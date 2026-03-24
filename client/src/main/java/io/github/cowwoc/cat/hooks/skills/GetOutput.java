@@ -9,8 +9,8 @@ package io.github.cowwoc.cat.hooks.skills;
 import java.io.IOException;
 import java.util.Arrays;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.util.AgentIdPatterns;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
@@ -34,7 +34,7 @@ public final class GetOutput implements SkillOutput
   /**
    * The JVM scope for accessing shared services.
    */
-  private final JvmScope scope;
+  private final ClaudeTool scope;
 
   /**
    * Creates a GetOutput instance.
@@ -42,7 +42,7 @@ public final class GetOutput implements SkillOutput
    * @param scope the JVM scope for accessing shared services
    * @throws NullPointerException if {@code scope} is null
    */
-  public GetOutput(JvmScope scope)
+  public GetOutput(ClaudeTool scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -239,7 +239,7 @@ public final class GetOutput implements SkillOutput
    */
   public static void main(String[] args)
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
       String output = new GetOutput(scope).getOutput(args);
       if (output != null)

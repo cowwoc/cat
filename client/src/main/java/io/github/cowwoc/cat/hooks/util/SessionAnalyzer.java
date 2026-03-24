@@ -6,12 +6,13 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
+import static io.github.cowwoc.cat.hooks.Strings.block;
 import static io.github.cowwoc.cat.hooks.skills.JsonHelper.getStringOrDefault;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.core.JacksonException;
@@ -448,13 +449,13 @@ public final class SessionAnalyzer
     if (content.isEmpty())
       return false;
 
-    // Check for JSON exit_code (both escaped and unescaped forms)
-    if (content.contains("exit_code") || content.contains("exitCode"))
+    // Check for JSON exit_code
+    if (content.contains("exit_code"))
     {
       try
       {
         JsonNode json = scope.getJsonMapper().readTree(content);
-        int exitCode = json.path("exit_code").asInt(json.path("exitCode").asInt(0));
+        int exitCode = json.path("exit_code").asInt(0);
         if (exitCode != 0)
           return true;
       }
@@ -533,64 +534,64 @@ public final class SessionAnalyzer
                SessionAnalyzer file-history <session-id> <path-pattern>""");
       System.exit(1);
     }
-    try (MainJvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
-      SessionAnalyzer analyzer = new SessionAnalyzer(scope);
-      String firstArg = args[0];
-      JsonNode result;
-      switch (firstArg)
+      try
       {
-        case "analyze" ->
+        SessionAnalyzer analyzer = new SessionAnalyzer(scope);
+        String firstArg = args[0];
+        JsonNode result;
+        switch (firstArg)
         {
-          if (args.length < 2)
+          case "analyze" ->
           {
-            System.err.println("Usage: SessionAnalyzer analyze <session-id>");
-            System.exit(1);
+            if (args.length < 2)
+            {
+              System.err.println("Usage: SessionAnalyzer analyze <session-id>");
+              System.exit(1);
+            }
+            result = analyzer.analyzeSession(analyzer.resolveSessionPath(args[1]));
           }
-          result = analyzer.analyzeSession(analyzer.resolveSessionPath(args[1]));
-        }
-        case "search" ->
-        {
-          if (args.length < 3)
+          case "search" ->
           {
-            System.err.println(
-              "Usage: SessionAnalyzer search <session-id> <pattern> [--context N] [--regex]");
-            System.exit(1);
+            if (args.length < 3)
+            {
+              System.err.println(
+                "Usage: SessionAnalyzer search <session-id> <pattern> [--context N] [--regex]");
+              System.exit(1);
+            }
+            result = runSearchCommand(analyzer, args);
           }
-          result = runSearchCommand(analyzer, args);
-        }
-        case "errors" ->
-        {
-          if (args.length < 2)
+          case "errors" ->
           {
-            System.err.println("Usage: SessionAnalyzer errors <session-id>");
-            System.exit(1);
+            if (args.length < 2)
+            {
+              System.err.println("Usage: SessionAnalyzer errors <session-id>");
+              System.exit(1);
+            }
+            result = analyzer.errors(analyzer.resolveSessionPath(args[1]));
           }
-          result = analyzer.errors(analyzer.resolveSessionPath(args[1]));
-        }
-        case "file-history" ->
-        {
-          if (args.length < 3)
+          case "file-history" ->
           {
-            System.err.println("Usage: SessionAnalyzer file-history <session-id> <path-pattern>");
-            System.exit(1);
+            if (args.length < 3)
+            {
+              System.err.println("Usage: SessionAnalyzer file-history <session-id> <path-pattern>");
+              System.exit(1);
+            }
+            result = analyzer.fileHistory(analyzer.resolveSessionPath(args[1]), args[2]);
           }
-          result = analyzer.fileHistory(analyzer.resolveSessionPath(args[1]), args[2]);
+          default ->
+          {
+            // No subcommand given — treat first arg as session ID for analyze
+            result = analyzer.analyzeSession(analyzer.resolveSessionPath(firstArg));
+          }
         }
-        default ->
-        {
-          // No subcommand given — treat first arg as session ID for analyze
-          result = analyzer.analyzeSession(analyzer.resolveSessionPath(firstArg));
-        }
+        System.out.println(scope.getJsonMapper().writeValueAsString(result));
       }
-      System.out.println(scope.getJsonMapper().writeValueAsString(result));
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      LoggerFactory.getLogger(SessionAnalyzer.class).error("Unexpected error", e);
-      try (MainJvmScope errorScope = new MainJvmScope())
+      catch (RuntimeException | AssertionError e)
       {
-        System.out.println(new HookOutput(errorScope).block(
+        LoggerFactory.getLogger(SessionAnalyzer.class).error("Unexpected error", e);
+        System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }
@@ -2037,16 +2038,13 @@ public final class SessionAnalyzer
         boolean isError = false;
 
         // Try to parse content as JSON to extract exit code — only when content looks like JSON
-        if (contentStr.contains("exit_code") || contentStr.contains("exitCode"))
+        if (contentStr.contains("exit_code"))
         try
         {
           JsonNode contentJson = scope.getJsonMapper().readTree(contentStr);
           JsonNode exitCodeNode = contentJson.path("exit_code");
           if (!exitCodeNode.isMissingNode())
             exitCode = exitCodeNode.asInt(0);
-          JsonNode exitCodeCamel = contentJson.path("exitCode");
-          if (!exitCodeCamel.isMissingNode() && exitCode == 0)
-            exitCode = exitCodeCamel.asInt(0);
 
           if (exitCode != 0)
           {

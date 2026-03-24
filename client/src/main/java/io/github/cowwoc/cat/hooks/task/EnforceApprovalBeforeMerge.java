@@ -9,7 +9,7 @@ package io.github.cowwoc.cat.hooks.task;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.Config;
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.TaskHandler;
 import io.github.cowwoc.cat.hooks.util.SessionFileUtils;
 import io.github.cowwoc.cat.hooks.util.TrustLevel;
@@ -59,7 +59,7 @@ public final class EnforceApprovalBeforeMerge implements TaskHandler
     "merge and approve",
     "merge approved");
 
-  private final JvmScope scope;
+  private final ClaudeHook scope;
 
   /**
    * Creates a new EnforceApprovalBeforeMerge handler.
@@ -67,7 +67,7 @@ public final class EnforceApprovalBeforeMerge implements TaskHandler
    * @param scope the JVM scope
    * @throws NullPointerException if {@code scope} is null
    */
-  public EnforceApprovalBeforeMerge(JvmScope scope)
+  public EnforceApprovalBeforeMerge(ClaudeHook scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;

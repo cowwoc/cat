@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.RootCauseAnalyzer;
 import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
@@ -32,7 +31,7 @@ public final class RootCauseAnalyzerTest
   public void constructorRejectsNullProjectRoot() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-rca-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       new RootCauseAnalyzer(null, scope);
     }
@@ -71,7 +70,7 @@ public final class RootCauseAnalyzerTest
   public void computesStatistics() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-rca-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retrospectivesDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retrospectivesDir);
@@ -112,7 +111,7 @@ public final class RootCauseAnalyzerTest
   public void filtersHistoryByStartId() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-rca-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retrospectivesDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retrospectivesDir);
@@ -154,7 +153,7 @@ public final class RootCauseAnalyzerTest
   public void handlesMissingRcaMethod() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-rca-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retrospectivesDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retrospectivesDir);
@@ -194,7 +193,7 @@ public final class RootCauseAnalyzerTest
   public void emptyInputReturnsNull() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-rca-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retrospectivesDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retrospectivesDir);
@@ -219,7 +218,7 @@ public final class RootCauseAnalyzerTest
   public void handlesMonthlySplitFiles() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-rca-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retrospectivesDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retrospectivesDir);
@@ -268,7 +267,7 @@ public final class RootCauseAnalyzerTest
   public void computesRecurrenceRate() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-rca-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retrospectivesDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retrospectivesDir);
@@ -307,7 +306,7 @@ public final class RootCauseAnalyzerTest
   public void countsAllMistakesRegardlessOfRcaMethod() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-rca-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path retrospectivesDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retrospectivesDir);
@@ -347,7 +346,7 @@ public final class RootCauseAnalyzerTest
   public void handlesMissingRetrospectivesDirectory() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-rca-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Don't create the retrospectives directory
       RootCauseAnalyzer analyzer = new RootCauseAnalyzer(tempDir, scope);

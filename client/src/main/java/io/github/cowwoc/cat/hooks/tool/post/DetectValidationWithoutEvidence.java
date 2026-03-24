@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.hooks.tool.post;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.PostToolHandler;
 import io.github.cowwoc.cat.hooks.util.ConversationLogUtils;
 import tools.jackson.core.JacksonException;
@@ -53,7 +53,7 @@ public final class DetectValidationWithoutEvidence implements PostToolHandler
    * @param scope the JVM scope providing configuration paths and JSON mapper
    * @throws NullPointerException if {@code scope} is null
    */
-  public DetectValidationWithoutEvidence(JvmScope scope)
+  public DetectValidationWithoutEvidence(ClaudeHook scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.sessionBasePath = scope.getClaudeSessionsPath();

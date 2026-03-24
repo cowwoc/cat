@@ -81,7 +81,7 @@ public final class AutoLearnMistakesTest
   public void bashExitCodeZeroDoesNotTriggerBuildFailure() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook())
     {
       JsonMapper mapper = scope.getJsonMapper();
       AutoLearnMistakes handler = new AutoLearnMistakes(scope);
@@ -106,7 +106,7 @@ public final class AutoLearnMistakesTest
   public void bashExitCodeZeroDoesNotTriggerTestFailure() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook())
     {
       JsonMapper mapper = scope.getJsonMapper();
       AutoLearnMistakes handler = new AutoLearnMistakes(scope);
@@ -128,7 +128,7 @@ public final class AutoLearnMistakesTest
   public void bashExitCodeNonZeroTriggersBuildFailure() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook())
     {
       JsonMapper mapper = scope.getJsonMapper();
       AutoLearnMistakes handler = new AutoLearnMistakes(scope);
@@ -150,7 +150,7 @@ public final class AutoLearnMistakesTest
   public void bashExitCodeNonZeroTriggersTestFailure() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook())
     {
       JsonMapper mapper = scope.getJsonMapper();
       AutoLearnMistakes handler = new AutoLearnMistakes(scope);
@@ -171,7 +171,7 @@ public final class AutoLearnMistakesTest
   public void failPrefixProgressBannerIsNotTestFailure() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook())
     {
       JsonMapper mapper = scope.getJsonMapper();
       AutoLearnMistakes handler = new AutoLearnMistakes(scope);
@@ -192,7 +192,7 @@ public final class AutoLearnMistakesTest
   public void failPrefixPhaseErrorIsNotTestFailure() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook())
     {
       JsonMapper mapper = scope.getJsonMapper();
       AutoLearnMistakes handler = new AutoLearnMistakes(scope);
@@ -214,7 +214,7 @@ public final class AutoLearnMistakesTest
   public void mavenSurefireTestFailureIsDetected() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook())
     {
       JsonMapper mapper = scope.getJsonMapper();
       AutoLearnMistakes handler = new AutoLearnMistakes(scope);
@@ -235,7 +235,7 @@ public final class AutoLearnMistakesTest
   public void multipleTestsFailedIsDetected() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook())
     {
       JsonMapper mapper = scope.getJsonMapper();
       AutoLearnMistakes handler = new AutoLearnMistakes(scope);
@@ -256,7 +256,7 @@ public final class AutoLearnMistakesTest
   public void failPrefixDocumentationErrorIsNotTestFailure() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook())
     {
       JsonMapper mapper = scope.getJsonMapper();
       AutoLearnMistakes handler = new AutoLearnMistakes(scope);
@@ -278,7 +278,7 @@ public final class AutoLearnMistakesTest
   public void testMethodFailedIsDetected() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook())
     {
       JsonMapper mapper = scope.getJsonMapper();
       AutoLearnMistakes handler = new AutoLearnMistakes(scope);
@@ -299,7 +299,7 @@ public final class AutoLearnMistakesTest
   public void failuresCountIsDetected() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook())
     {
       JsonMapper mapper = scope.getJsonMapper();
       AutoLearnMistakes handler = new AutoLearnMistakes(scope);
@@ -320,7 +320,7 @@ public final class AutoLearnMistakesTest
   public void singleTestFailedIsDetected() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook())
     {
       JsonMapper mapper = scope.getJsonMapper();
       AutoLearnMistakes handler = new AutoLearnMistakes(scope);
@@ -341,7 +341,7 @@ public final class AutoLearnMistakesTest
   public void zeroFailuresDoesNotTriggerTestFailure() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook())
     {
       JsonMapper mapper = scope.getJsonMapper();
       AutoLearnMistakes handler = new AutoLearnMistakes(scope);
@@ -363,7 +363,7 @@ public final class AutoLearnMistakesTest
   public void uppercaseMavenSurefireIsDetected() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook())
     {
       JsonMapper mapper = scope.getJsonMapper();
       AutoLearnMistakes handler = new AutoLearnMistakes(scope);
@@ -385,7 +385,7 @@ public final class AutoLearnMistakesTest
   public void indentedTestMethodFailedIsDetected() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook())
     {
       JsonMapper mapper = scope.getJsonMapper();
       AutoLearnMistakes handler = new AutoLearnMistakes(scope);
@@ -409,7 +409,7 @@ public final class AutoLearnMistakesTest
   public void severityTableMustFixCriticalIssuesIsNotTriggered() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook())
     {
       JsonMapper mapper = scope.getJsonMapper();
       AutoLearnMistakes handler = new AutoLearnMistakes(scope);
@@ -433,7 +433,7 @@ public final class AutoLearnMistakesTest
   public void severityTableCriticalErrorDescriptionIsNotTriggered() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook())
     {
       JsonMapper mapper = scope.getJsonMapper();
       AutoLearnMistakes handler = new AutoLearnMistakes(scope);
@@ -457,7 +457,7 @@ public final class AutoLearnMistakesTest
   public void severityTableCriticalBlocksReleaseIsNotTriggered() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook())
     {
       JsonMapper mapper = scope.getJsonMapper();
       AutoLearnMistakes handler = new AutoLearnMistakes(scope);
@@ -482,7 +482,7 @@ public final class AutoLearnMistakesTest
   public void firstPersonCriticalErrorInToolOutputIsNotTriggered() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook())
     {
       JsonMapper mapper = scope.getJsonMapper();
       AutoLearnMistakes handler = new AutoLearnMistakes(scope);
@@ -503,7 +503,7 @@ public final class AutoLearnMistakesTest
     expectedExceptionsMessageRegExp = ".*Invalid sessionId format.*")
   public void invalidSessionIdThrowsException() throws IOException
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook())
     {
       JsonMapper mapper = scope.getJsonMapper();
       AutoLearnMistakes handler = new AutoLearnMistakes(scope);
@@ -524,7 +524,7 @@ public final class AutoLearnMistakesTest
   public void realMavenBuildFailureTriggersBuildFailurePattern() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook())
     {
       JsonMapper mapper = scope.getJsonMapper();
       AutoLearnMistakes handler = new AutoLearnMistakes(scope);

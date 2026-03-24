@@ -16,12 +16,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.github.cowwoc.cat.hooks.Config;
-import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 import tools.jackson.databind.json.JsonMapper;
 
+import static io.github.cowwoc.cat.hooks.Strings.block;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
@@ -338,24 +339,24 @@ public final class GetConfigOutput implements SkillOutput
    */
   public static void main(String[] args)
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
-      GetConfigOutput generator = new GetConfigOutput(scope);
-      String output = generator.getOutput(args);
-      System.out.print(output);
-    }
-    catch (IOException e)
-    {
-      System.err.println("Error generating config output: " + e.getMessage());
-      System.exit(1);
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(GetConfigOutput.class);
-      log.error("Unexpected error", e);
-      try (MainJvmScope errorScope = new MainJvmScope())
+      try
       {
-        System.out.println(new HookOutput(errorScope).block(
+        GetConfigOutput generator = new GetConfigOutput(scope);
+        String output = generator.getOutput(args);
+        System.out.print(output);
+      }
+      catch (IOException e)
+      {
+        System.err.println("Error generating config output: " + e.getMessage());
+        System.exit(1);
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(GetConfigOutput.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }

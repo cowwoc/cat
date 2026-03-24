@@ -6,9 +6,9 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
-import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.databind.node.ObjectNode;
@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommandSingleLineInDirectory;
+import static io.github.cowwoc.cat.hooks.Strings.block;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
@@ -96,8 +97,6 @@ public final class GitAmend
     requireThat(message, "message").isNotNull();
     requireThat(afterAmend, "afterAmend").isNotNull();
 
-    HookOutput hookOutput = new HookOutput(scope);
-
     // Step 1: Record OLD_HEAD before amend
     String oldHead;
     try
@@ -106,7 +105,7 @@ public final class GitAmend
     }
     catch (IOException e)
     {
-      return hookOutput.block("Failed to resolve HEAD: " + e.getMessage());
+      return block(scope, "Failed to resolve HEAD: " + e.getMessage());
     }
 
     // Step 2: Check push status — if commit already pushed, fail-fast
@@ -152,7 +151,7 @@ public final class GitAmend
 
     ProcessRunner.Result amendResult = ProcessRunner.run(amendCmd.toArray(new String[0]));
     if (amendResult.exitCode() != 0)
-      return hookOutput.block("Amend failed: " + amendResult.stdout().strip());
+      return block(scope, "Amend failed: " + amendResult.stdout().strip());
 
     // Step 4: Record NEW_HEAD after amend
     String newHead = runGitCommandSingleLineInDirectory(directory, "rev-parse", "HEAD");
@@ -244,17 +243,17 @@ public final class GitAmend
    */
   public static void main(String[] args)
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
-      run(scope, args, System.out);
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(GitAmend.class);
-      log.error("Unexpected error", e);
-      try (MainJvmScope errorScope = new MainJvmScope())
+      try
       {
-        System.out.println(new HookOutput(errorScope).block(
+        run(scope, args, System.out);
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(GitAmend.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }
@@ -269,15 +268,13 @@ public final class GitAmend
    * @param scope the JVM scope
    * @param args  command-line arguments
    * @param out   the output stream to write JSON to
-   * @throws NullPointerException if {@code scope}, {@code args}, or {@code out} are null
+   * @throws NullPointerException if {@code args} or {@code out} are null
    */
   public static void run(JvmScope scope, String[] args, PrintStream out)
   {
-    requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();
     requireThat(out, "out").isNotNull();
 
-    HookOutput hookOutput = new HookOutput(scope);
     String amendMessage = "";
     boolean noEdit = false;
     String worktreePath = ".";
@@ -292,7 +289,7 @@ public final class GitAmend
         {
           if (index + 1 >= args.length)
           {
-            out.println(hookOutput.block("--message requires an argument"));
+            out.println(block(scope, "--message requires an argument"));
             return;
           }
           amendMessage = args[index + 1];
@@ -319,7 +316,7 @@ public final class GitAmend
     }
     catch (IOException e)
     {
-      out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      out.println(block(scope, Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }
 }

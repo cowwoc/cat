@@ -7,10 +7,8 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.bash.BlockMainRebase;
 import org.testng.annotations.Test;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -25,7 +23,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * using {@link io.github.cowwoc.cat.hooks.WorktreeContext#forSession} for lock-based context
  * determination.
  * <p>
- * Lock and worktree files are created via {@link JvmScope#getCatWorkPath()} to match
+ * Lock and worktree files are created via the scope's {@code getCatWorkPath()} to match
  * the external CAT storage location used by the production code.
  * <p>
  * Each test is self-contained with its own temporary directory structure.
@@ -48,15 +46,14 @@ public final class BlockMainRebaseTest
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    String command = "git rebase origin/main";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, projectPath.toString(), SESSION_ID,
+      projectPath, pluginRoot, projectPath))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockMainRebase handler = new BlockMainRebase(scope);
       // No lock file — session has no active worktree, so commands run in main context
-      String command = "git rebase origin/main";
 
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("REBASE ON MAIN BLOCKED");
@@ -82,22 +79,21 @@ public final class BlockMainRebaseTest
   {
     Path mainRepo = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
-    try (JvmScope scope = new TestJvmScope(mainRepo, pluginRoot))
+    String command = "git rebase main";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, mainRepo.toString(), SESSION_ID,
+      mainRepo, pluginRoot, mainRepo))
     {
       // Create a worktree on a feature branch
       Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
-      Path worktree = TestUtils.createWorktree(mainRepo, worktreesDir, ISSUE_ID);
+      TestUtils.createWorktree(mainRepo, worktreesDir, ISSUE_ID);
 
       // Create the lock file so the handler resolves to the worktree context
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
 
-      JsonMapper mapper = scope.getJsonMapper();
       BlockMainRebase handler = new BlockMainRebase(scope);
-      String command = "git rebase main";
 
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, command, worktree.toString(), SESSION_ID));
+      BashHandler.Result result = handler.check(scope);
 
       // The worktree is on feature branch, not main — rebase must be allowed
       requireThat(result.blocked(), "blocked").isFalse();
@@ -122,15 +118,14 @@ public final class BlockMainRebaseTest
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    String command = "git checkout feature-branch";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, projectPath.toString(), SESSION_ID,
+      projectPath, pluginRoot, projectPath))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockMainRebase handler = new BlockMainRebase(scope);
       // No lock — session is in main context; checkout must be blocked
-      String command = "git checkout feature-branch";
 
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -154,18 +149,17 @@ public final class BlockMainRebaseTest
   {
     Path mainRepo = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
-    try (JvmScope scope = new TestJvmScope(mainRepo, pluginRoot))
+    String command = "git checkout -b new-branch";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, mainRepo.toString(), SESSION_ID,
+      mainRepo, pluginRoot, mainRepo))
     {
       TestUtils.createWorktreeDir(scope, ISSUE_ID);
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
 
-      JsonMapper mapper = scope.getJsonMapper();
       BlockMainRebase handler = new BlockMainRebase(scope);
       // The session has a lock — it's in an issue worktree context, not main
-      String command = "git checkout -b new-branch";
 
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, command, mainRepo.toString(), SESSION_ID));
+      BashHandler.Result result = handler.check(scope);
 
       // -b is a flag, not a branch name — even in main context this would be a flag checkout
       requireThat(result.blocked(), "blocked").isFalse();
@@ -188,11 +182,11 @@ public final class BlockMainRebaseTest
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      BlockMainRebase handler = new BlockMainRebase(scope);
-      handler.check(TestUtils.bashInput(mapper, "git checkout feature-branch", projectPath.toString(), ""));
+      // Empty session ID omits session_id from payload, causing AbstractClaudeHook to throw
+      TestUtils.bashHook("git checkout feature-branch", projectPath.toString(), "",
+        projectPath, pluginRoot, projectPath);
     }
     finally
     {
@@ -212,11 +206,11 @@ public final class BlockMainRebaseTest
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      BlockMainRebase handler = new BlockMainRebase(scope);
-      handler.check(TestUtils.bashInput(mapper, "git rebase origin/main", projectPath.toString(), ""));
+      // Empty session ID omits session_id from payload, causing AbstractClaudeHook to throw
+      TestUtils.bashHook("git rebase origin/main", projectPath.toString(), "",
+        projectPath, pluginRoot, projectPath);
     }
     finally
     {
@@ -235,14 +229,13 @@ public final class BlockMainRebaseTest
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    String command = "git log --oneline -10";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, projectPath.toString(), SESSION_ID,
+      projectPath, pluginRoot, projectPath))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockMainRebase handler = new BlockMainRebase(scope);
-      String command = "git log --oneline -10";
 
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, command, projectPath.toString(), SESSION_ID));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
     }

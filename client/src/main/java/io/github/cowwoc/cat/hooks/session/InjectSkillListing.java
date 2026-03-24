@@ -6,11 +6,8 @@
  */
 package io.github.cowwoc.cat.hooks.session;
 
-import io.github.cowwoc.cat.hooks.HookInput;
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.util.SkillDiscovery;
-
-import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
  * Injects the full skill listing with descriptions into Claude's context after compaction.
@@ -22,34 +19,24 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  */
 public final class InjectSkillListing implements SessionStartHandler
 {
-  private final JvmScope scope;
-
   /**
    * Creates a new InjectSkillListing handler.
-   *
-   * @param scope the JVM scope providing environment paths and configuration
-   * @throws NullPointerException if {@code scope} is null
    */
-  public InjectSkillListing(JvmScope scope)
+  public InjectSkillListing()
   {
-    requireThat(scope, "scope").isNotNull();
-    this.scope = scope;
   }
 
   /**
    * Returns the full skill listing with descriptions as additional context.
    *
-   * @param input the hook input
    * @return a result containing the skill listing
-   * @throws NullPointerException if {@code input} is null
    */
   @Override
-  public Result handle(HookInput input)
+  public Result handle(ClaudeHook scope)
   {
-    requireThat(input, "input").isNotNull();
     // Only inject skill listing after compaction. Claude Code provides listings at initial startup,
     // but does not re-send them after conversation compaction.
-    String source = input.getString("source");
+    String source = scope.getString("source");
     if (!source.equals("compact"))
       return Result.empty();
     String listing = SkillDiscovery.getMainAgentSkillListing(scope);

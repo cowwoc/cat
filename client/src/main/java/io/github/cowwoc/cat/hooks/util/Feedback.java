@@ -8,9 +8,11 @@ package io.github.cowwoc.cat.hooks.util;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.HookOutput;
+import static io.github.cowwoc.cat.hooks.Strings.block;
+
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ArrayNode;
@@ -283,10 +285,10 @@ public final class Feedback implements AutoCloseable
    * Runs the "search" subcommand.
    *
    * @param feedback the feedback instance
-   * @param hookOutput the hook output helper for writing block responses
+   * @param scope the JVM scope for writing block responses
    * @param args the command-line arguments
    */
-  private static void runSearch(Feedback feedback, HookOutput hookOutput, String[] args)
+  private static void runSearch(Feedback feedback, JvmScope scope, String[] args)
   {
     String query = args[1];
     try
@@ -296,7 +298,7 @@ public final class Feedback implements AutoCloseable
     }
     catch (IOException e)
     {
-      System.out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      System.out.println(block(scope, Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }
 
@@ -304,14 +306,14 @@ public final class Feedback implements AutoCloseable
    * Runs the "open" subcommand.
    *
    * @param feedback the feedback instance
-   * @param hookOutput the hook output helper for writing block responses
+   * @param scope the JVM scope for writing block responses
    * @param args the command-line arguments
    */
-  private static void runOpen(Feedback feedback, HookOutput hookOutput, String[] args)
+  private static void runOpen(Feedback feedback, JvmScope scope, String[] args)
   {
     if (args.length < 3)
     {
-      System.out.println(hookOutput.block("Usage: feedback open <title> <body> [labels]"));
+      System.out.println(block(scope, "Usage: feedback open <title> <body> [labels]"));
       return;
     }
     String title = args[1];
@@ -335,7 +337,7 @@ public final class Feedback implements AutoCloseable
     catch (IOException e)
     {
       // openIssue() only throws IOException for JSON serialization failures, not browser errors
-      System.out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      System.out.println(block(scope, Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }
 
@@ -353,12 +355,11 @@ public final class Feedback implements AutoCloseable
    */
   public static void main(String[] args) throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
-      HookOutput hookOutput = new HookOutput(scope);
       if (args.length < 2)
       {
-        System.out.println(hookOutput.block(
+        System.out.println(block(scope,
           "Usage: feedback search <query> | feedback open <title> <body> [labels]"));
         return;
       }
@@ -369,9 +370,9 @@ public final class Feedback implements AutoCloseable
       {
         switch (subcommand)
         {
-          case "search" -> runSearch(feedback, hookOutput, args);
-          case "open" -> runOpen(feedback, hookOutput, args);
-          default -> System.out.println(hookOutput.block(
+          case "search" -> runSearch(feedback, scope, args);
+          case "open" -> runOpen(feedback, scope, args);
+          default -> System.out.println(block(scope,
             "Unknown subcommand: %s. Use 'search' or 'open'.".formatted(subcommand)));
         }
       }

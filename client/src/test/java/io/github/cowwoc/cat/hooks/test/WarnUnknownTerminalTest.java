@@ -6,16 +6,12 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.session.SessionStartHandler;
 import io.github.cowwoc.cat.hooks.session.WarnUnknownTerminal;
 import io.github.cowwoc.cat.hooks.skills.TerminalType;
 import org.testng.annotations.Test;
-import tools.jackson.databind.json.JsonMapper;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
@@ -31,18 +27,6 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  */
 public class WarnUnknownTerminalTest
 {
-  /**
-   * Creates a HookInput from a JSON string.
-   *
-   * @param mapper the JSON mapper
-   * @param json   the JSON input string
-   * @return the parsed HookInput
-   */
-  private HookInput createInput(JsonMapper mapper, String json)
-  {
-    return HookInput.readFrom(mapper, new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
-  }
-
   /**
    * Copies emoji-widths.json into the given plugin root directory if it is not already present.
    *
@@ -77,13 +61,13 @@ public class WarnUnknownTerminalTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-known-term-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, TerminalType.WINDOWS_TERMINAL))
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session-1\"}", projectPath, pluginRoot, projectPath,
+      TerminalType.WINDOWS_TERMINAL))
     {
       ensureEmojiWidthsFile(pluginRoot);
 
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"test-session-1\"}");
-      SessionStartHandler.Result result = new WarnUnknownTerminal(scope).handle(input);
+      SessionStartHandler.Result result = new WarnUnknownTerminal().handle(scope);
 
       // Should not emit warning when terminal is known (not using fallback)
       requireThat(result.stderr(), "stderr").isEmpty();
@@ -104,13 +88,13 @@ public class WarnUnknownTerminalTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-unknown-term-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, TerminalType.UNKNOWN))
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session-2\"}", projectPath, pluginRoot, projectPath,
+      TerminalType.UNKNOWN))
     {
       ensureEmojiWidthsFile(pluginRoot);
 
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"test-session-2\"}");
-      SessionStartHandler.Result result = new WarnUnknownTerminal(scope).handle(input);
+      SessionStartHandler.Result result = new WarnUnknownTerminal().handle(scope);
 
       // Should emit warning when terminal is unknown (using fallback)
       requireThat(result.stderr(), "stderr").isNotEmpty();
@@ -134,13 +118,13 @@ public class WarnUnknownTerminalTest
     Path projectPath = Files.createTempDirectory("cat-test-warn-fallback-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
     String sessionId = "test-session-" + System.nanoTime();
-    try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, TerminalType.UNKNOWN))
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"" + sessionId + "\"}", projectPath, pluginRoot, projectPath,
+      TerminalType.UNKNOWN))
     {
       ensureEmojiWidthsFile(pluginRoot);
 
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}");
-      SessionStartHandler.Result result = new WarnUnknownTerminal(scope).handle(input);
+      SessionStartHandler.Result result = new WarnUnknownTerminal().handle(scope);
 
       // Should emit warning
       requireThat(result.stderr(), "stderr").isNotEmpty();
@@ -166,7 +150,9 @@ public class WarnUnknownTerminalTest
     Path projectPath = Files.createTempDirectory("cat-test-suppress-warning-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
     String sessionId = "test-session-" + System.nanoTime();
-    try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, TerminalType.UNKNOWN))
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"" + sessionId + "\"}", projectPath, pluginRoot, projectPath,
+      TerminalType.UNKNOWN))
     {
       ensureEmojiWidthsFile(pluginRoot);
 
@@ -176,9 +162,7 @@ public class WarnUnknownTerminalTest
       Path markerFile = sessionDir.resolve("terminal-warning-emitted");
       Files.writeString(markerFile, "");
 
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}");
-      SessionStartHandler.Result result = new WarnUnknownTerminal(scope).handle(input);
+      SessionStartHandler.Result result = new WarnUnknownTerminal().handle(scope);
 
       // Should not emit warning because marker file exists
       requireThat(result.stderr(), "stderr").isEmpty();
@@ -198,13 +182,13 @@ public class WarnUnknownTerminalTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-no-warn-known-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, TerminalType.ITERM))
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session-known\"}", projectPath, pluginRoot, projectPath,
+      TerminalType.ITERM))
     {
       ensureEmojiWidthsFile(pluginRoot);
 
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"test-session-known\"}");
-      SessionStartHandler.Result result = new WarnUnknownTerminal(scope).handle(input);
+      SessionStartHandler.Result result = new WarnUnknownTerminal().handle(scope);
 
       // Should not emit warning when terminal is known (not using fallback)
       requireThat(result.stderr(), "stderr").isEmpty();
@@ -221,7 +205,8 @@ public class WarnUnknownTerminalTest
   }
 
   /**
-   * Verifies that an empty session ID throws IllegalStateException (fail-fast).
+   * Verifies that constructing a TestClaudeHook with an empty session ID throws IllegalArgumentException
+   * (fail-fast validation at construction time).
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*sessionId is empty.*")
@@ -229,13 +214,12 @@ public class WarnUnknownTerminalTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-empty-session-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, TerminalType.UNKNOWN))
+    try
     {
-      ensureEmojiWidthsFile(pluginRoot);
-
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"\"}");
-      new WarnUnknownTerminal(scope).handle(input);
+      // Session ID validation happens at construction time in AbstractClaudeHook
+      new TestClaudeHook(
+        "{\"session_id\": \"\"}", projectPath, pluginRoot, projectPath,
+        TerminalType.UNKNOWN);
     }
     finally
     {
@@ -254,7 +238,9 @@ public class WarnUnknownTerminalTest
     Path projectPath = Files.createTempDirectory("cat-test-readonly-session-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
     String sessionId = "test-session-" + System.nanoTime();
-    try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot, TerminalType.UNKNOWN))
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"" + sessionId + "\"}", projectPath, pluginRoot, projectPath,
+      TerminalType.UNKNOWN))
     {
       ensureEmojiWidthsFile(pluginRoot);
 
@@ -268,9 +254,7 @@ public class WarnUnknownTerminalTest
 
       try
       {
-        JsonMapper mapper = scope.getJsonMapper();
-        HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}");
-        SessionStartHandler.Result result = new WarnUnknownTerminal(scope).handle(input);
+        SessionStartHandler.Result result = new WarnUnknownTerminal().handle(scope);
 
         // Should still emit warning even though marker file write fails
         requireThat(result.stderr(), "stderr").isNotEmpty();

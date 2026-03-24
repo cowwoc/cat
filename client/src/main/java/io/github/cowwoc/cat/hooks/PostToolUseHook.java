@@ -36,18 +36,18 @@ import java.util.List;
  */
 public final class PostToolUseHook implements HookHandler
 {
-  private final JvmScope scope;
+  private final ClaudeHook jvmScope;
 
   /**
    * Creates a new PostToolUseHook instance.
    *
-   * @param scope the JVM scope providing configuration paths
+   * @param scope the hook scope providing configuration paths
    * @throws NullPointerException if {@code scope} is null
    */
-  public PostToolUseHook(JvmScope scope)
+  public PostToolUseHook(ClaudeHook scope)
   {
     requireThat(scope, "scope").isNotNull();
-    this.scope = scope;
+    this.jvmScope = scope;
   }
 
   /**
@@ -61,36 +61,31 @@ public final class PostToolUseHook implements HookHandler
   }
 
   /**
-   * Processes hook input and returns the result with any warnings.
+   * Processes hook data and returns the result with any warnings.
    *
-   * @param input the hook input to process
-   * @param output the hook output builder for creating responses
+   * @param scope the hook scope providing input data and output building
    * @return the hook result containing JSON output and warnings
-   * @throws NullPointerException if {@code input} or {@code output} are null
    */
   @Override
-  public HookResult run(HookInput input, HookOutput output)
+  public HookResult run(ClaudeHook scope)
   {
-    requireThat(input, "input").isNotNull();
-    requireThat(output, "output").isNotNull();
-
-    String toolName = input.getToolName();
+    String toolName = scope.getToolName();
     if (toolName.isEmpty())
-      return HookResult.withoutWarnings(output.empty());
+      return HookResult.withoutWarnings(scope.empty());
 
-    JsonNode toolResult = input.getToolResult();
-    String sessionId = input.getSessionId();
+    JsonNode toolResult = scope.getToolResult();
+    String sessionId = scope.getSessionId();
     requireThat(sessionId, "sessionId").isNotBlank();
 
-    // Create handlers using sessionId from HookInput
-    Path sessionDirectory = scope.getCatSessionPath(sessionId);
+    // Create handlers using sessionId from the hook scope
+    Path sessionDirectory = jvmScope.getCatSessionPath(sessionId);
     List<PostToolHandler> handlers = List.of(
-      new SetPendingAgentResult(scope),
+      new SetPendingAgentResult(jvmScope),
       new ResetFailureCounter(sessionDirectory),
-      new AutoLearnMistakes(scope),
-      new DetectAssistantGivingUp(scope),
-      new DetectValidationWithoutEvidence(scope),
-      new DetectTokenThreshold(scope),
+      new AutoLearnMistakes(jvmScope),
+      new DetectAssistantGivingUp(jvmScope),
+      new DetectValidationWithoutEvidence(jvmScope),
+      new DetectTokenThreshold(jvmScope),
       new RemindRestartAfterSkillModification());
 
     List<String> warnings = new ArrayList<>();
@@ -102,7 +97,7 @@ public final class PostToolUseHook implements HookHandler
     {
       try
       {
-        PostToolHandler.Result result = handler.check(toolName, toolResult, sessionId, input.getRaw());
+        PostToolHandler.Result result = handler.check(toolName, toolResult, sessionId, scope.getRaw());
         if (!result.warning().isEmpty())
           warnings.add(result.warning());
         if (!result.additionalContext().isEmpty())
@@ -124,11 +119,11 @@ public final class PostToolUseHook implements HookHandler
     if (!additionalContexts.isEmpty())
     {
       String combined = String.join("\n\n", additionalContexts);
-      jsonOutput = output.additionalContext("PostToolUse", combined);
+      jsonOutput = scope.additionalContext("PostToolUse", combined);
     }
     else
     {
-      jsonOutput = output.empty();
+      jsonOutput = scope.empty();
     }
 
     return new HookResult(jsonOutput, allWarnings);

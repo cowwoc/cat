@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.GetAddOutput;
 import io.github.cowwoc.cat.hooks.skills.GetConfigOutput;
 import io.github.cowwoc.cat.hooks.skills.ItemType;
@@ -39,7 +38,7 @@ public class HandlerOutputTest
   @Test
   public void getAddOutputGeneratesIssueDisplay() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
@@ -64,7 +63,7 @@ public class HandlerOutputTest
   @Test
   public void getAddOutputIncludesDependencies() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
@@ -88,7 +87,7 @@ public class HandlerOutputTest
   @Test
   public void getAddOutputShowsNoneForEmptyDependencies() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
@@ -112,7 +111,7 @@ public class HandlerOutputTest
   @Test
   public void getAddOutputGeneratesVersionDisplay() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
@@ -136,7 +135,7 @@ public class HandlerOutputTest
   @Test
   public void getAddOutputIncludesNextCommandHint() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
@@ -160,7 +159,7 @@ public class HandlerOutputTest
   @Test
   public void getAddOutputDefaultsToFeatureType() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
@@ -184,7 +183,7 @@ public class HandlerOutputTest
   @Test
   public void getAddOutputFormatsIssueType() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
@@ -208,7 +207,7 @@ public class HandlerOutputTest
   @Test
   public void getAddOutputVersionWithoutParentOmitsParentLine() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
@@ -232,7 +231,7 @@ public class HandlerOutputTest
   @Test
   public void getAddOutputVersionWithoutPathOmitsPathLine() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
@@ -256,7 +255,7 @@ public class HandlerOutputTest
   @Test
   public void getAddOutputIssueDisplayHasBoxStructure() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
@@ -281,7 +280,7 @@ public class HandlerOutputTest
   @Test
   public void getAddOutputIssueDisplayContainsCheckmarkEmoji() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
@@ -305,7 +304,7 @@ public class HandlerOutputTest
   @Test
   public void getAddOutputVersionDisplayContainsCheckmarkEmoji() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
@@ -329,7 +328,7 @@ public class HandlerOutputTest
   @Test
   public void getAddOutputVersionDisplayHasBoxStructure() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
@@ -353,7 +352,7 @@ public class HandlerOutputTest
   @Test
   public void getAddOutputVersionDisplayIncludesVersionName() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
@@ -377,7 +376,7 @@ public class HandlerOutputTest
   @Test
   public void getAddOutputVersionDisplayIncludesNextCommand() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
@@ -401,7 +400,7 @@ public class HandlerOutputTest
   @Test
   public void getConfigOutputReturnsNullWhenConfigMissing() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("handler-test");
       GetConfigOutput handler = new GetConfigOutput(scope);
@@ -419,7 +418,7 @@ public class HandlerOutputTest
   @Test
   public void getConfigOutputGeneratesSettingsDisplay() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("handler-test");
       try
@@ -461,7 +460,7 @@ public class HandlerOutputTest
   @Test
   public void getAddOutputVersionDisplayContainsPath() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
@@ -489,7 +488,7 @@ public class HandlerOutputTest
   @Test
   public void getAddOutputVersionUsesProvidedDefaults() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
@@ -516,7 +515,7 @@ public class HandlerOutputTest
   @Test
   public void getAddOutputIssueDisplayUsesDefaultType() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(
@@ -546,7 +545,7 @@ public class HandlerOutputTest
   @Test
   public void getAddOutputIssueDisplayContainsHeaderAndNextHint() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(

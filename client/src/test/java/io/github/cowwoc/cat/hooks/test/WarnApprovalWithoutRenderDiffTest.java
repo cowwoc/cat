@@ -9,7 +9,6 @@ package io.github.cowwoc.cat.hooks.test;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.AskHandler;
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ask.WarnApprovalWithoutRenderDiff;
 import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
@@ -40,7 +39,7 @@ public final class WarnApprovalWithoutRenderDiffTest
   public void missingGetDiffTriggersWarning() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-warn-approval-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-session-no-get-diff";
@@ -82,7 +81,7 @@ public final class WarnApprovalWithoutRenderDiffTest
   public void presentGetDiffWithBoxCharsAllows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-warn-approval-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-session-with-get-diff";
@@ -126,7 +125,7 @@ public final class WarnApprovalWithoutRenderDiffTest
   public void getDiffPresentButSparseBoxCharsTriggersReformatWarning() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-warn-approval-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-session-reformatted-diff";
@@ -176,7 +175,7 @@ public final class WarnApprovalWithoutRenderDiffTest
   public void nonApprovalQuestionAllows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-warn-approval-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-session-non-approval";
@@ -205,7 +204,7 @@ public final class WarnApprovalWithoutRenderDiffTest
   public void noCatDirectoryAllows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-warn-approval-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-session-no-cat-dir";

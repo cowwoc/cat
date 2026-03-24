@@ -6,19 +6,14 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.HookInput;
-import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.HookResult;
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.SubagentStartHook;
 import io.github.cowwoc.cat.hooks.util.SkillDiscovery;
 import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -30,24 +25,12 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public final class SubagentStartHookTest
 {
   /**
-   * Creates a HookInput from a JSON string.
-   *
-   * @param mapper the JSON mapper
-   * @param json   the JSON input string
-   * @return the parsed HookInput
-   */
-  private HookInput createInput(JsonMapper mapper, String json)
-  {
-    return HookInput.readFrom(mapper, new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
-  }
-
-  /**
    * Sets up a fake plugin in the given configDir with one skill entry.
    * <p>
    * Creates {@code configDir/plugins/installed_plugins.json} pointing to a fake plugin root
    * that contains one skill with the given name and description.
    *
-   * @param configDir   the Claude config directory (used as claudeConfigDir in TestJvmScope)
+   * @param configDir   the Claude config directory (used as claudeConfigDir in TestClaudeHook)
    * @param prefix      the plugin prefix (e.g. "fake" → skill name "fake:skill-name")
    * @param skillName   the skill directory name
    * @param description the skill description in SKILL.md frontmatter
@@ -134,13 +117,11 @@ public final class SubagentStartHookTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-subagent-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"agent_type\": \"task\"}",
+      projectPath, pluginRoot, projectPath))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"agent_type\": \"task\"}");
-      HookOutput output = new HookOutput(scope);
-      HookResult result = new SubagentStartHook(scope).run(input, output);
+      HookResult result = new SubagentStartHook(scope).run(scope);
 
       requireThat(result.output(), "output").contains("Your CAT agent ID is:");
       requireThat(result.output(), "output").contains("test-session/subagents/agent-1");
@@ -163,19 +144,17 @@ public final class SubagentStartHookTest
   @Test
   public void subagentStartHookInjectsSkillListingWhenSkillsPresent() throws IOException
   {
-    // claudeConfigDir == claudeProjectPath in TestJvmScope(projectPath, pluginRoot)
+    // claudeConfigDir == claudeProjectPath in TestClaudeHook(projectPath, pluginRoot, projectPath)
     Path configDir = Files.createTempDirectory("cat-test-subagent-config-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
     try
     {
       setupFakePlugin(configDir, "fake", "my-test-skill", "A test skill for unit testing.", true);
-      try (JvmScope scope = new TestJvmScope(configDir, pluginRoot))
+      try (TestClaudeHook scope = new TestClaudeHook(
+        "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"agent_type\": \"task\"}",
+        configDir, pluginRoot, configDir))
       {
-        JsonMapper mapper = scope.getJsonMapper();
-        HookInput input = createInput(mapper,
-          "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"agent_type\": \"task\"}");
-        HookOutput output = new HookOutput(scope);
-        HookResult result = new SubagentStartHook(scope).run(input, output);
+        HookResult result = new SubagentStartHook(scope).run(scope);
 
         requireThat(result.output(), "output").contains("hookSpecificOutput");
         requireThat(result.output(), "output").contains("SubagentStart");
@@ -236,13 +215,12 @@ public final class SubagentStartHookTest
     try
     {
       setupFakePlugin(configDir, "sample", "sample-skill", "Sample skill description.", true);
-      try (JvmScope scope = new TestJvmScope(configDir, pluginRoot))
+      try (TestClaudeHook scope = new TestClaudeHook(
+        "{\"session_id\": \"test-session\", \"agent_id\": \"sample-agent\"}",
+        configDir, pluginRoot, configDir))
       {
         JsonMapper mapper = scope.getJsonMapper();
-        HookInput input = createInput(mapper,
-          "{\"session_id\": \"test-session\", \"agent_id\": \"sample-agent\"}");
-        HookOutput output = new HookOutput(scope);
-        HookResult result = new SubagentStartHook(scope).run(input, output);
+        HookResult result = new SubagentStartHook(scope).run(scope);
 
         JsonNode json = mapper.readTree(result.output());
         requireThat(json.has("hookSpecificOutput"), "hasHookSpecificOutput").isTrue();
@@ -269,7 +247,7 @@ public final class SubagentStartHookTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-subagent-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
     {
       String listing = SkillDiscovery.getMainAgentSkillListing(scope);
       requireThat(listing, "listing").isEmpty();
@@ -292,7 +270,7 @@ public final class SubagentStartHookTest
     try
     {
       setupFakePlugin(configDir, "fmt", "format-test-skill", "Format test skill description.", true);
-      try (JvmScope scope = new TestJvmScope(configDir, pluginRoot))
+      try (TestClaudeHook scope = new TestClaudeHook(configDir, pluginRoot, configDir))
       {
         String listing = SkillDiscovery.getMainAgentSkillListing(scope);
         requireThat(listing, "listing").contains("The following skills are available.");
@@ -351,7 +329,7 @@ public final class SubagentStartHookTest
         }
         """.formatted(fakePluginRoot.toString()));
 
-      try (JvmScope scope = new TestJvmScope(configDir, pluginRoot))
+      try (TestClaudeHook scope = new TestClaudeHook(configDir, pluginRoot, configDir))
       {
         String listing = SkillDiscovery.getMainAgentSkillListing(scope);
         requireThat(listing, "listing").contains("excl:included-skill");
@@ -378,7 +356,7 @@ public final class SubagentStartHookTest
     try
     {
       setupFakePlugin(configDir, "sub", "sub-test-skill", "A subagent test skill.", true);
-      try (JvmScope scope = new TestJvmScope(configDir, pluginRoot))
+      try (TestClaudeHook scope = new TestClaudeHook(configDir, pluginRoot, configDir))
       {
         String listing = SkillDiscovery.getSubagentSkillListing(scope);
         requireThat(listing, "listing").contains("**Available skills:**");
@@ -439,7 +417,9 @@ public final class SubagentStartHookTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-getrules-blank-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\"}",
+      projectPath, pluginRoot, projectPath))
     {
       Path rulesDir = scope.getProjectPath().resolve(".cat/rules");
       Files.createDirectories(rulesDir);
@@ -452,11 +432,7 @@ public final class SubagentStartHookTest
         Applies to any subagent.
         """);
 
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\"}");
-      HookOutput output = new HookOutput(scope);
-      HookResult result = new SubagentStartHook(scope).run(input, output);
+      HookResult result = new SubagentStartHook(scope).run(scope);
 
       requireThat(result.output(), "output").contains("Universal subagent content");
       requireThat(result.output(), "output").contains("Applies to any subagent.");
@@ -479,7 +455,9 @@ public final class SubagentStartHookTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-getrules-specific-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"subagent_type\": \"cat:work-execute\"}",
+      projectPath, pluginRoot, projectPath))
     {
       Path rulesDir = scope.getProjectPath().resolve(".cat/rules");
       Files.createDirectories(rulesDir);
@@ -492,11 +470,7 @@ public final class SubagentStartHookTest
         Only for cat:work-execute.
         """);
 
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"subagent_type\": \"cat:work-execute\"}");
-      HookOutput output = new HookOutput(scope);
-      HookResult result = new SubagentStartHook(scope).run(input, output);
+      HookResult result = new SubagentStartHook(scope).run(scope);
 
       requireThat(result.output(), "output").contains("Work execute specific content");
       requireThat(result.output(), "output").contains("Only for cat:work-execute.");
@@ -519,7 +493,9 @@ public final class SubagentStartHookTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-getrules-nomatch-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"subagent_type\": \"Explore\"}",
+      projectPath, pluginRoot, projectPath))
     {
       Path rulesDir = scope.getProjectPath().resolve(".cat/rules");
       Files.createDirectories(rulesDir);
@@ -532,12 +508,8 @@ public final class SubagentStartHookTest
         Should not appear for Explore.
         """);
 
-      JsonMapper mapper = scope.getJsonMapper();
       // Different subagent type — rule should not match
-      HookInput input = createInput(mapper,
-        "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"subagent_type\": \"Explore\"}");
-      HookOutput output = new HookOutput(scope);
-      HookResult result = new SubagentStartHook(scope).run(input, output);
+      HookResult result = new SubagentStartHook(scope).run(scope);
 
       requireThat(result.output(), "output").doesNotContain("Work execute only content");
       requireThat(result.output(), "output").doesNotContain("Should not appear for Explore.");
@@ -562,13 +534,11 @@ public final class SubagentStartHookTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-agent-id-present-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session-abc\", \"agent_id\": \"subagent-xyz\"}",
+      projectPath, pluginRoot, projectPath))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"session_id\": \"test-session-abc\", \"agent_id\": \"subagent-xyz\"}");
-      HookOutput output = new HookOutput(scope);
-      HookResult result = new SubagentStartHook(scope).run(input, output);
+      HookResult result = new SubagentStartHook(scope).run(scope);
 
       requireThat(result.output(), "output").contains("Your CAT agent ID is:");
       requireThat(result.output(), "output").contains("test-session-abc/subagents/subagent-xyz");
@@ -592,13 +562,11 @@ public final class SubagentStartHookTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-agent-id-blank-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session-abc\", \"agent_id\": \"\"}",
+      projectPath, pluginRoot, projectPath))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"session_id\": \"test-session-abc\", \"agent_id\": \"\"}");
-      HookOutput output = new HookOutput(scope);
-      new SubagentStartHook(scope).run(input, output);
+      new SubagentStartHook(scope).run(scope);
     }
     finally
     {
@@ -608,7 +576,7 @@ public final class SubagentStartHookTest
   }
 
   /**
-   * Verifies that HookInput.readFrom throws IllegalStateException when session_id is blank.
+   * Verifies that constructing a TestClaudeHook with a blank session_id throws IllegalArgumentException.
    *
    * @throws IOException if file operations fail
    */
@@ -618,10 +586,10 @@ public final class SubagentStartHookTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-session-id-blank-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      createInput(mapper, "{\"session_id\": \"\", \"agent_id\": \"subagent-xyz\"}");
+      new TestClaudeHook("{\"session_id\": \"\", \"agent_id\": \"subagent-xyz\"}", projectPath, pluginRoot,
+        projectPath);
     }
     finally
     {

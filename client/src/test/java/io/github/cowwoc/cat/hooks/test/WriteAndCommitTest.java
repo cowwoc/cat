@@ -32,7 +32,7 @@ public class WriteAndCommitTest
     expectedExceptionsMessageRegExp = ".*filePath.*")
   public void executeRejectsNullFilePath() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
     Path tempDir = TestUtils.createTempDir("write-and-commit-test");
     try
@@ -62,7 +62,7 @@ public class WriteAndCommitTest
     expectedExceptionsMessageRegExp = ".*filePath.*")
   public void executeRejectsBlankFilePath() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
     Path tempDir = TestUtils.createTempDir("write-and-commit-test");
     try
@@ -92,7 +92,7 @@ public class WriteAndCommitTest
     expectedExceptionsMessageRegExp = ".*Content file not found.*")
   public void executeRejectsMissingContentFile() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
     Path tempDir = TestUtils.createTempDir("write-and-commit-test");
     try
@@ -121,7 +121,7 @@ public class WriteAndCommitTest
     expectedExceptionsMessageRegExp = ".*Commit message file not found.*")
   public void executeRejectsMissingCommitMsgFile() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
     Path tempDir = TestUtils.createTempDir("write-and-commit-test");
     try

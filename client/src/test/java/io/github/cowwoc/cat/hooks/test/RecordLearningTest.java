@@ -8,12 +8,13 @@ package io.github.cowwoc.cat.hooks.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.RecordLearning;
 import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
+
+import io.github.cowwoc.cat.hooks.JvmScope;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -53,7 +54,7 @@ public final class RecordLearningTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -83,7 +84,7 @@ public final class RecordLearningTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -114,7 +115,7 @@ public final class RecordLearningTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -152,7 +153,7 @@ public final class RecordLearningTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -194,7 +195,7 @@ public final class RecordLearningTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -237,7 +238,7 @@ public final class RecordLearningTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -271,7 +272,7 @@ public final class RecordLearningTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -310,7 +311,7 @@ public final class RecordLearningTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -342,7 +343,7 @@ public final class RecordLearningTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -375,7 +376,7 @@ public final class RecordLearningTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -412,7 +413,7 @@ public final class RecordLearningTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -452,7 +453,7 @@ public final class RecordLearningTest
     // Use a unique session ID to avoid the WorktreeLock static cache returning stale results
     // from other tests that used the default "test-session" ID.
     String sessionId = UUID.randomUUID().toString();
-    try (JvmScope scope = new TestJvmScope(mainRepo, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(mainRepo, pluginRoot))
     {
       // Create the worktree at the location WorktreeContext expects:
       // {projectCatDir}/worktrees/{issueId}
@@ -508,7 +509,7 @@ public final class RecordLearningTest
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
     // Use a unique session ID to avoid the WorktreeLock static cache returning stale results
     String sessionId = UUID.randomUUID().toString();
-    try (JvmScope scope = new TestJvmScope(mainRepo, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(mainRepo, pluginRoot))
     {
       Path retroDir = mainRepo.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -546,7 +547,7 @@ public final class RecordLearningTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       // Do NOT create the retrospectives directory or index.json
       RecordLearning cmd = new RecordLearning(scope, tempDir, FIXED_CLOCK);
@@ -579,7 +580,7 @@ public final class RecordLearningTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -629,7 +630,7 @@ public final class RecordLearningTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -665,7 +666,7 @@ public final class RecordLearningTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -717,7 +718,7 @@ public final class RecordLearningTest
     {
       Path tempDir = TestUtils.createTempGitRepo("main");
       Path pluginRoot = Files.createTempDirectory("plugin-root-");
-      try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+      try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
       {
         Path retroDir = tempDir.resolve(".cat/retrospectives");
         Files.createDirectories(retroDir);
@@ -758,7 +759,7 @@ public final class RecordLearningTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -817,7 +818,7 @@ public final class RecordLearningTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -869,7 +870,7 @@ public final class RecordLearningTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);
@@ -942,7 +943,7 @@ public final class RecordLearningTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       Path retroDir = tempDir.resolve(".cat/retrospectives");
       Files.createDirectories(retroDir);

@@ -6,9 +6,11 @@
  */
 package io.github.cowwoc.cat.hooks.skills;
 
-import io.github.cowwoc.cat.hooks.HookOutput;
+import static io.github.cowwoc.cat.hooks.Strings.block;
+
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.util.IssueDiscovery;
 import io.github.cowwoc.cat.hooks.util.IssueDiscovery.DiscoveryResult;
 import io.github.cowwoc.cat.hooks.util.IssueDiscovery.Scope;
@@ -154,27 +156,27 @@ public final class GetIssueCompleteOutput implements SkillOutput
    */
   public static void main(String[] args)
   {
-    try
+    try (ClaudeTool scope = new MainClaudeTool())
     {
-      String issueName = "";
-      String targetBranch = "main";
-      String scopeComplete = "";
-
-      for (int i = 0; i + 1 < args.length; i += 2)
+      try
       {
-        switch (args[i])
+        String issueName = "";
+        String targetBranch = "main";
+        String scopeComplete = "";
+
+        for (int i = 0; i + 1 < args.length; i += 2)
         {
-          case "--issue-name" -> issueName = args[i + 1];
-          case "--target-branch" -> targetBranch = args[i + 1];
-          case "--scope-complete" -> scopeComplete = args[i + 1];
-          default ->
+          switch (args[i])
           {
+            case "--issue-name" -> issueName = args[i + 1];
+            case "--target-branch" -> targetBranch = args[i + 1];
+            case "--scope-complete" -> scopeComplete = args[i + 1];
+            default ->
+            {
+            }
           }
         }
-      }
 
-      try (JvmScope scope = new MainJvmScope())
-      {
         GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
 
         if (!scopeComplete.isEmpty())
@@ -193,21 +195,18 @@ public final class GetIssueCompleteOutput implements SkillOutput
           System.out.println(box);
         }
       }
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(GetIssueCompleteOutput.class);
-      log.error("Unexpected error", e);
-      try (MainJvmScope errorScope = new MainJvmScope())
+      catch (RuntimeException | AssertionError e)
       {
-        System.out.println(new HookOutput(errorScope).block(
+        Logger log = LoggerFactory.getLogger(GetIssueCompleteOutput.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
-    }
-    catch (Exception e)
-    {
-      System.err.println("Error: " + e.getMessage());
-      System.exit(1);
+      catch (Exception e)
+      {
+        System.err.println("Error: " + e.getMessage());
+        System.exit(1);
+      }
     }
   }
 

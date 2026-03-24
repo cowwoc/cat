@@ -6,10 +6,10 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
-import io.github.cowwoc.cat.hooks.ClaudeEnv;
-import io.github.cowwoc.cat.hooks.HookOutput;
-import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import static io.github.cowwoc.cat.hooks.Strings.block;
+
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.util.IssueDiscovery.DiscoveryResult.ExistingWorktree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,7 +100,7 @@ public final class WorkPrepare
   };
 
   private final Logger log = LoggerFactory.getLogger(getClass());
-  private final JvmScope scope;
+  private final ClaudeTool scope;
   private final int diagnosticScanSafetyThreshold;
   private final int maxCycleDetectionDepth;
   private final List<String> warnings = Collections.synchronizedList(new ArrayList<>());
@@ -111,7 +111,7 @@ public final class WorkPrepare
    * @param scope the JVM scope providing project directory and shared services
    * @throws NullPointerException if {@code scope} is null
    */
-  public WorkPrepare(JvmScope scope)
+  public WorkPrepare(ClaudeTool scope)
   {
     this(scope, DEFAULT_DIAGNOSTIC_SCAN_SAFETY_THRESHOLD, DEFAULT_MAX_CYCLE_DETECTION_DEPTH);
   }
@@ -131,7 +131,7 @@ public final class WorkPrepare
    * @throws IllegalArgumentException if {@code diagnosticScanSafetyThreshold} is not positive or
    *                                  {@code maxCycleDetectionDepth} is negative
    */
-  public WorkPrepare(JvmScope scope, int diagnosticScanSafetyThreshold, int maxCycleDetectionDepth)
+  public WorkPrepare(ClaudeTool scope, int diagnosticScanSafetyThreshold, int maxCycleDetectionDepth)
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(diagnosticScanSafetyThreshold, "diagnosticScanSafetyThreshold").isPositive();
@@ -1926,7 +1926,7 @@ public final class WorkPrepare
    */
   public static void main(String[] args)
   {
-    try (MainJvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
       try
       {
@@ -1935,7 +1935,7 @@ public final class WorkPrepare
       catch (RuntimeException | AssertionError e)
       {
         LoggerFactory.getLogger(WorkPrepare.class).error("Unexpected error", e);
-        System.out.println(new HookOutput(scope).block(
+        System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }
@@ -1947,15 +1947,13 @@ public final class WorkPrepare
    * @param scope the JVM scope
    * @param args  command-line arguments
    * @param out   the output stream to write JSON to
-   * @throws NullPointerException if {@code scope}, {@code args}, or {@code out} are null
+   * @throws NullPointerException if {@code args} or {@code out} are null
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out)
+  public static void run(ClaudeTool scope, String[] args, PrintStream out)
   {
-    requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();
     requireThat(out, "out").isNotNull();
 
-    HookOutput hookOutput = new HookOutput(scope);
     String sessionIdOverride = "";
     String excludePattern = "";
     String issueId = "";
@@ -2012,7 +2010,7 @@ public final class WorkPrepare
     }
     catch (IllegalArgumentException e)
     {
-      out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      out.println(block(scope, Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       return;
     }
 
@@ -2022,7 +2020,7 @@ public final class WorkPrepare
       sessionId = sessionIdOverride;
     else
     {
-      sessionId = new ClaudeEnv().getSessionId();
+      sessionId = scope.getSessionId();
     }
 
     PrepareInput input = new PrepareInput(sessionId, excludePattern, issueId, trustLevel);
@@ -2058,12 +2056,11 @@ public final class WorkPrepare
    * @param scope   the JVM scope providing the shared {@link JsonMapper}
    * @param message the error message to include in the JSON
    * @return a JSON string of the form {@code {"status":"ERROR","message":"..."}}
-   * @throws NullPointerException if {@code scope} or {@code message} are null
+   * @throws NullPointerException if {@code message} is null
    * @throws IOException if JSON serialization fails
    */
-  public static String toErrorJson(JvmScope scope, String message) throws IOException
+  public static String toErrorJson(ClaudeTool scope, String message) throws IOException
   {
-    requireThat(scope, "scope").isNotNull();
     requireThat(message, "message").isNotNull();
     String escapedMessage = scope.getJsonMapper().writeValueAsString(message);
     return "{\"status\":\"ERROR\",\"message\":" + escapedMessage + "}";

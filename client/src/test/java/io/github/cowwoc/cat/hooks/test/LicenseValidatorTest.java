@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.licensing.LicenseResult;
 import io.github.cowwoc.cat.hooks.licensing.LicenseValidator;
 import io.github.cowwoc.cat.hooks.licensing.Tier;
@@ -46,7 +45,7 @@ public class LicenseValidatorTest
   {
     Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       try
       {
@@ -75,7 +74,7 @@ public class LicenseValidatorTest
   {
     Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       try
       {
@@ -112,7 +111,7 @@ public class LicenseValidatorTest
   {
     Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       try
       {
@@ -148,7 +147,7 @@ public class LicenseValidatorTest
   {
     Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       try
       {
@@ -183,7 +182,7 @@ public class LicenseValidatorTest
   {
     Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       try
       {
@@ -216,7 +215,7 @@ public class LicenseValidatorTest
   {
     Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       try
       {
@@ -254,7 +253,7 @@ public class LicenseValidatorTest
   {
     Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       try
       {
@@ -293,7 +292,7 @@ public class LicenseValidatorTest
   {
     Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       try
       {
@@ -329,7 +328,7 @@ public class LicenseValidatorTest
   {
     Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       try
       {
@@ -366,7 +365,7 @@ public class LicenseValidatorTest
   {
     Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       try
       {
@@ -401,7 +400,7 @@ public class LicenseValidatorTest
   {
     Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       try
       {
@@ -436,7 +435,7 @@ public class LicenseValidatorTest
   {
     Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       try
       {
@@ -474,7 +473,7 @@ public class LicenseValidatorTest
   {
     Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       try
       {
@@ -509,7 +508,7 @@ public class LicenseValidatorTest
   {
     Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       try
       {
@@ -544,7 +543,7 @@ public class LicenseValidatorTest
   {
     Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       try
       {

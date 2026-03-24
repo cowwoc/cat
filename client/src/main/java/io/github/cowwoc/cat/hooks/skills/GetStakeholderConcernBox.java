@@ -7,7 +7,8 @@
 package io.github.cowwoc.cat.hooks.skills;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 
 import java.io.IOException;
 import java.util.List;
@@ -96,7 +97,7 @@ public final class GetStakeholderConcernBox
     String description = args[2];
     String location = args[3];
 
-    try (JvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
       System.out.print(new GetStakeholderConcernBox(scope).
         getConcernBox(severity, stakeholder, description, location));

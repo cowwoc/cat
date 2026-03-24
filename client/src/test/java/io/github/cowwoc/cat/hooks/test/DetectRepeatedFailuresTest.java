@@ -38,7 +38,7 @@ public final class DetectRepeatedFailuresTest
   public void firstFailureAllowsQuietly() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
-    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
+    try (JvmScope scope = new TestClaudeTool(trackingDirectory, trackingDirectory))
     {
       String sessionId = "test-session-" + System.nanoTime();
 
@@ -64,7 +64,7 @@ public final class DetectRepeatedFailuresTest
   public void secondFailureReturnsWarning() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
-    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
+    try (JvmScope scope = new TestClaudeTool(trackingDirectory, trackingDirectory))
     {
       String sessionId = "test-session-" + System.nanoTime();
 
@@ -95,7 +95,7 @@ public final class DetectRepeatedFailuresTest
   public void thirdFailureContinuesToWarn() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
-    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
+    try (JvmScope scope = new TestClaudeTool(trackingDirectory, trackingDirectory))
     {
       String sessionId = "test-session-" + System.nanoTime();
 
@@ -123,7 +123,7 @@ public final class DetectRepeatedFailuresTest
   public void failureCountPersistsAcrossInstances() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
-    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
+    try (JvmScope scope = new TestClaudeTool(trackingDirectory, trackingDirectory))
     {
       String sessionId = "test-session-" + System.nanoTime();
 
@@ -154,7 +154,7 @@ public final class DetectRepeatedFailuresTest
   public void differentSessionsAreIndependent() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
-    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
+    try (JvmScope scope = new TestClaudeTool(trackingDirectory, trackingDirectory))
     {
       String sessionId1 = "test-session-a-" + System.nanoTime();
       String sessionId2 = "test-session-b-" + System.nanoTime();
@@ -184,7 +184,7 @@ public final class DetectRepeatedFailuresTest
   public void warningContainsDriftRecoveryGuidance() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
-    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
+    try (JvmScope scope = new TestClaudeTool(trackingDirectory, trackingDirectory))
     {
       String sessionId = "test-session-" + System.nanoTime();
 
@@ -210,7 +210,7 @@ public final class DetectRepeatedFailuresTest
   /**
    * Verifies that a blank sessionId throws IllegalArgumentException.
    * <p>
-   * Format validation for path traversal characters is centralized in HookInput.getSessionId().
+   * Format validation for path traversal characters is centralized in AbstractClaudeHook.getSessionId().
    * The handler's own contract requires a non-blank sessionId.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
@@ -218,7 +218,7 @@ public final class DetectRepeatedFailuresTest
   public void blankSessionIdThrows() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
-    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
+    try (JvmScope scope = new TestClaudeTool(trackingDirectory, trackingDirectory))
     {
       JsonNode toolResult = scope.getJsonMapper().createObjectNode();
       JsonNode hookData = scope.getJsonMapper().createObjectNode();
@@ -240,7 +240,7 @@ public final class DetectRepeatedFailuresTest
   public void corruptedTrackingFileResetsCounter() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
-    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
+    try (JvmScope scope = new TestClaudeTool(trackingDirectory, trackingDirectory))
     {
       String sessionId = "test-session-corrupt-" + System.nanoTime();
       Path trackingFile = trackingDirectory.resolve("cat-failure-tracking-" + sessionId + ".count");
@@ -268,7 +268,7 @@ public final class DetectRepeatedFailuresTest
   public void trackingFileHasOwnerOnlyPermissions() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
-    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
+    try (JvmScope scope = new TestClaudeTool(trackingDirectory, trackingDirectory))
     {
       String sessionId = "test-session-perms-" + System.nanoTime();
       Path trackingFile = trackingDirectory.resolve("cat-failure-tracking-" + sessionId + ".count");
@@ -296,7 +296,7 @@ public final class DetectRepeatedFailuresTest
   public void symlinkTrackingFilesAreSkippedDuringCleanup() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
-    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
+    try (JvmScope scope = new TestClaudeTool(trackingDirectory, trackingDirectory))
     {
       String sessionId = "test-session-symlink-" + System.nanoTime();
       Path realFile = Files.createTempFile(trackingDirectory, "cat-failure-real-", ".tmp");
@@ -325,7 +325,7 @@ public final class DetectRepeatedFailuresTest
   {
     Instant now = Instant.parse("2025-06-01T12:00:00Z");
     Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
-    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
+    try (JvmScope scope = new TestClaudeTool(trackingDirectory, trackingDirectory))
     {
       String sessionId = "test-session-ttl-" + System.nanoTime();
       Path trackingFile = trackingDirectory.resolve("cat-failure-tracking-" + sessionId + ".count");
@@ -360,7 +360,7 @@ public final class DetectRepeatedFailuresTest
     Instant now = Instant.parse("2025-06-01T12:00:00Z");
     Clock clock = Clock.fixed(now, ZoneOffset.UTC);
     Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
-    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
+    try (JvmScope scope = new TestClaudeTool(trackingDirectory, trackingDirectory))
     {
       // First call sets lastCleanup = now (cleanup runs because lastCleanup starts at EPOCH)
       String triggerSession = "test-session-trigger-" + System.nanoTime();
@@ -397,7 +397,7 @@ public final class DetectRepeatedFailuresTest
   public void unreadableTrackingFileResetsCounter() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
-    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
+    try (JvmScope scope = new TestClaudeTool(trackingDirectory, trackingDirectory))
     {
       String sessionId = "test-session-unreadable-" + System.nanoTime();
       Path trackingFile = trackingDirectory.resolve("cat-failure-tracking-" + sessionId + ".count");

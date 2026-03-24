@@ -11,7 +11,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.Strings;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 import tools.jackson.core.JacksonException;
@@ -120,7 +121,7 @@ public final class GetStatuslineOutput implements SkillOutput
    */
   public static void main(String[] args)
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
       GetStatuslineOutput generator = new GetStatuslineOutput(scope);
       String output = generator.getOutput(args);

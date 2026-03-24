@@ -7,7 +7,8 @@
 package io.github.cowwoc.cat.hooks.util;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
@@ -95,7 +96,7 @@ public final class ExistingWorkChecker
    */
   public static void main(String[] args) throws IOException
   {
-    try (MainJvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
       boolean success = run(args, scope, System.out, System.err);
       if (!success)

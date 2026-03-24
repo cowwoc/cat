@@ -10,8 +10,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
-import io.github.cowwoc.cat.hooks.HookInput;
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.util.GetSkill;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +42,7 @@ import java.util.stream.Collectors;
 public final class RequireSkillForCommand implements BashHandler
 {
   private final Logger log = LoggerFactory.getLogger(RequireSkillForCommand.class);
-  private final JvmScope scope;
+  private final ClaudeHook scope;
   private final List<GuardEntry> guards;
 
   /**
@@ -62,7 +61,7 @@ public final class RequireSkillForCommand implements BashHandler
    * @param scope the JVM scope providing access to shared resources including the plugin root and JSON mapper
    * @throws NullPointerException if {@code scope} is null
    */
-  public RequireSkillForCommand(JvmScope scope)
+  public RequireSkillForCommand(ClaudeHook scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -128,20 +127,18 @@ public final class RequireSkillForCommand implements BashHandler
    * This handler fails open: I/O errors reading the marker file or unexpected agent ID formats cause the
    * command to be allowed rather than blocked.
    *
-   * @param input the hook input containing the bash command and session information
+   * @param scope the hook scope providing the bash command, session ID, and agent context
    * @return a block result if a required skill is not loaded, or an allow result otherwise
-   * @throws NullPointerException if {@code input} is null
    */
   @Override
-  public Result check(HookInput input)
+  public Result check(ClaudeHook scope)
   {
-    requireThat(input, "input").isNotNull();
-    String command = input.getCommand();
+    String command = scope.getCommand();
     if (command.isBlank())
       return Result.allow();
 
-    String sessionId = input.getSessionId();
-    String catAgentId = input.getCatAgentId(sessionId);
+    String sessionId = scope.getSessionId();
+    String catAgentId = scope.getCatAgentId(sessionId);
     Path baseDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize();
     Set<String> loadedSkills;
     try

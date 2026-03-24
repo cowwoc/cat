@@ -8,7 +8,6 @@ package io.github.cowwoc.cat.hooks.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.PostToolHandler;
 import io.github.cowwoc.cat.hooks.tool.post.DetectAssistantGivingUp;
 import org.testng.annotations.Test;
@@ -32,7 +31,7 @@ public final class DetectAssistantGivingUpTest
   public void noConversationLogAllowsQuietly() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       DetectAssistantGivingUp handler = new DetectAssistantGivingUp(scope);
@@ -65,7 +64,7 @@ public final class DetectAssistantGivingUpTest
   public void noGivingUpPatternAllowsQuietly() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-" + UUID.randomUUID();
@@ -105,7 +104,7 @@ public final class DetectAssistantGivingUpTest
   public void givingUpPatternDetectedReturnsContext() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-" + UUID.randomUUID();
@@ -146,7 +145,7 @@ public final class DetectAssistantGivingUpTest
   public void multiplePatternsDetected() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String baseSessionId = "test-" + UUID.randomUUID();
@@ -202,7 +201,7 @@ public final class DetectAssistantGivingUpTest
   public void keywordsSplitAcrossMessagesShouldNotTrigger() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-" + UUID.randomUUID();
@@ -239,7 +238,7 @@ public final class DetectAssistantGivingUpTest
   public void keywordsInToolUseInputShouldNotTrigger() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-" + UUID.randomUUID();
@@ -267,13 +266,13 @@ public final class DetectAssistantGivingUpTest
   /**
    * Creates a conversation log file for testing, using the scope's session base path.
    *
-   * @param scope     the JVM scope providing the session base path
+   * @param scope the hook scope providing the session base path
    * @param sessionId the session ID
-   * @param content   the JSONL content
+   * @param content the JSONL content
    * @return the path to the created log file
    * @throws IOException if file creation fails
    */
-  private Path createConversationLog(JvmScope scope, String sessionId, String content) throws IOException
+  private Path createConversationLog(TestClaudeHook scope, String sessionId, String content) throws IOException
   {
     Path sessionBasePath = scope.getClaudeSessionsPath();
     Files.createDirectories(sessionBasePath);

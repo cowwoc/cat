@@ -6,9 +6,11 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
-import io.github.cowwoc.cat.hooks.HookOutput;
+import static io.github.cowwoc.cat.hooks.Strings.block;
+
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,8 +25,8 @@ import java.util.Objects;
  * <p>
  * Asserts that:
  * <ol>
- *   <li>{@code plugin/skills/add/first-use.md} does NOT contain a {@code cat:plan-builder-agent} invocation</li>
- *   <li>{@code plugin/skills/add/first-use.md} contains the lightweight plan generation block
+ *   <li>{@code plugin/skills/add-agent/first-use.md} does NOT contain a {@code cat:plan-builder-agent} invocation</li>
+ *   <li>{@code plugin/skills/add-agent/first-use.md} contains the lightweight plan generation block
  *       ({@code planTempFile=$(mktemp})</li>
  *   <li>{@code plugin/skills/work-implement-agent/first-use.md} contains the {@code hasSteps} check</li>
  *   <li>{@code plugin/skills/work-implement-agent/first-use.md} invokes {@code cat:plan-builder-agent}</li>
@@ -50,7 +52,7 @@ public final class VerifyDeferPlanGeneration
    */
   public static void main(String[] args)
   {
-    try (MainJvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
       try
       {
@@ -65,7 +67,7 @@ public final class VerifyDeferPlanGeneration
       {
         Logger log = LoggerFactory.getLogger(VerifyDeferPlanGeneration.class);
         log.error("Unexpected error", e);
-        System.out.println(new HookOutput(scope).block(
+        System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }
@@ -89,7 +91,7 @@ public final class VerifyDeferPlanGeneration
     else
       projectRoot = scope.getProjectPath();
 
-    Path addSkill = projectRoot.resolve("plugin/skills/add/first-use.md");
+    Path addSkill = projectRoot.resolve("plugin/skills/add-agent/first-use.md");
     Path workImplementSkill = projectRoot.resolve("plugin/skills/work-implement-agent/first-use.md");
 
     out.println("=== E2E Verification: defer-plan-generation-to-work-phase ===");

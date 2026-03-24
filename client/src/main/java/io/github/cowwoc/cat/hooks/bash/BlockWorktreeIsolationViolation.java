@@ -9,8 +9,7 @@ package io.github.cowwoc.cat.hooks.bash;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
-import io.github.cowwoc.cat.hooks.HookInput;
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.ShellParser;
 import io.github.cowwoc.cat.hooks.WorktreeContext;
 import tools.jackson.databind.json.JsonMapper;
@@ -68,7 +67,6 @@ public final class BlockWorktreeIsolationViolation implements BashHandler
   private static final Pattern MV_PATTERN =
     Pattern.compile("(?:^|[;&|\\s])mv(?:\\s|$)");
 
-  private final JvmScope scope;
   private final Path projectPath;
   private final JsonMapper mapper;
 
@@ -78,19 +76,18 @@ public final class BlockWorktreeIsolationViolation implements BashHandler
    * @param scope the JVM scope providing access to shared resources
    * @throws NullPointerException if {@code scope} is null
    */
-  public BlockWorktreeIsolationViolation(JvmScope scope)
+  public BlockWorktreeIsolationViolation(ClaudeHook scope)
   {
-    this.scope = scope;
     this.projectPath = scope.getProjectPath();
     this.mapper = scope.getJsonMapper();
   }
 
   @Override
-  public Result check(HookInput input)
+  public Result check(ClaudeHook scope)
   {
-    String command = input.getCommand();
-    String workingDirectory = input.getString("cwd");
-    String sessionId = input.getSessionId();
+    String command = scope.getCommand();
+    String workingDirectory = scope.getString("cwd");
+    String sessionId = scope.getSessionId();
     requireThat(command, "command").isNotNull();
     requireThat(workingDirectory, "workingDirectory").isNotNull();
     requireThat(sessionId, "sessionId").isNotBlank();

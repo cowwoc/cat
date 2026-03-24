@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+
 import io.github.cowwoc.cat.hooks.util.GetFile;
 import io.github.cowwoc.cat.hooks.util.GetSkill;
 import org.testng.annotations.Test;
@@ -46,7 +46,7 @@ public class GetFileTest
   public void getOutputReturnsFullContentOnFirstLoad() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-file-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path targetFile = tempDir.resolve("test-file.md");
       Files.writeString(targetFile, "Full file content here\n");
@@ -72,7 +72,7 @@ public class GetFileTest
   public void getOutputReturnsReferenceOnSubsequentLoad() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-file-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path targetFile = tempDir.resolve("test-file.md");
       Files.writeString(targetFile, "Full file content here\n");
@@ -103,7 +103,7 @@ public class GetFileTest
   public void getOutputTracksFilesIndependently() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-file-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path fileA = tempDir.resolve("file-a.md");
       Path fileB = tempDir.resolve("file-b.md");
@@ -144,7 +144,7 @@ public class GetFileTest
   public void getOutputThrowsForNonExistentFile() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-file-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String agentId = UUID.randomUUID().toString();
       GetFile getFile = new GetFile(scope);
@@ -166,7 +166,7 @@ public class GetFileTest
   public void getOutputRejectsEmptyArgs() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-file-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetFile getFile = new GetFile(scope);
       getFile.getOutput(new String[0]);
@@ -187,7 +187,7 @@ public class GetFileTest
   public void getOutputRejectsOnlyOneArg() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-file-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetFile getFile = new GetFile(scope);
       getFile.getOutput(new String[]{"only-one-arg"});
@@ -208,7 +208,7 @@ public class GetFileTest
   public void getOutputRejectsBlankCatAgentId() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-file-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetFile getFile = new GetFile(scope);
       getFile.getOutput(new String[]{"   ", "/some/file.md"});
@@ -229,7 +229,7 @@ public class GetFileTest
   public void getOutputRejectsBlankPath() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-file-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String agentId = UUID.randomUUID().toString();
       GetFile getFile = new GetFile(scope);
@@ -252,7 +252,7 @@ public class GetFileTest
   public void getOutputReturnsRawContentWithoutPreprocessing() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-file-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path targetFile = tempDir.resolve("skill-with-directive.md");
       Files.writeString(targetFile, """
@@ -288,7 +288,7 @@ More content.
   public void getOutputPlacesMainAgentMarkerInCorrectDirectory() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-file-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path targetFile = tempDir.resolve("target.md");
       Files.writeString(targetFile, "content");
@@ -324,7 +324,7 @@ More content.
   public void getOutputPlacesSubagentMarkerInCorrectDirectory() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-file-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path targetFile = tempDir.resolve("target.md");
       Files.writeString(targetFile, "content");
@@ -361,7 +361,7 @@ More content.
   public void getOutputPlacesMainAgentMarkerUnderCatWorkPath() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-file-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path targetFile = tempDir.resolve("target.md");
       Files.writeString(targetFile, "content");
@@ -395,7 +395,7 @@ More content.
   public void getOutputPlacesSubagentMarkerUnderCatWorkPath() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-file-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path targetFile = tempDir.resolve("target.md");
       Files.writeString(targetFile, "content");
@@ -432,7 +432,7 @@ More content.
   public void getOutputRejectsInvalidCatAgentIdWithPathTraversal() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-file-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path targetFile = tempDir.resolve("target.md");
       Files.writeString(targetFile, "content");
@@ -456,7 +456,7 @@ More content.
   public void getOutputHandlesSpecialCharactersInFilePath() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-file-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Create a file with a name that requires URL encoding
       Path targetFile = tempDir.resolve("file with spaces & special=chars.md");
@@ -491,7 +491,7 @@ More content.
   public void getOutputTracksMarkersPerAgent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-file-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path targetFile = tempDir.resolve("shared-file.md");
       Files.writeString(targetFile, "Shared file content\n");

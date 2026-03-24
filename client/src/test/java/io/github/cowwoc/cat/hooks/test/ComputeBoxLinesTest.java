@@ -6,11 +6,9 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.bash.ComputeBoxLines;
 import io.github.cowwoc.cat.hooks.BashHandler;
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.bash.ComputeBoxLines;
 import org.testng.annotations.Test;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -35,11 +33,10 @@ public class ComputeBoxLinesTest
   public void commandWithoutMarkerAllowed() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = TestUtils.bashHook("echo hello", "", "session1"))
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
-      JsonMapper mapper = scope.getJsonMapper();
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, "echo hello", "", "session1"));
+      BashHandler.Result result = handler.check(scope);
       requireThat(result.blocked(), "blocked").isFalse();
     }
     finally
@@ -57,12 +54,11 @@ public class ComputeBoxLinesTest
   public void singleLineBox() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    String command = "#BOX_COMPUTE\nHello World";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "", "session1"))
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
-      JsonMapper mapper = scope.getJsonMapper();
-      String command = "#BOX_COMPUTE\nHello World";
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();
@@ -95,12 +91,11 @@ public class ComputeBoxLinesTest
   public void multiLineBox() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    String command = "#BOX_COMPUTE\nLine 1\nLine 2\nLine 3";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "", "session1"))
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
-      JsonMapper mapper = scope.getJsonMapper();
-      String command = "#BOX_COMPUTE\nLine 1\nLine 2\nLine 3";
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();
@@ -131,12 +126,11 @@ public class ComputeBoxLinesTest
   public void emojiContentBox() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    String command = "#BOX_COMPUTE\n📊 Overall: 91%\n🏆 112/122 tasks";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "", "session1"))
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
-      JsonMapper mapper = scope.getJsonMapper();
-      String command = "#BOX_COMPUTE\n📊 Overall: 91%\n🏆 112/122 tasks";
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();
@@ -171,12 +165,11 @@ public class ComputeBoxLinesTest
   public void emptyContentProducesError() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    String command = "#BOX_COMPUTE";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "", "session1"))
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
-      JsonMapper mapper = scope.getJsonMapper();
-      String command = "#BOX_COMPUTE";
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();
@@ -197,12 +190,11 @@ public class ComputeBoxLinesTest
   public void varyingWidthsProduceAlignedBox() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    String command = "#BOX_COMPUTE\nShort\nMedium length\nVery long content line here";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "", "session1"))
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
-      JsonMapper mapper = scope.getJsonMapper();
-      String command = "#BOX_COMPUTE\nShort\nMedium length\nVery long content line here";
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();
@@ -242,12 +234,11 @@ public class ComputeBoxLinesTest
   public void producesAdditionalContext() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    String command = "#BOX_COMPUTE\nTest content";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "", "session1"))
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
-      JsonMapper mapper = scope.getJsonMapper();
-      String command = "#BOX_COMPUTE\nTest content";
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
       String additionalContext = result.additionalContext();
@@ -269,12 +260,11 @@ public class ComputeBoxLinesTest
   public void whitespaceOnlyMarkerNotRecognized() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    String command = "   #BOX_COMPUTE\nContent";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "", "session1"))
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
-      JsonMapper mapper = scope.getJsonMapper();
-      String command = "   #BOX_COMPUTE\nContent";
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -293,12 +283,11 @@ public class ComputeBoxLinesTest
   public void markerMustBeAtStartOfFirstLine() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    String command = "echo 'test'\n#BOX_COMPUTE\nContent";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "", "session1"))
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
-      JsonMapper mapper = scope.getJsonMapper();
-      String command = "echo 'test'\n#BOX_COMPUTE\nContent";
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -317,12 +306,11 @@ public class ComputeBoxLinesTest
   public void singleCharacterContent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    String command = "#BOX_COMPUTE\nX";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "", "session1"))
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
-      JsonMapper mapper = scope.getJsonMapper();
-      String command = "#BOX_COMPUTE\nX";
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();
@@ -349,13 +337,12 @@ public class ComputeBoxLinesTest
   public void veryLongContentNotTruncated() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    String longContent = "A".repeat(100);
+    String command = "#BOX_COMPUTE\n" + longContent;
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "", "session1"))
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
-      JsonMapper mapper = scope.getJsonMapper();
-      String longContent = "A".repeat(100);
-      String command = "#BOX_COMPUTE\n" + longContent;
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();
@@ -393,12 +380,11 @@ public class ComputeBoxLinesTest
   public void contentWithBoxDrawingCharacters() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    String command = "#BOX_COMPUTE\n─── Header\n│ Column │";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "", "session1"))
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
-      JsonMapper mapper = scope.getJsonMapper();
-      String command = "#BOX_COMPUTE\n─── Header\n│ Column │";
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();
@@ -419,12 +405,11 @@ public class ComputeBoxLinesTest
   public void mixedAsciiAndEmojiContent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    String command = "#BOX_COMPUTE\nStatus: ✅ Complete\nTasks: 🏆 10/10";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "", "session1"))
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
-      JsonMapper mapper = scope.getJsonMapper();
-      String command = "#BOX_COMPUTE\nStatus: ✅ Complete\nTasks: 🏆 10/10";
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();
@@ -445,12 +430,11 @@ public class ComputeBoxLinesTest
   public void blankLineInContent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    String command = "#BOX_COMPUTE\nLine 1\n\nLine 3";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "", "session1"))
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
-      JsonMapper mapper = scope.getJsonMapper();
-      String command = "#BOX_COMPUTE\nLine 1\n\nLine 3";
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();

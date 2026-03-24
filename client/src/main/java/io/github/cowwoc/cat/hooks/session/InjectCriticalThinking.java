@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.session;
 
-import io.github.cowwoc.cat.hooks.HookInput;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 
 /**
  * Injects critical thinking requirements into the session context once at session start
@@ -47,12 +47,10 @@ However, we should also consider scenario Y where this might need adjustment."
   /**
    * Returns the critical thinking reminder to inject into session context.
    *
-   * @param input the hook input
    * @return a result containing the critical thinking reminder as additional context
-   * @throws NullPointerException if {@code input} is null
    */
   @Override
-  public Result handle(HookInput input)
+  public Result handle(ClaudeHook scope)
   {
     return Result.context(REMINDER);
   }

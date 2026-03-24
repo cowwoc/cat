@@ -30,7 +30,7 @@ public final class BlockGitconfigFileWriteTest
   public void writeTildeGitconfigIsBlocked() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       BlockGitconfigFileWrite handler = new BlockGitconfigFileWrite();
       String home = System.getProperty("user.home");
@@ -55,7 +55,7 @@ public final class BlockGitconfigFileWriteTest
   public void writeXdgGitConfigIsBlocked() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       BlockGitconfigFileWrite handler = new BlockGitconfigFileWrite();
       String home = System.getProperty("user.home");
@@ -80,7 +80,7 @@ public final class BlockGitconfigFileWriteTest
   public void writeEtcGitconfigIsBlocked() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       BlockGitconfigFileWrite handler = new BlockGitconfigFileWrite();
       ObjectNode input = scope.getJsonMapper().createObjectNode();
@@ -104,7 +104,7 @@ public final class BlockGitconfigFileWriteTest
   public void writeUnrelatedFileIsAllowed() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       BlockGitconfigFileWrite handler = new BlockGitconfigFileWrite();
       ObjectNode input = scope.getJsonMapper().createObjectNode();
@@ -127,7 +127,7 @@ public final class BlockGitconfigFileWriteTest
   public void writeNonCanonicalGitconfigFileIsAllowed() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       BlockGitconfigFileWrite handler = new BlockGitconfigFileWrite();
       ObjectNode input = scope.getJsonMapper().createObjectNode();
@@ -150,7 +150,7 @@ public final class BlockGitconfigFileWriteTest
   public void missingFilePathIsAllowed() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       BlockGitconfigFileWrite handler = new BlockGitconfigFileWrite();
       ObjectNode input = scope.getJsonMapper().createObjectNode();
@@ -172,7 +172,7 @@ public final class BlockGitconfigFileWriteTest
   public void emptyFilePathIsAllowed() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       BlockGitconfigFileWrite handler = new BlockGitconfigFileWrite();
       ObjectNode input = scope.getJsonMapper().createObjectNode();
@@ -195,7 +195,7 @@ public final class BlockGitconfigFileWriteTest
   public void blockMessageMentionsExplicitUserRequest() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       BlockGitconfigFileWrite handler = new BlockGitconfigFileWrite();
       String home = System.getProperty("user.home");

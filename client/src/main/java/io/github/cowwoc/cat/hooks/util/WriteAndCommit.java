@@ -10,9 +10,11 @@ import static io.github.cowwoc.cat.hooks.util.GitCommands.runGit;
 import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommandSingleLine;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.HookOutput;
+import static io.github.cowwoc.cat.hooks.Strings.block;
+
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.databind.node.ObjectNode;
@@ -190,7 +192,7 @@ public final class WriteAndCommit
    */
   public static void main(String[] args)
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
       try
       {
@@ -200,7 +202,7 @@ public final class WriteAndCommit
       {
         Logger log = LoggerFactory.getLogger(WriteAndCommit.class);
         log.error("Unexpected error", e);
-        System.out.println(new HookOutput(scope).block(
+        System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }
@@ -215,18 +217,16 @@ public final class WriteAndCommit
    * @param scope the JVM scope
    * @param args  command-line arguments
    * @param out   the output stream to write output to
-   * @throws NullPointerException if {@code scope}, {@code args}, or {@code out} are null
+   * @throws NullPointerException if {@code args} or {@code out} are null
    */
   public static void run(JvmScope scope, String[] args, PrintStream out)
   {
-    requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();
     requireThat(out, "out").isNotNull();
 
-    HookOutput hookOutput = new HookOutput(scope);
     if (args.length < 3 || args.length > 4)
     {
-      out.println(hookOutput.block(
+      out.println(block(scope,
         "Usage: write-and-commit <file-path> <content-file> <commit-msg-file> [--executable]"));
       return;
     }
@@ -244,7 +244,7 @@ public final class WriteAndCommit
     }
     catch (IOException e)
     {
-      out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      out.println(block(scope, Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }
 }

@@ -80,7 +80,7 @@ public class HookRegistrarTest
   public void registerRejectsMissingShebang() throws IOException
   {
     Path tempDir = Files.createTempDirectory("hook-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       Config config = new Config("test-hook", HookTrigger.PRE_TOOL_USE, "", false, "echo test");
       Result result = HookRegistrar.register(config, tempDir.toString(), scope.getJsonMapper());
@@ -103,7 +103,7 @@ public class HookRegistrarTest
   public void registerDetectsCurlPipeSh() throws IOException
   {
     Path tempDir = Files.createTempDirectory("hook-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       Config config = new Config(
         "test-hook",
@@ -132,7 +132,7 @@ public class HookRegistrarTest
   public void registerDetectsRmRfRoot() throws IOException
   {
     Path tempDir = Files.createTempDirectory("hook-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       Config config = new Config(
         "test-hook",
@@ -161,7 +161,7 @@ public class HookRegistrarTest
   public void registerDetectsEvalDollar() throws IOException
   {
     Path tempDir = Files.createTempDirectory("hook-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       Config config = new Config(
         "test-hook",
@@ -190,7 +190,7 @@ public class HookRegistrarTest
   public void registerCreatesValidHook() throws IOException
   {
     Path tempDir = Files.createTempDirectory("hook-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       Config config = new Config(
         "test-hook",
@@ -238,7 +238,7 @@ public class HookRegistrarTest
   public void registerRejectsDuplicateHook() throws IOException
   {
     Path tempDir = Files.createTempDirectory("hook-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       Config config = new Config(
         "test-hook",
@@ -269,7 +269,7 @@ public class HookRegistrarTest
   public void resultToJsonProducesValidJson() throws IOException
   {
     Path tempDir = Files.createTempDirectory("hook-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       Result result = new Result(
         OperationStatus.SUCCESS,
@@ -386,7 +386,7 @@ public class HookRegistrarTest
   public void runWritesBlockResponseOnNonSuccess() throws IOException
   {
     Path tempDir = Files.createTempDirectory("hook-registrar-run-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {
@@ -433,7 +433,7 @@ public class HookRegistrarTest
   public void runWritesSuccessJsonOnSuccess() throws IOException
   {
     Path tempDir = Files.createTempDirectory("hook-registrar-run-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       try
       {

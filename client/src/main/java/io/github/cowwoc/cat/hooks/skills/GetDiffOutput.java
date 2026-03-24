@@ -27,9 +27,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import io.github.cowwoc.cat.hooks.Config;
-import io.github.cowwoc.cat.hooks.HookOutput;
+import static io.github.cowwoc.cat.hooks.Strings.block;
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 import tools.jackson.databind.JsonNode;
@@ -2253,7 +2254,7 @@ public final class GetDiffOutput implements SkillOutput
    */
   public static void main(String[] args)
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
       run(scope, args, System.out);
     }
@@ -2268,15 +2269,13 @@ public final class GetDiffOutput implements SkillOutput
    * @param scope the JVM scope
    * @param args  command-line arguments
    * @param out   the output stream to write output to
-   * @throws NullPointerException if {@code scope}, {@code args}, or {@code out} are null
+   * @throws NullPointerException if {@code args} or {@code out} are null
    */
   public static void run(JvmScope scope, String[] args, PrintStream out)
   {
-    requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();
     requireThat(out, "out").isNotNull();
 
-    HookOutput hookOutput = new HookOutput(scope);
     GetDiffOutput generator = new GetDiffOutput(scope);
     try
     {
@@ -2286,11 +2285,11 @@ public final class GetDiffOutput implements SkillOutput
     }
     catch (IllegalArgumentException e)
     {
-      out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      out.println(block(scope, Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
     catch (IOException e)
     {
-      out.println(hookOutput.block(
+      out.println(block(scope,
         "Error generating diff: " + Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }

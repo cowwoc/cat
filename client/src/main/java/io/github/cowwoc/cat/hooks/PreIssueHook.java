@@ -44,7 +44,7 @@ public final class PreIssueHook implements HookHandler
    * @param scope the JVM scope
    * @throws NullPointerException if {@code scope} is null
    */
-  public PreIssueHook(JvmScope scope)
+  public PreIssueHook(ClaudeHook scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.handlers = List.of(
@@ -77,29 +77,24 @@ public final class PreIssueHook implements HookHandler
   }
 
   /**
-   * Processes hook input and returns the result with any warnings.
+   * Processes hook data and returns the result with any warnings.
    *
-   * @param input the hook input to process
-   * @param output the hook output builder for creating responses
+   * @param scope the hook scope providing input data and output building
    * @return the hook result containing JSON output and warnings
-   * @throws NullPointerException if {@code input} or {@code output} are null
    */
   @Override
-  public HookResult run(HookInput input, HookOutput output)
+  public HookResult run(ClaudeHook scope)
   {
-    requireThat(input, "input").isNotNull();
-    requireThat(output, "output").isNotNull();
-
-    String toolName = input.getToolName();
+    String toolName = scope.getToolName();
     boolean isTask = equalsIgnoreCase(toolName, "Task");
     boolean isSkill = equalsIgnoreCase(toolName, "Skill");
     if (!isTask && !isSkill)
-      return HookResult.withoutWarnings(output.empty());
+      return HookResult.withoutWarnings(scope.empty());
 
-    JsonNode toolInput = input.getToolInput();
-    String sessionId = input.getSessionId();
+    JsonNode toolInput = scope.getToolInput();
+    String sessionId = scope.getSessionId();
     requireThat(sessionId, "sessionId").isNotBlank();
-    String cwd = input.getString("cwd");
+    String cwd = scope.getString("cwd");
     List<String> warnings = new ArrayList<>();
 
     for (TaskHandler handler : this.handlers)
@@ -111,9 +106,9 @@ public final class PreIssueHook implements HookHandler
         {
           String jsonOutput;
           if (result.additionalContext().isEmpty())
-            jsonOutput = output.block(result.reason());
+            jsonOutput = scope.block(result.reason());
           else
-            jsonOutput = output.block(result.reason(), result.additionalContext());
+            jsonOutput = scope.block(result.reason(), result.additionalContext());
           return HookResult.withoutWarnings(jsonOutput);
         }
         if (!result.reason().isEmpty())
@@ -121,12 +116,12 @@ public final class PreIssueHook implements HookHandler
       }
       catch (RuntimeException e)
       {
-        String jsonOutput = output.block("Hook handler failed: " + handler.getClass().getSimpleName() +
+        String jsonOutput = scope.block("Hook handler failed: " + handler.getClass().getSimpleName() +
           ": " + e.getMessage());
         return HookResult.withoutWarnings(jsonOutput);
       }
     }
 
-    return new HookResult(output.empty(), warnings);
+    return new HookResult(scope.empty(), warnings);
   }
 }

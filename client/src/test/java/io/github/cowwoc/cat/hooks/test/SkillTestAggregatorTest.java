@@ -30,7 +30,7 @@ public final class SkillTestAggregatorTest
   public void throwsOnNoArguments() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-benchmark-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       SkillTestAggregator handler = new SkillTestAggregator(scope);
       handler.getOutput(new String[]{});
@@ -49,7 +49,7 @@ public final class SkillTestAggregatorTest
   public void throwsOnTooManyArguments() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-benchmark-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       SkillTestAggregator handler = new SkillTestAggregator(scope);
       handler.getOutput(new String[]{"arg1", "arg2"});
@@ -68,7 +68,7 @@ public final class SkillTestAggregatorTest
   public void throwsOnEmptyResultList() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-benchmark-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       SkillTestAggregator handler = new SkillTestAggregator(scope);
       handler.getOutput(new String[]{"[]"});
@@ -88,7 +88,7 @@ public final class SkillTestAggregatorTest
   public void singleConfigSingleRun() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-benchmark-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       SkillTestAggregator handler = new SkillTestAggregator(scope);
       String input = """
@@ -121,7 +121,7 @@ public final class SkillTestAggregatorTest
   public void multipleRunsSameConfig() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-benchmark-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       SkillTestAggregator handler = new SkillTestAggregator(scope);
       // Two runs under "baseline": durations 1000 and 3000 ms → mean=2000, stddev=1000
@@ -155,7 +155,7 @@ public final class SkillTestAggregatorTest
   public void multipleConfigsProducesDelta() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-benchmark-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       SkillTestAggregator handler = new SkillTestAggregator(scope);
       // baseline: 2/3 pass rate, 1200ms, 500 tokens
@@ -189,7 +189,7 @@ public final class SkillTestAggregatorTest
   public void stddevIsZeroForIdenticalValues() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-benchmark-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       SkillTestAggregator handler = new SkillTestAggregator(scope);
       String input = """
@@ -218,7 +218,7 @@ public final class SkillTestAggregatorTest
   public void allFailedAssertionsYieldsZeroPassRate() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-benchmark-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       SkillTestAggregator handler = new SkillTestAggregator(scope);
       String input = """
@@ -245,7 +245,7 @@ public final class SkillTestAggregatorTest
   public void allPassedAssertionsYieldsFullPassRate() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-benchmark-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       SkillTestAggregator handler = new SkillTestAggregator(scope);
       String input = """
@@ -272,7 +272,7 @@ public final class SkillTestAggregatorTest
   public void deltaPassRateIsCorrect() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-benchmark-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       SkillTestAggregator handler = new SkillTestAggregator(scope);
       // baseline: 1/2 = 0.5, with-skill: 2/2 = 1.0 → delta = 0.5
@@ -304,7 +304,7 @@ public final class SkillTestAggregatorTest
   public void emptyAssertionsArrayYieldsZeroPassRate() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-benchmark-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       SkillTestAggregator handler = new SkillTestAggregator(scope);
       String input = """
@@ -332,7 +332,7 @@ public final class SkillTestAggregatorTest
   public void throwsOnNegativeDurationMs() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-benchmark-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       SkillTestAggregator handler = new SkillTestAggregator(scope);
       String input = """
@@ -356,7 +356,7 @@ public final class SkillTestAggregatorTest
   public void throwsOnNegativeTotalTokens() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-benchmark-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       SkillTestAggregator handler = new SkillTestAggregator(scope);
       String input = """
@@ -380,7 +380,7 @@ public final class SkillTestAggregatorTest
   public void throwsOnMissingDurationMs() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-benchmark-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       SkillTestAggregator handler = new SkillTestAggregator(scope);
       String input = """
@@ -404,7 +404,7 @@ public final class SkillTestAggregatorTest
   public void throwsOnMissingTotalTokens() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-benchmark-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       SkillTestAggregator handler = new SkillTestAggregator(scope);
       String input = """
@@ -429,7 +429,7 @@ public final class SkillTestAggregatorTest
   public void deltaWithZeroBaselinePassRate() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-benchmark-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       SkillTestAggregator handler = new SkillTestAggregator(scope);
       // baseline: 0/2 = 0.0, with-skill: 2/2 = 1.0 → delta = 1.0

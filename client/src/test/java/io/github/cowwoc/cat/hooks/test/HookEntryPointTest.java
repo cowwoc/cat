@@ -7,7 +7,6 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.TaskHandler;
 import io.github.cowwoc.cat.hooks.PreAskHook;
 import io.github.cowwoc.cat.hooks.PostBashHook;
@@ -19,9 +18,8 @@ import io.github.cowwoc.cat.hooks.UserPromptSubmitHook;
 import io.github.cowwoc.cat.hooks.PreIssueHook;
 
 import io.github.cowwoc.cat.hooks.PreWriteHook;
-import io.github.cowwoc.cat.hooks.HookInput;
-import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.HookResult;
+import io.github.cowwoc.cat.hooks.Strings;
 import io.github.cowwoc.cat.hooks.edit.EnforceWorkflowCompletion;
 import io.github.cowwoc.cat.hooks.task.EnforceWorktreeSafetyBeforeMerge;
 import io.github.cowwoc.cat.hooks.write.EnforcePluginFileIsolation;
@@ -32,7 +30,6 @@ import tools.jackson.databind.json.JsonMapper;
 import org.testng.annotations.Test;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -53,33 +50,6 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  */
 public class HookEntryPointTest
 {
-  /**
-   * Creates a HookInput from a JSON string.
-   *
-   * @param mapper the JSON mapper
-   * @param json the JSON input string
-   * @return the parsed HookInput
-   */
-  private HookInput createInput(JsonMapper mapper, String json)
-  {
-    // Inject a default session_id if the JSON is valid but doesn't contain one
-    if (!json.isBlank() && json.contains("{") && !json.contains("session_id"))
-    {
-      json = json.stripTrailing();
-      if (json.endsWith("}"))
-      {
-        String inner = json.substring(1, json.length() - 1).strip();
-        if (inner.isEmpty())
-          json = "{\"session_id\": \"test-session\"}";
-        else
-          json = json.substring(0, json.length() - 1) + ", \"session_id\": \"test-session\"}";
-      }
-    }
-    return HookInput.readFrom(mapper, new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
-  }
-
-
-
   // --- UserPromptSubmitHook tests ---
 
   /**
@@ -88,15 +58,17 @@ public class HookEntryPointTest
   @Test
   public void userPromptSubmitHookReturnsEmptyJsonForEmptyInput() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook("{\"session_id\": \"test-session\"}", tempDir, tempDir,
+      tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{}");
-      HookOutput output = new HookOutput(scope);
-
-      HookResult hookResult = new UserPromptSubmitHook(scope).run(input, output);
+      HookResult hookResult = new UserPromptSubmitHook(scope).run(scope);
 
       requireThat(hookResult.output().trim(), "output").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -106,15 +78,16 @@ public class HookEntryPointTest
   @Test
   public void userPromptSubmitHookReturnsEmptyJsonWhenNoMessage() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook("{\"session_id\": \"test\"}", tempDir, tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{\"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(scope);
-
-      HookResult hookResult = new UserPromptSubmitHook(scope).run(input, output);
+      HookResult hookResult = new UserPromptSubmitHook(scope).run(scope);
 
       requireThat(hookResult.output().trim(), "output").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -126,16 +99,17 @@ public class HookEntryPointTest
   @Test
   public void getBashPretoolReturnsEmptyJsonForNonBashTool() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"Read\", \"session_id\": \"test-session\"}", tempDir, tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
-      HookOutput output = new HookOutput(scope);
+      HookResult hookResult = new PreToolUseHook(scope).run(scope);
 
-      HookResult hookResult = new PreToolUseHook(scope).run(input, output);
-
-      String result = hookResult.output().trim();
-      requireThat(result, "result").isEqualTo("{}");
+      requireThat(hookResult.output().trim(), "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -145,16 +119,18 @@ public class HookEntryPointTest
   @Test
   public void getBashPretoolReturnsEmptyJsonWhenNoCommand() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"Bash\", \"tool_input\": {}, \"session_id\": \"test-session\"}", tempDir, tempDir,
+      tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{\"tool_name\": \"Bash\", \"tool_input\": {}}");
-      HookOutput output = new HookOutput(scope);
+      HookResult hookResult = new PreToolUseHook(scope).run(scope);
 
-      HookResult hookResult = new PreToolUseHook(scope).run(input, output);
-
-      String result = hookResult.output().trim();
-      requireThat(result, "result").isEqualTo("{}");
+      requireThat(hookResult.output().trim(), "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -164,18 +140,18 @@ public class HookEntryPointTest
   @Test
   public void getBashPretoolReturnsEmptyJsonWithCommand() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"Bash\", \"tool_input\": {\"command\": \"ls -la\"}, " +
+        "\"session_id\": \"test-session\", \"cwd\": \"/workspace\"}", tempDir, tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"tool_name\": \"Bash\", \"tool_input\": {\"command\": \"ls -la\"}, " +
-          "\"session_id\": \"test-session\", \"cwd\": \"/workspace\"}");
-      HookOutput output = new HookOutput(scope);
+      HookResult hookResult = new PreToolUseHook(scope).run(scope);
 
-      HookResult hookResult = new PreToolUseHook(scope).run(input, output);
-
-      String result = hookResult.output().trim();
-      requireThat(result, "result").isEqualTo("{}");
+      requireThat(hookResult.output().trim(), "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -187,16 +163,17 @@ public class HookEntryPointTest
   @Test
   public void getBashPosttoolReturnsEmptyJsonForNonBashTool() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"Read\", \"session_id\": \"test-session\"}", tempDir, tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
-      HookOutput output = new HookOutput(scope);
+      HookResult hookResult = new PostBashHook().run(scope);
 
-      HookResult hookResult = new PostBashHook().run(input, output);
-
-      String result = hookResult.output().trim();
-      requireThat(result, "result").isEqualTo("{}");
+      requireThat(hookResult.output().trim(), "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -208,17 +185,18 @@ public class HookEntryPointTest
   @Test
   public void getReadPretoolReturnsEmptyJsonForReadTool() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"Read\", \"tool_input\": {\"file_path\": \"/tmp/test\"}, " +
+        "\"session_id\": \"test-session\"}", tempDir, tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"tool_name\": \"Read\", \"tool_input\": {\"file_path\": \"/tmp/test\"}, \"session_id\": \"test-session\"}");
-      HookOutput output = new HookOutput(scope);
+      HookResult hookResult = new PreReadHook(scope).run(scope);
 
-      HookResult hookResult = new PreReadHook(scope).run(input, output);
-
-      String result = hookResult.output().trim();
-      requireThat(result, "result").isEqualTo("{}");
+      requireThat(hookResult.output().trim(), "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -228,16 +206,17 @@ public class HookEntryPointTest
   @Test
   public void getReadPretoolReturnsEmptyJsonForUnsupportedTool() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"Bash\", \"session_id\": \"test-session\"}", tempDir, tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{\"tool_name\": \"Bash\"}");
-      HookOutput output = new HookOutput(scope);
+      HookResult hookResult = new PreReadHook(scope).run(scope);
 
-      HookResult hookResult = new PreReadHook(scope).run(input, output);
-
-      String result = hookResult.output().trim();
-      requireThat(result, "result").isEqualTo("{}");
+      requireThat(hookResult.output().trim(), "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -249,17 +228,19 @@ public class HookEntryPointTest
   @Test
   public void getReadPosttoolReturnsEmptyJsonForGrepTool() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"Grep\", \"tool_input\": {}, \"tool_result\": {}, \"session_id\": \"test-session\"}",
+      tempDir, tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"tool_name\": \"Grep\", \"tool_input\": {}, \"tool_result\": {}, \"session_id\": \"test-session\"}");
-      HookOutput output = new HookOutput(scope);
-
-      HookResult hookResult = new PostReadHook(scope).run(input, output);
+      HookResult hookResult = new PostReadHook(scope).run(scope);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -272,13 +253,10 @@ public class HookEntryPointTest
   public void getPosttoolReturnsEmptyJsonForEmptyInput() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook("{\"session_id\": \"test-session\"}", tempDir, tempDir,
+      tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{}");
-      HookOutput output = new HookOutput(scope);
-
-      HookResult hookResult = new PostToolUseHook(scope).run(input, output);
+      HookResult hookResult = new PostToolUseHook(scope).run(scope);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -296,14 +274,11 @@ public class HookEntryPointTest
   public void getPosttoolReturnsEmptyJsonWithToolName() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"Write\", \"tool_result\": {}, \"session_id\": \"test-session\"}", tempDir, tempDir,
+      tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"tool_name\": \"Write\", \"tool_result\": {}, \"session_id\": \"test-session\"}");
-      HookOutput output = new HookOutput(scope);
-
-      HookResult hookResult = new PostToolUseHook(scope).run(input, output);
+      HookResult hookResult = new PostToolUseHook(scope).run(scope);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -314,200 +289,173 @@ public class HookEntryPointTest
     }
   }
 
-  // --- HookInput error path tests ---
+  // --- TestClaudeHook error path tests ---
 
   /**
-   * Verifies that HookInput.readFrom with malformed JSON throws IllegalStateException.
+   * Verifies that TestClaudeHook with malformed JSON throws IllegalStateException.
    */
   @Test(expectedExceptions = IllegalStateException.class,
     expectedExceptionsMessageRegExp = ".*malformed JSON.*")
-  public void hookInputWithMalformedJsonThrows() throws IOException
+  public void hookInputWithMalformedJsonThrows()
   {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      createInput(mapper, "not valid json {{{");
-    }
+    new TestClaudeHook("not valid json {{{");
   }
 
   /**
-   * Verifies that HookInput.readFrom with blank input throws IllegalStateException.
+   * Verifies that TestClaudeHook with blank input throws IllegalArgumentException.
    */
-  @Test(expectedExceptions = IllegalStateException.class,
-    expectedExceptionsMessageRegExp = ".*blank.*")
-  public void hookInputWithBlankInputThrows() throws IOException
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = "(?s).*empty.*")
+  public void hookInputWithBlankInputThrows()
   {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      createInput(mapper, "   ");
-    }
+    new TestClaudeHook("   ");
   }
 
   /**
-   * Verifies that HookInput.readFrom with empty string throws IllegalStateException.
+   * Verifies that TestClaudeHook with empty string throws IllegalArgumentException.
    */
-  @Test(expectedExceptions = IllegalStateException.class,
-    expectedExceptionsMessageRegExp = ".*blank.*")
-  public void hookInputWithEmptyStringThrows() throws IOException
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = "(?s).*empty.*")
+  public void hookInputWithEmptyStringThrows()
   {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      createInput(mapper, "");
-    }
+    new TestClaudeHook("");
   }
 
   /**
-   * Verifies that HookInput.getString with non-string value throws IllegalArgumentException.
+   * Verifies that getString with a non-string value throws IllegalArgumentException.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Expected string for key.*count.*")
-  public void hookInputGetStringWithNonStringValueThrows() throws IOException
+  public void hookInputGetStringWithNonStringValueThrows()
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook("{\"count\": 42, \"session_id\": \"test-session\"}"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{\"count\": 42}");
-      input.getString("count");
+      scope.getString("count");
     }
   }
 
   /**
-   * Verifies that HookInput.getString returns empty string for missing key.
+   * Verifies that getString returns empty string for a missing key.
    */
   @Test
-  public void hookInputGetStringReturnEmptyForMissingKey() throws IOException
+  public void hookInputGetStringReturnEmptyForMissingKey()
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook("{\"key\": \"value\", \"session_id\": \"test-session\"}"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{\"key\": \"value\"}");
-      String result = input.getString("nonexistent");
+      String result = scope.getString("nonexistent");
       requireThat(result, "result").isEqualTo("");
     }
   }
 
   /**
-   * Verifies that HookInput.readFrom with null stream throws NullPointerException.
+   * Verifies that TestClaudeHook with null payload throws NullPointerException.
    */
   @Test(expectedExceptions = NullPointerException.class,
-    expectedExceptionsMessageRegExp = ".*inputStream.*")
-  public void hookInputReadFromNullStreamThrows() throws IOException
+    expectedExceptionsMessageRegExp = ".*json.*")
+  public void hookInputReadFromNullStreamThrows()
   {
-    try (JvmScope scope = new TestJvmScope())
-    {
-    HookInput.readFrom(scope.getJsonMapper(), null);
-    }
+    new TestClaudeHook((String) null);
   }
 
   /**
-   * Verifies that HookInput.readFrom with valid JSON missing session_id throws IllegalArgumentException.
+   * Verifies that TestClaudeHook with valid JSON missing session_id throws IllegalArgumentException.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*session_id.*")
-  public void hookInputWithoutSessionIdThrows() throws IOException
+  public void hookInputWithoutSessionIdThrows()
   {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput.readFrom(mapper, new ByteArrayInputStream(
-        "{\"tool_name\": \"Bash\"}".getBytes(StandardCharsets.UTF_8)));
-    }
+    new TestClaudeHook("{\"tool_name\": \"Bash\"}");
   }
 
-  // --- HookOutput error path tests ---
+  // --- Strings block/empty error path tests ---
 
   /**
-   * Verifies that HookOutput.block with blank reason throws IllegalArgumentException.
+   * Verifies that Strings.block with blank reason throws IllegalArgumentException.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*reason.*")
   public void hookOutputBlockWithBlankReasonThrows() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
-      HookOutput output = new HookOutput(scope);
-      output.block("   ");
+      Strings.block(scope, "   ");
     }
   }
 
   /**
-   * Verifies that HookOutput.block with null reason throws NullPointerException.
+   * Verifies that Strings.block with null reason throws NullPointerException.
    */
   @Test(expectedExceptions = NullPointerException.class,
     expectedExceptionsMessageRegExp = ".*reason.*")
   public void hookOutputBlockWithNullReasonThrows() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
-      HookOutput output = new HookOutput(scope);
-      output.block(null);
+      Strings.block(scope, null);
     }
   }
 
   /**
-   * Verifies that HookOutput constructor with null mapper throws NullPointerException.
+   * Verifies that Strings.block with null scope throws NullPointerException.
    */
-  @Test(expectedExceptions = NullPointerException.class,
-    expectedExceptionsMessageRegExp = ".*scope.*")
+  @Test(expectedExceptions = NullPointerException.class)
   public void hookOutputWithNullMapperThrows()
   {
-    new HookOutput(null);
+    Strings.block(null, "reason");
   }
 
   /**
-   * Verifies that HookOutput.wrapSystemReminder with blank content throws IllegalArgumentException.
+   * Verifies that Strings.wrapSystemReminder with blank content throws IllegalArgumentException.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*content.*")
   public void hookOutputWrapSystemReminderWithBlankContentThrows()
   {
-    HookOutput.wrapSystemReminder("   ");
+    Strings.wrapSystemReminder("   ");
   }
 
   /**
-   * Verifies that HookOutput.additionalContext with blank hookEventName throws IllegalArgumentException.
+   * Verifies that scope.additionalContext with blank hookEventName throws IllegalArgumentException.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*hookEventName.*")
   public void hookOutputAdditionalContextWithBlankEventNameThrows() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook("{\"session_id\": \"test-session\"}", tempDir, tempDir,
+      tempDir))
     {
-      HookOutput output = new HookOutput(scope);
-      output.additionalContext("", "some context");
+      scope.additionalContext("", "some context");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
   /**
-   * Verifies that HookOutput.block produces valid JSON with decision field.
+   * Verifies that Strings.block produces valid JSON with the decision field.
    */
   @Test
   public void hookOutputBlockProducesValidJson() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
-      HookOutput output = new HookOutput(scope);
-      String result = output.block("test reason");
+      String result = Strings.block(scope, "test reason");
 
       requireThat(result, "result").contains("\"decision\"").contains("\"block\"").contains("\"test reason\"");
     }
   }
 
   /**
-   * Verifies that HookOutput.empty produces empty JSON object.
+   * Verifies that Strings.empty produces an empty JSON object.
    */
   @Test
-  public void hookOutputEmptyProducesEmptyJson() throws IOException
+  public void hookOutputEmptyProducesEmptyJson()
   {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      HookOutput output = new HookOutput(scope);
-      String result = output.empty();
+    String result = Strings.empty();
 
-      requireThat(result, "result").isEqualTo("{}");
-    }
+    requireThat(result, "result").isEqualTo("{}");
   }
 
   // --- GetAskOutput tests ---
@@ -518,16 +466,18 @@ public class HookEntryPointTest
   @Test
   public void getAskPretoolReturnsEmptyForNonAskTool() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"Read\", \"session_id\": \"test-session\"}", tempDir, tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
-      HookOutput output = new HookOutput(scope);
-
-      HookResult hookResult = new PreAskHook(scope).run(input, output);
+      HookResult hookResult = new PreAskHook(scope).run(scope);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -537,17 +487,19 @@ public class HookEntryPointTest
   @Test
   public void getAskPretoolReturnsEmptyForEmptyToolInput() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {}, \"session_id\": \"test-session\"}",
+      tempDir, tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
-      HookOutput output = new HookOutput(scope);
-
-      HookResult hookResult = new PreAskHook(scope).run(input, output);
+      HookResult hookResult = new PreAskHook(scope).run(scope);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -559,16 +511,18 @@ public class HookEntryPointTest
   @Test
   public void getEditPretoolReturnsEmptyForNonEditTool() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"Read\", \"session_id\": \"test-session\"}", tempDir, tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
-      HookOutput output = new HookOutput(scope);
-
-      HookResult hookResult = new PreWriteHook(scope).run(input, output);
+      HookResult hookResult = new PreWriteHook(scope).run(scope);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -578,33 +532,30 @@ public class HookEntryPointTest
   @Test
   public void getEditPretoolReturnsEmptyForEmptyToolInput() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"Edit\", \"tool_input\": {}, \"session_id\": \"test-session\"}",
+      tempDir, tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"tool_name\": \"Edit\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
-      HookOutput output = new HookOutput(scope);
-
-      HookResult hookResult = new PreWriteHook(scope).run(input, output);
+      HookResult hookResult = new PreWriteHook(scope).run(scope);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
-   * Verifies that HookInput.readFrom throws IllegalArgumentException when session_id is missing.
+   * Verifies that constructing a TestClaudeHook throws IllegalArgumentException when session_id is missing.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*session_id.*")
-  public void getEditPretoolThrowsOnMissingSessionId() throws IOException
+  public void getEditPretoolThrowsOnMissingSessionId()
   {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      String json = "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\"}}";
-      HookInput.readFrom(mapper, new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
-    }
+    new TestClaudeHook("{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\"}}");
   }
 
   // --- GetTaskOutput tests ---
@@ -615,16 +566,18 @@ public class HookEntryPointTest
   @Test
   public void getTaskPretoolReturnsEmptyForNonTaskTool() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"Read\", \"session_id\": \"test-session\"}", tempDir, tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
-      HookOutput output = new HookOutput(scope);
-
-      HookResult hookResult = new PreIssueHook(scope).run(input, output);
+      HookResult hookResult = new PreIssueHook(scope).run(scope);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -634,17 +587,19 @@ public class HookEntryPointTest
   @Test
   public void getTaskPretoolReturnsEmptyForEmptyToolInput() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"Task\", \"tool_input\": {}, \"session_id\": \"test-session\"}",
+      tempDir, tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"tool_name\": \"Task\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
-      HookOutput output = new HookOutput(scope);
-
-      HookResult hookResult = new PreIssueHook(scope).run(input, output);
+      HookResult hookResult = new PreIssueHook(scope).run(scope);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -656,17 +611,19 @@ public class HookEntryPointTest
   @Test
   public void enforceWorkflowCompletionAllowsNonStateMdFiles() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\"}, \"session_id\": \"test\"}",
+      tempDir, tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\"}, \"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(scope);
-
-      HookResult hookResult = new PreWriteHook(scope).run(input, output);
+      HookResult hookResult = new PreWriteHook(scope).run(scope);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -678,18 +635,19 @@ public class HookEntryPointTest
   @Test
   public void warnUnsquashedApprovalAllowsNonApprovalQuestions() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"What is your name?\"}, " +
+      "\"session_id\": \"test\"}", tempDir, tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"What is your name?\"}, " +
-        "\"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(scope);
-
-      HookResult hookResult = new PreAskHook(scope).run(input, output);
+      HookResult hookResult = new PreAskHook(scope).run(scope);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -701,18 +659,19 @@ public class HookEntryPointTest
   @Test
   public void warnApprovalWithoutRenderDiffAllowsNonApprovalQuestions() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Continue?\"}, " +
+      "\"session_id\": \"test\"}", tempDir, tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Continue?\"}, " +
-        "\"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(scope);
-
-      HookResult hookResult = new PreAskHook(scope).run(input, output);
+      HookResult hookResult = new PreAskHook(scope).run(scope);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -724,18 +683,19 @@ public class HookEntryPointTest
   @Test
   public void enforceApprovalBeforeMergeAllowsNonWorkMergeTasks() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"Task\", \"tool_input\": {\"subagent_type\": \"cat:implement\"}, " +
+      "\"session_id\": \"test\"}", tempDir, tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"tool_name\": \"Task\", \"tool_input\": {\"subagent_type\": \"cat:implement\"}, " +
-        "\"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(scope);
-
-      HookResult hookResult = new PreIssueHook(scope).run(input, output);
+      HookResult hookResult = new PreIssueHook(scope).run(scope);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -745,17 +705,19 @@ public class HookEntryPointTest
   @Test
   public void enforceApprovalBeforeMergeAllowsEmptySubagentType() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"Task\", \"tool_input\": {}, \"session_id\": \"test\"}",
+      tempDir, tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"tool_name\": \"Task\", \"tool_input\": {}, \"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(scope);
-
-      HookResult hookResult = new PreIssueHook(scope).run(input, output);
+      HookResult hookResult = new PreIssueHook(scope).run(scope);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -767,7 +729,7 @@ public class HookEntryPointTest
   @Test
   public void enforceWorktreeSafetyAllowsNonMergeTasksInsideWorktree() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode toolInput = mapper.readTree("{\"subagent_type\": \"cat:implement\"}");
@@ -785,7 +747,7 @@ public class HookEntryPointTest
   @Test
   public void enforceWorktreeSafetyBlocksMergeWhenCwdInsideWorktree() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode toolInput = mapper.readTree("{\"subagent_type\": \"cat:work-merge\"}");
@@ -806,7 +768,7 @@ public class HookEntryPointTest
   @Test
   public void enforceWorktreeSafetyAllowsMergeWhenCwdIsWorkspace() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode toolInput = mapper.readTree("{\"subagent_type\": \"cat:work-merge\"}");
@@ -823,7 +785,7 @@ public class HookEntryPointTest
   @Test
   public void enforceWorktreeSafetyAllowsMergeWhenCwdIsEmpty() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode toolInput = mapper.readTree("{\"subagent_type\": \"cat:work-merge\"}");
@@ -840,7 +802,7 @@ public class HookEntryPointTest
   @Test
   public void enforceWorktreeSafetyBlocksMergeWhenCwdIsSubdirOfWorktree() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode toolInput = mapper.readTree("{\"subagent_type\": \"cat:work-merge\"}");
@@ -862,7 +824,7 @@ public class HookEntryPointTest
   @Test
   public void enforceWorkflowCompletionWarnsOnStatusClosed() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode toolInput = mapper.readTree(
@@ -881,7 +843,7 @@ public class HookEntryPointTest
   @Test
   public void enforceWorkflowCompletionWarnsOnLowercaseStatusClosed() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode toolInput = mapper.readTree(
@@ -899,18 +861,19 @@ public class HookEntryPointTest
   @Test
   public void enforceWorkflowCompletionAllowsMissingNewString() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \".cat/v2/v2.1/my-task/index.json\"}, " +
+      "\"session_id\": \"test\"}", tempDir, tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \".cat/v2/v2.1/my-task/index.json\"}, " +
-        "\"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(scope);
-
-      HookResult hookResult = new PreWriteHook(scope).run(input, output);
+      HookResult hookResult = new PreWriteHook(scope).run(scope);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -920,18 +883,19 @@ public class HookEntryPointTest
   @Test
   public void enforceWorkflowCompletionAllowsNonClosedStatus() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \".cat/v2/v2.1/fix-bug-123/index.json\", " +
+      "\"new_string\": \"Status: in_progress\"}, \"session_id\": \"test\"}", tempDir, tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \".cat/v2/v2.1/fix-bug-123/index.json\", " +
-        "\"new_string\": \"Status: in_progress\"}, \"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(scope);
-
-      HookResult hookResult = new PreWriteHook(scope).run(input, output);
+      HookResult hookResult = new PreWriteHook(scope).run(scope);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -944,18 +908,19 @@ public class HookEntryPointTest
   @Test
   public void warnApprovalWithoutRenderDiffAllowsNonApprovalInput() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"What color?\"}, " +
+      "\"session_id\": \"test\"}", tempDir, tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"What color?\"}, " +
-        "\"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(scope);
-
-      HookResult hookResult = new PreAskHook(scope).run(input, output);
+      HookResult hookResult = new PreAskHook(scope).run(scope);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -965,18 +930,19 @@ public class HookEntryPointTest
   @Test
   public void warnApprovalWithoutRenderDiffAllowsMissingProjectDir() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Approve?\"}, " +
+      "\"session_id\": \"test\"}", tempDir, tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Approve?\"}, " +
-        "\"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(scope);
-
-      HookResult hookResult = new PreAskHook(scope).run(input, output);
+      HookResult hookResult = new PreAskHook(scope).run(scope);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -988,19 +954,20 @@ public class HookEntryPointTest
   @Test
   public void warnUnsquashedApprovalDetectsApproveInInput() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Ready to approve?\"}, " +
+      "\"session_id\": \"test\"}", tempDir, tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Ready to approve?\"}, " +
-        "\"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(scope);
-
-      HookResult hookResult = new PreAskHook(scope).run(input, output);
+      HookResult hookResult = new PreAskHook(scope).run(scope);
 
       String result = hookResult.output().trim();
       // WarnUnsquashedApproval also checks git state - outside a task worktree it allows
       requireThat(result, "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -1010,19 +977,20 @@ public class HookEntryPointTest
   @Test
   public void warnUnsquashedApprovalDetectsUppercaseApprove() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"APPROVE changes?\"}, " +
+      "\"session_id\": \"test\"}", tempDir, tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"APPROVE changes?\"}, " +
-        "\"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(scope);
-
-      HookResult hookResult = new PreAskHook(scope).run(input, output);
+      HookResult hookResult = new PreAskHook(scope).run(scope);
 
       String result = hookResult.output().trim();
       // WarnUnsquashedApproval also checks git state - outside a task worktree it allows
       requireThat(result, "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -1033,20 +1001,21 @@ public class HookEntryPointTest
   @Test
   public void getAskPretoolReturnsAdditionalContextEarly() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Continue?\"}, " +
+      "\"session_id\": \"test-session\"}", tempDir, tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Continue?\"}, " +
-        "\"session_id\": \"test-session\"}");
-      HookOutput output = new HookOutput(scope);
-
-      HookResult hookResult = new PreAskHook(scope).run(input, output);
+      HookResult hookResult = new PreAskHook(scope).run(scope);
 
       String result = hookResult.output().trim();
       // WarnApprovalWithoutRenderDiff and WarnUnsquashedApproval don't inject context in this case
       // This test verifies no crash occurs
       requireThat(result, "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -1058,7 +1027,7 @@ public class HookEntryPointTest
   @Test
   public void enforcePluginFileIsolationBlocksPluginFileOnProtectedBranch() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode toolInput = mapper.readTree(
@@ -1076,7 +1045,7 @@ public class HookEntryPointTest
   @Test
   public void enforcePluginFileIsolationAllowsNonPluginFiles() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode toolInput = mapper.readTree(
@@ -1092,7 +1061,7 @@ public class HookEntryPointTest
   @Test
   public void enforcePluginFileIsolationAllowsEmptyPath() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode toolInput = mapper.readTree("{}");
@@ -1109,7 +1078,7 @@ public class HookEntryPointTest
   @Test
   public void warnBaseBranchEditAllowsEmptyPath() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode toolInput = mapper.readTree("{}");
@@ -1124,7 +1093,7 @@ public class HookEntryPointTest
   @Test
   public void warnBaseBranchEditAllowsAllowedPatterns() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode toolInput = mapper.readTree(
@@ -1142,16 +1111,18 @@ public class HookEntryPointTest
   @Test
   public void getWriteEditPretoolReturnsEmptyForNonWriteEditTool() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"Read\", \"session_id\": \"test-session\"}", tempDir, tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
-      HookOutput output = new HookOutput(scope);
-
-      HookResult hookResult = new PreWriteHook(scope).run(input, output);
+      HookResult hookResult = new PreWriteHook(scope).run(scope);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -1161,19 +1132,21 @@ public class HookEntryPointTest
   @Test
   public void getWriteEditPretoolReturnsEmptyForEmptyToolInput() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"Write\", \"tool_input\": {}, \"session_id\": \"test-session\"}",
+      tempDir, tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"tool_name\": \"Write\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
-      HookOutput output = new HookOutput(scope);
-
-      HookResult hookResult = new PreWriteHook(scope).run(input, output);
+      HookResult hookResult = new PreWriteHook(scope).run(scope);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").
         doesNotContain("\"decision\" : \"block\"").
         doesNotContain("\"reason\"");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -1187,22 +1160,20 @@ public class HookEntryPointTest
   public void getWriteEditPretoolUsesCaseInsensitiveMatching() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-write-hook-");
-    try (JvmScope scope = new TestJvmScope())
+    try
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      String filePath = tempDir.resolve("test.txt").toString().
-        replace("\\", "\\\\");
-      HookInput input = createInput(mapper,
+      String filePath = tempDir.resolve("test.txt").toString().replace("\\", "\\\\");
+      try (TestClaudeHook scope = new TestClaudeHook(
         "{\"tool_name\": \"write\", \"tool_input\": {\"file_path\": \"" + filePath + "\"}, " +
-        "\"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(scope);
+        "\"session_id\": \"test\"}", tempDir, tempDir, tempDir))
+      {
+        HookResult hookResult = new PreWriteHook(scope).run(scope);
 
-      HookResult hookResult = new PreWriteHook(scope).run(input, output);
-
-      String result = hookResult.output().trim();
-      requireThat(result, "result").
-        doesNotContain("\"decision\" : \"block\"").
-        doesNotContain("\"reason\"");
+        String result = hookResult.output().trim();
+        requireThat(result, "result").
+          doesNotContain("\"decision\" : \"block\"").
+          doesNotContain("\"reason\"");
+      }
     }
     finally
     {
@@ -1220,22 +1191,20 @@ public class HookEntryPointTest
   public void getWriteEditPretoolAcceptsEditToolName() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-write-hook-");
-    try (JvmScope scope = new TestJvmScope())
+    try
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      String filePath = tempDir.resolve("test.txt").toString().
-        replace("\\", "\\\\");
-      HookInput input = createInput(mapper,
+      String filePath = tempDir.resolve("test.txt").toString().replace("\\", "\\\\");
+      try (TestClaudeHook scope = new TestClaudeHook(
         "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"" + filePath + "\", " +
-        "\"old_string\": \"a\", \"new_string\": \"b\"}, \"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(scope);
+        "\"old_string\": \"a\", \"new_string\": \"b\"}, \"session_id\": \"test\"}", tempDir, tempDir, tempDir))
+      {
+        HookResult hookResult = new PreWriteHook(scope).run(scope);
 
-      HookResult hookResult = new PreWriteHook(scope).run(input, output);
-
-      String result = hookResult.output().trim();
-      requireThat(result, "result").
-        doesNotContain("\"decision\" : \"block\"").
-        doesNotContain("\"reason\"");
+        String result = hookResult.output().trim();
+        requireThat(result, "result").
+          doesNotContain("\"decision\" : \"block\"").
+          doesNotContain("\"reason\"");
+      }
     }
     finally
     {
@@ -1254,7 +1223,7 @@ public class HookEntryPointTest
   @Test
   public void warnBaseBranchEditWarnsOnTargetBranch() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path tempDir = createTempGitRepo("main");
@@ -1283,7 +1252,7 @@ public class HookEntryPointTest
   @Test
   public void warnBaseBranchEditAllowsExistingEngineFiles() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path enginePom = Path.of("pom.xml").toAbsolutePath();
@@ -1306,7 +1275,7 @@ public class HookEntryPointTest
   @Test
   public void enforcePluginFileIsolationDetectsPluginSubdirectories() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode toolInput = mapper.readTree(
@@ -1325,7 +1294,7 @@ public class HookEntryPointTest
   @Test
   public void enforcePluginFileIsolationAllowsNonPluginPaths() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode toolInput = mapper.readTree(
@@ -1350,22 +1319,20 @@ public class HookEntryPointTest
   public void getWriteEditPretoolAllowsNonPluginFileWithWarning() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-write-hook-");
-    try (JvmScope scope = new TestJvmScope())
+    try
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      String filePath = tempDir.resolve("some-new-source.java").toString().
-        replace("\\", "\\\\");
-      HookInput input = createInput(mapper,
+      String filePath = tempDir.resolve("some-new-source.java").toString().replace("\\", "\\\\");
+      try (TestClaudeHook scope = new TestClaudeHook(
         "{\"tool_name\": \"Write\", \"tool_input\": {\"file_path\": \"" + filePath + "\"}, " +
-        "\"session_id\": \"test-session\"}");
-      HookOutput output = new HookOutput(scope);
+        "\"session_id\": \"test-session\"}", tempDir, tempDir, tempDir))
+      {
+        HookResult hookResult = new PreWriteHook(scope).run(scope);
 
-      HookResult hookResult = new PreWriteHook(scope).run(input, output);
-
-      String result = hookResult.output().trim();
-      requireThat(result, "result").
-        doesNotContain("\"decision\" : \"block\"").
-        doesNotContain("\"reason\"");
+        String result = hookResult.output().trim();
+        requireThat(result, "result").
+          doesNotContain("\"decision\" : \"block\"").
+          doesNotContain("\"reason\"");
+      }
     }
     finally
     {
@@ -1381,26 +1348,26 @@ public class HookEntryPointTest
   @Test
   public void writeEditPretoolAccumulatesMultipleWarnings() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"Write\", \"tool_input\": " +
+      "{\"file_path\": \"/workspace/some-file.txt\"}, \"session_id\": \"test-session-123\"}",
+      tempDir, tempDir, tempDir))
     {
       FileWriteHandler handler1 = (toolInput, sessionId) -> FileWriteHandler.Result.warn("Warning from handler 1");
       FileWriteHandler handler2 = (toolInput, sessionId) -> FileWriteHandler.Result.warn("Warning from handler 2");
 
       PreWriteHook dispatcher = new PreWriteHook(List.of(handler1, handler2));
 
-      JsonMapper mapper = scope.getJsonMapper();
-      String inputJson = "{\"tool_name\": \"Write\", \"tool_input\": " +
-        "{\"file_path\": \"/workspace/some-file.txt\"}, \"session_id\": \"test-session-123\"}";
-      JsonNode fullInput = mapper.readTree(inputJson);
-      HookInput input = HookInput.readFrom(scope.getJsonMapper(),
-        new ByteArrayInputStream(fullInput.toString().getBytes(StandardCharsets.UTF_8)));
-
-      HookOutput output = new HookOutput(scope);
-      HookResult result = dispatcher.run(input, output);
+      HookResult result = dispatcher.run(scope);
 
       requireThat(result.warnings(), "warnings").contains("Warning from handler 1");
       requireThat(result.warnings(), "warnings").contains("Warning from handler 2");
       requireThat(result.output(), "output").doesNotContain("\"decision\"");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -1411,26 +1378,26 @@ public class HookEntryPointTest
   @Test
   public void editPretoolAccumulatesMultipleWarnings() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"Edit\", \"tool_input\": " +
+      "{\"file_path\": \"/workspace/test.txt\"}, \"session_id\": \"test-session-456\"}",
+      tempDir, tempDir, tempDir))
     {
       FileWriteHandler handler1 = (toolInput, sessionId) -> FileWriteHandler.Result.warn("Warning from edit handler 1");
       FileWriteHandler handler2 = (toolInput, sessionId) -> FileWriteHandler.Result.warn("Warning from edit handler 2");
 
       PreWriteHook dispatcher = new PreWriteHook(List.of(handler1, handler2));
 
-      JsonMapper mapper = scope.getJsonMapper();
-      String inputJson = "{\"tool_name\": \"Edit\", \"tool_input\": " +
-        "{\"file_path\": \"/workspace/test.txt\"}, \"session_id\": \"test-session-456\"}";
-      JsonNode fullInput = mapper.readTree(inputJson);
-      HookInput input = HookInput.readFrom(scope.getJsonMapper(),
-        new ByteArrayInputStream(fullInput.toString().getBytes(StandardCharsets.UTF_8)));
-
-      HookOutput output = new HookOutput(scope);
-      HookResult result = dispatcher.run(input, output);
+      HookResult result = dispatcher.run(scope);
 
       requireThat(result.warnings(), "warnings").contains("Warning from edit handler 1");
       requireThat(result.warnings(), "warnings").contains("Warning from edit handler 2");
       requireThat(result.output(), "output").doesNotContain("\"decision\"");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -1441,26 +1408,26 @@ public class HookEntryPointTest
   @Test
   public void taskPretoolAccumulatesMultipleWarnings() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"Task\", \"tool_input\": " +
+      "{\"subagent_type\": \"cat:implement\"}, \"session_id\": \"test-session-789\"}",
+      tempDir, tempDir, tempDir))
     {
       TaskHandler handler1 = (toolInput, sessionId, cwd) -> TaskHandler.Result.warn("Warning from task handler 1");
       TaskHandler handler2 = (toolInput, sessionId, cwd) -> TaskHandler.Result.warn("Warning from task handler 2");
 
       PreIssueHook dispatcher = new PreIssueHook(List.of(handler1, handler2));
 
-      JsonMapper mapper = scope.getJsonMapper();
-      String inputJson = "{\"tool_name\": \"Task\", \"tool_input\": " +
-        "{\"subagent_type\": \"cat:implement\"}, \"session_id\": \"test-session-789\"}";
-      JsonNode fullInput = mapper.readTree(inputJson);
-      HookInput input = HookInput.readFrom(scope.getJsonMapper(),
-        new ByteArrayInputStream(fullInput.toString().getBytes(StandardCharsets.UTF_8)));
-
-      HookOutput output = new HookOutput(scope);
-      HookResult result = dispatcher.run(input, output);
+      HookResult result = dispatcher.run(scope);
 
       requireThat(result.warnings(), "warnings").contains("Warning from task handler 1");
       requireThat(result.warnings(), "warnings").contains("Warning from task handler 2");
       requireThat(result.output(), "output").doesNotContain("\"decision\"");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -1470,7 +1437,11 @@ public class HookEntryPointTest
   @Test
   public void writeEditPretoolBlocksWithoutWarnings() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("hook-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"tool_name\": \"Write\", \"tool_input\": " +
+      "{\"file_path\": \"/workspace/blocked.txt\"}, \"session_id\": \"test-session-999\"}",
+      tempDir, tempDir, tempDir))
     {
       FileWriteHandler handler1 = (toolInput, sessionId) ->
         FileWriteHandler.Result.warn("This warning should not appear");
@@ -1479,15 +1450,7 @@ public class HookEntryPointTest
 
       PreWriteHook dispatcher = new PreWriteHook(List.of(handler1, handler2));
 
-      JsonMapper mapper = scope.getJsonMapper();
-      String inputJson = "{\"tool_name\": \"Write\", \"tool_input\": " +
-        "{\"file_path\": \"/workspace/blocked.txt\"}, \"session_id\": \"test-session-999\"}";
-      JsonNode fullInput = mapper.readTree(inputJson);
-      HookInput input = HookInput.readFrom(scope.getJsonMapper(),
-        new ByteArrayInputStream(fullInput.toString().getBytes(StandardCharsets.UTF_8)));
-
-      HookOutput output = new HookOutput(scope);
-      HookResult result = dispatcher.run(input, output);
+      HookResult result = dispatcher.run(scope);
 
       requireThat(result.warnings(), "warnings").doesNotContain("This warning should not appear");
       requireThat(result.output(), "output").contains("\"decision\"");

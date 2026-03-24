@@ -6,9 +6,11 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
-import io.github.cowwoc.cat.hooks.HookOutput;
+import static io.github.cowwoc.cat.hooks.Strings.block;
+
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.databind.node.ArrayNode;
@@ -336,12 +338,19 @@ public final class GitRebase
       if (currentBranchRenamedPrefixes.contains(oldPrefix))
         continue;
 
-      // Check if current branch still tracks the old path
-      ProcessRunner.Result lsResult = runGit("ls-files", "--", oldPath);
-      if (lsResult.exitCode() == 0 && !lsResult.stdout().isBlank())
-        trackedConflicts.add(oldPath);
+      // Check if current branch still tracks the old path.
+      // Planning artifacts (.cat/) are historical records; stale path references there are
+      // acceptable and will be resolved automatically during rebase.
+      if (!oldPath.startsWith(".cat/"))
+      {
+        ProcessRunner.Result lsResult = runGit("ls-files", "--", oldPath);
+        if (lsResult.exitCode() == 0 && !lsResult.stdout().isBlank())
+          trackedConflicts.add(oldPath);
+      }
 
-      // Check if any tracked file in the current branch contains the old prefix as text
+      // Check if any tracked file in the current branch contains the old prefix as text.
+      // Planning artifacts (.cat/) are historical records; stale path references there are
+      // acceptable and will be resolved automatically during rebase.
       ProcessRunner.Result grepResult = runGit("grep", "-l", "--", oldPrefix);
       // git grep exits 1 when no matches (not an error); only exit code > 1 is a real error
       if (grepResult.exitCode() > 1)
@@ -678,7 +687,6 @@ public final class GitRebase
    */
   private String buildBlockResponse(String message, String target, String backupBranch)
   {
-    HookOutput hookOutput = new HookOutput(scope);
     StringBuilder reason = new StringBuilder(message);
     if (target != null)
     {
@@ -686,7 +694,7 @@ public final class GitRebase
     }
     if (backupBranch != null)
       reason.append("\nbackup_branch: ").append(backupBranch);
-    return hookOutput.block(reason.toString());
+    return block(scope, reason.toString());
   }
 
   /**
@@ -699,12 +707,11 @@ public final class GitRebase
    */
   private String buildContentChangedBlockResponse(String target, String backupBranch, String diffStat)
   {
-    HookOutput hookOutput = new HookOutput(scope);
     String reason = "Content changed during rebase - backup preserved for investigation" +
       "\ntargetBranch: " + target +
       "\nbackup_branch: " + backupBranch +
       "\ndiff_stat:\n" + diffStat;
-    return hookOutput.block(reason);
+    return block(scope, reason);
   }
 
   /**
@@ -719,17 +726,17 @@ public final class GitRebase
    */
   public static void main(String[] args)
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
-      run(scope, args, System.out);
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(GitRebase.class);
-      log.error("Unexpected error", e);
-      try (MainJvmScope errorScope = new MainJvmScope())
+      try
       {
-        System.out.println(new HookOutput(errorScope).block(
+        run(scope, args, System.out);
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(GitRebase.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }
@@ -744,18 +751,16 @@ public final class GitRebase
    * @param scope the JVM scope
    * @param args  command-line arguments
    * @param out   the output stream to write JSON to
-   * @throws NullPointerException if {@code scope}, {@code args}, or {@code out} are null
+   * @throws NullPointerException if {@code args} or {@code out} are null
    */
   public static void run(JvmScope scope, String[] args, PrintStream out)
   {
-    requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();
     requireThat(out, "out").isNotNull();
 
-    HookOutput hookOutput = new HookOutput(scope);
     if (args.length < 1)
     {
-      out.println(hookOutput.block("Usage: git-rebase <SOURCE_DIR> <TARGET_BRANCH>"));
+      out.println(block(scope, "Usage: git-rebase <SOURCE_DIR> <TARGET_BRANCH>"));
       return;
     }
 
@@ -772,7 +777,7 @@ public final class GitRebase
     }
     catch (IOException e)
     {
-      out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      out.println(block(scope, Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }
 }

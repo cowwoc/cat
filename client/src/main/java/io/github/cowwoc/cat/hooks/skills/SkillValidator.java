@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.skills;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
 import java.io.IOException;
@@ -46,13 +45,9 @@ public final class SkillValidator implements SkillOutput
 
   /**
    * Creates a SkillValidator instance.
-   *
-   * @param scope the JVM scope for accessing shared services
-   * @throws NullPointerException if {@code scope} is null
    */
-  public SkillValidator(JvmScope scope)
+  public SkillValidator()
   {
-    requireThat(scope, "scope").isNotNull();
   }
 
   /**

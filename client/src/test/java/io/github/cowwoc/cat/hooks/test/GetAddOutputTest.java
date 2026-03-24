@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+
 import io.github.cowwoc.cat.hooks.skills.GetAddOutput;
 import io.github.cowwoc.cat.hooks.skills.IssueType;
 import io.github.cowwoc.cat.hooks.skills.ItemType;
@@ -41,7 +41,7 @@ public class GetAddOutputTest
   public void singleIssueDisplayContainsExpectedContent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetAddOutput output = new GetAddOutput(scope);
       String result = output.getOutput(ItemType.ISSUE, List.of("parse-tokens"), "2.0",
@@ -69,7 +69,7 @@ public class GetAddOutputTest
   public void singleIssueWithDependenciesShowsDependencies() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetAddOutput output = new GetAddOutput(scope);
       String result = output.getOutput(ItemType.ISSUE, List.of("fix-auth"), "1.5",
@@ -94,7 +94,7 @@ public class GetAddOutputTest
   public void multipleIssuesDisplayNumberedList() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetAddOutput output = new GetAddOutput(scope);
       String result = output.getOutput(ItemType.ISSUE, List.of("parse-tokens", "fix-auth", "add-logging"), "2.0",
@@ -122,7 +122,7 @@ public class GetAddOutputTest
   public void versionDisplayContainsExpectedContent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetAddOutput output = new GetAddOutput(scope);
       String result = output.getOutput(ItemType.VERSION, List.of("Beta Release"), "2.1",
@@ -149,7 +149,7 @@ public class GetAddOutputTest
   public void versionDisplayOmitsEmptyOptionalFields() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetAddOutput output = new GetAddOutput(scope);
       String result = output.getOutput(ItemType.VERSION, List.of("Major Release"), "3.0",
@@ -174,7 +174,7 @@ public class GetAddOutputTest
   public void boxBordersAreAligned() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetAddOutput output = new GetAddOutput(scope);
       String result = output.getOutput(ItemType.ISSUE, List.of("test-issue"), "1.0",
@@ -210,7 +210,7 @@ public class GetAddOutputTest
   public void nullIssueTypeDefaultsToFeature() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetAddOutput output = new GetAddOutput(scope);
       String result = output.getOutput(ItemType.ISSUE, List.of("some-issue"), "1.0",
@@ -234,7 +234,7 @@ public class GetAddOutputTest
   public void getOutputRejectsNullItemType() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetAddOutput output = new GetAddOutput(scope);
       output.getOutput(null, List.of("test-issue"), "1.0", IssueType.FEATURE, List.of(), "", "");
@@ -255,7 +255,7 @@ public class GetAddOutputTest
   public void getOutputRejectsEmptyItemNames() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetAddOutput output = new GetAddOutput(scope);
       output.getOutput(ItemType.ISSUE, List.of(), "1.0", IssueType.FEATURE, List.of(), "", "");
@@ -276,7 +276,7 @@ public class GetAddOutputTest
   public void getOutputRejectsBlankVersion() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetAddOutput output = new GetAddOutput(scope);
       output.getOutput(ItemType.ISSUE, List.of("test-issue"), "", IssueType.FEATURE, List.of(), "", "");
@@ -297,7 +297,7 @@ public class GetAddOutputTest
   public void getOutputRejectsNullDependencies() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetAddOutput output = new GetAddOutput(scope);
       output.getOutput(ItemType.ISSUE, List.of("test-issue"), "1.0", IssueType.FEATURE, null, "", "");
@@ -318,7 +318,7 @@ public class GetAddOutputTest
   public void getOutputRejectsUnknownArgument() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetAddOutput output = new GetAddOutput(scope);
       output.getOutput(new String[]{"--unknown", "value"});
@@ -339,7 +339,7 @@ public class GetAddOutputTest
   public void getOutputRejectsMissingProjectDirValue() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetAddOutput output = new GetAddOutput(scope);
       output.getOutput(new String[]{"--project-dir"});
@@ -360,7 +360,7 @@ public class GetAddOutputTest
   public void getOutputRejectsNonExistentProjectDir() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetAddOutput output = new GetAddOutput(scope);
       output.getOutput(new String[]{"--project-dir", "/nonexistent/path/that/does/not/exist"});
@@ -381,7 +381,7 @@ public class GetAddOutputTest
   public void getOutputNormalizesProjectDirPath() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Create a subdirectory, then pass a path with ".." to traverse back
       Path subDir = Files.createDirectory(tempDir.resolve("sub"));
@@ -406,7 +406,7 @@ public class GetAddOutputTest
   public void getOutputRejectsNullItemNames() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetAddOutput output = new GetAddOutput(scope);
       output.getOutput(ItemType.ISSUE, null, "1.0", IssueType.FEATURE, List.of(), "", "");
@@ -427,7 +427,7 @@ public class GetAddOutputTest
   public void getOutputRejectsWhitespaceOnlyVersion() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetAddOutput output = new GetAddOutput(scope);
       output.getOutput(ItemType.ISSUE, List.of("test"), "   ", IssueType.FEATURE, List.of(), "", "");

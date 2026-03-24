@@ -7,10 +7,8 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.bash.BlockGitUserConfigChange;
 import org.testng.annotations.Test;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 
@@ -27,13 +25,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void setUserNameIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "git config user.name \"Alice\"";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "git config user.name \"Alice\"";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("user.name");
@@ -46,13 +43,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void setUserEmailIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "git config user.email \"alice@example.com\"";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "git config user.email \"alice@example.com\"";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("user.email");
@@ -65,13 +61,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void blockMessageMentionsExplicitUserRequest() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "git config user.name \"Bob\"";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "git config user.name \"Bob\"";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("explicitly");
@@ -84,13 +79,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void setGlobalUserNameIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "git config --global user.name \"Carol\"";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "git config --global user.name \"Carol\"";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("user.name");
@@ -103,13 +97,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void setGlobalUserEmailIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "git config --global user.email \"carol@example.com\"";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "git config --global user.email \"carol@example.com\"";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("user.email");
@@ -122,13 +115,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void readUserNameIsAllowed() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "git config user.name";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "git config user.name";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -140,13 +132,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void readUserEmailIsAllowed() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "git config user.email";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "git config user.email";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -158,13 +149,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void nonUserConfigIsAllowed() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "git config receive.denyCurrentBranch updateInstead";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "git config receive.denyCurrentBranch updateInstead";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -176,13 +166,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void nonGitConfigCommandIsAllowed() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "git commit -m \"feature: add something\"";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "git commit -m \"feature: add something\"";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -194,13 +183,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void getUserNameIsAllowed() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "git config --get user.name";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "git config --get user.name";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -212,13 +200,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void unsetUserNameIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "git config --unset user.name";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "git config --unset user.name";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -230,13 +217,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void unsetAllUserNameIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "git config --unset-all user.name";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/tmp", "session-1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "git config --unset-all user.name";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/tmp", "session-1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -248,13 +234,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void unsetAllUserEmailIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "git config --unset-all user.email";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/tmp", "session-1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "git config --unset-all user.email";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/tmp", "session-1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -266,13 +251,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void removeUserSectionIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "git config --remove-section user";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/tmp", "session-1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "git config --remove-section user";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/tmp", "session-1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -284,13 +268,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void inlineUserNameViaMinusCIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "git -c user.name=attacker commit -m 'test'";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/tmp", "session-1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "git -c user.name=attacker commit -m 'test'";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/tmp", "session-1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -302,13 +285,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void inlineUserEmailViaMinusCIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "git -c user.email=attacker@evil.com commit -m 'test'";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/tmp", "session-1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "git -c user.email=attacker@evil.com commit -m 'test'";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/tmp", "session-1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -320,13 +302,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void unsetUserEmailIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "git config --unset user.email";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "git config --unset user.email";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -338,13 +319,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void getUserEmailIsAllowed() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "git config --get user.email";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "git config --get user.email";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -356,13 +336,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void nonIdentityUserKeyIsAllowed() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "git config user.signingkey ABCDEF1234567890";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "git config user.signingkey ABCDEF1234567890";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -374,13 +353,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void gitAuthorNameEnvVarIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "GIT_AUTHOR_NAME=attacker git commit -m 'test'";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "GIT_AUTHOR_NAME=attacker git commit -m 'test'";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -392,13 +370,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void gitAuthorEmailEnvVarIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "GIT_AUTHOR_EMAIL=attacker@evil.com git commit -m 'test'";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "GIT_AUTHOR_EMAIL=attacker@evil.com git commit -m 'test'";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -410,13 +387,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void gitCommitterNameEnvVarIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "GIT_COMMITTER_NAME=attacker git commit -m 'test'";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "GIT_COMMITTER_NAME=attacker git commit -m 'test'";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -428,13 +404,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void gitCommitAuthorFlagIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "git commit --author='Attacker <attacker@evil.com>' -m 'test'";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "git commit --author='Attacker <attacker@evil.com>' -m 'test'";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -446,13 +421,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void printfAppendToHomeDotGitconfigIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "printf '[user]\\nname=X\\n' >> ~/.gitconfig";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "printf '[user]\\nname=X\\n' >> ~/.gitconfig";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -464,13 +438,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void echoAppendToHomeDotGitconfigIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "echo '  name = X' >> ~/.gitconfig";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "echo '  name = X' >> ~/.gitconfig";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -482,13 +455,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void echoOverwriteHomeDotGitconfigIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "echo '[user]' > ~/.gitconfig";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "echo '[user]' > ~/.gitconfig";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -500,13 +472,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void teeToHomeDotGitconfigIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "echo '[user]' | tee ~/.gitconfig";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "echo '[user]' | tee ~/.gitconfig";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -518,13 +489,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void teeAppendToHomeDotGitconfigIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "echo '  name = X' | tee -a ~/.gitconfig";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "echo '  name = X' | tee -a ~/.gitconfig";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -536,13 +506,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void sedInPlaceEditHomeDotGitconfigIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "sed -i 's/name = Alice/name = Attacker/' ~/.gitconfig";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "sed -i 's/name = Alice/name = Attacker/' ~/.gitconfig";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -554,13 +523,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void awkWriteToHomeDotGitconfigIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "awk '{print}' input.txt > ~/.gitconfig";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "awk '{print}' input.txt > ~/.gitconfig";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -572,13 +540,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void catWriteToHomeDotGitconfigIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "cat > ~/.gitconfig";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "cat > ~/.gitconfig";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -590,13 +557,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void echoAppendUsingDollarHomeIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "echo '[user]' >> $HOME/.gitconfig";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "echo '[user]' >> $HOME/.gitconfig";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -608,13 +574,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void echoAppendToXdgGitConfigIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "echo '[user]' >> ~/.config/git/config";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "echo '[user]' >> ~/.config/git/config";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -626,13 +591,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void echoAppendToEtcGitconfigIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "echo '[user]' >> /etc/gitconfig";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "echo '[user]' >> /etc/gitconfig";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -644,13 +608,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void catReadHomeDotGitconfigIsAllowed() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "cat ~/.gitconfig";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "cat ~/.gitconfig";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -662,13 +625,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void echoAppendToUnrelatedFileIsAllowed() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "echo hello >> ~/notes.txt";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "echo hello >> ~/notes.txt";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -680,13 +642,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void printfAppendToUnrelatedFileIsAllowed() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "printf 'some content' >> ~/somefile.txt";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "printf 'some content' >> ~/somefile.txt";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -698,13 +659,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void teeLongFormAppendToHomeDotGitconfigIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "echo '[user]' | tee --append ~/.gitconfig";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "echo '[user]' | tee --append ~/.gitconfig";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -716,13 +676,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void teeCombinedFlagsToHomeDotGitconfigIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "echo '[user]' | tee -ai ~/.gitconfig";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "echo '[user]' | tee -ai ~/.gitconfig";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -734,13 +693,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void cpToHomeDotGitconfigIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "cp /tmp/evil.gitconfig ~/.gitconfig";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "cp /tmp/evil.gitconfig ~/.gitconfig";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -752,13 +710,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void mvToHomeDotGitconfigIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "mv /tmp/evil.gitconfig ~/.gitconfig";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "mv /tmp/evil.gitconfig ~/.gitconfig";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -770,13 +727,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void installToHomeDotGitconfigIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "install -m 600 /tmp/evil.gitconfig ~/.gitconfig";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "install -m 600 /tmp/evil.gitconfig ~/.gitconfig";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -788,13 +744,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void cpToXdgGitConfigIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "cp /tmp/evil.gitconfig ~/.config/git/config";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "cp /tmp/evil.gitconfig ~/.config/git/config";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -806,13 +761,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void mvToEtcGitconfigIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "mv /tmp/evil.gitconfig /etc/gitconfig";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "mv /tmp/evil.gitconfig /etc/gitconfig";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -824,13 +778,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void cpToUnrelatedFileIsAllowed() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "cp /tmp/notes.txt ~/notes.txt";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "cp /tmp/notes.txt ~/notes.txt";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -842,13 +795,12 @@ public final class BlockGitUserConfigChangeTest
   @Test
   public void mvToUnrelatedFileIsAllowed() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    String command = "mv /tmp/notes.txt ~/notes.txt";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, "/workspace", "session1"))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange();
-      String command = "mv /tmp/notes.txt ~/notes.txt";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", "session1"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
     }

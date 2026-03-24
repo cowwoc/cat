@@ -14,7 +14,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -34,7 +33,6 @@ public final class SharedSecrets
   private static PostToolUseHookAccess postToolUseHookAccess;
   private static PostToolUseFailureHookAccess postToolUseFailureHookAccess;
   private static IssueDiscoveryAccess issueDiscoveryAccess;
-  private static ClaudeEnvAccess claudeEnvAccess;
 
   private SharedSecrets()
   {
@@ -125,35 +123,6 @@ public final class SharedSecrets
   }
 
   /**
-   * Registers the access object for {@link ClaudeEnv}.
-   *
-   * @param access the access object
-   * @throws NullPointerException if {@code access} is null
-   */
-  public static void setClaudeEnvAccess(ClaudeEnvAccess access)
-  {
-    requireThat(access, "access").isNotNull();
-    claudeEnvAccess = access;
-  }
-
-  /**
-   * Creates a new {@link ClaudeEnv} with the specified environment map.
-   * <p>
-   * This is intended for testing, where a controlled environment map avoids dependencies on the
-   * host environment.
-   *
-   * @param env the environment variable map to use
-   * @return a new ClaudeEnv
-   * @throws NullPointerException if {@code env} is null
-   */
-  public static ClaudeEnv newClaudeEnv(Map<String, String> env)
-  {
-    if (claudeEnvAccess == null)
-      initialize(ClaudeEnv.class);
-    return claudeEnvAccess.newClaudeEnv(env);
-  }
-
-  /**
    * Initializes a class. If the class is already initialized, this method has no effect.
    *
    * @param clazz the class
@@ -216,20 +185,5 @@ public final class SharedSecrets
      * @throws IOException if parsing fails
      */
     String getIssueStatus(String content, Path indexPath, JsonMapper mapper) throws IOException;
-  }
-
-  /**
-   * Provides test-specific access to {@link ClaudeEnv}.
-   */
-  @FunctionalInterface
-  public interface ClaudeEnvAccess
-  {
-    /**
-     * Creates a new {@link ClaudeEnv} with the specified environment map.
-     *
-     * @param env the environment variable map
-     * @return a new ClaudeEnv
-     */
-    ClaudeEnv newClaudeEnv(Map<String, String> env);
   }
 }

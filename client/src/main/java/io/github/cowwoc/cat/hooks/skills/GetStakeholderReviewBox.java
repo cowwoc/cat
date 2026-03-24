@@ -7,7 +7,8 @@
 package io.github.cowwoc.cat.hooks.skills;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -138,7 +139,7 @@ public final class GetStakeholderReviewBox
     String result = args[2];
     String summary = args[3];
 
-    try (JvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
       GetStakeholderReviewBox box = new GetStakeholderReviewBox(scope);
       List<ReviewerStatus> reviewerList = parseReviewers(reviewers);

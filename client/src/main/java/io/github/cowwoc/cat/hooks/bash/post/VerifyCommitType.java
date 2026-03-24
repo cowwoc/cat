@@ -7,7 +7,7 @@
 package io.github.cowwoc.cat.hooks.bash.post;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
-import io.github.cowwoc.cat.hooks.HookInput;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 
 import java.io.IOException;
@@ -61,9 +61,9 @@ public final class VerifyCommitType implements BashHandler
   }
 
   @Override
-  public Result check(HookInput input)
+  public Result check(ClaudeHook scope)
   {
-    String command = input.getCommand();
+    String command = scope.getCommand();
 
     // Only check git commit commands
     if (!command.contains("git commit"))

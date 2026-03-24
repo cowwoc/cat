@@ -9,10 +9,8 @@ package io.github.cowwoc.cat.hooks.test;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.bash.VerifyStateInCommit;
 import org.testng.annotations.Test;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,13 +28,12 @@ public final class VerifyStateInCommitTest
   public void allowsNonCommitCommands() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       VerifyStateInCommit handler = new VerifyStateInCommit();
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "git status", tempDir.toString(), "test-session"));
+        TestUtils.bashHook("git status", tempDir.toString(), "test-session", scope));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -54,13 +51,12 @@ public final class VerifyStateInCommitTest
   public void allowsNonBugfixFeatureCommits() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       VerifyStateInCommit handler = new VerifyStateInCommit();
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "git commit -m \"refactor: clean up code\"", tempDir.toString(), "test-session"));
+        TestUtils.bashHook("git commit -m \"refactor: clean up code\"", tempDir.toString(), "test-session", scope));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -78,14 +74,13 @@ public final class VerifyStateInCommitTest
   public void allowsAmendCommits() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       VerifyStateInCommit handler = new VerifyStateInCommit();
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "git commit --amend -m \"feature: updated feature\"",
-          tempDir.toString(), "test-session"));
+        TestUtils.bashHook("git commit --amend -m \"feature: updated feature\"",
+          tempDir.toString(), "test-session", scope));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -103,7 +98,7 @@ public final class VerifyStateInCommitTest
   public void blocksWhenIndexJsonNotStaged() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeTool scope = new TestClaudeTool(mainRepo, mainRepo))
     {
       Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
@@ -115,12 +110,11 @@ public final class VerifyStateInCommitTest
         Files.writeString(worktreeDir.resolve("some-file.java"), "class Foo {}");
         TestUtils.runGit(worktreeDir, "add", "some-file.java");
 
-        JsonMapper mapper = scope.getJsonMapper();
         VerifyStateInCommit handler = new VerifyStateInCommit();
 
         BashHandler.Result result = handler.check(
-          TestUtils.bashInput(mapper, "git commit -m \"bugfix: fix the thing\"",
-            worktreeDir.toString(), "test-session"));
+          TestUtils.bashHook("git commit -m \"bugfix: fix the thing\"",
+            worktreeDir.toString(), "test-session", scope));
 
         requireThat(result.blocked(), "blocked").isTrue();
         requireThat(result.reason(), "reason").contains("index.json not included");
@@ -144,7 +138,7 @@ public final class VerifyStateInCommitTest
   public void warnsWhenIndexJsonNotClosed() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeTool scope = new TestClaudeTool(mainRepo, mainRepo))
     {
       Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
@@ -162,12 +156,11 @@ public final class VerifyStateInCommitTest
         Files.writeString(worktreeDir.resolve("Foo.java"), "class Foo {}");
         TestUtils.runGit(worktreeDir, "add", "Foo.java");
 
-        JsonMapper mapper = scope.getJsonMapper();
         VerifyStateInCommit handler = new VerifyStateInCommit();
 
         BashHandler.Result result = handler.check(
-          TestUtils.bashInput(mapper, "git commit -m \"feature: add new feature\"",
-            worktreeDir.toString(), "test-session"));
+          TestUtils.bashHook("git commit -m \"feature: add new feature\"",
+            worktreeDir.toString(), "test-session", scope));
 
         requireThat(result.blocked(), "blocked").isFalse();
         requireThat(result.reason(), "reason").contains("closed");
@@ -191,7 +184,7 @@ public final class VerifyStateInCommitTest
   public void noWarnWhenIndexJsonIsClosed() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeTool scope = new TestClaudeTool(mainRepo, mainRepo))
     {
       Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
@@ -209,12 +202,11 @@ public final class VerifyStateInCommitTest
         Files.writeString(worktreeDir.resolve("Foo.java"), "class Foo {}");
         TestUtils.runGit(worktreeDir, "add", "Foo.java");
 
-        JsonMapper mapper = scope.getJsonMapper();
         VerifyStateInCommit handler = new VerifyStateInCommit();
 
         BashHandler.Result result = handler.check(
-          TestUtils.bashInput(mapper, "git commit -m \"feature: add new feature\"",
-            worktreeDir.toString(), "test-session"));
+          TestUtils.bashHook("git commit -m \"feature: add new feature\"",
+            worktreeDir.toString(), "test-session", scope));
 
         requireThat(result.blocked(), "blocked").isFalse();
         requireThat(result.reason(), "reason").isEmpty();
@@ -240,7 +232,7 @@ public final class VerifyStateInCommitTest
   {
     // mainRepo is a regular non-worktree directory (session's working directory)
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeTool scope = new TestClaudeTool(mainRepo, mainRepo))
     {
       Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
@@ -253,14 +245,13 @@ public final class VerifyStateInCommitTest
         Files.writeString(worktreeDir.resolve("some-file.java"), "class Foo {}");
         TestUtils.runGit(worktreeDir, "add", "some-file.java");
 
-        JsonMapper mapper = scope.getJsonMapper();
         VerifyStateInCommit handler = new VerifyStateInCommit();
 
         // workingDirectory is mainRepo (not a CAT worktree), but command has "cd worktreeDir"
         // The handler should detect worktreeDir as the effective directory via cd extraction
         String command = "cd " + worktreeDir + " && git commit -m \"bugfix: fix something\"";
         BashHandler.Result result = handler.check(
-          TestUtils.bashInput(mapper, command, mainRepo.toString(), "test-session"));
+          TestUtils.bashHook(command, mainRepo.toString(), "test-session", scope));
 
         // Since worktreeDir is a CAT worktree and index.json is not staged, it should be blocked
         requireThat(result.blocked(), "blocked").isTrue();
@@ -288,7 +279,7 @@ public final class VerifyStateInCommitTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     // secondDir is a regular repo (NOT a CAT worktree) — the last cd target
     Path secondDir = TestUtils.createTempGitRepo("second-branch");
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeTool scope = new TestClaudeTool(mainRepo, mainRepo))
     {
       Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
@@ -297,7 +288,6 @@ public final class VerifyStateInCommitTest
       Path firstDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-first-issue");
       try
       {
-        JsonMapper mapper = scope.getJsonMapper();
         VerifyStateInCommit handler = new VerifyStateInCommit();
 
         // Command cd's to firstDir (CAT worktree) then to secondDir (regular repo, not a worktree)
@@ -305,7 +295,7 @@ public final class VerifyStateInCommitTest
         String command = "cd " + firstDir + " && cd " + secondDir +
           " && git commit -m \"bugfix: fix something\"";
         BashHandler.Result result = handler.check(
-          TestUtils.bashInput(mapper, command, firstDir.toString(), "test-session"));
+          TestUtils.bashHook(command, firstDir.toString(), "test-session", scope));
 
         // secondDir is not a CAT worktree, so no index.json check → allowed
         requireThat(result.blocked(), "blocked").isFalse();
@@ -330,15 +320,14 @@ public final class VerifyStateInCommitTest
   public void fallsBackToWorkingDirectoryWhenNoCd() throws IOException
   {
     Path tempDir = TestUtils.createTempGitRepo("test-branch");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Regular repo: git dir parent is not "worktrees" → not a CAT worktree → should allow
-      JsonMapper mapper = scope.getJsonMapper();
       VerifyStateInCommit handler = new VerifyStateInCommit();
 
       // No cd in command — working directory is used
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "git commit -m \"bugfix: fix something\"", tempDir.toString(), "test-session"));
+        TestUtils.bashHook("git commit -m \"bugfix: fix something\"", tempDir.toString(), "test-session", scope));
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -356,7 +345,7 @@ public final class VerifyStateInCommitTest
   public void allowsMainWorkspaceCommitsWithClaudeCatDirectory() throws IOException
   {
     Path tempDir = TestUtils.createTempGitRepo("test-branch");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Create .cat directory (present in main workspace but not a CAT worktree)
       // The main workspace has .cat for retrospectives/issues but its git dir parent
@@ -367,11 +356,10 @@ public final class VerifyStateInCommitTest
       Files.writeString(tempDir.resolve("Foo.java"), "class Foo {}");
       TestUtils.runGit(tempDir, "add", "Foo.java");
 
-      JsonMapper mapper = scope.getJsonMapper();
       VerifyStateInCommit handler = new VerifyStateInCommit();
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "git commit -m \"bugfix: fix something\"", tempDir.toString(), "test-session"));
+        TestUtils.bashHook("git commit -m \"bugfix: fix something\"", tempDir.toString(), "test-session", scope));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -389,17 +377,16 @@ public final class VerifyStateInCommitTest
   public void allowsNonWorktreeCommits() throws IOException
   {
     Path tempDir = TestUtils.createTempGitRepo("test-branch");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Regular repo: git dir parent is not "worktrees" → not a CAT worktree
       Files.writeString(tempDir.resolve("Foo.java"), "class Foo {}");
       TestUtils.runGit(tempDir, "add", "Foo.java");
 
-      JsonMapper mapper = scope.getJsonMapper();
       VerifyStateInCommit handler = new VerifyStateInCommit();
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "git commit -m \"feature: add feature\"", tempDir.toString(), "test-session"));
+        TestUtils.bashHook("git commit -m \"feature: add feature\"", tempDir.toString(), "test-session", scope));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -417,7 +404,7 @@ public final class VerifyStateInCommitTest
   public void allowsWhenIndexJsonIsEmpty() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeTool scope = new TestClaudeTool(mainRepo, mainRepo))
     {
       Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
@@ -435,12 +422,11 @@ public final class VerifyStateInCommitTest
         Files.writeString(worktreeDir.resolve("Foo.java"), "class Foo {}");
         TestUtils.runGit(worktreeDir, "add", "Foo.java");
 
-        JsonMapper mapper = scope.getJsonMapper();
         VerifyStateInCommit handler = new VerifyStateInCommit();
 
         BashHandler.Result result = handler.check(
-          TestUtils.bashInput(mapper, "git commit -m \"feature: add feature\"",
-            worktreeDir.toString(), "test-session"));
+          TestUtils.bashHook("git commit -m \"feature: add feature\"",
+            worktreeDir.toString(), "test-session", scope));
 
         requireThat(result.blocked(), "blocked").isFalse();
         requireThat(result.reason(), "reason").isEmpty();
@@ -469,7 +455,7 @@ public final class VerifyStateInCommitTest
   public void warnsWhenIndexJsonHasInvalidJson() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeTool scope = new TestClaudeTool(mainRepo, mainRepo))
     {
       Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
@@ -487,12 +473,11 @@ public final class VerifyStateInCommitTest
         Files.writeString(worktreeDir.resolve("Foo.java"), "class Foo {}");
         TestUtils.runGit(worktreeDir, "add", "Foo.java");
 
-        JsonMapper mapper = scope.getJsonMapper();
         VerifyStateInCommit handler = new VerifyStateInCommit();
 
         BashHandler.Result result = handler.check(
-          TestUtils.bashInput(mapper, "git commit -m \"feature: add feature\"",
-            worktreeDir.toString(), "test-session"));
+          TestUtils.bashHook("git commit -m \"feature: add feature\"",
+            worktreeDir.toString(), "test-session", scope));
 
         // Invalid JSON: isClosedStatus() catches IOException, returns false → warning issued
         requireThat(result.blocked(), "blocked").isFalse();
@@ -518,7 +503,7 @@ public final class VerifyStateInCommitTest
   public void warnsWhenIndexJsonHasMissingStatusField() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeTool scope = new TestClaudeTool(mainRepo, mainRepo))
     {
       Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
@@ -536,12 +521,11 @@ public final class VerifyStateInCommitTest
         Files.writeString(worktreeDir.resolve("Foo.java"), "class Foo {}");
         TestUtils.runGit(worktreeDir, "add", "Foo.java");
 
-        JsonMapper mapper = scope.getJsonMapper();
         VerifyStateInCommit handler = new VerifyStateInCommit();
 
         BashHandler.Result result = handler.check(
-          TestUtils.bashInput(mapper, "git commit -m \"feature: add feature\"",
-            worktreeDir.toString(), "test-session"));
+          TestUtils.bashHook("git commit -m \"feature: add feature\"",
+            worktreeDir.toString(), "test-session", scope));
 
         // Missing status field: statusNode is null → isClosedStatus() returns false → warning issued
         requireThat(result.blocked(), "blocked").isFalse();
@@ -566,7 +550,7 @@ public final class VerifyStateInCommitTest
   public void warnsWhenIndexJsonHasInvalidStatus() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeTool scope = new TestClaudeTool(mainRepo, mainRepo))
     {
       Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
@@ -584,12 +568,11 @@ public final class VerifyStateInCommitTest
         Files.writeString(worktreeDir.resolve("Foo.java"), "class Foo {}");
         TestUtils.runGit(worktreeDir, "add", "Foo.java");
 
-        JsonMapper mapper = scope.getJsonMapper();
         VerifyStateInCommit handler = new VerifyStateInCommit();
 
         BashHandler.Result result = handler.check(
-          TestUtils.bashInput(mapper, "git commit -m \"feature: add feature\"",
-            worktreeDir.toString(), "test-session"));
+          TestUtils.bashHook("git commit -m \"feature: add feature\"",
+            worktreeDir.toString(), "test-session", scope));
 
         // "unknown" is not IssueStatus.CLOSED, so warning is expected
         requireThat(result.blocked(), "blocked").isFalse();
@@ -614,7 +597,7 @@ public final class VerifyStateInCommitTest
   public void warnsWhenIndexJsonHasInProgressStatus() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeTool scope = new TestClaudeTool(mainRepo, mainRepo))
     {
       Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
@@ -630,12 +613,11 @@ public final class VerifyStateInCommitTest
         Files.writeString(worktreeDir.resolve("Foo.java"), "class Foo {}");
         TestUtils.runGit(worktreeDir, "add", "Foo.java");
 
-        JsonMapper mapper = scope.getJsonMapper();
         VerifyStateInCommit handler = new VerifyStateInCommit();
 
         BashHandler.Result result = handler.check(
-          TestUtils.bashInput(mapper, "git commit -m \"feature: add feature\"",
-            worktreeDir.toString(), "test-session"));
+          TestUtils.bashHook("git commit -m \"feature: add feature\"",
+            worktreeDir.toString(), "test-session", scope));
 
         requireThat(result.blocked(), "blocked").isFalse();
         requireThat(result.reason(), "reason").contains("closed");
@@ -659,7 +641,7 @@ public final class VerifyStateInCommitTest
   public void warnsWhenIndexJsonHasBlockedStatus() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeTool scope = new TestClaudeTool(mainRepo, mainRepo))
     {
       Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
       Files.createDirectories(worktreesDir);
@@ -675,12 +657,11 @@ public final class VerifyStateInCommitTest
         Files.writeString(worktreeDir.resolve("Foo.java"), "class Foo {}");
         TestUtils.runGit(worktreeDir, "add", "Foo.java");
 
-        JsonMapper mapper = scope.getJsonMapper();
         VerifyStateInCommit handler = new VerifyStateInCommit();
 
         BashHandler.Result result = handler.check(
-          TestUtils.bashInput(mapper, "git commit -m \"feature: add feature\"",
-            worktreeDir.toString(), "test-session"));
+          TestUtils.bashHook("git commit -m \"feature: add feature\"",
+            worktreeDir.toString(), "test-session", scope));
 
         requireThat(result.blocked(), "blocked").isFalse();
         requireThat(result.reason(), "reason").contains("closed");
@@ -708,14 +689,13 @@ public final class VerifyStateInCommitTest
     // The isInCatWorktree() method catches IOException and returns false → Result.allow()
     Path nonExistentDir = Path.of("/tmp/non-existent-directory-" + System.nanoTime());
     Path tempDir = Files.createTempDirectory("vsic-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       VerifyStateInCommit handler = new VerifyStateInCommit();
 
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "git commit -m \"bugfix: fix something\"",
-          nonExistentDir.toString(), "test-session"));
+        TestUtils.bashHook("git commit -m \"bugfix: fix something\"",
+          nonExistentDir.toString(), "test-session", scope));
 
       // When git command fails, isInCatWorktree() returns false → allow
       requireThat(result.blocked(), "blocked").isFalse();

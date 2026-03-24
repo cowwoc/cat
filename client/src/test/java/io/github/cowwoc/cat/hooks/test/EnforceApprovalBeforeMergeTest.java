@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.hooks.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+
 import io.github.cowwoc.cat.hooks.TaskHandler;
 import io.github.cowwoc.cat.hooks.task.EnforceApprovalBeforeMerge;
 import org.testng.annotations.Test;
@@ -53,7 +53,7 @@ public final class EnforceApprovalBeforeMergeTest
    * @param content the JSONL content to write
    * @throws IOException if the session file cannot be written
    */
-  private static void writeSessionFile(JvmScope scope, String sessionId, String content)
+  private static void writeSessionFile(TestClaudeHook scope, String sessionId, String content)
     throws IOException
   {
     Path sessionDir = scope.getClaudeSessionsPath();
@@ -86,7 +86,7 @@ public final class EnforceApprovalBeforeMergeTest
   public void approveAndMergeInUserMessageAllows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-approval-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");
@@ -118,7 +118,7 @@ public final class EnforceApprovalBeforeMergeTest
   public void approvedMergeInUserMessageAllows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-approval-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");
@@ -150,7 +150,7 @@ public final class EnforceApprovalBeforeMergeTest
   public void approveAloneInUserMessageBlocks() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-approval-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");
@@ -182,7 +182,7 @@ public final class EnforceApprovalBeforeMergeTest
   public void approveAndMergeInAssistantMessageBlocks() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-approval-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");
@@ -214,7 +214,7 @@ public final class EnforceApprovalBeforeMergeTest
   public void askUserQuestionApprovalFlowAllows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-approval-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");
@@ -245,7 +245,7 @@ public final class EnforceApprovalBeforeMergeTest
   public void highTrustAlwaysAllows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-approval-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "high");
@@ -272,7 +272,7 @@ public final class EnforceApprovalBeforeMergeTest
   public void nonMergeSubagentTypeAllows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-approval-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");
@@ -300,7 +300,7 @@ public final class EnforceApprovalBeforeMergeTest
   public void approveMergeWithoutAndInUserMessageAllows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-approval-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");
@@ -330,7 +330,7 @@ public final class EnforceApprovalBeforeMergeTest
   public void missingSessionFileBlocks() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-approval-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");
@@ -358,7 +358,7 @@ public final class EnforceApprovalBeforeMergeTest
   public void lowTrustWithoutApprovalBlocks() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-approval-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "low");
@@ -388,7 +388,7 @@ public final class EnforceApprovalBeforeMergeTest
   public void reverseKeywordOrderAllows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-approval-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");
@@ -420,7 +420,7 @@ public final class EnforceApprovalBeforeMergeTest
   public void negationWithBothKeywordsBlocks() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-approval-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");
@@ -452,7 +452,7 @@ public final class EnforceApprovalBeforeMergeTest
   public void discussionWithBothKeywordsBlocks() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-approval-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");
@@ -482,7 +482,7 @@ public final class EnforceApprovalBeforeMergeTest
   public void capitalizedApproveAndMergeAllows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-approval-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");
@@ -513,7 +513,7 @@ public final class EnforceApprovalBeforeMergeTest
   public void plainStringContentFormatAllows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-approval-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");
@@ -548,7 +548,7 @@ public final class EnforceApprovalBeforeMergeTest
   public void askUserQuestionToolResultApprovalAllows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-approval-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");
@@ -588,7 +588,7 @@ public final class EnforceApprovalBeforeMergeTest
   public void skillToolInvocationWithoutApprovalBlocks() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-approval-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");
@@ -622,7 +622,7 @@ public final class EnforceApprovalBeforeMergeTest
   public void skillToolInvocationWithApprovalAllows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-approval-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");
@@ -655,7 +655,7 @@ public final class EnforceApprovalBeforeMergeTest
   public void skillToolNonMergeSkillAllows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-approval-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       writeCatConfig(tempDir, "medium");

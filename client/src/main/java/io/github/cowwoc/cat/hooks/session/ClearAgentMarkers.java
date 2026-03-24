@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.hooks.session;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.util.FileUtils;
 import io.github.cowwoc.cat.hooks.util.GetSkill;
 
@@ -36,7 +36,7 @@ import java.util.List;
  */
 public final class ClearAgentMarkers
 {
-  private final JvmScope scope;
+  private final ClaudeHook scope;
 
   /**
    * Creates a new ClearAgentMarkers.
@@ -44,7 +44,7 @@ public final class ClearAgentMarkers
    * @param scope the JVM scope providing the session base path
    * @throws NullPointerException if {@code scope} is null
    */
-  public ClearAgentMarkers(JvmScope scope)
+  public ClearAgentMarkers(ClaudeHook scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
