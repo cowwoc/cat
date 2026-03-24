@@ -8,12 +8,20 @@ sequence: 2 of 5
 
 ## Objective
 
-Remove `getClaudeSessionId()`, `getProjectPath()`, `getClaudePluginRoot()`, and `getClaudeEnvFile()`
-from the `JvmScope` interface and their implementations in `MainJvmScope` and `TestJvmScope`.
+Remove `getClaudeConfigDir()`, `getClaudeSessionsPath()`, and `getClaudeSessionPath()` from the
+`JvmScope` interface and from `AbstractJvmScope`. Add these methods to both `ClaudeTool` and
+`ClaudeHook` interfaces. Move the implementations from `AbstractJvmScope` to `AbstractClaudeTool`
+and `AbstractClaudeHook`.
+
+## Background
+
+Waves 1 and 5 (creating `ClaudeHook`, `ClaudeTool`, `AbstractClaudeHook`, `AbstractClaudeTool`,
+`MainClaudeTool`, `TestClaudeTool`) were implemented as part of `2.1-jvmenv-w1-claudeenv`. The
+remaining claude-specific methods in `JvmScope` are the three path methods listed above.
 
 ## Dependencies
 
-- `2.1-jvmenv-w1-claudeenv` must be merged first (`getClaudeEnv()` accessor must exist)
+- `2.1-jvmenv-w1-claudeenv` is already closed and merged into v2.1
 
 ## Scope
 
@@ -21,35 +29,55 @@ from the `JvmScope` interface and their implementations in `MainJvmScope` and `T
 
 File: `client/src/main/java/io/github/cowwoc/cat/hooks/JvmScope.java`
 
-- Remove declarations of `getClaudeSessionId()`, `getProjectPath()`, `getClaudePluginRoot()`,
-  `getClaudeEnvFile()`.
+- Remove declarations of `getClaudeConfigDir()`, `getClaudeSessionsPath()`, and
+  `getClaudeSessionPath(String sessionId)`.
 
-### MainClaudeTool
+### AbstractJvmScope
 
-File: `client/src/main/java/io/github/cowwoc/cat/hooks/MainClaudeTool.java`
+File: `client/src/main/java/io/github/cowwoc/cat/hooks/AbstractJvmScope.java`
 
-- Remove `ConcurrentLazyReference` fields `claudeProjectPath`, `claudePluginRoot`, `claudeSessionId`,
-  `claudeEnvFile` and their `@Override` methods.
-- Change the constructor to call `super(new ClaudeEnv())`.
+- Remove the concrete `getClaudeConfigDir()`, `getClaudeSessionsPath()`, and
+  `getClaudeSessionPath(String sessionId)` implementations. These move to `AbstractClaudeTool`
+  and `AbstractClaudeHook`.
 
-### TestClaudeTool
+### ClaudeTool interface
 
-File: `client/src/test/java/io/github/cowwoc/cat/hooks/test/TestClaudeTool.java`
+File: `client/src/main/java/io/github/cowwoc/cat/hooks/ClaudeTool.java`
 
-- Remove `@Override getProjectPath()`, `@Override getClaudePluginRoot()`,
-  `@Override getClaudeSessionId()`, `@Override getClaudeEnvFile()` method bodies and their backing
-  fields (`claudeProjectPath`, `claudePluginRoot`, `claudeSessionId`, `claudeEnvFile`).
-- In each constructor, build a `Map<String, String>` from the constructor parameters and pass
-  `SharedSecrets.newClaudeEnv(map)` to `super()`. Map keys:
-  - `CLAUDE_PROJECT_DIR` → `claudeProjectPath.toString()`
-  - `CLAUDE_PLUGIN_ROOT` → `claudePluginRoot.toString()`
-  - `CLAUDE_SESSION_ID` → `claudeSessionId` (default: `"test-session"`)
-  - `CLAUDE_ENV_FILE` → `claudeEnvFile.toString()`
-- Keep all existing constructor signatures unchanged.
+- Add declarations:
+  - `Path getClaudeConfigDir()`
+  - `Path getClaudeSessionsPath()`
+  - `Path getClaudeSessionPath(String sessionId)`
+
+### AbstractClaudeTool
+
+File: `client/src/main/java/io/github/cowwoc/cat/hooks/AbstractClaudeTool.java`
+
+- Add concrete implementations of `getClaudeConfigDir()`, `getClaudeSessionsPath()`, and
+  `getClaudeSessionPath(String sessionId)` (moved from `AbstractJvmScope`).
+
+### ClaudeHook interface
+
+File: `client/src/main/java/io/github/cowwoc/cat/hooks/ClaudeHook.java`
+
+- Add declarations:
+  - `Path getClaudeConfigDir()`
+  - `Path getClaudeSessionsPath()`
+  - `Path getClaudeSessionPath(String sessionId)`
+
+### AbstractClaudeHook
+
+File: `client/src/main/java/io/github/cowwoc/cat/hooks/AbstractClaudeHook.java`
+
+- `getClaudeConfigDir()` is already implemented here (line 206) — no change needed.
+- Add concrete implementations of `getClaudeSessionsPath()` and `getClaudeSessionPath(String sessionId)`
+  (moved from `AbstractJvmScope`).
 
 ## Post-conditions
 
-- [ ] No method named `getClaudeSessionId`, `getProjectPath`, `getClaudePluginRoot`, or
-  `getClaudeEnvFile` exists in `JvmScope`, `MainClaudeTool`, or `TestClaudeTool`
-- [ ] `MainClaudeTool` and `TestClaudeTool` pass a `ClaudeEnv` to `AbstractJvmScope` via `super()`
-- [ ] Code compiles (call sites in Wave 3/4 are updated next)
+- [ ] `JvmScope` declares no method named `getClaudeConfigDir`, `getClaudeSessionsPath`, or
+  `getClaudeSessionPath`
+- [ ] `AbstractJvmScope` contains no implementation of these three methods
+- [ ] `ClaudeTool` and `ClaudeHook` declare all three methods
+- [ ] `AbstractClaudeTool` and `AbstractClaudeHook` implement all three methods
+- [ ] Code compiles (call sites are updated in Wave 3/4)
