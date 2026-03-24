@@ -8,63 +8,55 @@ sequence: 3 of 5
 
 ## Objective
 
-Update all main-source call sites to use the new `scope.getClaudeEnv()` accessor instead of
-the removed scope methods.
+Update all main-source call sites where `scope` is typed as `JvmScope` but calls
+`getClaudeConfigDir()`, `getClaudeSessionsPath()`, or `getClaudeSessionPath()`. After Wave 2,
+these methods no longer exist on `JvmScope` and the parameter types must be widened to
+`ClaudeTool` or `ClaudeHook` as appropriate.
 
 ## Dependencies
 
 - `2.1-jvmenv-w2-interface` must be merged first
 
-## Substitutions
+## Strategy
 
-For each file listed below:
-- `scope.getClaudeSessionId()` → `scope.getClaudeEnv().getSessionId()`
-- `scope.getProjectPath()` → `scope.getClaudeEnv().getProjectPath()`
-- `scope.getClaudePluginRoot()` → `scope.getClaudeEnv().getPluginRoot()`
-- `scope.getClaudeEnvFile()` → `scope.getClaudeEnv().getEnvFile()`
+For each file below, change the parameter type of the `scope` argument from `JvmScope` (or
+`AbstractJvmScope`) to the narrowest supertype that provides the needed method:
+
+- If the class handles hook execution (receives a `ClaudeHook` at call site): use `ClaudeHook`
+- If the class is invoked as a skill CLI tool (receives a `ClaudeTool` at call site): use `ClaudeTool`
+- If the class is used in both contexts: use the narrowest common supertype, or split the method
 
 ## Files to Update
 
-- `client/src/main/java/io/github/cowwoc/cat/hooks/write/WarnBaseBranchEdit.java` (3 occurrences of getProjectPath)
-- `client/src/main/java/io/github/cowwoc/cat/hooks/write/EnforceWorktreePathIsolation.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/SessionEndHook.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/task/EnforceApprovalBeforeMerge.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/task/EnforceCollectAfterAgent.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/task/EnforceCommitBeforeSubagentSpawn.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/util/WorkPrepare.java` (getClaudeSessionId + 2x getProjectPath)
-- `client/src/main/java/io/github/cowwoc/cat/hooks/util/SkillDiscovery.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/util/IssueDiscovery.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/util/RecordLearning.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/util/RootCauseAnalyzer.java` (verify if already uses ClaudeEnv)
-- `client/src/main/java/io/github/cowwoc/cat/hooks/util/MergeAndCleanup.java`
+### Uses getClaudeConfigDir()
+
+- `client/src/main/java/io/github/cowwoc/cat/hooks/util/SkillDiscovery.java` (2 occurrences)
+- `client/src/main/java/io/github/cowwoc/cat/hooks/tool/post/DetectTokenThreshold.java`
+
+### Uses getClaudeSessionsPath()
+
+- `client/src/main/java/io/github/cowwoc/cat/hooks/util/SessionAnalyzer.java`
 - `client/src/main/java/io/github/cowwoc/cat/hooks/util/GetSkill.java`
 - `client/src/main/java/io/github/cowwoc/cat/hooks/util/InvestigationContextExtractor.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/licensing/Entitlements.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/licensing/LicenseValidator.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/bash/BlockWorktreeIsolationViolation.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/bash/BlockMainRebase.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/bash/BlockUnsafeRemoval.java`
+- `client/src/main/java/io/github/cowwoc/cat/hooks/util/RecordLearning.java`
+- `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetSubagentStatusOutput.java` (2 occurrences)
+- `client/src/main/java/io/github/cowwoc/cat/hooks/skills/EmpiricalTestRunner.java`
+- `client/src/main/java/io/github/cowwoc/cat/hooks/EnforceStatusOutput.java`
 - `client/src/main/java/io/github/cowwoc/cat/hooks/bash/BlockUnauthorizedMergeCleanup.java`
 - `client/src/main/java/io/github/cowwoc/cat/hooks/bash/RequireSkillForCommand.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetNextIssueOutput.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetStatuslineOutput.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetAddOutput.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetCheckpointOutput.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetStatusOutput.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetWorkOutput.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetCleanupOutput.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetConfigOutput.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetTokenReportOutput.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/skills/DisplayUtils.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/session/InjectSubAgentRules.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/session/InjectMainAgentRules.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/session/InjectEnv.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/session/CheckDataMigration.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/session/CheckUpdateAvailable.java`
+- `client/src/main/java/io/github/cowwoc/cat/hooks/ask/WarnApprovalWithoutRenderDiff.java`
+- `client/src/main/java/io/github/cowwoc/cat/hooks/tool/post/AutoLearnMistakes.java`
+- `client/src/main/java/io/github/cowwoc/cat/hooks/tool/post/DetectValidationWithoutEvidence.java`
+- `client/src/main/java/io/github/cowwoc/cat/hooks/tool/post/DetectAssistantGivingUp.java`
+- `client/src/main/java/io/github/cowwoc/cat/hooks/task/EnforceApprovalBeforeMerge.java`
+
+### Uses getClaudeSessionPath()
+
 - `client/src/main/java/io/github/cowwoc/cat/hooks/session/SessionEndHandler.java`
+- `client/src/main/java/io/github/cowwoc/cat/hooks/session/WarnUnknownTerminal.java`
 
 ## Post-conditions
 
-- [ ] No call site in `client/src/main/` references `scope.getClaudeSessionId()`,
-  `scope.getProjectPath()`, `scope.getClaudePluginRoot()`, or `scope.getClaudeEnvFile()`
+- [ ] No call site in `client/src/main/` calls `scope.getClaudeConfigDir()`,
+  `scope.getClaudeSessionsPath()`, or `scope.getClaudeSessionPath()` on a `JvmScope`-typed variable
 - [ ] Code compiles
