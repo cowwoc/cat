@@ -10,7 +10,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.WorktreeContext;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 import tools.jackson.databind.JsonNode;
@@ -69,7 +69,7 @@ public final class WarnBaseBranchEdit implements FileWriteHandler
     "retrospectives-",
     "index.json");
 
-  private final JvmScope scope;
+  private final ClaudeHook scope;
 
   /**
    * Creates a new WarnBaseBranchEdit instance.
@@ -77,7 +77,7 @@ public final class WarnBaseBranchEdit implements FileWriteHandler
    * @param scope the JVM scope providing project directory configuration
    * @throws NullPointerException if {@code scope} is null
    */
-  public WarnBaseBranchEdit(JvmScope scope)
+  public WarnBaseBranchEdit(ClaudeHook scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;

@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 import io.github.cowwoc.cat.hooks.util.TrustLevel;
 import io.github.cowwoc.cat.hooks.util.WorkPrepare;
@@ -51,7 +51,7 @@ public class WorkPrepareTest
   public void executeReturnsErrorWhenNoCatStructure() throws IOException
   {
     Path projectPath = Files.createTempDirectory("work-prepare-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       WorkPrepare prepare = new WorkPrepare(scope);
       PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "", "", TrustLevel.MEDIUM);
@@ -79,7 +79,7 @@ public class WorkPrepareTest
   public void executeReturnsNoIssuesWhenNoExecutableIssues() throws IOException
   {
     Path projectPath = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // Create a closed issue only
       createIssue(projectPath, "2", "1", "done-feature", "closed");
@@ -111,7 +111,7 @@ public class WorkPrepareTest
   public void executeReturnsOversizedWhenTokensExceedLimit() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "huge-feature", "open");
       createOversizedPlan(projectPath, "2", "1", "huge-feature");
@@ -146,7 +146,7 @@ public class WorkPrepareTest
   public void executeReturnsCorruptWhenIndexJsonExistsButNoPlanMd() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // Create issue directory with only index.json (no plan.md) — simulates a corrupt directory
       Path issueDir = projectPath.resolve(".cat").resolve("issues").
@@ -189,7 +189,7 @@ public class WorkPrepareTest
   public void executeReleasesLockOnOversizedReturn() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "huge-feature", "open");
       createOversizedPlan(projectPath, "2", "1", "huge-feature");
@@ -228,7 +228,7 @@ public class WorkPrepareTest
   public void executeReleasesLockOnCorruptReturn() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // Create issue directory with only index.json (no plan.md) — simulates a corrupt directory
       Path issueDir = projectPath.resolve(".cat").resolve("issues").
@@ -273,7 +273,7 @@ public class WorkPrepareTest
   public void executeDoesNotThrowWhenCalledTwiceOnOversizedIssue() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "huge-feature", "open");
       createOversizedPlan(projectPath, "2", "1", "huge-feature");
@@ -313,7 +313,7 @@ public class WorkPrepareTest
   public void executeDoesNotThrowWhenCalledTwiceOnCorruptIssue() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // Create issue directory with only index.json (no plan.md) — simulates a corrupt directory
       Path issueDir = projectPath.resolve(".cat").resolve("issues").
@@ -357,7 +357,7 @@ public class WorkPrepareTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "my-feature", "open");
       GitCommands.runGit(projectPath, "add", ".");
@@ -405,7 +405,7 @@ public class WorkPrepareTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "my-feature", "open");
       GitCommands.runGit(projectPath, "add", ".");
@@ -447,7 +447,7 @@ public class WorkPrepareTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "first-feature", "open");
       createIssue(projectPath, "2", "1", "second-feature", "open");
@@ -485,7 +485,7 @@ public class WorkPrepareTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "fix-bug", "open");
       GitCommands.runGit(projectPath, "add", ".");
@@ -520,7 +520,7 @@ public class WorkPrepareTest
   public void executeReturnsNoIssuesWhenAllIssuesExcluded() throws IOException
   {
     Path projectPath = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "compress-feature", "open");
 
@@ -549,7 +549,7 @@ public class WorkPrepareTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "my-feature", "open");
       createSimplePlan(projectPath, "2", "1", "my-feature");
@@ -588,7 +588,7 @@ public class WorkPrepareTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "my-feature", "open");
       createPlanWithGoal(projectPath, "2", "1", "my-feature", "Implement the best feature ever");
@@ -627,7 +627,7 @@ public class WorkPrepareTest
   public void executeReturnsLockedWhenReasonContainsLocked() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "locked-feature", "open");
       GitCommands.runGit(projectPath, "add", ".");
@@ -680,7 +680,7 @@ public class WorkPrepareTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "locked-with-wt", "open");
       GitCommands.runGit(projectPath, "add", ".");
@@ -742,7 +742,7 @@ public class WorkPrepareTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "resume-feature", "open");
       GitCommands.runGit(projectPath, "add", ".");
@@ -788,7 +788,7 @@ public class WorkPrepareTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "suspicious-feature", "open");
       GitCommands.runGit(projectPath, "add", ".");
@@ -833,7 +833,7 @@ public class WorkPrepareTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "fresh-feature", "open");
       GitCommands.runGit(projectPath, "add", ".");
@@ -873,7 +873,7 @@ public class WorkPrepareTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "no-goal", "open");
 
@@ -922,7 +922,7 @@ public class WorkPrepareTest
   public void executeReturnsNoIssuesWithBlockedIssuesDiagnostic() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // Create a dependency issue that is open (not closed)
       createIssue(projectPath, "2", "1", "dependency-issue", "open");
@@ -977,7 +977,7 @@ public class WorkPrepareTest
   public void executeReturnsOversizedAtTokenBoundary() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "boundary-feature", "open");
 
@@ -1025,7 +1025,7 @@ public class WorkPrepareTest
   public void runReturnsErrorStatusWhenExecuteThrowsIOException() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // Create an issue so execute() attempts lock acquisition
       createIssue(projectPath, "2", "1", "my-feature", "open");
@@ -1044,7 +1044,7 @@ public class WorkPrepareTest
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
 
-      // Pass a valid UUID as session-id — TestJvmScope returns "test-session" which IssueLock
+      // Pass a valid UUID as session-id — TestClaudeTool returns "test-session" which IssueLock
       // rejects as non-UUID. run() uses --session-id when present, overriding the scope value.
       String sessionId = UUID.randomUUID().toString();
       WorkPrepare.run(scope, new String[]{"--session-id", sessionId}, out);
@@ -1074,7 +1074,7 @@ public class WorkPrepareTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "my-feature", "open");
       GitCommands.runGit(projectPath, "add", ".");
@@ -1326,7 +1326,7 @@ public class WorkPrepareTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // Create an issue with a bare name
       createIssue(projectPath, "2", "1", "fix-bug", "open");
@@ -1371,7 +1371,7 @@ public class WorkPrepareTest
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath1 = null;
     Path worktreePath2 = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // Create a bare-named issue
       createIssue(projectPath, "2", "1", "fix-bug", "open");
@@ -1435,7 +1435,7 @@ public class WorkPrepareTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // Create an issue with a bare name
       createIssue(projectPath, "2", "1", "fix-bug", "open");
@@ -1482,7 +1482,7 @@ public class WorkPrepareTest
   public void diagnosticAccurateWithMoreThan333Issues() throws IOException
   {
     Path projectPath = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // Create 350 issues to exceed the old 1000-entry limit (each issue has ~3 files)
       // Issues are distributed across multiple minor versions for realism
@@ -1535,7 +1535,7 @@ public class WorkPrepareTest
   public void diagnosticScanCompletesWithoutErrorFor400Issues() throws IOException
   {
     Path projectPath = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // Create 400 issues — enough to have exceeded the old 1000 file limit
       for (int i = 0; i < 400; ++i)
@@ -1571,7 +1571,7 @@ public class WorkPrepareTest
   public void diagnosticReportsSimpleCircularDependency() throws IOException
   {
     Path projectPath = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // A depends on B, B depends on A — simple cycle
       createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "2.1-issue-b");
@@ -1620,7 +1620,7 @@ public class WorkPrepareTest
   public void diagnosticReportsComplexCircularDependency() throws IOException
   {
     Path projectPath = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // A -> B -> C -> A (3-node cycle)
       createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "2.1-issue-b");
@@ -1670,7 +1670,7 @@ public class WorkPrepareTest
   public void diagnosticDoesNotReportNonCircularDependencies() throws IOException
   {
     Path projectPath = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // Linear chain: A depends on B, B depends on C (no cycle)
       createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "2.1-issue-b");
@@ -1711,7 +1711,7 @@ public class WorkPrepareTest
   public void buildIssueIndexThrowsWhenScanLimitExceeded() throws IOException
   {
     Path projectPath = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // Create 2 issues sharing the same version dirs: issuesDir + v2 + v2.1 + 2*(dir+index.json) = 7 entries
       createIssue(projectPath, "2", "1", "issue-alpha", "closed");
@@ -1743,7 +1743,7 @@ public class WorkPrepareTest
   public void detectCyclesThrowsWhenDepthLimitExceeded() throws IOException
   {
     Path projectPath = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // issue-a depends on issue-b; with maxDepth=0 the first recursive call (depth=1) triggers
       createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "2.1-issue-b");
@@ -1771,7 +1771,7 @@ public class WorkPrepareTest
   public void detectCyclesSucceedsAtDepthLimit() throws IOException
   {
     Path projectPath = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // Build a linear chain: issue-0 -> ... -> issue-5 (6 nodes, max depth = 5 == limit, no throw)
       createIssueWithDependencies(projectPath, "2", "1", "issue-0", "open", "2.1-issue-1");
@@ -1810,7 +1810,7 @@ public class WorkPrepareTest
   public void diagnosticDetectsCycleThroughDecomposedParent() throws IOException
   {
     Path projectPath = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // A depends on decomposed B (which has sub-issue C depending on A)
       createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "2.1-issue-b");
@@ -1861,7 +1861,7 @@ public class WorkPrepareTest
   public void diagnosticDetectsCycleThroughNestedDecomposedParents() throws IOException
   {
     Path projectPath = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // A -> B(decomposed->C) -> C(decomposed->D) -> D -> A
       createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "2.1-issue-b");
@@ -1911,7 +1911,7 @@ public class WorkPrepareTest
   public void diagnosticNoFalsePositiveWithDecomposedParent() throws IOException
   {
     Path projectPath = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // A depends on decomposed B; B has sub-issue C; C has no further deps
       createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "2.1-issue-b");
@@ -1946,7 +1946,7 @@ public class WorkPrepareTest
   public void diagnosticDetectsBothDirectAndDecomposedCycles() throws IOException
   {
     Path projectPath = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // Direct cycle: issue-x depends on issue-y, issue-y depends on issue-x
       createIssueWithDependencies(projectPath, "2", "1", "issue-x", "open", "2.1-issue-y");
@@ -2007,7 +2007,7 @@ public class WorkPrepareTest
   public void diagnosticResolvesAmbiguousSubIssueToAllCandidates() throws IOException
   {
     Path projectPath = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // A depends on decomposed B; B lists fully-qualified "2.1-issue-sub" which cycles back to A
       createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "2.1-issue-b");
@@ -2061,7 +2061,7 @@ public class WorkPrepareTest
   public void diagnosticDetectsDirectCycleThroughAmbiguousDependency() throws IOException
   {
     Path projectPath = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // issue-a depends on bare name "shared-dep" (ambiguous: matches both 2.0 and 2.1 versions)
       createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "shared-dep");
@@ -2112,7 +2112,7 @@ public class WorkPrepareTest
   public void diagnosticSkipsMalformedDecomposedEntries() throws IOException
   {
     Path projectPath = createTempCatProject();
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // B is a decomposed parent with one valid and several malformed entries
       createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "2.1-issue-b");
@@ -2204,7 +2204,7 @@ public class WorkPrepareTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // Create issue with only plan.md - no index.json
       Path issueDir = projectPath.resolve(".cat").resolve("issues").
@@ -2247,7 +2247,7 @@ public class WorkPrepareTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // Create issue with only plan.md - no index.json
       Path issueDir = projectPath.resolve(".cat").resolve("issues").
@@ -2305,7 +2305,7 @@ public class WorkPrepareTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // Commit plan.md but NOT index.json — simulates an untracked issue directory
       Path issueDir = projectPath.resolve(".cat").resolve("issues").
@@ -2358,7 +2358,7 @@ public class WorkPrepareTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // Create issue with index.json that has no status field
       Path issueDir = projectPath.resolve(".cat").resolve("issues").
@@ -2402,7 +2402,7 @@ public class WorkPrepareTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       Path issueDir = projectPath.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("worktree-path-issue");
@@ -2703,7 +2703,7 @@ public class WorkPrepareTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "my-feature", "open");
       GitCommands.runGit(projectPath, "add", ".");
@@ -2750,7 +2750,7 @@ public class WorkPrepareTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "my-feature", "open");
       GitCommands.runGit(projectPath, "add", ".");
@@ -2795,7 +2795,7 @@ public class WorkPrepareTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "my-feature", "open");
 
@@ -2848,7 +2848,7 @@ public class WorkPrepareTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "glob-feature", "open");
 
@@ -2908,7 +2908,7 @@ public class WorkPrepareTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "glob-feature", "open");
 
@@ -2968,7 +2968,7 @@ public class WorkPrepareTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "glob-feature", "open");
 
@@ -3028,7 +3028,7 @@ public class WorkPrepareTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "glob-feature", "open");
 
@@ -3088,7 +3088,7 @@ public class WorkPrepareTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "glob-feature", "open");
 
@@ -3151,7 +3151,7 @@ public class WorkPrepareTest
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssue(projectPath, "2", "1", "my-feature", "open");
       GitCommands.runGit(projectPath, "add", ".");
@@ -3198,7 +3198,7 @@ public class WorkPrepareTest
     Path worktreePath = null;
     try
     {
-      try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+      try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
       {
         // Create only the PLAN.md for the parent (createOversizedPlan writes only PLAN.md)
         createOversizedPlan(projectPath, "2", "1", "big-parent");
@@ -3250,7 +3250,7 @@ public class WorkPrepareTest
   public void toErrorJsonEscapesEmbeddedDoubleQuote() throws IOException
   {
     Path tempDir = Files.createTempDirectory("work-prepare-json-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String json = WorkPrepare.toErrorJson(scope, "error: field \"name\" is invalid");
 
@@ -3274,7 +3274,7 @@ public class WorkPrepareTest
   public void toErrorJsonEscapesEmbeddedBackslash() throws IOException
   {
     Path tempDir = Files.createTempDirectory("work-prepare-json-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String json = WorkPrepare.toErrorJson(scope, "path: C:\\Users\\foo");
 
@@ -3298,7 +3298,7 @@ public class WorkPrepareTest
   public void toErrorJsonEscapesEmbeddedNewline() throws IOException
   {
     Path tempDir = Files.createTempDirectory("work-prepare-json-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String json = WorkPrepare.toErrorJson(scope, "line1\nline2");
 
@@ -3322,7 +3322,7 @@ public class WorkPrepareTest
   public void toErrorJsonEscapesEmbeddedTab() throws IOException
   {
     Path tempDir = Files.createTempDirectory("work-prepare-json-test");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String json = WorkPrepare.toErrorJson(scope, "col1\tcol2");
 

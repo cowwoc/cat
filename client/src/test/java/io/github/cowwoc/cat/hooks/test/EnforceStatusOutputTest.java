@@ -7,7 +7,6 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.EnforceStatusOutput;
-import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
@@ -66,14 +65,13 @@ public final class EnforceStatusOutputTest
   public void stopHookActiveWithBoxPresent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path transcriptFile = tempDir.resolve("transcript.jsonl");
       writeTranscriptWithBox(transcriptFile);
 
-      HookOutput hookOutput = new HookOutput(scope);
-      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), true, hookOutput, "", null);
+      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), true, scope, "", null);
 
       requireThat(result.trim(), "result").isEqualTo("{}");
     }
@@ -93,14 +91,13 @@ public final class EnforceStatusOutputTest
   public void stopHookActiveWithBoxMissing() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path transcriptFile = tempDir.resolve("transcript.jsonl");
       writeTranscriptWithoutBox(transcriptFile);
 
-      HookOutput hookOutput = new HookOutput(scope);
-      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), true, hookOutput, "", null);
+      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), true, scope, "", null);
 
       JsonNode resultNode = mapper.readTree(result);
       requireThat(resultNode.get("decision").asString(), "decision").isEqualTo("block");
@@ -122,14 +119,13 @@ public final class EnforceStatusOutputTest
   public void firstAttemptWithBoxPresent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path transcriptFile = tempDir.resolve("transcript.jsonl");
       writeTranscriptWithBox(transcriptFile);
 
-      HookOutput hookOutput = new HookOutput(scope);
-      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), false, hookOutput, "", null);
+      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), false, scope, "", null);
 
       requireThat(result.trim(), "result").isEqualTo("{}");
     }
@@ -149,14 +145,13 @@ public final class EnforceStatusOutputTest
   public void firstAttemptWithBoxMissing() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path transcriptFile = tempDir.resolve("transcript.jsonl");
       writeTranscriptWithoutBox(transcriptFile);
 
-      HookOutput hookOutput = new HookOutput(scope);
-      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), false, hookOutput, "", null);
+      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), false, scope, "", null);
 
       JsonNode resultNode = mapper.readTree(result);
       requireThat(resultNode.get("decision").asString(), "decision").isEqualTo("block");
@@ -178,7 +173,7 @@ public final class EnforceStatusOutputTest
   public void statusBeyondRecentWindow() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path transcriptFile = tempDir.resolve("transcript.jsonl");
@@ -196,8 +191,7 @@ public final class EnforceStatusOutputTest
       }
       Files.writeString(transcriptFile, sb.toString());
 
-      HookOutput hookOutput = new HookOutput(scope);
-      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), false, hookOutput, "", null);
+      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), false, scope, "", null);
 
       requireThat(result.strip(), "result").isEqualTo("{}");
     }
@@ -216,14 +210,13 @@ public final class EnforceStatusOutputTest
   public void emptyTranscriptFile() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path transcriptFile = tempDir.resolve("transcript.jsonl");
       Files.writeString(transcriptFile, "");
 
-      HookOutput hookOutput = new HookOutput(scope);
-      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), false, hookOutput, "", null);
+      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), false, scope, "", null);
 
       requireThat(result.strip(), "result").isEqualTo("{}");
     }
@@ -243,7 +236,7 @@ public final class EnforceStatusOutputTest
   public void malformedJsonInTranscript() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path transcriptFile = tempDir.resolve("transcript.jsonl");
@@ -255,8 +248,7 @@ public final class EnforceStatusOutputTest
         "\"text\":\"╭── Status ──╮\\n│ v2.1       │\\n╰────────────╯\"}]}}";
       Files.writeString(transcriptFile, userLine + "\n" + malformedLine + "\n" + assistantLine + "\n");
 
-      HookOutput hookOutput = new HookOutput(scope);
-      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), false, hookOutput, "", null);
+      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), false, scope, "", null);
 
       // Status was invoked and box was present, so hook should allow through
       requireThat(result.strip(), "result").isEqualTo("{}");

@@ -6,21 +6,12 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.HookInput;
-import io.github.cowwoc.cat.hooks.JvmScope;
 import org.testng.annotations.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Tests for HookInput.
+ * Tests for session_id validation in hook input parsing.
  */
 public final class HookInputTest
 {
@@ -29,42 +20,21 @@ public final class HookInputTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Invalid session_id format.*")
-  public void invalidSessionIdThrowsException() throws IOException
+  public void invalidSessionIdThrowsException()
   {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      String json = """
-        {"session_id": "../etc/passwd", "tool_name": "Bash"}
-        """;
-      ByteArrayInputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-      HookInput.readFrom(scope.getJsonMapper(), inputStream);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
+    new TestClaudeHook("{\"session_id\": \"../etc/passwd\", \"tool_name\": \"Bash\"}");
   }
 
   /**
    * Verifies that a valid UUID-style session ID is accepted.
    */
   @Test
-  public void validSessionIdIsReturned() throws IOException
+  public void validSessionIdIsReturned()
   {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    String sessionId = "550e8400-e29b-41d4-a716-446655440000";
+    try (TestClaudeHook scope = new TestClaudeHook("{\"session_id\": \"" + sessionId + "\"}"))
     {
-      String sessionId = "550e8400-e29b-41d4-a716-446655440000";
-      String json = "{\"session_id\": \"" + sessionId + "\", \"tool_name\": \"Bash\"}";
-      ByteArrayInputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-      HookInput input = HookInput.readFrom(scope.getJsonMapper(), inputStream);
-
-      requireThat(input.getSessionId(), "sessionId").isEqualTo(sessionId);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
+      requireThat(scope.getSessionId(), "sessionId").isEqualTo(sessionId);
     }
   }
 
@@ -73,21 +43,9 @@ public final class HookInputTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Invalid session_id format.*")
-  public void sessionIdWithSlashThrowsException() throws IOException
+  public void sessionIdWithSlashThrowsException()
   {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      String json = """
-        {"session_id": "valid/but/slashes", "tool_name": "Bash"}
-        """;
-      ByteArrayInputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-      HookInput.readFrom(scope.getJsonMapper(), inputStream);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
+    new TestClaudeHook("{\"session_id\": \"valid/but/slashes\", \"tool_name\": \"Bash\"}");
   }
 
   /**
@@ -95,42 +53,21 @@ public final class HookInputTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*session_id.*")
-  public void missingSessionIdThrows() throws IOException
+  public void missingSessionIdThrows()
   {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      String json = """
-        {"tool_name": "Bash"}
-        """;
-      ByteArrayInputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-      HookInput.readFrom(scope.getJsonMapper(), inputStream);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
+    new TestClaudeHook("{\"tool_name\": \"Bash\"}");
   }
 
   /**
    * Verifies that a session ID with underscores and hyphens is accepted.
    */
   @Test
-  public void sessionIdWithUnderscoresAndHyphensIsAccepted() throws IOException
+  public void sessionIdWithUnderscoresAndHyphensIsAccepted()
   {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    String sessionId = "test-session_abc123";
+    try (TestClaudeHook scope = new TestClaudeHook("{\"session_id\": \"" + sessionId + "\"}"))
     {
-      String sessionId = "test-session_abc123";
-      String json = "{\"session_id\": \"" + sessionId + "\", \"tool_name\": \"Bash\"}";
-      ByteArrayInputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-      HookInput input = HookInput.readFrom(scope.getJsonMapper(), inputStream);
-
-      requireThat(input.getSessionId(), "sessionId").isEqualTo(sessionId);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
+      requireThat(scope.getSessionId(), "sessionId").isEqualTo(sessionId);
     }
   }
 
@@ -139,19 +76,9 @@ public final class HookInputTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*sessionId is empty.*")
-  public void emptySessionIdThrows() throws IOException
+  public void emptySessionIdThrows()
   {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      String json = "{\"session_id\": \"\"}";
-      InputStream stream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-      HookInput.readFrom(scope.getJsonMapper(), stream);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
+    new TestClaudeHook("{\"session_id\": \"\"}");
   }
 
   /**
@@ -159,19 +86,9 @@ public final class HookInputTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*sessionId is empty.*")
-  public void whitespaceSessionIdThrows() throws IOException
+  public void whitespaceSessionIdThrows()
   {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      String json = "{\"session_id\": \"   \"}";
-      InputStream stream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-      HookInput.readFrom(scope.getJsonMapper(), stream);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
+    new TestClaudeHook("{\"session_id\": \"   \"}");
   }
 
   /**
@@ -179,19 +96,9 @@ public final class HookInputTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Invalid session_id format.*")
-  public void sessionIdWithDollarSignThrowsException() throws IOException
+  public void sessionIdWithDollarSignThrowsException()
   {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      String json = "{\"session_id\": \"test$id\"}";
-      InputStream stream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-      HookInput.readFrom(scope.getJsonMapper(), stream);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
+    new TestClaudeHook("{\"session_id\": \"test$id\"}");
   }
 
   /**
@@ -199,18 +106,8 @@ public final class HookInputTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Invalid session_id format.*")
-  public void sessionIdWithSpaceThrowsException() throws IOException
+  public void sessionIdWithSpaceThrowsException()
   {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      String json = "{\"session_id\": \"test id\"}";
-      InputStream stream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-      HookInput.readFrom(scope.getJsonMapper(), stream);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
+    new TestClaudeHook("{\"session_id\": \"test id\"}");
   }
 }

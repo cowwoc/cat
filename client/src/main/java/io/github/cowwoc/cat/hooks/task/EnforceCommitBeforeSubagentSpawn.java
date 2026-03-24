@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.hooks.task;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.TaskHandler;
 import io.github.cowwoc.cat.hooks.WorktreeContext;
 import tools.jackson.databind.JsonNode;
@@ -34,7 +34,7 @@ import java.nio.file.Path;
  */
 public final class EnforceCommitBeforeSubagentSpawn implements TaskHandler
 {
-  private final JvmScope scope;
+  private final ClaudeHook scope;
 
   /**
    * Creates a new EnforceCommitBeforeSubagentSpawn handler.
@@ -42,7 +42,7 @@ public final class EnforceCommitBeforeSubagentSpawn implements TaskHandler
    * @param scope the JVM scope providing project directory and JSON mapper
    * @throws NullPointerException if {@code scope} is null
    */
-  public EnforceCommitBeforeSubagentSpawn(JvmScope scope)
+  public EnforceCommitBeforeSubagentSpawn(ClaudeHook scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;

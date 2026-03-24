@@ -9,8 +9,6 @@ package io.github.cowwoc.cat.hooks.test;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
-import io.github.cowwoc.cat.hooks.HookInput;
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.bash.WarnFileExtraction;
 import org.testng.annotations.Test;
 
@@ -40,13 +38,12 @@ public final class WarnFileExtractionTest
   public void tarExtractionCommandIsWarned() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       WarnFileExtraction handler = new WarnFileExtraction();
-      HookInput input = TestUtils.bashInput(scope.getJsonMapper(), "tar -xzf archive.tar.gz",
-        WORKING_DIR, SESSION_ID);
 
-      BashHandler.Result result = handler.check(input);
+      BashHandler.Result result = handler.check(TestUtils.bashHook("tar -xzf archive.tar.gz",
+        WORKING_DIR, SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isNotEmpty();
@@ -69,13 +66,12 @@ public final class WarnFileExtractionTest
   public void tarListCommandIsNotWarned() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       WarnFileExtraction handler = new WarnFileExtraction();
-      HookInput input = TestUtils.bashInput(scope.getJsonMapper(), "tar -tzf archive.tar.gz",
-        WORKING_DIR, SESSION_ID);
 
-      BashHandler.Result result = handler.check(input);
+      BashHandler.Result result = handler.check(TestUtils.bashHook("tar -tzf archive.tar.gz",
+        WORKING_DIR, SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -97,13 +93,12 @@ public final class WarnFileExtractionTest
   public void unzipCommandIsWarned() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       WarnFileExtraction handler = new WarnFileExtraction();
-      HookInput input = TestUtils.bashInput(scope.getJsonMapper(), "unzip archive.zip",
-        WORKING_DIR, SESSION_ID);
 
-      BashHandler.Result result = handler.check(input);
+      BashHandler.Result result = handler.check(TestUtils.bashHook("unzip archive.zip",
+        WORKING_DIR, SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isNotEmpty();
@@ -126,13 +121,12 @@ public final class WarnFileExtractionTest
   public void gunzipCommandIsWarned() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       WarnFileExtraction handler = new WarnFileExtraction();
-      HookInput input = TestUtils.bashInput(scope.getJsonMapper(), "gunzip file.gz",
-        WORKING_DIR, SESSION_ID);
 
-      BashHandler.Result result = handler.check(input);
+      BashHandler.Result result = handler.check(TestUtils.bashHook("gunzip file.gz",
+        WORKING_DIR, SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isNotEmpty();
@@ -155,12 +149,11 @@ public final class WarnFileExtractionTest
   public void nonExtractionCommandIsNotWarned() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       WarnFileExtraction handler = new WarnFileExtraction();
-      HookInput input = TestUtils.bashInput(scope.getJsonMapper(), "ls -la", WORKING_DIR, SESSION_ID);
 
-      BashHandler.Result result = handler.check(input);
+      BashHandler.Result result = handler.check(TestUtils.bashHook("ls -la", WORKING_DIR, SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -182,13 +175,12 @@ public final class WarnFileExtractionTest
   public void tarCreateCommandIsNotWarned() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       WarnFileExtraction handler = new WarnFileExtraction();
-      HookInput input = TestUtils.bashInput(scope.getJsonMapper(), "tar -czf backup.tar.gz .",
-        WORKING_DIR, SESSION_ID);
 
-      BashHandler.Result result = handler.check(input);
+      BashHandler.Result result = handler.check(TestUtils.bashHook("tar -czf backup.tar.gz .",
+        WORKING_DIR, SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();

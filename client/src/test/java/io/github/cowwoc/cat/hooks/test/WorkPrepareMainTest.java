@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.util.WorkPrepare;
 import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
@@ -41,7 +41,7 @@ public class WorkPrepareMainTest
   public void invalidTrustLevelProducesBlockResponse() throws IOException
   {
     Path tempDir = Files.createTempDirectory("work-prepare-main-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -77,7 +77,7 @@ public class WorkPrepareMainTest
   public void sessionIdArgProducesJsonOutputOnStdout() throws IOException
   {
     Path tempDir = Files.createTempDirectory("work-prepare-main-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -124,7 +124,7 @@ public class WorkPrepareMainTest
   public void nullArgsThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("work-prepare-main-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       WorkPrepare.run(scope, null,
         new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8));
@@ -145,7 +145,7 @@ public class WorkPrepareMainTest
   public void nullOutThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("work-prepare-main-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       WorkPrepare.run(scope, new String[]{}, null);
     }

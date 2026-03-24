@@ -6,10 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.session;
 
-import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
-
-import io.github.cowwoc.cat.hooks.HookInput;
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.skills.DisplayUtils;
 
 import java.io.IOException;
@@ -27,18 +24,11 @@ public final class WarnUnknownTerminal implements SessionStartHandler
 {
   private static final String MARKER_FILE = "terminal-warning-emitted";
 
-  private final JvmScope scope;
-
   /**
    * Creates a new WarnUnknownTerminal handler.
-   *
-   * @param scope the JVM scope providing DisplayUtils and session directory
-   * @throws NullPointerException if {@code scope} is null
    */
-  public WarnUnknownTerminal(JvmScope scope)
+  public WarnUnknownTerminal()
   {
-    requireThat(scope, "scope").isNotNull();
-    this.scope = scope;
   }
 
   /**
@@ -46,18 +36,17 @@ public final class WarnUnknownTerminal implements SessionStartHandler
    * <p>
    * Uses a marker file in the session directory to ensure the warning is only shown once per session.
    *
-   * @param input the hook input containing the session ID
    * @return a result with a stderr warning if fallback widths are in use and the warning hasn't been shown
    *   yet, or an empty result otherwise
    */
   @Override
-  public Result handle(HookInput input)
+  public Result handle(ClaudeHook scope)
   {
     DisplayUtils display = scope.getDisplayUtils();
     if (!display.isUsingFallbackWidths())
       return Result.empty();
 
-    Path sessionDir = scope.getClaudeSessionPath(input.getSessionId());
+    Path sessionDir = scope.getClaudeSessionPath(scope.getSessionId());
     Path markerFile = sessionDir.resolve(MARKER_FILE);
     if (Files.exists(markerFile))
       return Result.empty();

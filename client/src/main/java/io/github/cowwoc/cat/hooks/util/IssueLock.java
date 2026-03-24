@@ -6,9 +6,11 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
-import io.github.cowwoc.cat.hooks.HookOutput;
+import static io.github.cowwoc.cat.hooks.Strings.block;
+
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -992,17 +994,17 @@ public final class IssueLock
    */
   public static void main(String[] args)
   {
-    try (MainJvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
-      run(args, scope, System.out);
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(IssueLock.class);
-      log.error("Unexpected error", e);
-      try (MainJvmScope errorScope = new MainJvmScope())
+      try
       {
-        System.out.println(new HookOutput(errorScope).block(
+        run(args, scope, System.out);
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(IssueLock.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }
@@ -1017,19 +1019,16 @@ public final class IssueLock
    * @param args  the command-line arguments
    * @param scope the JVM scope to use for lock operations
    * @param out   the output stream for all results
-   * @throws NullPointerException if {@code args}, {@code scope}, or {@code out} are null
+   * @throws NullPointerException if {@code args} or {@code out} are null
    */
   public static void run(String[] args, JvmScope scope, PrintStream out)
   {
     requireThat(args, "args").isNotNull();
-    requireThat(scope, "scope").isNotNull();
     requireThat(out, "out").isNotNull();
-
-    HookOutput hookOutput = new HookOutput(scope);
 
     if (args.length < 1)
     {
-      out.println(hookOutput.block(
+      out.println(block(scope,
         "Usage: issue-lock <command> [args]. Commands: acquire, release, force-release, transfer, check, list"));
       return;
     }
@@ -1042,20 +1041,20 @@ public final class IssueLock
 
       switch (command)
       {
-        case "acquire" -> handleAcquire(lock, mapper, hookOutput, args, out);
-        case "release" -> handleRelease(lock, mapper, hookOutput, args, out);
-        case "force-release" -> handleForceRelease(lock, mapper, hookOutput, args, out);
-        case "transfer" -> handleTransfer(lock, mapper, hookOutput, args, out);
-        case "check" -> handleCheck(lock, mapper, hookOutput, args, out);
+        case "acquire" -> handleAcquire(lock, mapper, scope, args, out);
+        case "release" -> handleRelease(lock, mapper, scope, args, out);
+        case "force-release" -> handleForceRelease(lock, mapper, scope, args, out);
+        case "transfer" -> handleTransfer(lock, mapper, scope, args, out);
+        case "check" -> handleCheck(lock, mapper, scope, args, out);
         case "list" -> handleList(lock, mapper, out);
-        default -> out.println(hookOutput.block(
+        default -> out.println(block(scope,
           "Unknown command: " + command +
             ". Use acquire, release, force-release, transfer, check, or list."));
       }
     }
     catch (IllegalArgumentException | IOException e)
     {
-      out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      out.println(block(scope, Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }
 
@@ -1064,17 +1063,17 @@ public final class IssueLock
    *
    * @param lock       the issue lock instance
    * @param mapper     the JSON mapper
-   * @param hookOutput the hook output for block responses
+   * @param scope the JVM scope for block responses
    * @param args       the command-line arguments
    * @param out        the output stream
    * @throws IOException if the operation fails
    */
-  private static void handleAcquire(IssueLock lock, JsonMapper mapper, HookOutput hookOutput, String[] args,
+  private static void handleAcquire(IssueLock lock, JsonMapper mapper, JvmScope scope, String[] args,
     PrintStream out) throws IOException
   {
     if (args.length < 4)
     {
-      out.println(hookOutput.block("Usage: acquire <issue-id> <session-id> <worktree>"));
+      out.println(block(scope, "Usage: acquire <issue-id> <session-id> <worktree>"));
       return;
     }
     String issueId = args[1];
@@ -1089,17 +1088,17 @@ public final class IssueLock
    *
    * @param lock       the issue lock instance
    * @param mapper     the JSON mapper
-   * @param hookOutput the hook output for block responses
+   * @param scope the JVM scope for block responses
    * @param args       the command-line arguments
    * @param out        the output stream
    * @throws IOException if the operation fails
    */
-  private static void handleRelease(IssueLock lock, JsonMapper mapper, HookOutput hookOutput, String[] args,
+  private static void handleRelease(IssueLock lock, JsonMapper mapper, JvmScope scope, String[] args,
     PrintStream out) throws IOException
   {
     if (args.length < 3)
     {
-      out.println(hookOutput.block("Usage: release <issue-id> <session-id>"));
+      out.println(block(scope, "Usage: release <issue-id> <session-id>"));
       return;
     }
     LockResult result = lock.release(args[1], args[2]);
@@ -1111,17 +1110,17 @@ public final class IssueLock
    *
    * @param lock       the issue lock instance
    * @param mapper     the JSON mapper
-   * @param hookOutput the hook output for block responses
+   * @param scope the JVM scope for block responses
    * @param args       the command-line arguments
    * @param out        the output stream
    * @throws IOException if the operation fails
    */
-  private static void handleForceRelease(IssueLock lock, JsonMapper mapper, HookOutput hookOutput,
+  private static void handleForceRelease(IssueLock lock, JsonMapper mapper, JvmScope scope,
     String[] args, PrintStream out) throws IOException
   {
     if (args.length < 2)
     {
-      out.println(hookOutput.block("Usage: force-release <issue-id>"));
+      out.println(block(scope, "Usage: force-release <issue-id>"));
       return;
     }
     LockResult result = lock.forceRelease(args[1]);
@@ -1133,17 +1132,17 @@ public final class IssueLock
    *
    * @param lock       the issue lock instance
    * @param mapper     the JSON mapper
-   * @param hookOutput the hook output for block responses
+   * @param scope the JVM scope for block responses
    * @param args       the command-line arguments
    * @param out        the output stream
    * @throws IOException if the operation fails
    */
-  private static void handleTransfer(IssueLock lock, JsonMapper mapper, HookOutput hookOutput, String[] args,
+  private static void handleTransfer(IssueLock lock, JsonMapper mapper, JvmScope scope, String[] args,
     PrintStream out) throws IOException
   {
     if (args.length < 5)
     {
-      out.println(hookOutput.block("Usage: transfer <issue-id> <old-session-id> <new-session-id> <worktree>"));
+      out.println(block(scope, "Usage: transfer <issue-id> <old-session-id> <new-session-id> <worktree>"));
       return;
     }
     String issueId = args[1];
@@ -1159,17 +1158,17 @@ public final class IssueLock
    *
    * @param lock       the issue lock instance
    * @param mapper     the JSON mapper
-   * @param hookOutput the hook output for block responses
+   * @param scope the JVM scope for block responses
    * @param args       the command-line arguments
    * @param out        the output stream
    * @throws IOException if the operation fails
    */
-  private static void handleCheck(IssueLock lock, JsonMapper mapper, HookOutput hookOutput, String[] args,
+  private static void handleCheck(IssueLock lock, JsonMapper mapper, JvmScope scope, String[] args,
     PrintStream out) throws IOException
   {
     if (args.length < 2)
     {
-      out.println(hookOutput.block("Usage: check <issue-id>"));
+      out.println(block(scope, "Usage: check <issue-id>"));
       return;
     }
     LockResult result = lock.check(args[1]);

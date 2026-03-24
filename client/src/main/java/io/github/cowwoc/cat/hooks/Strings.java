@@ -8,6 +8,8 @@ package io.github.cowwoc.cat.hooks;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import tools.jackson.databind.node.ObjectNode;
+
 /**
  * String utility methods.
  */
@@ -72,5 +74,54 @@ public final class Strings
     if (first == null || second == null)
       return false;
     return first.equalsIgnoreCase(second);
+  }
+
+  /**
+   * Builds a hook block decision JSON string using the scope's JSON mapper.
+   *
+   * @param scope  the JVM scope providing a JSON mapper
+   * @param reason the reason for blocking
+   * @return JSON string with {@code decision=block}
+   * @throws NullPointerException     if {@code scope} or {@code reason} are null
+   * @throws IllegalArgumentException if {@code reason} is blank
+   */
+  public static String block(JvmScope scope, String reason)
+  {
+    requireThat(reason, "reason").isNotBlank();
+    ObjectNode response = scope.getJsonMapper().createObjectNode();
+    response.put("decision", "block");
+    response.put("reason", reason);
+    try
+    {
+      return scope.getJsonMapper().writeValueAsString(response);
+    }
+    catch (Exception _)
+    {
+      return "{}";
+    }
+  }
+
+  /**
+   * Returns an empty hook response (allow the operation).
+   *
+   * @return the empty JSON object string {@code "{}"}
+   */
+  public static String empty()
+  {
+    return "{}";
+  }
+
+  /**
+   * Wraps content in {@code <system-reminder>} tags for injection into Claude's system prompt.
+   *
+   * @param content the content to wrap
+   * @return the content wrapped in system-reminder tags
+   * @throws NullPointerException     if {@code content} is null
+   * @throws IllegalArgumentException if {@code content} is blank
+   */
+  public static String wrapSystemReminder(String content)
+  {
+    requireThat(content, "content").isNotBlank();
+    return "<system-reminder>\n" + content + "\n</system-reminder>";
   }
 }

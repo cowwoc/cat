@@ -9,12 +9,11 @@ package io.github.cowwoc.cat.hooks.test;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.cat.hooks.bash.RequireSkillForCommand;
 import io.github.cowwoc.cat.hooks.util.GetSkill;
 import org.testng.annotations.Test;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -105,6 +104,44 @@ public final class RequireSkillForCommandTest
   }
 
   /**
+   * Builds a hook payload embedding the command in tool_input.command for the given session ID.
+   *
+   * @param command the bash command
+   * @param sessionId the session ID
+   * @return the JSON payload string
+   */
+  private static String buildPayload(String command, String sessionId)
+  {
+    String escaped = command.replace("\\", "\\\\").replace("\"", "\\\"");
+    return """
+      {
+        "session_id": "%s",
+        "tool_name": "Bash",
+        "tool_input": {"command": "%s"}
+      }""".formatted(sessionId, escaped);
+  }
+
+  /**
+   * Builds a hook payload embedding the command and agent_id for subagent simulation.
+   *
+   * @param command the bash command
+   * @param sessionId the session ID
+   * @param agentId the agent ID
+   * @return the JSON payload string
+   */
+  private static String buildSubagentPayload(String command, String sessionId, String agentId)
+  {
+    String escaped = command.replace("\\", "\\\\").replace("\"", "\\\"");
+    return """
+      {
+        "session_id": "%s",
+        "agent_id": "%s",
+        "tool_name": "Bash",
+        "tool_input": {"command": "%s"}
+      }""".formatted(sessionId, agentId, escaped);
+  }
+
+  /**
    * Verifies that a guarded command is blocked when the required skill has not been loaded.
    * <p>
    * The {@code skills-loaded} marker file is absent; the handler must block the command and include the
@@ -117,21 +154,23 @@ public final class RequireSkillForCommandTest
   {
     Path tempPluginRoot = Files.createTempDirectory("plugin-");
     Path tempProjectDir = Files.createTempDirectory("project-");
-    try (JvmScope scope = new TestJvmScope(tempProjectDir, tempPluginRoot))
+    try
     {
       writeRegistry(tempPluginRoot);
       // No skills-loaded marker written — skill is not loaded
-      JsonMapper mapper = scope.getJsonMapper();
-      RequireSkillForCommand handler = new RequireSkillForCommand(scope);
+      String payload = buildPayload("git rebase origin/main", "test-session-id");
+      try (TestClaudeHook scope = new TestClaudeHook(payload, tempProjectDir, tempPluginRoot, tempProjectDir))
+      {
+        RequireSkillForCommand handler = new RequireSkillForCommand(scope);
 
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "git rebase origin/main", "/workspace", "test-session-id"));
+        BashHandler.Result result = handler.check(scope);
 
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("BLOCKED");
-      requireThat(result.reason(), "reason").contains("cat:git-rebase-agent");
-      requireThat(result.reason(), "reason").contains("/cat:");
-      requireThat(result.reason(), "reason").contains("Then retry");
+        requireThat(result.blocked(), "blocked").isTrue();
+        requireThat(result.reason(), "reason").contains("BLOCKED");
+        requireThat(result.reason(), "reason").contains("cat:git-rebase-agent");
+        requireThat(result.reason(), "reason").contains("/cat:");
+        requireThat(result.reason(), "reason").contains("Then retry");
+      }
     }
     finally
     {
@@ -152,18 +191,20 @@ public final class RequireSkillForCommandTest
   {
     Path tempPluginRoot = Files.createTempDirectory("plugin-");
     Path tempProjectDir = Files.createTempDirectory("project-");
-    try (JvmScope scope = new TestJvmScope(tempProjectDir, tempPluginRoot))
+    try
     {
       writeRegistry(tempPluginRoot);
-      writeSkillsLoaded(scope, "test-session-id", "cat:git-rebase-agent\n");
-      JsonMapper mapper = scope.getJsonMapper();
-      RequireSkillForCommand handler = new RequireSkillForCommand(scope);
+      String payload = buildPayload("git rebase origin/main", "test-session-id");
+      try (TestClaudeHook scope = new TestClaudeHook(payload, tempProjectDir, tempPluginRoot, tempProjectDir))
+      {
+        writeSkillsLoaded(scope, "test-session-id", "cat:git-rebase-agent\n");
+        RequireSkillForCommand handler = new RequireSkillForCommand(scope);
 
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "git rebase origin/main", "/workspace", "test-session-id"));
+        BashHandler.Result result = handler.check(scope);
 
-      requireThat(result.blocked(), "blocked").isFalse();
-      requireThat(result.reason(), "reason").isEmpty();
+        requireThat(result.blocked(), "blocked").isFalse();
+        requireThat(result.reason(), "reason").isEmpty();
+      }
     }
     finally
     {
@@ -184,17 +225,19 @@ public final class RequireSkillForCommandTest
   {
     Path tempPluginRoot = Files.createTempDirectory("plugin-");
     Path tempProjectDir = Files.createTempDirectory("project-");
-    try (JvmScope scope = new TestJvmScope(tempProjectDir, tempPluginRoot))
+    try
     {
       writeRegistry(tempPluginRoot);
       // No skills-loaded marker — but command doesn't match any guard
-      JsonMapper mapper = scope.getJsonMapper();
-      RequireSkillForCommand handler = new RequireSkillForCommand(scope);
+      String payload = buildPayload("git status", "test-session-id");
+      try (TestClaudeHook scope = new TestClaudeHook(payload, tempProjectDir, tempPluginRoot, tempProjectDir))
+      {
+        RequireSkillForCommand handler = new RequireSkillForCommand(scope);
 
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "git status", "/workspace", "test-session-id"));
+        BashHandler.Result result = handler.check(scope);
 
-      requireThat(result.blocked(), "blocked").isFalse();
+        requireThat(result.blocked(), "blocked").isFalse();
+      }
     }
     finally
     {
@@ -216,22 +259,23 @@ public final class RequireSkillForCommandTest
   {
     Path tempPluginRoot = Files.createTempDirectory("plugin-");
     Path tempProjectDir = Files.createTempDirectory("project-");
-    try (JvmScope scope = new TestJvmScope(tempProjectDir, tempPluginRoot))
+    try
     {
       writeRegistry(tempPluginRoot);
       // No subagent skills-loaded marker written
-      JsonMapper mapper = scope.getJsonMapper();
-      RequireSkillForCommand handler = new RequireSkillForCommand(scope);
+      String payload = buildSubagentPayload("git rebase origin/v2.1", "test-session-id", "subagent-abc123");
+      try (TestClaudeHook scope = new TestClaudeHook(payload, tempProjectDir, tempPluginRoot, tempProjectDir))
+      {
+        RequireSkillForCommand handler = new RequireSkillForCommand(scope);
 
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInputWithAgentId(mapper, "git rebase origin/v2.1", "/workspace", "test-session-id",
-          "subagent-abc123"));
+        BashHandler.Result result = handler.check(scope);
 
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("BLOCKED");
-      requireThat(result.reason(), "reason").contains("cat:git-rebase-agent");
-      requireThat(result.reason(), "reason").contains("/cat:");
-      requireThat(result.reason(), "reason").contains("Then retry");
+        requireThat(result.blocked(), "blocked").isTrue();
+        requireThat(result.reason(), "reason").contains("BLOCKED");
+        requireThat(result.reason(), "reason").contains("cat:git-rebase-agent");
+        requireThat(result.reason(), "reason").contains("/cat:");
+        requireThat(result.reason(), "reason").contains("Then retry");
+      }
     }
     finally
     {
@@ -253,20 +297,20 @@ public final class RequireSkillForCommandTest
   {
     Path tempPluginRoot = Files.createTempDirectory("plugin-");
     Path tempProjectDir = Files.createTempDirectory("project-");
-    try (JvmScope scope = new TestJvmScope(tempProjectDir, tempPluginRoot))
+    try
     {
       writeRegistry(tempPluginRoot);
-      writeSubagentSkillsLoaded(scope, "test-session-id", "subagent-abc123",
-        "cat:git-rebase-agent\n");
-      JsonMapper mapper = scope.getJsonMapper();
-      RequireSkillForCommand handler = new RequireSkillForCommand(scope);
+      String payload = buildSubagentPayload("git rebase origin/v2.1", "test-session-id", "subagent-abc123");
+      try (TestClaudeHook scope = new TestClaudeHook(payload, tempProjectDir, tempPluginRoot, tempProjectDir))
+      {
+        writeSubagentSkillsLoaded(scope, "test-session-id", "subagent-abc123", "cat:git-rebase-agent\n");
+        RequireSkillForCommand handler = new RequireSkillForCommand(scope);
 
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInputWithAgentId(mapper, "git rebase origin/v2.1", "/workspace", "test-session-id",
-          "subagent-abc123"));
+        BashHandler.Result result = handler.check(scope);
 
-      requireThat(result.blocked(), "blocked").isFalse();
-      requireThat(result.reason(), "reason").isEmpty();
+        requireThat(result.blocked(), "blocked").isFalse();
+        requireThat(result.reason(), "reason").isEmpty();
+      }
     }
     finally
     {
@@ -288,18 +332,20 @@ public final class RequireSkillForCommandTest
   {
     Path tempPluginRoot = Files.createTempDirectory("plugin-");
     Path tempProjectDir = Files.createTempDirectory("project-");
-    try (JvmScope scope = new TestJvmScope(tempProjectDir, tempPluginRoot))
+    try
     {
       writeRegistry(tempPluginRoot);
-      writeSkillsLoaded(scope, "test-session-id", "");
-      JsonMapper mapper = scope.getJsonMapper();
-      RequireSkillForCommand handler = new RequireSkillForCommand(scope);
+      String payload = buildPayload("git rebase origin/main", "test-session-id");
+      try (TestClaudeHook scope = new TestClaudeHook(payload, tempProjectDir, tempPluginRoot, tempProjectDir))
+      {
+        writeSkillsLoaded(scope, "test-session-id", "");
+        RequireSkillForCommand handler = new RequireSkillForCommand(scope);
 
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "git rebase origin/main", "/workspace", "test-session-id"));
+        BashHandler.Result result = handler.check(scope);
 
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("cat:git-rebase-agent");
+        requireThat(result.blocked(), "blocked").isTrue();
+        requireThat(result.reason(), "reason").contains("cat:git-rebase-agent");
+      }
     }
     finally
     {
@@ -321,18 +367,20 @@ public final class RequireSkillForCommandTest
   {
     Path tempPluginRoot = Files.createTempDirectory("plugin-");
     Path tempProjectDir = Files.createTempDirectory("project-");
-    try (JvmScope scope = new TestJvmScope(tempProjectDir, tempPluginRoot))
+    try
     {
       writeRegistry(tempPluginRoot);
-      writeSkillsLoaded(scope, "test-session-id", "   \n  \n\t\n");
-      JsonMapper mapper = scope.getJsonMapper();
-      RequireSkillForCommand handler = new RequireSkillForCommand(scope);
+      String payload = buildPayload("git rebase origin/main", "test-session-id");
+      try (TestClaudeHook scope = new TestClaudeHook(payload, tempProjectDir, tempPluginRoot, tempProjectDir))
+      {
+        writeSkillsLoaded(scope, "test-session-id", "   \n  \n\t\n");
+        RequireSkillForCommand handler = new RequireSkillForCommand(scope);
 
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "git rebase origin/main", "/workspace", "test-session-id"));
+        BashHandler.Result result = handler.check(scope);
 
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("cat:git-rebase-agent");
+        requireThat(result.blocked(), "blocked").isTrue();
+        requireThat(result.reason(), "reason").contains("cat:git-rebase-agent");
+      }
     }
     finally
     {
@@ -353,16 +401,18 @@ public final class RequireSkillForCommandTest
   {
     Path tempPluginRoot = Files.createTempDirectory("plugin-");
     Path tempProjectDir = Files.createTempDirectory("project-");
-    try (JvmScope scope = new TestJvmScope(tempProjectDir, tempPluginRoot))
+    try
     {
       writeRegistry(tempPluginRoot);
-      JsonMapper mapper = scope.getJsonMapper();
-      RequireSkillForCommand handler = new RequireSkillForCommand(scope);
+      String payload = buildPayload("", "test-session-id");
+      try (TestClaudeHook scope = new TestClaudeHook(payload, tempProjectDir, tempPluginRoot, tempProjectDir))
+      {
+        RequireSkillForCommand handler = new RequireSkillForCommand(scope);
 
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "", "/workspace", "test-session-id"));
+        BashHandler.Result result = handler.check(scope);
 
-      requireThat(result.blocked(), "blocked").isFalse();
+        requireThat(result.blocked(), "blocked").isFalse();
+      }
     }
     finally
     {

@@ -195,7 +195,7 @@ public final class CheckDataMigrationTest
     Path tempDir = Files.createTempDirectory("migration-test-");
     Path catDir = tempDir.resolve(".cat");
     Files.createDirectories(catDir);
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
 
@@ -245,7 +245,7 @@ public final class CheckDataMigrationTest
     Path tempDir = Files.createTempDirectory("migration-test-");
     Path catDir = tempDir.resolve(".cat");
     Files.createDirectories(catDir);
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path configFile = catDir.resolve("config.json");
@@ -302,7 +302,7 @@ public final class CheckDataMigrationTest
     Path tempDir = Files.createTempDirectory("migration-test-");
     Path catDir = tempDir.resolve(".cat");
     Files.createDirectories(catDir);
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path configFile = catDir.resolve("config.json");

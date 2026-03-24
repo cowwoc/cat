@@ -16,9 +16,8 @@ import java.util.List;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
-import io.github.cowwoc.cat.hooks.ClaudeEnv;
-import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
 import static io.github.cowwoc.cat.hooks.skills.JsonHelper.getStringOrDefault;
@@ -49,7 +48,7 @@ public final class GetTokenReportOutput implements SkillOutput
   /**
    * The JVM scope for accessing shared services.
    */
-  private final JvmScope scope;
+  private final ClaudeTool scope;
 
   /**
    * Creates a GetTokenReportOutput instance.
@@ -57,7 +56,7 @@ public final class GetTokenReportOutput implements SkillOutput
    * @param scope the JVM scope for accessing shared services
    * @throws NullPointerException if scope is null
    */
-  public GetTokenReportOutput(JvmScope scope)
+  public GetTokenReportOutput(ClaudeTool scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -67,7 +66,7 @@ public final class GetTokenReportOutput implements SkillOutput
    * Generates the token report output for this skill.
    * <p>
    * This class does not accept any arguments. The session ID is resolved from
-   * {@link ClaudeEnv#getSessionId()}.
+   * the scope's {@code getSessionId()} method.
    *
    * @param args the arguments from the preprocessor directive (must be empty)
    * @return the formatted output, or null if session not found or CLAUDE_SESSION_ID not set
@@ -80,7 +79,7 @@ public final class GetTokenReportOutput implements SkillOutput
     requireThat(args, "args").isNotNull();
     if (args.length > 0)
       throw new IllegalArgumentException("Unexpected arguments: " + String.join(" ", args));
-    String envSessionId = new ClaudeEnv().getSessionId();
+    String envSessionId = scope.getSessionId();
     return getOutput(envSessionId);
   }
 
@@ -523,15 +522,16 @@ public final class GetTokenReportOutput implements SkillOutput
   /**
    * Main entry point.
    * <p>
-   * A {@link JvmScope} is required to resolve the session ID from {@code CLAUDE_SESSION_ID}
-   * and to locate session JSONL files on the filesystem. The output may be null when no
-   * session file is found; in that case nothing is printed. Command-line arguments are unused.
+   * A {@link ClaudeTool} scope is required to resolve the session ID from
+   * {@code CLAUDE_SESSION_ID} and to locate session JSONL files on the filesystem. The output may be
+   * null when no session file is found; in that case nothing is printed. Command-line arguments are
+   * unused.
    *
    * @param args command line arguments (unused)
    */
   public static void main(String[] args)
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
       String output = new GetTokenReportOutput(scope).getOutput(args);
       if (output != null)

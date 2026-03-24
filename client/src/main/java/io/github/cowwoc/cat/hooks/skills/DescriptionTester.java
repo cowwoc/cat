@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.skills;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
 import java.io.IOException;
@@ -37,13 +36,9 @@ public final class DescriptionTester implements SkillOutput
 
   /**
    * Creates a DescriptionTester instance.
-   *
-   * @param scope the JVM scope for accessing shared services
-   * @throws NullPointerException if {@code scope} is null
    */
-  public DescriptionTester(JvmScope scope)
+  public DescriptionTester()
   {
-    requireThat(scope, "scope").isNotNull();
   }
 
   /**

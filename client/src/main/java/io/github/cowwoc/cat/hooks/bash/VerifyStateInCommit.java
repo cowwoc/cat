@@ -10,7 +10,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.cat.hooks.Config;
-import io.github.cowwoc.cat.hooks.HookInput;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.IssueStatus;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 
@@ -48,11 +48,11 @@ public final class VerifyStateInCommit implements BashHandler
   }
 
   @Override
-  public Result check(HookInput input)
+  public Result check(ClaudeHook scope)
   {
-    String command = input.getCommand();
-    String workingDirectory = input.getString("cwd");
-    String sessionId = input.getSessionId();
+    String command = scope.getCommand();
+    String workingDirectory = scope.getString("cwd");
+    String sessionId = scope.getSessionId();
     requireThat(command, "command").isNotNull();
     requireThat(workingDirectory, "workingDirectory").isNotNull();
     requireThat(sessionId, "sessionId").isNotBlank();
@@ -88,7 +88,7 @@ public final class VerifyStateInCommit implements BashHandler
       String indexJsonContent = readStagedIndexJson(stagedFiles, effectiveDirectory);
       if (!indexJsonContent.isEmpty())
       {
-        boolean isClosed = isClosedStatus(indexJsonContent, input.getMapper());
+        boolean isClosed = isClosedStatus(indexJsonContent, scope.getMapper());
         if (!isClosed)
         {
           return Result.warn(

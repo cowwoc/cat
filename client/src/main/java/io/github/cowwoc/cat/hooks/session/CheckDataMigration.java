@@ -9,8 +9,7 @@ package io.github.cowwoc.cat.hooks.session;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.Config;
-import io.github.cowwoc.cat.hooks.HookInput;
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.util.ProcessRunner;
 import io.github.cowwoc.cat.hooks.util.VersionUtils;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
@@ -35,7 +34,7 @@ import java.util.List;
  */
 public final class CheckDataMigration implements SessionStartHandler
 {
-  private final JvmScope scope;
+  private final ClaudeHook scope;
 
   /**
    * Creates a new CheckDataMigration handler.
@@ -43,7 +42,7 @@ public final class CheckDataMigration implements SessionStartHandler
    * @param scope the JVM scope providing environment configuration
    * @throws NullPointerException if scope is null
    */
-  public CheckDataMigration(JvmScope scope)
+  public CheckDataMigration(ClaudeHook scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -52,16 +51,12 @@ public final class CheckDataMigration implements SessionStartHandler
   /**
    * Checks for version changes and runs migrations if needed.
    *
-   * @param input the hook input
    * @return a result with migration status as context, or empty if no action needed
-   * @throws NullPointerException if input is null
    * @throws WrappedCheckedException if an I/O error occurs reading configuration or running migrations
    */
   @Override
-  public Result handle(HookInput input)
+  public Result handle(ClaudeHook scope)
   {
-    requireThat(input, "input").isNotNull();
-
     Path configFile = scope.getCatDir().resolve("config.json");
     if (!Files.isRegularFile(configFile))
       return Result.empty();

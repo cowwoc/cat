@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.hooks.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+
 import io.github.cowwoc.cat.hooks.PostToolHandler;
 import io.github.cowwoc.cat.hooks.tool.post.DetectTokenThreshold;
 import org.testng.annotations.Test;
@@ -31,7 +31,7 @@ public final class DetectTokenThresholdTest
   public void belowThresholdReturnsAllow() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-session-low";
@@ -59,7 +59,7 @@ public final class DetectTokenThresholdTest
   public void softWarningAt60k() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-session-soft";
@@ -87,7 +87,7 @@ public final class DetectTokenThresholdTest
   public void strongWarningAt80k() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-session-strong";
@@ -115,7 +115,7 @@ public final class DetectTokenThresholdTest
   public void missingSessionFileReturnsAllow() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       DetectTokenThreshold handler = new DetectTokenThreshold(scope);
@@ -140,7 +140,7 @@ public final class DetectTokenThresholdTest
   public void missingTokenFieldsReturnsAllow() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-session-empty";

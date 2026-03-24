@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.hooks.tool.post;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.PostToolHandler;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -37,7 +37,7 @@ public final class DetectTokenThreshold implements PostToolHandler
    * @param scope the JVM scope providing configuration paths and services
    * @throws NullPointerException if {@code scope} is null
    */
-  public DetectTokenThreshold(JvmScope scope)
+  public DetectTokenThreshold(ClaudeHook scope)
   {
     this.claudeConfigDir = scope.getClaudeConfigDir();
     this.mapper = scope.getJsonMapper();

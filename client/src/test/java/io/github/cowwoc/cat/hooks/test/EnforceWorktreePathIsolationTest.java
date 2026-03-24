@@ -7,7 +7,7 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
-import io.github.cowwoc.cat.hooks.JvmScope;
+
 import io.github.cowwoc.cat.hooks.ReadHandler;
 import io.github.cowwoc.cat.hooks.write.EnforceWorktreePathIsolation;
 import org.testng.annotations.Test;
@@ -31,7 +31,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * {@code {claudeConfigDir}/projects/{encodedProjectDir}/cat/locks/{issueId}.lock} and
  * {@code {claudeConfigDir}/projects/{encodedProjectDir}/cat/worktrees/{issueId}/}.
  * <p>
- * The {@code TestJvmScope(projectPath, projectPath)} constructor sets {@code configDir = projectPath},
+ * The {@code TestClaudeTool(projectPath, projectPath)} constructor sets {@code configDir = projectPath},
  * so external paths resolve relative to {@code projectPath}. Lock and worktree files are created
  * via {@link JvmScope#getCatWorkPath()} to stay consistent with what the production code looks up.
  * <p>
@@ -52,7 +52,7 @@ public class EnforceWorktreePathIsolationTest
   public void noLockFileForSession() throws IOException
   {
     Path projectPath = Files.createTempDirectory("ewpi-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       EnforceWorktreePathIsolation handler = new EnforceWorktreePathIsolation(scope);
       JsonMapper mapper = scope.getJsonMapper();
@@ -78,7 +78,7 @@ public class EnforceWorktreePathIsolationTest
   public void lockExistsButWorktreeNotCreated() throws IOException
   {
     Path projectPath = Files.createTempDirectory("ewpi-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
 
@@ -106,7 +106,7 @@ public class EnforceWorktreePathIsolationTest
   public void fileInsideWorktreeIsAllowed() throws IOException
   {
     Path projectPath = Files.createTempDirectory("ewpi-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
@@ -136,7 +136,7 @@ public class EnforceWorktreePathIsolationTest
   public void fileOutsideWorktreeIsBlocked() throws IOException
   {
     Path projectPath = Files.createTempDirectory("ewpi-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
@@ -169,7 +169,7 @@ public class EnforceWorktreePathIsolationTest
   public void missingFilePathIsAllowed() throws IOException
   {
     Path projectPath = Files.createTempDirectory("ewpi-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       TestUtils.createWorktreeDir(scope, ISSUE_ID);
@@ -198,7 +198,7 @@ public class EnforceWorktreePathIsolationTest
   public void emptyFilePathIsAllowed() throws IOException
   {
     Path projectPath = Files.createTempDirectory("ewpi-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       TestUtils.createWorktreeDir(scope, ISSUE_ID);
@@ -229,7 +229,7 @@ public class EnforceWorktreePathIsolationTest
   public void fileTargetingMainWorkspaceIsBlocked() throws IOException
   {
     Path projectPath = Files.createTempDirectory("ewpi-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
@@ -264,7 +264,7 @@ public class EnforceWorktreePathIsolationTest
   public void fileOutsideWorkspaceIsAllowed() throws IOException
   {
     Path projectPath = Files.createTempDirectory("ewpi-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       TestUtils.createWorktreeDir(scope, ISSUE_ID);
@@ -301,7 +301,7 @@ public class EnforceWorktreePathIsolationTest
   public void fileInsideWorkspaceShowsCorrectedPathSuggestion() throws IOException
   {
     Path projectPath = Files.createTempDirectory("ewpi-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
@@ -336,7 +336,7 @@ public class EnforceWorktreePathIsolationTest
   public void pathWithDotsNormalizedOutsideWorkspaceIsAllowed() throws IOException
   {
     Path projectPath = Files.createTempDirectory("ewpi-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       TestUtils.createWorktreeDir(scope, ISSUE_ID);
@@ -371,7 +371,7 @@ public class EnforceWorktreePathIsolationTest
   public void readInsideWorktreeIsAllowed() throws IOException
   {
     Path projectPath = Files.createTempDirectory("ewpi-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
@@ -402,7 +402,7 @@ public class EnforceWorktreePathIsolationTest
   public void readOutsideWorktreeIsBlocked() throws IOException
   {
     Path projectPath = Files.createTempDirectory("ewpi-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       TestUtils.createWorktreeDir(scope, ISSUE_ID);
@@ -435,7 +435,7 @@ public class EnforceWorktreePathIsolationTest
   public void globToolIsNotBlocked() throws IOException
   {
     Path projectPath = Files.createTempDirectory("ewpi-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       TestUtils.createWorktreeDir(scope, ISSUE_ID);
@@ -467,7 +467,7 @@ public class EnforceWorktreePathIsolationTest
   public void grepToolIsNotBlocked() throws IOException
   {
     Path projectPath = Files.createTempDirectory("ewpi-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       TestUtils.createWorktreeDir(scope, ISSUE_ID);
@@ -498,7 +498,7 @@ public class EnforceWorktreePathIsolationTest
   public void readWithNoLockIsAllowed() throws IOException
   {
     Path projectPath = Files.createTempDirectory("ewpi-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       // No lock file created
       EnforceWorktreePathIsolation handler = new EnforceWorktreePathIsolation(scope);
@@ -529,7 +529,7 @@ public class EnforceWorktreePathIsolationTest
   public void catSubdirectoryShowsCorrectedWorktreePath() throws IOException
   {
     Path projectPath = Files.createTempDirectory("ewpi-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
@@ -566,7 +566,7 @@ public class EnforceWorktreePathIsolationTest
   public void readBlockedMessageShowsCorrectedPath() throws IOException
   {
     Path projectPath = Files.createTempDirectory("ewpi-test-");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);

@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.GetCheckpointOutput;
 import org.testng.annotations.Test;
 
@@ -31,7 +30,7 @@ public class GetCheckpointOutputTest
   @Test
   public void getCheckpointIssueCompleteContainsIssueNameAndHeader() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       String result = output.getCheckpointIssueComplete("2.1-test", "50000", "25", "v2.1");
@@ -45,7 +44,7 @@ public class GetCheckpointOutputTest
   @Test
   public void getCheckpointIssueCompleteContainsHeader() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       String result = output.getCheckpointIssueComplete("2.1-test", "50000", "25", "v2.1");
@@ -59,7 +58,7 @@ public class GetCheckpointOutputTest
   @Test
   public void getCheckpointIssueCompleteContainsIssueName() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       String result = output.getCheckpointIssueComplete("2.1-add-feature", "50000", "25", "v2.1");
@@ -73,7 +72,7 @@ public class GetCheckpointOutputTest
   @Test
   public void getCheckpointIssueCompleteContainsTokens() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       String result = output.getCheckpointIssueComplete("2.1-test", "50000", "25", "v2.1");
@@ -87,7 +86,7 @@ public class GetCheckpointOutputTest
   @Test
   public void getCheckpointIssueCompleteContainsBranch() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       String result = output.getCheckpointIssueComplete("2.1-test", "50000", "25", "v2.1");
@@ -101,7 +100,7 @@ public class GetCheckpointOutputTest
   @Test
   public void getCheckpointIssueCompleteHasBoxStructure() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       String result = output.getCheckpointIssueComplete("2.1-test", "50000", "25", "v2.1");
@@ -117,7 +116,7 @@ public class GetCheckpointOutputTest
   @Test
   public void getCheckpointFeedbackAppliedContainsIssueNameAndHeader() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       String result = output.getCheckpointFeedbackApplied("2.1-test", "1", "30", "130", "v2.1");
@@ -131,7 +130,7 @@ public class GetCheckpointOutputTest
   @Test
   public void getCheckpointFeedbackAppliedContainsHeader() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       String result = output.getCheckpointFeedbackApplied("2.1-test", "1", "30", "130", "v2.1");
@@ -145,7 +144,7 @@ public class GetCheckpointOutputTest
   @Test
   public void getCheckpointFeedbackAppliedContainsIteration() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       String result = output.getCheckpointFeedbackApplied("2.1-test", "2", "30", "130", "v2.1");
@@ -159,7 +158,7 @@ public class GetCheckpointOutputTest
   @Test
   public void getCheckpointFeedbackAppliedContainsTokenMetrics() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       String result = output.getCheckpointFeedbackApplied("2.1-test", "1", "30", "130", "v2.1");
@@ -173,7 +172,7 @@ public class GetCheckpointOutputTest
   @Test
   public void getCheckpointFeedbackAppliedHasBoxStructure() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       String result = output.getCheckpointFeedbackApplied("2.1-test", "1", "30", "130", "v2.1");
@@ -190,7 +189,7 @@ public class GetCheckpointOutputTest
     expectedExceptionsMessageRegExp = ".*issueName.*")
   public void getCheckpointIssueCompleteThrowsOnNullIssueName() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       output.getCheckpointIssueComplete(null, "50000", "25", "v2.1");
@@ -204,7 +203,7 @@ public class GetCheckpointOutputTest
     expectedExceptionsMessageRegExp = ".*issueName.*")
   public void getCheckpointIssueCompleteThrowsOnBlankIssueName() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       output.getCheckpointIssueComplete("", "50000", "25", "v2.1");
@@ -218,7 +217,7 @@ public class GetCheckpointOutputTest
     expectedExceptionsMessageRegExp = ".*tokens.*")
   public void getCheckpointIssueCompleteThrowsOnNullTokens() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       output.getCheckpointIssueComplete("2.1-test", null, "25", "v2.1");
@@ -232,7 +231,7 @@ public class GetCheckpointOutputTest
     expectedExceptionsMessageRegExp = ".*tokens.*")
   public void getCheckpointIssueCompleteThrowsOnBlankTokens() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       output.getCheckpointIssueComplete("2.1-test", "", "25", "v2.1");
@@ -246,7 +245,7 @@ public class GetCheckpointOutputTest
     expectedExceptionsMessageRegExp = ".*iteration.*")
   public void getCheckpointFeedbackAppliedThrowsOnNullIteration() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       output.getCheckpointFeedbackApplied("2.1-test", null, "30", "130", "v2.1");
@@ -260,7 +259,7 @@ public class GetCheckpointOutputTest
     expectedExceptionsMessageRegExp = ".*iteration.*")
   public void getCheckpointFeedbackAppliedThrowsOnBlankIteration() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       output.getCheckpointFeedbackApplied("2.1-test", "", "30", "130", "v2.1");

@@ -32,6 +32,9 @@ import java.nio.file.Path;
  */
 public abstract class AbstractJvmScope implements JvmScope
 {
+  // AbstractJvmScope is one of two permitted call sites for JsonMapper.builder(). The other is
+  // AbstractClaudeHook.createStdinMapper() for the bootstrap case where no scope is yet available.
+  // All other code must obtain the shared instance via JvmScope.getJsonMapper().
   private final ConcurrentLazyReference<JsonMapper> jsonMapper = ConcurrentLazyReference.create(() ->
     JsonMapper.builder().
       enable(SerializationFeature.INDENT_OUTPUT).
@@ -70,16 +73,10 @@ public abstract class AbstractJvmScope implements JvmScope
   {
   }
 
-  /**
-   * Returns the {@code .cat} directory under the project's root directory.
-   *
-   * @return the path to the {@code .cat} directory
-   * @throws AssertionError if the project directory is not configured
-   * @throws IllegalStateException if this scope is closed
-   */
   @Override
   public Path getCatDir()
   {
+    ensureOpen();
     return getProjectPath().resolve(Config.CAT_DIR_NAME);
   }
 
@@ -100,30 +97,13 @@ public abstract class AbstractJvmScope implements JvmScope
     return projectPath.replace("/", "-").replace(".", "-").replace(" ", "-");
   }
 
-  /**
-   * Returns the base directory for session JSONL files.
-   * <p>
-   * Session files are stored at {@code {claudeSessionsPath}/{sessionId}.jsonl}.
-   *
-   * @return the session base directory path
-   * @throws IllegalStateException if this scope is closed
-   */
   @Override
   public Path getClaudeSessionsPath()
   {
+    ensureOpen();
     return getClaudeConfigDir().resolve("projects").resolve(encodeProjectPath(getProjectPath().toString()));
   }
 
-  /**
-   * Returns the directory for a session's tracking files.
-   * <p>
-   * Located at {@code {claudeConfigDir}/projects/{encodedProjectRoot}/{sessionId}/}.
-   *
-   * @param sessionId the session ID
-   * @return the session directory path
-   * @throws NullPointerException if {@code sessionId} is null
-   * @throws IllegalStateException if this scope is closed
-   */
   @Override
   public Path getClaudeSessionPath(String sessionId)
   {
@@ -131,32 +111,13 @@ public abstract class AbstractJvmScope implements JvmScope
     return getClaudeSessionsPath().resolve(sessionId);
   }
 
-  /**
-   * Returns the cross-session project CAT directory.
-   * <p>
-   * Located at {@code {projectPath}/.cat/work/}.
-   * <p>
-   * This directory stores cross-session files such as {@code locks/} and {@code worktrees/}.
-   *
-   * @return the project CAT directory path
-   * @throws IllegalStateException if this scope is closed
-   */
   @Override
   public Path getCatWorkPath()
   {
+    ensureOpen();
     return getProjectPath().resolve(".cat").resolve("work");
   }
 
-  /**
-   * Returns the per-session CAT directory.
-   * <p>
-   * Located at {@code {projectPath}/.cat/work/sessions/{sessionId}/}.
-   *
-   * @param sessionId the session ID
-   * @return the session CAT directory path
-   * @throws NullPointerException if {@code sessionId} is null
-   * @throws IllegalStateException if this scope is closed
-   */
   @Override
   public Path getCatSessionPath(String sessionId)
   {
@@ -164,16 +125,6 @@ public abstract class AbstractJvmScope implements JvmScope
     return getCatWorkPath().resolve("sessions").resolve(sessionId);
   }
 
-  /**
-   * Returns the plugin prefix (e.g., {@code "cat"}).
-   * <p>
-   * Derived from the plugin root path structure ({@code .../{prefix}/{slug}/{version}/}).
-   * The prefix is the directory component two levels above the version directory.
-   *
-   * @return the plugin prefix, never blank
-   * @throws AssertionError if the prefix cannot be derived from the plugin root path
-   * @throws IllegalStateException if this scope is closed
-   */
   @Override
   public String getPluginPrefix()
   {

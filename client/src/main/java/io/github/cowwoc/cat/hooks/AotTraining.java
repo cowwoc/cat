@@ -26,11 +26,12 @@ import io.github.cowwoc.cat.hooks.util.GetFile;
 import io.github.cowwoc.cat.hooks.util.GetSkill;
 import io.github.cowwoc.cat.hooks.util.StatusAlignmentValidator;
 import io.github.cowwoc.cat.hooks.util.WorkPrepare;
+
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Exercises all handler code paths in a single JVM invocation for AOT training.
@@ -58,43 +59,41 @@ public final class AotTraining
    * @param args command line arguments (unused)
    * @throws Exception if training fails
    */
-  @SuppressWarnings("ResultOfMethodCallIgnored")
+  @SuppressWarnings({"ResultOfMethodCallIgnored", "PMD.CloseResource"})
   public static void main(String[] args) throws Exception
   {
-    try (JvmScope scope = new MainJvmScope())
+    // Redirect stdin so MainClaudeHook can parse the hook JSON payload during construction.
+    // originalIn is System.in which must not be closed; PMD.CloseResource is suppressed intentionally.
+    InputStream originalIn = System.in;
+    System.setIn(new ByteArrayInputStream(
+      "{\"session_id\": \"aot-training-session\", \"agent_id\": \"aot-training-agent\"}".getBytes(
+        StandardCharsets.UTF_8)));
+    try (AbstractClaudeHook scope = new MainClaudeHook())
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = HookInput.readFrom(mapper, new ByteArrayInputStream(
-        "{\"session_id\": \"aot-training-session\"}".getBytes(StandardCharsets.UTF_8)));
-      HookOutput output = new HookOutput(scope);
+      System.setIn(originalIn);
 
-      // Hook handlers with run(HookInput, HookOutput)
-      new PreToolUseHook(scope).run(input, output);
-      new PostBashHook().run(input, output);
-      new PreReadHook(scope).run(input, output);
-      new PostReadHook(scope).run(input, output);
-      new PostToolUseHook(scope).run(input, output);
-      new UserPromptSubmitHook(scope).run(input, output);
-      new PreAskHook(scope).run(input, output);
-      new PreWriteHook(scope).run(input, output);
-      new PreIssueHook(scope).run(input, output);
-      new SessionEndHook(scope).run(input, output);
-
-      HookInput sessionInput = HookInput.readFrom(mapper, new ByteArrayInputStream(
-        "{\"session_id\": \"aot-training-session\"}".getBytes(StandardCharsets.UTF_8)));
-      new SessionStartHook(scope).run(sessionInput, output);
-
-      HookInput subagentInput = HookInput.readFrom(mapper, new ByteArrayInputStream(
-        "{\"session_id\": \"aot-training-session\", \"agent_id\": \"aot-training-agent\"}".getBytes(
-          StandardCharsets.UTF_8)));
-      new SubagentStartHook(scope).run(subagentInput, output);
+      // Hook handlers all accept the unified ClaudeHook scope
+      new PreToolUseHook(scope).run(scope);
+      new PostBashHook().run(scope);
+      new PreReadHook(scope).run(scope);
+      new PostReadHook(scope).run(scope);
+      new PostToolUseHook(scope).run(scope);
+      new UserPromptSubmitHook(scope).run(scope);
+      new PreAskHook(scope).run(scope);
+      new PreWriteHook(scope).run(scope);
+      new PreIssueHook(scope).run(scope);
+      new SessionEndHook(scope).run(scope);
+      new SessionStartHook(scope).run(scope);
+      new SubagentStartHook(scope).run(scope);
 
       // Skill handlers - construct to load class graphs.
       // Calling getOutput() would read the filesystem, which is unnecessary for training.
-      new GetStatusOutput(scope);
+      // GetDiffOutput and GetCleanupOutput accept JvmScope (no session required).
+      // GetStatusOutput and GetOutput require AbstractClaudeTool (session-aware); use referenceClass() instead.
       new GetDiffOutput(scope);
       new GetCleanupOutput(scope);
-      new GetOutput(scope);
+      referenceClass(GetStatusOutput.class);
+      referenceClass(GetOutput.class);
 
       // VerifyAudit training - create temp directory with plan.md for prepare() and minimal JSON for report()
       Path tempDir = Files.createTempDirectory("aot-training-");

@@ -13,31 +13,28 @@ import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Production implementation of {@link JvmScope} that reads environment configuration from process
- * environment variables via {@link ConcurrentLazyReference}.
+ * Production implementation of {@link JvmScope} for infrastructure CLI tool processes that run
+ * outside a Claude session.
+ * <p>
+ * Reads only infrastructure path variables ({@code CLAUDE_PROJECT_DIR}, {@code CLAUDE_PLUGIN_ROOT},
+ * {@code CLAUDE_CONFIG_DIR}, {@code TZ}) from {@code System.getenv()} at construction time.
+ * {@code CLAUDE_PROJECT_DIR} and {@code CLAUDE_PLUGIN_ROOT} are required and fail fast if absent.
+ * {@code CLAUDE_CONFIG_DIR} defaults to {@code ~/.claude} and {@code TZ} defaults to {@code "UTC"}.
+ * <p>
+ * This scope is appropriate for CLI tools like {@code GetSkill} that are invoked by the skill
+ * preprocessor before a Claude session is established and therefore do not have access to
+ * session-specific variables ({@code CLAUDE_SESSION_ID}, {@code CLAUDE_ENV_FILE}).
  * <p>
  * <b>Thread Safety:</b> This class is thread-safe.
  */
 public final class MainJvmScope extends AbstractJvmScope
 {
-  private final ConcurrentLazyReference<Path> claudeProjectPath = ConcurrentLazyReference.create(() ->
-  {
-    String projectPath = System.getenv("CLAUDE_PROJECT_DIR");
-    if (projectPath == null || projectPath.isEmpty())
-      throw new AssertionError("CLAUDE_PROJECT_DIR is not set");
-    return Path.of(projectPath);
-  });
-  private final ConcurrentLazyReference<Path> claudePluginRoot = ConcurrentLazyReference.create(() ->
-  {
-    String pluginRoot = System.getenv("CLAUDE_PLUGIN_ROOT");
-    if (pluginRoot == null || pluginRoot.isEmpty())
-      throw new AssertionError("CLAUDE_PLUGIN_ROOT is not set");
-    return Path.of(pluginRoot);
-  });
+  private final Path projectPath;
+  private final Path pluginRoot;
   private final ConcurrentLazyReference<Path> claudeConfigDir = ConcurrentLazyReference.create(() ->
   {
     String configDir = System.getenv("CLAUDE_CONFIG_DIR");
-    if (configDir != null && !configDir.isEmpty())
+    if (configDir != null && !configDir.isBlank())
       return Path.of(configDir);
     return Path.of(System.getProperty("user.home"), ".claude");
   });
@@ -46,24 +43,40 @@ public final class MainJvmScope extends AbstractJvmScope
   private final ConcurrentLazyReference<String> tz = ConcurrentLazyReference.create(() ->
   {
     String tzValue = System.getenv("TZ");
-    if (tzValue == null || tzValue.isEmpty())
+    if (tzValue == null || tzValue.isBlank())
       return "UTC";
     return tzValue;
   });
   private final AtomicBoolean closed = new AtomicBoolean();
 
   /**
-   * Creates a new production JVM scope.
+   * Creates a new infrastructure JVM scope.
+   * <p>
+   * Reads {@code CLAUDE_PROJECT_DIR} and {@code CLAUDE_PLUGIN_ROOT} from {@code System.getenv()}
+   * and fails immediately with {@link AssertionError} if either is unset or blank. The variables
+   * {@code CLAUDE_CONFIG_DIR} and {@code TZ} are optional and loaded lazily with defaults.
+   *
+   * @throws AssertionError if {@code CLAUDE_PROJECT_DIR} or {@code CLAUDE_PLUGIN_ROOT} is not set
    */
   public MainJvmScope()
   {
+    this.projectPath = Path.of(readEnvVar("CLAUDE_PROJECT_DIR"));
+    this.pluginRoot = Path.of(readEnvVar("CLAUDE_PLUGIN_ROOT"));
   }
 
-  @Override
-  public Path getProjectPath()
+  /**
+   * Reads a required environment variable, failing fast if it is absent or blank.
+   *
+   * @param name the environment variable name
+   * @return the non-blank value
+   * @throws AssertionError if the variable is not set or is blank
+   */
+  private static String readEnvVar(String name)
   {
-    ensureOpen();
-    return claudeProjectPath.getValue();
+    String value = System.getenv(name);
+    if (value == null || value.isBlank())
+      throw new AssertionError(name + " is not set");
+    return value;
   }
 
   @Override
@@ -74,10 +87,17 @@ public final class MainJvmScope extends AbstractJvmScope
   }
 
   @Override
+  public Path getProjectPath()
+  {
+    ensureOpen();
+    return projectPath;
+  }
+
+  @Override
   public Path getPluginRoot()
   {
     ensureOpen();
-    return claudePluginRoot.getValue();
+    return pluginRoot;
   }
 
   @Override

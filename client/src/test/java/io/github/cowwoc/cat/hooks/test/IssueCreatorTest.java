@@ -36,7 +36,7 @@ public class IssueCreatorTest
   public void executeRejectsNullInput() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       IssueCreator creator = new IssueCreator(scope);
       creator.execute(null);
@@ -57,7 +57,7 @@ public class IssueCreatorTest
   public void executeRejectsEmptyInput() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       IssueCreator creator = new IssueCreator(scope);
       creator.execute("");
@@ -78,7 +78,7 @@ public class IssueCreatorTest
   public void executeRejectsMalformedJson() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       IssueCreator creator = new IssueCreator(scope);
       creator.execute("{invalid}");
@@ -99,7 +99,7 @@ public class IssueCreatorTest
   public void executeRejectsMissingMajor() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       IssueCreator creator = new IssueCreator(scope);
       String json = """
@@ -127,7 +127,7 @@ public class IssueCreatorTest
   public void executeRejectsMissingMinor() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       IssueCreator creator = new IssueCreator(scope);
       String json = """
@@ -155,7 +155,7 @@ public class IssueCreatorTest
   public void executeRejectsMissingIssueName() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       IssueCreator creator = new IssueCreator(scope);
       String json = """
@@ -183,7 +183,7 @@ public class IssueCreatorTest
   public void executeRejectsMissingIndexContent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       IssueCreator creator = new IssueCreator(scope);
       String json = """
@@ -211,7 +211,7 @@ public class IssueCreatorTest
   public void executeRejectsMissingPlanContent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       IssueCreator creator = new IssueCreator(scope);
       String json = """
@@ -238,7 +238,7 @@ public class IssueCreatorTest
   public void executeReturnsErrorWhenParentMissing() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       IssueCreator creator = new IssueCreator(scope);
       String json = """
@@ -313,7 +313,7 @@ public class IssueCreatorTest
   public void executeCreatesIssueStructure() throws IOException, InterruptedException
   {
     Path tempDir = setupGitRepo();
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       IssueCreator creator = new IssueCreator(scope);
       String json = """
@@ -364,7 +364,7 @@ public class IssueCreatorTest
   public void executeAcceptsOptionalCommitDescription() throws IOException, InterruptedException
   {
     Path tempDir = setupGitRepo();
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       IssueCreator creator = new IssueCreator(scope);
       String json = """
@@ -400,7 +400,7 @@ public class IssueCreatorTest
   public void executeCreatesMultipleIssuesIndependently() throws IOException, InterruptedException
   {
     Path tempDir = setupGitRepo();
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path versionDir = tempDir.resolve(".cat/issues/v2/v2.1");
 
@@ -455,7 +455,7 @@ public class IssueCreatorTest
   public void executeHandlesNonGitDirectory() throws IOException
   {
     Path tempDir = Files.createTempDirectory("issue-creator-test-nongit");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path versionDir = tempDir.resolve(".cat/issues/v2/v2.1");
       Files.createDirectories(versionDir);
@@ -494,7 +494,7 @@ public class IssueCreatorTest
     Path versionDir = tempDir.resolve(".cat/issues/v2/v2.1");
 
     boolean madeReadOnly = versionDir.toFile().setReadOnly();
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       IssueCreator creator = new IssueCreator(scope);
       String json = """

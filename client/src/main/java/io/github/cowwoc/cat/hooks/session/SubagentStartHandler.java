@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.hooks.session;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.HookInput;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 
 /**
  * Handles subagent-start hook operations.
@@ -22,11 +22,11 @@ public interface SubagentStartHandler
   /**
    * Handles a subagent start event.
    *
-   * @param input the hook input
+   * @param scope the hook scope providing input data
    * @return the handler result
-   * @throws NullPointerException if input is null
+   * @throws NullPointerException if {@code scope} is null
    */
-  Result handle(HookInput input);
+  Result handle(ClaudeHook scope);
 
   /**
    * The result of handling a subagent start event.

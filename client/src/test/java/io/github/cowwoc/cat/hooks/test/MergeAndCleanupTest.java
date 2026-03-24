@@ -7,7 +7,6 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.util.MergeAndCleanup;
-import io.github.cowwoc.cat.hooks.JvmScope;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -34,7 +33,7 @@ public class MergeAndCleanupTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       Path tempDir = TestUtils.createTempDir("merge-cleanup-test");
       try
@@ -61,7 +60,7 @@ public class MergeAndCleanupTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       Path tempDir = TestUtils.createTempDir("merge-cleanup-test");
       try
@@ -88,7 +87,7 @@ public class MergeAndCleanupTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       Path tempDir = TestUtils.createTempDir("merge-cleanup-test");
       try
@@ -115,7 +114,7 @@ public class MergeAndCleanupTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       Path tempDir = TestUtils.createTempDir("merge-cleanup-test");
       try
@@ -142,7 +141,7 @@ public class MergeAndCleanupTest
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
     {
       Path tempDir = TestUtils.createTempDir("merge-cleanup-test");
       try
@@ -238,7 +237,7 @@ public class MergeAndCleanupTest
       Path catDir = localRepo.resolve(".cat");
       Files.createDirectories(catDir);
 
-      try (JvmScope scope = new TestJvmScope(localRepo, pluginRoot))
+      try (TestClaudeTool scope = new TestClaudeTool(localRepo, pluginRoot))
       {
         MergeAndCleanup cmd = new MergeAndCleanup(scope);
 
@@ -340,7 +339,7 @@ public class MergeAndCleanupTest
       Path catDir = localRepo.resolve(".cat");
       Files.createDirectories(catDir);
 
-      try (JvmScope scope = new TestJvmScope(localRepo, pluginRoot))
+      try (TestClaudeTool scope = new TestClaudeTool(localRepo, pluginRoot))
       {
         MergeAndCleanup cmd = new MergeAndCleanup(scope);
 
@@ -403,7 +402,7 @@ public class MergeAndCleanupTest
       Path catDir = localRepo.resolve(".cat");
       Files.createDirectories(catDir);
 
-      try (JvmScope scope = new TestJvmScope(localRepo, pluginRoot))
+      try (TestClaudeTool scope = new TestClaudeTool(localRepo, pluginRoot))
       {
         MergeAndCleanup cmd = new MergeAndCleanup(scope);
 
@@ -483,7 +482,7 @@ public class MergeAndCleanupTest
         "HEAD..v2.1");
       requireThat(Integer.parseInt(divergeCount.strip()), "divergeCount").isGreaterThan(0);
 
-      try (JvmScope scope = new TestJvmScope(mainRepo, pluginRoot))
+      try (TestClaudeTool scope = new TestClaudeTool(mainRepo, pluginRoot))
       {
         MergeAndCleanup cmd = new MergeAndCleanup(scope);
         String result = cmd.execute(mainRepo.toString(), issueBranch, "test-session", "v2.1",
@@ -560,7 +559,7 @@ public class MergeAndCleanupTest
       requireThat(Files.exists(mainRepo.resolve("new-feature.txt")),
         "fileExistsBeforeMerge").isFalse();
 
-      try (JvmScope scope = new TestJvmScope(mainRepo, pluginRoot))
+      try (TestClaudeTool scope = new TestClaudeTool(mainRepo, pluginRoot))
       {
         MergeAndCleanup cmd = new MergeAndCleanup(scope);
         String result = cmd.execute(mainRepo.toString(), issueBranch, "test-session", "v2.1",

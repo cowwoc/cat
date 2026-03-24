@@ -38,7 +38,7 @@ public final class PostReadHook implements HookHandler
    * @param scope the JVM scope providing singleton handlers
    * @throws NullPointerException if scope is null
    */
-  public PostReadHook(JvmScope scope)
+  public PostReadHook(ClaudeHook scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.handlers = List.of(scope.getDetectSequentialTools());
@@ -55,26 +55,21 @@ public final class PostReadHook implements HookHandler
   }
 
   /**
-   * Processes hook input and returns the result with any warnings.
+   * Processes hook data and returns the result with any warnings.
    *
-   * @param input the hook input to process
-   * @param output the hook output builder for creating responses
+   * @param scope the hook scope providing input data and output building
    * @return the hook result containing JSON output and warnings
-   * @throws NullPointerException if {@code input} or {@code output} are null
    */
   @Override
-  public HookResult run(HookInput input, HookOutput output)
+  public HookResult run(ClaudeHook scope)
   {
-    requireThat(input, "input").isNotNull();
-    requireThat(output, "output").isNotNull();
-
-    String toolName = input.getToolName();
+    String toolName = scope.getToolName();
     if (!SUPPORTED_TOOLS.contains(toolName))
-      return HookResult.withoutWarnings(output.empty());
+      return HookResult.withoutWarnings(scope.empty());
 
-    JsonNode toolInput = input.getToolInput();
-    JsonNode toolResult = input.getToolResult();
-    String sessionId = input.getSessionId();
+    JsonNode toolInput = scope.getToolInput();
+    JsonNode toolResult = scope.getToolResult();
+    String sessionId = scope.getSessionId();
     requireThat(sessionId, "sessionId").isNotBlank();
     List<String> warnings = new ArrayList<>();
     List<String> errorWarnings = new ArrayList<>();
@@ -101,6 +96,6 @@ public final class PostReadHook implements HookHandler
     allWarnings.addAll(errorWarnings);
 
     // Always allow (PostToolUse cannot block, only warn)
-    return new HookResult(output.empty(), allWarnings);
+    return new HookResult(scope.empty(), allWarnings);
   }
 }

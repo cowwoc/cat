@@ -13,7 +13,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
 import io.github.cowwoc.cat.hooks.IssueStatus;
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -65,7 +65,7 @@ public final class StateSchemaValidator implements FileWriteHandler
    * @param scope the JVM scope providing shared services
    * @throws NullPointerException if {@code scope} is null
    */
-  public StateSchemaValidator(JvmScope scope)
+  public StateSchemaValidator(ClaudeHook scope)
   {
     this.mapper = scope.getJsonMapper();
   }

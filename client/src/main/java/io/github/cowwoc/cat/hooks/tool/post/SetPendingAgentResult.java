@@ -9,7 +9,7 @@ package io.github.cowwoc.cat.hooks.tool.post;
 import static io.github.cowwoc.cat.hooks.Strings.equalsIgnoreCase;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.skills.JsonHelper;
 import io.github.cowwoc.cat.hooks.PostToolHandler;
 import io.github.cowwoc.cat.hooks.WorktreeContext;
@@ -42,7 +42,7 @@ import java.util.Optional;
 public final class SetPendingAgentResult implements PostToolHandler
 {
   private final Logger log = LoggerFactory.getLogger(SetPendingAgentResult.class);
-  private final JvmScope scope;
+  private final ClaudeHook scope;
 
   /**
    * Creates a new SetPendingAgentResult handler.
@@ -50,7 +50,7 @@ public final class SetPendingAgentResult implements PostToolHandler
    * @param scope the JVM scope providing project directory and JSON mapper
    * @throws NullPointerException if {@code scope} is null
    */
-  public SetPendingAgentResult(JvmScope scope)
+  public SetPendingAgentResult(ClaudeHook scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;

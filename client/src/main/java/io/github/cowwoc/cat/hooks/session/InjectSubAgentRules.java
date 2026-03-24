@@ -6,16 +6,13 @@
  */
 package io.github.cowwoc.cat.hooks.session;
 
-import io.github.cowwoc.cat.hooks.HookInput;
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.util.RulesDiscovery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.util.List;
-
-import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
  * Injects audience-filtered rules from plugin-bundled and project-local rule directories into
@@ -31,18 +28,12 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public final class InjectSubAgentRules implements SubagentStartHandler
 {
   private final Logger log = LoggerFactory.getLogger(getClass());
-  private final JvmScope scope;
 
   /**
    * Creates a new InjectSubAgentRules handler.
-   *
-   * @param scope the JVM scope providing environment paths
-   * @throws NullPointerException if {@code scope} is null
    */
-  public InjectSubAgentRules(JvmScope scope)
+  public InjectSubAgentRules()
   {
-    requireThat(scope, "scope").isNotNull();
-    this.scope = scope;
   }
 
   /**
@@ -55,16 +46,12 @@ public final class InjectSubAgentRules implements SubagentStartHandler
    * </ol>
    * Both sources are concatenated; no filename-based deduplication is performed.
    *
-   * @param input the hook input containing the subagent type
    * @return a result containing the filtered rule content, or an empty result if no rules apply
-   * @throws NullPointerException if {@code input} is null
    */
   @Override
-  public Result handle(HookInput input)
+  public Result handle(ClaudeHook scope)
   {
-    requireThat(input, "input").isNotNull();
-
-    String subagentType = input.getString("subagent_type");
+    String subagentType = scope.getString("subagent_type");
     if (subagentType.isBlank())
       log.debug("SubagentStart hook received blank subagent_type; rules requiring a specific " +
         "subagent type will not match");

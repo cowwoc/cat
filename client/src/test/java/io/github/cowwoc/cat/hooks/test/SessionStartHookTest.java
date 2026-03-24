@@ -6,12 +6,9 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.ClaudeEnv;
-import io.github.cowwoc.cat.hooks.HookInput;
-import io.github.cowwoc.cat.hooks.HookOutput;
-import io.github.cowwoc.cat.hooks.JvmScope;
+
 import io.github.cowwoc.cat.hooks.SessionStartHook;
-import io.github.cowwoc.cat.hooks.SharedSecrets;
+
 import io.github.cowwoc.cat.hooks.session.CheckRetrospectiveDue;
 import io.github.cowwoc.cat.hooks.session.CheckUpdateAvailable;
 import io.github.cowwoc.cat.hooks.session.CheckDataMigration;
@@ -25,13 +22,10 @@ import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -42,32 +36,6 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  */
 public class SessionStartHookTest
 {
-  /**
-   * Creates a HookInput from a JSON string.
-   *
-   * @param mapper the JSON mapper
-   * @param json   the JSON input string
-   * @return the parsed HookInput
-   */
-  private HookInput createInput(JsonMapper mapper, String json)
-  {
-    // Inject a default session_id if the JSON is valid but doesn't contain one
-    if (!json.isBlank() && json.contains("{") && !json.contains("session_id"))
-    {
-      json = json.stripTrailing();
-      if (json.endsWith("}"))
-      {
-        String inner = json.substring(1, json.length() - 1).strip();
-        if (inner.isEmpty())
-          json = "{\"session_id\": \"test-session\"}";
-        else
-          json = json.substring(0, json.length() - 1) + ", \"session_id\": \"test-session\"}";
-      }
-    }
-    return HookInput.readFrom(mapper, new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
-  }
-
-
   // --- EchoSessionId tests ---
 
   /**
@@ -76,28 +44,22 @@ public class SessionStartHookTest
   @Test
   public void echoSessionIdReturnsSessionIdAsContext() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook())
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"test-session-123\"}");
-      SessionStartHandler.Result result = new EchoSessionId().handle(input);
-      requireThat(result.additionalContext(), "additionalContext").isEqualTo("Session ID: test-session-123");
+      SessionStartHandler.Result result = new EchoSessionId().handle(scope);
+      requireThat(result.additionalContext(), "additionalContext").contains("Session ID:");
       requireThat(result.stderr(), "stderr").isEmpty();
     }
   }
 
   /**
-   * Verifies that HookInput.readFrom throws IllegalArgumentException when no session ID is present.
+   * Verifies that constructing a TestClaudeHook without a session ID throws IllegalArgumentException.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*session_id.*")
-  public void echoSessionIdThrowsWhenNoSessionId() throws IOException
+  public void echoSessionIdThrowsWhenNoSessionId()
   {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput.readFrom(mapper, new ByteArrayInputStream("{}".getBytes(StandardCharsets.UTF_8)));
-    }
+    new TestClaudeHook("{}");
   }
 
   // --- ClearAgentMarkers tests ---
@@ -110,7 +72,7 @@ public class SessionStartHookTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
     {
       String sessionId = "test-session-" + System.nanoTime();
       Path sessionDir = scope.getCatWorkPath().resolve("sessions").resolve(sessionId);
@@ -137,7 +99,7 @@ public class SessionStartHookTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
     {
       String sessionId = "test-session-" + System.nanoTime();
       Path markerDir = scope.getCatWorkPath().resolve("sessions").resolve(sessionId).
@@ -184,12 +146,12 @@ public class SessionStartHookTest
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
       try
       {
-        try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"resume\", \"session_id\": \"" + resumedId + "\"}"),
+          projectPath, pluginRoot, projectPath, envFile))
         {
-          ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(Map.of("CLAUDE_ENV_FILE", envFile.toString()));
-          JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"source\": \"resume\", \"session_id\": \"" + resumedId + "\"}");
-          SessionStartHandler.Result result = new InjectEnv(scope, claudeEnv).handle(input);
+          SessionStartHandler.Result result = new InjectEnv(hook).handle(hook);
           requireThat(result.additionalContext(), "additionalContext").isEmpty();
           requireThat(result.stderr(), "stderr").isEmpty();
         }
@@ -238,12 +200,12 @@ public class SessionStartHookTest
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
       try
       {
-        try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"resume\", \"session_id\": \"" + resumedId + "\"}"),
+          projectPath, pluginRoot, projectPath, envFile))
         {
-          ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(Map.of("CLAUDE_ENV_FILE", envFile.toString()));
-          JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"source\": \"resume\", \"session_id\": \"" + resumedId + "\"}");
-          new InjectEnv(scope, claudeEnv).handle(input);
+          new InjectEnv(hook).handle(hook);
         }
         // The startup dir (CLAUDE_ENV_FILE parent) must NOT be written on resume
         requireThat(Files.exists(envFile), "startupEnvFileExists").isFalse();
@@ -290,12 +252,12 @@ public class SessionStartHookTest
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
       try
       {
-        try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"resume\", \"session_id\": \"" + resumedId + "\"}"),
+          projectPath, pluginRoot, projectPath, envFile))
         {
-          ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(Map.of("CLAUDE_ENV_FILE", envFile.toString()));
-          JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"source\": \"resume\", \"session_id\": \"" + resumedId + "\"}");
-          new InjectEnv(scope, claudeEnv).handle(input);
+          new InjectEnv(hook).handle(hook);
         }
         // File must contain the new session ID, not the old one
         String content = Files.readString(resumedEnvFile);
@@ -353,12 +315,12 @@ public class SessionStartHookTest
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
       try
       {
-        try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"resume\", \"session_id\": \"" + resumedId + "\"}"),
+          projectPath, pluginRoot, projectPath, envFile))
         {
-          ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(Map.of("CLAUDE_ENV_FILE", envFile.toString()));
-          JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"source\": \"resume\", \"session_id\": \"" + resumedId + "\"}");
-          SessionStartHandler.Result result = new InjectEnv(scope, claudeEnv).handle(input);
+          SessionStartHandler.Result result = new InjectEnv(hook).handle(hook);
           requireThat(result.additionalContext(), "additionalContext").isEmpty();
           requireThat(result.stderr(), "stderr").isEmpty();
         }
@@ -403,13 +365,12 @@ public class SessionStartHookTest
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
       try
       {
-        try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"clear\", \"session_id\": \"" + clearSessionId + "\"}"),
+          projectPath, pluginRoot, projectPath, envFile))
         {
-          ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(Map.of("CLAUDE_ENV_FILE", envFile.toString()));
-          JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper,
-            "{\"source\": \"clear\", \"session_id\": \"" + clearSessionId + "\"}");
-          SessionStartHandler.Result result = new InjectEnv(scope, claudeEnv).handle(input);
+          SessionStartHandler.Result result = new InjectEnv(hook).handle(hook);
           requireThat(result.additionalContext(), "additionalContext").isEmpty();
           requireThat(result.stderr(), "stderr").isEmpty();
         }
@@ -453,12 +414,12 @@ public class SessionStartHookTest
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
       try
       {
-        try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}"),
+          projectPath, pluginRoot, projectPath, envFile))
         {
-          ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(Map.of("CLAUDE_ENV_FILE", envFile.toString()));
-          JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}");
-          new InjectEnv(scope, claudeEnv).handle(input);
+          new InjectEnv(hook).handle(hook);
         }
         // Non-UUID directory should not have an env file written
         Path nonUuidEnvFile = nonUuidDir.resolve("sessionstart-hook-1.sh");
@@ -496,12 +457,12 @@ public class SessionStartHookTest
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
       try
       {
-        try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}"),
+          projectPath, pluginRoot, projectPath, envFile))
         {
-          ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(Map.of("CLAUDE_ENV_FILE", envFile.toString()));
-          JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}");
-          new InjectEnv(scope, claudeEnv).handle(input);
+          new InjectEnv(hook).handle(hook);
         }
         // File should exist but should not be double-written (appended twice)
         requireThat(Files.exists(envFile), "envFileExists").isTrue();
@@ -551,12 +512,12 @@ public class SessionStartHookTest
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
       try
       {
-        try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}"),
+          projectPath, pluginRoot, projectPath, envFile))
         {
-          ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(Map.of("CLAUDE_ENV_FILE", envFile.toString()));
-          JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}");
-          SessionStartHandler.Result result = new InjectEnv(scope, claudeEnv).handle(input);
+          SessionStartHandler.Result result = new InjectEnv(hook).handle(hook);
           // Should succeed with no warnings (only the startup dir and the resumed session dir)
           requireThat(result.stderr(), "stderr").isEmpty();
         }
@@ -595,14 +556,14 @@ public class SessionStartHookTest
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
       try
       {
-        try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}"),
+          projectPath, pluginRoot, projectPath, envFile))
         {
-          ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(Map.of("CLAUDE_ENV_FILE", envFile.toString()));
-          JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}");
           // sessionEnvBase = envFile.getParent().getParent() = tempBase
           // tempBase exists and has startupId in it, so this will iterate without crashing
-          SessionStartHandler.Result result = new InjectEnv(scope, claudeEnv).handle(input);
+          SessionStartHandler.Result result = new InjectEnv(hook).handle(hook);
           requireThat(result.stderr(), "stderr").isEmpty();
         }
         requireThat(Files.exists(envFile), "envFileExists").isTrue();
@@ -644,12 +605,12 @@ public class SessionStartHookTest
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
       try
       {
-        try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}"),
+          projectPath, pluginRoot, projectPath, envFile))
         {
-          ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(Map.of("CLAUDE_ENV_FILE", envFile.toString()));
-          JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}");
-          new InjectEnv(scope, claudeEnv).handle(input);
+          new InjectEnv(hook).handle(hook);
         }
         // Symlink directory should not have an env file written inside it
         Path symlinkEnvFile = symlinkDir.resolve("sessionstart-hook-1.sh");
@@ -672,7 +633,7 @@ public class SessionStartHookTest
    * a dangerous shell character such as {@code $}.
    * <p>
    * Since validateEnvValue is private, this test exercises it indirectly by injecting a path containing
-   * {@code $} via TestJvmScope. Note: real filesystem paths cannot contain {@code $} on most systems, so
+   * {@code $} via TestClaudeHook. Note: real filesystem paths cannot contain {@code $} on most systems, so
    * this validation is defense-in-depth for injected values; the test uses Path.of() to bypass filesystem
    * restrictions.
    */
@@ -695,13 +656,13 @@ public class SessionStartHookTest
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
       try
       {
-        try (TestJvmScope scope = new TestJvmScope(dangerousProjectDir, pluginRoot))
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}"),
+          dangerousProjectDir, pluginRoot, dangerousProjectDir, envFile))
         {
-          ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(Map.of("CLAUDE_ENV_FILE", envFile.toString()));
-          JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}");
           // validateEnvValue is called with projectPath.toString() which contains '$'
-          new InjectEnv(scope, claudeEnv).handle(input);
+          new InjectEnv(hook).handle(hook);
         }
       }
       finally
@@ -720,7 +681,7 @@ public class SessionStartHookTest
    * a double quote character.
    * <p>
    * Since validateEnvValue is private, this test exercises it indirectly by injecting a path containing
-   * {@code "} via TestJvmScope. The test uses Path.of() to bypass filesystem restrictions.
+   * {@code "} via TestClaudeHook. The test uses Path.of() to bypass filesystem restrictions.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*contains a dangerous shell character.*")
@@ -741,12 +702,12 @@ public class SessionStartHookTest
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
       try
       {
-        try (TestJvmScope scope = new TestJvmScope(dangerousProjectDir, pluginRoot))
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}"),
+          dangerousProjectDir, pluginRoot, dangerousProjectDir, envFile))
         {
-          ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(Map.of("CLAUDE_ENV_FILE", envFile.toString()));
-          JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}");
-          new InjectEnv(scope, claudeEnv).handle(input);
+          new InjectEnv(hook).handle(hook);
         }
       }
       finally
@@ -765,7 +726,7 @@ public class SessionStartHookTest
    * a backtick character.
    * <p>
    * Since validateEnvValue is private, this test exercises it indirectly by injecting a path containing
-   * a backtick via TestJvmScope. The test uses Path.of() to bypass filesystem restrictions.
+   * a backtick via TestClaudeHook. The test uses Path.of() to bypass filesystem restrictions.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*contains a dangerous shell character.*")
@@ -786,12 +747,12 @@ public class SessionStartHookTest
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
       try
       {
-        try (TestJvmScope scope = new TestJvmScope(dangerousProjectDir, pluginRoot))
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}"),
+          dangerousProjectDir, pluginRoot, dangerousProjectDir, envFile))
         {
-          ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(Map.of("CLAUDE_ENV_FILE", envFile.toString()));
-          JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}");
-          new InjectEnv(scope, claudeEnv).handle(input);
+          new InjectEnv(hook).handle(hook);
         }
       }
       finally
@@ -810,7 +771,7 @@ public class SessionStartHookTest
    * a newline character.
    * <p>
    * Since validateEnvValue is private, this test exercises it indirectly by injecting a path containing
-   * a newline via TestJvmScope. The test uses Path.of() to bypass filesystem restrictions.
+   * a newline via TestClaudeHook. The test uses Path.of() to bypass filesystem restrictions.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*contains a dangerous shell character.*")
@@ -831,12 +792,12 @@ public class SessionStartHookTest
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
       try
       {
-        try (TestJvmScope scope = new TestJvmScope(dangerousProjectDir, pluginRoot))
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}"),
+          dangerousProjectDir, pluginRoot, dangerousProjectDir, envFile))
         {
-          ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(Map.of("CLAUDE_ENV_FILE", envFile.toString()));
-          JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}");
-          new InjectEnv(scope, claudeEnv).handle(input);
+          new InjectEnv(hook).handle(hook);
         }
       }
       finally
@@ -882,12 +843,12 @@ public class SessionStartHookTest
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
       try
       {
-        try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"resume\", \"session_id\": \"" + resumedId + "\"}"),
+          projectPath, pluginRoot, projectPath, envFile))
         {
-          ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(Map.of("CLAUDE_ENV_FILE", envFile.toString()));
-          JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"source\": \"resume\", \"session_id\": \"" + resumedId + "\"}");
-          SessionStartHandler.Result result = new InjectEnv(scope, claudeEnv).handle(input);
+          SessionStartHandler.Result result = new InjectEnv(hook).handle(hook);
           // The env file in the resumed session dir is a symlink - should return a warning
           requireThat(result.additionalContext(), "additionalContext").contains("symlink");
         }
@@ -931,12 +892,12 @@ public class SessionStartHookTest
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
       try
       {
-        try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}"),
+          projectPath, pluginRoot, projectPath, envFile))
         {
-          ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(Map.of("CLAUDE_ENV_FILE", envFile.toString()));
-          JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}");
-          SessionStartHandler.Result result = new InjectEnv(scope, claudeEnv).handle(input);
+          SessionStartHandler.Result result = new InjectEnv(hook).handle(hook);
           requireThat(result.additionalContext(), "additionalContext").contains("symlink");
         }
       }
@@ -957,7 +918,7 @@ public class SessionStartHookTest
    * a dangerous shell character such as {@code $}.
    * <p>
    * Since validateEnvValue is private, this test exercises it indirectly by injecting a path containing
-   * {@code $} via TestJvmScope. The test uses Path.of() to bypass filesystem restrictions.
+   * {@code $} via TestClaudeHook. The test uses Path.of() to bypass filesystem restrictions.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*contains a dangerous shell character.*")
@@ -978,12 +939,12 @@ public class SessionStartHookTest
       Path projectPath = Files.createTempDirectory("cat-test-project-");
       try
       {
-        try (TestJvmScope scope = new TestJvmScope(projectPath, dangerousPluginRoot))
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}"),
+          projectPath, dangerousPluginRoot, projectPath, envFile))
         {
-          ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(Map.of("CLAUDE_ENV_FILE", envFile.toString()));
-          JsonMapper mapper = scope.getJsonMapper();
-          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}");
-          new InjectEnv(scope, claudeEnv).handle(input);
+          new InjectEnv(hook).handle(hook);
         }
       }
       finally
@@ -1021,13 +982,13 @@ public class SessionStartHookTest
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
       try
       {
-        try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+        // Inject a session_id that contains '$' - a dangerous shell character
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"startup\", \"session_id\": \"test-$INJECTED\"}"),
+          projectPath, pluginRoot, projectPath, envFile))
         {
-          ClaudeEnv claudeEnv = SharedSecrets.newClaudeEnv(Map.of("CLAUDE_ENV_FILE", envFile.toString()));
-          JsonMapper mapper = scope.getJsonMapper();
-          // Inject a session_id that contains '$' - a dangerous shell character
-          HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"test-$INJECTED\"}");
-          new InjectEnv(scope, claudeEnv).handle(input);
+          new InjectEnv(hook).handle(hook);
         }
       }
       finally
@@ -1057,11 +1018,9 @@ public class SessionStartHookTest
       Path clientDir = pluginRoot.resolve("client");
       Files.createDirectories(clientDir);
       Files.writeString(clientDir.resolve("VERSION"), "99.0.0\n");
-      try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+      try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
       {
-        JsonMapper mapper = scope.getJsonMapper();
-        HookInput input = createInput(mapper, "{}");
-        SessionStartHandler.Result result = new CheckUpdateAvailable(scope).handle(input);
+        SessionStartHandler.Result result = new CheckUpdateAvailable(scope).handle(scope);
         requireThat(result.additionalContext(), "additionalContext").isEmpty();
         requireThat(result.stderr(), "stderr").isEmpty();
       }
@@ -1086,11 +1045,9 @@ public class SessionStartHookTest
     try
     {
       // No config.json in projectPath → handler returns empty
-      try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+      try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
       {
-        JsonMapper mapper = scope.getJsonMapper();
-        HookInput input = createInput(mapper, "{}");
-        SessionStartHandler.Result result = new CheckDataMigration(scope).handle(input);
+        SessionStartHandler.Result result = new CheckDataMigration(scope).handle(scope);
         requireThat(result.additionalContext(), "additionalContext").isEmpty();
         requireThat(result.stderr(), "stderr").isEmpty();
       }
@@ -1115,11 +1072,9 @@ public class SessionStartHookTest
     try
     {
       // No .planning directory → handler returns empty (not a CAT project)
-      try (TestJvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+      try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
       {
-        JsonMapper mapper = scope.getJsonMapper();
-        HookInput input = createInput(mapper, "{}");
-        SessionStartHandler.Result result = new CheckRetrospectiveDue(scope).handle(input);
+        SessionStartHandler.Result result = new CheckRetrospectiveDue(scope).handle(scope);
         requireThat(result.additionalContext(), "additionalContext").isEmpty();
         requireThat(result.stderr(), "stderr").isEmpty();
       }
@@ -1139,16 +1094,15 @@ public class SessionStartHookTest
   @Test
   public void dispatcherReturnsEmptyWhenAllHandlersReturnEmpty() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\"}",
+      Files.createTempDirectory("cat-test-"), Files.createTempDirectory("cat-test-"),
+      Files.createTempDirectory("cat-test-")))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       SessionStartHandler emptyHandler = input -> SessionStartHandler.Result.empty();
       SessionStartHook dispatcher = new SessionStartHook(scope, List.of(emptyHandler));
 
-      HookInput input = createInput(mapper, "{\"session_id\": \"test-session\"}");
-      HookOutput output = new HookOutput(scope);
-
-      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(scope);
 
       requireThat(result.output(), "output").contains("Your CAT agent ID is:");
       requireThat(result.output(), "output").contains("test-session");
@@ -1161,17 +1115,16 @@ public class SessionStartHookTest
   @Test
   public void dispatcherCombinesContextFromMultipleHandlers() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\"}",
+      Files.createTempDirectory("cat-test-"), Files.createTempDirectory("cat-test-"),
+      Files.createTempDirectory("cat-test-")))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       SessionStartHandler handler1 = input -> SessionStartHandler.Result.context("context from handler 1");
       SessionStartHandler handler2 = input -> SessionStartHandler.Result.context("context from handler 2");
       SessionStartHook dispatcher = new SessionStartHook(scope, List.of(handler1, handler2));
 
-      HookInput input = createInput(mapper, "{\"session_id\": \"test-session\"}");
-      HookOutput output = new HookOutput(scope);
-
-      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(scope);
 
       requireThat(result.output(), "output").contains("context from handler 1");
       requireThat(result.output(), "output").contains("context from handler 2");
@@ -1186,15 +1139,15 @@ public class SessionStartHookTest
   @Test
   public void dispatcherReturnsWarningsFromHandlers() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\"}",
+      Files.createTempDirectory("cat-test-"), Files.createTempDirectory("cat-test-"),
+      Files.createTempDirectory("cat-test-")))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       SessionStartHandler handler = input -> SessionStartHandler.Result.stderr("stderr message");
       SessionStartHook dispatcher = new SessionStartHook(scope, List.of(handler));
 
-      HookInput input = createInput(mapper, "{\"session_id\": \"test-session\"}");
-      HookOutput output = new HookOutput(scope);
-      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(scope);
 
       requireThat(result.warnings(), "warnings").contains("stderr message");
 
@@ -1205,18 +1158,13 @@ public class SessionStartHookTest
   }
 
   /**
-   * Verifies that HookInput.readFrom throws IllegalStateException when session_id is blank.
+   * Verifies that constructing a TestClaudeHook with a blank session_id throws IllegalArgumentException.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*sessionId is empty.*")
-  public void dispatcherThrowsWhenSessionIdIsBlank() throws IOException
+  public void dispatcherThrowsWhenSessionIdIsBlank()
   {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput.readFrom(mapper, new ByteArrayInputStream(
-        "{\"session_id\": \"\"}".getBytes(StandardCharsets.UTF_8)));
-    }
+    new TestClaudeHook("{\"session_id\": \"\"}");
   }
 
   /**
@@ -1225,9 +1173,11 @@ public class SessionStartHookTest
   @Test
   public void dispatcherHandlesHandlerExceptionsGracefully() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\"}",
+      Files.createTempDirectory("cat-test-"), Files.createTempDirectory("cat-test-"),
+      Files.createTempDirectory("cat-test-")))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       SessionStartHandler failingHandler = input ->
       {
         throw new IllegalStateException("test error");
@@ -1235,10 +1185,7 @@ public class SessionStartHookTest
       SessionStartHandler goodHandler = input -> SessionStartHandler.Result.context("good context");
       SessionStartHook dispatcher = new SessionStartHook(scope, List.of(failingHandler, goodHandler));
 
-      HookInput input = createInput(mapper, "{\"session_id\": \"test-session\"}");
-      HookOutput output = new HookOutput(scope);
-
-      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(scope);
 
       requireThat(result.output(), "output").contains("good context");
       requireThat(result.output(), "output").contains("SessionStart Handler Errors");
@@ -1253,19 +1200,18 @@ public class SessionStartHookTest
   @Test
   public void dispatcherIncludesErrorInAdditionalContext() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\"}",
+      Files.createTempDirectory("cat-test-"), Files.createTempDirectory("cat-test-"),
+      Files.createTempDirectory("cat-test-")))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       SessionStartHandler failingHandler = input ->
       {
         throw new AssertionError("CLAUDE_SESSION_ID is not set");
       };
       SessionStartHook dispatcher = new SessionStartHook(scope, List.of(failingHandler));
 
-      HookInput input = createInput(mapper, "{\"session_id\": \"test-session\"}");
-      HookOutput output = new HookOutput(scope);
-
-      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(scope);
 
       requireThat(result.output(), "output").contains("SessionStart Handler Errors");
       requireThat(result.output(), "output").contains("CLAUDE_SESSION_ID is not set");
@@ -1279,9 +1225,11 @@ public class SessionStartHookTest
   @Test
   public void dispatcherContinuesAfterHandlerFailure() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\"}",
+      Files.createTempDirectory("cat-test-"), Files.createTempDirectory("cat-test-"),
+      Files.createTempDirectory("cat-test-")))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       SessionStartHandler handler1 = input -> SessionStartHandler.Result.context("handler 1 output");
       SessionStartHandler failingHandler = input ->
       {
@@ -1290,10 +1238,7 @@ public class SessionStartHookTest
       SessionStartHandler handler3 = input -> SessionStartHandler.Result.context("handler 3 output");
       SessionStartHook dispatcher = new SessionStartHook(scope, List.of(handler1, failingHandler, handler3));
 
-      HookInput input = createInput(mapper, "{\"session_id\": \"test-session\"}");
-      HookOutput output = new HookOutput(scope);
-
-      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(scope);
 
       requireThat(result.output(), "output").contains("handler 1 output");
       requireThat(result.output(), "output").contains("handler 3 output");
@@ -1309,16 +1254,16 @@ public class SessionStartHookTest
   @Test
   public void dispatcherReturnsSuccessWhenAllHandlersSucceed() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\"}",
+      Files.createTempDirectory("cat-test-"), Files.createTempDirectory("cat-test-"),
+      Files.createTempDirectory("cat-test-")))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       SessionStartHandler handler1 = input -> SessionStartHandler.Result.context("output 1");
       SessionStartHandler handler2 = input -> SessionStartHandler.Result.context("output 2");
       SessionStartHook dispatcher = new SessionStartHook(scope, List.of(handler1, handler2));
 
-      HookInput input = createInput(mapper, "{\"session_id\": \"test-session\"}");
-      HookOutput output = new HookOutput(scope);
-      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(scope);
 
       // No error section in output
       requireThat(result.output(), "output").doesNotContain("SessionStart Handler Errors");
@@ -1334,16 +1279,16 @@ public class SessionStartHookTest
   @Test
   public void dispatcherProducesValidJsonWithHookSpecificOutput() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"source\": \"startup\", \"session_id\": \"test\"}",
+      Files.createTempDirectory("cat-test-"), Files.createTempDirectory("cat-test-"),
+      Files.createTempDirectory("cat-test-")))
     {
       JsonMapper mapper = scope.getJsonMapper();
       SessionStartHandler handler = input -> SessionStartHandler.Result.context("test context");
       SessionStartHook dispatcher = new SessionStartHook(scope, List.of(handler));
 
-      HookInput input = createInput(mapper, "{\"source\": \"startup\", \"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(scope);
-
-      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(scope);
 
       // Parse as JSON to verify it's valid
       JsonNode json = mapper.readTree(result.output());
@@ -1361,15 +1306,15 @@ public class SessionStartHookTest
   @Test
   public void dispatcherHandlesBothContextAndWarnings() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\"}",
+      Files.createTempDirectory("cat-test-"), Files.createTempDirectory("cat-test-"),
+      Files.createTempDirectory("cat-test-")))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       SessionStartHandler handler = input -> SessionStartHandler.Result.both("context msg", "stderr msg");
       SessionStartHook dispatcher = new SessionStartHook(scope, List.of(handler));
 
-      HookInput input = createInput(mapper, "{\"session_id\": \"test-session\"}");
-      HookOutput output = new HookOutput(scope);
-      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(scope);
 
       requireThat(result.warnings(), "warnings").contains("stderr msg");
       requireThat(result.output(), "output").contains("context msg");

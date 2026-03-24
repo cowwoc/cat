@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.hooks.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.TaskHandler;
 import io.github.cowwoc.cat.hooks.task.EnforceCommitBeforeSubagentSpawn;
@@ -81,7 +82,7 @@ public final class EnforceCommitBeforeSubagentSpawnTest
   public void nonWorkExecuteSubagentIsAllowed() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-commit-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       EnforceCommitBeforeSubagentSpawn handler = new EnforceCommitBeforeSubagentSpawn(scope);
@@ -108,7 +109,7 @@ public final class EnforceCommitBeforeSubagentSpawnTest
   public void allowedWhenNoActiveLock() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
     {
       JsonMapper mapper = scope.getJsonMapper();
       EnforceCommitBeforeSubagentSpawn handler = new EnforceCommitBeforeSubagentSpawn(scope);
@@ -138,7 +139,7 @@ public final class EnforceCommitBeforeSubagentSpawnTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     Path worktreePath = null;
     String sessionId = UUID.randomUUID().toString();
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String issueId = "2.1-clean-issue";
@@ -176,7 +177,7 @@ public final class EnforceCommitBeforeSubagentSpawnTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     Path worktreePath = null;
     String sessionId = UUID.randomUUID().toString();
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String issueId = "2.1-dirty-issue";
@@ -216,7 +217,7 @@ public final class EnforceCommitBeforeSubagentSpawnTest
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     Path worktreePath = null;
     String sessionId = UUID.randomUUID().toString();
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String issueId = "2.1-staged-issue";

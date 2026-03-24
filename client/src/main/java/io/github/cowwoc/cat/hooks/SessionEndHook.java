@@ -39,15 +39,15 @@ import java.util.List;
 public final class SessionEndHook implements HookHandler
 {
   private static final long STALE_LOCK_AGE_SECONDS = 24L * 60L * 60L;
-  private final JvmScope scope;
+  private final ClaudeHook scope;
 
   /**
    * Creates a new SessionEndHook instance.
    *
-   * @param scope the JVM scope
+   * @param scope the hook scope
    * @throws NullPointerException if {@code scope} is null
    */
-  public SessionEndHook(JvmScope scope)
+  public SessionEndHook(ClaudeHook scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -64,44 +64,38 @@ public final class SessionEndHook implements HookHandler
   }
 
   /**
-   * Processes hook input and returns the result with any warnings.
+   * Processes hook data and returns the result with any warnings.
    *
-   * @param input the hook input to process
-   * @param output the hook output builder for creating responses
+   * @param scope the hook scope providing input data and output building
    * @return the hook result containing JSON output and warnings
-   * @throws NullPointerException if {@code input} or {@code output} are null
    */
   @Override
-  public HookResult run(HookInput input, HookOutput output)
+  public HookResult run(ClaudeHook scope)
   {
-    requireThat(input, "input").isNotNull();
-    requireThat(output, "output").isNotNull();
-    return runWithProjectDir(input, output, scope.getProjectPath());
+    return runWithProjectDir(scope, this.scope.getProjectPath());
   }
 
   /**
-   * Processes hook input and releases locks for a specific project directory.
+   * Processes hook data and releases locks for a specific project directory.
    * <p>
    * This method is public for testing purposes. The lock directory is resolved from the scope's
    * config directory using the encoded project path.
    *
-   * @param input the hook input to process
-   * @param output the hook output builder for creating responses
+   * @param scope the hook scope providing input data and output building
    * @param projectPath the project directory path (used only to derive the project name for
    *   the main project lock file filename)
    * @return the hook result containing JSON output and warnings
-   * @throws NullPointerException if {@code input}, {@code output}, or {@code projectPath} are null
+   * @throws NullPointerException if {@code scope} or {@code projectPath} are null
    */
-  public HookResult runWithProjectDir(HookInput input, HookOutput output, Path projectPath)
+  public HookResult runWithProjectDir(ClaudeHook scope, Path projectPath)
   {
-    requireThat(input, "input").isNotNull();
-    requireThat(output, "output").isNotNull();
+    requireThat(scope, "scope").isNotNull();
     requireThat(projectPath, "projectPath").isNotNull();
 
     try
     {
       String projectName = projectPath.getFileName().toString();
-      String sessionId = input.getSessionId();
+      String sessionId = scope.getSessionId();
 
       List<String> messages = new ArrayList<>();
 
@@ -114,13 +108,13 @@ public final class SessionEndHook implements HookHandler
 
       cleanStaleLocks(messages);
 
-      new SessionEndHandler(scope).clean(sessionId);
+      new SessionEndHandler(this.scope).clean(sessionId);
 
-      return new HookResult(output.empty(), messages);
+      return new HookResult(scope.empty(), messages);
     }
     catch (Exception e)
     {
-      return new HookResult(output.empty(), List.of("SessionEndHook error: " + e.getMessage()));
+      return new HookResult(scope.empty(), List.of("SessionEndHook error: " + e.getMessage()));
     }
   }
 

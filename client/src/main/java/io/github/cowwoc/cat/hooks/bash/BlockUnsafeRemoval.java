@@ -7,8 +7,8 @@
 package io.github.cowwoc.cat.hooks.bash;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
-import io.github.cowwoc.cat.hooks.HookInput;
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
+
 import io.github.cowwoc.cat.hooks.ShellParser;
 import io.github.cowwoc.cat.hooks.util.IssueLock;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
@@ -71,7 +71,7 @@ public final class BlockUnsafeRemoval implements BashHandler
   }
 
   private final Clock clock;
-  private final JvmScope scope;
+  private final ClaudeHook scope;
 
   /**
    * Creates a new handler for blocking unsafe directory removal.
@@ -79,7 +79,7 @@ public final class BlockUnsafeRemoval implements BashHandler
    * @param scope the JVM scope providing access to shared resources
    * @throws NullPointerException if {@code scope} is null
    */
-  public BlockUnsafeRemoval(JvmScope scope)
+  public BlockUnsafeRemoval(ClaudeHook scope)
   {
     this(scope, Clock.systemUTC());
   }
@@ -91,7 +91,7 @@ public final class BlockUnsafeRemoval implements BashHandler
    * @param clock the clock to use for determining lock staleness
    * @throws NullPointerException if {@code scope} or {@code clock} are null
    */
-  public BlockUnsafeRemoval(JvmScope scope, Clock clock)
+  public BlockUnsafeRemoval(ClaudeHook scope, Clock clock)
   {
     assert that(scope, "scope").isNotNull().elseThrow();
     assert that(clock, "clock").isNotNull().elseThrow();
@@ -100,12 +100,12 @@ public final class BlockUnsafeRemoval implements BashHandler
   }
 
   @Override
-  public Result check(HookInput input)
+  public Result check(ClaudeHook scope)
   {
-    String command = input.getCommand();
-    String workingDirectory = input.getString("cwd");
-    String sessionId = input.getSessionId();
-    String catAgentId = input.getCatAgentId(sessionId);
+    String command = scope.getCommand();
+    String workingDirectory = scope.getString("cwd");
+    String sessionId = scope.getSessionId();
+    String catAgentId = scope.getCatAgentId(sessionId);
 
     try
     {

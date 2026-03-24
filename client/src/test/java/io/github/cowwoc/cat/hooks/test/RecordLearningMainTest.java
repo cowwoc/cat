@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.RecordLearning;
 import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
@@ -15,6 +14,8 @@ import tools.jackson.databind.node.ObjectNode;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import io.github.cowwoc.cat.hooks.JvmScope;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
@@ -56,7 +57,7 @@ public class RecordLearningMainTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       // Set up minimal retrospectives directory
       Path retroDir = tempDir.resolve(".cat").resolve("retrospectives");
@@ -96,7 +97,7 @@ public class RecordLearningMainTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       InputStream emptyInput = new ByteArrayInputStream(new byte[0]);
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -130,7 +131,7 @@ public class RecordLearningMainTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       InputStream invalidJson = new ByteArrayInputStream(
         "not valid json at all".getBytes(StandardCharsets.UTF_8));
@@ -166,7 +167,7 @@ public class RecordLearningMainTest
   public void missingClaudeProjectDirProducesBlockResponse() throws IOException
   {
     Path tempDir = Files.createTempDirectory("record-learning-main-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       InputStream emptyInput = new ByteArrayInputStream(new byte[0]);
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -217,7 +218,7 @@ public class RecordLearningMainTest
   public void nullInThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("record-learning-main-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       RecordLearning.run(scope, null,
         new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8),
@@ -239,7 +240,7 @@ public class RecordLearningMainTest
   public void nullOutThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("record-learning-main-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       RecordLearning.run(scope, new ByteArrayInputStream(new byte[0]), null,
         () -> "");
@@ -261,7 +262,7 @@ public class RecordLearningMainTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       Clock fixedClock = Clock.fixed(Instant.parse("2026-03-05T10:00:00Z"), ZoneOffset.UTC);
       // Create the retrospectives directory with a corrupted mistakes file containing a literal newline
@@ -307,7 +308,7 @@ public class RecordLearningMainTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       Clock fixedClock = Clock.fixed(Instant.parse("2026-03-05T10:00:00Z"), ZoneOffset.UTC);
       Path retroDir = tempDir.resolve(".cat").resolve("retrospectives");
@@ -364,7 +365,7 @@ public class RecordLearningMainTest
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
-    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       Clock fixedClock = Clock.fixed(Instant.parse("2026-03-05T10:00:00Z"), ZoneOffset.UTC);
       Path retroDir = tempDir.resolve(".cat").resolve("retrospectives");

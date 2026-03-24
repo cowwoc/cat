@@ -42,14 +42,12 @@ public final class FeatureGate
   /**
    * Creates a new feature gate from JVM scope.
    *
-   * @param scope the JVM scope providing plugin root and JSON mapper
+   * @param scope the abstract JVM scope providing plugin root and JSON mapper
    * @return a new feature gate
    * @throws IOException if tiers.json cannot be loaded
-   * @throws NullPointerException if {@code scope} is null
    */
   public static FeatureGate create(JvmScope scope) throws IOException
   {
-    requireThat(scope, "scope").isNotNull();
     return new FeatureGate(new LicenseValidator(scope), new Entitlements(scope));
   }
 

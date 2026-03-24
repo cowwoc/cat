@@ -33,7 +33,7 @@ public final class SessionEndHandlerTest
   public void sessionEndDeletesStaleSessionWorkFiles() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       // Create a stale session work directory (no matching Claude session directory)
       String staleSessionId = "11111111-1111-1111-1111-111111111111";
@@ -62,7 +62,7 @@ public final class SessionEndHandlerTest
   public void sessionEndSkipsCurrentSessionWorkFiles() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       String currentSessionId = "test-session";
 
@@ -93,7 +93,7 @@ public final class SessionEndHandlerTest
   public void sessionEndHandlesNonExistentWorkDirectory() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       // Sessions directory does not exist — no error should occur
       Path sessionsDir = scope.getCatWorkPath().resolve("sessions");
@@ -116,7 +116,7 @@ public final class SessionEndHandlerTest
   public void sessionEndSkipsWhenStaleDirectoryMissing() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       // Create the sessions directory but no subdirectories.
       // The stale directory is absent before the handler runs.
@@ -148,7 +148,7 @@ public final class SessionEndHandlerTest
   public void sessionEndPreservesActiveSessionWorkFiles() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       // Simulate another active session: create its Claude session directory
       String activeOtherSessionId = "cccccccc-cccc-cccc-cccc-cccccccccccc";
@@ -183,7 +183,7 @@ public final class SessionEndHandlerTest
   public void sessionEndCleansMixedStaleSessions() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       // Active session: create its Claude session directory
       String activeSessionId = "dddddddd-dddd-dddd-dddd-dddddddddddd";
@@ -222,7 +222,7 @@ public final class SessionEndHandlerTest
   public void sessionEndSkipsCurrentSessionEvenWithoutClaudeDirectory() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       String currentSessionId = "test-session";
 
@@ -254,7 +254,7 @@ public final class SessionEndHandlerTest
   public void sessionEndContinuesOnConcurrentDeletion() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       // Create a stale session work directory
       String staleSessionId = "44444444-4444-4444-4444-444444444444";
@@ -285,7 +285,7 @@ public final class SessionEndHandlerTest
   public void sessionEndCleansMultipleStaleSessionsLeavingOnlyActive() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       // Active session 1: has Claude session directory
       String activeSessionId1 = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
@@ -341,7 +341,7 @@ public final class SessionEndHandlerTest
   public void sessionEndUsesScopeSessionIdToSkipCurrentSession() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       String sessionId = "test-session";
 
@@ -368,7 +368,7 @@ public final class SessionEndHandlerTest
   public void sessionEndRejectsNonUuidSessionIds() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       // Create sessions directory with a non-UUID entry
       Path sessionsDir = scope.getCatWorkPath().resolve("sessions");
@@ -402,7 +402,7 @@ public final class SessionEndHandlerTest
   public void claudeSessionPathParentIsClaudeProjectsDirectory() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       Path sessionPath = scope.getClaudeSessionPath("test-session");
       Path parentOfSessionPath = sessionPath.getParent();
@@ -424,7 +424,7 @@ public final class SessionEndHandlerTest
   public void sessionEndHandlesPermissionErrors() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       // Create a stale session work directory with a child file
       String staleSessionId = "88888888-8888-8888-8888-888888888888";

@@ -105,7 +105,7 @@ public class BatchReaderTest
       "2024-01-01T00:00:00Z");
 
     Path tempDir = Files.createTempDirectory("test-batch-reader-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       String json = result.toJson(scope.getJsonMapper());
 

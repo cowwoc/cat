@@ -8,8 +8,7 @@ package io.github.cowwoc.cat.hooks.session;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.HookInput;
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.util.VersionUtils;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.databind.JsonNode;
@@ -37,7 +36,7 @@ public final class CheckUpdateAvailable implements SessionStartHandler
   private static final String GITHUB_API_URL =
     "https://api.github.com/repos/cowwoc/cat/releases/latest";
   private static final Duration TIMEOUT = Duration.ofSeconds(5);
-  private final JvmScope scope;
+  private final ClaudeHook scope;
 
   /**
    * Creates a new CheckUpdateAvailable handler.
@@ -45,7 +44,7 @@ public final class CheckUpdateAvailable implements SessionStartHandler
    * @param scope the JVM scope providing environment configuration
    * @throws NullPointerException if scope is null
    */
-  public CheckUpdateAvailable(JvmScope scope)
+  public CheckUpdateAvailable(ClaudeHook scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -54,15 +53,12 @@ public final class CheckUpdateAvailable implements SessionStartHandler
   /**
    * Checks for available updates and returns a notice if a newer version exists.
    *
-   * @param input the hook input
    * @return a result with update notice if newer version available, empty otherwise
-   * @throws NullPointerException if input is null
    * @throws WrappedCheckedException if an I/O error occurs reading version or cache files
    */
   @Override
-  public Result handle(HookInput input)
+  public Result handle(ClaudeHook scope)
   {
-    requireThat(input, "input").isNotNull();
     Path pluginRoot = scope.getPluginRoot();
 
     try

@@ -6,17 +6,11 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.HookInput;
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.session.InjectSubAgentRules;
 import io.github.cowwoc.cat.hooks.session.SubagentStartHandler;
 import org.testng.annotations.Test;
-import tools.jackson.databind.json.JsonMapper;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -27,12 +21,6 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  */
 public final class InjectSubAgentRulesTest
 {
-  private HookInput createInput(JsonMapper mapper, String json)
-  {
-    InputStream stream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-    return HookInput.readFrom(mapper, stream);
-  }
-
   /**
    * Verifies that handle() returns content from the plugin rules directory even when no project
    * rules directory exists.
@@ -44,7 +32,9 @@ public final class InjectSubAgentRulesTest
   {
     Path projectPath = Files.createTempDirectory("inject-subagent-plugin-project-");
     Path pluginDir = Files.createTempDirectory("inject-subagent-plugin-root-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginDir))
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"subagent_type\": \"cat:work-execute\"}",
+      projectPath, pluginDir, projectPath))
     {
       Path pluginRulesDir = scope.getPluginRoot().resolve("rules");
       Files.createDirectories(pluginRulesDir);
@@ -58,12 +48,9 @@ public final class InjectSubAgentRulesTest
         """);
       // No project rules directory created
 
-      JsonMapper mapper = scope.getJsonMapper();
-      InjectSubAgentRules handler = new InjectSubAgentRules(scope);
-      HookInput input = createInput(mapper,
-        "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"subagent_type\": \"cat:work-execute\"}");
+      InjectSubAgentRules handler = new InjectSubAgentRules();
 
-      SubagentStartHandler.Result result = handler.handle(input);
+      SubagentStartHandler.Result result = handler.handle(scope);
 
       requireThat(result.additionalContext(), "additionalContext").contains("Plugin subagent rule");
       requireThat(result.additionalContext(), "additionalContext").contains(
@@ -88,7 +75,9 @@ public final class InjectSubAgentRulesTest
   {
     Path projectPath = Files.createTempDirectory("inject-subagent-override-project-");
     Path pluginDir = Files.createTempDirectory("inject-subagent-override-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginDir))
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\"}",
+      projectPath, pluginDir, projectPath))
     {
       Path pluginRulesDir = scope.getPluginRoot().resolve("rules");
       Files.createDirectories(pluginRulesDir);
@@ -110,12 +99,9 @@ public final class InjectSubAgentRulesTest
         This is from the project.
         """);
 
-      JsonMapper mapper = scope.getJsonMapper();
-      InjectSubAgentRules handler = new InjectSubAgentRules(scope);
-      HookInput input = createInput(mapper,
-        "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\"}");
+      InjectSubAgentRules handler = new InjectSubAgentRules();
 
-      SubagentStartHandler.Result result = handler.handle(input);
+      SubagentStartHandler.Result result = handler.handle(scope);
 
       // Both rules are included (no deduplication)
       requireThat(result.additionalContext(), "additionalContext").contains("Plugin version");
@@ -140,7 +126,9 @@ public final class InjectSubAgentRulesTest
   public void getRulesBlankSubagentTypeMatchesAllSubagentRule() throws IOException
   {
     Path tempDir = Files.createTempDirectory("inject-subagent-rules-blank-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\"}",
+      tempDir, tempDir, tempDir))
     {
       Path rulesDir = scope.getProjectPath().resolve(".cat/rules");
       Files.createDirectories(rulesDir);
@@ -153,13 +141,9 @@ public final class InjectSubAgentRulesTest
         Applies to any subagent.
         """);
 
-      JsonMapper mapper = scope.getJsonMapper();
-      InjectSubAgentRules handler = new InjectSubAgentRules(scope);
-      // Blank subagent_type
-      HookInput input = createInput(mapper,
-        "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\"}");
+      InjectSubAgentRules handler = new InjectSubAgentRules();
 
-      SubagentStartHandler.Result result = handler.handle(input);
+      SubagentStartHandler.Result result = handler.handle(scope);
 
       requireThat(result.additionalContext(), "additionalContext").contains("Universal subagent content");
       requireThat(result.additionalContext(), "additionalContext").contains("Applies to any subagent.");
@@ -179,7 +163,9 @@ public final class InjectSubAgentRulesTest
   public void getRulesPopulatedSubagentTypeMatchesSpecificRule() throws IOException
   {
     Path tempDir = Files.createTempDirectory("inject-subagent-rules-specific-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"subagent_type\": \"cat:work-execute\"}",
+      tempDir, tempDir, tempDir))
     {
       Path rulesDir = scope.getProjectPath().resolve(".cat/rules");
       Files.createDirectories(rulesDir);
@@ -192,12 +178,9 @@ public final class InjectSubAgentRulesTest
         Only for cat:work-execute.
         """);
 
-      JsonMapper mapper = scope.getJsonMapper();
-      InjectSubAgentRules handler = new InjectSubAgentRules(scope);
-      HookInput input = createInput(mapper,
-        "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"subagent_type\": \"cat:work-execute\"}");
+      InjectSubAgentRules handler = new InjectSubAgentRules();
 
-      SubagentStartHandler.Result result = handler.handle(input);
+      SubagentStartHandler.Result result = handler.handle(scope);
 
       requireThat(result.additionalContext(), "additionalContext").contains("Work execute specific content");
       requireThat(result.additionalContext(), "additionalContext").contains("Only for cat:work-execute.");
@@ -217,15 +200,14 @@ public final class InjectSubAgentRulesTest
   public void getRulesEmptyRulesDirReturnsEmptyString() throws IOException
   {
     Path tempDir = Files.createTempDirectory("inject-subagent-rules-empty-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"subagent_type\": \"cat:work-execute\"}",
+      tempDir, tempDir, tempDir))
     {
       // No rules directory created
-      JsonMapper mapper = scope.getJsonMapper();
-      InjectSubAgentRules handler = new InjectSubAgentRules(scope);
-      HookInput input = createInput(mapper,
-        "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"subagent_type\": \"cat:work-execute\"}");
+      InjectSubAgentRules handler = new InjectSubAgentRules();
 
-      SubagentStartHandler.Result result = handler.handle(input);
+      SubagentStartHandler.Result result = handler.handle(scope);
 
       requireThat(result.additionalContext(), "additionalContext").isEmpty();
       requireThat(result.stderr(), "stderr").isEmpty();
@@ -248,7 +230,9 @@ public final class InjectSubAgentRulesTest
   {
     Path projectPath = Files.createTempDirectory("inject-subagent-override-empty-project-");
     Path pluginDir = Files.createTempDirectory("inject-subagent-override-empty-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginDir))
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"subagent_type\": \"cat:work-execute\"}",
+      projectPath, pluginDir, projectPath))
     {
       Path pluginRulesDir = scope.getPluginRoot().resolve("rules");
       Files.createDirectories(pluginRulesDir);
@@ -273,12 +257,9 @@ public final class InjectSubAgentRulesTest
         This content should not reach any subagent.
         """);
 
-      JsonMapper mapper = scope.getJsonMapper();
-      InjectSubAgentRules handler = new InjectSubAgentRules(scope);
-      HookInput input = createInput(mapper,
-        "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"subagent_type\": \"cat:work-execute\"}");
+      InjectSubAgentRules handler = new InjectSubAgentRules();
 
-      SubagentStartHandler.Result result = handler.handle(input);
+      SubagentStartHandler.Result result = handler.handle(scope);
 
       // Plugin rule (null subAgents) passes the filter and is included
       requireThat(result.additionalContext(), "additionalContext").contains(
@@ -300,32 +281,15 @@ public final class InjectSubAgentRulesTest
   }
 
   /**
-   * Verifies that the constructor throws NullPointerException when scope is null.
-   */
-  @Test(expectedExceptions = NullPointerException.class)
-  public void testConstructorWithNullScopeThrowsNullPointerException()
-  {
-    new InjectSubAgentRules(null);
-  }
-
-  /**
    * Verifies that handle() throws NullPointerException when input is null.
    *
    * @throws IOException if file operations fail
    */
   @Test(expectedExceptions = NullPointerException.class)
-  public void testGetRulesWithNullInputThrowsNullPointerException() throws IOException
+  public void testGetRulesWithNullInputThrowsNullPointerException()
   {
-    Path tempDir = Files.createTempDirectory("inject-subagent-rules-null-input-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      InjectSubAgentRules handler = new InjectSubAgentRules(scope);
-      handler.handle(null);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
+    InjectSubAgentRules handler = new InjectSubAgentRules();
+    handler.handle(null);
   }
 
   /**
@@ -338,7 +302,9 @@ public final class InjectSubAgentRulesTest
   public void testGetRulesEmptySubagentsExcludesAll() throws IOException
   {
     Path tempDir = Files.createTempDirectory("inject-subagent-rules-empty-subagents-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"subagent_type\": \"cat:work-execute\"}",
+      tempDir, tempDir, tempDir))
     {
       Path rulesDir = scope.getProjectPath().resolve(".cat/rules");
       Files.createDirectories(rulesDir);
@@ -352,12 +318,9 @@ public final class InjectSubAgentRulesTest
         This rule should not reach any subagent.
         """);
 
-      JsonMapper mapper = scope.getJsonMapper();
-      InjectSubAgentRules handler = new InjectSubAgentRules(scope);
-      HookInput input = createInput(mapper,
-        "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"subagent_type\": \"cat:work-execute\"}");
+      InjectSubAgentRules handler = new InjectSubAgentRules();
 
-      SubagentStartHandler.Result result = handler.handle(input);
+      SubagentStartHandler.Result result = handler.handle(scope);
 
       requireThat(result.additionalContext(), "additionalContext").isEmpty();
       requireThat(result.stderr(), "stderr").isEmpty();
@@ -378,7 +341,9 @@ public final class InjectSubAgentRulesTest
   public void testGetRulesTypeDoesNotMatchDifferentSpecificType() throws IOException
   {
     Path tempDir = Files.createTempDirectory("inject-subagent-rules-type-mismatch-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"subagent_type\": \"cat:git-commit\"}",
+      tempDir, tempDir, tempDir))
     {
       Path rulesDir = scope.getProjectPath().resolve(".cat/rules");
       Files.createDirectories(rulesDir);
@@ -392,13 +357,9 @@ public final class InjectSubAgentRulesTest
         Only for cat:work-execute subagents.
         """);
 
-      JsonMapper mapper = scope.getJsonMapper();
-      InjectSubAgentRules handler = new InjectSubAgentRules(scope);
-      // Request as a different subagent type
-      HookInput input = createInput(mapper,
-        "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"subagent_type\": \"cat:git-commit\"}");
+      InjectSubAgentRules handler = new InjectSubAgentRules();
 
-      SubagentStartHandler.Result result = handler.handle(input);
+      SubagentStartHandler.Result result = handler.handle(scope);
 
       requireThat(result.additionalContext(), "additionalContext").isEmpty();
       requireThat(result.stderr(), "stderr").isEmpty();

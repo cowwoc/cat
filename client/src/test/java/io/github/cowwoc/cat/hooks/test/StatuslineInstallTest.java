@@ -30,7 +30,7 @@ public final class StatuslineInstallTest
   {
     Path tempDir = Files.createTempDirectory("statusline-install-test-");
     Path pluginRoot = Files.createTempDirectory("statusline-plugin-root-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       StatuslineInstall installer = new StatuslineInstall(scope);
       String result = installer.install(tempDir, pluginRoot);
@@ -60,7 +60,7 @@ public final class StatuslineInstallTest
   {
     Path tempDir = Files.createTempDirectory("statusline-install-test-");
     Path pluginRoot = Files.createTempDirectory("statusline-plugin-root-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       Path claudeDir = tempDir.resolve(".claude");
       Files.createDirectories(claudeDir);
@@ -99,7 +99,7 @@ public final class StatuslineInstallTest
   {
     Path tempDir = Files.createTempDirectory("statusline-install-test-");
     Path pluginRoot = Files.createTempDirectory("statusline-plugin-root-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       StatuslineInstall installer = new StatuslineInstall(scope);
       installer.install(tempDir, pluginRoot);
@@ -125,7 +125,7 @@ public final class StatuslineInstallTest
   {
     Path tempDir = Files.createTempDirectory("statusline-install-test-");
     Path pluginRoot = Files.createTempDirectory("statusline-plugin-root-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       StatuslineInstall installer = new StatuslineInstall(scope);
       String result = installer.install(tempDir, pluginRoot);
@@ -150,7 +150,7 @@ public final class StatuslineInstallTest
   {
     Path tempDir = Files.createTempDirectory("statusline-install-test-");
     Path pluginRoot = Files.createTempDirectory("statusline-plugin-root-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       Path claudeDir = tempDir.resolve(".claude");
       Files.createDirectories(claudeDir);
@@ -180,7 +180,7 @@ public final class StatuslineInstallTest
   {
     Path tempDir = Files.createTempDirectory("statusline-install-test-");
     Path pluginRoot = Files.createTempDirectory("statusline-plugin-root-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       Path claudeDir = tempDir.resolve(".claude");
       Files.createDirectories(claudeDir);
@@ -209,7 +209,7 @@ public final class StatuslineInstallTest
   {
     Path tempDir = Files.createTempDirectory("statusline-install-test-");
     Path pluginRoot = Files.createTempDirectory("statusline-plugin-root-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       Path claudeDir = tempDir.resolve(".claude");
       Files.createDirectories(claudeDir);

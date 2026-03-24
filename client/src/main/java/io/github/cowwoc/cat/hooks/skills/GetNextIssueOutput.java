@@ -6,9 +6,8 @@
  */
 package io.github.cowwoc.cat.hooks.skills;
 
-import io.github.cowwoc.cat.hooks.ClaudeEnv;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.util.IssueDiscovery;
 import io.github.cowwoc.cat.hooks.util.IssueGoalReader;
 import io.github.cowwoc.cat.hooks.util.IssueLock;
@@ -35,7 +34,7 @@ public final class GetNextIssueOutput implements SkillOutput
   /**
    * The JVM scope for accessing shared services.
    */
-  private final JvmScope scope;
+  private final ClaudeTool scope;
 
   /**
    * Creates a GetNextIssueOutput instance.
@@ -43,7 +42,7 @@ public final class GetNextIssueOutput implements SkillOutput
    * @param scope the JVM scope for accessing shared services
    * @throws NullPointerException if scope is null
    */
-  public GetNextIssueOutput(JvmScope scope)
+  public GetNextIssueOutput(ClaudeTool scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -127,7 +126,7 @@ public final class GetNextIssueOutput implements SkillOutput
 
     if (sessionId.isBlank())
     {
-      sessionId = new ClaudeEnv().getSessionId();
+      sessionId = scope.getSessionId();
     }
     if (projectPath.isEmpty())
       projectPath = scope.getProjectPath().toString();
@@ -165,7 +164,7 @@ public final class GetNextIssueOutput implements SkillOutput
         return;
       }
 
-      try (JvmScope scope = new MainJvmScope())
+      try (ClaudeTool scope = new MainClaudeTool())
       {
         GetNextIssueOutput output = new GetNextIssueOutput(scope);
         String box = output.getNextIssueBox(completedIssue, targetBranch, sessionId, projectPath, excludePattern);

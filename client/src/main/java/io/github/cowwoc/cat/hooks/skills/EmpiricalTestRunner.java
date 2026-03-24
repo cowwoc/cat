@@ -9,7 +9,8 @@ package io.github.cowwoc.cat.hooks.skills;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -752,7 +753,7 @@ public final class EmpiricalTestRunner
 
         if (sessionId.isEmpty())
         {
-          String id = event.path("sessionId").asString("");
+          String id = event.path("session_id").asString("");
           if (!id.isEmpty())
             sessionId = id;
         }
@@ -1494,7 +1495,7 @@ public final class EmpiricalTestRunner
       System.exit(1);
     }
 
-    try (JvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       if (baselinePrompt != null)

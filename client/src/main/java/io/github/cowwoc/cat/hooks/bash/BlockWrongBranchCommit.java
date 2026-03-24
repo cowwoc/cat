@@ -9,7 +9,7 @@ package io.github.cowwoc.cat.hooks.bash;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
-import io.github.cowwoc.cat.hooks.HookInput;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 
 import java.io.IOException;
@@ -46,11 +46,11 @@ public final class BlockWrongBranchCommit implements BashHandler
   }
 
   @Override
-  public Result check(HookInput input)
+  public Result check(ClaudeHook scope)
   {
-    String command = input.getCommand();
-    String workingDirectory = input.getString("cwd");
-    String sessionId = input.getSessionId();
+    String command = scope.getCommand();
+    String workingDirectory = scope.getString("cwd");
+    String sessionId = scope.getSessionId();
     requireThat(command, "command").isNotNull();
     requireThat(workingDirectory, "workingDirectory").isNotNull();
     requireThat(sessionId, "sessionId").isNotBlank();

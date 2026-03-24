@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.session.ClearAgentMarkers;
 import io.github.cowwoc.cat.hooks.util.GetSkill;
 import org.testng.annotations.Test;
@@ -46,7 +45,7 @@ public class ClearAgentMarkersTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, pluginRoot))
     {
       ClearAgentMarkers clearer = new ClearAgentMarkers(scope);
       clearer.clearMainAgentMarker(null);
@@ -69,7 +68,7 @@ public class ClearAgentMarkersTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, pluginRoot))
     {
       ClearAgentMarkers clearer = new ClearAgentMarkers(scope);
       clearer.clearMainAgentMarker("   ");
@@ -92,7 +91,7 @@ public class ClearAgentMarkersTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, pluginRoot))
     {
       ClearAgentMarkers clearer = new ClearAgentMarkers(scope);
       clearer.clearSubagentMarker(null, "agent123");
@@ -115,7 +114,7 @@ public class ClearAgentMarkersTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, pluginRoot))
     {
       ClearAgentMarkers clearer = new ClearAgentMarkers(scope);
       clearer.clearSubagentMarker("   ", "agent123");
@@ -138,7 +137,7 @@ public class ClearAgentMarkersTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, pluginRoot))
     {
       ClearAgentMarkers clearer = new ClearAgentMarkers(scope);
       clearer.clearSubagentMarker("session123", null);
@@ -161,7 +160,7 @@ public class ClearAgentMarkersTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, pluginRoot))
     {
       ClearAgentMarkers clearer = new ClearAgentMarkers(scope);
       clearer.clearSubagentMarker("session123", "   ");
@@ -184,7 +183,7 @@ public class ClearAgentMarkersTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, pluginRoot))
     {
       String sessionId = "test-session-" + System.nanoTime();
       Path sessionDir = scope.getCatWorkPath().resolve("sessions").resolve(sessionId);
@@ -214,7 +213,7 @@ public class ClearAgentMarkersTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, pluginRoot))
     {
       String sessionId = "test-session-" + System.nanoTime();
       String agentId = "agent-" + System.nanoTime();
@@ -245,7 +244,7 @@ public class ClearAgentMarkersTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, pluginRoot))
     {
       String sessionId = "test-session-" + System.nanoTime();
       Path sessionDir = scope.getCatWorkPath().resolve("sessions").resolve(sessionId);
@@ -277,7 +276,7 @@ public class ClearAgentMarkersTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, pluginRoot))
     {
       String sessionId = "test-session-" + System.nanoTime();
       String agentId = "agent456";
@@ -312,7 +311,7 @@ public class ClearAgentMarkersTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, pluginRoot))
     {
       String sessionId = "test-session-" + System.nanoTime();
       // Place markers under the NEW path: {catWorkPath}/sessions/{sessionId}/loaded/
@@ -346,7 +345,7 @@ public class ClearAgentMarkersTest
   {
     Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, pluginRoot))
     {
       String sessionId = "test-session-" + System.nanoTime();
       String agentId = "agent789";

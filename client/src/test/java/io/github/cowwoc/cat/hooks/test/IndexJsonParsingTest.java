@@ -38,7 +38,7 @@ public class IndexJsonParsingTest
   {
     String content = "{\"status\":\"open\",\"dependencies\":[],\"blocks\":[]}";
     Path tempDir = Files.createTempDirectory("test-index-json-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode result = mapper.readTree(content);
@@ -62,7 +62,7 @@ public class IndexJsonParsingTest
   {
     String content = "# State\n\n- **Status:** open\n- **Progress:** 0%\n";
     Path tempDir = Files.createTempDirectory("test-index-json-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       mapper.readTree(content);

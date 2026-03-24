@@ -7,7 +7,6 @@
 package io.github.cowwoc.cat.hooks;
 
 import static io.github.cowwoc.cat.hooks.Strings.equalsIgnoreCase;
-import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.bash.post.DetectConcatenatedCommit;
 import io.github.cowwoc.cat.hooks.bash.post.DetectFailures;
@@ -56,25 +55,20 @@ public final class PostBashHook implements HookHandler
   }
 
   /**
-   * Processes hook input and returns the result with any warnings.
+   * Processes hook data and returns the result with any warnings.
    *
-   * @param input the hook input to process
-   * @param output the hook output builder for creating responses
+   * @param scope the hook scope providing input data and output building
    * @return the hook result containing JSON output and warnings
-   * @throws NullPointerException if {@code input} or {@code output} are null
    */
   @Override
-  public HookResult run(HookInput input, HookOutput output)
+  public HookResult run(ClaudeHook scope)
   {
-    requireThat(input, "input").isNotNull();
-    requireThat(output, "output").isNotNull();
-
-    String toolName = input.getToolName();
+    String toolName = scope.getToolName();
     if (!equalsIgnoreCase(toolName, "Bash"))
-      return HookResult.withoutWarnings(output.empty());
+      return HookResult.withoutWarnings(scope.empty());
 
-    if (input.getCommand().isEmpty())
-      return HookResult.withoutWarnings(output.empty());
+    if (scope.getCommand().isEmpty())
+      return HookResult.withoutWarnings(scope.empty());
 
     List<String> warnings = new ArrayList<>();
     List<String> errorWarnings = new ArrayList<>();
@@ -84,7 +78,7 @@ public final class PostBashHook implements HookHandler
     {
       try
       {
-        BashHandler.Result result = handler.check(input);
+        BashHandler.Result result = handler.check(scope);
         // PostToolUse cannot block, only warn
         if (!result.reason().isEmpty())
           warnings.add(result.reason());
@@ -101,6 +95,6 @@ public final class PostBashHook implements HookHandler
     allWarnings.addAll(errorWarnings);
 
     // Always allow (PostToolUse cannot block, only warn)
-    return new HookResult(output.empty(), allWarnings);
+    return new HookResult(scope.empty(), allWarnings);
   }
 }

@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.tool.post;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.PostToolHandler;
 import io.github.cowwoc.cat.hooks.util.AgentIdPatterns;
 import tools.jackson.databind.JsonNode;
@@ -88,7 +88,7 @@ public final class AutoLearnMistakes implements PostToolHandler
 
   private static final Pattern COMMIT_HASH_PATTERN = Pattern.compile("^[a-f0-9]{7,}");
 
-  private final JvmScope scope;
+  private final ClaudeHook scope;
   private final Map<String, Integer> sessionIdToLineCount = new HashMap<>();
 
   /**
@@ -97,7 +97,7 @@ public final class AutoLearnMistakes implements PostToolHandler
    * @param scope the JVM scope providing session path configuration
    * @throws NullPointerException if {@code scope} is null
    */
-  public AutoLearnMistakes(JvmScope scope)
+  public AutoLearnMistakes(ClaudeHook scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;

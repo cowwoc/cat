@@ -6,17 +6,11 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.HookInput;
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.session.InjectMainAgentRules;
 import io.github.cowwoc.cat.hooks.session.SessionStartHandler;
 import org.testng.annotations.Test;
-import tools.jackson.databind.json.JsonMapper;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -37,7 +31,7 @@ public final class InjectMainAgentRulesTest
   public void handleWithMainAgentTrueRuleReturnsContext() throws IOException
   {
     Path tempDir = Files.createTempDirectory("inject-rules-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       // Create the rules directory inside the project dir (scope.getProjectPath())
       Path rulesDir = scope.getProjectPath().resolve(".cat/rules");
@@ -51,14 +45,9 @@ public final class InjectMainAgentRulesTest
         Important instruction for the main agent.
         """);
 
-      JsonMapper mapper = scope.getJsonMapper();
-      InjectMainAgentRules handler = new InjectMainAgentRules(scope);
+      InjectMainAgentRules handler = new InjectMainAgentRules();
 
-      String hookJson = "{\"session_id\": \"test-session\"}";
-      InputStream stream = new ByteArrayInputStream(hookJson.getBytes(StandardCharsets.UTF_8));
-      HookInput input = HookInput.readFrom(mapper, stream);
-
-      SessionStartHandler.Result result = handler.handle(input);
+      SessionStartHandler.Result result = handler.handle(scope);
 
       requireThat(result.additionalContext(), "additionalContext").contains("Main agent rule content");
       requireThat(result.additionalContext(), "additionalContext").contains(
@@ -82,7 +71,7 @@ public final class InjectMainAgentRulesTest
   {
     Path projectPath = Files.createTempDirectory("inject-rules-plugin-project-");
     Path pluginDir = Files.createTempDirectory("inject-rules-plugin-root-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginDir))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginDir, projectPath))
     {
       Path pluginRulesDir = scope.getPluginRoot().resolve("rules");
       Files.createDirectories(pluginRulesDir);
@@ -96,14 +85,9 @@ public final class InjectMainAgentRulesTest
         """);
       // No project rules directory created
 
-      JsonMapper mapper = scope.getJsonMapper();
-      InjectMainAgentRules handler = new InjectMainAgentRules(scope);
+      InjectMainAgentRules handler = new InjectMainAgentRules();
 
-      String hookJson = "{\"session_id\": \"test-session\"}";
-      InputStream stream = new ByteArrayInputStream(hookJson.getBytes(StandardCharsets.UTF_8));
-      HookInput input = HookInput.readFrom(mapper, stream);
-
-      SessionStartHandler.Result result = handler.handle(input);
+      SessionStartHandler.Result result = handler.handle(scope);
 
       requireThat(result.additionalContext(), "additionalContext").contains("Plugin bundled rule");
       requireThat(result.additionalContext(), "additionalContext").contains(
@@ -128,7 +112,7 @@ public final class InjectMainAgentRulesTest
   {
     Path projectPath = Files.createTempDirectory("inject-rules-override-project-");
     Path pluginDir = Files.createTempDirectory("inject-rules-override-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginDir))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginDir, projectPath))
     {
       Path pluginRulesDir = scope.getPluginRoot().resolve("rules");
       Files.createDirectories(pluginRulesDir);
@@ -150,14 +134,9 @@ public final class InjectMainAgentRulesTest
         This is from the project.
         """);
 
-      JsonMapper mapper = scope.getJsonMapper();
-      InjectMainAgentRules handler = new InjectMainAgentRules(scope);
+      InjectMainAgentRules handler = new InjectMainAgentRules();
 
-      String hookJson = "{\"session_id\": \"test-session\"}";
-      InputStream stream = new ByteArrayInputStream(hookJson.getBytes(StandardCharsets.UTF_8));
-      HookInput input = HookInput.readFrom(mapper, stream);
-
-      SessionStartHandler.Result result = handler.handle(input);
+      SessionStartHandler.Result result = handler.handle(scope);
 
       // Both rules are included (no deduplication)
       requireThat(result.additionalContext(), "additionalContext").contains(
@@ -184,17 +163,12 @@ public final class InjectMainAgentRulesTest
   public void handleWithMissingRulesDirReturnsEmpty() throws IOException
   {
     Path tempDir = Files.createTempDirectory("inject-rules-empty-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       // No rules directory created — getCatRulesForAudience will find no rules
-      JsonMapper mapper = scope.getJsonMapper();
-      InjectMainAgentRules handler = new InjectMainAgentRules(scope);
+      InjectMainAgentRules handler = new InjectMainAgentRules();
 
-      String hookJson = "{\"session_id\": \"test-session\"}";
-      InputStream stream = new ByteArrayInputStream(hookJson.getBytes(StandardCharsets.UTF_8));
-      HookInput input = HookInput.readFrom(mapper, stream);
-
-      SessionStartHandler.Result result = handler.handle(input);
+      SessionStartHandler.Result result = handler.handle(scope);
 
       requireThat(result.additionalContext(), "additionalContext").isEmpty();
       requireThat(result.stderr(), "stderr").isEmpty();
@@ -215,7 +189,7 @@ public final class InjectMainAgentRulesTest
   public void handleWithAllSubagentOnlyRulesReturnsEmpty() throws IOException
   {
     Path tempDir = Files.createTempDirectory("inject-rules-subonly-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       Path rulesDir = scope.getProjectPath().resolve(".cat/rules");
       Files.createDirectories(rulesDir);
@@ -227,14 +201,9 @@ public final class InjectMainAgentRulesTest
         # Only for subagents
         """);
 
-      JsonMapper mapper = scope.getJsonMapper();
-      InjectMainAgentRules handler = new InjectMainAgentRules(scope);
+      InjectMainAgentRules handler = new InjectMainAgentRules();
 
-      String hookJson = "{\"session_id\": \"test-session\"}";
-      InputStream stream = new ByteArrayInputStream(hookJson.getBytes(StandardCharsets.UTF_8));
-      HookInput input = HookInput.readFrom(mapper, stream);
-
-      SessionStartHandler.Result result = handler.handle(input);
+      SessionStartHandler.Result result = handler.handle(scope);
 
       requireThat(result.additionalContext(), "additionalContext").isEmpty();
       requireThat(result.stderr(), "stderr").isEmpty();
@@ -257,7 +226,7 @@ public final class InjectMainAgentRulesTest
   {
     Path projectPath = Files.createTempDirectory("inject-rules-override-main-false-project-");
     Path pluginDir = Files.createTempDirectory("inject-rules-override-main-false-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginDir))
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginDir, projectPath))
     {
       Path pluginRulesDir = scope.getPluginRoot().resolve("rules");
       Files.createDirectories(pluginRulesDir);
@@ -281,14 +250,9 @@ public final class InjectMainAgentRulesTest
         This content should not appear in main agent context.
         """);
 
-      JsonMapper mapper = scope.getJsonMapper();
-      InjectMainAgentRules handler = new InjectMainAgentRules(scope);
+      InjectMainAgentRules handler = new InjectMainAgentRules();
 
-      String hookJson = "{\"session_id\": \"test-session\"}";
-      InputStream stream = new ByteArrayInputStream(hookJson.getBytes(StandardCharsets.UTF_8));
-      HookInput input = HookInput.readFrom(mapper, stream);
-
-      SessionStartHandler.Result result = handler.handle(input);
+      SessionStartHandler.Result result = handler.handle(scope);
 
       // Plugin rule (mainAgent:true) passes the filter and is included
       requireThat(result.additionalContext(), "additionalContext").contains("Plugin main-agent rule");
@@ -309,32 +273,15 @@ public final class InjectMainAgentRulesTest
   }
 
   /**
-   * Verifies that the constructor throws NullPointerException when scope is null.
-   */
-  @Test(expectedExceptions = NullPointerException.class)
-  public void testConstructorWithNullScopeThrowsNullPointerException()
-  {
-    new InjectMainAgentRules(null);
-  }
-
-  /**
    * Verifies that handle() throws NullPointerException when input is null.
    *
    * @throws IOException if file operations fail
    */
   @Test(expectedExceptions = NullPointerException.class)
-  public void testHandleWithNullInputThrowsNullPointerException() throws IOException
+  public void testHandleWithNullInputThrowsNullPointerException()
   {
-    Path tempDir = Files.createTempDirectory("inject-rules-null-input-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      InjectMainAgentRules handler = new InjectMainAgentRules(scope);
-      handler.handle(null);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
+    InjectMainAgentRules handler = new InjectMainAgentRules();
+    handler.handle(null);
   }
 
   /**
@@ -347,7 +294,7 @@ public final class InjectMainAgentRulesTest
   public void testHandleWithMixedMainAgentRulesFiltersCorrectly() throws IOException
   {
     Path tempDir = Files.createTempDirectory("inject-rules-mixed-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       Path rulesDir = scope.getProjectPath().resolve(".cat/rules");
       Files.createDirectories(rulesDir);
@@ -366,14 +313,9 @@ public final class InjectMainAgentRulesTest
         Only subagents should see this.
         """);
 
-      JsonMapper mapper = scope.getJsonMapper();
-      InjectMainAgentRules handler = new InjectMainAgentRules(scope);
+      InjectMainAgentRules handler = new InjectMainAgentRules();
 
-      String hookJson = "{\"session_id\": \"test-session\"}";
-      InputStream stream = new ByteArrayInputStream(hookJson.getBytes(StandardCharsets.UTF_8));
-      HookInput input = HookInput.readFrom(mapper, stream);
-
-      SessionStartHandler.Result result = handler.handle(input);
+      SessionStartHandler.Result result = handler.handle(scope);
 
       requireThat(result.additionalContext(), "additionalContext").contains("Main agent exclusive content");
       requireThat(result.additionalContext(), "additionalContext").contains(

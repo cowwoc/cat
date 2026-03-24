@@ -32,7 +32,7 @@ public final class DetectPreprocessorFailureTest
   public void matchingErrorReturnsContextWithFeedbackInstruction() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ObjectNode hookData = scope.getJsonMapper().createObjectNode();
       hookData.put("error", "Bash command failed for pattern \"!`\": exit code 1");
@@ -58,7 +58,7 @@ public final class DetectPreprocessorFailureTest
   public void nonMatchingErrorReturnsAllow() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ObjectNode hookData = scope.getJsonMapper().createObjectNode();
       hookData.put("error", "Some other unrelated error occurred");
@@ -83,7 +83,7 @@ public final class DetectPreprocessorFailureTest
   public void missingErrorFieldReturnsAllow() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonNode hookData = scope.getJsonMapper().createObjectNode();
 
@@ -107,7 +107,7 @@ public final class DetectPreprocessorFailureTest
   public void errorWithPatternEmbeddedReturnsContextResult() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ObjectNode hookData = scope.getJsonMapper().createObjectNode();
       hookData.put("error", "prefix text Bash command failed for pattern \"!`\" suffix text");
@@ -133,7 +133,7 @@ public final class DetectPreprocessorFailureTest
   public void emptyErrorStringReturnsAllow() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ObjectNode hookData = scope.getJsonMapper().createObjectNode();
       hookData.put("error", "");
@@ -160,7 +160,7 @@ public final class DetectPreprocessorFailureTest
   public void numericErrorFieldReturnsAllow() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ObjectNode hookData = scope.getJsonMapper().createObjectNode();
       hookData.put("error", 42);
@@ -187,7 +187,7 @@ public final class DetectPreprocessorFailureTest
   public void booleanErrorFieldReturnsAllow() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ObjectNode hookData = scope.getJsonMapper().createObjectNode();
       hookData.put("error", true);
@@ -213,7 +213,7 @@ public final class DetectPreprocessorFailureTest
   public void jsonNullErrorFieldReturnsAllow() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ObjectNode hookData = scope.getJsonMapper().createObjectNode();
       hookData.putNull("error");
@@ -239,7 +239,7 @@ public final class DetectPreprocessorFailureTest
   public void lowercasePatternReturnsAllow() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ObjectNode hookData = scope.getJsonMapper().createObjectNode();
       hookData.put("error", "bash command failed for pattern \"!`\": exit code 1");

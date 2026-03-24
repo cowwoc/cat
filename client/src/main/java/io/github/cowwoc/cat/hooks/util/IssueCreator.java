@@ -9,10 +9,12 @@ package io.github.cowwoc.cat.hooks.util;
 import static io.github.cowwoc.cat.hooks.util.GitCommands.runGit;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import static io.github.cowwoc.cat.hooks.Strings.block;
+
 import io.github.cowwoc.cat.hooks.Config;
-import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
@@ -148,9 +150,8 @@ public final class IssueCreator
    */
   public static void main(String[] args) throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
-      HookOutput hookOutput = new HookOutput(scope);
       String jsonInput;
       if (args.length == 2 && args[0].equals("--json"))
       {
@@ -162,7 +163,7 @@ public final class IssueCreator
       }
       else
       {
-        System.out.println(hookOutput.block(
+        System.out.println(block(scope,
           "Usage: create-issue [--json <json-string>] (or read from stdin)"));
         return;
       }
@@ -175,7 +176,7 @@ public final class IssueCreator
       }
       catch (IOException e)
       {
-        System.out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+        System.out.println(block(scope, Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }
   }

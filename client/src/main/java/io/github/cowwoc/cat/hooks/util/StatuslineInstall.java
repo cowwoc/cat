@@ -8,9 +8,11 @@ package io.github.cowwoc.cat.hooks.util;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.HookOutput;
+import static io.github.cowwoc.cat.hooks.Strings.block;
+
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.Strings;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.node.ObjectNode;
@@ -178,12 +180,11 @@ public final class StatuslineInstall
    */
   public static void main(String[] args)
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
-      HookOutput hookOutput = new HookOutput(scope);
       if (args.length < 2)
       {
-        System.out.println(hookOutput.block(
+        System.out.println(block(scope,
           "Usage: statusline-install <projectPath> <pluginRoot>"));
         return;
       }
@@ -199,7 +200,7 @@ public final class StatuslineInstall
       }
       catch (IOException e)
       {
-        System.out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+        System.out.println(block(scope, Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }
   }

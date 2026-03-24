@@ -30,7 +30,7 @@ public final class ResetFailureCounterTest
   public void deletesTrackingFileWhenPresent() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-reset-test-");
-    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
+    try (JvmScope scope = new TestClaudeTool(trackingDirectory, trackingDirectory))
     {
       String sessionId = "test-session-reset-" + System.nanoTime();
       Path trackingFile = trackingDirectory.resolve("cat-failure-tracking-" + sessionId + ".count");
@@ -59,7 +59,7 @@ public final class ResetFailureCounterTest
   public void succeedsWhenTrackingFileAbsent() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-reset-test-");
-    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
+    try (JvmScope scope = new TestClaudeTool(trackingDirectory, trackingDirectory))
     {
       String sessionId = "test-session-absent-" + System.nanoTime();
 
@@ -86,7 +86,7 @@ public final class ResetFailureCounterTest
   public void returnsAllowWhenDeleteFails() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-reset-test-");
-    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
+    try (JvmScope scope = new TestClaudeTool(trackingDirectory, trackingDirectory))
     {
       String sessionId = "test-session-nodelperm-" + System.nanoTime();
       Path trackingFile = trackingDirectory.resolve("cat-failure-tracking-" + sessionId + ".count");
@@ -133,7 +133,7 @@ public final class ResetFailureCounterTest
   public void blankSessionIdThrows() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-reset-test-");
-    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
+    try (JvmScope scope = new TestClaudeTool(trackingDirectory, trackingDirectory))
     {
       JsonNode toolResult = scope.getJsonMapper().createObjectNode();
       JsonNode hookData = scope.getJsonMapper().createObjectNode();
@@ -154,7 +154,7 @@ public final class ResetFailureCounterTest
   public void alwaysReturnsAllow() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-reset-test-");
-    try (JvmScope scope = new TestJvmScope(trackingDirectory, trackingDirectory))
+    try (JvmScope scope = new TestClaudeTool(trackingDirectory, trackingDirectory))
     {
       String sessionId = "test-session-allow-" + System.nanoTime();
 

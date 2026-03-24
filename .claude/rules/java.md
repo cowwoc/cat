@@ -11,6 +11,25 @@ paths: ["*.java"]
 - **JSON Library:** Jackson 3.x with `JsonMapper`
 - **Validation Library:** requirements.java 13.2+
 
+### Running the Build
+
+**MANDATORY:** Use `mvn verify -e` (not `mvn test`) to run the full build including compiler and linters:
+
+```bash
+mvn -f client/pom.xml verify -e
+```
+
+Treat linter errors (Checkstyle, PMD) the same as compiler errors — both must be fixed before any commit.
+
+**Do NOT skip linters:**
+- ❌ `mvn -f client/pom.xml test -Dcheckstyle.skip=true`
+- ❌ `mvn -f client/pom.xml verify -Dpmd.skip=true`
+- ✅ `mvn -f client/pom.xml verify -e`
+
+**Fix ALL errors before rerunning the build.** After collecting the full output from one `mvn verify -e` run,
+apply all fixes across all files without any intermediate recompilation. Run `mvn verify -e` again only once
+all fixes have been applied.
+
 ## Code Style
 
 ### Braces
@@ -1280,6 +1299,65 @@ public final class SkillLoader
 }
 ```
 
+### Minimum Method Visibility
+Always use the most restrictive visibility that still allows the method to function correctly. Work down from the
+least-restrictive level needed:
+
+| Visibility | Use when |
+|------------|----------|
+| `public` | Part of the class's public API; called from outside the package |
+| `protected` | Must be accessible to subclasses or other classes in the same package |
+| package-private (no modifier) | Used only within the same package; no subclass involvement |
+| `private` | Used only within the same class |
+
+**Final classes:** `protected` is meaningless on a `final` class — the class cannot be subclassed, so no override or
+inheritance-based access is possible. Convert every `protected` method in a `final` class to `private` unless another
+class in the same package calls it (in which case package-private is sufficient).
+
+```java
+// Good - final class uses private instead of protected
+public final class MainClaudeTool implements ClaudeTool
+{
+  private String getEnvVar(String name)
+  {
+    return System.getenv(name);
+  }
+}
+
+// Avoid - protected in a final class (no subclass can ever override this)
+public final class MainClaudeTool implements ClaudeTool
+{
+  protected String getEnvVar(String name)
+  {
+    return System.getenv(name);
+  }
+}
+```
+
+**Non-final classes:** `protected` is appropriate only when a subclass actually overrides or calls the method.
+If no subclass uses it, prefer package-private (no modifier) or `private`.
+
+```java
+// Good - package-private; only used within the same package by non-subclass code
+String buildCacheKey()
+{
+  return "prefix:" + id;
+}
+
+// Avoid - protected when no subclass calls or overrides it
+protected String buildCacheKey()
+{
+  return "prefix:" + id;
+}
+```
+
+**Public API surface:** Restrict `public` to methods that form the class's intended contract. Helper and utility
+methods used only within the package should be package-private or private even if their class is public.
+
+**Remove unused methods:** After reducing visibility, delete any method that is now unreachable — i.e., `private`
+methods not called within the class, or package-private methods not called anywhere in the package. Dead code adds
+noise and misleads future readers into thinking a method has callers.
+
 ### Service Access via Pouch Scopes (No Dependency Injection)
 Do not use dependency injection frameworks (Spring, Guice, Dagger, etc.). Use [pouch](https://github.com/cowwoc/pouch)
 scope-based ServiceLocators for inversion of control. Scopes are explicit objects passed through constructors that
@@ -1330,8 +1408,11 @@ the scope internally. This keeps constructors stable when new dependencies are a
 accessors through call chains.
 
 **Scope implementations:**
-- `MainJvmScope` — production use (in `main()` methods), reads environment configuration
-- `TestJvmScope` — test use, accepts injectable paths: `new TestJvmScope(tempDir, tempDir)`
+- `MainClaudeTool` — production use for session CLI tools (in `main()` methods that require `CLAUDE_SESSION_ID`
+  and `CLAUDE_ENV_FILE`), reads all session environment configuration
+- `MainJvmScope` — production use for infrastructure CLI tools (in `main()` methods that do NOT require session
+  vars, e.g., `GetSkill`), reads only infrastructure vars
+- `TestClaudeTool` — test use, accepts injectable paths: `new TestClaudeTool(tempDir, tempDir)`
 
 **Why pouch over DI frameworks:**
 - No magic — explicit constructor wiring, fully debuggable code flow
@@ -1355,7 +1436,7 @@ public final class GetDiffOutput
 
   public static void main(String[] args)  // CLI entry point via hook.sh
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new MainClaudeTool())
     {
       String output = new GetDiffOutput(scope).getOutput();
       if (output != null)
@@ -1370,7 +1451,7 @@ public final class RenderDiffCommand  // Don't create this
   public static void main(String[] args)
   {
     // Trivial delegation adds no value
-    new GetDiffOutput(new MainJvmScope()).getOutput();
+    new GetDiffOutput(new MainClaudeTool()).getOutput();
   }
 }
 ```
@@ -1393,6 +1474,75 @@ catch (IOException e)
   System.exit(0);  // Unnecessary
 }
 ```
+
+### Try-With-Resources: Interface on Left Side
+
+Always declare the variable with the interface type on the left side of `try-with-resources`, not the concrete class:
+
+```java
+// Good - interface type on left
+try (ClaudeTool scope = new MainClaudeTool())
+{
+  ...
+}
+
+// Avoid - concrete class on left
+try (MainClaudeTool scope = new MainClaudeTool())
+{
+  ...
+}
+```
+
+### Single-Scope Error Handling in main()
+
+When `main()` handles expected and unexpected errors, use a single scope with a nested try-catch inside it. Do NOT create
+additional scope instances in catch blocks:
+
+```java
+// Good - one scope, nested try-catch inside
+public static void main(String[] args)
+{
+  try (ClaudeTool scope = new MainClaudeTool())
+  {
+    try
+    {
+      new MyClass(scope).run(args, System.out);
+    }
+    catch (IllegalArgumentException | IOException e)
+    {
+      System.out.println(new HookOutput(scope).block(
+        Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+    }
+    catch (RuntimeException | AssertionError e)
+    {
+      Logger log = LoggerFactory.getLogger(MyClass.class);
+      log.error("Unexpected error", e);
+      System.out.println(new HookOutput(scope).block(
+        Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+    }
+  }
+}
+
+// Avoid - multiple scope instances
+public static void main(String[] args)
+{
+  try (ClaudeTool scope = new MainClaudeTool())
+  {
+    new MyClass(scope).run(args, System.out);
+  }
+  catch (RuntimeException | AssertionError e)
+  {
+    try (ClaudeTool errorScope = new MainClaudeTool())   // Don't do this
+    {
+      System.out.println(new HookOutput(errorScope).block(...));
+    }
+  }
+}
+```
+
+**Why:** Creating a new scope in the catch block reads environment variables again, adds latency, and opens two resources
+sequentially when one would suffice. The single outer scope is still open during the catch block, so it can be used
+directly for error reporting.
 
 ## Warnings Suppression
 
@@ -1432,20 +1582,36 @@ depending on the execution context. Never call `System.getenv()` directly outsid
 
 | Context | Correct API |
 |---------|-------------|
-| CLI commands (`main()` methods) | `new ClaudeEnv().getSessionId()` — `getSessionId()` is an instance method |
+| Session CLI commands (`main()` methods) — have `CLAUDE_SESSION_ID` and `CLAUDE_ENV_FILE` | `scope.getSessionId()` via `ClaudeTool` |
+| Infrastructure CLI commands (`main()` methods) — invoked outside a session (e.g., by skill preprocessor) | `scope.getPluginRoot()` etc. via `JvmScope` |
 | Hook handlers | `HookInput.getSessionId()` |
 | Skill directive variable substitution | `System.getenv(name)` (whitelisted; see below) |
 
 **Why:** Hook handlers receive session-specific values from the `HookInput` JSON payload, not from environment
-variables. Reading environment variables in hook handlers bypasses this contract. CLI commands that run outside of
-hook invocation (e.g., `GetSkill`, `WorkPrepare`) use `ClaudeEnv` which wraps `System.getenv()` with validation.
+variables. Reading environment variables in hook handlers bypasses this contract. Session CLI commands use
+`MainClaudeTool` (a `ClaudeTool` implementation) which reads all env vars at startup. Infrastructure CLI commands
+(e.g., `GetSkill`) use `MainJvmScope` which reads only infrastructure path vars and does not require
+`CLAUDE_SESSION_ID` or `CLAUDE_ENV_FILE`.
 
 ```java
-// Good - CLI main() method reads session ID via ClaudeEnv (instance method)
+// Good - session CLI main() method reads session ID via scope
 public static void main(String[] args)
 {
-  String sessionId = new ClaudeEnv().getSessionId();
-  // ...
+  try (ClaudeTool scope = new MainClaudeTool())
+  {
+    String sessionId = scope.getSessionId();
+    // ...
+  }
+}
+
+// Good - infrastructure CLI main() method uses MainJvmScope (no session vars required)
+public static void main(String[] args)
+{
+  try (JvmScope scope = new MainJvmScope())
+  {
+    Path pluginRoot = scope.getPluginRoot();
+    // ...
+  }
 }
 
 // Bad - CLI main() method reads session ID via System.getenv()
@@ -1471,22 +1637,37 @@ public Result handle(HookInput input)
 ```
 
 `EnforceJvmScopeEnvAccessTest` enforces this convention by scanning all Java source files and failing the build if
-`System.getenv(` appears outside of `MainJvmScope.java`, `ClaudeEnv.java`, `GetSkill.java`, and `TerminalType.java`.
+`System.getenv(` appears outside of `MainClaudeTool.java`, `MainJvmScope.java`, `MainClaudeHook.java`,
+`GetSkill.java`, and `TerminalType.java`.
 
-The four whitelisted files each have a specific reason for direct env var access:
-- `MainJvmScope.java` — reads infrastructure path variables (`CLAUDE_PROJECT_DIR`, `CLAUDE_PLUGIN_ROOT`,
-  `CLAUDE_CONFIG_DIR`, `TZ`) available in both hook and CLI contexts
-- `ClaudeEnv.java` — the designated wrapper for session-specific variables (`CLAUDE_SESSION_ID`,
-  `CLAUDE_ENV_FILE`); all other code must use `ClaudeEnv` to access these
+The five whitelisted files each have a specific reason for direct env var access:
+- `MainClaudeTool.java` — reads all Claude env vars (`CLAUDE_PROJECT_DIR`, `CLAUDE_PLUGIN_ROOT`,
+  `CLAUDE_SESSION_ID`, `CLAUDE_ENV_FILE`, `TZ`) at startup and stores them as fields; for CLI tools that run
+  as part of a Claude session
+- `MainJvmScope.java` — reads only infrastructure path vars (`CLAUDE_PROJECT_DIR`, `CLAUDE_PLUGIN_ROOT`,
+  `CLAUDE_CONFIG_DIR`, `TZ`); for CLI tools that run without a Claude session (e.g., `GetSkill` which is
+  invoked by the skill preprocessor before a session is established)
+- `MainClaudeHook.java` — reads infrastructure path vars (`CLAUDE_PROJECT_DIR`, `CLAUDE_PLUGIN_ROOT`,
+  `CLAUDE_CONFIG_DIR`, `CLAUDE_ENV_FILE`, `TZ`) from the environment; the production hook scope implementation
+  used in hook handler `main()` methods
 - `GetSkill.java` — expands env var references in skill directive templates; requires direct access to
   substitute variable values
 - `TerminalType.java` — detects terminal type from standard terminal env vars (`TERM`, `TERM_PROGRAM`)
+
+**Scope implementations:**
+- `MainClaudeTool` — production use for session CLI tools (in `main()` methods that require `CLAUDE_SESSION_ID`
+  and `CLAUDE_ENV_FILE`), reads all session environment configuration
+- `MainJvmScope` — production use for infrastructure CLI tools (in `main()` methods that do NOT require session
+  vars, e.g., `GetSkill`), reads only infrastructure vars
+- `MainClaudeHook` — production use for hook handler `main()` methods, reads infrastructure path vars and hook
+  JSON from stdin
+- `TestClaudeTool` — test use, accepts injectable paths: `new TestClaudeTool(tempDir, tempDir)`
 
 ```cat-rules
 - pattern: "System\\.getenv\\("
   files: "*.java"
   severity: high
-  message: "Use ClaudeEnv (CLI commands) or HookInput (hook handlers) instead of System.getenv(). Direct access is only permitted in the four whitelisted files. See .claude/rules/java.md § Environment Variable Access."
+  message: "Use scope.getSessionId() (session CLI commands) or scope.getPluginRoot() via MainJvmScope (infrastructure CLI commands) or HookInput (hook handlers) instead of System.getenv(). Direct access is only permitted in the five whitelisted files. See .claude/rules/java.md § Environment Variable Access."
 ```
 
 ## Exception Handling
@@ -1500,10 +1681,7 @@ state is queryable, and the caller could have checked before calling.
 
 ```java
 // Good - AssertionError for environment invariant (caller cannot prevent or query)
-// Use ClaudeEnv to safely read session configuration
-String sessionId = new ClaudeEnv().getSessionId();
-if (sessionId.isBlank())
-  throw new AssertionError("CLAUDE_SESSION_ID is not set");
+String sessionId = scope.getSessionId();  // throws AssertionError if env var not set
 
 // Good - IllegalStateException for preventable state violation (caller can query)
 public void stop()
@@ -1691,8 +1869,8 @@ these Java-specific constraints:
 4. **No shared mutable state** - each test must be fully self-contained
 5. **No TestBase classes** - each test method must inline its own setup. This boilerplate is intentional and preferred
    over shared helpers or inheritance.
-6. **Use `TestJvmScope`, not `MainJvmScope`** - tests must never use `MainJvmScope` because it reads environment
-   variables that may not be set in test contexts. Use `TestJvmScope(tempDir, tempDir)` with injectable paths instead.
+6. **Use `TestClaudeTool`, not `MainClaudeTool`** - tests must never use `MainClaudeTool` because it reads environment
+   variables that may not be set in test contexts. Use `TestClaudeTool(tempDir, tempDir)` with injectable paths instead.
 7. **Never use scope-provided objects after closing the scope** - objects returned by `JvmScope` (e.g., `JsonMapper`,
    `DisplayUtils`) must not be used after the scope is closed. Keep the scope open for the entire duration of the test.
    Do not create helper methods like `getTestMapper()` that open a scope, extract an object, and close the scope.
@@ -1706,12 +1884,12 @@ these Java-specific constraints:
    missing file check), passing `"."` is acceptable since no git command actually runs.
 
 ```java
-// Good - self-contained test with TestJvmScope
+// Good - self-contained test with TestClaudeTool
 @Test
 public void testProcess() throws IOException
 {
   Path tempDir = Files.createTempDirectory("test-");
-  try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+  try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
   {
     JsonMapper mapper = scope.getJsonMapper();
     var result = process(scope, input);

@@ -35,7 +35,7 @@ public class JsonHelperTest
   @Test
   public void getStringOrDefaultReturnsValueWhenPresent() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree("{\"key\": \"value\"}");
@@ -52,7 +52,7 @@ public class JsonHelperTest
   @Test
   public void getStringOrDefaultReturnsDefaultWhenMissing() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree("{}");
@@ -69,7 +69,7 @@ public class JsonHelperTest
   @Test
   public void getStringOrDefaultReturnsDefaultWhenEmpty() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree("{\"key\": \"\"}");
@@ -86,7 +86,7 @@ public class JsonHelperTest
   @Test
   public void getIntOrDefaultReturnsValueWhenPresent() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree("{\"count\": 42}");
@@ -103,7 +103,7 @@ public class JsonHelperTest
   @Test
   public void getIntOrDefaultReturnsDefaultWhenMissing() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree("{}");
@@ -120,7 +120,7 @@ public class JsonHelperTest
   @Test
   public void getIntOrDefaultReturnsDefaultWhenNotNumber() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree("{\"count\": \"text\"}");
@@ -137,7 +137,7 @@ public class JsonHelperTest
   @Test
   public void getArrayReturnsListWhenPresent() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree("{\"items\": [\"a\", \"b\", \"c\"]}");
@@ -154,7 +154,7 @@ public class JsonHelperTest
   @Test
   public void getArrayReturnsEmptyListWhenMissing() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree("{}");
@@ -171,7 +171,7 @@ public class JsonHelperTest
   @Test
   public void getArrayReturnsEmptyListWhenNotArray() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree("{\"items\": \"text\"}");
@@ -188,7 +188,7 @@ public class JsonHelperTest
   @Test
   public void getStringArrayReturnsListWhenPresent() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree("{\"tags\": [\"tag1\", \"tag2\"]}");
@@ -207,7 +207,7 @@ public class JsonHelperTest
   @Test
   public void getStringArrayReturnsEmptyListWhenMissing() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree("{}");
@@ -224,7 +224,7 @@ public class JsonHelperTest
   @Test
   public void getStringArraySkipsNonStringItems() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree("{\"mixed\": [\"text\", 123, \"more\"]}");
@@ -256,7 +256,7 @@ public class JsonHelperTest
     expectedExceptionsMessageRegExp = ".*key.*")
   public void getStringOrDefaultWithNullKeyThrows() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree("{}");
@@ -283,7 +283,7 @@ public class JsonHelperTest
     expectedExceptionsMessageRegExp = ".*key.*")
   public void getIntOrDefaultWithNullKeyThrows() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree("{}");
@@ -310,7 +310,7 @@ public class JsonHelperTest
     expectedExceptionsMessageRegExp = ".*key.*")
   public void getArrayWithNullKeyThrows() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree("{}");
@@ -337,7 +337,7 @@ public class JsonHelperTest
     expectedExceptionsMessageRegExp = ".*key.*")
   public void getStringArrayWithNullKeyThrows() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode node = mapper.readTree("{}");

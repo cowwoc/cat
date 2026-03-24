@@ -6,6 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks;
 
+import static io.github.cowwoc.cat.hooks.Strings.wrapSystemReminder;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.prompt.DestructiveOps;
@@ -32,7 +33,7 @@ public final class UserPromptSubmitHook implements HookHandler
    * @param scope the JVM scope providing singleton handlers
    * @throws NullPointerException if scope is null
    */
-  public UserPromptSubmitHook(JvmScope scope)
+  public UserPromptSubmitHook(ClaudeHook scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.handlers = List.of(
@@ -52,24 +53,19 @@ public final class UserPromptSubmitHook implements HookHandler
   }
 
   /**
-   * Processes hook input and returns the result with any warnings.
+   * Processes hook data and returns the result with any warnings.
    *
-   * @param input the hook input to process
-   * @param output the hook output builder for creating responses
+   * @param scope the hook scope providing input data and output building
    * @return the hook result containing JSON output and warnings
-   * @throws NullPointerException if {@code input} or {@code output} are null
    */
   @Override
-  public HookResult run(HookInput input, HookOutput output)
+  public HookResult run(ClaudeHook scope)
   {
-    requireThat(input, "input").isNotNull();
-    requireThat(output, "output").isNotNull();
-
-    String userPrompt = input.getUserPrompt();
+    String userPrompt = scope.getUserPrompt();
     if (userPrompt.isEmpty())
-      return HookResult.withoutWarnings(output.empty());
+      return HookResult.withoutWarnings(scope.empty());
 
-    String sessionId = input.getSessionId();
+    String sessionId = scope.getSessionId();
     requireThat(sessionId, "sessionId").isNotBlank();
     List<String> outputs = new ArrayList<>();
     List<String> warnings = new ArrayList<>();
@@ -98,13 +94,13 @@ public final class UserPromptSubmitHook implements HookHandler
       {
         if (!combined.isEmpty())
           combined.append('\n');
-        combined.append(HookOutput.wrapSystemReminder(out));
+        combined.append(wrapSystemReminder(out));
       }
-      jsonOutput = output.additionalContext("UserPromptSubmit", combined.toString());
+      jsonOutput = scope.additionalContext("UserPromptSubmit", combined.toString());
     }
     else
     {
-      jsonOutput = output.empty();
+      jsonOutput = scope.empty();
     }
 
     return new HookResult(jsonOutput, warnings);

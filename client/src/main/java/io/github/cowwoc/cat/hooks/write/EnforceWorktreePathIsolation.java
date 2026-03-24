@@ -9,7 +9,7 @@ package io.github.cowwoc.cat.hooks.write;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.ReadHandler;
 import io.github.cowwoc.cat.hooks.WorktreeContext;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
@@ -41,7 +41,7 @@ import java.util.Optional;
  */
 public final class EnforceWorktreePathIsolation implements FileWriteHandler, ReadHandler
 {
-  private final JvmScope scope;
+  private final ClaudeHook scope;
   private final Path projectPath;
   private final JsonMapper mapper;
 
@@ -50,7 +50,7 @@ public final class EnforceWorktreePathIsolation implements FileWriteHandler, Rea
    *
    * @param scope the JVM scope providing project directory and JSON mapper
    */
-  public EnforceWorktreePathIsolation(JvmScope scope)
+  public EnforceWorktreePathIsolation(ClaudeHook scope)
   {
     this.scope = scope;
     this.projectPath = scope.getProjectPath();

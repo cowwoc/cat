@@ -9,7 +9,7 @@ package io.github.cowwoc.cat.hooks.ask;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.AskHandler;
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.util.SessionFileUtils;
 import tools.jackson.databind.JsonNode;
 
@@ -37,7 +37,7 @@ public final class WarnApprovalWithoutRenderDiff implements AskHandler
   private static final Pattern BOX_CHARS = Pattern.compile("[╭╮╰╯│├┤]");
   private static final Pattern MANUAL_DIFF_SIGNS = Pattern.compile("^\\+\\+\\+|^---|^@@", Pattern.MULTILINE);
 
-  private final JvmScope scope;
+  private final ClaudeHook scope;
 
   /**
    * Creates a new WarnApprovalWithoutRenderDiff handler.
@@ -45,7 +45,7 @@ public final class WarnApprovalWithoutRenderDiff implements AskHandler
    * @param scope the JVM scope
    * @throws NullPointerException if {@code scope} is null
    */
-  public WarnApprovalWithoutRenderDiff(JvmScope scope)
+  public WarnApprovalWithoutRenderDiff(ClaudeHook scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;

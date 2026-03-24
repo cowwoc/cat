@@ -47,7 +47,7 @@ public class GetDiffOutputTest
   @Test
   public void nonGitDirectoryReturnsErrorMessage() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -79,7 +79,7 @@ public class GetDiffOutputTest
   @Test
   public void noChangesReportsNoChanges() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -120,7 +120,7 @@ public class GetDiffOutputTest
   @Test
   public void changesProduceDiffSummary() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -150,7 +150,7 @@ public class GetDiffOutputTest
   @Test
   public void diffOutputIncludes2ColumnFormat() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -183,7 +183,7 @@ public class GetDiffOutputTest
   @Test
   public void diffOutputIncludesStats() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -215,7 +215,7 @@ public class GetDiffOutputTest
   @Test
   public void diffOutputListsChangedFiles() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -265,7 +265,7 @@ public class GetDiffOutputTest
   @Test
   public void dynamicColumnWidthForHighLineNumbers() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -317,7 +317,7 @@ public class GetDiffOutputTest
   @Test
   public void longLinesAreWrapped() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -370,7 +370,7 @@ public class GetDiffOutputTest
   @Test
   public void whitespaceChangesAreVisualized() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -419,7 +419,7 @@ public class GetDiffOutputTest
   @Test
   public void binaryFilesAreDetected() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -469,7 +469,7 @@ public class GetDiffOutputTest
   @Test
   public void renamedFilesAreDetected() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -518,7 +518,7 @@ public class GetDiffOutputTest
   @Test
   public void multipleHunksPerFile() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -578,7 +578,7 @@ public class GetDiffOutputTest
   @Test
   public void veryLongFilenamesAreTruncated() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -627,7 +627,7 @@ public class GetDiffOutputTest
   @Test
   public void emptyDiffContentReturnsMessage() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -672,7 +672,7 @@ public class GetDiffOutputTest
   @Test
   public void contextOnlyHunkIsHandled() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -721,7 +721,7 @@ public class GetDiffOutputTest
   @Test
   public void emptyDiffStatsReturnsZeros() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -769,7 +769,7 @@ public class GetDiffOutputTest
   @Test
   public void targetBranchDetectionFromWorktreePath() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempBase = Files.createTempDirectory("render-diff-test-base");
       try
@@ -827,7 +827,7 @@ public class GetDiffOutputTest
   @Test
   public void targetBranchDetectionInNonWorktreeDirectory() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -858,7 +858,7 @@ public class GetDiffOutputTest
   @Test
   public void rawDiffExceeding2KBReturnsSkipNotice() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-large-test");
       try
@@ -957,7 +957,7 @@ public class GetDiffOutputTest
   @Test
   public void detectTargetBranchFromBranchNamePattern() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -988,7 +988,7 @@ public class GetDiffOutputTest
   @Test
   public void versionBranchDetectsMainAsBase() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -1065,7 +1065,7 @@ public class GetDiffOutputTest
       Files.writeString(issuePath.resolve("index.json"),
         "{\"status\":\"in-progress\",\"target_branch\":\"v2.0\"}");
 
-      try (JvmScope scope = new TestJvmScope())
+      try (JvmScope scope = new TestClaudeTool())
       {
         GetDiffOutput handler = new GetDiffOutput(scope);
         String result = handler.getOutput(new String[]{issuePath.toString()});
@@ -1088,7 +1088,7 @@ public class GetDiffOutputTest
   @Test
   public void renamedFileWithContentChangesShowsBoth() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -1138,7 +1138,7 @@ public class GetDiffOutputTest
   @Test
   public void multiLineDeletionAdditionPairsSequentially() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -1188,7 +1188,7 @@ public class GetDiffOutputTest
   @Test
   public void diffStatsWithMismatchedBranchReturnsZeroStats() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -1236,7 +1236,7 @@ public class GetDiffOutputTest
   @Test
   public void columnWidthForSmallFileUsesTwoDigits() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -1268,7 +1268,7 @@ public class GetDiffOutputTest
   @Test
   public void multipleCommitsAppearInOutput() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -1327,7 +1327,7 @@ public class GetDiffOutputTest
   @Test
   public void modificationLinesHaveWordDiffMarkers() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -1363,7 +1363,7 @@ public class GetDiffOutputTest
   @Test
   public void unchangedWordsHaveNoBoldMarkers() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -1398,7 +1398,7 @@ public class GetDiffOutputTest
   @Test
   public void pureAdditionDeletionLinesHaveNoBoldMarkers() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -1448,7 +1448,7 @@ public class GetDiffOutputTest
   @Test
   public void markdownSpecialCharsAreEscaped() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -1482,7 +1482,7 @@ public class GetDiffOutputTest
   @Test
   public void underscoresInContentAreEscaped() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -1512,7 +1512,7 @@ public class GetDiffOutputTest
   @Test
   public void whitespaceOnlyChangesUseVisualizationNotWordDiff() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -1564,7 +1564,7 @@ public class GetDiffOutputTest
   @Test
   public void modificationLinesWithBoldMarkersAlignCorrectly() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -1615,7 +1615,7 @@ public class GetDiffOutputTest
   @Test
   public void veryLongLineDiffReturnsSkipNotice() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-long-line-test");
       try
@@ -1665,7 +1665,7 @@ public class GetDiffOutputTest
   @Test
   public void largeDiffReturnsDescriptiveMessageInsteadOfRendering() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-large-test");
       try
@@ -1728,7 +1728,7 @@ public class GetDiffOutputTest
   @Test
   public void detectTargetBranchFromWorktreePathViaExplicitProjectRoot() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       // Create main repo
       Path mainRepo = Files.createTempDirectory("render-diff-worktree-test");
@@ -1797,7 +1797,7 @@ public class GetDiffOutputTest
   @Test
   public void nonGitDirectoryReturnsMissingTargetBranchMessage() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       Path tempDir = Files.createTempDirectory("render-diff-no-target-test");
       try
@@ -1828,7 +1828,7 @@ public class GetDiffOutputTest
     expectedExceptionsMessageRegExp = ".*Expected exactly 1 argument.*got 0.*")
   public void testNoArgumentsThrowsException() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       GetDiffOutput handler = new GetDiffOutput(scope);
       handler.getOutput(new String[]{});
@@ -1842,7 +1842,7 @@ public class GetDiffOutputTest
     expectedExceptionsMessageRegExp = ".*Expected exactly 1 argument.*got 2.*")
   public void testTooManyArgumentsThrowsException() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       GetDiffOutput handler = new GetDiffOutput(scope);
       handler.getOutput(new String[]{"/some/path", "extra"});
@@ -1857,7 +1857,7 @@ public class GetDiffOutputTest
     expectedExceptionsMessageRegExp = ".*\\.cat/issues/.*")
   public void testInvalidIssuePathThrowsException() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (JvmScope scope = new TestClaudeTool())
     {
       GetDiffOutput handler = new GetDiffOutput(scope);
       handler.getOutput(new String[]{"/tmp/not-an-issue-path"});
@@ -1878,7 +1878,7 @@ public class GetDiffOutputTest
       Path issuePath = tempDir.resolve(".cat/issues/v2/v2.0/some-issue");
       Files.createDirectories(issuePath);
 
-      try (JvmScope scope = new TestJvmScope())
+      try (JvmScope scope = new TestClaudeTool())
       {
         GetDiffOutput handler = new GetDiffOutput(scope);
         handler.getOutput(new String[]{issuePath.toString()});
@@ -1935,7 +1935,7 @@ public class GetDiffOutputTest
       Files.writeString(issuePath.resolve("index.json"),
         "{\"status\":\"in-progress\"}");
 
-      try (JvmScope scope = new TestJvmScope())
+      try (JvmScope scope = new TestClaudeTool())
       {
         GetDiffOutput handler = new GetDiffOutput(scope);
         handler.getOutput(new String[]{issuePath.toString()});

@@ -33,25 +33,25 @@ import java.util.List;
  */
 public final class SessionStartHook implements HookHandler
 {
-  private final JvmScope scope;
+  private final ClaudeHook scope;
   private final List<SessionStartHandler> handlers;
 
   /**
    * Creates a new SessionStartHook with the default handler list.
    *
-   * @param scope the JVM scope providing environment configuration
+   * @param scope the hook scope providing environment configuration
    * @throws NullPointerException if {@code scope} is null
    */
-  public SessionStartHook(JvmScope scope)
+  public SessionStartHook(ClaudeHook scope)
   {
     this(scope, List.of(
       new CheckDataMigration(scope),
       new CheckUpdateAvailable(scope),
-      new WarnUnknownTerminal(scope),
+      new WarnUnknownTerminal(),
       new EchoSessionId(),
       new CheckRetrospectiveDue(scope),
-      new InjectMainAgentRules(scope),
-      new InjectSkillListing(scope),
+      new InjectMainAgentRules(),
+      new InjectSkillListing(),
       new InjectCriticalThinking(),
       new InjectEnv(scope)));
   }
@@ -59,11 +59,11 @@ public final class SessionStartHook implements HookHandler
   /**
    * Creates a new SessionStartHook with custom handlers (for testing).
    *
-   * @param scope    the JVM scope providing environment configuration
+   * @param scope    the hook scope providing environment configuration
    * @param handlers the handlers to run
    * @throws NullPointerException if {@code scope} or {@code handlers} are null
    */
-  public SessionStartHook(JvmScope scope, List<SessionStartHandler> handlers)
+  public SessionStartHook(ClaudeHook scope, List<SessionStartHandler> handlers)
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(handlers, "handlers").isNotNull();
@@ -78,35 +78,30 @@ public final class SessionStartHook implements HookHandler
    */
   public static void main(String[] args)
   {
-    HookRunner.execute(SessionStartHook::new, args);
+    HookRunner.execute(scope -> new SessionStartHook(scope), args);
   }
 
   /**
-   * Processes hook input by running all session start handlers and combining their output.
+   * Processes hook data by running all session start handlers and combining their output.
    *
-   * @param input  the hook input to process
-   * @param output the hook output builder for creating responses
+   * @param scope the hook scope providing input data and output building
    * @return the hook result containing JSON output and warnings
-   * @throws NullPointerException if {@code input} or {@code output} are null
    */
   @Override
-  public HookResult run(HookInput input, HookOutput output)
+  public HookResult run(ClaudeHook scope)
   {
-    requireThat(input, "input").isNotNull();
-    requireThat(output, "output").isNotNull();
-
     StringBuilder combinedContext = new StringBuilder(256);
     List<String> errors = new ArrayList<>();
     List<String> warnings = new ArrayList<>();
 
-    String sessionId = input.getSessionId();
+    String sessionId = scope.getSessionId();
     if (sessionId.isBlank())
     {
       throw new IllegalArgumentException(
         "session_id is blank. SessionStart hook requires a valid session ID.");
     }
 
-    String clearWarning = new ClearAgentMarkers(scope).clearMainAgentMarker(sessionId);
+    String clearWarning = new ClearAgentMarkers(this.scope).clearMainAgentMarker(sessionId);
     if (!clearWarning.isEmpty())
       warnings.add(clearWarning);
 
@@ -117,7 +112,7 @@ public final class SessionStartHook implements HookHandler
     {
       try
       {
-        SessionStartHandler.Result result = handler.handle(input);
+        SessionStartHandler.Result result = handler.handle(scope);
         if (!result.stderr().isEmpty())
           warnings.add(result.stderr());
         if (!result.additionalContext().isEmpty())
@@ -148,9 +143,9 @@ public final class SessionStartHook implements HookHandler
 
     String jsonOutput;
     if (combinedContext.isEmpty())
-      jsonOutput = output.empty();
+      jsonOutput = scope.empty();
     else
-      jsonOutput = output.additionalContext("SessionStart", combinedContext.toString());
+      jsonOutput = scope.additionalContext("SessionStart", combinedContext.toString());
 
     return new HookResult(jsonOutput, warnings);
   }

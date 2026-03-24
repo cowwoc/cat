@@ -33,7 +33,7 @@ public class FeedbackTest
   public void openIssueReturnsUrlOnlyWhenBrowserUnavailable() throws IOException
   {
     Path tempDir = Files.createTempDirectory("feedback-test");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir);
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
       Feedback feedback = new Feedback(scope))
     {
       // Inject a browser opener that always fails
@@ -69,7 +69,7 @@ public class FeedbackTest
   public void openIssueReturnsOpenedWhenBrowserSucceeds() throws IOException
   {
     Path tempDir = Files.createTempDirectory("feedback-test");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir);
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
       Feedback feedback = new Feedback(scope))
     {
       // Inject a browser opener that succeeds (no-op)
@@ -102,7 +102,7 @@ public class FeedbackTest
   public void openIssueRejectsNullTitle() throws IOException
   {
     Path tempDir = Files.createTempDirectory("feedback-test");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir);
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
       Feedback feedback = new Feedback(scope))
     {
       feedback.openIssue(null, "body", "", url ->
@@ -125,7 +125,7 @@ public class FeedbackTest
   public void openIssueRejectsBlankTitle() throws IOException
   {
     Path tempDir = Files.createTempDirectory("feedback-test");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir);
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
       Feedback feedback = new Feedback(scope))
     {
       feedback.openIssue("  ", "body", "", url ->
@@ -148,7 +148,7 @@ public class FeedbackTest
   public void openIssueRejectsNullBody() throws IOException
   {
     Path tempDir = Files.createTempDirectory("feedback-test");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir);
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
       Feedback feedback = new Feedback(scope))
     {
       feedback.openIssue("title", null, "", url ->
@@ -171,7 +171,7 @@ public class FeedbackTest
   public void openIssueRejectsBlankBody() throws IOException
   {
     Path tempDir = Files.createTempDirectory("feedback-test");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir);
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
       Feedback feedback = new Feedback(scope))
     {
       feedback.openIssue("title", "  ", "", url ->
@@ -194,7 +194,7 @@ public class FeedbackTest
   public void openIssueRejectsNullLabels() throws IOException
   {
     Path tempDir = Files.createTempDirectory("feedback-test");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir);
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
       Feedback feedback = new Feedback(scope))
     {
       feedback.openIssue("title", "body", null, url ->
@@ -217,7 +217,7 @@ public class FeedbackTest
   public void openIssueRejectsNullBrowserOpener() throws IOException
   {
     Path tempDir = Files.createTempDirectory("feedback-test");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir);
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
       Feedback feedback = new Feedback(scope))
     {
       feedback.openIssue("title", "body", "", null);
@@ -237,7 +237,7 @@ public class FeedbackTest
   public void openIssueEncodesLabelsInUrl() throws IOException
   {
     Path tempDir = Files.createTempDirectory("feedback-test");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir);
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
       Feedback feedback = new Feedback(scope))
     {
       String result = feedback.openIssue("Test Title", "Test body", "bug,enhancement",

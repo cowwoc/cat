@@ -25,17 +25,16 @@ public final class DetectFailuresTest
   @Test
   public void exitCodeZeroReturnsAllow()
   {
-    try (TestJvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      ObjectNode toolResult = mapper.createObjectNode();
-      toolResult.put("exit_code", 0);
-      toolResult.put("stdout", "BUILD FAILED");
-      toolResult.put("stderr", "ERROR: something went wrong");
+    JsonMapper mapper = new JsonMapper();
+    ObjectNode toolResult = mapper.createObjectNode();
+    toolResult.put("exit_code", 0);
+    toolResult.put("stdout", "BUILD FAILED");
+    toolResult.put("stderr", "ERROR: something went wrong");
 
+    try (TestClaudeHook scope = TestUtils.bashHookWithToolResult("mvn test", "", "test-session", toolResult))
+    {
       DetectFailures handler = new DetectFailures();
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "mvn test", "", "test-session", toolResult));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -48,17 +47,16 @@ public final class DetectFailuresTest
   @Test
   public void nonZeroExitCodeWithFailurePatternReturnsWarn()
   {
-    try (TestJvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      ObjectNode toolResult = mapper.createObjectNode();
-      toolResult.put("exit_code", 1);
-      toolResult.put("stdout", "BUILD FAILED");
-      toolResult.put("stderr", "");
+    JsonMapper mapper = new JsonMapper();
+    ObjectNode toolResult = mapper.createObjectNode();
+    toolResult.put("exit_code", 1);
+    toolResult.put("stdout", "BUILD FAILED");
+    toolResult.put("stderr", "");
 
+    try (TestClaudeHook scope = TestUtils.bashHookWithToolResult("mvn test", "", "test-session", toolResult))
+    {
       DetectFailures handler = new DetectFailures();
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "mvn test", "", "test-session", toolResult));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isNotEmpty();
@@ -71,17 +69,17 @@ public final class DetectFailuresTest
   @Test
   public void nonZeroExitCodeWithoutFailurePatternReturnsAllow()
   {
-    try (TestJvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      ObjectNode toolResult = mapper.createObjectNode();
-      toolResult.put("exit_code", 1);
-      toolResult.put("stdout", "Command not found");
-      toolResult.put("stderr", "");
+    JsonMapper mapper = new JsonMapper();
+    ObjectNode toolResult = mapper.createObjectNode();
+    toolResult.put("exit_code", 1);
+    toolResult.put("stdout", "Command not found");
+    toolResult.put("stderr", "");
 
+    try (TestClaudeHook scope = TestUtils.bashHookWithToolResult("nonexistent-cmd", "", "test-session",
+      toolResult))
+    {
       DetectFailures handler = new DetectFailures();
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "nonexistent-cmd", "", "test-session", toolResult));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -94,17 +92,17 @@ public final class DetectFailuresTest
   @Test
   public void buildFailedPatternInStdoutTriggersWarn()
   {
-    try (TestJvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      ObjectNode toolResult = mapper.createObjectNode();
-      toolResult.put("exit_code", 2);
-      toolResult.put("stdout", "Tests run: 5, Failures: 1\nBUILD FAILED");
-      toolResult.put("stderr", "");
+    JsonMapper mapper = new JsonMapper();
+    ObjectNode toolResult = mapper.createObjectNode();
+    toolResult.put("exit_code", 2);
+    toolResult.put("stdout", "Tests run: 5, Failures: 1\nBUILD FAILED");
+    toolResult.put("stderr", "");
 
+    try (TestClaudeHook scope = TestUtils.bashHookWithToolResult("mvn verify", "", "test-session",
+      toolResult))
+    {
       DetectFailures handler = new DetectFailures();
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "mvn verify", "", "test-session", toolResult));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.reason(), "reason").isNotEmpty();
     }
@@ -119,17 +117,17 @@ public final class DetectFailuresTest
   @Test
   public void nonTestRunnerCommandWithFailureOutputReturnsAllow()
   {
-    try (TestJvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      ObjectNode toolResult = mapper.createObjectNode();
-      toolResult.put("exit_code", 1);
-      toolResult.put("stdout", "");
-      toolResult.put("stderr", "FAILED: test suite execution");
+    JsonMapper mapper = new JsonMapper();
+    ObjectNode toolResult = mapper.createObjectNode();
+    toolResult.put("exit_code", 1);
+    toolResult.put("stdout", "");
+    toolResult.put("stderr", "FAILED: test suite execution");
 
+    try (TestClaudeHook scope = TestUtils.bashHookWithToolResult("./run-tests.sh", "", "test-session",
+      toolResult))
+    {
       DetectFailures handler = new DetectFailures();
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "./run-tests.sh", "", "test-session", toolResult));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -144,17 +142,17 @@ public final class DetectFailuresTest
   @Test
   public void compilerCommandWithErrorOutputReturnsAllow()
   {
-    try (TestJvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      ObjectNode toolResult = mapper.createObjectNode();
-      toolResult.put("exit_code", 1);
-      toolResult.put("stdout", "ERROR: compilation failed");
-      toolResult.put("stderr", "");
+    JsonMapper mapper = new JsonMapper();
+    ObjectNode toolResult = mapper.createObjectNode();
+    toolResult.put("exit_code", 1);
+    toolResult.put("stdout", "ERROR: compilation failed");
+    toolResult.put("stderr", "");
 
+    try (TestClaudeHook scope = TestUtils.bashHookWithToolResult("javac Main.java", "", "test-session",
+      toolResult))
+    {
       DetectFailures handler = new DetectFailures();
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "javac Main.java", "", "test-session", toolResult));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -169,17 +167,17 @@ public final class DetectFailuresTest
   @Test
   public void jvmCommandWithExceptionOutputReturnsAllow()
   {
-    try (TestJvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      ObjectNode toolResult = mapper.createObjectNode();
-      toolResult.put("exit_code", 1);
-      toolResult.put("stdout", "java.lang.NullPointerException: Cannot invoke method");
-      toolResult.put("stderr", "");
+    JsonMapper mapper = new JsonMapper();
+    ObjectNode toolResult = mapper.createObjectNode();
+    toolResult.put("exit_code", 1);
+    toolResult.put("stdout", "java.lang.NullPointerException: Cannot invoke method");
+    toolResult.put("stderr", "");
 
+    try (TestClaudeHook scope = TestUtils.bashHookWithToolResult("java -jar app.jar", "", "test-session",
+      toolResult))
+    {
       DetectFailures handler = new DetectFailures();
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "java -jar app.jar", "", "test-session", toolResult));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -194,17 +192,17 @@ public final class DetectFailuresTest
   @Test
   public void serverScriptWithFatalOutputReturnsAllow()
   {
-    try (TestJvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      ObjectNode toolResult = mapper.createObjectNode();
-      toolResult.put("exit_code", 1);
-      toolResult.put("stdout", "FATAL: unrecoverable error");
-      toolResult.put("stderr", "");
+    JsonMapper mapper = new JsonMapper();
+    ObjectNode toolResult = mapper.createObjectNode();
+    toolResult.put("exit_code", 1);
+    toolResult.put("stdout", "FATAL: unrecoverable error");
+    toolResult.put("stderr", "");
 
+    try (TestClaudeHook scope = TestUtils.bashHookWithToolResult("start-server.sh", "", "test-session",
+      toolResult))
+    {
       DetectFailures handler = new DetectFailures();
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "start-server.sh", "", "test-session", toolResult));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -220,17 +218,17 @@ public final class DetectFailuresTest
   @Test
   public void gitCommandWithFatalOutputReturnsAllow()
   {
-    try (TestJvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      ObjectNode toolResult = mapper.createObjectNode();
-      toolResult.put("exit_code", 1);
-      toolResult.put("stdout", "fatal: not a git repository");
-      toolResult.put("stderr", "");
+    JsonMapper mapper = new JsonMapper();
+    ObjectNode toolResult = mapper.createObjectNode();
+    toolResult.put("exit_code", 1);
+    toolResult.put("stdout", "fatal: not a git repository");
+    toolResult.put("stderr", "");
 
+    try (TestClaudeHook scope = TestUtils.bashHookWithToolResult("git status", "", "test-session",
+      toolResult))
+    {
       DetectFailures handler = new DetectFailures();
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "git status", "", "test-session", toolResult));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -246,23 +244,23 @@ public final class DetectFailuresTest
   @Test
   public void gitDiffWithFailureKeywordsInOutputReturnsAllow()
   {
-    try (TestJvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      ObjectNode toolResult = mapper.createObjectNode();
-      toolResult.put("exit_code", 0);
-      toolResult.put("stdout", """
-        diff --git a/PLAN.md b/PLAN.md
-        --- a/PLAN.md
-        +++ b/PLAN.md
-        @@ -1,3 +1,4 @@
-        +This discusses test_failure detection and FAILURE patterns in diffs.
-        """);
-      toolResult.put("stderr", "");
+    JsonMapper mapper = new JsonMapper();
+    ObjectNode toolResult = mapper.createObjectNode();
+    toolResult.put("exit_code", 0);
+    toolResult.put("stdout", """
+      diff --git a/PLAN.md b/PLAN.md
+      --- a/PLAN.md
+      +++ b/PLAN.md
+      @@ -1,3 +1,4 @@
+      +This discusses test_failure detection and FAILURE patterns in diffs.
+      """);
+    toolResult.put("stderr", "");
 
+    try (TestClaudeHook scope = TestUtils.bashHookWithToolResult("git diff", "", "test-session",
+      toolResult))
+    {
       DetectFailures handler = new DetectFailures();
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "git diff", "", "test-session", toolResult));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -277,17 +275,17 @@ public final class DetectFailuresTest
   @Test
   public void catCommandWithFailureKeywordsInOutputReturnsAllow()
   {
-    try (TestJvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      ObjectNode toolResult = mapper.createObjectNode();
-      toolResult.put("exit_code", 1);
-      toolResult.put("stdout", "This file discusses Exception handling and FAILURE modes in test scenarios.");
-      toolResult.put("stderr", "");
+    JsonMapper mapper = new JsonMapper();
+    ObjectNode toolResult = mapper.createObjectNode();
+    toolResult.put("exit_code", 1);
+    toolResult.put("stdout", "This file discusses Exception handling and FAILURE modes in test scenarios.");
+    toolResult.put("stderr", "");
 
+    try (TestClaudeHook scope = TestUtils.bashHookWithToolResult("cat PLAN.md", "", "test-session",
+      toolResult))
+    {
       DetectFailures handler = new DetectFailures();
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "cat PLAN.md", "", "test-session", toolResult));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -303,17 +301,17 @@ public final class DetectFailuresTest
   @Test
   public void getOutputGetDiffWithFailureKeywordsReturnsAllow()
   {
-    try (TestJvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      ObjectNode toolResult = mapper.createObjectNode();
-      toolResult.put("exit_code", 0);
-      toolResult.put("stdout", "Rendered diff: ERROR: test_failure detection would trigger here\nBUILD FAILED line");
-      toolResult.put("stderr", "");
+    JsonMapper mapper = new JsonMapper();
+    ObjectNode toolResult = mapper.createObjectNode();
+    toolResult.put("exit_code", 0);
+    toolResult.put("stdout", "Rendered diff: ERROR: test_failure detection would trigger here\nBUILD FAILED line");
+    toolResult.put("stderr", "");
 
+    try (TestClaudeHook scope = TestUtils.bashHookWithToolResult("get-output get-diff", "", "test-session",
+      toolResult))
+    {
       DetectFailures handler = new DetectFailures();
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "get-output get-diff", "", "test-session", toolResult));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -328,17 +326,17 @@ public final class DetectFailuresTest
   @Test
   public void batsTestRunnerFailureTriggersWarn()
   {
-    try (TestJvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      ObjectNode toolResult = mapper.createObjectNode();
-      toolResult.put("exit_code", 1);
-      toolResult.put("stdout", "1..3\nnot ok 1 should pass\nFAILED (1 of 3 tests)");
-      toolResult.put("stderr", "");
+    JsonMapper mapper = new JsonMapper();
+    ObjectNode toolResult = mapper.createObjectNode();
+    toolResult.put("exit_code", 1);
+    toolResult.put("stdout", "1..3\nnot ok 1 should pass\nFAILED (1 of 3 tests)");
+    toolResult.put("stderr", "");
 
+    try (TestClaudeHook scope = TestUtils.bashHookWithToolResult("bats tests/", "", "test-session",
+      toolResult))
+    {
       DetectFailures handler = new DetectFailures();
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "bats tests/", "", "test-session", toolResult));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isNotEmpty();
@@ -353,17 +351,17 @@ public final class DetectFailuresTest
   @Test
   public void gradleTestFailureTriggersWarn()
   {
-    try (TestJvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      ObjectNode toolResult = mapper.createObjectNode();
-      toolResult.put("exit_code", 1);
-      toolResult.put("stdout", "BUILD FAILED\n5 tests completed, 2 failed");
-      toolResult.put("stderr", "");
+    JsonMapper mapper = new JsonMapper();
+    ObjectNode toolResult = mapper.createObjectNode();
+    toolResult.put("exit_code", 1);
+    toolResult.put("stdout", "BUILD FAILED\n5 tests completed, 2 failed");
+    toolResult.put("stderr", "");
 
+    try (TestClaudeHook scope = TestUtils.bashHookWithToolResult("gradle test", "", "test-session",
+      toolResult))
+    {
       DetectFailures handler = new DetectFailures();
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "gradle test", "", "test-session", toolResult));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isNotEmpty();
@@ -378,17 +376,17 @@ public final class DetectFailuresTest
   @Test
   public void patternMatchingIsCaseInsensitiveForTestRunners()
   {
-    try (TestJvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      ObjectNode toolResult = mapper.createObjectNode();
-      toolResult.put("exit_code", 1);
-      toolResult.put("stdout", "build failed\ntests run: 1, failures: 1");
-      toolResult.put("stderr", "");
+    JsonMapper mapper = new JsonMapper();
+    ObjectNode toolResult = mapper.createObjectNode();
+    toolResult.put("exit_code", 1);
+    toolResult.put("stdout", "build failed\ntests run: 1, failures: 1");
+    toolResult.put("stderr", "");
 
+    try (TestClaudeHook scope = TestUtils.bashHookWithToolResult("mvn test", "", "test-session",
+      toolResult))
+    {
       DetectFailures handler = new DetectFailures();
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "mvn test", "", "test-session", toolResult));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.reason(), "reason").isNotEmpty();
     }
@@ -402,17 +400,17 @@ public final class DetectFailuresTest
   @Test
   public void npmRunTestFailureTriggersWarn()
   {
-    try (TestJvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      ObjectNode toolResult = mapper.createObjectNode();
-      toolResult.put("exit_code", 1);
-      toolResult.put("stdout", "FAILED: 3 tests failed");
-      toolResult.put("stderr", "");
+    JsonMapper mapper = new JsonMapper();
+    ObjectNode toolResult = mapper.createObjectNode();
+    toolResult.put("exit_code", 1);
+    toolResult.put("stdout", "FAILED: 3 tests failed");
+    toolResult.put("stderr", "");
 
+    try (TestClaudeHook scope = TestUtils.bashHookWithToolResult("npm run test", "", "test-session",
+      toolResult))
+    {
       DetectFailures handler = new DetectFailures();
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "npm run test", "", "test-session", toolResult));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isNotEmpty();
@@ -425,16 +423,16 @@ public final class DetectFailuresTest
   @Test
   public void nullStdoutAndStderrDefaultToEmpty()
   {
-    try (TestJvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      ObjectNode toolResult = mapper.createObjectNode();
-      toolResult.put("exit_code", 1);
-      // stdout and stderr fields intentionally absent
+    JsonMapper mapper = new JsonMapper();
+    ObjectNode toolResult = mapper.createObjectNode();
+    toolResult.put("exit_code", 1);
+    // stdout and stderr fields intentionally absent
 
+    try (TestClaudeHook scope = TestUtils.bashHookWithToolResult("some-command", "", "test-session",
+      toolResult))
+    {
       DetectFailures handler = new DetectFailures();
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "some-command", "", "test-session", toolResult));
+      BashHandler.Result result = handler.check(scope);
 
       // No exception and returns allow (no failure pattern found)
       requireThat(result.blocked(), "blocked").isFalse();
@@ -448,12 +446,10 @@ public final class DetectFailuresTest
   @Test
   public void nullToolResultReturnsAllow()
   {
-    try (TestJvmScope scope = new TestJvmScope())
+    try (TestClaudeHook scope = TestUtils.bashHookWithToolResult("some-command", "", "test-session", null))
     {
-      JsonMapper mapper = scope.getJsonMapper();
       DetectFailures handler = new DetectFailures();
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "some-command", "", "test-session"));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -466,17 +462,17 @@ public final class DetectFailuresTest
   @Test
   public void missingExitCodeDefaultsToZero()
   {
-    try (TestJvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      ObjectNode toolResult = mapper.createObjectNode();
-      // No exit_code field
-      toolResult.put("stdout", "BUILD FAILED");
-      toolResult.put("stderr", "");
+    JsonMapper mapper = new JsonMapper();
+    ObjectNode toolResult = mapper.createObjectNode();
+    // No exit_code field
+    toolResult.put("stdout", "BUILD FAILED");
+    toolResult.put("stderr", "");
 
+    try (TestClaudeHook scope = TestUtils.bashHookWithToolResult("mvn test", "", "test-session",
+      toolResult))
+    {
       DetectFailures handler = new DetectFailures();
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "mvn test", "", "test-session", toolResult));
+      BashHandler.Result result = handler.check(scope);
 
       // exit_code missing → defaults to 0 → allow
       requireThat(result.blocked(), "blocked").isFalse();
@@ -490,17 +486,17 @@ public final class DetectFailuresTest
   @Test
   public void warningIncludesExitCodeNumber()
   {
-    try (TestJvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      ObjectNode toolResult = mapper.createObjectNode();
-      toolResult.put("exit_code", 42);
-      toolResult.put("stdout", "BUILD FAILED");
-      toolResult.put("stderr", "");
+    JsonMapper mapper = new JsonMapper();
+    ObjectNode toolResult = mapper.createObjectNode();
+    toolResult.put("exit_code", 42);
+    toolResult.put("stdout", "BUILD FAILED");
+    toolResult.put("stderr", "");
 
+    try (TestClaudeHook scope = TestUtils.bashHookWithToolResult("mvn test", "", "test-session",
+      toolResult))
+    {
       DetectFailures handler = new DetectFailures();
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "mvn test", "", "test-session", toolResult));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.reason(), "reason").contains("42");
     }
@@ -512,17 +508,17 @@ public final class DetectFailuresTest
   @Test
   public void camelCaseExitCodeFieldIsParsed()
   {
-    try (TestJvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      ObjectNode toolResult = mapper.createObjectNode();
-      toolResult.put("exitCode", 1);
-      toolResult.put("stdout", "BUILD FAILED");
-      toolResult.put("stderr", "");
+    JsonMapper mapper = new JsonMapper();
+    ObjectNode toolResult = mapper.createObjectNode();
+    toolResult.put("exitCode", 1);
+    toolResult.put("stdout", "BUILD FAILED");
+    toolResult.put("stderr", "");
 
+    try (TestClaudeHook scope = TestUtils.bashHookWithToolResult("mvn test", "", "test-session",
+      toolResult))
+    {
       DetectFailures handler = new DetectFailures();
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "mvn test", "", "test-session", toolResult));
+      BashHandler.Result result = handler.check(scope);
 
       // exitCode=1 (non-zero) with BUILD FAILED pattern → warn
       requireThat(result.reason(), "reason").isNotEmpty();

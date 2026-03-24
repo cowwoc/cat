@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.hooks.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+
 import io.github.cowwoc.cat.hooks.PostToolHandler;
 import io.github.cowwoc.cat.hooks.tool.post.DetectValidationWithoutEvidence;
 import org.testng.annotations.Test;
@@ -32,7 +32,7 @@ public final class DetectValidationWithoutEvidenceTest
   public void noConversationLogAllowsQuietly() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       DetectValidationWithoutEvidence handler = new DetectValidationWithoutEvidence(scope);
@@ -65,7 +65,7 @@ public final class DetectValidationWithoutEvidenceTest
   public void noValidationClaimAllowsQuietly() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-" + UUID.randomUUID();
@@ -106,7 +106,7 @@ public final class DetectValidationWithoutEvidenceTest
   public void validationClaimWithEvidence() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-" + UUID.randomUUID();
@@ -152,7 +152,7 @@ public final class DetectValidationWithoutEvidenceTest
   public void validationClaimWithoutEvidence() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-" + UUID.randomUUID();
@@ -192,7 +192,7 @@ public final class DetectValidationWithoutEvidenceTest
   public void scoreClaimWithoutEvidence() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-" + UUID.randomUUID();
@@ -231,7 +231,7 @@ public final class DetectValidationWithoutEvidenceTest
   public void verifyImplementationSkillCountsAsEvidence() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-" + UUID.randomUUID();
@@ -276,7 +276,7 @@ public final class DetectValidationWithoutEvidenceTest
   public void verifiedPatternWithoutEvidence() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-" + UUID.randomUUID();
@@ -319,7 +319,7 @@ public final class DetectValidationWithoutEvidenceTest
   public void verifyImplementationAgentSkillCountsAsEvidence() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-" + UUID.randomUUID();
@@ -364,7 +364,7 @@ public final class DetectValidationWithoutEvidenceTest
   public void compareDocsAgentSkillCountsAsEvidence() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-" + UUID.randomUUID();
@@ -409,7 +409,7 @@ public final class DetectValidationWithoutEvidenceTest
   public void validatedPatternWithoutEvidence() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-" + UUID.randomUUID();
@@ -448,7 +448,7 @@ public final class DetectValidationWithoutEvidenceTest
   public void noSemanticLossClaimWithoutEvidence() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-" + UUID.randomUUID();
@@ -489,7 +489,7 @@ public final class DetectValidationWithoutEvidenceTest
    * @return the path to the created log file
    * @throws IOException if file creation fails
    */
-  private Path createConversationLog(JvmScope scope, String sessionId, String content) throws IOException
+  private Path createConversationLog(TestClaudeHook scope, String sessionId, String content) throws IOException
   {
     Path sessionBasePath = scope.getClaudeSessionsPath();
     Files.createDirectories(sessionBasePath);

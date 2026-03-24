@@ -39,7 +39,7 @@ public final class PreReadHook implements HookHandler
    * @param scope the JVM scope providing singleton handlers
    * @throws NullPointerException if scope is null
    */
-  public PreReadHook(JvmScope scope)
+  public PreReadHook(ClaudeHook scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.handlers = List.of(
@@ -58,25 +58,20 @@ public final class PreReadHook implements HookHandler
   }
 
   /**
-   * Processes hook input and returns the result with any warnings.
+   * Processes hook data and returns the result with any warnings.
    *
-   * @param input the hook input to process
-   * @param output the hook output builder for creating responses
+   * @param scope the hook scope providing input data and output building
    * @return the hook result containing JSON output and warnings
-   * @throws NullPointerException if {@code input} or {@code output} are null
    */
   @Override
-  public HookResult run(HookInput input, HookOutput output)
+  public HookResult run(ClaudeHook scope)
   {
-    requireThat(input, "input").isNotNull();
-    requireThat(output, "output").isNotNull();
-
-    String toolName = input.getToolName();
+    String toolName = scope.getToolName();
     if (!SUPPORTED_TOOLS.contains(toolName))
-      return HookResult.withoutWarnings(output.empty());
+      return HookResult.withoutWarnings(scope.empty());
 
-    JsonNode toolInput = input.getToolInput();
-    String sessionId = input.getSessionId();
+    JsonNode toolInput = scope.getToolInput();
+    String sessionId = scope.getSessionId();
     requireThat(sessionId, "sessionId").isNotBlank();
     List<String> warnings = new ArrayList<>();
     List<String> errorWarnings = new ArrayList<>();
@@ -91,9 +86,9 @@ public final class PreReadHook implements HookHandler
         {
           String jsonOutput;
           if (result.additionalContext().isEmpty())
-            jsonOutput = output.block(result.reason());
+            jsonOutput = scope.block(result.reason());
           else
-            jsonOutput = output.block(result.reason(), result.additionalContext());
+            jsonOutput = scope.block(result.reason(), result.additionalContext());
           return HookResult.withoutWarnings(jsonOutput);
         }
         if (!result.reason().isEmpty())
@@ -111,6 +106,6 @@ public final class PreReadHook implements HookHandler
     allWarnings.addAll(errorWarnings);
 
     // Allow the operation
-    return new HookResult(output.empty(), allWarnings);
+    return new HookResult(scope.empty(), allWarnings);
   }
 }

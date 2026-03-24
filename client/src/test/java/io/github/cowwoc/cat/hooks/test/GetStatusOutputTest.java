@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.IssueStatus;
 import io.github.cowwoc.cat.hooks.skills.DisplayUtils;
 import io.github.cowwoc.cat.hooks.skills.GetStatusOutput;
@@ -59,7 +58,7 @@ public class GetStatusOutputTest
   public void getOutputRejectsUnexpectedArguments() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       handler.getOutput(new String[]{"unexpected"});
@@ -79,7 +78,7 @@ public class GetStatusOutputTest
   public void noCatDirectoryReturnsErrorMessage() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-no-cat");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -104,7 +103,7 @@ public class GetStatusOutputTest
     Path catDir = tempDir.resolve(".cat");
     Files.createDirectories(catDir);
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -129,7 +128,7 @@ public class GetStatusOutputTest
     Path issuesDir = tempDir.resolve(".cat/issues");
     Files.createDirectories(issuesDir);
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -154,7 +153,7 @@ public class GetStatusOutputTest
     Path issuesDir = tempDir.resolve(".cat/issues");
     Files.createDirectories(issuesDir);
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -187,7 +186,7 @@ public class GetStatusOutputTest
     Files.writeString(issue1Dir.resolve("index.json"), "{\"status\":\"closed\"}");
     Files.writeString(issue2Dir.resolve("index.json"), "{\"status\":\"open\"}");
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -217,7 +216,7 @@ public class GetStatusOutputTest
 
     Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"open\"}");
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -248,7 +247,7 @@ public class GetStatusOutputTest
 
     Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"in-progress\"}");
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -282,7 +281,7 @@ public class GetStatusOutputTest
     Files.writeString(issue2Dir.resolve("index.json"),
       "{\"status\":\"open\",\"dependencies\":[\"task-1\"]}");
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -315,7 +314,7 @@ public class GetStatusOutputTest
     Files.writeString(issue1Dir.resolve("index.json"), "{\"status\":\"closed\"}");
     Files.writeString(issue2Dir.resolve("index.json"), "{\"status\":\"open\"}");
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -345,7 +344,7 @@ public class GetStatusOutputTest
 
     Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"open\"}");
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -375,7 +374,7 @@ public class GetStatusOutputTest
 
     Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"in-progress\"}");
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -405,7 +404,7 @@ public class GetStatusOutputTest
 
     Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"open\"}");
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -444,7 +443,7 @@ public class GetStatusOutputTest
     Files.writeString(issue3Dir.resolve("index.json"),
       "{\"status\":\"blocked\",\"dependencies\":[\"another-done-task\"]}");
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -476,7 +475,7 @@ public class GetStatusOutputTest
       "\n" +
       "## Version 2: Major Refactor (2024)\n");
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -513,7 +512,7 @@ public class GetStatusOutputTest
       "\n" +
       "- **2.1:** Port display scripts\n");
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -541,7 +540,7 @@ public class GetStatusOutputTest
 
     Files.writeString(catDir.resolve("PROJECT.md"), "# My Awesome Project\n");
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -571,7 +570,7 @@ public class GetStatusOutputTest
 
     Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"open\"}");
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -605,7 +604,7 @@ public class GetStatusOutputTest
     Files.writeString(issue1Dir.resolve("index.json"), "{\"status\":\"closed\"}");
     Files.writeString(issue2Dir.resolve("index.json"), "{\"status\":\"open\"}");
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -637,7 +636,7 @@ public class GetStatusOutputTest
     Files.createDirectories(minor11Dir);
     Files.createDirectories(minor20Dir);
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -680,7 +679,7 @@ public class GetStatusOutputTest
       "created_at=1234567890\n" +
       "worktree=/some/path\n");
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -710,7 +709,7 @@ public class GetStatusOutputTest
 
     Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"open\"}");
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -751,7 +750,7 @@ public class GetStatusOutputTest
       "created_at=1234567890\n" +
       "worktree=/some/path\n");
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -773,7 +772,7 @@ public class GetStatusOutputTest
   public void parseStatusFromContentExtractsValidStatus() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-parse-status");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String content = "- **Status:** in-progress\n- **Owner:** alice\n";
@@ -797,7 +796,7 @@ public class GetStatusOutputTest
   public void parseStatusFromContentRejectsInvalidStatus() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-invalid-status");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String content = "- **Status:** invalid-value\n";
@@ -819,7 +818,7 @@ public class GetStatusOutputTest
   public void parseStatusFromContentRejectsMissingStatus() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-missing-status");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String content = "- **Owner:** alice\n- **Created:** 2024-01-01\n";
@@ -840,7 +839,7 @@ public class GetStatusOutputTest
   public void parseStatusFromContentHandlesCaseInsensitiveStatus() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-case-status");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String content = "- **Status:** CLOSED\n";
@@ -864,7 +863,7 @@ public class GetStatusOutputTest
   public void parseStatusFromContentHandlesAllValidStatuses() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-all-statuses");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
 
@@ -890,7 +889,7 @@ public class GetStatusOutputTest
   public void isValidBranchNameAcceptsValidNames() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-valid-branch");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
 
@@ -924,7 +923,7 @@ public class GetStatusOutputTest
   public void isValidBranchNameRejectsInvalidNames() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-invalid-branch");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
 
@@ -958,7 +957,7 @@ public class GetStatusOutputTest
   public void isValidBranchNameRejectsNull() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-null-branch");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
 
@@ -981,7 +980,7 @@ public class GetStatusOutputTest
   public void isValidStateFilePathAcceptsValidPaths() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-valid-path");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
 
@@ -1012,7 +1011,7 @@ public class GetStatusOutputTest
   public void isValidStateFilePathRejectsPathTraversal() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-path-traversal");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
 
@@ -1043,7 +1042,7 @@ public class GetStatusOutputTest
   public void isValidStateFilePathRejectsWrongPrefix() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-wrong-prefix");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
 
@@ -1074,7 +1073,7 @@ public class GetStatusOutputTest
   public void isValidStateFilePathRejectsWrongSuffix() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-wrong-suffix");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
 
@@ -1105,7 +1104,7 @@ public class GetStatusOutputTest
   public void isValidStateFilePathRejectsEmptyString() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-empty-path");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
 
@@ -1131,7 +1130,7 @@ public class GetStatusOutputTest
     Path issuesDir = tempDir.resolve(".cat/issues");
     Files.createDirectories(issuesDir);
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -1176,7 +1175,7 @@ public class GetStatusOutputTest
     Files.createDirectories(shortIssueDir);
     Files.writeString(shortIssueDir.resolve("index.json"), "{\"status\":\"open\"}");
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       DisplayUtils display = new DisplayUtils(scope);
@@ -1247,7 +1246,7 @@ public class GetStatusOutputTest
       TestUtils.runGit(tempDir, "add", "-A");
       TestUtils.runGit(tempDir, "commit", "--date=2020-01-03T00:00:01", "-m", "add task-b");
 
-      try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+      try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
       {
         GetStatusOutput handler = new GetStatusOutput(scope);
         String result = handler.getOutput(new String[0]);
@@ -1302,7 +1301,7 @@ public class GetStatusOutputTest
       TestUtils.runGit(tempDir, "add", "-A");
       TestUtils.runGit(tempDir, "commit", "--date=2020-06-15T12:00:00", "-m", "add task-a");
 
-      try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+      try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
       {
         GetStatusOutput handler = new GetStatusOutput(scope);
         String result = handler.getOutput(new String[0]);
@@ -1342,7 +1341,7 @@ public class GetStatusOutputTest
     // Corrupt issue: index.json exists but plan.md is absent
     Files.writeString(corruptDir.resolve("index.json"), "{\"status\":\"open\"}");
 
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);

@@ -32,7 +32,7 @@ public final class StatuslineCommandTest
    * @return the statusline output
    * @throws IOException if an I/O error occurs
    */
-  private static String executeWithLockDir(TestJvmScope scope, String json, Path lockDir) throws IOException
+  private static String executeWithLockDir(TestClaudeTool scope, String json, Path lockDir) throws IOException
   {
     ByteArrayInputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -52,7 +52,7 @@ public final class StatuslineCommandTest
   public void validInputContainsAllComponents() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String json = """
         {
@@ -82,7 +82,7 @@ public final class StatuslineCommandTest
   public void durationUnderOneMinuteFormattedAsHHMM() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String json = """
         {
@@ -110,7 +110,7 @@ public final class StatuslineCommandTest
   public void durationOverOneHourFormattedWithHours() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String json = """
         {
@@ -140,7 +140,7 @@ public final class StatuslineCommandTest
   public void usageAbove80ContainsRgbRedColor() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String json = """
         {
@@ -171,7 +171,7 @@ public final class StatuslineCommandTest
   public void usageBetween50And80ContainsRgbOrangeColor() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String json = """
         {
@@ -201,7 +201,7 @@ public final class StatuslineCommandTest
   public void usageBelow50ContainsRgbGreenColor() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String json = """
         {
@@ -230,7 +230,7 @@ public final class StatuslineCommandTest
   public void emptyJsonObjectUsesDefaults() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String json = "{}";
       String output = executeWithLockDir(scope, json, tempDir);
@@ -254,7 +254,7 @@ public final class StatuslineCommandTest
   public void usageExceeding100ClampedTo100() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String json = """
         {
@@ -283,7 +283,7 @@ public final class StatuslineCommandTest
   public void usageBarFullAt100Percent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String json = """
         {
@@ -312,7 +312,7 @@ public final class StatuslineCommandTest
   public void sessionIdDisplayedInFull() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String json = """
         {
@@ -341,7 +341,7 @@ public final class StatuslineCommandTest
   public void usageAt50PercentScalesAbove50() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String json = """
         {
@@ -371,7 +371,7 @@ public final class StatuslineCommandTest
   public void usageAt80PercentScalesNearRed() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String json = """
         {
@@ -400,7 +400,7 @@ public final class StatuslineCommandTest
   public void usageBarAllEmptyAt0Percent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String json = """
         {
@@ -429,7 +429,7 @@ public final class StatuslineCommandTest
   public void usageBarAt50PercentRaw() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String json = """
         {
@@ -459,7 +459,7 @@ public final class StatuslineCommandTest
   public void negativeDurationClampedToZero() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String json = """
         {
@@ -487,7 +487,7 @@ public final class StatuslineCommandTest
   public void negativeUsagePercentageClampedToZero() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String json = """
         {
@@ -516,7 +516,7 @@ public final class StatuslineCommandTest
   public void outputContainsAllFiveEmojisWhenActiveIssuePresent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path lockDir = Files.createTempDirectory("cat-locks-");
       try
@@ -560,7 +560,7 @@ public final class StatuslineCommandTest
   public void outputContainsAllComponentColors() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path lockDir = Files.createTempDirectory("cat-locks-");
       try
@@ -609,7 +609,7 @@ public final class StatuslineCommandTest
   public void scalingThresholdBoundaryAt835Percent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       // used_percentage=84: contextPct = (84 * 1000) / 835 = 100 (truncated), clamped to 100
       String jsonAt84 = """
@@ -655,7 +655,7 @@ public final class StatuslineCommandTest
   public void shortSessionIdPassesThroughUnchanged() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String json = """
         {
@@ -683,7 +683,7 @@ public final class StatuslineCommandTest
   public void nullJsonFieldsUseDefaults() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String json = """
         {
@@ -714,7 +714,7 @@ public final class StatuslineCommandTest
   public void malformedJsonUsesDefaults() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String json = "not valid json at all !!!";
       String output = executeWithLockDir(scope, json, tempDir);
@@ -738,7 +738,7 @@ public final class StatuslineCommandTest
   public void getActiveIssueReturnsIssueIdWhenLockMatchesSession() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       StatuslineCommand cmd = new StatuslineCommand(scope);
       Path lockDir = Files.createTempDirectory("cat-locks-");
@@ -771,7 +771,7 @@ public final class StatuslineCommandTest
   public void getActiveIssueReturnsEmptyWhenNoMatchingLock() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       StatuslineCommand cmd = new StatuslineCommand(scope);
       Path lockDir = Files.createTempDirectory("cat-locks-");
@@ -804,7 +804,7 @@ public final class StatuslineCommandTest
   public void getActiveIssueReturnsEmptyWhenLocksDirectoryAbsent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       StatuslineCommand cmd = new StatuslineCommand(scope);
       // Pass a non-existent directory — should return "" gracefully
@@ -828,7 +828,7 @@ public final class StatuslineCommandTest
   public void executeOmitsFirstElementWhenNoActiveIssue() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String json = """
         {
@@ -859,7 +859,7 @@ public final class StatuslineCommandTest
   public void executeIncludesIssueIdWhenActiveIssueFound() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path lockDir = Files.createTempDirectory("cat-locks-");
       try
@@ -900,7 +900,7 @@ public final class StatuslineCommandTest
   public void getActiveIssueSanitizesAnsiInjectionInIssueId() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       StatuslineCommand cmd = new StatuslineCommand(scope);
       Path lockDir = Files.createTempDirectory("cat-locks-");
@@ -944,7 +944,7 @@ public final class StatuslineCommandTest
   public void getActiveIssueReturnsErrorWhenLockFileHasMalformedJson() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       StatuslineCommand cmd = new StatuslineCommand(scope);
       Path lockDir = Files.createTempDirectory("cat-locks-");
@@ -975,7 +975,7 @@ public final class StatuslineCommandTest
   public void getActiveIssueReturnsEmptyWhenLockFileHasNoSessionIdField() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       StatuslineCommand cmd = new StatuslineCommand(scope);
       Path lockDir = Files.createTempDirectory("cat-locks-");
@@ -1009,7 +1009,7 @@ public final class StatuslineCommandTest
   public void getActiveIssueReturnsErrorWhenLockFileIsEmpty() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       StatuslineCommand cmd = new StatuslineCommand(scope);
       Path lockDir = Files.createTempDirectory("cat-locks-");

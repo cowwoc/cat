@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.DescriptionTester;
 import org.testng.annotations.Test;
 
@@ -45,16 +44,8 @@ public final class DescriptionTesterTest
     expectedExceptionsMessageRegExp = ".*requires 1 argument.*")
   public void throwsOnNoArguments() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-desc-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      DescriptionTester handler = new DescriptionTester(scope);
-      handler.getOutput(new String[]{});
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
+    DescriptionTester handler = new DescriptionTester();
+    handler.getOutput(new String[]{});
   }
 
   /**
@@ -64,16 +55,8 @@ public final class DescriptionTesterTest
     expectedExceptionsMessageRegExp = ".*requires 1 argument.*")
   public void throwsOnTooManyArguments() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-desc-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      DescriptionTester handler = new DescriptionTester(scope);
-      handler.getOutput(new String[]{"arg1", "arg2"});
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
+    DescriptionTester handler = new DescriptionTester();
+    handler.getOutput(new String[]{"arg1", "arg2"});
   }
 
   /**
@@ -84,9 +67,9 @@ public final class DescriptionTesterTest
   public void throwsWhenSkillFileNotFound() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-desc-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try
     {
-      DescriptionTester handler = new DescriptionTester(scope);
+      DescriptionTester handler = new DescriptionTester();
       handler.getOutput(new String[]{tempDir.resolve("nonexistent.md").toString()});
     }
     finally
@@ -102,12 +85,12 @@ public final class DescriptionTesterTest
   public void producesCalibrationPromptWithDescription() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-desc-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try
     {
       Path skillFile = tempDir.resolve("SKILL.md");
       Files.writeString(skillFile, MINIMAL_SKILL_MD);
 
-      DescriptionTester handler = new DescriptionTester(scope);
+      DescriptionTester handler = new DescriptionTester();
       String output = handler.getOutput(new String[]{skillFile.toString()});
 
       requireThat(output, "output").isNotNull();
@@ -126,58 +109,42 @@ public final class DescriptionTesterTest
    * Verifies that extractDescription handles single-line description format.
    */
   @Test
-  public void extractsSingleLineDescription() throws IOException
+  public void extractsSingleLineDescription()
   {
-    Path tempDir = Files.createTempDirectory("test-desc-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      DescriptionTester handler = new DescriptionTester(scope);
-      String content = """
-        ---
-        description: Use when user asks for help - shows available commands
-        user-invocable: true
-        ---
-        # Help
-        """;
+    DescriptionTester handler = new DescriptionTester();
+    String content = """
+      ---
+      description: Use when user asks for help - shows available commands
+      user-invocable: true
+      ---
+      # Help
+      """;
 
-      String description = handler.extractDescription(content, "SKILL.md");
-      requireThat(description, "description").
-        isEqualTo("Use when user asks for help - shows available commands");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
+    String description = handler.extractDescription(content, "SKILL.md");
+    requireThat(description, "description").
+      isEqualTo("Use when user asks for help - shows available commands");
   }
 
   /**
    * Verifies that extractDescription handles block scalar (>) description format.
    */
   @Test
-  public void extractsBlockScalarDescription() throws IOException
+  public void extractsBlockScalarDescription()
   {
-    Path tempDir = Files.createTempDirectory("test-desc-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      DescriptionTester handler = new DescriptionTester(scope);
-      String content = """
-        ---
-        description: >
-          Use when user says record mistake or document failure.
-          Trigger words: "record this mistake", "learn from this".
-        model: sonnet
-        ---
-        # Learn
-        """;
+    DescriptionTester handler = new DescriptionTester();
+    String content = """
+      ---
+      description: >
+        Use when user says record mistake or document failure.
+        Trigger words: "record this mistake", "learn from this".
+      model: sonnet
+      ---
+      # Learn
+      """;
 
-      String description = handler.extractDescription(content, "SKILL.md");
-      requireThat(description, "description").contains("Use when user says record mistake");
-      requireThat(description, "description").contains("Trigger words");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
+    String description = handler.extractDescription(content, "SKILL.md");
+    requireThat(description, "description").contains("Use when user says record mistake");
+    requireThat(description, "description").contains("Trigger words");
   }
 
   /**
@@ -185,18 +152,10 @@ public final class DescriptionTesterTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*No YAML frontmatter.*")
-  public void throwsOnMissingFrontmatter() throws IOException
+  public void throwsOnMissingFrontmatter()
   {
-    Path tempDir = Files.createTempDirectory("test-desc-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      DescriptionTester handler = new DescriptionTester(scope);
-      handler.extractDescription("# No frontmatter\nJust content.", "test.md");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
+    DescriptionTester handler = new DescriptionTester();
+    handler.extractDescription("# No frontmatter\nJust content.", "test.md");
   }
 
   /**
@@ -204,18 +163,10 @@ public final class DescriptionTesterTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*No 'description:' field.*")
-  public void throwsOnMissingDescriptionField() throws IOException
+  public void throwsOnMissingDescriptionField()
   {
-    Path tempDir = Files.createTempDirectory("test-desc-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
-    {
-      DescriptionTester handler = new DescriptionTester(scope);
-      handler.extractDescription("---\nmodel: haiku\nuser-invocable: true\n---\n# Skill", "test.md");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
+    DescriptionTester handler = new DescriptionTester();
+    handler.extractDescription("---\nmodel: haiku\nuser-invocable: true\n---\n# Skill", "test.md");
   }
 
   /**
@@ -225,12 +176,12 @@ public final class DescriptionTesterTest
   public void promptMentionsAllFourQueryCategories() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-desc-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try
     {
       Path skillFile = tempDir.resolve("SKILL.md");
       Files.writeString(skillFile, MINIMAL_SKILL_MD);
 
-      DescriptionTester handler = new DescriptionTester(scope);
+      DescriptionTester handler = new DescriptionTester();
       String output = handler.getOutput(new String[]{skillFile.toString()});
 
       requireThat(output, "output").contains("Core triggers");

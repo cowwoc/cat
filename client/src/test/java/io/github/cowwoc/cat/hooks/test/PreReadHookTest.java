@@ -6,18 +6,12 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.HookInput;
-import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.HookResult;
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.PreReadHook;
 import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -38,28 +32,6 @@ public final class PreReadHookTest
   private static final String ISSUE_ID = "2.1-test-task";
 
   /**
-   * Builds a HookInput for a Read/Glob/Grep tool call with an explicit file_path.
-   *
-   * @param mapper the JSON mapper
-   * @param toolName the tool name (e.g. "Read", "Glob", "Grep")
-   * @param filePath the file_path value to include in tool_input
-   * @param sessionId the session ID
-   * @return a HookInput representing a PreToolUse event for the given tool
-   * @throws IOException if input parsing fails
-   */
-  private static HookInput readToolInput(JsonMapper mapper, String toolName, String filePath,
-    String sessionId) throws IOException
-  {
-    String json = """
-      {
-        "tool_name": "%s",
-        "tool_input": {"file_path": "%s"},
-        "session_id": "%s"
-      }""".formatted(toolName, filePath, sessionId);
-    return HookInput.readFrom(mapper, new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
-  }
-
-  /**
    * Verifies that PreReadHook blocks a Read operation targeting the main workspace when a worktree
    * is active for the session.
    * <p>
@@ -73,24 +45,29 @@ public final class PreReadHookTest
   {
     Path projectPath = Files.createTempDirectory("prh-test-");
     Path pluginRoot = Files.createTempDirectory("prh-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try
     {
-      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
-      TestUtils.createWorktreeDir(scope, ISSUE_ID);
-
-      JsonMapper mapper = scope.getJsonMapper();
       // Attempt to read a file in the main workspace (outside worktree)
       Path mainWorkspaceFile = projectPath.resolve("plugin/SomeClass.java");
-      HookInput input = readToolInput(mapper, "Read", mainWorkspaceFile.toString(), SESSION_ID);
-      HookOutput output = new HookOutput(scope);
+      String payload = """
+        {
+          "tool_name": "Read",
+          "tool_input": {"file_path": "%s"},
+          "session_id": "%s"
+        }""".formatted(mainWorkspaceFile.toString(), SESSION_ID);
+      try (TestClaudeHook scope = new TestClaudeHook(payload, projectPath, pluginRoot, projectPath))
+      {
+        TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+        TestUtils.createWorktreeDir(scope, ISSUE_ID);
 
-      HookResult result = new PreReadHook(scope).run(input, output);
+        HookResult result = new PreReadHook(scope).run(scope);
 
-      // The output JSON should contain a "block" decision
-      requireThat(result, "result").isNotNull();
-      String jsonOutput = result.output();
-      JsonNode parsedOutput = mapper.readTree(jsonOutput);
-      requireThat(parsedOutput.path("decision").asString(""), "decision").isEqualTo("block");
+        // The output JSON should contain a "block" decision
+        requireThat(result, "result").isNotNull();
+        String jsonOutput = result.output();
+        JsonNode parsedOutput = scope.getJsonMapper().readTree(jsonOutput);
+        requireThat(parsedOutput.path("decision").asString(""), "decision").isEqualTo("block");
+      }
     }
     finally
     {
@@ -109,25 +86,42 @@ public final class PreReadHookTest
   {
     Path projectPath = Files.createTempDirectory("prh-test-");
     Path pluginRoot = Files.createTempDirectory("prh-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try
     {
-      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
-      Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
+      String payload = """
+        {
+          "tool_name": "Read",
+          "tool_input": {"file_path": "placeholder"},
+          "session_id": "%s"
+        }""".formatted(SESSION_ID);
+      try (TestClaudeHook scope = new TestClaudeHook(payload, projectPath, pluginRoot, projectPath))
+      {
+        TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+        Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
 
-      JsonMapper mapper = scope.getJsonMapper();
-      // Read a file inside the active worktree
-      Path worktreeFile = worktreeDir.resolve("plugin/SomeClass.java");
-      HookInput input = readToolInput(mapper, "Read", worktreeFile.toString(), SESSION_ID);
-      HookOutput output = new HookOutput(scope);
+        // Read a file inside the active worktree — need a new scope with the worktree path
+        Path worktreeFile = worktreeDir.resolve("plugin/SomeClass.java");
+        String worktreePayload = """
+          {
+            "tool_name": "Read",
+            "tool_input": {"file_path": "%s"},
+            "session_id": "%s"
+          }""".formatted(worktreeFile.toString(), SESSION_ID);
+        try (TestClaudeHook worktreeScope = new TestClaudeHook(worktreePayload, projectPath, pluginRoot,
+          projectPath))
+        {
+          TestUtils.writeLockFile(worktreeScope, ISSUE_ID, SESSION_ID);
 
-      HookResult result = new PreReadHook(scope).run(input, output);
+          HookResult result = new PreReadHook(worktreeScope).run(worktreeScope);
 
-      requireThat(result, "result").isNotNull();
-      String jsonOutput = result.output();
-      // Empty output means "allow"
-      JsonNode parsedOutput = mapper.readTree(jsonOutput);
-      String decision = parsedOutput.path("decision").asString("");
-      requireThat(decision, "decision").isNotEqualTo("block");
+          requireThat(result, "result").isNotNull();
+          String jsonOutput = result.output();
+          // Empty output means "allow"
+          JsonNode parsedOutput = scope.getJsonMapper().readTree(jsonOutput);
+          String decision = parsedOutput.path("decision").asString("");
+          requireThat(decision, "decision").isNotEqualTo("block");
+        }
+      }
     }
     finally
     {
@@ -148,30 +142,28 @@ public final class PreReadHookTest
   {
     Path projectPath = Files.createTempDirectory("prh-test-");
     Path pluginRoot = Files.createTempDirectory("prh-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try
     {
-      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
-      TestUtils.createWorktreeDir(scope, ISSUE_ID);
-
-      JsonMapper mapper = scope.getJsonMapper();
-      // Use Glob tool — even with a project-root path, it must not be blocked
-      String json = """
+      String pattern = projectPath.resolve("**/*.java").toString();
+      String payload = """
         {
           "tool_name": "Glob",
           "tool_input": {"pattern": "%s"},
           "session_id": "%s"
-        }""".formatted(projectPath.resolve("**/*.java").toString(), SESSION_ID);
-      HookInput input = HookInput.readFrom(mapper,
-        new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
-      HookOutput output = new HookOutput(scope);
+        }""".formatted(pattern, SESSION_ID);
+      try (TestClaudeHook scope = new TestClaudeHook(payload, projectPath, pluginRoot, projectPath))
+      {
+        TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+        TestUtils.createWorktreeDir(scope, ISSUE_ID);
 
-      HookResult result = new PreReadHook(scope).run(input, output);
+        HookResult result = new PreReadHook(scope).run(scope);
 
-      requireThat(result, "result").isNotNull();
-      String jsonOutput = result.output();
-      JsonNode parsedOutput = mapper.readTree(jsonOutput);
-      // Glob must not be blocked
-      requireThat(parsedOutput.path("decision").asString(""), "decision").isNotEqualTo("block");
+        requireThat(result, "result").isNotNull();
+        String jsonOutput = result.output();
+        JsonNode parsedOutput = scope.getJsonMapper().readTree(jsonOutput);
+        // Glob must not be blocked
+        requireThat(parsedOutput.path("decision").asString(""), "decision").isNotEqualTo("block");
+      }
     }
     finally
     {
@@ -190,20 +182,25 @@ public final class PreReadHookTest
   {
     Path projectPath = Files.createTempDirectory("prh-test-");
     Path pluginRoot = Files.createTempDirectory("prh-plugin-");
-    try (JvmScope scope = new TestJvmScope(projectPath, pluginRoot))
+    try
     {
       // No lock file created — no active worktree
-      JsonMapper mapper = scope.getJsonMapper();
       Path anyFile = projectPath.resolve("plugin/SomeClass.java");
-      HookInput input = readToolInput(mapper, "Read", anyFile.toString(), SESSION_ID);
-      HookOutput output = new HookOutput(scope);
+      String payload = """
+        {
+          "tool_name": "Read",
+          "tool_input": {"file_path": "%s"},
+          "session_id": "%s"
+        }""".formatted(anyFile.toString(), SESSION_ID);
+      try (TestClaudeHook scope = new TestClaudeHook(payload, projectPath, pluginRoot, projectPath))
+      {
+        HookResult result = new PreReadHook(scope).run(scope);
 
-      HookResult result = new PreReadHook(scope).run(input, output);
-
-      requireThat(result, "result").isNotNull();
-      String jsonOutput = result.output();
-      JsonNode parsedOutput = mapper.readTree(jsonOutput);
-      requireThat(parsedOutput.path("decision").asString(""), "decision").isNotEqualTo("block");
+        requireThat(result, "result").isNotNull();
+        String jsonOutput = result.output();
+        JsonNode parsedOutput = scope.getJsonMapper().readTree(jsonOutput);
+        requireThat(parsedOutput.path("decision").asString(""), "decision").isNotEqualTo("block");
+      }
     }
     finally
     {

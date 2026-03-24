@@ -34,7 +34,7 @@ public final class JvmScopePathResolutionTest
   public void getCatWorkPathReturnsCorrectPath() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path result = scope.getCatWorkPath();
       Path expected = tempDir.resolve(".cat").resolve("work");
@@ -57,7 +57,7 @@ public final class JvmScopePathResolutionTest
   public void getCatSessionPathIncludesSessionId() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path result = scope.getCatSessionPath("test-session");
       String sessionId = "test-session";
@@ -116,7 +116,7 @@ public final class JvmScopePathResolutionTest
   public void getCatWorkPathThrowsAfterClose() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       scope.close();
       scope.getCatWorkPath();
@@ -138,7 +138,7 @@ public final class JvmScopePathResolutionTest
   public void getCatSessionPathThrowsAfterClose() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       scope.close();
       scope.getCatSessionPath("test-session");
@@ -160,7 +160,7 @@ public final class JvmScopePathResolutionTest
   public void getClaudeSessionsPathReturnsCorrectPath() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path result = scope.getClaudeSessionsPath();
       String encoded = AbstractJvmScope.encodeProjectPath(tempDir.toString());
@@ -184,7 +184,7 @@ public final class JvmScopePathResolutionTest
   public void getClaudeSessionPathReturnsCorrectPath() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path result = scope.getClaudeSessionPath("test-session");
       String encoded = AbstractJvmScope.encodeProjectPath(tempDir.toString());
@@ -208,8 +208,8 @@ public final class JvmScopePathResolutionTest
   public void crossSessionPathDifferentiation() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
-    try (TestJvmScope scope1 = new TestJvmScope(tempDir, tempDir);
-      TestJvmScope scope2 = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope1 = new TestClaudeTool(tempDir, tempDir);
+      TestClaudeTool scope2 = new TestClaudeTool(tempDir, tempDir))
     {
       Path sessionPath1 = scope1.getClaudeSessionPath("session-a");
       Path sessionPath2 = scope2.getClaudeSessionPath("session-b");
@@ -236,7 +236,7 @@ public final class JvmScopePathResolutionTest
   public void getClaudeSessionsPathThrowsAfterClose() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       scope.close();
       scope.getClaudeSessionsPath();
@@ -258,7 +258,7 @@ public final class JvmScopePathResolutionTest
   public void getClaudeSessionPathThrowsAfterClose() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       scope.close();
       scope.getClaudeSessionPath("test-session");
@@ -270,7 +270,7 @@ public final class JvmScopePathResolutionTest
   }
 
   /**
-   * Verifies that getWorkDir() returns the path injected into TestJvmScope.
+   * Verifies that getWorkDir() returns the path injected into TestClaudeTool.
    *
    * @throws IOException if temporary directory creation fails
    */
@@ -278,7 +278,7 @@ public final class JvmScopePathResolutionTest
   public void getWorkDirReturnsInjectedPath() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
-    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path result = scope.getWorkDir();
       requireThat(result, "result").isEqualTo(tempDir);
@@ -299,7 +299,7 @@ public final class JvmScopePathResolutionTest
   {
     Path projectPath = Files.createTempDirectory("test-project-");
     Path workDir = Files.createTempDirectory("test-work-");
-    try (TestJvmScope scope = new TestJvmScope(projectPath, projectPath, workDir))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath, workDir))
     {
       Path result = scope.getWorkDir();
       requireThat(result, "result").isEqualTo(workDir);
@@ -353,7 +353,7 @@ public final class JvmScopePathResolutionTest
     Path pluginDir = parentDir.resolve("plugin");
     Files.createDirectories(pluginDir);
 
-    try (TestJvmScope scope = new TestJvmScope(projectPath, pluginDir))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginDir))
     {
       Path result = scope.getClaudeSessionPath("test-session");
       String encoded = AbstractJvmScope.encodeProjectPath(projectPath.toString());
@@ -382,7 +382,7 @@ public final class JvmScopePathResolutionTest
     Path pluginDir = parentDir.resolve("plugin");
     Files.createDirectories(pluginDir);
 
-    try (TestJvmScope scope = new TestJvmScope(projectPath, pluginDir))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginDir))
     {
       Path result = scope.getClaudeSessionsPath();
       String encoded = AbstractJvmScope.encodeProjectPath(projectPath.toString());

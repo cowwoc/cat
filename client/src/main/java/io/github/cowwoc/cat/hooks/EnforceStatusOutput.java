@@ -21,6 +21,8 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static io.github.cowwoc.cat.hooks.Strings.block;
+
 /**
  * enforce-status-output - Stop hook to enforce verbatim status box output.
  * <p>
@@ -58,37 +60,35 @@ public final class EnforceStatusOutput
    */
   public static void main(String[] args)
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (ClaudeHook scope = new MainClaudeHook())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      HookOutput hookOutput = new HookOutput(scope);
-      String output;
       try
       {
-        HookInput input = HookInput.readFromStdin(mapper);
-        String transcriptPath = input.getString("transcript_path");
-        boolean stopHookActive = input.getBoolean("stop_hook_active", false);
-        String sessionId = input.getSessionId();
-        Path sessionBasePath = scope.getClaudeSessionsPath();
-        output = check(mapper, transcriptPath, stopHookActive, hookOutput, sessionId, sessionBasePath);
+        String output;
+        try
+        {
+          String transcriptPath = scope.getString("transcript_path");
+          boolean stopHookActive = scope.getBoolean("stop_hook_active", false);
+          String sessionId = scope.getSessionId();
+          Path sessionBasePath = scope.getClaudeSessionsPath();
+          output = check(mapper, transcriptPath, stopHookActive, scope, sessionId, sessionBasePath);
+        }
+        catch (Exception e)
+        {
+          String errorMessage =
+            "❌ Hook error: " + e.getMessage() + "\n" +
+            "\n" +
+            "Blocking as fail-safe. Please verify your working environment.";
+          output = block(scope, errorMessage);
+        }
+        System.out.println(output);
       }
-      catch (Exception e)
+      catch (RuntimeException | AssertionError e)
       {
-        String errorMessage =
-          "❌ Hook error: " + e.getMessage() + "\n" +
-          "\n" +
-          "Blocking as fail-safe. Please verify your working environment.";
-        output = hookOutput.block(errorMessage);
-      }
-      System.out.println(output);
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(EnforceStatusOutput.class);
-      log.error("Unexpected error", e);
-      try (MainJvmScope errorScope = new MainJvmScope())
-      {
-        System.out.println(new HookOutput(errorScope).block(
+        Logger log = LoggerFactory.getLogger(EnforceStatusOutput.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }
@@ -112,14 +112,14 @@ public final class EnforceStatusOutput
    * @param mapper the JSON mapper to use for parsing
    * @param transcriptPath path to the transcript JSONL file, or empty string if unavailable
    * @param stopHookActive whether Claude Code set {@code stop_hook_active=true} on this invocation
-   * @param hookOutput the hook output builder
+   * @param scope the JVM scope for building hook responses
    * @param sessionId the session ID, or empty string if unavailable
    * @param sessionBasePath the base path for session directories, or null if unavailable
    * @return JSON string representing the hook decision
    * @throws IOException if the transcript file cannot be read
    */
   public static String check(JsonMapper mapper, String transcriptPath, boolean stopHookActive,
-    HookOutput hookOutput, String sessionId, Path sessionBasePath) throws IOException
+    JvmScope scope, String sessionId, Path sessionBasePath) throws IOException
   {
     // Check for pending-agent-result flag before any other enforcement
     if (!sessionId.isEmpty() && sessionBasePath != null)
@@ -138,7 +138,7 @@ public final class EnforceStatusOutput
             Arguments: "<catAgentId> <issuePath> <subagentCommitsJson>"
 
           See plugin/skills/collect-results-agent/SKILL.md for argument details.""";
-        return hookOutput.block(reason);
+        return block(scope, reason);
       }
     }
 
@@ -163,9 +163,9 @@ public final class EnforceStatusOutput
           "OUTPUT THE COMPLETE STATUS BOX NOW - including the ╭── border, all issue lines, " +
           "the NEXT STEPS table, and the Legend. Do NOT summarize or interpret.";
       }
-      return hookOutput.block(reason);
+      return block(scope, reason);
     }
-    return hookOutput.empty();
+    return Strings.empty();
   }
 
   /**

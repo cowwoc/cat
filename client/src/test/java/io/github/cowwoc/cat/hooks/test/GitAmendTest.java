@@ -41,7 +41,7 @@ public class GitAmendTest
   public void constructorRejectsBlankDirectory() throws IOException
   {
     Path tempDir = Files.createTempDirectory("git-amend-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       new GitAmend(scope, "");
     }
@@ -58,7 +58,7 @@ public class GitAmendTest
   public void executeNoEditSucceedsOnUnpushedCommit() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    try (JvmScope scope = new TestClaudeTool(repoDir, repoDir))
     {
       try
       {
@@ -89,7 +89,7 @@ public class GitAmendTest
   public void executeWithMessageSucceedsOnUnpushedCommit() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    try (JvmScope scope = new TestClaudeTool(repoDir, repoDir))
     {
       try
       {
@@ -147,7 +147,7 @@ public class GitAmendTest
           TestUtils.runGit(cloneDir, "push", "origin", "main");
 
           // Now try to amend the pushed commit
-          try (JvmScope scope = new TestJvmScope(cloneDir, cloneDir))
+          try (JvmScope scope = new TestClaudeTool(cloneDir, cloneDir))
           {
             GitAmend cmd = new GitAmend(scope, cloneDir.toString());
             String result = cmd.execute("", true);
@@ -180,7 +180,7 @@ public class GitAmendTest
   public void executeRejectsNullMessage() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    try (JvmScope scope = new TestClaudeTool(repoDir, repoDir))
     {
       try
       {
@@ -201,7 +201,7 @@ public class GitAmendTest
   public void executeReturnsNoRaceWhenRemoteNotUpdated() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    try (JvmScope scope = new TestJvmScope(repoDir, repoDir))
+    try (JvmScope scope = new TestClaudeTool(repoDir, repoDir))
     {
       try
       {
@@ -255,7 +255,7 @@ public class GitAmendTest
           // Record OLD_HEAD before execute (this is what will be amended)
           String oldHead = TestUtils.runGitCommandWithOutput(cloneDir, "rev-parse", "HEAD");
 
-          try (JvmScope scope = new TestJvmScope(cloneDir, cloneDir))
+          try (JvmScope scope = new TestClaudeTool(cloneDir, cloneDir))
           {
             GitAmend cmd = new GitAmend(scope, cloneDir.toString());
             String result = cmd.execute("amended message", false, () ->

@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.GetSkill;
 import org.testng.annotations.Test;
 
@@ -54,7 +53,7 @@ public class GetSkillTest
   public void constructorRejectsEmptySkillArgs() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       new GetSkill(scope, List.of());
     }
@@ -75,7 +74,7 @@ public class GetSkillTest
   public void constructorBlankAgentIdThrowsIllegalArgumentException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       new GetSkill(scope, List.of(""));
     }
@@ -96,7 +95,7 @@ public class GetSkillTest
   public void constructorWhitespaceAgentIdThrowsIllegalArgumentException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       new GetSkill(scope, List.of("   "));
     }
@@ -119,9 +118,9 @@ public class GetSkillTest
   public void constructorFailsWhenPluginRootDoesNotExist() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("test-plugin-");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
-      // Delete the plugin root after TestJvmScope is constructed so GetSkill sees a missing directory
+      // Delete the plugin root after TestClaudeTool is constructed so GetSkill sees a missing directory
       TestUtils.deleteDirectoryRecursively(tempPluginRoot);
       new GetSkill(scope, List.of(UUID.randomUUID().toString()));
     }
@@ -140,7 +139,7 @@ public class GetSkillTest
   {
     Path tempPluginRoot = Files.createTempDirectory("test-plugin-");
     Path nonExistentProjectDir = tempPluginRoot.resolve("does-not-exist");
-    try (JvmScope scope = new TestJvmScope(nonExistentProjectDir, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(nonExistentProjectDir, tempPluginRoot))
     {
       // Constructor should succeed even when projectPath does not point to an existing directory
       GetSkill loader = new GetSkill(scope, List.of(UUID.randomUUID().toString()));
@@ -164,7 +163,7 @@ public class GetSkillTest
   public void loadPassesThroughPluginRootVariableInContentBody() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
@@ -196,7 +195,7 @@ Path: ${CLAUDE_PLUGIN_ROOT}/file.txt
   public void loadPassesThroughSessionIdVariableInContentBody() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
@@ -230,7 +229,7 @@ Session: ${CLAUDE_SESSION_ID}
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
     Path tempProjectDir = Files.createTempDirectory("get-skill-project");
-    try (JvmScope scope = new TestJvmScope(tempProjectDir, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempProjectDir, tempPluginRoot))
     {
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
@@ -259,7 +258,7 @@ Project: ${CLAUDE_PROJECT_DIR}/data
   public void loadReturnsContentOnFirstInvocation() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
@@ -289,7 +288,7 @@ Full skill content here
   public void loadReturnsReferenceOnSecondInvocation() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
@@ -324,7 +323,7 @@ Full skill content
   public void loadHandlesMissingContentFile() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path skillDir = tempPluginRoot.resolve("skills/empty-skill");
       Files.createDirectories(skillDir);
@@ -349,7 +348,7 @@ Full skill content
   public void loadRejectsNullSkillName() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       GetSkill loader = new GetSkill(scope,
         List.of(UUID.randomUUID().toString()));
@@ -371,7 +370,7 @@ Full skill content
   public void loadRejectsEmptySkillName() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       GetSkill loader = new GetSkill(scope,
         List.of(UUID.randomUUID().toString()));
@@ -396,7 +395,7 @@ Full skill content
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
     Path tempProjectDir = Files.createTempDirectory("get-skill-project");
-    try (JvmScope scope = new TestJvmScope(tempProjectDir, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempProjectDir, tempPluginRoot))
     {
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
@@ -428,7 +427,7 @@ Project: ${CLAUDE_PROJECT_DIR}/session_${CLAUDE_SESSION_ID}
   public void loadPassesThroughUndefinedVariable() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
@@ -457,7 +456,7 @@ Value: ${UNDEFINED_VAR}
   public void loadStripsFrontmatter() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
@@ -490,7 +489,7 @@ Value: ${UNDEFINED_VAR}
   public void loadPreservesContentWithoutLicenseHeader() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
@@ -525,7 +524,7 @@ Regular content here
   public void loadPassesThroughUnknownLauncher() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
@@ -560,7 +559,7 @@ Done
   public void loadExpandsVariablesInDirectivesButNotContentBody() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
@@ -593,7 +592,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
   public void loadInvokesSkillOutputForKnownLauncher() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path hooksDir = tempPluginRoot.resolve("client/bin");
       Files.createDirectories(hooksDir);
@@ -634,7 +633,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
   public void loadPropagatesIoExceptionFromSkillOutput() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path hooksDir = tempPluginRoot.resolve("client/bin");
       Files.createDirectories(hooksDir);
@@ -669,7 +668,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
   public void loadReturnsErrorStringForRuntimeException() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path hooksDir = tempPluginRoot.resolve("client/bin");
       Files.createDirectories(hooksDir);
@@ -709,7 +708,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
   public void loadReturnsErrorStringForConstructorException() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path hooksDir = tempPluginRoot.resolve("client/bin");
       Files.createDirectories(hooksDir);
@@ -749,7 +748,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
   public void loadReturnsClassNameForNullExceptionMessage() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path hooksDir = tempPluginRoot.resolve("client/bin");
       Files.createDirectories(hooksDir);
@@ -840,7 +839,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
   public void loadThrowsWhenClassExtractionFails() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path hooksDir = tempPluginRoot.resolve("client/bin");
       Files.createDirectories(hooksDir);
@@ -879,7 +878,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
   public void directivePositionalArgsSubstituted() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path hooksDir = tempPluginRoot.resolve("client/bin");
       Files.createDirectories(hooksDir);
@@ -920,7 +919,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
   public void contentBodyPositionalArgPassedThrough() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
@@ -950,7 +949,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
   public void loadPassesArgumentsToSkillOutput() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path hooksDir = tempPluginRoot.resolve("client/bin");
       Files.createDirectories(hooksDir);
@@ -991,7 +990,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
   public void loadReExecutesDirectiveOnSubsequentLoad() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path hooksDir = tempPluginRoot.resolve("client/bin");
       Files.createDirectories(hooksDir);
@@ -1039,7 +1038,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
   public void loadFailsOnSubsequentLoadWithMultipleDirectives() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path hooksDir = tempPluginRoot.resolve("client/bin");
       Files.createDirectories(hooksDir);
@@ -1081,7 +1080,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
   public void loadStripsYamlFrontmatterFromFirstUseMd() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path firstUseDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(firstUseDir);
@@ -1122,7 +1121,7 @@ Content after frontmatter.
   public void loadReturnsCodeBlockContentVerbatimOnFirstLoad() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path skillDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(skillDir);
@@ -1166,7 +1165,7 @@ More content here.
   public void loadSucceedsOnFirstLoadWithMultipleDirectives() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path hooksDir = tempPluginRoot.resolve("client/bin");
       Files.createDirectories(hooksDir);
@@ -1276,7 +1275,7 @@ More content here.
   public void constructorRejectsInvalidAgentIdFormat() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       new GetSkill(scope, List.of("not-a-uuid-or-subagent-id"));
     }
@@ -1296,7 +1295,7 @@ More content here.
   public void constructorRejectsMalformedSubagentId() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Valid UUID prefix but missing /subagents/ segment
       String malformedId = "12345678-1234-1234-1234-123456789abc/wrongsegment/agent123";
@@ -1323,7 +1322,7 @@ More content here.
   public void constructorSplitsAgentIdOnSpace() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String sessionId = UUID.randomUUID().toString();
       // Pass "sessionId description text" as a single quoted argument
@@ -1352,7 +1351,7 @@ More content here.
   public void constructorSplitsOnFirstSpaceOnly() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       String sessionId = UUID.randomUUID().toString();
       // Multiple spaces: only split on the FIRST space; remainder contains the rest
@@ -1382,7 +1381,7 @@ More content here.
   public void constructorFallsBackToSessionIdWhenAgentIdStartsWithSpace() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       // First arg starts with a space: spaceIndex == 0, not > 0, so no split occurs.
       // The full string " description text" is used as catAgentId, which is not blank (no fallback)
@@ -1407,7 +1406,7 @@ More content here.
   public void loadStoresQualifiedNameInMarkerFile() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
@@ -1441,7 +1440,7 @@ More content here.
   public void loadRecognizesAlreadyLoadedByQualifiedName() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
@@ -1486,7 +1485,7 @@ More content here.
   public void constructorAcceptsSubagentFormatCatAgentIdForStakeholderReviewAgent() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       // Use the format injected by SubagentStartHook: {sessionId}/subagents/{agentId}
       String sessionId = UUID.randomUUID().toString();
@@ -1516,7 +1515,7 @@ More content here.
   public void loadAcceptsAlreadyQualifiedName() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
@@ -1543,10 +1542,9 @@ More content here.
 
   /**
    * Verifies that variable expansion inside {@code !} directive strings uses {@code System.getenv()}
-   * directly, not the injectable {@code ClaudeEnv}.
+   * directly, not the scope's injectable paths.
    * <p>
-   * When {@code GetSkill} is constructed with a {@code ClaudeEnv} that has no variables (empty map),
-   * a real environment variable that exists in the process (like {@code PATH}) should still be
+   * A real environment variable that exists in the process (like {@code PATH}) should be
    * expanded in directive strings because expansion reads from {@code System.getenv()}.
    *
    * @throws IOException if an I/O error occurs
@@ -1559,7 +1557,7 @@ More content here.
     requireThat(pathValue, "pathValue").isNotNull();
 
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       // Set up a launcher so the directive is executed and args are visible in output
       Path hooksDir = tempPluginRoot.resolve("client/bin");
@@ -1623,7 +1621,7 @@ More content here.
   public void firstLoadWritesHashToMarkerFile() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
@@ -1662,7 +1660,7 @@ More content here.
   public void secondLoadWithMatchingHashReturnsSubsequentResponse() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
@@ -1703,7 +1701,7 @@ More content here.
   public void secondLoadWithMismatchedHashReturnsFullContent() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
@@ -1748,7 +1746,7 @@ More content here.
   public void emptyMarkerFileIsDeletedOnConstructionAndTriggersFirstUseReload() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
@@ -1796,7 +1794,7 @@ More content here.
   public void afterInvalidationNewMarkerIsValidForThirdLoad() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
@@ -1845,7 +1843,7 @@ More content here.
   public void agentSuffixFallbackComputesHashFromParentSkill() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       // Create only the parent skill's first-use.md (not foo-agent/first-use.md)
       Path parentSkillDir = tempPluginRoot.resolve("skills/foo");
@@ -1896,7 +1894,7 @@ More content here.
   public void loadRejectsPathTraversalInSkillName() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       GetSkill loader = new GetSkill(scope, List.of(UUID.randomUUID().toString()));
       loader.load("../../etc/passwd");
@@ -1920,7 +1918,7 @@ More content here.
   public void computeFirstUseHashRejectsPathTraversalInSkillName() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       // Pre-write a stale marker so load() proceeds to computeFirstUseHash() for the traversal name.
       String agentId = UUID.randomUUID().toString();
@@ -1954,7 +1952,7 @@ More content here.
   public void loadThrowsWhenStaleMarkerExistsButFirstUseMdIsMissing() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       // Pre-write a stale marker for "test-skill" but do NOT create the first-use.md file.
       String agentId = UUID.randomUUID().toString();

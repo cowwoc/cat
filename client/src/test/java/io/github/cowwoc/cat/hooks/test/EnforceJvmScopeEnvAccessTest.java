@@ -19,19 +19,23 @@ import java.util.List;
 import java.util.stream.Stream;
 
 /**
- * Enforces that only MainJvmScope.java, ClaudeEnv.java, GetSkill.java, and TerminalType.java call
- * System.getenv() directly.
+ * Enforces that only MainClaudeTool.java, MainJvmScope.java, MainClaudeHook.java, GetSkill.java,
+ * and TerminalType.java call System.getenv() directly.
  * <p>
  * Hook handlers must access session-specific values (session ID, env file path) from HookInput JSON,
- * not from environment variables. Non-hook CLI commands use ClaudeEnv to read environment variables.
+ * not from environment variables. CLI commands use either {@code MainClaudeTool} (session CLI tools)
+ * or {@code MainJvmScope} (infrastructure CLI tools) to read environment variables at startup.
+ * {@code MainClaudeHook} is allowed because it is the production hook scope implementation that reads
+ * infrastructure path variables ({@code CLAUDE_PROJECT_DIR}, {@code CLAUDE_PLUGIN_ROOT},
+ * {@code CLAUDE_CONFIG_DIR}, {@code CLAUDE_ENV_FILE}, {@code TZ}) from the environment at startup.
  * GetSkill.java is allowed because it is a CLI tool that does generic variable expansion (reading
- * arbitrary environment variables for directive string substitution).
- * TerminalType.detect() is allowed because it wraps System.getenv() for terminal detection.
+ * arbitrary environment variables for directive string substitution). TerminalType.detect() is allowed
+ * because it wraps System.getenv() for terminal detection.
  */
 public final class EnforceJvmScopeEnvAccessTest
 {
   /**
-   * Verifies that no Java file except the four whitelisted files contains System.getenv().
+   * Verifies that no Java file except the five whitelisted files contains System.getenv().
    * <p>
    * Uses fully-qualified path matching to prevent files with matching names in other packages from
    * bypassing the restriction.
@@ -58,9 +62,11 @@ public final class EnforceJvmScopeEnvAccessTest
       javaFiles = paths.filter(Files::isRegularFile).
         filter(path -> path.toString().endsWith(".java")).
         filter(path -> !sourceRoot.relativize(path).toString().equals(
+          "io/github/cowwoc/cat/hooks/MainClaudeTool.java")).
+        filter(path -> !sourceRoot.relativize(path).toString().equals(
           "io/github/cowwoc/cat/hooks/MainJvmScope.java")).
         filter(path -> !sourceRoot.relativize(path).toString().equals(
-          "io/github/cowwoc/cat/hooks/ClaudeEnv.java")).
+          "io/github/cowwoc/cat/hooks/MainClaudeHook.java")).
         filter(path -> !sourceRoot.relativize(path).toString().equals(
           "io/github/cowwoc/cat/hooks/util/GetSkill.java")).
         filter(path -> !sourceRoot.relativize(path).toString().equals(
@@ -79,19 +85,25 @@ public final class EnforceJvmScopeEnvAccessTest
     if (!violations.isEmpty())
     {
       String message = """
-        System.getenv() found in files other than MainJvmScope.java, ClaudeEnv.java, \
-        GetSkill.java, and TerminalType.java.
+        System.getenv() found in files other than MainClaudeTool.java, MainJvmScope.java, \
+        MainClaudeHook.java, GetSkill.java, and TerminalType.java.
 
         REQUIREMENT: Hooks must read session-specific values from HookInput JSON (not environment variables).
-        Non-hook CLI commands must use ClaudeEnv to read environment variables.
+        Session CLI commands receive session values from MainClaudeTool which reads them at startup.
+        Infrastructure CLI commands (e.g., GetSkill) use MainJvmScope which reads only path variables.
+        Hook handlers use MainClaudeHook to read infrastructure path variables at startup.
 
         Violations found in:
         """ + String.join("\n", violations.stream().map(v -> "  - " + v).toList()) + """
 
 
         FIX depends on context:
-          In CLI main() methods: new ClaudeEnv().getSessionId() or new ClaudeEnv().getEnvFile() \
-        are acceptable — ClaudeEnv wraps System.getenv() for non-hook commands.
+          Session CLI main() methods: use MainClaudeTool (or TestClaudeTool in tests) to access \
+        session values — the constructor reads environment variables and stores them as fields.
+          Infrastructure CLI main() methods: use MainJvmScope when CLAUDE_SESSION_ID and \
+        CLAUDE_ENV_FILE are not available (e.g., invoked by the skill preprocessor).
+          Hook handler main() methods: use MainClaudeHook to read infrastructure path variables \
+        and hook JSON from stdin.
           In hook handlers / business logic: read session-specific values from HookInput JSON, \
         not environment variables — hooks must not call System.getenv() directly.
         """;
@@ -100,7 +112,7 @@ public final class EnforceJvmScopeEnvAccessTest
   }
 
   /**
-   * Verifies that each of the four whitelisted files exists and contains at least one System.getenv()
+   * Verifies that each of the five whitelisted files exists and contains at least one System.getenv()
    * call, confirming the whitelist entries are accurate and not stale.
    *
    * @throws IOException if reading source files fails
@@ -111,8 +123,9 @@ public final class EnforceJvmScopeEnvAccessTest
     // Maven sets user.dir to the module directory (client/) during test execution.
     Path sourceRoot = Paths.get(System.getProperty("user.dir"), "src/main/java");
     String[] whitelistedFiles = {
+      "io/github/cowwoc/cat/hooks/MainClaudeTool.java",
       "io/github/cowwoc/cat/hooks/MainJvmScope.java",
-      "io/github/cowwoc/cat/hooks/ClaudeEnv.java",
+      "io/github/cowwoc/cat/hooks/MainClaudeHook.java",
       "io/github/cowwoc/cat/hooks/util/GetSkill.java",
       "io/github/cowwoc/cat/hooks/skills/TerminalType.java"
     };

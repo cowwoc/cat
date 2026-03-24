@@ -69,7 +69,7 @@ public final class InvestigationContextExtractorTest
       Files.writeString(tempFile, jsonl);
 
       InvestigationContextExtractor extractor =
-        new InvestigationContextExtractor(new TestJvmScope());
+        new InvestigationContextExtractor(new TestClaudeTool());
       JsonNode result = extractor.extract(tempFile, List.of());
 
       JsonNode docs = result.path("documents_read");
@@ -102,7 +102,7 @@ public final class InvestigationContextExtractorTest
       Files.writeString(tempFile, jsonl);
 
       InvestigationContextExtractor extractor =
-        new InvestigationContextExtractor(new TestJvmScope());
+        new InvestigationContextExtractor(new TestClaudeTool());
       JsonNode result = extractor.extract(tempFile, List.of());
 
       JsonNode docs = result.path("documents_read");
@@ -132,7 +132,7 @@ public final class InvestigationContextExtractorTest
       Files.writeString(tempFile, jsonl);
 
       InvestigationContextExtractor extractor =
-        new InvestigationContextExtractor(new TestJvmScope());
+        new InvestigationContextExtractor(new TestClaudeTool());
       JsonNode result = extractor.extract(tempFile, List.of());
 
       JsonNode skills = result.path("skill_invocations");
@@ -166,7 +166,7 @@ public final class InvestigationContextExtractorTest
       Files.writeString(tempFile, jsonl);
 
       InvestigationContextExtractor extractor =
-        new InvestigationContextExtractor(new TestJvmScope());
+        new InvestigationContextExtractor(new TestClaudeTool());
       JsonNode result = extractor.extract(tempFile, List.of("squash"));
 
       JsonNode commands = result.path("bash_commands");
@@ -203,7 +203,7 @@ public final class InvestigationContextExtractorTest
       Files.writeString(tempFile, jsonl);
 
       InvestigationContextExtractor extractor =
-        new InvestigationContextExtractor(new TestJvmScope());
+        new InvestigationContextExtractor(new TestClaudeTool());
       JsonNode result = extractor.extract(tempFile, List.of());
 
       requireThat(result.path("bash_commands").size(), "bashCommandsSize").isEqualTo(3);
@@ -232,7 +232,7 @@ public final class InvestigationContextExtractorTest
       Files.writeString(tempFile, jsonl);
 
       InvestigationContextExtractor extractor =
-        new InvestigationContextExtractor(new TestJvmScope());
+        new InvestigationContextExtractor(new TestClaudeTool());
       JsonNode result = extractor.extract(tempFile, List.of());
 
       JsonNode commands = result.path("bash_commands");
@@ -265,7 +265,7 @@ public final class InvestigationContextExtractorTest
       Files.writeString(tempFile, jsonl);
 
       InvestigationContextExtractor extractor =
-        new InvestigationContextExtractor(new TestJvmScope());
+        new InvestigationContextExtractor(new TestClaudeTool());
       JsonNode result = extractor.extract(tempFile, List.of());
 
       requireThat(result.path("parse_errors_skipped").asInt(),
@@ -312,7 +312,7 @@ public final class InvestigationContextExtractorTest
       Files.writeString(tempFile, jsonl);
 
       InvestigationContextExtractor extractor =
-        new InvestigationContextExtractor(new TestJvmScope());
+        new InvestigationContextExtractor(new TestClaudeTool());
       JsonNode result = extractor.extract(tempFile, List.of());
 
       String resultText = result.path("bash_commands").get(0).path("result").asString();
@@ -345,7 +345,7 @@ public final class InvestigationContextExtractorTest
       Files.writeString(tempFile, jsonl.toString());
 
       InvestigationContextExtractor extractor =
-        new InvestigationContextExtractor(new TestJvmScope());
+        new InvestigationContextExtractor(new TestClaudeTool());
       JsonNode result = extractor.extract(tempFile, List.of());
 
       requireThat(result.path("timeline_events").size(), "timelineEventsSize").isEqualTo(200);
@@ -372,7 +372,7 @@ public final class InvestigationContextExtractorTest
       Files.writeString(tempFile, "");
 
       InvestigationContextExtractor extractor =
-        new InvestigationContextExtractor(new TestJvmScope());
+        new InvestigationContextExtractor(new TestClaudeTool());
       JsonNode result = extractor.extract(tempFile, List.of());
 
       requireThat(result.path("documents_read").size(), "docsSize").isEqualTo(0);
@@ -404,7 +404,7 @@ public final class InvestigationContextExtractorTest
       Files.writeString(tempFile, "");
 
       InvestigationContextExtractor extractor =
-        new InvestigationContextExtractor(new TestJvmScope());
+        new InvestigationContextExtractor(new TestClaudeTool());
       JsonNode result = extractor.extract(tempFile, List.of());
 
       requireThat(result.path("timezone_context").asString(),
@@ -432,7 +432,7 @@ public final class InvestigationContextExtractorTest
       Files.writeString(tempFile, jsonl);
 
       InvestigationContextExtractor extractor =
-        new InvestigationContextExtractor(new TestJvmScope());
+        new InvestigationContextExtractor(new TestClaudeTool());
       JsonNode result = extractor.extract(tempFile, List.of());
 
       requireThat(result.path("documents_read").size(), "docsSize").isEqualTo(0);
@@ -462,7 +462,7 @@ public final class InvestigationContextExtractorTest
       Files.writeString(tempFile, jsonl);
 
       InvestigationContextExtractor extractor =
-        new InvestigationContextExtractor(new TestJvmScope());
+        new InvestigationContextExtractor(new TestClaudeTool());
       JsonNode result = extractor.extract(tempFile, List.of());
 
       requireThat(result.path("documents_read").size(), "docsSize").isEqualTo(1);
@@ -490,7 +490,7 @@ public final class InvestigationContextExtractorTest
       Files.writeString(tempFile, jsonl);
 
       InvestigationContextExtractor extractor =
-        new InvestigationContextExtractor(new TestJvmScope());
+        new InvestigationContextExtractor(new TestClaudeTool());
       JsonNode result = extractor.extract(tempFile, List.of());
 
       JsonNode commands = result.path("bash_commands");
@@ -522,7 +522,7 @@ public final class InvestigationContextExtractorTest
       Files.writeString(tempFile, jsonl);
 
       InvestigationContextExtractor extractor =
-        new InvestigationContextExtractor(new TestJvmScope());
+        new InvestigationContextExtractor(new TestClaudeTool());
       JsonNode result = extractor.extract(tempFile, List.of());
 
       requireThat(result.path("documents_read").size(), "docsSize").isEqualTo(1);
@@ -552,7 +552,7 @@ public final class InvestigationContextExtractorTest
       Files.writeString(tempFile, jsonl);
 
       InvestigationContextExtractor extractor =
-        new InvestigationContextExtractor(new TestJvmScope());
+        new InvestigationContextExtractor(new TestClaudeTool());
       JsonNode result = extractor.extract(tempFile, List.of());
 
       JsonNode commands = result.path("bash_commands");
@@ -584,7 +584,7 @@ public final class InvestigationContextExtractorTest
       Files.writeString(tempFile, jsonl);
 
       InvestigationContextExtractor extractor =
-        new InvestigationContextExtractor(new TestJvmScope());
+        new InvestigationContextExtractor(new TestClaudeTool());
       JsonNode result = extractor.extract(tempFile, List.of());
 
       JsonNode commands = result.path("bash_commands");
@@ -616,7 +616,7 @@ public final class InvestigationContextExtractorTest
       Files.writeString(tempFile, jsonl);
 
       InvestigationContextExtractor extractor =
-        new InvestigationContextExtractor(new TestJvmScope());
+        new InvestigationContextExtractor(new TestClaudeTool());
       JsonNode result = extractor.extract(tempFile, List.of());
 
       JsonNode commands = result.path("bash_commands");
@@ -643,7 +643,7 @@ public final class InvestigationContextExtractorTest
       Files.writeString(tempFile, "");
 
       InvestigationContextExtractor extractor =
-        new InvestigationContextExtractor(new TestJvmScope());
+        new InvestigationContextExtractor(new TestClaudeTool());
       JsonNode result = extractor.extract(tempFile, List.of("git", "squash"));
 
       requireThat(result.path("session_file").asString(),
@@ -677,7 +677,7 @@ public final class InvestigationContextExtractorTest
       Files.writeString(tempFile, jsonl);
 
       InvestigationContextExtractor extractor =
-        new InvestigationContextExtractor(new TestJvmScope());
+        new InvestigationContextExtractor(new TestClaudeTool());
       JsonNode result = extractor.extract(tempFile, List.of());
 
       JsonNode timeline = result.path("timeline_events");
@@ -709,7 +709,7 @@ public final class InvestigationContextExtractorTest
       Files.writeString(tempFile, jsonl);
 
       InvestigationContextExtractor extractor =
-        new InvestigationContextExtractor(new TestJvmScope());
+        new InvestigationContextExtractor(new TestClaudeTool());
       JsonNode result = extractor.extract(tempFile, List.of());
 
       JsonNode timeline = result.path("timeline_events");
@@ -738,7 +738,7 @@ public final class InvestigationContextExtractorTest
       Files.writeString(tempFile, "");
 
       InvestigationContextExtractor extractor =
-        new InvestigationContextExtractor(new TestJvmScope());
+        new InvestigationContextExtractor(new TestClaudeTool());
       JsonNode result = extractor.extract(tempFile, List.of());
 
       requireThat(result.path("tool_call_sequences").isNull(),
@@ -764,7 +764,7 @@ public final class InvestigationContextExtractorTest
       Files.writeString(tempFile, "");
 
       InvestigationContextExtractor extractor =
-        new InvestigationContextExtractor(new TestJvmScope());
+        new InvestigationContextExtractor(new TestClaudeTool());
       JsonNode result = extractor.extract(tempFile, List.of());
 
       JsonNode mistakeTimeline = result.path("mistake_timeline");
@@ -791,7 +791,7 @@ public final class InvestigationContextExtractorTest
       Files.writeString(tempFile, "");
 
       InvestigationContextExtractor extractor =
-        new InvestigationContextExtractor(new TestJvmScope());
+        new InvestigationContextExtractor(new TestClaudeTool());
       JsonNode result = extractor.extract(tempFile, List.of("squash", "rebase"));
 
       JsonNode sequences = result.path("tool_call_sequences");
@@ -831,7 +831,7 @@ public final class InvestigationContextExtractorTest
       Files.writeString(tempFile, jsonl.toString());
 
       InvestigationContextExtractor extractor =
-        new InvestigationContextExtractor(new TestJvmScope());
+        new InvestigationContextExtractor(new TestClaudeTool());
       JsonNode result = extractor.extract(tempFile, List.of("squash"));
 
       JsonNode sequences = result.path("tool_call_sequences");
@@ -882,7 +882,7 @@ public final class InvestigationContextExtractorTest
       Files.writeString(tempFile, jsonl.toString());
 
       InvestigationContextExtractor extractor =
-        new InvestigationContextExtractor(new TestJvmScope());
+        new InvestigationContextExtractor(new TestClaudeTool());
       JsonNode result = extractor.extract(tempFile, List.of());
 
       JsonNode mistakeTimeline = result.path("mistake_timeline");

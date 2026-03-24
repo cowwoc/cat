@@ -7,7 +7,8 @@
 package io.github.cowwoc.cat.hooks.skills;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -151,7 +152,7 @@ public final class GetStakeholderSelectionBox
     String running = args[2];
     String skipped = args[3];
 
-    try (JvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
       GetStakeholderSelectionBox box = new GetStakeholderSelectionBox(scope);
       List<String> runningList = parseCommaSeparated(running);

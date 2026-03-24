@@ -8,9 +8,11 @@ package io.github.cowwoc.cat.hooks.util;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.HookOutput;
+import static io.github.cowwoc.cat.hooks.Strings.block;
+
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.databind.JsonNode;
@@ -221,17 +223,17 @@ public final class HookRegistrar
    */
   public static void main(String[] args)
   {
-    try (MainJvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
-      run(scope, args, System.out);
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(HookRegistrar.class);
-      log.error("Unexpected error", e);
-      try (MainJvmScope errorScope = new MainJvmScope())
+      try
       {
-        System.out.println(new HookOutput(errorScope).block(
+        run(scope, args, System.out);
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(HookRegistrar.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }
@@ -247,15 +249,13 @@ public final class HookRegistrar
    * @param scope the JVM scope
    * @param args  command-line arguments
    * @param out   the output stream to write JSON to
-   * @throws NullPointerException if {@code scope}, {@code args}, or {@code out} are null
+   * @throws NullPointerException if {@code args} or {@code out} are null
    */
   public static void run(JvmScope scope, String[] args, PrintStream out)
   {
-    requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();
     requireThat(out, "out").isNotNull();
 
-    HookOutput hookOutput = new HookOutput(scope);
     String name = "";
     String trigger = "";
     String matcher = "";
@@ -309,7 +309,7 @@ public final class HookRegistrar
 
     if (name.isEmpty() || trigger.isEmpty() || scriptContent.isEmpty())
     {
-      out.println(hookOutput.block(
+      out.println(block(scope,
         "Usage: register-hook --name NAME --trigger EVENT --script-content CONTENT " +
           "[--matcher PATTERN] [--can-block] [--claude-dir DIR]"));
       return;
@@ -332,7 +332,7 @@ public final class HookRegistrar
     }
     catch (IllegalArgumentException e)
     {
-      out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      out.println(block(scope, Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       return;
     }
 
@@ -341,13 +341,13 @@ public final class HookRegistrar
     {
       Result result = register(config, claudeDir, scope.getJsonMapper());
       if (result.status() != OperationStatus.SUCCESS)
-        out.println(hookOutput.block(result.message()));
+        out.println(block(scope, result.message()));
       else
         out.println(result.toJson(scope.getJsonMapper()));
     }
     catch (IOException e)
     {
-      out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      out.println(block(scope, Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }
 

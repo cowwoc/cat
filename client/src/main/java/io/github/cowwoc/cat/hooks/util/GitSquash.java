@@ -10,9 +10,11 @@ import static io.github.cowwoc.cat.hooks.util.GitCommands.runGit;
 import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommandSingleLineInDirectory;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.HookOutput;
+import static io.github.cowwoc.cat.hooks.Strings.block;
+
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.databind.node.ArrayNode;
@@ -203,7 +205,7 @@ public final class GitSquash
    * appropriate JSON.
    *
    * @param rebaseResult the failed rebase result
-   * @return JSON string with REBASE_CONFLICT status, or a HookOutput block response on non-conflict failure
+   * @return JSON string with REBASE_CONFLICT status, or a block response on non-conflict failure
    * @throws IOException if git operations fail during error handling
    */
   private String handleRebaseFailure(ProcessRunner.Result rebaseResult) throws IOException
@@ -237,7 +239,7 @@ public final class GitSquash
       }
     }
     else
-      return new HookOutput(scope).block("Rebase failed: " + rebaseResult.stdout().strip());
+      return block(scope, "Rebase failed: " + rebaseResult.stdout().strip());
     return scope.getJsonMapper().writeValueAsString(json);
   }
 
@@ -335,17 +337,17 @@ public final class GitSquash
    */
   public static void main(String[] args)
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
-      run(scope, args, System.out);
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(GitSquash.class);
-      log.error("Unexpected error", e);
-      try (MainJvmScope errorScope = new MainJvmScope())
+      try
       {
-        System.out.println(new HookOutput(errorScope).block(
+        run(scope, args, System.out);
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(GitSquash.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }
@@ -360,18 +362,16 @@ public final class GitSquash
    * @param scope the JVM scope
    * @param args  command-line arguments
    * @param out   the output stream to write JSON to
-   * @throws NullPointerException if {@code scope}, {@code args}, or {@code out} are null
+   * @throws NullPointerException if {@code args} or {@code out} are null
    */
   public static void run(JvmScope scope, String[] args, PrintStream out)
   {
-    requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();
     requireThat(out, "out").isNotNull();
 
-    HookOutput hookOutput = new HookOutput(scope);
     if (args.length < 2)
     {
-      out.println(hookOutput.block(
+      out.println(block(scope,
         "Usage: git-squash <TARGET_BRANCH> <COMMIT_MESSAGE> [WORKTREE_PATH]"));
       return;
     }
@@ -392,7 +392,7 @@ public final class GitSquash
     }
     catch (IllegalArgumentException | IOException e)
     {
-      out.println(hookOutput.block(Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      out.println(block(scope, Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }
 }

@@ -7,7 +7,7 @@
 package io.github.cowwoc.cat.hooks.bash.post;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
-import io.github.cowwoc.cat.hooks.HookInput;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import tools.jackson.databind.JsonNode;
 
 import java.util.List;
@@ -83,9 +83,9 @@ public final class DetectFailures implements BashHandler
   }
 
   @Override
-  public Result check(HookInput input)
+  public Result check(ClaudeHook scope)
   {
-    JsonNode toolResult = input.getToolResult();
+    JsonNode toolResult = scope.getToolResult();
 
     // treat empty tool_result object as absent (PreToolUse context has no tool result)
     if (toolResult.isEmpty())
@@ -93,7 +93,7 @@ public final class DetectFailures implements BashHandler
 
     // Only apply failure detection to known test runner commands to avoid false positives
     // from incidental keyword matches in diff output, file content, or unrelated command output.
-    String command = input.getCommand();
+    String command = scope.getCommand();
     if (!isTestRunnerCommand(command))
       return Result.allow();
 

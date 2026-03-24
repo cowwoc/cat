@@ -9,11 +9,9 @@ package io.github.cowwoc.cat.hooks.test;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.bash.WarnMainWorkspaceCommit;
 import io.github.cowwoc.cat.hooks.util.IssueLock;
 import org.testng.annotations.Test;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -40,12 +38,12 @@ public final class WarnMainWorkspaceCommitTest
   /**
    * Creates a lock file for the given session and issue in the scope's lock directory.
    *
-   * @param scope     the JVM scope providing the project CAT directory
+   * @param scope     the scope providing the project CAT directory
    * @param issueId   the issue ID for the lock
    * @param sessionId the session ID to record in the lock file
    * @throws IOException if file operations fail
    */
-  private static void createLockFile(JvmScope scope, String issueId, String sessionId) throws IOException
+  private static void createLockFile(TestClaudeHook scope, String issueId, String sessionId) throws IOException
   {
     IssueLock lock = new IssueLock(scope);
     lock.acquire(issueId, sessionId, "/path/to/worktree");
@@ -63,7 +61,7 @@ public final class WarnMainWorkspaceCommitTest
   public void cwdInWorktreeIsIdentifiedAsCatWorktree() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
     {
       String sessionId = UUID.randomUUID().toString();
       Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
@@ -74,12 +72,10 @@ public final class WarnMainWorkspaceCommitTest
       {
         createLockFile(scope, "2.1-cwd-issue", sessionId);
 
-        JsonMapper mapper = scope.getJsonMapper();
-      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
+      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit();
         // Pass worktreeDir as the working directory — it IS a CAT worktree by git dir structure
-        BashHandler.Result result = handler.check(
-          TestUtils.bashInput(mapper, "git commit -m \"feature: test cwd detection\"",
-            worktreeDir.toString(), sessionId));
+        BashHandler.Result result = handler.check(TestUtils.bashHook(
+          "git commit -m \"feature: test cwd detection\"", worktreeDir.toString(), sessionId, scope));
 
         // Should allow because the worktree is identified by git dir structure
         requireThat(result.blocked(), "blocked").isFalse();
@@ -106,15 +102,14 @@ public final class WarnMainWorkspaceCommitTest
   public void nonCommitCommandIsAllowed() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
     {
       String sessionId = UUID.randomUUID().toString();
       createLockFile(scope, "test-issue", sessionId);
 
-      JsonMapper mapper = scope.getJsonMapper();
-      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
+      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit();
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "git status", mainRepo.toString(), sessionId));
+        TestUtils.bashHook("git status", mainRepo.toString(), sessionId, scope));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -137,15 +132,14 @@ public final class WarnMainWorkspaceCommitTest
   public void commitInMainWorkspaceWithActiveLockEmitsWarning() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
     {
       String sessionId = UUID.randomUUID().toString();
       createLockFile(scope, "2.1-my-feature", sessionId);
 
-      JsonMapper mapper = scope.getJsonMapper();
-      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "git commit -m \"feature: add something\"", mainRepo.toString(), sessionId));
+      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit();
+      BashHandler.Result result = handler.check(TestUtils.bashHook(
+        "git commit -m \"feature: add something\"", mainRepo.toString(), sessionId, scope));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isNotEmpty();
@@ -175,15 +169,14 @@ public final class WarnMainWorkspaceCommitTest
   public void warningMessageContainsCompleteStructure() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
     {
       String sessionId = UUID.randomUUID().toString();
       createLockFile(scope, "2.1-active-issue", sessionId);
 
-      JsonMapper mapper = scope.getJsonMapper();
-      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "git commit -m \"bugfix: fix something\"", mainRepo.toString(), sessionId));
+      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit();
+      BashHandler.Result result = handler.check(TestUtils.bashHook(
+        "git commit -m \"bugfix: fix something\"", mainRepo.toString(), sessionId, scope));
 
       String reason = result.reason();
       // Verify complete message structure
@@ -219,7 +212,7 @@ public final class WarnMainWorkspaceCommitTest
   public void commitFromInsideWorktreeIsAllowed() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
     {
       String sessionId = UUID.randomUUID().toString();
       Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
@@ -230,11 +223,9 @@ public final class WarnMainWorkspaceCommitTest
       {
         createLockFile(scope,"2.1-active-issue", sessionId);
 
-        JsonMapper mapper = scope.getJsonMapper();
-      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
-        BashHandler.Result result = handler.check(
-          TestUtils.bashInput(mapper, "git commit -m \"feature: implement the feature\"",
-            worktreeDir.toString(), sessionId));
+      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit();
+        BashHandler.Result result = handler.check(TestUtils.bashHook(
+          "git commit -m \"feature: implement the feature\"", worktreeDir.toString(), sessionId, scope));
 
         requireThat(result.blocked(), "blocked").isFalse();
         requireThat(result.reason(), "reason").isEmpty();
@@ -263,15 +254,14 @@ public final class WarnMainWorkspaceCommitTest
   public void commitInMainWorkspaceWithNoActiveLockIsAllowed() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
     {
       // No lock file created — no active worktree lock for this session
       String sessionId = UUID.randomUUID().toString();
 
-      JsonMapper mapper = scope.getJsonMapper();
-      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "git commit -m \"config: update settings\"", mainRepo.toString(), sessionId));
+      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit();
+      BashHandler.Result result = handler.check(TestUtils.bashHook(
+        "git commit -m \"config: update settings\"", mainRepo.toString(), sessionId, scope));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -294,7 +284,7 @@ public final class WarnMainWorkspaceCommitTest
   public void cdIntoWorktreeThenCommitIsAllowed() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
     {
       String sessionId = UUID.randomUUID().toString();
       Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
@@ -305,11 +295,10 @@ public final class WarnMainWorkspaceCommitTest
       {
         createLockFile(scope,"2.1-cd-issue", sessionId);
 
-        JsonMapper mapper = scope.getJsonMapper();
-      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
+      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit();
         // cwd is mainRepo but command cd's into the worktree
         String command = "cd " + worktreeDir + " && git commit -m \"feature: test\"";
-        BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, mainRepo.toString(), sessionId));
+        BashHandler.Result result = handler.check(TestUtils.bashHook(command, mainRepo.toString(), sessionId, scope));
 
         requireThat(result.blocked(), "blocked").isFalse();
         requireThat(result.reason(), "reason").isEmpty();
@@ -336,15 +325,14 @@ public final class WarnMainWorkspaceCommitTest
   public void gitCommitAmendInMainWorkspaceWithActiveLockEmitsWarning() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
     {
       String sessionId = UUID.randomUUID().toString();
       createLockFile(scope, "2.1-amend-issue", sessionId);
 
-      JsonMapper mapper = scope.getJsonMapper();
-      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "git commit --amend --no-edit", mainRepo.toString(), sessionId));
+      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit();
+      BashHandler.Result result = handler.check(TestUtils.bashHook(
+        "git commit --amend --no-edit", mainRepo.toString(), sessionId, scope));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isNotEmpty();
@@ -365,15 +353,14 @@ public final class WarnMainWorkspaceCommitTest
   public void gitPushInMainWorkspaceWithActiveLockIsAllowed() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
     {
       String sessionId = UUID.randomUUID().toString();
       createLockFile(scope, "2.1-push-issue", sessionId);
 
-      JsonMapper mapper = scope.getJsonMapper();
-      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
+      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit();
       BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "git push origin v2.1", mainRepo.toString(), sessionId));
+        TestUtils.bashHook("git push origin v2.1", mainRepo.toString(), sessionId, scope));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -393,15 +380,14 @@ public final class WarnMainWorkspaceCommitTest
   public void gitCommitWithMultipleSpacesEmitsWarning() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
     {
       String sessionId = UUID.randomUUID().toString();
       createLockFile(scope, "2.1-spaces-issue", sessionId);
 
-      JsonMapper mapper = scope.getJsonMapper();
-      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "git  commit -m \"feature: test\"", mainRepo.toString(), sessionId));  // Two spaces
+      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit();
+      BashHandler.Result result = handler.check(TestUtils.bashHook(
+        "git  commit -m \"feature: test\"", mainRepo.toString(), sessionId, scope));  // Two spaces
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isNotEmpty();
@@ -422,16 +408,14 @@ public final class WarnMainWorkspaceCommitTest
   public void gitCommitWithMultipleFlagsEmitsWarning() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
     {
       String sessionId = UUID.randomUUID().toString();
       createLockFile(scope, "2.1-flags-issue", sessionId);
 
-      JsonMapper mapper = scope.getJsonMapper();
-      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "git commit --verify --sign-off -m \"feature: test\"",
-          mainRepo.toString(), sessionId));
+      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit();
+      BashHandler.Result result = handler.check(TestUtils.bashHook(
+        "git commit --verify --sign-off -m \"feature: test\"", mainRepo.toString(), sessionId, scope));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isNotEmpty();
@@ -452,15 +436,14 @@ public final class WarnMainWorkspaceCommitTest
   public void gitCommitWithShorthandFlagEmitsWarning() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
     {
       String sessionId = UUID.randomUUID().toString();
       createLockFile(scope, "2.1-shorthand-issue", sessionId);
 
-      JsonMapper mapper = scope.getJsonMapper();
-      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "git commit -a -m \"feature: test\"", mainRepo.toString(), sessionId));
+      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit();
+      BashHandler.Result result = handler.check(TestUtils.bashHook(
+        "git commit -a -m \"feature: test\"", mainRepo.toString(), sessionId, scope));
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isNotEmpty();
@@ -481,7 +464,7 @@ public final class WarnMainWorkspaceCommitTest
   public void cdWithSemicolonThenCommitIsHandled() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
     {
       String sessionId = UUID.randomUUID().toString();
       Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
@@ -492,11 +475,10 @@ public final class WarnMainWorkspaceCommitTest
       {
         createLockFile(scope,"2.1-semicolon-issue", sessionId);
 
-        JsonMapper mapper = scope.getJsonMapper();
-      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
+      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit();
         // Semicolon syntax instead of &&
         String command = "cd " + worktreeDir + "; git commit -m \"feature: test\"";
-        BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, mainRepo.toString(), sessionId));
+        BashHandler.Result result = handler.check(TestUtils.bashHook(command, mainRepo.toString(), sessionId, scope));
 
         requireThat(result.blocked(), "blocked").isFalse();
         requireThat(result.reason(), "reason").isEmpty();
@@ -524,7 +506,7 @@ public final class WarnMainWorkspaceCommitTest
   public void cdWithPipeOperatorIsHandled() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
     {
       String sessionId = UUID.randomUUID().toString();
       Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
@@ -535,11 +517,10 @@ public final class WarnMainWorkspaceCommitTest
       {
         createLockFile(scope,"2.1-pipe-issue", sessionId);
 
-        JsonMapper mapper = scope.getJsonMapper();
-      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
+      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit();
         // Using pipe operator
         String command = "cd " + worktreeDir + " | git commit -m \"feature: test\"";
-        BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, mainRepo.toString(), sessionId));
+        BashHandler.Result result = handler.check(TestUtils.bashHook(command, mainRepo.toString(), sessionId, scope));
 
         requireThat(result.blocked(), "blocked").isFalse();
         requireThat(result.reason(), "reason").isEmpty();
@@ -565,7 +546,7 @@ public final class WarnMainWorkspaceCommitTest
   public void cdWithQuotedPathsIsHandled() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
     {
       String sessionId = UUID.randomUUID().toString();
       Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
@@ -576,11 +557,10 @@ public final class WarnMainWorkspaceCommitTest
       {
         createLockFile(scope,"2.1-quoted-issue", sessionId);
 
-        JsonMapper mapper = scope.getJsonMapper();
-      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
+      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit();
         // Double-quoted path
         String command = "cd \"" + worktreeDir + "\" && git commit -m \"feature: test\"";
-        BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, mainRepo.toString(), sessionId));
+        BashHandler.Result result = handler.check(TestUtils.bashHook(command, mainRepo.toString(), sessionId, scope));
 
         requireThat(result.blocked(), "blocked").isFalse();
         requireThat(result.reason(), "reason").isEmpty();
@@ -609,17 +589,16 @@ public final class WarnMainWorkspaceCommitTest
   public void lockFileDetectionInHandler() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
-    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
     {
       String sessionId = UUID.randomUUID().toString();
       String issueId = "2.1-lock-detection-issue";
       createLockFile(scope, issueId, sessionId);
 
       // Verify that handler can detect the lock and emit a warning
-      JsonMapper mapper = scope.getJsonMapper();
-      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit(scope);
-      BashHandler.Result result = handler.check(
-        TestUtils.bashInput(mapper, "git commit -m \"feature: test lock detection\"", mainRepo.toString(), sessionId));
+      WarnMainWorkspaceCommit handler = new WarnMainWorkspaceCommit();
+      BashHandler.Result result = handler.check(TestUtils.bashHook(
+        "git commit -m \"feature: test lock detection\"", mainRepo.toString(), sessionId, scope));
 
       // If the lock is correctly created and detected, we should get a warning
       requireThat(result.blocked(), "blocked").isFalse();

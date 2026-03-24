@@ -35,18 +35,18 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public final class PostToolUseFailureHook implements HookHandler
 {
   private final Logger log = LoggerFactory.getLogger(getClass());
-  private final JvmScope scope;
+  private final ClaudeHook jvmScope;
 
   /**
    * Creates a new PostToolUseFailureHook instance.
    *
-   * @param scope the JVM scope providing configuration paths
+   * @param scope the hook scope providing configuration paths
    * @throws NullPointerException if {@code scope} is null
    */
-  public PostToolUseFailureHook(JvmScope scope)
+  public PostToolUseFailureHook(ClaudeHook scope)
   {
     requireThat(scope, "scope").isNotNull();
-    this.scope = scope;
+    this.jvmScope = scope;
   }
 
   /**
@@ -60,28 +60,23 @@ public final class PostToolUseFailureHook implements HookHandler
   }
 
   /**
-   * Processes hook input and returns the result with any warnings.
+   * Processes hook data and returns the result with any warnings.
    *
-   * @param input the hook input to process
-   * @param output the hook output builder for creating responses
+   * @param scope the hook scope providing input data and output building
    * @return the hook result containing JSON output and warnings
-   * @throws NullPointerException if {@code input} or {@code output} are null
    */
   @Override
-  public HookResult run(HookInput input, HookOutput output)
+  public HookResult run(ClaudeHook scope)
   {
-    requireThat(input, "input").isNotNull();
-    requireThat(output, "output").isNotNull();
-
-    String sessionId = input.getSessionId();
-    // Create handlers using sessionId from HookInput
-    Path sessionDirectory = scope.getCatSessionPath(sessionId);
+    String sessionId = scope.getSessionId();
+    // Create handlers using sessionId from the hook scope
+    Path sessionDirectory = this.jvmScope.getCatSessionPath(sessionId);
     List<PostToolHandler> handlers = List.of(
       new DetectRepeatedFailures(Clock.systemUTC(), sessionDirectory),
       new DetectPreprocessorFailure());
 
-    String toolName = input.getToolName();
-    JsonNode toolResult = input.getToolResult();
+    String toolName = scope.getToolName();
+    JsonNode toolResult = scope.getToolResult();
     List<String> warnings = new ArrayList<>();
     List<String> additionalContexts = new ArrayList<>();
 
@@ -89,7 +84,7 @@ public final class PostToolUseFailureHook implements HookHandler
     {
       try
       {
-        PostToolHandler.Result result = handler.check(toolName, toolResult, sessionId, input.getRaw());
+        PostToolHandler.Result result = handler.check(toolName, toolResult, sessionId, scope.getRaw());
         if (!result.warning().isEmpty())
           warnings.add(result.warning());
         if (!result.additionalContext().isEmpty())
@@ -105,10 +100,10 @@ public final class PostToolUseFailureHook implements HookHandler
     if (!additionalContexts.isEmpty())
     {
       String combined = String.join("\n\n", additionalContexts);
-      jsonOutput = output.additionalContext("PostToolUseFailureHook", combined);
+      jsonOutput = scope.additionalContext("PostToolUseFailureHook", combined);
     }
     else
-      jsonOutput = output.empty();
+      jsonOutput = scope.empty();
 
     return new HookResult(jsonOutput, warnings);
   }

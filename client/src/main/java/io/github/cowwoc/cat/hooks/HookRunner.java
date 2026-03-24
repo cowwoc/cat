@@ -56,19 +56,13 @@ public final class HookRunner
   {
     requireThat(factory, "factory").isNotNull();
 
-    try (JvmScope scope = new MainJvmScope())
+    try (ClaudeHook scope = new MainClaudeHook())
     {
       try
       {
-        // Read input from stdin
-        HookInput input = HookInput.readFromStdin(scope.getJsonMapper());
-
-        // Create the hook output builder
-        HookOutput output = new HookOutput(scope);
-
         // Create handler via factory and run it
         HookHandler handler = factory.create(scope);
-        HookResult result = handler.run(input, output);
+        HookResult result = handler.run(scope);
 
         // Write warnings to stderr
         for (String warning : result.warnings())
@@ -77,7 +71,7 @@ public final class HookRunner
         // Write hook output to stdout
         System.out.println(result.output());
       }
-      catch (RuntimeException | AssertionError | IOException e)
+      catch (IOException | RuntimeException | AssertionError e)
       {
         LOG.error("Hook execution failed", e);
 
@@ -116,10 +110,10 @@ public final class HookRunner
     /**
      * Creates a new hook handler instance.
      *
-     * @param scope the JVM scope providing configuration and services
+     * @param scope the hook scope providing hook input, output, and configuration
      * @return a new hook handler
      * @throws IOException if handler creation fails
      */
-    HookHandler create(JvmScope scope) throws IOException;
+    HookHandler create(ClaudeHook scope) throws IOException;
   }
 }

@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.GetConfigOutput;
 import org.testng.annotations.Test;
 
@@ -33,7 +32,7 @@ public class GetConfigOutputTest
   public void getCurrentSettingsIncludesCompletionWorkflow() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Create a minimal config file so getCurrentSettings doesn't return null
       Path catDir = tempDir.resolve(".cat");
@@ -60,7 +59,7 @@ public class GetConfigOutputTest
   public void getCurrentSettingsShowsCompletionWorkflowValue() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
@@ -87,7 +86,7 @@ public class GetConfigOutputTest
   public void getCurrentSettingsIncludesMinSeverity() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
@@ -113,7 +112,7 @@ public class GetConfigOutputTest
   public void getCurrentSettingsShowsMinSeverityValue() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
@@ -139,7 +138,7 @@ public class GetConfigOutputTest
   public void getCurrentSettingsReturnsNullWhenNoConfig() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetConfigOutput handler = new GetConfigOutput(scope);
       String result = handler.getCurrentSettings(tempDir);
@@ -161,7 +160,7 @@ public class GetConfigOutputTest
   public void getCurrentSettingsContainsExistingSettings() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
@@ -193,7 +192,7 @@ public class GetConfigOutputTest
   public void minSeverityEdgeCaseEmptyString() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
@@ -227,7 +226,7 @@ public class GetConfigOutputTest
   public void minSeverityEdgeCaseWhitespace() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
@@ -260,7 +259,7 @@ public class GetConfigOutputTest
   public void minSeverityEdgeCaseInvalidValue() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
@@ -294,7 +293,7 @@ public class GetConfigOutputTest
   public void integrationFullConfigurationPipeline() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
@@ -324,7 +323,7 @@ public class GetConfigOutputTest
   public void getOutputUnknownPageThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
@@ -350,7 +349,7 @@ public class GetConfigOutputTest
   public void conditionsForVersionInsufficientArgsThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
@@ -376,7 +375,7 @@ public class GetConfigOutputTest
   public void settingUpdatedInsufficientArgsThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
@@ -402,7 +401,7 @@ public class GetConfigOutputTest
   public void conditionsUpdatedInsufficientArgsThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
@@ -427,7 +426,7 @@ public class GetConfigOutputTest
   public void getOutputSettingsPageReturnsCurrent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
@@ -457,7 +456,7 @@ public class GetConfigOutputTest
   public void getOutputEmptyArgsThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetConfigOutput handler = new GetConfigOutput(scope);
       handler.getOutput(new String[]{});
@@ -477,7 +476,7 @@ public class GetConfigOutputTest
   public void getCurrentSettingsIncludesFileWidth() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
@@ -503,7 +502,7 @@ public class GetConfigOutputTest
   public void getCurrentSettingsShowsFileWidthValue() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
@@ -529,7 +528,7 @@ public class GetConfigOutputTest
   public void getCurrentSettingsIncludesDisplayWidth() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
@@ -555,7 +554,7 @@ public class GetConfigOutputTest
   public void getCurrentSettingsShowsDisplayWidthValue() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);
@@ -581,7 +580,7 @@ public class GetConfigOutputTest
   public void getCurrentSettingsFileAndDisplayWidthAreIndependent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path catDir = tempDir.resolve(".cat");
       Files.createDirectories(catDir);

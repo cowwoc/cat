@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.session;
 
-import io.github.cowwoc.cat.hooks.HookInput;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 
 /**
  * Injects the session ID into Claude's context.
@@ -26,12 +26,11 @@ public final class EchoSessionId implements SessionStartHandler
   /**
    * Returns the session ID as additional context.
    *
-   * @param input the hook input
    * @return a result containing "Session ID: {id}" as context, or empty if no session ID
    */
   @Override
-  public Result handle(HookInput input)
+  public Result handle(ClaudeHook scope)
   {
-    return Result.context("Session ID: " + input.getSessionId());
+    return Result.context("Session ID: " + scope.getSessionId());
   }
 }

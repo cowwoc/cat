@@ -41,7 +41,7 @@ public class BatchReaderMainTest
   public void noArgsProducesBlockResponseWithUsage() throws IOException
   {
     Path tempDir = Files.createTempDirectory("batch-reader-main-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -72,7 +72,7 @@ public class BatchReaderMainTest
   public void invalidMaxFilesProducesBlockResponse() throws IOException
   {
     Path tempDir = Files.createTempDirectory("batch-reader-main-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -116,7 +116,7 @@ public class BatchReaderMainTest
   public void nullArgsThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("batch-reader-main-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       BatchReader.run(scope, null,
         new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8));
@@ -137,7 +137,7 @@ public class BatchReaderMainTest
   public void nullOutThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("batch-reader-main-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       BatchReader.run(scope, new String[]{}, null);
     }

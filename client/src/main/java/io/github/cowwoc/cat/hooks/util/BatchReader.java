@@ -6,11 +6,12 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
+import static io.github.cowwoc.cat.hooks.Strings.block;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 
@@ -157,7 +158,7 @@ public final class BatchReader
    */
   public static void main(String[] args)
   {
-    try (MainJvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
       run(scope, args, System.out);
     }
@@ -172,19 +173,16 @@ public final class BatchReader
    * @param scope the JVM scope
    * @param args  command-line arguments
    * @param out   the output stream to write output to
-   * @throws NullPointerException if {@code scope}, {@code args}, or {@code out} are null
+   * @throws NullPointerException if {@code args} or {@code out} are null
    */
   public static void run(JvmScope scope, String[] args, PrintStream out)
   {
-    requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();
     requireThat(out, "out").isNotNull();
 
-    HookOutput hookOutput = new HookOutput(scope);
-
     if (args.length < 1)
     {
-      out.println(hookOutput.block(
+      out.println(block(scope,
         "Usage: batch-read <pattern> [--max-files N] [--context-lines N] [--file-type TYPE]"));
       return;
     }
@@ -209,7 +207,7 @@ public final class BatchReader
           }
           catch (IllegalArgumentException e)
           {
-            out.println(hookOutput.block(
+            out.println(block(scope,
               Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
             return;
           }
@@ -223,7 +221,7 @@ public final class BatchReader
           }
           catch (IllegalArgumentException e)
           {
-            out.println(hookOutput.block(
+            out.println(block(scope,
               Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
             return;
           }
@@ -248,7 +246,7 @@ public final class BatchReader
     }
     catch (IOException e)
     {
-      out.println(hookOutput.block(
+      out.println(block(scope,
         Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       return;
     }
@@ -260,7 +258,7 @@ public final class BatchReader
     }
     else
     {
-      out.println(hookOutput.block(result.message()));
+      out.println(block(scope, result.message()));
     }
   }
 

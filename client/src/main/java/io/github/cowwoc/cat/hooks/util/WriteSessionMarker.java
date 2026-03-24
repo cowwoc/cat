@@ -6,9 +6,11 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
-import io.github.cowwoc.cat.hooks.HookOutput;
+import static io.github.cowwoc.cat.hooks.Strings.block;
+
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,7 +105,7 @@ public final class WriteSessionMarker implements SkillOutput
    */
   public static void main(String[] args)
   {
-    try (MainJvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
       try
       {
@@ -111,14 +113,14 @@ public final class WriteSessionMarker implements SkillOutput
       }
       catch (IOException e)
       {
-        System.out.println(new HookOutput(scope).block(
+        System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
       catch (RuntimeException | AssertionError e)
       {
         Logger log = LoggerFactory.getLogger(WriteSessionMarker.class);
         log.error("Unexpected error", e);
-        System.out.println(new HookOutput(scope).block(
+        System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }
@@ -132,12 +134,11 @@ public final class WriteSessionMarker implements SkillOutput
    * @param scope the JVM scope
    * @param args  the command-line arguments: session-id, issue-id, marker-content
    * @param out   the output stream to write to
-   * @throws NullPointerException if {@code scope}, {@code args}, or {@code out} are null
+   * @throws NullPointerException if {@code args} or {@code out} are null
    * @throws IOException          if the marker file cannot be written
    */
   public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
   {
-    requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();
     requireThat(out, "out").isNotNull();
     String output = new WriteSessionMarker(scope).getOutput(args);

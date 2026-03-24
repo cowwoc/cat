@@ -10,8 +10,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.cat.hooks.Config;
-import io.github.cowwoc.cat.hooks.HookInput;
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.util.SessionFileUtils;
 import io.github.cowwoc.cat.hooks.util.TrustLevel;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
@@ -56,7 +55,7 @@ public final class BlockUnauthorizedMergeCleanup implements BashHandler
     "merge and approve",
     "merge approved");
 
-  private final JvmScope scope;
+  private final ClaudeHook scope;
 
   /**
    * Creates a new handler for blocking unauthorized merge-and-cleanup invocations.
@@ -64,16 +63,16 @@ public final class BlockUnauthorizedMergeCleanup implements BashHandler
    * @param scope the JVM scope
    * @throws NullPointerException if {@code scope} is null
    */
-  public BlockUnauthorizedMergeCleanup(JvmScope scope)
+  public BlockUnauthorizedMergeCleanup(ClaudeHook scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
   }
 
   @Override
-  public Result check(HookInput input)
+  public Result check(ClaudeHook scope)
   {
-    String command = input.getCommand();
+    String command = scope.getCommand();
     requireThat(command, "command").isNotNull();
 
     // Only intercept commands that invoke the merge-and-cleanup binary
@@ -93,7 +92,7 @@ public final class BlockUnauthorizedMergeCleanup implements BashHandler
     if (trust == TrustLevel.HIGH)
       return Result.allow();
 
-    String sessionId = input.getSessionId();
+    String sessionId = scope.getSessionId();
     if (sessionId.isBlank())
     {
       return Result.block("""

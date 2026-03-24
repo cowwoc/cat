@@ -6,9 +6,11 @@
  */
 package io.github.cowwoc.cat.hooks.skills;
 
-import io.github.cowwoc.cat.hooks.HookOutput;
+import static io.github.cowwoc.cat.hooks.Strings.block;
+
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
 import java.io.IOException;
@@ -96,35 +98,35 @@ public final class GetCheckpointOutput implements SkillOutput
       System.exit(1);
     }
 
-    try
+    try (ClaudeTool scope = new MainClaudeTool())
     {
-      String type = "";
-      String issueName = "";
-      String tokens = "";
-      String percent = "";
-      String branch = "";
-      String iteration = "";
-      String total = "";
-
-      for (int i = 0; i + 1 < args.length; i += 2)
+      try
       {
-        switch (args[i])
+        String type = "";
+        String issueName = "";
+        String tokens = "";
+        String percent = "";
+        String branch = "";
+        String iteration = "";
+        String total = "";
+
+        for (int i = 0; i + 1 < args.length; i += 2)
         {
-          case "--type" -> type = args[i + 1];
-          case "--issue-name" -> issueName = args[i + 1];
-          case "--tokens" -> tokens = args[i + 1];
-          case "--percent" -> percent = args[i + 1];
-          case "--branch" -> branch = args[i + 1];
-          case "--iteration" -> iteration = args[i + 1];
-          case "--total" -> total = args[i + 1];
-          default ->
+          switch (args[i])
           {
+            case "--type" -> type = args[i + 1];
+            case "--issue-name" -> issueName = args[i + 1];
+            case "--tokens" -> tokens = args[i + 1];
+            case "--percent" -> percent = args[i + 1];
+            case "--branch" -> branch = args[i + 1];
+            case "--iteration" -> iteration = args[i + 1];
+            case "--total" -> total = args[i + 1];
+            default ->
+            {
+            }
           }
         }
-      }
 
-      try (JvmScope scope = new MainJvmScope())
-      {
         GetCheckpointOutput output = new GetCheckpointOutput(scope);
 
         switch (type)
@@ -156,21 +158,18 @@ public final class GetCheckpointOutput implements SkillOutput
           }
         }
       }
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(GetCheckpointOutput.class);
-      log.error("Unexpected error", e);
-      try (MainJvmScope errorScope = new MainJvmScope())
+      catch (RuntimeException | AssertionError e)
       {
-        System.out.println(new HookOutput(errorScope).block(
+        Logger log = LoggerFactory.getLogger(GetCheckpointOutput.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
-    }
-    catch (Exception e)
-    {
-      System.err.println("Error: " + e.getMessage());
-      System.exit(1);
+      catch (Exception e)
+      {
+        System.err.println("Error: " + e.getMessage());
+        System.exit(1);
+      }
     }
   }
 

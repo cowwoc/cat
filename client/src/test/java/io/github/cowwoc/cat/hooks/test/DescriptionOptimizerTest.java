@@ -76,7 +76,7 @@ public final class DescriptionOptimizerTest
   public void throwsOnNoArguments() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-desc-opt-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       DescriptionOptimizer handler = new DescriptionOptimizer(scope);
       handler.getOutput(new String[]{});
@@ -95,7 +95,7 @@ public final class DescriptionOptimizerTest
   public void throwsOnTooFewArguments() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-desc-opt-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       DescriptionOptimizer handler = new DescriptionOptimizer(scope);
       handler.getOutput(new String[]{"arg1", "arg2", "arg3"});
@@ -114,7 +114,7 @@ public final class DescriptionOptimizerTest
   public void throwsWhenSkillFileNotFound() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-desc-opt-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       DescriptionOptimizer handler = new DescriptionOptimizer(scope);
       handler.getOutput(new String[]{
@@ -138,7 +138,7 @@ public final class DescriptionOptimizerTest
   public void throwsOnInvalidMaxIterations() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-desc-opt-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path skillFile = tempDir.resolve("SKILL.md");
       Files.writeString(skillFile, MINIMAL_SKILL_MD);
@@ -165,7 +165,7 @@ public final class DescriptionOptimizerTest
   public void throwsOnEmptyEvalSet() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-desc-opt-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path skillFile = tempDir.resolve("SKILL.md");
       Files.writeString(skillFile, MINIMAL_SKILL_MD);
@@ -191,7 +191,7 @@ public final class DescriptionOptimizerTest
   public void producesOptimizationPromptWithTrainTestSplit() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-desc-opt-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path skillFile = tempDir.resolve("SKILL.md");
       Files.writeString(skillFile, MINIMAL_SKILL_MD);
@@ -226,7 +226,7 @@ public final class DescriptionOptimizerTest
   public void splitIsDeterministic() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-desc-opt-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path skillFile = tempDir.resolve("SKILL.md");
       Files.writeString(skillFile, MINIMAL_SKILL_MD);
@@ -260,7 +260,7 @@ public final class DescriptionOptimizerTest
   public void splitCountsAreCorrect() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-desc-opt-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path skillFile = tempDir.resolve("SKILL.md");
       Files.writeString(skillFile, MINIMAL_SKILL_MD);
@@ -300,7 +300,7 @@ public final class DescriptionOptimizerTest
   public void includesCurrentDescription() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-desc-opt-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path skillFile = tempDir.resolve("SKILL.md");
       Files.writeString(skillFile, MINIMAL_SKILL_MD);
@@ -329,7 +329,7 @@ public final class DescriptionOptimizerTest
   public void includesMaxIterations() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-desc-opt-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path skillFile = tempDir.resolve("SKILL.md");
       Files.writeString(skillFile, MINIMAL_SKILL_MD);
@@ -361,7 +361,7 @@ public final class DescriptionOptimizerTest
   public void promptIncludesConvergenceInstructions() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-desc-opt-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path skillFile = tempDir.resolve("SKILL.md");
       Files.writeString(skillFile, MINIMAL_SKILL_MD);
@@ -397,7 +397,7 @@ public final class DescriptionOptimizerTest
   public void maxIterationsPassedThroughToJson() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-desc-opt-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path skillFile = tempDir.resolve("SKILL.md");
       Files.writeString(skillFile, MINIMAL_SKILL_MD);
@@ -440,7 +440,7 @@ public final class DescriptionOptimizerTest
   public void acceptsEvalSetWithExactlyTwoItems() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-desc-opt-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path skillFile = tempDir.resolve("SKILL.md");
       Files.writeString(skillFile, MINIMAL_SKILL_MD);
@@ -477,7 +477,7 @@ public final class DescriptionOptimizerTest
   public void throwsOnMissingQueryField() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-desc-opt-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path skillFile = tempDir.resolve("SKILL.md");
       Files.writeString(skillFile, MINIMAL_SKILL_MD);
@@ -510,7 +510,7 @@ public final class DescriptionOptimizerTest
   public void throwsOnMissingShouldTriggerField() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-desc-opt-");
-    try (var scope = new TestJvmScope(tempDir, tempDir))
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path skillFile = tempDir.resolve("SKILL.md");
       Files.writeString(skillFile, MINIMAL_SKILL_MD);

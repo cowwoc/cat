@@ -6,8 +6,8 @@
 - Obtain the shared instance from `JvmScope.getJsonMapper()` — never call `JsonMapper.builder().build()` directly
 - The shared instance is configured with pretty print (`SerializationFeature.INDENT_OUTPUT`)
 - In production code, get the mapper from the `JvmScope` passed to your class
-- In tests, create a `TestJvmScope` and call `scope.getJsonMapper()`
-- In CLI `main()` methods, create a `MainJvmScope` and call `scope.getJsonMapper()`
+- In tests, create a `TestClaudeTool` and call `scope.getJsonMapper()`
+- In CLI `main()` methods, create a `MainClaudeTool` and call `scope.getJsonMapper()`
 
 ## JsonNode API
 

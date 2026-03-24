@@ -13,12 +13,11 @@ package io.github.cowwoc.cat.hooks;
 public interface HookHandler
 {
   /**
-   * Processes hook input and returns the result with any warnings.
+   * Processes hook data and returns the result with any warnings.
    *
-   * @param input the hook input to process
-   * @param output the hook output builder for creating responses
+   * @param scope the hook scope providing input data and output building
    * @return the hook result containing JSON output and warnings
-   * @throws NullPointerException if {@code input} or {@code output} are null
+   * @throws NullPointerException if {@code scope} is null
    */
-  HookResult run(HookInput input, HookOutput output);
+  HookResult run(ClaudeHook scope);
 }

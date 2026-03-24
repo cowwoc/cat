@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.GetNextIssueOutput;
 import io.github.cowwoc.cat.hooks.util.IssueGoalReader;
 import org.testng.annotations.Test;
@@ -153,7 +152,7 @@ public class GetNextIssueOutputTest
     expectedExceptionsMessageRegExp = ".*completedIssue.*")
   public void getNextIssueBoxThrowsOnNullCompletedIssue() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetNextIssueOutput output = new GetNextIssueOutput(scope);
       output.getNextIssueBox(null, "main", "session123", "/tmp", "");
@@ -167,7 +166,7 @@ public class GetNextIssueOutputTest
     expectedExceptionsMessageRegExp = ".*completedIssue.*")
   public void getNextIssueBoxThrowsOnBlankCompletedIssue() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetNextIssueOutput output = new GetNextIssueOutput(scope);
       output.getNextIssueBox("", "main", "session123", "/tmp", "");
@@ -181,7 +180,7 @@ public class GetNextIssueOutputTest
     expectedExceptionsMessageRegExp = ".*targetBranch.*")
   public void getNextIssueBoxThrowsOnNullTargetBranch() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetNextIssueOutput output = new GetNextIssueOutput(scope);
       output.getNextIssueBox("2.1-test", null, "session123", "/tmp", "");
@@ -195,7 +194,7 @@ public class GetNextIssueOutputTest
     expectedExceptionsMessageRegExp = ".*targetBranch.*")
   public void getNextIssueBoxThrowsOnBlankTargetBranch() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetNextIssueOutput output = new GetNextIssueOutput(scope);
       output.getNextIssueBox("2.1-test", "", "session123", "/tmp", "");
@@ -209,7 +208,7 @@ public class GetNextIssueOutputTest
     expectedExceptionsMessageRegExp = ".*sessionId.*")
   public void getNextIssueBoxThrowsOnNullSessionId() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetNextIssueOutput output = new GetNextIssueOutput(scope);
       output.getNextIssueBox("2.1-test", "main", null, "/tmp", "");
@@ -223,7 +222,7 @@ public class GetNextIssueOutputTest
     expectedExceptionsMessageRegExp = ".*sessionId.*")
   public void getNextIssueBoxThrowsOnBlankSessionId() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetNextIssueOutput output = new GetNextIssueOutput(scope);
       output.getNextIssueBox("2.1-test", "main", "", "/tmp", "");
@@ -237,7 +236,7 @@ public class GetNextIssueOutputTest
     expectedExceptionsMessageRegExp = ".*projectPath.*")
   public void getNextIssueBoxThrowsOnNullProjectDir() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetNextIssueOutput output = new GetNextIssueOutput(scope);
       output.getNextIssueBox("2.1-test", "main", "session123", null, "");
@@ -251,7 +250,7 @@ public class GetNextIssueOutputTest
     expectedExceptionsMessageRegExp = ".*projectPath.*")
   public void getNextIssueBoxThrowsOnBlankProjectDir() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetNextIssueOutput output = new GetNextIssueOutput(scope);
       output.getNextIssueBox("2.1-test", "main", "session123", "", "");
@@ -265,7 +264,7 @@ public class GetNextIssueOutputTest
     expectedExceptionsMessageRegExp = ".*excludePattern.*")
   public void getNextIssueBoxThrowsOnNullExcludePattern() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetNextIssueOutput output = new GetNextIssueOutput(scope);
       output.getNextIssueBox("2.1-test", "main", "session123", "/tmp", null);
@@ -278,7 +277,7 @@ public class GetNextIssueOutputTest
   @Test
   public void getNextIssueBoxAcceptsEmptyExcludePattern() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetNextIssueOutput output = new GetNextIssueOutput(scope);
       String result = output.getNextIssueBox("2.1-test", "main", "session123", "/tmp", "");
@@ -294,7 +293,7 @@ public class GetNextIssueOutputTest
   @Test
   public void getOutputParsesArguments() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetNextIssueOutput output = new GetNextIssueOutput(scope);
       String[] args = {
@@ -320,7 +319,7 @@ public class GetNextIssueOutputTest
     expectedExceptionsMessageRegExp = ".*GetNextIssueOutput.getOutput\\(\\) requires.*")
   public void getOutputThrowsForMissingArguments() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetNextIssueOutput output = new GetNextIssueOutput(scope);
       output.getOutput(new String[]{
@@ -342,7 +341,7 @@ public class GetNextIssueOutputTest
   @Test
   public void getOutputPreservesJsonArgWithCurlyBraces() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetNextIssueOutput output = new GetNextIssueOutput(scope);
       String jsonValue = "{\"key\":\"value\"}";
@@ -367,7 +366,7 @@ public class GetNextIssueOutputTest
     expectedExceptionsMessageRegExp = ".*args.*")
   public void getOutputThrowsOnNullArgs() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetNextIssueOutput output = new GetNextIssueOutput(scope);
       output.getOutput(null);
@@ -382,7 +381,7 @@ public class GetNextIssueOutputTest
   @Test
   public void getOutputUsesProvidedSessionIdAndProjectDir() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    try (TestClaudeTool scope = new TestClaudeTool())
     {
       GetNextIssueOutput output = new GetNextIssueOutput(scope);
       String sessionId = "00000000-0000-0000-0000-000000000010";
@@ -410,7 +409,7 @@ public class GetNextIssueOutputTest
   public void getNextIssueBoxExcludesCompletedIssue() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("get-next-issue-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // Only the completed issue exists; no other open issues
       createIssueWithState(projectPath, "2", "1", "done-feature", "open");
@@ -442,7 +441,7 @@ public class GetNextIssueOutputTest
   public void getNextIssueBoxSkipsCompletedAndFindsOtherIssue() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("get-next-issue-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssueWithState(projectPath, "2", "1", "done-feature", "open");
       createIssueWithState(projectPath, "2", "1", "pending-feature", "open");
@@ -476,7 +475,7 @@ public class GetNextIssueOutputTest
   public void getNextIssueBoxCombinesCompletedAndExternalExcludePatterns() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("get-next-issue-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       createIssueWithState(projectPath, "2", "1", "done-feature", "open");
       createIssueWithState(projectPath, "2", "1", "skip-feature", "open");
@@ -512,7 +511,7 @@ public class GetNextIssueOutputTest
   public void getNextIssueBoxHandlesIssueIdWithNoDash() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("get-next-issue-test");
-    try (JvmScope scope = new TestJvmScope(projectPath, projectPath))
+    try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       GetNextIssueOutput output = new GetNextIssueOutput(scope);
       // "nodash" has no '-' so extractBareName returns "nodash" as the exclude pattern

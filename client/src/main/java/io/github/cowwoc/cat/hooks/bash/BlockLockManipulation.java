@@ -7,7 +7,7 @@
 package io.github.cowwoc.cat.hooks.bash;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
-import io.github.cowwoc.cat.hooks.HookInput;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 
 import java.util.regex.Pattern;
 
@@ -30,9 +30,9 @@ public final class BlockLockManipulation implements BashHandler
   }
 
   @Override
-  public Result check(HookInput input)
+  public Result check(ClaudeHook scope)
   {
-    String command = input.getCommand();
+    String command = scope.getCommand();
 
     // Check for rm commands targeting lock files
     if (LOCK_FILE_PATTERN.matcher(command).find())

@@ -9,10 +9,9 @@ package io.github.cowwoc.cat.hooks.test;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.bash.BlockUnauthorizedMergeCleanup;
 import org.testng.annotations.Test;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -44,12 +43,12 @@ public final class BlockUnauthorizedMergeCleanupTest
   /**
    * Writes a session JSONL file with the given content.
    *
-   * @param scope the JVM scope providing the session base path
+   * @param scope the hook scope providing the Claude sessions path
    * @param sessionId the session ID
    * @param content the JSONL content to write
    * @throws IOException if the session file cannot be written
    */
-  private static void writeSessionFile(JvmScope scope, String sessionId, String content)
+  private static void writeSessionFile(ClaudeHook scope, String sessionId, String content)
     throws IOException
   {
     Path sessionDir = scope.getClaudeSessionsPath();
@@ -66,13 +65,13 @@ public final class BlockUnauthorizedMergeCleanupTest
   public void unrelatedCommandIsAllowed() throws IOException
   {
     Path tempDir = Files.createTempDirectory("block-unauthorized-merge-cleanup-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = TestUtils.bashHook("git status", "/workspace", SESSION_ID,
+      tempDir, tempDir, tempDir))
     {
       writeCatConfig(tempDir, "medium");
-      JsonMapper mapper = scope.getJsonMapper();
       BlockUnauthorizedMergeCleanup handler = new BlockUnauthorizedMergeCleanup(scope);
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, "git status", "/workspace", SESSION_ID));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -91,14 +90,13 @@ public final class BlockUnauthorizedMergeCleanupTest
   public void highTrustAllowsWithoutApproval() throws IOException
   {
     Path tempDir = Files.createTempDirectory("block-unauthorized-merge-cleanup-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = TestUtils.bashHook("/path/to/merge-and-cleanup session-id issue-id",
+      "/workspace", SESSION_ID, tempDir, tempDir, tempDir))
     {
       writeCatConfig(tempDir, "high");
-      JsonMapper mapper = scope.getJsonMapper();
       BlockUnauthorizedMergeCleanup handler = new BlockUnauthorizedMergeCleanup(scope);
-      String command = "/path/to/merge-and-cleanup session-id issue-id";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", SESSION_ID));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -117,17 +115,16 @@ public final class BlockUnauthorizedMergeCleanupTest
   public void mediumTrustWithoutApprovalBlocks() throws IOException
   {
     Path tempDir = Files.createTempDirectory("block-unauthorized-merge-cleanup-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = TestUtils.bashHook("/path/to/merge-and-cleanup session-id issue-id",
+      "/workspace", SESSION_ID, tempDir, tempDir, tempDir))
     {
       writeCatConfig(tempDir, "medium");
       writeSessionFile(scope, SESSION_ID, """
         {"type":"user","message":{"content":[{"type":"text","text":"looks good"}]}}
         """);
-      JsonMapper mapper = scope.getJsonMapper();
       BlockUnauthorizedMergeCleanup handler = new BlockUnauthorizedMergeCleanup(scope);
-      String command = "/path/to/merge-and-cleanup session-id issue-id";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", SESSION_ID));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -146,17 +143,16 @@ public final class BlockUnauthorizedMergeCleanupTest
   public void mediumTrustWithApprovalAllows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("block-unauthorized-merge-cleanup-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = TestUtils.bashHook("/path/to/merge-and-cleanup session-id issue-id",
+      "/workspace", SESSION_ID, tempDir, tempDir, tempDir))
     {
       writeCatConfig(tempDir, "medium");
       writeSessionFile(scope, SESSION_ID, """
         {"type":"user","message":{"content":[{"type":"text","text":"approve and merge"}]}}
         """);
-      JsonMapper mapper = scope.getJsonMapper();
       BlockUnauthorizedMergeCleanup handler = new BlockUnauthorizedMergeCleanup(scope);
-      String command = "/path/to/merge-and-cleanup session-id issue-id";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", SESSION_ID));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -175,17 +171,16 @@ public final class BlockUnauthorizedMergeCleanupTest
   public void lowTrustWithoutApprovalBlocks() throws IOException
   {
     Path tempDir = Files.createTempDirectory("block-unauthorized-merge-cleanup-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = TestUtils.bashHook("merge-and-cleanup session-id issue-id",
+      "/workspace", SESSION_ID, tempDir, tempDir, tempDir))
     {
       writeCatConfig(tempDir, "low");
       writeSessionFile(scope, SESSION_ID, """
         {"type":"user","message":{"content":[{"type":"text","text":"looks good"}]}}
         """);
-      JsonMapper mapper = scope.getJsonMapper();
       BlockUnauthorizedMergeCleanup handler = new BlockUnauthorizedMergeCleanup(scope);
-      String command = "merge-and-cleanup session-id issue-id";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", SESSION_ID));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }
@@ -207,7 +202,8 @@ public final class BlockUnauthorizedMergeCleanupTest
   public void wizardApprovalAllows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("block-unauthorized-merge-cleanup-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = TestUtils.bashHook("merge-and-cleanup session-id issue-id",
+      "/workspace", SESSION_ID, tempDir, tempDir, tempDir))
     {
       writeCatConfig(tempDir, "medium");
       String assistantLine =
@@ -219,11 +215,9 @@ public final class BlockUnauthorizedMergeCleanupTest
         "[{\"type\":\"tool_result\",\"tool_use_id\":\"tu1\"," +
         "\"content\":\"User answered: Approve and merge\"}]}}";
       writeSessionFile(scope, SESSION_ID, assistantLine + "\n" + userLine + "\n");
-      JsonMapper mapper = scope.getJsonMapper();
       BlockUnauthorizedMergeCleanup handler = new BlockUnauthorizedMergeCleanup(scope);
-      String command = "merge-and-cleanup session-id issue-id";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", SESSION_ID));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -245,17 +239,16 @@ public final class BlockUnauthorizedMergeCleanupTest
   public void blockMessageMentionsAllRequiredSteps() throws IOException
   {
     Path tempDir = Files.createTempDirectory("block-unauthorized-merge-cleanup-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = TestUtils.bashHook("merge-and-cleanup session-id issue-id",
+      "/workspace", SESSION_ID, tempDir, tempDir, tempDir))
     {
       writeCatConfig(tempDir, "medium");
       writeSessionFile(scope, SESSION_ID, """
         {"type":"user","message":{"content":[{"type":"text","text":"looks good"}]}}
         """);
-      JsonMapper mapper = scope.getJsonMapper();
       BlockUnauthorizedMergeCleanup handler = new BlockUnauthorizedMergeCleanup(scope);
-      String command = "merge-and-cleanup session-id issue-id";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", SESSION_ID));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Step 7");
@@ -299,15 +292,14 @@ public final class BlockUnauthorizedMergeCleanupTest
   public void missingSessionFileBlocks() throws IOException
   {
     Path tempDir = Files.createTempDirectory("block-unauthorized-merge-cleanup-test-");
-    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    try (TestClaudeHook scope = TestUtils.bashHook("merge-and-cleanup session-id issue-id",
+      "/workspace", SESSION_ID, tempDir, tempDir, tempDir))
     {
       writeCatConfig(tempDir, "medium");
       // No session file written intentionally
-      JsonMapper mapper = scope.getJsonMapper();
       BlockUnauthorizedMergeCleanup handler = new BlockUnauthorizedMergeCleanup(scope);
-      String command = "merge-and-cleanup session-id issue-id";
 
-      BashHandler.Result result = handler.check(TestUtils.bashInput(mapper, command, "/workspace", SESSION_ID));
+      BashHandler.Result result = handler.check(scope);
 
       requireThat(result.blocked(), "blocked").isTrue();
     }

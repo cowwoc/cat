@@ -6,12 +6,12 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.FileUtils;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -36,24 +36,6 @@ public final class TestUtils
   private TestUtils()
   {
     // Utility class
-  }
-
-  /**
-   * Creates a HookInput with a dummy session ID for tests that need a valid input but don't depend on the
-   * session ID value.
-   * <p>
-   * The dummy session ID ({@code "00000000-0000-0000-0000-000000000001"}) is intentionally distinct from the
-   * hardcoded {@code "test-session"} used by {@code TestJvmScope}, so that handlers which skip the current
-   * session (e.g., {@link io.github.cowwoc.cat.hooks.session.SessionEndHandler}) treat it as an
-   * external (non-current) session.
-   *
-   * @param scope the JVM scope
-   * @return a HookInput with a hard-coded session ID that differs from any {@code TestJvmScope} session ID
-   */
-  static HookInput dummyInput(JvmScope scope)
-  {
-    return HookInput.readFrom(scope.getJsonMapper(), new java.io.ByteArrayInputStream(
-      "{\"session_id\": \"00000000-0000-0000-0000-000000000001\"}".getBytes(StandardCharsets.UTF_8)));
   }
 
   /**
@@ -99,56 +81,190 @@ public final class TestUtils
   }
 
   /**
-   * Builds a HookInput for bash command tests with a JvmScope.
+   * Creates a {@link TestClaudeHook} with a bash command payload using auto-generated temporary
+   * directories for project, plugin, and config paths.
+   * <p>
+   * If {@code sessionId} is blank, the resulting JSON payload omits the {@code session_id} field,
+   * causing {@link io.github.cowwoc.cat.hooks.AbstractClaudeHook} to throw
+   * {@link IllegalArgumentException} on construction.
    *
-   * @param mapper the JSON mapper to use for constructing the input
    * @param command the bash command string
-   * @param workingDirectory the working directory, or empty string if unavailable
-   * @param sessionId the session ID
-   * @return a HookInput with the given values and no tool result
-   * @throws NullPointerException if {@code mapper}, {@code command}, {@code workingDirectory}, or
-   *   {@code sessionId} are null
+   * @param workingDirectory the working directory
+   * @param sessionId the session ID, or blank to omit it from the payload
+   * @return a TestClaudeHook with the given bash payload
+   * @throws NullPointerException if {@code command}, {@code workingDirectory}, or {@code sessionId}
+   *   are null
    */
-  public static HookInput bashInput(JsonMapper mapper, String command, String workingDirectory,
-    String sessionId)
+  public static TestClaudeHook bashHook(String command, String workingDirectory, String sessionId)
   {
-    return HookInput.forBash(mapper, command, workingDirectory, sessionId, null, null);
+    requireThat(command, "command").isNotNull();
+    requireThat(workingDirectory, "workingDirectory").isNotNull();
+    requireThat(sessionId, "sessionId").isNotNull();
+    Path projectPath = createTempDir("bash-hook-project-");
+    Path pluginRoot = createTempDir("bash-hook-plugin-");
+    Path claudeConfigDir = createTempDir("bash-hook-config-");
+    // Copy emoji-widths.json so that DisplayUtils can initialize in hook handlers under test.
+    // Maven sets user.dir to the client/ module directory during test execution.
+    Path emojiWidths = Path.of(System.getProperty("user.dir")).resolve("../plugin/emoji-widths.json");
+    try
+    {
+      Files.copy(emojiWidths, pluginRoot.resolve("emoji-widths.json"));
+    }
+    catch (IOException e)
+    {
+      throw WrappedCheckedException.wrap(e);
+    }
+    return bashHook(command, workingDirectory, sessionId, projectPath, pluginRoot, claudeConfigDir);
   }
 
   /**
-   * Builds a HookInput for bash command tests with a JvmScope and tool result.
+   * Creates a {@link TestClaudeHook} with a bash command payload using the specified paths.
+   * <p>
+   * If {@code sessionId} is blank, the resulting JSON payload omits the {@code session_id} field,
+   * causing {@link io.github.cowwoc.cat.hooks.AbstractClaudeHook} to throw
+   * {@link IllegalArgumentException} on construction.
    *
-   * @param mapper the JSON mapper to use for constructing the input
    * @param command the bash command string
-   * @param workingDirectory the working directory, or empty string if unavailable
-   * @param sessionId the session ID
-   * @param toolResult the tool result node (for PostToolUse handlers)
-   * @return a HookInput with the given values
-   * @throws NullPointerException if {@code mapper}, {@code command}, {@code workingDirectory}, or
-   *   {@code sessionId} are null
+   * @param workingDirectory the working directory
+   * @param sessionId the session ID, or blank to omit it from the payload
+   * @param projectPath the project directory path
+   * @param pluginRoot the plugin root directory path
+   * @param claudeConfigDir the Claude config directory path
+   * @return a TestClaudeHook with the given bash payload
+   * @throws NullPointerException if any parameter is null
    */
-  public static HookInput bashInput(JsonMapper mapper, String command, String workingDirectory,
+  public static TestClaudeHook bashHook(String command, String workingDirectory, String sessionId,
+    Path projectPath, Path pluginRoot, Path claudeConfigDir)
+  {
+    requireThat(command, "command").isNotNull();
+    requireThat(workingDirectory, "workingDirectory").isNotNull();
+    requireThat(sessionId, "sessionId").isNotNull();
+    requireThat(projectPath, "projectPath").isNotNull();
+    requireThat(pluginRoot, "pluginRoot").isNotNull();
+    requireThat(claudeConfigDir, "claudeConfigDir").isNotNull();
+    JsonMapper mapper = new JsonMapper();
+    ObjectNode root = mapper.createObjectNode();
+    root.put("tool_name", "Bash");
+    ObjectNode toolInput = mapper.createObjectNode();
+    toolInput.put("command", command);
+    root.set("tool_input", toolInput);
+    root.put("cwd", workingDirectory);
+    if (!sessionId.isBlank())
+      root.put("session_id", sessionId);
+    return new TestClaudeHook(root, projectPath, pluginRoot, claudeConfigDir);
+  }
+
+  /**
+   * Creates a {@link TestClaudeHook} with a bash command payload and a native agent ID, using the
+   * specified paths.
+   * <p>
+   * The native agent ID is embedded in the JSON payload under the {@code agent_id} field. This is used
+   * to simulate subagent-owned worktree removal checks.
+   * <p>
+   * If {@code sessionId} is blank, the resulting JSON payload omits the {@code session_id} field,
+   * causing {@link io.github.cowwoc.cat.hooks.AbstractClaudeHook} to throw
+   * {@link IllegalArgumentException} on construction.
+   *
+   * @param command the bash command string
+   * @param workingDirectory the working directory
+   * @param sessionId the session ID, or blank to omit it from the payload
+   * @param nativeAgentId the native (non-composite) agent ID to embed in the payload, or empty to omit
+   * @param projectPath the project directory path
+   * @param pluginRoot the plugin root directory path
+   * @param claudeConfigDir the Claude config directory path
+   * @return a TestClaudeHook with the given bash payload including agent_id
+   * @throws NullPointerException if any parameter is null
+   */
+  public static TestClaudeHook bashHookWithAgentId(String command, String workingDirectory,
+    String sessionId, String nativeAgentId, Path projectPath, Path pluginRoot, Path claudeConfigDir)
+  {
+    requireThat(command, "command").isNotNull();
+    requireThat(workingDirectory, "workingDirectory").isNotNull();
+    requireThat(sessionId, "sessionId").isNotNull();
+    requireThat(nativeAgentId, "nativeAgentId").isNotNull();
+    requireThat(projectPath, "projectPath").isNotNull();
+    requireThat(pluginRoot, "pluginRoot").isNotNull();
+    requireThat(claudeConfigDir, "claudeConfigDir").isNotNull();
+    JsonMapper mapper = new JsonMapper();
+    ObjectNode root = mapper.createObjectNode();
+    root.put("tool_name", "Bash");
+    ObjectNode toolInput = mapper.createObjectNode();
+    toolInput.put("command", command);
+    root.set("tool_input", toolInput);
+    root.put("cwd", workingDirectory);
+    if (!sessionId.isBlank())
+      root.put("session_id", sessionId);
+    if (!nativeAgentId.isBlank())
+      root.put("agent_id", nativeAgentId);
+    return new TestClaudeHook(root, projectPath, pluginRoot, claudeConfigDir);
+  }
+
+  /**
+   * Creates a {@link TestClaudeHook} with a bash command payload, reusing the paths from an
+   * existing {@link JvmScope}.
+   * <p>
+   * This overload is useful when the test already has an infrastructure scope (for setup operations
+   * like creating lock files or worktree directories) and needs a separate hook scope that carries
+   * the command and session ID for {@code BashHandler.check(ClaudeHook)}.
+   *
+   * @param command the bash command string
+   * @param workingDirectory the working directory
+   * @param sessionId the session ID
+   * @param pathSource the existing scope whose project, plugin, and config paths to reuse
+   * @return a TestClaudeHook with the given bash payload and paths from {@code pathSource}
+   * @throws NullPointerException if any parameter is null
+   */
+  public static TestClaudeHook bashHook(String command, String workingDirectory, String sessionId,
+    JvmScope pathSource)
+  {
+    requireThat(command, "command").isNotNull();
+    requireThat(workingDirectory, "workingDirectory").isNotNull();
+    requireThat(sessionId, "sessionId").isNotNull();
+    requireThat(pathSource, "pathSource").isNotNull();
+    return bashHook(command, workingDirectory, sessionId,
+      pathSource.getProjectPath(), pathSource.getPluginRoot(), pathSource.getClaudeConfigDir());
+  }
+
+  /**
+   * Creates a {@link TestClaudeHook} with a bash command payload and a tool result, using
+   * auto-generated temporary directories for project, plugin, and config paths.
+   * <p>
+   * The tool result is embedded in the JSON payload under the {@code tool_result} field. This is used
+   * to test PostToolUse handlers that inspect the command output (e.g., exit code, stdout, stderr).
+   * <p>
+   * If {@code sessionId} is blank, the resulting JSON payload omits the {@code session_id} field,
+   * causing {@link io.github.cowwoc.cat.hooks.AbstractClaudeHook} to throw
+   * {@link IllegalArgumentException} on construction.
+   *
+   * @param command the bash command string
+   * @param workingDirectory the working directory
+   * @param sessionId the session ID, or blank to omit it from the payload
+   * @param toolResult the tool result node to embed in the payload, or null to omit
+   * @return a TestClaudeHook with the given bash payload including tool_result
+   * @throws NullPointerException if {@code command}, {@code workingDirectory}, or {@code sessionId}
+   *   are null
+   */
+  public static TestClaudeHook bashHookWithToolResult(String command, String workingDirectory,
     String sessionId, JsonNode toolResult)
   {
-    return HookInput.forBash(mapper, command, workingDirectory, sessionId, null, toolResult);
-  }
-
-  /**
-   * Builds a HookInput for bash command tests with a JvmScope and native agent ID.
-   *
-   * @param mapper the JSON mapper to use for constructing the input
-   * @param command the bash command string
-   * @param workingDirectory the working directory, or empty string if unavailable
-   * @param sessionId the session ID
-   * @param nativeAgentId the native (non-composite) agent ID, or null if not a subagent
-   * @return a HookInput with the given values and no tool result
-   * @throws NullPointerException if {@code mapper}, {@code command}, {@code workingDirectory}, or
-   *   {@code sessionId} are null
-   */
-  public static HookInput bashInputWithAgentId(JsonMapper mapper, String command,
-    String workingDirectory, String sessionId, String nativeAgentId)
-  {
-    return HookInput.forBash(mapper, command, workingDirectory, sessionId, nativeAgentId, null);
+    requireThat(command, "command").isNotNull();
+    requireThat(workingDirectory, "workingDirectory").isNotNull();
+    requireThat(sessionId, "sessionId").isNotNull();
+    JsonMapper mapper = new JsonMapper();
+    ObjectNode root = mapper.createObjectNode();
+    root.put("tool_name", "Bash");
+    ObjectNode toolInput = mapper.createObjectNode();
+    toolInput.put("command", command);
+    root.set("tool_input", toolInput);
+    root.put("cwd", workingDirectory);
+    if (!sessionId.isBlank())
+      root.put("session_id", sessionId);
+    if (toolResult != null)
+      root.set("tool_result", toolResult);
+    Path projectPath = createTempDir("bash-hook-project-");
+    Path pluginRoot = createTempDir("bash-hook-plugin-");
+    Path claudeConfigDir = createTempDir("bash-hook-config-");
+    return new TestClaudeHook(root, projectPath, pluginRoot, claudeConfigDir);
   }
 
   /**
