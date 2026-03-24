@@ -351,6 +351,52 @@ public class GetAddOutputTest
   }
 
   /**
+   * Verifies that --project-dir with a non-existent path is rejected with IllegalArgumentException.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = "(?s).*--project-dir.*does not exist.*")
+  public void getOutputRejectsNonExistentProjectDir() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetAddOutput output = new GetAddOutput(scope);
+      output.getOutput(new String[]{"--project-dir", "/nonexistent/path/that/does/not/exist"});
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that --project-dir with a path containing {@code ..} components is normalized
+   * to an absolute path before use.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getOutputNormalizesProjectDirPath() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      // Create a subdirectory, then pass a path with ".." to traverse back
+      Path subDir = Files.createDirectory(tempDir.resolve("sub"));
+      String pathWithDotDot = subDir + "/../sub";
+      GetAddOutput output = new GetAddOutput(scope);
+      // The path resolves to subDir (which exists) — should not throw
+      output.getOutput(new String[]{"--project-dir", pathWithDotDot});
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that null itemNames is rejected with NullPointerException.
    *
    * @throws IOException if an I/O error occurs
