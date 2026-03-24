@@ -1475,23 +1475,47 @@ catch (IOException e)
 }
 ```
 
-### Try-With-Resources: Interface on Left Side
+### Prefer Interface Types for Variable Declarations
 
-Always declare the variable with the interface type on the left side of `try-with-resources`, not the concrete class:
+Always use the most general interface type that the code actually needs when declaring variables, fields, parameters,
+and return types. Use a concrete type only when the code requires a method or field not present on any interface.
+
+This applies to all variable declaration contexts:
 
 ```java
-// Good - interface type on left
+// Good - interface type used for local variable
+List<String> names = new ArrayList<>();
+Map<String, Integer> index = new HashMap<>();
+
+// Avoid - concrete type leaks implementation detail
+ArrayList<String> names = new ArrayList<>();
+HashMap<String, Integer> index = new HashMap<>();
+
+// Good - interface type used for try-with-resources
 try (ClaudeTool scope = new MainClaudeTool())
 {
   ...
 }
 
-// Avoid - concrete class on left
+// Avoid - concrete class on left side of try-with-resources
 try (MainClaudeTool scope = new MainClaudeTool())
 {
   ...
 }
+
+// Good - interface type used for field declarations
+private final List<String> items = new ArrayList<>();
+private final Map<String, Config> configs = new LinkedHashMap<>();
+
+// Good - interface type used for method parameters
+public void process(List<String> items) { ... }
+
+// Good - interface type used for method return types
+public List<String> getItems() { return Collections.unmodifiableList(items); }
 ```
+
+**When to use a concrete type:** Only when the variable is used with a method or field that is not declared on any
+interface — for example, `LinkedList` when `addFirst()` is needed, or `ArrayDeque` when `peekFirst()` is needed.
 
 ### Single-Scope Error Handling in main()
 
