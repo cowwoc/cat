@@ -96,9 +96,9 @@ public class GetAddOutputPlanningDataTest
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
 
-      Files.writeString(versionDir.resolve("STATE.md"),
-        "# State\n\n- **Status:** in-progress\n");
-      Files.writeString(versionDir.resolve("PLAN.md"),
+      Files.writeString(versionDir.resolve("index.json"), """
+        {"status":"in-progress"}""");
+      Files.writeString(versionDir.resolve("plan.md"),
         "# Plan\n\n## Goal\n\nTest version goal summary.\n");
       Files.createDirectories(versionDir.resolve("my-issue"));
 
@@ -145,7 +145,8 @@ public class GetAddOutputPlanningDataTest
       Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v1/v1.0");
       Files.createDirectories(versionDir);
-      Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** closed\n");
+      Files.writeString(versionDir.resolve("index.json"), """
+        {"status":"closed"}""");
 
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -159,13 +160,13 @@ public class GetAddOutputPlanningDataTest
   }
 
   /**
-   * Verifies that a version with a missing STATE.md is treated as closed and excluded.
+   * Verifies that a version with a missing index.json is treated as closed and excluded.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
   @SuppressWarnings("try")
-  public void missingStateMdTreatedAsClosed() throws IOException
+  public void missingIndexJsonTreatedAsClosed() throws IOException
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
@@ -173,7 +174,7 @@ public class GetAddOutputPlanningDataTest
       Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.0");
       Files.createDirectories(versionDir);
-      // No STATE.md written
+      // No index.json written
 
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -205,15 +206,18 @@ public class GetAddOutputPlanningDataTest
 
       Path v1Dir = issuesDir.resolve("v1/v1.0");
       Files.createDirectories(v1Dir);
-      Files.writeString(v1Dir.resolve("STATE.md"), "# State\n\n- **Status:** closed\n");
+      Files.writeString(v1Dir.resolve("index.json"), """
+        {"status":"closed"}""");
 
       Path v2Dir = issuesDir.resolve("v2/v2.0");
       Files.createDirectories(v2Dir);
-      Files.writeString(v2Dir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
+      Files.writeString(v2Dir.resolve("index.json"), """
+        {"status":"open"}""");
 
       Path v2p1Dir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(v2p1Dir);
-      Files.writeString(v2p1Dir.resolve("STATE.md"), "# State\n\n- **Status:** in-progress\n");
+      Files.writeString(v2p1Dir.resolve("index.json"), """
+        {"status":"in-progress"}""");
 
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -245,11 +249,13 @@ public class GetAddOutputPlanningDataTest
 
       Path v1p10Dir = issuesDir.resolve("v1/v1.10");
       Files.createDirectories(v1p10Dir);
-      Files.writeString(v1p10Dir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
+      Files.writeString(v1p10Dir.resolve("index.json"), """
+        {"status":"open"}""");
 
       Path v1p9Dir = issuesDir.resolve("v1/v1.9");
       Files.createDirectories(v1p9Dir);
-      Files.writeString(v1p9Dir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
+      Files.writeString(v1p9Dir.resolve("index.json"), """
+        {"status":"open"}""");
 
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -283,7 +289,8 @@ public class GetAddOutputPlanningDataTest
       Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
-      Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
+      Files.writeString(versionDir.resolve("index.json"), """
+        {"status":"open"}""");
 
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -311,8 +318,9 @@ public class GetAddOutputPlanningDataTest
       Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
-      Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
-      Files.writeString(versionDir.resolve("PLAN.md"), "# Plan\n\n## Goal\n\nGoal.\n");
+      Files.writeString(versionDir.resolve("index.json"), """
+        {"status":"open"}""");
+      Files.writeString(versionDir.resolve("plan.md"), "# Plan\n\n## Goal\n\nGoal.\n");
       Files.writeString(versionDir.resolve("CHANGELOG.md"), "# Changelog\n");
       Files.writeString(versionDir.resolve("notes.txt"), "some notes");
       Files.createDirectories(versionDir.resolve("real-issue"));
@@ -344,7 +352,8 @@ public class GetAddOutputPlanningDataTest
       Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
-      Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
+      Files.writeString(versionDir.resolve("index.json"), """
+        {"status":"open"}""");
       Files.createDirectories(versionDir.resolve("fix-bug-123"));
       Files.createDirectories(versionDir.resolve("add-feature-abc"));
 
@@ -377,7 +386,8 @@ public class GetAddOutputPlanningDataTest
       Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
-      Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
+      Files.writeString(versionDir.resolve("index.json"), """
+        {"status":"open"}""");
       Files.createDirectories(versionDir.resolve("issue-a"));
       Files.createDirectories(versionDir.resolve("issue-b"));
       Files.createDirectories(versionDir.resolve("issue-c"));
@@ -410,7 +420,8 @@ public class GetAddOutputPlanningDataTest
       Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
-      Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
+      Files.writeString(versionDir.resolve("index.json"), """
+        {"status":"open"}""");
 
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -426,7 +437,7 @@ public class GetAddOutputPlanningDataTest
   // ==================== parseGoalSummary edge cases ====================
 
   /**
-   * Verifies that an empty string is returned when PLAN.md has no Goal section.
+   * Verifies that an empty string is returned when plan.md has no Goal section.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -440,8 +451,9 @@ public class GetAddOutputPlanningDataTest
       Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
-      Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
-      Files.writeString(versionDir.resolve("PLAN.md"), "# Plan\n\nNo goal section here.\n");
+      Files.writeString(versionDir.resolve("index.json"), """
+        {"status":"open"}""");
+      Files.writeString(versionDir.resolve("plan.md"), "# Plan\n\nNo goal section here.\n");
 
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -467,8 +479,9 @@ public class GetAddOutputPlanningDataTest
       Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
-      Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
-      Files.writeString(versionDir.resolve("PLAN.md"), "# Plan\n\n## Goal");
+      Files.writeString(versionDir.resolve("index.json"), """
+        {"status":"open"}""");
+      Files.writeString(versionDir.resolve("plan.md"), "# Plan\n\n## Goal");
 
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -494,8 +507,9 @@ public class GetAddOutputPlanningDataTest
       Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
-      Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
-      Files.writeString(versionDir.resolve("PLAN.md"),
+      Files.writeString(versionDir.resolve("index.json"), """
+        {"status":"open"}""");
+      Files.writeString(versionDir.resolve("plan.md"),
         "# Plan\n\n## Goal\n\n\n\nActual goal summary.\n");
 
       GetAddOutput handler = new GetAddOutput(scope);
@@ -522,8 +536,9 @@ public class GetAddOutputPlanningDataTest
       Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
-      Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
-      Files.writeString(versionDir.resolve("PLAN.md"),
+      Files.writeString(versionDir.resolve("index.json"), """
+        {"status":"open"}""");
+      Files.writeString(versionDir.resolve("plan.md"),
         "# Plan\n\n## Goal\n\nFix bug #123: handle 'null' & <empty> values.\n");
 
       GetAddOutput handler = new GetAddOutput(scope);
@@ -536,16 +551,17 @@ public class GetAddOutputPlanningDataTest
     }
   }
 
-  // ==================== parseStatus edge cases ====================
+  // ==================== status parsing edge cases ====================
 
   /**
-   * Verifies that "open" is returned as the default when the Status field is missing.
+   * Verifies that IOException is thrown when index.json exists but the status field is absent.
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = ".*missing required 'status' field.*")
   @SuppressWarnings("try")
-  public void statusDefaultsToOpenWhenMissing() throws IOException
+  public void missingStatusFieldThrowsIOException() throws IOException
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
@@ -553,26 +569,21 @@ public class GetAddOutputPlanningDataTest
       Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
-      Files.writeString(versionDir.resolve("STATE.md"), "# State\n\nNo status field here.\n");
+      Files.writeString(versionDir.resolve("index.json"), "{}");
 
       GetAddOutput handler = new GetAddOutput(scope);
-      String result = handler.getOutput(new String[0]);
-
-      JsonMapper mapper = scope.getJsonMapper();
-      JsonNode versions = mapper.readTree(result).get("versions");
-      requireThat(versions.size(), "versions.size").isEqualTo(1);
-      requireThat(versions.get(0).get("status").asString(), "status").isEqualTo("open");
+      handler.getOutput(new String[0]);
     }
   }
 
   /**
-   * Verifies that status value is trimmed of surrounding whitespace.
+   * Verifies that the "open" status value is read correctly from index.json.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
   @SuppressWarnings("try")
-  public void statusValueIsTrimmed() throws IOException
+  public void openStatusReadFromIndexJson() throws IOException
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
@@ -580,26 +591,27 @@ public class GetAddOutputPlanningDataTest
       Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
-      Files.writeString(versionDir.resolve("STATE.md"),
-        "# State\n\n- **Status:**   in-progress   \n");
+      Files.writeString(versionDir.resolve("index.json"), """
+        {"status":"open"}""");
 
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(new String[0]);
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode version = mapper.readTree(result).get("versions").get(0);
-      requireThat(version.get("status").asString(), "status").isEqualTo("in-progress");
+      requireThat(version.get("status").asString(), "status").isEqualTo("open");
     }
   }
 
   /**
-   * Verifies that the first Status field value is used when multiple Status fields are present.
+   * Verifies that IOException is thrown when index.json exists but the status field has a non-string value.
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = "(?s).*'status' field must be a string.*")
   @SuppressWarnings("try")
-  public void firstStatusFieldUsedWhenMultiplePresent() throws IOException
+  public void nonStringStatusFieldThrowsIOException() throws IOException
   {
     try (TestJvmScope scope = new TestJvmScope())
     {
@@ -607,16 +619,11 @@ public class GetAddOutputPlanningDataTest
       Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
-      Files.writeString(versionDir.resolve("STATE.md"),
-        "# State\n\n- **Status:** open\n\n- **Status:** in-progress\n");
+      Files.writeString(versionDir.resolve("index.json"), """
+        {"status":42}""");
 
       GetAddOutput handler = new GetAddOutput(scope);
-      String result = handler.getOutput(new String[0]);
-
-      JsonMapper mapper = scope.getJsonMapper();
-      JsonNode versions = mapper.readTree(result).get("versions");
-      requireThat(versions.size(), "versions.size").isEqualTo(1);
-      requireThat(versions.get(0).get("status").asString(), "status").isEqualTo("open");
+      handler.getOutput(new String[0]);
     }
   }
 
@@ -637,9 +644,10 @@ public class GetAddOutputPlanningDataTest
       Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v3/v3.0");
       Files.createDirectories(versionDir);
-      Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
+      Files.writeString(versionDir.resolve("index.json"), """
+        {"status":"open"}""");
       String exactSummary = "A".repeat(120);
-      Files.writeString(versionDir.resolve("PLAN.md"),
+      Files.writeString(versionDir.resolve("plan.md"),
         "# Plan\n\n## Goal\n\n" + exactSummary + "\n");
 
       GetAddOutput handler = new GetAddOutput(scope);
@@ -667,9 +675,10 @@ public class GetAddOutputPlanningDataTest
       Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v3/v3.0");
       Files.createDirectories(versionDir);
-      Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
+      Files.writeString(versionDir.resolve("index.json"), """
+        {"status":"open"}""");
       String longSummary = "A".repeat(200);
-      Files.writeString(versionDir.resolve("PLAN.md"),
+      Files.writeString(versionDir.resolve("plan.md"),
         "# Plan\n\n## Goal\n\n" + longSummary + "\n");
 
       GetAddOutput handler = new GetAddOutput(scope);
@@ -698,9 +707,10 @@ public class GetAddOutputPlanningDataTest
       Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v3/v3.0");
       Files.createDirectories(versionDir);
-      Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
+      Files.writeString(versionDir.resolve("index.json"), """
+        {"status":"open"}""");
       String shortSummary = "A".repeat(119);
-      Files.writeString(versionDir.resolve("PLAN.md"),
+      Files.writeString(versionDir.resolve("plan.md"),
         "# Plan\n\n## Goal\n\n" + shortSummary + "\n");
 
       GetAddOutput handler = new GetAddOutput(scope);
@@ -730,7 +740,8 @@ public class GetAddOutputPlanningDataTest
       Path issuesDir = projectPath.resolve(".cat/issues");
       Path invalidDir = issuesDir.resolve("v2/invalid-dir");
       Files.createDirectories(invalidDir);
-      Files.writeString(invalidDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
+      Files.writeString(invalidDir.resolve("index.json"), """
+        {"status":"open"}""");
 
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -755,7 +766,8 @@ public class GetAddOutputPlanningDataTest
       Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
-      Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
+      Files.writeString(versionDir.resolve("index.json"), """
+        {"status":"open"}""");
 
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -783,7 +795,8 @@ public class GetAddOutputPlanningDataTest
       // v2 directly under issuesDir is depth 1, not depth 2 - excluded by filter
       Path majorDir = issuesDir.resolve("v2");
       Files.createDirectories(majorDir);
-      Files.writeString(majorDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
+      Files.writeString(majorDir.resolve("index.json"), """
+        {"status":"open"}""");
 
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -839,7 +852,8 @@ public class GetAddOutputPlanningDataTest
       Path issuesDir = projectPath.resolve(".cat/issues");
       Path versionDir = issuesDir.resolve("v2/v2.1");
       Files.createDirectories(versionDir);
-      Files.writeString(versionDir.resolve("STATE.md"), "# State\n\n- **Status:** open\n");
+      Files.writeString(versionDir.resolve("index.json"), """
+        {"status":"open"}""");
 
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(new String[0]);
