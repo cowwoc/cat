@@ -1,5 +1,5 @@
 {
   "status": "open",
-  "dependencies": ["prevent-plan-md-priming", "migrate-python-to-java"],
+  "dependencies": ["prevent-plan-md-priming", "migrate-python-to-java", "2.1-implement-scan-first-batch-edit"],
   "parent": "compress-skills-md"
 }
