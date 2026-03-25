@@ -43,5 +43,16 @@ preference:
 **Fallback behavior:** If Sonnet returns a rate-limit error, retry the same skill invocation using Opus. Do not
 ask the user before falling back — rate-limit fallback is automatic.
 
+This applies to ALL Sonnet-model invocations, including subagents spawned within a skill's execution:
+
+- When a Sonnet subagent (Agent/Task tool) hits rate limits, retry the subagent with `model: opus`
+- When a Sonnet skill hits rate limits, retry the skill invocation with `model: opus`
+- Once Sonnet rate limits are observed, use `model: opus` for all subsequent Sonnet-preferred
+  invocations in the same session
+
+Perform the delegated work with opus model instead of manually performing the work inline. Rate-limited
+subagent work must be retried via the same delegation mechanism (Agent/Task/Skill tool) with opus, not
+absorbed into the calling agent's context.
+
 **Skills not listed above** use their SKILL.md `model:` frontmatter (typically `haiku` for lightweight tasks).
 Do not override their model selection.
