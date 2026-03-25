@@ -33,6 +33,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+
 /**
  * Exercises all handler code paths in a single JVM invocation for AOT training.
  * <p>
@@ -71,80 +73,103 @@ public final class AotTraining
     try (AbstractClaudeHook scope = new MainClaudeHook())
     {
       System.setIn(originalIn);
-
-      // Hook handlers all accept the unified ClaudeHook scope
-      new PreToolUseHook(scope).run(scope);
-      new PostBashHook().run(scope);
-      new PreReadHook(scope).run(scope);
-      new PostReadHook(scope).run(scope);
-      new PostToolUseHook(scope).run(scope);
-      new UserPromptSubmitHook(scope).run(scope);
-      new PreAskHook(scope).run(scope);
-      new PreWriteHook(scope).run(scope);
-      new PreIssueHook(scope).run(scope);
-      new SessionEndHook(scope).run(scope);
-      new SessionStartHook(scope, Path.of("/tmp/aot-training-env")).run(scope);
-      new SubagentStartHook(scope).run(scope);
-
-      // Skill handlers - construct to load class graphs.
-      // Calling getOutput() would read the filesystem, which is unnecessary for training.
-      // GetDiffOutput and GetCleanupOutput accept JvmScope (no session required).
-      // GetStatusOutput and GetOutput require AbstractClaudeTool (session-aware); use referenceClass() instead.
-      new GetDiffOutput(scope);
-      new GetCleanupOutput(scope);
-      referenceClass(GetStatusOutput.class);
-      referenceClass(GetOutput.class);
-
-      // VerifyAudit training - create temp directory with plan.md for prepare() and minimal JSON for report()
-      Path tempDir = Files.createTempDirectory("aot-training-");
-      try
-      {
-        Path planFile = tempDir.resolve("plan.md");
-        Files.writeString(planFile, """
-          # Plan
-          ## Post-conditions
-          - [ ] Test criterion
-          ## Files to Modify
-          - test.md
-          """);
-
-        VerifyAudit audit = new VerifyAudit(scope);
-        String prepareArgs = """
-          {
-            "issue_id": "aot-training",
-            "issue_path": "%s",
-            "worktree_path": "%s"
-          }
-          """.formatted(tempDir.toString(), tempDir.toString());
-        audit.prepare(prepareArgs);
-        audit.report("test-issue", "{\"criteria_results\": [], \"file_results\": {\"modify\": {}, \"delete\": {}}}");
-      }
-      finally
-      {
-        Files.deleteIfExists(tempDir.resolve("plan.md"));
-        Files.deleteIfExists(tempDir);
-      }
-
-      // Reference arg-based classes to force class loading without invoking main()
-      // (their main() calls System.exit on missing args)
-      referenceClass(EnforceStatusOutput.class);
-      referenceClass(TokenCounter.class);
-      referenceClass(GetCheckpointOutput.class);
-      referenceClass(GetIssueCompleteOutput.class);
-      referenceClass(GetNextIssueOutput.class);
-      referenceClass(SessionAnalyzer.class);
-      referenceClass(ProgressBanner.class);
-      referenceClass(EmpiricalTestRunner.class);
-      referenceClass(WorkPrepare.class);
-      referenceClass(MarkdownWrapper.class);
-      referenceClass(BatchReader.class);
-      referenceClass(GetSubagentStatusOutput.class);
-      referenceClass(HookRegistrar.class);
-      referenceClass(StatusAlignmentValidator.class);
-      referenceClass(GetSkill.class);
-      referenceClass(GetFile.class);
-      referenceClass(Feedback.class);
+      System.exit(run(scope));
     }
+  }
+
+  /**
+   * Exercises all hook handler and skill constructor code paths for AOT training.
+   * <p>
+   * SYNC: Keep handler list synchronized with HANDLERS array in hooks/build-jlink.sh.
+   * When adding a new handler, update both locations:
+   * <ul>
+   *   <li>Add launcher entry to HANDLERS array in build-jlink.sh</li>
+   *   <li>Add training invocation to this method</li>
+   * </ul>
+   *
+   * @param scope the hook scope providing access to services and configuration
+   * @throws NullPointerException if {@code scope} is null
+   * @throws Exception if training fails
+   * @return 0 on success, non-zero on failure
+   */
+  @SuppressWarnings("ResultOfMethodCallIgnored")
+  public static int run(AbstractClaudeHook scope) throws Exception
+  {
+    requireThat(scope, "scope").isNotNull();
+
+    // Hook handlers all accept the unified ClaudeHook scope
+    new PreToolUseHook(scope).run(scope);
+    new PostBashHook().run(scope);
+    new PreReadHook(scope).run(scope);
+    new PostReadHook(scope).run(scope);
+    new PostToolUseHook(scope).run(scope);
+    new UserPromptSubmitHook(scope).run(scope);
+    new PreAskHook(scope).run(scope);
+    new PreWriteHook(scope).run(scope);
+    new PreIssueHook(scope).run(scope);
+    new SessionEndHook(scope).run(scope);
+    new SessionStartHook(scope, Path.of("/tmp/aot-training-env")).run(scope);
+    new SubagentStartHook(scope).run(scope);
+
+    // Skill handlers - construct to load class graphs.
+    // Calling getOutput() would read the filesystem, which is unnecessary for training.
+    // GetDiffOutput and GetCleanupOutput accept JvmScope (no session required).
+    // GetStatusOutput and GetOutput require AbstractClaudeTool (session-aware); use referenceClass() instead.
+    new GetDiffOutput(scope);
+    new GetCleanupOutput(scope);
+    referenceClass(GetStatusOutput.class);
+    referenceClass(GetOutput.class);
+
+    // VerifyAudit training - create temp directory with plan.md for prepare() and minimal JSON for report()
+    Path tempDir = Files.createTempDirectory("aot-training-");
+    try
+    {
+      Path planFile = tempDir.resolve("plan.md");
+      Files.writeString(planFile, """
+        # Plan
+        ## Post-conditions
+        - [ ] Test criterion
+        ## Files to Modify
+        - test.md
+        """);
+
+      VerifyAudit audit = new VerifyAudit(scope);
+      String prepareArgs = """
+        {
+          "issue_id": "aot-training",
+          "issue_path": "%s",
+          "worktree_path": "%s"
+        }
+        """.formatted(tempDir.toString(), tempDir.toString());
+      audit.prepare(prepareArgs);
+      audit.report("test-issue", "{\"criteria_results\": [], \"file_results\": {\"modify\": {}, \"delete\": {}}}");
+    }
+    finally
+    {
+      Files.deleteIfExists(tempDir.resolve("plan.md"));
+      Files.deleteIfExists(tempDir);
+    }
+
+    // Reference arg-based classes to force class loading without invoking main()
+    // (their main() calls System.exit on missing args)
+    referenceClass(EnforceStatusOutput.class);
+    referenceClass(TokenCounter.class);
+    referenceClass(GetCheckpointOutput.class);
+    referenceClass(GetIssueCompleteOutput.class);
+    referenceClass(GetNextIssueOutput.class);
+    referenceClass(SessionAnalyzer.class);
+    referenceClass(ProgressBanner.class);
+    referenceClass(EmpiricalTestRunner.class);
+    referenceClass(WorkPrepare.class);
+    referenceClass(MarkdownWrapper.class);
+    referenceClass(BatchReader.class);
+    referenceClass(GetSubagentStatusOutput.class);
+    referenceClass(HookRegistrar.class);
+    referenceClass(StatusAlignmentValidator.class);
+    referenceClass(GetSkill.class);
+    referenceClass(GetFile.class);
+    referenceClass(Feedback.class);
+    return 0;
   }
 
   /**
