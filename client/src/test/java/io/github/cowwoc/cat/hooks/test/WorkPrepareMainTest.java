@@ -154,4 +154,26 @@ public class WorkPrepareMainTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that an unknown flag produces an IllegalArgumentException.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Unknown argument.*--bogus.*")
+  public void unknownArgProducesError() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("work-prepare-main-test-");
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+      WorkPrepare.run(scope, new String[]{"--bogus", "value"}, out);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }

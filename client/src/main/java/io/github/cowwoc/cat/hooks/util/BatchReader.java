@@ -231,10 +231,8 @@ public final class BatchReader
           ++i;
           fileType = args[i];
         }
-        default ->
-        {
-          // ignore unknown flags
-        }
+        default -> throw new IllegalArgumentException(
+          "Unknown argument: " + args[i] + ". Valid arguments: --max-files, --context-lines, --file-type");
       }
     }
 

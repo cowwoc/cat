@@ -294,16 +294,21 @@ public final class HookRegistrar
             ++i;
             claudeDir = args[i];
           }
-          default ->
-          {
-            if (args[i].equals("--can-block"))
-              canBlock = true;
-          }
+          case "--can-block" -> canBlock = true;
+          default -> throw new IllegalArgumentException(
+            "Unknown argument: " + args[i] + ". Valid arguments: --name, --trigger, --matcher, " +
+              "--script-content, --claude-dir, --can-block");
         }
       }
       else if (args[i].equals("--can-block"))
       {
         canBlock = true;
+      }
+      else
+      {
+        throw new IllegalArgumentException(
+          "Unknown argument: " + args[i] + ". Valid arguments: --name, --trigger, --matcher, " +
+            "--script-content, --claude-dir, --can-block");
       }
     }
 

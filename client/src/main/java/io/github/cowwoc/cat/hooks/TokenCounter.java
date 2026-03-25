@@ -16,6 +16,7 @@ import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -52,37 +53,20 @@ public final class TokenCounter
    * Entry point for token counting.
    *
    * @param args file paths to count tokens for
-   * @throws IOException if file reading fails
    * @throws NullPointerException if {@code args} contains a null element
    */
-  public static void main(String[] args) throws IOException
+  public static void main(String[] args)
   {
-    if (args.length == 0)
-    {
-      System.err.println("Usage: TokenCounter file1.md file2.md ...");
-      System.exit(1);
-      return;
-    }
-
-    EncodingRegistry registry = Encodings.newDefaultEncodingRegistry();
-    Encoding encoding = registry.getEncoding("cl100k_base").orElseThrow(
-        () -> new IllegalStateException("cl100k_base encoding not found"));
-
     try (ClaudeTool scope = new MainClaudeTool())
     {
       try
       {
-        JsonMapper mapper = scope.getJsonMapper();
-        ObjectNode result = mapper.createObjectNode();
-
-        for (String filePath : args)
-        {
-          requireThat(filePath, "filePath").isNotNull();
-          int tokenCount = countTokens(filePath, encoding);
-          result.put(filePath, tokenCount);
-        }
-
-        System.out.println(mapper.writeValueAsString(result));
+        run(scope, args, System.out);
+      }
+      catch (IllegalArgumentException | IOException e)
+      {
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
       catch (RuntimeException | AssertionError e)
       {
@@ -92,6 +76,43 @@ public final class TokenCounter
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }
+  }
+
+  /**
+   * Counts tokens in the specified files and writes a JSON result to the output stream.
+   *
+   * @param scope the JVM scope
+   * @param args  file paths to count tokens for
+   * @param out   the output stream to write to
+   * @throws NullPointerException     if any of {@code scope}, {@code args}, or {@code out} are null, or if
+   *                                  {@code args} contains a null element
+   * @throws IllegalArgumentException if no file paths are provided
+   * @throws IOException              if file reading fails
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+
+    if (args.length == 0)
+      throw new IllegalArgumentException("Usage: TokenCounter file1.md file2.md ...");
+
+    EncodingRegistry registry = Encodings.newDefaultEncodingRegistry();
+    Encoding encoding = registry.getEncoding("cl100k_base").orElseThrow(
+      () -> new IllegalStateException("cl100k_base encoding not found"));
+
+    JsonMapper mapper = scope.getJsonMapper();
+    ObjectNode result = mapper.createObjectNode();
+
+    for (String filePath : args)
+    {
+      requireThat(filePath, "filePath").isNotNull();
+      int tokenCount = countTokens(filePath, encoding);
+      result.put(filePath, tokenCount);
+    }
+
+    out.println(mapper.writeValueAsString(result));
   }
 
   /**

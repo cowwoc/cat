@@ -7,13 +7,20 @@
 package io.github.cowwoc.cat.hooks.skills;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.Arrays;
+import java.util.Objects;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.util.AgentIdPatterns;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
+import static io.github.cowwoc.cat.hooks.Strings.block;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
@@ -241,19 +248,41 @@ public final class GetOutput implements SkillOutput
   {
     try (ClaudeTool scope = new MainClaudeTool())
     {
-      String output = new GetOutput(scope).getOutput(args);
-      if (output != null)
-        System.out.print(output);
+      try
+      {
+        run(scope, args, System.out);
+      }
+      catch (IllegalArgumentException | IOException e)
+      {
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(GetOutput.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
     }
-    catch (IOException e)
-    {
-      System.err.println("Error generating output: " + e.getMessage());
-      System.exit(1);
-    }
-    catch (RuntimeException | AssertionError e)
-    {
-      System.err.println("Unexpected error: " + e.getMessage());
-      System.exit(1);
-    }
+  }
+
+  /**
+   * Executes the output dispatch logic with a caller-provided output stream.
+   *
+   * @param scope the JVM scope (must implement {@link ClaudeTool})
+   * @param args  command line arguments
+   * @param out   the output stream to write to
+   * @throws NullPointerException if {@code scope}, {@code args} or {@code out} are null
+   * @throws IOException          if an I/O error occurs
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+    String output = new GetOutput((ClaudeTool) scope).getOutput(args);
+    if (output != null)
+      out.print(output);
   }
 }

@@ -732,6 +732,11 @@ public final class GitRebase
       {
         run(scope, args, System.out);
       }
+      catch (IllegalArgumentException e)
+      {
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
       catch (RuntimeException | AssertionError e)
       {
         Logger log = LoggerFactory.getLogger(GitRebase.class);
@@ -762,6 +767,12 @@ public final class GitRebase
     {
       out.println(block(scope, "Usage: git-rebase <SOURCE_DIR> <TARGET_BRANCH>"));
       return;
+    }
+    if (args.length > 2)
+    {
+      throw new IllegalArgumentException(
+        "Expected at most 2 arguments (source-dir, target-branch), got " + args.length + ". " +
+          "Usage: git-rebase <SOURCE_DIR> <TARGET_BRANCH>");
     }
 
     Path workingDirectory = Path.of(args[0]);

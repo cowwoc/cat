@@ -6,14 +6,22 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
+import static io.github.cowwoc.cat.hooks.Strings.block;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.MainJvmScope;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -60,10 +68,52 @@ public final class MarkdownWrapper
    * With no file argument, reads from stdin and writes wrapped content to stdout.
    *
    * @param args command-line arguments
-   * @throws IOException if file operations fail
    */
-  public static void main(String[] args) throws IOException
+  public static void main(String[] args)
   {
+    try (JvmScope scope = new MainJvmScope())
+    {
+      try
+      {
+        run(scope, args, System.in, System.out);
+      }
+      catch (IllegalArgumentException | IOException e)
+      {
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(MarkdownWrapper.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+    }
+  }
+
+  /**
+   * Wraps markdown content to a specified width.
+   * <p>
+   * When a file path argument is provided, wraps the file in place. Otherwise, reads from the input stream
+   * and writes wrapped content to the output stream.
+   *
+   * @param scope the JVM scope
+   * @param args  command-line arguments: {@code [file-path] [--width N]}
+   * @param in    the input stream to read from when no file argument is given
+   * @param out   the output stream to write wrapped content to
+   * @throws NullPointerException     if any of {@code scope}, {@code args}, {@code in}, or {@code out} are
+   *                                  null
+   * @throws IllegalArgumentException if the width argument is invalid
+   * @throws IOException              if file operations fail
+   */
+  public static void run(JvmScope scope, String[] args, InputStream in, PrintStream out) throws IOException
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(in, "in").isNotNull();
+    requireThat(out, "out").isNotNull();
+
     int maxWidth = 120;
     String filePath = "";
 
@@ -72,28 +122,25 @@ public final class MarkdownWrapper
       if (args[i].equals("--width") && i + 1 < args.length)
       {
         ++i;
-        try
-        {
-          maxWidth = parseWidthArg(args[i]);
-        }
-        catch (IllegalArgumentException e)
-        {
-          System.err.println(e.getMessage());
-          System.exit(1);
-        }
+        maxWidth = parseWidthArg(args[i]);
       }
       else if (!args[i].startsWith("--"))
       {
         filePath = args[i];
+      }
+      else
+      {
+        throw new IllegalArgumentException(
+          "Unknown argument: " + args[i] + ". Valid arguments: --width <N>, <file-path>");
       }
     }
 
     if (filePath.isEmpty())
     {
       // Read from stdin, wrap, write to stdout
-      String content = new String(System.in.readAllBytes(), StandardCharsets.UTF_8);
+      String content = new String(in.readAllBytes(), StandardCharsets.UTF_8);
       String wrapped = wrapMarkdown(content, maxWidth);
-      System.out.print(wrapped);
+      out.print(wrapped);
     }
     else
     {

@@ -13,11 +13,14 @@ import static io.github.cowwoc.cat.hooks.Strings.block;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -285,20 +288,21 @@ public final class Feedback implements AutoCloseable
    * Runs the "search" subcommand.
    *
    * @param feedback the feedback instance
-   * @param scope the JVM scope for writing block responses
-   * @param args the command-line arguments
+   * @param scope    the JVM scope for writing block responses
+   * @param args     the command-line arguments
+   * @param out      the output stream to write to
    */
-  private static void runSearch(Feedback feedback, JvmScope scope, String[] args)
+  private static void runSearch(Feedback feedback, JvmScope scope, String[] args, PrintStream out)
   {
     String query = args[1];
     try
     {
       String result = feedback.searchIssues(query);
-      System.out.println(result);
+      out.println(result);
     }
     catch (IOException e)
     {
-      System.out.println(block(scope, Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      out.println(block(scope, Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }
 
@@ -306,14 +310,15 @@ public final class Feedback implements AutoCloseable
    * Runs the "open" subcommand.
    *
    * @param feedback the feedback instance
-   * @param scope the JVM scope for writing block responses
-   * @param args the command-line arguments
+   * @param scope    the JVM scope for writing block responses
+   * @param args     the command-line arguments
+   * @param out      the output stream to write to
    */
-  private static void runOpen(Feedback feedback, JvmScope scope, String[] args)
+  private static void runOpen(Feedback feedback, JvmScope scope, String[] args, PrintStream out)
   {
     if (args.length < 3)
     {
-      System.out.println(block(scope, "Usage: feedback open <title> <body> [labels]"));
+      out.println(block(scope, "Usage: feedback open <title> <body> [labels]"));
       return;
     }
     String title = args[1];
@@ -332,17 +337,45 @@ public final class Feedback implements AutoCloseable
     try
     {
       String result = feedback.openIssue(title, body, labels);
-      System.out.println(result);
+      out.println(result);
     }
     catch (IOException e)
     {
       // openIssue() only throws IOException for JSON serialization failures, not browser errors
-      System.out.println(block(scope, Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      out.println(block(scope, Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }
 
   /**
    * Main method for CLI invocation.
+   *
+   * @param args the command-line arguments
+   */
+  public static void main(String[] args)
+  {
+    try (ClaudeTool scope = new MainClaudeTool())
+    {
+      try
+      {
+        run(scope, args, System.out);
+      }
+      catch (IllegalArgumentException | IOException e)
+      {
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(Feedback.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+    }
+  }
+
+  /**
+   * Executes the feedback command, writing the result to the given output stream.
    * <p>
    * Accepts two subcommands:
    * <ul>
@@ -350,31 +383,35 @@ public final class Feedback implements AutoCloseable
    *   <li>{@code open <title> <body> [labels]} — open browser with pre-filled issue URL and print JSON</li>
    * </ul>
    *
-   * @param args the command-line arguments
-   * @throws IOException if an I/O error occurs during initialization
+   * @param scope the JVM scope
+   * @param args  command-line arguments: {@code search <query>} or {@code open <title> <body> [labels]}
+   * @param out   the output stream to write to
+   * @throws NullPointerException if any of {@code scope}, {@code args}, or {@code out} are null
+   * @throws IOException          if an I/O error occurs
    */
-  public static void main(String[] args) throws IOException
+  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
   {
-    try (ClaudeTool scope = new MainClaudeTool())
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+
+    if (args.length < 2)
     {
-      if (args.length < 2)
-      {
-        System.out.println(block(scope,
-          "Usage: feedback search <query> | feedback open <title> <body> [labels]"));
-        return;
-      }
+      out.println(block(scope,
+        "Usage: feedback search <query> | feedback open <title> <body> [labels]"));
+      return;
+    }
 
-      String subcommand = args[0];
+    String subcommand = args[0];
 
-      try (Feedback feedback = new Feedback(scope))
+    try (Feedback feedback = new Feedback(scope))
+    {
+      switch (subcommand)
       {
-        switch (subcommand)
-        {
-          case "search" -> runSearch(feedback, scope, args);
-          case "open" -> runOpen(feedback, scope, args);
-          default -> System.out.println(block(scope,
-            "Unknown subcommand: %s. Use 'search' or 'open'.".formatted(subcommand)));
-        }
+        case "search" -> runSearch(feedback, scope, args, out);
+        case "open" -> runOpen(feedback, scope, args, out);
+        default -> out.println(block(scope,
+          "Unknown subcommand: %s. Use 'search' or 'open'.".formatted(subcommand)));
       }
     }
   }

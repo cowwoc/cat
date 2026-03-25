@@ -998,7 +998,7 @@ public final class IssueLock
     {
       try
       {
-        run(args, scope, System.out);
+        run(scope, args, System.out);
       }
       catch (RuntimeException | AssertionError e)
       {
@@ -1016,13 +1016,14 @@ public final class IssueLock
    * All output (success and error) is written to {@code out} using the standard hook JSON format.
    * IOException is converted to a block response on {@code out}.
    *
-   * @param args  the command-line arguments
    * @param scope the JVM scope to use for lock operations
+   * @param args  the command-line arguments
    * @param out   the output stream for all results
-   * @throws NullPointerException if {@code args} or {@code out} are null
+   * @throws NullPointerException if {@code scope}, {@code args}, or {@code out} are null
    */
-  public static void run(String[] args, JvmScope scope, PrintStream out)
+  public static void run(JvmScope scope, String[] args, PrintStream out)
   {
+    requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();
     requireThat(out, "out").isNotNull();
 

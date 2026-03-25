@@ -8,9 +8,16 @@ package io.github.cowwoc.cat.hooks.skills;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import java.io.PrintStream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
+
+import static io.github.cowwoc.cat.hooks.Strings.block;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -25,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
@@ -1388,20 +1396,58 @@ public final class EmpiricalTestRunner
    * Main entry point for CLI invocation.
    *
    * @param args command-line arguments
-   * @throws IOException if operations fail
    */
-  public static void main(String[] args) throws IOException
+  public static void main(String[] args)
   {
+    try (ClaudeTool scope = new MainClaudeTool())
+    {
+      try
+      {
+        int exitCode = run(scope, args, System.out);
+        System.exit(exitCode);
+      }
+      catch (IllegalArgumentException | IOException e)
+      {
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(EmpiricalTestRunner.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+    }
+  }
+
+  /**
+   * Executes the empirical test runner logic with a caller-provided output stream.
+   *
+   * @param scope the JVM scope
+   * @param args  command line arguments
+   * @param out   the output stream to write to
+   * @return the exit code (0 for success, non-zero for failure)
+   * @throws NullPointerException     if {@code scope}, {@code args} or {@code out} are null
+   * @throws IllegalArgumentException if arguments are invalid
+   * @throws IOException              if an I/O error occurs
+   */
+  public static int run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+
     if (args.length == 0 || args[0].equals("--help") || args[0].equals("-h"))
     {
-      System.out.println("""
+      out.println("""
         Usage: empirical-test-runner --config <config.json> [OPTIONS]
 
         Options:
           --config <path>     Path to test config JSON file (required)
           --trials <N>        Number of trials per config (default: 10)
           --model <name>      Model to test with: haiku|sonnet|opus (default: haiku)
-          --cwd <path>        Working directory for claude CLI (default: /workspace)
+          --cwd <path>        Working directory for claude CLI (default: current directory)
           --output <path>     Path to write JSON results (optional)
           --baseline <prompt> Baseline system prompt for blind comparison mode
 
@@ -1436,13 +1482,13 @@ public final class EmpiricalTestRunner
           empirical-test-runner --config /tmp/test.json --trials 10 --model sonnet
           empirical-test-runner --config test.json --output results.json
           empirical-test-runner --config test.json --baseline "baseline prompt" --output compare.json""");
-      return;
+      return 0;
     }
 
     Path configPath = null;
     int trials = 10;
     String model = "haiku";
-    Path cwd = Path.of("/workspace");
+    Path cwd = Path.of(".");
     Path outputPath = null;
     String baselinePrompt = null;
 
@@ -1482,46 +1528,35 @@ public final class EmpiricalTestRunner
           baselinePrompt = args[i + 1];
           ++i;
         }
-        default ->
-        {
-          // Ignore unknown arguments
-        }
+        default -> throw new IllegalArgumentException(
+          "Unknown argument: " + args[i] + ". Valid arguments: --config, --trials, --model, --cwd, " +
+            "--output, --baseline");
       }
     }
 
     if (configPath == null)
-    {
-      System.err.println("ERROR: --config argument is required");
-      System.exit(1);
-    }
+      throw new IllegalArgumentException("--config argument is required");
 
-    try (ClaudeTool scope = new MainClaudeTool())
+    EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+    if (baselinePrompt != null)
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
-      if (baselinePrompt != null)
+      // Blind comparison mode: read system_prompt from config as candidate
+      String configJson = Files.readString(configPath);
+      Map<String, Object> config = scope.getJsonMapper().readValue(configJson, MAP_TYPE);
+      String candidatePrompt = (String) config.getOrDefault("system_prompt", "");
+      ComparisonResult comparison = runner.runBlindComparison(configPath, trials, model, cwd,
+        candidatePrompt, baselinePrompt);
+      out.println("Winner: " + comparison.winner());
+      out.println("Reason: " + comparison.winnerReason());
+      if (outputPath != null)
       {
-        // Blind comparison mode: read system_prompt from config as candidate
-        String configJson = Files.readString(configPath);
-        Map<String, Object> config = scope.getJsonMapper().readValue(configJson, MAP_TYPE);
-        String candidatePrompt = (String) config.getOrDefault("system_prompt", "");
-        ComparisonResult comparison = runner.runBlindComparison(configPath, trials, model, cwd,
-          candidatePrompt, baselinePrompt);
-        System.out.println("Winner: " + comparison.winner());
-        System.out.println("Reason: " + comparison.winnerReason());
-        if (outputPath != null)
-        {
-          Files.writeString(outputPath,
-            scope.getJsonMapper().writeValueAsString(comparison), StandardCharsets.UTF_8);
-          System.out.println("Comparison results written to: " + outputPath);
-        }
-        System.exit(0);
+        Files.writeString(outputPath,
+          scope.getJsonMapper().writeValueAsString(comparison), StandardCharsets.UTF_8);
+        out.println("Comparison results written to: " + outputPath);
       }
-      else
-      {
-        int exitCode = runner.runTests(configPath, trials, model, cwd, outputPath);
-        System.exit(exitCode);
-      }
+      return 0;
     }
+    return runner.runTests(configPath, trials, model, cwd, outputPath);
   }
 
   /**

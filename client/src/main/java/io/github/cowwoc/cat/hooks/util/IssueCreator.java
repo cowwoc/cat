@@ -19,6 +19,8 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -141,43 +143,72 @@ public final class IssueCreator
 
   /**
    * Main method for command-line execution.
-   * <p>
-   * Provides CLI entry point to replace the original create-issue script.
-   * Invoked as: java -cp hooks.jar io.github.cowwoc.cat.hooks.util.IssueCreator [--json json-string]
    *
    * @param args command-line arguments (expects --json with JSON string, or reads from stdin)
-   * @throws IOException if the operation fails
    */
-  public static void main(String[] args) throws IOException
+  public static void main(String[] args)
   {
     try (ClaudeTool scope = new MainClaudeTool())
     {
-      String jsonInput;
-      if (args.length == 2 && args[0].equals("--json"))
-      {
-        jsonInput = args[1];
-      }
-      else if (args.length == 0)
-      {
-        jsonInput = new String(System.in.readAllBytes(), StandardCharsets.UTF_8);
-      }
-      else
-      {
-        System.out.println(block(scope,
-          "Usage: create-issue [--json <json-string>] (or read from stdin)"));
-        return;
-      }
-
-      IssueCreator creator = new IssueCreator(scope);
       try
       {
-        String result = creator.execute(jsonInput);
-        System.out.println(result);
+        run(scope, args, System.in, System.out);
       }
-      catch (IOException e)
+      catch (IllegalArgumentException | IOException e)
       {
-        System.out.println(block(scope, Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
+      catch (RuntimeException | AssertionError e)
+      {
+        org.slf4j.LoggerFactory.getLogger(IssueCreator.class).error("Unexpected error", e);
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+    }
+  }
+
+  /**
+   * Executes the issue creation command.
+   *
+   * @param scope the JVM scope
+   * @param args  command-line arguments (expects --json with JSON string, or reads from stdin)
+   * @param in    the input stream to read JSON from when no --json argument is given
+   * @param out   the output stream to write to
+   * @throws NullPointerException if any of {@code scope}, {@code args}, {@code in}, or {@code out} are null
+   * @throws IOException          if the operation fails
+   */
+  public static void run(JvmScope scope, String[] args, InputStream in, PrintStream out) throws IOException
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(in, "in").isNotNull();
+    requireThat(out, "out").isNotNull();
+
+    String jsonInput;
+    if (args.length == 2 && args[0].equals("--json"))
+    {
+      jsonInput = args[1];
+    }
+    else if (args.length == 0)
+    {
+      jsonInput = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+    }
+    else
+    {
+      out.println(block(scope, "Usage: create-issue [--json <json-string>] (or read from stdin)"));
+      return;
+    }
+
+    IssueCreator creator = new IssueCreator(scope);
+    try
+    {
+      String result = creator.execute(jsonInput);
+      out.println(result);
+    }
+    catch (IOException e)
+    {
+      out.println(block(scope, Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }
 }

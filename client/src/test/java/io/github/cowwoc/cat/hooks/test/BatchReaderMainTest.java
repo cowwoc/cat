@@ -146,4 +146,26 @@ public class BatchReaderMainTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that an unknown flag produces an IllegalArgumentException.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Unknown argument.*--bogus.*")
+  public void unknownArgProducesError() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("batch-reader-main-test-");
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+      BatchReader.run(scope, new String[]{"**/*.java", "--bogus", "value"}, out);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }

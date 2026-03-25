@@ -8,9 +8,18 @@ package io.github.cowwoc.cat.hooks.skills;
 
 import static io.github.cowwoc.requirements13.jackson.DefaultJacksonValidators.requireThat;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.util.Objects;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
+
+import static io.github.cowwoc.cat.hooks.Strings.block;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -728,13 +737,51 @@ public final class VerifyAudit
    * Main entry point for CLI invocation.
    *
    * @param args command-line arguments
-   * @throws IOException if operations fail
    */
-  public static void main(String[] args) throws IOException
+  public static void main(String[] args)
   {
+    try (ClaudeTool scope = new MainClaudeTool())
+    {
+      try
+      {
+        run(scope, args, System.in, System.out);
+      }
+      catch (IllegalArgumentException | IOException e)
+      {
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(VerifyAudit.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+    }
+  }
+
+  /**
+   * Executes the verify audit logic with caller-provided streams.
+   *
+   * @param scope the JVM scope
+   * @param args  command line arguments
+   * @param in    the input stream to read from
+   * @param out   the output stream to write to
+   * @throws NullPointerException     if {@code scope}, {@code args}, {@code in}, or {@code out} are null
+   * @throws IllegalArgumentException if arguments are invalid
+   * @throws IOException              if an I/O error occurs
+   */
+  public static void run(JvmScope scope, String[] args, InputStream in, PrintStream out) throws IOException
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(in, "in").isNotNull();
+    requireThat(out, "out").isNotNull();
+
     if (args.length == 0 || args[0].equals("--help") || args[0].equals("-h"))
     {
-      System.out.println("""
+      out.println("""
         Usage: verify-audit <subcommand> [options]
 
         Subcommands:
@@ -748,27 +795,19 @@ public final class VerifyAudit
     }
 
     String subcommand = args[0];
-    try (ClaudeTool scope = new MainClaudeTool())
-    {
-      VerifyAudit audit = new VerifyAudit(scope);
+    VerifyAudit audit = new VerifyAudit(scope);
 
-      switch (subcommand)
+    switch (subcommand)
+    {
+      case "report" ->
       {
-        case "report" ->
-        {
-          if (args.length < 2)
-            throw new IllegalArgumentException("report subcommand requires issue-id argument");
-          String issueId = args[1];
-          System.out.println(audit.report(issueId, new String(System.in.readAllBytes(),
-            StandardCharsets.UTF_8)));
-        }
-        case "prepare" ->
-        {
-          System.out.println(audit.prepare(new String(System.in.readAllBytes(),
-            StandardCharsets.UTF_8)));
-        }
-        default -> throw new IllegalArgumentException("Unknown subcommand: " + subcommand);
+        if (args.length < 2)
+          throw new IllegalArgumentException("report subcommand requires issue-id argument");
+        String issueId = args[1];
+        out.println(audit.report(issueId, new String(in.readAllBytes(), StandardCharsets.UTF_8)));
       }
+      case "prepare" -> out.println(audit.prepare(new String(in.readAllBytes(), StandardCharsets.UTF_8)));
+      default -> throw new IllegalArgumentException("Unknown subcommand: " + subcommand);
     }
   }
 

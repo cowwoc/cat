@@ -14,11 +14,14 @@ import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.node.ObjectNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -173,8 +176,6 @@ public final class StatuslineInstall
 
   /**
    * Main entry point.
-   * <p>
-   * Usage: statusline-install {@code <projectPath>} {@code <pluginRoot>}
    *
    * @param args command-line arguments: project directory, plugin root
    */
@@ -182,26 +183,65 @@ public final class StatuslineInstall
   {
     try (ClaudeTool scope = new MainClaudeTool())
     {
-      if (args.length < 2)
-      {
-        System.out.println(block(scope,
-          "Usage: statusline-install <projectPath> <pluginRoot>"));
-        return;
-      }
-
-      Path projectPath = Path.of(args[0]);
-      Path pluginRoot = Path.of(args[1]);
-
-      StatuslineInstall installer = new StatuslineInstall(scope);
       try
       {
-        String result = installer.install(projectPath, pluginRoot);
-        System.out.println(result);
+        run(scope, args, System.out);
       }
-      catch (IOException e)
+      catch (IllegalArgumentException e)
       {
-        System.out.println(block(scope, Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(StatuslineInstall.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+    }
+  }
+
+  /**
+   * Executes the statusline installation.
+   * <p>
+   * Usage: {@code statusline-install <projectPath> <pluginRoot>}
+   *
+   * @param scope the JVM scope
+   * @param args  command-line arguments: project directory, plugin root
+   * @param out   the output stream to write to
+   * @throws NullPointerException if any of {@code scope}, {@code args}, or {@code out} are null
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out)
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+
+    if (args.length < 2)
+    {
+      out.println(block(scope, "Usage: statusline-install <projectPath> <pluginRoot>"));
+      return;
+    }
+    if (args.length > 2)
+    {
+      throw new IllegalArgumentException(
+        "Expected exactly 2 arguments (projectPath, pluginRoot), got " + args.length + ". " +
+          "Usage: statusline-install <projectPath> <pluginRoot>");
+    }
+
+    Path projectPath = Path.of(args[0]);
+    Path pluginRoot = Path.of(args[1]);
+
+    StatuslineInstall installer = new StatuslineInstall(scope);
+    try
+    {
+      String result = installer.install(projectPath, pluginRoot);
+      out.println(result);
+    }
+    catch (IOException e)
+    {
+      out.println(block(scope, Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }
 }

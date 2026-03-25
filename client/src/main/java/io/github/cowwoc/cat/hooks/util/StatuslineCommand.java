@@ -6,11 +6,14 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
+import static io.github.cowwoc.cat.hooks.Strings.block;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -22,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.StringJoiner;
 
 /**
@@ -388,16 +392,44 @@ public final class StatuslineCommand
   {
     try (ClaudeTool scope = new MainClaudeTool())
     {
-      StatuslineCommand cmd = new StatuslineCommand(scope);
       try
       {
-        cmd.execute(System.in, System.out);
+        run(scope, args, System.in, System.out);
       }
-      catch (IOException e)
+      catch (IllegalArgumentException | IOException e)
       {
-        System.err.println("Error generating statusline: " + e.getMessage());
-        System.exit(1);
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(StatuslineCommand.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }
+  }
+
+  /**
+   * Reads JSON from the input stream and writes the statusline to the output stream.
+   *
+   * @param scope the JVM scope
+   * @param args  command-line arguments (unused)
+   * @param in    the input stream to read JSON from
+   * @param out   the output stream to write the statusline to
+   * @throws NullPointerException if any of {@code scope}, {@code args}, {@code in}, or {@code out} are null
+   * @throws IOException          if an I/O error occurs
+   */
+  public static void run(JvmScope scope, String[] args, InputStream in, PrintStream out) throws IOException
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(in, "in").isNotNull();
+    requireThat(out, "out").isNotNull();
+    if (args.length > 0)
+      throw new IllegalArgumentException("Unexpected arguments: " + String.join(" ", args));
+    StatuslineCommand cmd = new StatuslineCommand(scope);
+    cmd.execute(in, out);
   }
 }

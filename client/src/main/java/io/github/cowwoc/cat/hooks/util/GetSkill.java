@@ -902,7 +902,7 @@ public final class GetSkill
       {
         run(scope, args, System.out);
       }
-      catch (IOException e)
+      catch (IllegalArgumentException | IOException e)
       {
         System.err.println("Error loading skill: " + e.getMessage());
         System.exit(1);

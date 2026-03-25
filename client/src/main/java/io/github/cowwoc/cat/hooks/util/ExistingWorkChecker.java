@@ -6,9 +6,14 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
+import static io.github.cowwoc.cat.hooks.Strings.block;
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
@@ -16,9 +21,8 @@ import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Objects;
 import java.util.StringJoiner;
-
-import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
  * Static utility for checking if a task branch has existing commits.
@@ -98,9 +102,19 @@ public final class ExistingWorkChecker
   {
     try (ClaudeTool scope = new MainClaudeTool())
     {
-      boolean success = run(args, scope, System.out, System.err);
-      if (!success)
-        System.exit(1);
+      try
+      {
+        boolean success = run(scope, args, System.out, System.err);
+        if (!success)
+          System.exit(1);
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(ExistingWorkChecker.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
     }
   }
 
@@ -110,15 +124,20 @@ public final class ExistingWorkChecker
    * Unlike {@link #main(String[])}, this method does not call {@link System#exit(int)}.
    * Error output is written to {@code err} and {@code false} is returned.
    *
-   * @param args the command-line arguments
    * @param scope the JVM scope to use for JSON serialization
+   * @param args the command-line arguments
    * @param out the output stream for successful results
    * @param err the error stream for error messages
    * @return true if the command succeeded, false if an error occurred
+   * @throws NullPointerException if {@code scope}, {@code args}, {@code out}, or {@code err} are null
    * @throws IOException if git operations fail
    */
-  public static boolean run(String[] args, JvmScope scope, PrintStream out, PrintStream err) throws IOException
+  public static boolean run(JvmScope scope, String[] args, PrintStream out, PrintStream err) throws IOException
   {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+    requireThat(err, "err").isNotNull();
     String worktreePath = "";
     String targetBranch = "";
     JsonMapper mapper = scope.getJsonMapper();

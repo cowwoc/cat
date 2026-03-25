@@ -47,7 +47,7 @@ public class IssueLockCliTest
         PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
 
         String sessionId = UUID.randomUUID().toString();
-        IssueLock.run(new String[]{"acquire", "test-issue", sessionId, "/some/worktree"}, scope, out);
+        IssueLock.run(scope, new String[]{"acquire", "test-issue", sessionId, "/some/worktree"}, out);
 
         String output = outBytes.toString(StandardCharsets.UTF_8);
         requireThat(output, "output").contains("\"status\"");
@@ -76,7 +76,7 @@ public class IssueLockCliTest
         ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
         PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
 
-        IssueLock.run(new String[]{"acquire", "test-issue"}, scope, out);
+        IssueLock.run(scope, new String[]{"acquire", "test-issue"}, out);
 
         String output = outBytes.toString(StandardCharsets.UTF_8);
         requireThat(output, "output").contains("\"decision\"");
@@ -106,7 +106,7 @@ public class IssueLockCliTest
         ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
         PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
 
-        IssueLock.run(new String[]{"acquire", "test-issue", "not-a-uuid", "/some/worktree"}, scope, out);
+        IssueLock.run(scope, new String[]{"acquire", "test-issue", "not-a-uuid", "/some/worktree"}, out);
 
         String output = outBytes.toString(StandardCharsets.UTF_8);
         requireThat(output, "output").contains("\"decision\"");
@@ -140,7 +140,7 @@ public class IssueLockCliTest
         IssueLock lock = new IssueLock(scope);
         lock.acquire("test-issue", sessionId, "/path/to/worktree");
 
-        IssueLock.run(new String[]{"release", "test-issue", sessionId}, scope, out);
+        IssueLock.run(scope, new String[]{"release", "test-issue", sessionId}, out);
 
         String output = outBytes.toString(StandardCharsets.UTF_8);
         requireThat(output, "output").contains("\"status\"");
@@ -169,7 +169,7 @@ public class IssueLockCliTest
         ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
         PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
 
-        IssueLock.run(new String[]{"check", "unlocked-issue"}, scope, out);
+        IssueLock.run(scope, new String[]{"check", "unlocked-issue"}, out);
 
         String output = outBytes.toString(StandardCharsets.UTF_8);
         requireThat(output, "output").contains("\"locked\"");
@@ -198,7 +198,7 @@ public class IssueLockCliTest
         ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
         PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
 
-        IssueLock.run(new String[]{"list"}, scope, out);
+        IssueLock.run(scope, new String[]{"list"}, out);
 
         String output = outBytes.toString(StandardCharsets.UTF_8);
         requireThat(output, "output").contains("[");
@@ -227,7 +227,7 @@ public class IssueLockCliTest
         ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
         PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
 
-        IssueLock.run(new String[]{"invalid-command"}, scope, out);
+        IssueLock.run(scope, new String[]{"invalid-command"}, out);
 
         String output = outBytes.toString(StandardCharsets.UTF_8);
         requireThat(output, "output").contains("\"decision\"");
@@ -262,7 +262,7 @@ public class IssueLockCliTest
         IssueLock lock = new IssueLock(scope);
         lock.acquire("test-issue", sessionId, "/path/to/worktree");
 
-        IssueLock.run(new String[]{"force-release", "test-issue"}, scope, out);
+        IssueLock.run(scope, new String[]{"force-release", "test-issue"}, out);
 
         String output = outBytes.toString(StandardCharsets.UTF_8);
         requireThat(output, "output").contains("\"released\"");
@@ -290,7 +290,7 @@ public class IssueLockCliTest
         ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
         PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
 
-        IssueLock.run(new String[]{}, scope, out);
+        IssueLock.run(scope, new String[]{}, out);
 
         String output = outBytes.toString(StandardCharsets.UTF_8);
         requireThat(output, "output").contains("\"decision\"");
@@ -321,7 +321,7 @@ public class IssueLockCliTest
         PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
 
         String sessionId = UUID.randomUUID().toString();
-        IssueLock.run(new String[]{"acquire", "test-issue", sessionId, ""}, scope, out);
+        IssueLock.run(scope, new String[]{"acquire", "test-issue", sessionId, ""}, out);
 
         String output = outBytes.toString(StandardCharsets.UTF_8);
         requireThat(output, "output").contains("\"decision\"");
@@ -354,7 +354,7 @@ public class IssueLockCliTest
 
         String sessionId = UUID.randomUUID().toString();
         String worktreePath = "/some/path";
-        IssueLock.run(new String[]{"acquire", "test-issue", sessionId, worktreePath}, scope, out);
+        IssueLock.run(scope, new String[]{"acquire", "test-issue", sessionId, worktreePath}, out);
 
         String output = outBytes.toString(StandardCharsets.UTF_8);
         requireThat(output, "output").contains("\"status\"");
@@ -401,7 +401,7 @@ public class IssueLockCliTest
         // Now attempt to acquire a lock for issue-b via the CLI entry point
         ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
         PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
-        IssueLock.run(new String[]{"acquire", "issue-b", sessionId, "/worktree-b"}, scope, out);
+        IssueLock.run(scope, new String[]{"acquire", "issue-b", sessionId, "/worktree-b"}, out);
 
         String output = outBytes.toString(StandardCharsets.UTF_8);
         requireThat(output, "output").contains("\"status\"");

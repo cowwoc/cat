@@ -8,9 +8,17 @@ package io.github.cowwoc.cat.hooks.skills;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import java.io.PrintStream;
+import java.util.Objects;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
+
+import static io.github.cowwoc.cat.hooks.Strings.block;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 import java.io.IOException;
 
@@ -214,6 +222,12 @@ public final class ProgressBanner implements SkillOutput
       {
         issueId = args[i];
       }
+      else
+      {
+        throw new IllegalArgumentException(
+          "Unknown argument: " + args[i] + ". Valid arguments: --phase, --all-phases, " +
+            "--project-dir, --session-id, <issue-id>");
+      }
     }
 
     if (phaseStr.isEmpty())
@@ -285,16 +299,51 @@ public final class ProgressBanner implements SkillOutput
    * Invoked as: java -cp hooks.jar io.github.cowwoc.cat.hooks.skills.ProgressBanner [args]
    *
    * @param args command-line arguments
-   * @throws IOException if the operation fails
    */
-  public static void main(String[] args) throws IOException
+  public static void main(String[] args)
   {
+    try (ClaudeTool scope = new MainClaudeTool())
+    {
+      try
+      {
+        run(scope, args, System.out);
+      }
+      catch (IllegalArgumentException | IOException e)
+      {
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(ProgressBanner.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+    }
+  }
+
+  /**
+   * Executes the progress banner logic with a caller-provided output stream.
+   *
+   * @param scope the JVM scope
+   * @param args  command line arguments
+   * @param out   the output stream to write to
+   * @throws NullPointerException if {@code scope}, {@code args} or {@code out} are null
+   * @throws IOException          if an I/O error occurs
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+
     // Check for help flag
     for (String arg : args)
     {
       if (arg.equals("-h") || arg.equals("--help"))
       {
-        System.out.println("""
+        out.println("""
           Usage: get-progress-banner [issue-id] [--phase <phase>] [--all-phases]
 
           Arguments:
@@ -312,11 +361,8 @@ public final class ProgressBanner implements SkillOutput
       }
     }
 
-    try (ClaudeTool scope = new MainClaudeTool())
-    {
-      ProgressBanner banner = new ProgressBanner(scope);
-      String output = banner.getOutput(args);
-      System.out.println(output);
-    }
+    ProgressBanner banner = new ProgressBanner(scope);
+    String output = banner.getOutput(args);
+    out.println(output);
   }
 }

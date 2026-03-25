@@ -306,9 +306,9 @@ public class ExistingWorkCheckerTest
         PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
         PrintStream err = new PrintStream(errBytes, true, StandardCharsets.UTF_8);
 
-        boolean success = ExistingWorkChecker.run(
+        boolean success = ExistingWorkChecker.run(scope,
           new String[]{"--worktree", tempDir.toString(), "--target-branch", "target-branch"},
-          scope, out, err);
+          out, err);
 
         requireThat(success, "success").isTrue();
         String output = outBytes.toString(StandardCharsets.UTF_8);
@@ -339,9 +339,9 @@ public class ExistingWorkCheckerTest
       PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
       PrintStream err = new PrintStream(errBytes, true, StandardCharsets.UTF_8);
 
-      boolean success = ExistingWorkChecker.run(
+      boolean success = ExistingWorkChecker.run(scope,
         new String[]{"--target-branch", "main"},
-        scope, out, err);
+        out, err);
 
       requireThat(success, "success").isFalse();
       String errOutput = errBytes.toString(StandardCharsets.UTF_8);
@@ -368,9 +368,9 @@ public class ExistingWorkCheckerTest
         PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
         PrintStream err = new PrintStream(errBytes, true, StandardCharsets.UTF_8);
 
-        boolean success = ExistingWorkChecker.run(
+        boolean success = ExistingWorkChecker.run(scope,
           new String[]{"--worktree", tempDir.toString()},
-          scope, out, err);
+          out, err);
 
         requireThat(success, "success").isFalse();
         String errOutput = errBytes.toString(StandardCharsets.UTF_8);
