@@ -375,6 +375,12 @@ public final class GitSquash
         "Usage: git-squash <TARGET_BRANCH> <COMMIT_MESSAGE> [WORKTREE_PATH]"));
       return;
     }
+    if (args.length > 3)
+    {
+      throw new IllegalArgumentException(
+        "Expected 2-3 arguments (target-branch, commit-message, [worktree-path]), got " +
+          args.length + ". Usage: git-squash <TARGET_BRANCH> <COMMIT_MESSAGE> [WORKTREE_PATH]");
+    }
 
     String targetBranch = args[0];
     String commitMessage = args[1];

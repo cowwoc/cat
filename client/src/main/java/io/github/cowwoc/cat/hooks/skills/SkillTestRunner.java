@@ -1327,7 +1327,7 @@ public final class SkillTestRunner
     {
       try
       {
-        new SkillTestRunner(scope).run(args, System.out);
+        run(scope, args, System.out);
       }
       catch (IllegalArgumentException | IOException e)
       {
@@ -1342,5 +1342,23 @@ public final class SkillTestRunner
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }
+  }
+
+  /**
+   * Executes the skill test runner logic with a caller-provided output stream.
+   *
+   * @param scope the JVM scope
+   * @param args  command line arguments
+   * @param out   the output stream to write to
+   * @throws NullPointerException     if {@code scope}, {@code args} or {@code out} are null
+   * @throws IllegalArgumentException if arguments are invalid
+   * @throws IOException              if an I/O error occurs
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+    new SkillTestRunner(scope).run(args, out);
   }
 }

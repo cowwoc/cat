@@ -18,11 +18,15 @@ import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
+import java.io.PrintStream;
+
+import static io.github.cowwoc.cat.hooks.Strings.block;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -446,20 +450,49 @@ public final class GetAddOutput implements SkillOutput
    */
   public static void main(String[] args)
   {
+    try (ClaudeTool scope = new MainClaudeTool())
+    {
+      try
+      {
+        run(scope, args, System.out);
+      }
+      catch (IllegalArgumentException | IOException e)
+      {
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(GetAddOutput.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+    }
+  }
+
+  /**
+   * Executes the add output logic with a caller-provided output stream.
+   *
+   * @param scope the JVM scope
+   * @param args  command line arguments
+   * @param out   the output stream to write to
+   * @throws NullPointerException     if {@code scope}, {@code args} or {@code out} are null
+   * @throws IllegalArgumentException if arguments are invalid
+   * @throws IOException              if an I/O error occurs
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+
     // If no CLI args or first arg is --project-dir, produce planning data
     if (args.length == 0 || args[0].equals("--project-dir"))
     {
-      try (ClaudeTool scope = new MainClaudeTool())
-      {
-        GetAddOutput output = new GetAddOutput(scope);
-        String result = output.getOutput(args);
-        System.out.println(result);
-      }
-      catch (IOException e)
-      {
-        System.err.println("Error: " + e.getMessage());
-        System.exit(1);
-      }
+      GetAddOutput output = new GetAddOutput(scope);
+      String result = output.getOutput(args);
+      out.println(result);
       return;
     }
 
@@ -482,43 +515,24 @@ public final class GetAddOutput implements SkillOutput
         case "--dependencies" -> dependenciesStr = args[i + 1];
         case "--parent" -> parentInfo = args[i + 1];
         case "--path" -> itemPath = args[i + 1];
-        default ->
-        {
-          System.err.println("Error: unknown argument: " + args[i]);
-          System.exit(1);
-        }
+        default -> throw new IllegalArgumentException("Unknown argument: " + args[i]);
       }
     }
 
     if (itemTypeStr.isEmpty())
-    {
-      System.err.println("Error: --type required (issue or version)");
-      System.exit(1);
-    }
-
-    ItemType itemType;
-    switch (itemTypeStr.toLowerCase(Locale.ROOT))
-    {
-      case "issue" -> itemType = ItemType.ISSUE;
-      case "version" -> itemType = ItemType.VERSION;
-      default ->
-      {
-        System.err.println("Error: --type must be 'issue' or 'version', got: " + itemTypeStr);
-        System.exit(1);
-        return;
-      }
-    }
-
+      throw new IllegalArgumentException("--type required (issue or version)");
     if (nameStr.isEmpty())
-    {
-      System.err.println("Error: --name is required");
-      System.exit(1);
-    }
+      throw new IllegalArgumentException("--name is required");
     if (version.isEmpty())
+      throw new IllegalArgumentException("--version is required");
+
+    ItemType itemType = switch (itemTypeStr.toLowerCase(Locale.ROOT))
     {
-      System.err.println("Error: --version is required");
-      System.exit(1);
-    }
+      case "issue" -> ItemType.ISSUE;
+      case "version" -> ItemType.VERSION;
+      default ->
+        throw new IllegalArgumentException("--type must be 'issue' or 'version', got: " + itemTypeStr);
+    };
 
     List<String> itemNames = new ArrayList<>();
     for (String part : nameStr.split(","))
@@ -528,12 +542,11 @@ public final class GetAddOutput implements SkillOutput
         itemNames.add(stripped);
     }
 
-    IssueType issueType;
-    switch (issueTypeStr.toLowerCase(Locale.ROOT))
+    IssueType issueType = switch (issueTypeStr.toLowerCase(Locale.ROOT))
     {
-      case "bugfix" -> issueType = IssueType.BUGFIX;
-      default -> issueType = IssueType.FEATURE;
-    }
+      case "bugfix" -> IssueType.BUGFIX;
+      default -> IssueType.FEATURE;
+    };
 
     List<String> dependencies;
     if (dependenciesStr.isEmpty())
@@ -550,17 +563,9 @@ public final class GetAddOutput implements SkillOutput
       }
     }
 
-    try (ClaudeTool scope = new MainClaudeTool())
-    {
-      GetAddOutput output = new GetAddOutput(scope);
-      String result = output.getOutput(itemType, itemNames, version, issueType, dependencies,
-        parentInfo, itemPath);
-      System.out.println(result);
-    }
-    catch (RuntimeException e)
-    {
-      System.err.println("Error: " + e.getMessage());
-      System.exit(1);
-    }
+    GetAddOutput output = new GetAddOutput(scope);
+    String result = output.getOutput(itemType, itemNames, version, issueType, dependencies,
+      parentInfo, itemPath);
+    out.println(result);
   }
 }

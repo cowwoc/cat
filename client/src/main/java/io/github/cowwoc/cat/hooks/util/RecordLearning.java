@@ -598,6 +598,11 @@ public final class RecordLearning
       {
         run(scope, System.in, System.out, () -> scope.getProjectPath().toString());
       }
+      catch (IllegalArgumentException e)
+      {
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
       catch (RuntimeException | AssertionError e)
       {
         Logger log = LoggerFactory.getLogger(RecordLearning.class);

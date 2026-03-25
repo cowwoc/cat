@@ -6,10 +6,15 @@
  */
 package io.github.cowwoc.cat.hooks;
 
+import static io.github.cowwoc.cat.hooks.Strings.block;
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -20,8 +25,6 @@ import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static io.github.cowwoc.cat.hooks.Strings.block;
 
 /**
  * enforce-status-output - Stop hook to enforce verbatim status box output.
@@ -62,27 +65,14 @@ public final class EnforceStatusOutput
   {
     try (ClaudeHook scope = new MainClaudeHook())
     {
-      JsonMapper mapper = scope.getJsonMapper();
       try
       {
-        String output;
-        try
-        {
-          String transcriptPath = scope.getString("transcript_path");
-          boolean stopHookActive = scope.getBoolean("stop_hook_active", false);
-          String sessionId = scope.getSessionId();
-          Path sessionBasePath = scope.getClaudeSessionsPath();
-          output = check(mapper, transcriptPath, stopHookActive, scope, sessionId, sessionBasePath);
-        }
-        catch (Exception e)
-        {
-          String errorMessage =
-            "❌ Hook error: " + e.getMessage() + "\n" +
-            "\n" +
-            "Blocking as fail-safe. Please verify your working environment.";
-          output = block(scope, errorMessage);
-        }
-        System.out.println(output);
+        run(scope, args, System.in, System.out);
+      }
+      catch (IllegalArgumentException e)
+      {
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
       catch (RuntimeException | AssertionError e)
       {
@@ -92,6 +82,45 @@ public final class EnforceStatusOutput
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }
+  }
+
+  /**
+   * Executes the status output enforcement check.
+   *
+   * @param scope the JVM scope (must be a {@link ClaudeHook} to access hook input fields)
+   * @param args  command line arguments (unused)
+   * @param in    the input stream (unused in current implementation)
+   * @param out   the output stream to write the hook decision to
+   * @throws NullPointerException if any of {@code scope}, {@code args}, {@code in}, or {@code out} are null
+   */
+  public static void run(JvmScope scope, String[] args, InputStream in, PrintStream out)
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(in, "in").isNotNull();
+    requireThat(out, "out").isNotNull();
+    if (args.length > 0)
+      throw new IllegalArgumentException("Unexpected arguments: " + String.join(" ", args));
+    ClaudeHook hookScope = (ClaudeHook) scope;
+    JsonMapper mapper = scope.getJsonMapper();
+    String output;
+    try
+    {
+      String transcriptPath = hookScope.getString("transcript_path");
+      boolean stopHookActive = hookScope.getBoolean("stop_hook_active", false);
+      String sessionId = hookScope.getSessionId();
+      Path sessionBasePath = hookScope.getClaudeSessionsPath();
+      output = check(mapper, transcriptPath, stopHookActive, hookScope, sessionId, sessionBasePath);
+    }
+    catch (Exception e)
+    {
+      String errorMessage =
+        "❌ Hook error: " + e.getMessage() + "\n" +
+        "\n" +
+        "Blocking as fail-safe. Please verify your working environment.";
+      output = block(scope, errorMessage);
+    }
+    out.println(output);
   }
 
   /**

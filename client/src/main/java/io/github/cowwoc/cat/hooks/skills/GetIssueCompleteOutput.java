@@ -8,6 +8,8 @@ package io.github.cowwoc.cat.hooks.skills;
 
 import static io.github.cowwoc.cat.hooks.Strings.block;
 
+import java.io.PrintStream;
+
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
@@ -160,40 +162,12 @@ public final class GetIssueCompleteOutput implements SkillOutput
     {
       try
       {
-        String issueName = "";
-        String targetBranch = "main";
-        String scopeComplete = "";
-
-        for (int i = 0; i + 1 < args.length; i += 2)
-        {
-          switch (args[i])
-          {
-            case "--issue-name" -> issueName = args[i + 1];
-            case "--target-branch" -> targetBranch = args[i + 1];
-            case "--scope-complete" -> scopeComplete = args[i + 1];
-            default ->
-            {
-            }
-          }
-        }
-
-        GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
-
-        if (!scopeComplete.isEmpty())
-        {
-          String box = output.getScopeCompleteBox(scopeComplete);
-          System.out.println(box);
-        }
-        else
-        {
-          if (issueName.isEmpty())
-          {
-            System.err.println("--issue-name is required unless --scope-complete is used");
-            System.exit(1);
-          }
-          String box = output.discoverAndRender(issueName, targetBranch);
-          System.out.println(box);
-        }
+        run(scope, args, System.out);
+      }
+      catch (IllegalArgumentException | IOException e)
+      {
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
       catch (RuntimeException | AssertionError e)
       {
@@ -202,11 +176,55 @@ public final class GetIssueCompleteOutput implements SkillOutput
         System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
-      catch (Exception e)
+    }
+  }
+
+  /**
+   * Executes the issue complete output logic with a caller-provided output stream.
+   *
+   * @param scope the JVM scope
+   * @param args  command line arguments
+   * @param out   the output stream to write to
+   * @throws NullPointerException     if {@code scope}, {@code args} or {@code out} are null
+   * @throws IllegalArgumentException if arguments are invalid
+   * @throws IOException              if an I/O error occurs
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+
+    String issueName = "";
+    String targetBranch = "main";
+    String scopeComplete = "";
+
+    for (int i = 0; i + 1 < args.length; i += 2)
+    {
+      switch (args[i])
       {
-        System.err.println("Error: " + e.getMessage());
-        System.exit(1);
+        case "--issue-name" -> issueName = args[i + 1];
+        case "--target-branch" -> targetBranch = args[i + 1];
+        case "--scope-complete" -> scopeComplete = args[i + 1];
+        default -> throw new IllegalArgumentException(
+          "Unknown argument: " + args[i] + ". Valid arguments: --issue-name, --target-branch, " +
+            "--scope-complete");
       }
+    }
+
+    GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
+
+    if (!scopeComplete.isEmpty())
+    {
+      String box = output.getScopeCompleteBox(scopeComplete);
+      out.println(box);
+    }
+    else
+    {
+      if (issueName.isEmpty())
+        throw new IllegalArgumentException("--issue-name is required unless --scope-complete is used");
+      String box = output.discoverAndRender(issueName, targetBranch);
+      out.println(box);
     }
   }
 

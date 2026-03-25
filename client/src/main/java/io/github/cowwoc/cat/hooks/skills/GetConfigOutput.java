@@ -7,6 +7,7 @@
 package io.github.cowwoc.cat.hooks.skills;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -337,20 +338,18 @@ public final class GetConfigOutput implements SkillOutput
    *
    * @param args command line arguments (unused)
    */
-  public static void main(String[] args)
+  public static void main(String[] args) throws IOException
   {
     try (ClaudeTool scope = new MainClaudeTool())
     {
       try
       {
-        GetConfigOutput generator = new GetConfigOutput(scope);
-        String output = generator.getOutput(args);
-        System.out.print(output);
+        run(scope, args, System.out);
       }
-      catch (IOException e)
+      catch (IllegalArgumentException e)
       {
-        System.err.println("Error generating config output: " + e.getMessage());
-        System.exit(1);
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
       catch (RuntimeException | AssertionError e)
       {
@@ -359,6 +358,31 @@ public final class GetConfigOutput implements SkillOutput
         System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
+    }
+  }
+
+  /**
+   * Executes the config output logic with a caller-provided output stream.
+   *
+   * @param scope the JVM scope
+   * @param args  command line arguments
+   * @param out   the output stream to write to
+   * @throws NullPointerException if {@code scope}, {@code args} or {@code out} are null
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out)
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+    try
+    {
+      GetConfigOutput generator = new GetConfigOutput(scope);
+      String output = generator.getOutput(args);
+      out.print(output);
+    }
+    catch (IOException e)
+    {
+      out.println(block(scope, Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }
 

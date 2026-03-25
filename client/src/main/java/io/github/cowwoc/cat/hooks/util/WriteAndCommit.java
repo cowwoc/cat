@@ -198,6 +198,11 @@ public final class WriteAndCommit
       {
         run(scope, args, System.out);
       }
+      catch (IllegalArgumentException e)
+      {
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
       catch (RuntimeException | AssertionError e)
       {
         Logger log = LoggerFactory.getLogger(WriteAndCommit.class);
@@ -231,11 +236,21 @@ public final class WriteAndCommit
       return;
     }
 
+    boolean executable = false;
+    if (args.length == 4)
+    {
+      if (args[3].equals("--executable"))
+        executable = true;
+      else
+      {
+        throw new IllegalArgumentException(
+          "Unknown argument: " + args[3] + ". Valid optional argument: --executable");
+      }
+    }
+
     String filePath = args[0];
     String contentFile = args[1];
     String commitMsgFile = args[2];
-    boolean executable = args.length == 4 && args[3].equals("--executable");
-
     WriteAndCommit cmd = new WriteAndCommit(scope);
     try
     {

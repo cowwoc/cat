@@ -1991,10 +1991,9 @@ public final class WorkPrepare
           ++i;
           rawArguments = args[i];
         }
-        default ->
-        {
-          // ignore unknown flags
-        }
+        default -> throw new IllegalArgumentException(
+          "Unknown argument: " + args[i] + ". Valid arguments: --session-id, --exclude-pattern, " +
+            "--issue-id, --trust-level, --arguments");
       }
     }
 

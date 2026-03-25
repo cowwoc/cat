@@ -9,6 +9,8 @@ package io.github.cowwoc.cat.hooks.skills;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
 
+import java.io.PrintStream;
+
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import static io.github.cowwoc.cat.hooks.Strings.block;
@@ -243,35 +245,16 @@ public final class GetSubagentStatusOutput implements SkillOutput
    */
   public static void main(String[] args) throws IOException
   {
-    String sessionBaseOverride = "";
-
-    for (int i = 0; i < args.length - 1; ++i)
-    {
-      if (args[i].equals("--session-base"))
-      {
-        ++i;
-        sessionBaseOverride = args[i];
-      }
-    }
-
     try (ClaudeTool scope = new MainClaudeTool())
     {
       try
       {
-        // Use scope-provided session base path if not overridden via --session-base
-        String sessionBase;
-        if (!sessionBaseOverride.isEmpty())
-          sessionBase = sessionBaseOverride;
-        else
-          sessionBase = scope.getClaudeSessionsPath().toString();
-
-        JsonMapper mapper = scope.getJsonMapper();
-        StatusResult result = getStatus(sessionBase, mapper);
-        System.out.println(result.toJson(mapper));
+        run(scope, args, System.out);
       }
-      catch (IOException e)
+      catch (IllegalArgumentException e)
       {
-        System.out.println(block(scope, Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
       catch (RuntimeException | AssertionError e)
       {
@@ -280,6 +263,54 @@ public final class GetSubagentStatusOutput implements SkillOutput
         System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
+    }
+  }
+
+  /**
+   * Executes the subagent status output logic with a caller-provided output stream.
+   *
+   * @param scope the JVM scope
+   * @param args  command line arguments
+   * @param out   the output stream to write to
+   * @throws NullPointerException if {@code scope}, {@code args} or {@code out} are null
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out)
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+
+    String sessionBaseOverride = "";
+    for (int i = 0; i < args.length - 1; ++i)
+    {
+      if (args[i].equals("--session-base"))
+      {
+        ++i;
+        sessionBaseOverride = args[i];
+      }
+      else
+      {
+        throw new IllegalArgumentException(
+          "Unknown argument: " + args[i] + ". Valid arguments: --session-base <path>");
+      }
+    }
+
+    try
+    {
+      // Use scope-provided session base path if not overridden via --session-base
+      String sessionBase;
+      if (!sessionBaseOverride.isEmpty())
+        sessionBase = sessionBaseOverride;
+      else
+        sessionBase = scope.getClaudeSessionsPath().toString();
+
+      JsonMapper mapper = scope.getJsonMapper();
+      StatusResult result = getStatus(sessionBase, mapper);
+      out.println(result.toJson(mapper));
+    }
+    catch (IOException e)
+    {
+      out.println(block(scope, Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }
 

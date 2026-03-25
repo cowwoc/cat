@@ -6,18 +6,26 @@
  */
 package io.github.cowwoc.cat.hooks.skills;
 
+import java.util.Objects;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
+
+import static io.github.cowwoc.cat.hooks.Strings.block;
 import io.github.cowwoc.cat.hooks.util.IssueLock;
 import io.github.cowwoc.cat.hooks.util.ProcessRunner;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.time.Duration;
 import java.time.Instant;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -1001,6 +1009,45 @@ public final class GetCleanupOutput implements SkillOutput
    */
   public static void main(String[] args)
   {
+    try (ClaudeTool scope = new MainClaudeTool())
+    {
+      try
+      {
+        run(scope, args, System.out);
+      }
+      catch (IllegalArgumentException | IOException e)
+      {
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(GetCleanupOutput.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+    }
+  }
+
+  /**
+   * Executes the cleanup output logic with a caller-provided output stream.
+   * <p>
+   * Reads stdin for plan and verify phases.
+   *
+   * @param scope the JVM scope
+   * @param args  command line arguments
+   * @param out   the output stream to write to
+   * @throws NullPointerException     if {@code scope}, {@code args} or {@code out} are null
+   * @throws IllegalArgumentException if arguments are invalid
+   * @throws IOException              if an I/O error occurs
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+
     String projectPathArg = "";
     String phase = "survey";
     for (int i = 0; i < args.length; ++i)
@@ -1008,65 +1055,52 @@ public final class GetCleanupOutput implements SkillOutput
       if (args[i].equals("--project-dir"))
       {
         if (i + 1 >= args.length)
-        {
-          System.err.println("Error: --project-dir flag requires a PATH argument.");
-          System.exit(1);
-        }
+          throw new IllegalArgumentException("--project-dir flag requires a PATH argument.");
         projectPathArg = args[i + 1];
         ++i;
       }
       else if (args[i].equals("--phase"))
       {
         if (i + 1 >= args.length)
-        {
-          System.err.println("Error: --phase flag requires a value (survey, plan, or verify).");
-          System.exit(1);
-        }
+          throw new IllegalArgumentException("--phase flag requires a value (survey, plan, or verify).");
         phase = args[i + 1];
         ++i;
       }
+      else
+      {
+        throw new IllegalArgumentException(
+          "Unknown argument: " + args[i] + ". Valid arguments: --project-dir, --phase");
+      }
     }
 
-    try (ClaudeTool scope = new MainClaudeTool())
+    GetCleanupOutput output = new GetCleanupOutput(scope);
+    String result;
+    switch (phase)
     {
-      GetCleanupOutput output = new GetCleanupOutput(scope);
-      String result;
-      switch (phase)
+      case "survey" ->
       {
-        case "survey" ->
-        {
-          Path projectPath;
-          if (!projectPathArg.isEmpty())
-            projectPath = Path.of(projectPathArg);
-          else
-            projectPath = scope.getProjectPath();
-          result = output.gatherAndFormatSurveyOutput(projectPath);
-        }
-        case "plan" ->
-        {
-          String json = readStdin();
-          result = output.formatPlanFromJson(json);
-        }
-        case "verify" ->
-        {
-          String json = readStdin();
-          result = output.formatVerifyFromJson(json);
-        }
-        default ->
-        {
-          System.err.println("Error: unknown --phase value '" + phase +
-            "'. Expected: survey, plan, or verify.");
-          System.exit(1);
-          return;
-        }
+        Path projectPath;
+        if (!projectPathArg.isEmpty())
+          projectPath = Path.of(projectPathArg);
+        else
+          projectPath = scope.getProjectPath();
+        result = output.gatherAndFormatSurveyOutput(projectPath);
       }
-      System.out.println(result);
+      case "plan" ->
+      {
+        String json = readStdin();
+        result = output.formatPlanFromJson(json);
+      }
+      case "verify" ->
+      {
+        String json = readStdin();
+        result = output.formatVerifyFromJson(json);
+      }
+      default ->
+        throw new IllegalArgumentException("Unknown --phase value '" + phase +
+          "'. Expected: survey, plan, or verify.");
     }
-    catch (IOException e)
-    {
-      System.err.println("Error generating cleanup output: " + e.getMessage());
-      System.exit(1);
-    }
+    out.println(result);
   }
 
   /**

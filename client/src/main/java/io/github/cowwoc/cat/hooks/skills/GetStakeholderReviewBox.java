@@ -6,9 +6,17 @@
  */
 package io.github.cowwoc.cat.hooks.skills;
 
+import java.io.PrintStream;
+import java.util.Objects;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
+
+import static io.github.cowwoc.cat.hooks.Strings.block;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -123,28 +131,56 @@ public final class GetStakeholderReviewBox
    * </ul>
    *
    * @param args command-line arguments
-   * @throws IOException if the operation fails
    */
-  public static void main(String[] args) throws IOException
+  public static void main(String[] args)
   {
-    if (args.length != 4)
+    try (ClaudeTool scope = new MainClaudeTool())
     {
-      System.err.println("Expected 4 arguments but got " + args.length);
-      printUsage();
-      System.exit(1);
+      try
+      {
+        run(scope, args, System.out);
+      }
+      catch (IllegalArgumentException | IOException e)
+      {
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(GetStakeholderReviewBox.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
     }
+  }
+
+  /**
+   * Executes the stakeholder review box logic with a caller-provided output stream.
+   *
+   * @param scope the JVM scope
+   * @param args  command line arguments: issue, reviewers, result, summary
+   * @param out   the output stream to write to
+   * @throws NullPointerException     if {@code scope}, {@code args} or {@code out} are null
+   * @throws IllegalArgumentException if the wrong number of arguments is provided
+   * @throws IOException              if an I/O error occurs
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+    if (args.length != 4)
+      throw new IllegalArgumentException("Expected 4 arguments but got " + args.length);
 
     String issue = args[0];
     String reviewers = args[1];
     String result = args[2];
     String summary = args[3];
 
-    try (ClaudeTool scope = new MainClaudeTool())
-    {
-      GetStakeholderReviewBox box = new GetStakeholderReviewBox(scope);
-      List<ReviewerStatus> reviewerList = parseReviewers(reviewers);
-      System.out.print(box.getReviewBox(issue, reviewerList, result, summary));
-    }
+    GetStakeholderReviewBox box = new GetStakeholderReviewBox(scope);
+    List<ReviewerStatus> reviewerList = parseReviewers(reviewers);
+    out.print(box.getReviewBox(issue, reviewerList, result, summary));
   }
 
   /**
@@ -188,22 +224,5 @@ public final class GetStakeholderReviewBox
       result.add(new ReviewerStatus(name, status));
     }
     return result;
-  }
-
-  /**
-   * Prints usage information to stderr.
-   */
-  private static void printUsage()
-  {
-    System.err.println("""
-      Usage:
-        get-stakeholder-review-box <issue> <reviewers> <result> <summary>
-
-      Arguments:
-        issue      The issue name
-        reviewers  Comma-separated colon pairs (e.g., "architect:APPROVED,design:CONCERNS")
-        result     Overall result: "APPROVED", "CONCERNS", or "REJECTED"
-        summary    Brief summary of the review outcome
-      """);
   }
 }
