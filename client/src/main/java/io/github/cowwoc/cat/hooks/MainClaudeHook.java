@@ -104,16 +104,6 @@ public final class MainClaudeHook extends AbstractClaudeHook
   }
 
   @Override
-  public Path getEnvFile()
-  {
-    ensureOpen();
-    String value = System.getenv("CLAUDE_ENV_FILE");
-    if (value == null || value.isBlank())
-      throw new AssertionError("CLAUDE_ENV_FILE is not set");
-    return Path.of(value);
-  }
-
-  @Override
   public Path getWorkDir()
   {
     ensureOpen();

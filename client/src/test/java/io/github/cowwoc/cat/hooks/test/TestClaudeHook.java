@@ -36,7 +36,6 @@ public final class TestClaudeHook extends AbstractClaudeHook
 
   private final TerminalType terminalType;
   private final Path workDir;
-  private final Path envFile;
   private final AtomicBoolean closed = new AtomicBoolean();
 
   /**
@@ -105,7 +104,7 @@ public final class TestClaudeHook extends AbstractClaudeHook
   public TestClaudeHook(Path projectPath, Path pluginRoot, Path claudeConfigDir)
   {
     this(defaultPayload(AbstractClaudeHook.createStdinMapper()), projectPath, pluginRoot, claudeConfigDir,
-      projectPath.resolve("test-env-file.sh"), TerminalType.WINDOWS_TERMINAL);
+      TerminalType.WINDOWS_TERMINAL);
   }
 
   /**
@@ -123,7 +122,7 @@ public final class TestClaudeHook extends AbstractClaudeHook
   public TestClaudeHook(String payloadJson, Path projectPath, Path pluginRoot, Path claudeConfigDir)
   {
     this(parseJson(payloadJson, AbstractClaudeHook.createStdinMapper()), projectPath, pluginRoot, claudeConfigDir,
-      projectPath.resolve("test-env-file.sh"), TerminalType.WINDOWS_TERMINAL);
+      TerminalType.WINDOWS_TERMINAL);
   }
 
   /**
@@ -137,7 +136,7 @@ public final class TestClaudeHook extends AbstractClaudeHook
    */
   public TestClaudeHook(JsonNode hookPayload, Path projectPath, Path pluginRoot, Path claudeConfigDir)
   {
-    this(hookPayload, projectPath, pluginRoot, claudeConfigDir, projectPath.resolve("test-env-file.sh"));
+    this(hookPayload, projectPath, pluginRoot, claudeConfigDir, TerminalType.WINDOWS_TERMINAL);
   }
 
   /**
@@ -157,23 +156,7 @@ public final class TestClaudeHook extends AbstractClaudeHook
     TerminalType terminalType)
   {
     this(parseJson(payloadJson, AbstractClaudeHook.createStdinMapper()), projectPath, pluginRoot, claudeConfigDir,
-      projectPath.resolve("test-env-file.sh"), terminalType);
-  }
-
-  /**
-   * Creates a new test hook scope with a pre-parsed JSON payload, specified paths, and a custom env file.
-   *
-   * @param hookPayload the parsed hook JSON payload
-   * @param projectPath the project directory path
-   * @param pluginRoot the plugin root directory path
-   * @param claudeConfigDir the config directory path
-   * @param envFile the env file path
-   * @throws NullPointerException if any parameter is null
-   */
-  public TestClaudeHook(JsonNode hookPayload, Path projectPath, Path pluginRoot, Path claudeConfigDir,
-    Path envFile)
-  {
-    this(hookPayload, projectPath, pluginRoot, claudeConfigDir, envFile, TerminalType.WINDOWS_TERMINAL);
+      terminalType);
   }
 
   /**
@@ -183,38 +166,17 @@ public final class TestClaudeHook extends AbstractClaudeHook
    * @param projectPath the project directory path
    * @param pluginRoot the plugin root directory path
    * @param claudeConfigDir the config directory path
-   * @param envFile the env file path
    * @param terminalType the terminal type to report
    * @throws NullPointerException if any parameter is null
    */
   public TestClaudeHook(JsonNode hookPayload, Path projectPath, Path pluginRoot, Path claudeConfigDir,
-    Path envFile, TerminalType terminalType)
+    TerminalType terminalType)
   {
     super(hookPayload, projectPath, pluginRoot, claudeConfigDir);
     requireThat(projectPath, "projectPath").isNotNull();
     requireThat(terminalType, "terminalType").isNotNull();
     this.terminalType = terminalType;
     this.workDir = projectPath;
-    this.envFile = envFile;
-  }
-
-  /**
-   * Creates a test hook scope with a specific env file path, mirroring
-   * {@link TestClaudeTool#withEnvFile(Path, Path, Path)}.
-   * <p>
-   * The default hook payload with only the default session ID is used.
-   *
-   * @param projectPath the project directory path
-   * @param pluginRoot the plugin root directory path
-   * @param envFile the env file path
-   * @return a new {@code TestClaudeHook} with the specified env file
-   * @throws NullPointerException if any parameter is null
-   */
-  @SuppressWarnings("PMD.UnnecessaryFullyQualifiedName")
-  public static TestClaudeHook withEnvFile(Path projectPath, Path pluginRoot, Path envFile)
-  {
-    return new TestClaudeHook(defaultPayload(AbstractClaudeHook.createStdinMapper()), projectPath, pluginRoot,
-      projectPath, envFile);
   }
 
   /**
@@ -287,13 +249,6 @@ public final class TestClaudeHook extends AbstractClaudeHook
       requireThat(pluginRoot, "pluginRoot").isNotNull();
       requireThat(claudeConfigDir, "claudeConfigDir").isNotNull();
     }
-  }
-
-  @Override
-  public Path getEnvFile()
-  {
-    ensureOpen();
-    return envFile;
   }
 
   @Override

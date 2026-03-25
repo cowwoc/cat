@@ -214,7 +214,7 @@ public final class TestClaudeToolTest
   public void constructorRejectsNullSessionId()
   {
     Path validPath = Path.of("/tmp");
-    new MinimalClaudeTool(null, validPath, validPath, validPath.resolve(".env"));
+    new MinimalClaudeTool(null, validPath, validPath);
   }
 
   /**
@@ -225,18 +225,7 @@ public final class TestClaudeToolTest
   public void constructorRejectsBlankSessionId()
   {
     Path validPath = Path.of("/tmp");
-    new MinimalClaudeTool("   ", validPath, validPath, validPath.resolve(".env"));
-  }
-
-  /**
-   * Verifies that AbstractClaudeTool constructor rejects a null envFile.
-   */
-  @Test(expectedExceptions = NullPointerException.class,
-    expectedExceptionsMessageRegExp = "(?si).*envFile.*")
-  public void constructorRejectsNullEnvFile()
-  {
-    Path validPath = Path.of("/tmp");
-    new MinimalClaudeTool("session-id", validPath, validPath, null);
+    new MinimalClaudeTool("   ", validPath, validPath);
   }
 
   /**
@@ -253,31 +242,6 @@ public final class TestClaudeToolTest
     {
       String sessionId = scope.getSessionId();
       requireThat(sessionId, "sessionId").isEqualTo("00000000-0000-0000-0000-000000000000");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(projectPath);
-      TestUtils.deleteDirectoryRecursively(pluginRoot);
-    }
-  }
-
-  /**
-   * Verifies that getEnvFile() returns the expected .env file path derived from project path.
-   *
-   * @throws IOException if temporary directory creation fails
-   */
-  @Test
-  public void getEnvFileReturnsConstructedValue() throws IOException
-  {
-    Path projectPath = Files.createTempDirectory("test-project-");
-    Path pluginRoot = Files.createTempDirectory("test-plugin-");
-    try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginRoot))
-    {
-      Path envFile = scope.getEnvFile();
-      Path expected = projectPath.resolve(".env");
-      requireThat(envFile, "envFile").isEqualTo(expected);
-      requireThat(envFile.getParent(), "envFile.parent").isEqualTo(projectPath);
-      requireThat(envFile.getFileName().toString(), "envFile.filename").isEqualTo(".env");
     }
     finally
     {
@@ -392,17 +356,17 @@ public final class TestClaudeToolTest
   }
 
   // MainClaudeTool cannot be unit-tested directly: its constructor reads environment variables
-  // (CLAUDE_PROJECT_DIR, CLAUDE_PLUGIN_ROOT, CLAUDE_SESSION_ID, CLAUDE_ENV_FILE) that are not
-  // set in Maven test contexts. Equivalent coverage is provided via integration tests that run
-  // with the full hook environment, and by the TestClaudeTool tests above which exercise all
-  // AbstractJvmScope logic with injectable paths.
+  // (CLAUDE_PROJECT_DIR, CLAUDE_PLUGIN_ROOT, CLAUDE_SESSION_ID) that are not set in Maven test
+  // contexts. Equivalent coverage is provided via integration tests that run with the full hook
+  // environment, and by the TestClaudeTool tests above which exercise all AbstractJvmScope logic
+  // with injectable paths.
 
   /**
    * Minimal concrete subclass of AbstractClaudeTool for testing constructor parameter validation.
    * <p>
    * The sole purpose of this class is to expose the protected {@link AbstractClaudeTool} constructor
-   * so that validation of {@code sessionId}, {@code projectPath}, {@code pluginRoot}, and
-   * {@code envFile} can be verified directly.
+   * so that validation of {@code sessionId}, {@code projectPath}, and {@code pluginRoot} can be
+   * verified directly.
    */
   private static final class MinimalClaudeTool extends AbstractClaudeTool
   {
@@ -412,11 +376,10 @@ public final class TestClaudeToolTest
      * @param sessionId   the session ID (validated by AbstractClaudeTool)
      * @param projectPath the project path (validated by AbstractClaudeTool)
      * @param pluginRoot  the plugin root (validated by AbstractClaudeTool)
-     * @param envFile     the env file path (validated by AbstractClaudeTool)
      */
-    MinimalClaudeTool(String sessionId, Path projectPath, Path pluginRoot, Path envFile)
+    MinimalClaudeTool(String sessionId, Path projectPath, Path pluginRoot)
     {
-      super(sessionId, projectPath, pluginRoot, envFile);
+      super(sessionId, projectPath, pluginRoot);
     }
 
     @Override

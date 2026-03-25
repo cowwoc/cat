@@ -21,6 +21,7 @@ import io.github.cowwoc.cat.hooks.session.InjectSkillListing;
 import io.github.cowwoc.cat.hooks.session.SessionStartHandler;
 import io.github.cowwoc.cat.hooks.session.WarnUnknownTerminal;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,9 +41,10 @@ public final class SessionStartHook implements HookHandler
    * Creates a new SessionStartHook with the default handler list.
    *
    * @param scope the hook scope providing environment configuration
-   * @throws NullPointerException if {@code scope} is null
+   * @param envFile the path to the CLAUDE_ENV_FILE
+   * @throws NullPointerException if {@code scope} or {@code envFile} are null
    */
-  public SessionStartHook(ClaudeHook scope)
+  public SessionStartHook(ClaudeHook scope, Path envFile)
   {
     this(scope, List.of(
       new CheckDataMigration(scope),
@@ -53,7 +55,7 @@ public final class SessionStartHook implements HookHandler
       new InjectMainAgentRules(),
       new InjectSkillListing(),
       new InjectCriticalThinking(),
-      new InjectEnv(scope)));
+      new InjectEnv(scope, envFile)));
   }
 
   /**
@@ -78,7 +80,11 @@ public final class SessionStartHook implements HookHandler
    */
   public static void main(String[] args)
   {
-    HookRunner.execute(scope -> new SessionStartHook(scope), args);
+    String envFileValue = System.getenv("CLAUDE_ENV_FILE");
+    if (envFileValue == null || envFileValue.isBlank())
+      throw new AssertionError("CLAUDE_ENV_FILE is not set");
+    Path envFile = Path.of(envFileValue);
+    HookRunner.execute(scope -> new SessionStartHook(scope, envFile), args);
   }
 
   /**
