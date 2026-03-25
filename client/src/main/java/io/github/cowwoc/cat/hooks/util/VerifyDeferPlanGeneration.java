@@ -56,7 +56,7 @@ public final class VerifyDeferPlanGeneration
     {
       try
       {
-        run(args, scope, System.out);
+        System.exit(run(args, scope, System.out));
       }
       catch (IOException e)
       {
@@ -79,11 +79,11 @@ public final class VerifyDeferPlanGeneration
    * @param args  command-line arguments; optional first arg is PROJECT_ROOT
    * @param scope the JVM scope providing the project path when no argument is supplied
    * @param out   the output stream for results
+   * @return the process exit code: 0 if all checks passed, 1 if any check failed
    * @throws IOException          if a skill file cannot be read
    * @throws NullPointerException if {@code args}, {@code scope}, or {@code out} are null
    */
-  @SuppressWarnings("PMD.DoNotTerminateVM")
-  public static void run(String[] args, JvmScope scope, PrintStream out) throws IOException
+  public static int run(String[] args, JvmScope scope, PrintStream out) throws IOException
   {
     Path projectRoot;
     if (args.length >= 1)
@@ -192,8 +192,8 @@ public final class VerifyDeferPlanGeneration
     }
 
     out.println("=== Results: " + passed + " passed, " + failed + " failed ===");
-
     if (failed > 0)
-      System.exit(1);
+      return 1;
+    return 0;
   }
 }
