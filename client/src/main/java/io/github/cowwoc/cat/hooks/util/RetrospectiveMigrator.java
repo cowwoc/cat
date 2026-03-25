@@ -21,8 +21,10 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -30,7 +32,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * Migration script for retrospective files.
@@ -67,34 +68,21 @@ public final class RetrospectiveMigrator
 
   /**
    * Main method for command-line execution.
-   * <p>
-   * Migrates retrospective files to time-based split format and prints the JSON result to stdout.
    *
    * @param args command-line arguments: {@code [--dry-run] [project-dir]}
-   * @throws IOException if the operation fails
    */
-  public static void main(String[] args) throws IOException
+  public static void main(String[] args)
   {
-    boolean dryRun = false;
-    String projectPath = ".";
-
-    for (String arg : args)
-    {
-      if (arg.equals("--dry-run"))
-        dryRun = true;
-      else
-        projectPath = arg;
-    }
-
     try (ClaudeTool scope = new MainClaudeTool())
     {
       try
       {
-        RetrospectiveMigrator migrator = new RetrospectiveMigrator(scope);
-        MigrationResult result = migrator.migrate(Path.of(projectPath), dryRun);
-        for (String message : result.messages())
-          System.out.println(message);
-        System.out.println(scope.getJsonMapper().writeValueAsString(result.stats()));
+        run(scope, args, System.out);
+      }
+      catch (IllegalArgumentException | IOException e)
+      {
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
       catch (RuntimeException | AssertionError e)
       {
@@ -104,6 +92,44 @@ public final class RetrospectiveMigrator
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }
+  }
+
+  /**
+   * Migrates retrospective files to time-based split format and prints the JSON result to the output stream.
+   *
+   * @param scope the JVM scope
+   * @param args  command-line arguments: {@code [--dry-run] [project-dir]}
+   * @param out   the output stream to write to
+   * @throws NullPointerException if any of {@code scope}, {@code args}, or {@code out} are null
+   * @throws IOException          if the operation fails
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+
+    boolean dryRun = false;
+    String projectPath = ".";
+
+    for (String arg : args)
+    {
+      if (arg.equals("--dry-run"))
+        dryRun = true;
+      else if (!arg.startsWith("--"))
+        projectPath = arg;
+      else
+      {
+        throw new IllegalArgumentException(
+          "Unknown argument: " + arg + ". Valid arguments: --dry-run, <project-path>");
+      }
+    }
+
+    RetrospectiveMigrator migrator = new RetrospectiveMigrator(scope);
+    MigrationResult result = migrator.migrate(Path.of(projectPath), dryRun);
+    for (String message : result.messages())
+      out.println(message);
+    out.println(scope.getJsonMapper().writeValueAsString(result.stats()));
   }
 
 

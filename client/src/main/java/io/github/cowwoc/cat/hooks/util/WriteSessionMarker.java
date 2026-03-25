@@ -111,7 +111,7 @@ public final class WriteSessionMarker implements SkillOutput
       {
         run(scope, args, System.out);
       }
-      catch (IOException e)
+      catch (IllegalArgumentException | IOException e)
       {
         System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));

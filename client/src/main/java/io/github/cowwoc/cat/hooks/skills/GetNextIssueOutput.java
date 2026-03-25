@@ -6,8 +6,14 @@
  */
 package io.github.cowwoc.cat.hooks.skills;
 
+import java.io.PrintStream;
+import java.util.Objects;
+
 import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
+
+import static io.github.cowwoc.cat.hooks.Strings.block;
 import io.github.cowwoc.cat.hooks.util.IssueDiscovery;
 import io.github.cowwoc.cat.hooks.util.IssueGoalReader;
 import io.github.cowwoc.cat.hooks.util.IssueLock;
@@ -78,9 +84,9 @@ public final class GetNextIssueOutput implements SkillOutput
         case "--session-id" -> sessionId = args[i + 1];
         case "--project-dir" -> projectPath = args[i + 1];
         case "--exclude-pattern" -> excludePattern = args[i + 1];
-        default ->
-        {
-        }
+        default -> throw new IllegalArgumentException(
+          "Unknown argument: " + args[i] + ". Valid arguments: --completed-issue, --target-branch, " +
+            "--session-id, --project-dir, --exclude-pattern");
       }
     }
     return new ParsedArgs(completedIssue, targetBranch, sessionId, projectPath, excludePattern);
@@ -147,47 +153,59 @@ public final class GetNextIssueOutput implements SkillOutput
    */
   public static void main(String[] args)
   {
+    try (ClaudeTool scope = new MainClaudeTool())
+    {
+      try
+      {
+        run(scope, args, System.out);
+      }
+      catch (IllegalArgumentException | IOException e)
+      {
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(GetNextIssueOutput.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+    }
+  }
+
+  /**
+   * Executes the next issue output logic with a caller-provided output stream.
+   *
+   * @param scope the JVM scope (must implement {@link ClaudeTool})
+   * @param args  command line arguments
+   * @param out   the output stream to write to
+   * @throws NullPointerException     if {@code scope}, {@code args} or {@code out} are null
+   * @throws IllegalArgumentException if required arguments are missing
+   * @throws IOException              if an I/O error occurs
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+
     ParsedArgs parsed = parseArgs(args);
-    try
-    {
-      String completedIssue = parsed.completedIssue();
-      String targetBranch = parsed.targetBranch();
-      String sessionId = parsed.sessionId();
-      String projectPath = parsed.projectPath();
-      String excludePattern = parsed.excludePattern();
+    String completedIssue = parsed.completedIssue();
+    String targetBranch = parsed.targetBranch();
+    String sessionId = parsed.sessionId();
+    String projectPath = parsed.projectPath();
+    String excludePattern = parsed.excludePattern();
 
-      if (completedIssue.isEmpty() || targetBranch.isEmpty() || sessionId.isEmpty() || projectPath.isEmpty())
-      {
-        System.err.println("Usage: GetNextIssueOutput --completed-issue ID --target-branch BRANCH " +
-          "--session-id ID --project-dir DIR [--exclude-pattern GLOB]");
-        System.exit(1);
-        return;
-      }
-
-      try (ClaudeTool scope = new MainClaudeTool())
-      {
-        GetNextIssueOutput output = new GetNextIssueOutput(scope);
-        String box = output.getNextIssueBox(completedIssue, targetBranch, sessionId, projectPath, excludePattern);
-        System.out.println(box);
-      }
-    }
-    catch (Exception e)
+    if (completedIssue.isEmpty() || targetBranch.isEmpty() || sessionId.isEmpty() || projectPath.isEmpty())
     {
-      Logger log = LoggerFactory.getLogger(GetNextIssueOutput.class);
-      log.error("ERROR generating next issue box", e);
-      System.out.println();
-      String completedIssue = parsed.completedIssue();
-      String targetBranch = parsed.targetBranch();
-      if (!completedIssue.isEmpty())
-      {
-        if (targetBranch.isEmpty())
-          System.out.println(completedIssue + " merged.");
-        else
-          System.out.println(completedIssue + " merged to " + targetBranch + ".");
-      }
-      System.out.println();
-      System.exit(1);
+      throw new IllegalArgumentException("Usage: GetNextIssueOutput --completed-issue ID " +
+        "--target-branch BRANCH --session-id ID --project-dir DIR [--exclude-pattern GLOB]");
     }
+
+    GetNextIssueOutput output = new GetNextIssueOutput((ClaudeTool) scope);
+    String box = output.getNextIssueBox(completedIssue, targetBranch, sessionId, projectPath, excludePattern);
+    out.println(box);
   }
 
   /**

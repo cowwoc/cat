@@ -292,6 +292,11 @@ public final class GitMergeLinear
       {
         run(scope, args, System.out);
       }
+      catch (IllegalArgumentException e)
+      {
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
       catch (RuntimeException | AssertionError e)
       {
         Logger log = LoggerFactory.getLogger(GitMergeLinear.class);

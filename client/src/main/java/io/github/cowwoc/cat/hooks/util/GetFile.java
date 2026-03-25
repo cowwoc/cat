@@ -13,6 +13,7 @@ import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -78,6 +79,12 @@ public final class GetFile implements SkillOutput
         "catAgentId is required as the first argument but was not provided. " +
           "Usage: get-file <catAgentId> <file-path>");
     }
+    if (args.length > 2)
+    {
+      throw new IllegalArgumentException(
+        "Expected exactly 2 arguments (catAgentId, file-path), got " + args.length + ". " +
+          "Usage: get-file <catAgentId> <file-path>");
+    }
     if (args[1].isBlank())
     {
       throw new IllegalArgumentException(
@@ -119,9 +126,6 @@ public final class GetFile implements SkillOutput
 
   /**
    * Main method for command-line execution.
-   * <p>
-   * Invoked as: java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.util.GetFile
-   * catAgentId file-path
    *
    * @param args command-line arguments: catAgentId file-path
    */
@@ -131,15 +135,12 @@ public final class GetFile implements SkillOutput
     {
       try
       {
-        GetFile getFile = new GetFile(scope);
-        String result = getFile.getOutput(args);
-        System.out.print(result);
+        run(scope, args, System.out);
       }
-      catch (IOException e)
+      catch (IllegalArgumentException e)
       {
-        Logger log = LoggerFactory.getLogger(GetFile.class);
-        log.error("Error reading file", e);
-        System.out.println(block(scope, e.getMessage()));
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
       catch (RuntimeException | AssertionError e)
       {
@@ -148,6 +149,33 @@ public final class GetFile implements SkillOutput
         System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
+    }
+  }
+
+  /**
+   * Executes the get-file command, writing the result to the given output stream.
+   *
+   * @param scope the JVM scope
+   * @param args  command-line arguments: catAgentId file-path
+   * @param out   the output stream to write to
+   * @throws NullPointerException if any of {@code scope}, {@code args}, or {@code out} are null
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out)
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+    try
+    {
+      GetFile getFile = new GetFile(scope);
+      String result = getFile.getOutput(args);
+      out.print(result);
+    }
+    catch (IOException e)
+    {
+      Logger log = LoggerFactory.getLogger(GetFile.class);
+      log.error("Error reading file", e);
+      out.println(block(scope, e.getMessage()));
     }
   }
 }

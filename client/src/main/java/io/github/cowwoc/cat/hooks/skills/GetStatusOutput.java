@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.hooks.skills;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import java.util.stream.Stream;
 
 import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.IssueStatus;
 import io.github.cowwoc.cat.hooks.licensing.LicenseResult;
@@ -1259,14 +1261,12 @@ public final class GetStatusOutput implements SkillOutput
     {
       try
       {
-        GetStatusOutput generator = new GetStatusOutput(scope);
-        String output = generator.getOutput(args);
-        System.out.println(output);
+        run(scope, args, System.out);
       }
-      catch (IOException e)
+      catch (IllegalArgumentException | IOException e)
       {
-        System.err.println("Error generating status: " + e.getMessage());
-        System.exit(1);
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
       catch (RuntimeException | AssertionError e)
       {
@@ -1276,5 +1276,24 @@ public final class GetStatusOutput implements SkillOutput
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }
+  }
+
+  /**
+   * Executes the status output logic with a caller-provided output stream.
+   *
+   * @param scope the JVM scope (must implement {@link ClaudeTool})
+   * @param args  command line arguments
+   * @param out   the output stream to write to
+   * @throws NullPointerException if {@code scope}, {@code args} or {@code out} are null
+   * @throws IOException          if an I/O error occurs
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+    GetStatusOutput generator = new GetStatusOutput((ClaudeTool) scope);
+    String output = generator.getOutput(args);
+    out.println(output);
   }
 }

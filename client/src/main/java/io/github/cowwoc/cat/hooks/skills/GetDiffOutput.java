@@ -2252,7 +2252,7 @@ public final class GetDiffOutput implements SkillOutput
    *
    * @param args command line arguments (unused)
    */
-  public static void main(String[] args)
+  public static void main(String[] args) throws IOException
   {
     try (ClaudeTool scope = new MainClaudeTool())
     {
@@ -2269,10 +2269,11 @@ public final class GetDiffOutput implements SkillOutput
    * @param scope the JVM scope
    * @param args  command-line arguments
    * @param out   the output stream to write output to
-   * @throws NullPointerException if {@code args} or {@code out} are null
+   * @throws NullPointerException if {@code scope}, {@code args} or {@code out} are null
    */
   public static void run(JvmScope scope, String[] args, PrintStream out)
   {
+    requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();
     requireThat(out, "out").isNotNull();
 

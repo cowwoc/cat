@@ -6,12 +6,20 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
+import static io.github.cowwoc.cat.hooks.Strings.block;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.MainJvmScope;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
@@ -70,12 +78,50 @@ public final class StatusAlignmentValidator
    * Reads input from stdin, validates alignment, and writes the result to stdout.
    *
    * @param args command-line arguments (unused)
-   * @throws IOException if reading from stdin fails
    */
-  public static void main(String[] args) throws IOException
+  public static void main(String[] args)
   {
-    String input = new String(System.in.readAllBytes(), StandardCharsets.UTF_8);
-    System.out.println(validateAndFormat(input));
+    try (JvmScope scope = new MainJvmScope())
+    {
+      try
+      {
+        run(scope, args, System.in, System.out);
+      }
+      catch (IllegalArgumentException | IOException e)
+      {
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(StatusAlignmentValidator.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+    }
+  }
+
+  /**
+   * Reads input from the given stream, validates alignment, and writes the result to the output stream.
+   *
+   * @param scope the JVM scope
+   * @param args  command-line arguments (unused)
+   * @param in    the input stream to read from
+   * @param out   the output stream to write to
+   * @throws NullPointerException if any of {@code scope}, {@code args}, {@code in}, or {@code out} are null
+   * @throws IOException          if reading from the input stream fails
+   */
+  public static void run(JvmScope scope, String[] args, InputStream in, PrintStream out) throws IOException
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(in, "in").isNotNull();
+    requireThat(out, "out").isNotNull();
+    if (args.length > 0)
+      throw new IllegalArgumentException("Unexpected arguments: " + String.join(" ", args));
+    String input = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+    out.println(validateAndFormat(input));
   }
 
   /**

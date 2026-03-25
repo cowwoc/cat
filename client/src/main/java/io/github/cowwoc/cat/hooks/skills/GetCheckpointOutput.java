@@ -14,6 +14,7 @@ import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -90,73 +91,18 @@ public final class GetCheckpointOutput implements SkillOutput
    *
    * @param args command line arguments
    */
-  public static void main(String[] args)
+  public static void main(String[] args) throws IOException
   {
-    if (args.length < 2)
-    {
-      System.err.println("Usage: GetCheckpointOutput --type TYPE [options]");
-      System.exit(1);
-    }
-
     try (ClaudeTool scope = new MainClaudeTool())
     {
       try
       {
-        String type = "";
-        String issueName = "";
-        String tokens = "";
-        String percent = "";
-        String branch = "";
-        String iteration = "";
-        String total = "";
-
-        for (int i = 0; i + 1 < args.length; i += 2)
-        {
-          switch (args[i])
-          {
-            case "--type" -> type = args[i + 1];
-            case "--issue-name" -> issueName = args[i + 1];
-            case "--tokens" -> tokens = args[i + 1];
-            case "--percent" -> percent = args[i + 1];
-            case "--branch" -> branch = args[i + 1];
-            case "--iteration" -> iteration = args[i + 1];
-            case "--total" -> total = args[i + 1];
-            default ->
-            {
-            }
-          }
-        }
-
-        GetCheckpointOutput output = new GetCheckpointOutput(scope);
-
-        switch (type)
-        {
-          case "issue-complete" ->
-          {
-            if (tokens.isEmpty() || percent.isEmpty())
-            {
-              System.err.println("--tokens and --percent required for issue-complete type");
-              System.exit(1);
-            }
-            String box = output.getCheckpointIssueComplete(issueName, tokens, percent, branch);
-            System.out.println(box);
-          }
-          case "feedback-applied" ->
-          {
-            if (iteration.isEmpty() || tokens.isEmpty() || total.isEmpty())
-            {
-              System.err.println("--iteration, --tokens, and --total required for feedback-applied type");
-              System.exit(1);
-            }
-            String box = output.getCheckpointFeedbackApplied(issueName, iteration, tokens, total, branch);
-            System.out.println(box);
-          }
-          default ->
-          {
-            System.err.println("Invalid type: " + type);
-            System.exit(1);
-          }
-        }
+        run(scope, args, System.out);
+      }
+      catch (IllegalArgumentException e)
+      {
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
       catch (RuntimeException | AssertionError e)
       {
@@ -165,11 +111,71 @@ public final class GetCheckpointOutput implements SkillOutput
         System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
-      catch (Exception e)
+    }
+  }
+
+  /**
+   * Executes the checkpoint output logic with a caller-provided output stream.
+   *
+   * @param scope the JVM scope
+   * @param args  command line arguments
+   * @param out   the output stream to write to
+   * @throws NullPointerException     if {@code scope}, {@code args} or {@code out} are null
+   * @throws IllegalArgumentException if arguments are invalid
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out)
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+    if (args.length < 2)
+      throw new IllegalArgumentException("Usage: GetCheckpointOutput --type TYPE [options]");
+
+    String type = "";
+    String issueName = "";
+    String tokens = "";
+    String percent = "";
+    String branch = "";
+    String iteration = "";
+    String total = "";
+
+    for (int i = 0; i + 1 < args.length; i += 2)
+    {
+      switch (args[i])
       {
-        System.err.println("Error: " + e.getMessage());
-        System.exit(1);
+        case "--type" -> type = args[i + 1];
+        case "--issue-name" -> issueName = args[i + 1];
+        case "--tokens" -> tokens = args[i + 1];
+        case "--percent" -> percent = args[i + 1];
+        case "--branch" -> branch = args[i + 1];
+        case "--iteration" -> iteration = args[i + 1];
+        case "--total" -> total = args[i + 1];
+        default -> throw new IllegalArgumentException(
+          "Unknown argument: " + args[i] + ". Valid arguments: --type, --issue-name, --tokens, " +
+            "--percent, --branch, --iteration, --total");
       }
+    }
+
+    GetCheckpointOutput output = new GetCheckpointOutput(scope);
+
+    switch (type)
+    {
+      case "issue-complete" ->
+      {
+        if (tokens.isEmpty() || percent.isEmpty())
+          throw new IllegalArgumentException("--tokens and --percent required for issue-complete type");
+        String box = output.getCheckpointIssueComplete(issueName, tokens, percent, branch);
+        out.println(box);
+      }
+      case "feedback-applied" ->
+      {
+        if (iteration.isEmpty() || tokens.isEmpty() || total.isEmpty())
+          throw new IllegalArgumentException(
+            "--iteration, --tokens, and --total required for feedback-applied type");
+        String box = output.getCheckpointFeedbackApplied(issueName, iteration, tokens, total, branch);
+        out.println(box);
+      }
+      default -> throw new IllegalArgumentException("Invalid type: " + type);
     }
   }
 

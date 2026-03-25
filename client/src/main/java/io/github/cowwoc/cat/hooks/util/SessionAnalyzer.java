@@ -21,6 +21,7 @@ import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -521,6 +522,33 @@ public final class SessionAnalyzer
 
   /**
    * Main method for command-line execution.
+   *
+   * @param args command-line arguments
+   */
+  public static void main(String[] args)
+  {
+    try (ClaudeTool scope = new MainClaudeTool())
+    {
+      try
+      {
+        run(scope, args, System.out);
+      }
+      catch (IllegalArgumentException | IOException e)
+      {
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        LoggerFactory.getLogger(SessionAnalyzer.class).error("Unexpected error", e);
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+    }
+  }
+
+  /**
+   * Executes the session analysis command.
    * <p>
    * Subcommands:
    * <ul>
@@ -533,82 +561,71 @@ public final class SessionAnalyzer
    *   <li>{@code file-history <session-id> <path-pattern>} — trace tool uses referencing a path pattern</li>
    * </ul>
    *
-   * @param args command-line arguments
-   * @throws IOException if the operation fails
+   * @param scope the JVM scope
+   * @param args  command-line arguments
+   * @param out   the output stream to write to
+   * @throws NullPointerException     if any of {@code scope}, {@code args}, or {@code out} are null
+   * @throws IllegalArgumentException if the arguments are invalid
+   * @throws IOException              if the operation fails
    */
-  public static void main(String[] args) throws IOException
+  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
   {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+
     if (args.length < 1)
     {
-      System.err.println("""
+      throw new IllegalArgumentException("""
         Usage: SessionAnalyzer <session-id>
                SessionAnalyzer analyze <session-id>
                SessionAnalyzer search <session-id> <pattern> [--context N] [--regex]
                SessionAnalyzer errors <session-id>
                SessionAnalyzer file-history <session-id> <path-pattern>""");
-      System.exit(1);
     }
-    try (ClaudeTool scope = new MainClaudeTool())
+
+    SessionAnalyzer analyzer = new SessionAnalyzer(scope);
+    String firstArg = args[0];
+    JsonNode result;
+    switch (firstArg)
     {
-      try
+      case "analyze" ->
       {
-        SessionAnalyzer analyzer = new SessionAnalyzer(scope);
-        String firstArg = args[0];
-        JsonNode result;
-        switch (firstArg)
-        {
-          case "analyze" ->
-          {
-            if (args.length < 2)
-            {
-              System.err.println("Usage: SessionAnalyzer analyze <session-id>");
-              System.exit(1);
-            }
-            result = analyzer.analyzeSession(analyzer.resolveSessionPath(args[1]));
-          }
-          case "search" ->
-          {
-            if (args.length < 3)
-            {
-              System.err.println(
-                "Usage: SessionAnalyzer search <session-id> <pattern> [--context N] [--regex]");
-              System.exit(1);
-            }
-            result = runSearchCommand(analyzer, args);
-          }
-          case "errors" ->
-          {
-            if (args.length < 2)
-            {
-              System.err.println("Usage: SessionAnalyzer errors <session-id>");
-              System.exit(1);
-            }
-            result = analyzer.errors(analyzer.resolveSessionPath(args[1]));
-          }
-          case "file-history" ->
-          {
-            if (args.length < 3)
-            {
-              System.err.println("Usage: SessionAnalyzer file-history <session-id> <path-pattern>");
-              System.exit(1);
-            }
-            result = analyzer.fileHistory(analyzer.resolveSessionPath(args[1]), args[2]);
-          }
-          default ->
-          {
-            // No subcommand given — treat first arg as session ID for analyze
-            result = analyzer.analyzeSession(analyzer.resolveSessionPath(firstArg));
-          }
-        }
-        System.out.println(scope.getJsonMapper().writeValueAsString(result));
+        if (args.length < 2)
+          throw new IllegalArgumentException("Usage: SessionAnalyzer analyze <session-id>");
+        result = analyzer.analyzeSession(analyzer.resolveSessionPath(args[1]));
       }
-      catch (RuntimeException | AssertionError e)
+      case "search" ->
       {
-        LoggerFactory.getLogger(SessionAnalyzer.class).error("Unexpected error", e);
-        System.out.println(block(scope,
-          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+        if (args.length < 3)
+        {
+          throw new IllegalArgumentException(
+            "Usage: SessionAnalyzer search <session-id> <pattern> [--context N] [--regex]");
+        }
+        result = runSearchCommand(analyzer, args);
+      }
+      case "errors" ->
+      {
+        if (args.length < 2)
+          throw new IllegalArgumentException("Usage: SessionAnalyzer errors <session-id>");
+        result = analyzer.errors(analyzer.resolveSessionPath(args[1]));
+      }
+      case "file-history" ->
+      {
+        if (args.length < 3)
+        {
+          throw new IllegalArgumentException(
+            "Usage: SessionAnalyzer file-history <session-id> <path-pattern>");
+        }
+        result = analyzer.fileHistory(analyzer.resolveSessionPath(args[1]), args[2]);
+      }
+      default ->
+      {
+        // No subcommand given — treat first arg as session ID for analyze
+        result = analyzer.analyzeSession(analyzer.resolveSessionPath(firstArg));
       }
     }
+    out.println(scope.getJsonMapper().writeValueAsString(result));
   }
 
   /**
@@ -621,7 +638,6 @@ public final class SessionAnalyzer
    * @return the search result JSON
    * @throws IOException if the session file cannot be read
    */
-  @SuppressWarnings("PMD.DoNotTerminateVM")
   private static JsonNode runSearchCommand(SessionAnalyzer analyzer, String[] args) throws IOException
   {
     Path filePath = analyzer.resolveSessionPath(args[1]);
@@ -639,23 +655,14 @@ public final class SessionAnalyzer
         }
         catch (NumberFormatException _)
         {
-          System.err.println("Error: --context requires an integer value, got: " + args[i + 1]);
-          System.exit(1);
+          throw new IllegalArgumentException(
+            "--context requires an integer value, got: " + args[i + 1]);
         }
       }
       else if (args[i].equals("--regex"))
         useRegex = true;
     }
-    try
-    {
-      return analyzer.search(filePath, pattern, contextLines, useRegex);
-    }
-    catch (IllegalArgumentException e)
-    {
-      System.err.println("Error: " + e.getMessage());
-      System.exit(1);
-      return null;
-    }
+    return analyzer.search(filePath, pattern, contextLines, useRegex);
   }
 
   /**

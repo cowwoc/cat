@@ -22,14 +22,15 @@ import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * Extracts investigation context from a Claude session JSONL file for the learn skill.
@@ -79,27 +80,21 @@ public final class InvestigationContextExtractor
 
   /**
    * Main method for command-line execution.
-   * <p>
-   * Resolves the session file path from the scope and extracts investigation context, printing the JSON result
-   * to stdout. All command-line arguments are treated as keywords for filtering Bash commands.
    *
    * @param args optional keyword arguments to filter Bash commands
-   * @throws IOException if the operation fails
    */
-  public static void main(String[] args) throws IOException
+  public static void main(String[] args)
   {
     try (ClaudeTool scope = new MainClaudeTool())
     {
       try
       {
-        InvestigationContextExtractor extractor = new InvestigationContextExtractor(scope);
-        String envSessionId = scope.getSessionId();
-        Path sessionFile = scope.getClaudeSessionsPath().resolve(envSessionId + ".jsonl");
-        List<String> keywords = new ArrayList<>();
-        for (String arg : args)
-          keywords.add(arg);
-        JsonNode result = extractor.extract(sessionFile, keywords);
-        System.out.println(scope.getJsonMapper().writeValueAsString(result));
+        run(scope, args, System.out);
+      }
+      catch (IllegalArgumentException | IOException e)
+      {
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
       catch (RuntimeException | AssertionError e)
       {
@@ -109,6 +104,32 @@ public final class InvestigationContextExtractor
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }
+  }
+
+  /**
+   * Resolves the session file path from the scope and extracts investigation context, writing the JSON result
+   * to the output stream.
+   *
+   * @param scope the JVM scope (must be a {@link ClaudeTool} to access session ID)
+   * @param args  optional keyword arguments to filter Bash commands
+   * @param out   the output stream to write to
+   * @throws NullPointerException if any of {@code scope}, {@code args}, or {@code out} are null
+   * @throws IOException          if the operation fails
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+    ClaudeTool claudeTool = (ClaudeTool) scope;
+    InvestigationContextExtractor extractor = new InvestigationContextExtractor(scope);
+    String envSessionId = claudeTool.getSessionId();
+    Path sessionFile = claudeTool.getClaudeSessionsPath().resolve(envSessionId + ".jsonl");
+    List<String> keywords = new ArrayList<>();
+    for (String arg : args)
+      keywords.add(arg);
+    JsonNode result = extractor.extract(sessionFile, keywords);
+    out.println(scope.getJsonMapper().writeValueAsString(result));
   }
 
   /**

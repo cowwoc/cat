@@ -6,11 +6,20 @@
  */
 package io.github.cowwoc.cat.hooks.skills;
 
+import java.io.PrintStream;
+import java.util.Objects;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.Strings;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
+
+import static io.github.cowwoc.cat.hooks.Strings.block;
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
@@ -34,8 +43,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
-import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
  * Output generator for /cat:retrospective skill.
@@ -969,18 +976,40 @@ public final class GetRetrospectiveOutput implements SkillOutput
    *
    * @param args command line arguments (unused)
    */
-  public static void main(String[] args)
+  public static void main(String[] args) throws IOException
   {
     try (ClaudeTool scope = new MainClaudeTool())
     {
-      GetRetrospectiveOutput generator = new GetRetrospectiveOutput(scope);
-      String output = generator.getOutput(args);
-      System.out.print(output);
+      try
+      {
+        run(scope, args, System.out);
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(GetRetrospectiveOutput.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
     }
-    catch (IOException e)
-    {
-      System.err.println("Error generating retrospective output: " + e.getMessage());
-      System.exit(1);
-    }
+  }
+
+  /**
+   * Executes the retrospective output logic with a caller-provided output stream.
+   *
+   * @param scope the JVM scope
+   * @param args  command line arguments
+   * @param out   the output stream to write to
+   * @throws NullPointerException if {@code scope}, {@code args} or {@code out} are null
+   * @throws IOException          if an I/O error occurs
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+    GetRetrospectiveOutput generator = new GetRetrospectiveOutput(scope);
+    String output = generator.getOutput(args);
+    out.print(output);
   }
 }

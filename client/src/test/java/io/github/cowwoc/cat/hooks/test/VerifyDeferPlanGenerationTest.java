@@ -74,14 +74,14 @@ public final class VerifyDeferPlanGenerationTest
   public void allChecksPass() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-defer-");
-    try (JvmScope scope = new TestClaudeTool())
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       writeAddSkill(tempDir, "Some content with planTempFile=$(mktemp but no plan builder ref");
       writeWorkImplementSkill(tempDir, "Content with hasSteps and cat:plan-builder-agent invocation");
 
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, false, UTF_8);
-      int exitCode = VerifyDeferPlanGeneration.run(new String[]{tempDir.toString()}, scope, out);
+      int exitCode = VerifyDeferPlanGeneration.run(scope, new String[]{tempDir.toString()}, out);
       String output = buffer.toString(UTF_8);
 
       requireThat(exitCode, "exitCode").isEqualTo(0);
@@ -106,7 +106,7 @@ public final class VerifyDeferPlanGenerationTest
   public void check1FailsWhenPlanBuilderPresent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-defer-");
-    try (JvmScope scope = new TestClaudeTool())
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       writeAddSkill(tempDir,
         "Content with planTempFile=$(mktemp and cat:plan-builder-agent present");
@@ -114,7 +114,7 @@ public final class VerifyDeferPlanGenerationTest
 
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, false, UTF_8);
-      int exitCode = VerifyDeferPlanGeneration.run(new String[]{tempDir.toString()}, scope, out);
+      int exitCode = VerifyDeferPlanGeneration.run(scope, new String[]{tempDir.toString()}, out);
       String output = buffer.toString(UTF_8);
 
       requireThat(exitCode, "exitCode").isEqualTo(1);
@@ -139,14 +139,14 @@ public final class VerifyDeferPlanGenerationTest
   public void check2FailsWhenLightweightPlanMissing() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-defer-");
-    try (JvmScope scope = new TestClaudeTool())
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       writeAddSkill(tempDir, "Content without the lightweight plan block");
       writeWorkImplementSkill(tempDir, "Content with hasSteps and cat:plan-builder-agent invocation");
 
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, false, UTF_8);
-      int exitCode = VerifyDeferPlanGeneration.run(new String[]{tempDir.toString()}, scope, out);
+      int exitCode = VerifyDeferPlanGeneration.run(scope, new String[]{tempDir.toString()}, out);
       String output = buffer.toString(UTF_8);
 
       requireThat(exitCode, "exitCode").isEqualTo(1);
@@ -171,14 +171,14 @@ public final class VerifyDeferPlanGenerationTest
   public void check3FailsWhenHasStepsMissing() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-defer-");
-    try (JvmScope scope = new TestClaudeTool())
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       writeAddSkill(tempDir, "Content with planTempFile=$(mktemp but no plan builder ref");
       writeWorkImplementSkill(tempDir, "Content with cat:plan-builder-agent but no steps check");
 
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, false, UTF_8);
-      int exitCode = VerifyDeferPlanGeneration.run(new String[]{tempDir.toString()}, scope, out);
+      int exitCode = VerifyDeferPlanGeneration.run(scope, new String[]{tempDir.toString()}, out);
       String output = buffer.toString(UTF_8);
 
       requireThat(exitCode, "exitCode").isEqualTo(1);
@@ -203,14 +203,14 @@ public final class VerifyDeferPlanGenerationTest
   public void check4FailsWhenPlanBuilderMissing() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-defer-");
-    try (JvmScope scope = new TestClaudeTool())
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       writeAddSkill(tempDir, "Content with planTempFile=$(mktemp but no plan builder ref");
       writeWorkImplementSkill(tempDir, "Content with hasSteps but no plan builder agent");
 
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, false, UTF_8);
-      int exitCode = VerifyDeferPlanGeneration.run(new String[]{tempDir.toString()}, scope, out);
+      int exitCode = VerifyDeferPlanGeneration.run(scope, new String[]{tempDir.toString()}, out);
       String output = buffer.toString(UTF_8);
 
       requireThat(exitCode, "exitCode").isEqualTo(1);
@@ -235,13 +235,13 @@ public final class VerifyDeferPlanGenerationTest
   public void missingAddSkillFile() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-defer-");
-    try (JvmScope scope = new TestClaudeTool())
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       writeWorkImplementSkill(tempDir, "Content with hasSteps and cat:plan-builder-agent invocation");
 
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, false, UTF_8);
-      int exitCode = VerifyDeferPlanGeneration.run(new String[]{tempDir.toString()}, scope, out);
+      int exitCode = VerifyDeferPlanGeneration.run(scope, new String[]{tempDir.toString()}, out);
       String output = buffer.toString(UTF_8);
 
       requireThat(exitCode, "exitCode").isEqualTo(1);
@@ -268,13 +268,13 @@ public final class VerifyDeferPlanGenerationTest
   public void missingWorkImplementSkillFile() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-defer-");
-    try (JvmScope scope = new TestClaudeTool())
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       writeAddSkill(tempDir, "Content with planTempFile=$(mktemp but no plan builder ref");
 
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, false, UTF_8);
-      int exitCode = VerifyDeferPlanGeneration.run(new String[]{tempDir.toString()}, scope, out);
+      int exitCode = VerifyDeferPlanGeneration.run(scope, new String[]{tempDir.toString()}, out);
       String output = buffer.toString(UTF_8);
 
       requireThat(exitCode, "exitCode").isEqualTo(1);
@@ -300,11 +300,11 @@ public final class VerifyDeferPlanGenerationTest
   public void bothSkillFilesMissing() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-defer-");
-    try (JvmScope scope = new TestClaudeTool())
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, false, UTF_8);
-      int exitCode = VerifyDeferPlanGeneration.run(new String[]{tempDir.toString()}, scope, out);
+      int exitCode = VerifyDeferPlanGeneration.run(scope, new String[]{tempDir.toString()}, out);
       String output = buffer.toString(UTF_8);
 
       requireThat(exitCode, "exitCode").isEqualTo(1);
@@ -337,7 +337,7 @@ public final class VerifyDeferPlanGenerationTest
 
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, false, UTF_8);
-      int exitCode = VerifyDeferPlanGeneration.run(new String[]{}, scope, out);
+      int exitCode = VerifyDeferPlanGeneration.run(scope, new String[]{}, out);
       String output = buffer.toString(UTF_8);
 
       requireThat(exitCode, "exitCode").isEqualTo(0);

@@ -6,17 +6,23 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
+import static io.github.cowwoc.cat.hooks.Strings.block;
+
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.skills.JsonHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -185,6 +191,11 @@ public final class RootCauseAnalyzer
           throw new IllegalArgumentException("--start-id requires a value");
         }
       }
+      else
+      {
+        throw new IllegalArgumentException(
+          "Unknown argument: " + args[i] + ". Valid arguments: --start-id <N>");
+      }
     }
 
     return startId;
@@ -220,27 +231,46 @@ public final class RootCauseAnalyzer
   {
     try (ClaudeTool scope = new MainClaudeTool())
     {
-      int startId;
       try
       {
-        startId = parseStartId(args);
+        run(scope, args, System.out);
       }
-      catch (IllegalArgumentException e)
+      catch (IllegalArgumentException | IOException e)
       {
-        System.err.println(e.getMessage());
-        System.exit(1);
-        return;
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(RootCauseAnalyzer.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+    }
+  }
 
-      Path projectPath = scope.getProjectPath();
-      RootCauseAnalyzer analyzer = new RootCauseAnalyzer(projectPath, scope);
-      String result = analyzer.analyze(startId);
-      System.out.println(result);
-    }
-    catch (IOException e)
-    {
-      System.err.println("Error: " + e.getMessage());
-      System.exit(1);
-    }
+  /**
+   * Executes the root cause analysis.
+   *
+   * @param scope the JVM scope
+   * @param args  command-line arguments: [--start-id N]
+   * @param out   the output stream to write to
+   * @throws NullPointerException     if any of {@code scope}, {@code args}, or {@code out} are null
+   * @throws IllegalArgumentException if the start-id argument is invalid
+   * @throws IOException              if file operations fail
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+
+    int startId = parseStartId(args);
+    ClaudeTool claudeTool = (ClaudeTool) scope;
+    Path projectPath = claudeTool.getProjectPath();
+    RootCauseAnalyzer analyzer = new RootCauseAnalyzer(projectPath, scope);
+    String result = analyzer.analyze(startId);
+    out.println(result);
   }
 }

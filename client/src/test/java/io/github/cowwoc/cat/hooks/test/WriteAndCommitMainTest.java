@@ -113,4 +113,26 @@ public class WriteAndCommitMainTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that an unknown 4th argument throws IllegalArgumentException.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Unknown argument.*--bogus.*")
+  public void unknownFourthArgThrowsException() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("write-and-commit-main-test-");
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+      WriteAndCommit.run(scope, new String[]{"file", "content", "msg", "--bogus"}, out);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }

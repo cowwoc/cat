@@ -22,11 +22,12 @@ import tools.jackson.databind.node.ObjectNode;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Objects;
 
 /**
  * Merge issue branch and clean up worktree, branch, and lock.
@@ -436,47 +437,19 @@ public final class MergeAndCleanup
    * Main method for command-line execution.
    *
    * @param args command-line arguments
-   * @throws IOException if the operation fails
    */
-  public static void main(String[] args) throws IOException
+  public static void main(String[] args)
   {
     try (ClaudeTool scope = new MainClaudeTool())
     {
       try
       {
-        if (args.length < 4)
-        {
-          System.out.println(block(scope,
-            "Usage: merge-and-cleanup <project-dir> <issue-id> <session-id> <target-branch> [--worktree <path>]"));
-          return;
-        }
-
-        String projectPath = args[0];
-        String issueId = args[1];
-        String sessionId = args[2];
-        String targetBranch = args[3];
-        String worktreePath = "";
-
-        for (int i = 4; i < args.length; ++i)
-        {
-          if (args[i].equals("--worktree") && i + 1 < args.length)
-          {
-            worktreePath = args[i + 1];
-            ++i;
-          }
-        }
-
-        String pluginRoot = scope.getPluginRoot().toString();
-        MergeAndCleanup cmd = new MergeAndCleanup(scope);
-        try
-        {
-          String result = cmd.execute(projectPath, issueId, sessionId, targetBranch, worktreePath, pluginRoot);
-          System.out.println(result);
-        }
-        catch (IOException e)
-        {
-          System.out.println(block(scope, Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
-        }
+        run(scope, args, System.out);
+      }
+      catch (IllegalArgumentException | IOException e)
+      {
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
       catch (RuntimeException | AssertionError e)
       {
@@ -485,6 +458,60 @@ public final class MergeAndCleanup
         System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
+    }
+  }
+
+  /**
+   * Executes the merge-and-cleanup command.
+   *
+   * @param scope the JVM scope
+   * @param args  command-line arguments
+   * @param out   the output stream to write to
+   * @throws NullPointerException if any of {@code scope}, {@code args}, or {@code out} are null
+   * @throws IOException          if the operation fails
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+
+    if (args.length < 4)
+    {
+      out.println(block(scope,
+        "Usage: merge-and-cleanup <project-dir> <issue-id> <session-id> <target-branch> [--worktree <path>]"));
+      return;
+    }
+
+    String worktreePath = "";
+    for (int i = 4; i < args.length; ++i)
+    {
+      if (args[i].equals("--worktree") && i + 1 < args.length)
+      {
+        worktreePath = args[i + 1];
+        ++i;
+      }
+      else
+      {
+        throw new IllegalArgumentException(
+          "Unknown argument: " + args[i] + ". Valid arguments: --worktree <path>");
+      }
+    }
+
+    String projectPath = args[0];
+    String issueId = args[1];
+    String sessionId = args[2];
+    String targetBranch = args[3];
+    String pluginRoot = scope.getPluginRoot().toString();
+    MergeAndCleanup cmd = new MergeAndCleanup(scope);
+    try
+    {
+      String result = cmd.execute(projectPath, issueId, sessionId, targetBranch, worktreePath, pluginRoot);
+      out.println(result);
+    }
+    catch (IOException e)
+    {
+      out.println(block(scope, Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }
 }

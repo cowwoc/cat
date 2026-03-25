@@ -6,9 +6,17 @@
  */
 package io.github.cowwoc.cat.hooks.skills;
 
+import java.io.PrintStream;
+import java.util.Objects;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
+
+import static io.github.cowwoc.cat.hooks.Strings.block;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -114,16 +122,47 @@ public final class GetStakeholderSelectionBox
    * </ul>
    *
    * @param args command-line arguments
-   * @throws IOException if the operation fails
    */
-  public static void main(String[] args) throws IOException
+  public static void main(String[] args)
   {
-    if (args.length != 4)
+    try (ClaudeTool scope = new MainClaudeTool())
     {
-      System.err.println("Expected 4 arguments but got " + args.length);
-      printUsage();
-      System.exit(1);
+      try
+      {
+        run(scope, args, System.out);
+      }
+      catch (IllegalArgumentException | IOException e)
+      {
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(GetStakeholderSelectionBox.class);
+        log.error("Unexpected error", e);
+        System.out.println(block(scope,
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
     }
+  }
+
+  /**
+   * Executes the stakeholder selection box logic with a caller-provided output stream.
+   *
+   * @param scope the JVM scope
+   * @param args  command line arguments: selected-count, total-count, running, skipped
+   * @param out   the output stream to write to
+   * @throws NullPointerException     if {@code scope}, {@code args} or {@code out} are null
+   * @throws IllegalArgumentException if the wrong number of arguments or invalid integers are provided
+   * @throws IOException              if an I/O error occurs
+   */
+  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(out, "out").isNotNull();
+    if (args.length != 4)
+      throw new IllegalArgumentException("Expected 4 arguments but got " + args.length);
 
     int selectedCount;
     try
@@ -132,10 +171,7 @@ public final class GetStakeholderSelectionBox
     }
     catch (NumberFormatException _)
     {
-      System.err.println("selected-count must be an integer but got: " + args[0]);
-      printUsage();
-      System.exit(1);
-      return;
+      throw new IllegalArgumentException("selected-count must be an integer but got: " + args[0]);
     }
     int totalCount;
     try
@@ -144,21 +180,15 @@ public final class GetStakeholderSelectionBox
     }
     catch (NumberFormatException _)
     {
-      System.err.println("total-count must be an integer but got: " + args[1]);
-      printUsage();
-      System.exit(1);
-      return;
+      throw new IllegalArgumentException("total-count must be an integer but got: " + args[1]);
     }
     String running = args[2];
     String skipped = args[3];
 
-    try (ClaudeTool scope = new MainClaudeTool())
-    {
-      GetStakeholderSelectionBox box = new GetStakeholderSelectionBox(scope);
-      List<String> runningList = parseCommaSeparated(running);
-      List<SkippedStakeholder> skippedList = parseSkipped(skipped);
-      System.out.print(box.getSelectionBox(selectedCount, totalCount, runningList, skippedList));
-    }
+    GetStakeholderSelectionBox box = new GetStakeholderSelectionBox(scope);
+    List<String> runningList = parseCommaSeparated(running);
+    List<SkippedStakeholder> skippedList = parseSkipped(skipped);
+    out.print(box.getSelectionBox(selectedCount, totalCount, runningList, skippedList));
   }
 
   /**
@@ -207,22 +237,5 @@ public final class GetStakeholderSelectionBox
         result.add(new SkippedStakeholder(name, reason));
     }
     return result;
-  }
-
-  /**
-   * Prints usage information to stderr.
-   */
-  private static void printUsage()
-  {
-    System.err.println("""
-      Usage:
-        get-stakeholder-selection-box <selected-count> <total-count> <running> <skipped>
-
-      Arguments:
-        selected-count  Number of stakeholders selected
-        total-count     Total number of stakeholders available
-        running         Comma-separated stakeholder names (e.g., "architect,design,testing")
-        skipped         Comma-separated colon pairs (e.g., "ux:No UI changes,sales:Internal tooling")
-      """);
   }
 }
