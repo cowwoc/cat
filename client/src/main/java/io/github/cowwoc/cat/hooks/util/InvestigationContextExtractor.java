@@ -10,9 +10,8 @@ import static io.github.cowwoc.cat.hooks.Strings.block;
 import static io.github.cowwoc.cat.hooks.skills.JsonHelper.getStringOrDefault;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
-
 import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,16 +61,16 @@ public final class InvestigationContextExtractor
    * Maximum number of characters to include in a Bash command preview in the timeline.
    */
   private static final int MAX_COMMAND_PREVIEW_LENGTH = 120;
-  private final JvmScope scope;
+  private final ClaudeTool scope;
   private final SessionAnalyzer sessionAnalyzer;
 
   /**
    * Creates a new investigation context extractor.
    *
-   * @param scope the JVM scope providing JSON mapper
+   * @param scope the Claude tool scope providing JSON mapper and session paths
    * @throws NullPointerException if {@code scope} is null
    */
-  public InvestigationContextExtractor(JvmScope scope)
+  public InvestigationContextExtractor(ClaudeTool scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -122,7 +121,7 @@ public final class InvestigationContextExtractor
     requireThat(args, "args").isNotNull();
     requireThat(out, "out").isNotNull();
     ClaudeTool claudeTool = (ClaudeTool) scope;
-    InvestigationContextExtractor extractor = new InvestigationContextExtractor(scope);
+    InvestigationContextExtractor extractor = new InvestigationContextExtractor(claudeTool);
     String envSessionId = claudeTool.getSessionId();
     Path sessionFile = claudeTool.getClaudeSessionsPath().resolve(envSessionId + ".jsonl");
     List<String> keywords = new ArrayList<>();
@@ -536,10 +535,10 @@ public final class InvestigationContextExtractor
      * Creates a new extraction state.
      *
      * @param keywords the keyword filter list
-     * @param scope    the JVM scope used to create JSON nodes
+     * @param scope    the Claude tool scope used to create JSON nodes
      * @throws NullPointerException if {@code keywords} or {@code scope} are null
      */
-    private ExtractionState(List<String> keywords, JvmScope scope)
+    private ExtractionState(List<String> keywords, ClaudeTool scope)
     {
       requireThat(keywords, "keywords").isNotNull();
       requireThat(scope, "scope").isNotNull();

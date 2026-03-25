@@ -17,9 +17,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * outside a Claude session.
  * <p>
  * Reads only infrastructure path variables ({@code CLAUDE_PROJECT_DIR}, {@code CLAUDE_PLUGIN_ROOT},
- * {@code CLAUDE_CONFIG_DIR}, {@code TZ}) from {@code System.getenv()} at construction time.
+ * {@code TZ}) from {@code System.getenv()} at construction time.
  * {@code CLAUDE_PROJECT_DIR} and {@code CLAUDE_PLUGIN_ROOT} are required and fail fast if absent.
- * {@code CLAUDE_CONFIG_DIR} defaults to {@code ~/.claude} and {@code TZ} defaults to {@code "UTC"}.
+ * {@code TZ} defaults to {@code "UTC"}.
  * <p>
  * This scope is appropriate for CLI tools like {@code GetSkill} that are invoked by the skill
  * preprocessor before a Claude session is established and therefore do not have access to
@@ -29,15 +29,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public final class MainJvmScope extends AbstractJvmScope
 {
+  private final Path claudeConfigPath;
   private final Path projectPath;
   private final Path pluginRoot;
-  private final ConcurrentLazyReference<Path> claudeConfigDir = ConcurrentLazyReference.create(() ->
-  {
-    String configDir = System.getenv("CLAUDE_CONFIG_DIR");
-    if (configDir != null && !configDir.isBlank())
-      return Path.of(configDir);
-    return Path.of(System.getProperty("user.home"), ".claude");
-  });
   private final ConcurrentLazyReference<TerminalType> terminalType =
     ConcurrentLazyReference.create(TerminalType::detect);
   private final ConcurrentLazyReference<String> tz = ConcurrentLazyReference.create(() ->
@@ -53,13 +47,18 @@ public final class MainJvmScope extends AbstractJvmScope
    * Creates a new infrastructure JVM scope.
    * <p>
    * Reads {@code CLAUDE_PROJECT_DIR} and {@code CLAUDE_PLUGIN_ROOT} from {@code System.getenv()}
-   * and fails immediately with {@link AssertionError} if either is unset or blank. The variables
-   * {@code CLAUDE_CONFIG_DIR} and {@code TZ} are optional and loaded lazily with defaults.
+   * and fails immediately with {@link AssertionError} if either is unset or blank. {@code TZ} is
+   * optional and loaded lazily with a default of {@code "UTC"}.
    *
    * @throws AssertionError if {@code CLAUDE_PROJECT_DIR} or {@code CLAUDE_PLUGIN_ROOT} is not set
    */
   public MainJvmScope()
   {
+    String configDir = System.getenv("CLAUDE_CONFIG_DIR");
+    if (configDir == null || configDir.isBlank())
+      this.claudeConfigPath = Path.of(System.getProperty("user.home"), ".claude");
+    else
+      this.claudeConfigPath = Path.of(configDir);
     this.projectPath = Path.of(readEnvVar("CLAUDE_PROJECT_DIR"));
     this.pluginRoot = Path.of(readEnvVar("CLAUDE_PLUGIN_ROOT"));
   }
@@ -77,6 +76,13 @@ public final class MainJvmScope extends AbstractJvmScope
     if (value == null || value.isBlank())
       throw new AssertionError(name + " is not set");
     return value;
+  }
+
+  @Override
+  public Path getClaudeConfigPath()
+  {
+    ensureOpen();
+    return claudeConfigPath;
   }
 
   @Override
@@ -98,13 +104,6 @@ public final class MainJvmScope extends AbstractJvmScope
   {
     ensureOpen();
     return pluginRoot;
-  }
-
-  @Override
-  public Path getClaudeConfigDir()
-  {
-    ensureOpen();
-    return claudeConfigDir.getValue();
   }
 
   @Override

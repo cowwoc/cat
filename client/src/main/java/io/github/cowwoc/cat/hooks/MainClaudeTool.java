@@ -23,8 +23,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public final class MainClaudeTool extends AbstractClaudeTool
 {
-  private final ConcurrentLazyReference<Path> claudeConfigDirRef =
-    ConcurrentLazyReference.create(this::claudeConfigDir);
+  private final ConcurrentLazyReference<Path> claudeConfigPathRef =
+    ConcurrentLazyReference.create(this::claudeConfigPath);
   private final ConcurrentLazyReference<TerminalType> terminalTypeRef =
     ConcurrentLazyReference.create(this::terminalType);
   private final ConcurrentLazyReference<String> tzRef =
@@ -66,7 +66,7 @@ public final class MainClaudeTool extends AbstractClaudeTool
    *
    * @return the Claude config directory path
    */
-  private Path claudeConfigDir()
+  private Path claudeConfigPath()
   {
     String configDir = System.getenv("CLAUDE_CONFIG_DIR");
     if (configDir != null && !configDir.isBlank())
@@ -105,10 +105,10 @@ public final class MainClaudeTool extends AbstractClaudeTool
   }
 
   @Override
-  public Path getClaudeConfigDir()
+  public Path getClaudeConfigPath()
   {
     ensureOpen();
-    return claudeConfigDirRef.getValue();
+    return claudeConfigPathRef.getValue();
   }
 
   @Override

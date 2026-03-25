@@ -24,12 +24,12 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+import java.util.Objects;
 
 /**
  * Output generator for issue complete boxes.

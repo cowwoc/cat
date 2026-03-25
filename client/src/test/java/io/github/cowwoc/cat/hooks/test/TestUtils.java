@@ -6,6 +6,8 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
+import io.github.cowwoc.cat.hooks.ClaudeHook;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.FileUtils;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
@@ -102,7 +104,7 @@ public final class TestUtils
     requireThat(sessionId, "sessionId").isNotNull();
     Path projectPath = createTempDir("bash-hook-project-");
     Path pluginRoot = createTempDir("bash-hook-plugin-");
-    Path claudeConfigDir = createTempDir("bash-hook-config-");
+    Path claudeConfigPath = createTempDir("bash-hook-config-");
     // Copy emoji-widths.json so that DisplayUtils can initialize in hook handlers under test.
     // Maven sets user.dir to the client/ module directory during test execution.
     Path emojiWidths = Path.of(System.getProperty("user.dir")).resolve("../plugin/emoji-widths.json");
@@ -114,7 +116,7 @@ public final class TestUtils
     {
       throw WrappedCheckedException.wrap(e);
     }
-    return bashHook(command, workingDirectory, sessionId, projectPath, pluginRoot, claudeConfigDir);
+    return bashHook(command, workingDirectory, sessionId, projectPath, pluginRoot, claudeConfigPath);
   }
 
   /**
@@ -129,19 +131,19 @@ public final class TestUtils
    * @param sessionId the session ID, or blank to omit it from the payload
    * @param projectPath the project directory path
    * @param pluginRoot the plugin root directory path
-   * @param claudeConfigDir the Claude config directory path
+   * @param claudeConfigPath the Claude config directory path
    * @return a TestClaudeHook with the given bash payload
    * @throws NullPointerException if any parameter is null
    */
   public static TestClaudeHook bashHook(String command, String workingDirectory, String sessionId,
-    Path projectPath, Path pluginRoot, Path claudeConfigDir)
+    Path projectPath, Path pluginRoot, Path claudeConfigPath)
   {
     requireThat(command, "command").isNotNull();
     requireThat(workingDirectory, "workingDirectory").isNotNull();
     requireThat(sessionId, "sessionId").isNotNull();
     requireThat(projectPath, "projectPath").isNotNull();
     requireThat(pluginRoot, "pluginRoot").isNotNull();
-    requireThat(claudeConfigDir, "claudeConfigDir").isNotNull();
+    requireThat(claudeConfigPath, "claudeConfigPath").isNotNull();
     JsonMapper mapper = new JsonMapper();
     ObjectNode root = mapper.createObjectNode();
     root.put("tool_name", "Bash");
@@ -151,7 +153,7 @@ public final class TestUtils
     root.put("cwd", workingDirectory);
     if (!sessionId.isBlank())
       root.put("session_id", sessionId);
-    return new TestClaudeHook(root, projectPath, pluginRoot, claudeConfigDir);
+    return new TestClaudeHook(root, projectPath, pluginRoot, claudeConfigPath);
   }
 
   /**
@@ -171,12 +173,12 @@ public final class TestUtils
    * @param nativeAgentId the native (non-composite) agent ID to embed in the payload, or empty to omit
    * @param projectPath the project directory path
    * @param pluginRoot the plugin root directory path
-   * @param claudeConfigDir the Claude config directory path
+   * @param claudeConfigPath the Claude config directory path
    * @return a TestClaudeHook with the given bash payload including agent_id
    * @throws NullPointerException if any parameter is null
    */
   public static TestClaudeHook bashHookWithAgentId(String command, String workingDirectory,
-    String sessionId, String nativeAgentId, Path projectPath, Path pluginRoot, Path claudeConfigDir)
+    String sessionId, String nativeAgentId, Path projectPath, Path pluginRoot, Path claudeConfigPath)
   {
     requireThat(command, "command").isNotNull();
     requireThat(workingDirectory, "workingDirectory").isNotNull();
@@ -184,7 +186,7 @@ public final class TestUtils
     requireThat(nativeAgentId, "nativeAgentId").isNotNull();
     requireThat(projectPath, "projectPath").isNotNull();
     requireThat(pluginRoot, "pluginRoot").isNotNull();
-    requireThat(claudeConfigDir, "claudeConfigDir").isNotNull();
+    requireThat(claudeConfigPath, "claudeConfigPath").isNotNull();
     JsonMapper mapper = new JsonMapper();
     ObjectNode root = mapper.createObjectNode();
     root.put("tool_name", "Bash");
@@ -196,12 +198,12 @@ public final class TestUtils
       root.put("session_id", sessionId);
     if (!nativeAgentId.isBlank())
       root.put("agent_id", nativeAgentId);
-    return new TestClaudeHook(root, projectPath, pluginRoot, claudeConfigDir);
+    return new TestClaudeHook(root, projectPath, pluginRoot, claudeConfigPath);
   }
 
   /**
    * Creates a {@link TestClaudeHook} with a bash command payload, reusing the paths from an
-   * existing {@link JvmScope}.
+   * existing {@link ClaudeTool}.
    * <p>
    * This overload is useful when the test already has an infrastructure scope (for setup operations
    * like creating lock files or worktree directories) and needs a separate hook scope that carries
@@ -215,14 +217,36 @@ public final class TestUtils
    * @throws NullPointerException if any parameter is null
    */
   public static TestClaudeHook bashHook(String command, String workingDirectory, String sessionId,
-    JvmScope pathSource)
+    ClaudeTool pathSource)
   {
     requireThat(command, "command").isNotNull();
     requireThat(workingDirectory, "workingDirectory").isNotNull();
     requireThat(sessionId, "sessionId").isNotNull();
     requireThat(pathSource, "pathSource").isNotNull();
     return bashHook(command, workingDirectory, sessionId,
-      pathSource.getProjectPath(), pathSource.getPluginRoot(), pathSource.getClaudeConfigDir());
+      pathSource.getProjectPath(), pathSource.getPluginRoot(), pathSource.getClaudeConfigPath());
+  }
+
+  /**
+   * Creates a {@link TestClaudeHook} with a bash command payload, reusing paths from an existing
+   * {@link ClaudeHook} scope.
+   *
+   * @param command the bash command string
+   * @param workingDirectory the working directory
+   * @param sessionId the session ID
+   * @param pathSource the existing hook scope whose project, plugin, and config paths to reuse
+   * @return a TestClaudeHook with the given bash payload and paths from {@code pathSource}
+   * @throws NullPointerException if any parameter is null
+   */
+  public static TestClaudeHook bashHook(String command, String workingDirectory, String sessionId,
+    ClaudeHook pathSource)
+  {
+    requireThat(command, "command").isNotNull();
+    requireThat(workingDirectory, "workingDirectory").isNotNull();
+    requireThat(sessionId, "sessionId").isNotNull();
+    requireThat(pathSource, "pathSource").isNotNull();
+    return bashHook(command, workingDirectory, sessionId,
+      pathSource.getProjectPath(), pathSource.getPluginRoot(), pathSource.getClaudeConfigPath());
   }
 
   /**
@@ -263,8 +287,8 @@ public final class TestUtils
       root.set("tool_result", toolResult);
     Path projectPath = createTempDir("bash-hook-project-");
     Path pluginRoot = createTempDir("bash-hook-plugin-");
-    Path claudeConfigDir = createTempDir("bash-hook-config-");
-    return new TestClaudeHook(root, projectPath, pluginRoot, claudeConfigDir);
+    Path claudeConfigPath = createTempDir("bash-hook-config-");
+    return new TestClaudeHook(root, projectPath, pluginRoot, claudeConfigPath);
   }
 
   /**

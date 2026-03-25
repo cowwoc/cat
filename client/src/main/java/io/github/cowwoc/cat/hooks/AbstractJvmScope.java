@@ -97,11 +97,22 @@ public abstract class AbstractJvmScope implements JvmScope
     return projectPath.replace("/", "-").replace(".", "-").replace(" ", "-");
   }
 
+  /**
+   * Returns the Claude config directory.
+   * <p>
+   * Subclasses provide the concrete value; {@link ClaudeTool} and {@link ClaudeHook} expose this
+   * as part of their public API.
+   *
+   * @return the config directory path
+   * @throws IllegalStateException if this scope is closed
+   */
+  protected abstract Path getClaudeConfigPath();
+
   @Override
   public Path getClaudeSessionsPath()
   {
     ensureOpen();
-    return getClaudeConfigDir().resolve("projects").resolve(encodeProjectPath(getProjectPath().toString()));
+    return getClaudeConfigPath().resolve("projects").resolve(encodeProjectPath(getProjectPath().toString()));
   }
 
   @Override

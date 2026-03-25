@@ -11,7 +11,6 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.PostToolHandler;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,19 +27,18 @@ public final class DetectTokenThreshold implements PostToolHandler
   private static final long SOFT_WARNING_THRESHOLD = 60_000;
   private static final long STRONG_WARNING_THRESHOLD = 80_000;
 
-  private final Path claudeConfigDir;
-  private final JsonMapper mapper;
+  private final ClaudeHook scope;
 
   /**
    * Creates a new detect-token-threshold handler.
    *
-   * @param scope the JVM scope providing configuration paths and services
+   * @param scope the hook scope providing configuration paths and services
    * @throws NullPointerException if {@code scope} is null
    */
   public DetectTokenThreshold(ClaudeHook scope)
   {
-    this.claudeConfigDir = scope.getClaudeConfigDir();
-    this.mapper = scope.getJsonMapper();
+    requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
   }
 
   @Override
@@ -51,7 +49,7 @@ public final class DetectTokenThreshold implements PostToolHandler
     requireThat(sessionId, "sessionId").isNotBlank();
     requireThat(hookData, "hookData").isNotNull();
 
-    Path sessionFile = claudeConfigDir.resolve("sessions").resolve(sessionId + ".json");
+    Path sessionFile = scope.getClaudeConfigPath().resolve("sessions").resolve(sessionId + ".json");
     if (!Files.exists(sessionFile))
       return Result.allow();
 
@@ -95,7 +93,7 @@ public final class DetectTokenThreshold implements PostToolHandler
   long readTotalTokens(Path sessionFile) throws IOException
   {
     String content = Files.readString(sessionFile);
-    JsonNode root = mapper.readTree(content);
+    JsonNode root = scope.getJsonMapper().readTree(content);
 
     JsonNode tokenUsage = root.get("token_usage");
     if (tokenUsage == null)
