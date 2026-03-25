@@ -9,7 +9,6 @@ package io.github.cowwoc.cat.hooks.skills;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.ClaudeTool;
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
 
 import static io.github.cowwoc.cat.hooks.Strings.block;
@@ -1422,7 +1421,7 @@ public final class EmpiricalTestRunner
   /**
    * Executes the empirical test runner logic with a caller-provided output stream.
    *
-   * @param scope the JVM scope
+   * @param scope the scope providing access to session paths and shared services
    * @param args  command line arguments
    * @param out   the output stream to write to
    * @return the exit code (0 for success, non-zero for failure)
@@ -1430,7 +1429,7 @@ public final class EmpiricalTestRunner
    * @throws IllegalArgumentException if arguments are invalid
    * @throws IOException              if an I/O error occurs
    */
-  public static int run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  public static int run(ClaudeTool scope, String[] args, PrintStream out) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();
@@ -1535,8 +1534,7 @@ public final class EmpiricalTestRunner
     if (configPath == null)
       throw new IllegalArgumentException("--config argument is required");
 
-    ClaudeTool claudeTool = (ClaudeTool) scope;
-    EmpiricalTestRunner runner = new EmpiricalTestRunner(claudeTool);
+    EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
     if (baselinePrompt != null)
     {
       // Blind comparison mode: read system_prompt from config as candidate

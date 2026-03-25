@@ -10,7 +10,6 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
 
 import io.github.cowwoc.cat.hooks.ClaudeTool;
-import io.github.cowwoc.cat.hooks.JvmScope;
 import static io.github.cowwoc.cat.hooks.Strings.block;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
@@ -268,12 +267,12 @@ public final class GetSubagentStatusOutput implements SkillOutput
   /**
    * Executes the subagent status output logic with a caller-provided output stream.
    *
-   * @param scope the JVM scope
+   * @param scope the scope providing access to session paths and shared services
    * @param args  command line arguments
    * @param out   the output stream to write to
    * @throws NullPointerException if {@code scope}, {@code args} or {@code out} are null
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out)
+  public static void run(ClaudeTool scope, String[] args, PrintStream out)
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();

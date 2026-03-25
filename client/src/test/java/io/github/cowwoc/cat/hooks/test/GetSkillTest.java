@@ -1978,10 +1978,10 @@ More content here.
   /**
    * Verifies that {@code run()} does not throw {@code IllegalStateException} when stdin is empty.
    * <p>
-   * {@code GetSkill} is an infrastructure CLI tool invoked by the Skill preprocessor with no stdin
+   * {@code GetSkill} is a CLI tool invoked by the Skill preprocessor with no stdin
    * data. When {@code main()} used {@code MainClaudeHook} (which reads JSON from stdin at
    * construction time), it threw "Hook input is blank" on every skill invocation. This test
-   * verifies {@code run()} accepts a {@code JvmScope} that does not require stdin.
+   * verifies {@code run()} accepts a {@code ClaudeTool} that does not require stdin.
    *
    * @throws IOException if an I/O error occurs
    */
