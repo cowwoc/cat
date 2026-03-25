@@ -148,9 +148,10 @@ public final class WorkPrepare
    * @param excludePattern glob pattern to exclude issues by name, or empty string for none
    * @param issueId specific issue ID to select, or empty string for priority-based selection
    * @param trustLevel the trust level for execution
+   * @param resume whether the user explicitly requested resume/continue semantics
    */
   public record PrepareInput(String sessionId, String excludePattern, String issueId,
-    TrustLevel trustLevel)
+    TrustLevel trustLevel, boolean resume)
   {
     /**
      * Creates new prepare input.
@@ -159,6 +160,7 @@ public final class WorkPrepare
      * @param excludePattern glob pattern to exclude issues by name, or empty string for none
      * @param issueId specific issue ID to select, or empty string for priority-based selection
      * @param trustLevel the trust level for execution
+     * @param resume whether the user explicitly requested resume/continue semantics
      * @throws IllegalArgumentException if {@code sessionId} is blank
      * @throws NullPointerException if {@code excludePattern}, {@code issueId}, or
      *   {@code trustLevel} are null
@@ -407,9 +409,10 @@ public final class WorkPrepare
     {
       // The issue has an existing worktree. Check the lock state to determine the correct response:
       // - Locked by current session: resume with READY response
-      // - Locked by another session: return ERROR with locked_by/lock_age_seconds so the skill can
-      //   show a confirmation dialog before the user decides whether to resume across sessions
-      // - Unlocked: return ERROR about the existing worktree
+      // - resume=true: force-release any stale lock, acquire for current session, return READY
+      // - Locked by another session (no resume): return ERROR with locked_by/lock_age_seconds so the
+      //   skill can show a confirmation dialog before the user decides whether to resume
+      // - Unlocked (no resume): return ERROR about the existing worktree
       IssueLock issueLock = new IssueLock(scope);
       IssueLock.LockResult lockCheck = issueLock.check(existingWorktree.issueId());
       Path projectPath = scope.getProjectPath();
@@ -417,6 +420,9 @@ public final class WorkPrepare
       {
         if (locked.sessionId().equals(input.sessionId()))
           return resumeWithExistingWorktree(existingWorktree, projectPath, mapper);
+        if (input.resume())
+          return forceResumeWithExistingWorktree(existingWorktree, issueLock, input, projectPath,
+            mapper);
         Map<String, Object> errorResult = new LinkedHashMap<>();
         errorResult.put("status", "ERROR");
         errorResult.put("message", "Issue " + existingWorktree.issueId() +
@@ -427,10 +433,16 @@ public final class WorkPrepare
         errorResult.put("worktree_path", existingWorktree.worktreePath());
         return mapper.writeValueAsString(errorResult);
       }
-      return mapper.writeValueAsString(Map.of(
-        "status", "ERROR",
-        "message", "Issue " + existingWorktree.issueId() + " has an existing worktree at: " +
-          existingWorktree.worktreePath()));
+      // Unlocked worktree: resume if requested, otherwise return ERROR
+      if (input.resume())
+        return forceResumeWithExistingWorktree(existingWorktree, issueLock, input, projectPath,
+          mapper);
+      Map<String, Object> errorResult = new LinkedHashMap<>();
+      errorResult.put("status", "ERROR");
+      errorResult.put("message", "Issue " + existingWorktree.issueId() +
+        " has an existing worktree at: " + existingWorktree.worktreePath());
+      errorResult.put("issue_id", existingWorktree.issueId());
+      return mapper.writeValueAsString(errorResult);
     }
 
     if (discoveryResult instanceof IssueDiscovery.DiscoveryResult.DiscoveryError error)
@@ -696,6 +708,52 @@ public final class WorkPrepare
       result.put("warnings", warnings);
 
     return mapper.writeValueAsString(result);
+  }
+
+  /**
+   * Force-acquires the lock for the current session and resumes with an existing worktree.
+   * <p>
+   * Releases any existing lock unconditionally, then acquires a fresh lock for the current session.
+   * Used when the user explicitly requests resume/continue semantics.
+   *
+   * @param existingWorktree the existing-worktree discovery result
+   * @param issueLock the issue lock manager
+   * @param input the preparation input parameters
+   * @param projectPath the main project root directory
+   * @param mapper the JSON mapper for serialization
+   * @return JSON string with READY result, LOCKED result if a race condition occurs, or ERROR
+   * @throws IOException if file operations or JSON serialization fail
+   */
+  private String forceResumeWithExistingWorktree(
+    ExistingWorktree existingWorktree,
+    IssueLock issueLock,
+    PrepareInput input,
+    Path projectPath,
+    JsonMapper mapper) throws IOException
+  {
+    IssueLock.LockResult forceResult = issueLock.forceRelease(existingWorktree.issueId());
+    if (forceResult instanceof IssueLock.LockResult.Error forceError)
+    {
+      Map<String, Object> errorResult = new LinkedHashMap<>();
+      errorResult.put("status", "ERROR");
+      errorResult.put("message",
+        "Failed to release existing lock: " + forceError.message());
+      errorResult.put("issue_id", existingWorktree.issueId());
+      return mapper.writeValueAsString(errorResult);
+    }
+    IssueLock.LockResult acquireResult = issueLock.acquire(existingWorktree.issueId(),
+      input.sessionId(), existingWorktree.worktreePath());
+    if (acquireResult instanceof IssueLock.LockResult.Locked locked)
+    {
+      Map<String, Object> lockedResult = new LinkedHashMap<>();
+      lockedResult.put("status", "LOCKED");
+      lockedResult.put("message", "Issue " + existingWorktree.issueId() +
+        " was locked by another session during resume");
+      lockedResult.put("issue_id", existingWorktree.issueId());
+      lockedResult.put("locked_by", locked.owner());
+      return mapper.writeValueAsString(lockedResult);
+    }
+    return resumeWithExistingWorktree(existingWorktree, projectPath, mapper);
   }
 
   /**
@@ -1839,8 +1897,9 @@ public final class WorkPrepare
    *
    * @param issueId the resolved issue ID, or empty string if not present
    * @param excludePattern the resolved exclude-pattern glob, or empty string if not present
+   * @param resume whether the user explicitly used a resume/continue keyword
    */
-  public record ParsedArguments(String issueId, String excludePattern)
+  public record ParsedArguments(String issueId, String excludePattern, boolean resume)
   {
   }
 
@@ -1872,7 +1931,7 @@ public final class WorkPrepare
     String excludePattern)
   {
     if (rawArguments.isBlank() || !issueId.isEmpty() || !excludePattern.isEmpty())
-      return new ParsedArguments(issueId, excludePattern);
+      return new ParsedArguments(issueId, excludePattern, false);
 
     String raw = rawArguments.strip();
     // Skills pass $ARGUMENTS with the catAgentId as the first token. It must be present and stripped
@@ -1887,27 +1946,29 @@ public final class WorkPrepare
     }
     raw = raw.substring(agentIdMatcher.end()).strip();
     if (raw.isBlank())
-      return new ParsedArguments("", "");
-    // Strip leading modifier keywords that users naturally prepend (e.g. "resume 2.1-fix-bug")
+      return new ParsedArguments("", "", false);
+    // Detect leading modifier keywords (e.g. "resume 2.1-fix-bug") and capture as a boolean flag
+    boolean resume = false;
     for (String keyword : new String[]{"resume", "continue"})
     {
       if (raw.startsWith(keyword + " "))
       {
         raw = raw.substring(keyword.length()).strip();
+        resume = true;
         break;
       }
     }
     if (raw.matches("^[0-9]+\\.[0-9]+(-[a-zA-Z0-9_-]+)?$") ||
       raw.matches("^[a-zA-Z][a-zA-Z0-9_-]*$"))
     {
-      return new ParsedArguments(raw, "");
+      return new ParsedArguments(raw, "", resume);
     }
     if (raw.startsWith("skip "))
     {
       String word = raw.substring(5).strip();
-      return new ParsedArguments("", "*" + word + "*");
+      return new ParsedArguments("", "*" + word + "*", resume);
     }
-    return new ParsedArguments("", "");
+    return new ParsedArguments("", "", resume);
   }
 
   /**
@@ -2022,7 +2083,8 @@ public final class WorkPrepare
       sessionId = scope.getSessionId();
     }
 
-    PrepareInput input = new PrepareInput(sessionId, excludePattern, issueId, trustLevel);
+    PrepareInput input = new PrepareInput(sessionId, excludePattern, issueId, trustLevel,
+      parsed.resume());
     WorkPrepare wp = new WorkPrepare(scope);
     try
     {
