@@ -91,119 +91,117 @@ public final class VerifyDeferPlanGeneration
     requireThat(args, "args").isNotNull();
     requireThat(out, "out").isNotNull();
 
+    if (args.length > 1)
+    {
+      throw new IllegalArgumentException(
+        "Expected at most 1 argument (project-root), got " + args.length + ". " +
+          "Usage: verify-defer-plan-generation [<project-root>]");
+    }
+    Path projectRoot;
+    if (args.length >= 1)
+      projectRoot = Path.of(args[0]);
+    else
+      projectRoot = scope.getProjectPath();
+
+    Path addSkill = projectRoot.resolve("plugin/skills/add-agent/first-use.md");
+    Path workImplementSkill = projectRoot.resolve("plugin/skills/work-implement-agent/first-use.md");
+
+    out.println("=== E2E Verification: defer-plan-generation-to-work-phase ===");
+
+    int passed = 0;
+    int failed = 0;
+
+    // Read each file once; null means file is missing
+    String addContent;
+    if (Files.notExists(addSkill))
+      addContent = null;
+    else
+      addContent = Files.readString(addSkill);
+
+    String workContent;
+    if (Files.notExists(workImplementSkill))
+      workContent = null;
+    else
+      workContent = Files.readString(workImplementSkill);
+
+    // Check 1: add/first-use.md must NOT contain cat:plan-builder-agent invocation
+    if (addContent == null)
+    {
+      out.println("FAIL: add/first-use.md has no cat:plan-builder-agent invocation");
+      out.println("      File not found: " + addSkill);
+      ++failed;
+    }
+    else if (addContent.contains("cat:plan-builder-agent"))
+    {
+      out.println("FAIL: add/first-use.md has no cat:plan-builder-agent invocation");
+      out.println("      Found 'cat:plan-builder-agent' in " + addSkill);
+      ++failed;
+    }
+    else
+    {
+      out.println("PASS: add/first-use.md has no cat:plan-builder-agent invocation");
+      ++passed;
+    }
+
+    // Check 2: add/first-use.md must contain the lightweight plan generation block
+    if (addContent == null)
+    {
+      out.println("FAIL: add/first-use.md contains lightweight plan block (planTempFile mktemp)");
+      out.println("      File not found: " + addSkill);
+      ++failed;
+    }
+    else if (addContent.contains("planTempFile=$(mktemp"))
+    {
+      out.println("PASS: add/first-use.md contains planTempFile=$(mktemp ...)");
+      ++passed;
+    }
+    else
+    {
+      out.println("FAIL: add/first-use.md contains lightweight plan block (planTempFile mktemp)");
+      out.println("      Pattern 'planTempFile=$(mktemp' not found in " + addSkill);
+      ++failed;
+    }
+
+    // Check 3: work-implement-agent/first-use.md must contain hasSteps check
+    if (workContent == null)
+    {
+      out.println("FAIL: work-implement-agent/first-use.md contains hasSteps check");
+      out.println("      File not found: " + workImplementSkill);
+      ++failed;
+    }
+    else if (workContent.contains("hasSteps"))
+    {
+      out.println("PASS: work-implement-agent/first-use.md contains hasSteps check");
+      ++passed;
+    }
+    else
+    {
+      out.println("FAIL: work-implement-agent/first-use.md contains hasSteps check");
+      out.println("      Pattern 'hasSteps' not found in " + workImplementSkill);
+      ++failed;
+    }
+
+    // Check 4: work-implement-agent/first-use.md must invoke cat:plan-builder-agent
+    if (workContent == null)
+    {
+      out.println("FAIL: work-implement-agent/first-use.md invokes cat:plan-builder-agent");
+      out.println("      File not found: " + workImplementSkill);
+      ++failed;
+    }
+    else if (workContent.contains("cat:plan-builder-agent"))
+    {
+      out.println("PASS: work-implement-agent/first-use.md invokes cat:plan-builder-agent");
+      ++passed;
+    }
+    else
+    {
+      out.println("FAIL: work-implement-agent/first-use.md invokes cat:plan-builder-agent");
+      out.println("      Pattern 'cat:plan-builder-agent' not found in " + workImplementSkill);
+      ++failed;
+    }
+
     try
     {
-      if (args.length > 1)
-      {
-        throw new IllegalArgumentException(
-          "Expected at most 1 argument (project-root), got " + args.length + ". " +
-            "Usage: verify-defer-plan-generation [<project-root>]");
-      }
-      Path projectRoot;
-      if (args.length >= 1)
-        projectRoot = Path.of(args[0]);
-      else
-        projectRoot = scope.getProjectPath();
-
-      Path addSkill = projectRoot.resolve("plugin/skills/add-agent/first-use.md");
-      Path workImplementSkill = projectRoot.resolve("plugin/skills/work-implement-agent/first-use.md");
-
-      out.println("=== E2E Verification: defer-plan-generation-to-work-phase ===");
-
-      int passed = 0;
-      int failed = 0;
-
-      // Check 1: add/first-use.md must NOT contain cat:plan-builder-agent invocation
-      if (Files.notExists(addSkill))
-      {
-        out.println("FAIL: add/first-use.md has no cat:plan-builder-agent invocation");
-        out.println("      File not found: " + addSkill);
-        ++failed;
-      }
-      else
-      {
-        String addContent = Files.readString(addSkill);
-        if (addContent.contains("cat:plan-builder-agent"))
-        {
-          out.println("FAIL: add/first-use.md has no cat:plan-builder-agent invocation");
-          out.println("      Found 'cat:plan-builder-agent' in " + addSkill);
-          ++failed;
-        }
-        else
-        {
-          out.println("PASS: add/first-use.md has no cat:plan-builder-agent invocation");
-          ++passed;
-        }
-      }
-
-      // Check 2: add/first-use.md must contain the lightweight plan generation block
-      if (Files.notExists(addSkill))
-      {
-        out.println("FAIL: add/first-use.md contains lightweight plan block (planTempFile mktemp)");
-        out.println("      File not found: " + addSkill);
-        ++failed;
-      }
-      else
-      {
-        String addContent = Files.readString(addSkill);
-        if (addContent.contains("planTempFile=$(mktemp"))
-        {
-          out.println("PASS: add/first-use.md contains planTempFile=$(mktemp ...)");
-          ++passed;
-        }
-        else
-        {
-          out.println("FAIL: add/first-use.md contains lightweight plan block (planTempFile mktemp)");
-          out.println("      Pattern 'planTempFile=$(mktemp' not found in " + addSkill);
-          ++failed;
-        }
-      }
-
-      // Check 3: work-implement-agent/first-use.md must contain hasSteps check
-      if (Files.notExists(workImplementSkill))
-      {
-        out.println("FAIL: work-implement-agent/first-use.md contains hasSteps check");
-        out.println("      File not found: " + workImplementSkill);
-        ++failed;
-      }
-      else
-      {
-        String workContent = Files.readString(workImplementSkill);
-        if (workContent.contains("hasSteps"))
-        {
-          out.println("PASS: work-implement-agent/first-use.md contains hasSteps check");
-          ++passed;
-        }
-        else
-        {
-          out.println("FAIL: work-implement-agent/first-use.md contains hasSteps check");
-          out.println("      Pattern 'hasSteps' not found in " + workImplementSkill);
-          ++failed;
-        }
-      }
-
-      // Check 4: work-implement-agent/first-use.md must invoke cat:plan-builder-agent
-      if (Files.notExists(workImplementSkill))
-      {
-        out.println("FAIL: work-implement-agent/first-use.md invokes cat:plan-builder-agent");
-        out.println("      File not found: " + workImplementSkill);
-        ++failed;
-      }
-      else
-      {
-        String workContent = Files.readString(workImplementSkill);
-        if (workContent.contains("cat:plan-builder-agent"))
-        {
-          out.println("PASS: work-implement-agent/first-use.md invokes cat:plan-builder-agent");
-          ++passed;
-        }
-        else
-        {
-          out.println("FAIL: work-implement-agent/first-use.md invokes cat:plan-builder-agent");
-          out.println("      Pattern 'cat:plan-builder-agent' not found in " + workImplementSkill);
-          ++failed;
-        }
-      }
 
       out.println("=== Results: " + passed + " passed, " + failed + " failed ===");
 
