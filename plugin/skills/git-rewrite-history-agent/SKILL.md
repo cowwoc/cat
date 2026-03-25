@@ -1,6 +1,5 @@
 ---
 description: "MANDATORY: Use instead of git filter-branch - git filter-repo with Python detection and on-demand binary download"
-model: sonnet
 user-invocable: false
 argument-hint: "<cat_agent_id>"
 ---

@@ -4,7 +4,6 @@ description: >
   execution plan format, and comprehensiveness requirements. Invoked by /cat:work to generate full
   implementation steps before spawning the implementation subagent, and for mid-work revisions when
   requirements change during implementation.
-model: sonnet
 allowed-tools:
   - Read
   - Write

@@ -1,6 +1,5 @@
 ---
 description: After implementation - verify all plan.md acceptance criteria were met
-model: sonnet
 user-invocable: false
 allowed-tools:
   - Skill

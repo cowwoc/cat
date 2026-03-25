@@ -1,6 +1,5 @@
 ---
 description: Analyze session efficiency and generate execution optimization recommendations.
-model: sonnet
 disable-model-invocation: true
 ---
 

@@ -4,7 +4,6 @@ description: >
   Analyzes patterns across multiple recorded learnings to identify systemic improvements.
   Trigger words: "run retrospective", "analyze patterns", "learning session", "retrospective on learnings", "patterns from".
   MANDATORY after learn threshold is reached.
-model: sonnet
 user-invocable: false
 argument-hint: "<cat_agent_id>"
 ---

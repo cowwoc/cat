@@ -1,6 +1,5 @@
 ---
 description: Organize scattered documentation using a four-phase classify-extract-reconstruct-verify pipeline.
-model: sonnet
 disable-model-invocation: true
 user-invocable: false
 argument-hint: "<cat_agent_id>"
