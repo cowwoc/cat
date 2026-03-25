@@ -27,6 +27,7 @@ import io.github.cowwoc.cat.hooks.bash.ValidateGitOperations;
 import io.github.cowwoc.cat.hooks.bash.VerifyStateInCommit;
 import io.github.cowwoc.cat.hooks.bash.WarnFileExtraction;
 import io.github.cowwoc.cat.hooks.bash.WarnMainWorkspaceCommit;
+import io.github.cowwoc.cat.hooks.bash.WarnPipedWithoutTee;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,6 +82,7 @@ public final class PreToolUseHook implements HookHandler
       new VerifyStateInCommit(),
       new WarnFileExtraction(),
       new WarnMainWorkspaceCommit(),
+      new WarnPipedWithoutTee(),
       new RequireSkillForCommand(scope));
   }
 
