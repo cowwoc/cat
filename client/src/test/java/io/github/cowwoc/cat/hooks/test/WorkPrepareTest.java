@@ -54,7 +54,7 @@ public class WorkPrepareTest
     try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       WorkPrepare prepare = new WorkPrepare(scope);
-      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -85,7 +85,7 @@ public class WorkPrepareTest
       createIssue(projectPath, "2", "1", "done-feature", "closed");
 
       WorkPrepare prepare = new WorkPrepare(scope);
-      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -121,7 +121,7 @@ public class WorkPrepareTest
       GitCommands.runGit(projectPath, "commit", "-m", "Add oversized issue");
 
       WorkPrepare prepare = new WorkPrepare(scope);
-      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -160,7 +160,7 @@ public class WorkPrepareTest
       GitCommands.runGit(projectPath, "commit", "-m", "Add corrupt issue directory");
 
       WorkPrepare prepare = new WorkPrepare(scope);
-      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -198,7 +198,7 @@ public class WorkPrepareTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -243,7 +243,7 @@ public class WorkPrepareTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -282,7 +282,7 @@ public class WorkPrepareTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM, false);
 
       // First call should return OVERSIZED
       String json1 = prepare.execute(input);
@@ -328,7 +328,7 @@ public class WorkPrepareTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM, false);
 
       // First call should return CORRUPT
       String json1 = prepare.execute(input);
@@ -365,7 +365,7 @@ public class WorkPrepareTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -413,7 +413,7 @@ public class WorkPrepareTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -457,7 +457,7 @@ public class WorkPrepareTest
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
       // Request specific issue that would not be selected by priority
-      PrepareInput input = new PrepareInput(sessionId, "", "2.1-second-feature", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "2.1-second-feature", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -493,7 +493,7 @@ public class WorkPrepareTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "fix-bug", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "fix-bug", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -525,7 +525,7 @@ public class WorkPrepareTest
       createIssue(projectPath, "2", "1", "compress-feature", "open");
 
       WorkPrepare prepare = new WorkPrepare(scope);
-      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*compress*", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*compress*", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -558,7 +558,7 @@ public class WorkPrepareTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -597,7 +597,7 @@ public class WorkPrepareTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -649,7 +649,7 @@ public class WorkPrepareTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "2.1-locked-feature", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "2.1-locked-feature", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -708,7 +708,7 @@ public class WorkPrepareTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "2.1-locked-with-wt", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "2.1-locked-with-wt", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -751,7 +751,7 @@ public class WorkPrepareTest
       // First call creates the worktree and acquires the lock
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "2.1-resume-feature", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "2.1-resume-feature", TrustLevel.MEDIUM, false);
 
       String json1 = prepare.execute(input);
       JsonMapper mapper = scope.getJsonMapper();
@@ -802,7 +802,7 @@ public class WorkPrepareTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "2.1-suspicious-feature", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "2.1-suspicious-feature", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -841,7 +841,7 @@ public class WorkPrepareTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "2.1-fresh-feature", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "2.1-fresh-feature", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -894,7 +894,7 @@ public class WorkPrepareTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -936,7 +936,7 @@ public class WorkPrepareTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       // Exclude all issues so IssueDiscovery returns NotFound, triggering diagnostics
-      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -996,7 +996,7 @@ public class WorkPrepareTest
       GitCommands.runGit(projectPath, "commit", "-m", "Add boundary issue");
 
       WorkPrepare prepare = new WorkPrepare(scope);
-      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -1082,7 +1082,7 @@ public class WorkPrepareTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -1336,7 +1336,7 @@ public class WorkPrepareTest
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
       // Pass bare issue name (no version prefix) - should resolve via BARE_NAME scope
-      PrepareInput input = new PrepareInput(sessionId, "", "fix-bug", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "fix-bug", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -1382,7 +1382,7 @@ public class WorkPrepareTest
       String sessionId = UUID.randomUUID().toString();
 
       // Test 1: Bare name 'fix-bug' should resolve via BARE_NAME scope
-      PrepareInput bareNameInput = new PrepareInput(sessionId, "", "fix-bug", TrustLevel.MEDIUM);
+      PrepareInput bareNameInput = new PrepareInput(sessionId, "", "fix-bug", TrustLevel.MEDIUM, false);
       String bareNameJson = prepare.execute(bareNameInput);
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -1405,7 +1405,7 @@ public class WorkPrepareTest
 
       // Test 2: Qualified name '2.1-fix-bug' should resolve via ISSUE scope
       sessionId = UUID.randomUUID().toString();
-      PrepareInput qualifiedNameInput = new PrepareInput(sessionId, "", "2.1-fix-bug", TrustLevel.MEDIUM);
+      PrepareInput qualifiedNameInput = new PrepareInput(sessionId, "", "2.1-fix-bug", TrustLevel.MEDIUM, false);
       String qualifiedNameJson = prepare.execute(qualifiedNameInput);
 
       JsonNode qualifiedNameNode = mapper.readTree(qualifiedNameJson);
@@ -1447,7 +1447,7 @@ public class WorkPrepareTest
 
       // Pass bare issue name directly - must be detected as BARE_NAME scope
       // and resolve to the correct qualified issue
-      PrepareInput input = new PrepareInput(sessionId, "", "fix-bug", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "fix-bug", TrustLevel.MEDIUM, false);
       String json = prepare.execute(input);
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -1498,7 +1498,7 @@ public class WorkPrepareTest
         "2.8-dependency-far");
 
       WorkPrepare prepare = new WorkPrepare(scope);
-      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -1545,7 +1545,7 @@ public class WorkPrepareTest
       }
 
       WorkPrepare prepare = new WorkPrepare(scope);
-      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -1578,7 +1578,7 @@ public class WorkPrepareTest
       createIssueWithDependencies(projectPath, "2", "1", "issue-b", "open", "2.1-issue-a");
 
       WorkPrepare prepare = new WorkPrepare(scope);
-      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -1628,7 +1628,7 @@ public class WorkPrepareTest
       createIssueWithDependencies(projectPath, "2", "1", "issue-c", "open", "2.1-issue-a");
 
       WorkPrepare prepare = new WorkPrepare(scope);
-      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -1678,7 +1678,7 @@ public class WorkPrepareTest
       createIssue(projectPath, "2", "1", "issue-c", "open");
 
       WorkPrepare prepare = new WorkPrepare(scope);
-      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -1719,7 +1719,7 @@ public class WorkPrepareTest
 
       // Use threshold=5 so that 7 entries > 5 triggers the error
       WorkPrepare prepare = new WorkPrepare(scope, 5, 1000);
-      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM, false);
 
       prepare.execute(input);
     }
@@ -1751,7 +1751,7 @@ public class WorkPrepareTest
 
       // Use maxCycleDetectionDepth=0 so any recursive call (depth=1 > 0) triggers the error
       WorkPrepare prepare = new WorkPrepare(scope, 100_000, 0);
-      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM, false);
 
       prepare.execute(input);
     }
@@ -1783,7 +1783,7 @@ public class WorkPrepareTest
 
       // Use maxCycleDetectionDepth=5 so depth 5 == limit, should NOT throw
       WorkPrepare prepare = new WorkPrepare(scope, 100_000, 5);
-      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -1818,7 +1818,7 @@ public class WorkPrepareTest
       createIssueWithDependencies(projectPath, "2", "1", "issue-c", "open", "2.1-issue-a");
 
       WorkPrepare prepare = new WorkPrepare(scope);
-      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -1870,7 +1870,7 @@ public class WorkPrepareTest
       createIssueWithDependencies(projectPath, "2", "1", "issue-d", "open", "2.1-issue-a");
 
       WorkPrepare prepare = new WorkPrepare(scope);
-      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -1919,7 +1919,7 @@ public class WorkPrepareTest
       createIssue(projectPath, "2", "1", "issue-c", "open");
 
       WorkPrepare prepare = new WorkPrepare(scope);
-      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -1958,7 +1958,7 @@ public class WorkPrepareTest
       createIssueWithDependencies(projectPath, "2", "1", "issue-c", "open", "2.1-issue-a");
 
       WorkPrepare prepare = new WorkPrepare(scope);
-      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -2016,7 +2016,7 @@ public class WorkPrepareTest
       createIssueWithDependencies(projectPath, "2", "1", "issue-sub", "open", "2.1-issue-a");
 
       WorkPrepare prepare = new WorkPrepare(scope);
-      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -2071,7 +2071,7 @@ public class WorkPrepareTest
       createIssueWithDependencies(projectPath, "2", "1", "shared-dep", "open", "2.1-issue-a");
 
       WorkPrepare prepare = new WorkPrepare(scope);
-      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -2120,7 +2120,7 @@ public class WorkPrepareTest
       createIssue(projectPath, "2", "1", "issue-c", "open");
 
       WorkPrepare prepare = new WorkPrepare(scope);
-      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM, false);
 
       // Should complete without error; no cycles since C has no dep on A
       String json = prepare.execute(input);
@@ -2216,7 +2216,7 @@ public class WorkPrepareTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -2259,7 +2259,7 @@ public class WorkPrepareTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -2320,7 +2320,7 @@ public class WorkPrepareTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -2371,7 +2371,7 @@ public class WorkPrepareTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -2413,7 +2413,7 @@ public class WorkPrepareTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -2457,6 +2457,7 @@ public class WorkPrepareTest
       WorkPrepare.parseRawArguments("a1b2c3d4-e5f6-7890-abcd-ef1234567890 resume 2.1-fix-bug", "", "");
     requireThat(result.issueId(), "issueId").isEqualTo("2.1-fix-bug");
     requireThat(result.excludePattern(), "excludePattern").isEmpty();
+    requireThat(result.resume(), "resume").isTrue();
   }
 
   /**
@@ -2470,6 +2471,7 @@ public class WorkPrepareTest
       WorkPrepare.parseRawArguments("a1b2c3d4-e5f6-7890-abcd-ef1234567890 continue 2.1-fix-bug", "", "");
     requireThat(result.issueId(), "issueId").isEqualTo("2.1-fix-bug");
     requireThat(result.excludePattern(), "excludePattern").isEmpty();
+    requireThat(result.resume(), "resume").isTrue();
   }
 
   /**
@@ -2490,6 +2492,7 @@ public class WorkPrepareTest
       WorkPrepare.parseRawArguments("a1b2c3d4-e5f6-7890-abcd-ef1234567890 resume  2.1-fix-bug", "", "");
     requireThat(result.issueId(), "issueId").isEqualTo("2.1-fix-bug");
     requireThat(result.excludePattern(), "excludePattern").isEmpty();
+    requireThat(result.resume(), "resume").isTrue();
   }
 
   /**
@@ -2504,6 +2507,7 @@ public class WorkPrepareTest
       WorkPrepare.parseRawArguments("a1b2c3d4-e5f6-7890-abcd-ef1234567890 Resume 2.1-fix-bug", "", "");
     requireThat(result.issueId(), "issueId").isEmpty();
     requireThat(result.excludePattern(), "excludePattern").isEmpty();
+    requireThat(result.resume(), "resume").isFalse();
   }
 
   /**
@@ -2517,6 +2521,7 @@ public class WorkPrepareTest
       WorkPrepare.parseRawArguments("a1b2c3d4-e5f6-7890-abcd-ef1234567890 2.1-fix-bug", "", "");
     requireThat(result.issueId(), "issueId").isEqualTo("2.1-fix-bug");
     requireThat(result.excludePattern(), "excludePattern").isEmpty();
+    requireThat(result.resume(), "resume").isFalse();
   }
 
   /**
@@ -2622,6 +2627,7 @@ public class WorkPrepareTest
       WorkPrepare.parseRawArguments("a1b2c3d4-e5f6-7890-abcd-ef1234567890 resume skip compress", "", "");
     requireThat(result.issueId(), "issueId").isEmpty();
     requireThat(result.excludePattern(), "excludePattern").isEqualTo("*compress*");
+    requireThat(result.resume(), "resume").isTrue();
   }
 
   // -------------------------------------------------------------------------
@@ -2676,6 +2682,7 @@ public class WorkPrepareTest
       "92289cdd-76a1-4d7e-8cf3-be5618ec270a resume 2.1-fix-bug", "", "");
     requireThat(result.issueId(), "issueId").isEqualTo("2.1-fix-bug");
     requireThat(result.excludePattern(), "excludePattern").isEmpty();
+    requireThat(result.resume(), "resume").isTrue();
   }
 
   /**
@@ -2820,7 +2827,7 @@ public class WorkPrepareTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -2878,7 +2885,7 @@ public class WorkPrepareTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "2.1-glob-feature", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "2.1-glob-feature", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -2938,7 +2945,7 @@ public class WorkPrepareTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "2.1-glob-feature", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "2.1-glob-feature", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -2998,7 +3005,7 @@ public class WorkPrepareTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "2.1-glob-feature", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "2.1-glob-feature", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -3058,7 +3065,7 @@ public class WorkPrepareTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "2.1-glob-feature", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "2.1-glob-feature", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -3119,7 +3126,7 @@ public class WorkPrepareTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "2.1-glob-feature", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "2.1-glob-feature", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -3159,7 +3166,7 @@ public class WorkPrepareTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -3217,7 +3224,7 @@ public class WorkPrepareTest
         GitCommands.runGit(projectPath, "commit", "-m", "Add decomposed parent issue");
 
         WorkPrepare prepare = new WorkPrepare(scope);
-        PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "", "", TrustLevel.MEDIUM);
+        PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "", "", TrustLevel.MEDIUM, false);
 
         String json = prepare.execute(input);
 
@@ -3368,6 +3375,249 @@ public class WorkPrepareTest
         requireThat(result.issueId(), "issueId[" + i + "]").isEqualTo(issueId);
         requireThat(result.excludePattern(), "excludePattern[" + i + "]").isEmpty();
       }
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Resume mode — ExistingWorktree + resume=true
+  // -------------------------------------------------------------------------
+
+  /**
+   * Verifies that execute returns READY when resume=true and a different session owns the lock.
+   * The lock owner is replaced with the current session.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeReturnsReadyWhenResumeAndDifferentSessionOwnsLock() throws IOException
+  {
+    Path projectPath = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
+    {
+      createIssue(projectPath, "2", "1", "resume-diff-session", "open");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue");
+
+      // Create a lock file owned by a different session with a recent timestamp
+      Path locksDir = scope.getCatWorkPath().resolve("locks");
+      Files.createDirectories(locksDir);
+      String otherSession = UUID.randomUUID().toString();
+      long recentTimestamp = Instant.now().getEpochSecond();
+      String lockContent = """
+        {
+          "session_id": "%s",
+          "worktrees": {"/some/worktree": "%s"},
+          "created_at": %d,
+          "created_iso": "2026-03-01T23:00:00Z"
+        }""".formatted(otherSession, otherSession, recentTimestamp);
+      Files.writeString(locksDir.resolve("2.1-resume-diff-session.lock"), lockContent);
+
+      // Create an actual git worktree for the issue branch
+      worktreePath = scope.getCatWorkPath().resolve("worktrees").resolve("2.1-resume-diff-session");
+      Files.createDirectories(worktreePath.getParent());
+      GitCommands.runGit(projectPath, "worktree", "add", "-b", "2.1-resume-diff-session",
+        worktreePath.toString(), "HEAD");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "2.1-resume-diff-session",
+        TrustLevel.MEDIUM, true);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("READY");
+      requireThat(node.path("issue_id").asString(), "issueId").
+        isEqualTo("2.1-resume-diff-session");
+      requireThat(node.path("worktree_path").asString(), "worktreePath").
+        isEqualTo(worktreePath.toString());
+      requireThat(node.path("lock_acquired").asBoolean(), "lockAcquired").isTrue();
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that execute returns READY when resume=true, the worktree exists, but no lock exists.
+   * A fresh lock is acquired for the current session.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeReturnsReadyWhenResumeAndNoLockExists() throws IOException
+  {
+    Path projectPath = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
+    {
+      createIssue(projectPath, "2", "1", "resume-no-lock", "open");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue");
+
+      // Create an actual git worktree but do NOT create a lock file
+      worktreePath = scope.getCatWorkPath().resolve("worktrees").resolve("2.1-resume-no-lock");
+      Files.createDirectories(worktreePath.getParent());
+      GitCommands.runGit(projectPath, "worktree", "add", "-b", "2.1-resume-no-lock",
+        worktreePath.toString(), "HEAD");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "2.1-resume-no-lock",
+        TrustLevel.MEDIUM, true);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("READY");
+      requireThat(node.path("issue_id").asString(), "issueId").
+        isEqualTo("2.1-resume-no-lock");
+      requireThat(node.path("worktree_path").asString(), "worktreePath").
+        isEqualTo(worktreePath.toString());
+      requireThat(node.path("lock_acquired").asBoolean(), "lockAcquired").isTrue();
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that execute returns READY when resume=true and the current session already owns the
+   * lock. This is the no-regression case: resume with current-session lock behaves identically to
+   * the non-resume path.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeReturnsReadyWhenResumeAndCurrentSessionOwnsLock() throws IOException
+  {
+    Path projectPath = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
+    {
+      createIssue(projectPath, "2", "1", "resume-own-lock", "open");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue");
+
+      // First call creates the worktree and acquires the lock
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput firstInput = new PrepareInput(sessionId, "", "2.1-resume-own-lock",
+        TrustLevel.MEDIUM, false);
+
+      String json1 = prepare.execute(firstInput);
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node1 = mapper.readTree(json1);
+      requireThat(node1.path("status").asString(), "firstStatus").isEqualTo("READY");
+      worktreePath = Path.of(node1.path("worktree_path").asString());
+
+      // Second call with resume=true and same session ID
+      PrepareInput resumeInput = new PrepareInput(sessionId, "", "2.1-resume-own-lock",
+        TrustLevel.MEDIUM, true);
+
+      String json2 = prepare.execute(resumeInput);
+      JsonNode node2 = mapper.readTree(json2);
+      requireThat(node2.path("status").asString(), "secondStatus").isEqualTo("READY");
+      requireThat(node2.path("issue_id").asString(), "issueId").
+        isEqualTo("2.1-resume-own-lock");
+      requireThat(node2.path("worktree_path").asString(), "worktreePath").
+        isEqualTo(worktreePath.toString());
+      requireThat(node2.path("lock_acquired").asBoolean(), "lockAcquired").isTrue();
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that execute returns READY when resume=true but no worktree exists. The normal
+   * new-issue flow creates a fresh worktree.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeReturnsReadyWhenResumeAndNoWorktreeExists() throws IOException
+  {
+    Path projectPath = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
+    {
+      createIssue(projectPath, "2", "1", "resume-no-wt", "open");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "2.1-resume-no-wt",
+        TrustLevel.MEDIUM, true);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("READY");
+      requireThat(node.path("issue_id").asString(), "issueId").
+        isEqualTo("2.1-resume-no-wt");
+      requireThat(node.has("worktree_path"), "hasWorktreePath").isTrue();
+      worktreePath = Path.of(node.path("worktree_path").asString());
+      requireThat(Files.isDirectory(worktreePath), "worktreeExists").isTrue();
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that execute returns ERROR when resume=false and an orphaned worktree exists (no lock).
+   * This is the regression guard: without resume, orphaned worktrees still return ERROR.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeReturnsErrorWhenNoResumeAndOrphanedWorktree() throws IOException
+  {
+    Path projectPath = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
+    {
+      createIssue(projectPath, "2", "1", "orphan-wt", "open");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue");
+
+      // Create an actual git worktree but do NOT create a lock file
+      worktreePath = scope.getCatWorkPath().resolve("worktrees").resolve("2.1-orphan-wt");
+      Files.createDirectories(worktreePath.getParent());
+      GitCommands.runGit(projectPath, "worktree", "add", "-b", "2.1-orphan-wt",
+        worktreePath.toString(), "HEAD");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "2.1-orphan-wt",
+        TrustLevel.MEDIUM, false);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("ERROR");
+      requireThat(node.path("message").asString(), "message").contains("existing worktree");
+      requireThat(node.path("issue_id").asString(), "issueId").isEqualTo("2.1-orphan-wt");
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 
