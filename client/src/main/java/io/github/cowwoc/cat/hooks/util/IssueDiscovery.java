@@ -6,6 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
+import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.SharedSecrets;
 import io.github.cowwoc.cat.hooks.IssueStatus;
@@ -1450,6 +1451,43 @@ public final class IssueDiscovery
     }
 
     return true;
+  }
+
+  /**
+   * Derives the relative {@code index.json} path for an issue from a branch name.
+   * <p>
+   * The branch name encodes the version and issue name in a structured format such as
+   * {@code 2.1-my-issue}, {@code 2.1.3-my-issue}, or {@code 2-my-issue}. This method parses
+   * the branch name using {@link #QUALIFIED_ISSUE_ID_PATTERN} and constructs the corresponding
+   * relative path (e.g., {@code .cat/issues/v2/v2.1/my-issue/index.json}).
+   *
+   * @param branchName the git branch name
+   * @return the relative {@code index.json} path, or {@code null} if the branch name does not
+   *   match the expected format
+   */
+  public static String branchToIndexJsonPath(String branchName)
+  {
+    Matcher matcher = QUALIFIED_ISSUE_ID_PATTERN.matcher(branchName);
+    if (!matcher.matches())
+      return null;
+
+    String major = matcher.group(1);
+    String minor = matcher.group(2);
+    String patch = matcher.group(3);
+    String issueName = matcher.group(4);
+
+    if (minor == null)
+      return Config.CAT_DIR_NAME + "/issues/v" + major + "/" + issueName + "/index.json";
+    if (patch == null)
+    {
+      return Config.CAT_DIR_NAME + "/issues/v" + major +
+        "/v" + major + "." + minor +
+        "/" + issueName + "/index.json";
+    }
+    return Config.CAT_DIR_NAME + "/issues/v" + major +
+      "/v" + major + "." + minor +
+      "/v" + major + "." + minor + "." + patch +
+      "/" + issueName + "/index.json";
   }
 
   /**
