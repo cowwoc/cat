@@ -152,6 +152,7 @@
 						<CLAUDE_PLUGIN_ROOT>${project.basedir}/../plugin</CLAUDE_PLUGIN_ROOT>
 					</environmentVariables>
 					<parallel>methods</parallel>
+					<threadCount>8</threadCount>
 					<properties>
 						<property>
 							<!-- WORKAROUND: https://github.com/cbeust/testng/issues/2727 -->
