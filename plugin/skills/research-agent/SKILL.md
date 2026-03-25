@@ -5,7 +5,6 @@ description: >
   Use before planning an issue when technical investigation is needed.
   IMPORTANT: After invoking this skill, forward the AskUserQuestion tool call verbatim — do not respond
   conversationally.
-model: sonnet
 argument-hint: "<cat_agent_id> <research-type> <topic>"
 allowed-tools:
   - Task
