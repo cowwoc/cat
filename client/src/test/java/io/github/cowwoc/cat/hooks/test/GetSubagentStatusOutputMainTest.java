@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.skills.GetSubagentStatusOutput;
 import org.testng.annotations.Test;
 
@@ -20,7 +20,7 @@ import java.nio.file.Path;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Tests for {@link GetSubagentStatusOutput#run(JvmScope, String[], PrintStream)} CLI error path handling.
+ * Tests for {@link GetSubagentStatusOutput#run(ClaudeTool, String[], PrintStream)} CLI error path handling.
  */
 public class GetSubagentStatusOutputMainTest
 {
@@ -33,7 +33,7 @@ public class GetSubagentStatusOutputMainTest
   public void noArgsProducesOutput() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-subagent-status-output-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -57,7 +57,7 @@ public class GetSubagentStatusOutputMainTest
   public void nullArgsThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-subagent-status-output-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetSubagentStatusOutput.run(scope, null,
         new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8));
@@ -78,7 +78,7 @@ public class GetSubagentStatusOutputMainTest
   public void nullOutThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-subagent-status-output-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetSubagentStatusOutput.run(scope, new String[]{}, null);
     }
@@ -96,7 +96,7 @@ public class GetSubagentStatusOutputMainTest
   public void unknownArgThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-subagent-status-output-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);

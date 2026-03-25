@@ -11,7 +11,6 @@ import static io.github.cowwoc.cat.hooks.skills.JsonHelper.getStringOrDefault;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.ClaudeTool;
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -561,14 +560,14 @@ public final class SessionAnalyzer
    *   <li>{@code file-history <session-id> <path-pattern>} — trace tool uses referencing a path pattern</li>
    * </ul>
    *
-   * @param scope the JVM scope
+   * @param scope the scope providing access to session paths and shared services
    * @param args  command-line arguments
    * @param out   the output stream to write to
    * @throws NullPointerException     if any of {@code scope}, {@code args}, or {@code out} are null
    * @throws IllegalArgumentException if the arguments are invalid
    * @throws IOException              if the operation fails
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  public static void run(ClaudeTool scope, String[] args, PrintStream out) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();
@@ -584,8 +583,7 @@ public final class SessionAnalyzer
                SessionAnalyzer file-history <session-id> <path-pattern>""");
     }
 
-    ClaudeTool claudeTool = (ClaudeTool) scope;
-    SessionAnalyzer analyzer = new SessionAnalyzer(claudeTool);
+    SessionAnalyzer analyzer = new SessionAnalyzer(scope);
     String firstArg = args[0];
     JsonNode result;
     switch (firstArg)

@@ -8,7 +8,6 @@ package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.EnforceStatusOutput;
-import io.github.cowwoc.cat.hooks.JvmScope;
 import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -80,7 +79,7 @@ public class EnforceStatusOutputMainTest
   public void nullArgsThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-status-output-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       EnforceStatusOutput.run(scope, null,
         new ByteArrayInputStream(new byte[0]),
@@ -100,7 +99,7 @@ public class EnforceStatusOutputMainTest
   public void nullInThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-status-output-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       EnforceStatusOutput.run(scope, new String[]{}, null,
         new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8));
@@ -119,7 +118,7 @@ public class EnforceStatusOutputMainTest
   public void nullOutThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-status-output-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       EnforceStatusOutput.run(scope, new String[]{},
         new ByteArrayInputStream(new byte[0]), null);
@@ -140,7 +139,7 @@ public class EnforceStatusOutputMainTest
   public void unexpectedArgsProducesError() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-status-output-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);

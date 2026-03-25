@@ -26,6 +26,45 @@ For each file below, change the parameter type of the `scope` argument from `Jvm
 - If the class is invoked as a skill CLI tool (receives a `ClaudeTool` at call site): use `ClaudeTool`
 - If the class is used in both contexts: use the narrowest common supertype, or split the method
 
+## Research Findings
+
+### Class Hierarchy
+- `JvmScope` (interface) — root, provides basic JVM infrastructure
+- `ClaudeTool` (interface, extends JvmScope) — adds `getClaudeConfigPath()`, `getSessionId()`
+- `ClaudeHook` (interface, extends JvmScope) — adds `getClaudeConfigPath()`, `getSessionId()`, hook I/O methods
+- `AbstractJvmScope` — abstract class implementing JvmScope with `getClaudeConfigPath()` as abstract protected
+- `MainClaudeTool` — concrete implementation for CLI skill tools
+- `MainClaudeHook` — concrete implementation for hook handlers
+- `MainJvmScope` — concrete implementation for infrastructure tools (no session context)
+
+### File Classification
+
+**Hook Handlers (use ClaudeHook):**
+- DetectTokenThreshold — PostToolHandler, constructor takes ClaudeHook
+- EnforceStatusOutput — Stop hook handler
+- BlockUnauthorizedMergeCleanup — BashHandler, constructor takes ClaudeHook
+- RequireSkillForCommand — BashHandler
+- WarnApprovalWithoutRenderDiff — handler
+- AutoLearnMistakes — PostToolHandler, constructor takes ClaudeHook
+- DetectValidationWithoutEvidence — PostToolHandler
+- DetectAssistantGivingUp — PostToolHandler
+- EnforceApprovalBeforeMerge — hook handler
+- SessionEndHandler — SessionEndHandler, constructor takes ClaudeHook
+- WarnUnknownTerminal — SessionStartHandler
+
+**CLI Tool/Skill Classes (use ClaudeTool):**
+- SessionAnalyzer — main() creates MainClaudeTool
+- InvestigationContextExtractor — main() creates MainClaudeTool
+- RecordLearning — main() creates MainClaudeTool
+- GetSubagentStatusOutput — main() creates MainClaudeTool
+- EmpiricalTestRunner — main() creates MainClaudeTool
+
+**Infrastructure Tools (use JvmScope or ClaudeTool):**
+- GetSkill — main() creates MainJvmScope, but needs getClaudeSessionsPath(), so must widen to ClaudeTool
+
+**Utility Classes (dual context):**
+- SkillDiscovery — has overloads for both ClaudeHook and ClaudeTool contexts
+
 ## Files to Update
 
 ### Uses getClaudeConfigDir()
@@ -54,6 +93,30 @@ For each file below, change the parameter type of the `scope` argument from `Jvm
 
 - `client/src/main/java/io/github/cowwoc/cat/hooks/session/SessionEndHandler.java`
 - `client/src/main/java/io/github/cowwoc/cat/hooks/session/WarnUnknownTerminal.java`
+
+## Risk Assessment
+- **Risk Level:** LOW
+- **Breaking Changes:** None — all changes are internal parameter type widening
+- **Mitigation:** Compilation check verifies all call sites are updated correctly
+
+## Sub-Agent Waves
+
+### Wave 1
+- For each file listed above, check if the `scope` parameter (or field/constructor) is currently typed as
+  `JvmScope` or `AbstractJvmScope`. If so, change it to the appropriate type:
+  - Hook handlers (classes implementing PostToolHandler, BashHandler, SessionStartHandler, SessionEndHandler,
+    or used in hook context with MainClaudeHook): change to `ClaudeHook`
+  - CLI tool/skill classes (classes with `main()` creating MainClaudeTool): change to `ClaudeTool`
+  - GetSkill.java: if scope is typed as JvmScope/MainJvmScope and calls getClaudeSessionsPath(),
+    change the main() to create MainClaudeTool instead of MainJvmScope, or change the method parameter to ClaudeTool
+  - SkillDiscovery.java: ensure both overloads (ClaudeHook and ClaudeTool) exist if needed; update any
+    JvmScope-typed parameters
+- Update import statements accordingly (add imports for ClaudeTool/ClaudeHook, remove unused JvmScope imports)
+- If a file already has the correct type (ClaudeTool or ClaudeHook), no changes needed — skip it
+- After all changes, run `mvn -f client/pom.xml compile` to verify compilation
+- If compilation fails, fix any remaining call sites that reference the removed methods on JvmScope
+- Run `mvn -f client/pom.xml test` to verify all tests pass
+- Update index.json status to closed, progress 100%
 
 ## Post-conditions
 
