@@ -50,7 +50,7 @@ public class ParallelSubagentTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -91,7 +91,7 @@ public class ParallelSubagentTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
@@ -132,7 +132,7 @@ public class ParallelSubagentTest
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
-      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM, false);
 
       String json = prepare.execute(input);
 
