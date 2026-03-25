@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * <p>
  * This scope is appropriate for CLI tools like {@code GetSkill} that are invoked by the skill
  * preprocessor before a Claude session is established and therefore do not have access to
- * session-specific variables ({@code CLAUDE_SESSION_ID}, {@code CLAUDE_ENV_FILE}).
+ * session-specific variables ({@code CLAUDE_SESSION_ID}).
  * <p>
  * <b>Thread Safety:</b> This class is thread-safe.
  */

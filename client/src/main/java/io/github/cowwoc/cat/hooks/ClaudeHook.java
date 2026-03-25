@@ -10,8 +10,6 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 
-import java.nio.file.Path;
-
 /**
  * A {@link JvmScope} for hook handler processes that combines the Claude session environment
  * (project path, plugin root, config dir), hook input data, and hook output building in a single
@@ -29,15 +27,6 @@ public interface ClaudeHook extends JvmScope
    * @throws IllegalStateException if this scope is closed
    */
   String getSessionId();
-
-  /**
-   * Returns the path to the Claude environment file.
-   *
-   * @return the path to the env file
-   * @throws AssertionError if {@code CLAUDE_ENV_FILE} is not set in the environment
-   * @throws IllegalStateException if this scope is closed
-   */
-  Path getEnvFile();
 
   // Hook input methods
 

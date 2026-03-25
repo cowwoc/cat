@@ -45,13 +45,4 @@ public interface ClaudeTool extends JvmScope
    */
   @Override
   Path getPluginRoot();
-
-  /**
-   * Returns the path to the Claude environment file.
-   *
-   * @return the environment file path
-   * @throws AssertionError if {@code CLAUDE_ENV_FILE} is not set in the environment
-   * @throws IllegalStateException if this scope is closed
-   */
-  Path getEnvFile();
 }

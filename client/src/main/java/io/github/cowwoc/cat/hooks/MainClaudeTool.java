@@ -16,8 +16,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Production implementation of {@link JvmScope} for CLI tool processes.
  * <p>
  * Reads session environment values ({@code CLAUDE_SESSION_ID}, {@code CLAUDE_PROJECT_DIR},
- * {@code CLAUDE_PLUGIN_ROOT}, {@code CLAUDE_ENV_FILE}) from {@code System.getenv()} at
- * construction time and passes them to {@link AbstractClaudeTool}.
+ * {@code CLAUDE_PLUGIN_ROOT}) from {@code System.getenv()} at construction time and passes
+ * them to {@link AbstractClaudeTool}.
  * <p>
  * <b>Thread Safety:</b> This class is thread-safe.
  */
@@ -34,7 +34,7 @@ public final class MainClaudeTool extends AbstractClaudeTool
   /**
    * Creates a new production Claude tool scope.
    * <p>
-   * Reads the four required environment variables from {@code System.getenv()} and fails
+   * Reads the three required environment variables from {@code System.getenv()} and fails
    * immediately with {@link AssertionError} if any are unset or blank.
    *
    * @throws AssertionError if any required environment variable is not set
@@ -43,8 +43,7 @@ public final class MainClaudeTool extends AbstractClaudeTool
   {
     super(getEnvVar("CLAUDE_SESSION_ID"),
       Path.of(getEnvVar("CLAUDE_PROJECT_DIR")),
-      Path.of(getEnvVar("CLAUDE_PLUGIN_ROOT")),
-      Path.of(getEnvVar("CLAUDE_ENV_FILE")));
+      Path.of(getEnvVar("CLAUDE_PLUGIN_ROOT")));
   }
 
   /**

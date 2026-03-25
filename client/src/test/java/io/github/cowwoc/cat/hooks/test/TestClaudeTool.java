@@ -53,8 +53,7 @@ public final class TestClaudeTool extends AbstractClaudeTool
    */
   private TestClaudeTool(TempDirBundle bundle)
   {
-    super(SESSION_ID, bundle.projectPath(), bundle.pluginRoot(),
-      bundle.projectPath().resolve(".env"));
+    super(SESSION_ID, bundle.projectPath(), bundle.pluginRoot());
     this.claudeConfigDir = bundle.claudeConfigDir();
     this.terminalType = TerminalType.WINDOWS_TERMINAL;
     this.workDir = bundle.projectPath();
@@ -91,7 +90,7 @@ public final class TestClaudeTool extends AbstractClaudeTool
    */
   protected TestClaudeTool(Path claudeProjectPath, Path claudePluginRoot, Path workDir)
   {
-    super(SESSION_ID, claudeProjectPath, claudePluginRoot, claudeProjectPath.resolve(".env"));
+    super(SESSION_ID, claudeProjectPath, claudePluginRoot);
     requireThat(workDir, "workDir").isNotNull().isAbsolute();
     this.claudeConfigDir = claudeProjectPath;
     this.workDir = workDir;
@@ -133,7 +132,7 @@ public final class TestClaudeTool extends AbstractClaudeTool
   protected TestClaudeTool(Path claudeProjectPath, Path claudePluginRoot, TerminalType terminalType,
     Path workDir)
   {
-    super(SESSION_ID, claudeProjectPath, claudePluginRoot, claudeProjectPath.resolve(".env"));
+    super(SESSION_ID, claudeProjectPath, claudePluginRoot);
     requireThat(terminalType, "terminalType").isNotNull();
     requireThat(workDir, "workDir").isNotNull().isAbsolute();
     this.claudeConfigDir = claudeProjectPath;
@@ -147,54 +146,6 @@ public final class TestClaudeTool extends AbstractClaudeTool
     {
       throw WrappedCheckedException.wrap(e);
     }
-  }
-
-  /**
-   * Creates a new test Claude tool scope with all parameters explicit.
-   *
-   * @param sessionId the session ID
-   * @param claudeProjectPath the project directory path
-   * @param claudePluginRoot the plugin root directory path
-   * @param envFile the env file path
-   * @param workDir the work directory path (can differ from claudeProjectPath)
-   * @param terminalType the terminal type to use
-   * @throws NullPointerException if any parameter is null
-   * @throws IllegalArgumentException if {@code workDir} is not an absolute path
-   */
-  private TestClaudeTool(String sessionId, Path claudeProjectPath, Path claudePluginRoot, Path envFile,
-    Path workDir, TerminalType terminalType)
-  {
-    super(sessionId, claudeProjectPath, claudePluginRoot, envFile);
-    requireThat(workDir, "workDir").isNotNull().isAbsolute();
-    this.claudeConfigDir = claudeProjectPath;
-    this.workDir = workDir;
-    this.terminalType = terminalType;
-    try
-    {
-      copyEmojiWidthsIfNeeded(claudePluginRoot);
-    }
-    catch (IOException e)
-    {
-      throw WrappedCheckedException.wrap(e);
-    }
-  }
-
-  /**
-   * Creates a new test Claude tool scope with an explicit env file path.
-   * <p>
-   * Use when the test needs {@code scope.getEnvFile()} to return a specific path
-   * that differs from the default {@code claudeProjectPath.resolve(".env")}.
-   *
-   * @param claudeProjectPath the project directory path
-   * @param claudePluginRoot the plugin root directory path
-   * @param envFile the explicit env file path
-   * @return a new TestClaudeTool scope
-   * @throws NullPointerException if any parameter is null
-   */
-  public static TestClaudeTool withEnvFile(Path claudeProjectPath, Path claudePluginRoot, Path envFile)
-  {
-    return new TestClaudeTool(SESSION_ID, claudeProjectPath, claudePluginRoot, envFile,
-      claudeProjectPath, TerminalType.WINDOWS_TERMINAL);
   }
 
   /**
