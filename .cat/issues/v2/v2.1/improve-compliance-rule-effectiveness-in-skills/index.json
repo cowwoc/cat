@@ -1,5 +1,5 @@
 {
   "status": "open",
-  "dependencies": [],
+  "dependencies": ["2.1-revise-instruction-builder-file-targets"],
   "blocks": []
 }
