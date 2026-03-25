@@ -87,13 +87,13 @@ public final class EnforceStatusOutput
   /**
    * Executes the status output enforcement check.
    *
-   * @param scope the JVM scope (must be a {@link ClaudeHook} to access hook input fields)
+   * @param scope the hook scope providing access to hook input fields and session paths
    * @param args  command line arguments (unused)
    * @param in    the input stream (unused in current implementation)
    * @param out   the output stream to write the hook decision to
    * @throws NullPointerException if any of {@code scope}, {@code args}, {@code in}, or {@code out} are null
    */
-  public static void run(JvmScope scope, String[] args, InputStream in, PrintStream out)
+  public static void run(ClaudeHook scope, String[] args, InputStream in, PrintStream out)
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();
@@ -101,16 +101,15 @@ public final class EnforceStatusOutput
     requireThat(out, "out").isNotNull();
     if (args.length > 0)
       throw new IllegalArgumentException("Unexpected arguments: " + String.join(" ", args));
-    ClaudeHook hookScope = (ClaudeHook) scope;
     JsonMapper mapper = scope.getJsonMapper();
     String output;
     try
     {
-      String transcriptPath = hookScope.getString("transcript_path");
-      boolean stopHookActive = hookScope.getBoolean("stop_hook_active", false);
-      String sessionId = hookScope.getSessionId();
-      Path sessionBasePath = hookScope.getClaudeSessionsPath();
-      output = check(mapper, transcriptPath, stopHookActive, hookScope, sessionId, sessionBasePath);
+      String transcriptPath = scope.getString("transcript_path");
+      boolean stopHookActive = scope.getBoolean("stop_hook_active", false);
+      String sessionId = scope.getSessionId();
+      Path sessionBasePath = scope.getClaudeSessionsPath();
+      output = check(mapper, transcriptPath, stopHookActive, scope, sessionId, sessionBasePath);
     }
     catch (Exception e)
     {

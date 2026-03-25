@@ -10,8 +10,9 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 
+import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.ShellParser;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -123,7 +124,7 @@ public final class GetSkill
   private static final String LAUNCHER_DIRECTORY = "client/bin";
   private static final HexFormat HEX_FORMAT = HexFormat.of();
 
-  private final JvmScope scope;
+  private final ClaudeTool scope;
   private final Path pluginRoot;
   private final List<String> skillArgs;
   private final Path loadedDir;
@@ -144,9 +145,9 @@ public final class GetSkill
    * <p>
    * The plugin root and project directory are read from {@code scope} via
    * {@link JvmScope#getPluginRoot()} and {@link JvmScope#getProjectPath()}.
-   * When invoked from {@link #main(String[])}, the scope is a {@link MainJvmScope}.
+   * When invoked from {@link #main(String[])}, the scope is a {@link MainClaudeTool}.
    *
-   * @param scope the JVM scope for accessing shared services and environment paths
+   * @param scope the scope providing access to session paths, shared services, and environment paths
    * @param skillArgs pre-tokenized positional arguments; the first element ({@code $0}) is the CAT agent ID,
    *   optionally followed by a space and description text to insert as {@code $1}
    * @throws NullPointerException if {@code scope} or {@code skillArgs} are null
@@ -154,7 +155,7 @@ public final class GetSkill
    *   is blank, or if the catAgentId does not match a valid UUID or subagent ID format
    * @throws IOException if the plugin root directory does not exist, or if the agent marker file cannot be read
    */
-  public GetSkill(JvmScope scope, List<String> skillArgs) throws IOException
+  public GetSkill(ClaudeTool scope, List<String> skillArgs) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(skillArgs, "skillArgs").isNotNull();
@@ -857,13 +858,13 @@ public final class GetSkill
    * <p>
    * Extracted from {@link #main(String[])} to enable testing without requiring hook stdin input.
    *
-   * @param scope the JVM scope providing access to plugin root, project paths, and config directory
+   * @param scope the scope providing access to plugin root, project paths, and config directory
    * @param args command-line arguments: {@code skill-name catAgentId [skill-args...]}
    * @param out the stream to write skill content to
    * @throws IOException if the skill cannot be loaded
    * @throws NullPointerException if {@code scope}, {@code args}, or {@code out} are null
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out)
+  public static void run(ClaudeTool scope, String[] args, PrintStream out)
     throws IOException
   {
     requireThat(scope, "scope").isNotNull();
@@ -884,7 +885,7 @@ public final class GetSkill
    * <p>
    * {@code skill-name catAgentId [skill-args...]}
    * <p>
-   * The plugin root and project directory are read from the JVM environment via {@link MainJvmScope}.
+   * The plugin root and project directory are read from the JVM environment via {@link MainClaudeTool}.
    * The agent ID is passed as the first skill argument ({@code skill-args[0]}, i.e., {@code $0}).
    *
    * @param args command-line arguments: skill-name catAgentId [skill-args...]
@@ -897,7 +898,7 @@ public final class GetSkill
         "Usage: get-skill <skill-name> <catAgentId> [skill-args...]");
       System.exit(1);
     }
-    try (JvmScope scope = new MainJvmScope())
+    try (ClaudeTool scope = new MainClaudeTool())
     {
       try
       {

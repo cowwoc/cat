@@ -11,7 +11,6 @@ import static io.github.cowwoc.cat.hooks.skills.JsonHelper.getStringOrDefault;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.ClaudeTool;
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -109,21 +108,20 @@ public final class InvestigationContextExtractor
    * Resolves the session file path from the scope and extracts investigation context, writing the JSON result
    * to the output stream.
    *
-   * @param scope the JVM scope (must be a {@link ClaudeTool} to access session ID)
+   * @param scope the scope providing access to session paths and shared services
    * @param args  optional keyword arguments to filter Bash commands
    * @param out   the output stream to write to
    * @throws NullPointerException if any of {@code scope}, {@code args}, or {@code out} are null
    * @throws IOException          if the operation fails
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  public static void run(ClaudeTool scope, String[] args, PrintStream out) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();
     requireThat(out, "out").isNotNull();
-    ClaudeTool claudeTool = (ClaudeTool) scope;
-    InvestigationContextExtractor extractor = new InvestigationContextExtractor(claudeTool);
-    String envSessionId = claudeTool.getSessionId();
-    Path sessionFile = claudeTool.getClaudeSessionsPath().resolve(envSessionId + ".jsonl");
+    InvestigationContextExtractor extractor = new InvestigationContextExtractor(scope);
+    String envSessionId = scope.getSessionId();
+    Path sessionFile = scope.getClaudeSessionsPath().resolve(envSessionId + ".jsonl");
     List<String> keywords = new ArrayList<>();
     for (String arg : args)
       keywords.add(arg);

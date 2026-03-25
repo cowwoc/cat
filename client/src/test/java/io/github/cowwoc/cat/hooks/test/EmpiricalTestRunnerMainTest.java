@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner;
 import org.testng.annotations.Test;
 
@@ -20,7 +20,7 @@ import java.nio.file.Path;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Tests for {@link EmpiricalTestRunner#run(JvmScope, String[], PrintStream)} CLI error path handling.
+ * Tests for {@link EmpiricalTestRunner#run(ClaudeTool, String[], PrintStream)} CLI error path handling.
  */
 public class EmpiricalTestRunnerMainTest
 {
@@ -33,7 +33,7 @@ public class EmpiricalTestRunnerMainTest
   public void helpFlagProducesUsageOutput() throws IOException
   {
     Path tempDir = Files.createTempDirectory("empirical-test-runner-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -58,7 +58,7 @@ public class EmpiricalTestRunnerMainTest
   public void missingConfigThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("empirical-test-runner-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -80,7 +80,7 @@ public class EmpiricalTestRunnerMainTest
   public void nullArgsThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("empirical-test-runner-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner.run(scope, null,
         new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8));
@@ -101,7 +101,7 @@ public class EmpiricalTestRunnerMainTest
   public void nullOutThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("empirical-test-runner-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner.run(scope, new String[]{}, null);
     }
@@ -121,7 +121,7 @@ public class EmpiricalTestRunnerMainTest
   public void unknownArgThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("empirical-test-runner-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -142,7 +142,7 @@ public class EmpiricalTestRunnerMainTest
   public void shortHelpFlagProducesUsageOutput() throws IOException
   {
     Path tempDir = Files.createTempDirectory("empirical-test-runner-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
