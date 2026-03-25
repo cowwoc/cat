@@ -18,7 +18,7 @@ its own context, keeping main agent context minimal (~5-10K tokens).
 | Version | `work on issues in version 2.1` | Work on issues in version 2.1 |
 | Issue ID | `work on 2.1-migrate-api` | Work on specific issue |
 | Bare name | `work on migrate-api` | Work on specific issue by name only (resolves to current branch version) |
-| Resume | `resume 2.1-migrate-api` | Resume a specific issue (`resume`/`continue` prefix is stripped) |
+| Resume | `resume 2.1-migrate-api` | Resume a specific issue (force-acquires lock for existing worktree) |
 | Filter | `work on the next issue, skip compression` | Filter issue selection (natural language) |
 
 **Flags:**
@@ -192,14 +192,17 @@ When `work-prepare` returns ERROR and the `message` field references an existing
 existing session lock (e.g., "already holds a lock", "worktree already exists"):
 
 1. Display the error message to the user verbatim.
-2. Offer cleanup and retry using AskUserQuestion:
+2. Offer cleanup and retry using AskUserQuestion. The "Resume on existing worktree" option is only
+   available when the user's original invocation explicitly contained a `resume` or `continue` keyword
+   (e.g., `resume 2.1-my-issue`, `continue 2.1-my-issue`). If the user did NOT use resume/continue,
+   omit this option entirely and only present "Clean up and retry" and "Abort".
 
    ```
    AskUserQuestion:
      header: "Existing Worktree Detected"
      question: "<error message from work-prepare>"
      options:
-       - "Resume on existing worktree" (retry work-prepare immediately — see below)
+       - "Resume on existing worktree" (only offered when user explicitly said resume/continue — see below)
        - "Clean up and retry" (invoke cat:cleanup-agent, then immediately retry work-prepare)
        - "Abort" (stop)
    ```
@@ -210,9 +213,11 @@ existing session lock (e.g., "already holds a lock", "worktree already exists"):
    AskUserQuestion.
 
 3. If user selects **"Resume on existing worktree"**:
-   - **IMMEDIATELY retry work-prepare** using the same subprocess invocation from Phase 1:
-     `"${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare" --arguments "${ARGUMENTS}"`. Parse the result
-     and resume Phase 1 error handling logic.
+   - Extract the `issue_id` from the `"issue_id"` field of the ERROR JSON returned by the first
+     work-prepare invocation (this field is present in ERROR responses for existing worktrees).
+   - **IMMEDIATELY invoke work-prepare** with the resume prefix:
+     `"${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare" --arguments "resume ${issue_id}"`.
+     Parse the result and resume Phase 1 error handling logic.
    - Do NOT run any filesystem, git, or investigation commands before the retry
    - Do NOT manually construct issue paths or worktree paths — work-prepare returns these in its JSON
      output when it returns READY
