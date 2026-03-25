@@ -6,7 +6,6 @@ description: >
   NOT for viewing status - use /cat:status for that.
   IMPORTANT: After invoking this skill, forward the AskUserQuestion tool call verbatim — do not respond
   conversationally.
-model: sonnet
 argument-hint: "<cat_agent_id> [version | issue_id | filter] [--override-gate]"
 allowed-tools:
   - Read

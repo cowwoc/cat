@@ -4,7 +4,6 @@ description: >
   Use when user says "add an issue", "add a new issue", "create a new issue", "new issue for", or "I need to track".
   IMPORTANT: After invoking this skill, forward the AskUserQuestion tool call verbatim — do not respond
   conversationally.
-model: sonnet
 allowed-tools:
   - Read
   - Write
