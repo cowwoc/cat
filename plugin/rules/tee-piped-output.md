@@ -27,7 +27,6 @@ tail -50 "$LOG_FILE"
 ```
 
 **When NOT to tee:**
-- **Simple pipes with no re-filter need** -- e.g., `echo "hello" | wc -c` where re-filtering is unnecessary
 - **Commands in `run_in_background`** -- background task output is already captured and retrievable
 
 **Cleanup:** Delete the log file when you no longer need it. Do not leave temporary log files behind after the task is
