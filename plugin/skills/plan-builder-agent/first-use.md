@@ -40,6 +40,10 @@ read CAT_AGENT_ID EFFORT MODE ISSUE_PATH REVISION_CONTEXT <<< "$ARGUMENTS"
 
 The skill reads the existing plan.md, applies the revision, and writes the updated plan.md in place.
 
+> **Design rationale:** Both contexts use `revise` mode because adding execution steps to a lightweight plan.md (which
+> already contains goal and post-conditions) is a revision of that existing document, not creation from scratch. The
+> plan already exists; the skill revises it to include implementation details.
+
 ## When to Use
 
 - **Adding execution steps** (`/cat:work`): Generate full execution steps for a lightweight plan.md created by
