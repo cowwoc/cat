@@ -2533,4 +2533,64 @@ public class IssueDiscoveryTest
       }
     }
   }
+
+  /**
+   * Verifies that a major.minor branch name produces the correct index.json path.
+   */
+  @Test
+  public void branchToIndexJsonPathMajorMinor()
+  {
+    String result = IssueDiscovery.branchToIndexJsonPath("2.1-my-test-issue");
+    requireThat(result, "result").isEqualTo(".cat/issues/v2/v2.1/my-test-issue/index.json");
+  }
+
+  /**
+   * Verifies that a major.minor.patch branch name produces the correct index.json path.
+   */
+  @Test
+  public void branchToIndexJsonPathMajorMinorPatch()
+  {
+    String result = IssueDiscovery.branchToIndexJsonPath("2.1.3-fix-bug");
+    requireThat(result, "result").isEqualTo(".cat/issues/v2/v2.1/v2.1.3/fix-bug/index.json");
+  }
+
+  /**
+   * Verifies that a major-only branch name produces the correct index.json path.
+   */
+  @Test
+  public void branchToIndexJsonPathMajorOnly()
+  {
+    String result = IssueDiscovery.branchToIndexJsonPath("2-fix-bug");
+    requireThat(result, "result").isEqualTo(".cat/issues/v2/fix-bug/index.json");
+  }
+
+  /**
+   * Verifies that a branch name not matching the expected format returns null.
+   */
+  @Test
+  public void branchToIndexJsonPathNonMatchingBranch()
+  {
+    String result = IssueDiscovery.branchToIndexJsonPath("main");
+    requireThat(result, "result").isNull();
+  }
+
+  /**
+   * Verifies that a branch name starting with a non-letter issue name returns null.
+   */
+  @Test
+  public void branchToIndexJsonPathNumericIssueName()
+  {
+    String result = IssueDiscovery.branchToIndexJsonPath("2.1-123invalid");
+    requireThat(result, "result").isNull();
+  }
+
+  /**
+   * Verifies that a branch name with underscores and hyphens in the issue name is handled correctly.
+   */
+  @Test
+  public void branchToIndexJsonPathComplexIssueName()
+  {
+    String result = IssueDiscovery.branchToIndexJsonPath("2.1-fix-complex_issue-name");
+    requireThat(result, "result").isEqualTo(".cat/issues/v2/v2.1/fix-complex_issue-name/index.json");
+  }
 }

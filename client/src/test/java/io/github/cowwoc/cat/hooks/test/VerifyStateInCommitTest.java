@@ -706,4 +706,44 @@ public final class VerifyStateInCommitTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that when a commit is blocked for missing index.json, the suggested git add command
+   * references the specific issue path derived from the branch name, not a glob pattern.
+   */
+  @Test
+  public void blockMessageContainsSpecificIssuePath() throws IOException
+  {
+    Path mainRepo = TestUtils.createTempGitRepo("v2.1");
+    try (TestClaudeTool scope = new TestClaudeTool(mainRepo, mainRepo))
+    {
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+      Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-my-test-issue");
+      try
+      {
+        Files.writeString(worktreeDir.resolve("some-file.java"), "class Foo {}");
+        TestUtils.runGit(worktreeDir, "add", "some-file.java");
+
+        VerifyStateInCommit handler = new VerifyStateInCommit();
+        String command = "git commit -m \"bugfix: fix the thing\"";
+        BashHandler.Result result = handler.check(
+          TestUtils.bashHook(command, worktreeDir.toString(), "test-session", scope));
+
+        requireThat(result.blocked(), "blocked").isTrue();
+        requireThat(result.reason(), "reason").
+          contains(".cat/issues/v2/v2.1/my-test-issue/index.json");
+        requireThat(result.reason(), "reason").doesNotContain("**/index.json");
+      }
+      finally
+      {
+        TestUtils.runGit(mainRepo, "worktree", "remove", "--force", worktreeDir.toString());
+        TestUtils.deleteDirectoryRecursively(worktreeDir);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+    }
+  }
 }
