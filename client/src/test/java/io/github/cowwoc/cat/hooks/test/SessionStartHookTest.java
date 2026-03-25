@@ -149,9 +149,9 @@ public class SessionStartHookTest
         JsonMapper mapper = new JsonMapper();
         try (TestClaudeHook hook = new TestClaudeHook(
           mapper.readTree("{\"source\": \"resume\", \"session_id\": \"" + resumedId + "\"}"),
-          projectPath, pluginRoot, projectPath, envFile))
+          projectPath, pluginRoot, projectPath))
         {
-          SessionStartHandler.Result result = new InjectEnv(hook).handle(hook);
+          SessionStartHandler.Result result = new InjectEnv(hook, envFile).handle(hook);
           requireThat(result.additionalContext(), "additionalContext").isEmpty();
           requireThat(result.stderr(), "stderr").isEmpty();
         }
@@ -203,9 +203,9 @@ public class SessionStartHookTest
         JsonMapper mapper = new JsonMapper();
         try (TestClaudeHook hook = new TestClaudeHook(
           mapper.readTree("{\"source\": \"resume\", \"session_id\": \"" + resumedId + "\"}"),
-          projectPath, pluginRoot, projectPath, envFile))
+          projectPath, pluginRoot, projectPath))
         {
-          new InjectEnv(hook).handle(hook);
+          new InjectEnv(hook, envFile).handle(hook);
         }
         // The startup dir (CLAUDE_ENV_FILE parent) must NOT be written on resume
         requireThat(Files.exists(envFile), "startupEnvFileExists").isFalse();
@@ -255,9 +255,9 @@ public class SessionStartHookTest
         JsonMapper mapper = new JsonMapper();
         try (TestClaudeHook hook = new TestClaudeHook(
           mapper.readTree("{\"source\": \"resume\", \"session_id\": \"" + resumedId + "\"}"),
-          projectPath, pluginRoot, projectPath, envFile))
+          projectPath, pluginRoot, projectPath))
         {
-          new InjectEnv(hook).handle(hook);
+          new InjectEnv(hook, envFile).handle(hook);
         }
         // File must contain the new session ID, not the old one
         String content = Files.readString(resumedEnvFile);
@@ -318,9 +318,9 @@ public class SessionStartHookTest
         JsonMapper mapper = new JsonMapper();
         try (TestClaudeHook hook = new TestClaudeHook(
           mapper.readTree("{\"source\": \"resume\", \"session_id\": \"" + resumedId + "\"}"),
-          projectPath, pluginRoot, projectPath, envFile))
+          projectPath, pluginRoot, projectPath))
         {
-          SessionStartHandler.Result result = new InjectEnv(hook).handle(hook);
+          SessionStartHandler.Result result = new InjectEnv(hook, envFile).handle(hook);
           requireThat(result.additionalContext(), "additionalContext").isEmpty();
           requireThat(result.stderr(), "stderr").isEmpty();
         }
@@ -368,9 +368,9 @@ public class SessionStartHookTest
         JsonMapper mapper = new JsonMapper();
         try (TestClaudeHook hook = new TestClaudeHook(
           mapper.readTree("{\"source\": \"clear\", \"session_id\": \"" + clearSessionId + "\"}"),
-          projectPath, pluginRoot, projectPath, envFile))
+          projectPath, pluginRoot, projectPath))
         {
-          SessionStartHandler.Result result = new InjectEnv(hook).handle(hook);
+          SessionStartHandler.Result result = new InjectEnv(hook, envFile).handle(hook);
           requireThat(result.additionalContext(), "additionalContext").isEmpty();
           requireThat(result.stderr(), "stderr").isEmpty();
         }
@@ -417,9 +417,9 @@ public class SessionStartHookTest
         JsonMapper mapper = new JsonMapper();
         try (TestClaudeHook hook = new TestClaudeHook(
           mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}"),
-          projectPath, pluginRoot, projectPath, envFile))
+          projectPath, pluginRoot, projectPath))
         {
-          new InjectEnv(hook).handle(hook);
+          new InjectEnv(hook, envFile).handle(hook);
         }
         // Non-UUID directory should not have an env file written
         Path nonUuidEnvFile = nonUuidDir.resolve("sessionstart-hook-1.sh");
@@ -460,9 +460,9 @@ public class SessionStartHookTest
         JsonMapper mapper = new JsonMapper();
         try (TestClaudeHook hook = new TestClaudeHook(
           mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}"),
-          projectPath, pluginRoot, projectPath, envFile))
+          projectPath, pluginRoot, projectPath))
         {
-          new InjectEnv(hook).handle(hook);
+          new InjectEnv(hook, envFile).handle(hook);
         }
         // File should exist but should not be double-written (appended twice)
         requireThat(Files.exists(envFile), "envFileExists").isTrue();
@@ -515,9 +515,9 @@ public class SessionStartHookTest
         JsonMapper mapper = new JsonMapper();
         try (TestClaudeHook hook = new TestClaudeHook(
           mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}"),
-          projectPath, pluginRoot, projectPath, envFile))
+          projectPath, pluginRoot, projectPath))
         {
-          SessionStartHandler.Result result = new InjectEnv(hook).handle(hook);
+          SessionStartHandler.Result result = new InjectEnv(hook, envFile).handle(hook);
           // Should succeed with no warnings (only the startup dir and the resumed session dir)
           requireThat(result.stderr(), "stderr").isEmpty();
         }
@@ -559,11 +559,11 @@ public class SessionStartHookTest
         JsonMapper mapper = new JsonMapper();
         try (TestClaudeHook hook = new TestClaudeHook(
           mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}"),
-          projectPath, pluginRoot, projectPath, envFile))
+          projectPath, pluginRoot, projectPath))
         {
           // sessionEnvBase = envFile.getParent().getParent() = tempBase
           // tempBase exists and has startupId in it, so this will iterate without crashing
-          SessionStartHandler.Result result = new InjectEnv(hook).handle(hook);
+          SessionStartHandler.Result result = new InjectEnv(hook, envFile).handle(hook);
           requireThat(result.stderr(), "stderr").isEmpty();
         }
         requireThat(Files.exists(envFile), "envFileExists").isTrue();
@@ -608,9 +608,9 @@ public class SessionStartHookTest
         JsonMapper mapper = new JsonMapper();
         try (TestClaudeHook hook = new TestClaudeHook(
           mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}"),
-          projectPath, pluginRoot, projectPath, envFile))
+          projectPath, pluginRoot, projectPath))
         {
-          new InjectEnv(hook).handle(hook);
+          new InjectEnv(hook, envFile).handle(hook);
         }
         // Symlink directory should not have an env file written inside it
         Path symlinkEnvFile = symlinkDir.resolve("sessionstart-hook-1.sh");
@@ -659,10 +659,10 @@ public class SessionStartHookTest
         JsonMapper mapper = new JsonMapper();
         try (TestClaudeHook hook = new TestClaudeHook(
           mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}"),
-          dangerousProjectDir, pluginRoot, dangerousProjectDir, envFile))
+          dangerousProjectDir, pluginRoot, dangerousProjectDir))
         {
           // validateEnvValue is called with projectPath.toString() which contains '$'
-          new InjectEnv(hook).handle(hook);
+          new InjectEnv(hook, envFile).handle(hook);
         }
       }
       finally
@@ -705,9 +705,9 @@ public class SessionStartHookTest
         JsonMapper mapper = new JsonMapper();
         try (TestClaudeHook hook = new TestClaudeHook(
           mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}"),
-          dangerousProjectDir, pluginRoot, dangerousProjectDir, envFile))
+          dangerousProjectDir, pluginRoot, dangerousProjectDir))
         {
-          new InjectEnv(hook).handle(hook);
+          new InjectEnv(hook, envFile).handle(hook);
         }
       }
       finally
@@ -750,9 +750,9 @@ public class SessionStartHookTest
         JsonMapper mapper = new JsonMapper();
         try (TestClaudeHook hook = new TestClaudeHook(
           mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}"),
-          dangerousProjectDir, pluginRoot, dangerousProjectDir, envFile))
+          dangerousProjectDir, pluginRoot, dangerousProjectDir))
         {
-          new InjectEnv(hook).handle(hook);
+          new InjectEnv(hook, envFile).handle(hook);
         }
       }
       finally
@@ -795,9 +795,9 @@ public class SessionStartHookTest
         JsonMapper mapper = new JsonMapper();
         try (TestClaudeHook hook = new TestClaudeHook(
           mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}"),
-          dangerousProjectDir, pluginRoot, dangerousProjectDir, envFile))
+          dangerousProjectDir, pluginRoot, dangerousProjectDir))
         {
-          new InjectEnv(hook).handle(hook);
+          new InjectEnv(hook, envFile).handle(hook);
         }
       }
       finally
@@ -846,9 +846,9 @@ public class SessionStartHookTest
         JsonMapper mapper = new JsonMapper();
         try (TestClaudeHook hook = new TestClaudeHook(
           mapper.readTree("{\"source\": \"resume\", \"session_id\": \"" + resumedId + "\"}"),
-          projectPath, pluginRoot, projectPath, envFile))
+          projectPath, pluginRoot, projectPath))
         {
-          SessionStartHandler.Result result = new InjectEnv(hook).handle(hook);
+          SessionStartHandler.Result result = new InjectEnv(hook, envFile).handle(hook);
           // The env file in the resumed session dir is a symlink - should return a warning
           requireThat(result.additionalContext(), "additionalContext").contains("symlink");
         }
@@ -895,9 +895,9 @@ public class SessionStartHookTest
         JsonMapper mapper = new JsonMapper();
         try (TestClaudeHook hook = new TestClaudeHook(
           mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}"),
-          projectPath, pluginRoot, projectPath, envFile))
+          projectPath, pluginRoot, projectPath))
         {
-          SessionStartHandler.Result result = new InjectEnv(hook).handle(hook);
+          SessionStartHandler.Result result = new InjectEnv(hook, envFile).handle(hook);
           requireThat(result.additionalContext(), "additionalContext").contains("symlink");
         }
       }
@@ -942,9 +942,9 @@ public class SessionStartHookTest
         JsonMapper mapper = new JsonMapper();
         try (TestClaudeHook hook = new TestClaudeHook(
           mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}"),
-          projectPath, dangerousPluginRoot, projectPath, envFile))
+          projectPath, dangerousPluginRoot, projectPath))
         {
-          new InjectEnv(hook).handle(hook);
+          new InjectEnv(hook, envFile).handle(hook);
         }
       }
       finally
@@ -986,9 +986,9 @@ public class SessionStartHookTest
         JsonMapper mapper = new JsonMapper();
         try (TestClaudeHook hook = new TestClaudeHook(
           mapper.readTree("{\"source\": \"startup\", \"session_id\": \"test-$INJECTED\"}"),
-          projectPath, pluginRoot, projectPath, envFile))
+          projectPath, pluginRoot, projectPath))
         {
-          new InjectEnv(hook).handle(hook);
+          new InjectEnv(hook, envFile).handle(hook);
         }
       }
       finally

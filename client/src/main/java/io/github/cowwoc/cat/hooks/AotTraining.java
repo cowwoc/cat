@@ -83,7 +83,7 @@ public final class AotTraining
       new PreWriteHook(scope).run(scope);
       new PreIssueHook(scope).run(scope);
       new SessionEndHook(scope).run(scope);
-      new SessionStartHook(scope).run(scope);
+      new SessionStartHook(scope, Path.of("/tmp/aot-training-env")).run(scope);
       new SubagentStartHook(scope).run(scope);
 
       // Skill handlers - construct to load class graphs.

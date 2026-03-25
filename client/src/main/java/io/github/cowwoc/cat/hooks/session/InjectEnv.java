@@ -30,17 +30,21 @@ import java.nio.file.StandardOpenOption;
 public final class InjectEnv implements SessionStartHandler
 {
   private final ClaudeHook scope;
+  private final Path envFile;
 
   /**
    * Creates a new InjectEnv handler.
    *
    * @param scope the hook scope
-   * @throws NullPointerException if {@code scope} is null
+   * @param envFile the path to the env file
+   * @throws NullPointerException if {@code scope} or {@code envFile} are null
    */
-  public InjectEnv(ClaudeHook scope)
+  public InjectEnv(ClaudeHook scope, Path envFile)
   {
     requireThat(scope, "scope").isNotNull();
+    requireThat(envFile, "envFile").isNotNull();
     this.scope = scope;
+    this.envFile = envFile;
   }
 
   /**
@@ -52,11 +56,9 @@ public final class InjectEnv implements SessionStartHandler
    * <p>
    * For source="resume", writes directly to the resumed session's env directory (identified by session_id from
    * stdin JSON) using TRUNCATE_EXISTING to overwrite any previously written content.
-   * <p>
-   * The env file path is obtained from {@link ClaudeTool#getEnvFile()} via the scope.
    *
    * @return a result with a warning if a symlink was skipped, otherwise empty
-   * @throws AssertionError if required environment variables are not set (CLAUDE_ENV_FILE, CLAUDE_PROJECT_DIR,
+   * @throws AssertionError if required environment variables are not set (CLAUDE_PROJECT_DIR,
    *   CLAUDE_PLUGIN_ROOT) or if session_id is not found in hook input
    * @throws IllegalArgumentException if any environment value contains dangerous shell characters, or if
    *   {@code source} is not one of "startup", "clear", "resume", or "compact"
@@ -65,8 +67,7 @@ public final class InjectEnv implements SessionStartHandler
   @Override
   public Result handle(ClaudeHook scope)
   {
-    Path envPath = scope.getEnvFile();
-    if (Files.isSymbolicLink(envPath))
+    if (Files.isSymbolicLink(envFile))
       return Result.context("InjectEnv: CLAUDE_ENV_FILE is a symlink - skipping for security");
 
     // CLAUDE_SESSION_ID is empty in the hook environment. Read from stdin JSON instead.
@@ -80,11 +81,11 @@ public final class InjectEnv implements SessionStartHandler
     {
       case "resume" ->
       {
-        return handleResume(envPath, sessionId);
+        return handleResume(sessionId);
       }
       case "startup", "clear" ->
       {
-        return handleStartup(envPath, sessionId);
+        return handleStartup(sessionId);
       }
       case "compact" ->
       {
@@ -102,13 +103,12 @@ public final class InjectEnv implements SessionStartHandler
    * is fixed (dirs are the same). The write is still required after the fix because no source="startup"
    * event fires for resumed sessions.
    *
-   * @param envPath   the CLAUDE_ENV_FILE path
    * @param sessionId the session ID from stdin JSON
    * @return a result with a warning if the env file is a symlink, otherwise empty
    * @throws WrappedCheckedException if writing to the env file fails
    * @throws IllegalArgumentException if any environment value contains dangerous shell characters
    */
-  private Result handleResume(Path envPath, String sessionId)
+  private Result handleResume(String sessionId)
   {
     String projectPath = scope.getProjectPath().toString();
     String pluginRoot = scope.getPluginRoot().toString();
@@ -118,10 +118,10 @@ public final class InjectEnv implements SessionStartHandler
     String content = buildEnvContent(projectPath, pluginRoot, sessionId);
     try
     {
-      Path sessionEnvBase = envPath.getParent().getParent();
+      Path sessionEnvBase = envFile.getParent().getParent();
       Path resumedSessionDir = sessionEnvBase.resolve(sessionId);
       Files.createDirectories(resumedSessionDir);
-      String warning = writeEnvFileToDir(resumedSessionDir, envPath.getFileName(), content,
+      String warning = writeEnvFileToDir(resumedSessionDir, envFile.getFileName(), content,
         "InjectEnv: resumed session env file is a symlink - skipping for security", true);
       if (!warning.isEmpty())
         return Result.context(warning);
@@ -139,13 +139,12 @@ public final class InjectEnv implements SessionStartHandler
    * For source="clear", CLAUDE_ENV_FILE already points to the new session's correct directory, so the
    * write is identical to source="startup".
    *
-   * @param envPath   the CLAUDE_ENV_FILE path
    * @param sessionId the session ID from stdin JSON
    * @return an empty result
    * @throws WrappedCheckedException if writing to the env file fails
    * @throws IllegalArgumentException if any environment value contains dangerous shell characters
    */
-  private Result handleStartup(Path envPath, String sessionId)
+  private Result handleStartup(String sessionId)
   {
     String projectPath = scope.getProjectPath().toString();
     String pluginRoot = scope.getPluginRoot().toString();
@@ -155,8 +154,8 @@ public final class InjectEnv implements SessionStartHandler
     String content = buildEnvContent(projectPath, pluginRoot, sessionId);
     try
     {
-      Files.createDirectories(envPath.getParent());
-      writeEnvFileToDir(envPath.getParent(), envPath.getFileName(), content, "", false);
+      Files.createDirectories(envFile.getParent());
+      writeEnvFileToDir(envFile.getParent(), envFile.getFileName(), content, "", false);
     }
     catch (IOException e)
     {
@@ -219,15 +218,15 @@ public final class InjectEnv implements SessionStartHandler
     boolean overwrite)
     throws IOException
   {
-    Path envFile = targetDir.resolve(envFileName);
-    if (Files.isSymbolicLink(envFile))
+    Path targetFile = targetDir.resolve(envFileName);
+    if (Files.isSymbolicLink(targetFile))
       return warningIfSymlink;
     StandardOpenOption writeMode;
     if (overwrite)
       writeMode = StandardOpenOption.TRUNCATE_EXISTING;
     else
       writeMode = StandardOpenOption.APPEND;
-    Files.writeString(envFile, content, StandardCharsets.UTF_8,
+    Files.writeString(targetFile, content, StandardCharsets.UTF_8,
       StandardOpenOption.CREATE, writeMode);
     return "";
   }

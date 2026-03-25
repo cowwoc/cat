@@ -38,9 +38,6 @@ public final class TestClaudeHookTest
 
       Path projPath = hook.getProjectPath();
       requireThat(projPath, "projectPath").isNotNull();
-
-      Path envFile = hook.getEnvFile();
-      requireThat(envFile, "envFile").isNotNull();
     }
     finally
     {
@@ -156,32 +153,6 @@ public final class TestClaudeHookTest
     {
       hook.close();
       hook.getProjectPath();
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(projectPath);
-      TestUtils.deleteDirectoryRecursively(pluginRoot);
-      TestUtils.deleteDirectoryRecursively(configDir);
-    }
-  }
-
-  /**
-   * Verifies that getEnvFile() throws IllegalStateException after close().
-   *
-   * @throws IOException if temporary directory creation fails
-   */
-  @SuppressWarnings("try")
-  @Test(expectedExceptions = IllegalStateException.class,
-    expectedExceptionsMessageRegExp = ".*closed.*")
-  public void getEnvFileThrowsAfterClose() throws IOException
-  {
-    Path projectPath = Files.createTempDirectory("test-hook-project");
-    Path pluginRoot = Files.createTempDirectory("test-hook-plugin");
-    Path configDir = Files.createTempDirectory("test-hook-config");
-    try (TestClaudeHook hook = new TestClaudeHook(projectPath, pluginRoot, configDir))
-    {
-      hook.close();
-      hook.getEnvFile();
     }
     finally
     {

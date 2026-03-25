@@ -25,7 +25,6 @@ public abstract class AbstractClaudeTool extends AbstractJvmScope implements Cla
   private final String sessionId;
   private final Path projectPath;
   private final Path pluginRoot;
-  private final Path envFile;
 
   /**
    * Creates a new abstract Claude tool scope with the given environment values.
@@ -33,21 +32,18 @@ public abstract class AbstractClaudeTool extends AbstractJvmScope implements Cla
    * @param sessionId the Claude session ID
    * @param projectPath the project's root directory path (must be absolute)
    * @param pluginRoot the Claude plugin root directory path (must be absolute)
-   * @param envFile the path to the Claude environment file
    * @throws IllegalArgumentException if {@code sessionId} is blank, or if {@code projectPath} or
    *   {@code pluginRoot} are not absolute paths
-   * @throws NullPointerException if {@code projectPath}, {@code pluginRoot}, or {@code envFile} are null
+   * @throws NullPointerException if {@code projectPath} or {@code pluginRoot} are null
    */
-  protected AbstractClaudeTool(String sessionId, Path projectPath, Path pluginRoot, Path envFile)
+  protected AbstractClaudeTool(String sessionId, Path projectPath, Path pluginRoot)
   {
     requireThat(sessionId, "sessionId").isNotBlank();
     requireThat(projectPath, "projectPath").isNotNull().isAbsolute();
     requireThat(pluginRoot, "pluginRoot").isNotNull().isAbsolute();
-    requireThat(envFile, "envFile").isNotNull();
     this.sessionId = sessionId;
     this.projectPath = projectPath;
     this.pluginRoot = pluginRoot;
-    this.envFile = envFile;
   }
 
   @Override
@@ -69,12 +65,5 @@ public abstract class AbstractClaudeTool extends AbstractJvmScope implements Cla
   {
     ensureOpen();
     return pluginRoot;
-  }
-
-  @Override
-  public Path getEnvFile()
-  {
-    ensureOpen();
-    return envFile;
   }
 }

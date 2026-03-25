@@ -175,19 +175,6 @@ public abstract class AbstractClaudeHook extends AbstractJvmScope implements Cla
     return value;
   }
 
-  /**
-   * Returns the path to the Claude environment file.
-   * <p>
-   * Subclasses must implement this to provide the env file path from {@code CLAUDE_ENV_FILE}
-   * or an injected value.
-   *
-   * @return the path to the env file
-   * @throws AssertionError if {@code CLAUDE_ENV_FILE} is not set in the environment
-   * @throws IllegalStateException if this scope is closed
-   */
-  @Override
-  public abstract Path getEnvFile();
-
   @Override
   public Path getProjectPath()
   {
