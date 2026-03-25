@@ -16,8 +16,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Production implementation of {@link JvmScope} for CLI tool processes.
  * <p>
  * Reads session environment values ({@code CLAUDE_SESSION_ID}, {@code CLAUDE_PROJECT_DIR},
- * {@code CLAUDE_PLUGIN_ROOT}) from {@code System.getenv()} at construction time and passes
- * them to {@link AbstractClaudeTool}.
+ * {@code CLAUDE_PLUGIN_ROOT}) from {@code System.getenv()} at construction time and passes them
+ * to {@link AbstractClaudeTool}.
  * <p>
  * <b>Thread Safety:</b> This class is thread-safe.
  */
