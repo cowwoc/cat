@@ -3033,5 +3033,24 @@
       "catches_variations" : true
     },
     "correct_behavior" : ""
+  }, {
+    "id" : "M602",
+    "timestamp" : "2026-03-25T17:53:11Z",
+    "category" : "protocol_violation",
+    "description" : "",
+    "root_cause" : "SYSTEM: plugin/rules/skill-models.md fallback rule was too narrow — it covered skill-level retries but left a gap for subagent-within-skill rate limits.",
+    "cause_signature" : "compliance_failure:doc_missing:subagent_delegation",
+    "prevention_type" : "documentation",
+    "prevention_path" : "plugin/rules/skill-models.md",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : true,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
   } ]
 }
