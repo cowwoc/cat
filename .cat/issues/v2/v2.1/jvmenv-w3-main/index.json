@@ -1,4 +1,5 @@
 {
-  "status": "open",
-  "dependencies": ["2.1-jvmenv-w2-interface"]
+  "status" : "in-progress",
+  "dependencies" : [ "2.1-jvmenv-w2-interface" ],
+  "target_branch" : "v2.1"
 }
