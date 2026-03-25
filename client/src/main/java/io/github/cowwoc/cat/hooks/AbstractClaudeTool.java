@@ -6,9 +6,9 @@
  */
 package io.github.cowwoc.cat.hooks;
 
-import java.nio.file.Path;
-
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+
+import java.nio.file.Path;
 
 /**
  * Abstract base class for Claude tool processes that reads session environment values

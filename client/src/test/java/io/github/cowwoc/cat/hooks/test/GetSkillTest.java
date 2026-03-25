@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.GetSkill;
 import org.testng.annotations.Test;
 
@@ -1990,7 +1989,7 @@ More content here.
   public void runAcceptsJvmScopeWithoutStdin() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
-    try (JvmScope scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
     {
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);

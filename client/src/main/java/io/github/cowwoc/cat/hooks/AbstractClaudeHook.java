@@ -57,7 +57,7 @@ public abstract class AbstractClaudeHook extends AbstractJvmScope implements Cla
   private final String agentId;
   private final Path projectPath;
   private final Path pluginRoot;
-  private final Path claudeConfigDir;
+  private final Path claudeConfigPath;
 
   /**
    * Creates a new abstract Claude hook scope with the given hook JSON payload and infrastructure paths.
@@ -65,22 +65,22 @@ public abstract class AbstractClaudeHook extends AbstractJvmScope implements Cla
    * @param data the parsed hook JSON payload
    * @param projectPath the project's root directory
    * @param pluginRoot the Claude plugin root directory
-   * @param claudeConfigDir the Claude config directory
+   * @param claudeConfigPath the Claude config directory
    * @throws NullPointerException if any parameter is null
    * @throws IllegalArgumentException if the {@code session_id} field is missing, blank, or invalid
    */
-  protected AbstractClaudeHook(JsonNode data, Path projectPath, Path pluginRoot, Path claudeConfigDir)
+  protected AbstractClaudeHook(JsonNode data, Path projectPath, Path pluginRoot, Path claudeConfigPath)
   {
     requireThat(data, "data").isNotNull();
     requireThat(projectPath, "projectPath").isNotNull();
     requireThat(pluginRoot, "pluginRoot").isNotNull();
-    requireThat(claudeConfigDir, "claudeConfigDir").isNotNull();
+    requireThat(claudeConfigPath, "claudeConfigPath").isNotNull();
     this.data = data;
     this.sessionId = validateSessionId(data);
     this.agentId = validateAgentId(data);
     this.projectPath = projectPath;
     this.pluginRoot = pluginRoot;
-    this.claudeConfigDir = claudeConfigDir;
+    this.claudeConfigPath = claudeConfigPath;
   }
 
   /**
@@ -190,10 +190,10 @@ public abstract class AbstractClaudeHook extends AbstractJvmScope implements Cla
   }
 
   @Override
-  public Path getClaudeConfigDir()
+  public Path getClaudeConfigPath()
   {
     ensureOpen();
-    return claudeConfigDir;
+    return claudeConfigPath;
   }
 
   @Override

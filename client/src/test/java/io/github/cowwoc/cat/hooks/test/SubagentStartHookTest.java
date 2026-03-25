@@ -30,7 +30,7 @@ public final class SubagentStartHookTest
    * Creates {@code configDir/plugins/installed_plugins.json} pointing to a fake plugin root
    * that contains one skill with the given name and description.
    *
-   * @param configDir   the Claude config directory (used as claudeConfigDir in TestClaudeHook)
+   * @param configDir   the Claude config directory (used as claudeConfigPath in TestClaudeHook)
    * @param prefix      the plugin prefix (e.g. "fake" → skill name "fake:skill-name")
    * @param skillName   the skill directory name
    * @param description the skill description in SKILL.md frontmatter
@@ -144,7 +144,7 @@ public final class SubagentStartHookTest
   @Test
   public void subagentStartHookInjectsSkillListingWhenSkillsPresent() throws IOException
   {
-    // claudeConfigDir == claudeProjectPath in TestClaudeHook(projectPath, pluginRoot, projectPath)
+    // claudeConfigPath == claudeProjectPath in TestClaudeHook(projectPath, pluginRoot, projectPath)
     Path configDir = Files.createTempDirectory("cat-test-subagent-config-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
     try

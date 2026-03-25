@@ -18,12 +18,12 @@ import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.util.Objects;
 /**
  * Output generator for checkpoint boxes used by the {@code /cat:work} skill's review phase.
  * <p>

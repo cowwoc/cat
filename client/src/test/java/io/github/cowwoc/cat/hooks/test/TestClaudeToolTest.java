@@ -395,24 +395,6 @@ public final class TestClaudeToolTest
     }
 
     @Override
-    public Path getClaudeConfigDir()
-    {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Path getClaudeSessionsPath()
-    {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Path getClaudeSessionPath(String sessionId)
-    {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
     public TerminalType getTerminalType()
     {
       throw new UnsupportedOperationException();
@@ -428,6 +410,12 @@ public final class TestClaudeToolTest
     public boolean isClosed()
     {
       return false;
+    }
+
+    @Override
+    public Path getClaudeConfigPath()
+    {
+      throw new UnsupportedOperationException();
     }
 
     @Override

@@ -21,7 +21,7 @@ import java.nio.file.Path;
  * <p>
  * Session work files are stored at {@code {claudeProjectDir}/.cat/work/sessions/{sessionId}/}.
  * The handler deletes these directories when the corresponding Claude session directory at
- * {@code {claudeConfigDir}/projects/{encodedProjectDir}/{sessionId}/} no longer exists.
+ * {@code {claudeConfigPath}/projects/{encodedProjectDir}/{sessionId}/} no longer exists.
  */
 public final class SessionEndHandlerTest
 {
@@ -396,7 +396,7 @@ public final class SessionEndHandlerTest
    * projects directory for the given project path.
    * <p>
    * The parent of the session path must equal {@code scope.getClaudeSessionsPath()}, which is
-   * located at {@code {claudeConfigDir}/projects/{encodedProjectRoot}/}.
+   * located at {@code {claudeConfigPath}/projects/{encodedProjectRoot}/}.
    */
   @Test
   public void claudeSessionPathParentIsClaudeProjectsDirectory() throws IOException

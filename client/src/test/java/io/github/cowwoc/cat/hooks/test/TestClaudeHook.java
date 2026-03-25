@@ -77,7 +77,7 @@ public final class TestClaudeHook extends AbstractClaudeHook
   private TestClaudeHook(String payloadJson, TempDirBundle bundle)
   {
     this(parseJson(payloadJson, AbstractClaudeHook.createStdinMapper()), bundle.projectPath(), bundle.pluginRoot(),
-      bundle.claudeConfigDir());
+      bundle.claudeConfigPath());
   }
 
   /**
@@ -89,7 +89,7 @@ public final class TestClaudeHook extends AbstractClaudeHook
   private TestClaudeHook(TempDirBundle bundle)
   {
     this(defaultPayload(AbstractClaudeHook.createStdinMapper()), bundle.projectPath(), bundle.pluginRoot(),
-      bundle.claudeConfigDir());
+      bundle.claudeConfigPath());
   }
 
   /**
@@ -97,13 +97,13 @@ public final class TestClaudeHook extends AbstractClaudeHook
    *
    * @param projectPath the project directory path
    * @param pluginRoot the plugin root directory path
-   * @param claudeConfigDir the config directory path
+   * @param claudeConfigPath the config directory path
    * @throws NullPointerException if any parameter is null
    */
   @SuppressWarnings("PMD.UnnecessaryFullyQualifiedName")
-  public TestClaudeHook(Path projectPath, Path pluginRoot, Path claudeConfigDir)
+  public TestClaudeHook(Path projectPath, Path pluginRoot, Path claudeConfigPath)
   {
-    this(defaultPayload(AbstractClaudeHook.createStdinMapper()), projectPath, pluginRoot, claudeConfigDir,
+    this(defaultPayload(AbstractClaudeHook.createStdinMapper()), projectPath, pluginRoot, claudeConfigPath,
       TerminalType.WINDOWS_TERMINAL);
   }
 
@@ -113,15 +113,15 @@ public final class TestClaudeHook extends AbstractClaudeHook
    * @param payloadJson the hook input JSON string (must contain a {@code session_id} field)
    * @param projectPath the project directory path
    * @param pluginRoot the plugin root directory path
-   * @param claudeConfigDir the config directory path
+   * @param claudeConfigPath the config directory path
    * @throws NullPointerException if any parameter is null
    * @throws IllegalArgumentException if {@code payloadJson} is blank
    * @throws IllegalStateException if the JSON is malformed or missing required fields
    */
   @SuppressWarnings("PMD.UnnecessaryFullyQualifiedName")
-  public TestClaudeHook(String payloadJson, Path projectPath, Path pluginRoot, Path claudeConfigDir)
+  public TestClaudeHook(String payloadJson, Path projectPath, Path pluginRoot, Path claudeConfigPath)
   {
-    this(parseJson(payloadJson, AbstractClaudeHook.createStdinMapper()), projectPath, pluginRoot, claudeConfigDir,
+    this(parseJson(payloadJson, AbstractClaudeHook.createStdinMapper()), projectPath, pluginRoot, claudeConfigPath,
       TerminalType.WINDOWS_TERMINAL);
   }
 
@@ -131,12 +131,12 @@ public final class TestClaudeHook extends AbstractClaudeHook
    * @param hookPayload the parsed hook JSON payload
    * @param projectPath the project directory path
    * @param pluginRoot the plugin root directory path
-   * @param claudeConfigDir the config directory path
+   * @param claudeConfigPath the config directory path
    * @throws NullPointerException if any parameter is null
    */
-  public TestClaudeHook(JsonNode hookPayload, Path projectPath, Path pluginRoot, Path claudeConfigDir)
+  public TestClaudeHook(JsonNode hookPayload, Path projectPath, Path pluginRoot, Path claudeConfigPath)
   {
-    this(hookPayload, projectPath, pluginRoot, claudeConfigDir, TerminalType.WINDOWS_TERMINAL);
+    this(hookPayload, projectPath, pluginRoot, claudeConfigPath, TerminalType.WINDOWS_TERMINAL);
   }
 
   /**
@@ -145,17 +145,17 @@ public final class TestClaudeHook extends AbstractClaudeHook
    * @param payloadJson the hook input JSON string (must contain a {@code session_id} field)
    * @param projectPath the project directory path
    * @param pluginRoot the plugin root directory path
-   * @param claudeConfigDir the config directory path
+   * @param claudeConfigPath the config directory path
    * @param terminalType the terminal type to report
    * @throws NullPointerException if any parameter is null
    * @throws IllegalArgumentException if {@code payloadJson} is blank
    * @throws IllegalStateException if the JSON is malformed or missing required fields
    */
   @SuppressWarnings("PMD.UnnecessaryFullyQualifiedName")
-  public TestClaudeHook(String payloadJson, Path projectPath, Path pluginRoot, Path claudeConfigDir,
+  public TestClaudeHook(String payloadJson, Path projectPath, Path pluginRoot, Path claudeConfigPath,
     TerminalType terminalType)
   {
-    this(parseJson(payloadJson, AbstractClaudeHook.createStdinMapper()), projectPath, pluginRoot, claudeConfigDir,
+    this(parseJson(payloadJson, AbstractClaudeHook.createStdinMapper()), projectPath, pluginRoot, claudeConfigPath,
       terminalType);
   }
 
@@ -165,14 +165,14 @@ public final class TestClaudeHook extends AbstractClaudeHook
    * @param hookPayload the parsed hook JSON payload
    * @param projectPath the project directory path
    * @param pluginRoot the plugin root directory path
-   * @param claudeConfigDir the config directory path
+   * @param claudeConfigPath the config directory path
    * @param terminalType the terminal type to report
    * @throws NullPointerException if any parameter is null
    */
-  public TestClaudeHook(JsonNode hookPayload, Path projectPath, Path pluginRoot, Path claudeConfigDir,
+  public TestClaudeHook(JsonNode hookPayload, Path projectPath, Path pluginRoot, Path claudeConfigPath,
     TerminalType terminalType)
   {
-    super(hookPayload, projectPath, pluginRoot, claudeConfigDir);
+    super(hookPayload, projectPath, pluginRoot, claudeConfigPath);
     requireThat(projectPath, "projectPath").isNotNull();
     requireThat(terminalType, "terminalType").isNotNull();
     this.terminalType = terminalType;
@@ -231,23 +231,23 @@ public final class TestClaudeHook extends AbstractClaudeHook
    *
    * @param projectPath the project directory path
    * @param pluginRoot the plugin root directory path
-   * @param claudeConfigDir the config directory path
+   * @param claudeConfigPath the config directory path
    */
-  private record TempDirBundle(Path projectPath, Path pluginRoot, Path claudeConfigDir)
+  private record TempDirBundle(Path projectPath, Path pluginRoot, Path claudeConfigPath)
   {
     /**
      * Creates a new bundle.
      *
      * @param projectPath the project directory path
      * @param pluginRoot the plugin root directory path
-     * @param claudeConfigDir the config directory path
+     * @param claudeConfigPath the config directory path
      * @throws NullPointerException if any parameter is null
      */
     TempDirBundle
     {
       requireThat(projectPath, "projectPath").isNotNull();
       requireThat(pluginRoot, "pluginRoot").isNotNull();
-      requireThat(claudeConfigDir, "claudeConfigDir").isNotNull();
+      requireThat(claudeConfigPath, "claudeConfigPath").isNotNull();
     }
   }
 
