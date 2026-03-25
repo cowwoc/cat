@@ -13,6 +13,7 @@ import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.IssueStatus;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
+import io.github.cowwoc.cat.hooks.util.IssueDiscovery;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
@@ -75,6 +76,16 @@ public final class VerifyStateInCommit implements BashHandler
 
       if (!indexJsonStaged)
       {
+        String specificPath = deriveIndexJsonPath(effectiveDirectory);
+        String addTarget;
+        if (specificPath == null)
+        {
+          // Branch does not follow CAT naming convention (e.g., manually created branch),
+          // so we fall back to a glob pattern to cover all possible issue index files.
+          addTarget = Config.CAT_DIR_NAME + "/issues/**/index.json";
+        }
+        else
+          addTarget = specificPath;
         return Result.block(
           "**BLOCKED: index.json not included in bugfix/feature commit**\n" +
           "\n" +
@@ -82,7 +93,7 @@ public final class VerifyStateInCommit implements BashHandler
           "index.json must be updated and staged in the same commit.\n" +
           "\n" +
           "Fix: Update index.json to reflect completion status, then stage it:\n" +
-          "  git add " + Config.CAT_DIR_NAME + "/issues/**/index.json");
+          "  git add " + addTarget);
       }
 
       String indexJsonContent = readStagedIndexJson(stagedFiles, effectiveDirectory);
@@ -130,6 +141,28 @@ public final class VerifyStateInCommit implements BashHandler
         lastCdDir = Paths.get(dir).normalize().toString();
     }
     return lastCdDir;
+  }
+
+  /**
+   * Derives the specific index.json path for the current issue from the worktree branch name.
+   * <p>
+   * The branch name encodes the version and issue name in a structured format. This method
+   * parses the branch name and constructs the corresponding issue directory path.
+   *
+   * @param directory the working directory of the worktree
+   * @return the specific index.json path, or {@code null} if the branch name cannot be parsed
+   */
+  private String deriveIndexJsonPath(String directory)
+  {
+    try
+    {
+      String branch = GitCommands.runGit(Path.of(directory), "rev-parse", "--abbrev-ref", "HEAD").strip();
+      return IssueDiscovery.branchToIndexJsonPath(branch);
+    }
+    catch (IOException _)
+    {
+      return null;
+    }
   }
 
   /**
