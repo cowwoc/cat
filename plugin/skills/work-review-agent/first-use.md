@@ -339,7 +339,7 @@ deferred concern wizard) and does NOT affect this gate.
 **Per-trust-level procedure:**
 
 - **trust=low**: Invoke AskUserQuestion tool with detailed FIX/DEFER summary (all fields: severity, stakeholder,
-  location, decision, benefit, cost, threshold) and options:
+  location, explanation, recommendation, decision, benefit, cost, threshold) and options:
   - "Proceed with these decisions (Recommended)"
   - "Let me change decisions"
 - **trust=medium**: Invoke AskUserQuestion tool with brief FIX/DEFER summary (severity, stakeholder, description,
