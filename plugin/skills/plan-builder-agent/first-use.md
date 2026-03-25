@@ -28,7 +28,9 @@ Positional space-separated arguments:
 
 ### Mode: `revise`
 
-Used by `/cat:work`. The `contextPath` points to the issue directory (which contains plan.md and index.json).
+Used by `/cat:work` in two contexts: (1) generating execution steps for a lightweight plan (created by `/cat:add`,
+containing only goal and post-conditions), and (2) revising an existing plan when requirements change during
+implementation. The `contextPath` points to the issue directory (which contains plan.md and index.json).
 An additional revision description follows as remaining arguments:
 
 ```bash
@@ -40,8 +42,8 @@ The skill reads the existing plan.md, applies the revision, and writes the updat
 
 ## When to Use
 
-- **Initial implementation** (`/cat:work`): Generate full implementation steps from a lightweight plan.md created
-  by `/cat:add` (which contains only goal and post-conditions)
+- **Adding execution steps** (`/cat:work`): Generate full execution steps for a lightweight plan.md created by
+  `/cat:add` (which contains only goal and post-conditions, not a full plan from scratch)
 - **Mid-work revision** (`/cat:work`): Revise plan.md when requirements change during implementation
 
 ## Effort-Based Planning Depth
@@ -137,7 +139,7 @@ Goal/Problem section:
 
 ## Workflow
 
-### For Mid-Work Revision (mode=revise)
+### For Revise Mode (mode=revise)
 
 **Step 1:** Read the existing `${ISSUE_PATH}/plan.md`.
 
