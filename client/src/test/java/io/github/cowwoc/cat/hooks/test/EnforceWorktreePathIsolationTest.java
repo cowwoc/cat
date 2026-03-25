@@ -28,8 +28,8 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * file matches and the worktree directory exists, only edits within the worktree are allowed.
  * <p>
  * Tests create temp directories mimicking the external CAT storage structure:
- * {@code {claudeConfigDir}/projects/{encodedProjectDir}/cat/locks/{issueId}.lock} and
- * {@code {claudeConfigDir}/projects/{encodedProjectDir}/cat/worktrees/{issueId}/}.
+ * {@code {claudeConfigPath}/projects/{encodedProjectDir}/cat/locks/{issueId}.lock} and
+ * {@code {claudeConfigPath}/projects/{encodedProjectDir}/cat/worktrees/{issueId}/}.
  * <p>
  * The {@code TestClaudeTool(projectPath, projectPath)} constructor sets {@code configDir = projectPath},
  * so external paths resolve relative to {@code projectPath}. Lock and worktree files are created

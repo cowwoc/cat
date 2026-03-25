@@ -50,7 +50,7 @@ public final class MainClaudeHook extends AbstractClaudeHook
   public MainClaudeHook()
   {
     super(readStdin(), readEnvPath("CLAUDE_PROJECT_DIR"), readEnvPath("CLAUDE_PLUGIN_ROOT"),
-      readConfigDir());
+      readConfigPath());
   }
 
   /**
@@ -95,7 +95,7 @@ public final class MainClaudeHook extends AbstractClaudeHook
    *
    * @return the config directory path
    */
-  private static Path readConfigDir()
+  private static Path readConfigPath()
   {
     String configDir = System.getenv("CLAUDE_CONFIG_DIR");
     if (configDir != null && !configDir.isBlank())

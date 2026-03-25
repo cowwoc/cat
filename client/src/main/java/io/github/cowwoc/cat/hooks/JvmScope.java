@@ -98,6 +98,28 @@ public interface JvmScope extends AutoCloseable
   UserIssues getUserIssues();
 
   /**
+   * Returns the base directory for session JSONL files.
+   * <p>
+   * Session files are stored at {@code {claudeSessionsPath}/{sessionId}.jsonl}.
+   *
+   * @return the session base directory path
+   * @throws IllegalStateException if this scope is closed
+   */
+  Path getClaudeSessionsPath();
+
+  /**
+   * Returns the directory for a session's tracking files.
+   * <p>
+   * Located at {@code {claudeConfigPath}/projects/{encodedProjectRoot}/{sessionId}/}.
+   *
+   * @param sessionId the session ID
+   * @return the session directory path
+   * @throws NullPointerException if {@code sessionId} is null
+   * @throws IllegalStateException if this scope is closed
+   */
+  Path getClaudeSessionPath(String sessionId);
+
+  /**
    * Returns the project's root directory.
    *
    * @return the project directory path
@@ -114,16 +136,6 @@ public interface JvmScope extends AutoCloseable
    * @throws IllegalStateException if this scope is closed
    */
   Path getPluginRoot();
-
-  /**
-   * Returns the Claude config directory.
-   * <p>
-   * Reads the {@code CLAUDE_CONFIG_DIR} environment variable; defaults to {@code ~/.claude} if unset.
-   *
-   * @return the config directory path
-   * @throws IllegalStateException if this scope is closed
-   */
-  Path getClaudeConfigDir();
 
   /**
    * Returns the plugin prefix (e.g., {@code "cat"}).
@@ -144,28 +156,6 @@ public interface JvmScope extends AutoCloseable
    * @throws IllegalStateException if this scope is closed
    */
   Path getCatDir();
-
-  /**
-   * Returns the base directory for session JSONL files.
-   * <p>
-   * Session files are stored at {@code {claudeSessionsPath}/{sessionId}.jsonl}.
-   *
-   * @return the session base directory path
-   * @throws IllegalStateException if this scope is closed
-   */
-  Path getClaudeSessionsPath();
-
-  /**
-   * Returns the directory for a session's tracking files.
-   * <p>
-   * Located at {@code {claudeConfigDir}/projects/{encodedProjectRoot}/{sessionId}/}.
-   *
-   * @param sessionId the session ID
-   * @return the session directory path
-   * @throws NullPointerException if {@code sessionId} is null
-   * @throws IllegalStateException if this scope is closed
-   */
-  Path getClaudeSessionPath(String sessionId);
 
   /**
    * Returns the cross-session project CAT directory.

@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
  * <p>
  * Session work files are stored at {@code {claudeProjectDir}/.cat/work/sessions/{sessionId}/}. A
  * session is considered stale when the corresponding Claude session directory at
- * {@code {claudeConfigDir}/projects/{encodedProjectDir}/{sessionId}/} no longer exists.
+ * {@code {claudeConfigPath}/projects/{encodedProjectDir}/{sessionId}/} no longer exists.
  * <p>
  * The current session's directory is always skipped to avoid deleting files mid-session.
  * The current session ID is passed as a parameter to {@link #clean(String)}.

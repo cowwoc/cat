@@ -23,7 +23,7 @@ import java.nio.file.Path;
  * <p>
  * Tests verify the detection of get-diff usage (or lack thereof) when approval questions are presented.
  * <p>
- * Session files are placed at {@code {claudeConfigDir}/projects/{encodedProjectDir}/{sessionId}.jsonl}, resolved via
+ * Session files are placed at {@code {claudeConfigPath}/projects/{encodedProjectDir}/{sessionId}.jsonl}, resolved via
  * {@link JvmScope#getClaudeSessionsPath()}. The {@code .cat} directory is resolved via
  * {@link JvmScope#getProjectPath()}, matching the production code's path resolution.
  */

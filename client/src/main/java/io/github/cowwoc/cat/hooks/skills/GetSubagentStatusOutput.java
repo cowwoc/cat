@@ -9,10 +9,8 @@ package io.github.cowwoc.cat.hooks.skills;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
 
-import java.io.PrintStream;
-
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.JvmScope;
 import static io.github.cowwoc.cat.hooks.Strings.block;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
@@ -26,6 +24,7 @@ import tools.jackson.databind.node.ObjectNode;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -206,17 +205,17 @@ public final class GetSubagentStatusOutput implements SkillOutput
   }
 
   /**
-   * The JVM scope for accessing shared services.
+   * The Claude tool scope for accessing shared services.
    */
-  private final JvmScope scope;
+  private final ClaudeTool scope;
 
   /**
    * Creates a GetSubagentStatusOutput instance.
    *
-   * @param scope the JVM scope for accessing shared services
+   * @param scope the Claude tool scope for accessing shared services
    * @throws NullPointerException if {@code scope} is null
    */
-  public GetSubagentStatusOutput(JvmScope scope)
+  public GetSubagentStatusOutput(ClaudeTool scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -317,7 +316,7 @@ public final class GetSubagentStatusOutput implements SkillOutput
   /**
    * Reports the status of all subagent worktrees.
    *
-   * @param sessionBase the session files base directory (e.g., "{claudeConfigDir}/projects/{encodedProjectDir}")
+   * @param sessionBase the session files base directory (e.g., "{claudeConfigPath}/projects/{encodedProjectDir}")
    * @param mapper the JSON mapper to use for parsing completion files
    * @return the monitoring result
    * @throws NullPointerException if {@code sessionBase} or {@code mapper} is null

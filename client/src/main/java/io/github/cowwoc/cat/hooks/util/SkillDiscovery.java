@@ -5,7 +5,8 @@
  * See LICENSE.md in the project root for license terms.
  */
 package io.github.cowwoc.cat.hooks.util;
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -28,9 +29,9 @@ import java.util.stream.Stream;
  * <p>
  * Sources:
  * <ul>
- *   <li>All installed plugins via {@code ${claudeConfigDir}/plugins/installed_plugins.json}</li>
+ *   <li>All installed plugins via {@code ${claudeConfigPath}/plugins/installed_plugins.json}</li>
  *   <li>Project commands in {@code ${projectPath}/.claude/commands/}</li>
- *   <li>User skills in {@code ${claudeConfigDir}/skills/}</li>
+ *   <li>User skills in {@code ${claudeConfigPath}/skills/}</li>
  * </ul>
  * Each discovered skill is represented as a {@link SkillEntry} containing the qualified name and
  * description. Callers can format the entries as needed.
@@ -60,18 +61,32 @@ public final class SkillDiscovery
     }
   }
 
-  private final JvmScope scope;
+  private final Path claudeConfigPath;
+  private final Path projectPath;
+  private final JsonMapper jsonMapper;
 
   /**
    * Creates a new SkillDiscovery instance.
    *
-   * @param scope the JVM scope providing environment paths and configuration
-   * @throws NullPointerException if {@code scope} is null
+   * @param scope the hook scope providing config path, project path, and JSON mapper
    */
-  private SkillDiscovery(JvmScope scope)
+  private SkillDiscovery(ClaudeHook scope)
   {
-    requireThat(scope, "scope").isNotNull();
-    this.scope = scope;
+    this.claudeConfigPath = scope.getClaudeConfigPath();
+    this.projectPath = scope.getProjectPath();
+    this.jsonMapper = scope.getJsonMapper();
+  }
+
+  /**
+   * Creates a new SkillDiscovery instance.
+   *
+   * @param scope the tool scope providing config path, project path, and JSON mapper
+   */
+  private SkillDiscovery(ClaudeTool scope)
+  {
+    this.claudeConfigPath = scope.getClaudeConfigPath();
+    this.projectPath = scope.getProjectPath();
+    this.jsonMapper = scope.getJsonMapper();
   }
 
   /**
@@ -86,9 +101,9 @@ public final class SkillDiscovery
     try
     {
       List<SkillEntry> entries = new ArrayList<>();
-      entries.addAll(discoverPluginSkills(scope.getClaudeConfigDir(), scope.getJsonMapper()));
-      entries.addAll(discoverProjectCommands(scope.getProjectPath()));
-      entries.addAll(discoverUserSkills(scope.getClaudeConfigDir()));
+      entries.addAll(discoverPluginSkills(claudeConfigPath, jsonMapper));
+      entries.addAll(discoverProjectCommands(projectPath));
+      entries.addAll(discoverUserSkills(claudeConfigPath));
       return entries;
     }
     catch (IOException e)
@@ -104,10 +119,33 @@ public final class SkillDiscovery
    * uses the format {@code "- name: description"}, matching Claude Code's native skill listing.
    * The header references {@code get-skill} as an alternative to the Skill tool for loading skills.
    *
-   * @param scope the JVM scope providing environment paths and configuration
+   * @param scope the hook scope providing config path, project path, and JSON mapper
    * @return the formatted skill listing, or an empty string if no skills are found
    */
-  public static String getMainAgentSkillListing(JvmScope scope)
+  public static String getMainAgentSkillListing(ClaudeHook scope)
+  {
+    List<SkillEntry> entries = new SkillDiscovery(scope).discoverAll();
+    if (entries.isEmpty())
+      return "";
+    StringBuilder sb = new StringBuilder(512);
+    sb.append("The following skills are available. To load a skill's instructions, run via Bash:\n").
+      append("  \"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill\" " +
+        "\"<skill-name>\" \"<cat-agent-id>\"\n\n");
+    appendSkillEntries(sb, entries);
+    return sb.toString();
+  }
+
+  /**
+   * Formats the skill listing for injection into the main agent context.
+   * <p>
+   * Discovers all model-invocable skills and returns them as a formatted listing string. Each entry
+   * uses the format {@code "- name: description"}, matching Claude Code's native skill listing.
+   * The header references {@code get-skill} as an alternative to the Skill tool for loading skills.
+   *
+   * @param scope the tool scope providing config path, project path, and JSON mapper
+   * @return the formatted skill listing, or an empty string if no skills are found
+   */
+  public static String getMainAgentSkillListing(ClaudeTool scope)
   {
     List<SkillEntry> entries = new SkillDiscovery(scope).discoverAll();
     if (entries.isEmpty())
@@ -126,10 +164,10 @@ public final class SkillDiscovery
    * Returns only the dynamic skill list. Behavioral instructions about when and how to invoke skills
    * are provided separately via {@code plugin/rules/subagent-skill-instructions.md}.
    *
-   * @param scope the JVM scope providing environment paths and configuration
+   * @param scope the hook scope providing config path, project path, and JSON mapper
    * @return the formatted skill listing, or an empty string if no skills are found
    */
-  public static String getSubagentSkillListing(JvmScope scope)
+  public static String getSubagentSkillListing(ClaudeHook scope)
   {
     List<SkillEntry> entries = new SkillDiscovery(scope).discoverAll();
     if (entries.isEmpty())
@@ -155,7 +193,7 @@ public final class SkillDiscovery
   /**
    * Discovers model-invocable skills with descriptions from all installed plugins.
    * <p>
-   * Reads {@code ${claudeConfigDir}/plugins/installed_plugins.json} and for each plugin entry,
+   * Reads {@code ${claudeConfigPath}/plugins/installed_plugins.json} and for each plugin entry,
    * scans the plugin's {@code skills/} directory. The skill prefix is derived from the plugin
    * key (the part before {@code @}), e.g. {@code cat@cat} → prefix {@code cat:}.
    * <p>
@@ -165,15 +203,15 @@ public final class SkillDiscovery
    *   <li>A {@code description:} field is present in the frontmatter</li>
    * </ul>
    *
-   * @param configDir the Claude config directory containing {@code plugins/installed_plugins.json}
+   * @param configPath the Claude config directory containing {@code plugins/installed_plugins.json}
    * @param jsonMapper the JSON mapper used to parse installed_plugins.json
    * @return list of discovered skill entries
    * @throws IOException if skill discovery fails
    */
-  private static List<SkillEntry> discoverPluginSkills(Path configDir, JsonMapper jsonMapper) throws IOException
+  private static List<SkillEntry> discoverPluginSkills(Path configPath, JsonMapper jsonMapper) throws IOException
   {
     List<SkillEntry> entries = new ArrayList<>();
-    Path installedPluginsFile = configDir.resolve("plugins/installed_plugins.json");
+    Path installedPluginsFile = configPath.resolve("plugins/installed_plugins.json");
     if (!Files.exists(installedPluginsFile))
       return entries;
 
@@ -256,16 +294,16 @@ public final class SkillDiscovery
   /**
    * Discovers model-invocable user skills with descriptions.
    * <p>
-   * Scans directories under {@code ${claudeConfigDir}/skills/} for {@code SKILL.md} files. Skills are
+   * Scans directories under {@code ${claudeConfigPath}/skills/} for {@code SKILL.md} files. Skills are
    * included if they do not have {@code disable-model-invocation: true}.
    *
-   * @param configDir the Claude config directory containing the {@code skills/} subdirectory
+   * @param configPath the Claude config directory containing the {@code skills/} subdirectory
    * @return list of discovered skill entries
    * @throws IOException if discovery fails
    */
-  private static List<SkillEntry> discoverUserSkills(Path configDir) throws IOException
+  private static List<SkillEntry> discoverUserSkills(Path configPath) throws IOException
   {
-    Path skillsDir = configDir.resolve("skills");
+    Path skillsDir = configPath.resolve("skills");
     return discoverSkillsFromDirectory(skillsDir, "");
   }
 

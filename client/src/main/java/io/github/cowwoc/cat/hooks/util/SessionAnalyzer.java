@@ -10,8 +10,8 @@ import static io.github.cowwoc.cat.hooks.Strings.block;
 import static io.github.cowwoc.cat.hooks.skills.JsonHelper.getStringOrDefault;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,12 +36,12 @@ import java.util.Locale;
 import java.util.SequencedSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.Objects;
 
 /**
  * Analyzes Claude Code session JSONL files for optimization opportunities.
@@ -69,15 +69,15 @@ public final class SessionAnalyzer
     "No matches found. Note: additionalContext from hook events (e.g., SubagentStart) is injected at the API " +
     "level and is NOT stored in JSONL session logs — session-analyzer searches cannot find this content.";
   private final Logger log = LoggerFactory.getLogger(SessionAnalyzer.class);
-  private final JvmScope scope;
+  private final ClaudeTool scope;
 
   /**
    * Creates a new session analyzer.
    *
-   * @param scope the JVM scope providing JSON mapper
+   * @param scope the Claude tool scope providing JSON mapper and session paths
    * @throws NullPointerException if {@code scope} is null
    */
-  public SessionAnalyzer(JvmScope scope)
+  public SessionAnalyzer(ClaudeTool scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -584,7 +584,8 @@ public final class SessionAnalyzer
                SessionAnalyzer file-history <session-id> <path-pattern>""");
     }
 
-    SessionAnalyzer analyzer = new SessionAnalyzer(scope);
+    ClaudeTool claudeTool = (ClaudeTool) scope;
+    SessionAnalyzer analyzer = new SessionAnalyzer(claudeTool);
     String firstArg = args[0];
     JsonNode result;
     switch (firstArg)

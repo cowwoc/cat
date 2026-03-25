@@ -14,6 +14,7 @@ import io.github.cowwoc.cat.hooks.util.IssueLock;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.databind.JsonNode;
 
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
 
 import java.io.IOException;
@@ -95,6 +96,7 @@ public final class BlockUnsafeRemoval implements BashHandler
   {
     assert that(scope, "scope").isNotNull().elseThrow();
     assert that(clock, "clock").isNotNull().elseThrow();
+    requireThat(scope, "scope").isNotNull();
     this.scope = scope;
     this.clock = clock;
   }

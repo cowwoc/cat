@@ -1,4 +1,6 @@
 {
-  "status": "open",
-  "dependencies": ["2.1-jvmenv-w1-claudeenv"]
+  "status" : "closed",
+  "resolution" : "implemented",
+  "dependencies" : [ "2.1-jvmenv-w1-claudeenv" ],
+  "target_branch" : "v2.1"
 }

@@ -24,7 +24,7 @@ import java.time.temporal.ChronoUnit;
  * Tests for SessionEndHook.
  * <p>
  * Lock files are stored in the external CAT storage location:
- * {@code {claudeConfigDir}/projects/{encodedProjectDir}/cat/locks/}.
+ * {@code {claudeConfigPath}/projects/{encodedProjectDir}/cat/locks/}.
  * Tests use {@link io.github.cowwoc.cat.hooks.AbstractJvmScope#getCatWorkPath()} to resolve this
  * path correctly.
  * <p>

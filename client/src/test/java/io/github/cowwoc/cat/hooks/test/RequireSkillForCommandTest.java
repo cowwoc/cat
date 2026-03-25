@@ -9,7 +9,7 @@ package io.github.cowwoc.cat.hooks.test;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.cat.hooks.bash.RequireSkillForCommand;
 import io.github.cowwoc.cat.hooks.util.GetSkill;
@@ -53,12 +53,12 @@ public final class RequireSkillForCommandTest
   /**
    * Writes the loaded markers for the given session ID under the scope's session base path.
    *
-   * @param scope the JVM scope providing the session base path
+   * @param scope the Claude hook scope providing the session base path
    * @param sessionId the session ID (used as the agent directory name for main agents)
    * @param skills the newline-separated skill names to write
    * @throws IOException if writing fails
    */
-  private static void writeSkillsLoaded(JvmScope scope, String sessionId, String skills) throws IOException
+  private static void writeSkillsLoaded(ClaudeHook scope, String sessionId, String skills) throws IOException
   {
     Path agentDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize().resolve(sessionId);
     Path loadedDir = agentDir.resolve(GetSkill.LOADED_DIR);
@@ -79,13 +79,13 @@ public final class RequireSkillForCommandTest
    * <p>
    * Creates marker files in {@code sessionBasePath/{sessionId}/subagents/{nativeAgentId}/loaded/}.
    *
-   * @param scope the JVM scope providing the session base path
+   * @param scope the Claude hook scope providing the session base path
    * @param sessionId the session ID
    * @param nativeAgentId the native (non-composite) agent ID
    * @param skills the newline-separated skill names to write
    * @throws IOException if writing fails
    */
-  private static void writeSubagentSkillsLoaded(JvmScope scope, String sessionId, String nativeAgentId,
+  private static void writeSubagentSkillsLoaded(ClaudeHook scope, String sessionId, String nativeAgentId,
     String skills) throws IOException
   {
     Path agentDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize().

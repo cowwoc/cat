@@ -28,13 +28,13 @@ import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.util.Objects;
 
 /**
  * Loads skill content from a plugin's skill directory structure.
@@ -857,13 +857,14 @@ public final class GetSkill
    * <p>
    * Extracted from {@link #main(String[])} to enable testing without requiring hook stdin input.
    *
-   * @param scope the JVM scope providing access to plugin root and project paths
+   * @param scope the JVM scope providing access to plugin root, project paths, and config directory
    * @param args command-line arguments: {@code skill-name catAgentId [skill-args...]}
    * @param out the stream to write skill content to
    * @throws IOException if the skill cannot be loaded
    * @throws NullPointerException if {@code scope}, {@code args}, or {@code out} are null
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  public static void run(JvmScope scope, String[] args, PrintStream out)
+    throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();

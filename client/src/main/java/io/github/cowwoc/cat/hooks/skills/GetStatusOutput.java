@@ -17,7 +17,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -41,6 +40,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.util.Objects;
 
 /**
  * Output generator for /cat:status skill.

@@ -45,4 +45,14 @@ public interface ClaudeTool extends JvmScope
    */
   @Override
   Path getPluginRoot();
+
+  /**
+   * Returns the Claude config directory.
+   * <p>
+   * Reads the {@code CLAUDE_CONFIG_DIR} environment variable; defaults to {@code ~/.claude} if unset.
+   *
+   * @return the config directory path
+   * @throws IllegalStateException if this scope is closed
+   */
+  Path getClaudeConfigPath();
 }

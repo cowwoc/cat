@@ -152,7 +152,7 @@ public final class JvmScopePathResolutionTest
   /**
    * Verifies that getClaudeSessionsPath() returns the correct path.
    * <p>
-   * The result must be {@code {claudeConfigDir}/projects/{encodedProjectRoot}/}.
+   * The result must be {@code {claudeConfigPath}/projects/{encodedProjectRoot}/}.
    *
    * @throws IOException if temporary directory creation fails
    */
@@ -176,7 +176,7 @@ public final class JvmScopePathResolutionTest
   /**
    * Verifies that getClaudeSessionPath() returns the correct path.
    * <p>
-   * The result must be {@code {claudeConfigDir}/projects/{encodedProjectRoot}/{sessionId}/}.
+   * The result must be {@code {claudeConfigPath}/projects/{encodedProjectRoot}/{sessionId}/}.
    *
    * @throws IOException if temporary directory creation fails
    */

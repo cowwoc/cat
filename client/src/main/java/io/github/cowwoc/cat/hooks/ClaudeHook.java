@@ -6,6 +6,8 @@
  */
 package io.github.cowwoc.cat.hooks;
 
+import java.nio.file.Path;
+
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
@@ -27,6 +29,16 @@ public interface ClaudeHook extends JvmScope
    * @throws IllegalStateException if this scope is closed
    */
   String getSessionId();
+
+  /**
+   * Returns the Claude config directory.
+   * <p>
+   * Reads the {@code CLAUDE_CONFIG_DIR} environment variable; defaults to {@code ~/.claude} if unset.
+   *
+   * @return the config directory path
+   * @throws IllegalStateException if this scope is closed
+   */
+  Path getClaudeConfigPath();
 
   // Hook input methods
 

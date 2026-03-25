@@ -30,7 +30,7 @@ public final class TestClaudeTool extends AbstractClaudeTool
 {
   private static final String SESSION_ID = "00000000-0000-0000-0000-000000000000";
 
-  private final Path claudeConfigDir;
+  private final Path claudeConfigPath;
   private final TerminalType terminalType;
   private final AtomicBoolean closed = new AtomicBoolean();
   private final Path workDir;
@@ -54,7 +54,7 @@ public final class TestClaudeTool extends AbstractClaudeTool
   private TestClaudeTool(TempDirBundle bundle)
   {
     super(SESSION_ID, bundle.projectPath(), bundle.pluginRoot());
-    this.claudeConfigDir = bundle.claudeConfigDir();
+    this.claudeConfigPath = bundle.claudeConfigPath();
     this.terminalType = TerminalType.WINDOWS_TERMINAL;
     this.workDir = bundle.projectPath();
     try
@@ -92,7 +92,7 @@ public final class TestClaudeTool extends AbstractClaudeTool
   {
     super(SESSION_ID, claudeProjectPath, claudePluginRoot);
     requireThat(workDir, "workDir").isNotNull().isAbsolute();
-    this.claudeConfigDir = claudeProjectPath;
+    this.claudeConfigPath = claudeProjectPath;
     this.workDir = workDir;
     this.terminalType = TerminalType.WINDOWS_TERMINAL;
     try
@@ -135,7 +135,7 @@ public final class TestClaudeTool extends AbstractClaudeTool
     super(SESSION_ID, claudeProjectPath, claudePluginRoot);
     requireThat(terminalType, "terminalType").isNotNull();
     requireThat(workDir, "workDir").isNotNull().isAbsolute();
-    this.claudeConfigDir = claudeProjectPath;
+    this.claudeConfigPath = claudeProjectPath;
     this.terminalType = terminalType;
     this.workDir = workDir;
     try
@@ -173,23 +173,23 @@ public final class TestClaudeTool extends AbstractClaudeTool
    *
    * @param projectPath the project directory path
    * @param pluginRoot the plugin root directory path
-   * @param claudeConfigDir the config directory path
+   * @param claudeConfigPath the config directory path
    */
-  private record TempDirBundle(Path projectPath, Path pluginRoot, Path claudeConfigDir)
+  private record TempDirBundle(Path projectPath, Path pluginRoot, Path claudeConfigPath)
   {
     /**
      * Creates a new bundle.
      *
      * @param projectPath the project directory path
      * @param pluginRoot the plugin root directory path
-     * @param claudeConfigDir the config directory path
-     * @throws NullPointerException if {@code projectPath}, {@code pluginRoot}, or {@code claudeConfigDir} are null
+     * @param claudeConfigPath the config directory path
+     * @throws NullPointerException if {@code projectPath}, {@code pluginRoot}, or {@code claudeConfigPath} are null
      */
     TempDirBundle
     {
       requireThat(projectPath, "projectPath").isNotNull();
       requireThat(pluginRoot, "pluginRoot").isNotNull();
-      requireThat(claudeConfigDir, "claudeConfigDir").isNotNull();
+      requireThat(claudeConfigPath, "claudeConfigPath").isNotNull();
     }
   }
 
@@ -208,10 +208,10 @@ public final class TestClaudeTool extends AbstractClaudeTool
   }
 
   @Override
-  public Path getClaudeConfigDir()
+  public Path getClaudeConfigPath()
   {
     ensureOpen();
-    return claudeConfigDir;
+    return claudeConfigPath;
   }
 
   @Override

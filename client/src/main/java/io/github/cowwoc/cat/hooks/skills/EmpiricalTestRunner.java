@@ -8,18 +8,14 @@ package io.github.cowwoc.cat.hooks.skills;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import java.io.PrintStream;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
 
 import static io.github.cowwoc.cat.hooks.Strings.block;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
@@ -36,6 +32,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -95,17 +93,17 @@ public final class EmpiricalTestRunner
       case LOW -> 2;
     });
 
-  private final JvmScope scope;
+  private final ClaudeTool scope;
   private final Path sessionsPath;
   private final ObjectWriter compactWriter;
 
   /**
    * Creates a new empirical test runner.
    *
-   * @param scope the JVM scope providing JSON mapper and display utilities
+   * @param scope the Claude tool scope providing JSON mapper and display utilities
    * @throws NullPointerException if {@code scope} is null
    */
-  public EmpiricalTestRunner(JvmScope scope)
+  public EmpiricalTestRunner(ClaudeTool scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -1537,7 +1535,8 @@ public final class EmpiricalTestRunner
     if (configPath == null)
       throw new IllegalArgumentException("--config argument is required");
 
-    EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+    ClaudeTool claudeTool = (ClaudeTool) scope;
+    EmpiricalTestRunner runner = new EmpiricalTestRunner(claudeTool);
     if (baselinePrompt != null)
     {
       // Blind comparison mode: read system_prompt from config as candidate
