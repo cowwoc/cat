@@ -74,7 +74,8 @@ Status values:
 - Keep explanations in the `criteria` and `e2e` fields to one line each
 - The `detail_file` field is OPTIONAL — only include it when the criterion is Missing or Partial
 - **E2E Testing Guidance:**
-  - For feature/bugfix/refactor/performance issues: Run runtime E2E tests using worktree artifacts (not cached plugin)
+  - For feature/bugfix/refactor/performance issues AND CAUTION == "high": Run runtime E2E tests using worktree
+    artifacts (not cached plugin). For other caution levels, set e2e status to SKIPPED.
   - Runtime invocation required — static file inspection, syntax checks, or unit tests do not count as E2E testing
   - For docs and config issues (no runtime behavior changes), set e2e status to SKIPPED
 
@@ -151,3 +152,56 @@ For each FAIL, add a Missing criterion to your verify output:
 
 When no violations are found (all hits PASS or no hits), do not add any violation criteria — scanning completes
 silently.
+
+### Build Verification (caution-based)
+
+Read the caution level from config:
+
+```bash
+CLIENT_BIN="${WORKTREE_PATH}/client/target/jlink/bin"
+if [ ! -x "$CLIENT_BIN/get-config-output" ]; then
+  CLIENT_BIN="/home/node/.config/claude/plugins/cache/cat/cat/2.1/client/bin"
+fi
+CONFIG=$("${CLIENT_BIN}/get-config-output" effective 2>/dev/null || echo '{"caution":"medium"}')
+CAUTION=$(echo "$CONFIG" | grep -o '"caution"[[:space:]]*:[[:space:]]*"[^"]*"' \
+  | sed 's/.*"caution"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/' | tr '[:upper:]' '[:lower:]')
+CAUTION="${CAUTION:-medium}"
+```
+
+**Compile step (always runs — all caution levels):**
+
+Run `mvn -f client/pom.xml compile -q` from `${WORKTREE_PATH}`. If it succeeds, add to `criteria`:
+```json
+{"name": "Compilation passes", "status": "Done", "explanation": "mvn compile succeeded"}
+```
+If it fails, add:
+```json
+{"name": "Compilation passes", "status": "Missing", "explanation": "mvn compile failed"}
+```
+
+**Unit test step (runs when CAUTION != "low"):**
+
+If `CAUTION` is `medium` or `high`:
+- Run `mvn -f client/pom.xml test -q` from `${WORKTREE_PATH}`
+- If it succeeds, add to `criteria`:
+  ```json
+  {"name": "Unit tests pass", "status": "Done", "explanation": "mvn test succeeded"}
+  ```
+- If it fails, add:
+  ```json
+  {"name": "Unit tests pass", "status": "Missing", "explanation": "mvn test failed"}
+  ```
+
+If `CAUTION` is `low`:
+- Output: "Unit tests skipped (caution: low)"
+- Do NOT add a unit test criterion
+
+**E2E gating:**
+
+The existing E2E logic runs E2E for `feature`, `bugfix`, `refactor`, and `performance` issue types.
+Update this logic:
+- For `docs` and `config` issue types only: set e2e status to SKIPPED (existing behavior, unchanged)
+- For all other issue types: run E2E **only if CAUTION == "high"**; otherwise set e2e status to SKIPPED
+  with explanation "E2E skipped (caution: ${CAUTION})"
+
+Any `Missing` criterion from compile or unit tests contributes to the overall `INCOMPLETE` status.

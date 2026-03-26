@@ -45,19 +45,21 @@ public final class CautionLevelTest
   }
 
   /**
-   * Verifies that fromString is case-insensitive (e.g., "HIGH" returns HIGH).
+   * Verifies that fromString is case-insensitive for all three values.
    */
   @Test
   public void fromStringIsCaseInsensitive()
   {
-    requireThat(CautionLevel.fromString("HIGH"), "level").isEqualTo(CautionLevel.HIGH);
+    requireThat(CautionLevel.fromString("LOW"), "lowLevel").isEqualTo(CautionLevel.LOW);
+    requireThat(CautionLevel.fromString("MEDIUM"), "mediumLevel").isEqualTo(CautionLevel.MEDIUM);
+    requireThat(CautionLevel.fromString("HIGH"), "highLevel").isEqualTo(CautionLevel.HIGH);
   }
 
   /**
    * Verifies that toString returns lowercase "low" for the LOW enum value.
    */
   @Test
-  public void toStringReturnsLowForLOW()
+  public void toStringLowReturnsLowercase()
   {
     requireThat(CautionLevel.LOW.toString(), "CautionLevel.LOW.toString()").isEqualTo("low");
   }
@@ -66,7 +68,7 @@ public final class CautionLevelTest
    * Verifies that toString returns lowercase "medium" for the MEDIUM enum value.
    */
   @Test
-  public void toStringReturnsMediumForMEDIUM()
+  public void toStringMediumReturnsLowercase()
   {
     requireThat(CautionLevel.MEDIUM.toString(), "CautionLevel.MEDIUM.toString()").isEqualTo("medium");
   }
@@ -75,7 +77,7 @@ public final class CautionLevelTest
    * Verifies that toString returns lowercase "high" for the HIGH enum value.
    */
   @Test
-  public void toStringReturnsHighForHIGH()
+  public void toStringHighReturnsLowercase()
   {
     requireThat(CautionLevel.HIGH.toString(), "CautionLevel.HIGH.toString()").isEqualTo("high");
   }
@@ -84,10 +86,10 @@ public final class CautionLevelTest
    * Verifies that fromString throws IllegalArgumentException for an unrecognized value.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*UNKNOWN.*")
+    expectedExceptionsMessageRegExp = ".*INVALID.*")
   public void fromStringInvalidThrowsIllegalArgument()
   {
-    CautionLevel.fromString("unknown");
+    CautionLevel.fromString("invalid");
   }
 
   /**
@@ -121,5 +123,59 @@ public final class CautionLevelTest
   public void fromStringNullThrowsNullPointerException()
   {
     CautionLevel.fromString(null);
+  }
+
+  /**
+   * Verifies that LOW disables unit tests (compile only).
+   */
+  @Test
+  public void lowIsUnitTestDisabled()
+  {
+    requireThat(CautionLevel.LOW.isUnitTestEnabled(), "isUnitTestEnabled").isFalse();
+  }
+
+  /**
+   * Verifies that MEDIUM enables unit tests.
+   */
+  @Test
+  public void mediumIsUnitTestEnabled()
+  {
+    requireThat(CautionLevel.MEDIUM.isUnitTestEnabled(), "isUnitTestEnabled").isTrue();
+  }
+
+  /**
+   * Verifies that HIGH enables unit tests.
+   */
+  @Test
+  public void highIsUnitTestEnabled()
+  {
+    requireThat(CautionLevel.HIGH.isUnitTestEnabled(), "isUnitTestEnabled").isTrue();
+  }
+
+  /**
+   * Verifies that LOW disables E2E tests.
+   */
+  @Test
+  public void lowIsE2eDisabled()
+  {
+    requireThat(CautionLevel.LOW.isE2eEnabled(), "isE2eEnabled").isFalse();
+  }
+
+  /**
+   * Verifies that MEDIUM disables E2E tests.
+   */
+  @Test
+  public void mediumIsE2eDisabled()
+  {
+    requireThat(CautionLevel.MEDIUM.isE2eEnabled(), "isE2eEnabled").isFalse();
+  }
+
+  /**
+   * Verifies that HIGH enables E2E tests.
+   */
+  @Test
+  public void highIsE2eEnabled()
+  {
+    requireThat(CautionLevel.HIGH.isE2eEnabled(), "isE2eEnabled").isTrue();
   }
 }

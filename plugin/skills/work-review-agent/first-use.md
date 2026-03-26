@@ -1012,7 +1012,7 @@ Perform these actions immediately, before proceeding to Step 6 (Deferred Concern
 For **HIGH or CRITICAL severity** deferred concerns — create a tracking issue via `/cat:add-agent` so the concern is not
 lost. The target version is determined by the combination of severity and perfection:
 
-| Severity | Patience | Target Version | `/cat:add-agent` args prefix |
+| Severity | Perfection | Target Version | `/cat:add-agent` args prefix |
 |----------|----------|----------------|------------------------|
 | CRITICAL | low      | current minor  | `add issue:`           |
 | CRITICAL | medium   | current minor  | `add issue:`           |
