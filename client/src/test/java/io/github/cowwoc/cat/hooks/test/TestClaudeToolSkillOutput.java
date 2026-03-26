@@ -12,25 +12,26 @@ import io.github.cowwoc.cat.hooks.util.SkillOutput;
 import java.io.IOException;
 
 /**
- * Test implementation of SkillOutput for testing preprocessor directives.
+ * Test implementation of SkillOutput with a ClaudeTool constructor.
+ * <p>
+ * Used to verify that invokeSkillOutput() correctly handles SkillOutput classes
+ * whose constructor takes ClaudeTool rather than JvmScope.
  */
-public final class TestSkillOutput implements SkillOutput
+public final class TestClaudeToolSkillOutput implements SkillOutput
 {
   /**
-   * Creates a TestSkillOutput instance.
+   * Creates a TestClaudeToolSkillOutput instance.
    *
    * @param scope the ClaudeTool scope (unused in test)
    */
-  public TestSkillOutput(ClaudeTool scope)
+  public TestClaudeToolSkillOutput(ClaudeTool scope)
   {
   }
 
   @Override
   public String getOutput(String[] args) throws IOException
   {
-    if (args.length == 0)
-      return "NO_ARGS_OUTPUT";
-    return "ARGS:" + String.join(",", args);
+    return "CLAUDE_TOOL_OUTPUT";
   }
 
   /**
@@ -40,11 +41,6 @@ public final class TestSkillOutput implements SkillOutput
    */
   public static void main(String[] args)
   {
-    String output;
-    if (args.length == 0)
-      output = "NO_ARGS_OUTPUT";
-    else
-      output = "ARGS:" + String.join(",", args);
-    System.out.print(output);
+    System.out.print("CLAUDE_TOOL_OUTPUT");
   }
 }

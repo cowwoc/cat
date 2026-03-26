@@ -6,7 +6,9 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
+import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.skills.DescriptionTester;
+
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -44,8 +46,16 @@ public final class DescriptionTesterTest
     expectedExceptionsMessageRegExp = ".*requires 1 argument.*")
   public void throwsOnNoArguments() throws IOException
   {
-    DescriptionTester handler = new DescriptionTester();
-    handler.getOutput(new String[]{});
+    Path tempDir = Files.createTempDirectory("test-desc-");
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      DescriptionTester handler = new DescriptionTester(scope);
+      handler.getOutput(new String[]{});
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -55,8 +65,16 @@ public final class DescriptionTesterTest
     expectedExceptionsMessageRegExp = ".*requires 1 argument.*")
   public void throwsOnTooManyArguments() throws IOException
   {
-    DescriptionTester handler = new DescriptionTester();
-    handler.getOutput(new String[]{"arg1", "arg2"});
+    Path tempDir = Files.createTempDirectory("test-desc-");
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      DescriptionTester handler = new DescriptionTester(scope);
+      handler.getOutput(new String[]{"arg1", "arg2"});
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -67,9 +85,9 @@ public final class DescriptionTesterTest
   public void throwsWhenSkillFileNotFound() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-desc-");
-    try
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      DescriptionTester handler = new DescriptionTester();
+      DescriptionTester handler = new DescriptionTester(scope);
       handler.getOutput(new String[]{tempDir.resolve("nonexistent.md").toString()});
     }
     finally
@@ -85,12 +103,12 @@ public final class DescriptionTesterTest
   public void producesCalibrationPromptWithDescription() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-desc-");
-    try
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path skillFile = tempDir.resolve("SKILL.md");
       Files.writeString(skillFile, MINIMAL_SKILL_MD);
 
-      DescriptionTester handler = new DescriptionTester();
+      DescriptionTester handler = new DescriptionTester(scope);
       String output = handler.getOutput(new String[]{skillFile.toString()});
 
       requireThat(output, "output").isNotNull();
@@ -109,42 +127,58 @@ public final class DescriptionTesterTest
    * Verifies that extractDescription handles single-line description format.
    */
   @Test
-  public void extractsSingleLineDescription()
+  public void extractsSingleLineDescription() throws IOException
   {
-    DescriptionTester handler = new DescriptionTester();
-    String content = """
-      ---
-      description: Use when user asks for help - shows available commands
-      user-invocable: true
-      ---
-      # Help
-      """;
+    Path tempDir = Files.createTempDirectory("test-desc-");
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      DescriptionTester handler = new DescriptionTester(scope);
+      String content = """
+        ---
+        description: Use when user asks for help - shows available commands
+        user-invocable: true
+        ---
+        # Help
+        """;
 
-    String description = handler.extractDescription(content, "SKILL.md");
-    requireThat(description, "description").
-      isEqualTo("Use when user asks for help - shows available commands");
+      String description = handler.extractDescription(content, "SKILL.md");
+      requireThat(description, "description").
+        isEqualTo("Use when user asks for help - shows available commands");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
    * Verifies that extractDescription handles block scalar (>) description format.
    */
   @Test
-  public void extractsBlockScalarDescription()
+  public void extractsBlockScalarDescription() throws IOException
   {
-    DescriptionTester handler = new DescriptionTester();
-    String content = """
-      ---
-      description: >
-        Use when user says record mistake or document failure.
-        Trigger words: "record this mistake", "learn from this".
-      model: sonnet
-      ---
-      # Learn
-      """;
+    Path tempDir = Files.createTempDirectory("test-desc-");
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      DescriptionTester handler = new DescriptionTester(scope);
+      String content = """
+        ---
+        description: >
+          Use when user says record mistake or document failure.
+          Trigger words: "record this mistake", "learn from this".
+        model: sonnet
+        ---
+        # Learn
+        """;
 
-    String description = handler.extractDescription(content, "SKILL.md");
-    requireThat(description, "description").contains("Use when user says record mistake");
-    requireThat(description, "description").contains("Trigger words");
+      String description = handler.extractDescription(content, "SKILL.md");
+      requireThat(description, "description").contains("Use when user says record mistake");
+      requireThat(description, "description").contains("Trigger words");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -152,10 +186,18 @@ public final class DescriptionTesterTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*No YAML frontmatter.*")
-  public void throwsOnMissingFrontmatter()
+  public void throwsOnMissingFrontmatter() throws IOException
   {
-    DescriptionTester handler = new DescriptionTester();
-    handler.extractDescription("# No frontmatter\nJust content.", "test.md");
+    Path tempDir = Files.createTempDirectory("test-desc-");
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      DescriptionTester handler = new DescriptionTester(scope);
+      handler.extractDescription("# No frontmatter\nJust content.", "test.md");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -163,10 +205,18 @@ public final class DescriptionTesterTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*No 'description:' field.*")
-  public void throwsOnMissingDescriptionField()
+  public void throwsOnMissingDescriptionField() throws IOException
   {
-    DescriptionTester handler = new DescriptionTester();
-    handler.extractDescription("---\nmodel: haiku\nuser-invocable: true\n---\n# Skill", "test.md");
+    Path tempDir = Files.createTempDirectory("test-desc-");
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      DescriptionTester handler = new DescriptionTester(scope);
+      handler.extractDescription("---\nmodel: haiku\nuser-invocable: true\n---\n# Skill", "test.md");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -176,12 +226,12 @@ public final class DescriptionTesterTest
   public void promptMentionsAllFourQueryCategories() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-desc-");
-    try
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path skillFile = tempDir.resolve("SKILL.md");
       Files.writeString(skillFile, MINIMAL_SKILL_MD);
 
-      DescriptionTester handler = new DescriptionTester();
+      DescriptionTester handler = new DescriptionTester(scope);
       String output = handler.getOutput(new String[]{skillFile.toString()});
 
       requireThat(output, "output").contains("Core triggers");

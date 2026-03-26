@@ -8,7 +8,6 @@ package io.github.cowwoc.cat.hooks.skills;
 
 import static io.github.cowwoc.cat.hooks.Strings.block;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
@@ -38,15 +37,15 @@ public final class GetCheckpointOutput implements SkillOutput
   /**
    * The JVM scope for accessing shared services.
    */
-  private final JvmScope scope;
+  private final ClaudeTool scope;
 
   /**
    * Creates a GetCheckpointOutput instance.
    *
-   * @param scope the JVM scope for accessing shared services
+   * @param scope the ClaudeTool for accessing shared services
    * @throws NullPointerException if scope is null
    */
-  public GetCheckpointOutput(JvmScope scope)
+  public GetCheckpointOutput(ClaudeTool scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -123,7 +122,7 @@ public final class GetCheckpointOutput implements SkillOutput
    * @throws NullPointerException     if {@code scope}, {@code args} or {@code out} are null
    * @throws IllegalArgumentException if arguments are invalid
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out)
+  public static void run(ClaudeTool scope, String[] args, PrintStream out)
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();

@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.util.WriteSessionMarker;
 import org.testng.annotations.Test;
 
@@ -32,7 +32,7 @@ public class WriteSessionMarkerTest
   public void writesMarkerFileWithCorrectContent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("write-session-marker-test");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       new WriteSessionMarker(scope).getOutput(new String[]{"session-abc123", "2.1-fix-foo", "squashed:abc123def"});
 
@@ -55,7 +55,7 @@ public class WriteSessionMarkerTest
   public void createsSessionDirectoryWhenAbsent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("write-session-marker-test");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path sessionDir = tempDir.resolve(".cat/work/sessions/session-abc123");
       requireThat(Files.notExists(sessionDir), "sessionDirAbsent").isTrue();
@@ -80,7 +80,7 @@ public class WriteSessionMarkerTest
     expectedExceptionsMessageRegExp = ".*3 arguments.*")
   public void rejectsWhenArgCountIsNotThree() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       new WriteSessionMarker(scope).getOutput(new String[]{"session-id", "issue-id"});
     }
@@ -96,7 +96,7 @@ public class WriteSessionMarkerTest
     expectedExceptionsMessageRegExp = ".*(?=.*session-id)(?=.*blank).*")
   public void rejectsBlankSessionId() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       new WriteSessionMarker(scope).getOutput(new String[]{"", "issue-id", "content"});
     }
@@ -112,7 +112,7 @@ public class WriteSessionMarkerTest
     expectedExceptionsMessageRegExp = ".*(?=.*issue-id)(?=.*blank).*")
   public void rejectsBlankIssueId() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       new WriteSessionMarker(scope).getOutput(new String[]{"session-id", "", "content"});
     }
@@ -128,7 +128,7 @@ public class WriteSessionMarkerTest
   public void acceptsEmptyMarkerContent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("write-session-marker-test");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       new WriteSessionMarker(scope).getOutput(new String[]{"session-id", "issue-id", ""});
 

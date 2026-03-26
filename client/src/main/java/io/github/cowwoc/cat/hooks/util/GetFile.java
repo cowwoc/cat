@@ -9,7 +9,6 @@ package io.github.cowwoc.cat.hooks.util;
 import static io.github.cowwoc.cat.hooks.Strings.block;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import java.io.IOException;
@@ -45,15 +44,15 @@ import java.util.Objects;
  */
 public final class GetFile implements SkillOutput
 {
-  private final JvmScope scope;
+  private final ClaudeTool scope;
 
   /**
    * Creates a new GetFile instance.
    *
-   * @param scope the JVM scope for accessing shared services and environment paths
+   * @param scope the ClaudeTool for accessing shared services and environment paths
    * @throws NullPointerException if {@code scope} is null
    */
-  public GetFile(JvmScope scope)
+  public GetFile(ClaudeTool scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -160,7 +159,7 @@ public final class GetFile implements SkillOutput
    * @param out   the output stream to write to
    * @throws NullPointerException if any of {@code scope}, {@code args}, or {@code out} are null
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out)
+  public static void run(ClaudeTool scope, String[] args, PrintStream out)
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();

@@ -15,7 +15,6 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.Strings;
@@ -41,9 +40,9 @@ public final class GetStatuslineOutput implements SkillOutput
   /**
    * Creates a GetStatuslineOutput instance.
    *
-   * @param scope the JVM scope for accessing shared services
+   * @param scope the ClaudeTool for accessing shared services
    */
-  public GetStatuslineOutput(JvmScope scope)
+  public GetStatuslineOutput(ClaudeTool scope)
   {
     this.projectPath = scope.getProjectPath();
     this.mapper = scope.getJsonMapper();
@@ -151,13 +150,13 @@ public final class GetStatuslineOutput implements SkillOutput
   /**
    * Executes the statusline output logic with a caller-provided output stream.
    *
-   * @param scope the JVM scope
+   * @param scope the ClaudeTool
    * @param args  command line arguments
    * @param out   the output stream to write to
    * @throws NullPointerException if {@code scope}, {@code args} or {@code out} are null
    * @throws IOException          if an I/O error occurs
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  public static void run(ClaudeTool scope, String[] args, PrintStream out) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();

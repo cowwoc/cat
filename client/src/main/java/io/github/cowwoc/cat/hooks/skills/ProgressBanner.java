@@ -14,7 +14,6 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
 
@@ -71,15 +70,15 @@ public final class ProgressBanner implements SkillOutput
   private static final String ACTIVE = "◑";
   private static final String CAT_EMOJI = "🐱";
 
-  private final JvmScope scope;
+  private final ClaudeTool scope;
 
   /**
    * Creates a new ProgressBanner instance.
    *
-   * @param scope the JVM scope providing display utilities
+   * @param scope the ClaudeTool providing display utilities
    * @throws NullPointerException if {@code scope} is null
    */
-  public ProgressBanner(JvmScope scope)
+  public ProgressBanner(ClaudeTool scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -332,7 +331,7 @@ public final class ProgressBanner implements SkillOutput
    * @throws NullPointerException if {@code scope}, {@code args} or {@code out} are null
    * @throws IOException          if an I/O error occurs
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  public static void run(ClaudeTool scope, String[] args, PrintStream out) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();

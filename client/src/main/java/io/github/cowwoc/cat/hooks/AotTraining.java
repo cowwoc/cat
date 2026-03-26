@@ -113,10 +113,10 @@ public final class AotTraining
 
     // Skill handlers - construct to load class graphs.
     // Calling getOutput() would read the filesystem, which is unnecessary for training.
-    // GetDiffOutput and GetCleanupOutput accept JvmScope (no session required).
-    // GetStatusOutput and GetOutput require AbstractClaudeTool (session-aware); use referenceClass() instead.
-    new GetDiffOutput(scope);
-    new GetCleanupOutput(scope);
+    // All SkillOutput constructors require ClaudeTool; use referenceClass() since this hook scope
+    // is AbstractClaudeHook which does not implement ClaudeTool.
+    referenceClass(GetDiffOutput.class);
+    referenceClass(GetCleanupOutput.class);
     referenceClass(GetStatusOutput.class);
     referenceClass(GetOutput.class);
 

@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.skills.ProgressBanner;
 import io.github.cowwoc.cat.hooks.skills.ProgressBanner.Phase;
 import org.testng.annotations.Test;
@@ -34,7 +34,7 @@ public class ProgressBannerTest
   public void generateBannerProducesOutput() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ProgressBanner banner = new ProgressBanner(scope);
       String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
@@ -55,7 +55,7 @@ public class ProgressBannerTest
   public void generateBannerIncludesIssueId() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ProgressBanner banner = new ProgressBanner(scope);
       String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
@@ -76,7 +76,7 @@ public class ProgressBannerTest
   public void generateBannerIncludesCatEmoji() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ProgressBanner banner = new ProgressBanner(scope);
       String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
@@ -97,7 +97,7 @@ public class ProgressBannerTest
   public void generateBannerIncludesPhaseNames() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ProgressBanner banner = new ProgressBanner(scope);
       String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
@@ -122,7 +122,7 @@ public class ProgressBannerTest
   public void generateBannerProducesBoxStructure() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ProgressBanner banner = new ProgressBanner(scope);
       String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
@@ -146,7 +146,7 @@ public class ProgressBannerTest
   public void generateBannerPreparingPhaseShowsActiveSymbol() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ProgressBanner banner = new ProgressBanner(scope);
       String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
@@ -168,7 +168,7 @@ public class ProgressBannerTest
   public void generateBannerImplementingPhaseShowsCompleteAndActive() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ProgressBanner banner = new ProgressBanner(scope);
       String result = banner.generateBanner("2.1-test-issue", Phase.IMPLEMENTING);
@@ -192,7 +192,7 @@ public class ProgressBannerTest
   public void generateBannerReviewingPhaseShowsProgressPattern() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ProgressBanner banner = new ProgressBanner(scope);
       String result = banner.generateBanner("2.1-test-issue", Phase.REVIEWING);
@@ -217,7 +217,7 @@ public class ProgressBannerTest
   public void generateBannerMergingPhaseShowsFinalPattern() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ProgressBanner banner = new ProgressBanner(scope);
       String result = banner.generateBanner("2.1-test-issue", Phase.MERGING);
@@ -242,7 +242,7 @@ public class ProgressBannerTest
   public void generateBannerHandlesEmptyIssueId() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ProgressBanner banner = new ProgressBanner(scope);
       String result = banner.generateBanner("", Phase.PREPARING);
@@ -266,7 +266,7 @@ public class ProgressBannerTest
   public void generateBannerRejectsNullIssueId() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ProgressBanner banner = new ProgressBanner(scope);
       banner.generateBanner(null, Phase.PREPARING);
@@ -287,7 +287,7 @@ public class ProgressBannerTest
   public void generateBannerRejectsNullPhase() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ProgressBanner banner = new ProgressBanner(scope);
       banner.generateBanner("2.1-test-issue", null);
@@ -307,7 +307,7 @@ public class ProgressBannerTest
   public void generateAllPhasesIncludesAllPhases() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ProgressBanner banner = new ProgressBanner(scope);
       String result = banner.generateAllPhases("2.1-test-issue");
@@ -332,7 +332,7 @@ public class ProgressBannerTest
   public void generateAllPhasesUsesCodeBlocks() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ProgressBanner banner = new ProgressBanner(scope);
       String result = banner.generateAllPhases("2.1-test-issue");
@@ -353,7 +353,7 @@ public class ProgressBannerTest
   public void generateAllPhasesIncludesIssueId() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ProgressBanner banner = new ProgressBanner(scope);
       String result = banner.generateAllPhases("2.1-my-issue");
@@ -383,7 +383,7 @@ public class ProgressBannerTest
   public void generateAllPhasesRejectsNullIssueId() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ProgressBanner banner = new ProgressBanner(scope);
       banner.generateAllPhases(null);
@@ -403,7 +403,7 @@ public class ProgressBannerTest
   public void generateGenericPreparingBannerProducesOutput() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ProgressBanner banner = new ProgressBanner(scope);
       String result = banner.generateGenericPreparingBanner();
@@ -426,7 +426,7 @@ public class ProgressBannerTest
   public void generateGenericPreparingBannerIncludesExplanation() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ProgressBanner banner = new ProgressBanner(scope);
       String result = banner.generateGenericPreparingBanner();
@@ -447,7 +447,7 @@ public class ProgressBannerTest
   public void generateBannerProducesThreeLines() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ProgressBanner banner = new ProgressBanner(scope);
       String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
@@ -469,7 +469,7 @@ public class ProgressBannerTest
   public void generateBannerFirstLineStartsWithTopLeft() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ProgressBanner banner = new ProgressBanner(scope);
       String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
@@ -491,7 +491,7 @@ public class ProgressBannerTest
   public void generateBannerLastLineStartsWithBottomLeft() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ProgressBanner banner = new ProgressBanner(scope);
       String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
@@ -513,7 +513,7 @@ public class ProgressBannerTest
   public void generateBannerMiddleLineStartsWithVertical() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ProgressBanner banner = new ProgressBanner(scope);
       String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
@@ -535,7 +535,7 @@ public class ProgressBannerTest
   public void generateBannerHandlesLongIssueId() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ProgressBanner banner = new ProgressBanner(scope);
       String longId = "2.1-" + "a".repeat(100);
@@ -564,7 +564,7 @@ public class ProgressBannerTest
   public void generateBannerHandlesUnicodeIssueId() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ProgressBanner banner = new ProgressBanner(scope);
       String unicodeId = "2.1-tëst-üñicödé";
@@ -589,7 +589,7 @@ public class ProgressBannerTest
   public void generateBannerProducesConsistentStructure() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ProgressBanner banner = new ProgressBanner(scope);
       String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
@@ -630,7 +630,7 @@ public class ProgressBannerTest
   public void generateBannerConfirmingPhaseShowsCorrectPattern() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ProgressBanner banner = new ProgressBanner(scope);
       String result = banner.generateBanner("2.1-test-issue", Phase.CONFIRMING);
@@ -655,7 +655,7 @@ public class ProgressBannerTest
   public void confirmingPhaseSymbolsAreCorrect() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ProgressBanner banner = new ProgressBanner(scope);
       String result = banner.generateBanner("2.1-test-issue", Phase.CONFIRMING);
