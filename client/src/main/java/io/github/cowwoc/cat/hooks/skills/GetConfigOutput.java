@@ -87,6 +87,7 @@ public final class GetConfigOutput implements SkillOutput
     String caution = config.getCaution().toString();
     String curiosity = config.getCuriosity().toString();
     String perfection = config.getPerfection().toString();
+    String verbosity = config.getVerbosity().toString();
     String completionWorkflow = config.getString("completionWorkflow");
     String minSeverity = config.getMinSeverity().toString();
     int fileWidth = config.getInt("fileWidth", 120);
@@ -101,6 +102,7 @@ public final class GetConfigOutput implements SkillOutput
         "  🛡️ Caution: " + caution,
         "  🔍 Curiosity: " + curiosity,
         "  ✨ Perfection: " + perfection,
+        "  📢 Verbosity: " + verbosity,
         "  🔀 Completion: " + completionWorkflow,
         "  📈 Min Severity: " + minSeverity,
         "  📄 File Width: " + fileWidth,
