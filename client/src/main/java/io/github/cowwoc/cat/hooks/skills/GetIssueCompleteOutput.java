@@ -10,7 +10,6 @@ import static io.github.cowwoc.cat.hooks.Strings.block;
 
 import java.io.PrintStream;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.util.IssueDiscovery;
@@ -43,15 +42,15 @@ public final class GetIssueCompleteOutput implements SkillOutput
   /**
    * The JVM scope for accessing shared services.
    */
-  private final JvmScope scope;
+  private final ClaudeTool scope;
 
   /**
    * Creates a GetIssueCompleteOutput instance.
    *
-   * @param scope the JVM scope for accessing shared services
+   * @param scope the ClaudeTool for accessing shared services
    * @throws NullPointerException if scope is null
    */
-  public GetIssueCompleteOutput(JvmScope scope)
+  public GetIssueCompleteOutput(ClaudeTool scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -189,7 +188,7 @@ public final class GetIssueCompleteOutput implements SkillOutput
    * @throws IllegalArgumentException if arguments are invalid
    * @throws IOException              if an I/O error occurs
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  public static void run(ClaudeTool scope, String[] args, PrintStream out) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();

@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.skills;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ArrayNode;
@@ -61,15 +61,15 @@ public final class DescriptionOptimizer implements SkillOutput
   private static final Pattern DESCRIPTION_PATTERN =
     Pattern.compile("^description:\\s*>?\\s*(.+?)(?=^\\w|^---)", Pattern.MULTILINE | Pattern.DOTALL);
 
-  private final JvmScope scope;
+  private final ClaudeTool scope;
 
   /**
    * Creates a DescriptionOptimizer instance.
    *
-   * @param scope the JVM scope for accessing shared services
+   * @param scope the ClaudeTool for accessing shared services
    * @throws NullPointerException if {@code scope} is null
    */
-  public DescriptionOptimizer(JvmScope scope)
+  public DescriptionOptimizer(ClaudeTool scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;

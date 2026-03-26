@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.skills;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
@@ -61,15 +61,15 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  */
 public final class SkillTestAggregator implements SkillOutput
 {
-  private final JvmScope scope;
+  private final ClaudeTool scope;
 
   /**
    * Creates a SkillTestAggregator instance.
    *
-   * @param scope the JVM scope for accessing shared services
+   * @param scope the ClaudeTool for accessing shared services
    * @throws NullPointerException if {@code scope} is null
    */
-  public SkillTestAggregator(JvmScope scope)
+  public SkillTestAggregator(ClaudeTool scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;

@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.skills.GetInitOutput;
 import org.testng.annotations.Test;
 
@@ -34,7 +34,7 @@ public class GetInitOutputTest
   @Test
   public void defaultGatesBoxContainsHeader() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getDefaultGatesConfigured(3);
@@ -51,7 +51,7 @@ public class GetInitOutputTest
   @Test
   public void defaultGatesBoxDescribesEntryGates() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getDefaultGatesConfigured(1);
@@ -68,7 +68,7 @@ public class GetInitOutputTest
   @Test
   public void defaultGatesBoxDescribesExitGates() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getDefaultGatesConfigured(1);
@@ -85,7 +85,7 @@ public class GetInitOutputTest
   @Test
   public void defaultGatesBoxHasBoxStructure() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getDefaultGatesConfigured(2);
@@ -102,7 +102,7 @@ public class GetInitOutputTest
   @Test
   public void defaultGatesBoxHandlesZeroVersions() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getDefaultGatesConfigured(0);
@@ -119,7 +119,7 @@ public class GetInitOutputTest
   @Test
   public void researchSkippedBoxContainsHeader() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getResearchSkipped("v2.0");
@@ -136,7 +136,7 @@ public class GetInitOutputTest
   @Test
   public void researchSkippedBoxIncludesExampleVersion() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getResearchSkipped("v3.1");
@@ -153,7 +153,7 @@ public class GetInitOutputTest
   @Test
   public void chooseYourPartnerBoxContainsHeader() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getChooseYourPartner();
@@ -170,7 +170,7 @@ public class GetInitOutputTest
   @Test
   public void chooseYourPartnerBoxHasBoxStructure() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getChooseYourPartner();
@@ -187,7 +187,7 @@ public class GetInitOutputTest
   @Test
   public void catInitializedBoxContainsHeader() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getCatInitialized("high", "medium", "low");
@@ -204,7 +204,7 @@ public class GetInitOutputTest
   @Test
   public void catInitializedBoxShowsPreferences() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getCatInitialized("high", "medium", "low");
@@ -222,7 +222,7 @@ public class GetInitOutputTest
   @Test
   public void catInitializedBoxMentionsConfigCommand() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getCatInitialized("medium", "medium", "medium");
@@ -239,7 +239,7 @@ public class GetInitOutputTest
   @Test
   public void firstIssueWalkthroughBoxContainsHeader() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getFirstIssueWalkthrough();
@@ -256,7 +256,7 @@ public class GetInitOutputTest
   @Test
   public void firstIssueCreatedBoxContainsHeader() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getFirstIssueCreated("fix-login-bug");
@@ -273,7 +273,7 @@ public class GetInitOutputTest
   @Test
   public void firstIssueCreatedBoxShowsIssueName() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getFirstIssueCreated("add-search-feature");
@@ -290,7 +290,7 @@ public class GetInitOutputTest
   @Test
   public void firstIssueCreatedBoxShowsLocation() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getFirstIssueCreated("my-task");
@@ -307,7 +307,7 @@ public class GetInitOutputTest
   @Test
   public void firstIssueCreatedBoxDescribesFiles() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getFirstIssueCreated("test-task");
@@ -324,7 +324,7 @@ public class GetInitOutputTest
   @Test
   public void allSetBoxContainsHeader() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getAllSet();
@@ -341,7 +341,7 @@ public class GetInitOutputTest
   @Test
   public void allSetBoxListsCommands() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getAllSet();
@@ -359,7 +359,7 @@ public class GetInitOutputTest
   @Test
   public void exploreBoxContainsHeader() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getExploreAtYourOwnPace();
@@ -376,7 +376,7 @@ public class GetInitOutputTest
   @Test
   public void exploreBoxListsCommands() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getExploreAtYourOwnPace();
@@ -394,7 +394,7 @@ public class GetInitOutputTest
   @Test
   public void exploreBoxIncludesStatusTip() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getExploreAtYourOwnPace();
@@ -411,7 +411,7 @@ public class GetInitOutputTest
   @Test
   public void getOutputEmptyArgsReturnsEmptyString() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getOutput(new String[]{});
@@ -429,7 +429,7 @@ public class GetInitOutputTest
     expectedExceptionsMessageRegExp = ".*(?=.*Unknown page)(?=.*explore-at-your-own-pace).*")
   public void getOutputUnknownPageThrows() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       handler.getOutput(new String[]{"invalid-page"});
@@ -446,7 +446,7 @@ public class GetInitOutputTest
     expectedExceptionsMessageRegExp = ".*(?=.*version-count must be a number)(?=.*not-a-number).*")
   public void defaultGatesConfiguredNonNumericArgThrows() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       handler.getOutput(new String[]{"default-gates-configured", "not-a-number"});
@@ -463,7 +463,7 @@ public class GetInitOutputTest
     expectedExceptionsMessageRegExp = ".*(?=.*research-skipped requires 1 argument)(?=.*example-version).*")
   public void researchSkippedInsufficientArgsThrows() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       handler.getOutput(new String[]{"research-skipped"});
@@ -480,7 +480,7 @@ public class GetInitOutputTest
     expectedExceptionsMessageRegExp = ".*(?=.*cat-initialized requires 3 arguments)(?=.*perfection).*")
   public void catInitializedInsufficientArgsThrows() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       handler.getOutput(new String[]{"cat-initialized", "high", "medium"});
@@ -497,7 +497,7 @@ public class GetInitOutputTest
     expectedExceptionsMessageRegExp = ".*(?=.*first-issue-created requires 1 argument)(?=.*issue-name).*")
   public void firstIssueCreatedInsufficientArgsThrows() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       handler.getOutput(new String[]{"first-issue-created"});
@@ -513,7 +513,7 @@ public class GetInitOutputTest
   @Test
   public void getOutputDefaultGatesConfiguredDispatch() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getOutput(new String[]{"default-gates-configured", "5"});
@@ -530,7 +530,7 @@ public class GetInitOutputTest
   @Test
   public void getOutputResearchSkippedDispatch() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getOutput(new String[]{"research-skipped", "v2.0"});
@@ -549,7 +549,7 @@ public class GetInitOutputTest
   @Test
   public void getOutputCatInitializedDispatch() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getOutput(new String[]{"cat-initialized", "high", "medium", "low"});
@@ -570,7 +570,7 @@ public class GetInitOutputTest
   @Test
   public void getOutputFirstIssueCreatedDispatch() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getOutput(new String[]{"first-issue-created", "my-feature"});

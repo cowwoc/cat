@@ -6,6 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.skills;
 
+import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
 import java.io.IOException;
@@ -45,9 +46,13 @@ public final class SkillValidator implements SkillOutput
 
   /**
    * Creates a SkillValidator instance.
+   *
+   * @param scope the ClaudeTool for accessing shared services
+   * @throws NullPointerException if {@code scope} is null
    */
-  public SkillValidator()
+  public SkillValidator(ClaudeTool scope)
   {
+    requireThat(scope, "scope").isNotNull();
   }
 
   /**

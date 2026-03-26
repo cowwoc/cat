@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
 import java.io.IOException;
@@ -19,9 +19,9 @@ public final class TestSkillOutputThrowsRuntime implements SkillOutput
   /**
    * Creates a TestSkillOutputThrowsRuntime instance.
    *
-   * @param scope the JVM scope (unused in test)
+   * @param scope the ClaudeTool scope (unused in test)
    */
-  public TestSkillOutputThrowsRuntime(JvmScope scope)
+  public TestSkillOutputThrowsRuntime(ClaudeTool scope)
   {
   }
 

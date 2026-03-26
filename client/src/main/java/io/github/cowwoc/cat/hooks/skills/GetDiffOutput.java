@@ -28,7 +28,6 @@ import java.util.regex.Pattern;
 
 import io.github.cowwoc.cat.hooks.Config;
 import static io.github.cowwoc.cat.hooks.Strings.block;
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
@@ -71,15 +70,15 @@ public final class GetDiffOutput implements SkillOutput
   /**
    * The JVM scope for accessing shared services.
    */
-  private final JvmScope scope;
+  private final ClaudeTool scope;
 
   /**
    * Creates a GetDiffOutput instance.
    *
-   * @param scope the JVM scope for accessing shared services
+   * @param scope the ClaudeTool for accessing shared services
    * @throws NullPointerException if {@code scope} is null
    */
-  public GetDiffOutput(JvmScope scope)
+  public GetDiffOutput(ClaudeTool scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -2271,7 +2270,7 @@ public final class GetDiffOutput implements SkillOutput
    * @param out   the output stream to write output to
    * @throws NullPointerException if {@code scope}, {@code args} or {@code out} are null
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out)
+  public static void run(ClaudeTool scope, String[] args, PrintStream out)
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();

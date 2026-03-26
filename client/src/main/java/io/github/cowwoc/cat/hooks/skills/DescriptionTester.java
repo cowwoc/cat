@@ -6,6 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.skills;
 
+import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
 import java.io.IOException;
@@ -36,9 +37,13 @@ public final class DescriptionTester implements SkillOutput
 
   /**
    * Creates a DescriptionTester instance.
+   *
+   * @param scope the ClaudeTool for accessing shared services
+   * @throws NullPointerException if {@code scope} is null
    */
-  public DescriptionTester()
+  public DescriptionTester(ClaudeTool scope)
   {
+    requireThat(scope, "scope").isNotNull();
   }
 
   /**

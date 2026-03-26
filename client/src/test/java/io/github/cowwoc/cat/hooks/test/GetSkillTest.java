@@ -2048,4 +2048,48 @@ More content here.
       TestUtils.deleteDirectoryRecursively(tempPluginRoot);
     }
   }
+
+  /**
+   * Verifies that a SkillOutput class with a ClaudeTool constructor is correctly instantiated
+   * by invokeSkillOutput().
+   * <p>
+   * Java reflection's getConstructor() requires an exact type match. Without the ClaudeTool-first
+   * fallback, classes whose constructor takes ClaudeTool (a subtype of JvmScope) would fail
+   * with NoSuchMethodException when the JvmScope constructor lookup was attempted.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void loadInvokesSkillOutputWithClaudeToolConstructor() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
+    {
+      Path hooksDir = tempPluginRoot.resolve("client/bin");
+      Files.createDirectories(hooksDir);
+      Files.writeString(hooksDir.resolve("test-output"), """
+        #!/bin/bash
+        java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestClaudeToolSkillOutput "$@"
+        """);
+
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      Files.writeString(companionDir.resolve("first-use.md"), """
+        Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output"`
+        Done
+        """);
+
+      GetSkill loader = new GetSkill(scope, List.of(UUID.randomUUID().toString()));
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").
+        contains("CLAUDE_TOOL_OUTPUT").
+        contains("Done").
+        doesNotContain("!`");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
 }

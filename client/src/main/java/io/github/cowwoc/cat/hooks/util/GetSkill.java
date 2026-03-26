@@ -658,11 +658,12 @@ public final class GetSkill
       Object instance;
       try
       {
-        instance = targetClass.getConstructor(JvmScope.class).newInstance(scope);
+        instance = targetClass.getConstructor(ClaudeTool.class).newInstance(scope);
       }
-      catch (NoSuchMethodException _)
+      catch (NoSuchMethodException e)
       {
-        instance = targetClass.getConstructor().newInstance();
+        throw new IllegalStateException("SkillOutput class " + targetClass.getName() +
+          " must have a constructor that takes ClaudeTool", e);
       }
       if (!(instance instanceof SkillOutput skillOutput))
       {
