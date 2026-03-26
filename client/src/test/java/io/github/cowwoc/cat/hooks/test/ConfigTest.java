@@ -14,6 +14,7 @@ import io.github.cowwoc.cat.hooks.util.CautionLevel;
 import io.github.cowwoc.cat.hooks.util.CuriosityLevel;
 import io.github.cowwoc.cat.hooks.util.PerfectionLevel;
 import io.github.cowwoc.cat.hooks.util.TrustLevel;
+import io.github.cowwoc.cat.hooks.util.VerbosityLevel;
 import org.testng.annotations.Test;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
@@ -186,6 +187,7 @@ public class ConfigTest
       requireThat(values.get("caution"), "caution").isEqualTo("medium");
       requireThat(values.get("curiosity"), "curiosity").isEqualTo("medium");
       requireThat(values.get("perfection"), "perfection").isEqualTo("medium");
+      requireThat(values.get("verbosity"), "verbosity").isEqualTo("medium");
       requireThat(values.get("fileWidth"), "fileWidth").isEqualTo(120);
       requireThat(values.get("displayWidth"), "displayWidth").isEqualTo(120);
       requireThat(values.get("completionWorkflow"), "completionWorkflow").isEqualTo("merge");
@@ -1134,6 +1136,110 @@ public class ConfigTest
       requireThat(result, "result").isNotNull();
       requireThat(result, "result").contains("trust");
       requireThat(result, "result").contains("caution");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getVerbosity() returns MEDIUM by default when the config file is missing.
+   */
+  @Test
+  public void configUsesDefaultVerbosityWhenConfigMissing() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("config-test");
+    try (TestClaudeTool scope = new TestClaudeTool())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Config config = Config.load(mapper, tempDir);
+
+      requireThat(config.getString("verbosity"), "verbosity").isEqualTo("medium");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getVerbosity() reads "low" from config.json correctly.
+   */
+  @Test
+  public void configReadsVerbosityFromFile() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("config-test");
+    try (TestClaudeTool scope = new TestClaudeTool())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path catDir = tempDir.resolve(".cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("config.json"), """
+        {
+          "verbosity": "low"
+        }
+        """);
+
+      Config config = Config.load(mapper, tempDir);
+
+      requireThat(config.getString("verbosity"), "verbosity").isEqualTo("low");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getVerbosity() parses "low" from the config file as VerbosityLevel.LOW.
+   */
+  @Test
+  public void configVerbosityParsesToEnum() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("config-test");
+    try (TestClaudeTool scope = new TestClaudeTool())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path catDir = tempDir.resolve(".cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("config.json"), """
+        {
+          "verbosity": "low"
+        }
+        """);
+
+      Config config = Config.load(mapper, tempDir);
+
+      requireThat(config.getVerbosity(), "verbosity").isEqualTo(VerbosityLevel.LOW);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getVerbosity() throws IllegalArgumentException for an unrecognized verbosity value.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*BOGUS.*")
+  public void configRejectsUnknownVerbosityValue() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("config-test");
+    try (TestClaudeTool scope = new TestClaudeTool())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path catDir = tempDir.resolve(".cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("config.json"), """
+        {
+          "verbosity": "bogus"
+        }
+        """);
+
+      Config config = Config.load(mapper, tempDir);
+      config.getVerbosity();
     }
     finally
     {

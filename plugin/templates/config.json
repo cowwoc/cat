@@ -3,5 +3,6 @@
   "trust": "medium",
   "caution": "medium",
   "curiosity": "medium",
-  "perfection": "medium"
+  "perfection": "medium",
+  "verbosity": "medium"
 }

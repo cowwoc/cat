@@ -551,6 +551,7 @@ Create `.cat/config.json`:
   "caution": "[low|medium|high]",
   "curiosity": "[low|medium|high]",
   "perfection": "[high|medium|low]",
+  "verbosity": "[low|medium|high]",
   "gitWorkflow": {
     "branchingStrategy": "[main-only|feature|version]",
     "mergeStyle": "[direct|fast-forward|merge-commit|squash]",

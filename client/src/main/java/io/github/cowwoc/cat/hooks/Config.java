@@ -11,6 +11,7 @@ import io.github.cowwoc.cat.hooks.util.ConcernSeverity;
 import io.github.cowwoc.cat.hooks.util.CuriosityLevel;
 import io.github.cowwoc.cat.hooks.util.PerfectionLevel;
 import io.github.cowwoc.cat.hooks.util.TrustLevel;
+import io.github.cowwoc.cat.hooks.util.VerbosityLevel;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -53,6 +54,7 @@ public final class Config
     defaults.put("caution", "medium");
     defaults.put("curiosity", "medium");
     defaults.put("perfection", "medium");
+    defaults.put("verbosity", "medium");
     defaults.put("fileWidth", 120);
     defaults.put("displayWidth", 120);
     defaults.put("completionWorkflow", "merge");
@@ -287,6 +289,17 @@ public final class Config
   public PerfectionLevel getPerfection()
   {
     return PerfectionLevel.fromString(getString("perfection", "medium"));
+  }
+
+  /**
+   * Get the verbosity level.
+   *
+   * @return the parsed {@link VerbosityLevel} (defaults to {@link VerbosityLevel#MEDIUM} if not configured)
+   * @throws IllegalArgumentException if the configured value is not a recognized verbosity level
+   */
+  public VerbosityLevel getVerbosity()
+  {
+    return VerbosityLevel.fromString(getString("verbosity", "medium"));
   }
 
   /**
