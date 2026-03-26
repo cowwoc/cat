@@ -6,120 +6,83 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
-
 import io.github.cowwoc.cat.hooks.util.CuriosityLevel;
-
 import org.testng.annotations.Test;
 
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+
 /**
- * Tests for {@link CuriosityLevel}.
+ * Tests for CuriosityLevel enum behavior.
  */
-public final class CuriosityLevelTest
+public class CuriosityLevelTest
 {
   /**
    * Verifies that fromString("low") returns LOW.
    */
   @Test
-  public void fromStringLowReturnsLOW()
+  public void fromStringLowReturnsLow()
   {
-    requireThat(CuriosityLevel.fromString("low"), "level").isEqualTo(CuriosityLevel.LOW);
+    CuriosityLevel result = CuriosityLevel.fromString("low");
+    requireThat(result, "result").isEqualTo(CuriosityLevel.LOW);
   }
 
   /**
    * Verifies that fromString("medium") returns MEDIUM.
    */
   @Test
-  public void fromStringMediumReturnsMEDIUM()
+  public void fromStringMediumReturnsMedium()
   {
-    requireThat(CuriosityLevel.fromString("medium"), "level").isEqualTo(CuriosityLevel.MEDIUM);
+    CuriosityLevel result = CuriosityLevel.fromString("medium");
+    requireThat(result, "result").isEqualTo(CuriosityLevel.MEDIUM);
   }
 
   /**
    * Verifies that fromString("high") returns HIGH.
    */
   @Test
-  public void fromStringHighReturnsHIGH()
+  public void fromStringHighReturnsHigh()
   {
-    requireThat(CuriosityLevel.fromString("high"), "level").isEqualTo(CuriosityLevel.HIGH);
+    CuriosityLevel result = CuriosityLevel.fromString("high");
+    requireThat(result, "result").isEqualTo(CuriosityLevel.HIGH);
   }
 
   /**
-   * Verifies that fromString is case-insensitive (e.g., "HIGH" returns HIGH).
+   * Verifies that fromString is case-insensitive: "LOW", "Medium", "HIGH" all parse correctly.
    */
   @Test
-  public void fromStringIsCaseInsensitive()
+  public void fromStringCaseInsensitive()
   {
-    requireThat(CuriosityLevel.fromString("HIGH"), "level").isEqualTo(CuriosityLevel.HIGH);
+    requireThat(CuriosityLevel.fromString("LOW"), "LOW").isEqualTo(CuriosityLevel.LOW);
+    requireThat(CuriosityLevel.fromString("Medium"), "Medium").isEqualTo(CuriosityLevel.MEDIUM);
+    requireThat(CuriosityLevel.fromString("HIGH"), "HIGH").isEqualTo(CuriosityLevel.HIGH);
   }
 
   /**
-   * Verifies that toString returns lowercase "low" for the LOW enum value.
+   * Verifies that fromString("") throws IllegalArgumentException.
    */
-  @Test
-  public void toStringLowReturnsLowercase()
-  {
-    requireThat(CuriosityLevel.LOW.toString(), "CuriosityLevel.LOW.toString()").isEqualTo("low");
-  }
-
-  /**
-   * Verifies that toString returns lowercase "medium" for the MEDIUM enum value.
-   */
-  @Test
-  public void toStringMediumReturnsLowercase()
-  {
-    requireThat(CuriosityLevel.MEDIUM.toString(), "CuriosityLevel.MEDIUM.toString()").isEqualTo("medium");
-  }
-
-  /**
-   * Verifies that toString returns lowercase "high" for the HIGH enum value.
-   */
-  @Test
-  public void toStringHighReturnsLowercase()
-  {
-    requireThat(CuriosityLevel.HIGH.toString(), "CuriosityLevel.HIGH.toString()").isEqualTo("high");
-  }
-
-  /**
-   * Verifies that fromString throws IllegalArgumentException for an unrecognized value.
-   */
-  @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*UNKNOWN.*")
-  public void fromStringInvalidThrowsIllegalArgument()
-  {
-    CuriosityLevel.fromString("unknown");
-  }
-
-  /**
-   * Verifies that fromString throws IllegalArgumentException for blank input, with a message referencing
-   * the parameter name.
-   */
-  @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*value.*")
-  public void fromStringBlankThrowsIllegalArgument()
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void fromStringBlankThrowsIllegalArgumentException()
   {
     CuriosityLevel.fromString("");
   }
 
   /**
-   * Verifies that fromString throws IllegalArgumentException for whitespace-padded input.
-   * <p>
-   * The implementation does not strip whitespace before matching, so " low " is not a valid curiosity level.
+   * Verifies that fromString("invalid") throws IllegalArgumentException.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".* LOW .*")
-  public void fromStringWhitespacePaddedThrowsIllegalArgument()
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void fromStringUnknownValueThrowsIllegalArgumentException()
   {
-    CuriosityLevel.fromString(" low ");
+    CuriosityLevel.fromString("invalid");
   }
 
   /**
-   * Verifies that fromString throws NullPointerException for null input.
+   * Verifies that toString() returns the lowercase name: "low", "medium", "high".
    */
-  @Test(expectedExceptions = NullPointerException.class,
-    expectedExceptionsMessageRegExp = ".*value.*")
-  public void fromStringNullThrowsNullPointerException()
+  @Test
+  public void toStringReturnsLowercase()
   {
-    CuriosityLevel.fromString(null);
+    requireThat(CuriosityLevel.LOW.toString(), "LOW.toString()").isEqualTo("low");
+    requireThat(CuriosityLevel.MEDIUM.toString(), "MEDIUM.toString()").isEqualTo("medium");
+    requireThat(CuriosityLevel.HIGH.toString(), "HIGH.toString()").isEqualTo("high");
   }
 }

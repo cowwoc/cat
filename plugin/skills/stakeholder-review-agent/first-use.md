@@ -373,7 +373,7 @@ fi
 case "$CURIOSITY" in
     low)    REVIEW_SCOPE="Review changed lines only. Flag obvious issues visible in the diff." ;;
     medium) REVIEW_SCOPE="Review changed lines and their surrounding context (functions, classes containing the change). Flag issues that arise from the interaction between new and existing code." ;;
-    high)   REVIEW_SCOPE="Review the broader impact on surrounding code. Flag pre-existing issues in any file you read, not just the changed lines. Consider systemic effects across the codebase." ;;
+    high)   REVIEW_SCOPE="Review the broader system context. For each changed file, read the surrounding code that references or depends on it. Consider: (1) how this change interacts with other open issues in the same version, (2) architectural patterns in the rest of the codebase this change should follow or might inadvertently break, (3) cross-cutting concerns (security, performance, accessibility) beyond immediately changed files. Flag pre-existing issues in any file you read. Consider downstream impact on consumers of changed APIs or interfaces." ;;
     *)      echo "WARNING: Unrecognized curiosity value '${CURIOSITY}'. Defaulting to 'medium'." >&2
             CURIOSITY="medium"
             REVIEW_SCOPE="Review changed lines and their surrounding context (functions, classes containing the change). Flag issues that arise from the interaction between new and existing code." ;;
