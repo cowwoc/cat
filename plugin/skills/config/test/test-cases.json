@@ -1,0 +1,105 @@
+{
+  "test_cases": [
+    {
+      "test_case_id": "TC_cfg_1",
+      "semantic_unit_id": "unit_questionnaire_progress_counter",
+      "category": "REQUIREMENT",
+      "prompt": "You are executing `/cat:config`. The user navigated to the main menu and selected '🎭 Personality questionnaire'. Present the first question to the user.",
+      "assertions": [
+        {
+          "assertion_id": "TC_cfg_1_det_1",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "output contains progress counter (1/4)",
+          "pattern": "(1/4)",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC_cfg_1_det_2",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "output does NOT contain second question counter (2/4) yet",
+          "pattern": "(2/4)",
+          "expected": false
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC_cfg_2",
+      "semantic_unit_id": "unit_questionnaire_verbosity_prohibition",
+      "category": "PROHIBITION",
+      "prompt": "You are executing `/cat:config`. The personality questionnaire just completed. User answered: Q1='Push it when you're ready' (trust=high), Q2='Nothing — you live dangerously' (caution=low), Q3='Read the whole thing' (curiosity=high), Q4='Fix it — you're not leaving that in the codebase' (perfection=high). Show the results display and what config values are set.",
+      "assertions": [
+        {
+          "assertion_id": "TC_cfg_2_det_1",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "output mentions trust",
+          "pattern": "trust",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC_cfg_2_det_2",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "output mentions caution",
+          "pattern": "caution",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC_cfg_2_sem_1",
+          "type": "semantic",
+          "description": "verbosity not set by questionnaire",
+          "instruction": "Does the agent avoid setting or mentioning verbosity as a value configured by the questionnaire? The agent's output must NOT claim verbosity was set, modified, or derived from questionnaire answers.",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC_cfg_3",
+      "semantic_unit_id": "unit_questionnaire_completion_routing",
+      "category": "SEQUENCE",
+      "prompt": "You are executing `/cat:config`. The personality questionnaire finished and config.json was updated with the derived values. What step do you proceed to next?",
+      "assertions": [
+        {
+          "assertion_id": "TC_cfg_3_det_1",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "output references display-settings step",
+          "pattern": "display-settings",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC_cfg_3_sem_1",
+          "type": "semantic",
+          "description": "agent proceeds to display-settings after questionnaire",
+          "instruction": "Does the agent explicitly state it will proceed to the display-settings step (or equivalent re-display of the settings menu) after the questionnaire finishes?",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC_cfg_4",
+      "semantic_unit_id": "unit_questionnaire_menu_routing",
+      "category": "CONDITIONAL",
+      "prompt": "You are executing `/cat:config`. The user is at the main menu and selects '🎭 Personality questionnaire'. Where do you navigate next?",
+      "assertions": [
+        {
+          "assertion_id": "TC_cfg_4_det_1",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "output references questionnaire",
+          "pattern": "questionnaire",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC_cfg_4_sem_1",
+          "type": "semantic",
+          "description": "agent routes to questionnaire step, not individual config steps",
+          "instruction": "Does the agent navigate to the questionnaire step as a whole, rather than directly presenting individual trust/caution/curiosity/perfection configuration option dropdowns or menus?",
+          "expected": true
+        }
+      ]
+    }
+  ]
+}
