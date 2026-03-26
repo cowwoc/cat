@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
 import java.io.IOException;
@@ -19,10 +19,10 @@ public final class TestSkillOutputThrowsFromConstructor implements SkillOutput
   /**
    * Creates a TestSkillOutputThrowsFromConstructor instance.
    *
-   * @param scope the JVM scope (unused in test)
+   * @param scope the ClaudeTool scope (unused in test)
    * @throws IllegalStateException always, to simulate constructor failure
    */
-  public TestSkillOutputThrowsFromConstructor(JvmScope scope)
+  public TestSkillOutputThrowsFromConstructor(ClaudeTool scope)
   {
     throw new IllegalStateException("constructor failure");
   }

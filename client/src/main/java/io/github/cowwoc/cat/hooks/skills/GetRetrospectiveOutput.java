@@ -12,7 +12,6 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.Strings;
@@ -64,15 +63,15 @@ public final class GetRetrospectiveOutput implements SkillOutput
   private static final int MAX_CATEGORY_ROWS = 8;
   private static final DateTimeFormatter PERIOD_FORMATTER =
     DateTimeFormatter.ofPattern("MMM d h:mm a", Locale.ENGLISH).withZone(ZoneOffset.UTC);
-  private final JvmScope scope;
+  private final ClaudeTool scope;
 
   /**
    * Creates a GetRetrospectiveOutput instance.
    *
-   * @param scope the JVM scope for accessing shared services
+   * @param scope the ClaudeTool for accessing shared services
    * @throws NullPointerException if scope is null
    */
-  public GetRetrospectiveOutput(JvmScope scope)
+  public GetRetrospectiveOutput(ClaudeTool scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -1003,7 +1002,7 @@ public final class GetRetrospectiveOutput implements SkillOutput
    * @throws NullPointerException if {@code scope}, {@code args} or {@code out} are null
    * @throws IOException          if an I/O error occurs
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  public static void run(ClaudeTool scope, String[] args, PrintStream out) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();

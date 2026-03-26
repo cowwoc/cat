@@ -8,7 +8,6 @@ package io.github.cowwoc.cat.hooks.util;
 
 import static io.github.cowwoc.cat.hooks.Strings.block;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import org.slf4j.Logger;
@@ -31,15 +30,15 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public final class WriteSessionMarker implements SkillOutput
 {
-  private final JvmScope scope;
+  private final ClaudeTool scope;
 
   /**
    * Creates a new WriteSessionMarker.
    *
-   * @param scope the JVM scope providing access to the project path
+   * @param scope the ClaudeTool providing access to the project path
    * @throws NullPointerException if {@code scope} is null
    */
-  public WriteSessionMarker(JvmScope scope)
+  public WriteSessionMarker(ClaudeTool scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -137,7 +136,7 @@ public final class WriteSessionMarker implements SkillOutput
    * @throws NullPointerException if {@code args} or {@code out} are null
    * @throws IOException          if the marker file cannot be written
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  public static void run(ClaudeTool scope, String[] args, PrintStream out) throws IOException
   {
     requireThat(args, "args").isNotNull();
     requireThat(out, "out").isNotNull();

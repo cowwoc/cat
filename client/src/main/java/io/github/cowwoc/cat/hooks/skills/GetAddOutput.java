@@ -7,7 +7,6 @@
 package io.github.cowwoc.cat.hooks.skills;
 
 import io.github.cowwoc.cat.hooks.Config;
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
@@ -49,15 +48,15 @@ public final class GetAddOutput implements SkillOutput
   /**
    * The JVM scope for accessing shared services.
    */
-  private final JvmScope scope;
+  private final ClaudeTool scope;
 
   /**
    * Creates a GetAddOutput instance.
    *
-   * @param scope the JVM scope for accessing shared services
+   * @param scope the ClaudeTool for accessing shared services
    * @throws NullPointerException if {@code scope} is null
    */
-  public GetAddOutput(JvmScope scope)
+  public GetAddOutput(ClaudeTool scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -481,7 +480,7 @@ public final class GetAddOutput implements SkillOutput
    * @throws IllegalArgumentException if arguments are invalid
    * @throws IOException              if an I/O error occurs
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  public static void run(ClaudeTool scope, String[] args, PrintStream out) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();

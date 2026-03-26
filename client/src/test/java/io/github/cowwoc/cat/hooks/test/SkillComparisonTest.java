@@ -6,6 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
+import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.skills.SkillComparison;
 import org.testng.annotations.Test;
 
@@ -68,8 +69,16 @@ public final class SkillComparisonTest
     expectedExceptionsMessageRegExp = ".*requires 2 or 3 arguments.*")
   public void throwsOnOneArgument() throws IOException
   {
-    SkillComparison handler = new SkillComparison();
-    handler.getOutput(new String[]{"only-one"});
+    Path tempDir = Files.createTempDirectory("test-compare-");
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      SkillComparison handler = new SkillComparison(scope);
+      handler.getOutput(new String[]{"only-one"});
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -79,8 +88,16 @@ public final class SkillComparisonTest
     expectedExceptionsMessageRegExp = ".*requires 2 or 3 arguments.*")
   public void throwsOnFourArguments() throws IOException
   {
-    SkillComparison handler = new SkillComparison();
-    handler.getOutput(new String[]{"a", "b", "goal", "extra"});
+    Path tempDir = Files.createTempDirectory("test-compare-");
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      SkillComparison handler = new SkillComparison(scope);
+      handler.getOutput(new String[]{"a", "b", "goal", "extra"});
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -91,12 +108,12 @@ public final class SkillComparisonTest
   public void throwsWhenSkillANotFound() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-compare-");
-    try
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path skillBFile = tempDir.resolve("skill-b.md");
       Files.writeString(skillBFile, SKILL_B_CONTENT);
 
-      SkillComparison handler = new SkillComparison();
+      SkillComparison handler = new SkillComparison(scope);
       handler.getOutput(new String[]{
         tempDir.resolve("nonexistent-a.md").toString(),
         skillBFile.toString()
@@ -116,12 +133,12 @@ public final class SkillComparisonTest
   public void throwsWhenSkillBNotFound() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-compare-");
-    try
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path skillAFile = tempDir.resolve("skill-a.md");
       Files.writeString(skillAFile, SKILL_A_CONTENT);
 
-      SkillComparison handler = new SkillComparison();
+      SkillComparison handler = new SkillComparison(scope);
       handler.getOutput(new String[]{
         skillAFile.toString(),
         tempDir.resolve("nonexistent-b.md").toString()
@@ -140,14 +157,14 @@ public final class SkillComparisonTest
   public void producesComparisonPromptWithBothSkills() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-compare-");
-    try
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path skillAFile = tempDir.resolve("skill-a.md");
       Path skillBFile = tempDir.resolve("skill-b.md");
       Files.writeString(skillAFile, SKILL_A_CONTENT);
       Files.writeString(skillBFile, SKILL_B_CONTENT);
 
-      SkillComparison handler = new SkillComparison();
+      SkillComparison handler = new SkillComparison(scope);
       String output = handler.getOutput(new String[]{skillAFile.toString(), skillBFile.toString()});
 
       requireThat(output, "output").isNotNull();
@@ -170,7 +187,7 @@ public final class SkillComparisonTest
   public void usesExplicitGoalWhenProvided() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-compare-");
-    try
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path skillAFile = tempDir.resolve("skill-a.md");
       Path skillBFile = tempDir.resolve("skill-b.md");
@@ -178,7 +195,7 @@ public final class SkillComparisonTest
       Files.writeString(skillBFile, SKILL_B_CONTENT);
 
       String customGoal = "Combine N commits safely without losing history";
-      SkillComparison handler = new SkillComparison();
+      SkillComparison handler = new SkillComparison(scope);
       String output = handler.getOutput(new String[]{
         skillAFile.toString(),
         skillBFile.toString(),
@@ -200,14 +217,14 @@ public final class SkillComparisonTest
   public void extractsGoalFromPurposeSectionWhenNotProvided() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-compare-");
-    try
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path skillAFile = tempDir.resolve("skill-a.md");
       Path skillBFile = tempDir.resolve("skill-b.md");
       Files.writeString(skillAFile, SKILL_A_CONTENT);
       Files.writeString(skillBFile, SKILL_B_CONTENT);
 
-      SkillComparison handler = new SkillComparison();
+      SkillComparison handler = new SkillComparison(scope);
       String output = handler.getOutput(new String[]{skillAFile.toString(), skillBFile.toString()});
 
       // Goal extracted from Skill A's Purpose section
@@ -223,39 +240,55 @@ public final class SkillComparisonTest
    * Verifies that extractGoal returns fallback message when no Purpose section exists.
    */
   @Test
-  public void extractGoalReturnsFallbackWhenNoPurposeSection()
+  public void extractGoalReturnsFallbackWhenNoPurposeSection() throws IOException
   {
-    SkillComparison handler = new SkillComparison();
-    String content = "---\ndescription: Some skill\n---\n# Skill\n\nNo purpose section here.";
-    String goal = handler.extractGoal(content, "test.md");
+    Path tempDir = Files.createTempDirectory("test-compare-");
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      SkillComparison handler = new SkillComparison(scope);
+      String content = "---\ndescription: Some skill\n---\n# Skill\n\nNo purpose section here.";
+      String goal = handler.extractGoal(content, "test.md");
 
-    requireThat(goal, "goal").contains("goal not specified");
+      requireThat(goal, "goal").contains("goal not specified");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
    * Verifies that extractGoal extracts text from ## Purpose section.
    */
   @Test
-  public void extractGoalFromPurposeSection()
+  public void extractGoalFromPurposeSection() throws IOException
   {
-    SkillComparison handler = new SkillComparison();
-    String content = """
-      ---
-      description: Some skill
-      ---
-      # Skill
+    Path tempDir = Files.createTempDirectory("test-compare-");
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      SkillComparison handler = new SkillComparison(scope);
+      String content = """
+        ---
+        description: Some skill
+        ---
+        # Skill
 
-      ## Purpose
+        ## Purpose
 
-      Produce correct output for all test cases.
+        Produce correct output for all test cases.
 
-      ## Procedure
+        ## Procedure
 
-      Steps here.
-      """;
-    String goal = handler.extractGoal(content, "test.md");
+        Steps here.
+        """;
+      String goal = handler.extractGoal(content, "test.md");
 
-    requireThat(goal, "goal").isEqualTo("Produce correct output for all test cases.");
+      requireThat(goal, "goal").isEqualTo("Produce correct output for all test cases.");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -265,14 +298,14 @@ public final class SkillComparisonTest
   public void promptIncludesRubricCriteria() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-compare-");
-    try
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path skillAFile = tempDir.resolve("skill-a.md");
       Path skillBFile = tempDir.resolve("skill-b.md");
       Files.writeString(skillAFile, SKILL_A_CONTENT);
       Files.writeString(skillBFile, SKILL_B_CONTENT);
 
-      SkillComparison handler = new SkillComparison();
+      SkillComparison handler = new SkillComparison(scope);
       String output = handler.getOutput(new String[]{skillAFile.toString(), skillBFile.toString()});
 
       requireThat(output, "output").contains("Trigger precision");
