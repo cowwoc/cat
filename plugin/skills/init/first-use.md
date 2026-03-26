@@ -416,32 +416,126 @@ Replace `{PENDING_VERSION}` with an example pending version for the help text.
 
 <step name="behavior_style">
 
-**Choose Your Partner - Capture development style preferences**
+**Choose Your Partner — Personality Questionnaire**
 
-INVOKE: Skill("cat:get-output-agent", args="init.choose-your-partner")
+Present 5 situational questions without revealing which config option each derives. Collect all 5 answers
+before displaying the results.
 
-AskUserQuestion: header="Trust", question="How do you prefer to work together?", options=[
-  "🛡️ Hands-On - check in often, verify each move",
-  "⚔️ Balanced - trust routine calls, review key decisions (Recommended)",
-  "🏹 Autonomous - let the partner lead, step in when critical"
-]
+See `plugin/templates/questionnaire.md` for question content, answer mappings, and explanation text.
 
-AskUserQuestion: header="Curiosity", question="How should your partner handle discoveries?", options=[
-  "🎯 Focused - stay on the issue, ignore tangents",
-  "🗺️ Observant - note interesting finds, but stay on mission (Recommended)",
-  "🔮 Thorough - explore every corner, document all discoveries"
-]
+**Question 1:**
 
-AskUserQuestion: header="Perfection", question="When your partner spots an improvement...", options=[
-  "💎 Act now - if it's valuable, address it immediately",
-  "⚖️ Quick wins - take easy improvements, note the rest (Recommended)",
-  "📜 Log it - add to backlog, maintain focus"
-]
+AskUserQuestion:
+- header: "How do you lead? (1/5)"
+- question: |
+    It's Wednesday evening and you're on vacation. A junior developer messages you:
+    "I'm close to finishing the new feature — what should I do when I have it?"
+    You tell them:
+- options:
+  - "Push it when you're ready"
+  - "Send me a quick summary to review before pushing anything out"
+  - "Sit tight until Monday — we'll go through everything together before it ships"
 
-Map responses to preference values:
-- Trust: low | medium | high
-- Curiosity: low | medium | high
-- Perfection: high | medium | low
+Map answer to TRUST:
+- "Push it when you're ready" → TRUST=high
+- "Send me a quick summary..." → TRUST=medium
+- "Sit tight until Monday..." → TRUST=low
+
+**Question 2:**
+
+AskUserQuestion:
+- header: "Friday deploy (2/5)"
+- question: |
+    It's 4:55pm on a Friday and production is down. You've found the fix. Before you push and head out,
+    you run:
+- options:
+  - "Nothing — you live dangerously"
+  - "The tests for what you changed — close enough"
+  - "The full test suite — the pub can wait"
+
+Map answer to CAUTION:
+- "Nothing — you live dangerously" → CAUTION=low
+- "The tests for what you changed — close enough" → CAUTION=medium
+- "The full test suite — the pub can wait" → CAUTION=high
+
+**Question 3:**
+
+AskUserQuestion:
+- header: "The old module (3/5)"
+- question: |
+    You're handed a bug report in a module nobody has touched in two years. Do you:
+- options:
+  - "Fix the line, close the ticket, move on"
+  - "Poke around enough to understand what you're changing"
+  - "Read the whole thing — you don't touch code you don't understand"
+
+Map answer to CURIOSITY:
+- "Fix the line, close the ticket, move on" → CURIOSITY=low
+- "Poke around enough to understand..." → CURIOSITY=medium
+- "Read the whole thing..." → CURIOSITY=high
+
+**Question 4:**
+
+AskUserQuestion:
+- header: "Someone else's mess (4/5)"
+- question: |
+    While fixing a bug you stumble across an obvious hack someone left in the code. Do you:
+- options:
+  - "Leave it — it's a problem for another day"
+  - "Clean it up if it'll take less than ten minutes"
+  - "Fix it — you're not leaving that in the codebase"
+
+Map answer to PERFECTION:
+- "Leave it..." → PERFECTION=low
+- "Clean it up if it'll take less than ten minutes" → PERFECTION=medium
+- "Fix it — you're not leaving that in the codebase" → PERFECTION=high
+
+**Question 5:**
+
+AskUserQuestion:
+- header: "The code review (5/5)"
+- question: |
+    You're reviewing a PR with a tricky bug. You'd prefer CAT to:
+- options:
+  - "Give you the short answer"
+  - "Walk you through the reasoning"
+  - "Explain everything, including what it ruled out"
+
+Map answer to VERBOSITY:
+- "Give you the short answer" → VERBOSITY=low
+- "Walk you through the reasoning" → VERBOSITY=medium
+- "Explain everything, including what it ruled out" → VERBOSITY=high
+
+**After collecting all 5 answers, display results as plain text (not as an AskUserQuestion):**
+
+Select explanation text from the table in `plugin/templates/questionnaire.md` and output:
+
+```
+Your working style:
+
+  trust: {TRUST}         {trust_explanation}
+  caution: {CAUTION}     {caution_explanation}
+  curiosity: {CURIOSITY} {curiosity_explanation}
+  perfection: {PERFECTION} {perfection_explanation}
+  verbosity: {VERBOSITY} {verbosity_explanation}
+
+You can update any of these later with /cat:config.
+```
+
+**Manual Testing:**
+To test the questionnaire behavior manually:
+1. Create a new CAT project with `/cat:init`
+2. At the "How do you lead?" step, verify all 5 questions appear in sequence
+3. Provide one answer to each question
+4. Verify the result display shows all 5 values with correct explanations (verify against template)
+5. Confirm all config values (trust, caution, curiosity, perfection, verbosity) are correctly derived in `.cat/config.json`
+
+Store derived values for use in the config step:
+- TRUST (low|medium|high)
+- CAUTION (low|medium|high)
+- CURIOSITY (low|medium|high)
+- PERFECTION (low|medium|high)
+- VERBOSITY (low|medium|high)
 
 </step>
 
@@ -822,6 +916,7 @@ paths: ["*.java"]      # default: always (omit to always inject)
 These preferences shape how CAT makes autonomous decisions:
 
 - **Trust Level:** [low|medium|high] - review frequency
+- **Caution:** [low|medium|high] - validation thoroughness
 - **Curiosity:** [low|medium|high] - exploration beyond immediate issue
 - **Perfection:** [high|medium|low] - how immediately to act on improvements
 
@@ -841,9 +936,9 @@ git commit -m "docs: initialize CAT planning structure"
 
 <step name="done">
 
-INVOKE: Skill("cat:get-output-agent", args="init.cat-initialized {trust} {curiosity} {perfection}")
+INVOKE: Skill("cat:get-output-agent", args="init.cat-initialized {trust} {caution} {curiosity} {perfection} {verbosity}")
 
-Replace `{trust}`, `{curiosity}`, `{perfection}` with actual preference values.
+Replace `{trust}`, `{caution}`, `{curiosity}`, `{perfection}`, `{verbosity}` with actual preference values.
 
 **New projects:**
 ```

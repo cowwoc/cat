@@ -648,4 +648,78 @@ public class MergeAndCleanupTest
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
+
+  /**
+   * Verifies that the worktree dirtiness check prevents merge when the issue worktree has uncommitted
+   * changes.
+   * <p>
+   * The worktree isolation model ensures that each issue worktree is independent. Before merge, the
+   * worktree must be clean (no uncommitted changes) to guarantee the merge state is consistent with
+   * what the user sees on their file system. This test validates the cleanup phase's safety check.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = ".*uncommitted changes.*")
+  public void executeThrowsWhenWorktreeIsDirty() throws IOException
+  {
+    Path originRepo = Files.createTempDirectory("origin-repo-");
+    Path localRepo = Files.createTempDirectory("local-repo-");
+    Path worktreesDir = Files.createTempDirectory("worktrees-");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+
+    try
+    {
+      // Initialize bare origin
+      TestUtils.runGit(originRepo, "init", "--bare", "--initial-branch=v2.1");
+
+      // Create local repo
+      TestUtils.runGit(localRepo, "init", "--initial-branch=v2.1");
+      TestUtils.runGit(localRepo, "config", "user.email", "test@example.com");
+      TestUtils.runGit(localRepo, "config", "user.name", "Test User");
+
+      // Create initial commit in local
+      Files.writeString(localRepo.resolve("README.md"), "initial");
+      TestUtils.runGit(localRepo, "add", "README.md");
+      TestUtils.runGit(localRepo, "commit", "-m", "Initial commit");
+
+      // Add origin remote and push
+      TestUtils.runGit(localRepo, "remote", "add", "origin", originRepo.toString());
+      TestUtils.runGit(localRepo, "push", "-u", "origin", "v2.1");
+
+      // Create the issue worktree and make a commit
+      String issueBranch = "my-dirty-issue";
+      Path issueWorktree = TestUtils.createWorktree(localRepo, worktreesDir, issueBranch);
+      TestUtils.runGit(issueWorktree, "config", "user.email", "test@example.com");
+      TestUtils.runGit(issueWorktree, "config", "user.name", "Test User");
+
+      // Add and commit issue work
+      Files.writeString(issueWorktree.resolve("issue-work.txt"), "issue work");
+      TestUtils.runGit(issueWorktree, "add", "issue-work.txt");
+      TestUtils.runGit(issueWorktree, "commit", "-m", "Issue commit");
+
+      // Make the worktree dirty by adding an uncommitted file
+      Files.writeString(issueWorktree.resolve("uncommitted.txt"), "dirty change");
+
+      // Set up .cat structure in local repo
+      Path catDir = localRepo.resolve(".cat");
+      Files.createDirectories(catDir);
+
+      try (TestClaudeTool scope = new TestClaudeTool(localRepo, pluginRoot))
+      {
+        MergeAndCleanup cmd = new MergeAndCleanup(scope);
+
+        // This should throw because the worktree has uncommitted changes
+        cmd.execute(localRepo.toString(), issueBranch, "test-session", "v2.1",
+          issueWorktree.toString(), pluginRoot.toString());
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(worktreesDir);
+      TestUtils.deleteDirectoryRecursively(localRepo);
+      TestUtils.deleteDirectoryRecursively(originRepo);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
 }

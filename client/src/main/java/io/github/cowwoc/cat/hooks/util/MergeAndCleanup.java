@@ -57,6 +57,11 @@ public final class MergeAndCleanup
 
   /**
    * Executes the merge and cleanup operation.
+   * <p>
+   * Note: Both the issue worktree and the main worktree are checked before merge. The issue worktree's
+   * state is verified via {@link #isWorktreeDirty(String)}, and the main worktree's state is verified
+   * via {@link #verifyMainWorkspaceClean(Path)}. The merge itself is atomic (git fast-forward merge)
+   * and cannot be partially applied.
    *
    * @param projectPath the project root directory
    * @param issueId the issue identifier

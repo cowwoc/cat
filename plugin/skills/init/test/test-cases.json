@@ -1,0 +1,50 @@
+{
+  "test_cases": [
+    {
+      "test_case_id": "TC_init_1",
+      "semantic_unit_id": "unit_init_done_caution_arg",
+      "category": "REQUIREMENT",
+      "prompt": "You are executing `/cat:init`. trust=medium, caution=medium, curiosity=medium, perfection=medium. You are now at the done step. Show exactly what Skill invocation you would make.",
+      "assertions": [
+        {
+          "assertion_id": "TC_init_1_det_1",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "skill invocation references init.cat-initialized output command",
+          "pattern": "init.cat-initialized",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC_init_1_sem_1",
+          "type": "semantic",
+          "description": "invocation includes init.cat-initialized with caution argument",
+          "instruction": "Does the Skill invocation reference 'init.cat-initialized' and include 'caution' as one of the positional arguments passed to it?",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC_init_2",
+      "semantic_unit_id": "unit_init_config_caution_field",
+      "category": "REQUIREMENT",
+      "prompt": "You are executing `/cat:init`. Questionnaire results: TRUST=high, CAUTION=low, CURIOSITY=high, PERFECTION=high. Show what config.json you would write.",
+      "assertions": [
+        {
+          "assertion_id": "TC_init_2_det_1",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "config JSON contains caution key",
+          "pattern": "\"caution\"",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC_init_2_sem_1",
+          "type": "semantic",
+          "description": "config contains all four questionnaire keys",
+          "instruction": "Does the config.json output contain all four keys derived from the questionnaire: trust, caution, curiosity, and perfection?",
+          "expected": true
+        }
+      ]
+    }
+  ]
+}

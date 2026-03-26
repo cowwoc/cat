@@ -1,7 +1,6 @@
 {
-  "status": "open",
-  "dependencies": [
-    "2.1-rename-config-options"
-  ],
-  "blocks": []
+  "status" : "closed",
+  "dependencies" : [ "2.1-rename-config-options" ],
+  "blocks" : [ ],
+  "target_branch" : "v2.1"
 }

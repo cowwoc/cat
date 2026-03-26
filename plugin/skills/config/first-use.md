@@ -53,8 +53,8 @@ Show current values in descriptions using data from read-config step.
 - header: "Settings"
 - question: "What would you like to configure?"
 - options:
-  - label: "🐱 CAT Behavior"
-    description: "Currently: {trust} · {caution} · {curiosity} · {perfection}"
+  - label: "🎭 Personality"
+    description: "Currently: {trust} · {caution} · {curiosity} · {perfection} · {verbosity}"
   - label: "📏 Width Settings"
     description: "Currently: file={fileWidth || 120} · display={displayWidth || 120} characters"
   - label: "🔀 Completion Workflow"
@@ -64,6 +64,13 @@ Show current values in descriptions using data from read-config step.
   - label: "📊 Version Conditions"
     description: "Pre/post-conditions for versions"
 
+Dispatch based on selection:
+- "🎭 Personality" → go to step "personality-menu"
+- "📏 Width Settings" → go to step "width-settings"
+- "🔀 Completion Workflow" → go to step "completion-workflow"
+- "📈 Min Severity" → go to step "min-severity"
+- "📊 Version Conditions" → go to step "version-conditions"
+
 If user selects "Other" and types "done", "exit", or "back", proceed to exit step.
 
 **Note:** Context limits are fixed and not configurable. See agent-architecture.md § Context Limit Constants.
@@ -71,30 +78,117 @@ If user selects "Other" and types "done", "exit", or "back", proceed to exit ste
 </step>
 
 
-<step name="cat-behavior">
+<step name="personality-menu">
 
-**🐱 CAT Behavior selection:**
+**🎭 Personality — derive or set all personality settings**
 
-**MANDATORY - Display behavior summary BEFORE prompting:**
-
-INVOKE: Skill("cat:get-output-agent", args="config.settings")
-
-Then AskUserQuestion:
-- header: "Behavior"
-- question: "Which setting would you like to adjust?"
-- options (show current values in descriptions):
-  - label: "🤝 Trust"
-    description: "Currently: {trust || 'medium'}"
-  - label: "✅ Caution"
-    description: "Currently: {caution || 'medium'}"
-  - label: "🔍 Curiosity"
-    description: "Currently: {curiosity || 'medium'}"
-  - label: "⏳ Perfection"
-    description: "Currently: {perfection || 'medium'}"
-  - label: "🗣️ Verbosity"
-    description: "Currently: {verbosity || 'medium'}"
+AskUserQuestion:
+- header: "Personality"
+- question: "How would you like to configure your personality settings?"
+- options:
+  - label: "🧭 Guided setup"
+    description: "Answer 5 scenario questions to derive all personality settings at once"
+  - label: "⚙️ Manual settings"
+    description: "Set trust, caution, curiosity, perfection, and verbosity directly"
   - label: "← Back"
     description: "Return to main menu"
+
+Dispatch based on selection:
+- "🧭 Guided setup" → Continue to step: questionnaire
+- "⚙️ Manual settings" → Continue to step: manual-settings
+- "← Back" → Continue to step: main-menu
+
+</step>
+
+<step name="manual-settings">
+
+**⚙️ Manual Settings — set all personality settings directly**
+
+Present two pages. Read current values from config (loaded in read-config step) to mark the current selection
+in each option description with " (current)".
+
+**Page 1 of 2 — Behavior:**
+
+AskUserQuestion:
+- header: "Behavior (1/2)"
+- question: "Set your behavior preferences:"
+- questions array (4 questions):
+  1. question: "Trust — How much autonomy should CAT have?"
+     header: "Trust"
+     options:
+     - label: "Low"
+       description: "Stops frequently to request approval{' (current)' if trust=='low'}"
+     - label: "Medium"
+       description: "Auto-continues between issues, stops at approval gates{' (current)' if trust=='medium'}"
+     - label: "High"
+       description: "Fully autonomous, skips approval gates{' (current)' if trust=='high'}"
+  2. question: "Caution — How thoroughly should CAT test before merging?"
+     header: "Caution"
+     options:
+     - label: "Low"
+       description: "Compile only (fastest feedback){' (current)' if caution=='low'}"
+     - label: "Medium"
+       description: "Compile and unit tests{' (current)' if caution=='medium'}"
+     - label: "High"
+       description: "Compile, unit tests, and E2E tests (maximum confidence){' (current)' if caution=='high'}"
+  3. question: "Curiosity — How broadly should CAT read the codebase?"
+     header: "Curiosity"
+     options:
+     - label: "Low"
+       description: "Investigate the issue as stated, no extra exploration{' (current)' if curiosity=='low'}"
+     - label: "Medium"
+       description: "Notice related issues while investigating{' (current)' if curiosity=='medium'}"
+     - label: "High"
+       description: "Actively explore solutions and alternatives{' (current)' if curiosity=='high'}"
+  4. question: "Perfection — How much should CAT pursue perfection?"
+     header: "Perfection"
+     options:
+     - label: "Low"
+       description: "Stay focused on the primary goal, defer improvements{' (current)' if perfection=='low'}"
+     - label: "Medium"
+       description: "Fix issues within the current task scope{' (current)' if perfection=='medium'}"
+     - label: "High"
+       description: "Fix every issue encountered, expand scope as needed{' (current)' if perfection=='high'}"
+
+Map answers: Low → "low", Medium → "medium", High → "high" for each respective setting.
+
+**Page 2 of 2 — Communication:**
+
+AskUserQuestion:
+- header: "Communication (2/2)"
+- question: "Set your communication preference:"
+- questions array (1 question):
+  1. question: "Verbosity — How much should CAT explain its reasoning?"
+     header: "Verbosity"
+     options:
+     - label: "Low"
+       description: "Progress banners and errors only — no reasoning, no summaries beyond phase markers{' (current)' if verbosity=='low'}"
+     - label: "Medium"
+       description: "Phase-transition summaries — what was done, key decisions{' (current)' if verbosity=='medium'}"
+     - label: "High"
+       description: "Full reasoning — alternatives considered, tradeoffs noted, rationale for each decision{' (current)' if verbosity=='high'}"
+
+Map answer: Low → "low", Medium → "medium", High → "high" for verbosity.
+
+**After collecting all answers from both pages, update config.json:**
+
+1. Read the current `.cat/config.json` content using the Read tool.
+2. Update all five personality keys with the selected values:
+   - `"trust"`: selected trust value
+   - `"caution"`: selected caution value
+   - `"curiosity"`: selected curiosity value
+   - `"perfection"`: selected perfection value
+   - `"verbosity"`: selected verbosity value
+3. Write the complete updated JSON back using the Write tool.
+
+Do NOT use `python3`, `jq`, or any external tool. Use the Write tool directly.
+
+INVOKE: Skill("cat:get-output-agent", args="config.setting-updated personality {old-summary} {new-summary}")
+
+Where `{old-summary}` is the previous values joined as "trust:X caution:X curiosity:X perfection:X verbosity:X"
+and `{new-summary}` is the new values in the same format.
+
+Continue to step: main-menu
 
 </step>
 
@@ -113,9 +207,11 @@ Display current setting, then AskUserQuestion:
   - label: "High"
     description: "Fully autonomous, skips approval gates"
   - label: "← Back"
-    description: "Return to behavior menu"
+    description: "Return to personality menu"
 
 Map: Low → `trust: "low"`, Medium → `trust: "medium"`, High → `trust: "high"`
+
+On selection, call update-config with the derived value, then continue to step: confirm.
 
 </step>
 
@@ -134,9 +230,11 @@ Display current setting, then AskUserQuestion:
   - label: "High"
     description: "Compile, unit tests, and E2E tests (maximum confidence)"
   - label: "← Back"
-    description: "Return to behavior menu"
+    description: "Return to personality menu"
 
 Map: Low → `caution: "low"`, Medium → `caution: "medium"`, High → `caution: "high"`
+
+On selection, call update-config with the derived value, then continue to step: confirm.
 
 </step>
 
@@ -155,9 +253,11 @@ Display current setting, then AskUserQuestion:
   - label: "High"
     description: "Actively explore solutions and alternatives"
   - label: "← Back"
-    description: "Return to behavior menu"
+    description: "Return to personality menu"
 
 Map: Low → `curiosity: "low"`, Medium → `curiosity: "medium"`, High → `curiosity: "high"`
+
+On selection, call update-config with the derived value, then continue to step: confirm.
 
 </step>
 
@@ -176,9 +276,11 @@ Display current setting, then AskUserQuestion:
   - label: "High"
     description: "Fix every issue encountered, expand scope as needed"
   - label: "← Back"
-    description: "Return to behavior menu"
+    description: "Return to personality menu"
 
 Map: Low → `perfection: "low"`, Medium → `perfection: "medium"`, High → `perfection: "high"`
+
+On selection, call update-config with the derived value, then continue to step: confirm.
 
 **Priority-based deferral (when perfection is low):**
 - High benefit, low cost → Current or next version
@@ -202,17 +304,11 @@ Display current setting, then AskUserQuestion:
   - label: "High"
     description: "Full reasoning — alternatives considered, tradeoffs noted, rationale for each decision"
   - label: "← Back"
-    description: "Return to behavior menu"
+    description: "Return to personality menu"
 
 Map: Low → `verbosity: "low"`, Medium → `verbosity: "medium"`, High → `verbosity: "high"`
 
-**Update config using the Write tool:**
-
-1. Read the current `.cat/config.json` content using the Read tool.
-2. Merge the new `verbosity` string value into the existing config object (update or add the key).
-3. Write the complete updated JSON back using the Write tool.
-
-Do NOT use `python3`, `jq`, or any external tool. Use the Write tool directly.
+On selection, call update-config with the derived value, then continue to step: confirm.
 
 </step>
 
@@ -514,6 +610,140 @@ Return to Step 3 (Choose action) to allow further edits or navigation.
 
 </step>
 
+<step name="questionnaire">
+
+**Personality Questionnaire — re-derive all behavior settings from situational questions**
+
+Present 5 situational questions without revealing which config option each derives. After collecting all
+5 answers, update config.json with all derived values and display the results.
+
+See `plugin/templates/questionnaire.md` for question content, answer mappings, and explanation text.
+
+**Question 1:**
+
+AskUserQuestion:
+- header: "How do you lead? (1/5)"
+- question: |
+    It's Wednesday evening and you're on vacation. A junior developer messages you:
+    "I'm close to finishing the new feature — what should I do when I have it?"
+    You tell them:
+- options:
+  - "Push it when you're ready"
+  - "Send me a quick summary to review before pushing anything out"
+  - "Sit tight until Monday — we'll go through everything together before it ships"
+
+Map answer to TRUST:
+- "Push it when you're ready" → TRUST=high
+- "Send me a quick summary..." → TRUST=medium
+- "Sit tight until Monday..." → TRUST=low
+
+**Question 2:**
+
+AskUserQuestion:
+- header: "Friday deploy (2/5)"
+- question: |
+    It's 4:55pm on a Friday and production is down. You've found the fix. Before you push and head out,
+    you run:
+- options:
+  - "Nothing — you live dangerously"
+  - "The tests for what you changed — close enough"
+  - "The full test suite — the pub can wait"
+
+Map answer to CAUTION:
+- "Nothing — you live dangerously" → CAUTION=low
+- "The tests for what you changed — close enough" → CAUTION=medium
+- "The full test suite — the pub can wait" → CAUTION=high
+
+**Question 3:**
+
+AskUserQuestion:
+- header: "The old module (3/5)"
+- question: |
+    You're handed a bug report in a module nobody has touched in two years. Do you:
+- options:
+  - "Fix the line, close the ticket, move on"
+  - "Poke around enough to understand what you're changing"
+  - "Read the whole thing — you don't touch code you don't understand"
+
+Map answer to CURIOSITY:
+- "Fix the line, close the ticket, move on" → CURIOSITY=low
+- "Poke around enough to understand..." → CURIOSITY=medium
+- "Read the whole thing..." → CURIOSITY=high
+
+**Question 4:**
+
+AskUserQuestion:
+- header: "Someone else's mess (4/5)"
+- question: |
+    While fixing a bug you stumble across an obvious hack someone left in the code. Do you:
+- options:
+  - "Leave it — it's a problem for another day"
+  - "Clean it up if it'll take less than ten minutes"
+  - "Fix it — you're not leaving that in the codebase"
+
+Map answer to PERFECTION:
+- "Leave it..." → PERFECTION=low
+- "Clean it up if it'll take less than ten minutes" → PERFECTION=medium
+- "Fix it — you're not leaving that in the codebase" → PERFECTION=high
+
+**Question 5:**
+
+AskUserQuestion:
+- header: "The code review (5/5)"
+- question: |
+    You're reviewing a PR with a tricky bug. You'd prefer CAT to:
+- options:
+  - "Give you the short answer"
+  - "Walk you through the reasoning"
+  - "Explain everything, including what it ruled out"
+
+Map answer to VERBOSITY:
+- "Give you the short answer" → VERBOSITY=low
+- "Walk you through the reasoning" → VERBOSITY=medium
+- "Explain everything, including what it ruled out" → VERBOSITY=high
+
+**After collecting all 5 answers, display results as plain text:**
+
+Select explanation text from the table in `plugin/templates/questionnaire.md` and output:
+
+```
+Your working style:
+
+  trust: {TRUST}         {trust_explanation}
+  caution: {CAUTION}     {caution_explanation}
+  curiosity: {CURIOSITY} {curiosity_explanation}
+  perfection: {PERFECTION} {perfection_explanation}
+  verbosity: {VERBOSITY} {verbosity_explanation}
+
+You can update any of these later with /cat:config.
+```
+
+**Update config.json with all 5 derived values:**
+
+1. Read the current `.cat/config.json` content using the Read tool.
+2. Update all five personality keys with derived values:
+   - `"trust"`: TRUST value
+   - `"caution"`: CAUTION value
+   - `"curiosity"`: CURIOSITY value
+   - `"perfection"`: PERFECTION value
+   - `"verbosity"`: VERBOSITY value
+3. Write the complete updated JSON back using the Write tool.
+
+Do NOT use `python3`, `jq`, or any external tool. Use the Write tool directly.
+
+**Manual Testing:**
+To test the questionnaire behavior manually:
+1. Run `/cat:config` on an existing CAT project
+2. Select "🎭 Personality" then "🧭 Guided setup" from the menus
+3. Verify all 5 questions appear in sequence
+4. Provide one answer to each question
+5. Verify the result display shows all 5 values with correct explanations (verify against template)
+6. Confirm config.json was updated with all 5 values (use `cat .cat/config.json` to verify)
+
+**After updating config.json**, continue to step: display-settings (re-displays settings box and main menu).
+
+</step>
+
 <step name="update-config">
 
 **Update configuration file:**
@@ -563,6 +793,7 @@ INVOKE: Skill("cat:get-output-agent", args="config.no-changes")
 | `caution` | string | "medium" | How cautious the agent is when validating changes |
 | `curiosity` | string | "medium" | How curious the agent is when investigating problems and exploring solutions |
 | `perfection` | string | "medium" | How much the agent pursues perfection (high=fix all issues, low=stay focused on primary goal) |
+| `verbosity` | string | "medium" | How much CAT explains its reasoning during task execution |
 | `completionWorkflow` | string | "merge" | Issue completion behavior (merge or PR) |
 | `minSeverity` | string | "low" | Minimum severity level for concerns to be visible at all |
 | `fileWidth` | integer | 120 | Line width for content written to files (e.g., markdown docs) |
@@ -590,6 +821,11 @@ INVOKE: Skill("cat:get-output-agent", args="config.no-changes")
 - `medium` — Fix issues within the current task scope.
 - `low` — Stay focused on the primary goal, defer improvements.
 
+### Verbosity Values
+- `low` — Progress banners and errors only.
+- `medium` — Phase-transition summaries — what was done, key decisions.
+- `high` — Full reasoning — alternatives considered, tradeoffs noted, rationale for each decision.
+
 ### Completion Workflow Values
 - `merge` — Merge source branch directly to target branch after approval (default).
 - `pr` — Create a pull request instead of merging directly.
@@ -610,5 +846,8 @@ INVOKE: Skill("cat:get-output-agent", args="config.no-changes")
 - [ ] Version conditions viewable and editable via wizard
 - [ ] Gate changes saved to version plan.md files
 - [ ] Changes confirmed with before/after values
+- [ ] Personality submenu presents Guided setup and Manual settings options
+- [ ] Manual settings wizard covers all 5 personality settings across two pages
+- [ ] Current values highlighted in Manual settings options
 
 </success_criteria>
