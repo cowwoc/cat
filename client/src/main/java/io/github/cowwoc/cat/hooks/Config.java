@@ -6,11 +6,11 @@
  */
 package io.github.cowwoc.cat.hooks;
 
+import io.github.cowwoc.cat.hooks.util.CautionLevel;
 import io.github.cowwoc.cat.hooks.util.ConcernSeverity;
-import io.github.cowwoc.cat.hooks.util.EffortLevel;
-import io.github.cowwoc.cat.hooks.util.PatienceLevel;
+import io.github.cowwoc.cat.hooks.util.CuriosityLevel;
+import io.github.cowwoc.cat.hooks.util.PerfectionLevel;
 import io.github.cowwoc.cat.hooks.util.TrustLevel;
-import io.github.cowwoc.cat.hooks.util.VerifyLevel;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -50,9 +50,9 @@ public final class Config
   {
     Map<String, Object> defaults = new HashMap<>();
     defaults.put("trust", "medium");
-    defaults.put("verify", "changed");
-    defaults.put("effort", "medium");
-    defaults.put("patience", "high");
+    defaults.put("caution", "medium");
+    defaults.put("curiosity", "medium");
+    defaults.put("perfection", "medium");
     defaults.put("fileWidth", 120);
     defaults.put("displayWidth", 120);
     defaults.put("completionWorkflow", "merge");
@@ -257,36 +257,36 @@ public final class Config
   }
 
   /**
-   * Get the verify level.
+   * Get the caution level.
    *
-   * @return the parsed {@link VerifyLevel} (defaults to {@link VerifyLevel#CHANGED} if not configured)
-   * @throws IllegalArgumentException if the configured value is not a recognized verify level
+   * @return the parsed {@link CautionLevel} (defaults to {@link CautionLevel#MEDIUM} if not configured)
+   * @throws IllegalArgumentException if the configured value is not a recognized caution level
    */
-  public VerifyLevel getVerify()
+  public CautionLevel getCaution()
   {
-    return VerifyLevel.fromString(getString("verify", "changed"));
+    return CautionLevel.fromString(getString("caution", "medium"));
   }
 
   /**
-   * Get the effort level.
+   * Get the curiosity level.
    *
-   * @return the parsed {@link EffortLevel} (defaults to {@link EffortLevel#MEDIUM} if not configured)
-   * @throws IllegalArgumentException if the configured value is not a recognized effort level
+   * @return the parsed {@link CuriosityLevel} (defaults to {@link CuriosityLevel#MEDIUM} if not configured)
+   * @throws IllegalArgumentException if the configured value is not a recognized curiosity level
    */
-  public EffortLevel getEffort()
+  public CuriosityLevel getCuriosity()
   {
-    return EffortLevel.fromString(getString("effort", "medium"));
+    return CuriosityLevel.fromString(getString("curiosity", "medium"));
   }
 
   /**
-   * Get the patience level.
+   * Get the perfection level.
    *
-   * @return the parsed {@link PatienceLevel} (defaults to {@link PatienceLevel#HIGH} if not configured)
-   * @throws IllegalArgumentException if the configured value is not a recognized patience level
+   * @return the parsed {@link PerfectionLevel} (defaults to {@link PerfectionLevel#MEDIUM} if not configured)
+   * @throws IllegalArgumentException if the configured value is not a recognized perfection level
    */
-  public PatienceLevel getPatience()
+  public PerfectionLevel getPerfection()
   {
-    return PatienceLevel.fromString(getString("patience", "high"));
+    return PerfectionLevel.fromString(getString("perfection", "medium"));
   }
 
   /**

@@ -65,7 +65,7 @@ public final class GetInitOutput implements SkillOutput
    * Some pages require additional arguments.
    *
    * @param args page argument and optional extra args: [default-gates-configured count |
-   *             research-skipped version | choose-your-partner | cat-initialized trust effort patience |
+   *             research-skipped version | choose-your-partner | cat-initialized trust curiosity perfection |
    *             first-issue-walkthrough | first-issue-created issue-name | all-set | explore-at-your-own-pace]
    * @return the formatted box
    * @throws NullPointerException if {@code args} is null
@@ -111,7 +111,7 @@ public final class GetInitOutput implements SkillOutput
       {
         if (args.length < 4)
           throw new IllegalArgumentException(
-            "cat-initialized requires 3 arguments: trust effort patience");
+            "cat-initialized requires 3 arguments: trust curiosity perfection");
         yield getCatInitialized(args[1], args[2], args[3]);
       }
       case "first-issue-walkthrough" -> getFirstIssueWalkthrough();
@@ -206,32 +206,32 @@ public final class GetInitOutput implements SkillOutput
    * Build the CAT initialized box.
    *
    * @param trust the trust preference value
-   * @param effort the effort preference value
-   * @param patience the patience preference value
+   * @param curiosity the curiosity preference value
+   * @param perfection the perfection preference value
    * @return the formatted box
    * @throws NullPointerException if any parameter is null
    * @throws IllegalArgumentException if any parameter is blank
    */
-  public String getCatInitialized(String trust, String effort, String patience)
+  public String getCatInitialized(String trust, String curiosity, String perfection)
   {
     requireThat(trust, "trust").isNotBlank();
-    requireThat(effort, "effort").isNotBlank();
-    requireThat(patience, "patience").isNotBlank();
+    requireThat(curiosity, "curiosity").isNotBlank();
+    requireThat(perfection, "perfection").isNotBlank();
 
     String pad = " ".repeat(50);
     String trustLine = "  🤝 Trust: " + trust + pad.substring(0, Math.max(1, 53 - trust.length()));
-    String effortLine = "  💪 Effort: " + effort +
-      pad.substring(0, Math.max(1, 49 - effort.length()));
-    String patienceLine = "  ⏳ Patience: " + patience +
-      pad.substring(0, Math.max(1, 51 - patience.length()));
+    String curiosityLine = "  🔍 Curiosity: " + curiosity +
+      pad.substring(0, Math.max(1, 49 - curiosity.length()));
+    String perfectionLine = "  ✨ Perfection: " + perfection +
+      pad.substring(0, Math.max(1, 51 - perfection.length()));
 
     return scope.getDisplayUtils().buildHeaderBox(
       "🚀 CAT INITIALIZED",
       List.of(
         "                                                                  ",
         trustLine,
-        effortLine,
-        patienceLine,
+        curiosityLine,
+        perfectionLine,
         "                                                                  ",
         "  Your partner is ready. Let's build something solid.             ",
         "  Adjust anytime: /cat:config                                     "),

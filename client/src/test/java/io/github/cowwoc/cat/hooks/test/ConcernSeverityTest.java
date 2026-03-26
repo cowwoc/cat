@@ -71,7 +71,7 @@ public final class ConcernSeverityTest
   @Test
   public void toStringCriticalReturnsLowercase()
   {
-    requireThat(ConcernSeverity.CRITICAL.toString(), "str").isEqualTo("critical");
+    requireThat(ConcernSeverity.CRITICAL.toString(), "ConcernSeverity.CRITICAL.toString()").isEqualTo("critical");
   }
 
   /**
@@ -80,7 +80,7 @@ public final class ConcernSeverityTest
   @Test
   public void toStringHighReturnsLowercase()
   {
-    requireThat(ConcernSeverity.HIGH.toString(), "str").isEqualTo("high");
+    requireThat(ConcernSeverity.HIGH.toString(), "ConcernSeverity.HIGH.toString()").isEqualTo("high");
   }
 
   /**
@@ -89,7 +89,7 @@ public final class ConcernSeverityTest
   @Test
   public void toStringMediumReturnsLowercase()
   {
-    requireThat(ConcernSeverity.MEDIUM.toString(), "str").isEqualTo("medium");
+    requireThat(ConcernSeverity.MEDIUM.toString(), "ConcernSeverity.MEDIUM.toString()").isEqualTo("medium");
   }
 
   /**
@@ -98,7 +98,7 @@ public final class ConcernSeverityTest
   @Test
   public void toStringLowReturnsLowercase()
   {
-    requireThat(ConcernSeverity.LOW.toString(), "str").isEqualTo("low");
+    requireThat(ConcernSeverity.LOW.toString(), "ConcernSeverity.LOW.toString()").isEqualTo("low");
   }
 
   /**

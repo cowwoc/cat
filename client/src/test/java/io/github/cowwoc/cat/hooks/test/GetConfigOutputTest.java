@@ -171,9 +171,9 @@ public class GetConfigOutputTest
 
       requireThat(result, "result").
         contains("Trust").
-        contains("Verify").
-        contains("Effort").
-        contains("Patience").
+        contains("Caution").
+        contains("Curiosity").
+        contains("Perfection").
         doesNotContain("Auto-remove").
         doesNotContain("Keep");
     }

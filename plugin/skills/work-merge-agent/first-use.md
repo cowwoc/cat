@@ -21,10 +21,10 @@ commit squashing, branch merging, worktree cleanup, and state updates.
 
 ## Arguments and Configuration
 
-`<cat_agent_id> <issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <commits_json_path> <trust> <verify>`
+`<cat_agent_id> <issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <commits_json_path> <trust> <caution>`
 
 ```bash
-read CAT_AGENT_ID ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH COMMITS_JSON_PATH TRUST VERIFY <<< "$ARGUMENTS"
+read CAT_AGENT_ID ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH COMMITS_JSON_PATH TRUST CAUTION <<< "$ARGUMENTS"
 PLAN_MD="${ISSUE_PATH}/plan.md"
 COMMITS_JSON=$(cat "$COMMITS_JSON_PATH")
 ```
@@ -52,7 +52,7 @@ CRITERIA_FILE="${VERIFY_DIR}/criteria-analysis.json"
 ```
 
 If `CRITERIA_FILE` does not exist:
-- If `VERIFY == "none"`: output note and continue to Step 8.
+- If `CAUTION == "low"`: output note and continue to Step 8.
 - Otherwise: STOP, return FAILED — the confirm phase was improperly skipped.
 
 If file exists, check for unmet criteria:
@@ -323,7 +323,7 @@ remaining, offer only: ["Approve and merge (with known concerns)", "Request chan
    ```
 3. Re-squash ALL commits (MANDATORY, M560): invoke `cat:git-squash-agent` before re-running stakeholder review.
 4. Re-run stakeholder review on squashed state:
-   `Skill("cat:stakeholder-review-agent", "${ISSUE_ID} ${WORKTREE_PATH} ${VERIFY} ${ALL_COMMITS_COMPACT}")`
+   `Skill("cat:stakeholder-review-agent", "${ISSUE_ID} ${WORKTREE_PATH} ${CAUTION} ${ALL_COMMITS_COMPACT}")`
 5. Increment `FIX_ITERATION`. Return to Step 11.
 
 **If changes requested:** Return to user with feedback for iteration. Return status:

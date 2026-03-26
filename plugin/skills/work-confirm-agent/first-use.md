@@ -11,7 +11,7 @@ stakeholder quality review. Spawns a verify subagent, handles fix iteration if c
 ## Arguments Format
 
 ```
-<cat_agent_id> <issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <execution_commits_json_path> <files_changed> <trust> <verify>
+<cat_agent_id> <issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <execution_commits_json_path> <files_changed> <trust> <caution>
 ```
 
 | Position | Name | Example |
@@ -25,7 +25,7 @@ stakeholder quality review. Spawns a verify subagent, handles fix iteration if c
 | 7 | execution_commits_json_path | Path to JSON file containing commit objects from the implement phase |
 | 8 | files_changed | integer count of files changed |
 | 9 | trust | `medium` |
-| 10 | verify | `changed` |
+| 10 | caution | `medium` |
 
 ## Output Contract
 
@@ -44,7 +44,7 @@ Return JSON when complete:
 Parse arguments and display the **Confirming phase** banner in a chained call:
 
 ```bash
-read CAT_AGENT_ID ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH EXECUTION_COMMITS_JSON_PATH FILES_CHANGED TRUST VERIFY <<< "$ARGUMENTS" && \
+read CAT_AGENT_ID ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH EXECUTION_COMMITS_JSON_PATH FILES_CHANGED TRUST CAUTION <<< "$ARGUMENTS" && \
 PLAN_MD="${ISSUE_PATH}/plan.md" && \
 "${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" ${ISSUE_ID} --phase confirming
 ```
@@ -64,14 +64,14 @@ FAIL: progress-banner launcher failed for phase 'confirming'.
 The jlink image may not be built. Run: mvn -f hooks/pom.xml verify
 ```
 Do NOT skip the banner or continue without it. **The banner must run regardless of the value of
-VERIFY — even when `VERIFY == "none"`. The banner and the skip check are independent; skipping
+CAUTION — even when `CAUTION == "low"`. The banner and the skip check are independent; skipping
 verification does not authorize skipping the banner.**
 
 ### Skip Verification if Configured
 
-Skip **only the verification steps below** if: `VERIFY == "none"`
+Skip **only the verification steps below** if: `CAUTION == "low"`
 
-If skipping, output: "Verification skipped (verify: ${VERIFY})"
+If skipping, output: "Verification skipped (caution: ${CAUTION})"
 
 The banner (above) is NOT part of the verification steps and must always run.
 

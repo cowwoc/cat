@@ -11,32 +11,32 @@ import java.util.Locale;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * The verify level, controlling which tests are run during the verify phase.
+ * How cautious the agent is when validating changes.
  */
-public enum VerifyLevel
+public enum CautionLevel
 {
   /**
-   * No verification: skip all tests.
+   * Minimal caution: skip validation.
    */
-  NONE,
+  LOW,
   /**
-   * Changed verification: run tests only for changed files.
+   * Moderate caution: validate only changed files.
    */
-  CHANGED,
+  MEDIUM,
   /**
-   * All verification: run all tests.
+   * Maximum caution: validate everything.
    */
-  ALL;
+  HIGH;
 
   /**
-   * Parses a verify level from a string value.
+   * Parses a caution level from a string value.
    *
    * @param value the string value to parse (case-insensitive)
-   * @return the parsed verify level
+   * @return the parsed caution level
    * @throws NullPointerException if {@code value} is null
-   * @throws IllegalArgumentException if {@code value} is blank or does not match any verify level
+   * @throws IllegalArgumentException if {@code value} is blank or does not match any caution level
    */
-  public static VerifyLevel fromString(String value)
+  public static CautionLevel fromString(String value)
   {
     requireThat(value, "value").isNotBlank();
     return valueOf(value.toUpperCase(Locale.ROOT));

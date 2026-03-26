@@ -7,29 +7,29 @@ See LICENSE.md in the project root for license terms.
 
 Project-type aware verification before review.
 
-## Verify Configuration (MANDATORY)
+## Caution Configuration (MANDATORY)
 
-**CRITICAL: Check `.cat/config.json` "verify" setting BEFORE proposing merge.**
+**CRITICAL: Check `.cat/config.json` "caution" setting BEFORE proposing merge.**
 
 ```bash
 CONFIG=$("${CLAUDE_PLUGIN_ROOT}/client/bin/get-config-output" effective)
-VERIFY_SETTING=$(echo "$CONFIG" | grep -o '"verify"[[:space:]]*:[[:space:]]*"[^"]*"' \
-  | sed 's/.*"verify"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
-VERIFY_SETTING="${VERIFY_SETTING:-all}"
+CAUTION_SETTING=$(echo "$CONFIG" | grep -o '"caution"[[:space:]]*:[[:space:]]*"[^"]*"' \
+  | sed 's/.*"caution"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+CAUTION_SETTING="${CAUTION_SETTING:-high}"
 ```
 
 | Setting | Behavior |
 |---------|----------|
-| `"all"` | Run full verification (build, tests, lint, etc.) |
-| `"tests"` | Run tests only |
-| `"none"` | Skip verification (for non-code issues) |
+| `"high"` | Run full verification (build, tests, lint, etc.) |
+| `"medium"` | Run tests only |
+| `"low"` | Skip verification (for non-code issues) |
 
-**When verify != "none":**
+**When caution != "low":**
 1. Run appropriate verification commands based on project type
 2. All required checks MUST pass before presenting for user approval
 3. Never propose merge if verification fails
 
-**Anti-pattern:** Proposing merge without checking verify setting or running verification.
+**Anti-pattern:** Proposing merge without checking caution setting or running verification.
 
 ## Project Type Detection
 

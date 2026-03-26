@@ -353,29 +353,29 @@ SOURCE_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(java|py|ts|js|go|rs|c|cpp|cs)
 TEST_FILES=$(echo "$CHANGED_FILES" | grep -E '(Test|Spec|_test|_spec)\.' || true) && \
 CONFIG_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(json|yaml|yml|xml|properties|toml)$' || true)
 
-# Read effort config
+# Read curiosity config
 LANG_SUPPLEMENT_PATH=""
 if [[ -f "${CLAUDE_PLUGIN_ROOT}/lang/${PRIMARY_LANG}.md" ]]; then
     LANG_SUPPLEMENT_PATH="${CLAUDE_PLUGIN_ROOT}/lang/${PRIMARY_LANG}.md"
 fi
 
-# Read effort via effective config tool (applies defaults for missing fields)
+# Read curiosity via effective config tool (applies defaults for missing fields)
 EFFECTIVE_CONFIG=$("${CLAUDE_PLUGIN_ROOT}/client/bin/get-config-output" effective) || {
     echo "ERROR: Failed to read effective config" >&2
     exit 1
 }
-EFFORT=$(echo "$EFFECTIVE_CONFIG" | grep -o '"effort"[[:space:]]*:[[:space:]]*"[^"]*"' \
-    | sed 's/.*"effort"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
-if [[ -z "$EFFORT" ]]; then
-    EFFORT="medium"
+CURIOSITY=$(echo "$EFFECTIVE_CONFIG" | grep -o '"curiosity"[[:space:]]*:[[:space:]]*"[^"]*"' \
+    | sed 's/.*"curiosity"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+if [[ -z "$CURIOSITY" ]]; then
+    CURIOSITY="medium"
 fi
 
-case "$EFFORT" in
+case "$CURIOSITY" in
     low)    REVIEW_SCOPE="Review changed lines only. Flag obvious issues visible in the diff." ;;
     medium) REVIEW_SCOPE="Review changed lines and their surrounding context (functions, classes containing the change). Flag issues that arise from the interaction between new and existing code." ;;
     high)   REVIEW_SCOPE="Review the broader impact on surrounding code. Flag pre-existing issues in any file you read, not just the changed lines. Consider systemic effects across the codebase." ;;
-    *)      echo "WARNING: Unrecognized effort value '${EFFORT}'. Defaulting to 'medium'." >&2
-            EFFORT="medium"
+    *)      echo "WARNING: Unrecognized curiosity value '${CURIOSITY}'. Defaulting to 'medium'." >&2
+            CURIOSITY="medium"
             REVIEW_SCOPE="Review changed lines and their surrounding context (functions, classes containing the change). Flag issues that arise from the interaction between new and existing code." ;;
 esac
 

@@ -429,9 +429,9 @@ public class HandlerOutputTest
         Files.writeString(configFile, """
           {
             "trust": "high",
-            "verify": "all",
-            "effort": "medium",
-            "patience": "low"
+            "caution": "high",
+            "curiosity": "medium",
+            "perfection": "low"
           }
           """);
 
