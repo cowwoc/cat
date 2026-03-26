@@ -9,9 +9,8 @@ package io.github.cowwoc.cat.hooks.util;
 import static io.github.cowwoc.cat.hooks.Strings.block;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.ClaudeTool;
-import io.github.cowwoc.cat.hooks.MainClaudeTool;
+import io.github.cowwoc.cat.hooks.ClaudeStatusline;
+import io.github.cowwoc.cat.hooks.MainClaudeStatusline;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.core.JacksonException;
@@ -19,12 +18,12 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Objects;
 import java.util.StringJoiner;
 
@@ -71,16 +70,16 @@ public final class StatuslineCommand
   private static final String SESSION_EMOJI = "🆔";
   private static final String USAGE_EMOJI = "📊";
 
-  private final JvmScope scope;
+  private final ClaudeStatusline scope;
   private final JsonMapper mapper;
 
   /**
    * Creates a new StatuslineCommand.
    *
-   * @param scope the JVM scope for accessing shared services
+   * @param scope the statusline scope for accessing JSON parsing and the CAT work path
    * @throws NullPointerException if {@code scope} is null
    */
-  public StatuslineCommand(JvmScope scope)
+  public StatuslineCommand(ClaudeStatusline scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -88,94 +87,40 @@ public final class StatuslineCommand
   }
 
   /**
-   * Reads JSON from the input stream and writes the formatted statusline to the output stream.
-   * <p>
-   * On input parse failure or missing fields, defaults are used for graceful degradation.
+   * Writes the formatted statusline to the output stream using data already parsed into the scope.
    *
-   * @param inputStream  the input stream providing JSON data
    * @param outputStream the output stream to write the statusline to
-   * @throws NullPointerException if {@code inputStream} or {@code outputStream} are null
-   * @throws IOException          if an I/O error occurs reading from the input stream
+   * @throws NullPointerException if {@code outputStream} is null
+   * @throws IOException          if an I/O error occurs
    */
-  public void execute(InputStream inputStream, PrintStream outputStream) throws IOException
+  public void execute(PrintStream outputStream) throws IOException
   {
-    execute(inputStream, outputStream, scope.getCatWorkPath().resolve("locks"));
+    execute(outputStream, scope.getCatWorkPath().resolve("locks"));
   }
 
   /**
-   * Reads JSON from the input stream and writes the formatted statusline to the output stream.
-   * <p>
-   * On input parse failure or missing fields, defaults are used for graceful degradation.
+   * Writes the formatted statusline to the output stream using data already parsed into the scope.
    *
-   * @param inputStream  the input stream providing JSON data
    * @param outputStream the output stream to write the statusline to
    * @param lockDir      the locks directory containing {@code .lock} files
-   * @throws NullPointerException if {@code inputStream}, {@code outputStream}, or {@code lockDir} are null
-   * @throws IOException          if an I/O error occurs reading from the input stream
+   * @throws NullPointerException if {@code outputStream} or {@code lockDir} are null
+   * @throws IOException          if an I/O error occurs
    */
-  public void execute(InputStream inputStream, PrintStream outputStream, Path lockDir) throws IOException
+  public void execute(PrintStream outputStream, Path lockDir) throws IOException
   {
-    requireThat(inputStream, "inputStream").isNotNull();
     requireThat(outputStream, "outputStream").isNotNull();
     requireThat(lockDir, "lockDir").isNotNull();
 
-    String jsonInput = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-
-    String displayName = "unknown";
-    String sessionId = "unknown";
-    long totalDurationMs = 0;
-    int usedPercentage = 0;
-
-    try
-    {
-      JsonNode root = mapper.readTree(jsonInput);
-
-      JsonNode modelNode = root.get("model");
-      if (modelNode != null && !modelNode.isNull())
-      {
-        JsonNode displayNameNode = modelNode.get("display_name");
-        if (displayNameNode != null && !displayNameNode.isNull())
-          displayName = displayNameNode.asString();
-      }
-
-      JsonNode sessionIdNode = root.get("session_id");
-      if (sessionIdNode != null && !sessionIdNode.isNull())
-        sessionId = sessionIdNode.asString();
-
-      JsonNode costNode = root.get("cost");
-      if (costNode != null && !costNode.isNull())
-      {
-        JsonNode durationNode = costNode.get("total_duration_ms");
-        if (durationNode != null && !durationNode.isNull() && durationNode.canConvertToLong())
-          totalDurationMs = durationNode.longValue();
-      }
-
-      JsonNode contextNode = root.get("context_window");
-      if (contextNode != null && !contextNode.isNull())
-      {
-        JsonNode percentageNode = contextNode.get("used_percentage");
-        if (percentageNode != null && !percentageNode.isNull() && percentageNode.canConvertToInt())
-          usedPercentage = percentageNode.intValue();
-      }
-    }
-    catch (JacksonException _)
-    {
-      // Use defaults on parse failure (graceful degradation)
-    }
-
-    // Clamp values to valid ranges
-    if (totalDurationMs < 0)
-      totalDurationMs = 0;
-    if (usedPercentage < 0)
-      usedPercentage = 0;
-    if (usedPercentage > 100)
-      usedPercentage = 100;
+    String displayName = scope.getModelDisplayName();
+    String sessionId = scope.getSessionId();
+    Duration totalDuration = scope.getTotalDuration();
+    int usedPercentage = scope.getUsedPercentage();
 
     // Get active issue for the current session
     String activeIssue = getActiveIssue(sessionId, lockDir);
 
     // Format duration
-    String duration = formatDuration(totalDurationMs);
+    String duration = formatDuration(totalDuration);
 
     // Session ID, with control characters removed to prevent ANSI injection
     String displaySessionId = removeControlCharacters(sessionId);
@@ -264,14 +209,14 @@ public final class StatuslineCommand
   }
 
   /**
-   * Formats a duration in milliseconds to HH:MM format.
+   * Formats a duration to HH:MM format.
    *
-   * @param milliseconds the duration in milliseconds
+   * @param duration the duration to format
    * @return the formatted duration string in HH:MM format
    */
-  private String formatDuration(long milliseconds)
+  private String formatDuration(Duration duration)
   {
-    long totalSeconds = milliseconds / 1000;
+    long totalSeconds = duration.toMillis() / 1000;
     long hours = totalSeconds / 3600;
     long minutes = (totalSeconds % 3600) / 60;
 
@@ -390,11 +335,11 @@ public final class StatuslineCommand
    */
   public static void main(String[] args)
   {
-    try (ClaudeTool scope = new MainClaudeTool())
+    try (ClaudeStatusline scope = new MainClaudeStatusline(System.in))
     {
       try
       {
-        run(scope, args, System.in, System.out);
+        run(scope, args, System.out);
       }
       catch (IllegalArgumentException | IOException e)
       {
@@ -409,27 +354,30 @@ public final class StatuslineCommand
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }
+    catch (IOException e)
+    {
+      Logger log = LoggerFactory.getLogger(StatuslineCommand.class);
+      log.error("Failed to read statusline input", e);
+    }
   }
 
   /**
-   * Reads JSON from the input stream and writes the statusline to the output stream.
+   * Writes the statusline to the output stream using data already parsed into the scope.
    *
-   * @param scope the JVM scope
+   * @param scope the statusline scope with pre-parsed JSON data
    * @param args  command-line arguments (unused)
-   * @param in    the input stream to read JSON from
    * @param out   the output stream to write the statusline to
-   * @throws NullPointerException if any of {@code scope}, {@code args}, {@code in}, or {@code out} are null
+   * @throws NullPointerException if any of {@code scope}, {@code args}, or {@code out} are null
    * @throws IOException          if an I/O error occurs
    */
-  public static void run(JvmScope scope, String[] args, InputStream in, PrintStream out) throws IOException
+  public static void run(ClaudeStatusline scope, String[] args, PrintStream out) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();
-    requireThat(in, "in").isNotNull();
     requireThat(out, "out").isNotNull();
     if (args.length > 0)
       throw new IllegalArgumentException("Unexpected arguments: " + String.join(" ", args));
     StatuslineCommand cmd = new StatuslineCommand(scope);
-    cmd.execute(in, out);
+    cmd.execute(out);
   }
 }
