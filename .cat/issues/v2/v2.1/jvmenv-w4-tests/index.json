@@ -1,4 +1,6 @@
 {
-  "status": "open",
-  "dependencies": ["2.1-jvmenv-w3-main"]
+  "status" : "closed",
+  "resolution" : "duplicate (2.1-jvmenv-w3-main)",
+  "dependencies" : [ "2.1-jvmenv-w3-main" ],
+  "target_branch" : "v2.1"
 }
