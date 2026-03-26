@@ -67,14 +67,6 @@ Do NOT skip the banner or continue without it. **The banner must run regardless 
 CAUTION — even when `CAUTION == "low"`. The banner and the skip check are independent; skipping
 verification does not authorize skipping the banner.**
 
-### Skip Verification if Configured
-
-Skip **only the verification steps below** if: `CAUTION == "low"`
-
-If skipping, output: "Verification skipped (caution: ${CAUTION})"
-
-The banner (above) is NOT part of the verification steps and must always run.
-
 ### Delegate Verification to Subagent
 
 Spawn a verify subagent to check post-conditions and run E2E tests. The verify subagent writes detailed
@@ -98,6 +90,7 @@ Task tool:
     BRANCH: ${BRANCH}
     TARGET_BRANCH: ${TARGET_BRANCH}
     PLAN_MD_PATH: ${PLAN_MD}
+    CAUTION: ${CAUTION}
 
     Read the Goal and Post-conditions sections from PLAN_MD_PATH (plan.md) directly.
     Do NOT ask the main agent to provide this content — it is authoritative in plan.md.

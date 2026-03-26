@@ -128,11 +128,11 @@ Display current setting, then AskUserQuestion:
 - question: "How cautious should the agent be when validating changes? (Current: {caution || 'medium'})"
 - options:
   - label: "Low"
-    description: "Skip validation before commit"
+    description: "Compile only (fastest feedback)"
   - label: "Medium (Default)"
-    description: "Validate only modified files and modules"
+    description: "Compile and unit tests"
   - label: "High"
-    description: "Validate the entire project"
+    description: "Compile, unit tests, and E2E tests (maximum confidence)"
   - label: "← Back"
     description: "Return to behavior menu"
 
@@ -576,9 +576,9 @@ INVOKE: Skill("cat:get-output-agent", args="config.no-changes")
 - `high` — Fully autonomous, skips approval gates.
 
 ### Caution Values
-- `low` — No verification before commit.
-- `medium` — Verify modified file/module only.
-- `high` — Verify entire project.
+- `low` — Compile only (fastest feedback).
+- `medium` — Compile and unit tests (default).
+- `high` — Compile, unit tests, and E2E tests (maximum confidence).
 
 ### Curiosity Values
 - `low` — Investigate the issue as stated, no extra exploration.

@@ -11,20 +11,20 @@ import java.util.Locale;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * How cautious the agent is when validating changes.
+ * How cautiously the agent validates changes before the approval gate.
  */
 public enum CautionLevel
 {
   /**
-   * Minimal caution: skip validation.
+   * Compile only (fastest feedback).
    */
   LOW,
   /**
-   * Moderate caution: validate only changed files.
+   * Compile and unit tests (default).
    */
   MEDIUM,
   /**
-   * Maximum caution: validate everything.
+   * Compile, unit tests, and E2E tests (maximum confidence).
    */
   HIGH;
 
@@ -40,6 +40,26 @@ public enum CautionLevel
   {
     requireThat(value, "value").isNotBlank();
     return valueOf(value.toUpperCase(Locale.ROOT));
+  }
+
+  /**
+   * Returns whether unit tests should run at this caution level.
+   *
+   * @return {@code true} if unit tests are enabled (MEDIUM or HIGH), {@code false} if compile-only (LOW)
+   */
+  public boolean isUnitTestEnabled()
+  {
+    return this != LOW;
+  }
+
+  /**
+   * Returns whether end-to-end tests should run at this caution level.
+   *
+   * @return {@code true} if E2E tests are enabled (HIGH only), {@code false} otherwise
+   */
+  public boolean isE2eEnabled()
+  {
+    return this == HIGH;
   }
 
   @Override
