@@ -11,17 +11,27 @@ sub-issue decomposition context.
 
 ## Purpose
 
-Break down a issue that is too large for a single context window into smaller, manageable sub-issues.
-This is essential for CAT's proactive context management, allowing work to continue efficiently
-when a issue exceeds safe context bounds.
+Break down an issue into smaller, independently deliverable sub-issues at structural boundaries.
+Decomposition is a structural decision — high context usage alone does NOT trigger decomposition.
+Use wave re-splitting (`plugin/concepts/token-warning.md`) to manage context within a single issue.
 
 ## When to Use
 
-- Token report shows issue approaching 40% threshold (80K tokens)
-- Subagent has experienced compaction events
-- plan.md analysis reveals issue is larger than expected
-- Partial collection indicates significant remaining work
-- Pre-emptive decomposition during planning phase
+Decompose an issue **only** when one or more of the following structural criteria apply:
+
+- **Merge boundary required:** Phase B cannot begin until Phase A's code is merged and visible to
+  reviewers (e.g., Phase A establishes an API that Phase B implements against)
+- **Independently deliverable:** Each child issue can be reviewed, merged, and shipped without the
+  other (both issues produce standalone, useful deliverables)
+- **Genuinely disjoint subsystems:** The work spans separate subsystems with no shared files or
+  interfaces connecting them
+
+**Do NOT decompose based on:**
+- Token count or context percentage (use wave re-splitting instead)
+- Compaction events (use wave re-splitting instead)
+- "The issue feels large" without a structural boundary
+
+See `plugin/concepts/execution-model.md` for the full context management and decomposition model.
 
 ## Naming Convention
 
@@ -181,7 +191,7 @@ Original issue index.json:
 - **Progress:** 0%
 - **Decomposed:** true
 - **Decomposed At:** 2026-01-10T16:00:00Z
-- **Reason:** Issue exceeded context threshold (85K tokens used)
+- **Reason:** Issue spans independently deliverable components requiring separate merge boundaries
 
 ## Decomposed Into
 
@@ -212,8 +222,6 @@ New issue index.json:
 ```
 
 ### 7. Handle Existing Subagent Work
-
-If decomposing due to subagent context limits:
 
 ```bash
 # Collect partial results from subagent
@@ -362,13 +370,12 @@ decompose_to:
 
 ### Mid-Execution Decomposition
 
-When subagent hits context limits:
+When analysis reveals components have independent merge boundaries:
 
 ```yaml
 decomposition_trigger:
   issue: 1.3-implement-formatter
-  subagent_tokens: 85000
-  compaction_events: 1
+  reason: formatter-core and formatter-extensions are independently reviewable deliverables
   completed_work:
     - Basic formatter structure
     - Indentation handling
@@ -507,7 +514,6 @@ sub-issues:
 
 ## Related Skills
 
-- `cat:token-report` - Triggers decomposition decisions
 - `cat:collect-results-agent` - Preserves progress before decomposition
 - `cat:spawn-subagent` - Launches work on decomposed issues
 - `cat:parallel-execute` - Can run independent sub-issues concurrently

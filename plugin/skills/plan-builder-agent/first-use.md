@@ -103,6 +103,42 @@ Rules for sub-agent waves:
 - Waves must not modify the same files (to avoid merge conflicts)
 - The last wave is responsible for updating index.json
 
+### Wave Sizing Guidance
+
+When writing waves, size each wave so it stays within 40% of a subagent's context budget.
+
+**Estimation heuristic:**
+- Count the number of files the wave must modify or create
+- Assess change complexity: trivial (rename, formatting), medium (logic changes, new methods), high
+  (new module, significant refactor)
+- A wave with > 5 medium-complexity files or > 10 trivial files is likely to exceed 40% context
+
+**Splitting oversized waves:**
+If a planned wave would exceed the 40% budget, split it into two waves of roughly equal scope before
+writing plan.md. Move the second half of the wave's items into a new wave immediately after it.
+Aim for waves of equal scope so each subagent uses approximately the same context fraction.
+
+**Example — oversized wave split:**
+
+```markdown
+## Sub-Agent Waves
+
+### Wave 1   ← original wave (12 files, medium complexity — too large)
+- Update 12 service classes to use new interface
+```
+
+Split into:
+
+```markdown
+## Sub-Agent Waves
+
+### Wave 1
+- Update 6 service classes (A–F) to use new interface
+
+### Wave 2
+- Update 6 service classes (G–L) to use new interface
+```
+
 **Main Agent Waves (optional):** If the issue requires skills that spawn their own subagents (e.g.,
 `/cat:instruction-builder-agent`, `/cat:stakeholder-review-agent`), add a `## Main Agent Waves` section
 **above** `## Sub-Agent Waves`. The main agent executes these skills directly before spawning implementation

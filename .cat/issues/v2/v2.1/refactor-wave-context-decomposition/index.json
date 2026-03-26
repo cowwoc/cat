@@ -1,5 +1,7 @@
 {
-  "status": "open",
-  "dependencies": ["2.1-canonicalize-wave-hierarchy-doc"],
-  "blocks": []
+  "status" : "closed",
+  "resolution" : "implemented",
+  "dependencies" : [ "2.1-canonicalize-wave-hierarchy-doc" ],
+  "blocks" : [ ],
+  "target_branch" : "v2.1"
 }
