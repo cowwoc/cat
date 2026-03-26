@@ -192,11 +192,54 @@ Then output: "Review skipped (caution: ${CAUTION})"
 
 Note: `TRUST == "high"` does NOT skip review. Review is mandatory regardless of trust level.
 
+**Skip review if curiosity=low:**
+
+Read CURIOSITY from the effective config:
+
+```bash
+EFFECTIVE_CONFIG=$("${CLAUDE_PLUGIN_ROOT}/client/bin/get-config-output" effective) || {
+    echo "ERROR: Failed to read effective config" >&2
+    exit 1
+}
+CURIOSITY=$(echo "$EFFECTIVE_CONFIG" | grep -o '"curiosity"[[:space:]]*:[[:space:]]*"[^"]*"' \
+    | sed 's/.*"curiosity"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+if [[ -z "$CURIOSITY" ]]; then
+    CURIOSITY="medium"
+fi
+```
+
+If `CURIOSITY == "low"`, output: "Review skipped (curiosity: low)" and return:
+
+```json
+{
+  "status": "REVIEW_PASSED",
+  "all_concerns": [],
+  "fixed_concerns": [],
+  "deferred_concerns": [],
+  "allCommitsCompact": "${ALL_COMMITS_COMPACT}"
+}
+```
+
 ### Invoke Stakeholder Review
 
 **Proceed automatically without asking the user.** The review phase is a mandatory workflow step, not an optional
 operation. Do NOT ask for permission to run it, even though it spawns reviewer subagents. Asking for permission here
 interrupts the workflow unnecessarily — the user already approved the workflow by invoking `/cat:work`.
+
+**If CURIOSITY == "high", invoke `cat:research-agent` before running stakeholder review:**
+
+Invoke `cat:research-agent` to survey the codebase for existing patterns relevant to this issue. Pass the research
+findings as additional context in the `DOMAIN_KNOWLEDGE` section when spawning stakeholder reviewer subagents. This
+allows reviewers to evaluate the implementation against established patterns in the broader codebase, not just the
+changed files.
+
+```
+Skill tool:
+  skill: "cat:research-agent"
+  args: "${CAT_AGENT_ID} Survey the codebase for existing patterns relevant to issue ${ISSUE_ID}. Focus on: (1) architectural patterns used in files adjacent to those changed, (2) conventions applied consistently across similar components, (3) cross-cutting concerns (error handling, logging, security) that the changed files should conform to. Summarize findings for use by code reviewers."
+```
+
+Capture the research output and include it in the stakeholder reviewer prompts as additional domain knowledge context.
 
 **CRITICAL: Invoke stakeholder-review at main agent level** (do NOT delegate to subagent):
 

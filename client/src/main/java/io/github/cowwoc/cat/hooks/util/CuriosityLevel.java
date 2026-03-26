@@ -11,20 +11,21 @@ import java.util.Locale;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * How curious the agent is when investigating problems and exploring solutions.
+ * How broadly stakeholder review and research considers system context when evaluating an issue.
  */
 public enum CuriosityLevel
 {
   /**
-   * Low curiosity: take the obvious approach without deep investigation.
+   * Skip automatic stakeholder review. Review only runs if the user explicitly invokes it.
    */
   LOW,
   /**
-   * Medium curiosity: explore alternatives and investigate trade-offs.
+   * Run automatic stakeholder review scoped to changed files and direct dependencies.
    */
   MEDIUM,
   /**
-   * High curiosity: deeply research the problem space and document findings.
+   * Run automatic stakeholder review with holistic system integration scope. Reviewers consider broader codebase
+   * context, cross-cutting concerns, and downstream impact.
    */
   HIGH;
 
