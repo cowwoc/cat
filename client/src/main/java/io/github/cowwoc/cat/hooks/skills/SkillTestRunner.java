@@ -528,7 +528,6 @@ public final class SkillTestRunner
     Path benchmarkJsonPath = benchmarkDir.resolve("benchmark.json");
     JsonMapper mapper = scope.getJsonMapper();
     ObjectNode root = mapper.createObjectNode();
-    root.put("_comment", "Auto-generated snapshot of the last benchmark run. Not a config file.");
     root.put("session_id", sessionId);
     root.put("phase", phase);
     root.put("timestamp", timestamp);
