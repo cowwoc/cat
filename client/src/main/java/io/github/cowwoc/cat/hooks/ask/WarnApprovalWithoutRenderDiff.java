@@ -31,8 +31,7 @@ import java.util.regex.Pattern;
  * from blocking because those workflows do not change the working tree.
  * <p>
  * When cat:get-diff was invoked but the output appears reformatted (sparse box characters
- * with many manual diff signs), the handler issues a warning via additional context
- * rather than blocking.
+ * with many manual diff signs), the handler blocks the approval gate.
  */
 public final class WarnApprovalWithoutRenderDiff implements AskHandler
 {
@@ -135,7 +134,7 @@ public final class WarnApprovalWithoutRenderDiff implements AskHandler
           DO NOT extract into code blocks or reformat as standard diff.
 
           The user must see the actual 4-column table output.""";
-        return Result.withContext(warning);
+        return Result.block(warning);
       }
     }
     catch (IOException e)
