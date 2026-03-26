@@ -17,6 +17,9 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -951,6 +954,12 @@ public final class SkillTestRunnerTest
       requireThat(root.path("skill").path("path").asString(), "skill.path").isEqualTo("skill.md");
       requireThat(root.path("skill").path("sha256").asString(""), "skill.sha256").isNotBlank();
       requireThat(root.path("test_cases").path("sha256").asString(""), "test_cases.sha256").isNotBlank();
+
+      // Assert exclusivity: no undocumented fields
+      List<String> fieldNames = new ArrayList<>(root.propertyNames());
+      Collections.sort(fieldNames);
+      List<String> expectedFieldNames = List.of("phase", "session_id", "skill", "test_cases", "timestamp");
+      requireThat(fieldNames, "fieldNames").isEqualTo(expectedFieldNames);
     }
     finally
     {
