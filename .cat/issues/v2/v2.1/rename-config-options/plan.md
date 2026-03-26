@@ -28,9 +28,9 @@ config template, Java source in `client/`, and migration infrastructure.
 **Java source (production):**
 - `client/src/main/java/io/github/cowwoc/cat/hooks/Config.java` — accessors `getVerify()`, `getEffort()`,
   `getPatience()` with string literals `"verify"`, `"effort"`, `"patience"` and default values in DEFAULTS map
-- `client/src/main/java/io/github/cowwoc/cat/hooks/util/VerifyLevel.java` — rename to `CautionLevel.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/util/EffortLevel.java` — rename to `CuriosityLevel.java`
-- `client/src/main/java/io/github/cowwoc/cat/hooks/util/PatienceLevel.java` — rename to `PerfectionLevel.java`
+- `client/src/main/java/io/github/cowwoc/cat/hooks/util/CautionLevel.java` — renamed from `VerifyLevel.java`
+- `client/src/main/java/io/github/cowwoc/cat/hooks/util/CuriosityLevel.java` — renamed from `EffortLevel.java`
+- `client/src/main/java/io/github/cowwoc/cat/hooks/util/PerfectionLevel.java` — renamed from `PatienceLevel.java`
 - `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetInitOutput.java` — references `effort patience`
   in argument parsing
 
@@ -93,36 +93,28 @@ be a no-op for this key. The migration must now handle:
 ### Wave 1
 
 1. **Rename Java enum classes** (file renames + content updates):
-   - Rename `client/src/main/java/io/github/cowwoc/cat/hooks/util/VerifyLevel.java` to `CautionLevel.java`:
-     change class name `VerifyLevel` → `CautionLevel`, update Javadoc from "verify level" to "caution level",
-     update method name `fromString` Javadoc, keep same enum values (NONE, CHANGED, ALL)
-   - Rename `client/src/main/java/io/github/cowwoc/cat/hooks/util/EffortLevel.java` to `CuriosityLevel.java`:
-     change class name `EffortLevel` → `CuriosityLevel`, update Javadoc from "effort level" to
-     "curiosity level", keep same enum values (LOW, MEDIUM, HIGH)
-   - Rename `client/src/main/java/io/github/cowwoc/cat/hooks/util/PatienceLevel.java` to
-     `PerfectionLevel.java`: change class name `PatienceLevel` → `PerfectionLevel`, update Javadoc from
-     "patience level" to "perfection level" with note about inverted scale (high=act immediately, low=defer),
-     keep same enum values (LOW, MEDIUM, HIGH)
+   - `client/src/main/java/io/github/cowwoc/cat/hooks/util/CautionLevel.java` — renamed from `VerifyLevel.java`:
+     class name `CautionLevel`, Javadoc "caution level", enum values (NONE, CHANGED, ALL)
+   - `client/src/main/java/io/github/cowwoc/cat/hooks/util/CuriosityLevel.java` — renamed from `EffortLevel.java`:
+     class name `CuriosityLevel`, Javadoc "curiosity level", enum values (LOW, MEDIUM, HIGH)
+   - `client/src/main/java/io/github/cowwoc/cat/hooks/util/PerfectionLevel.java` — renamed from `PatienceLevel.java`:
+     class name `PerfectionLevel`, Javadoc "perfection level" with note about inverted scale (high=act immediately, low=defer),
+     enum values (LOW, MEDIUM, HIGH)
 
 2. **Update Config.java**:
-   - In DEFAULTS map: change keys `"verify"` → `"caution"`, `"effort"` → `"curiosity"`,
-     `"patience"` → `"perfection"`
-   - Rename accessor `getVerify()` → `getCaution()`, return type `VerifyLevel` → `CautionLevel`,
-     string literal `"verify"` → `"caution"`
-   - Rename accessor `getEffort()` → `getCuriosity()`, return type `EffortLevel` → `CuriosityLevel`,
-     string literal `"effort"` → `"curiosity"`
-   - Rename accessor `getPatience()` → `getPerfection()`, return type `PatienceLevel` → `PerfectionLevel`,
-     string literal `"patience"` → `"perfection"`
+   - In DEFAULTS map: keys now use `"caution"`, `"curiosity"`, `"perfection"`
+   - Accessor `getCaution()`, return type `CautionLevel`, string literal `"caution"`
+   - Accessor `getCuriosity()`, return type `CuriosityLevel`, string literal `"curiosity"`
+   - Accessor `getPerfection()`, return type `PerfectionLevel`, string literal `"perfection"`
    - Update all import statements for renamed enum classes
 
 3. **Update GetInitOutput.java**:
    - Change argument references from `effort patience` to `curiosity perfection`
    - Update any string literals referencing old names
 
-4. **Update all Java files that import or reference the old enum classes**:
-   - Search for `import.*VerifyLevel`, `import.*EffortLevel`, `import.*PatienceLevel` across all Java files
-   - Update imports and usages to new class names
-   - Search for `getVerify()`, `getEffort()`, `getPatience()` across all Java files and update to new names
+4. **Update all Java files that import or reference the renamed enum classes**:
+   - Search for `import.*CautionLevel`, `import.*CuriosityLevel`, `import.*PerfectionLevel` across all Java files
+   - Search for `getCaution()`, `getCuriosity()`, `getPerfection()` across all Java files (already renamed in Config.java)
 
 5. **Update Java tests**:
    - `ConfigTest.java`: update all references to old key names (`"verify"`, `"effort"`, `"patience"`) to new
