@@ -148,12 +148,12 @@ public class BatchReaderMainTest
   }
 
   /**
-   * Verifies that an unknown flag produces an IllegalArgumentException.
+   * Verifies that run() outputs a block response for an unknown flag, naming the unknown flag in
+   * the reason field.
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*Unknown argument.*--bogus.*")
+  @Test
   public void unknownArgProducesError() throws IOException
   {
     Path tempDir = Files.createTempDirectory("batch-reader-main-test-");
@@ -162,6 +162,13 @@ public class BatchReaderMainTest
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
       BatchReader.run(scope, new String[]{"**/*.java", "--bogus", "value"}, out);
+
+      String output = buffer.toString(StandardCharsets.UTF_8).strip();
+      requireThat(output, "output").isNotBlank();
+
+      JsonNode json = scope.getJsonMapper().readTree(output);
+      requireThat(json.path("decision").asString(), "decision").isEqualTo("block");
+      requireThat(json.path("reason").asString(), "reason").contains("--bogus");
     }
     finally
     {

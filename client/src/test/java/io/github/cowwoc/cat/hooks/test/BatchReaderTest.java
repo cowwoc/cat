@@ -10,11 +10,15 @@ import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.BatchReader;
 import io.github.cowwoc.cat.hooks.util.BatchReader.Config;
 import io.github.cowwoc.cat.hooks.util.BatchReader.Result;
+import io.github.cowwoc.cat.hooks.util.CliArgs;
 import io.github.cowwoc.cat.hooks.util.OperationStatus;
 import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -270,22 +274,190 @@ public class BatchReaderTest
   }
 
   /**
-   * Verifies that parseIntFlag returns the parsed integer for a valid value.
+   * Verifies that requiredInt returns the parsed integer for a valid value.
    */
   @Test
-  public void parseIntFlagReturnsIntegerForValidValue()
+  public void requiredIntReturnsIntegerForValidValue()
   {
-    int result = BatchReader.parseIntFlag("--max-files", "42");
+    int result = CliArgs.requiredInt("--max-files", "42");
     requireThat(result, "result").isEqualTo(42);
   }
 
   /**
-   * Verifies that parseIntFlag throws IllegalArgumentException for non-integer input.
+   * Verifies that requiredInt throws IllegalArgumentException for non-integer input.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*--max-files.*")
-  public void parseIntFlagThrowsForNonIntegerValue()
+  public void requiredIntThrowsForNonIntegerValue()
   {
-    BatchReader.parseIntFlag("--max-files", "not-a-number");
+    CliArgs.requiredInt("--max-files", "not-a-number");
+  }
+
+  /**
+   * Verifies that run() outputs a block response for an unknown flag, naming the unknown flag in
+   * the reason field.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void unknownFlagCausesError() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("batch-reader-test-");
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+      BatchReader.run(scope, new String[]{"some-pattern", "--unknown-flag", "value"}, out);
+
+      String output = buffer.toString(StandardCharsets.UTF_8).strip();
+      requireThat(output, "output").isNotBlank();
+
+      JsonNode json = scope.getJsonMapper().readTree(output);
+      requireThat(json.path("decision").asString(), "decision").isEqualTo("block");
+      requireThat(json.path("reason").asString(), "reason").contains("--unknown-flag");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that run() outputs a block response when --max-files is provided without a value,
+   * naming the flag in the reason field.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void maxFilesMissingValueCausesError() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("batch-reader-test-");
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+      BatchReader.run(scope, new String[]{"pattern", "--max-files"}, out);
+
+      String output = buffer.toString(StandardCharsets.UTF_8).strip();
+      requireThat(output, "output").isNotBlank();
+
+      JsonNode json = scope.getJsonMapper().readTree(output);
+      requireThat(json.path("decision").asString(), "decision").isEqualTo("block");
+      requireThat(json.path("reason").asString(), "reason").contains("--max-files");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that run() outputs a block response when --max-files is given a non-integer value.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void maxFilesNonIntegerValueCausesError() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("batch-reader-test-");
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+      BatchReader.run(scope, new String[]{"pattern", "--max-files", "abc"}, out);
+
+      String output = buffer.toString(StandardCharsets.UTF_8).strip();
+      requireThat(output, "output").isNotBlank();
+
+      JsonNode json = scope.getJsonMapper().readTree(output);
+      requireThat(json.path("decision").asString(), "decision").isEqualTo("block");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that run() outputs a block response when --context-lines is provided without a value.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void contextLinesMissingValueCausesError() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("batch-reader-test-");
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+      BatchReader.run(scope, new String[]{"pattern", "--context-lines"}, out);
+
+      String output = buffer.toString(StandardCharsets.UTF_8).strip();
+      requireThat(output, "output").isNotBlank();
+
+      JsonNode json = scope.getJsonMapper().readTree(output);
+      requireThat(json.path("decision").asString(), "decision").isEqualTo("block");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that run() outputs a block response when --context-lines is given a non-integer value.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void contextLinesNonIntegerValueCausesError() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("batch-reader-test-");
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+      BatchReader.run(scope, new String[]{"pattern", "--context-lines", "xyz"}, out);
+
+      String output = buffer.toString(StandardCharsets.UTF_8).strip();
+      requireThat(output, "output").isNotBlank();
+
+      JsonNode json = scope.getJsonMapper().readTree(output);
+      requireThat(json.path("decision").asString(), "decision").isEqualTo("block");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that run() outputs a block response when --file-type is provided without a value,
+   * naming the flag in the reason field.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void fileTypeMissingValueCausesError() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("batch-reader-test-");
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+      BatchReader.run(scope, new String[]{"pattern", "--file-type"}, out);
+
+      String output = buffer.toString(StandardCharsets.UTF_8).strip();
+      requireThat(output, "output").isNotBlank();
+
+      JsonNode json = scope.getJsonMapper().readTree(output);
+      requireThat(json.path("decision").asString(), "decision").isEqualTo("block");
+      requireThat(json.path("reason").asString(), "reason").contains("--file-type");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 }

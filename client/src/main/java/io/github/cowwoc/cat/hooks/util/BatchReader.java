@@ -7,6 +7,8 @@
 package io.github.cowwoc.cat.hooks.util;
 
 import static io.github.cowwoc.cat.hooks.Strings.block;
+import static io.github.cowwoc.cat.hooks.util.CliArgs.optionalInt;
+import static io.github.cowwoc.cat.hooks.util.CliArgs.optionalString;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
@@ -27,6 +29,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.OptionalInt;
 
 /**
  * Batch file search and read utility.
@@ -192,47 +196,40 @@ public final class BatchReader
     int contextLines = 0;
     String fileType = "";
 
-    // Loop bound is args.length - 1 so that args[i+1] (the flag value) is always available.
-    // A lone flag key at the last position is intentionally skipped to avoid ArrayIndexOutOfBoundsException.
-    for (int i = 1; i < args.length - 1; ++i)
+    for (int i = 1; i < args.length; ++i)
     {
       switch (args[i])
       {
         case "--max-files" ->
         {
-          ++i;
-          try
-          {
-            maxFiles = parseIntFlag("--max-files", args[i]);
-          }
-          catch (IllegalArgumentException e)
-          {
-            out.println(block(scope,
-              Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+          OptionalInt value = optionalInt(i, args, "--max-files", scope, out);
+          if (value.isEmpty())
             return;
-          }
+          ++i;
+          maxFiles = value.getAsInt();
         }
         case "--context-lines" ->
         {
-          ++i;
-          try
-          {
-            contextLines = parseIntFlag("--context-lines", args[i]);
-          }
-          catch (IllegalArgumentException e)
-          {
-            out.println(block(scope,
-              Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+          OptionalInt value = optionalInt(i, args, "--context-lines", scope, out);
+          if (value.isEmpty())
             return;
-          }
+          ++i;
+          contextLines = value.getAsInt();
         }
         case "--file-type" ->
         {
+          Optional<String> value = optionalString(i, args, "--file-type", scope, out);
+          if (value.isEmpty())
+            return;
           ++i;
-          fileType = args[i];
+          fileType = value.get();
         }
-        default -> throw new IllegalArgumentException(
-          "Unknown argument: " + args[i] + ". Valid arguments: --max-files, --context-lines, --file-type");
+        default ->
+        {
+          out.println(block(scope, "Unknown flag '" + args[i] + "'. Valid flags: --max-files, " +
+            "--context-lines, --file-type"));
+          return;
+        }
       }
     }
 
@@ -451,25 +448,5 @@ public final class BatchReader
     }
 
     return files;
-  }
-
-  /**
-   * Parses an integer value for a command-line flag.
-   *
-   * @param flagName the name of the flag (e.g., "--max-files")
-   * @param value the string value to parse
-   * @return the parsed integer
-   * @throws IllegalArgumentException if {@code value} is not a valid integer
-   */
-  public static int parseIntFlag(String flagName, String value)
-  {
-    try
-    {
-      return Integer.parseInt(value);
-    }
-    catch (NumberFormatException _)
-    {
-      throw new IllegalArgumentException("Error: " + flagName + " requires an integer, got: " + value);
-    }
   }
 }
