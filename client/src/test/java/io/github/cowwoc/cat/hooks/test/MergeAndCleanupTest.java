@@ -507,6 +507,70 @@ public class MergeAndCleanupTest
   }
 
   /**
+   * Verifies that execute throws IOException when projectPath has uncommitted changes.
+   * <p>
+   * An untracked file in the main workspace causes {@code git status --porcelain} to return
+   * non-empty output, which must be detected before the merge begins.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = "(?s).*uncommitted changes.*dirty-file\\.txt.*")
+  public void executeThrowsWhenMainWorkspaceIsDirty() throws IOException
+  {
+    Path originRepo = Files.createTempDirectory("origin-repo-");
+    Path mainRepo = Files.createTempDirectory("main-repo-");
+    Path worktreesDir = Files.createTempDirectory("worktrees-");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try
+    {
+      // Initialize bare origin
+      TestUtils.runGit(originRepo, "init", "--bare", "--initial-branch=v2.1");
+
+      // Create main repo with initial commit
+      TestUtils.runGit(mainRepo, "init", "--initial-branch=v2.1");
+      TestUtils.runGit(mainRepo, "config", "user.email", "test@example.com");
+      TestUtils.runGit(mainRepo, "config", "user.name", "Test User");
+      Files.writeString(mainRepo.resolve("README.md"), "initial");
+      TestUtils.runGit(mainRepo, "add", "README.md");
+      TestUtils.runGit(mainRepo, "commit", "-m", "Initial commit");
+
+      // Add origin remote and push
+      TestUtils.runGit(mainRepo, "remote", "add", "origin", originRepo.toString());
+      TestUtils.runGit(mainRepo, "push", "-u", "origin", "v2.1");
+
+      // Create the issue branch via worktree
+      String issueBranch = "dirty-workspace-issue";
+      Path issueWorktree = TestUtils.createWorktree(mainRepo, worktreesDir, issueBranch);
+      TestUtils.runGit(issueWorktree, "config", "user.email", "test@example.com");
+      TestUtils.runGit(issueWorktree, "config", "user.name", "Test User");
+      Files.writeString(issueWorktree.resolve("issue-work.txt"), "issue work");
+      TestUtils.runGit(issueWorktree, "add", "issue-work.txt");
+      TestUtils.runGit(issueWorktree, "commit", "-m", "Issue commit");
+
+      // Set up .cat structure in main repo
+      Files.createDirectories(mainRepo.resolve(".cat"));
+
+      // Introduce an uncommitted (untracked) file in the main workspace to make it dirty
+      Files.writeString(mainRepo.resolve("dirty-file.txt"), "uncommitted content");
+
+      try (TestClaudeTool scope = new TestClaudeTool(mainRepo, pluginRoot))
+      {
+        MergeAndCleanup cmd = new MergeAndCleanup(scope);
+        cmd.execute(mainRepo.toString(), issueBranch, "test-session", "v2.1",
+          issueWorktree.toString(), pluginRoot.toString());
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(worktreesDir);
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+      TestUtils.deleteDirectoryRecursively(originRepo);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
    * Verifies that after execute completes, the main working tree is synced with the merged
    * commits.
    * <p>

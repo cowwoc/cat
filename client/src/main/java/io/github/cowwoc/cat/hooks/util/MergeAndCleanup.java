@@ -97,6 +97,8 @@ public final class MergeAndCleanup
         ". Commit or stash changes first.");
     }
 
+    verifyMainWorkspaceClean(projectPath);
+
     syncTargetBranchWithOrigin(projectPath, targetBranch);
 
     int diverged = getDivergenceCount(worktreePath, targetBranch);
@@ -170,6 +172,23 @@ public final class MergeAndCleanup
   {
     String status = runGit(Path.of(worktreePath), "status", "--porcelain");
     return !status.isEmpty();
+  }
+
+  /**
+   * Verifies the main workspace working tree is clean before merge.
+   *
+   * @param projectPath the project root directory (main worktree)
+   * @throws IOException if the working tree has uncommitted changes, with message listing dirty files
+   */
+  private void verifyMainWorkspaceClean(String projectPath) throws IOException
+  {
+    String dirty = runGit(Path.of(projectPath), "status", "--porcelain");
+    if (!dirty.isEmpty())
+    {
+      throw new IOException(
+        "Cannot merge: main workspace has uncommitted changes in '" + projectPath + "'.\n" +
+          "Commit or discard these changes before merging:\n" + dirty);
+    }
   }
 
   /**
