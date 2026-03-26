@@ -15,6 +15,7 @@ preference:
 - `cat:git-rebase-agent`
 - `cat:git-rewrite-history-agent`
 - `cat:git-squash-agent`
+- `cat:github-trigger-workflow-agent`
 - `cat:init`
 - `cat:instruction-builder-agent`
 - `cat:instruction-organizer-agent`

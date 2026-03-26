@@ -1,4 +1,4 @@
-# Plan: add-feature-branch-workflow-trigger
+# Plan: github-trigger-workflow-agent
 
 ## Goal
 
@@ -40,9 +40,9 @@ None
 
 ## Files to Modify
 
-- `plugin/skills/add-feature-branch-workflow-trigger/SKILL.md` — New skill frontmatter (no license header, SKILL.md
+- `plugin/skills/github-trigger-workflow-agent/SKILL.md` — New skill frontmatter (no license header, SKILL.md
   files are exempt per `.claude/rules/license-header.md`)
-- `plugin/skills/add-feature-branch-workflow-trigger/first-use.md` — Skill instructions with license header
+- `plugin/skills/github-trigger-workflow-agent/first-use.md` — Skill instructions with license header
 
 ## Pre-conditions
 
@@ -52,7 +52,7 @@ None
 
 ### Wave 1
 
-- Create `plugin/skills/add-feature-branch-workflow-trigger/SKILL.md` with the following exact content:
+- Create `plugin/skills/github-trigger-workflow-agent/SKILL.md` with the following exact content:
 
   ```markdown
   ---
@@ -66,12 +66,12 @@ None
   disable-model-invocation: true
   ---
 
-  !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" add-feature-branch-workflow-trigger "${CLAUDE_SESSION_ID}" "$ARGUMENTS"`
+  !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" github-trigger-workflow-agent "${CLAUDE_SESSION_ID}" "$ARGUMENTS"`
   ```
 
   No license header (SKILL.md files are exempt).
 
-- Create `plugin/skills/add-feature-branch-workflow-trigger/first-use.md` with a license header (HTML comment)
+- Create `plugin/skills/github-trigger-workflow-agent/first-use.md` with a license header (HTML comment)
   followed by the skill instructions below.
 
   License header:
@@ -95,7 +95,7 @@ None
 
   **Validation**: Before any steps, validate:
   1. If `WORKFLOW_FILE` is empty: STOP with "ERROR: WORKFLOW_FILE argument is required.\nUsage:
-     /cat:add-feature-branch-workflow-trigger <path/to/workflow.yml>"
+     /cat:github-trigger-workflow-agent <path/to/workflow.yml>"
   2. If the file does not exist at `WORKFLOW_FILE`: STOP with "ERROR: Workflow file not found: {WORKFLOW_FILE}"
   3. Check that `gh` is available: `gh --version`. If it fails: STOP with "ERROR: GitHub CLI (gh) is required.
      Install from https://cli.github.com/ and authenticate with 'gh auth login'."
@@ -162,18 +162,31 @@ None
     git push
   ```
 
-- Update `plugin/skills/add-feature-branch-workflow-trigger/first-use.md` is the companion file name — it must
+- Update `plugin/skills/github-trigger-workflow-agent/first-use.md` is the companion file name — it must
   be named `first-use.md` (per skill conventions in `.claude/rules/skills.md`).
 - Commit the two new skill files with message:
   `feature: add skill to trigger GitHub Actions workflow from a feature branch`
-- Update `.cat/issues/v2/v2.1/add-feature-branch-workflow-trigger/index.json` to
+- Update `.cat/issues/v2/v2.1/github-trigger-workflow-agent/index.json` to
   `{"status":"closed","resolution":"implemented","targetBranch":"v2.1"}` and include it in the same commit.
 
 ## Post-conditions
 
-- [ ] `plugin/skills/add-feature-branch-workflow-trigger/SKILL.md` exists with correct frontmatter
-- [ ] `plugin/skills/add-feature-branch-workflow-trigger/first-use.md` exists with license header and covers all
+- [ ] `plugin/skills/github-trigger-workflow-agent/SKILL.md` exists with correct frontmatter
+- [ ] `plugin/skills/github-trigger-workflow-agent/first-use.md` exists with license header and covers all
       6 steps, error handling, and manual cleanup note
 - [ ] `mvn -f client/pom.xml test` passes
-- [ ] E2E: Invoke `/cat:add-feature-branch-workflow-trigger .github/workflows/build-git-filter-repo.yml` from
-      the current feature branch and confirm the `build-git-filter-repo` workflow appears in `gh run list`
+- [ ] E2E: Invoke `/cat:github-trigger-workflow-agent .github/workflows/build-git-filter-repo.yml` from the
+      current feature branch and confirm the `build-git-filter-repo` workflow appears in `gh run list`.
+
+      **GitHub API limitation (documented):** `gh workflow run` dispatches a `workflow_dispatch` event, which GitHub
+      only allows from the default branch. When invoked from a feature branch, Step 4 (`gh workflow run`) will fail
+      with HTTP 422. The skill's core mechanism — adding a push trigger in Step 2 and pushing in Step 3 — correctly
+      triggers the workflow via the `push` event on the feature branch. The E2E test must therefore verify that the
+      push in Step 3 causes the workflow to appear in `gh run list`, not that `gh workflow run` succeeds.
+
+      **Revised E2E verification steps:**
+      1. Invoke `/cat:github-trigger-workflow-agent .github/workflows/build-git-filter-repo.yml`
+      2. Observe Step 3 (`git push`) completes — this triggers the workflow via the push event
+      3. Run `gh run list --workflow=build-git-filter-repo.yml` and confirm a run is present
+      4. The Step 4 `gh workflow run` failure (HTTP 422) is expected and non-fatal per the skill spec
+      5. Confirm Step 5 cleanup removes the temporary push trigger
