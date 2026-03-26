@@ -29,7 +29,6 @@ public final class TestClaudeTool extends AbstractClaudeTool
 {
   private static final String SESSION_ID = "00000000-0000-0000-0000-000000000000";
 
-  private final Path claudeConfigPath;
   private final TerminalType terminalType;
   private final AtomicBoolean closed = new AtomicBoolean();
   private final Path workDir;
@@ -52,8 +51,7 @@ public final class TestClaudeTool extends AbstractClaudeTool
    */
   private TestClaudeTool(TempDirBundle bundle)
   {
-    super(SESSION_ID, bundle.projectPath(), bundle.pluginRoot());
-    this.claudeConfigPath = bundle.claudeConfigPath();
+    super(SESSION_ID, bundle.projectPath(), bundle.pluginRoot(), bundle.claudeConfigPath());
     this.terminalType = TerminalType.WINDOWS_TERMINAL;
     this.workDir = bundle.projectPath();
     try
@@ -89,9 +87,8 @@ public final class TestClaudeTool extends AbstractClaudeTool
    */
   protected TestClaudeTool(Path claudeProjectPath, Path claudePluginRoot, Path workDir)
   {
-    super(SESSION_ID, claudeProjectPath, claudePluginRoot);
+    super(SESSION_ID, claudeProjectPath, claudePluginRoot, claudeProjectPath);
     requireThat(workDir, "workDir").isNotNull().isAbsolute();
-    this.claudeConfigPath = claudeProjectPath;
     this.workDir = workDir;
     this.terminalType = TerminalType.WINDOWS_TERMINAL;
     try
@@ -131,10 +128,9 @@ public final class TestClaudeTool extends AbstractClaudeTool
   protected TestClaudeTool(Path claudeProjectPath, Path claudePluginRoot, TerminalType terminalType,
     Path workDir)
   {
-    super(SESSION_ID, claudeProjectPath, claudePluginRoot);
+    super(SESSION_ID, claudeProjectPath, claudePluginRoot, claudeProjectPath);
     requireThat(terminalType, "terminalType").isNotNull();
     requireThat(workDir, "workDir").isNotNull().isAbsolute();
-    this.claudeConfigPath = claudeProjectPath;
     this.terminalType = terminalType;
     this.workDir = workDir;
     try
@@ -204,13 +200,6 @@ public final class TestClaudeTool extends AbstractClaudeTool
   {
     ensureOpen();
     return workDir;
-  }
-
-  @Override
-  public Path getClaudeConfigPath()
-  {
-    ensureOpen();
-    return claudeConfigPath;
   }
 
   @Override

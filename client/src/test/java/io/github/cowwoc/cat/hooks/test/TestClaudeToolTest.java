@@ -214,7 +214,7 @@ public final class TestClaudeToolTest
   public void constructorRejectsNullSessionId()
   {
     Path validPath = Path.of("/tmp");
-    new MinimalClaudeTool(null, validPath, validPath);
+    new MinimalClaudeTool(null, validPath, validPath, validPath);
   }
 
   /**
@@ -225,7 +225,7 @@ public final class TestClaudeToolTest
   public void constructorRejectsBlankSessionId()
   {
     Path validPath = Path.of("/tmp");
-    new MinimalClaudeTool("   ", validPath, validPath);
+    new MinimalClaudeTool("   ", validPath, validPath, validPath);
   }
 
   /**
@@ -373,13 +373,14 @@ public final class TestClaudeToolTest
     /**
      * Creates a new minimal Claude tool for constructor-validation tests.
      *
-     * @param sessionId   the session ID (validated by AbstractClaudeTool)
-     * @param projectPath the project path (validated by AbstractClaudeTool)
-     * @param pluginRoot  the plugin root (validated by AbstractClaudeTool)
+     * @param sessionId       the session ID (validated by AbstractClaudeTool)
+     * @param projectPath     the project path (validated by AbstractClaudeTool)
+     * @param pluginRoot      the plugin root (validated by AbstractClaudeTool)
+     * @param claudeConfigPath the Claude config directory path
      */
-    MinimalClaudeTool(String sessionId, Path projectPath, Path pluginRoot)
+    MinimalClaudeTool(String sessionId, Path projectPath, Path pluginRoot, Path claudeConfigPath)
     {
-      super(sessionId, projectPath, pluginRoot);
+      super(sessionId, projectPath, pluginRoot, claudeConfigPath);
     }
 
     @Override
@@ -410,12 +411,6 @@ public final class TestClaudeToolTest
     public boolean isClosed()
     {
       return false;
-    }
-
-    @Override
-    public Path getClaudeConfigPath()
-    {
-      throw new UnsupportedOperationException();
     }
 
     @Override
