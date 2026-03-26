@@ -246,13 +246,13 @@ public final class WarnApprovalWithoutRenderDiffTest
   }
 
   /**
-   * Verifies that the sparse box character warning triggers when "get-diff" is present
+   * Verifies that the sparse box character check blocks approval when "get-diff" is present
    * but box characters are insufficient and manual diff signs are present.
    *
    * @throws IOException if test setup fails
    */
   @Test
-  public void getDiffPresentButSparseBoxCharsTriggersReformatWarning() throws IOException
+  public void getDiffPresentButSparseBoxCharsBlocksApproval() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-warn-approval-");
     try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
@@ -288,7 +288,7 @@ public final class WarnApprovalWithoutRenderDiffTest
 
       AskHandler.Result result = handler.check(toolInput, sessionId);
 
-      requireThat(result.additionalContext(), "additionalContext").contains("RENDER-DIFF OUTPUT MAY BE REFORMATTED");
+      requireThat(result.blocked(), "blocked").isTrue();
     }
     finally
     {
