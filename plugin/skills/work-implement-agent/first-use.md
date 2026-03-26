@@ -160,7 +160,64 @@ Do NOT skip the banner step itself; always run the binary.
 rm -f "${BANNER_STDERR_FILE}"
 ```
 
-## Step 4: Generate Implementation Steps
+## Step 4: Pre-Implementation Approval Gate (trust=low only)
+
+If `TRUST != "low"`, skip this step entirely and proceed to Step 5.
+
+Read the Goal and Post-conditions from plan.md:
+
+```bash
+ISSUE_GOAL=$(sed -n '/^## Goal/{n;:loop;/^## /b;p;n;b loop}' "${PLAN_MD}" | sed '/^[[:space:]]*$/d' | head -20)
+POST_CONDITIONS=$(sed -n '/^## Post-conditions/{n;:loop;/^## /b;p;n;b loop}' "${PLAN_MD}" | sed '/^[[:space:]]*$/d' | head -30)
+```
+
+If either `ISSUE_GOAL` or `POST_CONDITIONS` is empty, STOP immediately:
+```
+ERROR: plan.md is missing required sections (Goal or Post-conditions).
+Cannot present pre-implementation gate without these sections.
+Fix plan.md and retry /cat:work.
+```
+
+Present the pre-implementation review gate:
+
+```
+AskUserQuestion:
+  header: "${ISSUE_ID} — Pre-Implementation Review"
+  question: |
+    **Goal:**
+    ${ISSUE_GOAL}
+
+    **Post-conditions:**
+    ${POST_CONDITIONS}
+
+    **Estimated token cost:** ${ESTIMATED_TOKENS}
+
+    Approve to start implementation, or request changes to the plan first.
+  options:
+    - "Approve and start"
+    - "Request changes"
+    - "Abort"
+```
+
+Gate result handling:
+
+- **"Approve and start"**: proceed to Step 5.
+- **"Request changes"**: release lock:
+  ```bash
+  "${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${ISSUE_ID}" "${CLAUDE_SESSION_ID}"
+  ```
+  Return:
+  ```json
+  {"status": "BLOCKED", "message": "User requested changes to the plan before implementation. Edit plan.md and re-invoke /cat:work."}
+  ```
+- **"Abort"**: release lock (same command as above). Return:
+  ```json
+  {"status": "BLOCKED", "message": "User aborted before implementation started."}
+  ```
+- **Gate rejected (empty or non-matching answer)**: Re-present the full gate. Max 3 attempts. If still
+  not answered after 3 attempts, treat as "Abort".
+
+## Step 5: Generate Implementation Steps
 
 Before reading Main Agent Waves, check whether plan.md already contains implementation steps:
 
