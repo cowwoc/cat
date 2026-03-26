@@ -91,7 +91,7 @@ public class GetCheckpointOutputMainTest
    * Verifies that an unknown flag throws IllegalArgumentException.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*Unknown argument.*--bogus.*")
+    expectedExceptionsMessageRegExp = ".*Unknown flag.*--bogus.*")
   public void unknownArgThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-checkpoint-output-main-test-");
