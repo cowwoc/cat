@@ -210,7 +210,7 @@ public class GetInitOutputTest
       String result = handler.getCatInitialized("high", "medium", "low");
 
       requireThat(result, "result").contains("Trust: high").
-        contains("Effort: medium").contains("Patience: low");
+        contains("Curiosity: medium").contains("Perfection: low");
     }
   }
 
@@ -477,7 +477,7 @@ public class GetInitOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*(?=.*cat-initialized requires 3 arguments)(?=.*patience).*")
+    expectedExceptionsMessageRegExp = ".*(?=.*cat-initialized requires 3 arguments)(?=.*perfection).*")
   public void catInitializedInsufficientArgsThrows() throws IOException
   {
     try (JvmScope scope = new TestClaudeTool())

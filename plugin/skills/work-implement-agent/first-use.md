@@ -11,7 +11,7 @@ and orchestrates subagent execution of the implementation plan.
 ## Arguments Format
 
 ```
-<cat_agent_id> <issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <estimated_tokens> <trust> <verify>
+<cat_agent_id> <issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <estimated_tokens> <trust> <caution>
 ```
 
 | Position | Name | Example |
@@ -24,7 +24,7 @@ and orchestrates subagent execution of the implementation plan.
 | 6 | target_branch | `v2.1` |
 | 7 | estimated_tokens | `45000` |
 | 8 | trust | `medium` |
-| 9 | verify | `changed` |
+| 9 | caution | `changed` |
 
 ## Output Contract
 
@@ -60,7 +60,7 @@ split on whitespace. Also display the preparing banner in a chained call:
 
 ```bash
 # Parse positional arguments, set PLAN_MD path, and display preparing banner
-read CAT_AGENT_ID ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH ESTIMATED_TOKENS TRUST VERIFY <<< "$ARGUMENTS" && \
+read CAT_AGENT_ID ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH ESTIMATED_TOKENS TRUST CAUTION <<< "$ARGUMENTS" && \
 PLAN_MD="${ISSUE_PATH}/plan.md" && \
 "${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" "${ISSUE_ID}" --phase preparing
 ```
@@ -173,7 +173,7 @@ echo "hasSteps=true" || echo "hasSteps=false"
 **If `hasSteps=false`** (lightweight plan created by `/cat:add`): invoke `cat:plan-builder-agent` in revise mode to
 generate full implementation steps before spawning the implementation subagent:
 
-1. Read EFFORT from config:
+1. Read CURIOSITY from config:
 
 ```bash
 CONFIG=$("${CLAUDE_PLUGIN_ROOT}/client/bin/get-config-output" effective)
@@ -181,8 +181,8 @@ if [[ $? -ne 0 ]]; then
     echo "ERROR: Failed to read effective config" >&2
     exit 1
 fi
-EFFORT=$(echo "$CONFIG" | grep -o '"effort"[[:space:]]*:[[:space:]]*"[^"]*"' \
-  | sed 's/.*"effort"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+CURIOSITY=$(echo "$CONFIG" | grep -o '"curiosity"[[:space:]]*:[[:space:]]*"[^"]*"' \
+  | sed 's/.*"curiosity"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 ```
 
 2. Invoke plan-builder-agent to add implementation steps:
@@ -190,7 +190,7 @@ EFFORT=$(echo "$CONFIG" | grep -o '"effort"[[:space:]]*:[[:space:]]*"[^"]*"' \
 ```
 Skill tool:
   skill: "cat:plan-builder-agent"
-  args: "${CAT_AGENT_ID} ${EFFORT} revise ${ISSUE_PATH} Generate full implementation steps for this lightweight
+  args: "${CAT_AGENT_ID} ${CURIOSITY} revise ${ISSUE_PATH} Generate full implementation steps for this lightweight
 plan. Add Sub-Agent Waves or Execution Steps section with detailed step-by-step implementation guidance."
 ```
 
@@ -268,7 +268,7 @@ below). The last wave for index.json ownership is `### Wave ${WAVES_COUNT}` (the
 
 ### Mid-Work plan.md Revision
 
-If requirements change, read `EFFORT` from config:
+If requirements change, read `CURIOSITY` from config:
 
 ```bash
 CONFIG=$("${CLAUDE_PLUGIN_ROOT}/client/bin/get-config-output" effective)
@@ -276,12 +276,12 @@ if [[ $? -ne 0 ]]; then
     echo "ERROR: Failed to read effective config" >&2
     exit 1
 fi
-EFFORT=$(echo "$CONFIG" | grep -o '"effort"[[:space:]]*:[[:space:]]*"[^"]*"' \
-  | sed 's/.*"effort"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+CURIOSITY=$(echo "$CONFIG" | grep -o '"curiosity"[[:space:]]*:[[:space:]]*"[^"]*"' \
+  | sed 's/.*"curiosity"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 ```
 
 Then invoke:
-`Skill("cat:plan-builder-agent", "${CAT_AGENT_ID} ${EFFORT} revise ${ISSUE_PATH} <description of what changed>")`
+`Skill("cat:plan-builder-agent", "${CAT_AGENT_ID} ${CURIOSITY} revise ${ISSUE_PATH} <description of what changed>")`
 
 After revision, re-read the updated plan.md and adjust remaining execution accordingly.
 

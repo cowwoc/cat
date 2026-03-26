@@ -10,10 +10,10 @@ import io.github.cowwoc.cat.hooks.Config;
 
 import io.github.cowwoc.cat.hooks.skills.GetConfigOutput;
 import io.github.cowwoc.cat.hooks.util.ConcernSeverity;
-import io.github.cowwoc.cat.hooks.util.EffortLevel;
-import io.github.cowwoc.cat.hooks.util.PatienceLevel;
+import io.github.cowwoc.cat.hooks.util.CautionLevel;
+import io.github.cowwoc.cat.hooks.util.CuriosityLevel;
+import io.github.cowwoc.cat.hooks.util.PerfectionLevel;
 import io.github.cowwoc.cat.hooks.util.TrustLevel;
-import io.github.cowwoc.cat.hooks.util.VerifyLevel;
 import org.testng.annotations.Test;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
@@ -58,19 +58,19 @@ public class ConfigTest
   }
 
   /**
-   * Verifies that Config uses default verify=changed when config file is missing.
+   * Verifies that Config uses default caution=medium when config file is missing.
    */
   @Test
-  public void configUsesDefaultVerifyWhenConfigMissing() throws IOException
+  public void configUsesDefaultCautionWhenConfigMissing() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
     try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
       Config config = Config.load(mapper, tempDir);
-      String verify = config.getString("verify");
+      String caution = config.getString("caution");
 
-      requireThat(verify, "verify").isEqualTo("changed");
+      requireThat(caution, "caution").isEqualTo("medium");
     }
     finally
     {
@@ -95,14 +95,14 @@ public class ConfigTest
       Files.writeString(catDir.resolve("config.json"), """
         {
           "trust": "high",
-          "verify": "all"
+          "caution": "high"
         }
         """);
 
       Config config = Config.load(mapper, tempDir);
 
       requireThat(config.getString("trust"), "trust").isEqualTo("high");
-      requireThat(config.getString("verify"), "verify").isEqualTo("all");
+      requireThat(config.getString("caution"), "caution").isEqualTo("high");
     }
     finally
     {
@@ -133,7 +133,7 @@ public class ConfigTest
       Config config = Config.load(mapper, tempDir);
 
       requireThat(config.getString("trust"), "trust").isEqualTo("low");
-      requireThat(config.getString("verify"), "verify").isEqualTo("changed");
+      requireThat(config.getString("caution"), "caution").isEqualTo("medium");
     }
     finally
     {
@@ -183,9 +183,9 @@ public class ConfigTest
       Map<String, Object> values = config.asMap();
 
       requireThat(values.get("trust"), "trust").isEqualTo("medium");
-      requireThat(values.get("verify"), "verify").isEqualTo("changed");
-      requireThat(values.get("effort"), "effort").isEqualTo("medium");
-      requireThat(values.get("patience"), "patience").isEqualTo("high");
+      requireThat(values.get("caution"), "caution").isEqualTo("medium");
+      requireThat(values.get("curiosity"), "curiosity").isEqualTo("medium");
+      requireThat(values.get("perfection"), "perfection").isEqualTo("medium");
       requireThat(values.get("fileWidth"), "fileWidth").isEqualTo(120);
       requireThat(values.get("displayWidth"), "displayWidth").isEqualTo(120);
       requireThat(values.get("completionWorkflow"), "completionWorkflow").isEqualTo("merge");
@@ -213,9 +213,9 @@ public class ConfigTest
       Files.writeString(catDir.resolve("config.json"), """
         {
           "trust": "high",
-          "verify": "all",
-          "effort": "medium",
-          "patience": "low"
+          "caution": "high",
+          "curiosity": "medium",
+          "perfection": "low"
         }
         """);
 
@@ -224,10 +224,9 @@ public class ConfigTest
 
       requireThat(result, "result").contains("CURRENT SETTINGS");
       requireThat(result, "result").contains("Trust: high");
-      requireThat(result, "result").contains("Verify: all");
-      requireThat(result, "result").contains("Effort: medium");
-      requireThat(result, "result").contains("Patience: low");
-      requireThat(result, "result").doesNotContain("Curiosity");
+      requireThat(result, "result").contains("Caution: high");
+      requireThat(result, "result").contains("Curiosity: medium");
+      requireThat(result, "result").contains("Perfection: low");
     }
     finally
     {
@@ -318,7 +317,7 @@ public class ConfigTest
       Files.writeString(catDir.resolve("config.json"), """
         {
           "trust": "medium",
-          "verify": "changed"
+          "caution": "medium"
         }
         """);
 
@@ -458,10 +457,10 @@ public class ConfigTest
   }
 
   /**
-   * Verifies that getVerify() returns CHANGED by default when the config file is missing.
+   * Verifies that getCaution() returns MEDIUM by default when the config file is missing.
    */
   @Test
-  public void getVerifyDefaultsToChanged() throws IOException
+  public void getCautionDefaultsToMedium() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -469,7 +468,7 @@ public class ConfigTest
       JsonMapper mapper = scope.getJsonMapper();
       Config config = Config.load(mapper, tempDir);
 
-      requireThat(config.getVerify(), "verify").isEqualTo(VerifyLevel.CHANGED);
+      requireThat(config.getCaution(), "caution").isEqualTo(CautionLevel.MEDIUM);
     }
     finally
     {
@@ -478,10 +477,10 @@ public class ConfigTest
   }
 
   /**
-   * Verifies that getVerify() parses "all" from the config file correctly.
+   * Verifies that getCaution() parses "high" from the config file correctly.
    */
   @Test
-  public void getVerifyParsesAllFromConfig() throws IOException
+  public void getCautionParsesHighFromConfig() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -491,13 +490,13 @@ public class ConfigTest
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("config.json"), """
         {
-          "verify": "all"
+          "caution": "high"
         }
         """);
 
       Config config = Config.load(mapper, tempDir);
 
-      requireThat(config.getVerify(), "verify").isEqualTo(VerifyLevel.ALL);
+      requireThat(config.getCaution(), "caution").isEqualTo(CautionLevel.HIGH);
     }
     finally
     {
@@ -506,116 +505,12 @@ public class ConfigTest
   }
 
   /**
-   * Verifies that getVerify() throws IllegalArgumentException for an unrecognized verify value in the config file.
-   */
-  @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*UNKNOWN.*")
-  public void getVerifyThrowsForInvalidValue() throws IOException
-  {
-    Path tempDir = TestUtils.createTempDir("config-test");
-    try (TestClaudeTool scope = new TestClaudeTool())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path catDir = tempDir.resolve(".cat");
-      Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("config.json"), """
-        {
-          "verify": "unknown"
-        }
-        """);
-
-      Config config = Config.load(mapper, tempDir);
-      config.getVerify();
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that getEffort() returns MEDIUM by default when the config file is missing.
-   */
-  @Test
-  public void getEffortDefaultsToMedium() throws IOException
-  {
-    Path tempDir = TestUtils.createTempDir("config-test");
-    try (TestClaudeTool scope = new TestClaudeTool())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      Config config = Config.load(mapper, tempDir);
-
-      requireThat(config.getEffort(), "effort").isEqualTo(EffortLevel.MEDIUM);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that getEffort() parses "high" from the config file correctly.
-   */
-  @Test
-  public void getEffortParsesHighFromConfig() throws IOException
-  {
-    Path tempDir = TestUtils.createTempDir("config-test");
-    try (TestClaudeTool scope = new TestClaudeTool())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path catDir = tempDir.resolve(".cat");
-      Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("config.json"), """
-        {
-          "effort": "high"
-        }
-        """);
-
-      Config config = Config.load(mapper, tempDir);
-
-      requireThat(config.getEffort(), "effort").isEqualTo(EffortLevel.HIGH);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that getEffort() parses "medium" from the config file correctly.
-   */
-  @Test
-  public void getEffortParsesMediumFromConfig() throws IOException
-  {
-    Path tempDir = TestUtils.createTempDir("config-test");
-    try (TestClaudeTool scope = new TestClaudeTool())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path catDir = tempDir.resolve(".cat");
-      Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("config.json"), """
-        {
-          "effort": "medium"
-        }
-        """);
-
-      Config config = Config.load(mapper, tempDir);
-
-      requireThat(config.getEffort(), "effort").isEqualTo(EffortLevel.MEDIUM);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that getEffort() throws IllegalArgumentException for an unrecognized effort value in the config
+   * Verifies that getCaution() throws IllegalArgumentException for an unrecognized caution value in the config
    * file.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*UNKNOWN.*")
-  public void getEffortThrowsForInvalidValue() throws IOException
+  public void getCautionThrowsForInvalidValue() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -625,12 +520,12 @@ public class ConfigTest
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("config.json"), """
         {
-          "effort": "unknown"
+          "caution": "unknown"
         }
         """);
 
       Config config = Config.load(mapper, tempDir);
-      config.getEffort();
+      config.getCaution();
     }
     finally
     {
@@ -639,10 +534,10 @@ public class ConfigTest
   }
 
   /**
-   * Verifies that getPatience() returns HIGH by default when the config file is missing.
+   * Verifies that getCuriosity() returns MEDIUM by default when the config file is missing.
    */
   @Test
-  public void getPatienceDefaultsToHigh() throws IOException
+  public void getCuriosityDefaultsToMedium() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -650,7 +545,7 @@ public class ConfigTest
       JsonMapper mapper = scope.getJsonMapper();
       Config config = Config.load(mapper, tempDir);
 
-      requireThat(config.getPatience(), "patience").isEqualTo(PatienceLevel.HIGH);
+      requireThat(config.getCuriosity(), "curiosity").isEqualTo(CuriosityLevel.MEDIUM);
     }
     finally
     {
@@ -659,10 +554,10 @@ public class ConfigTest
   }
 
   /**
-   * Verifies that getPatience() parses "low" from the config file correctly.
+   * Verifies that getCuriosity() parses "high" from the config file correctly.
    */
   @Test
-  public void getPatienceParsesLowFromConfig() throws IOException
+  public void getCuriosityParsesHighFromConfig() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -672,13 +567,13 @@ public class ConfigTest
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("config.json"), """
         {
-          "patience": "low"
+          "curiosity": "high"
         }
         """);
 
       Config config = Config.load(mapper, tempDir);
 
-      requireThat(config.getPatience(), "patience").isEqualTo(PatienceLevel.LOW);
+      requireThat(config.getCuriosity(), "curiosity").isEqualTo(CuriosityLevel.HIGH);
     }
     finally
     {
@@ -687,12 +582,40 @@ public class ConfigTest
   }
 
   /**
-   * Verifies that getPatience() throws IllegalArgumentException for an unrecognized patience value in the config
-   * file.
+   * Verifies that getCuriosity() parses "medium" from the config file correctly.
+   */
+  @Test
+  public void getCuriosityParsesMediumFromConfig() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("config-test");
+    try (TestClaudeTool scope = new TestClaudeTool())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path catDir = tempDir.resolve(".cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("config.json"), """
+        {
+          "curiosity": "medium"
+        }
+        """);
+
+      Config config = Config.load(mapper, tempDir);
+
+      requireThat(config.getCuriosity(), "curiosity").isEqualTo(CuriosityLevel.MEDIUM);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getCuriosity() throws IllegalArgumentException for an unrecognized curiosity value in the
+   * config file.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*UNKNOWN.*")
-  public void getPatienceThrowsForInvalidValue() throws IOException
+  public void getCuriosityThrowsForInvalidValue() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -702,12 +625,89 @@ public class ConfigTest
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("config.json"), """
         {
-          "patience": "unknown"
+          "curiosity": "unknown"
         }
         """);
 
       Config config = Config.load(mapper, tempDir);
-      config.getPatience();
+      config.getCuriosity();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getPerfection() returns MEDIUM by default when the config file is missing.
+   */
+  @Test
+  public void getPerfectionDefaultsToMedium() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("config-test");
+    try (TestClaudeTool scope = new TestClaudeTool())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Config config = Config.load(mapper, tempDir);
+
+      requireThat(config.getPerfection(), "perfection").isEqualTo(PerfectionLevel.MEDIUM);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getPerfection() parses "low" from the config file correctly.
+   */
+  @Test
+  public void getPerfectionParsesLowFromConfig() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("config-test");
+    try (TestClaudeTool scope = new TestClaudeTool())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path catDir = tempDir.resolve(".cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("config.json"), """
+        {
+          "perfection": "low"
+        }
+        """);
+
+      Config config = Config.load(mapper, tempDir);
+
+      requireThat(config.getPerfection(), "perfection").isEqualTo(PerfectionLevel.LOW);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getPerfection() throws IllegalArgumentException for an unrecognized perfection value in the
+   * config file.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*UNKNOWN.*")
+  public void getPerfectionThrowsForInvalidValue() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("config-test");
+    try (TestClaudeTool scope = new TestClaudeTool())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path catDir = tempDir.resolve(".cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("config.json"), """
+        {
+          "perfection": "unknown"
+        }
+        """);
+
+      Config config = Config.load(mapper, tempDir);
+      config.getPerfection();
     }
     finally
     {
@@ -878,9 +878,9 @@ public class ConfigTest
       requireThat(values.get("trust"), "trust").isEqualTo("high");
       requireThat(values.get("minSeverity"), "minSeverity").isEqualTo("medium");
       // Remaining defaults
-      requireThat(values.get("verify"), "verify").isEqualTo("changed");
-      requireThat(values.get("effort"), "effort").isEqualTo("medium");
-      requireThat(values.get("patience"), "patience").isEqualTo("high");
+      requireThat(values.get("caution"), "caution").isEqualTo("medium");
+      requireThat(values.get("curiosity"), "curiosity").isEqualTo("medium");
+      requireThat(values.get("perfection"), "perfection").isEqualTo("medium");
     }
     finally
     {
@@ -928,7 +928,7 @@ public class ConfigTest
       Files.writeString(catDir.resolve("config.json"), """
         {
           "trust": "medium",
-          "reviewThreshold": "medium"
+          "unknownSetting": "medium"
         }
         """);
 
@@ -971,7 +971,7 @@ public class ConfigTest
       {
         requireThat(e.getMessage(), "message").contains("unknownKey");
         requireThat(e.getMessage(), "message").contains("trust");
-        requireThat(e.getMessage(), "message").contains("verify");
+        requireThat(e.getMessage(), "message").contains("caution");
       }
     }
     finally
@@ -1062,9 +1062,9 @@ public class ConfigTest
         {
         });
       requireThat(parsed.get("trust"), "trust").isEqualTo("medium");
-      requireThat(parsed.get("verify"), "verify").isEqualTo("changed");
-      requireThat(parsed.get("effort"), "effort").isEqualTo("medium");
-      requireThat(parsed.get("patience"), "patience").isEqualTo("high");
+      requireThat(parsed.get("caution"), "caution").isEqualTo("medium");
+      requireThat(parsed.get("curiosity"), "curiosity").isEqualTo("medium");
+      requireThat(parsed.get("perfection"), "perfection").isEqualTo("medium");
       requireThat(parsed.get("fileWidth"), "fileWidth").isEqualTo(120);
       requireThat(parsed.get("displayWidth"), "displayWidth").isEqualTo(120);
       requireThat(parsed.get("completionWorkflow"), "completionWorkflow").isEqualTo("merge");
@@ -1092,7 +1092,7 @@ public class ConfigTest
       Files.writeString(catDir.resolve("config.json"), """
         {
           "trust": "high",
-          "verify": "all"
+          "caution": "high"
         }
         """);
 
@@ -1106,10 +1106,10 @@ public class ConfigTest
         });
       // Overridden values
       requireThat(parsed.get("trust"), "trust").isEqualTo("high");
-      requireThat(parsed.get("verify"), "verify").isEqualTo("all");
+      requireThat(parsed.get("caution"), "caution").isEqualTo("high");
       // Defaults for missing keys
-      requireThat(parsed.get("effort"), "effort").isEqualTo("medium");
-      requireThat(parsed.get("patience"), "patience").isEqualTo("high");
+      requireThat(parsed.get("curiosity"), "curiosity").isEqualTo("medium");
+      requireThat(parsed.get("perfection"), "perfection").isEqualTo("medium");
     }
     finally
     {
@@ -1133,7 +1133,7 @@ public class ConfigTest
 
       requireThat(result, "result").isNotNull();
       requireThat(result, "result").contains("trust");
-      requireThat(result, "result").contains("verify");
+      requireThat(result, "result").contains("caution");
     }
     finally
     {

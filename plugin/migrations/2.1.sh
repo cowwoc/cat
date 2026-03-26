@@ -21,7 +21,7 @@ set -euo pipefail
 #    "## Gates" / "### Entry" / "### Exit" → "## Pre-conditions" / "## Post-conditions"
 #    "## Entry Gate" / "## Exit Gate" → "## Pre-conditions" / "## Post-conditions"
 #    "## Exit Gate Tasks" → "## Post-conditions"
-# 6. Rename "curiosity" config key to "effort" in existing cat-config.json files
+# 6. Rename config keys: verify→caution, effort→curiosity, patience→perfection (with value inversion)
 # 7. Create .cat/.gitignore with patterns for local config files if missing;
 #    if it exists, add any missing patterns and remove stale ones (/worktrees/, /locks/, /verify/)
 #    including their associated comment and blank lines
@@ -44,6 +44,7 @@ set -euo pipefail
 #     extracting: status, resolution, target_branch, dependencies, blocks, parent, decomposedInto
 #     Strips Progress, Last Updated, Completed, and any narrative content.
 # 20. Rename targetBranch → target_branch in all index.json files under .cat/issues/
+# 21. Rename caution config values: none→low, changed→medium, all→high
 
 trap 'echo "ERROR in 2.1.sh at line $LINENO: $BASH_COMMAND" >&2; exit 1' ERR
 
@@ -480,22 +481,52 @@ else
 fi
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Phase 6: Rename "curiosity" to "effort" in cat-config.json
+# Phase 6: Rename config keys verify→caution, effort→curiosity, patience→perfection
 # ──────────────────────────────────────────────────────────────────────────────
 
-log_migration "Phase 6: Rename curiosity → effort in cat-config.json"
+log_migration "Phase 6: Rename config keys verify→caution, effort→curiosity, patience→perfection"
 
-config_file=".cat/cat-config.json"
+config_file=".cat/config.json"
 
 if [[ ! -f "$config_file" ]]; then
     log_migration "No config file found - skipping phase 6"
 else
-    if grep -q '"curiosity"' "$config_file" 2>/dev/null; then
-        log_migration "Found curiosity key - renaming to effort"
-        sed -i 's/"curiosity"/"effort"/g' "$config_file"
-        log_migration "Phase 6 complete: renamed curiosity → effort"
+    phase6_changed=false
+
+    # Rename "verify" → "caution" (idempotent: skip if already renamed)
+    if grep -q '"verify"' "$config_file" 2>/dev/null && ! grep -q '"caution"' "$config_file" 2>/dev/null; then
+        sed -i 's/"verify"/"caution"/g' "$config_file"
+        log_migration "  Renamed verify → caution"
+        phase6_changed=true
+    fi
+
+    # Rename "effort" → "curiosity" (idempotent: skip if already renamed)
+    if grep -q '"effort"' "$config_file" 2>/dev/null && ! grep -q '"curiosity"' "$config_file" 2>/dev/null; then
+        sed -i 's/"effort"/"curiosity"/g' "$config_file"
+        log_migration "  Renamed effort → curiosity"
+        phase6_changed=true
+    fi
+
+    # Rename "patience" → "perfection" with value inversion (idempotent: skip if already renamed)
+    if grep -q '"patience"' "$config_file" 2>/dev/null && ! grep -q '"perfection"' "$config_file" 2>/dev/null; then
+        # Extract current patience value before renaming
+        patience_value=$(grep -o '"patience"[[:space:]]*:[[:space:]]*"[^"]*"' "$config_file" | head -1 | \
+            sed 's/.*"patience"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+        # Invert the scale: high↔low, medium stays medium
+        case "$patience_value" in
+            high) inverted_value="low" ;;
+            low)  inverted_value="high" ;;
+            *)    inverted_value="$patience_value" ;;
+        esac
+        sed -i "s/\"patience\"[[:space:]]*:[[:space:]]*\"[^\"]*\"/\"perfection\": \"${inverted_value}\"/" "$config_file"
+        log_migration "  Renamed patience → perfection (value: ${patience_value} → ${inverted_value})"
+        phase6_changed=true
+    fi
+
+    if [[ "$phase6_changed" == "true" ]]; then
+        log_migration "Phase 6 complete: config keys renamed"
     else
-        log_migration "No curiosity key found - skipping phase 6"
+        log_migration "Phase 6: no old keys found - skipping"
     fi
 fi
 
@@ -1535,6 +1566,43 @@ while IFS= read -r index_file; do
 done < <(find "$issues_dir" -name "index.json" -type f 2>/dev/null || true)
 
 log_migration "Phase 20 complete: $phase20_migrated files updated, $phase20_skipped already up to date"
+
+# Phase 21: Rename caution config values: none→low, changed→medium, all→high
+# Idempotent: only updates config files that contain old caution values
+phase21_migrated=0
+phase21_skipped=0
+
+for config_file in "${project_root}/.cat/config.json" "${project_root}/.cat/config.local.json"; do
+    [[ -f "$config_file" ]] || continue
+    if grep -q '"caution"' "$config_file" 2>/dev/null; then
+        caution_value=$(grep -o '"caution"[[:space:]]*:[[:space:]]*"[^"]*"' "$config_file" | \
+            sed 's/.*"caution"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+        case "$caution_value" in
+            none)
+                sed -i 's/"caution"[[:space:]]*:[[:space:]]*"none"/"caution": "low"/g' "$config_file"
+                log_migration "  Renamed caution none → low in: $config_file"
+                ((phase21_migrated++)) || true
+                ;;
+            changed)
+                sed -i 's/"caution"[[:space:]]*:[[:space:]]*"changed"/"caution": "medium"/g' "$config_file"
+                log_migration "  Renamed caution changed → medium in: $config_file"
+                ((phase21_migrated++)) || true
+                ;;
+            all)
+                sed -i 's/"caution"[[:space:]]*:[[:space:]]*"all"/"caution": "high"/g' "$config_file"
+                log_migration "  Renamed caution all → high in: $config_file"
+                ((phase21_migrated++)) || true
+                ;;
+            *)
+                ((phase21_skipped++)) || true
+                ;;
+        esac
+    else
+        ((phase21_skipped++)) || true
+    fi
+done
+
+log_migration "Phase 21 complete: $phase21_migrated files updated, $phase21_skipped already up to date"
 
 log_success "Migration to 2.1 completed"
 exit 0
