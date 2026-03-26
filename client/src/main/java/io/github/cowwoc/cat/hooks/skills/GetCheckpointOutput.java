@@ -12,17 +12,15 @@ import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
-import java.io.IOException;
 import java.io.PrintStream;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.Objects;
 /**
  * Output generator for checkpoint boxes used by the {@code /cat:work} skill's review phase.
  * <p>
@@ -64,25 +62,28 @@ public final class GetCheckpointOutput implements SkillOutput
    * @throws IOException              if an I/O error occurs
    */
   @Override
-  public String getOutput(String[] args) throws IOException
+  public String getOutput(String[] args)
   {
     requireThat(args, "args").isNotNull();
-    Path projectPath = null;
-    for (int i = 0; i < args.length; ++i)
+
+    String projectPath = "";
+
+    for (int i = 0; i + 1 < args.length; i += 2)
     {
-      if (args[i].equals("--project-dir"))
+      switch (args[i])
       {
-        if (i + 1 >= args.length)
-          throw new IllegalArgumentException("Missing PATH argument for --project-dir");
-        projectPath = Path.of(args[i + 1]);
-        ++i;
+        case "--project-dir" -> projectPath = args[i + 1];
+        default -> throw new IllegalArgumentException(
+          "Unknown argument: " + args[i] + ". Valid arguments: --project-dir");
       }
-      else
-        throw new IllegalArgumentException("Unknown argument: " + args[i]);
     }
-    if (projectPath == null)
-      projectPath = scope.getProjectPath();
-    return "GetCheckpointOutput: project-dir=" + projectPath;
+
+    String effectiveProjectPath;
+    if (projectPath.isEmpty())
+      effectiveProjectPath = scope.getProjectPath().toString();
+    else
+      effectiveProjectPath = projectPath;
+    return "GetCheckpointOutput: project-dir=" + effectiveProjectPath;
   }
 
   /**
@@ -90,7 +91,7 @@ public final class GetCheckpointOutput implements SkillOutput
    *
    * @param args command line arguments
    */
-  public static void main(String[] args) throws IOException
+  public static void main(String[] args)
   {
     try (ClaudeTool scope = new MainClaudeTool())
     {
@@ -150,7 +151,7 @@ public final class GetCheckpointOutput implements SkillOutput
         case "--iteration" -> iteration = args[i + 1];
         case "--total" -> total = args[i + 1];
         default -> throw new IllegalArgumentException(
-          "Unknown argument: " + args[i] + ". Valid arguments: --type, --issue-name, --tokens, " +
+          "Unknown flag: " + args[i] + ". Valid flags: --type, --issue-name, --tokens, " +
             "--percent, --branch, --iteration, --total");
       }
     }

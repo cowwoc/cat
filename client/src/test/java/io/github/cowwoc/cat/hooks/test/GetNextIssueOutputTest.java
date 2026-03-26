@@ -6,6 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
+import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.skills.GetNextIssueOutput;
 import io.github.cowwoc.cat.hooks.util.IssueGoalReader;
 import org.testng.annotations.Test;
@@ -525,6 +526,28 @@ public class GetNextIssueOutputTest
     finally
     {
       TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that getOutput() throws IllegalArgumentException for an unknown flag, naming the unknown
+   * flag and listing valid flags in the message.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = "(?s).*--unknown-flag.*")
+  public void unknownFlagCausesError() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("get-next-issue-test-");
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      GetNextIssueOutput output = new GetNextIssueOutput(scope);
+      output.getOutput(new String[]{"--unknown-flag", "value"});
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 

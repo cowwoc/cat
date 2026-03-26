@@ -59,12 +59,14 @@ public final class GetNextIssueOutput implements SkillOutput
    * <p>
    * Iterates {@code args} as alternating key/value pairs. Recognized keys are
    * {@code --completed-issue}, {@code --target-branch}, {@code --session-id},
-   * {@code --project-dir}, and {@code --exclude-pattern}. Unrecognized keys are silently ignored.
+   * {@code --project-dir}, and {@code --exclude-pattern}. Unrecognized keys throw
+   * {@link IllegalArgumentException}.
    *
    * @param args the arguments to parse (alternating key/value pairs)
-   * @return a record holding the parsed argument values; unrecognized or absent keys leave the
-   *   corresponding field empty
+   * @return a record holding the parsed argument values; absent keys leave the corresponding
+   *   field empty
    * @throws NullPointerException if {@code args} is null
+   * @throws IllegalArgumentException if an unrecognized flag is encountered
    */
   private static ParsedArgs parseArgs(String[] args)
   {
@@ -85,7 +87,7 @@ public final class GetNextIssueOutput implements SkillOutput
         case "--project-dir" -> projectPath = args[i + 1];
         case "--exclude-pattern" -> excludePattern = args[i + 1];
         default -> throw new IllegalArgumentException(
-          "Unknown argument: " + args[i] + ". Valid arguments: --completed-issue, --target-branch, " +
+          "Unknown flag: " + args[i] + ". Valid flags: --completed-issue, --target-branch, " +
             "--session-id, --project-dir, --exclude-pattern");
       }
     }
@@ -116,6 +118,7 @@ public final class GetNextIssueOutput implements SkillOutput
    * @param args the arguments from the preprocessor directive (alternating key/value pairs)
    * @return the formatted Issue Complete or Scope Complete box
    * @throws NullPointerException if {@code args} is null
+   * @throws IllegalArgumentException if an unrecognized flag is encountered
    * @throws IOException if required arguments are missing or an I/O error occurs
    */
   @Override

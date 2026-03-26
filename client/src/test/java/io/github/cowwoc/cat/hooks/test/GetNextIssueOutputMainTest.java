@@ -91,7 +91,7 @@ public class GetNextIssueOutputMainTest
    * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*Unknown argument.*--bogus.*")
+    expectedExceptionsMessageRegExp = ".*Unknown flag.*--bogus.*")
   public void unknownArgThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-next-issue-output-main-test-");

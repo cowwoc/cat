@@ -3622,6 +3622,36 @@ public class WorkPrepareTest
   }
 
   /**
+   * Verifies that run() outputs an ERROR JSON response for an unknown flag, naming the unknown flag
+   * and listing valid flags in the message.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void unknownFlagCausesError() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("work-prepare-test-");
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+      WorkPrepare.run(scope, new String[]{"--include-pattern", "foo"}, out);
+
+      String output = buffer.toString(StandardCharsets.UTF_8).strip();
+      requireThat(output, "output").isNotBlank();
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode json = mapper.readTree(output);
+      requireThat(json.path("status").asString(), "status").isEqualTo("ERROR");
+      requireThat(json.path("message").asString(), "message").contains("--include-pattern");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Cleans up a worktree if it exists (best-effort, errors are swallowed).
    *
    * @param projectPath the project root directory
