@@ -6,6 +6,8 @@ See LICENSE.md in the project root for license terms.
 # Decompose Issue
 
 See `${CLAUDE_PLUGIN_ROOT}/concepts/version-paths.md` for version path conventions used throughout this skill.
+See `${CLAUDE_PLUGIN_ROOT}/concepts/execution-model.md` for the full execution hierarchy, wave definitions, and
+sub-issue decomposition context.
 
 ## Purpose
 

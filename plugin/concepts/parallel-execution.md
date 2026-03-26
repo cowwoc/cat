@@ -5,6 +5,8 @@ See LICENSE.md in the project root for license terms.
 -->
 # Parallel Subagent Execution
 
+> See `plugin/concepts/execution-model.md` for the full execution model, hierarchy, and wave parallelism rules.
+
 CAT supports running independent work items in parallel by spawning multiple implementation subagents, each working on
 its own assigned wave of items. Parallelism is opt-in: it only activates when plan.md contains a `## Execution Waves`
 section with multiple `### Wave N` subsections.
@@ -18,10 +20,9 @@ When the work skill starts executing an issue:
 3. **Parallel mode requires 2+ waves:** Plans with only 1 wave (or no waves at all) use single-subagent mode, spawning
    one implementation subagent with all items (default behavior). Only plans with 2 or more distinct waves spawn
    parallel subagents.
-4. **Parallel execution (2+ waves):** For each wave (in order), spawn one subagent per wave simultaneously.
-5. Wait for all subagents in the wave to complete before proceeding to the next wave.
-6. All subagents commit to the same issue branch (`v2.1-issue-name`).
-7. After all waves complete, `work-with-issue` merges their commit lists and proceeds to review and merge.
+4. **Parallel execution (2+ waves):** All wave subagents spawn simultaneously in a single API response.
+5. All subagents commit to the same issue branch (`v2.1-issue-name`).
+6. After all waves complete, `work-with-issue` merges their commit lists and proceeds to review and merge.
 
 ## Wave Section Syntax
 
@@ -42,11 +43,8 @@ additional subagents.
 - Run full test suite
 ```
 
-In this example:
-- Wave 1 has 2 items (parsed module + tests)
-- Wave 2 has 3 items (formatter module + tests + test suite)
-- All Wave 1 items run in parallel
-- After Wave 1 completes, all Wave 2 items run in parallel
+In this example, Wave 1 and Wave 2 spawn simultaneously. If Wave 2 depends on Wave 1's output, declare that dependency
+explicitly in plan.md so the orchestrator waits for Wave 1 before delegating Wave 2 items.
 
 ## When to Use Execution Waves
 
@@ -58,7 +56,7 @@ Use execution waves **only** when:
 
 **Do NOT use waves when:**
 
-- Items must run sequentially (later items consume output from earlier ones)
+- Items must run in sequence (later items consume output from earlier ones)
 - Items modify the same files
 - The issue is small enough that parallelism adds no benefit
 - There is only one item (or one wave of items)
@@ -74,7 +72,7 @@ The `work-with-issue` skill communicates this ownership in each subagent's deleg
 
 ## Worktree Sharing
 
-All wave subagents share the same worktree (`WORKTREE_PATH`). They commit and push sequentially to the same branch.
+All wave subagents share the same worktree (`WORKTREE_PATH`). They commit and push to the same branch.
 Each subagent must `git pull --rebase` before pushing to incorporate commits from other waves that completed first.
 
 The `work-merge` phase is transparent to parallelism — it squashes all commits from `TARGET_BRANCH..HEAD` regardless of
@@ -95,26 +93,3 @@ wave's commits have already been pushed). The coordination protocol is:
 
 This ensures that even when subagents complete in unpredictable order, each subagent can eventually push its commits
 without forcing a merge or overwriting other waves' work.
-
-## Architecture Summary
-
-```
-work-with-issue (main agent)
-    |
-    +---> Read plan.md directly
-    |     Detect ## Execution Waves / ### Wave N sections
-    |     Count top-level bullet items per wave
-    |
-    +---> [if 2+ waves] Spawn one subagent per wave (parallel within wave)
-    |         Wave 1: subagent handles all items in Wave 1 (parallel)
-    |         Wave 2: subagent handles all items in Wave 2 (wait for Wave 1, then parallel)
-    |         Worktree: shared
-    |         index.json: NO (Wave 1) / YES (Wave 2, last)
-    |
-    +---> Collect commits from all waves
-    |
-    +---> stakeholder-review (single review of combined work)
-    |
-    +---> work-merge (squashes all commits, single merge)
-```
-
