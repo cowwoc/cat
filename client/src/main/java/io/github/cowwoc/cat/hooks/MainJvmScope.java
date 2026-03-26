@@ -27,11 +27,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * <p>
  * <b>Thread Safety:</b> This class is thread-safe.
  */
-public final class MainJvmScope extends AbstractJvmScope
+public final class MainJvmScope extends AbstractClaudeScope
 {
-  private final Path claudeConfigPath;
-  private final Path projectPath;
-  private final Path pluginRoot;
   private final ConcurrentLazyReference<TerminalType> terminalType =
     ConcurrentLazyReference.create(TerminalType::detect);
   private final ConcurrentLazyReference<String> tz = ConcurrentLazyReference.create(() ->
@@ -54,13 +51,9 @@ public final class MainJvmScope extends AbstractJvmScope
    */
   public MainJvmScope()
   {
-    String configDir = System.getenv("CLAUDE_CONFIG_DIR");
-    if (configDir == null || configDir.isBlank())
-      this.claudeConfigPath = Path.of(System.getProperty("user.home"), ".claude");
-    else
-      this.claudeConfigPath = Path.of(configDir);
-    this.projectPath = Path.of(readEnvVar("CLAUDE_PROJECT_DIR"));
-    this.pluginRoot = Path.of(readEnvVar("CLAUDE_PLUGIN_ROOT"));
+    super(Path.of(readEnvVar("CLAUDE_PROJECT_DIR")),
+      Path.of(readEnvVar("CLAUDE_PLUGIN_ROOT")),
+      readClaudeConfigPath());
   }
 
   /**
@@ -78,11 +71,17 @@ public final class MainJvmScope extends AbstractJvmScope
     return value;
   }
 
-  @Override
-  public Path getClaudeConfigPath()
+  /**
+   * Reads the Claude config directory from the environment or defaults to {@code ~/.claude}.
+   *
+   * @return the Claude config directory path
+   */
+  private static Path readClaudeConfigPath()
   {
-    ensureOpen();
-    return claudeConfigPath;
+    String configDir = System.getenv("CLAUDE_CONFIG_DIR");
+    if (configDir == null || configDir.isBlank())
+      return Path.of(System.getProperty("user.home"), ".claude");
+    return Path.of(configDir);
   }
 
   @Override
@@ -90,20 +89,6 @@ public final class MainJvmScope extends AbstractJvmScope
   {
     ensureOpen();
     return Path.of(System.getProperty("user.dir"));
-  }
-
-  @Override
-  public Path getProjectPath()
-  {
-    ensureOpen();
-    return projectPath;
-  }
-
-  @Override
-  public Path getPluginRoot()
-  {
-    ensureOpen();
-    return pluginRoot;
   }
 
   @Override
