@@ -894,6 +894,27 @@ The subagent branch name and worktree path for each group are returned in the Ta
 - If any group returns FAILED or BLOCKED, stop and report failure
 - Aggregate `files_changed`, `tokens_used`, and `compaction_events` across all groups
 
+### Reactive Wave Re-Splitting
+
+After collecting the result from a completed wave subagent, check `percent_of_context` before spawning
+the next wave:
+
+**If `percent_of_context > 40`** (high context usage):
+
+1. Read the remaining unsplit waves from plan.md (those not yet spawned).
+2. For each remaining wave, split it in half:
+   - Move the second half of its bullet items into a new `### Wave N+k` inserted immediately after it.
+   - If a wave has only one bullet item, it cannot be split — leave it as-is.
+3. Renumber all subsequent wave headers to maintain a gapless sequence (Wave 1, 2, 3, ...).
+4. Write the updated plan.md back to disk.
+5. Re-run the canonical `WAVES_COUNT` detection command to get the updated count before spawning.
+
+**If `percent_of_context <= 40`**: proceed without modifying plan.md.
+
+This check applies whether using single-subagent or parallel execution — always check `percent_of_context`
+from the most recently completed wave's result before starting the next wave. See
+`plugin/concepts/token-warning.md` for compaction-event handling that interacts with this flow.
+
 ### Handle Execution Result
 
 Parse the subagent result(s):
