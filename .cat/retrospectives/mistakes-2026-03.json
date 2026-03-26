@@ -3099,5 +3099,47 @@
     "prevention_verified" : false,
     "recurrence_of" : null,
     "correct_behavior" : ""
+  }, {
+    "id" : "M606",
+    "timestamp" : "2026-03-26T22:00:00Z",
+    "category" : "protocol_violation",
+    "description" : "Agent presented the merge approval gate (AskUserQuestion) without first squashing commits by topic, violating the MANDATORY requirement in CLAUDE.md and work-with-issue-agent. The agent was running outside the formal work-with-issue orchestration flow and directly called AskUserQuestion after implementation, skipping the mandatory squash step.",
+    "root_cause" : "HOOK ABSENT: No enforcement hook exists to block AskUserQuestion from being called for merge approval when commits have not been squashed. The CLAUDE.md rule 'MANDATORY: Squash commits by topic before EVERY approval gate' is documentation-level only. The agent bypassed the formal work-with-issue-agent orchestration (which has Step 7/8 squash+rebase before gate) by operating in ad-hoc mode after the implement phase, presenting the gate directly without squashing.",
+    "rca_method" : "C",
+    "rca_method_name" : "causal-barrier",
+    "cause_signature" : "compliance_failure:hook_absent:issue_workflow",
+    "prevention_type" : "hook",
+    "prevention_path" : "",
+    "pattern_keywords" : [ "squash_before_approval_gate", "approval_gate_without_squash", "merge_workflow_bypass", "ad_hoc_merge" ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : "Before presenting any AskUserQuestion for merge approval, squash commits by topic using cat:git-squash-agent. The formal path is to use cat:work-merge-agent which enforces this in Steps 7-11. If operating outside the formal workflow, squash explicitly before the gate."
+  }, {
+    "id" : "M607",
+    "timestamp" : "2026-03-26T22:15:00Z",
+    "category" : "protocol_violation",
+    "description" : "After user approved the merge gate, agent used 'git update-ref refs/heads/v2.1 <branch>' instead of invoking cat:work-merge-agent to perform the merge. This bypasses the formal merge workflow which handles worktree cleanup, lock release, state updates, and branch deletion.",
+    "root_cause" : "HOOK ABSENT (RECURRENCE of M579): M579 recorded this same pattern and recorded prevention as BlockDirectBranchPointerModification.java, but that file was never created. The hook file does not exist in client/src/main/java/io/github/cowwoc/cat/hooks/bash/, so git update-ref remains unblocked. The agent was also operating outside the formal work-with-issue-agent flow, so even proper skill infrastructure was bypassed.",
+    "rca_method" : "C",
+    "rca_method_name" : "causal-barrier",
+    "cause_signature" : "compliance_failure:hook_absent:git_operations",
+    "prevention_type" : "hook",
+    "prevention_path" : "client/src/main/java/io/github/cowwoc/cat/hooks/bash/BlockDirectBranchPointerModification.java",
+    "pattern_keywords" : [ "git_update_ref", "merge_bypass", "work_merge_agent_bypass", "block_direct_branch_pointer" ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : "M579",
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : "Use cat:work-merge-agent to perform merges. Never use git update-ref to directly move branch pointers. The BlockDirectBranchPointerModification hook (M579 prevention, still unimplemented) must be created to block 'git update-ref refs/heads/' commands."
   } ]
 }
