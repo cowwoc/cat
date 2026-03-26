@@ -1171,6 +1171,42 @@ auto-fix loop, fix concerns, re-run review, until all FIX-marked concerns resolv
 **Do NOT stop after showing the stakeholder review box.** The review box is informational output, not the phase
 completion signal. The JSON below is the completion signal.
 
+## Persist Review Result for Merge Phase
+
+Write the review result to a session file so the merge phase can access it for trust=high routing:
+
+```bash
+REVIEW_DIR="${CLAUDE_PROJECT_DIR}/.cat/work/review/${CLAUDE_SESSION_ID}"
+mkdir -p "${REVIEW_DIR}"
+REVIEW_RESULT_FILE="${REVIEW_DIR}/${ISSUE_ID}-result.json"
+```
+
+Construct minimal JSON with status and highest severity present in deferred_concerns:
+
+```bash
+# Determine if any HIGH or CRITICAL concern exists in all_concerns
+# (use the in-context ALL_CONCERNS array populated during the review phase)
+HAS_HIGH_OR_CRITICAL="false"
+for concern in "${ALL_CONCERNS[@]}"; do
+  severity=$(echo "$concern" | grep -o '"severity"[[:space:]]*:[[:space:]]*"[^"]*"' | \
+    sed 's/.*"severity"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+  if [[ "$severity" == "HIGH" || "$severity" == "CRITICAL" ]]; then
+    HAS_HIGH_OR_CRITICAL="true"
+    break
+  fi
+done
+```
+
+Write the file. Use printf with a here-doc approach that does not involve redirecting tee or '>' to
+a variable-expanded path — instead construct the JSON as a string variable and write with printf:
+
+```bash
+REVIEW_RESULT_JSON="{\"status\":\"${REVIEW_STATUS}\",\"has_high_or_critical\":${HAS_HIGH_OR_CRITICAL}}"
+printf '%s' "${REVIEW_RESULT_JSON}" > "${REVIEW_RESULT_FILE}"
+```
+
+If writing fails (non-zero exit), log a warning but do NOT stop — the merge phase has a fallback.
+
 Output ONLY this JSON (no surrounding text):
 
 ```json

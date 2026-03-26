@@ -116,6 +116,7 @@ Task tool:
 - **Step 8 SUCCESS**: write `squashed:<hash>`
 - **Step 11 SUCCESS**: update `squashed:<hash>`
 - **Step 12 "Approve and merge"**: write `approved`
+- **Step 12 trust=high auto-merge (HIGH_TRUST_PAUSE=false)**: write `approved`
 - **Step 12 "Fix remaining concerns"**: write `approved:invalidated`
 - **Step 12 "Request changes"**: write `approved:invalidated`
 - **Step 12 "Abort"**: write `approved:invalidated`
@@ -228,8 +229,39 @@ If squash fails: return FAILED. Do NOT proceed to gate.
 
 ## Step 12: Approval Gate (MANDATORY)
 
-**trust == "high":** Skip gate — UNLESS `REBASE_HAD_CONFLICTS=true`, in which case present conflict resolutions
-via AskUserQuestion before proceeding (silently merged conflicts require user acknowledgment).
+**trust == "high":** Read the review result file to determine whether to auto-merge or pause.
+
+```bash
+REVIEW_DIR="${CLAUDE_PROJECT_DIR}/.cat/work/review/${CLAUDE_SESSION_ID}"
+REVIEW_RESULT_FILE="${REVIEW_DIR}/${ISSUE_ID}-result.json"
+
+HIGH_TRUST_PAUSE="false"
+if [[ -f "${REVIEW_RESULT_FILE}" ]]; then
+  PERSISTED_STATUS=$(grep -o '"status"[[:space:]]*:[[:space:]]*"[^"]*"' "${REVIEW_RESULT_FILE}" | \
+    head -1 | sed 's/.*"status"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+  PERSISTED_HAS_HIGH=$(grep -o '"has_high_or_critical"[[:space:]]*:[[:space:]]*[^,}]*' "${REVIEW_RESULT_FILE}" | \
+    sed 's/.*"has_high_or_critical"[[:space:]]*:[[:space:]]*\([^,}]*\)/\1/' | tr -d ' ')
+
+  if [[ "$PERSISTED_STATUS" == "CONCERNS_FOUND" || "$PERSISTED_HAS_HIGH" == "true" ]]; then
+    HIGH_TRUST_PAUSE="true"
+  fi
+fi
+# If REVIEW_RESULT_FILE absent: caution=low was configured, no review ran → treat as APPROVED → auto-merge.
+# If REBASE_HAD_CONFLICTS=true: always pause regardless of review result.
+if [[ "${REBASE_HAD_CONFLICTS:-false}" == "true" ]]; then
+  HIGH_TRUST_PAUSE="true"
+fi
+```
+
+If `HIGH_TRUST_PAUSE == "false"`:
+- Auto-merge path: proceed directly to Step 13 without invoking AskUserQuestion.
+- Still run the pre-merge approval verification (marker check) to maintain audit trail.
+- Set `APPROVAL_MARKER=true` automatically (no user gate needed for trust=high clean review).
+
+If `HIGH_TRUST_PAUSE == "true"`:
+- Present concerns and conflict resolutions as in the standard gate.
+- Offer: `["Approve and merge", "Fix concerns", "Abort"]`
+- Process responses per the existing gate logic.
 
 **trust == "low" or "medium":** STOP for explicit user approval.
 
