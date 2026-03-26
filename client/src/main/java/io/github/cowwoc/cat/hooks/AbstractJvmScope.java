@@ -25,8 +25,9 @@ import java.nio.file.Path;
  * Abstract base class providing default implementations of derived path methods and shared
  * lazy-initialized service instances for {@link JvmScope}.
  * <p>
- * Subclasses must implement the abstract methods declared in {@link JvmScope} to supply the base
- * configuration values from which these derived paths are computed.
+ * Stores the JVM-level base path values ({@code projectPath}, {@code pluginRoot})
+ * so that subclasses do not need to duplicate those fields. Claude-specific paths
+ * (such as the Claude config directory) belong in {@link AbstractClaudeScope}.
  * <p>
  * <b>Thread Safety:</b> This class is thread-safe.
  */
@@ -65,19 +66,43 @@ public abstract class AbstractJvmScope implements JvmScope
   @SuppressWarnings("this-escape")
   private final ConcurrentLazyReference<String> pluginPrefix = ConcurrentLazyReference.create(
     this::derivePluginPrefix);
+  private final Path projectPath;
+  private final Path pluginRoot;
 
   /**
-   * Creates a new abstract JVM scope.
+   * Creates a new abstract JVM scope with the given base paths.
+   *
+   * @param projectPath the project's root directory
+   * @param pluginRoot the Claude plugin root directory
+   * @throws NullPointerException if any parameter is null
    */
-  protected AbstractJvmScope()
+  protected AbstractJvmScope(Path projectPath, Path pluginRoot)
   {
+    requireThat(projectPath, "projectPath").isNotNull();
+    requireThat(pluginRoot, "pluginRoot").isNotNull();
+    this.projectPath = projectPath;
+    this.pluginRoot = pluginRoot;
+  }
+
+  @Override
+  public Path getProjectPath()
+  {
+    ensureOpen();
+    return projectPath;
+  }
+
+  @Override
+  public Path getPluginRoot()
+  {
+    ensureOpen();
+    return pluginRoot;
   }
 
   @Override
   public Path getCatDir()
   {
     ensureOpen();
-    return getProjectPath().resolve(Config.CAT_DIR_NAME);
+    return projectPath.resolve(Config.CAT_DIR_NAME);
   }
 
   /**
@@ -97,36 +122,11 @@ public abstract class AbstractJvmScope implements JvmScope
     return projectPath.replace("/", "-").replace(".", "-").replace(" ", "-");
   }
 
-  /**
-   * Returns the Claude config directory.
-   * <p>
-   * Subclasses provide the concrete value; {@link ClaudeTool} and {@link ClaudeHook} expose this
-   * as part of their public API.
-   *
-   * @return the config directory path
-   * @throws IllegalStateException if this scope is closed
-   */
-  protected abstract Path getClaudeConfigPath();
-
-  @Override
-  public Path getClaudeSessionsPath()
-  {
-    ensureOpen();
-    return getClaudeConfigPath().resolve("projects").resolve(encodeProjectPath(getProjectPath().toString()));
-  }
-
-  @Override
-  public Path getClaudeSessionPath(String sessionId)
-  {
-    requireThat(sessionId, "sessionId").isNotBlank();
-    return getClaudeSessionsPath().resolve(sessionId);
-  }
-
   @Override
   public Path getCatWorkPath()
   {
     ensureOpen();
-    return getProjectPath().resolve(".cat").resolve("work");
+    return projectPath.resolve(".cat").resolve("work");
   }
 
   @Override
@@ -151,7 +151,7 @@ public abstract class AbstractJvmScope implements JvmScope
    */
   private String derivePluginPrefix()
   {
-    Path pluginRoot = getPluginRoot().toAbsolutePath().normalize();
+    Path pluginRoot = this.pluginRoot.toAbsolutePath().normalize();
     Path slugDir = pluginRoot.getParent();
     if (slugDir == null)
       throw new AssertionError("Plugin root has no parent directory: " + pluginRoot);

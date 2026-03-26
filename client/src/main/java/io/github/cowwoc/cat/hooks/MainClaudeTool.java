@@ -23,19 +23,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public final class MainClaudeTool extends AbstractClaudeTool
 {
-  private final ConcurrentLazyReference<Path> claudeConfigPathRef =
-    ConcurrentLazyReference.create(this::claudeConfigPath);
   private final ConcurrentLazyReference<TerminalType> terminalTypeRef =
-    ConcurrentLazyReference.create(this::terminalType);
-  private final ConcurrentLazyReference<String> tzRef =
-    ConcurrentLazyReference.create(this::tz);
+    ConcurrentLazyReference.create(TerminalType::detect);
+  private final ConcurrentLazyReference<String> tzRef = ConcurrentLazyReference.create(() ->
+  {
+    String tzValue = System.getenv("TZ");
+    if (tzValue == null || tzValue.isBlank())
+      return "UTC";
+    return tzValue;
+  });
   private final AtomicBoolean closed = new AtomicBoolean();
 
   /**
    * Creates a new production Claude tool scope.
    * <p>
-   * Reads the three required environment variables from {@code System.getenv()} and fails
-   * immediately with {@link AssertionError} if any are unset or blank.
+   * Reads the required environment variables from {@code System.getenv()} and fails
+   * immediately with {@link AssertionError} if any required variable is unset or blank.
    *
    * @throws AssertionError if any required environment variable is not set
    */
@@ -43,7 +46,8 @@ public final class MainClaudeTool extends AbstractClaudeTool
   {
     super(getEnvVar("CLAUDE_SESSION_ID"),
       Path.of(getEnvVar("CLAUDE_PROJECT_DIR")),
-      Path.of(getEnvVar("CLAUDE_PLUGIN_ROOT")));
+      Path.of(getEnvVar("CLAUDE_PLUGIN_ROOT")),
+      readClaudeConfigPath());
   }
 
   /**
@@ -62,11 +66,11 @@ public final class MainClaudeTool extends AbstractClaudeTool
   }
 
   /**
-   * Reads the Claude config directory from the environment or defaults to ~/.claude.
+   * Reads the Claude config directory from the environment or defaults to {@code ~/.claude}.
    *
    * @return the Claude config directory path
    */
-  private Path claudeConfigPath()
+  private static Path readClaudeConfigPath()
   {
     String configDir = System.getenv("CLAUDE_CONFIG_DIR");
     if (configDir != null && !configDir.isBlank())
@@ -74,41 +78,11 @@ public final class MainClaudeTool extends AbstractClaudeTool
     return Path.of(System.getProperty("user.home"), ".claude");
   }
 
-  /**
-   * Detects the terminal type.
-   *
-   * @return the detected terminal type
-   */
-  private TerminalType terminalType()
-  {
-    return TerminalType.detect();
-  }
-
-  /**
-   * Reads the timezone from the environment or defaults to UTC.
-   *
-   * @return the timezone string
-   */
-  private String tz()
-  {
-    String tzValue = System.getenv("TZ");
-    if (tzValue == null || tzValue.isBlank())
-      return "UTC";
-    return tzValue;
-  }
-
   @Override
   public Path getWorkDir()
   {
     ensureOpen();
     return Path.of(System.getProperty("user.dir"));
-  }
-
-  @Override
-  public Path getClaudeConfigPath()
-  {
-    ensureOpen();
-    return claudeConfigPathRef.getValue();
   }
 
   @Override

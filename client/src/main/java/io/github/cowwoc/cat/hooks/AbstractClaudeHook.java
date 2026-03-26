@@ -34,7 +34,7 @@ import tools.jackson.databind.node.ObjectNode;
  * <p>
  * <b>Thread Safety:</b> This class is thread-safe.
  */
-public abstract class AbstractClaudeHook extends AbstractJvmScope implements ClaudeHook
+public abstract class AbstractClaudeHook extends AbstractClaudeScope implements ClaudeHook
 {
   /**
    * Pattern that accepts alphanumeric characters, hyphens, and underscores.
@@ -55,9 +55,6 @@ public abstract class AbstractClaudeHook extends AbstractJvmScope implements Cla
   private final JsonNode data;
   private final String sessionId;
   private final String agentId;
-  private final Path projectPath;
-  private final Path pluginRoot;
-  private final Path claudeConfigPath;
 
   /**
    * Creates a new abstract Claude hook scope with the given hook JSON payload and infrastructure paths.
@@ -71,16 +68,11 @@ public abstract class AbstractClaudeHook extends AbstractJvmScope implements Cla
    */
   protected AbstractClaudeHook(JsonNode data, Path projectPath, Path pluginRoot, Path claudeConfigPath)
   {
+    super(projectPath, pluginRoot, claudeConfigPath);
     requireThat(data, "data").isNotNull();
-    requireThat(projectPath, "projectPath").isNotNull();
-    requireThat(pluginRoot, "pluginRoot").isNotNull();
-    requireThat(claudeConfigPath, "claudeConfigPath").isNotNull();
     this.data = data;
     this.sessionId = validateSessionId(data);
     this.agentId = validateAgentId(data);
-    this.projectPath = projectPath;
-    this.pluginRoot = pluginRoot;
-    this.claudeConfigPath = claudeConfigPath;
   }
 
   /**
@@ -173,27 +165,6 @@ public abstract class AbstractClaudeHook extends AbstractJvmScope implements Cla
         "'. Expected alphanumeric, hyphens, and underscores only.");
     }
     return value;
-  }
-
-  @Override
-  public Path getProjectPath()
-  {
-    ensureOpen();
-    return projectPath;
-  }
-
-  @Override
-  public Path getPluginRoot()
-  {
-    ensureOpen();
-    return pluginRoot;
-  }
-
-  @Override
-  public Path getClaudeConfigPath()
-  {
-    ensureOpen();
-    return claudeConfigPath;
   }
 
   @Override

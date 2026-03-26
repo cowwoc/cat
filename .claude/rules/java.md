@@ -1090,6 +1090,33 @@ private record CheckResult(boolean statusInvoked, boolean hasBoxOutput)
 }
 ```
 
+### Skip Validation of Constructor Arguments Passed to Superclass
+
+Do not validate constructor arguments that are already validated by a superclass constructor.
+The superclass validation is sufficient; redundant checks clutter the code.
+
+**Example - Bad (redundant validation):**
+```java
+public MySubclass(String name, Path projectPath)
+{
+  requireThat(name, "name").isNotBlank();           // Redundant - superclass validates this
+  requireThat(projectPath, "projectPath").isAbsolute();  // Redundant - superclass validates
+  super(name, projectPath);
+}
+```
+
+**Example - Good (omit redundant checks):**
+```java
+public MySubclass(String name, Path projectPath)
+{
+  super(name, projectPath);  // Superclass validates both
+}
+```
+
+**When to add validation:**
+- Argument is used in the subclass before calling `super()` (rare)
+- Argument has constraints specific to the subclass (not enforced by superclass)
+
 ### Method Preconditions
 **Public methods:** Always validate parameters with `requireThat()` - throws `IllegalArgumentException`:
 
@@ -1357,6 +1384,33 @@ methods used only within the package should be package-private or private even i
 **Remove unused methods:** After reducing visibility, delete any method that is now unreachable — i.e., `private`
 methods not called within the class, or package-private methods not called anywhere in the package. Dead code adds
 noise and misleads future readers into thinking a method has callers.
+
+### No Delegation-Only Methods
+
+Do not declare methods that do nothing except delegate to the superclass implementation with the same method name.
+These add no value and clutter the codebase.
+
+When inheriting from a superclass that implements a required interface method, rely on the inherited implementation
+unless your subclass needs to override it with custom behavior.
+
+**Example - Bad (delegation-only method):**
+```java
+@Override
+public Path getClaudeConfigPath()
+{
+  return super.getClaudeConfigPath();
+}
+```
+
+**Example - Good (omit the method and use inherited implementation):**
+```java
+// Don't declare this method - the superclass implementation is sufficient
+```
+
+**When to override:**
+- Your subclass needs different behavior (custom logic, computed values)
+- You need to add visibility (e.g., a `protected` method in superclass that should be `public`)
+- You need to add documentation specific to the subclass
 
 ### Service Access via Pouch Scopes (No Dependency Injection)
 Do not use dependency injection frameworks (Spring, Guice, Dagger, etc.). Use [pouch](https://github.com/cowwoc/pouch)
