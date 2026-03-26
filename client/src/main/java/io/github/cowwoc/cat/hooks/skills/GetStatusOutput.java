@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -23,9 +24,10 @@ import java.util.stream.Stream;
 
 import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
-import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.IssueStatus;
+import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.LockFile;
+import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.licensing.LicenseResult;
 import io.github.cowwoc.cat.hooks.licensing.LicenseValidator;
 import io.github.cowwoc.cat.hooks.licensing.Tier;
@@ -347,7 +349,7 @@ public final class GetStatusOutput implements SkillOutput
     if (status.equals("open"))
     {
       String lockFileName = minorNum + "-" + issueName + ".lock";
-      Path lockFile = catDir.resolve("locks").resolve(lockFileName);
+      Path lockFile = scope.getCatWorkPath().resolve("locks").resolve(lockFileName);
       if (Files.exists(lockFile))
         return "in-progress";
 
@@ -575,7 +577,7 @@ public final class GetStatusOutput implements SkillOutput
     contentItems.add("");
 
     String envSessionId = scope.getSessionId();
-    List<Agent> agents = getActiveAgents(catDir, envSessionId);
+    List<Agent> agents = getActiveAgents(envSessionId);
 
     if (!agents.isEmpty())
     {
@@ -1009,14 +1011,13 @@ public final class GetStatusOutput implements SkillOutput
   /**
    * Gets list of active agents from lock files.
    *
-   * @param catDir the CAT directory
    * @param currentSession the current session ID to exclude
    * @return the list of active agents
    * @throws IOException if an I/O error occurs
    */
-  private List<Agent> getActiveAgents(Path catDir, String currentSession) throws IOException
+  private List<Agent> getActiveAgents(String currentSession) throws IOException
   {
-    Path locksDir = catDir.resolve("locks");
+    Path locksDir = scope.getCatWorkPath().resolve("locks");
     if (!Files.isDirectory(locksDir))
       return List.of();
 
@@ -1034,33 +1035,25 @@ public final class GetStatusOutput implements SkillOutput
         String issueId = lockFile.getFileName().toString();
         issueId = issueId.substring(0, issueId.length() - 5);
 
-        String sessionId = "";
-        long createdAt = 0;
-        String worktree = "";
-
-        String content = Files.readString(lockFile);
-        for (String line : content.split("\n"))
+        LockFile lockData;
+        try
         {
-          if (line.startsWith("session_id="))
-            sessionId = line.substring("session_id=".length());
-          else if (line.startsWith("created_at="))
-          {
-            try
-            {
-              createdAt = Long.parseLong(line.substring("created_at=".length()));
-            }
-            catch (NumberFormatException _)
-            {
-            }
-          }
-          else if (line.startsWith("worktree="))
-            worktree = line.substring("worktree=".length());
+          lockData = LockFile.parse(lockFile, scope.getJsonMapper());
         }
+        catch (JacksonException e)
+        {
+          log.warn("Skipping lock file with invalid JSON: {}", lockFile, e);
+          continue;
+        }
+
+        String sessionId = lockData.sessionId();
+        long createdAt = lockData.createdAt();
+        String worktree = lockData.worktree();
 
         if (sessionId.equals(currentSession))
           continue;
 
-        if (!sessionId.isEmpty())
+        if (!sessionId.isBlank())
         {
           long ageSeconds;
           if (createdAt > 0)
