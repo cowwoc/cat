@@ -8,8 +8,8 @@ package io.github.cowwoc.cat.hooks.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.ClaudeStatusline;
 import io.github.cowwoc.cat.hooks.util.StatuslineCommand;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -24,21 +24,20 @@ import org.testng.annotations.Test;
 public final class StatuslineCommandTest
 {
   /**
-   * Executes the statusline command with the given JSON and locks directory, returning the output string.
+   * Executes the statusline command with the given scope and locks directory, returning the output
+   * string.
    *
-   * @param scope   the JVM scope
-   * @param json    the JSON input
+   * @param scope   the test scope (with JSON already parsed via the 3-arg constructor)
    * @param lockDir the locks directory containing {@code .lock} files
    * @return the statusline output
    * @throws IOException if an I/O error occurs
    */
-  private static String executeWithLockDir(TestClaudeTool scope, String json, Path lockDir) throws IOException
+  private static String executeWithLockDir(ClaudeStatusline scope, Path lockDir) throws IOException
   {
-    ByteArrayInputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     PrintStream printStream = new PrintStream(outputStream, true, StandardCharsets.UTF_8);
     StatuslineCommand cmd = new StatuslineCommand(scope);
-    cmd.execute(inputStream, printStream, lockDir);
+    cmd.execute(printStream, lockDir);
     return outputStream.toString(StandardCharsets.UTF_8);
   }
 
@@ -52,7 +51,7 @@ public final class StatuslineCommandTest
   public void validInputContainsAllComponents() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try
     {
       String json = """
         {
@@ -62,10 +61,13 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 45}
         }
         """;
-      String output = executeWithLockDir(scope, json, tempDir);
-      requireThat(output, "output").contains("claude-3-5-sonnet");
-      requireThat(output, "output").contains("abcdef12-1234-5678-abcd-ef1234567890");
-      requireThat(output, "output").contains("00:02");
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        String output = executeWithLockDir(scope, tempDir);
+        requireThat(output, "output").contains("claude-3-5-sonnet");
+        requireThat(output, "output").contains("abcdef12-1234-5678-abcd-ef1234567890");
+        requireThat(output, "output").contains("00:02");
+      }
     }
     finally
     {
@@ -82,7 +84,7 @@ public final class StatuslineCommandTest
   public void durationUnderOneMinuteFormattedAsHHMM() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try
     {
       String json = """
         {
@@ -92,8 +94,11 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 0}
         }
         """;
-      String output = executeWithLockDir(scope, json, tempDir);
-      requireThat(output, "output").contains("00:00");
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        String output = executeWithLockDir(scope, tempDir);
+        requireThat(output, "output").contains("00:00");
+      }
     }
     finally
     {
@@ -110,7 +115,7 @@ public final class StatuslineCommandTest
   public void durationOverOneHourFormattedWithHours() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try
     {
       String json = """
         {
@@ -120,9 +125,12 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 0}
         }
         """;
-      String output = executeWithLockDir(scope, json, tempDir);
-      // 3725000ms = 3725 seconds = 62 minutes 5 seconds → 1 hour 2 minutes → 01:02
-      requireThat(output, "output").contains("01:02");
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        String output = executeWithLockDir(scope, tempDir);
+        // 3725000ms = 3725 seconds = 62 minutes 5 seconds → 1 hour 2 minutes → 01:02
+        requireThat(output, "output").contains("01:02");
+      }
     }
     finally
     {
@@ -140,7 +148,7 @@ public final class StatuslineCommandTest
   public void usageAbove80ContainsRgbRedColor() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try
     {
       String json = """
         {
@@ -150,10 +158,13 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 85}
         }
         """;
-      String output = executeWithLockDir(scope, json, tempDir);
-      // contextPct = (85 * 1000) / 835 = 101, clamped to 100 → pure red: \033[38;2;255;0;0m
-      requireThat(output, "output").contains("\033[38;2;255;0;0m");
-      requireThat(output, "output").contains("100%");
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        String output = executeWithLockDir(scope, tempDir);
+        // contextPct = (85 * 1000) / 835 = 101, clamped to 100 → pure red: \033[38;2;255;0;0m
+        requireThat(output, "output").contains("\033[38;2;255;0;0m");
+        requireThat(output, "output").contains("100%");
+      }
     }
     finally
     {
@@ -171,7 +182,7 @@ public final class StatuslineCommandTest
   public void usageBetween50And80ContainsRgbOrangeColor() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try
     {
       String json = """
         {
@@ -181,9 +192,12 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 65}
         }
         """;
-      String output = executeWithLockDir(scope, json, tempDir);
-      // contextPct = (65 * 1000) / 835 = 77 → red=255, green=((100-77)*255)/50 = 117 → \033[38;2;255;117;0m
-      requireThat(output, "output").contains("\033[38;2;255;117;0m");
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        String output = executeWithLockDir(scope, tempDir);
+        // contextPct = (65 * 1000) / 835 = 77 → red=255, green=((100-77)*255)/50 = 117 → \033[38;2;255;117;0m
+        requireThat(output, "output").contains("\033[38;2;255;117;0m");
+      }
     }
     finally
     {
@@ -201,7 +215,7 @@ public final class StatuslineCommandTest
   public void usageBelow50ContainsRgbGreenColor() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try
     {
       String json = """
         {
@@ -211,9 +225,12 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 30}
         }
         """;
-      String output = executeWithLockDir(scope, json, tempDir);
-      // contextPct = (30 * 1000) / 835 = 35 → red=(35*255)/50 = 178, green=255 → \033[38;2;178;255;0m
-      requireThat(output, "output").contains("\033[38;2;178;255;0m");
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        String output = executeWithLockDir(scope, tempDir);
+        // contextPct = (30 * 1000) / 835 = 35 → red=(35*255)/50 = 178, green=255 → \033[38;2;178;255;0m
+        requireThat(output, "output").contains("\033[38;2;178;255;0m");
+      }
     }
     finally
     {
@@ -230,14 +247,17 @@ public final class StatuslineCommandTest
   public void emptyJsonObjectUsesDefaults() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try
     {
       String json = "{}";
-      String output = executeWithLockDir(scope, json, tempDir);
-      requireThat(output, "output").contains("unknown");
-      requireThat(output, "output").contains("00:00");
-      // contextPct=0 → right-justified: "  0%"
-      requireThat(output, "output").contains("  0%");
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        String output = executeWithLockDir(scope, tempDir);
+        requireThat(output, "output").contains("unknown");
+        requireThat(output, "output").contains("00:00");
+        // contextPct=0 → right-justified: "  0%"
+        requireThat(output, "output").contains("  0%");
+      }
     }
     finally
     {
@@ -254,7 +274,7 @@ public final class StatuslineCommandTest
   public void usageExceeding100ClampedTo100() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try
     {
       String json = """
         {
@@ -264,9 +284,12 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 150}
         }
         """;
-      String output = executeWithLockDir(scope, json, tempDir);
-      requireThat(output, "output").contains("100%");
-      requireThat(output, "output").doesNotContain("150%");
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        String output = executeWithLockDir(scope, tempDir);
+        requireThat(output, "output").contains("100%");
+        requireThat(output, "output").doesNotContain("150%");
+      }
     }
     finally
     {
@@ -283,7 +306,7 @@ public final class StatuslineCommandTest
   public void usageBarFullAt100Percent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try
     {
       String json = """
         {
@@ -293,9 +316,12 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 100}
         }
         """;
-      String output = executeWithLockDir(scope, json, tempDir);
-      // 20 filled blocks
-      requireThat(output, "output").contains("████████████████████");
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        String output = executeWithLockDir(scope, tempDir);
+        // 20 filled blocks
+        requireThat(output, "output").contains("████████████████████");
+      }
     }
     finally
     {
@@ -312,7 +338,7 @@ public final class StatuslineCommandTest
   public void sessionIdDisplayedInFull() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try
     {
       String json = """
         {
@@ -322,8 +348,11 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 0}
         }
         """;
-      String output = executeWithLockDir(scope, json, tempDir);
-      requireThat(output, "output").contains("12345678-abcd-ef01-2345-678901234567");
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        String output = executeWithLockDir(scope, tempDir);
+        requireThat(output, "output").contains("12345678-abcd-ef01-2345-678901234567");
+      }
     }
     finally
     {
@@ -341,7 +370,7 @@ public final class StatuslineCommandTest
   public void usageAt50PercentScalesAbove50() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try
     {
       String json = """
         {
@@ -351,9 +380,12 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 50}
         }
         """;
-      String output = executeWithLockDir(scope, json, tempDir);
-      // contextPct = (50 * 1000) / 835 = 59 → red=255, green=((100-59)*255)/50 = 209 → \033[38;2;255;209;0m
-      requireThat(output, "output").contains("\033[38;2;255;209;0m");
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        String output = executeWithLockDir(scope, tempDir);
+        // contextPct = (50 * 1000) / 835 = 59 → red=255, green=((100-59)*255)/50 = 209 → \033[38;2;255;209;0m
+        requireThat(output, "output").contains("\033[38;2;255;209;0m");
+      }
     }
     finally
     {
@@ -371,7 +403,7 @@ public final class StatuslineCommandTest
   public void usageAt80PercentScalesNearRed() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try
     {
       String json = """
         {
@@ -381,9 +413,12 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 80}
         }
         """;
-      String output = executeWithLockDir(scope, json, tempDir);
-      // contextPct = (80 * 1000) / 835 = 95 → red=255, green=((100-95)*255)/50 = 25 → \033[38;2;255;25;0m
-      requireThat(output, "output").contains("\033[38;2;255;25;0m");
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        String output = executeWithLockDir(scope, tempDir);
+        // contextPct = (80 * 1000) / 835 = 95 → red=255, green=((100-95)*255)/50 = 25 → \033[38;2;255;25;0m
+        requireThat(output, "output").contains("\033[38;2;255;25;0m");
+      }
     }
     finally
     {
@@ -400,7 +435,7 @@ public final class StatuslineCommandTest
   public void usageBarAllEmptyAt0Percent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try
     {
       String json = """
         {
@@ -410,9 +445,12 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 0}
         }
         """;
-      String output = executeWithLockDir(scope, json, tempDir);
-      // All 20 segments should be empty
-      requireThat(output, "output").contains("░░░░░░░░░░░░░░░░░░░░");
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        String output = executeWithLockDir(scope, tempDir);
+        // All 20 segments should be empty
+        requireThat(output, "output").contains("░░░░░░░░░░░░░░░░░░░░");
+      }
     }
     finally
     {
@@ -429,7 +467,7 @@ public final class StatuslineCommandTest
   public void usageBarAt50PercentRaw() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try
     {
       String json = """
         {
@@ -439,10 +477,13 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 50}
         }
         """;
-      String output = executeWithLockDir(scope, json, tempDir);
-      // contextPct = (50 * 1000) / 835 = 59 → filled = (59 * 20) / 100 = 11
-      // 11 filled followed by 9 empty segments
-      requireThat(output, "output").contains("███████████░░░░░░░░░");
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        String output = executeWithLockDir(scope, tempDir);
+        // contextPct = (50 * 1000) / 835 = 59 → filled = (59 * 20) / 100 = 11
+        // 11 filled followed by 9 empty segments
+        requireThat(output, "output").contains("███████████░░░░░░░░░");
+      }
     }
     finally
     {
@@ -459,7 +500,7 @@ public final class StatuslineCommandTest
   public void negativeDurationClampedToZero() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try
     {
       String json = """
         {
@@ -469,8 +510,11 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 0}
         }
         """;
-      String output = executeWithLockDir(scope, json, tempDir);
-      requireThat(output, "output").contains("00:00");
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        String output = executeWithLockDir(scope, tempDir);
+        requireThat(output, "output").contains("00:00");
+      }
     }
     finally
     {
@@ -487,7 +531,7 @@ public final class StatuslineCommandTest
   public void negativeUsagePercentageClampedToZero() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try
     {
       String json = """
         {
@@ -497,9 +541,12 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": -10}
         }
         """;
-      String output = executeWithLockDir(scope, json, tempDir);
-      // contextPct=0 → right-justified: "  0%"
-      requireThat(output, "output").contains("  0%");
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        String output = executeWithLockDir(scope, tempDir);
+        // contextPct=0 → right-justified: "  0%"
+        requireThat(output, "output").contains("  0%");
+      }
     }
     finally
     {
@@ -516,7 +563,7 @@ public final class StatuslineCommandTest
   public void outputContainsAllFiveEmojisWhenActiveIssuePresent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try
     {
       Path lockDir = Files.createTempDirectory("cat-locks-");
       try
@@ -533,12 +580,15 @@ public final class StatuslineCommandTest
             "context_window": {"used_percentage": 50}
           }
           """;
-        String output = executeWithLockDir(scope, json, lockDir);
-        requireThat(output, "output").contains("🌿");
-        requireThat(output, "output").contains("🤖");
-        requireThat(output, "output").contains("⏰");
-        requireThat(output, "output").contains("🆔");
-        requireThat(output, "output").contains("📊");
+        try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+        {
+          String output = executeWithLockDir(scope, lockDir);
+          requireThat(output, "output").contains("🌿");
+          requireThat(output, "output").contains("🤖");
+          requireThat(output, "output").contains("⏰");
+          requireThat(output, "output").contains("🆔");
+          requireThat(output, "output").contains("📊");
+        }
       }
       finally
       {
@@ -560,7 +610,7 @@ public final class StatuslineCommandTest
   public void outputContainsAllComponentColors() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try
     {
       Path lockDir = Files.createTempDirectory("cat-locks-");
       try
@@ -577,15 +627,18 @@ public final class StatuslineCommandTest
             "context_window": {"used_percentage": 50}
           }
           """;
-        String output = executeWithLockDir(scope, json, lockDir);
-        // WORKTREE_COLOR: Bright White
-        requireThat(output, "output").contains("\033[38;2;255;255;255m");
-        // MODEL_COLOR: Warm Gold
-        requireThat(output, "output").contains("\033[38;2;220;150;9m");
-        // TIME_COLOR: Coral
-        requireThat(output, "output").contains("\033[38;2;255;127;80m");
-        // SESSION_COLOR: Medium Purple
-        requireThat(output, "output").contains("\033[38;2;147;112;219m");
+        try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+        {
+          String output = executeWithLockDir(scope, lockDir);
+          // WORKTREE_COLOR: Bright White
+          requireThat(output, "output").contains("\033[38;2;255;255;255m");
+          // MODEL_COLOR: Warm Gold
+          requireThat(output, "output").contains("\033[38;2;220;150;9m");
+          // TIME_COLOR: Coral
+          requireThat(output, "output").contains("\033[38;2;255;127;80m");
+          // SESSION_COLOR: Medium Purple
+          requireThat(output, "output").contains("\033[38;2;147;112;219m");
+        }
       }
       finally
       {
@@ -609,7 +662,7 @@ public final class StatuslineCommandTest
   public void scalingThresholdBoundaryAt835Percent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try
     {
       // used_percentage=84: contextPct = (84 * 1000) / 835 = 100 (truncated), clamped to 100
       String jsonAt84 = """
@@ -620,10 +673,13 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 84}
         }
         """;
-      String output84 = executeWithLockDir(scope, jsonAt84, tempDir);
-      // contextPct=100 → all 20 segments filled
-      requireThat(output84, "output84").contains("████████████████████");
-      requireThat(output84, "output84").contains("100%");
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, jsonAt84))
+      {
+        String output84 = executeWithLockDir(scope, tempDir);
+        // contextPct=100 → all 20 segments filled
+        requireThat(output84, "output84").contains("████████████████████");
+        requireThat(output84, "output84").contains("100%");
+      }
 
       // used_percentage=83: contextPct = (83 * 1000) / 835 = 99 (truncated)
       String jsonAt83 = """
@@ -634,11 +690,14 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 83}
         }
         """;
-      String output83 = executeWithLockDir(scope, jsonAt83, tempDir);
-      // contextPct=99 → filled = (99 * 20) / 100 = 19, so 19 filled and 1 empty
-      requireThat(output83, "output83").contains("███████████████████░");
-      // contextPct=99 → right-justified: " 99%"
-      requireThat(output83, "output83").contains(" 99%");
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, jsonAt83))
+      {
+        String output83 = executeWithLockDir(scope, tempDir);
+        // contextPct=99 → filled = (99 * 20) / 100 = 19, so 19 filled and 1 empty
+        requireThat(output83, "output83").contains("███████████████████░");
+        // contextPct=99 → right-justified: " 99%"
+        requireThat(output83, "output83").contains(" 99%");
+      }
     }
     finally
     {
@@ -655,7 +714,7 @@ public final class StatuslineCommandTest
   public void shortSessionIdPassesThroughUnchanged() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try
     {
       String json = """
         {
@@ -665,8 +724,11 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": 0}
         }
         """;
-      String output = executeWithLockDir(scope, json, tempDir);
-      requireThat(output, "output").contains("abc123");
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        String output = executeWithLockDir(scope, tempDir);
+        requireThat(output, "output").contains("abc123");
+      }
     }
     finally
     {
@@ -683,7 +745,7 @@ public final class StatuslineCommandTest
   public void nullJsonFieldsUseDefaults() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try
     {
       String json = """
         {
@@ -693,11 +755,14 @@ public final class StatuslineCommandTest
           "context_window": {"used_percentage": null}
         }
         """;
-      String output = executeWithLockDir(scope, json, tempDir);
-      requireThat(output, "output").contains("unknown");
-      requireThat(output, "output").contains("00:00");
-      // contextPct=0 → right-justified: "  0%"
-      requireThat(output, "output").contains("  0%");
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        String output = executeWithLockDir(scope, tempDir);
+        requireThat(output, "output").contains("unknown");
+        requireThat(output, "output").contains("00:00");
+        // contextPct=0 → right-justified: "  0%"
+        requireThat(output, "output").contains("  0%");
+      }
     }
     finally
     {
@@ -714,14 +779,17 @@ public final class StatuslineCommandTest
   public void malformedJsonUsesDefaults() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try
     {
       String json = "not valid json at all !!!";
-      String output = executeWithLockDir(scope, json, tempDir);
-      requireThat(output, "output").contains("unknown");
-      requireThat(output, "output").contains("00:00");
-      // contextPct=0 → right-justified: "  0%"
-      requireThat(output, "output").contains("  0%");
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        String output = executeWithLockDir(scope, tempDir);
+        requireThat(output, "output").contains("unknown");
+        requireThat(output, "output").contains("00:00");
+        // contextPct=0 → right-justified: "  0%"
+        requireThat(output, "output").contains("  0%");
+      }
     }
     finally
     {
@@ -738,7 +806,7 @@ public final class StatuslineCommandTest
   public void getActiveIssueReturnsIssueIdWhenLockMatchesSession() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir))
     {
       StatuslineCommand cmd = new StatuslineCommand(scope);
       Path lockDir = Files.createTempDirectory("cat-locks-");
@@ -771,7 +839,7 @@ public final class StatuslineCommandTest
   public void getActiveIssueReturnsEmptyWhenNoMatchingLock() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir))
     {
       StatuslineCommand cmd = new StatuslineCommand(scope);
       Path lockDir = Files.createTempDirectory("cat-locks-");
@@ -804,7 +872,7 @@ public final class StatuslineCommandTest
   public void getActiveIssueReturnsEmptyWhenLocksDirectoryAbsent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir))
     {
       StatuslineCommand cmd = new StatuslineCommand(scope);
       // Pass a non-existent directory — should return "" gracefully
@@ -828,7 +896,7 @@ public final class StatuslineCommandTest
   public void executeOmitsFirstElementWhenNoActiveIssue() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try
     {
       String json = """
         {
@@ -837,11 +905,14 @@ public final class StatuslineCommandTest
           "cost": {"total_duration_ms": 0},
           "context_window": {"used_percentage": 0}
         }""";
-      String result = executeWithLockDir(scope, json, tempDir);
-      // No lock → no worktree element → output does not contain 🌿
-      requireThat(result, "result").doesNotContain("🌿");
-      // Model element still present
-      requireThat(result, "result").contains("claude-3-5-sonnet");
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        String result = executeWithLockDir(scope, tempDir);
+        // No lock → no worktree element → output does not contain 🌿
+        requireThat(result, "result").doesNotContain("🌿");
+        // Model element still present
+        requireThat(result, "result").contains("claude-3-5-sonnet");
+      }
     }
     finally
     {
@@ -859,7 +930,7 @@ public final class StatuslineCommandTest
   public void executeIncludesIssueIdWhenActiveIssueFound() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try
     {
       Path lockDir = Files.createTempDirectory("cat-locks-");
       try
@@ -875,9 +946,12 @@ public final class StatuslineCommandTest
             "cost": {"total_duration_ms": 0},
             "context_window": {"used_percentage": 0}
           }""";
-        String result = executeWithLockDir(scope, json, lockDir);
-        requireThat(result, "result").contains("🌿");
-        requireThat(result, "result").contains("2.1-my-issue");
+        try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+        {
+          String result = executeWithLockDir(scope, lockDir);
+          requireThat(result, "result").contains("🌿");
+          requireThat(result, "result").contains("2.1-my-issue");
+        }
       }
       finally
       {
@@ -900,7 +974,7 @@ public final class StatuslineCommandTest
   public void getActiveIssueSanitizesAnsiInjectionInIssueId() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir))
     {
       StatuslineCommand cmd = new StatuslineCommand(scope);
       Path lockDir = Files.createTempDirectory("cat-locks-");
@@ -944,7 +1018,7 @@ public final class StatuslineCommandTest
   public void getActiveIssueReturnsErrorWhenLockFileHasMalformedJson() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir))
     {
       StatuslineCommand cmd = new StatuslineCommand(scope);
       Path lockDir = Files.createTempDirectory("cat-locks-");
@@ -975,7 +1049,7 @@ public final class StatuslineCommandTest
   public void getActiveIssueReturnsEmptyWhenLockFileHasNoSessionIdField() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir))
     {
       StatuslineCommand cmd = new StatuslineCommand(scope);
       Path lockDir = Files.createTempDirectory("cat-locks-");
@@ -1009,7 +1083,7 @@ public final class StatuslineCommandTest
   public void getActiveIssueReturnsErrorWhenLockFileIsEmpty() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir))
     {
       StatuslineCommand cmd = new StatuslineCommand(scope);
       Path lockDir = Files.createTempDirectory("cat-locks-");
