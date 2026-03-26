@@ -16,6 +16,8 @@ import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import io.github.cowwoc.cat.hooks.ShellParser;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -677,31 +679,31 @@ public final class GetSkill
       Throwable cause = e.getCause();
       if (cause == null)
         cause = e;
-      String errorMsg = cause.getMessage();
-      if (errorMsg == null)
-        errorMsg = cause.getClass().getName();
-      return buildPreprocessorErrorMessage(originalDirective, errorMsg);
+      StringWriter stringWriter = new StringWriter();
+      cause.printStackTrace(new PrintWriter(stringWriter));
+      return buildPreprocessorErrorMessage(originalDirective, cause.toString(), stringWriter.toString());
     }
     catch (Exception e)
     {
-      String errorMsg = e.getMessage();
-      if (errorMsg == null)
-        errorMsg = e.getClass().getName();
-      return buildPreprocessorErrorMessage(originalDirective, errorMsg);
+      StringWriter stringWriter = new StringWriter();
+      e.printStackTrace(new PrintWriter(stringWriter));
+      return buildPreprocessorErrorMessage(originalDirective, e.toString(), stringWriter.toString());
     }
   }
 
   /**
    * Builds a user-friendly error message when a preprocessor directive fails.
    * <p>
-   * The message includes the directive that failed, the error details, and instructions for
-   * filing a bug report using {@code /cat:feedback}.
+   * The message includes the directive that failed, the error details, the full stack trace for
+   * debugging, and instructions for filing a bug report using {@code /cat:feedback}.
    *
    * @param originalDirective the original preprocessor directive text that failed
-   * @param errorMsg the error message from the exception
+   * @param errorMsg the error summary from the exception (via {@code toString()})
+   * @param stackTrace the full stack trace from the exception
    * @return a user-friendly error message with bug report instructions
    */
-  private static String buildPreprocessorErrorMessage(String originalDirective, String errorMsg)
+  static String buildPreprocessorErrorMessage(String originalDirective, String errorMsg,
+    String stackTrace)
   {
     return """
 
@@ -713,10 +715,15 @@ public final class GetSkill
       **Directive:** `%s`
       **Error:** %s
 
+      **Stack Trace:**
+      ```
+      %s
+      ```
+
       To report this bug, run: `/cat:feedback`
       ---
 
-      """.formatted(originalDirective, errorMsg);
+      """.formatted(originalDirective, errorMsg, stackTrace.stripTrailing());
   }
 
   /**
