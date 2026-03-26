@@ -14,7 +14,7 @@ CAT organizes work in a five-level hierarchy:
 ```
 version
   └── issue
-        └── sub-issue          (decomposed from a parent issue when context is too large)
+        └── sub-issue          (decomposed from a parent issue at a structural delivery boundary)
               └── wave          (a batch of work items executed by one subagent)
                     └── subagent  (executes one wave in an isolated worktree)
 ```
@@ -23,7 +23,7 @@ version
 |-------|-------------|
 | **version** | A major or minor release (e.g., `v2.1`). See `plugin/concepts/hierarchy.md`. |
 | **issue** | An atomic unit of work within a version. |
-| **sub-issue** | A child issue created by decomposing a parent issue that exceeds the context-size threshold. |
+| **sub-issue** | A child issue created by decomposing a parent issue at a structural delivery boundary. |
 | **wave** | A batch of work items assigned to one subagent. Items within a wave run in parallel; waves run sequentially only when a dependency exists between them. |
 | **subagent** | An isolated Claude instance that executes one wave inside a dedicated git worktree. |
 
@@ -72,16 +72,39 @@ Use multiple waves **only** when:
 Plans with only 1 wave (or no waves at all) use single-subagent mode, spawning one implementation
 subagent with all items. Only plans with 2 or more distinct waves spawn parallel subagents.
 
+## Wave-Based Context Management
+
+High subagent context usage is handled by splitting waves — not by decomposing the issue into sub-issues.
+
+### Proactive Wave Sizing
+
+When writing plan.md waves, estimate the scope of each wave using file count and change complexity.
+If a wave would exceed 40% of the subagent context budget, split it into two waves of roughly equal
+scope before plan.md is written. A rule-of-thumb heuristic: each wave should touch no more than
+5 files with medium-complexity changes, or 10 files with trivial changes (rename, formatting).
+
+### Reactive Wave Re-Splitting
+
+After a subagent completes and returns its result, check `percent_of_context`:
+- **If `percent_of_context > 40`:** Before spawning the next wave, split every remaining wave in
+  plan.md in half. Move the second half of each remaining wave's bullet items into a new wave inserted
+  immediately after it. Renumber all subsequent waves to keep the sequence gapless.
+- **If `percent_of_context <= 40`:** Proceed without modification.
+
+See `plugin/concepts/token-warning.md` for how compaction events alter this flow when context is
+fully exhausted.
+
 ## Sub-Issue Decomposition
 
-A **sub-issue** is created when an issue's context size exceeds the safe threshold (approximately 80 K tokens
-or when compaction events occur). Decomposition splits the parent issue into smaller, focused child issues
-that each fit within a single subagent's context window.
+A **sub-issue** is a child issue created by splitting a parent when the work spans genuinely separate
+delivery boundaries. Decomposition is a structural decision — it is **never triggered by context usage
+alone**. Use wave re-splitting to manage context; use decomposition only when:
 
-Triggers for decomposition:
-- Token report shows issue approaching 40% threshold (80 K tokens)
-- Subagent has experienced compaction events
-- Pre-emptive analysis reveals the issue is too large before execution begins
+- A **merge boundary** is required between phases (phase B cannot start until phase A's code is merged
+  and visible to reviewers)
+- Components are **independently deliverable and reviewable** (each child issue can be reviewed, merged,
+  and shipped without the other)
+- Work spans **genuinely disjoint subsystems** where no shared file or interface connects them
 
 After decomposition, the sub-issues are organized into waves following the same dependency analysis rules
 described above. See `plugin/skills/decompose-issue-agent/first-use.md` for the full decomposition workflow.
