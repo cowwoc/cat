@@ -88,6 +88,9 @@ subagents to fabricate results.
 
 ## Sub-Agent Waves for Parallel Execution
 
+> See `${CLAUDE_PLUGIN_ROOT}/concepts/execution-model.md` for the full wave execution model, hierarchy, and
+> parallelism rules.
+
 When the issue has clearly independent work that can run simultaneously, use `## Sub-Agent Waves` with `### Wave N`
 sections to enable parallel subagent spawning. Use sparingly — only when items genuinely don't depend on each other
 and won't modify the same files.
