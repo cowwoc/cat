@@ -8,7 +8,6 @@ package io.github.cowwoc.cat.hooks;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
@@ -62,13 +61,8 @@ public final class WorktreeLock
       {
         try
         {
-          String content = Files.readString(lockFile);
-          JsonNode lockData = jsonMapper.readTree(content);
-          JsonNode sessionNode = lockData.get("session_id");
-          if (sessionNode == null)
-            continue;
-
-          if (sessionId.equals(sessionNode.asString()))
+          LockFile lockData = LockFile.parse(lockFile, jsonMapper);
+          if (sessionId.equals(lockData.sessionId()))
           {
             String filename = lockFile.getFileName().toString();
             return filename.substring(0, filename.length() - ".lock".length());

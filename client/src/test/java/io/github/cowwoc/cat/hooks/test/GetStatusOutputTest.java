@@ -672,12 +672,11 @@ public class GetStatusOutputTest
 
     Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"open\"}");
 
-    Path locksDir = catDir.resolve("locks");
+    Path locksDir = catDir.resolve("work/locks");
     Files.createDirectories(locksDir);
     Files.writeString(locksDir.resolve("2.1-my-task.lock"),
-      "session_id=test-session\n" +
-      "created_at=1234567890\n" +
-      "worktree=/some/path\n");
+      "{\"session_id\":\"test-session\",\"worktrees\":{\"/some/path\":\"test-session\"}," +
+      "\"created_at\":1234567890,\"created_iso\":\"2023-11-14T22:13:20Z\"}");
 
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
@@ -743,12 +742,11 @@ public class GetStatusOutputTest
     Files.writeString(issue1Dir.resolve("index.json"), "{\"status\":\"closed\"}");
     Files.writeString(issue2Dir.resolve("index.json"), "{\"status\":\"open\"}");
 
-    Path locksDir = catDir.resolve("locks");
+    Path locksDir = catDir.resolve("work/locks");
     Files.createDirectories(locksDir);
     Files.writeString(locksDir.resolve("2.1-done-task.lock"),
-      "session_id=test-session\n" +
-      "created_at=1234567890\n" +
-      "worktree=/some/path\n");
+      "{\"session_id\":\"test-session\",\"worktrees\":{\"/some/path\":\"test-session\"}," +
+      "\"created_at\":1234567890,\"created_iso\":\"2023-11-14T22:13:20Z\"}");
 
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
@@ -756,6 +754,46 @@ public class GetStatusOutputTest
       String result = handler.getOutput(new String[0]);
 
       requireThat(result, "result").contains("☑️ done-task");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that an open issue locked by another session shows as in-progress (🔄).
+   * <p>
+   * When a different session holds a lock on an issue with status "open", the status
+   * display must show 🔄 rather than 🔳 to indicate the issue is actively being worked on.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void lockedIssueShowsInProgressStatus() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-locked-inprog");
+    Path catDir = tempDir.resolve(".cat");
+    Path issuesDir = catDir.resolve("issues");
+    Path majorDir = issuesDir.resolve("v2");
+    Path minorDir = majorDir.resolve("v2.0");
+    Path issueDir = minorDir.resolve("my-task");
+    Files.createDirectories(issueDir);
+
+    Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"open\"}");
+
+    Path locksDir = catDir.resolve("work/locks");
+    Files.createDirectories(locksDir);
+    Files.writeString(locksDir.resolve("2.0-my-task.lock"),
+      "{\"session_id\":\"other-session-id\",\"worktrees\":{\"/some/worktree\":\"other-session-id\"}," +
+      "\"created_at\":1700000000,\"created_iso\":\"2023-11-14T22:13:20Z\"}");
+
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      GetStatusOutput handler = new GetStatusOutput(scope);
+      String result = handler.getOutput(new String[0]);
+
+      requireThat(result, "result").contains("🔄 my-task");
     }
     finally
     {
