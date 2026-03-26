@@ -91,6 +91,8 @@ Then AskUserQuestion:
     description: "Currently: {curiosity || 'medium'}"
   - label: "⏳ Perfection"
     description: "Currently: {perfection || 'medium'}"
+  - label: "🗣️ Verbosity"
+    description: "Currently: {verbosity || 'medium'}"
   - label: "← Back"
     description: "Return to main menu"
 
@@ -182,6 +184,35 @@ Map: Low → `perfection: "low"`, Medium → `perfection: "medium"`, High → `p
 - High benefit, low cost → Current or next version
 - Moderate → Next major version
 - Low benefit, high cost → Backlog or distant future
+
+</step>
+
+<step name="verbosity">
+
+**🗣️ Verbosity — How much CAT explains itself during task execution**
+
+Display current setting, then AskUserQuestion:
+- header: "Verbosity"
+- question: "How much should CAT explain its reasoning? (Current: {verbosity || 'medium'})"
+- options:
+  - label: "Low"
+    description: "Progress banners and errors only — no reasoning, no summaries beyond phase markers"
+  - label: "Medium (Default)"
+    description: "Phase-transition summaries — what was done, key decisions"
+  - label: "High"
+    description: "Full reasoning — alternatives considered, tradeoffs noted, rationale for each decision"
+  - label: "← Back"
+    description: "Return to behavior menu"
+
+Map: Low → `verbosity: "low"`, Medium → `verbosity: "medium"`, High → `verbosity: "high"`
+
+**Update config using the Write tool:**
+
+1. Read the current `.cat/config.json` content using the Read tool.
+2. Merge the new `verbosity` string value into the existing config object (update or add the key).
+3. Write the complete updated JSON back using the Write tool.
+
+Do NOT use `python3`, `jq`, or any external tool. Use the Write tool directly.
 
 </step>
 

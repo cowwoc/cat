@@ -598,4 +598,56 @@ public class GetConfigOutputTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that getCurrentSettings includes verbosity with default value "medium" when config is empty.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getCurrentSettingsIncludesVerbosityDefault() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-config-output-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Path catDir = tempDir.resolve(".cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("config.json"), "{}");
+
+      GetConfigOutput handler = new GetConfigOutput(scope);
+      String result = handler.getCurrentSettings(tempDir);
+
+      requireThat(result, "result").contains("📢 Verbosity: medium");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getCurrentSettings shows "low" verbosity when config has verbosity set to "low".
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getCurrentSettingsShowsVerbosityLow() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-config-output-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Path catDir = tempDir.resolve(".cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("config.json"), "{\"verbosity\": \"low\"}");
+
+      GetConfigOutput handler = new GetConfigOutput(scope);
+      String result = handler.getCurrentSettings(tempDir);
+
+      requireThat(result, "result").contains("📢 Verbosity: low");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }
