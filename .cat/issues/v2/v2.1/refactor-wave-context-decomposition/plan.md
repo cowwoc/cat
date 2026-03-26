@@ -56,6 +56,11 @@ None
   rationale; replace with structural criteria (merge boundary, independent deliverables, disjoint
   subsystems)
   - Files: `plugin/skills/decompose-issue-agent/first-use.md`
+- Remove residual context-trigger lines from `plugin/skills/decompose-issue-agent/first-use.md`:
+  delete line 226 ("If decomposing due to subagent context limits") and the entry at line 519
+  ("cat:token-report - Triggers decomposition decisions") so that no text implies context can
+  trigger decomposition
+  - Files: `plugin/skills/decompose-issue-agent/first-use.md`
 - Update `plugin/skills/plan-builder-agent/first-use.md`: add wave sizing guidance — when planning
   waves, estimate scope (files to modify × change complexity); if a wave would exceed 40% context
   budget, split it into two waves of equal scope; document the heuristic

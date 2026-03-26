@@ -28,23 +28,25 @@ during execution. This indicates potential quality degradation.
 The subagent experienced {N} compaction event(s). This indicates:
 - Context window was exhausted during execution
 - Quality may have degraded as context was summarized
-- Issue may be too large for single-subagent execution
+- Remaining waves should be split before spawning
 
-RECOMMENDATION: Decompose remaining work into smaller issues.
+RECOMMENDATION: Split remaining waves in plan.md into smaller waves before continuing.
 ```
 
 ### User Decision
 
 Use AskUserQuestion:
 - header: "Token Warning"
-- question: "Issue triggered context compaction. Decomposition is strongly recommended:"
+- question: "Issue triggered context compaction. Splitting remaining waves is strongly recommended:"
 - options:
-  - "Decompose" - Split into smaller issues via /cat:decompose-issue-agent (Recommended)
+  - "Split waves" - Halve each remaining wave in plan.md before continuing (Recommended)
   - "Continue anyway" - Accept potential quality impact
   - "Abort" - Stop and review work quality
 
-**If "Decompose":**
-Invoke `/cat:decompose-issue-agent` to split remaining similar work.
+**If "Split waves":**
+For each remaining `### Wave N` in plan.md that has not yet been spawned, split it by moving the
+second half of its bullet items into a new wave inserted immediately after it. Renumber all subsequent
+waves to maintain a gapless sequence. Then continue spawning from the first unsplit wave.
 
 **If "Continue anyway":**
 Proceed but note in index.json that compaction occurred.
@@ -54,18 +56,23 @@ Rollback changes and mark issue for manual review.
 
 ---
 
-## High Token Usage Warning (Informational)
+## High Token Usage Warning (Proactive Wave Split)
 
-**If tokens >= targetContextUsage threshold but no compaction:**
+**If `percent_of_context > 40` but no compaction:**
 
 ```
 📊 HIGH TOKEN USAGE: {N} tokens ({percentage}% of context)
 
-The subagent used significant context (threshold: {targetContextUsage}%).
-Consider decomposing similar issues in the future.
+The subagent used significant context (threshold: 40%).
+Remaining waves will be split before spawning to stay under the 40% budget.
 ```
 
-No action required - this is informational for future planning.
+**Action required:** For each remaining `### Wave N` in plan.md that has not yet been spawned,
+split it by moving the second half of its bullet items into a new wave inserted immediately after it.
+Renumber all subsequent waves to maintain a gapless sequence. Then continue spawning from the first
+unsplit wave.
+
+This split happens automatically — no user prompt is needed.
 
 ---
 
