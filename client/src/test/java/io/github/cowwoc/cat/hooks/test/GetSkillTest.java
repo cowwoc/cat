@@ -2006,4 +2006,46 @@ More content here.
       TestUtils.deleteDirectoryRecursively(tempPluginRoot);
     }
   }
+
+  /**
+   * Verifies that a preprocessor error includes the full stack trace.
+   * <p>
+   * When a directive references a class that does not exist, the resulting error message must contain
+   * a {@code **Stack Trace:**} section with at least one stack frame line (containing {@code at }).
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void preprocessorErrorIncludesStackTrace() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("get-skill-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempPluginRoot, tempPluginRoot))
+    {
+      // Create a launcher file pointing to a class that does not exist so that Class.forName()
+      // throws ClassNotFoundException, triggering the catch (Exception e) block in invokeSkillOutput().
+      Path launcherDir = tempPluginRoot.resolve("client/bin");
+      Files.createDirectories(launcherDir);
+      Files.writeString(launcherDir.resolve("broken-launcher"),
+        "java -m test.module/com.example.nonexistent.BrokenClass\n",
+        UTF_8);
+
+      // Create a skill with a directive that references the broken launcher.
+      Path skillDir = tempPluginRoot.resolve("skills/broken-skill");
+      Files.createDirectories(skillDir);
+      Files.writeString(skillDir.resolve("first-use.md"),
+        "# Broken Skill\n!`\"broken-launcher\" arg1`\n",
+        UTF_8);
+
+      String agentId = UUID.randomUUID().toString();
+      GetSkill loader = new GetSkill(scope, List.of(agentId));
+      String output = loader.load("broken-skill");
+
+      requireThat(output, "output").contains("**Stack Trace:**");
+      requireThat(output, "output").contains("\tat ");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
 }
