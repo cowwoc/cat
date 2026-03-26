@@ -3085,5 +3085,19 @@
     "prevention_verified" : false,
     "recurrence_of" : null,
     "correct_behavior" : ""
+  }, {
+    "id" : "M605",
+    "timestamp" : "2026-03-26T19:23:13Z",
+    "category" : "",
+    "description" : "",
+    "root_cause" : "Agent assumed session compaction = lock is orphaned. No differentiation between 'other active session' and 'dead session'. No permission gate invoked.",
+    "cause_signature" : null,
+    "prevention_type" : "",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "correct_behavior" : ""
   } ]
 }
