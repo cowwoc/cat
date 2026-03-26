@@ -8,14 +8,14 @@ package io.github.cowwoc.cat.hooks.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.util.TrustLevel;
+import io.github.cowwoc.cat.hooks.util.CautionLevel;
 
 import org.testng.annotations.Test;
 
 /**
- * Tests for {@link TrustLevel}.
+ * Tests for {@link CautionLevel}.
  */
-public final class TrustLevelTest
+public final class CautionLevelTest
 {
   /**
    * Verifies that fromString("low") returns LOW.
@@ -23,7 +23,7 @@ public final class TrustLevelTest
   @Test
   public void fromStringLowReturnsLOW()
   {
-    requireThat(TrustLevel.fromString("low"), "level").isEqualTo(TrustLevel.LOW);
+    requireThat(CautionLevel.fromString("low"), "level").isEqualTo(CautionLevel.LOW);
   }
 
   /**
@@ -32,7 +32,7 @@ public final class TrustLevelTest
   @Test
   public void fromStringMediumReturnsMEDIUM()
   {
-    requireThat(TrustLevel.fromString("medium"), "level").isEqualTo(TrustLevel.MEDIUM);
+    requireThat(CautionLevel.fromString("medium"), "level").isEqualTo(CautionLevel.MEDIUM);
   }
 
   /**
@@ -41,7 +41,7 @@ public final class TrustLevelTest
   @Test
   public void fromStringHighReturnsHIGH()
   {
-    requireThat(TrustLevel.fromString("high"), "level").isEqualTo(TrustLevel.HIGH);
+    requireThat(CautionLevel.fromString("high"), "level").isEqualTo(CautionLevel.HIGH);
   }
 
   /**
@@ -50,34 +50,34 @@ public final class TrustLevelTest
   @Test
   public void fromStringIsCaseInsensitive()
   {
-    requireThat(TrustLevel.fromString("HIGH"), "level").isEqualTo(TrustLevel.HIGH);
+    requireThat(CautionLevel.fromString("HIGH"), "level").isEqualTo(CautionLevel.HIGH);
   }
 
   /**
    * Verifies that toString returns lowercase "low" for the LOW enum value.
    */
   @Test
-  public void toStringLowReturnsLowercase()
+  public void toStringReturnsLowForLOW()
   {
-    requireThat(TrustLevel.LOW.toString(), "TrustLevel.LOW.toString()").isEqualTo("low");
+    requireThat(CautionLevel.LOW.toString(), "CautionLevel.LOW.toString()").isEqualTo("low");
   }
 
   /**
    * Verifies that toString returns lowercase "medium" for the MEDIUM enum value.
    */
   @Test
-  public void toStringMediumReturnsLowercase()
+  public void toStringReturnsMediumForMEDIUM()
   {
-    requireThat(TrustLevel.MEDIUM.toString(), "TrustLevel.MEDIUM.toString()").isEqualTo("medium");
+    requireThat(CautionLevel.MEDIUM.toString(), "CautionLevel.MEDIUM.toString()").isEqualTo("medium");
   }
 
   /**
    * Verifies that toString returns lowercase "high" for the HIGH enum value.
    */
   @Test
-  public void toStringHighReturnsLowercase()
+  public void toStringReturnsHighForHIGH()
   {
-    requireThat(TrustLevel.HIGH.toString(), "TrustLevel.HIGH.toString()").isEqualTo("high");
+    requireThat(CautionLevel.HIGH.toString(), "CautionLevel.HIGH.toString()").isEqualTo("high");
   }
 
   /**
@@ -87,7 +87,7 @@ public final class TrustLevelTest
     expectedExceptionsMessageRegExp = ".*UNKNOWN.*")
   public void fromStringInvalidThrowsIllegalArgument()
   {
-    TrustLevel.fromString("unknown");
+    CautionLevel.fromString("unknown");
   }
 
   /**
@@ -98,19 +98,19 @@ public final class TrustLevelTest
     expectedExceptionsMessageRegExp = ".*value.*")
   public void fromStringBlankThrowsIllegalArgument()
   {
-    TrustLevel.fromString("");
+    CautionLevel.fromString("");
   }
 
   /**
    * Verifies that fromString throws IllegalArgumentException for whitespace-padded input.
    * <p>
-   * The implementation does not strip whitespace before matching, so " low " is not a valid trust level.
+   * The implementation does not strip whitespace before matching, so " low " is not a valid caution level.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".* LOW .*")
   public void fromStringWhitespacePaddedThrowsIllegalArgument()
   {
-    TrustLevel.fromString(" low ");
+    CautionLevel.fromString(" low ");
   }
 
   /**
@@ -120,6 +120,6 @@ public final class TrustLevelTest
     expectedExceptionsMessageRegExp = ".*value.*")
   public void fromStringNullThrowsNullPointerException()
   {
-    TrustLevel.fromString(null);
+    CautionLevel.fromString(null);
   }
 }

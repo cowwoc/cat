@@ -11,32 +11,32 @@ import java.util.Locale;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * The effort level, controlling how thoroughly the agent investigates during planning and review.
+ * How curious the agent is when investigating problems and exploring solutions.
  */
-public enum EffortLevel
+public enum CuriosityLevel
 {
   /**
-   * Low effort: minimal investigation, quick approach.
+   * Low curiosity: take the obvious approach without deep investigation.
    */
   LOW,
   /**
-   * Medium effort: moderate investigation and exploration.
+   * Medium curiosity: explore alternatives and investigate trade-offs.
    */
   MEDIUM,
   /**
-   * High effort: thorough investigation and deep analysis.
+   * High curiosity: deeply research the problem space and document findings.
    */
   HIGH;
 
   /**
-   * Parses an effort level from a string value.
+   * Parses a curiosity level from a string value.
    *
    * @param value the string value to parse (case-insensitive)
-   * @return the parsed effort level
+   * @return the parsed curiosity level
    * @throws NullPointerException if {@code value} is null
-   * @throws IllegalArgumentException if {@code value} is blank or does not match any effort level
+   * @throws IllegalArgumentException if {@code value} is blank or does not match any curiosity level
    */
-  public static EffortLevel fromString(String value)
+  public static CuriosityLevel fromString(String value)
   {
     requireThat(value, "value").isNotBlank();
     return valueOf(value.toUpperCase(Locale.ROOT));

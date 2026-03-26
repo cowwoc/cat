@@ -1,7 +1,7 @@
 {
   "version": "${CAT_VERSION}",
   "trust": "medium",
-  "verify": "changed",
-  "effort": "medium",
-  "patience": "high"
+  "caution": "medium",
+  "curiosity": "medium",
+  "perfection": "medium"
 }

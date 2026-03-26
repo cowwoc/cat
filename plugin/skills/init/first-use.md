@@ -426,22 +426,22 @@ AskUserQuestion: header="Trust", question="How do you prefer to work together?",
   "🏹 Autonomous - let the partner lead, step in when critical"
 ]
 
-AskUserQuestion: header="Effort", question="How should your partner handle discoveries?", options=[
+AskUserQuestion: header="Curiosity", question="How should your partner handle discoveries?", options=[
   "🎯 Focused - stay on the issue, ignore tangents",
   "🗺️ Observant - note interesting finds, but stay on mission (Recommended)",
   "🔮 Thorough - explore every corner, document all discoveries"
 ]
 
-AskUserQuestion: header="Patience", question="When your partner spots an opportunity...", options=[
-  "📜 Log it - add to backlog, maintain focus",
+AskUserQuestion: header="Perfection", question="When your partner spots an improvement...", options=[
+  "💎 Act now - if it's valuable, address it immediately",
   "⚖️ Quick wins - take easy improvements, note the rest (Recommended)",
-  "💎 Act now - if it's valuable, address it immediately"
+  "📜 Log it - add to backlog, maintain focus"
 ]
 
 Map responses to preference values:
 - Trust: low | medium | high
-- Effort: low | medium | high
-- Patience: high | medium | low
+- Curiosity: low | medium | high
+- Perfection: high | medium | low
 
 </step>
 
@@ -548,9 +548,9 @@ Create `.cat/config.json`:
 {
   "last_migrated_version": "[CAT_VERSION from above]",
   "trust": "[low|medium|high]",
-  "verify": "changed",
-  "effort": "[low|medium|high]",
-  "patience": "[high|medium|low]",
+  "caution": "[low|medium|high]",
+  "curiosity": "[low|medium|high]",
+  "perfection": "[high|medium|low]",
   "gitWorkflow": {
     "branchingStrategy": "[main-only|feature|version]",
     "mergeStyle": "[direct|fast-forward|merge-commit|squash]",
@@ -821,8 +821,8 @@ paths: ["*.java"]      # default: always (omit to always inject)
 These preferences shape how CAT makes autonomous decisions:
 
 - **Trust Level:** [low|medium|high] - review frequency
-- **Effort:** [low|medium|high] - exploration beyond immediate issue
-- **Patience:** [high|medium|low] - tolerance for opportunistic improvements
+- **Curiosity:** [low|medium|high] - exploration beyond immediate issue
+- **Perfection:** [high|medium|low] - how immediately to act on improvements
 
 Update anytime with: `/cat:config`
 ```
@@ -840,9 +840,9 @@ git commit -m "docs: initialize CAT planning structure"
 
 <step name="done">
 
-INVOKE: Skill("cat:get-output-agent", args="init.cat-initialized {trust} {effort} {patience}")
+INVOKE: Skill("cat:get-output-agent", args="init.cat-initialized {trust} {curiosity} {perfection}")
 
-Replace `{trust}`, `{effort}`, `{patience}` with actual preference values.
+Replace `{trust}`, `{curiosity}`, `{perfection}` with actual preference values.
 
 **New projects:**
 ```

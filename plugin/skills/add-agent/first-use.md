@@ -127,7 +127,7 @@ Capture as ISSUE_DESCRIPTION, then continue to step: issue_read_config.
 
 **Read and validate configuration:**
 
-Read the `effort` value from effective config and store it for all downstream steps:
+Read the `curiosity` value from effective config and store it for all downstream steps:
 
 ```bash
 CONFIG=$("${CLAUDE_PLUGIN_ROOT}/client/bin/get-config-output" effective)
@@ -135,21 +135,21 @@ if [[ $? -ne 0 ]]; then
     echo "ERROR: Failed to read effective config" >&2
     exit 1
 fi
-EFFORT=$(echo "$CONFIG" | grep -o '"effort"[[:space:]]*:[[:space:]]*"[^"]*"' \
-  | sed 's/.*"effort"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
-if [[ -z "$EFFORT" ]]; then
-    echo "ERROR: 'effort' key not found in effective config." >&2
-    echo "Add: \"effort\": \"low|medium|high\" to .cat/config.json" >&2
+CURIOSITY=$(echo "$CONFIG" | grep -o '"curiosity"[[:space:]]*:[[:space:]]*"[^"]*"' \
+  | sed 's/.*"curiosity"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+if [[ -z "$CURIOSITY" ]]; then
+    echo "ERROR: 'curiosity' key not found in effective config." >&2
+    echo "Add: \"curiosity\": \"low|medium|high\" to .cat/config.json" >&2
     exit 1
 fi
-if [[ "$EFFORT" != "low" && "$EFFORT" != "medium" && "$EFFORT" != "high" ]]; then
-    echo "ERROR: Invalid effort value '$EFFORT' in effective config." >&2
+if [[ "$CURIOSITY" != "low" && "$CURIOSITY" != "medium" && "$CURIOSITY" != "high" ]]; then
+    echo "ERROR: Invalid curiosity value '$CURIOSITY' in effective config." >&2
     echo "Valid values: low, medium, high" >&2
     exit 1
 fi
 ```
 
-Store EFFORT for use in issue_smart_questioning, issue_impact_analysis, and issue_create.
+Store CURIOSITY for use in issue_smart_questioning, issue_impact_analysis, and issue_create.
 
 </step>
 
@@ -183,15 +183,15 @@ Continue to next step.
 
 <step name="issue_smart_questioning">
 
-**Probe for ambiguities in the issue description (effort-scaled):**
+**Probe for ambiguities in the issue description (curiosity-scaled):**
 
-Use the EFFORT value set in issue_read_config.
+Use the CURIOSITY value set in issue_read_config.
 
-**If EFFORT is "low":**
+**If CURIOSITY is "low":**
 
 Skip this step entirely. Continue to step: issue_analyze_versions.
 
-**If EFFORT is "medium":**
+**If CURIOSITY is "medium":**
 
 Analyze ISSUE_DESCRIPTION for the following ambiguity indicators:
 - **Scope ambiguity:** The description could apply to multiple subsystems, layers, or components without specifying which
@@ -220,7 +220,7 @@ If user provides clarification, append it to ISSUE_DESCRIPTION.
 
 If no ambiguities are detected, skip to step: issue_analyze_versions.
 
-**If EFFORT is "high":**
+**If CURIOSITY is "high":**
 
 Perform a deeper analysis of ISSUE_DESCRIPTION covering:
 - All medium-level checks above
@@ -815,17 +815,17 @@ Proceed silently to step: issue_impact_analysis (no user interaction needed).
 
 <step name="issue_impact_analysis">
 
-**Analyze potential impact of the proposed issue on existing features (effort-scaled):**
+**Analyze potential impact of the proposed issue on existing features (curiosity-scaled):**
 
 Initialize IMPACT_NOTES="".
 
-Use the EFFORT value set in issue_read_config.
+Use the CURIOSITY value set in issue_read_config.
 
-**If EFFORT is "low":**
+**If CURIOSITY is "low":**
 
 Skip this step entirely. Continue to step: issue_create.
 
-**If EFFORT is "medium":**
+**If CURIOSITY is "medium":**
 
 Load existing issues from the selected version using output.versions[selected_version].existing_issues.
 
@@ -873,7 +873,7 @@ Set IMPACT_NOTES to the concern descriptions. These will be appended to the plan
 
 Skip silently to step: issue_create.
 
-**If EFFORT is "high":**
+**If CURIOSITY is "high":**
 
 Perform a broader impact analysis covering multiple dimensions:
 

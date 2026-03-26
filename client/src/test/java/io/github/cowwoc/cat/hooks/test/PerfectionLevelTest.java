@@ -8,14 +8,14 @@ package io.github.cowwoc.cat.hooks.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.util.PatienceLevel;
+import io.github.cowwoc.cat.hooks.util.PerfectionLevel;
 
 import org.testng.annotations.Test;
 
 /**
- * Tests for {@link PatienceLevel}.
+ * Tests for {@link PerfectionLevel}.
  */
-public final class PatienceLevelTest
+public final class PerfectionLevelTest
 {
   /**
    * Verifies that fromString("low") returns LOW.
@@ -23,7 +23,7 @@ public final class PatienceLevelTest
   @Test
   public void fromStringLowReturnsLOW()
   {
-    requireThat(PatienceLevel.fromString("low"), "level").isEqualTo(PatienceLevel.LOW);
+    requireThat(PerfectionLevel.fromString("low"), "level").isEqualTo(PerfectionLevel.LOW);
   }
 
   /**
@@ -32,7 +32,7 @@ public final class PatienceLevelTest
   @Test
   public void fromStringMediumReturnsMEDIUM()
   {
-    requireThat(PatienceLevel.fromString("medium"), "level").isEqualTo(PatienceLevel.MEDIUM);
+    requireThat(PerfectionLevel.fromString("medium"), "level").isEqualTo(PerfectionLevel.MEDIUM);
   }
 
   /**
@@ -41,7 +41,7 @@ public final class PatienceLevelTest
   @Test
   public void fromStringHighReturnsHIGH()
   {
-    requireThat(PatienceLevel.fromString("high"), "level").isEqualTo(PatienceLevel.HIGH);
+    requireThat(PerfectionLevel.fromString("high"), "level").isEqualTo(PerfectionLevel.HIGH);
   }
 
   /**
@@ -50,7 +50,7 @@ public final class PatienceLevelTest
   @Test
   public void fromStringIsCaseInsensitive()
   {
-    requireThat(PatienceLevel.fromString("HIGH"), "level").isEqualTo(PatienceLevel.HIGH);
+    requireThat(PerfectionLevel.fromString("HIGH"), "level").isEqualTo(PerfectionLevel.HIGH);
   }
 
   /**
@@ -59,7 +59,7 @@ public final class PatienceLevelTest
   @Test
   public void toStringLowReturnsLowercase()
   {
-    requireThat(PatienceLevel.LOW.toString(), "str").isEqualTo("low");
+    requireThat(PerfectionLevel.LOW.toString(), "PerfectionLevel.LOW.toString()").isEqualTo("low");
   }
 
   /**
@@ -68,7 +68,7 @@ public final class PatienceLevelTest
   @Test
   public void toStringMediumReturnsLowercase()
   {
-    requireThat(PatienceLevel.MEDIUM.toString(), "str").isEqualTo("medium");
+    requireThat(PerfectionLevel.MEDIUM.toString(), "PerfectionLevel.MEDIUM.toString()").isEqualTo("medium");
   }
 
   /**
@@ -77,7 +77,7 @@ public final class PatienceLevelTest
   @Test
   public void toStringHighReturnsLowercase()
   {
-    requireThat(PatienceLevel.HIGH.toString(), "str").isEqualTo("high");
+    requireThat(PerfectionLevel.HIGH.toString(), "PerfectionLevel.HIGH.toString()").isEqualTo("high");
   }
 
   /**
@@ -87,7 +87,7 @@ public final class PatienceLevelTest
     expectedExceptionsMessageRegExp = ".*UNKNOWN.*")
   public void fromStringInvalidThrowsIllegalArgument()
   {
-    PatienceLevel.fromString("unknown");
+    PerfectionLevel.fromString("unknown");
   }
 
   /**
@@ -98,19 +98,19 @@ public final class PatienceLevelTest
     expectedExceptionsMessageRegExp = ".*value.*")
   public void fromStringBlankThrowsIllegalArgument()
   {
-    PatienceLevel.fromString("");
+    PerfectionLevel.fromString("");
   }
 
   /**
    * Verifies that fromString throws IllegalArgumentException for whitespace-padded input.
    * <p>
-   * The implementation does not strip whitespace before matching, so " low " is not a valid patience level.
+   * The implementation does not strip whitespace before matching, so " low " is not a valid perfection level.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".* LOW .*")
   public void fromStringWhitespacePaddedThrowsIllegalArgument()
   {
-    PatienceLevel.fromString(" low ");
+    PerfectionLevel.fromString(" low ");
   }
 
   /**
@@ -120,6 +120,6 @@ public final class PatienceLevelTest
     expectedExceptionsMessageRegExp = ".*value.*")
   public void fromStringNullThrowsNullPointerException()
   {
-    PatienceLevel.fromString(null);
+    PerfectionLevel.fromString(null);
   }
 }

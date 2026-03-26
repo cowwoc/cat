@@ -66,7 +66,7 @@ cat "${CLAUDE_PROJECT_DIR}/.cat/config.json"
 
 Extract these values:
 - `TRUST` — from `"trust"` field (e.g., `"low"`, `"medium"`, `"high"`)
-- `VERIFY` — from `"verify"` field (e.g., `"none"`, `"tests"`, `"all"`)
+- `CAUTION` — from `"caution"` field (e.g., `"low"`, `"medium"`, `"high"`)
 
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" --phase preparing`
 
@@ -426,7 +426,7 @@ Use the Skill tool to invoke `/cat:work-with-issue-agent` with positional space-
 ```
 Skill tool:
   skill: "cat:work-with-issue-agent"
-  args: "${CLAUDE_SESSION_ID} ${issue_id} ${issue_path} ${worktree_path} ${issue_branch} ${target_branch} ${estimated_tokens} ${TRUST} ${VERIFY}"
+  args: "${CLAUDE_SESSION_ID} ${issue_id} ${issue_path} ${worktree_path} ${issue_branch} ${target_branch} ${estimated_tokens} ${TRUST} ${CAUTION}"
 ```
 
 The skill will:

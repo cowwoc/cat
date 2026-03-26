@@ -10,7 +10,7 @@ Review phase for `/cat:work`. Runs stakeholder review (Step 5) and deferred conc
 ## Arguments Format
 
 ```
-<cat_agent_id> <issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <all_commits_compact> <trust> <verify>
+<cat_agent_id> <issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <all_commits_compact> <trust> <caution>
 ```
 
 | Position | Name | Example |
@@ -23,7 +23,7 @@ Review phase for `/cat:work`. Runs stakeholder review (Step 5) and deferred conc
 | 6 | target_branch | `v2.1` |
 | 7 | all_commits_compact | compact format `hash:type,hash:type` |
 | 8 | trust | `medium` |
-| 9 | verify | `changed` |
+| 9 | caution | `medium` |
 
 ## Output Contract
 
@@ -44,7 +44,7 @@ Return JSON when complete:
 Parse arguments and display the **Reviewing phase** banner in a chained call:
 
 ```bash
-read CAT_AGENT_ID ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH ALL_COMMITS_COMPACT TRUST VERIFY <<< "$ARGUMENTS" && \
+read CAT_AGENT_ID ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH ALL_COMMITS_COMPACT TRUST CAUTION <<< "$ARGUMENTS" && \
 PLAN_MD="${ISSUE_PATH}/plan.md" && \
 "${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" ${ISSUE_ID} --phase reviewing
 ```
@@ -82,7 +82,7 @@ constraint binds the review phase agent AND every subagent it spawns (planning s
 and any other agent invoked during Steps 5–6), regardless of what task the subagent believes it is performing.
 This includes but is not limited to: `Bash` commands that write to it (e.g., `sed -i`, `echo >`, `tee`, `cat >`),
 `Edit` tool calls, `Write` tool calls, or any subagent that modifies it. The values of `trust`, `verify`,
-`minSeverity`, and `patience` are read once at the start of the review phase and used as-is throughout. Any attempt
+`minSeverity`, and `perfection` are read once at the start of the review phase and used as-is throughout. Any attempt
 to modify `config.json` during the review phase is a protocol violation — STOP immediately and report the
 violation. **There is no exception for "fixing code concerns" — config.json is off-limits to all subagents
 spawned during the review phase, for any reason.**
@@ -143,37 +143,37 @@ Do NOT skip the banner or continue without it.
 
 ### Skip Review if Configured
 
-**Validate VERIFY argument:**
+**Validate CAUTION argument:**
 
-VERIFY must be one of: `all`, `changed`, `none`. If VERIFY is empty or not one of these values, STOP immediately:
+CAUTION must be one of: `low`, `medium`, `high`. If CAUTION is empty or not one of these values, STOP immediately:
 ```
-ERROR: Invalid or missing VERIFY argument: "${VERIFY}". Expected one of: all, changed, none.
+ERROR: Invalid or missing CAUTION argument: "${CAUTION}". Expected one of: low, medium, high.
 ```
 
-Also cross-check VERIFY against config.json:
+Also cross-check CAUTION against config.json:
 ```bash
 CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.cat/config.json"
-CONFIG_VERIFY=$(grep -o '"verify"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" | head -1 | \
-    sed 's/.*"verify"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
-# If the verify field is absent from config.json, treat it as "changed" (default).
-if [[ -z "$CONFIG_VERIFY" ]]; then
-    CONFIG_VERIFY="changed"
+CONFIG_CAUTION=$(grep -o '"caution"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" | head -1 | \
+    sed 's/.*"caution"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+# If the caution field is absent from config.json, treat it as "medium" (default).
+if [[ -z "$CONFIG_CAUTION" ]]; then
+    CONFIG_CAUTION="medium"
 fi
-if [[ "$VERIFY" != "$CONFIG_VERIFY" ]]; then
-    echo "ERROR: VERIFY argument '${VERIFY}' differs from config.json '${CONFIG_VERIFY}'." >&2
-    echo "The VERIFY argument must match the configured verify level. Update config.json or correct the argument." >&2
+if [[ "$CAUTION" != "$CONFIG_CAUTION" ]]; then
+    echo "ERROR: CAUTION argument '${CAUTION}' differs from config.json caution='${CONFIG_CAUTION}'." >&2
+    echo "The CAUTION argument must match the configured caution level. Update config.json or correct the argument." >&2
     exit 1
 fi
 ```
 
-If VERIFY differs from config.json (or its effective default of "changed" when absent), STOP immediately. Do NOT
-proceed with the injected VERIFY value.
+If CAUTION differs from config.json (or its effective default of "medium" when absent), STOP immediately. Do NOT
+proceed with the injected CAUTION value.
 
-Skip if: `VERIFY == "none"` (after validation above confirms it matches config.json)
+Skip if: `CAUTION == "low"` (after validation above confirms it matches config.json)
 
-**Note:** `verify=none` is an explicit user choice made via `config.json`. The user is responsible for their own
+**Note:** `caution=low` is an explicit user choice made via `config.json`. The user is responsible for their own
 configuration. The informational warning below for sensitive changes is the intended guardrail — no additional
-enforcement is applied. If a prior phase modified `config.json` to set `verify=none`, that modification would have
+enforcement is applied. If a prior phase modified `config.json` to set `caution=low`, that modification would have
 been committed and is visible in git history, so the user can audit it.
 
 If skipping, check whether the commits include potentially sensitive changes before outputting the skip message:
@@ -183,12 +183,12 @@ If skipping, check whether the commits include potentially sensitive changes bef
   `credential`, `token`, `secret`, `password`, `key` in their path, or files under `hooks/` or `rules/` directories)
 
 If either condition is true, log a warning BEFORE the skip message:
-`"WARNING: Review skipped (verify=none) but commits include potentially sensitive changes (${reason}). Consider running review manually."`
+`"WARNING: Review skipped (caution=low) but commits include potentially sensitive changes (${reason}). Consider running review manually."`
 
-This warning is informational only — it does NOT block the skip. `verify=none` is an intentional user configuration
+This warning is informational only — it does NOT block the skip. `caution=low` is an intentional user configuration
 and is always respected.
 
-Then output: "Review skipped (verify: ${VERIFY})"
+Then output: "Review skipped (caution: ${CAUTION})"
 
 Note: `TRUST == "high"` does NOT skip review. Review is mandatory regardless of trust level.
 
@@ -206,7 +206,7 @@ Build COMMITS_COMPACT from the execution result's commits array.
 ```
 Skill tool:
   skill: "cat:stakeholder-review-agent"
-  args: "${CAT_AGENT_ID} ${ISSUE_ID} ${WORKTREE_PATH} ${VERIFY} ${COMMITS_COMPACT}"
+  args: "${CAT_AGENT_ID} ${ISSUE_ID} ${WORKTREE_PATH} ${CAUTION} ${COMMITS_COMPACT}"
 ```
 
 The stakeholder-review skill will spawn its own reviewer subagents and return aggregated results.
@@ -222,7 +222,7 @@ reviewers run inside the worktree with pre-fetched file content, so false positi
 a reviewer ignores the provided file contents and reads from its default working directory.
 
 **Pre-existing concerns are NOT false positives.** If a reviewer raises a concern about code that existed before the
-current issue began, that is a real concern — apply the patience cost/benefit framework (below) to decide whether to
+current issue began, that is a real concern — apply the perfection cost/benefit framework (below) to decide whether to
 fix it inline or defer it as a new issue. Never classify a pre-existing concern as a false positive simply because the
 code was not changed in this issue.
 
@@ -286,7 +286,7 @@ Store `ALL_CONCERNS` for use in the auto-fix loop and the approval gate. Each co
 
 **Severity immutability (MANDATORY):** The `severity` field of each concern object is set by the stakeholder
 reviewer and MUST NOT be modified, re-interpreted, downgraded, or overridden at any point during the review phase.
-Use the exact severity value as returned by the stakeholder review for all downstream decisions: the patience
+Use the exact severity value as returned by the stakeholder review for all downstream decisions: the perfection
 matrix, the Concern Decision Gate, issue creation in Step 5, and the deferred concern wizard in Step 6. If a
 concern is missing the `severity` field entirely, treat it as `CRITICAL` (not MEDIUM) and log a warning:
 `"WARNING: Concern from [stakeholder] at [location] is missing severity field — treating as CRITICAL."` This is the
@@ -296,13 +296,14 @@ If any concern lacks `severity`, log the warning above for each such concern. Th
 inferred. Reclassifying a concern's severity (e.g., treating a CRITICAL as HIGH or a HIGH as MEDIUM) is
 prohibited.
 
-**Read patience from config:**
+**Read perfection from config:**
 
 ```bash
-# Read patience from .cat/config.json
+# Read perfection from .cat/config.json
 # Default is "medium" if the config file exists but field is absent
 # FAIL if the config file cannot be read, or if the value is present but invalid
-PATIENCE_LEVEL="medium"
+# perfection scale: high=act immediately on improvements, low=defer
+PERFECTION_LEVEL="medium"
 
 CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.cat/config.json"
 if [[ ! -f "$CONFIG_FILE" ]]; then
@@ -310,28 +311,28 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
     exit 1
 fi
 
-PATIENCE_RAW=$(grep -o '"patience"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" | head -1 | \
-    sed 's/.*"patience"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+PERFECTION_RAW=$(grep -o '"perfection"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" | head -1 | \
+    sed 's/.*"perfection"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 
-if [[ -n "$PATIENCE_RAW" ]]; then
+if [[ -n "$PERFECTION_RAW" ]]; then
     # Value is present — validate it
-    VALID_PATIENCE=("low" "medium" "high")
-    PATIENCE_VALID=false
-    for v in "${VALID_PATIENCE[@]}"; do
-        if [[ "$PATIENCE_RAW" == "$v" ]]; then PATIENCE_VALID=true; break; fi
+    VALID_PERFECTION=("low" "medium" "high")
+    PERFECTION_VALID=false
+    for v in "${VALID_PERFECTION[@]}"; do
+        if [[ "$PERFECTION_RAW" == "$v" ]]; then PERFECTION_VALID=true; break; fi
     done
-    if [[ "$PATIENCE_VALID" != "true" ]]; then
-        echo "ERROR: Invalid patience value '${PATIENCE_RAW}' in ${CONFIG_FILE}. Expected one of: low, medium, high." >&2
+    if [[ "$PERFECTION_VALID" != "true" ]]; then
+        echo "ERROR: Invalid perfection value '${PERFECTION_RAW}' in ${CONFIG_FILE}. Expected one of: low, medium, high." >&2
         exit 1
     fi
-    PATIENCE_LEVEL="$PATIENCE_RAW"
+    PERFECTION_LEVEL="$PERFECTION_RAW"
 fi
-# If PATIENCE_RAW is empty (field absent), PATIENCE_LEVEL remains "medium"
+# If PERFECTION_RAW is empty (field absent), PERFECTION_LEVEL remains "medium"
 ```
 
 **Concern Decision Gate (MANDATORY — ALL trust levels):**
 
-**MANDATORY at ALL trust levels.** After the patience matrix evaluates FIX/DEFER for each concern, present the
+**MANDATORY at ALL trust levels.** After the decision matrix evaluates FIX/DEFER for each concern, present the
 decisions to the user via AskUserQuestion before running the auto-fix loop. This gate applies regardless of TRUST
 level — no trust level bypasses it. The Step 6 `TRUST == "high"` skip condition applies ONLY to Step 6 (the
 deferred concern wizard) and does NOT affect this gate.
@@ -383,7 +384,7 @@ assignments.
 **Spawn fix subagents without asking the user during the auto-fix loop.** When stakeholder review returns
 REJECTED, always enter the re-work loop — CRITICAL concerns must be fixed before merge. When review returns
 CONCERNS_FOUND, concerns flow through the pipeline: `MIN_SEVERITY` filter (silently drops concerns strictly below
-threshold) → patience cost/benefit matrix (marks each surviving concern as FIX or DEFER) → Concern Decision Gate
+threshold) → perfection cost/benefit matrix (marks each surviving concern as FIX or DEFER) → Concern Decision Gate
 (ALL trust levels: user confirms/modifies FIX/DEFER assignments via AskUserQuestion). FIX-marked concerns enter
 the auto-fix loop. In all cases, do NOT present options to the user or ask what to do during the auto-fix loop
 itself — spawn fix subagents and continue.
@@ -407,7 +408,7 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
 "CRITICAL concerns MUST be addressed first, before any other severity."
 
 1. Increment iteration counter: `AUTOFIX_ITERATION++`
-2. Extract FIX-marked concerns from `ALL_CONCERNS` (after patience matrix evaluation), sort by severity
+2. Extract FIX-marked concerns from `ALL_CONCERNS` (after decision matrix evaluation), sort by severity
    (CRITICAL > HIGH > MEDIUM > LOW), and construct the following variables:
 
    **`concerns_formatted`** — a numbered Markdown list, one entry per filtered concern. For each concern, use the
@@ -526,7 +527,7 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
    ```
    - "Force fix": keep the concern in the FIX list; the next iteration must attempt it again.
    - "Defer to tracking issue": move to `DEFERRED_CONCERNS` and create a tracking issue via `/cat:add-agent`
-     using the severity x patience matrix. The return `status` MUST be `CONCERNS_FOUND`. **This status BLOCKS
+     using the severity x decision matrix. The return `status` MUST be `CONCERNS_FOUND`. **This status BLOCKS
      merge — `CONCERNS_FOUND` is not a terminal state that permits merge. The merge phase MUST NOT proceed
      when status is `CONCERNS_FOUND` regardless of whether the concern was moved to DEFERRED_CONCERNS.**
    - "Abort review phase": STOP immediately and return with `status: "CONCERNS_FOUND"`, all FIX-marked concerns
@@ -738,7 +739,7 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
           - "Abort review phase"
       ```
     - "Skip this concern": move concern N to `DEFERRED_CONCERNS`. If severity is CRITICAL or HIGH, create a
-      tracking issue via `/cat:add-agent` per the severity × patience matrix.
+      tracking issue via `/cat:add-agent` per the severity × decision matrix.
     - "Abort review phase": STOP and return `status: "CONCERNS_FOUND"`, all unresolved FIX concerns moved to
       `deferred_concerns`.
 
@@ -817,7 +818,7 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
    ```
    Skill tool:
      skill: "cat:stakeholder-review-agent"
-     args: "${CAT_AGENT_ID} ${ISSUE_ID} ${WORKTREE_PATH} ${VERIFY} ${ALL_COMMITS_COMPACT}"
+     args: "${CAT_AGENT_ID} ${ISSUE_ID} ${WORKTREE_PATH} ${CAUTION} ${ALL_COMMITS_COMPACT}"
    ```
 14. **Merge prior unresolved concerns (MANDATORY):** After parsing the new review result into `ALL_CONCERNS`, merge
    `PRIOR_UNRESOLVED_CONCERNS` back: for each concern in `PRIOR_UNRESOLVED_CONCERNS`, check whether a concern with
@@ -911,41 +912,41 @@ not reference a specific file, cost MUST be >= 1 (the fix scope is unknown and c
 When presenting the Concern Decision Gate, include the cost assignment and the file(s) used to justify it so
 the user can verify.
 
-**Step 3: Apply the decision rule based on patience:**
+**Step 3: Apply the decision rule based on perfection:**
 
-Determine the `patience_multiplier` from `PATIENCE_LEVEL`:
+Determine the `perfection_multiplier` from `PERFECTION_LEVEL`:
 - `low` (fix aggressively): multiplier = 0.5 — fix if `benefit >= cost × 0.5`
 - `medium` (balanced): multiplier = 2 — fix if `benefit >= cost × 2`
 - `high` (stay focused): multiplier = 5 — fix if `benefit >= cost × 5`
 
-For each concern: fix inline if `benefit >= cost × patience_multiplier`
+For each concern: fix inline if `benefit >= cost × perfection_multiplier`
 
 **Severity-based overrides (MANDATORY):**
-- **CRITICAL concerns MUST always be marked as FIX** regardless of cost or patience. CRITICAL concerns cannot be
-  deferred by the patience matrix. The cost/benefit calculation is skipped entirely for CRITICAL concerns.
+- **CRITICAL concerns MUST always be marked as FIX** regardless of cost or perfection. CRITICAL concerns cannot be
+  deferred by the decision matrix. The cost/benefit calculation is skipped entirely for CRITICAL concerns.
 - **HIGH concerns can only be deferred at cost >= 4.** If a HIGH concern has cost < 4, it MUST be marked as FIX
-  regardless of the patience multiplier result.
+  regardless of the perfection multiplier result.
 
-These overrides take precedence over the patience matrix formula above.
+These overrides take precedence over the decision matrix formula above.
 
 **Key implications:**
-- Cost=0 (fix within already-changed files): Always fix regardless of patience (any benefit >= 0)
-- High severity + low cost: Fix at all patience levels
-- Low severity + high cost: Defer at all patience levels
-- Medium cases: patience determines the decision
+- Cost=0 (fix within already-changed files): Always fix regardless of perfection (any benefit >= 0)
+- High severity + low cost: Fix at all perfection levels
+- Low severity + high cost: Defer at all perfection levels
+- Medium cases: perfection determines the decision
 
 The non-linear cost scale (0, 1, 4, 10) reflects that larger changes have disproportionately higher cost (more risk,
-more review surface, more context required). The patience multipliers (0.5, 2, 5) give clear differentiation: low
-patience fixes 13/16 combinations, medium fixes 8/16, high fixes 6/16.
+more review surface, more context required). The perfection multipliers (0.5, 2, 5) give clear differentiation: low
+perfection fixes 13/16 combinations, medium fixes 8/16, high fixes 6/16.
 
 **Step 4: Act on the evaluation:**
 
 Partition `ALL_CONCERNS` into two named lists based on the threshold:
 
-- `FIXED_CONCERNS` — concerns where `benefit >= cost × patience_multiplier` (will be fixed in the auto-fix loop)
-- `DEFERRED_CONCERNS` — concerns where `benefit < cost × patience_multiplier` (will be deferred or tracked as issues)
+- `FIXED_CONCERNS` — concerns where `benefit >= cost × perfection_multiplier` (will be fixed in the auto-fix loop)
+- `DEFERRED_CONCERNS` — concerns where `benefit < cost × perfection_multiplier` (will be deferred or tracked as issues)
 
-**Concerns that pass the threshold** (benefit >= cost × patience_multiplier):
+**Concerns that pass the threshold** (benefit >= cost × perfection_multiplier):
 - Add to `FIXED_CONCERNS` and back into the auto-fix loop for fixing
 - These additional loop iterations count toward the existing `AUTOFIX_ITERATION < 3` limit. `AUTOFIX_ITERATION`
   retains its current value (it is NOT reset to 0). If `AUTOFIX_ITERATION` is already 3 or more, no further
@@ -957,16 +958,16 @@ CRITICAL concern — one not present in any prior round's `ALL_CONCERNS` (matche
 This bonus iteration is capped at 1 total (not per concern): if multiple new CRITICAL concerns are discovered, they
 all share the single bonus iteration. The bonus iteration follows the same auto-fix loop rules (planning subagent,
 implementation subagent, re-review, persistent tracking merge). If the bonus iteration does not resolve the CRITICAL
-concern(s), they move to `DEFERRED_CONCERNS` with tracking issues created per the severity x patience matrix. The
+concern(s), they move to `DEFERRED_CONCERNS` with tracking issues created per the severity x decision matrix. The
 `AUTOFIX_ITERATION` counter increments normally for the bonus iteration (e.g., from 3 to 4). No further bonus
 iterations are granted after the first one.
 
-**Step 5: Handle deferred concerns** (benefit < cost × patience_multiplier):
+**Step 5: Handle deferred concerns** (benefit < cost × perfection_multiplier):
 
 Perform these actions immediately, before proceeding to Step 6 (Deferred Concern Review).
 
 For **HIGH or CRITICAL severity** deferred concerns — create a tracking issue via `/cat:add-agent` so the concern is not
-lost. The target version is determined by the combination of severity and patience:
+lost. The target version is determined by the combination of severity and perfection:
 
 | Severity | Patience | Target Version | `/cat:add-agent` args prefix |
 |----------|----------|----------------|------------------------|
@@ -1007,7 +1008,7 @@ Example invocations:
   ```
 
 Any deferred concern that (a) is at or above `MIN_SEVERITY` AND (b) was not automatically tracked as an issue above
-(e.g., MEDIUM or LOW severity concerns deferred by the patience matrix) is collected for the interactive wizard in
+(e.g., MEDIUM or LOW severity concerns deferred by the decision matrix) is collected for the interactive wizard in
 Step 6 where the user decides how to handle them. Concerns strictly below `MIN_SEVERITY` are silently ignored and
 never appear in Step 6.
 
@@ -1053,14 +1054,14 @@ AskUserQuestion tool:
    additional context, but cannot eliminate concerns from the record or change their severity.
    **Version target constraint for HIGH/CRITICAL (MANDATORY):** When rescheduling HIGH or CRITICAL concerns (whether
    via "Reschedule one or more concerns" or "Other"), the target version is limited to: current minor version, next
-   minor version, or next major version — the same versions available in the severity x patience matrix. No other
+   minor version, or next major version — the same versions available in the severity x decision matrix. No other
    target versions are permitted for HIGH/CRITICAL concerns. If a freeform instruction specifies a version outside
    this set for a HIGH/CRITICAL concern, reject it and re-prompt the user.
 
 ### Part B: Review untracked deferred concerns
 
 If any deferred concerns were NOT automatically tracked as issues AND are at or above `MIN_SEVERITY` (this includes
-MEDIUM/LOW concerns deferred by the patience matrix), present them to the user. Concerns strictly below `MIN_SEVERITY`
+MEDIUM/LOW concerns deferred by the decision matrix), present them to the user. Concerns strictly below `MIN_SEVERITY`
 are silently ignored and do not appear here.
 
 1. Display a summary of each untracked concern:
@@ -1083,7 +1084,7 @@ AskUserQuestion tool:
 ```
 
 3. If user selects **"Create issues for selected concerns"**: use AskUserQuestion with multiSelect to let the user
-   pick which concerns to track, then invoke `/cat:add-agent` for each selected concern. Use the same severity × patience
+   pick which concerns to track, then invoke `/cat:add-agent` for each selected concern. Use the same severity × perfection
    matrix from Step 5 to determine the target version for each selected concern.
 
 4. If user selects **"Ignore these concerns"**: proceed without creating issues for these concerns.
@@ -1097,7 +1098,7 @@ AskUserQuestion tool:
    additional context, but cannot eliminate concerns from the record or change their severity.
    **Version target constraint for HIGH/CRITICAL (MANDATORY):** When scheduling or rescheduling HIGH or CRITICAL
    concerns via "Other", the target version is limited to: current minor version, next minor version, or next major
-   version — the same versions available in the severity x patience matrix. No other target versions are permitted
+   version — the same versions available in the severity x decision matrix. No other target versions are permitted
    for HIGH/CRITICAL concerns. If a freeform instruction specifies a version outside this set for a HIGH/CRITICAL
    concern, reject it and re-prompt the user.
 
@@ -1148,7 +1149,7 @@ Where:
   still unresolved in the current issue and merge is blocked until the user explicitly overrides.**
 - `all_concerns` = the full list of concern objects from the final review pass
 - `fixed_concerns` = concerns that were fixed in the auto-fix loop
-- `deferred_concerns` = concerns deferred by the patience matrix (may have tracking issues created)
+- `deferred_concerns` = concerns deferred by the decision matrix (may have tracking issues created)
 - `allCommitsCompact` = accumulated compact format string including any fix commits added during this phase
 
 **After outputting this JSON, do NOT add any further text.** The orchestrator parses the JSON return value and

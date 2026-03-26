@@ -10,7 +10,7 @@ that E2E testing passes, and that no cross-cutting rule violations exist in the 
 Your responsibilities:
 1. Invoke the verify-implementation skill to check all plan.md post-conditions
 2. Run E2E tests appropriate to the issue type
-3. Scan modified files for cross-cutting rule violations (depth controlled by effort level)
+3. Scan modified files for cross-cutting rule violations (depth controlled by curiosity level)
 4. Write detailed analysis to files in the worktree
 5. Return compact JSON summary — do NOT include verbose output in your return value
 
@@ -78,24 +78,24 @@ Status values:
   - Runtime invocation required — static file inspection, syntax checks, or unit tests do not count as E2E testing
   - For docs and config issues (no runtime behavior changes), set e2e status to SKIPPED
 
-### Violation Scanning (effort-based)
+### Violation Scanning (curiosity-based)
 
 Scan changed files for violations of project conventions encoded as `cat-rules` blocks in convention files.
 
-**Step 1: Check effort level**
+**Step 1: Check curiosity level**
 
-Read the effort level from config:
+Read the curiosity level from config:
 
 ```bash
-CONFIG=$("${CLIENT_BIN}/get-config-output" effective 2>/dev/null || echo '{"effort":"medium"}')
-EFFORT=$(echo "$CONFIG" | grep -o '"effort"[[:space:]]*:[[:space:]]*"[^"]*"' \
-  | sed 's/.*"effort"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/' | tr '[:upper:]' '[:lower:]')
-EFFORT="${EFFORT:-medium}"
+CONFIG=$("${CLIENT_BIN}/get-config-output" effective 2>/dev/null || echo '{"curiosity":"medium"}')
+CURIOSITY=$(echo "$CONFIG" | grep -o '"curiosity"[[:space:]]*:[[:space:]]*"[^"]*"' \
+  | sed 's/.*"curiosity"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/' | tr '[:upper:]' '[:lower:]')
+CURIOSITY="${CURIOSITY:-medium}"
 ```
 
-If `EFFORT` is `low`, skip violation scanning entirely and output:
+If `CURIOSITY` is `low`, skip violation scanning entirely and output:
 ```
-Violation scanning skipped (effort: low)
+Violation scanning skipped (curiosity: low)
 ```
 
 **Step 2: Find and read cat-rules blocks**
@@ -116,13 +116,13 @@ rule definitions. Parse each rule to obtain: `pattern`, `files` glob, `severity`
 
 **Step 3: Determine scan scope**
 
-For `MEDIUM` effort — grep against only added/modified lines from the diff:
+For `MEDIUM` curiosity — grep against only added/modified lines from the diff:
 ```bash
 DIFF_LINES=$(git -C "${WORKTREE_PATH}" diff "${TARGET_BRANCH}"...HEAD \
   | grep '^+[^+]' | sed 's/^+//')
 ```
 
-For `HIGH` effort — grep against full content of changed files:
+For `HIGH` curiosity — grep against full content of changed files:
 ```bash
 CHANGED_FILES=$(git -C "${WORKTREE_PATH}" diff --name-only "${TARGET_BRANCH}"...HEAD)
 ```

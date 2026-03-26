@@ -54,7 +54,7 @@ Show current values in descriptions using data from read-config step.
 - question: "What would you like to configure?"
 - options:
   - label: "🐱 CAT Behavior"
-    description: "Currently: {trust} · {verify} · {effort} · {patience}"
+    description: "Currently: {trust} · {caution} · {curiosity} · {perfection}"
   - label: "📏 Width Settings"
     description: "Currently: file={fileWidth || 120} · display={displayWidth || 120} characters"
   - label: "🔀 Completion Workflow"
@@ -85,12 +85,12 @@ Then AskUserQuestion:
 - options (show current values in descriptions):
   - label: "🤝 Trust"
     description: "Currently: {trust || 'medium'}"
-  - label: "✅ Verify"
-    description: "Currently: {verify || 'changed'}"
-  - label: "🔍 Effort"
-    description: "Currently: {effort || 'medium'}"
-  - label: "⏳ Patience"
-    description: "Currently: {patience || 'high'}"
+  - label: "✅ Caution"
+    description: "Currently: {caution || 'medium'}"
+  - label: "🔍 Curiosity"
+    description: "Currently: {curiosity || 'medium'}"
+  - label: "⏳ Perfection"
+    description: "Currently: {perfection || 'medium'}"
   - label: "← Back"
     description: "Return to main menu"
 
@@ -98,18 +98,18 @@ Then AskUserQuestion:
 
 <step name="trust">
 
-**🤝 Trust — How much you trust CAT to make decisions**
+**🤝 Trust — How much autonomy CAT has to act independently**
 
 Display current setting, then AskUserQuestion:
 - header: "Trust"
-- question: "How much do you trust CAT to make decisions? (Current: {trust || 'medium'})"
+- question: "How much autonomy should CAT have when making decisions? (Current: {trust || 'medium'})"
 - options:
-  - label: "Medium (Recommended)"
-    description: "Auto-fixes review issues, presents meaningful choices"
   - label: "Low"
-    description: "Asks before fixing review issues, presents options frequently"
+    description: "Stops frequently to request approval"
+  - label: "Medium (Default)"
+    description: "Auto-continues between issues, stops at approval gates"
   - label: "High"
-    description: "Full autonomy, skips review, auto-merges"
+    description: "Fully autonomous, skips approval gates"
   - label: "← Back"
     description: "Return to behavior menu"
 
@@ -117,68 +117,68 @@ Map: Low → `trust: "low"`, Medium → `trust: "medium"`, High → `trust: "hig
 
 </step>
 
-<step name="verify">
+<step name="caution">
 
-**✅ Verify — What verification CAT runs before committing**
-
-Display current setting, then AskUserQuestion:
-- header: "Verify"
-- question: "What verification should CAT run? (Current: {verify || 'changed'})"
-- options:
-  - label: "Changed (Recommended)"
-    description: "Verify modified file/module only"
-  - label: "None"
-    description: "No verification before commit"
-  - label: "All"
-    description: "Verify entire project"
-  - label: "← Back"
-    description: "Return to behavior menu"
-
-Map: None → `verify: "none"`, Changed → `verify: "changed"`, All → `verify: "all"`
-
-</step>
-
-<step name="effort">
-
-**🔍 Effort — How much CAT explores beyond the immediate issue**
+**✅ Caution — How cautiously the agent validates changes**
 
 Display current setting, then AskUserQuestion:
-- header: "Effort"
-- question: "How much should CAT explore beyond the issue? (Current: {effort || 'medium'})"
+- header: "Caution"
+- question: "How cautious should the agent be when validating changes? (Current: {caution || 'medium'})"
 - options:
-  - label: "Low (Recommended)"
-    description: "Issue-only, minimal scope"
-  - label: "Medium"
-    description: "Notice obvious issues while working"
-  - label: "High"
-    description: "Actively explore for improvements"
-  - label: "← Back"
-    description: "Return to behavior menu"
-
-Map: Low → `effort: "low"`, Medium → `effort: "medium"`, High → `effort: "high"`
-
-</step>
-
-<step name="patience">
-
-**⏳ Patience — When CAT acts on discovered opportunities**
-
-Display current setting, then AskUserQuestion:
-- header: "Patience"
-- question: "When should CAT act on discovered opportunities? (Current: {patience || 'high'})"
-- options:
-  - label: "High (Recommended)"
-    description: "Defer by priority to future versions"
-  - label: "Medium"
-    description: "Defer to current version"
   - label: "Low"
-    description: "Act immediately, expand scope"
+    description: "Skip validation before commit"
+  - label: "Medium (Default)"
+    description: "Validate only modified files and modules"
+  - label: "High"
+    description: "Validate the entire project"
   - label: "← Back"
     description: "Return to behavior menu"
 
-Map: Low → `patience: "low"`, Medium → `patience: "medium"`, High → `patience: "high"`
+Map: Low → `caution: "low"`, Medium → `caution: "medium"`, High → `caution: "high"`
 
-**Priority-based deferral (when patience is high):**
+</step>
+
+<step name="curiosity">
+
+**🔍 Curiosity — How curious the agent is when investigating problems and exploring solutions**
+
+Display current setting, then AskUserQuestion:
+- header: "Curiosity"
+- question: "How curious should CAT be when investigating problems? (Current: {curiosity || 'medium'})"
+- options:
+  - label: "Low"
+    description: "Investigate the issue as stated, no extra exploration"
+  - label: "Medium (Default)"
+    description: "Notice related issues while investigating"
+  - label: "High"
+    description: "Actively explore solutions and alternatives"
+  - label: "← Back"
+    description: "Return to behavior menu"
+
+Map: Low → `curiosity: "low"`, Medium → `curiosity: "medium"`, High → `curiosity: "high"`
+
+</step>
+
+<step name="perfection">
+
+**⏳ Perfection — How much the agent pursues perfection in the current task**
+
+Display current setting, then AskUserQuestion:
+- header: "Perfection"
+- question: "How much should CAT pursue perfection in the current task? (Current: {perfection || 'medium'})"
+- options:
+  - label: "Low"
+    description: "Stay focused on the primary goal, defer improvements"
+  - label: "Medium (Default)"
+    description: "Fix issues within the current task scope"
+  - label: "High"
+    description: "Fix every issue encountered, expand scope as needed"
+  - label: "← Back"
+    description: "Return to behavior menu"
+
+Map: Low → `perfection: "low"`, Medium → `perfection: "medium"`, High → `perfection: "high"`
+
+**Priority-based deferral (when perfection is low):**
 - High benefit, low cost → Current or next version
 - Moderate → Next major version
 - Low benefit, high cost → Backlog or distant future
@@ -206,7 +206,7 @@ AskUserQuestion:
 - header: "File Width"
 - question: "What device are you primarily writing files on?"
 - options:
-  - label: "🖥️ Desktop/Laptop (Recommended)"
+  - label: "🖥️ Desktop/Laptop (Default)"
     description: "120 characters - standard for wide monitors and markdown editors"
   - label: "⚙️ Custom value"
     description: "Enter a specific width (40-200)"
@@ -223,7 +223,7 @@ AskUserQuestion:
 - header: "Display Width"
 - question: "What device are you primarily using?"
 - options:
-  - label: "🖥️ Desktop/Laptop (Recommended)"
+  - label: "🖥️ Desktop/Laptop (Default)"
     description: "120 characters - optimized for wide monitors"
   - label: "📱 Mobile"
     description: "50 characters - optimized for phones and narrow screens"
@@ -283,7 +283,7 @@ AskUserQuestion:
 - header: "Completion Workflow"
 - question: "How should completed issues be integrated? (Current: {completionWorkflow || 'merge'})"
 - options:
-  - label: "🔀 Merge (Recommended)"
+  - label: "🔀 Merge (Default)"
     description: "Merge source branch directly to target branch after approval"
   - label: "📝 Pull Request"
     description: "Create a PR instead of merging directly"
@@ -322,7 +322,7 @@ AskUserQuestion:
 - header: "Min Severity — Concern Visibility"
 - question: "Minimum severity level to make visible? (Current: {minSeverity || 'low'})"
 - options:
-  - label: "LOW (Recommended)"
+  - label: "LOW (Default)"
     description: "All concerns visible (CRITICAL, HIGH, MEDIUM, and LOW)"
   - label: "MEDIUM"
     description: "MEDIUM, HIGH, and CRITICAL concerns visible; LOW are ignored"
@@ -528,10 +528,10 @@ INVOKE: Skill("cat:get-output-agent", args="config.no-changes")
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `trust` | string | "medium" | Trust level (controls review and autonomy) |
-| `verify` | string | "changed" | What verification runs before commits |
-| `effort` | string | "medium" | Exploration beyond immediate issue |
-| `patience` | string | "high" | When to act on discoveries |
+| `trust` | string | "medium" | How much autonomy CAT has to act independently |
+| `caution` | string | "medium" | How cautious the agent is when validating changes |
+| `curiosity` | string | "medium" | How curious the agent is when investigating problems and exploring solutions |
+| `perfection` | string | "medium" | How much the agent pursues perfection (high=fix all issues, low=stay focused on primary goal) |
 | `completionWorkflow` | string | "merge" | Issue completion behavior (merge or PR) |
 | `minSeverity` | string | "low" | Minimum severity level for concerns to be visible at all |
 | `fileWidth` | integer | 120 | Line width for content written to files (e.g., markdown docs) |
@@ -540,24 +540,24 @@ INVOKE: Skill("cat:get-output-agent", args="config.no-changes")
 **Context Limits:** Fixed values, not configurable. See agent-architecture.md § Context Limit Constants.
 
 ### Trust Values
-- `low` — Asks before fixing review issues. Presents options frequently.
-- `medium` — Auto-fixes review issues. Presents meaningful choices.
-- `high` — Full autonomy. Skips review. Auto-merges.
+- `low` — Stops frequently to request approval.
+- `medium` — Auto-continues between issues, stops at approval gates.
+- `high` — Fully autonomous, skips approval gates.
 
-### Verify Values
-- `none` — No verification before commit.
-- `changed` — Verify modified file/module only.
-- `all` — Verify entire project.
+### Caution Values
+- `low` — No verification before commit.
+- `medium` — Verify modified file/module only.
+- `high` — Verify entire project.
 
-### Effort Values
-- `low` — Issue-only. Don't explore.
-- `medium` — Notice obvious issues while working.
-- `high` — Actively explore for improvements.
+### Curiosity Values
+- `low` — Investigate the issue as stated, no extra exploration.
+- `medium` — Notice related issues while investigating.
+- `high` — Actively explore solutions and alternatives.
 
-### Patience Values
-- `low` — Act immediately. Expand scope.
-- `medium` — Defer to current version.
-- `high` — Defer by priority to future versions.
+### Perfection Values
+- `high` — Fix every issue encountered, expand scope as needed.
+- `medium` — Fix issues within the current task scope.
+- `low` — Stay focused on the primary goal, defer improvements.
 
 ### Completion Workflow Values
 - `merge` — Merge source branch directly to target branch after approval (default).

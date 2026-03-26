@@ -36,7 +36,7 @@ immediately with an error message showing the current branch and expected branch
 
 ### Step 2: Read Effective Configuration Before Using Config Values
 
-Before reading or relying on any behavioral configuration value (trust level, verify level, effort, etc.), **MUST**
+Before reading or relying on any behavioral configuration value (trust level, caution level, curiosity, etc.), **MUST**
 read the effective configuration using the `get-config-output` tool:
 
 ```bash
@@ -47,9 +47,9 @@ This returns JSON with all defaults applied (missing entries filled in automatic
 ```json
 {
   "trust": "medium",
-  "verify": "all",
-  "effort": "high",
-  "patience": "medium",
+  "caution": "high",
+  "curiosity": "high",
+  "perfection": "medium",
   "displayWidth": 50,
   "fileWidth": 120,
   "completionWorkflow": "merge",
@@ -195,7 +195,7 @@ When a worktree is created, the following context is established:
 | `ISSUE_ID` | work preparation output | `2.1-issue-name` | Identifying the issue |
 | `TARGET_BRANCH` | work preparation output | `v2.1` | Merge target |
 | `TRUST` | `config.json` field `"trust"` | `medium` | Approval gate behavior |
-| `VERIFY` | `config.json` field `"verify"` | `all` | Review level |
+| `CAUTION` | `config.json` field `"caution"` | `high` | Review level |
 
 **Do not assume any of these values.** Always read them from authoritative sources:
 - Directory path: from preparation phase output passed as parameter

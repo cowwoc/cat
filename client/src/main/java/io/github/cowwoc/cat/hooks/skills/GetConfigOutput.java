@@ -84,9 +84,9 @@ public final class GetConfigOutput implements SkillOutput
     Config config = Config.load(scope.getJsonMapper(), projectPath);
 
     String trust = config.getTrust().toString();
-    String verify = config.getVerify().toString();
-    String effort = config.getEffort().toString();
-    String patience = config.getPatience().toString();
+    String caution = config.getCaution().toString();
+    String curiosity = config.getCuriosity().toString();
+    String perfection = config.getPerfection().toString();
     String completionWorkflow = config.getString("completionWorkflow");
     String minSeverity = config.getMinSeverity().toString();
     int fileWidth = config.getInt("fileWidth", 120);
@@ -98,9 +98,9 @@ public final class GetConfigOutput implements SkillOutput
       List.of(
         "",
         "  🤝 Trust: " + trust,
-        "  ✅ Verify: " + verify,
-        "  💪 Effort: " + effort,
-        "  ⏳ Patience: " + patience,
+        "  🛡️ Caution: " + caution,
+        "  🔍 Curiosity: " + curiosity,
+        "  ✨ Perfection: " + perfection,
         "  🔀 Completion: " + completionWorkflow,
         "  📈 Min Severity: " + minSeverity,
         "  📄 File Width: " + fileWidth,

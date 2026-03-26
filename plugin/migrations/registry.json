@@ -25,7 +25,7 @@
     {
       "version": "2.1",
       "script": "2.1.sh",
-      "description": "Move .claude/cat to .cat, merge In Progress into Pending sections, rename status values, move version tracking to VERSION file, remove reviewThreshold config key, migrate cross-session dirs (locks/, worktrees/, verify/) to .cat/work/"
+      "description": "Move .claude/cat to .cat, merge In Progress into Pending sections, rename status values, move version tracking to VERSION file, remove reviewThreshold config key, migrate cross-session dirs (locks/, worktrees/, verify/) to .cat/work/, rename config keys verify→caution effort→curiosity patience→perfection"
     }
   ]
 }

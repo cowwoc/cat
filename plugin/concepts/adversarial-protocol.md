@@ -22,14 +22,14 @@ to seek new attack vectors each round rather than revisiting prior findings.
 
 ## Effort Gate
 
-When the calling agent's configured effort level is `low`, skip the adversarial hardening loop entirely. The loop
-is most valuable for medium and high effort work where thoroughness justifies the additional rounds. Low-effort
+When the calling agent's configured curiosity level is `low`, skip the adversarial hardening loop entirely. The loop
+is most valuable for medium and high curiosity work where thoroughness justifies the additional rounds. Low-curiosity
 work relies on the author's initial quality and stakeholder review for validation.
 
-Callers should check effort before entering the loop:
+Callers should check curiosity before entering the loop:
 
-- `effort = low` → skip adversarial hardening, proceed to next workflow step
-- `effort = medium` or `effort = high` → run the full adversarial loop
+- `curiosity = low` → skip adversarial hardening, proceed to next workflow step
+- `curiosity = medium` or `curiosity = high` → run the full adversarial loop
 
 ## Convergence Criterion
 

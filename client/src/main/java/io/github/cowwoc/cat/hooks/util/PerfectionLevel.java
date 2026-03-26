@@ -11,32 +11,34 @@ import java.util.Locale;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * The patience level, controlling how long the agent waits before timing out or giving up.
+ * How much the agent pursues perfection in the current task.
+ * <p>
+ * High perfection means fixing every issue encountered; low perfection means staying focused on the primary goal.
  */
-public enum PatienceLevel
+public enum PerfectionLevel
 {
   /**
-   * Low patience: short wait times, quick timeouts.
+   * Low perfection: stay focused on the primary goal, defer tangential improvements.
    */
   LOW,
   /**
-   * Medium patience: moderate wait times.
+   * Medium perfection: fix issues that are easy to address, defer complex ones.
    */
   MEDIUM,
   /**
-   * High patience: long wait times, persistent retries.
+   * High perfection: fix every issue encountered, even if tangential to the primary goal.
    */
   HIGH;
 
   /**
-   * Parses a patience level from a string value.
+   * Parses a perfection level from a string value.
    *
    * @param value the string value to parse (case-insensitive)
-   * @return the parsed patience level
+   * @return the parsed perfection level
    * @throws NullPointerException if {@code value} is null
-   * @throws IllegalArgumentException if {@code value} is blank or does not match any patience level
+   * @throws IllegalArgumentException if {@code value} is blank or does not match any perfection level
    */
-  public static PatienceLevel fromString(String value)
+  public static PerfectionLevel fromString(String value)
   {
     requireThat(value, "value").isNotBlank();
     return valueOf(value.toUpperCase(Locale.ROOT));

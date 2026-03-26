@@ -39,7 +39,7 @@ require user permission to execute — they are pre-approved as part of the `/ca
 are additionally enforced by hooks or explicit STOP instructions that block progress mechanically if skipped.
 
 - **Step 5: Review Phase (Stakeholder Review)** — always invoke `cat:stakeholder-review-agent` except for config-driven
-  exceptions (VERIFY=none or TRUST=high); do not skip based on perceived simplicity or short feedback cycles
+  exceptions (CAUTION=none or TRUST=high); do not skip based on perceived simplicity or short feedback cycles
 - **Step 7: Squash Commits by Topic Before Review** — always squash before the approval gate; do not proceed to
   Step 8 without completing this step
 - **Step 8: Rebase onto Target Branch Before Approval Gate** — always rebase the squashed branch onto the current tip
@@ -50,10 +50,10 @@ are additionally enforced by hooks or explicit STOP instructions that block prog
 ## Arguments and Configuration
 
 The main `/cat:work` skill invokes this with positional space-separated arguments:
-`<issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <estimated_tokens> <trust> <verify>`
+`<issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <estimated_tokens> <trust> <caution>`
 
 ```bash
-read ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH ESTIMATED_TOKENS TRUST VERIFY <<< "$ARGUMENTS"
+read ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH ESTIMATED_TOKENS TRUST CAUTION <<< "$ARGUMENTS"
 ```
 
 ## Path Validation
@@ -99,7 +99,7 @@ Invoke the implement phase skill:
 ```
 Skill tool:
   skill: "cat:work-implement-agent"
-  args: "${CAT_AGENT_ID} ${ISSUE_ID} ${ISSUE_PATH} ${WORKTREE_PATH} ${BRANCH} ${TARGET_BRANCH} ${ESTIMATED_TOKENS} ${TRUST} ${VERIFY}"
+  args: "${CAT_AGENT_ID} ${ISSUE_ID} ${ISSUE_PATH} ${WORKTREE_PATH} ${BRANCH} ${TARGET_BRANCH} ${ESTIMATED_TOKENS} ${TRUST} ${CAUTION}"
 ```
 
 Capture the result. Assign variables from the returned JSON:
@@ -124,7 +124,7 @@ printf '%s' "${EXECUTION_COMMITS_JSON}" > "${EXECUTION_COMMITS_JSON_PATH}"
 ```
 Skill tool:
   skill: "cat:work-confirm-agent"
-  args: "${CAT_AGENT_ID} ${ISSUE_ID} ${ISSUE_PATH} ${WORKTREE_PATH} ${BRANCH} ${TARGET_BRANCH} ${EXECUTION_COMMITS_JSON_PATH} ${FILES_CHANGED} ${TRUST} ${VERIFY}"
+  args: "${CAT_AGENT_ID} ${ISSUE_ID} ${ISSUE_PATH} ${WORKTREE_PATH} ${BRANCH} ${TARGET_BRANCH} ${EXECUTION_COMMITS_JSON_PATH} ${FILES_CHANGED} ${TRUST} ${CAUTION}"
 ```
 
 Where `EXECUTION_COMMITS_JSON_PATH` is the path to the JSON file containing commits from the implement phase result,
@@ -141,7 +141,7 @@ Invoke the review phase skill:
 ```
 Skill tool:
   skill: "cat:work-review-agent"
-  args: "${CAT_AGENT_ID} ${ISSUE_ID} ${ISSUE_PATH} ${WORKTREE_PATH} ${BRANCH} ${TARGET_BRANCH} ${ALL_COMMITS_COMPACT} ${TRUST} ${VERIFY}"
+  args: "${CAT_AGENT_ID} ${ISSUE_ID} ${ISSUE_PATH} ${WORKTREE_PATH} ${BRANCH} ${TARGET_BRANCH} ${ALL_COMMITS_COMPACT} ${TRUST} ${CAUTION}"
 ```
 
 Capture the result including `all_concerns`, `fixed_concerns`, `deferred_concerns`, and
@@ -164,7 +164,7 @@ printf '%s' "${COMMITS_JSON}" > "${COMMITS_JSON_PATH}"
 ```
 Skill tool:
   skill: "cat:work-merge-agent"
-  args: "${CAT_AGENT_ID} ${ISSUE_ID} ${ISSUE_PATH} ${WORKTREE_PATH} ${BRANCH} ${TARGET_BRANCH} ${COMMITS_JSON_PATH} ${TRUST} ${VERIFY}"
+  args: "${CAT_AGENT_ID} ${ISSUE_ID} ${ISSUE_PATH} ${WORKTREE_PATH} ${BRANCH} ${TARGET_BRANCH} ${COMMITS_JSON_PATH} ${TRUST} ${CAUTION}"
 ```
 
 Where `COMMITS_JSON_PATH` is the path to the JSON file containing all commits accumulated across implement, confirm,
