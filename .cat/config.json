@@ -2,8 +2,8 @@
   "displayWidth": 50,
   "fileWidth": 120,
   "trust": "medium",
-  "verify": "all",
-  "effort": "high",
-  "patience": "low",
+  "caution": "high",
+  "curiosity": "high",
+  "perfection": "low",
   "minSeverity": "low"
 }
