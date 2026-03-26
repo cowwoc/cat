@@ -30,13 +30,13 @@ import java.nio.file.Path;
 public final class WarnApprovalWithoutRenderDiffTest
 {
   /**
-   * Verifies that warning IS triggered when approval question is present but "get-diff" is NOT found
+   * Verifies that blocking IS triggered when approval question is present but "get-diff" is NOT found
    * in the recent session lines and box characters are insufficient.
    *
    * @throws IOException if test setup fails
    */
   @Test
-  public void missingGetDiffTriggersWarning() throws IOException
+  public void missingGetDiffBlocksApproval() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-warn-approval-");
     try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
@@ -63,7 +63,137 @@ public final class WarnApprovalWithoutRenderDiffTest
 
       AskHandler.Result result = handler.check(toolInput, sessionId);
 
-      requireThat(result.additionalContext(), "additionalContext").contains("RENDER-DIFF NOT DETECTED");
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("RENDER-DIFF NOT DETECTED");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that force push sessions are exempt from blocking even when "get-diff" is absent
+   * and box characters are insufficient.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void forcePushIsExemptFromBlock() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-warn-approval-");
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      String sessionId = "test-session-force-push";
+
+      // Set up .cat directory so the catDir check passes
+      Path catDir = scope.getProjectPath().resolve(".cat");
+      Files.createDirectories(catDir);
+
+      // Set up session file containing force push signal but no get-diff and no box chars
+      Path sessionDir = scope.getClaudeSessionsPath();
+      Files.createDirectories(sessionDir);
+      Path sessionFile = sessionDir.resolve(sessionId + ".jsonl");
+      Files.writeString(sessionFile, """
+        {"role":"assistant","content":"Pushing with git push --force to update the remote branch"}
+        """);
+
+      WarnApprovalWithoutRenderDiff handler = new WarnApprovalWithoutRenderDiff(scope);
+      JsonNode toolInput = mapper.readTree("""
+        {"question": "Do you approve these changes?"}""");
+
+      AskHandler.Result result = handler.check(toolInput, sessionId);
+
+      // AskHandler.Result has no isAllowed() method; blocked() and additionalContext() are the complete specification
+      requireThat(result.blocked(), "blocked").isFalse();
+      requireThat(result.additionalContext(), "additionalContext").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that force push sessions using the short -f flag are exempt from blocking even when
+   * "get-diff" is absent and box characters are insufficient.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void forcePushShortFlagIsExemptFromBlock() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-warn-approval-");
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      String sessionId = "test-session-force-push-short-flag";
+
+      // Set up .cat directory so the catDir check passes
+      Path catDir = scope.getProjectPath().resolve(".cat");
+      Files.createDirectories(catDir);
+
+      // Set up session file containing -f short flag signal but no get-diff and no box chars
+      Path sessionDir = scope.getClaudeSessionsPath();
+      Files.createDirectories(sessionDir);
+      Path sessionFile = sessionDir.resolve(sessionId + ".jsonl");
+      Files.writeString(sessionFile, """
+        {"role":"assistant","content":"Pushing with git push -f origin main"}
+        """);
+
+      WarnApprovalWithoutRenderDiff handler = new WarnApprovalWithoutRenderDiff(scope);
+      JsonNode toolInput = mapper.readTree("""
+        {"question": "Do you approve these changes?"}""");
+
+      AskHandler.Result result = handler.check(toolInput, sessionId);
+
+      // AskHandler.Result has no isAllowed() method; blocked() and additionalContext() are the complete specification
+      requireThat(result.blocked(), "blocked").isFalse();
+      requireThat(result.additionalContext(), "additionalContext").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that git filter-repo sessions are exempt from blocking even when "get-diff" is absent
+   * and box characters are insufficient.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void filterRepoIsExemptFromBlock() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-warn-approval-");
+    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      String sessionId = "test-session-filter-repo";
+
+      // Set up .cat directory so the catDir check passes
+      Path catDir = scope.getProjectPath().resolve(".cat");
+      Files.createDirectories(catDir);
+
+      // Set up session file containing filter-repo signal but no get-diff and no box chars
+      Path sessionDir = scope.getClaudeSessionsPath();
+      Files.createDirectories(sessionDir);
+      Path sessionFile = sessionDir.resolve(sessionId + ".jsonl");
+      Files.writeString(sessionFile, """
+        {"role":"assistant","content":"Running git filter-repo --path sensitive.txt to clean history"}
+        """);
+
+      WarnApprovalWithoutRenderDiff handler = new WarnApprovalWithoutRenderDiff(scope);
+      JsonNode toolInput = mapper.readTree("""
+        {"question": "Do you approve these changes?"}""");
+
+      AskHandler.Result result = handler.check(toolInput, sessionId);
+
+      // AskHandler.Result has no isAllowed() method; blocked() and additionalContext() are the complete specification
+      requireThat(result.blocked(), "blocked").isFalse();
+      requireThat(result.additionalContext(), "additionalContext").isEmpty();
     }
     finally
     {
@@ -136,7 +266,7 @@ public final class WarnApprovalWithoutRenderDiffTest
 
       // Set up session file with "get-diff" but sparse box chars and many manual diff signs.
       // MIN_BOX_CHARS_WITH_INVOCATION=10 so we need fewer than 10 box chars.
-      // MIN_MANUAL_DIFF_SIGNS=5 so we need more than 5 matches of ^+++|^---|^@@.
+      // REFORMAT_MANUAL_DIFF_THRESHOLD=5 so we need more than 5 matches of ^+++|^---|^@@.
       // The MANUAL_DIFF_SIGNS pattern uses MULTILINE, so each literal JSONL line can start
       // with a diff marker to trigger the pattern.
       Path sessionDir = scope.getClaudeSessionsPath();
