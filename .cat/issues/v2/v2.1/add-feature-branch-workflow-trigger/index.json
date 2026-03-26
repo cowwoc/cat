@@ -1,6 +1,7 @@
 {
-  "status" : "open",
-  "dependencies" : [ "2.1-fix-add-skill-index-json-format" ],
-  "blocks" : [ "2.1-build-git-filter-repo-ci" ],
-  "target_branch" : "v2.1"
+  "status": "closed",
+  "resolution": "implemented",
+  "dependencies": ["2.1-fix-add-skill-index-json-format"],
+  "blocks": ["2.1-build-git-filter-repo-ci"],
+  "target_branch": "v2.1"
 }
