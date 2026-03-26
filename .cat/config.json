@@ -4,6 +4,6 @@
   "trust": "medium",
   "caution": "high",
   "curiosity": "high",
-  "perfection": "low",
+  "perfection": "high",
   "minSeverity": "low"
 }
