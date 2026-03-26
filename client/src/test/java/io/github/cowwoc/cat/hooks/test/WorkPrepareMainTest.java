@@ -156,12 +156,12 @@ public class WorkPrepareMainTest
   }
 
   /**
-   * Verifies that an unknown flag produces an IllegalArgumentException.
+   * Verifies that run() outputs a business-format JSON error for an unknown flag, naming the unknown flag in
+   * the message field.
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*Unknown argument.*--bogus.*")
+  @Test
   public void unknownArgProducesError() throws IOException
   {
     Path tempDir = Files.createTempDirectory("work-prepare-main-test-");
@@ -170,6 +170,13 @@ public class WorkPrepareMainTest
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
       WorkPrepare.run(scope, new String[]{"--bogus", "value"}, out);
+
+      String output = buffer.toString(StandardCharsets.UTF_8).strip();
+      requireThat(output, "output").isNotBlank();
+
+      JsonNode json = scope.getJsonMapper().readTree(output);
+      requireThat(json.path("status").asString(), "status").isEqualTo("ERROR");
+      requireThat(json.path("message").asString(), "message").contains("--bogus");
     }
     finally
     {

@@ -2021,41 +2021,61 @@ public final class WorkPrepare
     String trustLevelStr = "medium";
     String rawArguments = "";
 
-    // Loop bound is args.length - 1 so that args[i+1] (the flag value) is always available.
-    // A lone flag key at the last position is intentionally skipped to avoid ArrayIndexOutOfBoundsException.
-    for (int i = 0; i < args.length - 1; ++i)
+    try
     {
-      switch (args[i])
+      for (int i = 0; i < args.length; ++i)
       {
-        case "--session-id" ->
+        switch (args[i])
         {
-          ++i;
-          sessionIdOverride = args[i];
+          case "--session-id" ->
+          {
+            if (!checkFlag(i, args, "--session-id", out, scope))
+              return;
+            ++i;
+            sessionIdOverride = args[i];
+          }
+          case "--exclude-pattern" ->
+          {
+            if (!checkFlag(i, args, "--exclude-pattern", out, scope))
+              return;
+            ++i;
+            excludePattern = args[i];
+          }
+          case "--issue-id" ->
+          {
+            if (!checkFlag(i, args, "--issue-id", out, scope))
+              return;
+            ++i;
+            issueId = args[i];
+          }
+          case "--trust-level" ->
+          {
+            if (!checkFlag(i, args, "--trust-level", out, scope))
+              return;
+            ++i;
+            trustLevelStr = args[i];
+          }
+          case "--arguments" ->
+          {
+            if (!checkFlag(i, args, "--arguments", out, scope))
+              return;
+            ++i;
+            rawArguments = args[i];
+          }
+          default ->
+          {
+            out.println(toErrorJson(scope, "Unknown flag '" + args[i] + "'. Valid flags: --session-id, " +
+              "--exclude-pattern, --issue-id, --trust-level, --arguments"));
+            return;
+          }
         }
-        case "--exclude-pattern" ->
-        {
-          ++i;
-          excludePattern = args[i];
-        }
-        case "--issue-id" ->
-        {
-          ++i;
-          issueId = args[i];
-        }
-        case "--trust-level" ->
-        {
-          ++i;
-          trustLevelStr = args[i];
-        }
-        case "--arguments" ->
-        {
-          ++i;
-          rawArguments = args[i];
-        }
-        default -> throw new IllegalArgumentException(
-          "Unknown argument: " + args[i] + ". Valid arguments: --session-id, --exclude-pattern, " +
-            "--issue-id, --trust-level, --arguments");
       }
+    }
+    catch (IOException e)
+    {
+      LoggerFactory.getLogger(WorkPrepare.class).error("Failed to serialize error message", e);
+      out.println("{\"status\":\"ERROR\",\"message\":\"serialization failed\"}");
+      return;
     }
 
     // Parse raw arguments into issue-id or exclude-pattern
@@ -2105,6 +2125,33 @@ public final class WorkPrepare
         LoggerFactory.getLogger(WorkPrepare.class).error("Failed to serialize error message", jsonException);
         out.println("{\"status\":\"ERROR\",\"message\":\"serialization failed\"}");
       }
+    }
+  }
+
+  /**
+   * Validates that the flag at position {@code flagIndex} has a value argument, outputting an error
+   * JSON message and returning {@code false} if not.
+   *
+   * @param flagIndex the index of the flag in {@code args}
+   * @param args the command-line arguments
+   * @param flagName the name of the flag (e.g., "--session-id")
+   * @param out the output stream to write the error JSON to
+   * @param scope the JVM scope
+   * @return {@code true} if the flag has a value argument; {@code false} otherwise
+   * @throws IOException if JSON serialization of the error message fails
+   */
+  private static boolean checkFlag(int flagIndex, String[] args, String flagName, PrintStream out,
+    ClaudeTool scope) throws IOException
+  {
+    try
+    {
+      CliArgs.requiredValue(flagIndex, args, flagName);
+      return true;
+    }
+    catch (IllegalArgumentException e)
+    {
+      out.println(toErrorJson(scope, e.getMessage()));
+      return false;
     }
   }
 
