@@ -380,6 +380,23 @@ main() {
   if try_acquire_runtime "$jdk_path" "$plugin_version"; then
     debug "JDK runtime ready, invoking Java dispatcher"
 
+    # Workaround for https://github.com/anthropics/claude-code/issues/38699
+    # Claude Code v2.1.83+ sets CLAUDE_PLUGIN_ROOT to the marketplace source directory for
+    # hooks/skills, but the agent Bash environment uses installPath (versioned cache). If these
+    # differ, symlink installPath/client -> plugin_root/client so binaries are accessible from
+    # both paths.
+    local installed_plugins_json="${HOME}/.config/claude/plugins/installed_plugins.json"
+    if [[ -f "$installed_plugins_json" ]]; then
+      local install_path
+      install_path=$(grep -o '"installPath"[[:space:]]*:[[:space:]]*"[^"]*"' "$installed_plugins_json" \
+        | head -1 | sed 's/.*"\([^"]*\)"$/\1/')
+      if [[ -n "$install_path" && "$install_path" != "$plugin_root" \
+            && ! -d "${install_path}/${JDK_SUBDIR}" && ! -L "${install_path}/${JDK_SUBDIR}" ]]; then
+        debug "Bridging installPath: ${install_path}/${JDK_SUBDIR} -> ${jdk_path}"
+        ln -sfn "$jdk_path" "${install_path}/${JDK_SUBDIR}"
+      fi
+    fi
+
     # Invoke the SessionStartHook Java dispatcher
     # It handles all session start operations: update check, data migration, session ID,
     # retrospective reminders, session instructions, env injection, skill marker cleanup.
