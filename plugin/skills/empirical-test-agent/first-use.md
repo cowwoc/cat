@@ -308,6 +308,42 @@ improvements:
 
 Once the root cause is identified, create the candidate fix and test it in production context:
 
+**CRITICAL: Fix the skill under test, not the test cases.**
+
+When compliance is low (e.g., 0% or 33%), the default assumption is that the skill/agent is broken. Do NOT mask
+underlying issues by tweaking test prompts.
+
+**When to Modify Test Cases:**
+
+Modify test cases ONLY if the test itself was fundamentally broken from the start. A test is fundamentally broken if:
+
+**Example 1: Test was measuring the wrong behavior**
+- Original test expected: "Agent skips this step when configured with low trust"
+- But the rule says: "This step is mandatory and cannot be skipped"
+- Fix: Correct the test expectation, not the skill (the skill is correct, the test was wrong)
+
+**Example 2: Test prompt is ambiguous or contradicts the rule being tested**
+- Test prompt says: "Use tool X"
+- Skill instructions say: "Tool X is not available; use tool Y instead"
+- Fix: Clarify the test prompt (remove the contradiction)
+
+**When to Fix the Skill (Default):**
+
+When compliance is low, assume the skill/agent is broken and needs fixing. Common scenarios:
+
+**Example 3: Agent doesn't follow a clearly documented rule**
+- Rule says: "Always echo content verbatim"
+- Test has agent echo content, but agent is paraphrasing (0% pass rate)
+- Fix: Improve the skill instructions or system prompt so agent follows the rule
+
+**Example 4: Agent uses wrong approach despite clear guidance**
+- Rule says: "Use tool X to validate the data"
+- Agent is not using tool X even with clear instructions (33% pass rate over 5 trials)
+- Fix: Add stronger instruction or example to the skill
+
+**Decision Rule:** If the test was written correctly (prompts are clear, expectations match documented rules),
+and compliance is still low, the skill is broken. Fix the skill, not the test.
+
 1. Apply the fix to the actual skill/prompt file
 2. Create a new config that uses the **actual file content** (not a simplified version)
 3. Include **all production elements** (priming, prefix, full content, and system prompt from CLAUDE.md)
