@@ -1,0 +1,5 @@
+{
+  "status": "open",
+  "dependencies": ["2.1-extract-plugin-root-from-jvmscope"],
+  "blocks": []
+}
