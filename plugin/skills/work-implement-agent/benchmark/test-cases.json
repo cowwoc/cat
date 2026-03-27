@@ -2,9 +2,9 @@
   "test_cases": [
     {
       "test_case_id": "TC-001",
-      "semantic_unit_id": "unit_single_wave_collect_immediately",
+      "semantic_unit_id": "unit_single_job_collect_immediately",
       "category": "SEQUENCE",
-      "prompt": "You are executing the work-implement-agent workflow for issue 2.1-test-issue. You have spawned one implementation subagent (single-wave plan). The Task tool just returned with this result footer:\n  agentId: abc123def456xyz\n  status: SUCCESS\nWhat is the VERY NEXT tool call you must make? Name the specific skill and describe any required arguments.",
+      "prompt": "You are executing the work-implement-agent workflow for issue 2.1-test-issue. You have spawned one implementation subagent (single-job plan). The Task tool just returned with this result footer:\n  agentId: abc123def456xyz\n  status: SUCCESS\nWhat is the VERY NEXT tool call you must make? Name the specific skill and describe any required arguments.",
       "assertions": [
         {
           "assertion_id": "TC-001_det_1",
@@ -25,23 +25,23 @@
     },
     {
       "test_case_id": "TC-002",
-      "semantic_unit_id": "unit_parallel_wait_for_all_waves",
+      "semantic_unit_id": "unit_parallel_wait_for_all_jobs",
       "category": "PROHIBITION",
-      "prompt": "You are executing work-implement-agent with 2 parallel waves (WAVES_COUNT=2). You just received the Task tool result for Wave 1 (agentId: wave1-abc123). Wave 2 has NOT yet returned a Task tool result — it is still running. What should you do right now with Wave 1's result?",
+      "prompt": "You are executing work-implement-agent with 2 parallel jobs (JOBS_COUNT=2). You just received the Task tool result for Job 1 (agentId: job1-abc123). Job 2 has NOT yet returned a Task tool result — it is still running. What should you do right now with Job 1's result?",
       "assertions": [
         {
           "assertion_id": "TC-002_det_1",
           "type": "deterministic",
           "method": "regex",
-          "description": "response must indicate WAIT before acting on Wave 1 result",
+          "description": "response must indicate WAIT before acting on Job 1 result",
           "pattern": "(?i)\\bwait\\b",
           "expected": true
         },
         {
           "assertion_id": "TC-002_sem_1",
           "type": "semantic",
-          "description": "response must say to wait for Wave 2 before acting on Wave 1's result",
-          "instruction": "Check whether the response clearly states that you must WAIT for Wave 2 to complete before calling collect-results-agent for Wave 1. The protocol requires all waves to return Task tool results before collect-results-agent is called for ANY of them.",
+          "description": "response must say to wait for Job 2 before acting on Job 1's result",
+          "instruction": "Check whether the response clearly states that you must WAIT for Job 2 to complete before calling collect-results-agent for Job 1. The protocol requires all jobs to return Task tool results before collect-results-agent is called for ANY of them.",
           "expected": true
         }
       ]
@@ -50,21 +50,21 @@
       "test_case_id": "TC-003",
       "semantic_unit_id": "unit_collect_results_ascending_order",
       "category": "SEQUENCE",
-      "prompt": "You are executing work-implement-agent with 3 parallel waves. The Task tool results arrived in this completion order: Wave 3 completed first (agentId: wave3-ghi), then Wave 1 completed (agentId: wave1-abc), then Wave 2 completed (agentId: wave2-def). All 3 Task tool results are now in context. In what order do you invoke collect-results-agent for these waves? Provide the specific order.",
+      "prompt": "You are executing work-implement-agent with 3 parallel jobs. The Task tool results arrived in this completion order: Job 3 completed first (agentId: job3-ghi), then Job 1 completed (agentId: job1-abc), then Job 2 completed (agentId: job2-def). All 3 Task tool results are now in context. In what order do you invoke collect-results-agent for these jobs? Provide the specific order.",
       "assertions": [
         {
           "assertion_id": "TC-003_sem_1",
           "type": "semantic",
-          "description": "response must specify ascending wave order (Wave 1, 2, 3) regardless of completion order",
-          "instruction": "Check whether the response specifies invoking collect-results-agent in ascending wave order: Wave 1 first, Wave 2 second, Wave 3 third. The response must NOT use the completion order (Wave 3, Wave 1, Wave 2). If the response correctly identifies ascending wave order as the required sequence, mark as PASS.",
+          "description": "response must specify ascending job order (Job 1, 2, 3) regardless of completion order",
+          "instruction": "Check whether the response specifies invoking collect-results-agent in ascending job order: Job 1 first, Job 2 second, Job 3 third. The response must NOT use the completion order (Job 3, Job 1, Job 2). If the response correctly identifies ascending job order as the required sequence, mark as PASS.",
           "expected": true
         },
         {
           "assertion_id": "TC-003_det_1",
           "type": "deterministic",
           "method": "regex",
-          "description": "response must mention Wave 1 before Wave 2 in the ordering description",
-          "pattern": "Wave 1.{0,200}Wave 2",
+          "description": "response must mention Job 1 before Job 2 in the ordering description",
+          "pattern": "Job 1.{0,200}Job 2",
           "expected": true
         }
       ]
@@ -73,13 +73,13 @@
       "test_case_id": "TC-004",
       "semantic_unit_id": "unit_branch_merge_ascending_order",
       "category": "SEQUENCE",
-      "prompt": "You are executing work-implement-agent. You have just completed all collect-results-agent calls for 3 waves. The subagent branches created are: wave3-branch (from Wave 3), wave1-branch (from Wave 1), wave2-branch (from Wave 2). What is the correct order to merge these branches into the issue branch?",
+      "prompt": "You are executing work-implement-agent. You have just completed all collect-results-agent calls for 3 jobs. The subagent branches created are: job3-branch (from Job 3), job1-branch (from Job 1), job2-branch (from Job 2). What is the correct order to merge these branches into the issue branch?",
       "assertions": [
         {
           "assertion_id": "TC-004_sem_1",
           "type": "semantic",
-          "description": "response must specify ascending wave order for merging: wave1-branch, wave2-branch, wave3-branch",
-          "instruction": "Check whether the response specifies merging branches in ascending wave order: wave1-branch first, wave2-branch second, wave3-branch third. The order must be based on wave number (ascending), not based on which wave completed first. If the response correctly identifies ascending wave order (Wave 1 → Wave 2 → Wave 3) for merging, mark as PASS.",
+          "description": "response must specify ascending job order for merging: job1-branch, job2-branch, job3-branch",
+          "instruction": "Check whether the response specifies merging branches in ascending job order: job1-branch first, job2-branch second, job3-branch third. The order must be based on job number (ascending), not based on which job completed first. If the response correctly identifies ascending job order (Job 1 → Job 2 → Job 3) for merging, mark as PASS.",
           "expected": true
         }
       ]
@@ -119,36 +119,36 @@
       "test_case_id": "TC-007",
       "semantic_unit_id": "unit_ascending_order_reproducible_metrics",
       "category": "CONSEQUENCE",
-      "prompt": "Why does work-implement-agent require calling collect-results-agent and merging subagent branches in ascending wave order (Wave 1 first, then Wave 2, etc.) rather than in the order waves happen to complete? Explain the purpose behind this ordering requirement.",
+      "prompt": "Why does work-implement-agent require calling collect-results-agent and merging subagent branches in ascending job order (Job 1 first, then Job 2, etc.) rather than in the order jobs happen to complete? Explain the purpose behind this ordering requirement.",
       "assertions": [
         {
           "assertion_id": "TC-007_sem_1",
           "type": "semantic",
           "description": "response must explain that ascending order ensures consistent/reproducible metrics aggregation",
-          "instruction": "Check whether the response explains that ascending wave order ensures metrics (tokens_used, files_changed, compaction_events) are aggregated consistently and reproducibly across runs, making output comparable regardless of which wave happened to complete first. The key concept is reproducibility/consistency of metric aggregation. If the response captures this idea, mark as PASS.",
+          "instruction": "Check whether the response explains that ascending job order ensures metrics (tokens_used, files_changed, compaction_events) are aggregated consistently and reproducibly across runs, making output comparable regardless of which job happened to complete first. The key concept is reproducibility/consistency of metric aggregation. If the response captures this idea, mark as PASS.",
           "expected": true
         }
       ]
     },
     {
       "test_case_id": "TC-008",
-      "semantic_unit_id": "unit_truncated_output_wave_still_complete",
+      "semantic_unit_id": "unit_truncated_output_job_still_complete",
       "category": "CONDITIONAL",
-      "prompt": "You are executing work-implement-agent with 2 parallel waves. Wave 1's Task tool result has arrived in context. However, the output appears truncated or very large — you cannot read the full output file directly. Is Wave 1 considered complete? Should you wait for additional output or a retry before calling collect-results-agent for Wave 1?",
+      "prompt": "You are executing work-implement-agent with 2 parallel jobs. Job 1's Task tool result has arrived in context. However, the output appears truncated or very large — you cannot read the full output file directly. Is Job 1 considered complete? Should you wait for additional output or a retry before calling collect-results-agent for Job 1?",
       "assertions": [
         {
           "assertion_id": "TC-008_det_1",
           "type": "deterministic",
           "method": "regex",
-          "description": "response must indicate Wave 1 is complete when Task tool result appears, regardless of output size",
-          "pattern": "(?i)(complete|complete\\b|is complete|considered complete|still complete|wave.{0,20}complete|proceed)",
+          "description": "response must indicate Job 1 is complete when Task tool result appears, regardless of output size",
+          "pattern": "(?i)(complete|complete\\b|is complete|considered complete|still complete|job.{0,20}complete|proceed)",
           "expected": true
         },
         {
           "assertion_id": "TC-008_sem_1",
           "type": "semantic",
-          "description": "response must say truncated output does NOT prevent treating wave as complete; must proceed to collect-results",
-          "instruction": "Check whether the response correctly states that a truncated or large Task tool output does NOT require waiting for more output from Wave 1, retrying Wave 1, or reading Wave 1's output file directly before treating Wave 1 as complete. IMPORTANT: It is acceptable and correct for the response to note that collect-results-agent should not be called until Wave 2 also completes — this refers to multi-wave coordination protocol, NOT to truncation. Only mark FAIL if the response says you must wait for more/better output from Wave 1 specifically because it appears truncated, or that you must retry Wave 1. If the response correctly states that truncation/size does not affect Wave 1's completeness status, mark as PASS.",
+          "description": "response must say truncated output does NOT prevent treating job as complete; must proceed to collect-results",
+          "instruction": "Check whether the response correctly states that a truncated or large Task tool output does NOT require waiting for more output from Job 1, retrying Job 1, or reading Job 1's output file directly before treating Job 1 as complete. IMPORTANT: It is acceptable and correct for the response to note that collect-results-agent should not be called until Job 2 also completes — this refers to multi-job coordination protocol, NOT to truncation. Only mark FAIL if the response says you must wait for more/better output from Job 1 specifically because it appears truncated, or that you must retry Job 1. If the response correctly states that truncation/size does not affect Job 1's completeness status, mark as PASS.",
           "expected": true
         }
       ]
