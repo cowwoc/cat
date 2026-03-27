@@ -118,7 +118,7 @@ Task tool:
     2. Run E2E testing appropriate to the issue type:
        - Determine issue type by reading the `## Type` field in ${ISSUE_PATH}/plan.md. Use the FIRST
          occurrence of a line matching `^## Type` in the file — the authoritative field is always near
-         the top of plan.md, never inside a Sub-Agent Waves section. Do NOT infer type from commit
+         the top of plan.md, never inside a Jobs section. Do NOT infer type from commit
          messages, issue ID naming, or other heuristics.
        - For `feature`, `bugfix`, `refactor`, and `performance` issue types: run runtime E2E tests
          using worktree artifacts.
@@ -252,12 +252,12 @@ the first result is PARTIAL or INCOMPLETE. Do NOT re-initialize inside any branc
        - Read ${ISSUE_PATH}/plan.md to understand the current plan
        - Read the detail files to understand what specifically failed. Do NOT include file contents
          in your JSON response — use them only to inform what fix steps to write
-       - Add new items to the Sub-Agent Waves section of plan.md
+       - Add new items to the Jobs section of plan.md
        - Each new item must address exactly one missing criterion
-       - Do NOT remove or alter existing items — only append new items to the last wave (or steps section)
+       - Do NOT remove or alter existing items — only append new items to the last job (or steps section)
        - Do NOT modify any existing plan.md fields — especially `## Type`, `## Goal`, existing post-conditions,
-         or any section other than the Sub-Agent Waves / steps list
-       - Sub-Agent Wave items MUST be concrete, actionable implementation steps that modify source files,
+         or any section other than the Jobs / steps list
+       - Job items MUST be concrete, actionable implementation steps that modify source files,
          add tests, or run migrations. Read-only checks, echo commands, or no-op commands that do not
          modify files do NOT satisfy missing implementation criteria and must not be used as fix steps
        - Do NOT add commentary, interpretive qualifications, or text claiming existing criteria are
@@ -341,7 +341,7 @@ spawn step 6 until step 5 completes. Do NOT make parallel Task tool calls betwee
    the original rendered prompt string). Substitute the CURRENT value of `CURRENT_COMMITS_JSON` (which
    now includes fix commits) and the updated `filesChanged` total into the prompt before spawning.
    The re-rendered prompt must reflect the post-fix state. Note: the planning subagent appended fix steps
-   only to the `## Sub-Agent Waves` section of plan.md — never to the post-conditions. The verify subagent
+   only to the `## Jobs` section of plan.md — never to the post-conditions. The verify subagent
    evaluates the same post-conditions as the initial invocation.
 
 **If still INCOMPLETE or PARTIAL after 2 iterations:**

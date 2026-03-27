@@ -5,8 +5,7 @@ See LICENSE.md in the project root for license terms.
 -->
 # Work Phase: Implement
 
-> See `${CLAUDE_PLUGIN_ROOT}/concepts/execution-model.md` for the full execution model, wave definitions, and
-> parallelism rules.
+> See `${CLAUDE_PLUGIN_ROOT}/concepts/execution-model.md` for the full execution model and parallelism rules.
 
 Implement phase for `/cat:work`. Displays preparing/implementing banners, verifies lock ownership,
 and orchestrates subagent execution of the implementation plan.
@@ -36,7 +35,7 @@ Return JSON when complete:
 ```json
 {
   "status": "SUCCESS|PARTIAL|FAILED|BLOCKED",
-  "waves_count": 1,
+  "jobs_count": 1,
   "commits": [
     {"hash": "abc123", "message": "feature: description", "type": "feature"}
   ],
@@ -46,14 +45,14 @@ Return JSON when complete:
 }
 ```
 
-`waves_count` MUST be the integer value printed by the canonical detection command (`echo "WAVES_COUNT=${WAVES_COUNT}"`).
-It may NOT be derived by reading plan.md into context and counting `### Wave ` occurrences mentally or via any method
+`jobs_count` MUST be the integer value printed by the canonical detection command (`echo "JOBS_COUNT=${JOBS_COUNT}"`).
+It may NOT be derived by reading plan.md into context and counting `### Job ` occurrences mentally or via any method
 other than running that Bash command. If the command was not run (e.g., because plan.md was already in context),
 run it now before returning.
 
-**Relay prohibition:** `waves_count` (even when correctly grep-derived) MUST NOT be embedded into any subagent
-prompt text. Do NOT write "there are N waves" or "WAVES_COUNT=N" or any equivalent into a subagent prompt.
-Each subagent determines its own wave count by reading `PLAN_MD_PATH` directly.
+**Relay prohibition:** `jobs_count` (even when correctly grep-derived) MUST NOT be embedded into any subagent
+prompt text. Do NOT write "there are N jobs" or "JOBS_COUNT=N" or any equivalent into a subagent prompt.
+Each subagent determines its own job count by reading `PLAN_MD_PATH` directly.
 
 ## Configuration
 
@@ -222,11 +221,11 @@ Gate result handling:
 
 ## Step 5: Generate Implementation Steps
 
-Before reading Main Agent Waves, check whether plan.md already contains implementation steps:
+Before reading Main Agent Jobs, check whether plan.md already contains implementation steps:
 
 ```bash
 PLAN_MD="${ISSUE_PATH}/plan.md" && \
-grep -qE '^## (Sub-Agent Waves|Execution Steps)' "${PLAN_MD}" && \
+grep -qE '^## (Jobs|Execution Steps)' "${PLAN_MD}" && \
 echo "hasSteps=true" || echo "hasSteps=false"
 ```
 
@@ -251,27 +250,27 @@ CURIOSITY=$(echo "$CONFIG" | grep -o '"curiosity"[[:space:]]*:[[:space:]]*"[^"]*
 Skill tool:
   skill: "cat:plan-builder-agent"
   args: "${CAT_AGENT_ID} ${CURIOSITY} revise ${ISSUE_PATH} Generate full implementation steps for this lightweight
-plan. Add Sub-Agent Waves or Execution Steps section with detailed step-by-step implementation guidance."
+plan. Add Jobs or Execution Steps section with detailed step-by-step implementation guidance."
 ```
 
 3. After plan-builder-agent returns, re-read the updated plan.md in subsequent steps.
 
 **If `hasSteps=true`** (full plan with implementation steps): skip plan-builder-agent invocation. Proceed directly
-to "Read plan.md and Invoke Main Agent Waves".
+to "Read plan.md and Invoke Main Agent Jobs".
 
-### Read plan.md and Invoke Main Agent Waves
+### Read plan.md and Invoke Main Agent Jobs
 
-Read the `## Main Agent Waves` section from plan.md:
+Read the `## Main Agent Jobs` section from plan.md:
 
 ```bash
-PLAN_MD="${ISSUE_PATH}/plan.md" && MAIN_AGENT_WAVES=$(sed -n '/^## Main Agent Waves/,/^## /p' "$PLAN_MD" | head -n -1)
+PLAN_MD="${ISSUE_PATH}/plan.md" && MAIN_AGENT_JOBS=$(sed -n '/^## Main Agent Jobs/,/^## /p' "$PLAN_MD" | head -n -1)
 ```
 
-**If `## Main Agent Waves` is present and non-empty:** extract each bullet item
+**If `## Main Agent Jobs` is present and non-empty:** extract each bullet item
 (`- /cat:skill-name args`) and invoke the corresponding skill NOW at the main agent level
 using the Skill tool.
 
-Example: If `## Main Agent Waves` contains `- /cat:example-skill path/to/file.md`, then:
+Example: If `## Main Agent Jobs` contains `- /cat:example-skill path/to/file.md`, then:
 
 ```
 Skill tool:
@@ -295,36 +294,36 @@ content eligible for relay. If skill output cannot be cleanly separated from pla
 omit the plan.md-describing portion and include only the non-plan.md functional results.
 
 **plan.md paraphrase detection:** Any text in skill output that restates, summarizes, or quotes
-the issue goal, step names, acceptance criteria, or wave structure from plan.md is plan.md paraphrase,
+the issue goal, step names, acceptance criteria, or job structure from plan.md is plan.md paraphrase,
 regardless of whether the text was produced by the skill or copied from plan.md by the skill. The
 origin of the text (skill vs. agent) is irrelevant — only the content matters. When in doubt, omit.
 Permitted metric examples: "Reduced file size from 5000 to 3000 tokens", "Validation passed: 0 errors".
 Prohibited metric examples: "Compressed plan.md. Goal: add user authentication" — the goal text is
 plan.md paraphrase embedded in a metric and must be stripped before inclusion.
 
-### Detect Parallel Execution Waves
+### Detect Parallel Execution Jobs
 
-**CRITICAL: `WAVES_COUNT` MUST be derived exclusively from the Bash canonical command output below.
+**CRITICAL: `JOBS_COUNT` MUST be derived exclusively from the Bash canonical command output below.
 It MUST NOT be derived from in-context plan.md content, mental counting, or any other method —
 even if plan.md has already been read into context for other purposes. Reading plan.md into context
-does not make its content a permitted source for the wave count. The canonical Bash command is the
+does not make its content a permitted source for the job count. The canonical Bash command is the
 only permitted source.**
 
-Read plan.md directly to count `### Wave N` subsections using the canonical command:
+Read plan.md directly to count `### Job N` subsections using the canonical command:
 
 ```bash
-WAVES_COUNT=$(grep -c '^### Wave ' "$PLAN_MD") && echo "WAVES_COUNT=${WAVES_COUNT}"
+JOBS_COUNT=$(grep -c '^### Job ' "$PLAN_MD") && echo "JOBS_COUNT=${JOBS_COUNT}"
 ```
 
 Use this exact command — do NOT substitute alternative counting logic or Bash constructs. Any other method is
 prohibited. The `echo` is part of the same command; do not split detection and printing into separate Bash
 calls. No further Bash calls are permitted after this step before the prepare phase begins.
 
-**If waves are empty or only one wave is present (`WAVES_COUNT` is 0 or 1):** proceed to single-subagent execution
-(see below). Parse execution items from `## Sub-Agent Waves` / `### Wave 1`.
+**If jobs are empty or only one job is present (`JOBS_COUNT` is 0 or 1):** proceed to single-subagent execution
+(see below). Parse execution items from `## Jobs` / `### Job 1`.
 
-**If two or more waves are present (`WAVES_COUNT` >= 2):** use parallel execution (see Parallel Subagent Execution
-below). The last wave for index.json ownership is `### Wave ${WAVES_COUNT}` (the highest numbered wave).
+**If two or more jobs are present (`JOBS_COUNT` >= 2):** use parallel execution (see Parallel Subagent Execution
+below). The last job for index.json ownership is `### Job ${JOBS_COUNT}` (the highest numbered job).
 
 ### Mid-Work plan.md Revision
 
@@ -349,7 +348,7 @@ After revision, re-read the updated plan.md and adjust remaining execution accor
 
 **Subagents read plan.md directly — do NOT relay its content into prompts.**
 
-Pass `PLAN_MD_PATH` so the subagent can read the Goal and Sub-Agent Waves/Steps sections itself.
+Pass `PLAN_MD_PATH` so the subagent can read the Goal and Jobs/Steps sections itself.
 Do NOT extract and paste those sections into the prompt — that is the content relay anti-pattern.
 
 **Why:** Subagents that receive a `PLAN_MD_PATH` and read plan.md themselves always see the authoritative
@@ -360,7 +359,7 @@ interpretive distortion.
 **Pattern:**
 - ✅ Pass `PLAN_MD_PATH: ${PLAN_MD}` and instruct the subagent to read Goal and Execution sections itself
 - ✅ Trust plan.md structure — subagents read it directly, no relay needed
-- ❌ Do NOT inline `${ISSUE_GOAL}` or Sub-Agent Waves content into the prompt
+- ❌ Do NOT inline `${ISSUE_GOAL}` or Jobs content into the prompt
 - ❌ Do NOT add interpretive summaries or aggregate instructions that restate plan.md differently
 
 ### Commit-Before-Spawn Requirement
@@ -501,7 +500,7 @@ Task tool:
     TRUST_LEVEL: ${TRUST}
     PLAN_MD_PATH: ${PLAN_MD}
 
-    Read the Goal section and Sub-Agent Waves (or Execution Steps) from PLAN_MD_PATH directly.
+    Read the Goal section and Jobs (or Execution Steps) from PLAN_MD_PATH directly.
     Do NOT ask the main agent to provide this content — it is authoritative in plan.md.
 
     ## Pre-Invoked Skill Results
@@ -617,102 +616,102 @@ fi
 The subagent branch name and worktree path are returned in the Task tool result when `isolation: "worktree"` is
 used. Use that branch name in the merge command above.
 
-### Parallel Subagent Execution (two or more groups)
+### Parallel Subagent Execution (two or more jobs)
 
-When plan.md contains two or more execution groups, spawn one subagent per group simultaneously.
+When plan.md contains two or more jobs, spawn one subagent per job simultaneously.
 Each subagent is spawned with `isolation: "worktree"` — it gets its own isolated git worktree branched from
-the issue branch HEAD. Subagents execute concurrently without shared disk state. The last group's subagent
-updates index.json; other groups skip it.
+the issue branch HEAD. Subagents execute concurrently without shared disk state. The last job's subagent
+updates index.json; other jobs skip it.
 
 **IMPORTANT:** Each parallel subagent commits to its own isolated worktree branch. After all subagents
-complete, the main agent merges each subagent branch back into the issue branch in ascending wave order
-(Wave 1 first, then Wave 2, etc.).
-Only the last wave subagent updates index.json.
+complete, the main agent merges each subagent branch back into the issue branch in ascending job order
+(Job 1 first, then Job 2, etc.).
+Only the last job subagent updates index.json.
 
-**CRITICAL: Parallel means one API response — not "start Wave 1, then start Wave 2".**
-When `WAVES_COUNT` >= 2, spawn ALL wave subagents in a SINGLE assistant API response by making multiple
+**CRITICAL: Parallel means one API response — not "start Job 1, then start Job 2".**
+When `JOBS_COUNT` >= 2, spawn ALL job subagents in a SINGLE assistant API response by making multiple
 Task tool calls in that same response. An "API response" is one assistant message turn: everything between
-receiving the user/tool input and sending back the next assistant message. Do NOT spawn Wave 1, await its
-result, then spawn Wave 2 in a separate API response — that is sequential execution masquerading as parallel.
+receiving the user/tool input and sending back the next assistant message. Do NOT spawn Job 1, await its
+result, then spawn Job 2 in a separate API response — that is sequential execution masquerading as parallel.
 
 **Violation test (observable and unambiguous):** If you issued a Task call and received any tool result
 before all Task calls were issued, you violated the rule — regardless of intent or turn-boundary awareness.
 
-**No tool calls are permitted between Task spawns.** After issuing the first Task call for Wave 1, the very
-next tool call in that same assistant message must be the Task call for Wave 2 (and Wave 3, if present, and
+**No tool calls are permitted between Task spawns.** After issuing the first Task call for Job 1, the very
+next tool call in that same assistant message must be the Task call for Job 2 (and Job 3, if present, and
 so on). No Bash, Read, Grep, Write, Skill, or any other tool call may appear between the Task calls.
 Safety checks, verification reads, status queries, and skill invocations between Task spawns are all
 prohibited.
 
-**All wave prompts are constructable from plan.md alone.** plan.md is the single authoritative source for
-wave contents. Each wave prompt contains only: the issue configuration variables (already known before
-reading plan.md), the `PLAN_MD_PATH` reference, and the `ASSIGNED_WAVE` number. No wave prompt requires
-output from another wave in order to be constructed. Therefore, all prompts can and must be fully drafted
+**All job prompts are constructable from plan.md alone.** plan.md is the single authoritative source for
+job contents. Each job prompt contains only: the issue configuration variables (already known before
+reading plan.md), the `PLAN_MD_PATH` reference, and the `ASSIGNED_JOB` number. No job prompt requires
+output from another job in order to be constructed. Therefore, all prompts can and must be fully drafted
 before any Task call is issued.
 
-**`WAVES_COUNT` must NOT appear in any subagent prompt.** Do not embed the numeric wave count (e.g.,
-"WAVES_COUNT=3", "there are 3 waves", or any equivalent phrasing) into a subagent prompt. Including it
+**`JOBS_COUNT` must NOT appear in any subagent prompt.** Do not embed the numeric job count (e.g.,
+"JOBS_COUNT=3", "there are 3 jobs", or any equivalent phrasing) into a subagent prompt. Including it
 would relay structural plan.md metadata, which is prohibited. Each subagent reads `PLAN_MD_PATH` directly
-and determines wave structure itself.
+and determines job structure itself.
 
 **Prepare ALL prompts before issuing ANY tool call in the spawn phase.**
 
 Two-phase execution:
 
-1. **Prepare phase (written in response text, no tool calls):** Write out every wave prompt in the
+1. **Prepare phase (written in response text, no tool calls):** Write out every job prompt in the
    assistant response text, derived from already-in-context variables and plan.md content. The prepare
-   phase text must include the complete text of each wave's prompt — it is not complete without the actual
+   phase text must include the complete text of each job's prompt — it is not complete without the actual
    prompts. This phase is observable: the prompts appear as text in the response before any Task call.
    Do NOT issue any tool call (Bash, Read, Grep, Write, Task, Skill, or any other) during this phase.
 
    **Permitted pre-prepare tool calls (strictly bounded):** Before entering the prepare phase, you may
    issue tool calls only to satisfy two concrete prerequisites: (a) read plan.md into context if it is
-   not already there, and (b) run the canonical `WAVES_COUNT` detection command. No other tool
+   not already there, and (b) run the canonical `JOBS_COUNT` detection command. No other tool
    calls are permitted before the prepare phase. Once both prerequisites are satisfied, the very next
-   assistant action must be the prepare phase text (containing the full wave prompts) followed immediately
+   assistant action must be the prepare phase text (containing the full job prompts) followed immediately
    by the spawn phase.
 
-   **`WAVES_COUNT` routing is determined by the canonical Bash command result only.** Even after reading
+   **`JOBS_COUNT` routing is determined by the canonical Bash command result only.** Even after reading
    plan.md into context, the agent MUST NOT use the in-context plan.md content to decide whether to use
    single-subagent or parallel execution. The routing decision (single vs. parallel) MUST wait for and
    use the integer value printed by the canonical detection command. If the canonical command has not yet
    been run, run it before making any routing decision.
 
-   **BLOCKING GATE — Write a wave spawn checklist before issuing the first Task call.** After writing all
-   wave prompts in the response text, write this checklist as plain prose (not in a code block):
+   **BLOCKING GATE — Write a job spawn checklist before issuing the first Task call.** After writing all
+   job prompts in the response text, write this checklist as plain prose (not in a code block):
 
-   Wave spawn checklist (WAVES_COUNT = N):
-   - Wave 1 prompt: written above ✓
-   - Wave 2 prompt: written above ✓
-   ... (one entry per wave, from 1 to WAVES_COUNT)
-   All N wave prompts written. Spawning all N Task calls now.
+   Job spawn checklist (JOBS_COUNT = N):
+   - Job 1 prompt: written above ✓
+   - Job 2 prompt: written above ✓
+   ... (one entry per job, from 1 to JOBS_COUNT)
+   All N job prompts written. Spawning all N Task calls now.
 
-   Every wave from 1 to WAVES_COUNT must have a corresponding checklist entry. If any wave prompt is
+   Every job from 1 to JOBS_COUNT must have a corresponding checklist entry. If any job prompt is
    missing from the response text above the checklist, write it before completing the entry. Only after
    the checklist is complete may the spawn phase begin. This gate makes it structurally visible when a
-   wave prompt was omitted — the gap appears in the checklist before any Task call is issued.
+   job prompt was omitted — the gap appears in the checklist before any Task call is issued.
 
 2. **Spawn phase (one API response, all Task calls together, nothing else):** Issue ALL Task tool calls
    simultaneously in a single assistant message, immediately following the prepare-phase text and the
-   wave spawn checklist. The spawn phase contains ONLY Task tool calls — no other tool calls before,
+   job spawn checklist. The spawn phase contains ONLY Task tool calls — no other tool calls before,
    between, or after the Task calls within this phase.
 
 Correct pattern (one message, two Task calls, nothing between them):
 
 ```
-Task tool call: Wave 1 subagent
-Task tool call: Wave 2 subagent
+Task tool call: Job 1 subagent
+Task tool call: Job 2 subagent
 ```
 
-For each wave (example for Wave 1 with steps 1, 2, 3):
+For each job (example for Job 1 with steps 1, 2, 3):
 
 ```
 Task tool:
-  description: "Execute: implement ${ISSUE_ID} wave 1 (steps 1, 2, 3)"
+  description: "Execute: implement ${ISSUE_ID} job 1 (steps 1, 2, 3)"
   subagent_type: "cat:work-execute"
   isolation: "worktree"
   prompt: |
-    Execute the implementation for issue ${ISSUE_ID}, wave 1 only.
+    Execute the implementation for issue ${ISSUE_ID}, job 1 only.
 
     ## Issue Configuration
     ISSUE_ID: ${ISSUE_ID}
@@ -723,10 +722,10 @@ Task tool:
     ESTIMATED_TOKENS: ${ESTIMATED_TOKENS}
     TRUST_LEVEL: ${TRUST}
     PLAN_MD_PATH: ${PLAN_MD}
-    ASSIGNED_WAVE: 1
+    ASSIGNED_JOB: 1
 
-    Read the Goal section from PLAN_MD_PATH. Then read ONLY the `### Wave 1` section from
-    PLAN_MD_PATH for your execution items. Do NOT read or execute items from other wave sections.
+    Read the Goal section from PLAN_MD_PATH. Then read ONLY the `### Job 1` section from
+    PLAN_MD_PATH for your execution items. Do NOT read or execute items from other job sections.
     Do NOT ask the main agent to provide this content — it is authoritative in plan.md.
 
     ## Pre-Invoked Skill Results
@@ -734,9 +733,9 @@ Task tool:
 
     ## Critical Requirements
     - You are working in an isolated worktree. Your changes will be merged back to the issue branch.
-    - Execute ONLY the items assigned to your wave (ASSIGNED_WAVE above, read from plan.md)
-    - Do NOT execute items from other waves
-    - **index.json ownership:** You are [DETERMINED AUTOMATICALLY: if wave is the last one, "the index.json owner"
+    - Execute ONLY the items assigned to your job (ASSIGNED_JOB above, read from plan.md)
+    - Do NOT execute items from other jobs
+    - **index.json ownership:** You are [DETERMINED AUTOMATICALLY: if job is the last one, "the index.json owner"
       else "NOT the index.json owner"]. [If owner: "Update index.json in your final commit: status: closed,
       progress: 100%." Else: "Do NOT modify index.json in any commit."]
     - Run tests if applicable
@@ -755,7 +754,7 @@ Task tool:
     ```json
     {
       "status": "SUCCESS|PARTIAL|FAILED|BLOCKED",
-      "wave": 1,
+      "job": 1,
       "tokens_used": <actual>,
       "percent_of_context": <actual>,
       "compaction_events": 0,
@@ -773,14 +772,14 @@ Task tool:
     }
     ```
 
-    The `"wave"` field MUST equal the numeric `ASSIGNED_WAVE` value from the Issue Configuration above.
-    Do NOT use a letter-based group identifier — use the integer wave number.
+    The `"job"` field MUST equal the numeric `ASSIGNED_JOB` value from the Issue Configuration above.
+    Do NOT use a letter-based group identifier — use the integer job number.
 
     If you encounter a blocker, return:
     ```json
     {
       "status": "BLOCKED",
-      "wave": 1,
+      "job": 1,
       "message": "Description of blocker",
       "blocker": "What needs to be resolved"
     }
@@ -789,36 +788,36 @@ Task tool:
     CRITICAL: You are the implementation agent - implement directly, do NOT spawn another subagent.
 ```
 
-**Wait for ALL group subagents to complete before invoking collect-results-agent for ANY of them.**
+**Wait for ALL job subagents to complete before invoking collect-results-agent for ANY of them.**
 The `EnforceCollectAfterAgent` hook blocks all Skill and Task calls until collect-results-agent is invoked
 for each completed Agent tool result.
 
-**CRITICAL: Do NOT call collect-results-agent for Wave N until EVERY wave from 1 to WAVES_COUNT has returned
-a Task tool result.** Calling collect-results for a subset of waves while others are still running is a
+**CRITICAL: Do NOT call collect-results-agent for Job N until EVERY job from 1 to JOBS_COUNT has returned
+a Task tool result.** Calling collect-results for a subset of jobs while others are still running is a
 protocol violation — it leaves the implementation in a partial state.
 
-**Parallel wave completion protocol — wait for ALL waves before calling collect-results-agent for ANY:**
+**Parallel job completion protocol — wait for ALL jobs before calling collect-results-agent for ANY:**
 1. Issue all N Task calls simultaneously (spawn phase, single API response)
 2. Receive Task tool results — each result arrives as it completes
-3. Track which waves have returned: a wave is complete only when its Task tool result appears in context
-4. **WAIT** — do not act on any result until ALL N waves have returned Task tool results
-5. When ALL N waves have returned Task tool results, initialize a counter: `NEXT_COLLECT=1`
-6. Call collect-results-agent for wave `NEXT_COLLECT`. Before each call, verify `NEXT_COLLECT` equals
-   the expected wave number. After the call succeeds, increment: `NEXT_COLLECT=$((NEXT_COLLECT + 1))`.
-   Repeat until `NEXT_COLLECT > WAVES_COUNT`. Do NOT skip ahead or reorder — each collect-results call
-   MUST process waves in strict ascending order (1, 2, 3, ..., N).
+3. Track which jobs have returned: a job is complete only when its Task tool result appears in context
+4. **WAIT** — do not act on any result until ALL N jobs have returned Task tool results
+5. When ALL N jobs have returned Task tool results, initialize a counter: `NEXT_COLLECT=1`
+6. Call collect-results-agent for job `NEXT_COLLECT`. Before each call, verify `NEXT_COLLECT` equals
+   the expected job number. After the call succeeds, increment: `NEXT_COLLECT=$((NEXT_COLLECT + 1))`.
+   Repeat until `NEXT_COLLECT > JOBS_COUNT`. Do NOT skip ahead or reorder — each collect-results call
+   MUST process jobs in strict ascending order (1, 2, 3, ..., N).
 7. After all collect-results-agent calls complete, initialize a counter: `NEXT_MERGE=1`. Merge each
-   subagent branch in strict ascending order: merge wave `NEXT_MERGE`, then increment
-   `NEXT_MERGE=$((NEXT_MERGE + 1))`. Repeat until `NEXT_MERGE > WAVES_COUNT`. Do NOT merge out of order.
+   subagent branch in strict ascending order: merge job `NEXT_MERGE`, then increment
+   `NEXT_MERGE=$((NEXT_MERGE + 1))`. Repeat until `NEXT_MERGE > JOBS_COUNT`. Do NOT merge out of order.
 
-NEVER proceed to collect-results after only a subset of waves have returned.
+NEVER proceed to collect-results after only a subset of jobs have returned.
 
-**Why ascending order matters:** Merging and collecting results in ascending wave order ensures metrics
+**Why ascending order matters:** Merging and collecting results in ascending job order ensures metrics
 (tokens_used, files_changed, compaction_events) are aggregated consistently across runs, making output
-reproducible and comparable regardless of which wave happened to complete first.
+reproducible and comparable regardless of which job happened to complete first.
 
-**Handling large output / ambiguous completion:** If a wave's Task output is truncated or too large to read
-directly, the wave is still complete when its Task tool result appears — the result size does not affect
+**Handling large output / ambiguous completion:** If a job's Task output is truncated or too large to read
+directly, the job is still complete when its Task tool result appears — the result size does not affect
 completeness. Do NOT attempt to read the output file directly or use TaskOutput on Agent tasks. Wait for the
 system notification of the Task tool result, then proceed.
 
@@ -826,7 +825,7 @@ system notification of the Task tool result, then proceed.
 steps. If truncation removes these fields from the visible Task tool result, do NOT fabricate or guess
 values. Instead, use `TaskGet` with the task ID to retrieve the full result metadata including the `agentId`
 and branch name. If `TaskGet` also fails to provide the metadata, STOP and return FAILED status with message
-"Unable to retrieve agentId or branch name for wave N after truncation".
+"Unable to retrieve agentId or branch name for job N after truncation".
 
 For each completed subagent, call collect-results-agent:
 
@@ -836,7 +835,7 @@ Skill tool:
   args: "${CAT_AGENT_ID}/subagents/${SUBAGENT_RAW_ID} ${ISSUE_PATH} <subagentCommitsJsonPath>"
 ```
 
-Where `SUBAGENT_RAW_ID` is the `agentId:` value from that wave's Task tool result footer.
+Where `SUBAGENT_RAW_ID` is the `agentId:` value from that job's Task tool result footer.
 Apply the same SUBAGENT_RAW_ID validation as described in the single-subagent section: verify it is
 non-empty and contains only alphanumeric characters, hyphens, and underscores before constructing
 the compound ID. If validation fails, STOP and return FAILED status.
@@ -845,13 +844,13 @@ The cat_agent_id format for a subagent is `{session_id}/subagents/{agent_id}` �
 `/subagents/` segment or the call will be rejected with a format validation error.
 
 Then validate and merge each subagent branch back into the issue branch using the `NEXT_MERGE` counter
-from the parallel wave completion protocol (step 7). Process wave `NEXT_MERGE`, then increment. Do NOT
-merge any wave out of ascending order.
+from the parallel job completion protocol (step 7). Process job `NEXT_MERGE`, then increment. Do NOT
+merge any job out of ascending order.
 
-For each wave's branch name received from the Task tool result, validate before merging:
+For each job's branch name received from the Task tool result, validate before merging:
 
 ```bash
-SUBAGENT_BRANCH="<branch name from Task tool result metadata for this wave>"
+SUBAGENT_BRANCH="<branch name from Task tool result metadata for this job>"
 
 # Validate BRANCH is non-empty before using it in prefix checks
 if [[ -z "${BRANCH}" ]]; then
@@ -880,39 +879,39 @@ fi
 
 cd "${WORKTREE_PATH}" && git merge --ff-only "${SUBAGENT_BRANCH}"
 if [[ $? -ne 0 ]]; then
-  echo "ERROR: Fast-forward merge of ${SUBAGENT_BRANCH} failed (wave ${NEXT_MERGE}). The branch has diverged."
-  echo "Use /cat:git-merge-linear-agent to resolve the diverged history before merging the next wave."
+  echo "ERROR: Fast-forward merge of ${SUBAGENT_BRANCH} failed (job ${NEXT_MERGE}). The branch has diverged."
+  echo "Use /cat:git-merge-linear-agent to resolve the diverged history before merging the next job."
   exit 1
 fi
-# ... repeat for each wave in ascending order using NEXT_MERGE counter
+# ... repeat for each job in ascending order using NEXT_MERGE counter
 ```
 
-The subagent branch name and worktree path for each group are returned in the Task tool result when
+The subagent branch name and worktree path for each job are returned in the Task tool result when
 `isolation: "worktree"` is used.
 
-- Collect commits from all groups into a single combined list
-- If any group returns FAILED or BLOCKED, stop and report failure
-- Aggregate `files_changed`, `tokens_used`, and `compaction_events` across all groups
+- Collect commits from all jobs into a single combined list
+- If any job returns FAILED or BLOCKED, stop and report failure
+- Aggregate `files_changed`, `tokens_used`, and `compaction_events` across all jobs
 
-### Reactive Wave Re-Splitting
+### Reactive Job Re-Splitting
 
-After collecting the result from a completed wave subagent, check `percent_of_context` before spawning
-the next wave:
+After collecting the result from a completed job subagent, check `percent_of_context` before spawning
+the next job:
 
 **If `percent_of_context > 40`** (high context usage):
 
-1. Read the remaining unsplit waves from plan.md (those not yet spawned).
-2. For each remaining wave, split it in half:
-   - Move the second half of its bullet items into a new `### Wave N+k` inserted immediately after it.
-   - If a wave has only one bullet item, it cannot be split — leave it as-is.
-3. Renumber all subsequent wave headers to maintain a gapless sequence (Wave 1, 2, 3, ...).
+1. Read the remaining unsplit jobs from plan.md (those not yet spawned).
+2. For each remaining job, split it in half:
+   - Move the second half of its bullet items into a new `### Job N+k` inserted immediately after it.
+   - If a job has only one bullet item, it cannot be split — leave it as-is.
+3. Renumber all subsequent job headers to maintain a gapless sequence (Job 1, 2, 3, ...).
 4. Write the updated plan.md back to disk.
-5. Re-run the canonical `WAVES_COUNT` detection command to get the updated count before spawning.
+5. Re-run the canonical `JOBS_COUNT` detection command to get the updated count before spawning.
 
 **If `percent_of_context <= 40`**: proceed without modifying plan.md.
 
 This check applies whether using single-subagent or parallel execution — always check `percent_of_context`
-from the most recently completed wave's result before starting the next wave. See
+from the most recently completed job's result before starting the next job. See
 `plugin/concepts/token-warning.md` for compaction-event handling that interacts with this flow.
 
 ### Handle Execution Result
