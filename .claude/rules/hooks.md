@@ -76,22 +76,37 @@ catch (IOException e)
 Unexpected errors in `main()` must be caught, logged, and converted to a `ClaudeHook.block()` response on stdout.
 They must NOT be rethrown, as non-zero exit or uncaught exceptions prevent Claude Code from parsing the JSON response.
 
+Scope initialization itself can throw (e.g., missing `CLAUDE_PROJECT_DIR`). When scope creation is wrapped in
+try-with-resources, an outer catch block handles failures that occur before the scope is available. Since scope
+services (like `ClaudeHook`) are unavailable in the outer catch, use stderr or plain-text stdout as a fallback.
+
 ```java
 public static void main(String[] args)
 {
-  try (MainJvmScope scope = new MainJvmScope())
+  try
   {
-    try
+    try (MainJvmScope scope = new MainJvmScope())
     {
-      run(scope, args, System.out);
+      try
+      {
+        run(scope, args, System.out);
+      }
+      catch (RuntimeException | AssertionError e)
+      {
+        Logger log = LoggerFactory.getLogger(ClassName.class);
+        log.error("Unexpected error", e);
+        System.out.println(new ClaudeHook(scope).block(
+          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      }
     }
-    catch (RuntimeException | AssertionError e)
-    {
-      Logger log = LoggerFactory.getLogger(ClassName.class);
-      log.error("Unexpected error", e);
-      System.out.println(new ClaudeHook(scope).block(
-        Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
-    }
+  }
+  // Scope creation failed (e.g., missing CLAUDE_PROJECT_DIR) - cannot use scope services
+  catch (RuntimeException | AssertionError e)
+  {
+    Logger log = LoggerFactory.getLogger(ClassName.class);
+    log.error("Failed to initialize scope", e);
+    System.err.println("Failed to initialize scope: " +
+      Objects.toString(e.getMessage(), e.getClass().getSimpleName()));
   }
 }
 ```
