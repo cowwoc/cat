@@ -2,7 +2,14 @@
 
 ## Goal
 
-Move getPluginRoot() and getPluginPrefix() from JvmScope/AbstractJvmScope to ClaudeScope/AbstractClaudeScope, and change AbstractClaudeStatusline to extend AbstractJvmScope directly instead of AbstractClaudeScope. This removes the CLAUDE_PLUGIN_ROOT dependency from ClaudeStatusline, fixing the statusline error when CLAUDE_PLUGIN_ROOT is not set in the statusline execution context.
+Refactor the scope hierarchy to:
+
+1. Move `getPluginRoot()` and `getPluginPrefix()` from `JvmScope`/`AbstractJvmScope` into `ClaudeHook` and `ClaudeTool` (and their abstract implementations)
+2. Remove `ClaudeScope` interface and `AbstractClaudeScope` class entirely, moving their methods (`getClaudeConfigPath()`, `getClaudeSessionsPath()`, `getClaudeSessionPath()`) into `ClaudeHook`/`ClaudeTool` and `AbstractClaudeHook`/`AbstractClaudeTool`
+3. Change `AbstractClaudeStatusline` to extend `AbstractJvmScope` directly (no longer needs plugin-root or Claude-config concerns)
+4. Remove `CLAUDE_PLUGIN_ROOT` from `MainClaudeStatusline` — it reads `projectPath` from the stdin JSON `workspace.project_dir` field instead of env var
+
+This fixes the statusline error "CLAUDE_PLUGIN_ROOT is not set" because the statusline execution context does not provide plugin environment variables.
 
 ## Pre-conditions
 
@@ -12,7 +19,10 @@ Move getPluginRoot() and getPluginPrefix() from JvmScope/AbstractJvmScope to Cla
 
 - [ ] User-visible behavior unchanged for ClaudeHook and ClaudeTool consumers
 - [ ] Tests passing
-- [ ] JvmScope interface no longer declares getPluginRoot() or getPluginPrefix()
-- [ ] getPluginRoot() and getPluginPrefix() accessible via ClaudeHook and ClaudeTool (through ClaudeScope)
-- [ ] MainClaudeStatusline does not read CLAUDE_PLUGIN_ROOT from environment
-- [ ] E2E verification: statusline command runs without error when CLAUDE_PLUGIN_ROOT is unset
+- [ ] `JvmScope` no longer declares `getPluginRoot()` or `getPluginPrefix()`
+- [ ] `ClaudeScope` interface and `AbstractClaudeScope` class deleted
+- [ ] `getPluginRoot()`, `getPluginPrefix()`, `getClaudeConfigPath()`, `getClaudeSessionsPath()`, `getClaudeSessionPath()` declared on both `ClaudeHook` and `ClaudeTool`
+- [ ] `AbstractClaudeHook` and `AbstractClaudeTool` contain the implementations formerly in `AbstractJvmScope` and `AbstractClaudeScope`
+- [ ] `AbstractClaudeStatusline` extends `AbstractJvmScope` directly
+- [ ] `MainClaudeStatusline` does not read `CLAUDE_PLUGIN_ROOT` from environment
+- [ ] E2E verification: statusline command runs without error when `CLAUDE_PLUGIN_ROOT` is unset
