@@ -3141,5 +3141,19 @@
       "catches_variations" : true
     },
     "correct_behavior" : "Use cat:work-merge-agent to perform merges. Never use git update-ref to directly move branch pointers. The BlockDirectBranchPointerModification hook (M579 prevention, still unimplemented) must be created to block 'git update-ref refs/heads/' commands."
+  }, {
+    "id" : "M608",
+    "timestamp" : "2026-03-27T23:38:54Z",
+    "category" : "",
+    "description" : "",
+    "root_cause" : "",
+    "cause_signature" : null,
+    "prevention_type" : "",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "correct_behavior" : ""
   } ]
 }
