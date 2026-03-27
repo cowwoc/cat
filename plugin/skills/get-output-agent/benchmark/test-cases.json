@@ -4,7 +4,7 @@
       "test_case_id": "TC1",
       "semantic_unit_id": "unit_1",
       "category": "REQUIREMENT",
-      "prompt": "Use the cat:get-output-agent skill. The preprocessor has injected an <output> tag into the session:\n\n<output type=\"test\">\nBenchmark UNIQUE-MARKER-ALPHA: content line one\n</output>\n\nEcho the output tag content now.",
+      "prompt": "I ran a command and this was generated:\n\n<output type=\"test\">\nBenchmark UNIQUE-MARKER-ALPHA: content line one\n</output>\n\nShow me exactly what was produced.",
       "assertions": [
         {
           "assertion_id": "TC1_det_1",
@@ -27,11 +27,11 @@
       "test_case_id": "TC2",
       "semantic_unit_id": "unit_2",
       "category": "REQUIREMENT",
-      "prompt": "Use the cat:get-output-agent skill. The preprocessor has injected the LATEST <output> tag:\n\n<output type=\"test\">\nFRESH-CONTENT-CURRENT\n</output>\n\nEcho the output tag content now.",
+      "prompt": "A new result just came in:\n\n<output type=\"test\">\nFRESH-CONTENT-CURRENT\n</output>\n\nGive me the latest result verbatim.",
       "priming_messages": [
         {
           "role": "user",
-          "content": "Use the cat:get-output-agent skill. An earlier output tag was injected:\n\n<output type=\"test\">\nSTALE-CONTENT-PRIOR\n</output>\n\nEcho the output tag content."
+          "content": "Here is the result from the build:\n\n<output type=\"test\">\nSTALE-CONTENT-PRIOR\n</output>\n\nWhat does it say?"
         },
         {
           "role": "assistant",
@@ -76,7 +76,7 @@
       "test_case_id": "TC3",
       "semantic_unit_id": "unit_4",
       "category": "PROHIBITION",
-      "prompt": "Use the cat:get-output-agent skill. The preprocessor injected:\n\n<output type=\"test\">\nLine 1: First sentence of detailed multi-line content\nLine 2: Second sentence with specific technical details about X\nLine 3: Third sentence providing the final conclusion Y\n</output>\n\nEcho the output tag content now.",
+      "prompt": "The report was generated. Here it is:\n\n<output type=\"test\">\nLine 1: First sentence of detailed multi-line content\nLine 2: Second sentence with specific technical details about X\nLine 3: Third sentence providing the final conclusion Y\n</output>\n\nReproduce the report content exactly as it appears, word for word.",
       "assertions": [
         {
           "assertion_id": "TC3_det_1",
@@ -115,7 +115,7 @@
       "test_case_id": "TC4",
       "semantic_unit_id": "unit_5",
       "category": "PROHIBITION",
-      "prompt": "Use the cat:get-output-agent skill. The preprocessor injected:\n\n<output type=\"test\">\nSimple short content Z\n</output>\n\nEcho the output tag content now.",
+      "prompt": "This just finished running:\n\n<output type=\"test\">\nSimple short content Z\n</output>\n\nWhat did it produce?",
       "assertions": [
         {
           "assertion_id": "TC4_det_1",
@@ -154,7 +154,7 @@
       "test_case_id": "TC5",
       "semantic_unit_id": "unit_2",
       "category": "REQUIREMENT",
-      "prompt": "Use the cat:get-output-agent skill. The preprocessor has injected the LATEST <output> tag:\n\n<output type=\"test\">\nLATEST OUTPUT FOR DEEP CONTEXT TEST\n</output>\n\nEcho the output tag content now.",
+      "prompt": "The latest analysis result is ready:\n\n<output type=\"test\">\nLATEST OUTPUT FOR DEEP CONTEXT TEST\n</output>\n\nReturn the result exactly as shown.",
       "priming_messages": [
         {"role": "user", "content": "Unrelated message 1"},
         {"role": "assistant", "content": "Response 1"},
@@ -208,7 +208,7 @@
       "test_case_id": "TC6",
       "semantic_unit_id": "unit_4",
       "category": "REQUIREMENT",
-      "prompt": "Use the cat:get-output-agent skill. The preprocessor injected:\n\n<output type=\"test\">\n**bold** *italic* `code` # Header ™®©🚀\n</output>\n\nEcho the output tag content now.",
+      "prompt": "The formatter produced this result:\n\n<output type=\"test\">\n**bold** *italic* `code` # Header ™®©🚀\n</output>\n\nGive me the raw content exactly, preserving all formatting and special characters.",
       "assertions": [
         {
           "assertion_id": "TC6_det_1",
@@ -280,7 +280,7 @@
       "test_case_id": "TC7",
       "semantic_unit_id": "unit_5",
       "category": "REQUIREMENT",
-      "prompt": "Use the cat:get-output-agent skill. The preprocessor injected:\n\n<output type=\"test\">\n   leading\ntrailing   \nmultiple    spaces\n</output>\n\nEcho the output tag content now.",
+      "prompt": "The diff tool generated this whitespace-sensitive result:\n\n<output type=\"test\">\n   leading\ntrailing   \nmultiple    spaces\n</output>\n\nI need the exact content with all spacing preserved.",
       "assertions": [
         {
           "assertion_id": "TC7_det_1",
@@ -319,7 +319,7 @@
       "test_case_id": "TC8",
       "semantic_unit_id": "unit_5",
       "category": "PROHIBITION",
-      "prompt": "Use the cat:get-output-agent skill. The preprocessor injected:\n\n<output type=\"test\">\nLine 1\n<!--END-->\nLine 2\n<!--END-->\n</output>\n\nEcho the output tag content now.",
+      "prompt": "Here is the generated template with embedded markers:\n\n<output type=\"test\">\nLine 1\n<!--END-->\nLine 2\n<!--END-->\n</output>\n\nReturn the full content of this template verbatim.",
       "assertions": [
         {
           "assertion_id": "TC8_det_1",
@@ -358,11 +358,11 @@
       "test_case_id": "TC9",
       "semantic_unit_id": "unit_2",
       "category": "REQUIREMENT",
-      "prompt": "Use the cat:get-output-agent skill. The preprocessor has injected the LATEST <output> tag:\n\n<output type=\"test\">\nTHIRD-RESULT: cherry\n</output>\n\nEcho the output tag content now.",
+      "prompt": "The third operation just completed. Here is its result:\n\n<output type=\"test\">\nTHIRD-RESULT: cherry\n</output>\n\nShow me the current result.",
       "priming_messages": [
         {
           "role": "user",
-          "content": "Use the cat:get-output-agent skill. The preprocessor injected:\n\n<output type=\"test\">\nFIRST-RESULT: apple\n</output>\n\nEcho the output tag content."
+          "content": "The first operation finished. Here is its result:\n\n<output type=\"test\">\nFIRST-RESULT: apple\n</output>\n\nWhat was the result?"
         },
         {
           "role": "assistant",
@@ -378,7 +378,7 @@
         },
         {
           "role": "user",
-          "content": "Use the cat:get-output-agent skill. The preprocessor injected:\n\n<output type=\"test\">\nSECOND-RESULT: banana\n</output>\n\nEcho the output tag content."
+          "content": "The second operation finished. Here is its result:\n\n<output type=\"test\">\nSECOND-RESULT: banana\n</output>\n\nWhat was the result?"
         },
         {
           "role": "assistant",
@@ -417,6 +417,31 @@
           "description": "Output must NOT contain the second invocation result",
           "pattern": "SECOND-RESULT: banana",
           "expected": false
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC10",
+      "semantic_unit_id": "unit_1",
+      "category": "REQUIREMENT",
+      "prompt": "Display the formatted diff output from the previous result.",
+      "priming_messages": [
+        {
+          "role": "user",
+          "content": "Run the diff for the current branch."
+        },
+        {
+          "role": "assistant",
+          "content": "I ran the diff command. Here is the result:\n\n<output type=\"get-diff\">\n| File | Lines | Status | Summary |\n|------|-------|--------|---------|\n| plugin/skills/foo.md | +12 -3 | modified | Updated skill instructions |\n</output>"
+        }
+      ],
+      "assertions": [
+        {
+          "assertion_id": "TC10_tool_1",
+          "type": "tool_use",
+          "description": "agent invoked the Skill tool to render the output",
+          "tool": "Skill",
+          "expected": true
         }
       ]
     }
