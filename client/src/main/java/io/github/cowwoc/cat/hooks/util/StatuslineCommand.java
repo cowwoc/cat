@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
-import static io.github.cowwoc.cat.hooks.Strings.block;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.ClaudeStatusline;
@@ -343,21 +342,20 @@ public final class StatuslineCommand
       }
       catch (IllegalArgumentException | IOException e)
       {
-        System.out.println(block(scope,
-          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+        System.out.println("⚠ " + Objects.toString(e.getMessage(), e.getClass().getSimpleName()));
       }
       catch (RuntimeException | AssertionError e)
       {
         Logger log = LoggerFactory.getLogger(StatuslineCommand.class);
         log.error("Unexpected error", e);
-        System.out.println(block(scope,
-          Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+        System.out.println("⚠ " + Objects.toString(e.getMessage(), e.getClass().getSimpleName()));
       }
     }
     catch (IOException e)
     {
       Logger log = LoggerFactory.getLogger(StatuslineCommand.class);
       log.error("Failed to read statusline input", e);
+      System.out.println("⚠ " + Objects.toString(e.getMessage(), e.getClass().getSimpleName()));
     }
   }
 
