@@ -5,7 +5,7 @@ See LICENSE.md in the project root for license terms.
 -->
 # CAT Execution Model
 
-This document is the canonical reference for CAT's execution hierarchy and wave-based parallelism model.
+This document is the canonical reference for CAT's execution hierarchy and parallel job execution model.
 
 ## Hierarchy
 
@@ -15,8 +15,8 @@ CAT organizes work in a five-level hierarchy:
 version
   └── issue
         └── sub-issue          (decomposed from a parent issue at a structural delivery boundary)
-              └── wave          (a batch of work items executed by one subagent)
-                    └── subagent  (executes one wave in an isolated worktree)
+              └── job           (a batch of work items executed by one implementation subagent)
+                    └── subagent  (executes one job in an isolated worktree)
 ```
 
 | Level | Description |
@@ -24,71 +24,75 @@ version
 | **version** | A major or minor release (e.g., `v2.1`). See `plugin/concepts/hierarchy.md`. |
 | **issue** | An atomic unit of work within a version. |
 | **sub-issue** | A child issue created by decomposing a parent issue at a structural delivery boundary. |
-| **wave** | A batch of work items assigned to one subagent. Items within a wave run in parallel; waves run sequentially only when a dependency exists between them. |
-| **subagent** | An isolated Claude instance that executes one wave inside a dedicated git worktree. |
+| **job** | A batch of work items defined in a `### Job N` section of plan.md and executed by one implementation subagent. |
+| **subagent** | An isolated Claude instance that executes one job in an isolated worktree. |
 
-## Waves
+## Jobs
 
-A **wave** is defined by a `### Wave N` subsection under `## Execution Waves` (or `## Sub-Agent Waves`) in plan.md.
-Each wave contains one or more top-level bullet items (`- `) listing the work to be done. Sub-items
+A **job** is defined by a `### Job N` subsection under `## Jobs` in plan.md.
+Each job contains one or more top-level bullet items (`- `) listing the work to be done. Sub-items
 (indented bullets with `  - `) are informational and do not spawn additional subagents.
 
 ```markdown
-## Execution Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Implement parser module
 - Add parser tests
 
-### Wave 2
+### Job 2
 - Implement formatter module
 - Add formatter tests
 - Run full test suite
 ```
 
-### Wave Parallelism
+### Job Parallelism
 
-**All waves spawn simultaneously in a single API response.** There is no sequential waiting between
-waves unless an explicit dependency between them is declared. Within each wave, all items also run in
+**All jobs spawn simultaneously in a single API response.** There is no sequential waiting between
+jobs unless an explicit dependency between them is declared. Within each job, all items also run in
 parallel (each item is handled by the same subagent).
 
-Ordering is sequential **only when a dependency exists** between waves (e.g., Wave 2 requires output
-produced by Wave 1). When no dependency exists, treat all waves as launching at the same time.
+Ordering is sequential **only when a dependency exists** between jobs (e.g., Job 2 requires output
+produced by Job 1). When no dependency exists, treat all jobs as launching at the same time.
 
-### When to Use Multiple Waves
+### When to Use Multiple Jobs
 
-Use multiple waves **only** when:
+Use multiple jobs as the **default structure** for issues with independent work items. Separate work into jobs
+whenever items can run simultaneously without conflict:
 
-- Work items are genuinely independent (no data or file dependencies between waves)
-- Items in different waves modify **different files** (overlapping files cause merge conflicts)
-- The parallelism benefit justifies the added complexity
+- Work items are independent (no data or file dependencies between jobs)
+- Items in different jobs modify **different files** (overlapping files cause merge conflicts)
 
-**Do NOT use multiple waves when:**
+**Add sequential ordering (explicit dependency) only when:**
 
-- Items must run in sequence (later items consume output from earlier ones)
-- Items modify the same files
-- The issue is small enough that parallelism adds no benefit
+- A later job consumes output or side-effects produced by an earlier job
+- Items in the later job require files committed by an earlier job before they can begin
 
-Plans with only 1 wave (or no waves at all) use single-subagent mode, spawning one implementation
-subagent with all items. Only plans with 2 or more distinct waves spawn parallel subagents.
+**Use a single job (or no jobs) only when:**
 
-## Wave-Based Context Management
+- All items must touch the same files (parallelism would cause merge conflicts)
+- The issue is small enough that a single subagent handles everything efficiently
 
-High subagent context usage is handled by splitting waves — not by decomposing the issue into sub-issues.
+Plans with only 1 job (or no jobs at all) use single-subagent mode, spawning one implementation
+subagent with all items. Only plans with 2 or more distinct jobs spawn parallel subagents.
 
-### Proactive Wave Sizing
+## Job-Based Context Management
 
-When writing plan.md waves, estimate the scope of each wave using file count and change complexity.
-If a wave would exceed 40% of the subagent context budget, split it into two waves of roughly equal
-scope before plan.md is written. A rule-of-thumb heuristic: each wave should touch no more than
+High subagent context usage is handled by job splitting — not by decomposing the issue into sub-issues.
+
+### Proactive Job Sizing
+
+When writing plan.md jobs, estimate the scope of each job using file count and change complexity.
+If a job would exceed 40% of the subagent context budget, split it into two jobs of roughly equal
+scope before plan.md is written. A rule-of-thumb heuristic: each job should touch no more than
 5 files with medium-complexity changes, or 10 files with trivial changes (rename, formatting).
 
-### Reactive Wave Re-Splitting
+### Reactive Job Splitting
 
 After a subagent completes and returns its result, check `percent_of_context`:
-- **If `percent_of_context > 40`:** Before spawning the next wave, split every remaining wave in
-  plan.md in half. Move the second half of each remaining wave's bullet items into a new wave inserted
-  immediately after it. Renumber all subsequent waves to keep the sequence gapless.
+- **If `percent_of_context > 40`:** Before spawning the next job, split every remaining job in
+  plan.md in half. Move the second half of each remaining job's bullet items into a new job inserted
+  immediately after it. Renumber all subsequent jobs to keep the sequence gapless.
 - **If `percent_of_context <= 40`:** Proceed without modification.
 
 See `plugin/concepts/token-warning.md` for how compaction events alter this flow when context is
@@ -98,7 +102,7 @@ fully exhausted.
 
 A **sub-issue** is a child issue created by splitting a parent when the work spans genuinely separate
 delivery boundaries. Decomposition is a structural decision — it is **never triggered by context usage
-alone**. Use wave re-splitting to manage context; use decomposition only when:
+alone**. Use job splitting to manage context; use decomposition only when:
 
 - A **merge boundary** is required between phases (phase B cannot start until phase A's code is merged
   and visible to reviewers)
@@ -106,13 +110,13 @@ alone**. Use wave re-splitting to manage context; use decomposition only when:
   and shipped without the other)
 - Work spans **genuinely disjoint subsystems** where no shared file or interface connects them
 
-After decomposition, the sub-issues are organized into waves following the same dependency analysis rules
+After decomposition, the sub-issues are organized into jobs following the same dependency analysis rules
 described above. See `plugin/skills/decompose-issue-agent/first-use.md` for the full decomposition workflow.
 
 ## Worktree Sharing and Push Coordination
 
-All wave subagents share the same worktree (`WORKTREE_PATH`). They commit and push to the same issue branch.
-Each subagent must `git pull --rebase` before pushing to incorporate commits from other waves that completed
+All implementation subagents share the same worktree (`WORKTREE_PATH`). They commit and push to the same issue branch.
+Each subagent must `git pull --rebase` before pushing to incorporate commits from other agents that completed
 first.
 
 When pushing encounters a non-fast-forward rejection, the subagent retries up to 3 times, rebasing before
@@ -120,11 +124,11 @@ each retry. See `plugin/concepts/parallel-execution.md` for the full push coordi
 
 ## index.json Ownership
 
-`index.json` must be updated exactly once per issue run. The last wave alphabetically owns the index.json
+`index.json` must be updated exactly once per issue run. The last job alphabetically owns the index.json
 update:
 
-- All waves except the last: do NOT update `index.json`
-- Last wave: updates `index.json` to `"status": "closed"` in its final commit
+- All jobs except the last: do NOT update `index.json`
+- Last job: updates `index.json` to `"status": "closed"` in its final commit
 
 ## Architecture Summary
 
@@ -132,16 +136,16 @@ update:
 work-with-issue (main agent)
     |
     +---> Read plan.md directly
-    |     Detect ## Execution Waves / ### Wave N sections
-    |     Count top-level bullet items per wave
+    |     Detect ## Jobs / ### Job N sections
+    |     Count top-level bullet items per job
     |
-    +---> [if 2+ waves] Spawn all wave subagents simultaneously
-    |         Wave 1: subagent handles all items in Wave 1 (parallel)
-    |         Wave 2: subagent handles all items in Wave 2 (parallel)
+    +---> [if 2+ jobs] Spawn all implementation subagents simultaneously
+    |         Job 1: subagent handles all items in Job 1 (parallel)
+    |         Job 2: subagent handles all items in Job 2 (parallel)
     |         Worktree: shared
-    |         index.json: NO (all waves except last) / YES (last wave)
+    |         index.json: NO (all jobs except last) / YES (last job)
     |
-    +---> Collect commits from all waves
+    +---> Collect commits from all jobs
     |
     +---> stakeholder-review (single review of combined work)
     |

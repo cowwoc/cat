@@ -66,11 +66,11 @@ of the files or instructions the subagent will need.
 
 ```
 ✅ CORRECT: pass the description with references
-  "Implement the changes described in plan.md Wave 1. plan.md is at:
+  "Implement the changes described in plan.md Job 1. plan.md is at:
    /workspace/.claude/worktrees/my-issue/.cat/issues/v2/v2.1/my-issue/plan.md"
 
 ❌ WRONG: expand the plan inline
-  "Here are the Wave 1 items: [plan.md Wave 1 section pasted verbatim]"
+  "Here are the Job 1 items: [plan.md Job 1 section pasted verbatim]"
 ```
 
 ## Correct Patterns
@@ -85,7 +85,7 @@ Task tool:
   prompt: |
     Implement the changes described in:
       plan.md: ${WORKTREE_PATH}/.cat/issues/v2/v2.1/my-issue/plan.md
-    Read that file yourself before starting. Execute only Wave 1 items.
+    Read that file yourself before starting. Execute only Job 1 items.
 ```
 
 ### Pass Commit SHA Instead of Diff Text
@@ -155,7 +155,7 @@ Passing the verbatim output wastes main agent context without benefit.
 ```
 
 **Exception:** If the main agent already read the file or ran the command for its *own* decision-making (for example,
-reviewing plan.md to choose which wave to execute), it MAY include that content in the subagent prompt to avoid a
+reviewing plan.md to choose which job to execute), it MAY include that content in the subagent prompt to avoid a
 redundant subagent read. The key distinction is that the main agent read it for its own purpose first, not as a relay.
 
 ## Codebase Examples

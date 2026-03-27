@@ -6,14 +6,14 @@ See LICENSE.md in the project root for license terms.
 # Decompose Issue
 
 See `${CLAUDE_PLUGIN_ROOT}/concepts/version-paths.md` for version path conventions used throughout this skill.
-See `${CLAUDE_PLUGIN_ROOT}/concepts/execution-model.md` for the full execution hierarchy, wave definitions, and
+See `${CLAUDE_PLUGIN_ROOT}/concepts/execution-model.md` for the full execution hierarchy, agent execution model, and
 sub-issue decomposition context.
 
 ## Purpose
 
 Break down an issue into smaller, independently deliverable sub-issues at structural boundaries.
 Decomposition is a structural decision — high context usage alone does NOT trigger decomposition.
-Use wave re-splitting (`plugin/concepts/token-warning.md`) to manage context within a single issue.
+Use job splitting (`plugin/concepts/token-warning.md`) to manage context within a single issue.
 
 ## When to Use
 
@@ -27,8 +27,8 @@ Decompose an issue **only** when one or more of the following structural criteri
   interfaces connecting them
 
 **Do NOT decompose based on:**
-- Token count or context percentage (use wave re-splitting instead)
-- Compaction events (use wave re-splitting instead)
+- Token count or context percentage (use job splitting instead)
+- Compaction events (use job splitting instead)
 - "The issue feels large" without a structural boundary
 
 See `plugin/concepts/execution-model.md` for the full context management and decomposition model.
@@ -237,46 +237,47 @@ git merge "${SUBAGENT_BRANCH}" -m "Inherit partial progress from decomposed pare
 
 ### 8. Generate Parallel Execution Plan
 
-**MANDATORY: Analyze dependencies and create wave-based execution plan.**
+**MANDATORY: Analyze dependencies and create parallel execution plan.**
 
-After decomposition, determine which sub-issues can run concurrently and organize them into waves. A wave is a
-dependency-ordered group of sub-issues that can execute in parallel. All sub-issues in Wave N must complete before any
-sub-issue in Wave N+1 can begin.
+After decomposition, assume all sub-issues run in parallel by default. Identify which sub-issues have explicit
+dependencies on prior sub-issues and organize only those into later groups. A group is sub-issues that
+execute in parallel. Sequential ordering between groups applies only when an explicit dependency exists: Group N+1
+requires output or side-effects produced by Group N.
 
 ```yaml
 # Dependency analysis (use fully-qualified names: VERSION_PREFIX + bare-name)
 sub-issues:
   - id: 1.2-parser-lexer
-    dependencies: []
+    dependencies: []           # No dependencies -> parallel (Group 1)
     estimated_tokens: 25000
   - id: 1.2-parser-ast
-    dependencies: [1.2-parser-lexer]
+    dependencies: [1.2-parser-lexer]  # Depends on lexer output -> Group 2
     estimated_tokens: 30000
   - id: 1.2-parser-tests
-    dependencies: []
+    dependencies: []           # No dependencies -> parallel (Group 1)
     estimated_tokens: 20000
 
-# Wave-based parallel plan
+# Parallel execution plan
 parallel_execution_plan:
-  wave_1:
-    # Issues with no dependencies - can run concurrently
+  group_1:
+    # All sub-issues with no dependencies run in parallel
     issues: [1.2-parser-lexer, 1.2-parser-tests]
     max_concurrent: 2
-    reason: "Both have no dependencies, can execute in parallel"
+    reason: "No dependencies - default parallel execution"
 
-  wave_2:
-    # Issues that depend on wave_1 completion
+  group_2:
+    # Only sub-issues with explicit dependencies on Group 1 output
     issues: [1.2-parser-ast]
-    depends_on: [wave_1]
-    reason: "Depends on 1.2-parser-lexer from wave_1"
+    depends_on: [group_1]
+    reason: "Depends on 1.2-parser-lexer output from Group 1"
 
 execution_order:
-  1. Spawn subagents for wave_1 issues (parallel)
-  2. Monitor and collect wave_1 results
-  3. Merge wave_1 branches
-  4. Spawn subagents for wave_2 issues (parallel)
-  5. Monitor and collect wave_2 results
-  6. Merge wave_2 branches
+  1. Spawn subagents for group_1 issues (parallel)
+  2. Monitor and collect group_1 results
+  3. Merge group_1 branches
+  4. Spawn subagents for group_2 issues (parallel, only if dependencies exist)
+  5. Monitor and collect group_2 results
+  6. Merge group_2 branches
 ```
 
 **Output parallel plan to index.json:**
@@ -284,24 +285,24 @@ execution_order:
 ```markdown
 ## Parallel Execution Plan
 
-### Wave 1 (Concurrent)
+### Job 1 (Concurrent)
 | Issue | Est. Tokens | Dependencies |
 |------|-------------|--------------|
 | 1.2-parser-lexer | 25K | None |
 | 1.2-parser-tests | 20K | None |
 
-### Wave 2 (After Wave 1)
+### Job 2 (After Job 1)
 | Issue | Est. Tokens | Dependencies |
 |------|-------------|--------------|
 | 1.2-parser-ast | 30K | 1.2-parser-lexer |
 
 **Total sub-issues:** 3
-**Max concurrent subagents:** 2 (in wave 1)
+**Max concurrent subagents:** 2 (in agent 1)
 ```
 
 **Conflict detection for parallel issues:**
 
-Ensure no parallel issues within the same wave modify the same files:
+Ensure no parallel issues within the same group modify the same files:
 
 ```yaml
 conflict_check:
@@ -310,12 +311,15 @@ conflict_check:
   issue_2: 1.2-parser-tests
     files: [test/parser/ParserIntegrationTest.java]
 
-  overlap: []  # No conflicts - safe to parallelize in same wave
+  overlap: []  # No conflicts - safe to parallelize in same group
 
   # If overlap exists:
   conflict_resolution:
-    move_conflicting_issue_to_next_wave: true
+    move_conflicting_issue_to_next_group: true
 ```
+
+**Note:** The same conflict principle applies to items within a group. If two items in the same group both modify the
+same file, move one item to a later group or merge them into a single task to avoid merge conflicts.
 
 ### 9. Update Original Issue for Decomposition
 
@@ -329,7 +333,7 @@ conflict_check:
 echo "---
 decomposed: true
 decomposedInto: [1.2-parser-lexer, 1.2-parser-ast, 1.2-parser-semantic]
-parallel_plan: wave_1=[1.2-parser-lexer, 1.2-parser-semantic], wave_2=[1.2-parser-ast]
+parallel_plan: group_1=[1.2-parser-lexer, 1.2-parser-semantic], group_2=[1.2-parser-ast]
 ---" >> "${ISSUE_DIR}/plan.md"
 
 # Update index.json - status stays in-progress, add Decomposed field
