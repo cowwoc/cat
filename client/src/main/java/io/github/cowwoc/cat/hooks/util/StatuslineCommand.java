@@ -334,29 +334,46 @@ public final class StatuslineCommand
    */
   public static void main(String[] args)
   {
-    try (ClaudeStatusline scope = new MainClaudeStatusline(System.in))
+    try
     {
-      try
+      try (ClaudeStatusline scope = new MainClaudeStatusline(System.in))
       {
-        run(scope, args, System.out);
+        try
+        {
+          run(scope, args, System.out);
+        }
+        catch (IllegalArgumentException | IOException e)
+        {
+          System.out.println("⚠ " + Objects.toString(e.getMessage(), e.getClass().getSimpleName()));
+        }
+        catch (RuntimeException | AssertionError e)
+        {
+          printError("Unexpected error", e);
+        }
       }
-      catch (IllegalArgumentException | IOException e)
+      catch (IOException e)
       {
-        System.out.println("⚠ " + Objects.toString(e.getMessage(), e.getClass().getSimpleName()));
-      }
-      catch (RuntimeException | AssertionError e)
-      {
-        Logger log = LoggerFactory.getLogger(StatuslineCommand.class);
-        log.error("Unexpected error", e);
-        System.out.println("⚠ " + Objects.toString(e.getMessage(), e.getClass().getSimpleName()));
+        printError("Failed to read statusline input", e);
       }
     }
-    catch (IOException e)
+    // Scope creation failed (e.g., missing CLAUDE_PROJECT_DIR) - cannot use scope services
+    catch (RuntimeException | AssertionError e)
     {
-      Logger log = LoggerFactory.getLogger(StatuslineCommand.class);
-      log.error("Failed to read statusline input", e);
-      System.out.println("⚠ " + Objects.toString(e.getMessage(), e.getClass().getSimpleName()));
+      printError("Failed to initialize statusline", e);
     }
+  }
+
+  /**
+   * Logs an error and prints a user-visible warning to stdout.
+   *
+   * @param logMessage the message to log at error level
+   * @param throwable the exception to log and display
+   */
+  private static void printError(String logMessage, Throwable throwable)
+  {
+    Logger log = LoggerFactory.getLogger(StatuslineCommand.class);
+    log.error(logMessage, throwable);
+    System.out.println("⚠ " + Objects.toString(throwable.getMessage(), throwable.getClass().getSimpleName()));
   }
 
   /**
