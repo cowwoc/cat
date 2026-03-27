@@ -2792,17 +2792,17 @@
   }, {
     "id" : "M590",
     "timestamp" : "2026-03-21T18:28:07Z",
-    "category" : "",
-    "description" : "",
-    "root_cause" : "",
-    "cause_signature" : null,
-    "prevention_type" : "",
-    "prevention_path" : "",
-    "pattern_keywords" : [ ],
-    "prevention_implemented" : false,
+    "category" : "documentation_priming",
+    "description" : "Agent passed full combined subagent JSON to record-learning instead of extracting the .prevent key, causing all fields (category, description, root_cause, prevention_type) to silently default to empty strings.",
+    "root_cause" : "Step 4c instruction said PHASE3_JSON should contain 'prevent phase JSON output from subagent' which is ambiguous — agents interpreted this as the full combined JSON containing the prevent phase rather than just the .prevent key's value.",
+    "cause_signature" : "documentation_priming:ambiguous_instruction:learn_skill",
+    "prevention_type" : "skill_instruction_fix",
+    "prevention_path" : "plugin/skills/learn/first-use.md",
+    "pattern_keywords" : [ "record-learning", "PHASE3_JSON", "prevent", "empty-fields", "learn-skill" ],
+    "prevention_implemented" : true,
     "prevention_verified" : false,
     "recurrence_of" : null,
-    "correct_behavior" : ""
+    "correct_behavior" : "Extract only the .prevent key value from the combined subagent JSON before passing to record-learning. Validate that category, description, root_cause, and prevention_type are non-empty before invocation."
   }, {
     "id" : "M591",
     "timestamp" : "2026-03-22T08:31:23Z",
