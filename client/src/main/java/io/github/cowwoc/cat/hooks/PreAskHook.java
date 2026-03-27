@@ -11,8 +11,11 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.ask.WarnApprovalWithoutRenderDiff;
 import io.github.cowwoc.cat.hooks.ask.WarnUnsquashedApproval;
+import org.slf4j.LoggerFactory;
 import tools.jackson.databind.JsonNode;
 
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.util.List;
 
 /**
@@ -61,7 +64,33 @@ public final class PreAskHook implements HookHandler
    */
   public static void main(String[] args)
   {
-    HookRunner.execute(PreAskHook::new, args);
+    try (ClaudeHook scope = new MainClaudeHook())
+    {
+      run(scope, args, System.in, System.out);
+    }
+    catch (RuntimeException | AssertionError e)
+    {
+      LoggerFactory.getLogger(PreAskHook.class).error("Failed to create JVM scope", e);
+      System.err.println("Hook failed: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Testable entry point for processing hook data with injectable I/O.
+   *
+   * @param scope the hook scope providing input data and output building
+   * @param args command line arguments (unused)
+   * @param in input stream (unused)
+   * @param out output stream for writing JSON response
+   * @throws NullPointerException if {@code scope}, {@code args}, {@code in}, or {@code out} are null
+   */
+  public static void run(ClaudeHook scope, String[] args, InputStream in, PrintStream out)
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(in, "in").isNotNull();
+    requireThat(out, "out").isNotNull();
+    HookRunner.execute(PreAskHook::new, scope, out);
   }
 
   /**

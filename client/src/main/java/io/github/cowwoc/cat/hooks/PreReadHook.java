@@ -11,6 +11,9 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import io.github.cowwoc.cat.hooks.write.EnforceWorktreePathIsolation;
 import tools.jackson.databind.JsonNode;
 
+import org.slf4j.LoggerFactory;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -54,7 +57,29 @@ public final class PreReadHook implements HookHandler
    */
   public static void main(String[] args)
   {
-    HookRunner.execute(PreReadHook::new, args);
+    try (ClaudeHook scope = new MainClaudeHook())
+    {
+      run(scope, args, System.in, System.out);
+    }
+    catch (RuntimeException | AssertionError e)
+    {
+      LoggerFactory.getLogger(PreReadHook.class).error("Failed to create JVM scope", e);
+      System.err.println("Hook failed: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Testable entry point with injectable I/O.
+   *
+   * @param scope the hook scope
+   * @param args command line arguments (unused)
+   * @param in input stream (unused)
+   * @param out output stream for writing JSON response
+   * @throws NullPointerException if any argument is null
+   */
+  public static void run(ClaudeHook scope, String[] args, InputStream in, PrintStream out)
+  {
+    HookRunner.execute(PreReadHook::new, scope, out);
   }
 
   /**
