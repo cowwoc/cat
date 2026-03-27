@@ -18,6 +18,9 @@ import io.github.cowwoc.cat.hooks.write.ValidateSkillTestFormat;
 import io.github.cowwoc.cat.hooks.write.WarnBaseBranchEdit;
 import tools.jackson.databind.JsonNode;
 
+import org.slf4j.LoggerFactory;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -84,7 +87,29 @@ public final class PreWriteHook implements HookHandler
    */
   public static void main(String[] args)
   {
-    HookRunner.execute(PreWriteHook::new, args);
+    try (ClaudeHook scope = new MainClaudeHook())
+    {
+      run(scope, args, System.in, System.out);
+    }
+    catch (RuntimeException | AssertionError e)
+    {
+      LoggerFactory.getLogger(PreWriteHook.class).error("Failed to create JVM scope", e);
+      System.err.println("Hook failed: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Testable entry point with injectable I/O.
+   *
+   * @param scope the hook scope
+   * @param args command line arguments (unused)
+   * @param in input stream (unused)
+   * @param out output stream for writing JSON response
+   * @throws NullPointerException if any argument is null
+   */
+  public static void run(ClaudeHook scope, String[] args, InputStream in, PrintStream out)
+  {
+    HookRunner.execute(PreWriteHook::new, scope, out);
   }
 
   /**
