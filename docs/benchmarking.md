@@ -43,6 +43,60 @@ is only required to distinguish skills above 95% from skills below 85%; it makes
 In practice this means a skill that passes 90% of the time may receive either verdict, and that is by design — the
 zone represents a region of ambiguity where the practical difference between accepting and rejecting is small.
 
+## Why Run Multiple Tests
+
+A single test run can pass or fail for two very different reasons: the skill's instructions may be defective (a
+systematic problem that will recur), or the LLM's sampling may have produced an unlucky output (random noise that will
+not reliably recur). A single run cannot distinguish these two cases. Multiple runs can — systematic defects cause
+repeated failures, while sampling noise averages out.
+
+This only works if we assume that the causes of failure are stable across runs. A broken instruction that causes 30% of
+runs to fail today will cause roughly 30% to fail tomorrow, provided the model and configuration remain the same. That
+assumption — that past pass rates are informative about future pass rates under the same conditions — is the
+foundational reason for running multiple tests. Without it, testing would be pointless.
+
+SPRT adds statistical rigor to this process. Rather than picking an arbitrary number of runs and eyeballing the results,
+SPRT accumulates evidence run by run and stops as soon as there is enough to confidently distinguish a systematic
+defect from noise. This matters because each run costs time and API calls; SPRT minimizes that cost while controlling
+the risk of wrong verdicts.
+
+## What Benchmark Results Allow You to Say
+
+**With confidence:** "Under the model version and configuration tested, this skill's instructions reliably produce
+compliant output for inputs similar to the eval set." Specifically, the pass rate against the eval set likely exceeds
+95% (for ACCEPT) or falls below 85% (for REJECT), with at most a 5% chance of either verdict being wrong.
+
+**Not with confidence:**
+
+- That the skill will perform the same way after a model update or provider-side change. The verdict is a snapshot tied
+  to the conditions at testing time. When those conditions change, re-benchmarking is needed.
+- That the skill handles inputs the eval set does not cover. The verdict measures compliance against the specific test
+  cases provided. A narrow eval set produces a narrow verdict. Production inputs that differ substantially from the eval
+  set are untested territory.
+- The exact pass rate. SPRT decides whether the rate is above 95% or below 85%; it does not estimate the rate itself.
+  A skill at 96% and one at 100% both receive ACCEPT. The `pass_count` and `total_runs` fields provide a rough point
+  estimate, but SPRT's guarantees are about the decision, not the estimate.
+  
+## Assumptions
+
+SPRT requires two assumptions to deliver its guaranteed error rates. Both hold reasonably well for LLM skill testing,
+but imperfectly.
+
+**Independence.** SPRT assumes each run's outcome does not depend on previous runs. For LLM skill testing, this
+assumption is reasonable because each run uses a different test case with different input content, and LLM API calls do
+not carry state between requests. The primary source of dependence would be test cases that are so similar they trigger
+the same failure mode for the same underlying reason — which is really one defect counted multiple times, not a
+violation of independence per se. In practice, a well-designed eval set with diverse test cases satisfies this
+assumption adequately. If observations are correlated, the effective sample size is smaller than the run count and the
+true error rates may exceed the configured α and β, but the 10% indifference zone provides a buffer against moderate
+correlation.
+
+**Stationarity.** SPRT assumes the underlying pass rate does not change during testing. Within a single benchmark
+session this holds well — the model version, API configuration, and infrastructure do not change mid-run. Across
+sessions, stationarity can break: model updates, provider-side changes, or different deployment environments can shift
+the true pass rate. An ACCEPT verdict from last week is not automatically valid this week if the model has changed.
+Re-benchmark after known changes to the model or environment.
+
 ## What ACCEPT, REJECT, and INCONCLUSIVE Guarantee
 
 - **ACCEPT** means the algorithm has accumulated enough statistical evidence that the skill's compliance rate likely
@@ -56,12 +110,7 @@ zone represents a region of ambiguity where the practical difference between acc
   limit for more evidence or investigate whether the skill's true compliance is genuinely near the indifference zone
   boundary (between 85% and 95%).
 
-**What these verdicts mean in practice:**
-
-An ACCEPT decision does not guarantee the skill always passes — it guarantees the evidence is strong enough to conclude
-the skill passes at least 95% of the time, given the configured error tolerance. A REJECT verdict means the evidence
-strongly indicates the skill's compliance is below 85%, making it unsuitable for production use. INCONCLUSIVE means the
-test ran to its limit without decisive evidence; additional runs or investigation may be needed.
+See "What Benchmark Results Allow You to Say" above for a plain-English interpretation of these verdicts.
 
 ## Sample Efficiency
 
@@ -109,10 +158,11 @@ Each test case in `benchmark.json` contains the following fields:
 Benchmark results are written to `benchmark.json` in the CAT work directory. When a skill is executed against its test
 cases:
 
-1. **ACCEPT result** — The skill meets the compliance target (≥95% pass rate within statistical tolerance). The skill is
-   ready for production use.
-2. **REJECT result** — The skill falls below acceptable compliance (≤85% within statistical tolerance). The skill needs
-   debugging or test case revision before it can be deployed.
+1. **ACCEPT result** — The skill meets the compliance target (≥95% pass rate against the eval set, within statistical
+   tolerance). The result applies to the model version and configuration tested; changes to either may require
+   re-benchmarking.
+2. **REJECT result** — The skill falls below acceptable compliance against the eval set (≤85% within statistical
+   tolerance). The skill needs debugging or test case revision before it can be re-benchmarked.
 3. **INCONCLUSIVE result** — The test reached its run limit without enough evidence to decide. This is rare and suggests
    the skill's true compliance is near the indifference zone boundary. Run additional tests or review the skill's
    implementation to understand why results are borderline.
