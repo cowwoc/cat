@@ -78,7 +78,7 @@ public final class GetStatuslineOutput implements SkillOutput
     }
     catch (IOException e)
     {
-      String errorMsg = "Failed to read settings.json: " + e.getMessage();
+      String errorMsg = "GetStatuslineOutput: Failed to read settings.json: " + e.getMessage();
       return """
         {
           "status": "ERROR",
@@ -93,7 +93,7 @@ public final class GetStatuslineOutput implements SkillOutput
     }
     catch (JacksonException e)
     {
-      String errorMsg = "Invalid JSON in settings.json: " + e.getMessage();
+      String errorMsg = "GetStatuslineOutput: Invalid JSON in settings.json: " + e.getMessage();
       return """
         {
           "status": "ERROR",
@@ -134,14 +134,14 @@ public final class GetStatuslineOutput implements SkillOutput
       }
       catch (IllegalArgumentException | IOException e)
       {
-        System.out.println(block(scope,
+        System.out.println(block(scope, "GetStatuslineOutput: " +
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
       catch (RuntimeException | AssertionError e)
       {
         Logger log = LoggerFactory.getLogger(GetStatuslineOutput.class);
         log.error("Unexpected error", e);
-        System.out.println(block(scope,
+        System.out.println(block(scope, "GetStatuslineOutput: " +
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }

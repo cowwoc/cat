@@ -75,7 +75,7 @@ public final class StatuslineInstall
     }
     catch (IOException e)
     {
-      return buildError("Failed to create directory: " + claudeDir + ": " + e.getMessage());
+      return buildError("StatuslineInstall: Failed to create directory: " + claudeDir + ": " + e.getMessage());
     }
 
     // The statusline-command binary in the jlink bundle
@@ -97,7 +97,7 @@ public final class StatuslineInstall
       }
       catch (IOException e)
       {
-        return buildError("Failed to read settings.json: " + settingsFile + ": " + e.getMessage());
+        return buildError("StatuslineInstall: Failed to read settings.json: " + settingsFile + ": " + e.getMessage());
       }
 
       try
@@ -106,11 +106,12 @@ public final class StatuslineInstall
       }
       catch (JacksonException e)
       {
-        return buildError("Existing settings.json is not valid JSON: " + settingsFile + ": " + e.getMessage());
+        return buildError("StatuslineInstall: Existing settings.json is not valid JSON: " +
+          settingsFile + ": " + e.getMessage());
       }
       catch (ClassCastException _)
       {
-        return buildError("settings.json does not contain a JSON object: " + settingsFile);
+        return buildError("StatuslineInstall: settings.json does not contain a JSON object: " + settingsFile);
       }
     }
 
@@ -132,7 +133,7 @@ public final class StatuslineInstall
     }
     catch (JacksonException e)
     {
-      return buildError("Failed to serialize settings.json: " + e.getMessage());
+      return buildError("StatuslineInstall: Failed to serialize settings.json: " + e.getMessage());
     }
 
     Path tempFile = settingsFile.resolveSibling(settingsFile.getFileName() + ".tmp");
@@ -144,7 +145,7 @@ public final class StatuslineInstall
     catch (IOException e)
     {
       Files.deleteIfExists(tempFile);
-      return buildError("Failed to write settings.json: " + settingsFile + ": " + e.getMessage());
+      return buildError("StatuslineInstall: Failed to write settings.json: " + settingsFile + ": " + e.getMessage());
     }
 
     return """
@@ -189,14 +190,14 @@ public final class StatuslineInstall
       }
       catch (IllegalArgumentException e)
       {
-        System.out.println(block(scope,
+        System.out.println(block(scope, "StatuslineInstall: " +
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
       catch (RuntimeException | AssertionError e)
       {
         Logger log = LoggerFactory.getLogger(StatuslineInstall.class);
         log.error("Unexpected error", e);
-        System.out.println(block(scope,
+        System.out.println(block(scope, "StatuslineInstall: " +
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
       }
     }
@@ -241,7 +242,7 @@ public final class StatuslineInstall
     }
     catch (IOException e)
     {
-      out.println(block(scope, Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
+      out.println(block(scope, "StatuslineInstall: " + Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
     }
   }
 }

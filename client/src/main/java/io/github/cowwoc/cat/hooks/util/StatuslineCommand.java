@@ -159,7 +159,7 @@ public final class StatuslineCommand
    * {@code sessionId}. Returns the matching lock filename without the {@code .lock} suffix, with
    * control characters removed. Returns {@code ""} if no match is found or the lock directory does not
    * exist. On I/O or parse failure, returns an error indicator string of the form
-   * {@code "⚠ <ExceptionClass>: <message>"} with control characters removed, so the error is visible in the
+   * {@code "⚠ StatuslineCommand: <message>"} with control characters removed, so the error is visible in the
    * statusline.
    *
    * @param sessionId the session ID to look up
@@ -202,7 +202,7 @@ public final class StatuslineCommand
     }
     catch (IOException | JacksonException e)
     {
-      String errorMsg = "⚠ " + e.getClass().getSimpleName() + ": " + e.getMessage();
+      String errorMsg = "⚠ StatuslineCommand: " + e.getMessage();
       return removeControlCharacters(errorMsg);
     }
   }
@@ -344,7 +344,7 @@ public final class StatuslineCommand
         }
         catch (IllegalArgumentException | IOException e)
         {
-          System.out.println("⚠ " + Objects.toString(e.getMessage(), e.getClass().getSimpleName()));
+          System.out.println("⚠ StatuslineCommand: " + Objects.toString(e.getMessage(), e.getClass().getSimpleName()));
         }
         catch (RuntimeException | AssertionError e)
         {
@@ -373,7 +373,8 @@ public final class StatuslineCommand
   {
     Logger log = LoggerFactory.getLogger(StatuslineCommand.class);
     log.error(logMessage, throwable);
-    System.out.println("⚠ " + Objects.toString(throwable.getMessage(), throwable.getClass().getSimpleName()));
+    System.out.println("⚠ StatuslineCommand: " +
+      Objects.toString(throwable.getMessage(), throwable.getClass().getSimpleName()));
   }
 
   /**
