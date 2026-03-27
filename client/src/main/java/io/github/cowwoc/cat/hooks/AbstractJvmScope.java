@@ -20,6 +20,7 @@ import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Abstract base class providing default implementations of derived path methods and shared
@@ -33,6 +34,9 @@ import java.nio.file.Path;
  */
 public abstract class AbstractJvmScope implements JvmScope
 {
+  // Initialized at field declaration so it is available before any subclass constructor runs.
+  // This prevents NullPointerException when superclass methods call isClosed() during construction.
+  private final AtomicBoolean closed = new AtomicBoolean();
   // AbstractJvmScope is one of two permitted call sites for JsonMapper.builder(). The other is
   // AbstractClaudeHook.createStdinMapper() for the bootstrap case where no scope is yet available.
   // All other code must obtain the shared instance via JvmScope.getJsonMapper().
@@ -205,6 +209,18 @@ public abstract class AbstractJvmScope implements JvmScope
   {
     ensureOpen();
     return userIssues.getValue();
+  }
+
+  @Override
+  public boolean isClosed()
+  {
+    return closed.get();
+  }
+
+  @Override
+  public void close()
+  {
+    closed.set(true);
   }
 
   /**
