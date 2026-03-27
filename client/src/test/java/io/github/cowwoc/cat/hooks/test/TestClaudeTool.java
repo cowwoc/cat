@@ -15,7 +15,6 @@ import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Test implementation of JvmScope with injectable environment paths.
@@ -30,7 +29,6 @@ public final class TestClaudeTool extends AbstractClaudeTool
   private static final String SESSION_ID = "00000000-0000-0000-0000-000000000000";
 
   private final TerminalType terminalType;
-  private final AtomicBoolean closed = new AtomicBoolean();
   private final Path workDir;
 
   /**
@@ -214,17 +212,5 @@ public final class TestClaudeTool extends AbstractClaudeTool
   {
     ensureOpen();
     return "UTC";
-  }
-
-  @Override
-  public boolean isClosed()
-  {
-    return closed.get();
-  }
-
-  @Override
-  public void close()
-  {
-    closed.set(true);
   }
 }

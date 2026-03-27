@@ -10,7 +10,6 @@ import io.github.cowwoc.cat.hooks.skills.TerminalType;
 import io.github.cowwoc.pouch10.core.ConcurrentLazyReference;
 
 import java.nio.file.Path;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Production implementation of {@link JvmScope} for CLI tool processes.
@@ -32,7 +31,6 @@ public final class MainClaudeTool extends AbstractClaudeTool
       return "UTC";
     return tzValue;
   });
-  private final AtomicBoolean closed = new AtomicBoolean();
 
   /**
    * Creates a new production Claude tool scope.
@@ -97,17 +95,5 @@ public final class MainClaudeTool extends AbstractClaudeTool
   {
     ensureOpen();
     return tzRef.getValue();
-  }
-
-  @Override
-  public boolean isClosed()
-  {
-    return closed.get();
-  }
-
-  @Override
-  public void close()
-  {
-    closed.set(true);
   }
 }

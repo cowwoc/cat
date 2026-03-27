@@ -13,7 +13,6 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Production implementation of {@link ClaudeHook} for hook handler processes.
@@ -35,7 +34,6 @@ public final class MainClaudeHook extends AbstractClaudeHook
       return "UTC";
     return tzValue;
   });
-  private final AtomicBoolean closed = new AtomicBoolean();
 
   /**
    * Creates a new production hook scope.
@@ -122,17 +120,5 @@ public final class MainClaudeHook extends AbstractClaudeHook
   {
     ensureOpen();
     return tz.getValue();
-  }
-
-  @Override
-  public boolean isClosed()
-  {
-    return closed.get();
-  }
-
-  @Override
-  public void close()
-  {
-    closed.set(true);
   }
 }

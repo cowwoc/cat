@@ -12,7 +12,6 @@ import io.github.cowwoc.pouch10.core.ConcurrentLazyReference;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * The main implementation of {@link ClaudeStatusline} for production use.
@@ -29,7 +28,6 @@ public final class MainClaudeStatusline extends AbstractClaudeStatusline
     ConcurrentLazyReference.create(this::terminalType);
   private final ConcurrentLazyReference<String> tzRef =
     ConcurrentLazyReference.create(this::tz);
-  private final AtomicBoolean closed = new AtomicBoolean();
 
   /**
    * Creates a new production Claude statusline scope, reading statusline JSON from stdin.
@@ -121,17 +119,5 @@ public final class MainClaudeStatusline extends AbstractClaudeStatusline
   {
     ensureOpen();
     return tzRef.getValue();
-  }
-
-  @Override
-  public boolean isClosed()
-  {
-    return closed.get();
-  }
-
-  @Override
-  public void close()
-  {
-    closed.set(true);
   }
 }

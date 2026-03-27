@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Test implementation of {@link ClaudeHook} with injectable hook JSON payload and environment paths.
@@ -36,7 +35,6 @@ public final class TestClaudeHook extends AbstractClaudeHook
 
   private final TerminalType terminalType;
   private final Path workDir;
-  private final AtomicBoolean closed = new AtomicBoolean();
 
   /**
    * Creates a new test hook scope with auto-generated temporary directories and a default empty
@@ -277,17 +275,5 @@ public final class TestClaudeHook extends AbstractClaudeHook
   {
     ensureOpen();
     return "UTC";
-  }
-
-  @Override
-  public boolean isClosed()
-  {
-    return closed.get();
-  }
-
-  @Override
-  public void close()
-  {
-    closed.set(true);
   }
 }

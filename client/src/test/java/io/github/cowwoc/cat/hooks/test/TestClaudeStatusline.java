@@ -14,7 +14,6 @@ import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Test implementation of {@link io.github.cowwoc.cat.hooks.ClaudeStatusline} with injectable
@@ -31,7 +30,6 @@ public final class TestClaudeStatusline extends AbstractClaudeStatusline
 {
   private final Path workDir;
   private final TerminalType terminalType;
-  private final AtomicBoolean closed = new AtomicBoolean();
 
   /**
    * Creates a new test Claude statusline scope with default field values.
@@ -100,17 +98,5 @@ public final class TestClaudeStatusline extends AbstractClaudeStatusline
   {
     ensureOpen();
     return "UTC";
-  }
-
-  @Override
-  public boolean isClosed()
-  {
-    return closed.get();
-  }
-
-  @Override
-  public void close()
-  {
-    closed.set(true);
   }
 }
