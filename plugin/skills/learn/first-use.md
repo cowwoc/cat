@@ -421,10 +421,36 @@ silently truncate the input. Using a variable protects against both heredoc inje
 **IMPORTANT:** The `PHASE3_JSON` variable MUST be assigned using double-quoted syntax (`PHASE3_JSON="..."`) to prevent
 word splitting and glob expansion. Never use `eval`, backtick substitution, or unquoted assignment with this value.
 
+**Phase 3 subagent failure handling:** If the Phase 3 subagent returns an error, empty output, or output
+that cannot be parsed as JSON, the correct action is to RETRY the Phase 3 subagent (go back to Step 3).
+Do NOT attempt to call `record-learning` directly with manually constructed or partial data — this bypasses
+the three-phase analysis and produces incomplete learning records.
+
 ```bash
-# Store Phase 3 output in a shell variable (JSON from subagent result)
+# Extract ONLY the .prevent object from the combined subagent JSON output.
+# The subagent returns a combined JSON with top-level keys: phases_executed, phase_summaries,
+# investigate, analyze, prevent. The record-learning CLI expects the FLAT .prevent object
+# (containing category, description, root_cause, prevention_type at the top level),
+# NOT the full combined JSON (which nests these fields inside the "prevent" key).
+#
+# WRONG: PHASE3_JSON="$FULL_SUBAGENT_JSON"  — fields are nested, record-learning reads empty strings
+# RIGHT: PHASE3_JSON="<the value of the 'prevent' key from the subagent JSON>"
 # MUST use double-quoted assignment: PHASE3_JSON="..." — unquoted or eval'd assignment risks injection
-PHASE3_JSON="{prevent phase JSON output from subagent}"
+PHASE3_JSON="{value of the 'prevent' key extracted from the combined subagent JSON}"
+
+# Pre-check: verify record-learning input fields are non-empty before invocation.
+# These are the fields record-learning reads from the top level of PHASE3_JSON.
+# If any are empty, the subagent output was likely passed as the full combined JSON
+# instead of just the .prevent key, or the prevent phase produced incomplete output.
+for FIELD in category description root_cause prevention_type; do
+  FIELD_VALUE=$(printf '%s' "$PHASE3_JSON" | grep -o "\"${FIELD}\"[[:space:]]*:[[:space:]]*\"[^\"]*\"" | sed "s/.*\"${FIELD}\"[[:space:]]*:[[:space:]]*\"\([^\"]*\)\".*/\1/")
+  if [[ -z "$FIELD_VALUE" ]]; then
+    echo "ERROR: PHASE3_JSON is missing or has empty '${FIELD}' field. This usually means the full combined subagent JSON was passed instead of just the .prevent key. Learning NOT recorded."
+    echo "Expected: PHASE3_JSON should contain the value of the 'prevent' key from the subagent output."
+    echo "Got PHASE3_JSON (first 500 chars): $(printf '%s' "$PHASE3_JSON" | head -c 500)"
+    exit 1
+  fi
+done
 
 # Write Phase 3 output to temp file using a variable to avoid injection
 # mktemp generates a unique path per invocation via random suffix (XXXXXX), ensuring
