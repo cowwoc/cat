@@ -46,14 +46,14 @@ Select the appropriate template based on issue type.
 <!-- Default: all dependent issues listed in index.json are closed -->
 - [ ] All dependent issues are closed
 
-## Main Agent Waves
+## Main Agent Jobs
 <!-- OPTIONAL: Skills that require main-agent-level execution (spawn their own subagents) -->
 <!-- Remove this section if the issue has no pre-delegation skills -->
 <!-- Each bullet is a skill invocation: - /cat:instruction-builder-agent path/to/file.md -->
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 <!-- ACTIONS ONLY - Do NOT include expected outcomes like "score = 1.0" or "should be X" -->
 <!-- Expected values prime subagents to fabricate results instead of running actual validation -->
 - [action item 1]
@@ -111,12 +111,12 @@ code_that_fails();
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Main Agent Waves
+## Main Agent Jobs
 <!-- OPTIONAL: Skills requiring main-agent-level execution. Remove if not needed. -->
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 <!-- ACTIONS ONLY - Do NOT include expected outcomes -->
 - [action item 1 with specific code changes]
 - [action item 2]
@@ -155,12 +155,12 @@ code_that_fails();
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Main Agent Waves
+## Main Agent Jobs
 <!-- OPTIONAL: Skills requiring main-agent-level execution. Remove if not needed. -->
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 <!-- ACTIONS ONLY - Do NOT include expected outcomes -->
 - [action item 1 with before/after patterns]
 - [action item 2]
