@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import tools.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
+import java.io.PrintStream;
 
 /**
  * Encapsulates hook execution with Claude Code compliance.
@@ -58,35 +59,7 @@ public final class HookRunner
 
     try (ClaudeHook scope = new MainClaudeHook())
     {
-      try
-      {
-        // Create handler via factory and run it
-        HookHandler handler = factory.create(scope);
-        HookResult result = handler.run(scope);
-
-        // Write warnings to stderr
-        for (String warning : result.warnings())
-          System.err.println(warning);
-
-        // Write hook output to stdout
-        System.out.println(result.output());
-      }
-      catch (IOException | RuntimeException | AssertionError e)
-      {
-        LOG.error("Hook execution failed", e);
-
-        // Output error using Claude Code's universal JSON fields.
-        // "systemMessage" is a warning shown to the user.
-        String message;
-        if (e.getMessage() != null)
-          message = e.getMessage();
-        else
-          message = e.getClass().getSimpleName();
-
-        ObjectNode errorJson = scope.getJsonMapper().createObjectNode();
-        errorJson.put("systemMessage", "Hook failed: " + message);
-        System.out.println(errorJson.toString());
-      }
+      execute(factory, scope, System.out);
     }
     catch (RuntimeException | AssertionError e)
     {
@@ -96,6 +69,54 @@ public final class HookRunner
     }
     // Method returns normally → JVM exits with code 0.
     // Claude Code processes JSON output on exit 0.
+  }
+
+  /**
+   * Execute a hook handler with an existing scope and injectable output stream.
+   * <p>
+   * This overload enables testing: tests create a {@code TestClaudeHook} scope and capture output
+   * via a custom {@code PrintStream}, while {@code main()} delegates here via the no-arg overload.
+   *
+   * @param factory the hook handler factory
+   * @param scope   the hook scope providing hook input, output, and configuration
+   * @param out     the output stream for writing JSON response
+   * @throws NullPointerException if {@code factory}, {@code scope}, or {@code out} are null
+   */
+  public static void execute(HookHandlerFactory factory, ClaudeHook scope, PrintStream out)
+  {
+    requireThat(factory, "factory").isNotNull();
+    requireThat(scope, "scope").isNotNull();
+    requireThat(out, "out").isNotNull();
+
+    try
+    {
+      // Create handler via factory and run it
+      HookHandler handler = factory.create(scope);
+      HookResult result = handler.run(scope);
+
+      // Write warnings to stderr
+      for (String warning : result.warnings())
+        System.err.println(warning);
+
+      // Write hook output to the provided stream
+      out.println(result.output());
+    }
+    catch (IOException | RuntimeException | AssertionError e)
+    {
+      LOG.error("Hook execution failed", e);
+
+      // Output error using Claude Code's universal JSON fields.
+      // "systemMessage" is a warning shown to the user.
+      String message;
+      if (e.getMessage() != null)
+        message = e.getMessage();
+      else
+        message = e.getClass().getSimpleName();
+
+      ObjectNode errorJson = scope.getJsonMapper().createObjectNode();
+      errorJson.put("systemMessage", "Hook failed: " + message);
+      out.println(errorJson.toString());
+    }
   }
 
   /**
