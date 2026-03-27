@@ -891,6 +891,77 @@ public final class EmpiricalTestRunner
   }
 
   /**
+   * Evaluates a list of typed assertions against agent output.
+   * <p>
+   * Supports the following assertion types:
+   * <ul>
+   *   <li>{@code deterministic} — evaluates string-match assertions against the text output</li>
+   *   <li>{@code semantic} — skipped (evaluated by Claude as a judge, not programmatically)</li>
+   *   <li>{@code tool_use} — checks whether the named tool was invoked</li>
+   * </ul>
+   *
+   * @param assertions list of assertion maps, each containing at minimum {@code assertion_id},
+   *                   {@code type}, and {@code expected}
+   * @param texts      the text outputs from the agent
+   * @param toolUses   the tool use names from the agent
+   * @return the evaluation result
+   * @throws NullPointerException     if {@code assertions}, {@code texts}, or {@code toolUses} are null
+   * @throws IllegalArgumentException if an assertion has an unknown {@code type} or an unknown
+   *                                  {@code method} within a {@code deterministic} assertion
+   */
+  public EvaluationResult evaluateAssertions(List<Map<String, Object>> assertions,
+    List<String> texts, List<String> toolUses)
+  {
+    requireThat(assertions, "assertions").isNotNull();
+    requireThat(texts, "texts").isNotNull();
+    requireThat(toolUses, "toolUses").isNotNull();
+    String fullText = String.join("\n", texts);
+    String lowerText = fullText.toLowerCase(Locale.ROOT);
+
+    Map<String, Boolean> checks = new HashMap<>();
+    for (Map<String, Object> assertion : assertions)
+    {
+      String assertionId = (String) assertion.get("assertion_id");
+      String type = (String) assertion.get("type");
+      boolean expected = Boolean.TRUE.equals(assertion.get("expected"));
+
+      switch (type)
+      {
+        case "deterministic" ->
+        {
+          String method = (String) assertion.get("method");
+          if (method == null || !method.equals("string_match"))
+          {
+            throw new IllegalArgumentException(
+              "assertion '" + assertionId + "': unknown deterministic method: '" + method +
+              "'. Supported methods: [string_match]");
+          }
+          String pattern = (String) assertion.get("pattern");
+          boolean found = lowerText.contains(pattern.toLowerCase(Locale.ROOT));
+          checks.put(assertionId, found == expected);
+        }
+        case "semantic" ->
+        {
+          // Semantic assertions are evaluated by Claude as a judge, not programmatically.
+        }
+        case "tool_use" ->
+        {
+          String tool = (String) assertion.get("tool");
+          boolean found = toolUses.contains(tool);
+          checks.put(assertionId, found == expected);
+        }
+        default ->
+          throw new IllegalArgumentException(
+            "assertion '" + assertionId + "': unknown type: '" + type +
+            "'. Supported types: [deterministic, semantic, tool_use]");
+      }
+    }
+
+    boolean allPass = checks.isEmpty() || checks.values().stream().allMatch(v -> v);
+    return new EvaluationResult(allPass, checks);
+  }
+
+  /**
    * Produces a structured grading report for a single message evaluation.
    * <p>
    * For each criterion in the success criteria map, extracts a {@link CriterionGrade} containing

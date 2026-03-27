@@ -2956,4 +2956,140 @@ public final class EmpiricalTestRunnerTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that a tool_use assertion passes when the expected tool appears in toolUses.
+   */
+  @Test
+  public void toolUseAssertionPassesWhenToolFound() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("empirical-test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      List<Map<String, Object>> assertions = List.of(
+        Map.of("assertion_id", "TC10_tool_1", "type", "tool_use", "tool", "Skill", "expected", true));
+      EvaluationResult result = runner.evaluateAssertions(assertions, List.of("some text"),
+        List.of("Skill", "Bash"));
+      requireThat(result.pass(), "pass").isTrue();
+      requireThat(result.checks().get("TC10_tool_1"), "TC10_tool_1").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a tool_use assertion fails when the expected tool is absent from toolUses.
+   */
+  @Test
+  public void toolUseAssertionFailsWhenToolNotFound() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("empirical-test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      List<Map<String, Object>> assertions = List.of(
+        Map.of("assertion_id", "TC10_tool_1", "type", "tool_use", "tool", "Skill", "expected", true));
+      EvaluationResult result = runner.evaluateAssertions(assertions, List.of("some text"),
+        List.of("Bash"));
+      requireThat(result.pass(), "pass").isFalse();
+      requireThat(result.checks().get("TC10_tool_1"), "TC10_tool_1").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a tool_use assertion passes when the tool is absent and expected is false.
+   */
+  @Test
+  public void toolUseAssertionPassesWhenToolAbsentAndExpectedFalse() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("empirical-test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      List<Map<String, Object>> assertions = List.of(
+        Map.of("assertion_id", "TC10_tool_1", "type", "tool_use", "tool", "Skill", "expected", false));
+      EvaluationResult result = runner.evaluateAssertions(assertions, List.of(), List.of("Bash"));
+      requireThat(result.pass(), "pass").isTrue();
+      requireThat(result.checks().get("TC10_tool_1"), "TC10_tool_1").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a deterministic string_match assertion passes when pattern is found and expected is true.
+   */
+  @Test
+  public void deterministicAssertionPassesWhenPatternFound() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("empirical-test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      List<Map<String, Object>> assertions = List.of(
+        Map.of("assertion_id", "TC1_det_1", "type", "deterministic", "method", "string_match",
+          "pattern", "hello world", "expected", true));
+      EvaluationResult result = runner.evaluateAssertions(assertions, List.of("Hello World output"),
+        List.of());
+      requireThat(result.pass(), "pass").isTrue();
+      requireThat(result.checks().get("TC1_det_1"), "TC1_det_1").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that semantic assertions are skipped and do not affect the pass/fail result.
+   */
+  @Test
+  public void semanticAssertionIsSkippedDoesNotAffectResult() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("empirical-test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      List<Map<String, Object>> assertions = List.of(
+        Map.of("assertion_id", "TC1_sem_1", "type", "semantic",
+          "instruction", "Check if the response is good", "expected", true));
+      EvaluationResult result = runner.evaluateAssertions(assertions, List.of("some text"), List.of());
+      requireThat(result.pass(), "pass").isTrue();
+      requireThat(result.checks().containsKey("TC1_sem_1"), "containsKey").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that an unknown assertion type throws IllegalArgumentException.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*unknown type.*'invalid_type'.*")
+  public void evaluateAssertionsRejectsUnknownType() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("empirical-test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      List<Map<String, Object>> assertions = List.of(
+        Map.of("assertion_id", "TC_bad", "type", "invalid_type", "expected", true));
+      runner.evaluateAssertions(assertions, List.of(), List.of());
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }
