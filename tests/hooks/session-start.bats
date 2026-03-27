@@ -92,13 +92,14 @@ JAVA_EOF
   [ "$status" -eq 0 ]
 }
 
-@test "flush_log with error level exits 1" {
+@test "flush_log with error level calls exit 0" {
   LOG_LEVEL=""
   LOG_MESSAGE=""
   DEBUG_LINES=""
   log "error" "test error message"
   run flush_log
-  [ "$status" -eq 1 ]
+  # flush_log calls exit 0 on error level (hook JSON is written to stdout for Claude Code to parse)
+  [ "$status" -eq 0 ]
   [[ "$output" == *'"error"'* ]]
 }
 
@@ -119,7 +120,8 @@ JAVA_EOF
   mkdir -p "$CLAUDE_PLUGIN_ROOT/.claude-plugin"
   # No plugin.json file created
   run main
-  [ "$status" -ne 0 ]
+  # flush_log calls exit 0 on error (hook JSON output), so check output for error status
+  [[ "$output" == *'"error"'* ]]
   unset CLAUDE_PLUGIN_ROOT
 }
 
@@ -278,7 +280,7 @@ JAVA_EOF
   mkdir -p "$CLAUDE_PLUGIN_ROOT/.claude-plugin"
   echo '{"version":"not-a-version","repository":"https://github.com/cowwoc/cat"}' > "$CLAUDE_PLUGIN_ROOT/.claude-plugin/plugin.json"
   run main
-  [ "$status" -ne 0 ]
+  [[ "$output" == *'"error"'* ]]
   unset CLAUDE_PLUGIN_ROOT
 }
 
@@ -287,7 +289,7 @@ JAVA_EOF
   mkdir -p "$CLAUDE_PLUGIN_ROOT/.claude-plugin"
   echo '{"repository":"https://github.com/cowwoc/cat"}' > "$CLAUDE_PLUGIN_ROOT/.claude-plugin/plugin.json"
   run main
-  [ "$status" -ne 0 ]
+  [[ "$output" == *'"error"'* ]]
   unset CLAUDE_PLUGIN_ROOT
 }
 
@@ -414,7 +416,7 @@ JAVA_EOF
   [ ! -d "${fake_jdk}.lock" ]
 }
 
-@test "try_acquire_runtime detects completion by another session during wait" {
+@test "try_acquire_runtime succeeds on fast path when VERSION matches and java works despite stale lock" {
   local fake_jdk="${TEST_DIR}/fake-jdk-concurrent"
   local fake_version="1.2.3"
   mkdir -p "${fake_jdk}/bin"
@@ -427,34 +429,18 @@ exit 0
 JAVA_EOF
   chmod +x "${fake_jdk}/bin/java"
 
-  # Simulate the TOCTOU race condition:
-  # 1. Initially, no VERSION file (forces slow path)
-  # 2. Pre-create the lock (simulates another session holding it)
-  # 3. Pre-create the VERSION file with correct version (simulates another session completing download during our wait)
-  mkdir -p "${fake_jdk}.lock"
+  # VERSION file exists with matching version — fast path is taken
   echo "$fake_version" > "${fake_jdk}/VERSION"
 
-  # try_acquire_runtime should:
-  # - See no VERSION file initially (it's going to enter slow path)
-  # - Try to acquire lock (fails because lock exists)
-  # - Wait and retry
-  # - Eventually succeed (either when lock is removed or timeout - we make timeout long and remove lock)
-
-  # For this test, we'll create a lock and have it be stale (so it gets removed on first attempt)
+  # Create a stale lock (leftover from a crashed session)
+  # The fast path does NOT interact with locks, so this is left untouched
+  mkdir -p "${fake_jdk}.lock"
   touch -d "20 minutes ago" "${fake_jdk}.lock"
-
-  # Now when we call try_acquire_runtime, it will:
-  # 1. See no VERSION file initially (first check)
-  # 2. See stale lock and remove it
-  # 3. Acquire the lock
-  # 4. Re-check VERSION file (TOCTOU re-check)
-  # 5. Detect VERSION file now exists with matching version (another session completed download)
-  # 6. Return 0 without downloading
 
   run try_acquire_runtime "$fake_jdk" "$fake_version"
   [ "$status" -eq 0 ]
-  # Lock must be cleaned up
-  [ ! -d "${fake_jdk}.lock" ]
+  # Fast path returns without touching locks — stale lock is still present
+  # (stale lock cleanup happens only when entering the slow/download path)
 }
 
 @test "acquire_runtime_lock times out waiting for held lock" {
@@ -488,4 +474,212 @@ JAVA_EOF
   # Test the logic: lock exists and is recent, so it won't be removed
   # Try to acquire should fail immediately (timeout after 30s, but we can't wait)
   # For now, we document this as a limitation and rely on the code review
+}
+
+# --- Symlink bridge tests ---
+
+@test "main creates symlink from plugin_root/client to installPath/client before download" {
+  # Set up plugin_root (marketplaces path) with valid plugin.json
+  local plugin_root="${TEST_DIR}/marketplaces/cat/plugin"
+  mkdir -p "${plugin_root}/.claude-plugin"
+  echo '{"version":"9.9.9","repository":"https://github.com/cowwoc/cat"}' \
+    > "${plugin_root}/.claude-plugin/plugin.json"
+
+  # Set up installPath (cache path) with a working runtime
+  local install_path="${TEST_DIR}/cache/cat/cat/9.9.9"
+  mkdir -p "${install_path}/client/bin"
+  echo "9.9.9" > "${install_path}/client/VERSION"
+  cat > "${install_path}/client/bin/java" <<'JAVA_EOF'
+#!/usr/bin/env bash
+echo "openjdk version \"25\" 2025-09-16" >&2
+exit 0
+JAVA_EOF
+  chmod +x "${install_path}/client/bin/java"
+
+  # Create installed_plugins.json with installPath different from plugin_root
+  mkdir -p "${TEST_DIR}/.config/claude/plugins"
+  cat > "${TEST_DIR}/.config/claude/plugins/installed_plugins.json" <<IPJSON
+[{"installPath":"${install_path}"}]
+IPJSON
+
+  # Override HOME so the script reads our fake installed_plugins.json
+  export HOME="${TEST_DIR}"
+  export CLAUDE_PLUGIN_ROOT="$plugin_root"
+
+  # main() will:
+  # 1. Read installPath from installed_plugins.json
+  # 2. Create symlink plugin_root/client -> installPath/client BEFORE download
+  # 3. try_acquire_runtime targets installPath/client (which has a working runtime)
+  # 4. Invoke java (which will fail because SessionStartHook isn't real, but symlink is already created)
+
+  run main
+  # The java dispatcher call will fail, but we only care about the symlink
+  # Check that the symlink was created
+  [ -L "${plugin_root}/client" ]
+  local target
+  target=$(readlink "${plugin_root}/client")
+  [ "$target" = "${install_path}/client" ]
+
+  unset HOME CLAUDE_PLUGIN_ROOT
+}
+
+@test "existing runtime at installPath/client is reused via symlink without download" {
+  # Set up plugin_root (marketplaces path) with valid plugin.json
+  local plugin_root="${TEST_DIR}/marketplaces/cat/plugin"
+  mkdir -p "${plugin_root}/.claude-plugin"
+  echo '{"version":"9.9.9","repository":"https://github.com/cowwoc/cat"}' \
+    > "${plugin_root}/.claude-plugin/plugin.json"
+
+  # Set up installPath with a working runtime (already downloaded)
+  local install_path="${TEST_DIR}/cache/cat/cat/9.9.9"
+  mkdir -p "${install_path}/client/bin"
+  echo "9.9.9" > "${install_path}/client/VERSION"
+  cat > "${install_path}/client/bin/java" <<'JAVA_EOF'
+#!/usr/bin/env bash
+if [[ "$1" == "-version" ]]; then
+  echo "openjdk version \"25\" 2025-09-16" >&2
+  exit 0
+fi
+# SessionStartHook invocation - just output valid JSON and exit
+echo '{"status":"ok","message":"mock session start"}'
+exit 0
+JAVA_EOF
+  chmod +x "${install_path}/client/bin/java"
+
+  # Create installed_plugins.json
+  mkdir -p "${TEST_DIR}/.config/claude/plugins"
+  cat > "${TEST_DIR}/.config/claude/plugins/installed_plugins.json" <<IPJSON
+[{"installPath":"${install_path}"}]
+IPJSON
+
+  export HOME="${TEST_DIR}"
+  export CLAUDE_PLUGIN_ROOT="$plugin_root"
+
+  # Mock curl to fail (proves no download was attempted - if curl is called, the test fails)
+  local fake_bin="${TEST_DIR}/fake-bin"
+  mkdir -p "$fake_bin"
+  cat > "${fake_bin}/curl" <<'CURL_EOF'
+#!/usr/bin/env bash
+echo "ERROR: curl should not be called - runtime should be reused" >&2
+exit 1
+CURL_EOF
+  chmod +x "${fake_bin}/curl"
+
+  PATH="${fake_bin}:$PATH" run main
+  [ "$status" -eq 0 ]
+
+  # Verify symlink exists and points correctly
+  [ -L "${plugin_root}/client" ]
+  local target
+  target=$(readlink "${plugin_root}/client")
+  [ "$target" = "${install_path}/client" ]
+
+  unset HOME CLAUDE_PLUGIN_ROOT
+}
+
+@test "download failure still leaves symlink pointing to installPath/client" {
+  # Set up plugin_root with valid plugin.json
+  local plugin_root="${TEST_DIR}/marketplaces/cat/plugin"
+  mkdir -p "${plugin_root}/.claude-plugin"
+  echo '{"version":"9.9.9","repository":"https://github.com/cowwoc/cat"}' \
+    > "${plugin_root}/.claude-plugin/plugin.json"
+
+  # Set up installPath WITHOUT a working runtime (empty - no client dir)
+  local install_path="${TEST_DIR}/cache/cat/cat/9.9.9"
+  mkdir -p "${install_path}"
+
+  # Create installed_plugins.json
+  mkdir -p "${TEST_DIR}/.config/claude/plugins"
+  cat > "${TEST_DIR}/.config/claude/plugins/installed_plugins.json" <<IPJSON
+[{"installPath":"${install_path}"}]
+IPJSON
+
+  export HOME="${TEST_DIR}"
+  export CLAUDE_PLUGIN_ROOT="$plugin_root"
+
+  # Mock curl to fail (simulate 404)
+  local fake_bin="${TEST_DIR}/fake-bin"
+  mkdir -p "$fake_bin"
+  cat > "${fake_bin}/curl" <<'CURL_EOF'
+#!/usr/bin/env bash
+echo "curl: (22) The requested URL returned error: 404" >&2
+exit 22
+CURL_EOF
+  chmod +x "${fake_bin}/curl"
+
+  PATH="${fake_bin}:$PATH" run main
+  # Download fails, but symlink should still exist
+  [ "$status" -eq 0 ]  # main() logs warning and exits 0
+
+  # Symlink was created before the download attempt
+  [ -L "${plugin_root}/client" ]
+  local target
+  target=$(readlink "${plugin_root}/client")
+  [ "$target" = "${install_path}/client" ]
+
+  unset HOME CLAUDE_PLUGIN_ROOT
+}
+
+@test "no symlink created when installPath equals plugin_root" {
+  # When installPath == plugin_root, no symlink is needed
+  local plugin_root="${TEST_DIR}/same-path-plugin"
+  mkdir -p "${plugin_root}/.claude-plugin"
+  echo '{"version":"9.9.9","repository":"https://github.com/cowwoc/cat"}' \
+    > "${plugin_root}/.claude-plugin/plugin.json"
+
+  # Create installed_plugins.json with installPath == plugin_root
+  mkdir -p "${TEST_DIR}/.config/claude/plugins"
+  cat > "${TEST_DIR}/.config/claude/plugins/installed_plugins.json" <<IPJSON
+[{"installPath":"${plugin_root}"}]
+IPJSON
+
+  export HOME="${TEST_DIR}"
+  export CLAUDE_PLUGIN_ROOT="$plugin_root"
+
+  # Will attempt download (no existing runtime), which will fail
+  run main
+  # plugin_root/client should NOT be a symlink (download target == jdk_path)
+  [ ! -L "${plugin_root}/client" ]
+
+  unset HOME CLAUDE_PLUGIN_ROOT
+}
+
+@test "plugin_root/client resolves through symlink to working binary" {
+  # Set up plugin_root
+  local plugin_root="${TEST_DIR}/marketplaces/cat/plugin"
+  mkdir -p "${plugin_root}/.claude-plugin"
+  echo '{"version":"9.9.9","repository":"https://github.com/cowwoc/cat"}' \
+    > "${plugin_root}/.claude-plugin/plugin.json"
+
+  # Set up installPath with a working runtime
+  local install_path="${TEST_DIR}/cache/cat/cat/9.9.9"
+  mkdir -p "${install_path}/client/bin"
+  echo "9.9.9" > "${install_path}/client/VERSION"
+  cat > "${install_path}/client/bin/java" <<'JAVA_EOF'
+#!/usr/bin/env bash
+if [[ "$1" == "-version" ]]; then
+  echo "openjdk version \"25\" 2025-09-16" >&2
+  exit 0
+fi
+echo '{"status":"ok","message":"mock"}'
+exit 0
+JAVA_EOF
+  chmod +x "${install_path}/client/bin/java"
+
+  # Create installed_plugins.json
+  mkdir -p "${TEST_DIR}/.config/claude/plugins"
+  cat > "${TEST_DIR}/.config/claude/plugins/installed_plugins.json" <<IPJSON
+[{"installPath":"${install_path}"}]
+IPJSON
+
+  export HOME="${TEST_DIR}"
+  export CLAUDE_PLUGIN_ROOT="$plugin_root"
+
+  run main
+  [ "$status" -eq 0 ]
+
+  # Verify the symlink path resolves to the actual binary
+  [ -x "${plugin_root}/client/bin/java" ]
+
+  unset HOME CLAUDE_PLUGIN_ROOT
 }
