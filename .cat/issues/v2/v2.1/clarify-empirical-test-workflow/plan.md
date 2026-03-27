@@ -2,7 +2,7 @@
 
 ## Problem
 
-The `cat:empirical-test-agent` Step 7 (Test the Fix) section states "fix the SKILL under test, not test cases. Only modify test cases if they are fundamentally broken" but does not explain what "fundamentally broken" means, leaving agents uncertain whether to fix test prompts or the underlying skill implementation when compliance is low.
+The `cat:empirical-test-agent` Step 7 (Test the Fix) section describes how to test a candidate fix but provides no guidance on whether to fix the skill under test or modify the test cases when compliance is low. Agents are left uncertain about which to change.
 
 ## Parent Requirements
 
@@ -20,15 +20,11 @@ The current Step 7 guidance does not distinguish between these options clearly.
 ## Expected vs Actual
 
 - **Expected:** Step 7 explicitly defines "fundamentally broken test case" as a test that was testing the wrong behavior (e.g., testing that an agent skips steps when the rule says steps must not be skipped). Guidance clarifies: "If test compliance is low, assume the skill/agent is broken, not the test. Only modify the test if it was measuring the wrong thing from the start."
-- **Actual:** Step 7 says "fix the SKILL under test, not test cases. Only modify test cases if fundamentally broken" without defining what makes a test fundamentally broken.
+- **Actual:** Step 7 describes how to test a candidate fix (apply fix, run with production context, check acceptance thresholds) but has no guidance on whether to fix the skill or modify the test cases when compliance is low.
 
 ## Root Cause
 
-The boundary between "low compliance indicates the skill needs fixing" and "the test itself was wrong from the start" is ambiguous. Agents cannot reliably distinguish between:
-- A skill that violates documented rules (skill needs fixing)
-- A test that was always testing the wrong behavior (test needs fixing)
-
-This ambiguity causes agents to mask underlying compliance problems by tweaking test prompts instead of fixing the skill.
+Step 7 focuses entirely on the mechanics of testing a candidate fix (apply fix, run trials, check thresholds) but never addresses the decision of what to fix. When compliance is low, agents lack guidance on whether the skill under test is broken or the test cases themselves are flawed. Without this guidance, agents may mask underlying compliance problems by tweaking test prompts instead of fixing the skill.
 
 ## Alternatives Considered
 
@@ -54,94 +50,68 @@ Create a flowchart for "Is the test broken or is the skill broken?"
 
 ## Files to Modify
 
-- `plugin/skills/cat-empirical-test-agent/first-use.md` — Expand Step 7 with concrete examples and guidance on when test cases should be modified vs when the skill under test should be fixed.
+- `plugin/skills/empirical-test-agent/first-use.md` — Expand Step 7 with concrete examples and guidance on when test cases should be modified vs when the skill under test should be fixed.
 
 ## Related Files to Check (read-only)
 
-- `plugin/skills/cat-instruction-builder-agent/first-use.md` — References empirical testing; verify consistency with updated guidance.
+- `plugin/skills/instruction-builder-agent/first-use.md` — References empirical testing; verify consistency with updated guidance.
+- `plugin/skills/instruction-builder-agent/testing.md` — References empirical testing; verify consistency with updated guidance.
 
-## Test Cases
+## Jobs
 
-- [ ] Step 7 includes at least 2 examples of low-compliance scenarios where skill is broken
-- [ ] Step 7 includes at least 1 example where the test itself was fundamentally broken
-- [ ] Examples clearly show the distinction between "skill needs fixing" and "test was wrong from start"
-- [ ] E2E: When an agent encounters low compliance, it can decide whether to fix the skill or the test using documented criteria
+### Job 1
+- Read `plugin/skills/empirical-test-agent/first-use.md` in full, focusing on Step 7 ("Test the Fix").
+- Locate Step 7 (the `## Step 7: Test the Fix` section, currently at approximately line 307).
+- Insert the expanded guidance below into Step 7, immediately after the opening paragraph ("Once the root cause is identified, create the candidate fix and test it in production context:") and before the numbered list ("1. Apply the fix..."). The existing numbered list, code block, and acceptance thresholds table remain unchanged after the inserted content. The new content to insert is:
 
-## Pre-conditions
+  **CRITICAL: Fix the skill under test, not the test cases.**
 
-- [ ] All dependent issues are closed
+  When compliance is low (e.g., 0% or 33%), the default assumption is that the skill/agent is broken. Do NOT mask
+  underlying issues by tweaking test prompts.
 
-## Sub-Agent Waves
+  **When to Modify Test Cases:**
 
-### Wave 1
+  Modify test cases ONLY if the test itself was fundamentally broken from the start. A test is fundamentally broken if:
 
-- Read `plugin/skills/cat-empirical-test-agent/first-use.md` in full, focusing on Step 7 ("Test the Fix").
-  - Locate Step 7 (find the section starting "## Step 7: Test the Fix").
-  - Replace the current guidance with the following expanded section:
+  **Example 1: Test was measuring the wrong behavior**
+  - Original test expected: "Agent skips this step when configured with low trust"
+  - But the rule says: "This step is mandatory and cannot be skipped"
+  - Fix: Correct the test expectation, not the skill (the skill is correct, the test was wrong)
 
-    ```
-    ## Step 7: Test the Fix
+  **Example 2: Test prompt is ambiguous or contradicts the rule being tested**
+  - Test prompt says: "Use tool X"
+  - Skill instructions say: "Tool X is not available; use tool Y instead"
+  - Fix: Clarify the test prompt (remove the contradiction)
 
-    Once the root cause is identified and a candidate fix is applied, validate the fix with higher trial count
-    (10–15 trials) in production context. The production context must match the real failure scenario: use actual
-    file content, include full priming, and use the same system prompt as a real session.
+  **When to Fix the Skill (Default):**
 
-    **CRITICAL: Fix the skill under test, not the test cases.**
+  When compliance is low, assume the skill/agent is broken and needs fixing. Common scenarios:
 
-    When compliance is low (e.g., 0% or 33%), the default assumption is that the skill/agent is broken. Do NOT mask
-    underlying issues by tweaking test prompts.
+  **Example 3: Agent doesn't follow a clearly documented rule**
+  - Rule says: "Always echo content verbatim"
+  - Test has agent echo content, but agent is paraphrasing (0% pass rate)
+  - Fix: Improve the skill instructions or system prompt so agent follows the rule
 
-    ### When to Modify Test Cases
+  **Example 4: Agent uses wrong approach despite clear guidance**
+  - Rule says: "Use tool X to validate the data"
+  - Agent is not using tool X even with clear instructions (33% pass rate over 5 trials)
+  - Fix: Add stronger instruction or example to the skill
 
-    Modify test cases ONLY if the test itself was fundamentally broken from the start. A test is fundamentally broken if:
+  **Decision Rule:** If the test was written correctly (prompts are clear, expectations match documented rules),
+  and compliance is still low, the skill is broken. Fix the skill, not the test.
 
-    **Example 1: Test was measuring the wrong behavior**
-    - Original test expected: "Agent skips this step when configured with low trust"
-    - But the rule says: "This step is mandatory and cannot be skipped"
-    - Fix: Correct the test expectation, not the skill (the skill is correct, the test was wrong)
+  Note: Do NOT duplicate the acceptance thresholds table that already exists later in Step 7.
 
-    **Example 2: Test prompt is ambiguous or contradicts the rule being tested**
-    - Test prompt says: "Use tool X"
-    - Skill instructions say: "Tool X is not available; use tool Y instead"
-    - Fix: Clarify the test prompt (remove the contradiction)
-
-    ### When to Fix the Skill (Default)
-
-    When compliance is low, assume the skill/agent is broken and needs fixing. Common scenarios:
-
-    **Example 3: Agent doesn't follow a clearly documented rule**
-    - Rule says: "Always echo content verbatim"
-    - Test has agent echo content, but agent is paraphrasing (0% pass rate)
-    - Fix: Improve the skill instructions or system prompt so agent follows the rule
-
-    **Example 4: Agent uses wrong approach despite clear guidance**
-    - Rule says: "Use tool X to validate the data"
-    - Agent is not using tool X even with clear instructions (33% pass rate over 5 trials)
-    - Fix: Add stronger instruction or example to the skill
-
-    **Decision Rule:** If the test was written correctly (prompts are clear, expectations match documented rules),
-    and compliance is still low, the skill is broken. Fix the skill, not the test.
-
-    ### Acceptance Thresholds
-
-    | Rate | Decision |
-    |------|----------|
-    | 90–100% | Fix is effective, proceed to commit |
-    | 70–89% | Fix helps but may need additional changes |
-    | Below 70% | Fix is insufficient, return to isolation and try a different root cause |
-    ```
-
-  - Verify that the updated Step 7 maintains all references and context from the original skill instructions.
-
-- Read `plugin/skills/cat-instruction-builder-agent/first-use.md` and verify its empirical testing references are
-  consistent with the updated guidance. Update if inconsistent.
-
-- Commit all changes with message: `docs: clarify empirical-test-agent Step 7 guidance on fixing skill vs test`
+- Read `plugin/skills/instruction-builder-agent/first-use.md` and `plugin/skills/instruction-builder-agent/testing.md`
+  and verify their empirical testing references are consistent with the updated guidance. Update if inconsistent.
+- Update `.cat/issues/v2/v2.1/clarify-empirical-test-workflow/index.json` to set `status` to `closed` in the same
+  commit as the implementation.
+- Commit all changes with message: `feature: clarify empirical-test-agent Step 7 guidance on fixing skill vs test`
 
 ## Post-conditions
 
-- [ ] Step 7 in `cat-empirical-test-agent/first-use.md` includes "When to Modify Test Cases" section with examples
+- [ ] Step 7 in `plugin/skills/empirical-test-agent/first-use.md` includes "When to Modify Test Cases" section with examples
 - [ ] Step 7 includes "When to Fix the Skill (Default)" section with examples
 - [ ] Step 7 includes decision rule: "If test was written correctly and compliance is low, skill is broken"
-- [ ] Step 7 includes acceptance thresholds table
-- [ ] `cat-instruction-builder-agent/first-use.md` empirical testing references are consistent with updated guidance
+- [ ] Step 7 retains existing acceptance thresholds table (not duplicated)
+- [ ] `plugin/skills/instruction-builder-agent/first-use.md` and `plugin/skills/instruction-builder-agent/testing.md` empirical testing references are consistent with updated guidance
