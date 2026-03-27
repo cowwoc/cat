@@ -15,7 +15,7 @@ import java.nio.file.Path;
  * Implementations read these values from environment variables set by Claude Code when
  * spawning CLI tool processes.
  */
-public interface ClaudeTool extends JvmScope
+public interface ClaudeTool extends ClaudeScope
 {
   /**
    * Returns the Claude session ID.
@@ -45,14 +45,4 @@ public interface ClaudeTool extends JvmScope
    */
   @Override
   Path getPluginRoot();
-
-  /**
-   * Returns the Claude config directory.
-   * <p>
-   * Reads the {@code CLAUDE_CONFIG_DIR} environment variable; defaults to {@code ~/.claude} if unset.
-   *
-   * @return the config directory path
-   * @throws IllegalStateException if this scope is closed
-   */
-  Path getClaudeConfigPath();
 }

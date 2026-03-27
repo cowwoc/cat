@@ -23,15 +23,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Accepts {@code claudeProjectPath} and {@code claudePluginRoot} as constructor parameters so tests
  * can point to temporary directories populated with test data. Optionally accepts a JSON string to
  * parse statusline data at construction time via the superclass
- * {@link AbstractClaudeStatusline#AbstractClaudeStatusline(java.io.InputStream)} constructor.
+ * {@link AbstractClaudeStatusline#AbstractClaudeStatusline(Path, Path, Path, java.io.InputStream)} constructor.
  * <p>
  * <b>Thread Safety:</b> This class is thread-safe.
  */
 public final class TestClaudeStatusline extends AbstractClaudeStatusline
 {
-  private final Path claudeConfigPath;
-  private final Path projectPath;
-  private final Path pluginRoot;
   private final Path workDir;
   private final TerminalType terminalType;
   private final AtomicBoolean closed = new AtomicBoolean();
@@ -48,11 +45,7 @@ public final class TestClaudeStatusline extends AbstractClaudeStatusline
    */
   public TestClaudeStatusline(Path claudeProjectPath, Path claudePluginRoot)
   {
-    requireThat(claudeProjectPath, "claudeProjectPath").isNotNull();
-    requireThat(claudePluginRoot, "claudePluginRoot").isNotNull();
-    this.projectPath = claudeProjectPath;
-    this.pluginRoot = claudePluginRoot;
-    this.claudeConfigPath = claudeProjectPath;
+    super(claudeProjectPath, claudePluginRoot, claudeProjectPath);
     this.workDir = claudeProjectPath;
     this.terminalType = TerminalType.WINDOWS_TERMINAL;
     try
@@ -79,12 +72,8 @@ public final class TestClaudeStatusline extends AbstractClaudeStatusline
   public TestClaudeStatusline(Path claudeProjectPath, Path claudePluginRoot, String json)
     throws IOException
   {
-    requireThat(claudeProjectPath, "claudeProjectPath").isNotNull();
-    requireThat(claudePluginRoot, "claudePluginRoot").isNotNull();
+    super(claudeProjectPath, claudePluginRoot, claudeProjectPath);
     requireThat(json, "json").isNotNull();
-    this.projectPath = claudeProjectPath;
-    this.pluginRoot = claudePluginRoot;
-    this.claudeConfigPath = claudeProjectPath;
     this.workDir = claudeProjectPath;
     this.terminalType = TerminalType.WINDOWS_TERMINAL;
     TestScopeUtils.copyEmojiWidthsIfNeeded(claudePluginRoot);
@@ -93,31 +82,10 @@ public final class TestClaudeStatusline extends AbstractClaudeStatusline
   }
 
   @Override
-  public Path getProjectPath()
-  {
-    ensureOpen();
-    return projectPath;
-  }
-
-  @Override
-  public Path getPluginRoot()
-  {
-    ensureOpen();
-    return pluginRoot;
-  }
-
-  @Override
   public Path getWorkDir()
   {
     ensureOpen();
     return workDir;
-  }
-
-  @Override
-  protected Path getClaudeConfigPath()
-  {
-    ensureOpen();
-    return claudeConfigPath;
   }
 
   @Override

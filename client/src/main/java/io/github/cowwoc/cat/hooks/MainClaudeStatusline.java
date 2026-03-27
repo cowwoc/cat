@@ -25,10 +25,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public final class MainClaudeStatusline extends AbstractClaudeStatusline
 {
-  private final Path projectPath;
-  private final Path pluginRoot;
-  private final ConcurrentLazyReference<Path> claudeConfigPathRef =
-    ConcurrentLazyReference.create(this::claudeConfigPath);
   private final ConcurrentLazyReference<TerminalType> terminalTypeRef =
     ConcurrentLazyReference.create(this::terminalType);
   private final ConcurrentLazyReference<String> tzRef =
@@ -49,9 +45,10 @@ public final class MainClaudeStatusline extends AbstractClaudeStatusline
    */
   public MainClaudeStatusline(InputStream stdin) throws IOException
   {
-    super(stdin);
-    this.projectPath = Path.of(getEnvVar("CLAUDE_PROJECT_DIR"));
-    this.pluginRoot = Path.of(getEnvVar("CLAUDE_PLUGIN_ROOT"));
+    super(Path.of(getEnvVar("CLAUDE_PROJECT_DIR")),
+      Path.of(getEnvVar("CLAUDE_PLUGIN_ROOT")),
+      createClaudeConfigPath(),
+      stdin);
   }
 
   /**
@@ -74,7 +71,7 @@ public final class MainClaudeStatusline extends AbstractClaudeStatusline
    *
    * @return the Claude config directory path
    */
-  private Path claudeConfigPath()
+  private static Path createClaudeConfigPath()
   {
     String configDir = System.getenv("CLAUDE_CONFIG_DIR");
     if (configDir != null && !configDir.isBlank())
@@ -106,31 +103,10 @@ public final class MainClaudeStatusline extends AbstractClaudeStatusline
   }
 
   @Override
-  public Path getProjectPath()
-  {
-    ensureOpen();
-    return projectPath;
-  }
-
-  @Override
-  public Path getPluginRoot()
-  {
-    ensureOpen();
-    return pluginRoot;
-  }
-
-  @Override
   public Path getWorkDir()
   {
     ensureOpen();
     return Path.of(System.getProperty("user.dir"));
-  }
-
-  @Override
-  protected Path getClaudeConfigPath()
-  {
-    ensureOpen();
-    return claudeConfigPathRef.getValue();
   }
 
   @Override

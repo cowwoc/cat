@@ -16,7 +16,7 @@ import java.nio.file.Path;
  * <p>
  * <b>Thread Safety:</b> This class is thread-safe.
  */
-public abstract class AbstractClaudeScope extends AbstractJvmScope
+public abstract class AbstractClaudeScope extends AbstractJvmScope implements ClaudeScope
 {
   private final Path claudeConfigPath;
 
@@ -35,12 +35,7 @@ public abstract class AbstractClaudeScope extends AbstractJvmScope
     this.claudeConfigPath = claudeConfigPath;
   }
 
-  /**
-   * Returns the Claude config directory.
-   *
-   * @return the config directory path
-   * @throws IllegalStateException if this scope is closed
-   */
+  @Override
   public Path getClaudeConfigPath()
   {
     ensureOpen();
