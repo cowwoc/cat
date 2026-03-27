@@ -20,7 +20,10 @@ import io.github.cowwoc.cat.hooks.session.InjectEnv;
 import io.github.cowwoc.cat.hooks.session.InjectSkillListing;
 import io.github.cowwoc.cat.hooks.session.SessionStartHandler;
 import io.github.cowwoc.cat.hooks.session.WarnUnknownTerminal;
+import org.slf4j.LoggerFactory;
 
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -84,7 +87,30 @@ public final class SessionStartHook implements HookHandler
     if (envFileValue == null || envFileValue.isBlank())
       throw new AssertionError("CLAUDE_ENV_FILE is not set");
     Path envFile = Path.of(envFileValue);
-    HookRunner.execute(scope -> new SessionStartHook(scope, envFile), args);
+    try (ClaudeHook scope = new MainClaudeHook())
+    {
+      run(scope, envFile, args, System.in, System.out);
+    }
+    catch (RuntimeException | AssertionError e)
+    {
+      LoggerFactory.getLogger(SessionStartHook.class).error("Failed to create JVM scope", e);
+      System.err.println("Hook failed: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Testable entry point with injectable I/O.
+   *
+   * @param scope the hook scope
+   * @param envFile the path to the Claude environment file
+   * @param args command line arguments (unused)
+   * @param in input stream (unused)
+   * @param out output stream for writing JSON response
+   * @throws NullPointerException if any argument is null
+   */
+  public static void run(ClaudeHook scope, Path envFile, String[] args, InputStream in, PrintStream out)
+  {
+    HookRunner.execute(hookScope -> new SessionStartHook(hookScope, envFile), scope, out);
   }
 
   /**

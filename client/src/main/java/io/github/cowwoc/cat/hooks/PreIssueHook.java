@@ -15,6 +15,9 @@ import io.github.cowwoc.cat.hooks.task.EnforceCommitBeforeSubagentSpawn;
 import io.github.cowwoc.cat.hooks.task.EnforceWorktreeSafetyBeforeMerge;
 import tools.jackson.databind.JsonNode;
 
+import org.slf4j.LoggerFactory;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -73,7 +76,29 @@ public final class PreIssueHook implements HookHandler
    */
   public static void main(String[] args)
   {
-    HookRunner.execute(PreIssueHook::new, args);
+    try (ClaudeHook scope = new MainClaudeHook())
+    {
+      run(scope, args, System.in, System.out);
+    }
+    catch (RuntimeException | AssertionError e)
+    {
+      LoggerFactory.getLogger(PreIssueHook.class).error("Failed to create JVM scope", e);
+      System.err.println("Hook failed: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Testable entry point with injectable I/O.
+   *
+   * @param scope the hook scope
+   * @param args command line arguments (unused)
+   * @param in input stream (unused)
+   * @param out output stream for writing JSON response
+   * @throws NullPointerException if any argument is null
+   */
+  public static void run(ClaudeHook scope, String[] args, InputStream in, PrintStream out)
+  {
+    HookRunner.execute(PreIssueHook::new, scope, out);
   }
 
   /**
