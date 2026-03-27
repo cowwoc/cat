@@ -5,7 +5,7 @@
 Refactor the scope hierarchy to:
 
 1. Move `getPluginRoot()` and `getPluginPrefix()` from `JvmScope`/`AbstractJvmScope` into `ClaudeHook` and `ClaudeTool` (and their abstract implementations)
-2. Remove `ClaudeScope` interface and `AbstractClaudeScope` class entirely, moving their methods (`getClaudeConfigPath()`, `getClaudeSessionsPath()`, `getClaudeSessionPath()`) into `ClaudeHook`/`ClaudeTool` and `AbstractClaudeHook`/`AbstractClaudeTool`
+2. Remove `ClaudeScope` interface and `AbstractClaudeScope` class entirely, duplicating their methods and field implementations into both `AbstractClaudeHook` and `AbstractClaudeTool` (duplication is intentional — these two hierarchies serve different execution contexts)
 3. Change `AbstractClaudeStatusline` to extend `AbstractJvmScope` directly (no longer needs plugin-root or Claude-config concerns)
 4. Remove `CLAUDE_PLUGIN_ROOT` from `MainClaudeStatusline` — it reads `projectPath` from the stdin JSON `workspace.project_dir` field instead of env var
 
