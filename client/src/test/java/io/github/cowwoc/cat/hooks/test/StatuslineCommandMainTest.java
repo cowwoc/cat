@@ -63,4 +63,25 @@ public class StatuslineCommandMainTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that run() throws IllegalArgumentException when unexpected arguments are provided.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Unexpected arguments.*")
+  public void unexpectedArgsThrowsException() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("statusline-cmd-main-test-");
+    try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir))
+    {
+      StatuslineCommand.run(scope, new String[]{"unexpected"},
+        new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8));
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }
