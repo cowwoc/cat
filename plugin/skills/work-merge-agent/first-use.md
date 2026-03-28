@@ -16,8 +16,8 @@ commit squashing, branch merging, worktree cleanup, and state updates.
 - **Step 10: Instruction-Builder Review** — invoke `cat:instruction-builder-agent` for modified skill/command files before gate
 - **Step 11: Squash Before Approval Gate** — squash immediately before presenting gate. Re-squash ALL commits
   on EVERY presentation, including after user feedback.
-- **Step 11 (sub-step): Background Task Completion** — ALL background tasks — including any reviewer subagents
-  spawned during the review phase — must have returned via `<task-notification>` before invoking AskUserQuestion.
+  - **Background Task Completion** — ALL background tasks — including any reviewer subagents
+    spawned during the review phase — must have returned via `<task-notification>` before invoking AskUserQuestion.
 
 ## Arguments and Configuration
 
@@ -51,18 +51,56 @@ VERIFY_DIR="${CLAUDE_PROJECT_DIR}/.cat/work/verify/${CLAUDE_SESSION_ID}"
 CRITERIA_FILE="${VERIFY_DIR}/criteria-analysis.json"
 ```
 
-If `CRITERIA_FILE` does not exist:
-- If `CAUTION == "low"`: output note and continue to Step 8.
-- Otherwise: STOP, return FAILED — the confirm phase was improperly skipped.
+If `CRITERIA_FILE` does not exist (e.g., `CAUTION == "low"` or confirm phase was skipped):
+
+```
+NOTE: criteria-analysis.json not found — post-condition gate check skipped
+```
+
+Output the note and continue to Step 8 without blocking.
 
 If file exists, check for unmet criteria:
 ```bash
 UNMET=$(grep -E '"status"[[:space:]]*:[[:space:]]*"(Partial|Missing)"' "${CRITERIA_FILE}" || true)
 ```
 
-If `UNMET` is non-empty, display a blocking error listing criterion name + status pairs and return FAILED:
+If `UNMET` is empty, all criteria are Done — continue to Step 8 without blocking.
+
+If `UNMET` is non-empty, extract criterion name + status pairs and display a blocking error:
+
+```bash
+# Extract criterion name + status pairs for the unmet items.
+# For each criterion with Partial or Missing status, find the "name" field in the surrounding
+# context block. Use -EB5 to get up to 5 lines of context before each status match, then use
+# awk to pair name and status values within each context block regardless of field order.
+UNMET_DETAILS=$(grep -EB5 '"status"[[:space:]]*:[[:space:]]*"(Partial|Missing)"' "${CRITERIA_FILE}" \
+  | awk '
+    /^--$/ { if (name != "" && status != "") print "  - " name " [" status "]"; name=""; status="" }
+    /"name"[[:space:]]*:/ { match($0, /"name"[[:space:]]*:[[:space:]]*"([^"]+)"/, a); name=a[1] }
+    /"status"[[:space:]]*:/ { match($0, /"status"[[:space:]]*:[[:space:]]*"([^"]+)"/, a); status=a[1] }
+    END { if (name != "" && status != "") print "  - " name " [" status "]" }
+  ')
+```
+
+Display a blocking error and return FAILED — do NOT proceed to squash, rebase, or the approval gate:
+
+```
+BLOCKED: Approval gate cannot be presented — unmet post-conditions detected.
+
+The confirm phase reported the following criteria as not fully satisfied:
+${UNMET_DETAILS}
+
+Required action:
+1. Return to the implementation phase and address each unmet criterion.
+2. Re-run /cat:work to complete confirm → review → merge in sequence.
+3. Do NOT manually squash commits or force-present the approval gate.
+
+The gate protects users from approving incomplete work. Fix the implementation first.
+```
+
+Return FAILED status:
 ```json
-{"status": "FAILED", "phase": "pre-gate-check", "message": "Approval gate blocked: unmet post-conditions", "issue_id": "${ISSUE_ID}", "lock_retained": true}
+{"status": "FAILED", "phase": "pre-gate-check", "message": "Approval gate blocked: unmet post-conditions (see above)", "issue_id": "${ISSUE_ID}", "lock_retained": true}
 ```
 
 ## Step 8: Squash Commits by Topic Before Review (MANDATORY)
