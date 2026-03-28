@@ -18,6 +18,10 @@ treats the argument as a issue description and skips directly to issue creation 
 **Efficiency:** Independent questions are batched into single AskUserQuestion calls (up to 4 questions per call)
 to minimize wizard interactions and reduce user friction.
 
+**Post-completion workflow:** After issue or version creation completes, offer any next-step workflow
+progression using AskUserQuestion — do NOT mention internal slash commands (e.g., `/cat:work`,
+`/cat:status`) in conversational text. Internal slash commands are not visible to users.
+
 **Reference files** — read on demand as needed:
 - See `${CLAUDE_PLUGIN_ROOT}/templates/issue-index.json` for the issue index.json template.
 - See `${CLAUDE_PLUGIN_ROOT}/templates/issue-plan.md` for issue plan.md templates.
