@@ -26,7 +26,7 @@ The result is one of three types:
 
 | Content starts with | Action |
 |---------------------|--------|
-| Analysis data | **MANDATORY:** Output verbatim, then continue with workflow steps 5-9. Do NOT skip post-handler steps. |
+| Analysis data | **MANDATORY:** Continue with workflow steps 5-9. Do NOT skip post-handler steps. |
 | Status message | Output verbatim, then STOP - retrospective not triggered |
 | Error message | Output verbatim, then STOP - cannot proceed |
 
