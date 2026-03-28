@@ -525,11 +525,12 @@ public class IssueLockTest
   }
 
   /**
-   * Verifies that lock file sanitizes issue IDs with slashes.
+   * Verifies that lock acquisition rejects issue IDs containing forward slashes.
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*characters not allowed.*")
   public void lockFileSanitizesIssueIdWithSlashes() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
@@ -541,11 +542,6 @@ public class IssueLockTest
         String sessionId = UUID.randomUUID().toString();
 
         lock.acquire("v2.1/fix-bug", sessionId, "/path/to/worktree");
-
-        Path lockDir = scope.getCatWorkPath().resolve("locks");
-        Path lockFile = lockDir.resolve("v2.1-fix-bug.lock");
-
-        requireThat(Files.exists(lockFile), "lockFileExists").isTrue();
       }
       finally
       {
@@ -645,11 +641,12 @@ public class IssueLockTest
   }
 
   /**
-   * Verifies that lock files sanitize backslashes in issue IDs.
+   * Verifies that lock acquisition rejects issue IDs containing backslashes.
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*characters not allowed.*")
   public void lockFileSanitizesBackslashesInIssueId() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
@@ -661,11 +658,6 @@ public class IssueLockTest
         String sessionId = UUID.randomUUID().toString();
 
         lock.acquire("v2.1\\fix-bug", sessionId, "/path/to/worktree");
-
-        Path lockDir = scope.getCatWorkPath().resolve("locks");
-        Path lockFile = lockDir.resolve("v2.1-fix-bug.lock");
-
-        requireThat(Files.exists(lockFile), "lockFileExists").isTrue();
       }
       finally
       {
@@ -675,11 +667,12 @@ public class IssueLockTest
   }
 
   /**
-   * Verifies that lock files sanitize colons in issue IDs.
+   * Verifies that lock acquisition rejects issue IDs containing colons.
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*characters not allowed.*")
   public void lockFileSanitizesColonsInIssueId() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
@@ -691,11 +684,6 @@ public class IssueLockTest
         String sessionId = UUID.randomUUID().toString();
 
         lock.acquire("issue:123", sessionId, "/path/to/worktree");
-
-        Path lockDir = scope.getCatWorkPath().resolve("locks");
-        Path lockFile = lockDir.resolve("issue:123.lock");
-
-        requireThat(Files.exists(lockFile), "lockFileExists").isTrue();
       }
       finally
       {
@@ -1308,6 +1296,143 @@ public class IssueLockTest
         requireThat(result, "result").isInstanceOf(LockResult.Error.class);
         LockResult.Error error = (LockResult.Error) result;
         requireThat(error.message(), "message").contains(issueId);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that list() filters on the filename component only, not on ancestor directory names.
+   * <p>
+   * Creates a temp directory hierarchy where a parent directory's name ends in ".lock" and places a
+   * valid lock file inside the locks sub-directory. Confirms that the filter uses {@code getFileName()}
+   * rather than {@code toString()} on the full path, so the parent directory name does not cause a
+   * false match.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void listFiltersOnFilenameNotFullPath() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("issue-lock-test");
+    Path tempParent = tempBase.resolve("parent.lock");
+    Path tempDir = tempParent.resolve("project");
+    Files.createDirectories(tempDir);
+    try
+    {
+      try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+      {
+        try
+        {
+          IssueLock lock = new IssueLock(scope);
+          String sessionId = UUID.randomUUID().toString();
+
+          lock.acquire("test-issue", sessionId, "/path/to/worktree");
+
+          List<LockListEntry> locks = lock.list();
+
+          requireThat(locks.size(), "size").isEqualTo(1);
+          requireThat(locks.get(0).issue(), "issue").isEqualTo("test-issue");
+        }
+        finally
+        {
+          TestUtils.deleteDirectoryRecursively(tempDir);
+        }
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that scanForConflictingLock() (called internally by acquire()) emits a warning
+   * when a lock file cannot be parsed as JSON.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void scanForConflictingLockWarnsOnMalformedFile() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        ByteArrayOutputStream warningBytes = new ByteArrayOutputStream();
+        PrintStream warnings = new PrintStream(warningBytes, true, StandardCharsets.UTF_8);
+        IssueLock lock = new IssueLock(scope, Clock.systemUTC(), warnings);
+
+        // Place a malformed lock file in the locks directory before calling acquire()
+        Path lockDirPath = scope.getCatWorkPath().resolve("locks");
+        Files.createDirectories(lockDirPath);
+        Path malformedFile = lockDirPath.resolve("other-issue.lock");
+        Files.writeString(malformedFile, "this is not valid json");
+
+        // Acquire a different issue to trigger scanForConflictingLock()
+        String sessionId = UUID.randomUUID().toString();
+        lock.acquire("test-issue", sessionId, "/path/to/worktree");
+
+        String warningOutput = warningBytes.toString(StandardCharsets.UTF_8);
+        requireThat(warningOutput, "warningOutput").contains("WARNING: Skipping malformed lock file");
+        requireThat(warningOutput, "warningOutput").contains("other-issue.lock");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that a typical CAT issue ID passes validation without throwing.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void sanitizeIssueIdAcceptsValidId() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId = UUID.randomUUID().toString();
+
+        // A typical CAT issue ID — must not throw IllegalArgumentException
+        lock.acquire("2.1-fix-something", sessionId, "/path/to/worktree");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that an issue ID containing a forward slash is rejected with {@link IllegalArgumentException}.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*characters not allowed.*")
+  public void sanitizeIssueIdRejectsInvalidCharacters() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId = UUID.randomUUID().toString();
+
+        // Forward slash is not allowed — sanitizeIssueId() throws before any I/O
+        lock.acquire("foo/bar", sessionId, "/path/to/worktree");
       }
       finally
       {
