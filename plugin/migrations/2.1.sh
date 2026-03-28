@@ -31,10 +31,8 @@ set -euo pipefail
 # 10. Remove legacy worktree-locks directory
 # 11. Migrate cross-session dirs (locks/, worktrees/, verify/) to .cat/work/ inside project workspace
 # 12. Migrate terminalWidth to fileWidth + displayWidth in cat-config.json
-# 13. Remove deprecated Last Updated and Completed fields from open issue-level STATE.md files
-#     (closed issues are not modified)
-# 14. Rename ## Satisfies → ## Parent Requirements in open issue-level PLAN.md files
-#     (closed issues are not modified)
+# 13. Remove deprecated Last Updated and Completed fields from issue-level STATE.md files
+# 14. Rename ## Satisfies → ## Parent Requirements in issue-level PLAN.md files
 # 15. Rename ## Execution Waves → ## Sub-Agent Waves in PLAN.md files
 #     (all issues, including closed ones)
 # 16. Rename cat-config.json → config.json and cat-config.local.json → config.local.json
@@ -1071,10 +1069,10 @@ else
     fi
 fi
 
-# Phase 13: Remove deprecated Last Updated, Completed, and Closed fields from open issue-level STATE.md
+# Phase 13: Remove deprecated Last Updated, Completed, and Closed fields from issue-level STATE.md
 # ──────────────────────────────────────────────────────────────────────────────
 
-log_migration "Phase 13: Remove deprecated Last Updated, Completed, and Closed fields from open issue-level STATE.md"
+log_migration "Phase 13: Remove deprecated Last Updated, Completed, and Closed fields from issue-level STATE.md"
 
 # Issue-level STATE.md files live at .cat/issues/v*/v*.*/issue-name/STATE.md (depth 5 from issues/).
 issue_state_files=$(find .cat/issues -path "*v*.*/*" -name "STATE.md" -mindepth 5 -maxdepth 5 -type f \
@@ -1087,17 +1085,9 @@ else
     log_migration "Found $totalCount issue-level STATE.md files to check"
 
     phase13_changed=0
-    phase13_skipped=0
 
     while IFS= read -r state_file; do
         [[ -z "$state_file" ]] && continue
-
-        # Skip closed issues
-        if grep -q '^\*\*Status:\*\* closed' "$state_file" 2>/dev/null || \
-           grep -q '^- \*\*Status:\*\* closed' "$state_file" 2>/dev/null; then
-            ((phase13_skipped++)) || true
-            continue
-        fi
 
         changed=false
 
@@ -1123,14 +1113,14 @@ else
 
     done <<< "$issue_state_files"
 
-    log_migration "Phase 13 complete: $phase13_changed files changed, $phase13_skipped closed issues skipped"
+    log_migration "Phase 13 complete: $phase13_changed files changed"
 fi
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Phase 14: Rename ## Satisfies → ## Parent Requirements in open issue PLAN.md files
+# Phase 14: Rename ## Satisfies → ## Parent Requirements in issue PLAN.md files
 # ──────────────────────────────────────────────────────────────────────────────
 
-log_migration "Phase 14: Rename ## Satisfies → ## Parent Requirements in open issue PLAN.md files"
+log_migration "Phase 14: Rename ## Satisfies → ## Parent Requirements in issue PLAN.md files"
 
 # Issue-level PLAN.md files live at .cat/issues/v*/v*.*/issue-name/PLAN.md (depth 4 from issues/).
 issue_plan_files=$(find .cat/issues -path "*v*.*/*" -name "PLAN.md" -mindepth 4 -maxdepth 4 -type f \
@@ -1143,7 +1133,6 @@ else
     log_migration "Found $totalCount issue-level PLAN.md files to check"
 
     phase14_changed=0
-    phase14_skipped=0
 
     while IFS= read -r planFile; do
         [[ -z "$planFile" ]] && continue
@@ -1153,24 +1142,13 @@ else
             continue
         fi
 
-        # Skip closed issues - check corresponding STATE.md
-        issue_dir=$(dirname "$planFile")
-        state_file="${issue_dir}/STATE.md"
-        if [[ ! -f "$state_file" ]]; then
-            log_migration "  Warning: STATE.md missing for $planFile — treating as open issue"
-        elif grep -q '^\*\*Status:\*\* closed' "$state_file" 2>/dev/null || \
-             grep -q '^- \*\*Status:\*\* closed' "$state_file" 2>/dev/null; then
-            ((phase14_skipped++)) || true
-            continue
-        fi
-
         sed -i 's/^## Satisfies$/## Parent Requirements/' "$planFile"
         ((phase14_changed++)) || true
         log_migration "  Updated: $planFile"
 
     done <<< "$issue_plan_files"
 
-    log_migration "Phase 14 complete: $phase14_changed files changed, $phase14_skipped closed issues skipped"
+    log_migration "Phase 14 complete: $phase14_changed files changed"
 fi
 
 # ──────────────────────────────────────────────────────────────────────────────
