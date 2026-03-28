@@ -147,14 +147,36 @@ if [[ -z "${EXPECTED_SHA256}" ]]; then
   exit 1
 fi
 
-# Use cached binary if it exists and passes SHA256 verification
+# Use cached binary if it exists, passes version check, and passes SHA256 verification
 if [[ -f "${CACHED_BINARY}" ]] && [[ -z "${GFR_FORCE_DOWNLOAD:-}" ]]; then
-  ACTUAL_SHA256=$(sha256sum_portable "${CACHED_BINARY}")
-  if [[ "${ACTUAL_SHA256}" == "${EXPECTED_SHA256}" ]]; then
-    echo "${CACHED_BINARY}"
-    exit 0
+  CACHED_VERSION_FILE="${CACHED_BINARY}.version"
+  VERSION_CHECK_PASSED=false
+
+  # Check version file first (faster than SHA256 computation)
+  if [[ -f "${CACHED_VERSION_FILE}" ]]; then
+    CACHED_VERSION=$(cat "${CACHED_VERSION_FILE}" 2>/dev/null || true)
+    if [[ "${CACHED_VERSION}" != "${RELEASE_TAG}" ]]; then
+      echo "Cached binary version mismatch (expected: ${RELEASE_TAG}, got: ${CACHED_VERSION}); re-downloading..." >&2
+      rm -f "${CACHED_BINARY}" "${CACHED_VERSION_FILE}"
+    else
+      VERSION_CHECK_PASSED=true
+    fi
   else
-    echo "Cached binary failed SHA256 verification; re-downloading..." >&2
+    # No version file present; flag as passed for backward compatibility with older cached binaries
+    VERSION_CHECK_PASSED=true
+  fi
+
+  # If version check passed, verify SHA256
+  if [[ "${VERSION_CHECK_PASSED}" == "true" ]]; then
+    ACTUAL_SHA256=$(sha256sum_portable "${CACHED_BINARY}")
+    if [[ "${ACTUAL_SHA256}" == "${EXPECTED_SHA256}" ]]; then
+      # SHA256 matches; create/update version file for future checks
+      echo "${RELEASE_TAG}" > "${CACHED_VERSION_FILE}"
+      echo "${CACHED_BINARY}"
+      exit 0
+    else
+      echo "Cached binary failed SHA256 verification; re-downloading..." >&2
+    fi
   fi
 fi
 
@@ -211,6 +233,11 @@ fi
 
 mv "${TMP_BINARY}" "${CACHED_BINARY}"
 chmod +x "${CACHED_BINARY}"
+
+# Write version file for future cache coherency checks
+CACHED_VERSION_FILE="${CACHED_BINARY}.version"
+echo "${RELEASE_TAG}" > "${CACHED_VERSION_FILE}"
+
 echo "git-filter-repo downloaded and verified at ${CACHED_BINARY}" >&2
 
 echo "${CACHED_BINARY}"
