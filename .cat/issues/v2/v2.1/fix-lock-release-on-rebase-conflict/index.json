@@ -1,0 +1,1 @@
+{"status":"open","dependencies":["add-pretooluse-hook-enforce-merge-approval-gate","block-gate-on-unmet-postconditions","clarify-git-rebase-conflict-handling","refactor-phase-skill-subagent-isolation","run-verify-after-squash-when-caution-requires"]}
