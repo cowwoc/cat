@@ -370,6 +370,7 @@ public final class GetStatusOutput implements SkillOutput
   /**
    * Parses the status field from index.json content.
    * <p>
+   * Blank content is treated as an absent index.json and returns {@code "open"}.
    * Throws IOException if the status field is missing or contains an unrecognized value.
    *
    * @param content the index.json file content
@@ -379,6 +380,8 @@ public final class GetStatusOutput implements SkillOutput
    */
   private String parseStatusFromIndexJson(String content, String sourcePath) throws IOException
   {
+    if (content.isBlank())
+      return "open";
     JsonNode root;
     try
     {
@@ -388,18 +391,7 @@ public final class GetStatusOutput implements SkillOutput
     {
       throw new IOException("Failed to parse index.json at " + sourcePath + ": " + e.getMessage(), e);
     }
-    if (content.isBlank())
-      return "open";
-    JsonNode statusNode = root.get("status");
-    if (statusNode == null || !statusNode.isString())
-      throw new IOException("Missing status field in " + sourcePath);
-    String rawStatus = statusNode.asString().strip();
-    IssueStatus status = IssueStatus.fromString(rawStatus);
-    if (status != null)
-      return status.toString();
-    throw new IOException("Unknown status '" + rawStatus + "' in " + sourcePath + ".\n" +
-      "Valid values: " + IssueStatus.asCommaSeparated() + ".\n" +
-      "If migrating from older versions, run: plugin/migrations/2.1.sh");
+    return parseStatusFromJsonNode(root, sourcePath);
   }
 
   /**
@@ -446,21 +438,37 @@ public final class GetStatusOutput implements SkillOutput
     try
     {
       JsonNode root = scope.getJsonMapper().readTree(content);
-      JsonNode statusNode = root.get("status");
-      if (statusNode == null || !statusNode.isString())
-        throw new IOException("Missing 'status' field in " + sourcePath);
-      String rawStatus = statusNode.asString();
-      IssueStatus status = IssueStatus.fromString(rawStatus);
-      if (status != null)
-        return status.toString();
-      throw new IOException("Unknown status '" + rawStatus + "' in " + sourcePath + ".\n" +
-        "Valid values: " + IssueStatus.asCommaSeparated() + ".\n" +
-        "If migrating from older versions, run: plugin/migrations/2.1.sh");
+      return parseStatusFromJsonNode(root, sourcePath);
     }
     catch (JacksonException e)
     {
       throw new IOException("Invalid JSON in " + sourcePath + ": " + e.getMessage(), e);
     }
+  }
+
+  /**
+   * Extracts the status value from an already-parsed JSON root node.
+   * <p>
+   * Shared by {@link #parseStatusFromIndexJson} and {@link #parseStatusFromJson} to ensure consistent
+   * {@code .strip()} handling and uniform error messages.
+   *
+   * @param root the parsed JSON root node
+   * @param sourcePath the file path to include in error messages
+   * @return the normalized status string
+   * @throws IOException if the status field is absent, not a string, or contains an unrecognized value
+   */
+  private String parseStatusFromJsonNode(JsonNode root, String sourcePath) throws IOException
+  {
+    JsonNode statusNode = root.get("status");
+    if (statusNode == null || !statusNode.isString())
+      throw new IOException("Missing 'status' field in " + sourcePath);
+    String rawStatus = statusNode.asString().strip();
+    IssueStatus status = IssueStatus.fromString(rawStatus);
+    if (status != null)
+      return status.toString();
+    throw new IOException("Unknown status '" + rawStatus + "' in " + sourcePath + ".\n" +
+      "Valid values: " + IssueStatus.asCommaSeparated() + ".\n" +
+      "If migrating from older versions, run: plugin/migrations/2.1.sh");
   }
 
   /**
