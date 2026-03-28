@@ -36,7 +36,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  */
 public final class PostToolUseFailureHook implements HookHandler
 {
-  private final Logger log = LoggerFactory.getLogger(getClass());
+  private final Logger log = LoggerFactory.getLogger(PostToolUseFailureHook.class);
   private final ClaudeHook jvmScope;
 
   /**

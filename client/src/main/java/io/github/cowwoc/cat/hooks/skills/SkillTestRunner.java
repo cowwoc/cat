@@ -107,7 +107,7 @@ public final class SkillTestRunner
   private static final DateTimeFormatter ISO_UTC =
     DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC);
 
-  private final Logger log = LoggerFactory.getLogger(getClass());
+  private final Logger log = LoggerFactory.getLogger(SkillTestRunner.class);
   private final JvmScope scope;
 
   /**
