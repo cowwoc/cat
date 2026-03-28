@@ -146,7 +146,7 @@ public final class GetSkill
    * fails fast.
    * <p>
    * The plugin root and project directory are read from {@code scope} via
-   * {@link JvmScope#getPluginRoot()} and {@link JvmScope#getProjectPath()}.
+   * {@link ClaudeTool#getPluginRoot()} and {@link JvmScope#getProjectPath()}.
    * When invoked from {@link #main(String[])}, the scope is a {@link MainClaudeTool}.
    *
    * @param scope the scope providing access to session paths, shared services, and environment paths

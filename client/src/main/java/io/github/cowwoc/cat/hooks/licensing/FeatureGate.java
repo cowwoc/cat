@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.hooks.licensing;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -40,13 +40,14 @@ public final class FeatureGate
   }
 
   /**
-   * Creates a new feature gate from JVM scope.
+   * Creates a new feature gate from a scope.
    *
-   * @param scope the abstract JVM scope providing plugin root and JSON mapper
+   * @param scope the scope providing JSON mapper and plugin root
    * @return a new feature gate
    * @throws IOException if tiers.json cannot be loaded
+   * @throws NullPointerException if {@code scope} is null
    */
-  public static FeatureGate create(JvmScope scope) throws IOException
+  public static FeatureGate create(ClaudeTool scope) throws IOException
   {
     return new FeatureGate(new LicenseValidator(scope), new Entitlements(scope));
   }

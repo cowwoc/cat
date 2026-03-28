@@ -9,7 +9,6 @@ package io.github.cowwoc.cat.hooks;
 import io.github.cowwoc.cat.hooks.prompt.UserIssues;
 import io.github.cowwoc.cat.hooks.read.post.DetectSequentialTools;
 import io.github.cowwoc.cat.hooks.read.pre.PredictBatchOpportunity;
-import io.github.cowwoc.cat.hooks.skills.DisplayUtils;
 import io.github.cowwoc.cat.hooks.skills.TerminalType;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.dataformat.yaml.YAMLMapper;
@@ -23,14 +22,6 @@ import java.nio.file.Path;
  */
 public interface JvmScope extends AutoCloseable
 {
-  /**
-   * Returns the display utilities singleton.
-   *
-   * @return the display utilities
-   * @throws IllegalStateException if this scope is closed
-   */
-  DisplayUtils getDisplayUtils();
-
   /**
    * Returns the current working directory.
    *
@@ -105,26 +96,6 @@ public interface JvmScope extends AutoCloseable
    * @throws IllegalStateException if this scope is closed
    */
   Path getProjectPath();
-
-  /**
-   * Returns the Claude plugin root directory.
-   *
-   * @return the plugin root directory path
-   * @throws AssertionError if {@code CLAUDE_PLUGIN_ROOT} is not set in the environment
-   * @throws IllegalStateException if this scope is closed
-   */
-  Path getPluginRoot();
-
-  /**
-   * Returns the plugin prefix (e.g., {@code "cat"}).
-   * <p>
-   * Derived from the plugin root path structure ({@code .../{prefix}/{slug}/{version}/}).
-   *
-   * @return the plugin prefix, never blank
-   * @throws AssertionError if the prefix cannot be derived from the plugin root path
-   * @throws IllegalStateException if this scope is closed
-   */
-  String getPluginPrefix();
 
   /**
    * Returns the {@code .cat} directory under the project's root directory.

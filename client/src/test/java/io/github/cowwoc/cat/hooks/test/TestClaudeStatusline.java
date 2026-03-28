@@ -22,7 +22,7 @@ import java.nio.file.Path;
  * Accepts {@code claudeProjectPath} and {@code claudePluginRoot} as constructor parameters so tests
  * can point to temporary directories populated with test data. Optionally accepts a JSON string to
  * parse statusline data at construction time via the superclass
- * {@link AbstractClaudeStatusline#AbstractClaudeStatusline(Path, Path, Path, java.io.InputStream)} constructor.
+ * {@link AbstractClaudeStatusline#AbstractClaudeStatusline(Path, java.io.InputStream)} constructor.
  * <p>
  * <b>Thread Safety:</b> This class is thread-safe.
  */
@@ -38,12 +38,12 @@ public final class TestClaudeStatusline extends AbstractClaudeStatusline
    * require parsed statusline data.
    *
    * @param claudeProjectPath the project directory path
-   * @param claudePluginRoot the plugin root directory path
+   * @param claudePluginRoot the plugin root directory path (used only for emoji-widths.json)
    * @throws NullPointerException if {@code claudeProjectPath} or {@code claudePluginRoot} are null
    */
   public TestClaudeStatusline(Path claudeProjectPath, Path claudePluginRoot)
   {
-    super(claudeProjectPath, claudePluginRoot, claudeProjectPath);
+    super(claudeProjectPath);
     this.workDir = claudeProjectPath;
     this.terminalType = TerminalType.WINDOWS_TERMINAL;
     try
@@ -61,7 +61,7 @@ public final class TestClaudeStatusline extends AbstractClaudeStatusline
    * fields.
    *
    * @param claudeProjectPath the project directory path
-   * @param claudePluginRoot the plugin root directory path
+   * @param claudePluginRoot the plugin root directory path (used only for emoji-widths.json)
    * @param json the Claude Code hook JSON string to parse
    * @throws NullPointerException if {@code claudeProjectPath}, {@code claudePluginRoot}, or
    *   {@code json} are null
@@ -70,7 +70,7 @@ public final class TestClaudeStatusline extends AbstractClaudeStatusline
   public TestClaudeStatusline(Path claudeProjectPath, Path claudePluginRoot, String json)
     throws IOException
   {
-    super(claudeProjectPath, claudePluginRoot, claudeProjectPath);
+    super(claudeProjectPath);
     requireThat(json, "json").isNotNull();
     this.workDir = claudeProjectPath;
     this.terminalType = TerminalType.WINDOWS_TERMINAL;

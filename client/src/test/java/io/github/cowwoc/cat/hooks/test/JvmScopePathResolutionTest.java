@@ -313,7 +313,7 @@ public final class JvmScopePathResolutionTest
   }
 
   /**
-   * Verifies that MainJvmScope.getWorkDir() returns System.getProperty("user.dir").
+   * Verifies that MainClaudeTool.getWorkDir() returns System.getProperty("user.dir").
    *
    * @throws IOException if temporary directory creation fails
    */
@@ -327,7 +327,7 @@ public final class JvmScopePathResolutionTest
     Path tempPluginRoot = Files.createTempDirectory("test-main-plugin-");
     try
     {
-      // Note: MainJvmScope requires environment variables to be set, so we test indirectly
+      // Note: MainClaudeTool requires environment variables to be set, so we test indirectly
       // by verifying the contract that getWorkDir() should return Path.of(System.getProperty("user.dir"))
       Path expected = Path.of(userDir);
       requireThat(expected, "expected").isNotNull();
