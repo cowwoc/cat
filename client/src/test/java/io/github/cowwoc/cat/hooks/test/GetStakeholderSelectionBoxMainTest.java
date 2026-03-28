@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.skills.GetStakeholderSelectionBox;
 import org.testng.annotations.Test;
 
@@ -18,7 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * Tests for {@link GetStakeholderSelectionBox#run(JvmScope, String[], PrintStream)} CLI error path handling.
+ * Tests for {@link GetStakeholderSelectionBox#run(ClaudeTool, String[], PrintStream)} CLI error path handling.
  */
 public class GetStakeholderSelectionBoxMainTest
 {
@@ -32,7 +32,7 @@ public class GetStakeholderSelectionBoxMainTest
   public void noArgsThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-stakeholder-selection-box-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -54,7 +54,7 @@ public class GetStakeholderSelectionBoxMainTest
   public void nullArgsThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-stakeholder-selection-box-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStakeholderSelectionBox.run(scope, null,
         new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8));
@@ -75,7 +75,7 @@ public class GetStakeholderSelectionBoxMainTest
   public void nullOutThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-stakeholder-selection-box-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStakeholderSelectionBox.run(scope, new String[]{}, null);
     }

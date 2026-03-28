@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.AbstractClaudeTool;
 import io.github.cowwoc.cat.hooks.AbstractJvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.TerminalType;
 import org.testng.annotations.Test;
@@ -57,7 +58,7 @@ public final class TestClaudeToolTest
   public void getDisplayUtilsThrowsAfterClose() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       scope.close();
 

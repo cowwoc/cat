@@ -15,7 +15,6 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
 
@@ -62,15 +61,15 @@ public final class VerifyAudit
   {
   };
 
-  private final JvmScope scope;
+  private final ClaudeTool scope;
 
   /**
    * Creates a new VerifyAudit instance.
    *
-   * @param scope the JVM scope providing JSON mapper and display utilities
+   * @param scope the scope providing JSON mapper and display utilities
    * @throws NullPointerException if {@code scope} is null
    */
-  public VerifyAudit(JvmScope scope)
+  public VerifyAudit(ClaudeTool scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -764,7 +763,7 @@ public final class VerifyAudit
   /**
    * Executes the verify audit logic with caller-provided streams.
    *
-   * @param scope the JVM scope
+   * @param scope the CLI tool scope
    * @param args  command line arguments
    * @param in    the input stream to read from
    * @param out   the output stream to write to
@@ -772,7 +771,7 @@ public final class VerifyAudit
    * @throws IllegalArgumentException if arguments are invalid
    * @throws IOException              if an I/O error occurs
    */
-  public static void run(JvmScope scope, String[] args, InputStream in, PrintStream out) throws IOException
+  public static void run(ClaudeTool scope, String[] args, InputStream in, PrintStream out) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();

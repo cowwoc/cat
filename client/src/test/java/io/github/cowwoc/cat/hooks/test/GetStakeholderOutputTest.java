@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.skills.GetStakeholderConcernBox;
 import io.github.cowwoc.cat.hooks.skills.GetStakeholderReviewBox;
 import io.github.cowwoc.cat.hooks.skills.GetStakeholderReviewBox.ReviewerStatus;
@@ -38,7 +38,7 @@ public class GetStakeholderOutputTest
   @Test
   public void selectionBoxContainsHeader() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetStakeholderSelectionBox handler = new GetStakeholderSelectionBox(scope);
       String result = handler.getSelectionBox(
@@ -58,7 +58,7 @@ public class GetStakeholderOutputTest
   @Test
   public void selectionBoxShowsCounts() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetStakeholderSelectionBox handler = new GetStakeholderSelectionBox(scope);
       String result = handler.getSelectionBox(
@@ -78,7 +78,7 @@ public class GetStakeholderOutputTest
   @Test
   public void selectionBoxIncludesRunningList() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetStakeholderSelectionBox handler = new GetStakeholderSelectionBox(scope);
       String result = handler.getSelectionBox(
@@ -98,7 +98,7 @@ public class GetStakeholderOutputTest
   @Test
   public void selectionBoxIncludesSkippedWithReasons() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetStakeholderSelectionBox handler = new GetStakeholderSelectionBox(scope);
       String result = handler.getSelectionBox(
@@ -122,7 +122,7 @@ public class GetStakeholderOutputTest
   @Test
   public void selectionBoxHasBoxStructure() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetStakeholderSelectionBox handler = new GetStakeholderSelectionBox(scope);
       String result = handler.getSelectionBox(
@@ -142,7 +142,7 @@ public class GetStakeholderOutputTest
   @Test
   public void selectionBoxHandlesEmptyRunningList() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetStakeholderSelectionBox handler = new GetStakeholderSelectionBox(scope);
       String result = handler.getSelectionBox(
@@ -162,7 +162,7 @@ public class GetStakeholderOutputTest
   @Test
   public void reviewBoxContainsHeader() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetStakeholderReviewBox handler = new GetStakeholderReviewBox(scope);
       String result = handler.getReviewBox(
@@ -183,7 +183,7 @@ public class GetStakeholderOutputTest
   @Test
   public void reviewBoxShowsIssueName() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetStakeholderReviewBox handler = new GetStakeholderReviewBox(scope);
       String result = handler.getReviewBox(
@@ -204,7 +204,7 @@ public class GetStakeholderOutputTest
   @Test
   public void reviewBoxIncludesReviewerStatuses() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetStakeholderReviewBox handler = new GetStakeholderReviewBox(scope);
       String result = handler.getReviewBox(
@@ -228,7 +228,7 @@ public class GetStakeholderOutputTest
   @Test
   public void reviewBoxShowsResultAndSummary() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetStakeholderReviewBox handler = new GetStakeholderReviewBox(scope);
       String result = handler.getReviewBox(
@@ -249,7 +249,7 @@ public class GetStakeholderOutputTest
   @Test
   public void reviewBoxUsesTreePrefixes() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetStakeholderReviewBox handler = new GetStakeholderReviewBox(scope);
       String result = handler.getReviewBox(
@@ -272,7 +272,7 @@ public class GetStakeholderOutputTest
   @Test
   public void reviewBoxHasSeparators() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetStakeholderReviewBox handler = new GetStakeholderReviewBox(scope);
       String result = handler.getReviewBox(
@@ -293,7 +293,7 @@ public class GetStakeholderOutputTest
   @Test
   public void reviewBoxHasBoxStructure() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetStakeholderReviewBox handler = new GetStakeholderReviewBox(scope);
       String result = handler.getReviewBox(
@@ -314,7 +314,7 @@ public class GetStakeholderOutputTest
   @Test
   public void criticalConcernBoxContainsSeverity() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetStakeholderConcernBox handler = new GetStakeholderConcernBox(scope);
       String result = handler.getConcernBox(
@@ -332,7 +332,7 @@ public class GetStakeholderOutputTest
   @Test
   public void criticalConcernBoxIncludesContent() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetStakeholderConcernBox handler = new GetStakeholderConcernBox(scope);
       String result = handler.getConcernBox(
@@ -351,7 +351,7 @@ public class GetStakeholderOutputTest
   @Test
   public void criticalConcernBoxHasBoxStructure() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetStakeholderConcernBox handler = new GetStakeholderConcernBox(scope);
       String result = handler.getConcernBox(
@@ -369,7 +369,7 @@ public class GetStakeholderOutputTest
   @Test
   public void highConcernBoxContainsSeverity() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetStakeholderConcernBox handler = new GetStakeholderConcernBox(scope);
       String result = handler.getConcernBox(
@@ -387,7 +387,7 @@ public class GetStakeholderOutputTest
   @Test
   public void highConcernBoxIncludesContent() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetStakeholderConcernBox handler = new GetStakeholderConcernBox(scope);
       String result = handler.getConcernBox(
@@ -406,7 +406,7 @@ public class GetStakeholderOutputTest
   @Test
   public void concernBoxShowsFileLocationWithConnector() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetStakeholderConcernBox handler = new GetStakeholderConcernBox(scope);
       String result = handler.getConcernBox(
@@ -424,7 +424,7 @@ public class GetStakeholderOutputTest
   @Test
   public void selectionBoxContentLinesHaveConsistentWidth() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetStakeholderSelectionBox handler = new GetStakeholderSelectionBox(scope);
       String result = handler.getSelectionBox(
@@ -457,7 +457,7 @@ public class GetStakeholderOutputTest
   @Test
   public void concernBoxRendersCompactFormatEntry() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetStakeholderConcernBox handler = new GetStakeholderConcernBox(scope);
       // Simulates rendering a concern from the compact JSON format:
@@ -481,7 +481,7 @@ public class GetStakeholderOutputTest
   @Test
   public void concernBoxRendersCompactFormatWithReviewPath() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetStakeholderConcernBox handler = new GetStakeholderConcernBox(scope);
       // Simulates rendering a concern where location comes from "review output" placeholder
@@ -502,7 +502,7 @@ public class GetStakeholderOutputTest
   @Test
   public void concernBoxRendersCompactFormatCriticalSeverity() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (ClaudeTool scope = new TestClaudeTool())
     {
       GetStakeholderConcernBox handler = new GetStakeholderConcernBox(scope);
       // Simulates a CRITICAL concern from compact JSON:

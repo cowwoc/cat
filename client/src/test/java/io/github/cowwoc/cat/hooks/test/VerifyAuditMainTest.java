@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.skills.VerifyAudit;
 import org.testng.annotations.Test;
 
@@ -22,7 +22,7 @@ import java.nio.file.Path;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Tests for {@link VerifyAudit#run(JvmScope, String[], InputStream, PrintStream)} CLI error path handling.
+ * Tests for {@link VerifyAudit#run(ClaudeTool, String[], InputStream, PrintStream)} CLI error path handling.
  */
 public class VerifyAuditMainTest
 {
@@ -35,7 +35,7 @@ public class VerifyAuditMainTest
   public void helpFlagProducesUsageOutput() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-audit-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -60,7 +60,7 @@ public class VerifyAuditMainTest
   public void nullArgsThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-audit-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       InputStream in = new ByteArrayInputStream(new byte[0]);
       VerifyAudit.run(scope, null, in,
@@ -82,7 +82,7 @@ public class VerifyAuditMainTest
   public void nullOutThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-audit-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       InputStream in = new ByteArrayInputStream(new byte[0]);
       VerifyAudit.run(scope, new String[]{}, in, null);
@@ -102,7 +102,7 @@ public class VerifyAuditMainTest
   public void shortHelpFlagProducesUsageOutput() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-audit-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -127,7 +127,7 @@ public class VerifyAuditMainTest
   public void unknownSubcommandThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-audit-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);

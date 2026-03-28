@@ -13,7 +13,6 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import static io.github.cowwoc.cat.hooks.Strings.block;
 
 import io.github.cowwoc.cat.hooks.Config;
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
 import org.slf4j.Logger;
@@ -41,15 +40,15 @@ import java.nio.file.Paths;
 public final class MergeAndCleanup
 {
   private final Logger log = LoggerFactory.getLogger(MergeAndCleanup.class);
-  private final JvmScope scope;
+  private final ClaudeTool scope;
 
   /**
    * Creates a new MergeAndCleanup instance.
    *
-   * @param scope the JVM scope providing JSON mapper
+   * @param scope the tool scope providing JSON mapper and plugin root
    * @throws NullPointerException if {@code scope} is null
    */
-  public MergeAndCleanup(JvmScope scope)
+  public MergeAndCleanup(ClaudeTool scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -494,7 +493,7 @@ public final class MergeAndCleanup
    * @throws NullPointerException if any of {@code scope}, {@code args}, or {@code out} are null
    * @throws IOException          if the operation fails
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  public static void run(ClaudeTool scope, String[] args, PrintStream out) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();

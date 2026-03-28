@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.skills.GetStakeholderConcernBox;
 import org.testng.annotations.Test;
 
@@ -18,7 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * Tests for {@link GetStakeholderConcernBox#run(JvmScope, String[], PrintStream)} CLI error path handling.
+ * Tests for {@link GetStakeholderConcernBox#run(ClaudeTool, String[], PrintStream)} CLI error path handling.
  */
 public class GetStakeholderConcernBoxMainTest
 {
@@ -32,7 +32,7 @@ public class GetStakeholderConcernBoxMainTest
   public void noArgsThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-stakeholder-concern-box-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -54,7 +54,7 @@ public class GetStakeholderConcernBoxMainTest
   public void nullArgsThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-stakeholder-concern-box-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStakeholderConcernBox.run(scope, null,
         new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8));
@@ -75,7 +75,7 @@ public class GetStakeholderConcernBoxMainTest
   public void nullOutThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-stakeholder-concern-box-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetStakeholderConcernBox.run(scope, new String[]{}, null);
     }

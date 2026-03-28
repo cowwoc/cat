@@ -8,8 +8,8 @@ package io.github.cowwoc.cat.hooks.licensing;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.Config;
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 
 import java.io.IOException;
@@ -39,15 +39,15 @@ public final class LicenseValidator
   {
   };
 
-  private final JvmScope scope;
+  private final ClaudeTool scope;
 
   /**
    * Creates a new license validator.
    *
-   * @param scope the JVM scope providing plugin root and JSON mapper
+   * @param scope the scope providing JSON mapper and plugin root
    * @throws NullPointerException if {@code scope} is null
    */
-  public LicenseValidator(JvmScope scope)
+  public LicenseValidator(ClaudeTool scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;

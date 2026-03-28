@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.hooks.licensing;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 
 import java.io.IOException;
@@ -39,17 +39,13 @@ public final class Entitlements
   /**
    * Creates a new entitlements resolver.
    *
-   * @param scope the JVM scope providing plugin root and JSON mapper
+   * @param scope the scope providing JSON mapper and plugin root
    * @throws IOException if tiers.json cannot be read or parsed
-   * @throws NullPointerException if {@code scope} is null
    */
-  public Entitlements(JvmScope scope) throws IOException
+  public Entitlements(ClaudeTool scope) throws IOException
   {
-    requireThat(scope, "scope").isNotNull();
-
-    Path pluginRoot = scope.getPluginRoot();
     JsonMapper mapper = scope.getJsonMapper();
-    Path tiersFile = pluginRoot.resolve("config").resolve("tiers.json");
+    Path tiersFile = scope.getPluginRoot().resolve("config").resolve("tiers.json");
     if (!Files.exists(tiersFile))
       throw new IOException("Tier configuration not found: " + tiersFile);
 

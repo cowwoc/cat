@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.util.MergeAndCleanup;
 import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
@@ -35,7 +35,7 @@ public class MergeAndCleanupMainTest
   public void tooFewArgsProducesBlockResponseWithUsage() throws IOException
   {
     Path tempDir = Files.createTempDirectory("merge-cleanup-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -67,7 +67,7 @@ public class MergeAndCleanupMainTest
   public void nullArgsThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("merge-cleanup-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       MergeAndCleanup.run(scope, null,
         new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8));
@@ -88,7 +88,7 @@ public class MergeAndCleanupMainTest
   public void nullOutThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("merge-cleanup-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       MergeAndCleanup.run(scope, new String[]{"dummy"}, null);
     }
@@ -108,7 +108,7 @@ public class MergeAndCleanupMainTest
   public void unknownArgProducesError() throws IOException
   {
     Path tempDir = Files.createTempDirectory("merge-cleanup-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);

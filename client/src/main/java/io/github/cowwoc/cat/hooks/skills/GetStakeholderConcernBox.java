@@ -12,7 +12,6 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
 
@@ -31,17 +30,17 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public final class GetStakeholderConcernBox
 {
   /**
-   * The JVM scope for accessing shared services.
+   * The scope for accessing shared services.
    */
-  private final JvmScope scope;
+  private final ClaudeTool scope;
 
   /**
    * Creates a GetStakeholderConcernBox instance.
    *
-   * @param scope the JVM scope for accessing shared services
+   * @param scope the scope for accessing shared services
    * @throws NullPointerException if {@code scope} is null
    */
-  public GetStakeholderConcernBox(JvmScope scope)
+  public GetStakeholderConcernBox(ClaudeTool scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -123,7 +122,7 @@ public final class GetStakeholderConcernBox
    * @throws IllegalArgumentException if the wrong number of arguments is provided
    * @throws IOException              if an I/O error occurs
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  public static void run(ClaudeTool scope, String[] args, PrintStream out) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();

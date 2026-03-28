@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.hooks.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.skills.VerifyAudit;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -31,7 +31,7 @@ public final class VerifyAuditTest
   public void reportRendersAllDone() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-audit-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       VerifyAudit audit = new VerifyAudit(scope);
 
@@ -84,7 +84,7 @@ public final class VerifyAuditTest
   public void reportRendersMixedResults() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-audit-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       VerifyAudit audit = new VerifyAudit(scope);
 
@@ -142,7 +142,7 @@ public final class VerifyAuditTest
   public void reportAssessmentLogic() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-audit-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       VerifyAudit audit = new VerifyAudit(scope);
 
@@ -196,7 +196,7 @@ public final class VerifyAuditTest
   public void prepareReturnsIssueIdentifiersAndFileResults() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-audit-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       VerifyAudit audit = new VerifyAudit(scope);
@@ -255,7 +255,7 @@ public final class VerifyAuditTest
   public void prepareRejectsMissingIssueId() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-audit-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       VerifyAudit audit = new VerifyAudit(scope);
 
@@ -284,7 +284,7 @@ public final class VerifyAuditTest
   public void prepareRejectsMissingPlanMd() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-audit-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       VerifyAudit audit = new VerifyAudit(scope);
 
