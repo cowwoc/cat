@@ -133,16 +133,10 @@ onto the target branch first (see Step 3 of work-merge-first-use skill).
 
 **Correct pattern:**
 ```bash
-# Work from main workspace directly (target branch already checked out)
-cd /workspace
-
-# Verify you're on the target branch
-git branch --show-current  # Should show target branch (e.g., v2.1)
-
-# Merge source branch using fast-forward only (enforces linear history)
-git merge --ff-only {source-branch}
+# Merge from main workspace directly using -C flag (no cd or checkout needed)
+git -C "${CLAUDE_PROJECT_DIR}" merge --ff-only {source-branch}
 # If fast-forward not possible, rebase the source branch first:
-#   git rebase v2.1  (in the worktree), then retry --ff-only
+#   cd ${WORKTREE_PATH} && git rebase {target-branch}, then retry
 ```
 
 **Why this works:**
@@ -160,7 +154,7 @@ where all subsequent commands fail silently.
 
 ```bash
 # ALWAYS change to main workspace first
-cd /workspace
+cd "${CLAUDE_PROJECT_DIR}"
 
 # Then remove the worktree
 git worktree remove ${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/{issue-name}
@@ -168,7 +162,7 @@ git worktree remove ${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/{issue-name}
 
 If worktree removal fails:
 ```bash
-cd /workspace
+cd "${CLAUDE_PROJECT_DIR}"
 git worktree remove --force ${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/{issue-name}
 ```
 
