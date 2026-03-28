@@ -8,10 +8,13 @@ package io.github.cowwoc.cat.hooks.util;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.ClaudePluginScope;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.regex.Pattern;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Utility methods for plugin version reading and semantic version comparison.
@@ -28,30 +31,55 @@ public final class VersionUtils
   }
 
   /**
-   * Reads the plugin version from {@code pluginRoot/client/VERSION}.
+   * Reads the plugin version from {@code pluginRoot/.claude-plugin/plugin.json}.
    *
-   * @param pluginRoot the plugin root directory
+   * @param scope the Claude plugin scope providing the plugin root directory and JSON parsing
    * @return the version string
-   * @throws NullPointerException if {@code pluginRoot} is null
-   * @throws AssertionError if the VERSION file is not found, empty, or has an invalid format
-   * @throws IOException if reading the VERSION file fails
+   * @throws NullPointerException if {@code scope} is null
+   * @throws AssertionError if the plugin.json file is not found, missing the version field, or has an invalid
+   *   format
+   * @throws IOException if reading the plugin.json file fails
    */
-  public static String getPluginVersion(Path pluginRoot) throws IOException
+  public static String getPluginVersion(ClaudePluginScope scope) throws IOException
   {
-    requireThat(pluginRoot, "pluginRoot").isNotNull();
-    Path versionFile = pluginRoot.resolve("client/VERSION");
-    if (!Files.isRegularFile(versionFile))
+    requireThat(scope, "scope").isNotNull();
+    Path pluginJsonFile = scope.getPluginRoot().resolve(".claude-plugin/plugin.json");
+    if (!Files.isRegularFile(pluginJsonFile))
     {
-      throw new AssertionError("Plugin version not found: " + versionFile + "\n" +
+      throw new AssertionError("Plugin version not found: " + pluginJsonFile + "\n" +
         "Run /cat-update-client to build and install the jlink runtime.");
     }
-    String version = Files.readString(versionFile).strip();
+    JsonNode root = scope.getJsonMapper().readTree(Files.readString(pluginJsonFile));
+    JsonNode versionNode = root.get("version");
+    if (versionNode == null || !versionNode.isString())
+    {
+      throw new AssertionError("Invalid plugin.json: missing or non-string 'version' field in " +
+        pluginJsonFile);
+    }
+    String version = versionNode.asString().strip();
     if (version.isEmpty() || !VERSION_PATTERN.matcher(version).matches())
     {
-      throw new AssertionError("Invalid version format in " + versionFile + ": '" + version +
+      throw new AssertionError("Invalid version format in " + pluginJsonFile + ": '" + version +
         "'. Expected X.Y or X.Y.Z");
     }
     return version;
+  }
+
+  /**
+   * Returns {@code true} if the given version string is a valid numeric version.
+   * <p>
+   * A valid version matches the pattern {@code X}, {@code X.Y}, or {@code X.Y.Z} where each component
+   * is a non-negative integer. Pre-release components (e.g., {@code "-SNAPSHOT"}, {@code "-beta"}) are not
+   * supported and will cause this method to return {@code false}.
+   *
+   * @param version the version string to validate
+   * @return {@code true} if the version matches the expected pattern, {@code false} otherwise
+   */
+  public static boolean isValidVersion(String version)
+  {
+    if (version == null || version.isBlank())
+      return false;
+    return VERSION_PATTERN.matcher(version.strip()).matches();
   }
 
   /**
@@ -60,6 +88,9 @@ public final class VersionUtils
    * Splits each version on dots and compares numeric parts left to right.
    * Missing parts are treated as 0. Non-numeric parts are treated as 0.
    * Null or empty versions are treated as "0.0.0".
+   * <p>
+   * Pre-release version components (e.g., {@code "-SNAPSHOT"}, {@code "-beta"}) are not supported
+   * and will produce undefined comparison results.
    *
    * @param v1 the first version
    * @param v2 the second version

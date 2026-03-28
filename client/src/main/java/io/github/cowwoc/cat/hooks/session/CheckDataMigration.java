@@ -66,7 +66,7 @@ public final class CheckDataMigration implements SessionStartHandler
     try
     {
       String lastMigratedVersion = getLastMigratedVersion();
-      String pluginVersion = VersionUtils.getPluginVersion(pluginRoot);
+      String pluginVersion = VersionUtils.getPluginVersion(scope);
 
       int cmp = VersionUtils.compareVersions(lastMigratedVersion, pluginVersion);
 
