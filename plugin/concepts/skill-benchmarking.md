@@ -22,38 +22,111 @@ review with user -> improve skill -> repeat.
 
 ## Eval Set Format
 
-An eval set is a JSON array of test cases. Each test case defines the prompt to send to the
-subagent and the assertions to evaluate against the output.
+An eval set is a JSON object with a `version` field and a `test_cases` array. Each test case defines the prompt to
+send to the subagent and the assertions to evaluate against the output.
 
 ```json
-[
-  {
-    "id": "case-1",
-    "prompt": "Squash my last 3 commits into one",
-    "assertions": [
-      "Output includes a squash commit message",
-      "Agent invokes the git-squash skill",
-      "No destructive git commands are run without confirmation"
-    ]
-  },
-  {
-    "id": "case-2",
-    "prompt": "Combine the last two commits before I merge",
-    "assertions": [
-      "Output includes a squash commit message",
-      "Agent invokes the git-squash skill"
-    ]
-  }
-]
+{
+  "version": "2.0",
+  "test_cases": [
+    {
+      "test_case_id": "TC1",
+      "semantic_unit_id": "unit_squash_invokes_skill",
+      "category": "REQUIREMENT",
+      "prompt": "Squash my last 3 commits into one",
+      "assertions": [
+        {
+          "assertion_id": "TC1_det_1",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "output mentions the git-squash skill",
+          "pattern": "git-squash",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC1_sem_1",
+          "type": "semantic",
+          "description": "agent invokes the git-squash skill rather than manual git commands",
+          "instruction": "Check whether the response directs the agent to use cat:git-squash-agent rather than manually running git commands such as git reset --soft or git rebase -i.",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC1_tool_1",
+          "type": "tool_use",
+          "description": "agent invoked the Skill tool to call git-squash-agent",
+          "tool": "Skill",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC2",
+      "semantic_unit_id": "unit_squash_invokes_skill",
+      "category": "REQUIREMENT",
+      "prompt": "Combine the last two commits before I merge",
+      "priming_messages": [
+        {
+          "role": "user",
+          "content": "I just pushed a hotfix. Do I need to squash?"
+        },
+        {
+          "role": "assistant",
+          "content": "If the commits are logically related, squashing is recommended before merging."
+        }
+      ],
+      "assertions": [
+        {
+          "assertion_id": "TC2_det_1",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "output mentions git-squash",
+          "pattern": "git-squash",
+          "expected": true
+        }
+      ]
+    }
+  ]
+}
 ```
 
-**Field definitions:**
+**Root object fields:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `version` | string | required | Schema version; currently `"2.0"` |
+| `test_cases` | array | required | Array of test case objects |
+
+**Test case fields:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `test_case_id` | string | required | Unique identifier for this test case (used in grading output and benchmark JSON) |
+| `semantic_unit_id` | string | required | Domain-specific name for the behavioral unit under test — not sequential (e.g., `"unit_squash_invokes_skill"`, `"unit_step3_seq_read_comment"`) |
+| `prompt` | string | required | The user prompt sent to the subagent under test |
+| `assertions` | array | required | Array of assertion objects |
+| `category` | string | optional | Test case category, e.g., `REQUIREMENT`, `PROHIBITION`, `SEQUENCE`, `CONDITIONAL` |
+| `priming_messages` | array | optional | Prior conversation turns to inject before the prompt |
+
+### priming_messages
+
+`priming_messages` is an optional array of prior conversation turns prepended to the subagent context before the
+`prompt` is sent. Use it to test behavior that depends on conversation history.
+
+Each entry is an object with two fields:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `id` | string | Unique identifier for this test case (used in grading output and benchmark JSON) |
-| `prompt` | string | The user prompt sent to the subagent under test |
-| `assertions` | array of strings | Natural-language assertions evaluated against the subagent output |
+| `role` | string | `"user"` or `"assistant"` |
+| `content` | string | The message content |
+
+Example:
+
+```json
+"priming_messages": [
+  { "role": "user", "content": "What was the last result?" },
+  { "role": "assistant", "content": "The last result was STALE-VALUE." }
+]
+```
 
 **Guidelines for writing test cases:**
 
@@ -68,21 +141,53 @@ subagent and the assertions to evaluate against the output.
 
 ## Assertion Schema
 
-Each assertion is a natural-language string that the skill-grader-agent evaluates against
-a single test-case output.
+Each assertion is a structured object with a `type` field that determines its evaluation method.
+Three types are supported: `deterministic`, `semantic`, and `tool_use`.
 
-An assertion should describe a **verifiable property** of the output:
+### deterministic
 
-```
-Good: "Output includes a commit message in the conventional format"
-Good: "Agent does not run git push without explicit user confirmation"
-Bad:  "Output is good"          — not verifiable
-Bad:  "Agent performs correctly" — not falsifiable
-```
+Evaluates the output against a pattern using a deterministic method (no LLM judgment required).
 
-The grader assigns each assertion a verdict and an evidence quote. The verdict is:
-- **PASS**: The output clearly satisfies the assertion.
-- **FAIL**: The output violates the assertion, or provides no evidence the assertion holds.
+| Field | Type | Description |
+|-------|------|-------------|
+| `assertion_id` | string | Unique identifier within the test case |
+| `type` | string | Literal `"deterministic"` |
+| `method` | string | Matching method: `"regex"`, `"string_match"`, or `"structural"` |
+| `description` | string | Human-readable description of what is being checked |
+| `pattern` | string | The pattern to match against |
+| `expected` | bool | `true` if the pattern must match; `false` if it must not match |
+
+**Methods:**
+
+| Method | Description |
+|--------|-------------|
+| `regex` | Pattern match using a regular expression |
+| `string_match` | Literal substring match |
+| `structural` | Structural or format check (e.g., valid JSON, correct indentation) |
+
+### semantic
+
+Evaluates the output using LLM judgment against a natural-language instruction.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `assertion_id` | string | Unique identifier within the test case |
+| `type` | string | Literal `"semantic"` |
+| `description` | string | Human-readable description of what is being checked |
+| `instruction` | string | Natural-language instruction for the grader LLM |
+| `expected` | bool | `true` if the condition described must hold; `false` if it must not hold |
+
+### tool_use
+
+Asserts that the agent did (or did not) invoke a specific tool during the run.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `assertion_id` | string | Unique identifier within the test case |
+| `type` | string | Literal `"tool_use"` |
+| `description` | string | Human-readable description of what is being checked |
+| `tool` | string | Name of the tool whose invocation is asserted (e.g., `"Skill"`) |
+| `expected` | bool | `true` if the tool must have been invoked; `false` if it must not have been invoked |
 
 ## Grading Output Schema
 

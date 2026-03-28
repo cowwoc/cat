@@ -1,4 +1,5 @@
 {
+  "version": "2.0",
   "test_cases": [
     {
       "test_case_id": "TC-001",
