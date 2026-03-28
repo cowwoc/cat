@@ -324,6 +324,10 @@ and write all code against the new design only.
 run. Scripts should check current state before making changes (e.g., skip renaming a file that's already renamed, skip
 adding a field that already exists).
 
+**Closed issue coverage:** Migration scripts must process all issues regardless of status (open or closed). Closed
+issues contain the same file formats as open issues and must be migrated to maintain consistency. The CLAUDE.md rule
+about not modifying closed issues applies only to manual agent edits, not automated migrations.
+
 **Planning file schema changes:** When an issue modifies the schema of planning files (STATE.md, PLAN.md headings,
 field names, section structure), the issue MUST include updating the current version's `plugin/migrations/` script to
 transform existing files. The migration is part of the same issue — do not defer it to a separate issue.
