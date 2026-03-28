@@ -3155,5 +3155,19 @@
     "prevention_verified" : false,
     "recurrence_of" : null,
     "correct_behavior" : ""
+  }, {
+    "id" : "M609",
+    "timestamp" : "2026-03-28T16:34:44Z",
+    "category" : "",
+    "description" : "",
+    "root_cause" : "The Error Handling section of plugin/skills/work-merge-agent/first-use.md incorrectly classifies rebase conflicts (errors containing 'CONFLICT' or 'merge conflict') as 'permanent' errors, which triggers lock release via `issue-lock release`. A rebase conflict during Step 9 is a user-resolvable situation — the issue is not abandoned, only blocked temporarily. The classification table makes no distinction between a conflict that prevents merge completion (which would require user action to resolve) and a truly unrecoverable permanent failure. As a result, the agent correctly followed the documented error handling table and released the lock, even though the worktree and branch still existed and the issue was still in progress.",
+    "cause_signature" : null,
+    "prevention_type" : "",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "correct_behavior" : ""
   } ]
 }
