@@ -51,7 +51,7 @@ public final class SessionStartHook implements HookHandler
   {
     this(scope, List.of(
       new CheckDataMigration(scope),
-      new CheckUpdateAvailable(scope),
+      new CheckUpdateAvailable(),
       new WarnUnknownTerminal(),
       new EchoSessionId(),
       new CheckRetrospectiveDue(scope),

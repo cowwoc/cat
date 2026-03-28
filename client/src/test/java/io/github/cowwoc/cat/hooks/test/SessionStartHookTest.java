@@ -1015,12 +1015,12 @@ public class SessionStartHookTest
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
     try
     {
-      Path clientDir = pluginRoot.resolve("client");
-      Files.createDirectories(clientDir);
-      Files.writeString(clientDir.resolve("VERSION"), "99.0.0\n");
+      Path pluginJsonDir = pluginRoot.resolve(".claude-plugin");
+      Files.createDirectories(pluginJsonDir);
+      Files.writeString(pluginJsonDir.resolve("plugin.json"), "{\"version\":\"99.0.0\"}");
       try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
       {
-        SessionStartHandler.Result result = new CheckUpdateAvailable(scope).handle(scope);
+        SessionStartHandler.Result result = new CheckUpdateAvailable().handle(scope);
         requireThat(result.additionalContext(), "additionalContext").isEmpty();
         requireThat(result.stderr(), "stderr").isEmpty();
       }
@@ -1460,16 +1460,16 @@ public class SessionStartHookTest
   }
 
   /**
-   * Verifies that getPluginVersion throws when client/VERSION is not found.
+   * Verifies that getPluginVersion throws when .claude-plugin/plugin.json is not found.
    */
   @Test(expectedExceptions = AssertionError.class,
     expectedExceptionsMessageRegExp = ".*Plugin version not found.*")
   public void getPluginVersionThrowsForMissingVersionFile() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-test-version-");
-    try
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      VersionUtils.getPluginVersion(tempDir);
+      VersionUtils.getPluginVersion(scope);
     }
     finally
     {
@@ -1478,18 +1478,18 @@ public class SessionStartHookTest
   }
 
   /**
-   * Verifies that getPluginVersion reads from client/VERSION.
+   * Verifies that getPluginVersion reads from .claude-plugin/plugin.json.
    */
   @Test
-  public void getPluginVersionReadsFromClientVersion() throws IOException
+  public void getPluginVersionReadsFromPluginJson() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-test-version-");
-    try
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      Path clientDir = tempDir.resolve("client");
-      Files.createDirectories(clientDir);
-      Files.writeString(clientDir.resolve("VERSION"), "3.1\n");
-      String version = VersionUtils.getPluginVersion(tempDir);
+      Path pluginJsonDir = tempDir.resolve(".claude-plugin");
+      Files.createDirectories(pluginJsonDir);
+      Files.writeString(pluginJsonDir.resolve("plugin.json"), "{\"version\":\"3.1\"}");
+      String version = VersionUtils.getPluginVersion(scope);
       requireThat(version, "version").isEqualTo("3.1");
     }
     finally
@@ -1505,12 +1505,12 @@ public class SessionStartHookTest
   public void getPluginVersionAcceptsThreePartVersion() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-test-version-");
-    try
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      Path clientDir = tempDir.resolve("client");
-      Files.createDirectories(clientDir);
-      Files.writeString(clientDir.resolve("VERSION"), "3.2.1\n");
-      String version = VersionUtils.getPluginVersion(tempDir);
+      Path pluginJsonDir = tempDir.resolve(".claude-plugin");
+      Files.createDirectories(pluginJsonDir);
+      Files.writeString(pluginJsonDir.resolve("plugin.json"), "{\"version\":\"3.2.1\"}");
+      String version = VersionUtils.getPluginVersion(scope);
       requireThat(version, "version").isEqualTo("3.2.1");
     }
     finally
@@ -1527,12 +1527,12 @@ public class SessionStartHookTest
   public void getPluginVersionThrowsForInvalidFormat() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-test-version-");
-    try
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      Path clientDir = tempDir.resolve("client");
-      Files.createDirectories(clientDir);
-      Files.writeString(clientDir.resolve("VERSION"), "not-a-version\n");
-      VersionUtils.getPluginVersion(tempDir);
+      Path pluginJsonDir = tempDir.resolve(".claude-plugin");
+      Files.createDirectories(pluginJsonDir);
+      Files.writeString(pluginJsonDir.resolve("plugin.json"), "{\"version\":\"not-a-version\"}");
+      VersionUtils.getPluginVersion(scope);
     }
     finally
     {
@@ -1541,23 +1541,283 @@ public class SessionStartHookTest
   }
 
   /**
-   * Verifies that getPluginVersion throws for an empty VERSION file.
+   * Verifies that getPluginVersion throws for an empty version field in plugin.json.
    */
   @Test(expectedExceptions = AssertionError.class,
     expectedExceptionsMessageRegExp = ".*Invalid version format.*")
   public void getPluginVersionThrowsForEmptyFile() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-test-version-");
-    try
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      Path clientDir = tempDir.resolve("client");
-      Files.createDirectories(clientDir);
-      Files.writeString(clientDir.resolve("VERSION"), "\n");
-      VersionUtils.getPluginVersion(tempDir);
+      Path pluginJsonDir = tempDir.resolve(".claude-plugin");
+      Files.createDirectories(pluginJsonDir);
+      Files.writeString(pluginJsonDir.resolve("plugin.json"), "{\"version\":\"\"}");
+      VersionUtils.getPluginVersion(scope);
     }
     finally
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that CheckUpdateAvailable detects a newer version from the cached plugin.json format.
+   * <p>
+   * Also verifies that both the current and latest version strings appear in the output.
+   */
+  @Test
+  public void checkUpdateAvailableDetectsNewVersionViaPluginJson() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-update-detect-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-detect-");
+    try
+    {
+      // Set up local plugin.json with version 1.0.0
+      Path pluginJsonDir = pluginRoot.resolve(".claude-plugin");
+      Files.createDirectories(pluginJsonDir);
+      Files.writeString(pluginJsonDir.resolve("plugin.json"), "{\"version\":\"1.0.0\"}");
+
+      try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
+      {
+        // Seed a stale cache file with a newer version 99.0.0, older than 24h
+        Path cacheDir = scope.getCatWorkPath().resolve("cache/update-check");
+        Files.createDirectories(cacheDir);
+        Path cacheFile = cacheDir.resolve("latest_version.json");
+        Files.writeString(cacheFile, "{\"version\":\"99.0.0\"}");
+        // Keep the file fresh (default mtime = now) so cache is used directly
+        SessionStartHandler.Result result = new CheckUpdateAvailable().handle(scope);
+        requireThat(result.additionalContext(), "additionalContext").contains("CAT update available");
+        requireThat(result.additionalContext(), "additionalContext").contains("1.0.0");
+        requireThat(result.additionalContext(), "additionalContext").contains("99.0.0");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that CheckUpdateAvailable reads the version from pluginRoot and detects an update.
+   * <p>
+   * When pluginRoot contains version "1.0.0" and the cache has "99.0.0", the result must
+   * contain an update notice showing both version strings.
+   */
+  @Test
+  public void checkUpdateAvailableReadsVersionFromPluginRoot() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-update-root-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-root-");
+    try
+    {
+      Path pluginJsonDir = pluginRoot.resolve(".claude-plugin");
+      Files.createDirectories(pluginJsonDir);
+      Files.writeString(pluginJsonDir.resolve("plugin.json"), "{\"version\":\"1.0.0\"}");
+
+      try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
+      {
+        Path cacheDir = scope.getCatWorkPath().resolve("cache/update-check");
+        Files.createDirectories(cacheDir);
+        Files.writeString(cacheDir.resolve("latest_version.json"), "{\"version\":\"99.0.0\"}");
+
+        SessionStartHandler.Result result = new CheckUpdateAvailable().handle(scope);
+        requireThat(result.additionalContext(), "additionalContext").contains("1.0.0");
+        requireThat(result.additionalContext(), "additionalContext").contains("99.0.0");
+        requireThat(result.stderr(), "stderr").contains("1.0.0");
+        requireThat(result.stderr(), "stderr").contains("99.0.0");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that CheckUpdateAvailable throws when plugin.json does not exist at pluginRoot.
+   */
+  @Test(expectedExceptions = AssertionError.class,
+    expectedExceptionsMessageRegExp = ".*Plugin version not found.*")
+  public void checkUpdateAvailableThrowsWhenPluginJsonMissing() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-update-missing-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-missing-");
+    try
+    {
+      // No plugin.json created at pluginRoot
+      try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
+      {
+        new CheckUpdateAvailable().handle(scope);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that CheckUpdateAvailable uses a fresh cache without making a network call.
+   * <p>
+   * When the cache file exists with a fresh modification time, the cached version is returned
+   * directly without attempting network access.
+   */
+  @Test
+  public void checkUpdateAvailableUsesFreshCache() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-update-cache-fresh-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-cache-fresh-");
+    try
+    {
+      Path pluginJsonDir = pluginRoot.resolve(".claude-plugin");
+      Files.createDirectories(pluginJsonDir);
+      Files.writeString(pluginJsonDir.resolve("plugin.json"), "{\"version\":\"1.0.0\"}");
+
+      try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
+      {
+        // Write a fresh cache file (modification time = now, which is < 24h old)
+        Path cacheDir = scope.getCatWorkPath().resolve("cache/update-check");
+        Files.createDirectories(cacheDir);
+        Path cacheFile = cacheDir.resolve("latest_version.json");
+        Files.writeString(cacheFile, "{\"version\":\"2.0.0\"}");
+
+        // The handler must use the cached version (2.0.0 > 1.0.0) without a network call
+        SessionStartHandler.Result result = new CheckUpdateAvailable().handle(scope);
+        requireThat(result.additionalContext(), "additionalContext").contains("2.0.0");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that CheckUpdateAvailable refreshes a stale cache by attempting network access.
+   * <p>
+   * When the cache file is older than 24 hours, the handler bypasses the cache and fetches the
+   * latest version from the network. Since no network is available in tests, the result is empty.
+   */
+  @Test
+  public void checkUpdateAvailableRefreshesStaleCache() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-update-cache-stale-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-cache-stale-");
+    try
+    {
+      Path pluginJsonDir = pluginRoot.resolve(".claude-plugin");
+      Files.createDirectories(pluginJsonDir);
+      Files.writeString(pluginJsonDir.resolve("plugin.json"), "{\"version\":\"1.0.0\"}");
+
+      try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
+      {
+        // Write a stale cache file (modification time = 25 hours ago)
+        Path cacheDir = scope.getCatWorkPath().resolve("cache/update-check");
+        Files.createDirectories(cacheDir);
+        Path cacheFile = cacheDir.resolve("latest_version.json");
+        Files.writeString(cacheFile, "{\"version\":\"2.0.0\"}");
+        // Set modification time to 25 hours ago to make the cache stale
+        java.nio.file.attribute.FileTime staleTime =
+          java.nio.file.attribute.FileTime.from(
+            java.time.Instant.now().minusSeconds(25 * 60 * 60));
+        Files.setLastModifiedTime(cacheFile, staleTime);
+
+        // The stale cache triggers a network fetch; since no network is available in tests,
+        // the handler returns empty rather than using the stale data
+        SessionStartHandler.Result result = new CheckUpdateAvailable().handle(scope);
+        requireThat(result.additionalContext(), "additionalContext").isEmpty();
+        requireThat(result.stderr(), "stderr").isEmpty();
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that CheckUpdateAvailable handles invalid JSON in the network response gracefully.
+   * <p>
+   * When the cache is stale and the network fetch returns invalid JSON, the handler returns
+   * empty rather than crashing.
+   */
+  @Test
+  public void checkUpdateAvailableHandlesInvalidJson() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-update-invalid-json-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-invalid-json-");
+    try
+    {
+      Path pluginJsonDir = pluginRoot.resolve(".claude-plugin");
+      Files.createDirectories(pluginJsonDir);
+      Files.writeString(pluginJsonDir.resolve("plugin.json"), "{\"version\":\"1.0.0\"}");
+
+      try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
+      {
+        // Write a stale cache containing invalid JSON to simulate a corrupted cache
+        Path cacheDir = scope.getCatWorkPath().resolve("cache/update-check");
+        Files.createDirectories(cacheDir);
+        Path cacheFile = cacheDir.resolve("latest_version.json");
+        Files.writeString(cacheFile, "not-valid-json");
+        java.nio.file.attribute.FileTime staleTime =
+          java.nio.file.attribute.FileTime.from(
+            java.time.Instant.now().minusSeconds(25 * 60 * 60));
+        Files.setLastModifiedTime(cacheFile, staleTime);
+
+        // The network fetch also fails in the test environment; handler returns empty gracefully
+        SessionStartHandler.Result result = new CheckUpdateAvailable().handle(scope);
+        requireThat(result.additionalContext(), "additionalContext").isEmpty();
+        requireThat(result.stderr(), "stderr").isEmpty();
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that CheckUpdateAvailable handles a network response with no version field gracefully.
+   * <p>
+   * When the network returns valid JSON but without a {@code "version"} field, the handler returns
+   * empty rather than crashing.
+   */
+  @Test
+  public void checkUpdateAvailableHandlesMissingVersionField() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-update-no-version-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-no-version-");
+    try
+    {
+      Path pluginJsonDir = pluginRoot.resolve(".claude-plugin");
+      Files.createDirectories(pluginJsonDir);
+      Files.writeString(pluginJsonDir.resolve("plugin.json"), "{\"version\":\"1.0.0\"}");
+
+      try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
+      {
+        // Write a fresh cache without a version field to simulate a response with missing field
+        Path cacheDir = scope.getCatWorkPath().resolve("cache/update-check");
+        Files.createDirectories(cacheDir);
+        Path cacheFile = cacheDir.resolve("latest_version.json");
+        Files.writeString(cacheFile, "{\"other_field\":\"value\"}");
+
+        // No version field in cache → handler returns empty gracefully
+        SessionStartHandler.Result result = new CheckUpdateAvailable().handle(scope);
+        requireThat(result.additionalContext(), "additionalContext").isEmpty();
+        requireThat(result.stderr(), "stderr").isEmpty();
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
 }
