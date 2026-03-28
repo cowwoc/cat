@@ -171,24 +171,8 @@ if [[ -f "${CACHED_BINARY}" ]] && [[ -z "${GFR_FORCE_DOWNLOAD:-}" ]]; then
 fi
 
 # Construct GitHub release download URL
-REPO_OWNER=$(grep -E '^REPO_OWNER=' "${CONF}" | sed 's/^REPO_OWNER="\(.*\)"$/\1/' | head -1 || true)
-if [[ -z "${REPO_OWNER}" ]]; then
-  echo "ERROR: REPO_OWNER not found in ${CONF}" >&2
-  exit 1
-fi
-if ! echo "${REPO_OWNER}" | grep -qE '^[a-zA-Z0-9_-]+$'; then
-  echo "ERROR: REPO_OWNER in ${CONF} has unexpected format: ${REPO_OWNER}" >&2
-  exit 1
-fi
-REPO_NAME=$(grep -E '^REPO_NAME=' "${CONF}" | sed 's/^REPO_NAME="\(.*\)"$/\1/' | head -1 || true)
-if [[ -z "${REPO_NAME}" ]]; then
-  echo "ERROR: REPO_NAME not found in ${CONF}" >&2
-  exit 1
-fi
-if ! echo "${REPO_NAME}" | grep -qE '^[a-zA-Z0-9_-]+$'; then
-  echo "ERROR: REPO_NAME in ${CONF} has unexpected format: ${REPO_NAME}" >&2
-  exit 1
-fi
+REPO_OWNER="cowwoc"
+REPO_NAME="cat"
 BINARY_URL="https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${RELEASE_TAG}/${BINARY_NAME}"
 
 if ! mkdir -p "${CACHE_DIR}"; then
@@ -205,7 +189,7 @@ trap "rm -f '${TMP_BINARY}'" EXIT
 
 echo "Downloading git-filter-repo standalone binary for ${PLATFORM}..." >&2
 echo "  URL: ${BINARY_URL}" >&2
-if ! curl -fsSL --max-time 120 -o "${TMP_BINARY}" "${BINARY_URL}"; then
+curl -fsSL --max-time 120 -o "${TMP_BINARY}" "${BINARY_URL}" || {
   CURL_EXIT=$?
   echo "ERROR: Failed to download git-filter-repo" >&2
   echo "  URL: ${BINARY_URL}" >&2
@@ -217,7 +201,7 @@ if ! curl -fsSL --max-time 120 -o "${TMP_BINARY}" "${BINARY_URL}"; then
     *)  echo "  See 'man curl' for exit code ${CURL_EXIT} details." >&2 ;;
   esac
   exit 1
-fi
+}
 
 if [[ ! -s "${TMP_BINARY}" ]]; then
   echo "ERROR: Downloaded file is empty or missing: ${TMP_BINARY}" >&2
