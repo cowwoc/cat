@@ -988,11 +988,20 @@ ${ISSUE_DESCRIPTION}
 ...
 ```
 
-3. Create the issue, passing the generated plan.md file path.
+3. Write the index.json content to a unique temporary file (multi-instance safe):
 
-**JSON escaping:** All interpolated string values ({issue-name}, {one-line description}, dependency names, and
-{full index.json content}) must be valid JSON string values. Escape any double quotes as `\"` and backslashes
-as `\\` before embedding them in the JSON argument.
+```bash
+index_temp_file=$(mktemp /tmp/cat-index-XXXXXX.json)
+cat > "${index_temp_file}" << 'INDEXEOF'
+{full index.json content}
+INDEXEOF
+```
+
+4. Create the issue, passing both generated temp file paths.
+
+**JSON escaping:** All interpolated string values ({issue-name}, {one-line description}, dependency names) must be
+valid JSON string values. Escape any double quotes as `\"` and backslashes as `\\` before embedding them in the JSON
+argument. Index content is written to a temp file and does not need JSON escaping.
 
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/client/bin/create-issue" --json '{
@@ -1001,7 +1010,7 @@ as `\\` before embedding them in the JSON argument.
   "issue_name": "{issue-name}",
   "issue_type": "{issue-type}",
   "dependencies": ["{dep1}", "{dep2}"],
-  "index_content": "{full index.json content}",
+  "index_file": "'"${index_temp_file}"'",
   "plan_file": "'"${plan_temp_file}"'",
   "commit_description": "{one-line description}"
 }'
@@ -1009,21 +1018,21 @@ as `\\` before embedding them in the JSON argument.
 
 The script handles:
 - Creating the issue directory
-- Writing index.json and plan.md
+- Writing index.json (always pretty-printed) and plan.md
 - Updating parent version index.json
 - Git add and commit
 
-Check the JSON output for success status. If create-issue returns an error, clean up the temporary plan file
+Check the JSON output for success status. If create-issue returns an error, clean up both temporary files
 before reporting the error and stopping:
 
 ```bash
-rm -f "${plan_temp_file}"
+rm -f "${plan_temp_file}" "${index_temp_file}"
 ```
 
-Clean up the temporary plan file after a successful create-issue call:
+Clean up both temporary files after a successful create-issue call:
 
 ```bash
-rm -f "${plan_temp_file}"
+rm -f "${plan_temp_file}" "${index_temp_file}"
 ```
 
 **Apply auto-detected skill dependency updates (if any):**
