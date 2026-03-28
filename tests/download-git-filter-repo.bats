@@ -359,6 +359,62 @@ EOF
 # curl failure simulation (error handling)
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# stale cache by version mismatch (resolution tier 3, cached binary with wrong version)
+# ---------------------------------------------------------------------------
+
+@test "re-downloads when cached binary version file does not match RELEASE_TAG" {
+    # No python3, no git-filter-repo on PATH — force tier-3 resolution
+    write_python3_stub
+
+    # Fix platform to linux-x64 for deterministic binary name
+    cat > "${STUB_BIN_DIR}/uname" <<'EOF'
+#!/usr/bin/env bash
+if [[ "$1" == "-s" ]]; then
+  echo "Linux"
+elif [[ "$1" == "-m" ]]; then
+  echo "x86_64"
+fi
+EOF
+    chmod +x "${STUB_BIN_DIR}/uname"
+
+    BINARY_NAME="git-filter-repo-linux-x64"
+    CACHE_DIR="${FAKE_PLUGIN_ROOT}/lib"
+    mkdir -p "${CACHE_DIR}"
+
+    # Place a cached binary with a STALE version file (different tag)
+    echo "fake binary content" > "${CACHE_DIR}/${BINARY_NAME}"
+    echo "git-filter-repo-v1.0.0" > "${CACHE_DIR}/${BINARY_NAME}.version"
+
+    # sha256sum stub that returns the expected hash (simulates a correct-hash binary)
+    write_sha256sum_stub "${STUB_BIN_DIR}" "${FAKE_SHA256_LINUX_X64}"
+
+    # curl stub: writes a valid fake binary and exits 0
+    cat > "${STUB_BIN_DIR}/curl" <<EOF
+#!/usr/bin/env bash
+# Write content to the -o <output> argument
+for ((i=1; i<=\$#; i++)); do
+  if [[ "\${!i}" == "-o" ]]; then
+    next=\$((i+1))
+    echo "downloaded binary" > "\${!next}"
+    break
+  fi
+done
+exit 0
+EOF
+    chmod +x "${STUB_BIN_DIR}/curl"
+
+    run env PATH="${STUB_BIN_DIR}:${SAFE_PATH}" bash "${DOWNLOAD_SCRIPT}"
+
+    [ "${status}" -eq 0 ]
+    # The script should have re-downloaded; verify that the version file now contains the correct tag
+    [ -f "${CACHE_DIR}/${BINARY_NAME}.version" ]
+    VERSION_IN_FILE=$(cat "${CACHE_DIR}/${BINARY_NAME}.version")
+    [ "${VERSION_IN_FILE}" = "git-filter-repo-v2.38.0" ]
+}
+
+# ---------------------------------------------------------------------------
+
 @test "fails with error when curl exits non-zero during download" {
     # Stub python3 to fail so we reach download phase; git-filter-repo excluded via SAFE_PATH
     write_python3_stub
