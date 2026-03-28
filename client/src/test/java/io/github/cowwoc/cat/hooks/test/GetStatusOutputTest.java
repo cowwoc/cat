@@ -1393,4 +1393,109 @@ public class GetStatusOutputTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that a blank index.json is treated as "open" status without throwing an IOException.
+   * <p>
+   * The blank-check must occur before JSON parsing so that an empty file doesn't cause a
+   * misleading parse error.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void blankIndexJsonReturnsOpen() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-blank-index");
+    Path issueDir = tempDir.resolve(".cat/issues/v2/v2.1/my-task");
+    Files.createDirectories(issueDir);
+    Files.writeString(issueDir.resolve("index.json"), "");
+
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      GetStatusOutput handler = new GetStatusOutput(scope);
+      String result = handler.getOutput(new String[0]);
+
+      requireThat(result, "result").contains("my-task");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a valid index.json with a recognized status parses correctly.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void validIndexJsonParsesCorrectly() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-valid-index");
+    Path issueDir = tempDir.resolve(".cat/issues/v2/v2.1/my-task");
+    Files.createDirectories(issueDir);
+    Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"open\"}");
+
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      GetStatusOutput handler = new GetStatusOutput(scope);
+      String result = handler.getOutput(new String[0]);
+
+      requireThat(result, "result").contains("my-task");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that an index.json with an unknown status value causes getOutput to throw IOException.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = "(?s).*Unknown status.*")
+  public void unknownStatusInIndexJsonThrows() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-unknown-status-index");
+    Path issueDir = tempDir.resolve(".cat/issues/v2/v2.1/my-task");
+    Files.createDirectories(issueDir);
+    Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"bogus-value\"}");
+
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      GetStatusOutput handler = new GetStatusOutput(scope);
+      handler.getOutput(new String[0]);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that an index.json missing the status field causes getOutput to throw IOException.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = "(?s).*Missing 'status' field.*")
+  public void missingStatusFieldInIndexJsonThrows() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-missing-status-index");
+    Path issueDir = tempDir.resolve(".cat/issues/v2/v2.1/my-task");
+    Files.createDirectories(issueDir);
+    Files.writeString(issueDir.resolve("index.json"), "{\"name\":\"my-task\"}");
+
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      GetStatusOutput handler = new GetStatusOutput(scope);
+      handler.getOutput(new String[0]);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }
