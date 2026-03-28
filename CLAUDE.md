@@ -21,7 +21,9 @@
 - **STATE.md belongs with implementation:** When closing an issue, STATE.md updates belong in the SAME commit as the implementation work, using the implementation's commit type (feature:/bugfix:/docs:/etc), NOT in a separate planning: commit
 - If a commit would touch both docs and non-docs files, split it into separate commits
 - **Do not update closed issue files:** Never modify PLAN.md or STATE.md of closed issues unless the user explicitly
-  instructs you to. Closed issues are historical records.
+  instructs you to. Closed issues are historical records. **Exception:** Automated migration scripts under
+  `plugin/migrations/` must process all issues including closed ones to ensure consistent file formats across the
+  entire issue tree.
 
 ## Issue Workflow vs Direct Implementation
 
