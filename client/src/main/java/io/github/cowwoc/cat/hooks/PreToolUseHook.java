@@ -54,7 +54,7 @@ import java.util.List;
  */
 public final class PreToolUseHook implements HookHandler
 {
-  private final Logger log = LoggerFactory.getLogger(getClass());
+  private final Logger log = LoggerFactory.getLogger(PreToolUseHook.class);
   private final List<BashHandler> handlers;
 
   /**

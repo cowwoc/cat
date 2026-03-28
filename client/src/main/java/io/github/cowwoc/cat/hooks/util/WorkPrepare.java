@@ -99,7 +99,7 @@ public final class WorkPrepare
   {
   };
 
-  private final Logger log = LoggerFactory.getLogger(getClass());
+  private final Logger log = LoggerFactory.getLogger(WorkPrepare.class);
   private final ClaudeTool scope;
   private final int diagnosticScanSafetyThreshold;
   private final int maxCycleDetectionDepth;

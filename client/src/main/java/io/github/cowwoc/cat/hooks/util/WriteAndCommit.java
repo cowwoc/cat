@@ -37,7 +37,7 @@ import java.util.Set;
  */
 public final class WriteAndCommit
 {
-  private final Logger log = LoggerFactory.getLogger(getClass());
+  private final Logger log = LoggerFactory.getLogger(WriteAndCommit.class);
   private final JvmScope scope;
 
   /**
