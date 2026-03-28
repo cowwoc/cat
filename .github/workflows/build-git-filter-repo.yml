@@ -205,6 +205,41 @@ jobs:
           echo "macos_x64=${MACOS_X64}" >> $GITHUB_OUTPUT
           echo "macos_aarch64=${MACOS_AARCH64}" >> $GITHUB_OUTPUT
 
+      - name: Create combined SHA256 manifest
+        run: |
+          set -euo pipefail
+          # Combine all platform SHA256 checksums into a single manifest file.
+          # Entries are sorted alphabetically by platform filename for deterministic ordering
+          # regardless of which matrix jobs complete first.
+          # Expected sorted order: linux-aarch64, linux-x64, macos-aarch64, macos-x64
+          {
+            printf '%s  %s\n' "$(awk '{print $1}' artifacts/git-filter-repo-linux-aarch64.sha256)" \
+              "git-filter-repo-linux-aarch64"
+            printf '%s  %s\n' "$(awk '{print $1}' artifacts/git-filter-repo-linux-x64.sha256)" \
+              "git-filter-repo-linux-x64"
+            printf '%s  %s\n' "$(awk '{print $1}' artifacts/git-filter-repo-macos-aarch64.sha256)" \
+              "git-filter-repo-macos-aarch64"
+            printf '%s  %s\n' "$(awk '{print $1}' artifacts/git-filter-repo-macos-x64.sha256)" \
+              "git-filter-repo-macos-x64"
+          } > artifacts/SHA256SUMS.txt
+          cat artifacts/SHA256SUMS.txt
+
+      - name: Verify manifest ordering
+        run: |
+          set -euo pipefail
+          # Verify that SHA256SUMS.txt entries are in sorted order (second column = filename).
+          EXPECTED=$(sort -k2 artifacts/SHA256SUMS.txt)
+          ACTUAL=$(cat artifacts/SHA256SUMS.txt)
+          if [[ "$EXPECTED" != "$ACTUAL" ]]; then
+            echo "ERROR: SHA256SUMS.txt entries are not in sorted order." >&2
+            echo "Expected:" >&2
+            echo "$EXPECTED" >&2
+            echo "Actual:" >&2
+            echo "$ACTUAL" >&2
+            exit 1
+          fi
+          echo "OK: SHA256SUMS.txt entries are in sorted order."
+
       - name: Create release
         uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2.6.1
         with:
@@ -238,5 +273,6 @@ jobs:
             artifacts/git-filter-repo-linux-aarch64.sha256
             artifacts/git-filter-repo-macos-x64.sha256
             artifacts/git-filter-repo-macos-aarch64.sha256
+            artifacts/SHA256SUMS.txt
           draft: false
           prerelease: false
