@@ -16,8 +16,8 @@ commit squashing, branch merging, worktree cleanup, and state updates.
 - **Step 10: Instruction-Builder Review** — invoke `cat:instruction-builder-agent` for modified skill/command files before gate
 - **Step 11: Squash Before Approval Gate** — squash immediately before presenting gate. Re-squash ALL commits
   on EVERY presentation, including after user feedback.
-- **Step 11 (sub-step): Background Task Completion** — ALL background tasks launched in Steps 9-11 must have
-  returned via `<task-notification>` before invoking AskUserQuestion.
+- **Step 11 (sub-step): Background Task Completion** — ALL background tasks — including any reviewer subagents
+  spawned during the review phase — must have returned via `<task-notification>` before invoking AskUserQuestion.
 
 ## Arguments and Configuration
 
@@ -267,8 +267,48 @@ If `HIGH_TRUST_PAUSE == "true"`:
 
 ### Pre-Gate Background Task Completion (MANDATORY — BLOCKING)
 
-ALL background tasks (started with `run_in_background: true`) must have delivered `<task-notification>` before
-presenting pre-gate output or AskUserQuestion. Do NOT assume completion based on time or conversation turns.
+ALL background tasks (started with `run_in_background: true`) — including any reviewer subagents spawned during the
+review phase — must have delivered `<task-notification>` before presenting pre-gate output or AskUserQuestion. Do NOT
+assume completion based on time or conversation turns.
+
+**Reviewer completion check (MANDATORY):**
+
+`ISSUE_ID` is the issue identifier passed as a parameter to `work-merge-agent` (the same `issue_id` used throughout
+the merge skill for lock files and state). `CAUTION` is already parsed from the `$ARGUMENTS` binding at the top of
+this skill.
+
+```bash
+REVIEW_DIR="${CLAUDE_PROJECT_DIR}/.cat/work/review/${CLAUDE_SESSION_ID}"
+REVIEW_RESULT_FILE="${REVIEW_DIR}/${ISSUE_ID}-result.json"
+```
+
+If `REVIEW_RESULT_FILE` exists:
+- Read the file and extract the `status` field:
+  ```bash
+  PERSISTED_STATUS=$(grep -o '"status"[[:space:]]*:[[:space:]]*"[^"]*"' "${REVIEW_RESULT_FILE}" | \
+    head -1 | sed 's/.*"status"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+  ```
+- If `PERSISTED_STATUS` is absent or empty: STOP with error:
+  ```
+  ERROR: Review result file at ${REVIEW_RESULT_FILE} exists but contains no valid status.
+  All reviewer subagents must complete before the approval gate can be presented.
+  Re-run /cat:work to retry the review phase.
+  ```
+- If `PERSISTED_STATUS == "FAILED"`: STOP with error:
+  ```
+  ERROR: Review phase reported FAILED status. One or more reviewer subagents did not return a result.
+  All reviewer subagents must complete before the approval gate can be presented.
+  Re-run /cat:work to retry the review phase.
+  ```
+
+If `REVIEW_RESULT_FILE` does not exist AND `CAUTION != "low"` (i.e., review was not explicitly skipped):
+- STOP with error:
+  ```
+  ERROR: Review result file not found at ${REVIEW_RESULT_FILE}.
+  The review phase must complete successfully before the approval gate is shown.
+  Ensure the review phase ran and all reviewer subagents returned results.
+  Re-run /cat:work to retry.
+  ```
 
 ### Present Changes Before Approval Gate (BLOCKING)
 
