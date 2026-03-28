@@ -84,9 +84,9 @@ Extract conflict handling into a new file and link from `first-use.md`.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Read `plugin/skills/git-rebase-agent/first-use.md` in full.
   - Locate the `## Handling Conflicts` section (currently lines ~136-162).
@@ -142,11 +142,20 @@ Extract conflict handling into a new file and link from `first-use.md`.
     `Follow the numbered steps in **## Handling Conflicts** below. Backup preserved at backup_branch.
     Delete backup after resolution or abort is complete.`
 
-- Read `plugin/skills/work-merge-agent/first-use.md` and verify its CONFLICT handling guidance
-  (the "If rebase reports CONFLICT" block) is consistent with the updated steps. Update if inconsistent.
+- Read `plugin/skills/work-merge-agent/first-use.md`. Locate any block that describes what to do when
+  `git-rebase` returns a CONFLICT status (search for the text "CONFLICT" or "rebase" near conflict-handling
+  instructions). If that block describes steps for resolving conflicts or aborting, ensure it either:
+  (a) defers to "Follow the numbered steps in **## Handling Conflicts** in the git-rebase-agent skill", or
+  (b) is already consistent with the 6-step --continue path and --abort path defined in the updated
+      `git-rebase-agent/first-use.md`.
+  If it gives different or contradictory instructions, update that block to reference the expanded
+  `## Handling Conflicts` section in `git-rebase-agent/first-use.md`.
 
-- Read `plugin/skills/merge-subagent-agent/first-use.md` and verify its CONFLICT handling is consistent.
-  Update if inconsistent.
+- Read `plugin/skills/merge-subagent-agent/first-use.md`. Locate any block that describes CONFLICT handling
+  for a git rebase (search for "CONFLICT" or "rebase" near conflict instructions). Apply the same consistency
+  check: if the block gives steps for resolving or aborting that contradict the updated 6-step/abort path,
+  update it to reference or match the `## Handling Conflicts` section in `git-rebase-agent/first-use.md`.
+  If no such block exists, no change is needed.
 
 - Commit all changes with message: `bugfix: clarify git-rebase CONFLICT handling with explicit --continue and --abort steps`
 
