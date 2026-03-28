@@ -82,7 +82,7 @@ public final class IssueCreator
       throw new IOException("Input must be a JSON object, got: " + parsedNode.getNodeType());
     ObjectNode data = (ObjectNode) parsedNode;
 
-    String[] required = {"major", "minor", "issue_name", "index_content"};
+    String[] required = {"major", "minor", "issue_name", "index_file"};
     for (String field : required)
     {
       if (!data.has(field))
@@ -94,7 +94,8 @@ public final class IssueCreator
     int major = data.get("major").asInt();
     int minor = data.get("minor").asInt();
     String issueName = data.get("issue_name").asString();
-    String indexContent = data.get("index_content").asString();
+    Path indexSourceFile = Path.of(data.get("index_file").asString());
+    String indexContent = Files.readString(indexSourceFile, StandardCharsets.UTF_8);
     String planContent;
     if (data.has("plan_file"))
     {
@@ -123,7 +124,8 @@ public final class IssueCreator
     Files.createDirectories(issuePath);
 
     Path indexFile = issuePath.resolve("index.json");
-    Files.writeString(indexFile, indexContent, StandardCharsets.UTF_8);
+    JsonNode parsedIndex = this.mapper.readTree(indexContent);
+    Files.writeString(indexFile, this.mapper.writeValueAsString(parsedIndex), StandardCharsets.UTF_8);
 
     Path planFile = issuePath.resolve("plan.md");
     Files.writeString(planFile, planContent, StandardCharsets.UTF_8);
