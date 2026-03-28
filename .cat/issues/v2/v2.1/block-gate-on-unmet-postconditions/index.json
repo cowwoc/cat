@@ -1,4 +1,7 @@
 {
   "status": "open",
-  "dependencies": ["2.1-fix-work-merge-git-checkout-worktree"]
+  "dependencies": [
+    "2.1-fix-work-merge-git-checkout-worktree",
+    "2.1-fix-lock-release-on-rebase-conflict"
+  ]
 }

@@ -1,5 +1,7 @@
 {
   "status": "open",
-  "dependencies": [],
+  "dependencies": [
+    "2.1-fix-lock-release-on-rebase-conflict"
+  ],
   "blocks": []
 }
