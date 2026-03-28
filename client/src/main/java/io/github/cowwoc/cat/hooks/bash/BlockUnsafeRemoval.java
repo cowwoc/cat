@@ -596,11 +596,18 @@ public final class BlockUnsafeRemoval implements BashHandler
    * Reads and parses a lock file as JSON.
    *
    * @param lockFile the lock file to parse
-   * @return the parsed JSON node, or null if the file cannot be parsed
+   * @return the parsed JSON node, or null if the file cannot be read or parsed
    */
   private JsonNode parseLockFile(Path lockFile)
   {
-    return IssueLock.parseLockFile(lockFile, scope.getJsonMapper());
+    try
+    {
+      return IssueLock.parseLockFile(lockFile, scope.getJsonMapper());
+    }
+    catch (IOException _)
+    {
+      return null;
+    }
   }
 
   /**
