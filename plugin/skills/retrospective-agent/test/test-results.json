@@ -1,0 +1,56 @@
+{
+  "session": "6eac3ea2-1e8e-44d5-81ff-8d3d98bc7c00",
+  "version": "2.0",
+  "sprt_parameters": {
+    "p0": 0.95,
+    "p1": 0.85,
+    "alpha": 0.05,
+    "beta": 0.05,
+    "accept_boundary": 2.944,
+    "reject_boundary": -2.944
+  },
+  "test_cases": [
+    {
+      "test_case_id": "TC1",
+      "semantic_unit_id": "unit_routing_analysis_action",
+      "passes": 27,
+      "fails": 0,
+      "invalid_runs": 2,
+      "log_ratio": 3.0024,
+      "verdict": "ACCEPT",
+      "notes": "27 clean passes across 29 runs (2 invalid: agents re-invoked real skill). All clean runs show correct behavior: agent proceeds directly to step 5 without echoing box."
+    },
+    {
+      "test_case_id": "TC2",
+      "semantic_unit_id": "unit_critical_mandatory_sequence",
+      "passes": 48,
+      "fails": 0,
+      "invalid_runs": 16,
+      "log_ratio": 5.3376,
+      "verdict": "ACCEPT",
+      "notes": "48 clean passes across 64 runs (16 invalid: agents refused due to no-tools constraint or re-invoked real skill). All clean runs show correct behavior: agent executes steps 5 and 6 of post-handler workflow."
+    },
+    {
+      "test_case_id": "TC3",
+      "semantic_unit_id": "unit_routing_status_stop",
+      "passes": 27,
+      "fails": 0,
+      "invalid_runs": 0,
+      "log_ratio": 3.0024,
+      "verdict": "ACCEPT",
+      "notes": "27 clean passes across 27 runs. Agent outputs status message verbatim and stops without executing workflow steps."
+    },
+    {
+      "test_case_id": "TC4",
+      "semantic_unit_id": "unit_routing_error_stop",
+      "passes": 27,
+      "fails": 0,
+      "invalid_runs": 0,
+      "log_ratio": 3.0024,
+      "verdict": "ACCEPT",
+      "notes": "27 clean passes across 27 runs. Agent outputs error message verbatim and stops."
+    }
+  ],
+  "overall_verdict": "ACCEPT",
+  "conclusion": "All four test cases crossed the SPRT accept boundary (log_ratio >= 2.944). The skill change correctly routes analysis data to workflow steps 5-9 without verbatim box output, and correctly stops with verbatim output for status and error messages."
+}
