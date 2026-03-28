@@ -254,6 +254,31 @@ Skill tool:
 
 The stakeholder-review skill will spawn its own reviewer subagents and return aggregated results.
 
+### Reviewer Completion Gate (MANDATORY)
+
+Before parsing the stakeholder-review result, verify that the returned JSON contains `reviewer_count` equal to or
+greater than the count of selected stakeholders.
+
+`reviewer_count` is a top-level integer field in the JSON output from `stakeholder-review-agent` (set in Step 4 of
+that skill to the number of Task tool responses actually received, before synthetic results were added).
+
+The count of selected stakeholders is the total number of stakeholder results returned in the review output
+(including any synthetic REJECTED results added for missing reviewers). Extract this count from the result's
+reviewer list length before checking `reviewer_count`.
+
+If `reviewer_count` is absent from the result (older version of the skill), proceed without this check.
+
+If `reviewer_count` is present AND less than the total stakeholder result count, STOP immediately. Do NOT return to
+work-with-issue. Release the lock:
+```bash
+"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${ISSUE_ID}" "$CLAUDE_SESSION_ID"
+```
+
+Then return FAILED status:
+```json
+{"status": "FAILED", "message": "Reviewer completion gate failed: only ${reviewer_count} of ${total_stakeholder_count} reviewers returned results. All reviewer subagents must complete before the approval gate can be presented. Re-run /cat:work to retry."}
+```
+
 ### Handle Review Result
 
 Parse review result and filter false positives (concerns from reviewers that read target branch instead of worktree).

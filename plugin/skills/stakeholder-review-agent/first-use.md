@@ -434,10 +434,19 @@ fi
 > or was not issued, report the stakeholder as "ERROR: no Task response" instead of
 > fabricating a verdict. The verification checklist below requires matching Task call count
 > to selected stakeholder count — a mismatch is evidence of fabrication.
+>
+> **REVIEWER COUNT CHECK:** Before writing any verdict, additionally verify that the number of Task
+> tool results received equals the count of selected stakeholders (`SELECTED_COUNT` from Step 1).
+> If fewer results arrived than expected, treat each missing reviewer as FAILED with verdict REJECTED
+> and a `parse_error` note: "Reviewer did not return a Task result."
 
-All selected reviewers MUST be dispatched in a single response — one Task/Agent call per reviewer,
+All selected reviewers MUST be dispatched in a single response — one Task call per reviewer,
 all issued at the same time. Do NOT loop or spawn reviewers one at a time. Total wall time becomes
 the MAX of reviewer times rather than the SUM.
+
+**MANDATORY — Foreground Task calls only:** Issue ALL Task calls in one message. Use ONLY the Task tool — NEVER
+the Agent tool. Do NOT set `run_in_background: true`. Reviewer subagents MUST complete as foreground tasks so their
+results are received before Step 4 begins.
 
 Prepare prompts: for each stakeholder in $SELECTED, collect conventions from CONVENTION_MAP, gather
 ISSUE_PLAN_PATH and VERSION_PLAN_PATH (use VERSION_ID extraction from Step 1), extract
@@ -498,11 +507,18 @@ Return ONLY valid JSON matching your stakeholder definition.
 ```
 
 For each stakeholder, extract `model:` field from agent frontmatter (omit if absent).
-Issue ALL Task calls in one message: Task(prompt, model=optional).
+Issue ALL Task calls in one message: Task(prompt, model=optional). NEVER use Agent tool or set `run_in_background: true`.
 
 ### Step 4: Collect Reviews
 
 **Collect and parse stakeholder reviews:**
+
+**Reviewer count check (MANDATORY):** Before parsing any result, count the number of Task tool responses received.
+The expected count is `SELECTED_COUNT` — the integer count of stakeholders selected in Step 1 (it is the length of
+the selected-stakeholders list). If the received count is less than `SELECTED_COUNT`: for each missing reviewer, add
+a synthetic REJECTED result with concerns:
+`[{severity: 'CRITICAL', location: 'N/A', explanation: 'Reviewer subagent did not return a result.',
+recommendation: 'Retry /cat:work or check for background task failures.'}]`
 
 Parse Task tool output as JSON — do NOT infer verdicts from context. Every verdict comes from actual
 Task results. Expected format: `{stakeholder, approval: APPROVED|CONCERNS|REJECTED, concerns: [{severity, location, explanation, recommendation, detail_file}]}`
@@ -514,6 +530,11 @@ Validation rules:
 - Stakeholder identity mismatch: use spawned role (not self-reported) for rendering
 - detail_file validation: verify path starts with `${WORKTREE_PATH}/`; replace if invalid
 - Quality check: if ALL APPROVED with zero concerns on >50-line diff across >3 files, log warning (does not change verdict)
+
+After processing all reviewer results and before writing the final JSON output, record `ACTUAL_REVIEWER_COUNT` as the
+number of Task tool responses actually received (before any synthetic results were added for missing reviewers).
+Include a `reviewer_count` field in the top-level result JSON, set to `ACTUAL_REVIEWER_COUNT`.
+Example: `"reviewer_count": 3`
 
 ### Step 5: Aggregate Results
 
@@ -582,6 +603,10 @@ Fail if missing. Action: verify_level="none" → skip; "quick"|"changed"|"all" �
 
 - [ ] All selected stakeholder Task calls issued before verdict text (fabrication check)
 - [ ] Task call count equals selected stakeholder count (mismatch = fabrication)
+- [ ] Task tool only — Agent tool and `run_in_background: true` were NOT used for reviewer subagents
+- [ ] Received Task result count verified against SELECTED_COUNT before parsing (Step 4 reviewer count check)
+- [ ] Missing reviewers added as synthetic REJECTED results before parsing
+- [ ] `reviewer_count` field included in top-level result JSON (set to actual received count, before synthetic results)
 - [ ] Review box verdicts match Task approval fields
 - [ ] Concern counts match aggregated results
 - [ ] Boxes via Skill tool only (no prose summary)
