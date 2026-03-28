@@ -242,26 +242,28 @@ Then use AskUserQuestion with these options (in this order):
 1. **Remove stale artifacts only (≥4 hours)** *(default)* — remove only locks and worktrees with age ≥ 4 hours,
    plus all orphaned branches regardless of age
 2. **Remove all artifacts (including recent)** — remove all identified artifacts regardless of age
-3. **Delete all corrupt issue directories** — delete all directories listed under "⚠ Corrupt Issue Directories"
+3. **Delete corrupt index.json files** — delete the corrupt index.json files from issue directories listed under
+   "⚠ Corrupt Issue Directories" (directories are preserved)
 4. **Abort** — stop without removing anything
 
 If the user selects option 1, skip any locks and worktrees classified as "recent" in the plan box.
 If the user selects option 2, remove all items in the plan box.
 If the user selects option 3, for each corrupt issue directory:
 1. Display the contents of its index.json to the user (it may contain useful state data such as target branch or progress)
-2. Ask the user to confirm deletion of that specific directory after reviewing its contents
-3. Delete the directory using `/cat:safe-rm-agent`
+2. Ask the user to confirm deletion of the index.json file after reviewing its contents
+3. Delete only the corrupt index.json file: `rm "${CORRUPT_DIR}/index.json"` (never delete the directory itself —
+   it may contain plan.md and other valuable files; always preserve it even if index.json was the only file present)
 4. Stage and commit the deletion. Validate the path is non-empty before staging:
    ```bash
-   DELETED_DIR="<deleted-directory-path>"
+   CORRUPT_DIR="<issue-directory-path>"
    ISSUE_NAME="<issue-name>"
    # Validate ISSUE_NAME contains only alphanumeric characters, hyphens, and dots
    if [[ ! "$ISSUE_NAME" =~ ^[a-zA-Z0-9._-]+$ ]]; then
      echo "ERROR: Issue name contains unexpected characters: '$ISSUE_NAME'. Skipping commit." >&2
-   elif [[ -z "$DELETED_DIR" ]]; then
-     echo "ERROR: Deleted directory path is empty. Skipping commit." >&2
+   elif [[ -z "$CORRUPT_DIR" ]]; then
+     echo "ERROR: Issue directory path is empty. Skipping commit." >&2
    else
-     git add -- "$DELETED_DIR" && git commit -m "planning: remove corrupt issue directory $ISSUE_NAME"
+     git add -- "${CORRUPT_DIR}/index.json" && git commit -m "planning: remove corrupt index.json from $ISSUE_NAME"
    fi
    ```
 
