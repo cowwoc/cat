@@ -34,7 +34,7 @@ import tools.jackson.databind.node.ObjectNode;
  * <p>
  * <b>Thread Safety:</b> This class is thread-safe.
  */
-public abstract class AbstractClaudeHook extends AbstractClaudeScope implements ClaudeHook
+public abstract class AbstractClaudeHook extends AbstractClaudePluginScope implements ClaudeHook
 {
   /**
    * Pattern that accepts alphanumeric characters, hyphens, and underscores.

@@ -30,7 +30,6 @@ import io.github.cowwoc.cat.hooks.util.WorkPrepare;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -120,38 +119,9 @@ public final class AotTraining
     referenceClass(GetStatusOutput.class);
     referenceClass(GetOutput.class);
 
-    // VerifyAudit training - create temp directory with plan.md for prepare() and minimal JSON for report()
-    Path tempDir = Files.createTempDirectory("aot-training-");
-    try
-    {
-      Path planFile = tempDir.resolve("plan.md");
-      Files.writeString(planFile, """
-        # Plan
-        ## Post-conditions
-        - [ ] Test criterion
-        ## Files to Modify
-        - test.md
-        """);
-
-      VerifyAudit audit = new VerifyAudit(scope);
-      String prepareArgs = """
-        {
-          "issue_id": "aot-training",
-          "issue_path": "%s",
-          "worktree_path": "%s"
-        }
-        """.formatted(tempDir.toString(), tempDir.toString());
-      audit.prepare(prepareArgs);
-      audit.report("test-issue", "{\"criteria_results\": [], \"file_results\": {\"modify\": {}, \"delete\": {}}}");
-    }
-    finally
-    {
-      Files.deleteIfExists(tempDir.resolve("plan.md"));
-      Files.deleteIfExists(tempDir);
-    }
-
     // Reference arg-based classes to force class loading without invoking main()
-    // (their main() calls System.exit on missing args)
+    // (their main() calls System.exit on missing args, or require ClaudeTool scope)
+    referenceClass(VerifyAudit.class);
     referenceClass(EnforceStatusOutput.class);
     referenceClass(TokenCounter.class);
     referenceClass(GetCheckpointOutput.class);

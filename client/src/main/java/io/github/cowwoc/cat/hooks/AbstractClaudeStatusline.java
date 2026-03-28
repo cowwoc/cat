@@ -13,19 +13,19 @@ import tools.jackson.databind.JsonNode;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.time.Duration;
 
 /**
  * Abstract base class for scopes that provide statusline rendering capabilities.
  * <p>
- * Extends {@link AbstractClaudeScope} with the {@link ClaudeStatusline} contract, giving subclasses
+ * Extends {@link AbstractJvmScope} with the {@link ClaudeStatusline} contract, giving subclasses
  * access to the JSON mapper and CAT work path required to render the Claude Code statusline.
  * <p>
  * <b>Thread Safety:</b> This class is thread-safe.
  */
-public abstract class AbstractClaudeStatusline extends AbstractClaudeScope implements ClaudeStatusline
+public abstract class AbstractClaudeStatusline extends AbstractJvmScope implements ClaudeStatusline
 {
   private String modelDisplayName = "unknown";
   private String sessionId = "unknown";
@@ -38,13 +38,11 @@ public abstract class AbstractClaudeStatusline extends AbstractClaudeScope imple
    * Subclasses that do not read statusline data from an input stream may use this constructor.
    *
    * @param projectPath the project's root directory
-   * @param pluginRoot the Claude plugin root directory
-   * @param claudeConfigPath the Claude config directory
-   * @throws NullPointerException if any parameter is null
+   * @throws NullPointerException if {@code projectPath} is null
    */
-  protected AbstractClaudeStatusline(Path projectPath, Path pluginRoot, Path claudeConfigPath)
+  protected AbstractClaudeStatusline(Path projectPath)
   {
-    super(projectPath, pluginRoot, claudeConfigPath);
+    super(projectPath);
   }
 
   /**
@@ -55,17 +53,14 @@ public abstract class AbstractClaudeStatusline extends AbstractClaudeScope imple
    * {@link #parseStatuslineJson(String)} to populate the statusline fields.
    *
    * @param projectPath the project's root directory
-   * @param pluginRoot the Claude plugin root directory
-   * @param claudeConfigPath the Claude config directory
    * @param stdin the input stream providing Claude Code hook JSON
    * @throws NullPointerException if any parameter is null
    * @throws IOException if an I/O error occurs while reading the stream
    */
   @SuppressWarnings({"this-escape", "PMD.ConstructorCallsOverridableMethod"})
-  protected AbstractClaudeStatusline(Path projectPath, Path pluginRoot, Path claudeConfigPath,
-    InputStream stdin) throws IOException
+  protected AbstractClaudeStatusline(Path projectPath, InputStream stdin) throws IOException
   {
-    super(projectPath, pluginRoot, claudeConfigPath);
+    super(projectPath);
     requireThat(stdin, "stdin").isNotNull();
     String json = new String(stdin.readAllBytes(), StandardCharsets.UTF_8);
     parseStatuslineJson(json);

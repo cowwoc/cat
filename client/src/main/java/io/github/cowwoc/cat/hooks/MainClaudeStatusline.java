@@ -8,17 +8,22 @@ package io.github.cowwoc.cat.hooks;
 
 import io.github.cowwoc.cat.hooks.skills.TerminalType;
 import io.github.cowwoc.pouch10.core.ConcurrentLazyReference;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
 /**
  * The main implementation of {@link ClaudeStatusline} for production use.
  * <p>
- * Reads session environment values ({@code CLAUDE_PROJECT_DIR}, {@code CLAUDE_PLUGIN_ROOT}) from
- * {@code System.getenv()} at construction time, then reads and parses the statusline JSON from the
- * provided input stream.
+ * Reads and parses the statusline JSON from stdin at construction time. The project path is
+ * extracted from the JSON's {@code workspace.project_dir} field, falling back to the
+ * {@code CLAUDE_PROJECT_DIR} environment variable.
  * <p>
  * <b>Thread Safety:</b> This class is thread-safe.
  */
@@ -32,49 +37,65 @@ public final class MainClaudeStatusline extends AbstractClaudeStatusline
   /**
    * Creates a new production Claude statusline scope, reading statusline JSON from stdin.
    * <p>
-   * Reads all bytes from {@code stdin} and parses them as statusline JSON via the superclass
-   * constructor, then reads the required environment variables from {@code System.getenv()},
-   * failing immediately with {@link AssertionError} if any are unset or blank.
+   * Reads all bytes from {@code stdin}, extracts the project path from the JSON's
+   * {@code workspace.project_dir} field (falling back to the {@code CLAUDE_PROJECT_DIR}
+   * environment variable), then passes the bytes to the superclass for statusline field parsing.
    *
    * @param stdin the input stream providing Claude Code hook JSON (typically {@code System.in})
-   * @throws AssertionError if any required environment variable is not set
    * @throws NullPointerException if {@code stdin} is null
    * @throws IOException if an I/O error occurs while reading the stream
    */
   public MainClaudeStatusline(InputStream stdin) throws IOException
   {
-    super(Path.of(getEnvVar("CLAUDE_PROJECT_DIR")),
-      Path.of(getEnvVar("CLAUDE_PLUGIN_ROOT")),
-      createClaudeConfigPath(),
-      stdin);
+    this(stdin.readAllBytes());
   }
 
   /**
-   * Reads a required environment variable, failing fast if it is absent or blank.
+   * Creates a new production Claude statusline scope from pre-read stdin bytes.
    *
-   * @param name the environment variable name
-   * @return the non-blank value
-   * @throws AssertionError if the variable is not set or is blank
+   * @param stdinBytes the raw bytes from stdin
+   * @throws IOException if an I/O error occurs
    */
-  private static String getEnvVar(String name)
+  private MainClaudeStatusline(byte[] stdinBytes) throws IOException
   {
-    String value = System.getenv(name);
-    if (value == null || value.isBlank())
-      throw new AssertionError(name + " is not set");
-    return value;
+    super(extractProjectPath(stdinBytes), new ByteArrayInputStream(stdinBytes));
   }
 
   /**
-   * Reads the Claude config directory from the environment or defaults to ~/.claude.
+   * Extracts the project path from the stdin JSON's {@code workspace.project_dir} field.
+   * <p>
+   * Falls back to the {@code CLAUDE_PROJECT_DIR} environment variable if the JSON field is absent.
    *
-   * @return the Claude config directory path
+   * @param stdinBytes the raw bytes from stdin
+   * @return the project path
+   * @throws AssertionError if neither the JSON field nor the environment variable provides a project path
    */
-  private static Path createClaudeConfigPath()
+  private static Path extractProjectPath(byte[] stdinBytes)
   {
-    String configDir = System.getenv("CLAUDE_CONFIG_DIR");
-    if (configDir != null && !configDir.isBlank())
-      return Path.of(configDir);
-    return Path.of(System.getProperty("user.home"), ".claude");
+    try
+    {
+      JsonMapper mapper = JsonMapper.builder().build();
+      JsonNode root = mapper.readTree(new String(stdinBytes, StandardCharsets.UTF_8));
+      JsonNode workspaceNode = root.get("workspace");
+      if (workspaceNode != null && !workspaceNode.isNull())
+      {
+        JsonNode projectDirNode = workspaceNode.get("project_dir");
+        if (projectDirNode != null && projectDirNode.isString())
+        {
+          String projectDir = projectDirNode.asString();
+          if (!projectDir.isBlank())
+            return Path.of(projectDir);
+        }
+      }
+    }
+    catch (JacksonException _)
+    {
+      // Fall through to env var fallback
+    }
+    String envValue = System.getenv("CLAUDE_PROJECT_DIR");
+    if (envValue == null || envValue.isBlank())
+      throw new AssertionError("Neither workspace.project_dir in stdin JSON nor CLAUDE_PROJECT_DIR is set");
+    return Path.of(envValue);
   }
 
   /**

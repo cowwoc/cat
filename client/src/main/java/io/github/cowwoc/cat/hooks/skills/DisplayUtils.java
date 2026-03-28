@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.skills;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudePluginScope;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -91,16 +91,13 @@ public final class DisplayUtils
   private final String detectedTerminalKey;
 
   /**
-   * Creates a DisplayUtils instance.
+   * Creates a DisplayUtils for a plugin scope execution context.
    *
-   * @param scope the JVM scope providing JSON mapper, plugin root, and terminal type
-   * @throws NullPointerException if {@code scope} is null
-   * @throws IOException if {@code emoji-widths.json} cannot be loaded
+   * @param scope the plugin scope providing JSON mapper, terminal type, and plugin root
+   * @throws IOException if {@code emoji-widths.json} exists but cannot be loaded
    */
-  public DisplayUtils(JvmScope scope) throws IOException
+  public DisplayUtils(ClaudePluginScope scope) throws IOException
   {
-    requireThat(scope, "scope").isNotNull();
-
     JsonMapper mapper = scope.getJsonMapper();
     Path pluginRoot = scope.getPluginRoot();
     TerminalType terminalType = scope.getTerminalType();
