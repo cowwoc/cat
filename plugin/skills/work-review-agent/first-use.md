@@ -983,9 +983,9 @@ the user can verify.
 **Step 3: Apply the decision rule based on perfection:**
 
 Determine the `perfection_multiplier` from `PERFECTION_LEVEL`:
-- `low` (fix aggressively): multiplier = 0.5 — fix if `benefit >= cost × 0.5`
+- `high` (fix aggressively): multiplier = 0.5 — fix if `benefit >= cost × 0.5`
 - `medium` (balanced): multiplier = 2 — fix if `benefit >= cost × 2`
-- `high` (stay focused): multiplier = 5 — fix if `benefit >= cost × 5`
+- `low` (stay focused): multiplier = 5 — fix if `benefit >= cost × 5`
 
 For each concern: fix inline if `benefit >= cost × perfection_multiplier`
 
@@ -1004,8 +1004,8 @@ These overrides take precedence over the decision matrix formula above.
 - Medium cases: perfection determines the decision
 
 The non-linear cost scale (0, 1, 4, 10) reflects that larger changes have disproportionately higher cost (more risk,
-more review surface, more context required). The perfection multipliers (0.5, 2, 5) give clear differentiation: low
-perfection fixes 13/16 combinations, medium fixes 8/16, high fixes 6/16.
+more review surface, more context required). The perfection multipliers (0.5, 2, 5) give clear differentiation: high
+perfection fixes 13/16 combinations, medium fixes 8/16, low fixes 6/16.
 
 **Step 4: Act on the evaluation:**
 
