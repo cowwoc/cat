@@ -170,6 +170,50 @@ EOF
 }
 
 # ---------------------------------------------------------------------------
+# sha256sum output with hex-like filename (regression: no false-positive hash extraction)
+# ---------------------------------------------------------------------------
+
+@test "sha256sum output with hex-like filename does not cause false-positive hash extraction" {
+    # No python3, no git-filter-repo on PATH — force tier-3 resolution
+    write_python3_stub
+
+    # Fix platform to linux-x64 for deterministic binary name
+    cat > "${STUB_BIN_DIR}/uname" <<'EOF'
+#!/usr/bin/env bash
+if [[ "$1" == "-s" ]]; then
+  echo "Linux"
+elif [[ "$1" == "-m" ]]; then
+  echo "x86_64"
+fi
+EOF
+    chmod +x "${STUB_BIN_DIR}/uname"
+
+    BINARY_NAME="git-filter-repo-linux-x64"
+    CACHE_DIR="${FAKE_PLUGIN_ROOT}/lib"
+    mkdir -p "${CACHE_DIR}"
+
+    # Create a cached binary and its version file matching RELEASE_TAG
+    echo "fake binary content" > "${CACHE_DIR}/${BINARY_NAME}"
+    echo "git-filter-repo-v2.38.0" > "${CACHE_DIR}/${BINARY_NAME}.version"
+
+    # Write a sha256sum stub whose output filename contains a 64-char hex segment.
+    # The first field (the hash) is FAKE_SHA256_LINUX_X64 (correct); the second field
+    # is a filename that itself embeds another 64-char hex string.  The script must
+    # extract only the first field and not be confused by the hex in the filename.
+    mkdir -p "${STUB_BIN_DIR}"
+    cat > "${STUB_BIN_DIR}/sha256sum" <<EOF
+#!/usr/bin/env bash
+printf '%s  git-filter-repo-linux-x64-${FAKE_SHA256_LINUX_X64}\n' "${FAKE_SHA256_LINUX_X64}"
+EOF
+    chmod +x "${STUB_BIN_DIR}/sha256sum"
+
+    run env PATH="${STUB_BIN_DIR}:${SAFE_PATH}" bash "${DOWNLOAD_SCRIPT}"
+
+    [ "${status}" -eq 0 ]
+    [ "${output}" = "${CACHE_DIR}/${BINARY_NAME}" ]
+}
+
+# ---------------------------------------------------------------------------
 # release.conf missing RELEASE_TAG (error handling)
 # ---------------------------------------------------------------------------
 
