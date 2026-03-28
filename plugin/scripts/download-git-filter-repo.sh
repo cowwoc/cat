@@ -171,8 +171,24 @@ if [[ -f "${CACHED_BINARY}" ]] && [[ -z "${GFR_FORCE_DOWNLOAD:-}" ]]; then
 fi
 
 # Construct GitHub release download URL
-REPO_OWNER="cowwoc"
-REPO_NAME="cat"
+REPO_OWNER=$(grep -E '^REPO_OWNER=' "${CONF}" | sed 's/^REPO_OWNER="\(.*\)"$/\1/' | head -1 || true)
+if [[ -z "${REPO_OWNER}" ]]; then
+  echo "ERROR: REPO_OWNER not found in ${CONF}" >&2
+  exit 1
+fi
+if ! echo "${REPO_OWNER}" | grep -qE '^[a-zA-Z0-9_-]+$'; then
+  echo "ERROR: REPO_OWNER in ${CONF} has unexpected format: ${REPO_OWNER}" >&2
+  exit 1
+fi
+REPO_NAME=$(grep -E '^REPO_NAME=' "${CONF}" | sed 's/^REPO_NAME="\(.*\)"$/\1/' | head -1 || true)
+if [[ -z "${REPO_NAME}" ]]; then
+  echo "ERROR: REPO_NAME not found in ${CONF}" >&2
+  exit 1
+fi
+if ! echo "${REPO_NAME}" | grep -qE '^[a-zA-Z0-9_-]+$'; then
+  echo "ERROR: REPO_NAME in ${CONF} has unexpected format: ${REPO_NAME}" >&2
+  exit 1
+fi
 BINARY_URL="https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${RELEASE_TAG}/${BINARY_NAME}"
 
 if ! mkdir -p "${CACHE_DIR}"; then
