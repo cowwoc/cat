@@ -74,18 +74,8 @@ fi
 
 # --- Check 3: Download pre-built binary ---
 
-# Portable SHA256 computation across Linux (sha256sum) and macOS (shasum -a 256)
-sha256sum_portable() {
-  local file="$1"
-  if command -v sha256sum &>/dev/null; then
-    sha256sum "${file}" 2>/dev/null | awk '{print $1}'
-  elif command -v shasum &>/dev/null; then
-    shasum -a 256 "${file}" 2>/dev/null | awk '{print $1}'
-  else
-    echo "ERROR: Neither sha256sum nor shasum found in PATH" >&2
-    return 1
-  fi
-}
+# shellcheck source=plugin/scripts/sha256sum-portable.sh
+source "${CLAUDE_PLUGIN_ROOT}/scripts/sha256sum-portable.sh"
 
 # --- Detect platform ---
 # Maps uname output to platform identifiers:
