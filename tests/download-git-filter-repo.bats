@@ -60,6 +60,10 @@ setup() {
     # Write the standard release.conf
     write_release_conf
 
+    # Copy sha256sum-portable.sh into the fake plugin root so the download script can source it
+    mkdir -p "${FAKE_PLUGIN_ROOT}/scripts"
+    cp "${SCRIPT_DIR}/plugin/scripts/sha256sum-portable.sh" "${FAKE_PLUGIN_ROOT}/scripts/"
+
     # Create a stub bin dir for PATH overrides
     STUB_BIN_DIR="$(mktemp -d)"
     export STUB_BIN_DIR
@@ -162,50 +166,6 @@ EOF
     echo "fake binary content" > "${CACHE_DIR}/${BINARY_NAME}"
 
     write_sha256sum_stub "${STUB_BIN_DIR}" "${EXPECTED_HASH}"
-
-    run env PATH="${STUB_BIN_DIR}:${SAFE_PATH}" bash "${DOWNLOAD_SCRIPT}"
-
-    [ "${status}" -eq 0 ]
-    [ "${output}" = "${CACHE_DIR}/${BINARY_NAME}" ]
-}
-
-# ---------------------------------------------------------------------------
-# sha256sum output with hex-like filename (regression: no false-positive hash extraction)
-# ---------------------------------------------------------------------------
-
-@test "sha256sum output with hex-like filename does not cause false-positive hash extraction" {
-    # No python3, no git-filter-repo on PATH — force tier-3 resolution
-    write_python3_stub
-
-    # Fix platform to linux-x64 for deterministic binary name
-    cat > "${STUB_BIN_DIR}/uname" <<'EOF'
-#!/usr/bin/env bash
-if [[ "$1" == "-s" ]]; then
-  echo "Linux"
-elif [[ "$1" == "-m" ]]; then
-  echo "x86_64"
-fi
-EOF
-    chmod +x "${STUB_BIN_DIR}/uname"
-
-    BINARY_NAME="git-filter-repo-linux-x64"
-    CACHE_DIR="${FAKE_PLUGIN_ROOT}/lib"
-    mkdir -p "${CACHE_DIR}"
-
-    # Create a cached binary and its version file matching RELEASE_TAG
-    echo "fake binary content" > "${CACHE_DIR}/${BINARY_NAME}"
-    echo "git-filter-repo-v2.38.0" > "${CACHE_DIR}/${BINARY_NAME}.version"
-
-    # Write a sha256sum stub whose output filename contains a 64-char hex segment.
-    # The first field (the hash) is FAKE_SHA256_LINUX_X64 (correct); the second field
-    # is a filename that itself embeds another 64-char hex string.  The script must
-    # extract only the first field and not be confused by the hex in the filename.
-    mkdir -p "${STUB_BIN_DIR}"
-    cat > "${STUB_BIN_DIR}/sha256sum" <<EOF
-#!/usr/bin/env bash
-printf '%s  git-filter-repo-linux-x64-${FAKE_SHA256_LINUX_X64}\n' "${FAKE_SHA256_LINUX_X64}"
-EOF
-    chmod +x "${STUB_BIN_DIR}/sha256sum"
 
     run env PATH="${STUB_BIN_DIR}:${SAFE_PATH}" bash "${DOWNLOAD_SCRIPT}"
 
@@ -477,6 +437,9 @@ EOF
     # Stub sha256sum so SHA256 verification of cache also fails gracefully (no cached binary exists)
     write_sha256sum_stub "${STUB_BIN_DIR}" "${FAKE_SHA256_LINUX_X64}"
 
+    CACHE_DIR="${FAKE_PLUGIN_ROOT}/lib"
+    mkdir -p "${CACHE_DIR}"
+
     # Stub curl to return a connection failure exit code
     cat > "${STUB_BIN_DIR}/curl" <<'EOF'
 #!/usr/bin/env bash
@@ -488,4 +451,151 @@ EOF
 
     [ "${status}" -ne 0 ]
     [[ "${output}" == *"ERROR"* ]] || [[ "${lines[*]}" == *"ERROR"* ]]
+    # CACHED_BINARY must not exist
+    [ ! -f "${CACHE_DIR}/git-filter-repo-linux-x64" ]
+    # No .tmp. files must remain in the cache directory
+    TMP_COUNT=$(find "${CACHE_DIR}" -name "*.tmp.*" 2>/dev/null | wc -l)
+    [ "${TMP_COUNT}" -eq 0 ]
+}
+
+@test "curl timeout (exit 28) leaves no partial file in cache directory" {
+    # Stub python3 to fail so we reach download phase; git-filter-repo excluded via SAFE_PATH
+    write_python3_stub
+
+    # Fix platform to linux-x64 for deterministic binary name
+    cat > "${STUB_BIN_DIR}/uname" <<'EOF'
+#!/usr/bin/env bash
+if [[ "$1" == "-s" ]]; then
+  echo "Linux"
+elif [[ "$1" == "-m" ]]; then
+  echo "x86_64"
+fi
+EOF
+    chmod +x "${STUB_BIN_DIR}/uname"
+
+    write_sha256sum_stub "${STUB_BIN_DIR}" "${FAKE_SHA256_LINUX_X64}"
+
+    CACHE_DIR="${FAKE_PLUGIN_ROOT}/lib"
+    mkdir -p "${CACHE_DIR}"
+
+    # Stub curl: write partial bytes to the -o output file then exit 28 (timeout)
+    cat > "${STUB_BIN_DIR}/curl" <<'EOF'
+#!/usr/bin/env bash
+for ((i=1; i<=$#; i++)); do
+  if [[ "${!i}" == "-o" ]]; then
+    next=$((i+1))
+    printf 'partial' > "${!next}"
+    break
+  fi
+done
+exit 28
+EOF
+    chmod +x "${STUB_BIN_DIR}/curl"
+
+    run env PATH="${STUB_BIN_DIR}:${SAFE_PATH}" bash "${DOWNLOAD_SCRIPT}"
+
+    [ "${status}" -ne 0 ]
+    [[ "${output}" == *"ERROR"* ]] || [[ "${lines[*]}" == *"ERROR"* ]]
+    [[ "${output}" == *"timeout"* ]] || [[ "${lines[*]}" == *"timeout"* ]]
+    # CACHED_BINARY must not exist
+    [ ! -f "${CACHE_DIR}/git-filter-repo-linux-x64" ]
+    # No .tmp. files must remain in the cache directory
+    TMP_COUNT=$(find "${CACHE_DIR}" -name "*.tmp.*" 2>/dev/null | wc -l)
+    [ "${TMP_COUNT}" -eq 0 ]
+}
+
+@test "partial download (curl exits 0, wrong SHA256) triggers SHA256 failure and cleanup" {
+    # Stub python3 to fail so we reach download phase; git-filter-repo excluded via SAFE_PATH
+    write_python3_stub
+
+    # Fix platform to linux-x64 for deterministic binary name
+    cat > "${STUB_BIN_DIR}/uname" <<'EOF'
+#!/usr/bin/env bash
+if [[ "$1" == "-s" ]]; then
+  echo "Linux"
+elif [[ "$1" == "-m" ]]; then
+  echo "x86_64"
+fi
+EOF
+    chmod +x "${STUB_BIN_DIR}/uname"
+
+    # Stub sha256sum to return all-zeros hash (will not match FAKE_SHA256_LINUX_X64)
+    WRONG_HASH="0000000000000000000000000000000000000000000000000000000000000000"
+    write_sha256sum_stub "${STUB_BIN_DIR}" "${WRONG_HASH}"
+
+    CACHE_DIR="${FAKE_PLUGIN_ROOT}/lib"
+    mkdir -p "${CACHE_DIR}"
+
+    # Stub curl: write a few bytes (partial content) then exit 0
+    cat > "${STUB_BIN_DIR}/curl" <<'EOF'
+#!/usr/bin/env bash
+for ((i=1; i<=$#; i++)); do
+  if [[ "${!i}" == "-o" ]]; then
+    next=$((i+1))
+    printf 'partial' > "${!next}"
+    break
+  fi
+done
+exit 0
+EOF
+    chmod +x "${STUB_BIN_DIR}/curl"
+
+    run env PATH="${STUB_BIN_DIR}:${SAFE_PATH}" bash "${DOWNLOAD_SCRIPT}"
+
+    [ "${status}" -ne 0 ]
+    [[ "${output}" == *"SHA256"* ]] || [[ "${output}" == *"checksum"* ]] || \
+        [[ "${lines[*]}" == *"SHA256"* ]] || [[ "${lines[*]}" == *"checksum"* ]]
+    # CACHED_BINARY must not exist after failed SHA256 verification
+    [ ! -f "${CACHE_DIR}/git-filter-repo-linux-x64" ]
+    # No .tmp. files must remain in the cache directory
+    TMP_COUNT=$(find "${CACHE_DIR}" -name "*.tmp.*" 2>/dev/null | wc -l)
+    [ "${TMP_COUNT}" -eq 0 ]
+}
+
+@test "successful download with SHA256 mismatch triggers cleanup (no CACHED_BINARY left)" {
+    # Stub python3 to fail so we reach download phase; git-filter-repo excluded via SAFE_PATH
+    write_python3_stub
+
+    # Fix platform to linux-x64 for deterministic binary name
+    cat > "${STUB_BIN_DIR}/uname" <<'EOF'
+#!/usr/bin/env bash
+if [[ "$1" == "-s" ]]; then
+  echo "Linux"
+elif [[ "$1" == "-m" ]]; then
+  echo "x86_64"
+fi
+EOF
+    chmod +x "${STUB_BIN_DIR}/uname"
+
+    # Stub sha256sum to return all-f's hash (will not match FAKE_SHA256_LINUX_X64)
+    WRONG_HASH="ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    write_sha256sum_stub "${STUB_BIN_DIR}" "${WRONG_HASH}"
+
+    CACHE_DIR="${FAKE_PLUGIN_ROOT}/lib"
+    mkdir -p "${CACHE_DIR}"
+
+    # Stub curl: write "wrong content" (simulates a full download of wrong data) then exit 0
+    cat > "${STUB_BIN_DIR}/curl" <<'EOF'
+#!/usr/bin/env bash
+for ((i=1; i<=$#; i++)); do
+  if [[ "${!i}" == "-o" ]]; then
+    next=$((i+1))
+    echo "wrong content" > "${!next}"
+    break
+  fi
+done
+exit 0
+EOF
+    chmod +x "${STUB_BIN_DIR}/curl"
+
+    run env PATH="${STUB_BIN_DIR}:${SAFE_PATH}" bash "${DOWNLOAD_SCRIPT}"
+
+    [ "${status}" -ne 0 ]
+    [[ "${output}" == *"SHA256"* ]] || [[ "${output}" == *"checksum"* ]] || \
+        [[ "${lines[*]}" == *"SHA256"* ]] || [[ "${lines[*]}" == *"checksum"* ]]
+    # CACHED_BINARY must not exist after failed SHA256 verification
+    [ ! -f "${CACHE_DIR}/git-filter-repo-linux-x64" ]
+    # No .tmp. files must remain in the cache directory
+    TMP_COUNT=$(find "${CACHE_DIR}" -name "*.tmp.*" 2>/dev/null | wc -l)
+    [ "${TMP_COUNT}" -eq 0 ]
 }

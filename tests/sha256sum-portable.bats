@@ -37,13 +37,19 @@ sha256sum_portable /dev/null
 }
 
 @test "sha256sum_portable falls back to shasum when sha256sum is absent" {
-    cat > "${STUB_BIN_DIR}/shasum" <<'EOF'
-#!/usr/bin/env bash
-echo "1111111111111111111111111111111111111111111111111111111111111111  $1"
+    # Use absolute shebang so the stub works without /usr/bin in PATH.
+    cat > "${STUB_BIN_DIR}/shasum" <<EOF
+#!${STUB_BIN_DIR}/bash
+echo "1111111111111111111111111111111111111111111111111111111111111111  \$1"
 EOF
     chmod +x "${STUB_BIN_DIR}/shasum"
 
-    run env PATH="${STUB_BIN_DIR}:${SAFE_PATH}" bash -c "
+    # Symlink bash and awk into the stub dir so the helper script can use them
+    # without /usr/bin in PATH, keeping sha256sum genuinely absent.
+    ln -sf /usr/bin/bash "${STUB_BIN_DIR}/bash"
+    ln -sf /usr/bin/awk "${STUB_BIN_DIR}/awk"
+
+    run env PATH="${STUB_BIN_DIR}" /usr/bin/bash -c "
 source '${HELPER_SCRIPT}'
 sha256sum_portable /dev/null
 "
@@ -53,7 +59,8 @@ sha256sum_portable /dev/null
 }
 
 @test "sha256sum_portable exits non-zero when neither sha256sum nor shasum is available" {
-    run env PATH="${STUB_BIN_DIR}:${SAFE_PATH}" bash -c "
+    # Do NOT include /usr/bin in PATH so that neither sha256sum nor shasum is present.
+    run env PATH="${STUB_BIN_DIR}" /usr/bin/bash -c "
 source '${HELPER_SCRIPT}'
 sha256sum_portable /dev/null
 "
