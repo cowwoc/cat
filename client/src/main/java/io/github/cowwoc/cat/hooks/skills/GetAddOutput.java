@@ -44,7 +44,7 @@ public final class GetAddOutput implements SkillOutput
   private static final String BRANCH_STRATEGY = "feature";
   private static final String BRANCH_PATTERN = "v{version}/{issue-name}";
   private static final int SUMMARY_MAX_LENGTH = 120;
-  private final Logger log = LoggerFactory.getLogger(getClass());
+  private final Logger log = LoggerFactory.getLogger(GetAddOutput.class);
   /**
    * The JVM scope for accessing shared services.
    */

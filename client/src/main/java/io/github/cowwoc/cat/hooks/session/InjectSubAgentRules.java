@@ -27,7 +27,7 @@ import java.util.List;
  */
 public final class InjectSubAgentRules implements SubagentStartHandler
 {
-  private final Logger log = LoggerFactory.getLogger(getClass());
+  private final Logger log = LoggerFactory.getLogger(InjectSubAgentRules.class);
 
   /**
    * Creates a new InjectSubAgentRules handler.
