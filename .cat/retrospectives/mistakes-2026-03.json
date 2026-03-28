@@ -2740,17 +2740,24 @@
   }, {
     "id" : "M587",
     "timestamp" : "2026-03-20T15:22:31Z",
-    "category" : "protocol-violation",
-    "description" : "",
-    "root_cause" : "Agent skipped verify-implementation-agent invocation BEFORE presenting approval gate; marked index.json as closed despite post-conditions unsatisfied",
-    "cause_signature" : null,
-    "prevention_type" : "",
-    "prevention_path" : "",
-    "pattern_keywords" : [ ],
-    "prevention_implemented" : false,
+    "category" : "protocol_violation",
+    "title" : "Approval gate presented despite INCOMPLETE verify-implementation result",
+    "description" : "work-merge-agent presented AskUserQuestion for issue 2.1-add-output-token-optimization-guidance when the confirm phase had reported INCOMPLETE status. The commit contained only tests with no actual skill file modifications, so post-conditions were Missing. The merge phase had no mechanism to check the verify-implementation result before proceeding to the gate.",
+    "root_cause" : "work-merge-agent does not read the criteria-analysis.json file produced by the work-verify subagent during the confirm phase. No parameter or file carries the verify result forward to the merge phase, leaving the gate unguarded against incomplete implementations.",
+    "cause_signature" : "compliance_failure:skill_incomplete:gate_unguarded",
+    "prevention_type" : "skill",
+    "prevention_path" : "plugin/skills/work-merge-agent/first-use.md Step 7",
+    "prevention_commit_hash" : null,
+    "pattern_keywords" : [ "work-merge-agent", "approval-gate", "post-conditions", "verify-implementation", "criteria-analysis" ],
+    "prevention_implemented" : true,
     "prevention_verified" : false,
     "recurrence_of" : null,
-    "correct_behavior" : ""
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : "Before squashing or rebasing (Step 7), work-merge-agent reads ${CLAUDE_PROJECT_DIR}/.cat/work/verify/${CLAUDE_SESSION_ID}/criteria-analysis.json. If any criterion has status Missing or Partial, the skill outputs a BLOCKED message listing each unmet criterion and returns FAILED without presenting AskUserQuestion. The gate is only presented when all criteria are Done (or the file is absent because verify=none)."
   }, {
     "id" : "M588",
     "timestamp" : "2026-03-19T14:53:44Z",

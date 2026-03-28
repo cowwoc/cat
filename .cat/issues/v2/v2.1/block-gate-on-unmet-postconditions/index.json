@@ -1,7 +1,8 @@
 {
-  "status": "open",
+  "status": "closed",
+  "resolution": "implemented",
   "dependencies": [
-    "2.1-fix-work-merge-git-checkout-worktree",
-    "2.1-fix-lock-release-on-rebase-conflict"
-  ]
+    "2.1-fix-work-merge-git-checkout-worktree"
+  ],
+  "target_branch": "v2.1"
 }

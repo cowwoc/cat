@@ -203,3 +203,58 @@ Trace the updated Step 6.5 logic manually:
 
 Document the simulation results as a comment appended to the Execution Plan section of this
 PLAN.md file (the commit from Step 5 is already done at this point; do not amend it).
+
+<!-- E2E Simulation Results (Step 6 trace — 2026-03-28)
+
+Scenario 1: criteria-analysis.json absent
+  CRITERIA_FILE="${CLAUDE_PROJECT_DIR}/.cat/work/verify/${CLAUDE_SESSION_ID}/criteria-analysis.json"
+  [[ ! -f "${CRITERIA_FILE}" ]] → true
+  Output: "NOTE: criteria-analysis.json not found — post-condition gate check skipped"
+  Result: Flow continues to Step 8 (squash). PASS.
+
+Scenario 2: All criteria Done
+  CRITERIA_FILE present. Contents include only "status": "Done" entries.
+  UNMET=$(grep -E '"status"[[:space:]]*:[[:space:]]*"(Partial|Missing)"' ...) → empty string
+  [[ -z "${UNMET}" ]] → true
+  Result: Flow continues to Step 8 (squash). PASS.
+
+Scenario 3: One Missing criterion
+  CRITERIA_FILE present. One criterion has "status": "Missing", name: "Skill file updated".
+  UNMET → non-empty
+  UNMET_DETAILS computed via grep -EB5 + awk → "  - Skill file updated [Missing]"
+  Output: "BLOCKED: Approval gate cannot be presented — unmet post-conditions detected."
+           "  - Skill file updated [Missing]"
+  Returned: {"status": "FAILED", "phase": "pre-gate-check", ...}
+  Result: Gate not presented, squash/rebase skipped. PASS.
+
+Scenario 4: One Partial criterion
+  CRITERIA_FILE present. One criterion has "status": "Partial", name: "Tests passing".
+  UNMET → non-empty
+  UNMET_DETAILS → "  - Tests passing [Partial]"
+  Output: BLOCKED message with criterion listed.
+  Returned: {"status": "FAILED", ...}
+  Result: Gate not presented. PASS.
+
+All 4 scenarios verified. grep -EB5 flag ensures alternation in the pattern is active. awk-based
+extraction handles field order variation (name before or after status) correctly.
+-->
+
+### Step 7: Correct prevention_path in mistakes-2026-03.json
+
+The M587 entry in `.cat/retrospectives/mistakes-2026-03.json` has `prevention_path` set to
+`"plugin/skills/work-merge-agent/first-use.md Step 7"`. The plan specified `Step 6.5`, but the
+implementation correctly renumbered the step to `Step 7` per CLAUDE.md convention (no half-steps).
+The retrospective entry must reflect the actual step label used in the implementation.
+
+Read `.cat/retrospectives/mistakes-2026-03.json`, locate the M587 entry, and verify the current
+value of `prevention_path`. If it already reads `"plugin/skills/work-merge-agent/first-use.md Step 7"`,
+the entry is correct and no change is needed — this step is a no-op. If it reads `Step 6.5` or any
+other value, update it to `"plugin/skills/work-merge-agent/first-use.md Step 7"`.
+
+Commit the updated file:
+
+```bash
+cd "${WORKTREE_PATH}"
+git add .cat/retrospectives/mistakes-2026-03.json
+git commit -m "bugfix: correct M587 prevention_path to Step 7 (renamed from Step 6.5 per CLAUDE.md)"
+```
