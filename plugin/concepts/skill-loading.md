@@ -53,6 +53,13 @@ flow — there is no background subprocess spawning. After the Skill tool return
 should immediately proceed with the skill's instructions rather than waiting for a background process to
 complete.
 
+**CRITICAL: Skill tool content delivery IS the execution result.** When the Skill tool returns skill
+instructions, that return constitutes successful execution of the skill. The agent MUST follow the returned
+instructions directly. Do NOT bypass the Skill tool by spawning a manual Agent task with a simplified
+delegation prompt. Doing so strips mandatory workflow steps (such as AskUserQuestion approval gates,
+review phases, and merge protocols) and causes protocol violations. The skill's returned content is the
+authoritative source of what the agent should do next — use it as-is.
+
 ### Via `skills:` Frontmatter (agent definitions only)
 
 The `skills:` field in agent YAML frontmatter injects skill content into a subagent's context at spawn
