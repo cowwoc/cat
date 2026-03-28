@@ -6,20 +6,19 @@
  */
 package io.github.cowwoc.cat.hooks;
 
-
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
- * A {@link JvmScope} for hook handler processes that combines the Claude session environment
+ * A {@link ClaudePluginScope} for hook handler processes that combines the Claude session environment
  * (project path, plugin root, config dir), hook input data, and hook output building in a single
  * scope object.
  * <p>
  * Implementations read infrastructure env vars at construction and parse hook JSON from stdin
  * (production) or from an injected value (tests).
  */
-public interface ClaudeHook extends ClaudeScope
+public interface ClaudeHook extends ClaudePluginScope
 {
   /**
    * Returns the Claude session ID extracted from the hook input JSON.

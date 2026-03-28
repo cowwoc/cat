@@ -12,7 +12,6 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
 
@@ -35,7 +34,7 @@ public final class GetStakeholderSelectionBox
   /**
    * The JVM scope for accessing shared services.
    */
-  private final JvmScope scope;
+  private final ClaudeTool scope;
 
   /**
    * Represents a skipped stakeholder with reason.
@@ -63,10 +62,10 @@ public final class GetStakeholderSelectionBox
   /**
    * Creates a GetStakeholderSelectionBox instance.
    *
-   * @param scope the JVM scope for accessing shared services
+   * @param scope the scope for accessing shared services
    * @throws NullPointerException if {@code scope} is null
    */
-  public GetStakeholderSelectionBox(JvmScope scope)
+  public GetStakeholderSelectionBox(ClaudeTool scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -149,14 +148,14 @@ public final class GetStakeholderSelectionBox
   /**
    * Executes the stakeholder selection box logic with a caller-provided output stream.
    *
-   * @param scope the JVM scope
+   * @param scope the scope
    * @param args  command line arguments: selected-count, total-count, running, skipped
    * @param out   the output stream to write to
    * @throws NullPointerException     if {@code scope}, {@code args} or {@code out} are null
    * @throws IllegalArgumentException if the wrong number of arguments or invalid integers are provided
    * @throws IOException              if an I/O error occurs
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  public static void run(ClaudeTool scope, String[] args, PrintStream out) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();

@@ -20,7 +20,7 @@ import java.nio.file.Path;
  * <p>
  * <b>Thread Safety:</b> This class is thread-safe.
  */
-public abstract class AbstractClaudeTool extends AbstractClaudeScope implements ClaudeTool
+public abstract class AbstractClaudeTool extends AbstractClaudePluginScope implements ClaudeTool
 {
   private final String sessionId;
 

@@ -19,13 +19,13 @@ import java.util.List;
 import java.util.stream.Stream;
 
 /**
- * Enforces that only MainClaudeTool.java, MainJvmScope.java, MainClaudeHook.java, GetSkill.java,
+ * Enforces that only MainClaudeTool.java, MainClaudeHook.java, GetSkill.java,
  * TerminalType.java, SessionStartHook.java, and MainClaudeStatusline.java call System.getenv()
  * directly.
  * <p>
  * Hook handlers must access session-specific values (session ID) from HookInput JSON,
- * not from environment variables. CLI commands use either {@code MainClaudeTool} (session CLI tools)
- * or {@code MainJvmScope} (infrastructure CLI tools) to read environment variables at startup.
+ * not from environment variables. CLI commands use {@code MainClaudeTool} (session CLI tools)
+ * to read environment variables at startup.
  * {@code MainClaudeHook} is allowed because it is the production hook scope implementation that reads
  * infrastructure path variables ({@code CLAUDE_PROJECT_DIR}, {@code CLAUDE_PLUGIN_ROOT},
  * {@code CLAUDE_CONFIG_DIR}, {@code TZ}) from the environment at startup.
@@ -34,9 +34,8 @@ import java.util.stream.Stream;
  * because it wraps System.getenv() for terminal detection. SessionStartHook.java is allowed because its
  * {@code main()} method reads {@code CLAUDE_ENV_FILE} from the environment and passes it to
  * {@code InjectEnv} as a constructor parameter. MainClaudeStatusline.java is allowed because it is the
- * production statusline scope implementation that reads infrastructure path variables
- * ({@code CLAUDE_PROJECT_DIR}, {@code CLAUDE_PLUGIN_ROOT}, {@code CLAUDE_CONFIG_DIR}, {@code TZ})
- * from the environment at startup.
+ * production statusline scope implementation that reads {@code CLAUDE_PROJECT_DIR}, {@code TZ} from the
+ * environment at startup.
  */
 public final class EnforceJvmScopeEnvAccessTest
 {
@@ -70,8 +69,6 @@ public final class EnforceJvmScopeEnvAccessTest
         filter(path -> !sourceRoot.relativize(path).toString().equals(
           "io/github/cowwoc/cat/hooks/MainClaudeTool.java")).
         filter(path -> !sourceRoot.relativize(path).toString().equals(
-          "io/github/cowwoc/cat/hooks/MainJvmScope.java")).
-        filter(path -> !sourceRoot.relativize(path).toString().equals(
           "io/github/cowwoc/cat/hooks/MainClaudeHook.java")).
         filter(path -> !sourceRoot.relativize(path).toString().equals(
           "io/github/cowwoc/cat/hooks/util/GetSkill.java")).
@@ -95,13 +92,12 @@ public final class EnforceJvmScopeEnvAccessTest
     if (!violations.isEmpty())
     {
       String message = """
-        System.getenv() found in files other than MainClaudeTool.java, MainJvmScope.java, \
+        System.getenv() found in files other than MainClaudeTool.java, \
         MainClaudeHook.java, GetSkill.java, TerminalType.java, SessionStartHook.java, and \
         MainClaudeStatusline.java.
 
         REQUIREMENT: Hooks must read session-specific values from HookInput JSON (not environment variables).
         Session CLI commands receive session values from MainClaudeTool which reads them at startup.
-        Infrastructure CLI commands (e.g., GetSkill) use MainJvmScope which reads only path variables.
         Hook handlers use MainClaudeHook to read infrastructure path variables at startup.
 
         Violations found in:
@@ -111,8 +107,6 @@ public final class EnforceJvmScopeEnvAccessTest
         FIX depends on context:
           Session CLI main() methods: use MainClaudeTool (or TestClaudeTool in tests) to access \
         session values — the constructor reads environment variables and stores them as fields.
-          Infrastructure CLI main() methods: use MainJvmScope when CLAUDE_SESSION_ID and \
-        CLAUDE_ENV_FILE are not available (e.g., invoked by the skill preprocessor).
           Hook handler main() methods: use MainClaudeHook to read infrastructure path variables \
         and hook JSON from stdin.
           In hook handlers / business logic: read session-specific values from HookInput JSON, \
@@ -135,7 +129,6 @@ public final class EnforceJvmScopeEnvAccessTest
     Path sourceRoot = Paths.get(System.getProperty("user.dir"), "src/main/java");
     String[] whitelistedFiles = {
       "io/github/cowwoc/cat/hooks/MainClaudeTool.java",
-      "io/github/cowwoc/cat/hooks/MainJvmScope.java",
       "io/github/cowwoc/cat/hooks/MainClaudeHook.java",
       "io/github/cowwoc/cat/hooks/util/GetSkill.java",
       "io/github/cowwoc/cat/hooks/skills/TerminalType.java",
