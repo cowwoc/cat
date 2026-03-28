@@ -1,4 +1,6 @@
 {
-  "status": "open",
-  "dependencies": ["2.1-fix-work-merge-git-checkout-worktree"]
+  "status" : "closed",
+  "resolution" : "implemented",
+  "dependencies" : [ "2.1-fix-work-merge-git-checkout-worktree" ],
+  "target_branch" : "v2.1"
 }

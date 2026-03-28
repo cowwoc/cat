@@ -143,8 +143,8 @@ if [[ -z "$OLD_FORK_POINT" ]]; then echo "ERROR: Could not determine fork point"
 Skill("cat:git-rebase-agent", args="{WORKTREE_PATH} {TARGET_BRANCH}")
 ```
 
-- **CONFLICT**: Resolve each file preserving intent of both sides. Record `CONFLICT_RESOLUTIONS`. Set
-  `REBASE_HAD_CONFLICTS=true`. Delete backup branch. Proceed to Step 9c.
+- **CONFLICT**: Follow the numbered steps in **## Handling Conflicts** in the git-rebase-agent skill. Record
+  `CONFLICT_RESOLUTIONS`. Set `REBASE_HAD_CONFLICTS=true`. Delete backup branch. Proceed to Step 9c.
 - **OK**: Delete backup branch. Proceed to Step 9c.
 - **ERROR**: Output error, restore from backup if needed. STOP.
 
