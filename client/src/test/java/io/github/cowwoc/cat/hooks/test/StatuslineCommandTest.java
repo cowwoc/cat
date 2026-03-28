@@ -1026,7 +1026,7 @@ public final class StatuslineCommandTest
       {
         Files.writeString(lockDir.resolve("2.1-broken.lock"), "{broken}");
         String result = cmd.getActiveIssue("aaaaaaaa-1111-2222-3333-444444444444", lockDir);
-        requireThat(result, "result").startsWith("⚠");
+        requireThat(result, "result").startsWith("⚠ CAT:");
       }
       finally
       {
@@ -1091,7 +1091,7 @@ public final class StatuslineCommandTest
       {
         Files.writeString(lockDir.resolve("2.1-empty.lock"), "");
         String result = cmd.getActiveIssue("aaaaaaaa-1111-2222-3333-444444444444", lockDir);
-        requireThat(result, "result").startsWith("⚠");
+        requireThat(result, "result").startsWith("⚠ CAT:");
       }
       finally
       {
