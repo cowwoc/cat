@@ -99,20 +99,23 @@ public class IssueCreatorTest
   public void executeRejectsMissingMajor() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
+    Path indexTempFile = Files.createTempFile("index-", ".json");
     try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
+      Files.writeString(indexTempFile, "{}");
       IssueCreator creator = new IssueCreator(scope);
       String json = """
         {
           "minor": 1,
           "issue_name": "test",
-          "index_content": "{}",
+          "index_file": "%s",
           "plan_content": "plan"
-        }""";
+        }""".formatted(indexTempFile.toString().replace("\\", "\\\\"));
       creator.execute(json);
     }
     finally
     {
+      Files.deleteIfExists(indexTempFile);
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
@@ -127,20 +130,23 @@ public class IssueCreatorTest
   public void executeRejectsMissingMinor() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
+    Path indexTempFile = Files.createTempFile("index-", ".json");
     try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
+      Files.writeString(indexTempFile, "{}");
       IssueCreator creator = new IssueCreator(scope);
       String json = """
         {
           "major": 2,
           "issue_name": "test",
-          "index_content": "{}",
+          "index_file": "%s",
           "plan_content": "plan"
-        }""";
+        }""".formatted(indexTempFile.toString().replace("\\", "\\\\"));
       creator.execute(json);
     }
     finally
     {
+      Files.deleteIfExists(indexTempFile);
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
@@ -155,32 +161,35 @@ public class IssueCreatorTest
   public void executeRejectsMissingIssueName() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
+    Path indexTempFile = Files.createTempFile("index-", ".json");
     try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
+      Files.writeString(indexTempFile, "{}");
       IssueCreator creator = new IssueCreator(scope);
       String json = """
         {
           "major": 2,
           "minor": 1,
-          "index_content": "{}",
+          "index_file": "%s",
           "plan_content": "plan"
-        }""";
+        }""".formatted(indexTempFile.toString().replace("\\", "\\\\"));
       creator.execute(json);
     }
     finally
     {
+      Files.deleteIfExists(indexTempFile);
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
   /**
-   * Verifies that execute rejects JSON missing required field index_content.
+   * Verifies that execute rejects JSON missing required field index_file.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = IOException.class,
-    expectedExceptionsMessageRegExp = ".*Missing required field: index_content.*")
-  public void executeRejectsMissingIndexContent() throws IOException
+    expectedExceptionsMessageRegExp = ".*Missing required field: index_file.*")
+  public void executeRejectsMissingIndexFile() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
@@ -211,20 +220,23 @@ public class IssueCreatorTest
   public void executeRejectsMissingPlanContent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
+    Path indexTempFile = Files.createTempFile("index-", ".json");
     try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
+      Files.writeString(indexTempFile, "{}");
       IssueCreator creator = new IssueCreator(scope);
       String json = """
         {
           "major": 2,
           "minor": 1,
           "issue_name": "test",
-          "index_content": "{}"
-        }""";
+          "index_file": "%s"
+        }""".formatted(indexTempFile.toString().replace("\\", "\\\\"));
       creator.execute(json);
     }
     finally
     {
+      Files.deleteIfExists(indexTempFile);
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
@@ -238,17 +250,19 @@ public class IssueCreatorTest
   public void executeReturnsErrorWhenParentMissing() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
+    Path indexTempFile = Files.createTempFile("index-", ".json");
     try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
+      Files.writeString(indexTempFile, "{}");
       IssueCreator creator = new IssueCreator(scope);
       String json = """
         {
           "major": 999,
           "minor": 999,
           "issue_name": "nonexistent-test",
-          "index_content": "{}",
+          "index_file": "%s",
           "plan_content": "plan"
-        }""";
+        }""".formatted(indexTempFile.toString().replace("\\", "\\\\"));
 
       String result = creator.execute(json);
       JsonMapper mapper = scope.getJsonMapper();
@@ -261,6 +275,7 @@ public class IssueCreatorTest
     }
     finally
     {
+      Files.deleteIfExists(indexTempFile);
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
@@ -304,7 +319,7 @@ public class IssueCreatorTest
   }
 
   /**
-   * Verifies that execute creates directories and files for valid input.
+   * Verifies that execute creates directories and files for valid input, and that index.json is pretty-printed.
    *
    * @throws IOException if an I/O error occurs
    * @throws InterruptedException if git process is interrupted
@@ -313,18 +328,20 @@ public class IssueCreatorTest
   public void executeCreatesIssueStructure() throws IOException, InterruptedException
   {
     Path tempDir = setupGitRepo();
+    Path indexTempFile = Files.createTempFile("index-", ".json");
     try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
+      Files.writeString(indexTempFile, "{\"status\": \"open\"}");
       IssueCreator creator = new IssueCreator(scope);
       String json = """
         {
           "major": 2,
           "minor": 1,
           "issue_name": "test-issue",
-          "index_content": "{\\"status\\": \\"open\\"}",
+          "index_file": "%s",
           "plan_content": "# Plan\\nSteps here",
           "commit_description": "Test issue creation"
-        }""";
+        }""".formatted(indexTempFile.toString().replace("\\", "\\\\"));
 
       String result = creator.execute(json, tempDir);
       JsonMapper mapper = scope.getJsonMapper();
@@ -339,6 +356,8 @@ public class IssueCreatorTest
 
       String indexContent = Files.readString(issuePath.resolve("index.json"));
       requireThat(indexContent, "indexContent").contains("open");
+      // index.json must be pretty-printed (indented), not a single-line JSON string
+      requireThat(indexContent, "indexContent").contains("\n");
 
       String planContent = Files.readString(issuePath.resolve("plan.md"));
       requireThat(planContent, "planContent").contains("Steps here");
@@ -350,6 +369,7 @@ public class IssueCreatorTest
     }
     finally
     {
+      Files.deleteIfExists(indexTempFile);
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
@@ -364,17 +384,19 @@ public class IssueCreatorTest
   public void executeAcceptsOptionalCommitDescription() throws IOException, InterruptedException
   {
     Path tempDir = setupGitRepo();
+    Path indexTempFile = Files.createTempFile("index-", ".json");
     try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
+      Files.writeString(indexTempFile, "{}");
       IssueCreator creator = new IssueCreator(scope);
       String json = """
         {
           "major": 2,
           "minor": 1,
           "issue_name": "test-optional",
-          "index_content": "{}",
+          "index_file": "%s",
           "plan_content": "# Plan"
-        }""";
+        }""".formatted(indexTempFile.toString().replace("\\", "\\\\"));
 
       String result = creator.execute(json, tempDir);
       JsonMapper mapper = scope.getJsonMapper();
@@ -384,6 +406,7 @@ public class IssueCreatorTest
     }
     finally
     {
+      Files.deleteIfExists(indexTempFile);
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
@@ -400,8 +423,12 @@ public class IssueCreatorTest
   public void executeCreatesMultipleIssuesIndependently() throws IOException, InterruptedException
   {
     Path tempDir = setupGitRepo();
+    Path indexTempFile1 = Files.createTempFile("index-", ".json");
+    Path indexTempFile2 = Files.createTempFile("index-", ".json");
     try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
+      Files.writeString(indexTempFile1, "{\"status\": \"open\"}");
+      Files.writeString(indexTempFile2, "{\"status\": \"open\"}");
       Path versionDir = tempDir.resolve(".cat/issues/v2/v2.1");
 
       IssueCreator creator = new IssueCreator(scope);
@@ -410,9 +437,9 @@ public class IssueCreatorTest
           "major": 2,
           "minor": 1,
           "issue_name": "first-issue",
-          "index_content": "{\\"status\\": \\"open\\"}",
+          "index_file": "%s",
           "plan_content": "# Plan"
-        }""";
+        }""".formatted(indexTempFile1.toString().replace("\\", "\\\\"));
 
       String result1 = creator.execute(json1, tempDir);
       JsonMapper mapper = scope.getJsonMapper();
@@ -424,9 +451,9 @@ public class IssueCreatorTest
           "major": 2,
           "minor": 1,
           "issue_name": "second-issue",
-          "index_content": "{\\"status\\": \\"open\\"}",
+          "index_file": "%s",
           "plan_content": "# Plan"
-        }""";
+        }""".formatted(indexTempFile2.toString().replace("\\", "\\\\"));
 
       String result2 = creator.execute(json2, tempDir);
       ObjectNode result2Node = (ObjectNode) mapper.readTree(result2);
@@ -441,6 +468,8 @@ public class IssueCreatorTest
     }
     finally
     {
+      Files.deleteIfExists(indexTempFile1);
+      Files.deleteIfExists(indexTempFile2);
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
@@ -455,11 +484,13 @@ public class IssueCreatorTest
   public void executeHandlesNonGitDirectory() throws IOException
   {
     Path tempDir = Files.createTempDirectory("issue-creator-test-nongit");
+    Path indexTempFile = Files.createTempFile("index-", ".json");
     try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path versionDir = tempDir.resolve(".cat/issues/v2/v2.1");
       Files.createDirectories(versionDir);
       Files.writeString(versionDir.resolve("index.json"), "{\"status\": \"open\"}\n");
+      Files.writeString(indexTempFile, "{}");
 
       IssueCreator creator = new IssueCreator(scope);
       String json = """
@@ -467,14 +498,15 @@ public class IssueCreatorTest
           "major": 2,
           "minor": 1,
           "issue_name": "test-issue",
-          "index_content": "{}",
+          "index_file": "%s",
           "plan_content": "# Plan"
-        }""";
+        }""".formatted(indexTempFile.toString().replace("\\", "\\\\"));
 
       creator.execute(json, tempDir);
     }
     finally
     {
+      Files.deleteIfExists(indexTempFile);
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
@@ -492,19 +524,21 @@ public class IssueCreatorTest
   {
     Path tempDir = setupGitRepo();
     Path versionDir = tempDir.resolve(".cat/issues/v2/v2.1");
+    Path indexTempFile = Files.createTempFile("index-", ".json");
 
     boolean madeReadOnly = versionDir.toFile().setReadOnly();
     try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
+      Files.writeString(indexTempFile, "{\"status\": \"open\"}");
       IssueCreator creator = new IssueCreator(scope);
       String json = """
         {
           "major": 2,
           "minor": 1,
           "issue_name": "test-readonly",
-          "index_content": "{\\"status\\": \\"open\\"}",
+          "index_file": "%s",
           "plan_content": "# Plan"
-        }""";
+        }""".formatted(indexTempFile.toString().replace("\\", "\\\\"));
 
       creator.execute(json, tempDir);
     }
@@ -512,6 +546,7 @@ public class IssueCreatorTest
     {
       if (madeReadOnly)
         versionDir.toFile().setWritable(true);
+      Files.deleteIfExists(indexTempFile);
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
