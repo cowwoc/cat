@@ -97,11 +97,24 @@ Instances must NEVER:
 
 ### Safe Patterns
 
-**Temporary files/directories:**
+**Temporary files/directories (ephemeral state — not needed across session restarts):**
 - ✅ Use `mktemp -d` or `mktemp` for unique per-invocation isolation
 - ✅ Store in `/tmp` or per-session directories (e.g., `${CLAUDE_CONFIG_DIR}/projects/.../${CLAUDE_SESSION_ID}/`)
 - ❌ Use hardcoded paths like `../repo-clean.git` or `/tmp/shared-work/`
 - ❌ Use paths like `${WORKTREE_PARENT}/shared-dir/` (multiple instances share the parent)
+
+**Resumable progress state (data that must survive session restarts):**
+- ✅ Write to `.cat/work` inside the issue worktree (e.g., `${WORKTREE_PATH}/.cat/work/progress.json`)
+- ❌ Write to `/tmp` — `/tmp` may be cleared between sessions on Linux (systemd-tmpfiles) and macOS,
+  causing resumable state to be lost when the user restarts a conversation
+
+```bash
+# WRONG: progress state lost if session is restarted
+echo '{"step": 3}' > /tmp/cat-progress-${ISSUE_ID}.json
+
+# CORRECT: progress state persists across session restarts
+echo '{"step": 3}' > "${WORKTREE_PATH}/.cat/work/progress.json"
+```
 
 **Example: History rewriting with isolated temp directories**
 ```bash
