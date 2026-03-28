@@ -79,7 +79,7 @@ When a backup_branch was created before the error, its name appears on a `backup
 | Status | Meaning | Agent Recovery Action |
 |--------|---------|----------------------|
 | `OK` | Rebase completed successfully | Report commits rebased, verify no content changes. Delete backup branch (see below). |
-| `CONFLICT` | Rebase stopped due to conflicts | Agent examines conflicting_files and decides: manual resolution, alternative strategy, or abort. Backup preserved at backup_branch. Delete backup after resolution is complete. |
+| `CONFLICT` | Rebase stopped due to conflicts | Follow the numbered steps in **## Handling Conflicts** below. Backup preserved at backup_branch. Delete backup after resolution or abort is complete. |
 | `block` decision | Rebase failed (not a conflict) | Parse backup_branch from the reason field if present. Restore from backup if needed. Delete backup after the error is handled. |
 
 **On OK status:** After a successful rebase:
@@ -199,19 +199,28 @@ Determine intent: does the commit being replayed still need the file?
   git add <file>
   ```
 
-**Step 3: Continue the rebase after all files in the current commit are resolved.**
+**Step 3: Stage each resolved file** after all conflict markers are removed.
+
+**Step 4: Continue the rebase after all files in the current commit are resolved.**
 
 ```bash
 git rebase --continue
 ```
 
-**Step 4: Repeat Steps 1–3 for each subsequent conflicting commit** until the rebase completes.
+**Step 5: Repeat Steps 1–4 for each subsequent conflicting commit** until the rebase completes.
+
+**Step 6: Delete the backup branch after successful resolution.**
+
+```bash
+git branch -D <backup_branch>
+```
 
 **Abort path** (use only when resolution is not feasible and you must restore the original state):
 
 ```bash
 git rebase --abort
-git reset --hard "$BACKUP"
+git reset --hard <backup_branch>  # ACKNOWLEDGED
+git branch -D <backup_branch>
 ```
 
 ### Conflict Resolution References
@@ -284,8 +293,14 @@ git rebase main
 
 If rebase went wrong:
 - Abort rebase: `git rebase --abort`
-- Restore from backup: `git reset --hard $BACKUP`
-- Check reflog: `git reflog` then `git reset --hard HEAD@{N}`
+- Restore from backup: `git reset --hard $BACKUP  # ACKNOWLEDGED`
+- Check reflog: `git reflog` to find the target entry, resolve to a commit hash (avoids TOCTOU),
+  then reset to the resolved hash:
+  ```bash
+  RESTORE_COMMIT=$(git rev-parse HEAD@{N})  # resolve once — positional N is stable at this point
+  git show "$RESTORE_COMMIT" --stat         # verify it is the correct commit
+  git reset --hard "$RESTORE_COMMIT"  # ACKNOWLEDGED
+  ```
 
 ## Verification After Amend/Fixup Operations
 
