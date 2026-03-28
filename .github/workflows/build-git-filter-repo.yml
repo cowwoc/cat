@@ -5,8 +5,10 @@
 name: Build git-filter-repo Binaries
 
 # How to trigger a build:
-#   Go to Actions > Build git-filter-repo Binaries > Run workflow
-#   Enter the git-filter-repo version tag (e.g., v2.38.0)
+#   Automatically: The check-git-filter-repo-upstream workflow runs daily and triggers this
+#                  workflow when a new upstream release is detected.
+#   Manually: Go to Actions > Build git-filter-repo Binaries > Run workflow
+#             Enter the git-filter-repo version tag (e.g., v2.38.0)
 
 on:
   workflow_dispatch:

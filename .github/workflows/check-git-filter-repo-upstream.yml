@@ -1,0 +1,209 @@
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+name: Check git-filter-repo Upstream Release
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  check-upstream:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Get latest upstream release
+        id: upstream
+        run: |
+          set -euo pipefail
+          HTTP_CODE=$(curl -sSL \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -o response.json \
+            -w "%{http_code}" \
+            "https://api.github.com/repos/newren/git-filter-repo/releases/latest")
+          RESPONSE=$(cat response.json)
+          if [[ "${HTTP_CODE}" != "200" ]]; then
+            echo "ERROR: GitHub API returned HTTP ${HTTP_CODE}" >&2
+            echo "Response: ${RESPONSE}" >&2
+            exit 1
+          fi
+          if echo "${RESPONSE}" | grep -q '"message"'; then
+            API_MESSAGE=$(echo "${RESPONSE}" | \
+              grep '"message"' | \
+              sed 's/.*"message"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/' | \
+              head -1)
+            echo "ERROR: GitHub API error: ${API_MESSAGE}" >&2
+            echo "Response: ${RESPONSE}" >&2
+            exit 1
+          fi
+          LATEST_TAG=$(echo "${RESPONSE}" | \
+            grep '"tag_name"' | \
+            sed 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/' | \
+            head -1)
+          if [[ -z "${LATEST_TAG}" ]]; then
+            echo "ERROR: Could not parse tag_name from GitHub API response" >&2
+            echo "Response: ${RESPONSE}" >&2
+            exit 1
+          fi
+          if ! echo "${LATEST_TAG}" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "ERROR: Latest tag '${LATEST_TAG}' does not match expected format vX.Y.Z" >&2
+            exit 1
+          fi
+          echo "latest_tag=${LATEST_TAG}" >> "$GITHUB_OUTPUT"
+          echo "Latest upstream release: ${LATEST_TAG}"
+
+      - name: Get current built version
+        id: current
+        run: |
+          set -euo pipefail
+          CURRENT_RELEASE_TAG=$(grep -E '^RELEASE_TAG=' \
+            plugin/.git-filter-repo-config/release.conf | \
+            sed 's/^RELEASE_TAG="\(.*\)"$/\1/' | head -1)
+          if [[ -z "${CURRENT_RELEASE_TAG}" ]]; then
+            echo "ERROR: RELEASE_TAG not found in release.conf" >&2
+            exit 1
+          fi
+          CURRENT_TAG="${CURRENT_RELEASE_TAG#git-filter-repo-}"
+          if [[ -z "${CURRENT_TAG}" ]]; then
+            echo "ERROR: Could not extract version from RELEASE_TAG='${CURRENT_RELEASE_TAG}'" >&2
+            exit 1
+          fi
+          if ! echo "${CURRENT_TAG}" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "ERROR: Current tag '${CURRENT_TAG}' does not match expected format vX.Y.Z" >&2
+            exit 1
+          fi
+          echo "current_tag=${CURRENT_TAG}" >> "$GITHUB_OUTPUT"
+          echo "Current built version: ${CURRENT_TAG}"
+
+      - name: Check if update needed
+        id: check
+        run: |
+          set -euo pipefail
+          LATEST="${{ steps.upstream.outputs.latest_tag }}"
+          CURRENT="${{ steps.current.outputs.current_tag }}"
+
+          # Compare versions numerically by splitting on '.' and comparing each component
+          semver_gt() {
+            local a="${1#v}" b="${2#v}"
+            local IFS='.'
+            read -ra A <<< "$a"
+            read -ra B <<< "$b"
+            for i in 0 1 2; do
+              local av="${A[$i]:-0}" bv="${B[$i]:-0}"
+              if (( av > bv )); then return 0; fi
+              if (( av < bv )); then return 1; fi
+            done
+            return 1
+          }
+
+          if [[ "${LATEST}" == "${CURRENT}" ]]; then
+            echo "update_needed=false" >> "$GITHUB_OUTPUT"
+            echo "Already up to date (${CURRENT}). No update needed."
+          elif semver_gt "${LATEST}" "${CURRENT}"; then
+            echo "update_needed=true" >> "$GITHUB_OUTPUT"
+            echo "Update available: ${CURRENT} -> ${LATEST}"
+          else
+            echo "update_needed=false" >> "$GITHUB_OUTPUT"
+            echo "Current version (${CURRENT}) is not older than upstream (${LATEST}). No update needed."
+          fi
+
+      - name: Download new source
+        id: source
+        if: steps.check.outputs.update_needed == 'true'
+        run: |
+          set -euo pipefail
+          LATEST="${{ steps.upstream.outputs.latest_tag }}"
+          SOURCE_URL="https://raw.githubusercontent.com/newren/git-filter-repo/${LATEST}/git-filter-repo"
+          echo "Downloading git-filter-repo source from ${SOURCE_URL}..."
+          if ! curl --retry 3 --max-time 60 --retry-delay 5 --retry-max-time 180 \
+              -fsSL -o git-filter-repo.py "${SOURCE_URL}"; then
+            echo "ERROR: Failed to download git-filter-repo source for ${LATEST} after 3 attempts" >&2
+            exit 1
+          fi
+          SOURCE_SHA256=$(sha256sum git-filter-repo.py | awk '{print $1}')
+          echo "source_sha256=${SOURCE_SHA256}" >> "$GITHUB_OUTPUT"
+          echo "SOURCE_SHA256: ${SOURCE_SHA256}"
+
+      - name: Update release.conf
+        if: steps.check.outputs.update_needed == 'true'
+        run: |
+          set -euo pipefail
+          LATEST="${{ steps.upstream.outputs.latest_tag }}"
+          SOURCE_SHA256="${{ steps.source.outputs.source_sha256 }}"
+          CONF="plugin/.git-filter-repo-config/release.conf"
+          sed -i "s|^RELEASE_TAG=.*|RELEASE_TAG=\"git-filter-repo-${LATEST}\"|" "${CONF}"
+          sed -i "s|^SOURCE_SHA256=.*|SOURCE_SHA256=\"${SOURCE_SHA256}\"|" "${CONF}"
+          echo "Updated ${CONF}:"
+          grep -E '^(RELEASE_TAG|SOURCE_SHA256)=' "${CONF}"
+
+      - name: Configure git
+        if: steps.check.outputs.update_needed == 'true'
+        env:
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+        run: |
+          git config user.name "${GIT_AUTHOR_NAME}"
+          git config user.email "${GIT_AUTHOR_EMAIL}"
+          CONFIGURED_NAME=$(git config user.name)
+          CONFIGURED_EMAIL=$(git config user.email)
+          if [[ "${CONFIGURED_NAME}" != "${GIT_AUTHOR_NAME}" ]]; then
+            echo "ERROR: git config user.name did not take effect (got '${CONFIGURED_NAME}')" >&2
+            exit 1
+          fi
+          if [[ "${CONFIGURED_EMAIL}" != "${GIT_AUTHOR_EMAIL}" ]]; then
+            echo "ERROR: git config user.email did not take effect (got '${CONFIGURED_EMAIL}')" >&2
+            exit 1
+          fi
+
+      - name: Commit and push release.conf update
+        if: steps.check.outputs.update_needed == 'true'
+        run: |
+          set -euo pipefail
+          LATEST="${{ steps.upstream.outputs.latest_tag }}"
+          git add plugin/.git-filter-repo-config/release.conf
+          git commit -m "config: update git-filter-repo source reference to ${LATEST}"
+          MAX_ATTEMPTS=3
+          ATTEMPT=0
+          while (( ATTEMPT < MAX_ATTEMPTS )); do
+            ATTEMPT=$(( ATTEMPT + 1 ))
+            if timeout 30 git push; then
+              break
+            fi
+            if (( ATTEMPT >= MAX_ATTEMPTS )); then
+              echo "ERROR: Failed to push after ${MAX_ATTEMPTS} attempts" >&2
+              exit 1
+            fi
+            echo "Push attempt ${ATTEMPT} failed (possible concurrent update). Rebasing and retrying..." >&2
+            git pull --rebase
+          done
+          LOCAL_SHA=$(git rev-parse HEAD)
+          REMOTE_SHA=$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | awk '{print $1}')
+          if [[ "${REMOTE_SHA}" != "${LOCAL_SHA}" ]]; then
+            echo "ERROR: Push verification failed: local HEAD=${LOCAL_SHA} but remote HEAD=${REMOTE_SHA}" >&2
+            exit 1
+          fi
+          echo "Push verified: remote HEAD=${REMOTE_SHA}"
+
+      - name: Trigger build workflow
+        if: steps.check.outputs.update_needed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          LATEST="${{ steps.upstream.outputs.latest_tag }}"
+          gh workflow run build-git-filter-repo.yml \
+            -f version="${LATEST}" \
+            --ref "v2.1"
+          echo "Triggered build-git-filter-repo.yml for version ${LATEST} on ref v2.1"
