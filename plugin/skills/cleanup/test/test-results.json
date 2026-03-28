@@ -1,0 +1,75 @@
+{
+  "skill_hash": "4ea9acedb902592213dd7b33918bd8d55853a122",
+  "model": "haiku",
+  "session_id": "85a666e0-99cb-4dd5-b164-d292cc17743f",
+  "timestamp": "2026-03-28T00:00:00Z",
+  "overall_decision": "Accept",
+  "notes": "135 runs, 100% pass rate. SPRT reached Accept boundary (A=2.944) after 27 runs per test case. All deterministic and semantic assertions passed across all waves.",
+  "sprt": {
+    "p0": 0.95,
+    "p1": 0.85,
+    "alpha": 0.05,
+    "beta": 0.05,
+    "accept_boundary": 2.944,
+    "reject_boundary": -2.944,
+    "test_cases": [
+      {
+        "test_case_id": "TC1",
+        "runs": 27,
+        "passes": 27,
+        "failures": 0,
+        "log_ratio": 3.0051,
+        "decision": "Accept",
+        "total_tokens": 0,
+        "total_duration_ms": 0
+      },
+      {
+        "test_case_id": "TC2",
+        "runs": 27,
+        "passes": 27,
+        "failures": 0,
+        "log_ratio": 3.0051,
+        "decision": "Accept",
+        "total_tokens": 0,
+        "total_duration_ms": 0
+      },
+      {
+        "test_case_id": "TC3",
+        "runs": 27,
+        "passes": 27,
+        "failures": 0,
+        "log_ratio": 3.0051,
+        "decision": "Accept",
+        "total_tokens": 0,
+        "total_duration_ms": 0
+      },
+      {
+        "test_case_id": "TC4",
+        "runs": 27,
+        "passes": 27,
+        "failures": 0,
+        "log_ratio": 3.0051,
+        "decision": "Accept",
+        "total_tokens": 0,
+        "total_duration_ms": 0
+      },
+      {
+        "test_case_id": "TC5",
+        "runs": 27,
+        "passes": 27,
+        "failures": 0,
+        "log_ratio": 3.0051,
+        "decision": "Accept",
+        "total_tokens": 0,
+        "total_duration_ms": 0
+      }
+    ],
+    "aggregate": {
+      "total_runs": 135,
+      "total_passes": 135,
+      "total_failures": 0,
+      "total_tokens": 0,
+      "total_duration_ms": 0
+    }
+  }
+}
