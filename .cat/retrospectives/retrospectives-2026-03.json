@@ -213,6 +213,29 @@
       }
     },
     {
+      "id": "R032",
+      "timestamp": "2026-03-29T00:00:00Z",
+      "trigger": "count_based",
+      "period_analyzed": "2026-03-23T13:18:51Z to 2026-03-29T00:00:00Z",
+      "mistakes_analyzed": 14,
+      "summary": "14 mistakes analyzed (M599-M611). Substantive entries: M599 (collect-results called for Wave 1 only while Wave 2 still running), M600 (main agent spawned cat:work-execute without cat:work-implement-agent), M602 (rate limit fallback gap in subagent delegation docs), M606 (approval gate without squash — outside formal workflow), M607 (git update-ref instead of cat:work-merge-agent — hook still absent despite M579), M609 (rebase conflict incorrectly classified as permanent error in work-merge-agent), M610 (Agent tool instead of Task tool for job subagents), M611 (AutoLearnMistakes false positive when Bash reads JSONL containing subagent edit failure messages — FIXED). PATTERN-017 (approval_gate_bypass) worsening: 2 new recurrences via ad-hoc orchestration bypass vector. PATTERN-023 fix (M611) committed this period. New pattern PATTERN-032 (workflow_orchestration_bypass) identified: 3 occurrences (M599, M600, M610). ESCALATE-A020 reopened: new bypass vector not covered by prior fix.",
+      "findings": {
+        "category_breakdown": {
+          "protocol_violation": 6,
+          "unknown": 5,
+          "detection_gap": 1,
+          "knowledge_gap": 2
+        },
+        "worsening_patterns": ["PATTERN-017"],
+        "no_improvement_patterns": ["PATTERN-023"],
+        "improving_patterns": ["PATTERN-001", "PATTERN-003"],
+        "new_patterns": ["PATTERN-032"],
+        "new_action_items": ["A038"],
+        "open_action_items": ["A001", "A003", "A020", "A028", "A029", "A030", "A031", "A032", "A033", "A034", "A035", "A036", "A037"],
+        "fixed_this_period": ["M611"]
+      }
+    },
+    {
       "id": "R031",
     "timestamp": "2026-03-23T13:18:51Z",
     "trigger": "count_based",
