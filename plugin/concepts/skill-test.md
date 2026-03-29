@@ -11,11 +11,27 @@ case is a separate `.md` file that describes a scenario and the assertions the a
 ## Directory Convention
 
 ```
-plugin/skills/<skill-name>/
-  test/
-    <test-case-slug>.md   (one file per test case)
-  results.json            (written after a test run; see plugin/concepts/skill-test-results.md)
+plugin/tests/<path>/<name>/
+  <scenario-slug>.md     (one file per test case)
+  results.json           (written after a test run; see plugin/concepts/skill-test-results.md)
+  runs/
+    <scenario-slug>-<run-id>.md  (raw transcript per run)
 ```
+
+## Runs Directory
+
+Transcripts from individual test executions are stored in the `runs/` subdirectory alongside the scenario files.
+
+**Location:** `plugin/tests/<path>/<name>/runs/`
+
+**Transcript file naming:** `<scenario-slug>-<run-id>.md` where `<run-id>` is a short unique identifier
+per execution (e.g., a timestamp or random suffix).
+
+**How transcripts are written:** The test runner writes the raw agent transcript to a `runs/` file before
+grading begins. Each execution appends a new transcript file; old runs are not overwritten.
+
+**How graders read transcripts:** Grader agents read transcripts via `git show <SHA>:<path>` or direct
+file access. The grader receives the path (and optionally the commit SHA) as an input parameter.
 
 ## Filename Convention
 
@@ -33,47 +49,59 @@ Each test case file uses YAML frontmatter followed by required markdown sections
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `type` | string | yes | Test type. Must be one of: `should-trigger`, `should-not-trigger`, `behavior` |
 | `category` | string | yes | Semantic category for grouping and filtering. Must be one of the values in [Category Values](#category-values). |
 
 ### Required Sections
 
 | Section | Description |
 |---------|-------------|
-| `## Scenario` | The user prompt or setup context sent to the agent under test |
-| `## Tier 1 Assertion` | The primary assertion — the single most important behavioral property to check |
-| `## Tier 2 Assertion` | A secondary assertion — a supporting property that should also hold |
+| `## Turn 1` | The first (and usually only) user turn — the prompt or setup context sent to the agent under test |
+| `## Assertions` | Numbered list of assertions to evaluate against the agent's transcript. Assertions are numbered 1, 2, 3, etc., one per line |
 
-Both tier sections are required, even if the tier 2 assertion is weaker than tier 1. A test case
-without both sections is malformed and will be rejected by the `ValidateSkillTestFormat` hook.
+Both sections are required. Additional `## Turn N` sections (N = 2, 3, …) are optional and must be contiguous
+starting from 1 — if `## Turn 3` is present then `## Turn 1` and `## Turn 2` must also be present.
+
+A test case without `## Turn 1` and `## Assertions` is malformed and will be rejected by the
+`ValidateSkillTestFormat` hook.
 
 ### Example File
 
 ```markdown
 ---
-type: should-trigger
 category: routing
 ---
-## Scenario
+## Turn 1
 
 The user says: "Squash my last 3 commits into one."
 
-## Tier 1 Assertion
-
-The agent invokes the git-squash skill before running any git commands.
-
-## Tier 2 Assertion
-
-The agent does not run destructive git commands without first presenting a summary to the user.
+## Assertions
+1. The agent invokes the git-squash skill before running any git commands.
+2. The agent does not run destructive git commands without first presenting a summary to the user.
 ```
 
-## Type Values
+### Multi-Turn Example
 
-| Value | Meaning |
-|-------|---------|
-| `should-trigger` | The skill should be invoked given this scenario |
-| `should-not-trigger` | The skill should NOT be invoked given this scenario |
-| `behavior` | Validates agent behavior when the skill is active (not about trigger routing) |
+```markdown
+---
+category: sequence
+---
+## Turn 1
+
+The user says: "Squash my last 3 commits into one."
+
+## Turn 2
+
+The user says: "Actually, make it the last 5 commits."
+
+## Turn 3
+
+The user says: "Ok go ahead."
+
+## Assertions
+1. The agent invokes the git-squash skill before running any git commands.
+2. The agent updates the squash range when the user changes the count.
+3. The agent does not run destructive git commands until the user confirms.
+```
 
 ## Category Values
 
@@ -81,7 +109,7 @@ Category is a fixed lowercase slug. Valid values:
 
 | Value | Meaning |
 |-------|---------|
-| `routing` | Tests about skill activation — whether the skill is invoked given this scenario (used with `should-trigger` and `should-not-trigger` types) |
+| `routing` | Tests about skill activation — whether the skill is invoked given the scenario |
 | `sequence` | Tests about sequential or ordered behavior (e.g., step numbering, procedure order) |
 | `requirement` | Tests about satisfying stated requirements in the output |
 | `consequence` | Tests about reasoning from findings to a conclusion |
@@ -89,11 +117,10 @@ Category is a fixed lowercase slug. Valid values:
 
 ## Writing Effective Test Cases
 
-- The `## Scenario` section must contain enough context for the agent to reproduce the test independently.
-- Tier 1 assertions should be the single most discriminating check — one that passes only when the
-  skill is working correctly.
-- Tier 2 assertions should cover a supporting property, such as absence of harmful behavior or a
-  secondary output characteristic.
-- Avoid assertions that are always true regardless of skill activation (non-discriminating assertions).
-- For `should-not-trigger` tests, the tier 1 assertion should explicitly state that the skill was not
-  invoked.
+- The `## Turn 1` section must contain enough context for the agent to reproduce the test independently.
+- Assertions should be ordered by importance: the first assertion is the most critical, subsequent
+  assertions provide supporting checks.
+- Assertions should be specific and discriminating — they should pass only when the skill is
+  working correctly.
+- Avoid assertions that are always true regardless of agent behavior (non-discriminating assertions).
+- Assertions are numbered sequentially (1, 2, 3, ...) in the `## Assertions` list.

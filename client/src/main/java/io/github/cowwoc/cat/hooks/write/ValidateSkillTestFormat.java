@@ -28,21 +28,21 @@ import java.util.regex.Pattern;
 /**
  * Validates skill test case markdown files on write.
  * <p>
- * Test case files are located at {@code plugin/skills/<skill>/test/*.md}. Each file must contain
- * YAML frontmatter with the required fields {@code type} and {@code category}, and the required
- * sections {@code ## Scenario}, {@code ## Tier 1 Assertion}, and
- * {@code ## Tier 2 Assertion}.
+ * Test case files are located at {@code plugin/tests/<path>/<name>/*.md}. Each file must contain
+ * YAML frontmatter with the required field {@code category}, and at minimum the sections
+ * {@code ## Turn 1} and {@code ## Assertions}. Optional {@code ## System Prompt} and additional
+ * {@code ## Turn N} sections (contiguous from 1) are also supported.
  * <p>
  * This hook runs as a PreToolUse handler for Write and Edit operations. Files that do not match the
- * {@code test/*.md} path pattern are passed through without validation.
+ * {@code plugin/tests/} path pattern are passed through without validation.
  */
 public final class ValidateSkillTestFormat implements FileWriteHandler
 {
   private static final Pattern TEST_MD_PATTERN =
-    Pattern.compile("(?:^|/)plugin/skills/[^/]+/test/[^/]+\\.md$");
+    Pattern.compile("(?:^|/)plugin/tests/.+\\.md$");
   private static final Pattern FRONTMATTER_PATTERN =
     Pattern.compile("\\A---\\n(.*?)\\n---\\n?", Pattern.DOTALL);
-  private static final Set<String> REQUIRED_FRONTMATTER_FIELDS = Set.of("type", "category");
+  private static final Set<String> REQUIRED_FRONTMATTER_FIELDS = Set.of("category");
   private static final Map<String, Pattern> FRONTMATTER_FIELD_PATTERNS;
 
   static
@@ -52,9 +52,8 @@ public final class ValidateSkillTestFormat implements FileWriteHandler
       FRONTMATTER_FIELD_PATTERNS.put(field, Pattern.compile("^" + Pattern.quote(field) + ":\\s*(.+)$",
         Pattern.MULTILINE));
   }
-  private static final Set<String> VALID_TYPES = Set.of("should-trigger", "should-not-trigger", "behavior");
-  private static final List<String> REQUIRED_SECTIONS =
-    List.of("## Scenario", "## Tier 1 Assertion", "## Tier 2 Assertion");
+  private static final Pattern TURN_SECTION_PATTERN =
+    Pattern.compile("^## Turn (\\d+)\\s*$", Pattern.MULTILINE);
 
   /**
    * Creates a new ValidateSkillTestFormat instance.
@@ -137,7 +136,6 @@ public final class ValidateSkillTestFormat implements FileWriteHandler
         Skill test format violation in %s: missing YAML frontmatter.
 
         Test case files must begin with a YAML frontmatter block containing:
-          type: <should-trigger|should-not-trigger|behavior>
           category: <semantic category, e.g. routing>
 
         See plugin/concepts/skill-test.md for the complete format specification.""".
@@ -162,22 +160,13 @@ public final class ValidateSkillTestFormat implements FileWriteHandler
   private FileWriteHandler.Result validateFrontmatter(String frontmatterBody, String filePath)
   {
     List<String> missingFields = new ArrayList<>();
-    String typeValue = "";
 
     for (Map.Entry<String, Pattern> entry : FRONTMATTER_FIELD_PATTERNS.entrySet())
     {
       String field = entry.getKey();
       Matcher matcher = entry.getValue().matcher(frontmatterBody);
-      if (matcher.find())
-      {
-        String value = matcher.group(1).strip();
-        if (field.equals("type"))
-          typeValue = value;
-      }
-      else
-      {
+      if (!matcher.find())
         missingFields.add(field);
-      }
     }
 
     if (!missingFields.isEmpty())
@@ -186,29 +175,17 @@ public final class ValidateSkillTestFormat implements FileWriteHandler
         Skill test format violation in %s: missing required frontmatter field(s): %s.
 
         Required frontmatter fields:
-          type: <should-trigger|should-not-trigger|behavior>
           category: <semantic category, e.g. routing>
 
         See plugin/concepts/skill-test.md for the complete format specification.""".
         formatted(filePath, String.join(", ", missingFields)));
     }
 
-    if (!typeValue.isEmpty() && !VALID_TYPES.contains(typeValue))
-    {
-      return FileWriteHandler.Result.block("""
-        Skill test format violation in %s: invalid 'type' value '%s'.
-
-        'type' must be one of: should-trigger, should-not-trigger, behavior
-
-        See plugin/concepts/skill-test.md for the complete format specification.""".
-        formatted(filePath, typeValue));
-    }
-
     return FileWriteHandler.Result.allow();
   }
 
   /**
-   * Validate that all required markdown sections are present.
+   * Validate that all required markdown sections are present and turn sections are contiguous.
    *
    * @param content  the full markdown content
    * @param filePath the file path for error messages
@@ -216,25 +193,48 @@ public final class ValidateSkillTestFormat implements FileWriteHandler
    */
   private FileWriteHandler.Result validateSections(String content, String filePath)
   {
-    List<String> missingSections = new ArrayList<>();
-    for (String section : REQUIRED_SECTIONS)
-    {
-      if (!content.contains(section))
-        missingSections.add(section);
-    }
-
-    if (!missingSections.isEmpty())
+    if (!content.contains("## Assertions"))
     {
       return FileWriteHandler.Result.block("""
-        Skill test format violation in %s: missing required section(s): %s.
-
-        Each test case file must contain all of these sections:
-          ## Scenario
-          ## Tier 1 Assertion
-          ## Tier 2 Assertion
+        Skill test format violation in %s: missing required section '## Assertions'. \
+Each test case file must contain at least ## Turn 1 and ## Assertions.
 
         See plugin/concepts/skill-test.md for the complete format specification.""".
-        formatted(filePath, String.join(", ", missingSections)));
+        formatted(filePath));
+    }
+
+    if (!content.contains("## Turn 1"))
+    {
+      return FileWriteHandler.Result.block("""
+        Skill test format violation in %s: missing required section '## Turn 1'. \
+Each test case file must contain at least ## Turn 1 and ## Assertions.
+
+        See plugin/concepts/skill-test.md for the complete format specification.""".
+        formatted(filePath));
+    }
+
+    // Collect all ## Turn N numbers and verify they form a contiguous sequence starting at 1
+    Matcher turnMatcher = TURN_SECTION_PATTERN.matcher(content);
+    List<Integer> turnNumbers = new ArrayList<>();
+    while (turnMatcher.find())
+      turnNumbers.add(Integer.parseInt(turnMatcher.group(1)));
+    turnNumbers.sort(Integer::compareTo);
+
+    for (int index = 0; index < turnNumbers.size(); ++index)
+    {
+      int expected = index + 1;
+      if (turnNumbers.get(index) != expected)
+      {
+        List<Integer> expectedList = new ArrayList<>();
+        for (int number = 1; number <= turnNumbers.getLast(); ++number)
+          expectedList.add(number);
+        return FileWriteHandler.Result.block("""
+          Skill test format violation in %s: turn sections are not contiguous: \
+found turns %s, expected %s.
+
+          See plugin/concepts/skill-test.md for the complete format specification.""".
+          formatted(filePath, turnNumbers, expectedList));
+      }
     }
 
     return FileWriteHandler.Result.allow();

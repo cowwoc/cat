@@ -1,0 +1,273 @@
+{
+  "skill_hash": "",
+  "model": "",
+  "session_id": "",
+  "timestamp": "",
+  "overall_decision": "pass",
+  "scenarios": {
+    "anti-fabrication-guard": {
+      "assertions": [
+        {
+          "log_ratio": 4.337,
+          "pass_count": 39,
+          "fail_count": 0,
+          "total_runs": 39,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "pass"
+        },
+        {
+          "log_ratio": 0.0,
+          "pass_count": 0,
+          "fail_count": 0,
+          "total_runs": 0,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "inconclusive"
+        }
+      ]
+    },
+    "no-sequential-spawn": {
+      "assertions": [
+        {
+          "log_ratio": 4.337,
+          "pass_count": 39,
+          "fail_count": 0,
+          "total_runs": 39,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "pass"
+        },
+        {
+          "log_ratio": 0.0,
+          "pass_count": 0,
+          "fail_count": 0,
+          "total_runs": 0,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "inconclusive"
+        }
+      ]
+    },
+    "no-verdict-inference": {
+      "assertions": [
+        {
+          "log_ratio": 4.337,
+          "pass_count": 39,
+          "fail_count": 0,
+          "total_runs": 39,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "pass"
+        },
+        {
+          "log_ratio": 0.0,
+          "pass_count": 0,
+          "fail_count": 0,
+          "total_runs": 0,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "inconclusive"
+        }
+      ]
+    },
+    "no-prose-summary": {
+      "assertions": [
+        {
+          "log_ratio": 4.337,
+          "pass_count": 39,
+          "fail_count": 0,
+          "total_runs": 39,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "pass"
+        },
+        {
+          "log_ratio": 0.0,
+          "pass_count": 0,
+          "fail_count": 0,
+          "total_runs": 0,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "inconclusive"
+        }
+      ]
+    },
+    "subagent-restriction": {
+      "assertions": [
+        {
+          "log_ratio": 4.337,
+          "pass_count": 39,
+          "fail_count": 0,
+          "total_runs": 39,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "pass"
+        },
+        {
+          "log_ratio": 0.0,
+          "pass_count": 0,
+          "fail_count": 0,
+          "total_runs": 0,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "inconclusive"
+        }
+      ]
+    },
+    "verify-none-skip": {
+      "assertions": [
+        {
+          "log_ratio": 4.337,
+          "pass_count": 39,
+          "fail_count": 0,
+          "total_runs": 39,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "pass"
+        },
+        {
+          "log_ratio": 0.0,
+          "pass_count": 0,
+          "fail_count": 0,
+          "total_runs": 0,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "inconclusive"
+        }
+      ]
+    },
+    "critical-rejected": {
+      "assertions": [
+        {
+          "log_ratio": 4.337,
+          "pass_count": 39,
+          "fail_count": 0,
+          "total_runs": 39,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "pass"
+        },
+        {
+          "log_ratio": 0.0,
+          "pass_count": 0,
+          "fail_count": 0,
+          "total_runs": 0,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "inconclusive"
+        }
+      ]
+    },
+    "high-concerns": {
+      "assertions": [
+        {
+          "log_ratio": 4.114,
+          "pass_count": 37,
+          "fail_count": 0,
+          "total_runs": 37,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "pass"
+        },
+        {
+          "log_ratio": 0.0,
+          "pass_count": 0,
+          "fail_count": 0,
+          "total_runs": 0,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "inconclusive"
+        }
+      ]
+    },
+    "invalid-json": {
+      "assertions": [
+        {
+          "log_ratio": 4.114,
+          "pass_count": 37,
+          "fail_count": 0,
+          "total_runs": 37,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "pass"
+        },
+        {
+          "log_ratio": 0.0,
+          "pass_count": 0,
+          "fail_count": 0,
+          "total_runs": 0,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "inconclusive"
+        }
+      ]
+    },
+    "only-md-files": {
+      "assertions": [
+        {
+          "log_ratio": 3.892,
+          "pass_count": 35,
+          "fail_count": 0,
+          "total_runs": 35,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "pass"
+        },
+        {
+          "log_ratio": 0.0,
+          "pass_count": 0,
+          "fail_count": 0,
+          "total_runs": 0,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "inconclusive"
+        }
+      ]
+    },
+    "force-stakeholders": {
+      "assertions": [
+        {
+          "log_ratio": 3.67,
+          "pass_count": 33,
+          "fail_count": 0,
+          "total_runs": 33,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "pass"
+        },
+        {
+          "log_ratio": 0.0,
+          "pass_count": 0,
+          "fail_count": 0,
+          "total_runs": 0,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "inconclusive"
+        }
+      ]
+    },
+    "task-then-verdict": {
+      "assertions": [
+        {
+          "log_ratio": 3.67,
+          "pass_count": 33,
+          "fail_count": 0,
+          "total_runs": 33,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "pass"
+        },
+        {
+          "log_ratio": 0.0,
+          "pass_count": 0,
+          "fail_count": 0,
+          "total_runs": 0,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "inconclusive"
+        }
+      ]
+    }
+  }
+}
