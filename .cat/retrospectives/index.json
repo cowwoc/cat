@@ -4,7 +4,7 @@
     "mistake_count_threshold" : 10,
     "trigger_interval_days" : 7
   },
-  "last_retrospective" : "2026-03-29T14:56:05.504747716Z",
+  "last_retrospective" : "2026-03-29T00:00:00Z",
   "mistake_count_since_last" : 0,
   "files" : {
     "mistakes" : [ "mistakes-2026-01.json", "mistakes-2026-02.json", "mistakes-2026-03.json" ],
@@ -221,16 +221,16 @@
   }, {
     "pattern_id" : "PATTERN-017",
     "pattern" : "approval_gate_bypass",
-    "occurrences_total" : 9,
-    "occurrences_after_fix" : 6,
+    "occurrences_total" : 11,
+    "occurrences_after_fix" : 8,
     "first_seen" : "2026-02-08T14:00:00Z",
-    "last_seen" : "2026-03-05T00:00:00Z",
+    "last_seen" : "2026-03-26T22:15:00Z",
     "last_action_date" : null,
-    "status" : "recurring",
+    "status" : "worsening",
     "effectiveness" : "pending",
-    "preventions" : [ "M479", "M480", "M489", "M437", "M446", "M459", "M462", "M463", "M464" ],
+    "preventions" : [ "M479", "M480", "M489", "M437", "M446", "M459", "M462", "M463", "M464", "M606", "M607" ],
     "related_action_items" : [ "A020" ],
-    "note" : "Agent bypasses approval gate when trust=medium. Merges without formal AskUserQuestion, or interprets conversational 'yes' as approval instead of requiring explicit option selection."
+    "note" : "Agent bypasses approval gate when trust=medium. Merges without formal AskUserQuestion, or interprets conversational 'yes' as approval instead of requiring explicit option selection. M606/M607 (2026-03-26) introduce new bypass vector: agent operating outside the formal work-with-issue orchestration flow, presenting ad-hoc approval gates and using git update-ref directly instead of cat:work-merge-agent."
   }, {
     "pattern_id" : "PATTERN-018",
     "pattern" : "stakeholder_review_quality",
@@ -299,16 +299,16 @@
   }, {
     "pattern_id" : "PATTERN-023",
     "pattern" : "autolearn_false_positive",
-    "occurrences_total" : 4,
-    "occurrences_after_fix" : 2,
+    "occurrences_total" : 5,
+    "occurrences_after_fix" : 3,
     "first_seen" : "2026-03-04T00:00:00Z",
-    "last_seen" : "2026-03-16T01:44:12Z",
+    "last_seen" : "2026-03-29T00:00:00Z",
     "last_action_date" : null,
-    "status" : "worsening",
+    "status" : "recurring",
     "effectiveness" : "ineffective",
-    "preventions" : [ "M461", "M466", "M555", "M563" ],
+    "preventions" : [ "M461", "M466", "M555", "M563", "M611" ],
     "related_action_items" : [ "A027" ],
-    "note" : "AutoLearnMistakes hook triggers false positives on benign content: documentation severity tables matching CRITICAL ISSUE regex, embedded JSON strings in session-analyzer output containing build_failure/test_failure keywords."
+    "note" : "AutoLearnMistakes hook triggers false positives on benign content: documentation severity tables matching CRITICAL ISSUE regex, embedded JSON strings in session-analyzer output containing build_failure/test_failure keywords, and Bash output reading JSONL files containing subagent edit failure messages. Pattern 5 guard added (M611 fix) to require toolName='Edit' before triggering edit_failure detection."
   }, {
     "pattern_id" : "PATTERN-024",
     "pattern" : "error_output_priming",
@@ -413,6 +413,19 @@
     "preventions" : [ "M588", "M598" ],
     "related_action_items" : [ "A037" ],
     "note" : "Skill documentation contains explicitly incorrect instructions that cause agents to produce wrong results. M588: work-implement-agent showed wrong catAgentId format (missing /subagents/ segment). M598: instruction-builder docs incorrectly instructed committing post-compression benchmark JSON (transient verification artifact, not a persistent benchmark)."
+  }, {
+    "pattern_id" : "PATTERN-032",
+    "pattern" : "workflow_orchestration_bypass",
+    "occurrences_total" : 3,
+    "occurrences_after_fix" : 0,
+    "first_seen" : "2026-03-23T00:00:00Z",
+    "last_seen" : "2026-03-29T02:46:21Z",
+    "last_action_date" : null,
+    "status" : "new",
+    "effectiveness" : "pending",
+    "preventions" : [ "M599", "M600", "M610" ],
+    "related_action_items" : [ "A038" ],
+    "note" : "Agent skips or misuses formal workflow phase tooling: calling collect-results-agent mid-wave, spawning cat:work-execute directly without cat:work-implement-agent, using Agent tool instead of Task tool for parallel job subagents in work-implement-agent."
   } ],
   "action_items" : [ {
     "id" : "A001",
@@ -436,8 +449,8 @@
       "last_reviewed" : "2026-02-23T10:22:49Z",
       "reason" : "5 post-fix mistakes (M346, M349, M356 in current period) - documentation-level prevention ineffective",
       "escalation_level" : "hook",
-      "analysis" : "R022 update: No new PATTERN-001 recurrences in current period (M377-M391). Prior period had 5 post-fix failures (M346, M349, M356, M364, M368). A012 (prompt priming prevention) may be taking effect - descriptive placeholders instead of example values appears to reduce fabrication rate. PATTERN-020 (mandatory step bypass) shows subagent compliance gap persists in different form. Escalation remains open: if PATTERN-001 recurs, implement PostToolUse hook to detect validation claims without corresponding skill invocation evidence in session transcript.",
-      "proposed_solution" : "Continue monitoring. A012 (prompt priming prevention) may be stabilizing the pattern. R022: No new recurrences in current period. If recurrence in next period, implement structural enforcement: PostToolUse hook requiring tool output evidence in subagent validation claims. Current escalation level: hook (proposed but not implemented). Monitor for 2+ clean periods before closing.",
+      "analysis" : "R032 update: 0 new PATTERN-001 recurrences in M599-M611. Prior period had 5 post-fix failures. Pattern appears stable — no fabrication instances in current 14-mistake period. A012 (prompt priming prevention) continues to hold. Continue monitoring for 1 more clean period before considering closure.",
+      "proposed_solution" : "Continue monitoring. A012 (prompt priming prevention) may be stabilizing the pattern. R032: No new recurrences in current period. If recurrence in next period, implement structural enforcement: PostToolUse hook requiring tool output evidence in subagent validation claims. Current escalation level: hook (proposed but not implemented). Monitor for 2+ clean periods before closing.",
       "status" : "open"
     }
   }, {
@@ -481,8 +494,8 @@
       "implementation" : "Enhanced warn-base-branch-edit.sh to detect and warn when Edit/Write uses absolute /workspace/ paths while in a worktree, bypassing isolation",
       "prevention_path" : "${CLAUDE_PLUGIN_ROOT}/hooks/warn-base-branch-edit.sh",
       "last_reviewed" : "2026-02-23T10:22:49Z",
-      "analysis" : "R022 update: M390 (learn skill committed retrospective metadata to main workspace instead of active worktree) adds new path/commit-routing assumption instance. warn-base-branch-edit.sh hook covers Edit/Write tool calls in worktrees, but learn skill commit routing decisions are not enforced at hook level. A022 (phase-record.md single-commit-rule) partially addresses M390 scenario. Documentation-level A003 (agent-architecture.md section) confirmed ineffective across 5+ instances. Hook enforcement covers only a subset of path assumption failure modes.",
-      "proposed_solution" : "Expand hook coverage to detect commits to main workspace while active worktree exists. A022 prevention (phase-record.md) addresses the specific M390 learn-skill scenario. Consider adding commit destination validation to learn skill phase-record subagent. R022: Escalation remains open; M390 prevention implemented but not yet verified."
+      "analysis" : "R032 update: M605 (2026-03-26) may be a path_config_assumption instance (lock assumption during session compaction) but has empty description, preventing definitive attribution. No clearly confirmed PATTERN-003 recurrence in M599-M611. Prior escalation analysis (R031) identified M390 commit routing as gap. Current period shows possible stability — continue monitoring. Hook coverage remains partial.",
+      "proposed_solution" : "Expand hook coverage to detect commits to main workspace while active worktree exists. A022 prevention (phase-record.md) addresses the specific M390 learn-skill scenario. Consider adding commit destination validation to learn skill phase-record subagent. R032: Possible stability — no confirmed PATTERN-003 recurrence this period. Monitor for 1 more clean period before considering improvement."
     }
   }, {
     "id" : "A004",
@@ -804,9 +817,9 @@
       "escalated_date" : "2026-03-05T19:10:00Z",
       "reason" : "6 post-fix failures. Hook validates AskUserQuestion was called but does not check that answers object is non-empty. M459/M462/M463/M464 all bypass approval gate via empty answers {}.",
       "escalation_level" : "hook",
-      "analysis" : "R026 escalation: 6 post-fix failures recorded. However, issue 2.1-fix-approval-gate-empty-answers-handling was closed 2026-03-04 with a documentation fix adding explicit empty-answers handling to work-with-issue Step 8. M459/M462/M463/M464 occurred before or during the fix. Fix implemented; effectiveness pending next monitoring period.",
-      "proposed_solution" : "Implemented via 2.1-fix-approval-gate-empty-answers-handling (closed 2026-03-04). Monitor for recurrences.",
-      "status" : "implemented"
+      "analysis" : "R032 update: M606 and M607 (2026-03-26) show new bypass vector: agent operating OUTSIDE the formal work-with-issue orchestration flow, directly calling AskUserQuestion after implement phase and using git update-ref instead of cat:work-merge-agent. The prior fix (2.1-fix-approval-gate-empty-answers-handling) addressed empty-answers bypass but did not prevent ad-hoc orchestration bypass. The hook cannot enforce what it cannot observe: when the agent skips work-with-issue entirely, no squash/rebase/approval gate enforcement is possible. New bypass requires architectural enforcement: the formal work-with-issue-agent flow must be the only path to merge, not just the recommended one.",
+      "proposed_solution" : "Add PreToolUse hook that blocks merge-related git operations (merge, update-ref, push to target branch) unless the session holds an active issue lock via cat:work-with-issue-agent. This prevents ad-hoc merge bypasses. Also add AskUserQuestion pre-hook to require non-empty answers AND verify squash was performed (git log --oneline count check).",
+      "status" : "open"
     }
   }, {
     "id" : "A021",
@@ -1073,6 +1086,22 @@
     "related_mistakes" : [ "M588", "M598" ],
     "effectiveness_check" : {
       "mistakes_before" : 2,
+      "mistakes_after" : null,
+      "post_fix_mistakes" : [ ],
+      "verdict" : "pending"
+    }
+  }, {
+    "id" : "A038",
+    "priority" : "high",
+    "description" : "Enforce cat:work-implement-agent as the exclusive entry point for implementation work: (1) Add hook blocking cat:work-execute spawns when current session does not hold the issue lock (A001 escalation proposed this for subagent validation; same mechanism applies here). (2) Add instruction to work-implement-agent that collect-results must be called AFTER ALL waves complete, never mid-wave. (3) Clarify Task-vs-Agent tool distinction in work-implement-agent: implementation job subagents must use Task tool, never Agent tool.",
+    "category" : "protocol_violation",
+    "pattern_id" : "PATTERN-032",
+    "status" : "open",
+    "created_date" : "2026-03-29T00:00:00Z",
+    "completed_date" : null,
+    "related_mistakes" : [ "M599", "M600", "M610" ],
+    "effectiveness_check" : {
+      "mistakes_before" : 3,
       "mistakes_after" : null,
       "post_fix_mistakes" : [ ],
       "verdict" : "pending"
