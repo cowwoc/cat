@@ -3,324 +3,71 @@ Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
-# Grep and Read Skill
+# Grep and Read Agent
 
-**Purpose**: Search for pattern and read all matching files in a single coordinated operation, eliminating sequential
-round-trips.
+## Purpose
 
-**Performance**: 50-70% time savings, 4000-8000 token savings compared to sequential Grep -> Read -> Read -> Read
-pattern.
+Search for a pattern AND read all matching files in one operation, eliminating sequential Grep → Read round-trips.
+All Reads execute in parallel after a single Grep — 50–70% faster than sequential calls.
 
-**When to Use**:
-- Exploring codebase for specific functionality
-- Finding all files containing a pattern
-- Researching implementation approaches
-- Investigating errors or bugs across multiple files
+**Invoke when:**
+- You need to search for a pattern AND read the matching files (unknown paths)
+- Exploring codebase structure, researching implementations, or investigating bugs across multiple files
 
-## Anti-Pattern This Skill Replaces
+**Do NOT invoke when:**
+- You already know the exact file paths (use parallel Read calls directly)
+- You only need file paths or line context (use Grep alone)
+- Files likely exceed 1000 lines each and you need to evaluate matches before committing to full reads
 
-**INEFFICIENT PATTERN** (4 messages, 9-12 seconds):
-```
-Message 1: Grep "FormattingRule" -> returns 5 files
-  [Wait for response ~2.5s]
+## Procedure
 
-Message 2: Read src/main/java/.../FormattingRule.java
-  [Wait for response ~2.5s]
+### Step 1: Determine the search pattern
 
-Message 3: Read src/test/java/.../FormattingRuleTest.java
-  [Wait for response ~2.5s]
+From context, identify: the pattern (regex or literal), directory (default: `.`), optional glob filter (e.g.,
+`*.java`), and whether case-insensitive search is needed.
 
-Message 4: Read docs/architecture.md
-  [Wait for response ~2.5s]
-
--> Impact: 4 round-trips = ~10 seconds, ~12,000 tokens
--> Wasted: 3 avoidable round-trips
-```
-
-**EFFICIENT PATTERN** (1 message, 3-4 seconds):
-```
-Message 1: Skill grep-and-read pattern="FormattingRule" max_files=5
-  - Grep finds matches
-  - Read all matching files in parallel
-  - Return consolidated output
-  [Wait for response ~3.5s]
-
--> Impact: 1 round-trip = ~3.5 seconds, ~4,000 tokens
--> Saved: 3 round-trips = 6.5 seconds (65% faster), 8,000 tokens
-```
-
-## Skill Parameters
-
-| Parameter | Required | Default | Description |
-|-----------|----------|---------|-------------|
-| `pattern` | Yes | - | Grep pattern to search for (regex supported) |
-| `path` | No | `.` | Directory to search in |
-| `glob` | No | - | File type filter (e.g., "*.java", "*.md") |
-| `max_files` | No | 5 | Maximum number of files to read |
-| `context_lines` | No | 100 | Lines to read per file (0 = all) |
-| `case_sensitive` | No | true | Case-sensitive search |
-
-## Skill Workflow
-
-### Step 1: Search for Pattern
-
-Use Grep tool to find all files containing the pattern:
-
-```bash
-# Search for pattern with optional filters
-Grep: pattern="{pattern}"
-  path="{path}"
-  glob="{glob}"
-  output_mode="files_with_matches"
-  -i={!case_sensitive}
-```
-
-**Example**:
-```
-Grep: pattern="FormattingRule"
-  path="/path/to/project"
-  glob="*.java"
-  output_mode="files_with_matches"
-```
-
-**Output**: List of file paths
-```
-src/main/java/io/github/cowwoc/styler/formatter/FormattingRule.java
-src/main/java/io/github/cowwoc/styler/formatter/FormattingRuleImpl.java
-src/test/java/io/github/cowwoc/styler/formatter/FormattingRuleTest.java
-```
-
-### Step 2: Read All Matching Files (Parallel)
-
-Read all found files in a single message using multiple Read tool calls:
-
-```bash
-# Parallel read invocations in one message
-Read: /path/to/project/src/main/java/.../FormattingRule.java
-Read: /path/to/project/src/main/java/.../FormattingRuleImpl.java
-Read: /path/to/project/src/test/java/.../FormattingRuleTest.java
-```
-
-**If max_files exceeded**: Show first N files, report total found
-**If context_lines limited**: Read first N lines of each file
-
-### Step 3: Consolidate and Report
-
-Provide summary and consolidated output:
+### Step 2: Search for matching files
 
 ```
-===============================================================
-GREP AND READ SUMMARY
-===============================================================
-Pattern:        FormattingRule
-Files Found:    3
-Files Read:     3
-Total Size:     ~15KB
-Time Saved:     ~6.5 seconds (vs sequential)
-Tokens Saved:   ~8,000 tokens
-===============================================================
-
-FILES READ:
-
----------------------------------------------------------------
-FILE 1: src/main/java/.../FormattingRule.java
----------------------------------------------------------------
-[file contents...]
-
----------------------------------------------------------------
-FILE 2: src/main/java/.../FormattingRuleImpl.java
----------------------------------------------------------------
-[file contents...]
-
----------------------------------------------------------------
-FILE 3: src/test/java/.../FormattingRuleTest.java
----------------------------------------------------------------
-[file contents...]
+Grep:
+  pattern: "<pattern>"
+  path: "<directory>"          # optional
+  glob: "<glob-filter>"        # optional
+  output_mode: "files_with_matches"
+  -i: true                     # optional
 ```
 
-## Usage Examples
+If no files match, report and stop. You may suggest a broader pattern but do not act on it — return control to the
+caller.
 
-### Example 1: Explore API Implementation
+If more than 10 files match, read only the top 10 by **match count** (run a second Grep with `output_mode: "count"`
+and sort descending). List skipped files with their counts and suggest a more targeted pattern or glob filter.
 
-**Goal**: Understand how "FormattingRule" is implemented
+### Step 3: Read all matching files in parallel
 
-**Command**:
-```bash
-Skill: grep-and-read
-  pattern="FormattingRule"
-  path="/path/to/project"
-  glob="*.java"
-  max_files=5
+Issue **every** Read call in a **single message**:
+
+```
+Read: <path-1>
+Read: <path-2>
+Read: <path-3>
+...
 ```
 
-**Benefit**: Get complete picture of implementation in one round-trip
+All matching files (or the selected subset) must appear in exactly one message. Do not split reads across multiple
+messages — even two batches is sequential at the message level and defeats the purpose. If a tool-call limit
+prevents issuing all reads at once, reduce the file count to fit and report which files were dropped.
 
-### Example 2: Research Error Handling
+### Step 4: Return consolidated content
 
-**Goal**: Find all files handling "ValidationException"
+Read each file in full — no `limit` or `offset` parameters. Do not summarize or truncate unless a file exceeds
+1000 lines after being read in full. When a file does exceed 1000 lines, note the total line count and the range
+returned.
 
-**Command**:
-```bash
-Skill: grep-and-read
-  pattern="ValidationException"
-  path="/path/to/project/src"
-  max_files=10
-  context_lines=50
-```
+## Verification
 
-**Benefit**: See all error handling patterns without multiple reads
-
-### Example 3: Documentation Research
-
-**Goal**: Find all documentation mentioning "error handling"
-
-**Command**:
-```bash
-Skill: grep-and-read
-  pattern="error handling"
-  path="/path/to/project/docs"
-  glob="*.md"
-  case_sensitive=false
-  context_lines=0
-```
-
-**Benefit**: Read all relevant docs in one operation
-
-### Example 4: Test Coverage Analysis
-
-**Goal**: Find all tests for "Formatter" classes
-
-**Command**:
-```bash
-Skill: grep-and-read
-  pattern="class.*Formatter.*Test"
-  path="/path/to/project/src/test"
-  glob="*Test.java"
-  max_files=8
-```
-
-**Benefit**: See complete test coverage at once
-
-## Edge Cases
-
-### Too Many Matches
-
-**Problem**: Pattern matches 50+ files
-
-**Solution**:
-1. Report total matches found
-2. Read first `max_files` only
-3. Suggest more specific pattern or glob filter
-
-**Output**:
-```
-Warning: Pattern matched 53 files
-Reading first 5 files (use max_files parameter to adjust)
-Suggestion: Refine pattern or add glob filter for more targeted search
-```
-
-### Large Files
-
-**Problem**: Files exceed context window
-
-**Solution**:
-1. Use `context_lines` parameter to limit output
-2. Read first N lines of each file
-3. Report truncation with file statistics
-
-**Output**:
-```
-File: FormattingRule.java
-   Total lines: 1500
-   Read lines: 100 (first 100)
-   [... file contents ...]
-   [... truncated: showing 100 of 1500 lines ...]
-```
-
-### No Matches
-
-**Problem**: Pattern doesn't match any files
-
-**Solution**:
-1. Report no matches found
-2. Suggest alternative search strategies
-3. Verify search path and pattern
-
-**Output**:
-```
-No files found matching pattern: "FooBar"
-Search path: /path/to/project
-Suggestions:
-   - Try case-insensitive search (case_sensitive=false)
-   - Broaden pattern (use wildcards)
-   - Check search path is correct
-```
-
-## Performance Comparison
-
-### Scenario: Finding and reading 5 files
-
-| Approach | Messages | Time | Tokens | Savings |
-|----------|----------|------|--------|---------|
-| **Sequential** (Grep + 5 Reads) | 6 | ~15s | ~18,000 | Baseline |
-| **grep-and-read Skill** | 1 | ~4s | ~6,000 | 73% time, 67% tokens |
-
-### Scenario: Finding and reading 3 files
-
-| Approach | Messages | Time | Tokens | Savings |
-|----------|----------|------|--------|---------|
-| **Sequential** (Grep + 3 Reads) | 4 | ~10s | ~12,000 | Baseline |
-| **grep-and-read Skill** | 1 | ~3s | ~4,000 | 70% time, 67% tokens |
-
-## When to Use This Skill
-
-**Use Grep alone when**:
-- You need only file paths (use `output_mode="files_with_matches"`)
-- You need specific line context (use `output_mode="content"` and `-C` flag)
-- Files are too large (> 1000 lines each) and you need to see matches before committing to full reads
-- Pattern is exploratory and you want to evaluate matches first
-
-**Use this skill when**:
-- You know you'll read the matching files
-- Files are reasonably sized (< 1000 lines each)
-- You want comprehensive view of pattern usage
-- Exploring codebase for implementation understanding
-
-## Integration with Existing Tools
-
-### Complements batch-read Skill
-
-**batch-read**: Use when you KNOW which files to read
-```bash
-# You already know the files
-batch-read: "error-handling" --type md --max-files 5
-```
-
-**grep-and-read**: Use when you need to FIND files first
-```bash
-# You need to discover the files
-grep-and-read: pattern="error handling" glob="*.md"
-```
-
-### Complements Grep Tool
-
-**Grep (content mode)**: Use for seeing match context
-```bash
-# See lines around matches
-Grep: pattern="FormattingRule" output_mode="content" -C=3
-```
-
-**grep-and-read**: Use for reading entire matching files
-```bash
-# Read complete files
-grep-and-read: pattern="FormattingRule" max_files=5
-```
-
----
-
-**Related Skills**:
-- [batch-read](../batch-read/SKILL.md) - Read known files in batch
-
-**Related Tools**:
-- Grep tool - Pattern search
-- Read tool - File reading
+- [ ] Grep used only for file discovery — one `files_with_matches` call, plus optionally one `count` call when
+  ranking >10 files. No `content`-mode Grep calls substituting for Read
+- [ ] All Read calls issued in a single message (parallel), not one at a time
+- [ ] Full file contents returned without unnecessary summarization
+- [ ] If no files matched, result reported and execution stopped cleanly
