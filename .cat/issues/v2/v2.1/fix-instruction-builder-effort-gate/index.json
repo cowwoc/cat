@@ -1,3 +1,5 @@
 {
-  "status" : "open"
+  "status" : "open",
+  "dependencies" : [ "2.1-fix-instruction-builder-sprt-loop" ],
+  "blocks" : [ ]
 }
