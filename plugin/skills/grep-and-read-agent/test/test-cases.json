@@ -1,0 +1,103 @@
+{
+  "test_cases": [
+    {
+      "test_case_id": "TC1",
+      "semantic_unit_id": "unit_grep_files_with_matches",
+      "category": "REQUIREMENT",
+      "prompt": "Search for 'HookHandler' across the entire codebase and read all matching files. Show me the full contents of each file you find.",
+      "assertions": [
+        {
+          "assertion_id": "TC1_det_1",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "Grep must be called with output_mode: files_with_matches",
+          "pattern": "files_with_matches",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC1_sem_1",
+          "type": "semantic",
+          "description": "Agent returned file contents, not just file paths",
+          "instruction": "Check if the output includes actual file contents (not merely a list of file paths). The agent should have read and returned the content of each matched file.",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC2",
+      "semantic_unit_id": "unit_parallel_reads",
+      "category": "PROHIBITION",
+      "prompt": "Find all files containing 'ClaudeHook' in the codebase and read their full contents. I need to see each file's implementation.",
+      "assertions": [
+        {
+          "assertion_id": "TC2_det_1",
+          "type": "deterministic",
+          "method": "string_match",
+          "description": "Grep must use files_with_matches mode (not content mode)",
+          "pattern": "files_with_matches",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC2_sem_1",
+          "type": "semantic",
+          "description": "Read calls were issued in parallel (single message), not sequentially one file at a time",
+          "instruction": "Check if the agent issued multiple Read tool calls simultaneously in a single response turn rather than reading one file, receiving the result, then reading the next. Parallel reads appear as multiple Read calls in the same response turn.",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC3",
+      "semantic_unit_id": "unit_no_match_stop",
+      "category": "CONDITIONAL",
+      "prompt": "Search for 'XYZNONEXISTENT_UNIQUE_PATTERN_99999' across all Java files in the project and read them.",
+      "assertions": [
+        {
+          "assertion_id": "TC3_det_1",
+          "type": "deterministic",
+          "method": "regex",
+          "description": "Agent reported no files found",
+          "pattern": "(?i)(no files|no match|not found|0 file|no result|nothing found)",
+          "expected": true
+        },
+        {
+          "assertion_id": "TC3_sem_1",
+          "type": "semantic",
+          "description": "Agent stopped after reporting no matches and did not attempt any Read calls",
+          "instruction": "Check if the agent reported that no files matched the pattern and then stopped, without attempting to read any files.",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC4",
+      "semantic_unit_id": "unit_limit_10",
+      "category": "CONDITIONAL",
+      "prompt": "Find all Java files in the project that contain 'import' and read all of them. I need to see every import statement across the codebase.",
+      "assertions": [
+        {
+          "assertion_id": "TC4_sem_1",
+          "type": "semantic",
+          "description": "When more than 10 files match, agent reads at most 10 and reports the total count",
+          "instruction": "Check if the agent: (1) noted that the total number of matching files exceeded 10, and (2) read only a subset of up to 10 files rather than attempting to read all matches.",
+          "expected": true
+        }
+      ]
+    },
+    {
+      "test_case_id": "TC5",
+      "semantic_unit_id": "unit_full_content",
+      "category": "REQUIREMENT",
+      "prompt": "Search for 'WorkPrepare' across all Java files in the project and read the matching files. I need the complete source code.",
+      "assertions": [
+        {
+          "assertion_id": "TC5_sem_1",
+          "type": "semantic",
+          "description": "Agent returned full file contents without summarizing or truncating",
+          "instruction": "Check if the agent returned the complete file contents for each matched file without summarizing, paraphrasing, or showing only excerpts (unless a file genuinely exceeded 1000 lines, in which case truncation with a line count note is acceptable).",
+          "expected": true
+        }
+      ]
+    }
+  ]
+}
