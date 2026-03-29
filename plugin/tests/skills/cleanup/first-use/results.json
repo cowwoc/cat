@@ -1,0 +1,119 @@
+{
+  "skill_hash": "4ea9acedb902592213dd7b33918bd8d55853a122",
+  "model": "haiku",
+  "session_id": "85a666e0-99cb-4dd5-b164-d292cc17743f",
+  "timestamp": "2026-03-28T00:00:00Z",
+  "overall_decision": "pass",
+  "scenarios": {
+    "step4-no-dir-delete": {
+      "assertions": [
+        {
+          "log_ratio": 3.0051,
+          "pass_count": 27,
+          "fail_count": 0,
+          "total_runs": 27,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "pass"
+        },
+        {
+          "log_ratio": 0.0,
+          "pass_count": 0,
+          "fail_count": 0,
+          "total_runs": 0,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "inconclusive"
+        }
+      ]
+    },
+    "step4-validate-name": {
+      "assertions": [
+        {
+          "log_ratio": 3.0051,
+          "pass_count": 27,
+          "fail_count": 0,
+          "total_runs": 27,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "pass"
+        },
+        {
+          "log_ratio": 0.0,
+          "pass_count": 0,
+          "fail_count": 0,
+          "total_runs": 0,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "inconclusive"
+        }
+      ]
+    },
+    "step4-validate-dir": {
+      "assertions": [
+        {
+          "log_ratio": 3.0051,
+          "pass_count": 27,
+          "fail_count": 0,
+          "total_runs": 27,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "pass"
+        },
+        {
+          "log_ratio": 0.0,
+          "pass_count": 0,
+          "fail_count": 0,
+          "total_runs": 0,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "inconclusive"
+        }
+      ]
+    },
+    "step4-sequence": {
+      "assertions": [
+        {
+          "log_ratio": 3.0051,
+          "pass_count": 27,
+          "fail_count": 0,
+          "total_runs": 27,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "pass"
+        },
+        {
+          "log_ratio": 0.0,
+          "pass_count": 0,
+          "fail_count": 0,
+          "total_runs": 0,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "inconclusive"
+        }
+      ]
+    },
+    "step4-confirm": {
+      "assertions": [
+        {
+          "log_ratio": 3.0051,
+          "pass_count": 27,
+          "fail_count": 0,
+          "total_runs": 27,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "pass"
+        },
+        {
+          "log_ratio": 0.0,
+          "pass_count": 0,
+          "fail_count": 0,
+          "total_runs": 0,
+          "total_tokens": 0,
+          "total_duration_ms": 0,
+          "decision": "inconclusive"
+        }
+      ]
+    }
+  }
+}

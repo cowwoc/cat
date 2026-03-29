@@ -12,7 +12,7 @@ runs across model versions or skill revisions.
 ## File Location
 
 ```
-plugin/skills/<skill-name>/results.json
+plugin/tests/<path>/<name>/results.json
 ```
 
 ## Top-Level Fields
@@ -23,23 +23,31 @@ plugin/skills/<skill-name>/results.json
 | `model` | string | Model identifier used for this run (e.g., `claude-sonnet-4-6`) |
 | `session_id` | string | Claude session ID from `CLAUDE_SESSION_ID` at run time |
 | `timestamp` | string | ISO-8601 UTC timestamp when the run completed |
-| `overall_decision` | string | Aggregated decision across all test cases: `pass`, `fail`, or `inconclusive` |
-| `test_cases` | array | Per-test-case SPRT data (see below) |
+| `overall_decision` | string | Aggregated decision across all scenarios: `pass`, `fail`, or `inconclusive` |
+| `scenarios` | object | Per-scenario SPRT data keyed by scenario filename without extension (see below) |
 
-## test_cases Array Entry Fields
+## scenarios Object Entry Fields
 
-Each entry in `test_cases` corresponds to one `.md` file in the skill's `test/` directory.
+Each key in `scenarios` is the scenario filename without extension (e.g., `squash-trigger-basic`).
+Each value contains the SPRT statistics tracked independently per assertion.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `id` | string | Filename without extension (e.g., `squash-trigger-basic`) |
-| `type` | string | Test type copied from frontmatter: `should-trigger`, `should-not-trigger`, or `behavior` |
+| `assertions` | array | Array of SPRT data objects, one per assertion in the scenario file (ordered to match the `## Assertions` list) |
+
+## Assertion Entry Fields
+
+Each element of the `assertions` array contains:
+
+| Field | Type | Description |
+|-------|------|-------------|
 | `log_ratio` | number | SPRT log-likelihood ratio at the time of the run |
-| `pass_count` | integer | Number of runs where the assertion held |
-| `fail_count` | integer | Number of runs where the assertion did not hold |
+| `pass_count` | integer | Number of runs where this assertion held |
+| `fail_count` | integer | Number of runs where this assertion did not hold |
 | `total_runs` | integer | `pass_count + fail_count` |
-| `total_tokens` | integer | Cumulative token count across all runs for this test case |
+| `total_tokens` | integer | Cumulative token count across all runs for this assertion |
 | `total_duration_ms` | integer | Cumulative wall-clock time in milliseconds across all runs |
+| `decision` | string | Per-assertion SPRT decision: `pass`, `fail`, or `inconclusive` |
 
 ## overall_decision Values
 
@@ -58,27 +66,51 @@ Each entry in `test_cases` corresponds to one `.md` file in the skill's `test/` 
   "session_id": "abc123de-f456-7890-abcd-ef1234567890",
   "timestamp": "2026-03-24T14:30:00Z",
   "overall_decision": "pass",
-  "test_cases": [
-    {
-      "id": "squash-trigger-basic",
-      "type": "should-trigger",
-      "log_ratio": 2.94,
-      "pass_count": 8,
-      "fail_count": 2,
-      "total_runs": 10,
-      "total_tokens": 14800,
-      "total_duration_ms": 42000
+  "scenarios": {
+    "squash-trigger-basic": {
+      "assertions": [
+        {
+          "log_ratio": 2.94,
+          "pass_count": 8,
+          "fail_count": 2,
+          "total_runs": 10,
+          "total_tokens": 14800,
+          "total_duration_ms": 42000,
+          "decision": "pass"
+        },
+        {
+          "log_ratio": 1.50,
+          "pass_count": 7,
+          "fail_count": 3,
+          "total_runs": 10,
+          "total_tokens": 14800,
+          "total_duration_ms": 42000,
+          "decision": "inconclusive"
+        }
+      ]
     },
-    {
-      "id": "squash-should-not-trigger-rebase",
-      "type": "should-not-trigger",
-      "log_ratio": 3.10,
-      "pass_count": 9,
-      "fail_count": 1,
-      "total_runs": 10,
-      "total_tokens": 13200,
-      "total_duration_ms": 38000
+    "squash-should-not-trigger-rebase": {
+      "assertions": [
+        {
+          "log_ratio": 3.10,
+          "pass_count": 9,
+          "fail_count": 1,
+          "total_runs": 10,
+          "total_tokens": 13200,
+          "total_duration_ms": 38000,
+          "decision": "pass"
+        },
+        {
+          "log_ratio": 2.80,
+          "pass_count": 8,
+          "fail_count": 2,
+          "total_runs": 10,
+          "total_tokens": 13200,
+          "total_duration_ms": 38000,
+          "decision": "pass"
+        }
+      ]
     }
-  ]
+  }
 }
 ```

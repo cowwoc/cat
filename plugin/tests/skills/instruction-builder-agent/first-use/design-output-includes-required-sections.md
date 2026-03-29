@@ -1,16 +1,14 @@
 ---
-type: behavior
 category: sequence
 ---
-## Scenario
+## Turn 1
 
 Design a skill for a CAT plugin agent that creates a new git branch and commits a file. The skill must follow
 the standard skill structure with Purpose, Procedure, and Verification sections, and use sequential step
 numbering starting at Step 1.
 
-## Tier 1 Assertion
-
-- **TC2_det_1** (regex): Response contains a Purpose section heading
+## Assertions
+1. - **TC2_det_1** (regex): Response contains a Purpose section heading
   - Pattern: `##\s+Purpose`
   - Expected: true
 - **TC2_det_2** (regex): Response contains a Procedure section heading
@@ -25,7 +23,4 @@ numbering starting at Step 1.
 - **TC2_det_5** (string_match): Response does not contain Step 0 (no 0-based numbering)
   - Pattern: `### Step 0`
   - Expected: false
-
-## Tier 2 Assertion
-
-_(no semantic assertions)_
+2. _(no semantic assertions)_

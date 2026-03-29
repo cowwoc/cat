@@ -31,25 +31,43 @@ orchestrating agent needs to know the exact blocker to adjust its delegation str
 If a plan.md or delegation prompt specifies using a skill (e.g., `cat:instruction-builder-agent`), invoke it directly via the Skill
 tool. Do not assume tool limitations exist - subagents have full tool access.
 
-## Spawning Subagents: Task vs TaskCreate
+## Spawning Subagents: Task vs Agent vs TaskCreate
 
-**Use the Task tool to spawn subagents, NOT TaskCreate.**
+**Use the Task tool to spawn parallel job subagents that require worktree isolation, NOT the Agent tool.**
 
-These are completely different tools:
+These are three completely different tools:
 
-| Tool | Purpose | What it does |
-|------|---------|--------------|
-| **Task** | Subagent spawner | Spawns a subagent that executes work and returns results |
-| **TaskCreate** | Todo tracker | Adds an item to the task list UI (does NOT spawn anything) |
+- **Task**: Isolated subagent spawner. Spawns with `isolation: "worktree"`, giving the subagent its own git
+  worktree. Commits made inside the subagent persist after it completes and can be merged back.
+- **Agent**: In-process subagent spawner. No worktree isolation — the subagent's git state and all its commits
+  are destroyed when it completes.
+- **TaskCreate**: Todo tracker. Adds an item to the task list UI (does NOT spawn anything).
+
+**Critical distinction — Task vs Agent worktree behavior:**
+
+When `work-implement-agent` spawns job subagents using `isolation: "worktree"`, the Task tool is **required**.
+Using the Agent tool instead silently breaks worktree isolation:
+
+- **Task tool**: subagent gets its own git worktree; commits made inside survive after the subagent finishes and can
+  be merged back into the issue branch via the branch name in the Task result metadata.
+- **Agent tool**: subagent's worktree and all its commits are destroyed when the subagent completes. The main agent
+  receives the JSON result but the actual git commits are unrecoverable. The work appears to succeed but nothing
+  was committed.
 
 **Common confusion**: System reminders mention "TaskCreate" for task tracking. When you see
 "Task tool:" in a skill, this means the **Task** tool (subagent spawner), not TaskCreate.
 
 ```
-# ✅ CORRECT: Spawns a subagent
+# ✅ CORRECT: Isolated worktree — commits survive, can be merged back
 Task tool:
-  subagent_type: "general-purpose"
-  prompt: "Do the work..."
+  subagent_type: "cat:work-execute"
+  isolation: "worktree"
+  prompt: "Implement job 1..."
+
+# ❌ WRONG: No isolation — worktree and commits destroyed on completion
+Agent tool:
+  subagent_type: "cat:work-execute"
+  prompt: "Implement job 1..."
 
 # ❌ WRONG: Just adds a todo item, nothing executes
 TaskCreate:

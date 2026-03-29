@@ -1,4 +1,6 @@
 {
-  "status" : "open",
-  "dependencies" : [ "2.1-revise-instruction-builder-file-targets" ]
+  "status" : "closed",
+  "resolution" : "implemented",
+  "dependencies" : [ "2.1-revise-instruction-builder-file-targets" ],
+  "target_branch" : "v2.1"
 }
