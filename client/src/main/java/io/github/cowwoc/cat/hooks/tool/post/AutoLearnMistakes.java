@@ -299,8 +299,11 @@ public final class AutoLearnMistakes implements PostToolHandler
           extractContext(filtered, "\\(eval\\):[0-9]+:|parse error", 3));
     }
 
-    // Pattern 5: Edit tool failures (no tool-type guard)
-    if (EDIT_FAILURE_PATTERN.matcher(filtered).find())
+    // Pattern 5: Edit tool failures — only trigger for the Edit tool itself.
+    // Bash commands that read files containing these phrases (e.g., task output files that include
+    // subagent conversation JSON) must not trigger this pattern; the phrase is only meaningful when
+    // the Edit tool reports it as its own failure.
+    if (toolName.equals("Edit") && EDIT_FAILURE_PATTERN.matcher(filtered).find())
     {
       String editPattern = "string to replace not found|old_string not found";
       return new MistakeDetection("edit_failure", extractContext(filtered, editPattern, 2));
