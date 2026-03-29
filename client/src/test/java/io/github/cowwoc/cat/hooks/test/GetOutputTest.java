@@ -281,16 +281,16 @@ public class GetOutputTest
   }
 
   /**
-   * Integration test: verifies that "benchmark-aggregator" type routes through GetOutput dispatcher
-   * to SkillTestAggregator and returns wrapped output with configs and no delta for
+   * Integration test: verifies that "instruction-test-aggregator" type routes through GetOutput dispatcher
+   * to InstructionTestAggregator and returns wrapped output with configs and no delta for
    * a single config.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void benchmarkAggregatorRoutesThroughDispatcher() throws IOException
+  public void instructionTestAggregatorRoutesThroughDispatcher() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-get-output-benchmark-");
+    Path tempDir = Files.createTempDirectory("test-get-output-instruction-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetOutput handler = new GetOutput(scope);
@@ -300,10 +300,10 @@ public class GetOutputTest
         ]
         """;
 
-      String result = handler.getOutput(new String[]{"benchmark-aggregator", runResultsJson});
+      String result = handler.getOutput(new String[]{"instruction-test-aggregator", runResultsJson});
 
       requireThat(result, "result").
-        contains("<output type=\"benchmark-aggregator\">").
+        contains("<output type=\"instruction-test-aggregator\">").
         contains("</output>").
         contains("\"with-skill\"").
         contains("pass_rate");

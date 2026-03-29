@@ -237,7 +237,7 @@ If none modified: skip to artifact cleanup.
 
 ```bash
 cd "${WORKTREE_PATH}"
-rm -f findings.json diff-validation-*.json benchmark-artifacts/ 2>/dev/null
+rm -f findings.json diff-validation-*.json test-artifacts/ 2>/dev/null
 git rm --cached findings.json diff-validation-*.json 2>/dev/null || true
 ```
 

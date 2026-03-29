@@ -2158,8 +2158,20 @@ module io.github.cowwoc.cat.hooks.test
 
 ### Access Implications
 - Methods tested directly must be `public` (visible across modules)
+- Private methods that need cross-module test access: use the SharedSecrets pattern (do NOT use `@VisibleForTesting`)
 - Package-private methods can only be tested indirectly through public API
 - Use `exports ... to ...` for targeted exports to test module only
+- Use `opens ... to ...` only when deep reflection is required (e.g., Jackson deserialization); do NOT add test module
+  to `opens` directives when SharedSecrets suffices
+
+**Do not use `@VisibleForTesting`.** Widening method visibility solely for tests introduces accidental API surface and
+violates encapsulation. Use the SharedSecrets pattern instead:
+
+1. Add a `@FunctionalInterface` inner interface to `SharedSecrets.java` (e.g., `SkillTestRunnerAccess`)
+2. Add a `private static` field and `setXAccess()` setter in `SharedSecrets`
+3. Add a public accessor in `SharedSecrets` that calls `initialize(TheClass.class)` if the field is null
+4. Register via a static initializer in the class: `static { SharedSecrets.setXAccess(TheClass::theMethod); }`
+5. Tests call `SharedSecrets.theMethod(...)` directly; no instance or `@VisibleForTesting` needed
 
 ## Project Structure
 

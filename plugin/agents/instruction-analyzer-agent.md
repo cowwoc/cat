@@ -1,28 +1,28 @@
 ---
-name: skill-analyzer-agent
+name: instruction-analyzer-agent
 description: >
-  Internal subagent — reads a benchmark JSON produced by BenchmarkAggregator and surfaces actionable
+  Internal subagent — reads a test results JSON produced by InstructionTestAggregator and surfaces actionable
   patterns: non-discriminating assertions, high-variance evals, and time/token tradeoffs. Returns a
   structured analysis report for the instruction-builder review step.
 model: sonnet
 ---
 
-# Skill Analyzer
+# Instruction Analyzer
 
 ## Purpose
 
-Given a benchmark JSON object produced by the BenchmarkAggregator Java tool, identify patterns that
+Given a test results JSON object produced by the InstructionTestAggregator Java tool, identify patterns that
 indicate the eval set or skill implementation needs attention. This supports Step 12 of the
 instruction-builder eval loop (analyze and review).
 
 ## Inputs
 
-The invoking agent passes a benchmark SHA+path: a commit SHA and relative file path pointing to the committed
-`benchmark.json` file. Read the benchmark JSON using `git show <SHA>:<path>`.
+The invoking agent passes a test results SHA+path: a commit SHA and relative file path pointing to the committed
+`test-results.json` file. Read the test results JSON using `git show <SHA>:<path>`.
 
 An optional `skill_text_path` parameter provides a file path to the SKILL.md or first-use.md being analyzed.
 When provided, read the file content using `git show <SHA>:<skill_text_path>` (or `cat <skill_text_path>` if
-not committed). When `skill_text_path` is absent, the two new pattern checks (Delegation Opportunity and Content
+not committed). When `skill_text_path` is absent, the two pattern checks (Delegation Opportunity and Content
 Relay Anti-Pattern) are skipped.
 
 ## Patterns to Detect
@@ -39,7 +39,7 @@ contribution — the results are the same whether or not the skill is active.
 
 An eval (config) has **high variance** when its timing or token stddev exceeds 50% of the mean
 (`stddev > mean * 0.5`). High variance indicates unstable or non-deterministic behavior that makes
-benchmark results unreliable.
+test results unreliable.
 
 **Detection rule:** For each config, check:
 - `stddev_duration_ms > mean_duration_ms * 0.5` → flag duration as high-variance
@@ -94,15 +94,15 @@ its own decision-making before passing it to the subagent, do NOT flag it as an 
 
 ## Procedure
 
-### Step 1: Read and Validate Benchmark JSON from Git
+### Step 1: Read and Validate Test Results JSON from Git
 
-Read the benchmark JSON from git using `git show <SHA>:<path>` where `<SHA>` and `<path>` are the
-values passed by the invoking agent. Parse the JSON content as the benchmark object.
+Read the test results JSON from git using `git show <SHA>:<path>` where `<SHA>` and `<path>` are the
+values passed by the invoking agent. Parse the JSON content as the test results object.
 
 If `git show` returns a non-zero exit code (e.g., SHA not found, path does not exist at that commit,
 permission error), return `{"error": "git show failed: <reason>: SHA=<SHA> path=<path>"}` and stop.
 
-After reading, validate that the benchmark JSON structure is complete and well-formed. The benchmark must contain:
+After reading, validate that the test results JSON structure is complete and well-formed. The test results must contain:
 
 **Required top-level fields:**
 - `configs`: An object containing one or more config objects
@@ -118,13 +118,13 @@ After reading, validate that the benchmark JSON structure is complete and well-f
 If any required field is missing, return an error message in this format:
 
 ```
-ERROR: Invalid benchmark JSON structure.
+ERROR: Invalid test results JSON structure.
 Missing required field: <field-path>
 
-Analysis cannot proceed without complete benchmark data.
+Analysis cannot proceed without complete test results data.
 ```
 
-Do not attempt to proceed with missing or incomplete benchmark data.
+Do not attempt to proceed with missing or incomplete test results data.
 
 ### Step 2: Detect Non-Discriminating Eval Set
 
@@ -173,8 +173,8 @@ For each flagged instance, record:
 Output the analysis report in this format:
 
 ```
-BENCHMARK ANALYSIS REPORT
-=========================
+TEST RESULTS ANALYSIS REPORT
+============================
 
 Non-Discriminating Eval Set (|delta.pass_rate| < 0.10):
   [DETECTED: delta.pass_rate = X.XX — eval set does not discriminate with-skill from without-skill]
@@ -227,7 +227,7 @@ After producing the analysis report text:
 
 1. Create the directory with `mkdir -p ${EVAL_ARTIFACTS_DIR}` if it does not exist.
 2. Write the compact analysis report text to `${EVAL_ARTIFACTS_DIR}/analysis.txt`.
-3. Commit the file with message `eval: analyze benchmark [session: ${CLAUDE_SESSION_ID}]`.
+3. Commit the file with message `eval: analyze test results [session: ${CLAUDE_SESSION_ID}]`.
 4. Return the commit SHA AND the full compact analysis report text as the return value. The compact report
    text must flow back to the invoking agent for display to the user; the commit SHA is for audit trail only.
 
@@ -237,26 +237,26 @@ After producing the analysis report text:
   at that commit, permission denied), return `{"error": "git show failed: <reason>: SHA=<SHA> path=<path>"}` and
   stop. Do not produce a partial report with empty or default values.
 - **Malformed JSON**: If the output of `git show` is not valid JSON, return
-  `{"error": "benchmark JSON is not valid JSON: <first 200 chars of raw output>"}` and stop.
-- **Missing required fields** (see Step 1): If the benchmark JSON is missing required fields,
+  `{"error": "test results JSON is not valid JSON: <first 200 chars of raw output>"}` and stop.
+- **Missing required fields** (see Step 1): If the test results JSON is missing required fields,
   return the error message from Step 1 validation with the specific missing field path.
-- **Missing `delta` field**: If the benchmark JSON has only one config (no `delta` field), skip the
+- **Missing `delta` field**: If the test results JSON has only one config (no `delta` field), skip the
   Non-Discriminating Eval Set and Time/Token Tradeoff sections and report them as "N/A (single config)".
 - **Missing `configs` field**: If `configs` is absent or empty, output an error message stating the
-  benchmark JSON is malformed and stop — do not produce a partial report.
+  test results JSON is malformed and stop — do not produce a partial report.
 - **Unknown config names**: Analysis works with any config names present in the JSON. No assumption is
   made that config names must be "with-skill" / "without-skill".
 
 ## Verification
 
-- [ ] Benchmark JSON is read from git using `git show <SHA>:<path>` before any analysis begins
+- [ ] Test results JSON is read from git using `git show <SHA>:<path>` before any analysis begins
 - [ ] If `git show` fails, an error JSON is returned immediately — no partial report is produced
-- [ ] Benchmark JSON envelope is validated for required top-level and per-config fields after reading (Step 1)
-- [ ] If required benchmark fields are missing or invalid, an error is returned immediately — no partial report is produced
+- [ ] Test results JSON envelope is validated for required top-level and per-config fields after reading (Step 1)
+- [ ] If required test results fields are missing or invalid, an error is returned immediately — no partial report is produced
 - [ ] If the JSON is malformed, an error JSON is returned immediately — no partial report is produced
 - [ ] `delta.pass_rate` is evaluated for non-discrimination (absolute value < 0.10)
 - [ ] Every config is evaluated for high variance on both duration and token dimensions
-- [ ] Tradeoff detection uses the `delta` values directly from the benchmark JSON
+- [ ] Tradeoff detection uses the `delta` values directly from the test results JSON
 - [ ] Recommendations address each pattern found with a specific actionable suggestion
 - [ ] Report sections are present even when no patterns are found (show "Not detected" or "ABSENT")
 - [ ] Compact analysis report text is returned alongside the commit SHA

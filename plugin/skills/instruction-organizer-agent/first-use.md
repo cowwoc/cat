@@ -19,6 +19,9 @@ Use this skill when a document (or set of documents) has:
 - Workflow steps scattered across subsections, headers, and notes rather than organized sequentially
 - Redundant restatements of the same requirement in "Notes", "CRITICAL", and "Reminder" sections
 
+This skill works on any MD instruction file: skill `first-use.md`, CLAUDE.md, `.claude/rules/*.md`,
+`plugin/rules/*.md`, agent instruction files, or any other file that defines agent behavior.
+
 **Do NOT use to reduce file size.** Use the `instruction-builder-agent` compression protocol for size reduction; use this skill only when content
 organization is the problem.
 
@@ -151,12 +154,13 @@ EQUIVALENT.
 ## Phase 4: Quality Verification (SPRT Compliance Gate)
 
 After Phase 3 returns EQUIVALENT and changes are applied, verify that the reorganized document produces compliant
-agent behavior using the SPRT-based benchmark from `../instruction-builder-agent/validation-protocol.md`.
+agent behavior using the SPRT-based testing from `../instruction-builder-agent/validation-protocol.md`.
 
 **When to run Phase 4:**
-- Only when the reorganized document is an instruction file (skill first-use.md, agent instructions)
+- Only when the reorganized document is an instruction file (skill `first-use.md`, CLAUDE.md,
+  `.claude/rules/*.md`, `plugin/rules/*.md`, agent instructions, or any other file that defines agent behavior)
 - Skip Phase 4 for reference/lookup documents (commit type tables, configuration option listings) — these do not
-  produce agent behavior and SPRT benchmarking does not apply
+  produce agent behavior and SPRT testing does not apply
 
 **SPRT parameters:**
 - H₀ (null hypothesis): compliance rate ≥ 0.95
@@ -168,7 +172,7 @@ agent behavior using the SPRT-based benchmark from `../instruction-builder-agent
 
 **Procedure:**
 
-1. Run the SPRT benchmark per the protocol in `../instruction-builder-agent/validation-protocol.md` (Section 1),
+1. Run the SPRT tests per the protocol in `../instruction-builder-agent/validation-protocol.md` (Section 1),
    using the same test cases used before reorganization (or generate new ones if none exist).
 2. If ALL test cases Accept → reorganization is complete. Commit the reorganized file.
 3. If ANY test case Rejects → the reorganization altered observable behavior despite passing Phase 3. Revert to

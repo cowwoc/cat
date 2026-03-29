@@ -23,7 +23,7 @@ The invoking agent passes:
 1. **Current content**: The full text of the target content to be hardened.
 2. **Red-team commit hash**: The commit hash where findings.json was written by the red-team.
 3. **Target file path**: Absolute path to the target file to revise.
-4. **Target type**: One of `skill_instructions`, `test_code`, or `source_code`. Controls which patch
+4. **Target type**: One of `instructions`, `test_code`, or `source_code`. Controls which patch
    procedure to apply.
 5. **Round number**: The current loop iteration (1 for first invocation; higher for resumes).
 6. **WORKTREE_ROOT**: Absolute path to the worktree root, used to locate and write findings.json.
@@ -62,7 +62,7 @@ Write the updated findings.json to `{WORKTREE_ROOT}/findings.json` (with both ar
 Apply the minimal change that closes each CRITICAL or HIGH loophole remaining in `loopholes` after
 Step 2. The patch procedure differs by `target_type`:
 
-#### `skill_instructions` — Edit Markdown Prose
+#### `instructions` — Edit Markdown Prose
 
 - **Unlisted tools/techniques**: Add explicit prohibitions naming the tool or technique
 - **Undefined terms**: Add a definition or replace the ambiguous term with a precise one

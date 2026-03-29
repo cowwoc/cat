@@ -1,4 +1,4 @@
-# Skill Grader
+# Instruction Grader
 
 ## Purpose
 

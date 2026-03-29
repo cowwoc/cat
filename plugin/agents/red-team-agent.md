@@ -21,7 +21,7 @@ The invoking agent passes:
 
 1. **Target content**: The full text of the content being reviewed (skill instructions, test code, or
    source code).
-2. **Target type**: One of `skill_instructions`, `test_code`, or `source_code`. Controls the vocabulary
+2. **Target type**: One of `instructions`, `test_code`, or `source_code`. Controls the vocabulary
    used in findings and the nature of weaknesses sought.
 3. **Worktree root**: Absolute path to the worktree root for writing findings.json.
 4. **Round number**: The current loop iteration (1 for first invocation; higher for resumes).
@@ -48,7 +48,7 @@ Do NOT re-raise findings already present in the `disputed` array of the existing
 Seek NEW attack vectors each round — do not revisit prior findings. The vocabulary for weaknesses
 depends on `target_type`:
 
-- `skill_instructions`: call each weakness a **loophole** — an unhandled case, missing prohibition,
+- `instructions`: call each weakness a **loophole** — an unhandled case, missing prohibition,
   or undefined term that lets an agent circumvent the instructions.
 - `test_code`: call each weakness a **missing assertion** — a missing check, uncovered edge case,
   or assertion that is too weak to catch a real defect.
@@ -81,7 +81,7 @@ Write your findings to `{WORKTREE_ROOT}/findings.json` using this exact format:
 
 ```json
 {
-  "target_type": "skill_instructions",
+  "target_type": "instructions",
   "loopholes": [
     {
       "name": "bash-file-write-bypass",
@@ -96,7 +96,7 @@ Write your findings to `{WORKTREE_ROOT}/findings.json` using this exact format:
 
 Field notes:
 
-- `target_type`: Set to the value passed in by the invoking agent (`skill_instructions`, `test_code`,
+- `target_type`: Set to the value passed in by the invoking agent (`instructions`, `test_code`,
   or `source_code`). Consumers use this to verify findings originated from the correct target.
 - `loopholes`: Array of weakness entries.
 - `disputed`: Array written by the blue-team agent when it rejects a finding as invalid. Red-team

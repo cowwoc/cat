@@ -22,7 +22,7 @@ The invoking agent passes:
 1. **RED_TEAM_COMMIT_HASH**: The commit hash where findings.json was written by the red-team.
 2. **BLUE_TEAM_COMMIT_HASH**: The commit hash where the blue-team committed patches.
 3. **TARGET_FILE_PATH**: Absolute path to the target file that was patched.
-4. **target_type**: One of `skill_instructions`, `test_code`, or `source_code`. Used to interpret
+4. **target_type**: One of `instructions`, `test_code`, or `source_code`. Used to interpret
    finding vocabulary in match decisions.
 5. **Round number**: The current loop iteration.
 6. **WORKTREE_ROOT**: Absolute path to the worktree root for writing the diff-validation-{N}.json report.
@@ -68,7 +68,7 @@ A hunk addresses a finding if any of the following match:
 - The hunk contains the finding's `name` as a verbatim substring (e.g., in a comment)
 - The semantic content of the hunk clearly corresponds to the finding's weakness (apply judgment for
   target-type vocabulary):
-  - `skill_instructions`: adding prohibitions, narrowing definitions, closing permissive-by-omission lists
+  - `instructions`: adding prohibitions, narrowing definitions, closing permissive-by-omission lists
   - `test_code`: adding assertions, adding test cases for the identified edge case, tightening assertion
     specificity
   - `source_code`: adding guard clauses, narrowing input ranges, adding error branches
@@ -100,7 +100,7 @@ Then write a machine-readable JSON summary to `{WORKTREE_ROOT}/diff-validation-{
 ```json
 {
   "round": 1,
-  "target_type": "skill_instructions",
+  "target_type": "instructions",
   "red_team_commit": "{RED_TEAM_COMMIT_HASH}",
   "blue_team_commit": "{BLUE_TEAM_COMMIT_HASH}",
   "findings": [
