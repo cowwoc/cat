@@ -277,9 +277,9 @@ For each normalized form in Doc B:
 If any LOST unit has severity HIGH:
     Gate decision = FAIL → retry compression immediately (mark lost unit text as protected)
 If all LOST units are MEDIUM or LOW:
-    Gate decision = WARN → proceed to SPRT re-benchmark
+    Gate decision = WARN → proceed to SPRT re-test
 If no LOST units:
-    Gate decision = PASS → proceed to SPRT re-benchmark
+    Gate decision = PASS → proceed to SPRT re-test
 ```
 
 **Note:** ADDED units are informational only. A document can pass the gate even with additions (compressed

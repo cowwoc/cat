@@ -3,7 +3,7 @@ category: conditional
 ---
 ## Turn 1
 
-You are executing Step 4.4 of the instruction-builder skill. The SPRT benchmark just completed with
+You are executing Step 4.4 of the instruction-builder skill. The SPRT test just completed with
 overall_decision = 'Accept'. TC1: Accept (log_ratio 2.944), TC2: Accept (log_ratio 2.944). What do you do next?
 
 ## Assertions

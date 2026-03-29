@@ -87,7 +87,7 @@ readonly -a HANDLERS=(
   "statusline-install:util.StatuslineInstall"
   "record-learning:util.RecordLearning"
   "write-session-marker:util.WriteSessionMarker"
-  "skill-test-runner:skills.SkillTestRunner"
+  "instruction-test-runner:skills.InstructionTestRunner"
   "verify-defer-plan-generation:util.VerifyDeferPlanGeneration"
   "write-and-commit:util.WriteAndCommit"
   "get-subagent-status:skills.GetSubagentStatusOutput"
