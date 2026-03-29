@@ -515,6 +515,64 @@ public final class AutoLearnMistakesTest
   }
 
   /**
+   * Verifies that a Bash command reading a file that contains "String to replace not found" does NOT
+   * trigger Pattern 5 (edit_failure).
+   * <p>
+   * Task output files contain subagent JSONL conversation including text from subagent tool operations.
+   * A subagent's failed Edit attempt leaves this phrase in the output file. When the main agent reads
+   * the file via Bash, the hook must not fire — the phrase is only meaningful when the Edit tool itself
+   * reports it.
+   */
+  @Test
+  public void bashReadingFileWithEditFailurePhraseDoesNotTriggerEditFailure() throws IOException
+  {
+    String sessionId = "00000000-0000-0000-0000-000000000000";
+    try (TestClaudeHook scope = new TestClaudeHook())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      AutoLearnMistakes handler = new AutoLearnMistakes(scope);
+      // Simulates a task output file containing a subagent's failed Edit attempt
+      String taskOutput = """
+        {"role":"assistant","content":"Let me edit the file."}
+        {"role":"tool","content":"String to replace not found in file."}
+        {"role":"assistant","content":"I need to try a different approach."}
+        """;
+      JsonNode result = toolResult(mapper, taskOutput, 0);
+      JsonNode hook = hookData(mapper, sessionId);
+
+      PostToolHandler.Result detection = handler.check("Bash", result, sessionId, hook);
+
+      requireThat(detection.additionalContext(), "additionalContext").
+        doesNotContain("edit_failure");
+    }
+  }
+
+  /**
+   * Verifies that the Edit tool reporting "String to replace not found" DOES trigger Pattern 5
+   * (edit_failure).
+   * <p>
+   * True positive preserved: genuine Edit tool failures must continue to be detected when the Edit
+   * tool itself is the source of the failure message.
+   */
+  @Test
+  public void editToolReportingEditFailurePhraseTriggersEditFailure() throws IOException
+  {
+    String sessionId = "00000000-0000-0000-0000-000000000000";
+    try (TestClaudeHook scope = new TestClaudeHook())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      AutoLearnMistakes handler = new AutoLearnMistakes(scope);
+      JsonNode result = toolResult(mapper, "String to replace not found in /some/file.java");
+      JsonNode hook = hookData(mapper, sessionId);
+
+      PostToolHandler.Result detection = handler.check("Edit", result, sessionId, hook);
+
+      requireThat(detection.additionalContext(), "additionalContext").
+        contains("edit_failure");
+    }
+  }
+
+  /**
    * Verifies that real Maven BUILD FAILURE output still triggers Pattern 1 (build_failure)
    * when exit_code is non-zero.
    * <p>
