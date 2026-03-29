@@ -3198,17 +3198,22 @@
     "correct_behavior" : "Use Task tool with isolation: \"worktree\" when spawning job subagents in work-implement-agent. The Task tool preserves the subagent's worktree and commits so they can be merged back into the issue branch. Never use Agent tool for implementation subagents — it destroys their work."
   }, {
     "id" : "M611",
-    "timestamp" : "2026-03-29T15:53:28Z",
-    "category" : "path_violation",
+    "timestamp" : "2026-03-29T14:54:23Z",
+    "category" : "",
     "description" : "",
-    "root_cause" : "work-review-agent or its invocation context was not programmed to write review plans to the correct directory. The documented rule in .claude/rules/common.md § Multi-Instance Safety clearly specifies .cat/work for resumable progress state.",
-    "cause_signature" : "compliance_failure:doc_ignored:subagent_delegation",
-    "prevention_type" : "",
+    "root_cause" : "",
+    "cause_signature" : "tool_limitation:validation_absent:post_tool_use",
+    "prevention_type" : "code_fix",
     "prevention_path" : "",
     "pattern_keywords" : [ ],
-    "prevention_implemented" : false,
+    "prevention_implemented" : true,
     "prevention_verified" : false,
     "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
     "correct_behavior" : ""
   } ]
 }
