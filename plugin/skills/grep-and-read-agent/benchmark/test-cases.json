@@ -1,0 +1,87 @@
+{
+  "target_description": "Agent uses grep-and-read-agent when asked to search for and read multiple files at unknown paths, and does NOT use the skill for search-only tasks or when exact file paths are already provided",
+  "system_reminders": [],
+  "system_prompt": "You have access to the following skill:\n- cat:grep-and-read-agent: PREFER when searching pattern AND reading matches - single operation (50-70% faster than sequential)\n\nInvoke skills using the Skill tool: Skill(skill=\"cat:grep-and-read-agent\", args=\"<cat_agent_id>\")",
+  "configs": {
+    "positive_find_implementations": {
+      "messages": [
+        {
+          "prompt": "I need you to search for the pattern 'HookHandler' across the codebase and read all matching files. The file paths are unknown — use a single operation to search and read the matches, then explain what each implementation does.",
+          "success_criteria": {
+            "must_use_tools": ["Skill"],
+            "_metadata": {
+              "uses_tool:Skill": {
+                "description": "Tier 1 — agent invoked grep-and-read-agent to search and read multiple files in a single operation",
+                "severity": "HIGH"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "positive_test_coverage": {
+      "messages": [
+        {
+          "prompt": "Search for the pattern 'HookHandler' and read all matching files in a single operation — the paths are unknown. Once you have the file contents, summarize what each test verifies.",
+          "success_criteria": {
+            "must_use_tools": ["Skill"],
+            "_metadata": {
+              "uses_tool:Skill": {
+                "description": "Tier 1 — agent invoked grep-and-read-agent to find and read test files in one operation",
+                "severity": "HIGH"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "negative_search_only": {
+      "messages": [
+        {
+          "prompt": "List all Java files that reference HookHandler — just the paths, not their contents.",
+          "success_criteria": {
+            "must_not_use_tools": ["Skill"],
+            "_metadata": {
+              "not_uses_tool:Skill": {
+                "description": "Search-only task — grep-and-read-agent must not be invoked when content is not needed",
+                "severity": "HIGH"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "negative_single_known_file": {
+      "messages": [
+        {
+          "prompt": "Read plugin/skills/grep-and-read-agent/SKILL.md.",
+          "success_criteria": {
+            "must_not_use_tools": ["Skill"],
+            "_metadata": {
+              "not_uses_tool:Skill": {
+                "description": "Single explicit file path — no search needed, skill must not be invoked",
+                "severity": "HIGH"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "negative_two_explicit_paths": {
+      "messages": [
+        {
+          "prompt": "Read plugin/skills/grep-and-read-agent/SKILL.md and plugin/skills/grep-and-read-agent/first-use.md.",
+          "success_criteria": {
+            "must_not_use_tools": ["Skill"],
+            "_metadata": {
+              "not_uses_tool:Skill": {
+                "description": "Two explicit known paths — skill must not be invoked when paths are already known",
+                "severity": "HIGH"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
