@@ -5,7 +5,7 @@
     "trigger_interval_days" : 7
   },
   "last_retrospective" : "2026-03-23T13:18:51.196642020Z",
-  "mistake_count_since_last" : 12,
+  "mistake_count_since_last" : 13,
   "files" : {
     "mistakes" : [ "mistakes-2026-01.json", "mistakes-2026-02.json", "mistakes-2026-03.json" ],
     "retrospectives" : [ "retrospectives-2026-01.json", "retrospectives-2026-02.json", "retrospectives-2026-03.json" ]
