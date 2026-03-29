@@ -138,7 +138,7 @@ Task tool:
   subagent_type: "cat:red-team-agent"
   prompt: |
     ## Target Type
-    {skill_instructions|test_code|source_code}
+    {instructions|test_code|source_code}
 
     ## Target File Path
     {TARGET_FILE_PATH}
@@ -169,7 +169,7 @@ Task tool (resume):
     Round {N}. Resume your red-team analysis.
 
     ## Target Type
-    {skill_instructions|test_code|source_code}
+    {instructions|test_code|source_code}
 
     ## What Changed Since Last Round
     {git diff RED_TEAM_COMMIT_HASH..BLUE_TEAM_COMMIT_HASH -- TARGET_FILE_PATH}
@@ -248,7 +248,7 @@ Task tool:
   subagent_type: "cat:blue-team-agent"
   prompt: |
     ## Target Type
-    {skill_instructions|test_code|source_code}
+    {instructions|test_code|source_code}
 
     ## Target File Path
     {TARGET_FILE_PATH}
@@ -293,7 +293,7 @@ Task tool (resume):
     Round {N}. Resume your blue-team patching.
 
     ## Target Type
-    {skill_instructions|test_code|source_code}
+    {instructions|test_code|source_code}
 
     ## Red-Team Commit Hash
     {RED_TEAM_COMMIT_HASH}
@@ -454,7 +454,7 @@ Task tool:
   subagent_type: "cat:diff-validation-agent"
   prompt: |
     ## Target Type
-    {skill_instructions|test_code|source_code}
+    {instructions|test_code|source_code}
 
     ## RED_TEAM_COMMIT_HASH
     {RED_TEAM_COMMIT_HASH}
@@ -479,7 +479,7 @@ Task tool (resume):
   task_id: {DIFF_VALIDATION_TASK_ID}
   prompt: |
     ## Target Type
-    {skill_instructions|test_code|source_code}
+    {instructions|test_code|source_code}
 
     ## RED_TEAM_COMMIT_HASH
     {RED_TEAM_COMMIT_HASH}

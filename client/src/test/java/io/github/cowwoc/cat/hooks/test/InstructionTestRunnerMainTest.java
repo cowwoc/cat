@@ -7,7 +7,7 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.skills.SkillTestRunner;
+import io.github.cowwoc.cat.hooks.skills.InstructionTestRunner;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -18,9 +18,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * Tests for {@link SkillTestRunner#run(JvmScope, String[], PrintStream)} CLI error path handling.
+ * Tests for {@link InstructionTestRunner#run(JvmScope, String[], PrintStream)} CLI error path handling.
  */
-public class SkillTestRunnerMainTest
+public class InstructionTestRunnerMainTest
 {
   /**
    * Verifies that invoking run() with no arguments throws IllegalArgumentException.
@@ -31,12 +31,12 @@ public class SkillTestRunnerMainTest
     expectedExceptionsMessageRegExp = "(?s).*no command specified.*")
   public void noArgsThrowsException() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("skill-test-runner-main-test-");
+    Path tempDir = Files.createTempDirectory("instruction-test-runner-main-test-");
     try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
-      SkillTestRunner.run(scope, new String[]{}, out);
+      InstructionTestRunner.run(scope, new String[]{}, out);
     }
     finally
     {
@@ -53,10 +53,10 @@ public class SkillTestRunnerMainTest
     expectedExceptionsMessageRegExp = ".*args.*")
   public void nullArgsThrowsException() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("skill-test-runner-main-test-");
+    Path tempDir = Files.createTempDirectory("instruction-test-runner-main-test-");
     try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
-      SkillTestRunner.run(scope, null,
+      InstructionTestRunner.run(scope, null,
         new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8));
     }
     finally
@@ -74,10 +74,10 @@ public class SkillTestRunnerMainTest
     expectedExceptionsMessageRegExp = ".*out.*")
   public void nullOutThrowsException() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("skill-test-runner-main-test-");
+    Path tempDir = Files.createTempDirectory("instruction-test-runner-main-test-");
     try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
-      SkillTestRunner.run(scope, new String[]{}, null);
+      InstructionTestRunner.run(scope, new String[]{}, null);
     }
     finally
     {

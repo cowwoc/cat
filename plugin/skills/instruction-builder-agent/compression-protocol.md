@@ -14,8 +14,8 @@ See LICENSE.md in the project root for license terms.
 Reduce document size by ~50% while maintaining **perfect execution equivalence**. Compression amount is
 secondary to equivalence — lesser compression is acceptable if needed to preserve all semantic content.
 
-Behavioral compliance (SPRT re-benchmark) is the authoritative gate, not semantic equivalence alone. Preserve
-all load-bearing text; the re-benchmark determines what is actually load-bearing.
+Behavioral compliance (SPRT re-test) is the authoritative gate, not semantic equivalence alone. Preserve
+all load-bearing text; the re-test determines what is actually load-bearing.
 
 ---
 

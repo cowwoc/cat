@@ -3,7 +3,7 @@ category: conditional
 ---
 ## Turn 1
 
-You are executing Step 4.4. The SPRT benchmark just completed with overall_decision = 'Reject'. TC1: Reject
+You are executing Step 4.4. The SPRT test just completed with overall_decision = 'Reject'. TC1: Reject
 (log_ratio -2.944, pass 1, fail 4), TC2: Accept (log_ratio 2.944). SESSION_ANALYZER is available at
 /opt/cat/client/bin/session-analyzer. CLAUDE_SESSION_ID = 'sess-abc123'. What do you do?
 

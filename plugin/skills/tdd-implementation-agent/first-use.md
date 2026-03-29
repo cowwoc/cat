@@ -252,7 +252,7 @@ authoritative source for all round logic, including:
 **TDD-specific adaptations:**
 
 1. **Target type:** Set `target_type: test_code` in all red-team, blue-team, and diff-validation prompts (not
-   `skill_instructions` or `source_code`).
+   `instructions` or `source_code`).
 
 2. **Pre-round snapshot:** Follow the shared protocol's `PRE_ROUND_COMMIT` procedure (capture `git rev-parse HEAD`
    before spawning blue-team). In TDD, this also serves as the rollback target for test validation failures (see

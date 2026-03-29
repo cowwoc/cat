@@ -7,20 +7,21 @@ See LICENSE.md in the project root for license terms.
 
 ## Purpose
 
-Design or update skills and commands by reasoning backward from the goal to required preconditions,
-then converting to forward-execution steps. This skill delegates the design phase to a Task subagent
-which reads detailed methodology and conventions from separate files.
+Design or update instruction documents (skills, commands, CLAUDE.md, rules files, or any other MD file that defines
+agent behavior) by reasoning backward from the goal to required preconditions, then converting to forward-execution
+steps. This skill delegates the design phase to a Task subagent which reads detailed methodology and conventions from
+separate files.
 
 ---
 
 ## When to Use
 
-- Creating a new skill or command
-- Updating an existing skill or command that has unclear or failing steps
+- Creating a new instruction document (skill, command, CLAUDE.md, rules file, etc.)
+- Updating an existing instruction document that has unclear or failing instructions
 - Any procedure where the goal is clear but the path is not
 
-**Note:** Both `skills/` and `commands/` are agent-facing prompt files that define behavior.
-Use instruction-builder for BOTH types.
+**Note:** Instruction documents include skills, commands, CLAUDE.md, project rules files, and any other MD file that
+defines agent behavior.
 
 ---
 
@@ -112,31 +113,31 @@ Before creating a new skill/command, answer:
 
 ## Procedure
 
-### Step 1: Collect Existing Skill Content (if updating)
+### Step 1: Collect Existing Instruction Content (if updating)
 
-If the caller provides an existing skill path, store it as `EXISTING_SKILL_PATH` for the design subagent.
-Do NOT read the skill files into a variable — the design subagent will read them from disk itself.
+If the caller provides an existing instruction file path, store it as `EXISTING_INSTRUCTION_PATH` for the design
+subagent. Do NOT read the instruction files into a variable — the design subagent will read them from disk itself.
 
-If creating a new skill, set `EXISTING_SKILL_PATH` to `"N/A"`.
+If creating a new instruction document, set `EXISTING_INSTRUCTION_PATH` to `"N/A"`.
 
 ### Step 2: Delegate Design Phase to Task Subagent
 
 Invoke the Task tool to delegate the design phase (backward chaining, methodology, conventions) to a
 general-purpose subagent. The subagent will read the design methodology and conventions from separate files
-and return a complete skill draft.
+and return a complete instruction draft.
 
 ```
 Task tool:
-  description: "Design skill: [skill name]"
+  description: "Design instruction: [instruction name]"
   subagent_type: "general-purpose"
   prompt: |
-    You are a skill design agent. Design or update a CAT skill following the methodology below.
+    You are a skill design agent. Design or update an instruction document following the methodology below.
 
     ## Inputs
     Goal: {GOAL}
-    Existing skill path (if updating): {EXISTING_SKILL_PATH or "N/A — creating new skill"}
-    If a path is provided, read the SKILL.md and first-use.md files from that path to understand the
-    current state. Do NOT expect the content to be provided inline — read the files yourself.
+    Existing instruction path (if updating): {EXISTING_INSTRUCTION_PATH or "N/A — creating new"}
+    If a path is provided, read the instruction file from that path to understand the current state.
+    Do NOT expect the content to be provided inline — read the file yourself.
 
     ## Design Methodology
     Read and follow: ${CLAUDE_PLUGIN_ROOT}/skills/instruction-builder-agent/design-methodology.md
@@ -145,28 +146,28 @@ Task tool:
     Read and follow: ${CLAUDE_PLUGIN_ROOT}/skills/instruction-builder-agent/skill-conventions.md
 
     ## Return Format
-    Return the complete designed skill as a markdown code block (the full SKILL.md or first-use.md content).
+    Return the complete designed instruction document as a markdown code block.
     Do NOT spawn subagents. Do NOT invoke the Task tool. Do NOT use Bash, Write, Edit, NotebookEdit,
     Glob, Grep, WebFetch, WebSearch, TaskOutput, ToolSearch, Skill, or any other tool besides Read.
     Do NOT invoke any skill (e.g., cat:grep-and-read-agent, or any other
     cat: skill). The ONLY permitted tool is Read — no other tool may be used under any circumstances,
     regardless of whether it appears in the list above. Nothing else — no exceptions.
     Only read the two files referenced above (design-methodology.md and skill-conventions.md) and, if
-    updating, the existing skill files at EXISTING_SKILL_PATH. Do NOT read other files.
+    updating, the existing instruction file at EXISTING_INSTRUCTION_PATH. Do NOT read other files.
 ```
 
-The design subagent should only read files and return SKILL_DRAFT. If the response includes Task tool
+The design subagent should only read files and return INSTRUCTION_DRAFT. If the response includes Task tool
 invocations, evidence of subagent spawning, or use of Bash/Write/Edit/NotebookEdit/Grep/any non-Read tool,
 treat as constraint violation and reject the draft. Additionally, verify that all Read tool invocations
 targeted only the permitted files (design-methodology.md, skill-conventions.md, and if updating, the
-existing skill files at EXISTING_SKILL_PATH). If the subagent read any file outside this permitted set,
-treat as a constraint violation and reject the draft. If the Task tool response metadata indicates a
+existing instruction file at EXISTING_INSTRUCTION_PATH). If the subagent read any file outside this permitted
+set, treat as a constraint violation and reject the draft. If the Task tool response metadata indicates a
 different subagent_type than `general-purpose` was used, reject the draft and re-invoke with the correct
 subagent_type. Note: these checks are best-effort — they detect tool usage only when evidence appears in
 the return value. The Task tool does not provide a tool-usage audit log, so undetectable violations remain
 an inherent limitation of instruction-based isolation.
 
-The subagent will return the designed skill draft as `SKILL_DRAFT`. Validate that:
+The subagent will return the designed instruction draft as `INSTRUCTION_DRAFT`. Validate that:
 - The response is non-empty
 - The response is a valid markdown code block
 - The content contains Purpose, Procedure, and Verification sections
@@ -177,7 +178,7 @@ reject the draft and re-invoke the design subagent with clarifying instructions.
 
 ### Step 3: Compact-Output Pass
 
-Before writing the draft to disk, review `SKILL_DRAFT` for output-token waste. Apply each compaction rule
+Before writing the draft to disk, review `INSTRUCTION_DRAFT` for output-token waste. Apply each compaction rule
 below inline (no subagent needed). **Correctness takes priority over compactness** — both semantic correctness
 (meaning/parsing) and visual correctness (user-facing output alignment and readability) override any size
 reduction.
@@ -204,54 +205,63 @@ reduction.
    steps that informed a decision but weren't requested, full context that the receiver already has, verbose
    status updates that duplicate information the receiver already knows.
 
-After applying compaction rules, store the result as `SKILL_DRAFT` (overwrite with the compacted version).
+After applying compaction rules, store the result as `INSTRUCTION_DRAFT` (overwrite with the compacted version).
 If no changes were made, proceed without noting it — this pass is silent unless changes were significant
 (>10% size reduction), in which case note "Compact-output pass reduced draft by ~{N}%."
 
 ### Step 4: Test Evaluation Loop
 
-After receiving the skill draft from the design subagent, write `SKILL_DRAFT` to its target file path on disk
-(the SKILL.md or first-use.md path where the skill will live). Store this path as `SKILL_TEXT_PATH` — a
-**worktree-relative path** (e.g., `plugin/skills/my-skill/first-use.md`), not an absolute filesystem path.
-Commit the file with message `feature: write skill draft [session: ${CLAUDE_SESSION_ID}]` and store the
-commit SHA as `SKILL_DRAFT_SHA`. The skill text is now on disk and committed, so subagents can read it via
-`git show <SHA>:<SKILL_TEXT_PATH>` or `cat <SKILL_TEXT_PATH>`.
+After receiving the instruction draft from the design subagent, write `INSTRUCTION_DRAFT` to its target file
+path on disk (the path where the instruction document will live). Store this path as `INSTRUCTION_TEXT_PATH` — a
+**worktree-relative path** (e.g., `plugin/skills/my-skill/first-use.md` for a skill, or `CLAUDE.md` for a project
+instruction), not an absolute filesystem path.
+Commit the file with message `feature: write instruction draft [session: ${CLAUDE_SESSION_ID}]` and store the
+commit SHA as `INSTRUCTION_DRAFT_SHA`. The instruction text is now on disk and committed, so subagents can read it
+via `git show <SHA>:<INSTRUCTION_TEXT_PATH>` or `cat <INSTRUCTION_TEXT_PATH>`.
 
-**Effort gate:** Read `effort` from `${CLAUDE_PROJECT_DIR}/.cat/config.json`. If `effort = low`, skip
-the test evaluation loop (Steps 4.1–4.4), adversarial hardening (Step 5), compression phase (Step 7),
-and organic test creation (Step 8) entirely. Before spawning the sanity check, compute
+**Effort gate:** Read `curiosity` from the effective config (`get-config-output effective`). If `curiosity = low`, skip
+the test evaluation loop (Steps 4.1–4.4), adversarial hardening (Step 5), and compression phase (Step 7) entirely. Before spawning the sanity check, compute
 `TEST_DIR` and `TEST_MODEL` using the **Model selection** paragraph below — these
 values are required even for the sanity check. Then proceed directly to ## Output Format with a single-run
 sanity check: spawn one `TEST_MODEL` test-run
-subagent with the skill active on a scenario that exercises the skill's primary purpose (i.e., a prompt
-that triggers the skill's main workflow, not an empty or no-op input). Verify the output contains at least
-one substantive result from the skill's procedure (e.g., a generated step, a produced artifact, or a
+subagent with the instruction active on a scenario that exercises the instruction's primary purpose (i.e., a
+prompt that triggers the instruction's main behavior, not an empty or no-op input). Verify the output contains
+at least one substantive result from the instruction's procedure (e.g., a generated step, a produced artifact, or a
 decision — not merely an echo of the prompt or a generic acknowledgment). If the sanity check fails
 (no substantive result), do NOT proceed to Output Format — report the failure to the user and return to
-Step 2 to redesign the skill draft. Report the result to the user.
+Step 2 to redesign the instruction draft. Report the result to the user.
 
 At the start of Step 4, compute `TEST_DIR` as the corresponding directory under `plugin/tests/`:
 ```bash
-# SKILL_TEXT_PATH is worktree-relative (e.g., plugin/skills/foo/SKILL.md)
-SKILL_ABS_PATH="${CLAUDE_PROJECT_DIR}/${SKILL_TEXT_PATH}"
-SKILL_RELATIVE="${SKILL_TEXT_PATH#plugin/}"
-SKILL_RELATIVE_NO_EXT="${SKILL_RELATIVE%.*}"
-TEST_DIR="${CLAUDE_PROJECT_DIR}/plugin/tests/${SKILL_RELATIVE_NO_EXT}"
+# INSTRUCTION_TEXT_PATH is worktree-relative (e.g., plugin/skills/foo/SKILL.md or CLAUDE.md)
+INSTRUCTION_ABS_PATH="${CLAUDE_PROJECT_DIR}/${INSTRUCTION_TEXT_PATH}"
+INSTRUCTION_RELATIVE_NO_EXT="${INSTRUCTION_TEXT_PATH%.*}"
+# For files under plugin/, strip the leading "plugin/" so tests mirror the plugin/ structure
+if [[ "$INSTRUCTION_TEXT_PATH" == plugin/* ]]; then
+  TEST_RELATIVE="${INSTRUCTION_RELATIVE_NO_EXT#plugin/}"
+else
+  TEST_RELATIVE="${INSTRUCTION_RELATIVE_NO_EXT}"
+fi
+TEST_DIR="${CLAUDE_PROJECT_DIR}/plugin/tests/${TEST_RELATIVE}"
 ```
+Example: `plugin/skills/foo/first-use.md` → `plugin/tests/skills/foo/first-use/`.
+For non-plugin paths: `CLAUDE.md` → `plugin/tests/CLAUDE/`, `.claude/rules/common.md` → `plugin/tests/.claude/rules/common/`.
 Pass this resolved path as a literal string to all subagents — do NOT pass variable references.
 
-**Model selection:** Read the target skill's `model:` frontmatter field to determine which model to use for
-test-run subagents. Run:
+**Model selection:** Read the target instruction file's `model:` frontmatter field to determine which model to use
+for test-run subagents. Run:
 ```bash
-TEST_MODEL=$("${CLAUDE_PLUGIN_ROOT}/client/bin/skill-test-runner" extract-model \
-  "<absolute-path-to-SKILL_TEXT_PATH>")
+TEST_MODEL=$("${CLAUDE_PLUGIN_ROOT}/client/bin/instruction-test-runner" extract-model \
+  "<absolute-path-to-INSTRUCTION_TEXT_PATH>")
 ```
 The script prints the model name (e.g., `sonnet`, `haiku`) or falls back to `haiku` when the field is absent.
+For instruction files without a `model:` field (e.g., CLAUDE.md, rules files), the tool falls back to `haiku`
+automatically.
 Store the result as `TEST_MODEL` and pass it as a resolved literal string to all test-run and grader
 subagents. Do NOT hardcode `haiku` — always use the value from `extract-model`.
 
-**Artifact location:** `TEST_DIR` is the stable directory under `plugin/tests/` corresponding to the skill file.
-Artifacts written here can be committed alongside the skill and compared across sessions to detect
+**Artifact location:** `TEST_DIR` is the stable directory under `plugin/tests/` corresponding to the instruction file.
+Artifacts written here can be committed alongside the instruction document and compared across sessions to detect
 regressions or improvements. Each test-run subagent receives `TEST_DIR`, `CLAUDE_SESSION_ID`,
 and `TEST_MODEL` as pre-resolved literal strings, so no subagent ever expands these variables
 independently. Subagents must not derive their own session ID — they must use the value passed by the main agent.
@@ -282,9 +292,13 @@ violation and must be treated as prohibition failures.
 - Do NOT use shell redirection operators (`>`, `>>`, `<`, `<<`, `2>`) for any purpose
 - Do NOT use any Bash command not on the allowlist
 
+All test cases use the `.md` scenario format committed to `plugin/tests/{skill_name}/`. Scenarios run
+organically — without the skill pre-loaded — so each run tests both trigger selection and behavioral
+compliance in a single pass. SPRT operates on the combined pass/fail outcome.
+
 #### Step 4.1: Auto-Generate Test Cases
 
-Extract semantic units from the skill file using the Nine-Category Extraction Algorithm embedded in
+Extract semantic units from the instruction file using the Nine-Category Extraction Algorithm embedded in
 `${CLAUDE_PLUGIN_ROOT}/skills/instruction-builder-agent/validation-protocol.md` (Section 1). Perform this
 extraction inline (do NOT spawn a subagent for extraction). Read the validation-protocol.md file to apply
 the algorithm.
@@ -294,101 +308,122 @@ For each extracted unit, classify it as behaviorally testable or not:
   EXCLUSION, CONSEQUENCE
 - **Not testable (skip):** REFERENCE, CONJUNCTION
 
-For each testable unit, generate a test case using this template:
+For each testable unit, generate a scenario file using the `.md` format:
 1. Extract the constraint from the semantic unit's `original` text
 2. Design a scenario that exercises the constraint:
    - For REQUIREMENT: scenario where the requirement should be applied
    - For PROHIBITION: scenario where the forbidden action is tempting but must be avoided
-   - For CONDITIONAL: two scenarios — one triggering the condition, one not
+   - For CONDITIONAL: two scenarios — one triggering the condition, one not (see below)
    - For SEQUENCE: scenario requiring multiple ordered steps
    - For DEPENDENCY: scenario with dependency present, scenario with dependency absent
    - For EXCLUSION: scenario attempting both mutually exclusive options
    - For CONSEQUENCE: scenario triggering the cause, assert the effect occurs
-3. Generate assertions using the hybrid type system:
-   - **Deterministic** (preferred): regex match, string containment, structural check — graded inline
-   - **Semantic** (fallback): when the expected behavior requires understanding or judgment
-   - Each test case must have at least one assertion
-   - Maximize deterministic-to-semantic ratio; use semantic only when behavior is genuinely subjective
+3. Generate plain-text assertions describing expected behavior. Each test case must have at least one
+   assertion. All assertions are semantic (plain-text numbered list) — graded entirely by instruction-grader-agent.
 
-**Assertion type decision heuristic:**
-- Use deterministic when: output format (table, list, JSON), presence/absence of specific strings,
-  file operations, ordering constraints
-- Use semantic when: correctness of explanations, appropriateness of approach, quality beyond syntax
-- When uncertain, prefer deterministic; only fall back to semantic if the property is genuinely subjective
-
-**Test case JSON schema** (stored in `${TEST_DIR}/test-cases.json`):
-```json
-{
-  "test_cases": [
-    {
-      "test_case_id": "TC1",
-      "semantic_unit_id": "unit_5",
-      "category": "REQUIREMENT",
-      "prompt": "Scenario text that exercises the behavior...",
-      "assertions": [
-        {
-          "assertion_id": "TC1_det_1",
-          "type": "deterministic",
-          "method": "regex",
-          "description": "output must contain table with 4 columns",
-          "pattern": "\\|[^|]+\\|[^|]+\\|[^|]+\\|[^|]+\\|",
-          "expected": true
-        },
-        {
-          "assertion_id": "TC1_sem_1",
-          "type": "semantic",
-          "description": "explanation correctly identifies the root cause",
-          "instruction": "Check if the output explanation correctly identifies...",
-          "expected": true
-        }
-      ]
-    }
-  ]
-}
-```
-
-**`semantic_unit_id` naming convention:** Use domain-specific names (e.g., `unit_step44_guard`,
+**Scenario file naming:** Use domain-specific names for the file stem (e.g., `unit_step44_guard`,
 `unit_step44_reject`) rather than sequential IDs (e.g., `unit_1`, `unit_2`) to make each unit's intent
 self-describing.
 
-Deterministic assertion methods:
-- `regex`: `pattern` field contains regex; pass if output matches (or doesn't match when `expected: false`)
-- `string_match`: `pattern` field contains literal string; pass if output contains it
-- `structural`: `pattern` field contains a structural check description (e.g., "JSON with key 'status'")
+**Scenario file format:** For each testable semantic unit, generate a `.md` file in `${TEST_DIR}/` named
+`<unit_stem>.md` (the file stem serves as the test case ID).
 
-After generating test cases, present them to the user for approval. The user may add, remove, or modify
-test cases. Auto-generated cases that appear non-discriminating are flagged for the user's review.
+```
+---
+category: <CATEGORY>
+---
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
+## Turn 1
+<realistic user prompt that organically requires this skill — no system_reminders listing skills>
+## Assertions
+1. [For skills: "The Skill tool was invoked"] [For non-skill files: primary compliance assertion]
+2. <behavioral assertion describing expected skill behavior>
+3. <additional behavioral assertion>
+```
 
-Store the approved test cases in `${TEST_DIR}/test-cases.json` and commit with message
-`test: generate test cases [session: ${CLAUDE_SESSION_ID}]`. Store the commit SHA as
-`TEST_SET_SHA`. Do NOT retain the test case JSON in context — subagents read assertions from the
-committed file via `cat {TEST_DIR}/test-cases.json`.
+For skill instruction files (`plugin/skills/`): Assert #1 is always `The Skill tool was invoked` (trigger
+assertion). Behavioral assertions follow.
+For non-skill instruction files (CLAUDE.md, rules files, etc.): Assert #1 describes the primary compliance
+behavior expected. There is no trigger assertion — all assertions are behavioral.
+Scenarios must be realistic work prompts; do NOT list available skills in the prompt.
+
+For CONDITIONAL semantic units that require two scenarios (one triggering, one not), generate two separate
+`.md` files with descriptive names that reflect the condition being tested (e.g.,
+`<unit_stem>_when_condition_present.md` and `<unit_stem>_when_condition_absent.md`).
+Both are positive scenarios where the skill IS invoked; the first verifies the conditional behavior occurs
+when the condition is present, the second verifies it does NOT occur when the condition is absent.
+
+**Negative test cases (minimum 3):** In addition to per-unit positive scenarios, generate at least 3
+negative scenario files.
+- For skill instruction files: negative scenarios cover distinct out-of-scope prompts where the skill should NOT be
+  invoked.
+- For non-skill instruction files: negative scenarios verify that the instruction is not incorrectly applied to
+  out-of-scope situations. The assertion should describe the out-of-scope behavior.
+Name them `<instruction_stem>_negative_<N>.md` (e.g., `my_instruction_negative_1.md`). Each negative scenario has
+a single assertion:
+
+```
+---
+category: negative
+---
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
+## Turn 1
+<realistic out-of-scope prompt where this skill should not fire>
+## Assertions
+1. The Skill tool was NOT invoked
+```
+
+For non-skill instruction files, the negative assertion should describe the out-of-scope behavior (e.g.,
+"The constraint from the rules file was not applied to this unrelated scenario").
+Cover distinct out-of-scope scenarios (e.g., different task types, wrong tool context, unrelated
+domains). Do NOT include system_reminders listing available skills in any scenario.
+
+After generating scenario files, present them to the user for approval. The user may add, remove, or
+modify files. Auto-generated cases that appear non-discriminating are flagged for the user's review.
+
+Commit all generated `.md` files with message `test: generate test cases [session: ${CLAUDE_SESSION_ID}]`:
+```bash
+cd "${TEST_DIR}" && git add *.md && cd - && \
+  git -C "${CLAUDE_PROJECT_DIR}" add "${TEST_DIR}/*.md" && \
+  git -C "${CLAUDE_PROJECT_DIR}" commit -m "test: generate test cases [session: ${CLAUDE_SESSION_ID}]"
+```
+Store the commit SHA as `TEST_SET_SHA`. Do NOT retain test case content in context — test-run subagents
+read from the committed `.md` file for their assigned test case.
 
 #### Step 4.2: Incremental Test Case Selection (Re-testing only)
 
 When re-testing an existing skill after an edit (rather than testing a brand-new draft), use
-`${CLAUDE_PLUGIN_ROOT}/client/bin/skill-test-runner` to identify which test cases need to re-run and which can carry forward from
+`${CLAUDE_PLUGIN_ROOT}/client/bin/instruction-test-runner` to identify which test cases need to re-run and which can carry forward from
 the prior test result.
 
 **Workflow:**
 
 1. Run change detection to identify modified line ranges:
    ```bash
-   "${CLAUDE_PLUGIN_ROOT}/client/bin/skill-test-runner" detect-changes \
-     <SKILL_DRAFT_SHA> <SKILL_TEXT_PATH> "${TEST_DIR}/test-cases.json"
+   "${CLAUDE_PLUGIN_ROOT}/client/bin/instruction-test-runner" detect-changes \
+     <INSTRUCTION_DRAFT_SHA> <INSTRUCTION_TEXT_PATH> "${TEST_DIR}"
    ```
    Output fields:
    - `skill_changed`: false → skip re-test entirely (carry all results forward)
    - `frontmatter_changed`: true → all test cases must re-run (model/config may have changed)
    - `body_changed` + `changed_ranges`: the line ranges in the updated skill body that changed
-   - `rerun_test_case_ids`: populated when frontmatter changed (all TCs) or no body-only change
+   - `rerun_test_case_ids`: populated when frontmatter changed (all TCs) or no body-only change;
+     `all_test_case_ids` is derived from `.md` file stems in `${TEST_DIR}`
    - `semantic_units_path_hint`: guidance for the next step when body-only changes occurred
 
 2. When `body_changed=true` and `frontmatter_changed=false`, extract semantic units from the updated
    skill body:
    ```bash
-   "${CLAUDE_PLUGIN_ROOT}/client/bin/skill-test-runner" extract-units \
-     <SKILL_TEXT_PATH>
+   "${CLAUDE_PLUGIN_ROOT}/client/bin/instruction-test-runner" extract-units \
+     <INSTRUCTION_TEXT_PATH>
    ```
    This outputs the skill body with original file line numbers prepended (tab-separated). Apply the
    Nine-Category Extraction Algorithm from `validation-protocol.md` Section 1 inline to extract units
@@ -399,10 +434,11 @@ the prior test result.
 
 4. Map changed unit IDs to affected test cases:
    ```bash
-   "${CLAUDE_PLUGIN_ROOT}/client/bin/skill-test-runner" map-units \
-     "${TEST_DIR}/test-cases.json" '["unit_1", "unit_5"]'
+   "${CLAUDE_PLUGIN_ROOT}/client/bin/instruction-test-runner" map-units \
+     "${TEST_DIR}" '["unit_step44_guard", "unit_step44_reject"]'
    ```
    Output: `rerun_test_case_ids` (must re-run SPRT) and `carryforward_test_case_ids` (results preserved).
+   Test case IDs are the `.md` file stems in `${TEST_DIR}`; changed unit IDs are matched against file stems.
 
 5. For `carryforward_test_case_ids`, copy the SPRT log_ratio and decision from the prior
    `test-results.json` into the new test result. Only `rerun_test_case_ids` go through full SPRT.
@@ -417,7 +453,7 @@ final test summary.
 
 #### Step 4.3: SPRT Test Run
 
-Run the SPRT-based test to measure the skill's compliance quantitatively.
+Run the SPRT-based test to measure the instruction document's compliance quantitatively.
 
 **SPRT parameters:**
 - p0 = 0.95 (pass rate under H₀ — skill is compliant)
@@ -446,8 +482,8 @@ as a Reject decision — a skill that requires more than 50 trials to demonstrat
 non-compliant. This cap prevents unbounded token and time consumption when the true pass rate falls within
 the indifference zone between p0 and p1.
 
-**Mixed assertion aggregation:** A single test run passes if and only if ALL assertions pass
-(deterministic and semantic). One failed assertion fails the entire run. SPRT receives one pass/fail per run.
+**Assertion aggregation:** A single test run passes if and only if ALL assertions pass. One failed
+assertion fails the entire run. SPRT receives one pass/fail per run.
 
 **SPRT independence requirement:** Each test run (TC + run number) MUST spawn a completely fresh
 subagent with no prior conversation context. Do NOT execute multiple runs inside the same subagent
@@ -492,12 +528,9 @@ dispatched together in one parallel message. If any run in a wave fails or any T
 2. Wait for all subagents in the wave to return, then main agent immediately performs the Result
    Inspection Checklist (see below) for each before any other processing. Once the checklist passes for
    a run:
-   a. Independently verifies deterministic assertions by reading the output file and re-running each
-      deterministic check (regex, string_match, structural) against the actual output — do not trust the
-      subagent's self-reported results without verification
-   b. If semantic assertions exist, spawns a `TEST_MODEL` grader subagent (counts against the slot limit)
-   c. Once all assertions for the run are graded, updates the SPRT log_ratio for that test case
-   d. Checks boundaries: if Accept or Reject, stops spawning new subagents for that test case
+   a. Spawns a `TEST_MODEL` grader subagent for all assertions (counts against the slot limit)
+   b. Once all assertions for the run are graded, updates the SPRT log_ratio for that test case
+   c. Checks boundaries: if Accept or Reject, stops spawning new subagents for that test case
 3. After all wave results are processed and graded:
    - If ALL runs in the wave passed: `WAVE_SLOTS = min(WAVE_SLOTS * 2, 16)`. Dispatch next wave.
    - If ANY run failed or any TC rejected: keep `WAVE_SLOTS` unchanged. If early-reject triggered,
@@ -516,40 +549,33 @@ dispatched together in one parallel message. If any run in a wave fails or any T
   Wait for in-flight subagents to return (to avoid orphaned processes), discard their results, and proceed
   to hardening. Do NOT spawn any additional test-run or grader subagents.
 
-**Spawn parallel test-run subagents:** Each subagent runs with the skill active at `SKILL_TEXT_PATH`.
+**Spawn parallel test-run subagents:** Each subagent runs organically — the skill is NOT pre-loaded.
 Each test-run subagent executes exactly one run (one TC + one run index) and then terminates. Never
 assign more than one run to a single subagent.
 Each test-run subagent:
-1. Executes the test case prompt in its configured environment (skill present and active)
-2. Evaluates deterministic assertions inline and reports results before returning (regex, string_match,
-   structural checks)
-3. Returns per-assertion pass/fail with `null` for semantic assertions (pending grading). The main agent
-   independently verifies deterministic results by reading the output file at `output_path` and re-running
-   each deterministic assertion against the actual output. If the main agent's result disagrees with the
-   subagent's self-reported result, the main agent's result takes precedence.
-4. Records `duration_ms` (elapsed wall-clock time in milliseconds from subagent start to return) and
+1. Reads the assigned scenario from `cat {TEST_DIR}/{test_case_id}.md` and executes the scenario prompt
+   organically (no skill pre-loaded in context; the agent must choose the skill based on its description)
+2. Records `duration_ms` (elapsed wall-clock time in milliseconds from subagent start to return) and
    `total_tokens` (sum of input and output tokens consumed by the subagent invocation, including any
    tool-use overhead)
-5. Writes the full output to a temp file:
+3. Writes the full output to a temp file:
    `/tmp/test-runs/<CLAUDE_SESSION_ID>/<case-id>_run_<N>.txt` (NOT committed). Create the directory
    with `mkdir -p /tmp/test-runs/<CLAUDE_SESSION_ID>` before writing. Here `<CLAUDE_SESSION_ID>` is the
    literal session ID string received as a parameter from the main agent at spawn time — do NOT expand an
    environment variable; use the literal value passed to you.
-6. Returns: `{"run_id": "<TC_id>_run_<N>", "test_case_id": "<TC_id>", "assertion_results":
-   [{"assertion_id": "...", "passed": true|false|null}], "semantic_pending": ["<assertion_id>"],
+4. Returns: `{"run_id": "<TC_id>_run_<N>", "test_case_id": "<TC_id>",
    "output_path": "/tmp/test-runs/<CLAUDE_SESSION_ID>/<case-id>_run_<N>.txt",
    "duration_ms": <integer>, "total_tokens": <integer>}`
    On failure, returns `{"error": "<reason>"}`.
 
 Pass each subagent only scalar references (test case ID, run index, `TEST_DIR`,
 `CLAUDE_SESSION_ID`, model: `TEST_MODEL`) — do NOT embed test case content or assertion arrays inline in
-the prompt. The test-run subagent reads assertions from
-`cat {TEST_DIR}/test-cases.json`.
+the prompt. The test-run subagent reads the scenario from `{TEST_DIR}/{test_case_id}.md`.
 
 The test-run subagent prompt must include the prohibition: "Do NOT read any test artifact files
-(other than test-cases.json to read the prompt and assertions), grading files, or run-output files from
-other subagents. The ONLY permitted read from {TEST_DIR} is test-cases.json. Do NOT read
-any other file under {TEST_DIR} via any mechanism (Read tool, Bash, Grep, or otherwise).
+(other than your assigned scenario file), grading files, or run-output files from other subagents.
+The ONLY permitted read from {TEST_DIR} is `{test_case_id}.md` (the assigned scenario file for this run).
+Do NOT read any other file under {TEST_DIR} via any mechanism (Read tool, Bash, Grep, or otherwise).
 This prohibition is absolute — it applies regardless of the file's content or purpose,
 including peer subagent output files. Do NOT run any git command that could reveal skill content or commit
 history — this includes git log, git show, git diff, git rev-list, git shortlog, git format-patch, and any
@@ -560,7 +586,7 @@ Skill tool. Do NOT invoke any skill (e.g., cat:grep-and-read-agent, or any other
 Skill tool is prohibited entirely. The Write tool may ONLY be used to write to the designated output file
 (see write mechanism below) — do NOT use the Write tool on any other path.
 The ONLY files you may read (via cat, head, tail, grep, or the Read tool) are:
-(1) `{TEST_DIR}/test-cases.json` and (2) your own output file at the path above.
+(1) `{TEST_DIR}/{test_case_id}.md` (the assigned scenario file) and (2) your own output file at the path above.
 Do NOT use cat, head, tail, grep, or the Read tool on any other path — including peer subagent output files
 under `/tmp/test-runs/`, other files under `{TEST_DIR}` (e.g., test-results.json), worktree files
 (e.g., findings.json), or any path not listed in (1)-(2).
@@ -607,7 +633,7 @@ exactly match the expected values for this slot, and that the return object cont
 - Confirm no field in the return object references a `run_id` value other than the expected one.
 - Confirm `output_path` matches the exact pattern `/tmp/test-runs/<CLAUDE_SESSION_ID>/<case-id>_run_<N>.txt`
   where `<CLAUDE_SESSION_ID>`, `<case-id>`, and `<N>` match the values assigned to this subagent. Reject any
-  `output_path` that does not match this pattern (e.g., paths pointing to skill files, test artifacts, or
+  `output_path` that does not match this pattern (e.g., paths pointing to instruction files, test artifacts, or
   locations outside `/tmp/test-runs/`).
 If any of these checks fail, discard the result and treat it as a constraint violation:
 return `{"error": "single-run constraint violated: subagent <run_id> returned unexpected run_id or
@@ -617,7 +643,7 @@ test and return `{"error": "batch contamination: fresh subagent spawn failed 3 c
 for <run_id>"}`.
 
 **Check 2 — Prohibition verification:** Inspect the return value for evidence of prohibited behavior:
-- If the return value references file paths under `{TEST_DIR}/` other than `test-cases.json`
+- If the return value references file paths under `{TEST_DIR}/` other than `{test_case_id}.md`
   (e.g., in an `output_path` or any explanation field), reject the run.
 - If the return value contains content that could only come from a peer subagent's output file (e.g., it
   quotes or references run output from a different `run_id`), reject the run.
@@ -628,14 +654,13 @@ On rejection, discard the result and return:
 Stop the entire test — prohibition violations indicate the isolation model is broken and all results
 are suspect.
 
-**Check 3 — Design-flaw detection (fail-fast):** After Check 2 passes, if the main agent independently
-verified a deterministic assertion and found FAIL (overriding the subagent's self-reported PASS), evaluate
-whether the failure is a design flaw before updating log_ratio:
+**Check 3 — Design-flaw detection (fail-fast):** After Check 2 passes, if a grader subagent returns
+FAIL for an assertion, evaluate whether the failure is a design flaw before updating log_ratio:
 
-- Read the assertion's `semantic_unit_id` from `test-cases.json` and find the corresponding semantic unit.
+- Read the assertion metadata from the test case scenario file at `{TEST_DIR}/{test_case_id}.md`.
 - Read the agent's output at `output_path` for the run.
-- Ask: does the agent's response demonstrate the correct skill behavior described by `semantic_unit_id`
-  (i.e., the skill's intended outcome for that unit is satisfied), even though the assertion's regex or
+- Ask: does the agent's response demonstrate the correct skill behavior described by the assertion's
+  intended outcome (i.e., the assertion's description is satisfied), even though the assertion's regex or
   pattern still fired?
 - If yes (design flaw confirmed): the assertion is too broad — it matches in negation or qualification
   contexts where the agent is demonstrating correct behavior (e.g., pattern `requirements.*APPROVED` fires
@@ -643,8 +668,7 @@ whether the failure is a design flaw before updating log_ratio:
 
 **Design-flaw halt:** When a design flaw is confirmed:
 1. Do NOT update log_ratio for this run.
-2. Record the flawed assertion: `{"assertion_id": "<id>", "semantic_unit_id": "<uid>",
-   "flaw_evidence": "<quoted agent text that triggered the assertion>",
+2. Record the flawed assertion: `{"assertion": "<assertion text>", "flaw_evidence": "<quoted agent text that triggered the assertion>",
    "correct_behavior": "<brief explanation of why the agent behavior is actually correct>"}`.
 3. Halt SPRT immediately — do not spawn additional test-run subagents for any test case.
 4. Route directly to Step 4.4 with `design_flaw=true` and the recorded evidence.
@@ -660,7 +684,7 @@ corroborating signals only — if spawn parameters were correct but symptoms app
       test_case_id: "TC1", run_index: 1, TEST_DIR: ".../plugin/skills/my-skill/tests",
       CLAUDE_SESSION_ID: "abc123", model: TEST_MODEL
 
-    Subagent reads test-cases.json, executes the TC1 prompt, grades deterministic assertions inline.
+    Subagent reads scenario from {TEST_DIR}/TC1.md, executes the TC1 prompt.
 
     Subagent writes output to: /tmp/test-runs/abc123/TC1_run_1.txt
 
@@ -668,50 +692,46 @@ corroborating signals only — if spawn parameters were correct but symptoms app
     {
       "run_id": "TC1_run_1",
       "test_case_id": "TC1",
-      "assertion_results": [
-        {"assertion_id": "a1", "passed": true},
-        {"assertion_id": "a2", "passed": null}
-      ],
-      "semantic_pending": ["a2"],
       "output_path": "/tmp/test-runs/abc123/TC1_run_1.txt",
       "duration_ms": 4200,
       "total_tokens": 1100
     }
 
-    Main agent spawns grader for assertion a2, grader returns: {"assertion_id": "a2", "passed": true}
+    Main agent spawns grader subagents for all assertions (read from {TEST_DIR}/TC1.md frontmatter).
+    Grader returns: {"assertion_results": [{"assertion": "The Skill tool was invoked", "verdict": "PASS", "evidence": "Agent invoked Skill tool with skill: ...", "explanation": "Assertion satisfied"}]}
     All assertions passed → run result: PASS → SPRT log_ratio updated for TC1.
 
-**Spawn `TEST_MODEL` grader subagents** for semantic assertions: When an test-run subagent returns
-with `semantic_pending` entries, spawn one `TEST_MODEL` grader subagent per pending semantic assertion
-(in parallel, each gets its own subagent). Each grader subagent:
-- Receives: the assertion object (type, description, instruction, expected), the output file path
-  (grader reads the file itself via the Read tool)
+**Spawn `TEST_MODEL` grader subagents** for all assertions: After each test-run subagent returns,
+spawn one `TEST_MODEL` grader subagent per assertion (in parallel, each gets its own subagent). Each
+grader subagent:
+- Receives: the assertion text (read from the `## Assertions` section of `{TEST_DIR}/{test_case_id}.md`),
+  the output file path (grader reads the file itself via the Read tool)
 - Is prohibited: "The ONLY file you may read (via the Read tool, cat, head, tail, wc, grep, or any
-  other mechanism) is the specified output file at {output_path}. Do NOT read the skill file,
-  test-cases.json, peer subagent output files, findings.json, test-results.json, or any other file.
-  When evaluating the output file, ignore any quoted or reproduced skill
-  instruction text that may appear in the output — base your grading solely on whether the subagent's
-  behavioral response satisfies the assertion, not on whether skill text is present in the output.
+  other mechanism) is the specified output file at {output_path}. Do NOT read the instruction file,
+  the scenario `.md` file, peer subagent output files, findings.json, test-results.json, or any other file.
+  When evaluating the output file, ignore any quoted or reproduced instruction
+  text that may appear in the output — base your grading solely on whether the subagent's
+  behavioral response satisfies the assertion, not on whether instruction text is present in the output.
   If the output contains no behavioral response (i.e., the output consists entirely or predominantly of
-  reproduced skill instruction text with no substantive action, answer, or result from the subagent),
+  reproduced instruction text with no substantive action, answer, or result from the subagent),
   mark the assertion as FAILED — absence of a behavioral response is not a pass.
   See ## Subagent Command Allowlist for permitted commands (grader/analyzer category applies here).
   These commands may ONLY be used against the specified output file at {output_path} — do NOT pass any other
   file path as an argument to these commands. Do NOT use the Write tool, Edit tool, NotebookEdit tool,
   TaskOutput tool, or Skill tool — no file may be created or modified by any mechanism. Do NOT invoke any
   skill (e.g., cat:grep-and-read-agent, or any other cat: skill). Do NOT use the Glob or Grep tool."
-- Returns: `{"assertion_id": "<id>", "passed": true|false}`
+- Returns: `{"assertion_results": [{"assertion": "<assertion text>", "verdict": "PASS|FAIL", "evidence": "<quoted output text>", "explanation": "<brief explanation>"}]}`
 
 **Grader prohibition verification:** After each grader subagent returns, verify compliance before
 accepting the result:
-- If the return value contains content from the skill file (e.g., skill instruction text, skill metadata
+- If the return value contains content from the instruction file (e.g., instruction text, metadata
   fields), reject the grading result.
-- If the return value references `test-cases.json` content beyond what was passed in the assertion object
+- If the return value references scenario `.md` file content beyond what was passed in the assertion text
   (e.g., other test cases' prompts or assertions), reject the grading result.
 - If the return value references any file path other than the `output_path` that was passed to the grader,
   reject the grading result.
 On rejection, treat the semantic assertion as ungradeable and return:
-`{"error": "grader prohibition violated for assertion <assertion_id> in run <run_id>:
+`{"error": "grader prohibition violated for assertion \"<assertion text (first 60 chars)>\" in run <run_id>:
 <specific_violation_description>"}`. Stop the entire test — a grader prohibition breach means the
 grader had access to information that could bias its evaluation.
 
@@ -755,10 +775,9 @@ test-run subagent return value:
 }
 ```
 
-Commit `${TEST_DIR}/test-cases.json` and `${TEST_DIR}/test-results.json` with
-message `test: SPRT result [session: ${CLAUDE_SESSION_ID}]`. Store SHA as `TEST_SHA`. Both files
-are written to the skill-adjacent `test/` directory and committed there directly — no separate persist
-step is needed.
+Commit `${TEST_DIR}/test-results.json` with message `test: SPRT result [session: ${CLAUDE_SESSION_ID}]`.
+Store SHA as `TEST_SHA`. The file is written to the skill-adjacent `test/` directory and committed there
+directly — no separate persist step is needed.
 
 **Token summary display:** After committing test artifacts, display a token usage summary to the user:
 
@@ -788,8 +807,8 @@ subagent conversation transcripts to distinguish genuine skill failures from tes
 (batch contamination, shared context priming, model-default behaviors) and assertion design flaws.
 
 **RESTRICTION:** The investigation phase is a read-only analysis. Do NOT use the Write tool, Edit tool,
-NotebookEdit tool, or Skill tool during this phase. Do NOT modify the skill file, test-results.json,
-test-cases.json, or any test artifact. The only permitted operations are: reading transcripts via
+NotebookEdit tool, or Skill tool during this phase. Do NOT modify the instruction file, test-results.json,
+scenario `.md` files, or any test artifact. The only permitted operations are: reading transcripts via
 cat:get-history-agent, running session-analyzer search commands via Bash, and interpreting the results.
 
 **Investigation procedure:**
@@ -857,7 +876,7 @@ content for use in sub-steps 4–7.
 ```
 
 Interpret: any match indicates the test-run subagent asked a follow-up question or deviated from
-the skill's instruction to produce direct output. Record each match with its surrounding context lines
+the instruction document's requirement to produce direct output. Record each match with its surrounding context lines
 as a "compliance failure" candidate.
 
 **Sub-step 5 — Check for batch contamination** (automatic + interpret):
@@ -960,7 +979,7 @@ Priming sources: None identified
     this escape clause may have allowed the agent to deviate)
 
 Conclusion: Genuine skill defect
-→ Next step: Proceed to Step 4.5 (cat:skill-analyzer-agent) to analyze the defect pattern.
+→ Next step: Proceed to Step 4.5 (cat:instruction-analyzer-agent) to analyze the defect pattern.
 
   (or: Conclusion: Test environment artifact
 → Next step: Rerun the test after removing the contaminated test case or isolating the
@@ -968,25 +987,24 @@ Conclusion: Genuine skill defect
 
   (or: Conclusion: Inconclusive
 → Next step: Gather additional evidence — examine the full transcript for each failed run via
-    cat:get-history-agent, compare the failing agent's received prompt against the skill text,
+    cat:get-history-agent, compare the failing agent's received prompt against the instruction text,
     and check whether the failure reproduces across multiple independent test reruns before
-    deciding whether to modify the skill.)
+    deciding whether to modify the instruction document.)
 
   (or: Conclusion: Assertion design flaw
-  Flawed assertion: <assertion_id> (semantic_unit_id: <uid>)
+  Flawed assertion: "<assertion text>" in <test_case_id>
   Evidence: agent wrote:
     ```
     I will NOT write requirements: APPROVED
     ```
     which correctly demonstrates avoidance behavior, but the pattern `requirements.*APPROVED` still fired.
-→ Next step: Fix the assertion in test-cases.json to use a more specific pattern that does not
-    match negation or qualification contexts (e.g., add a negative lookahead or rewrite as a
-    semantic assertion). Do NOT modify the skill — the skill behavior is correct.)
+→ Next step: Fix the assertion in the scenario `.md` file to use more specific wording that does not
+    match negation or qualification contexts. Do NOT modify the skill — the skill behavior is correct.)
 ```
 
 **Artifact handling and routing:**
 - If conclusion is "Assertion design flaw": do NOT proceed to Step 4.5. The skill behavior is correct;
-  the assertion must be fixed. Recommend updating the affected assertion in `test-cases.json` before
+  the assertion must be fixed. Recommend updating the affected assertion in the scenario `.md` file before
   rerunning the test.
 - If conclusion is "Test environment artifact": do NOT proceed to Step 4.5; recommend rerunning the
   test after fixing the artifact source.
@@ -996,23 +1014,23 @@ Conclusion: Genuine skill defect
 analyzer unavailable for agent ${AGENT_ID}" in that field of the report and continue to the next
 sub-step. Do not abort the investigation for a single tool failure.
 
-#### Step 4.5: Analyze via skill-analyzer-agent
+#### Step 4.5: Analyze via instruction-analyzer-agent
 
-**Analyze via skill-analyzer-agent subagent:** Spawn skill-analyzer-agent. Pass it the test
-SHA+path (from the SPRT result) and `SKILL_TEXT_PATH` (worktree-relative). The `skill_text_path` must be
+**Analyze via instruction-analyzer-agent subagent:** Spawn instruction-analyzer-agent. Pass it the test
+SHA+path (from the SPRT result) and `INSTRUCTION_TEXT_PATH` (worktree-relative). The `instruction_text_path` must be
 a **worktree-relative path** (e.g., `plugin/skills/my-skill/first-use.md`) — never an absolute path.
 
 ```
 Task tool:
   description: "Analyze skill against test results"
-  subagent_type: "cat:skill-analyzer-agent"
+  subagent_type: "cat:instruction-analyzer-agent"
   prompt: |
     ## Test Results
     SHA: {TEST_SHA}
     Path: {TEST_PATH}
 
-    ## Skill Text
-    skill_text_path: {SKILL_TEXT_PATH}
+    ## Instruction Text
+    instruction_text_path: {INSTRUCTION_TEXT_PATH}
 
     ## Worktree Root
     WORKTREE_ROOT: {WORKTREE_ROOT}
@@ -1021,10 +1039,10 @@ Task tool:
     TEST_DIR: {TEST_DIR}
     CLAUDE_SESSION_ID: {CLAUDE_SESSION_ID}
 
-    Read the skill text using: cat {WORKTREE_ROOT}/{SKILL_TEXT_PATH}
-    (SKILL_TEXT_PATH is worktree-relative; prepend WORKTREE_ROOT for the absolute path.)
+    Read the instruction text using: cat {WORKTREE_ROOT}/{INSTRUCTION_TEXT_PATH}
+    (INSTRUCTION_TEXT_PATH is worktree-relative; prepend WORKTREE_ROOT for the absolute path.)
 
-    RESTRICTION: This is a read-only analysis task. Do NOT modify the skill file, test
+    RESTRICTION: This is a read-only analysis task. Do NOT modify the instruction file, test
     artifacts, findings.json, or any other file in the worktree. Do NOT use the Write, Edit,
     NotebookEdit, or Skill tools. Do NOT invoke any skill (e.g., cat:grep-and-read-agent,
     or any other cat: skill).
@@ -1032,9 +1050,9 @@ Task tool:
     Do NOT use find, ls, the Glob tool, or the Grep tool to discover or enumerate files.
     The ONLY files you may read or access (via cat, head, tail, grep, wc, sort, uniq, diff, stat,
     or the Read tool) are:
-    (1) the skill file at {WORKTREE_ROOT}/{SKILL_TEXT_PATH} and (2) the test results file
+    (1) the instruction file at {WORKTREE_ROOT}/{INSTRUCTION_TEXT_PATH} and (2) the test results file
     whose path is provided to you. Do NOT use any allowlisted command against any file not in this list.
-    Do NOT read test-cases.json, test-results.json,
+    Do NOT read scenario `.md` files, test-results.json,
     protected-sections.txt, or any file under {TEST_DIR} other than the specific
     test results file provided. Do NOT use shell redirection operators (>, >>, <, <<, 2>) or any command
     that writes, moves, copies, or deletes files (rm, mv, cp, sed -i, tee, dd, truncate, install, patch,
@@ -1049,13 +1067,13 @@ only the compact analysis report text (~1KB). It does NOT read the analysis file
 2. Would you like to improve the skill and re-run the test?
 3. Are you satisfied with the current skill version?
 
-**Iterate if needed:** If the user requests improvement, apply targeted changes to the skill file at
-`SKILL_TEXT_PATH`, commit the updated file, and update `SKILL_DRAFT_SHA` before returning to Step 4.3. Cap
+**Iterate if needed:** If the user requests improvement, apply targeted changes to the instruction file at
+`INSTRUCTION_TEXT_PATH`, commit the updated file, and update `INSTRUCTION_DRAFT_SHA` before returning to Step 4.3. Cap
 at 5 test iterations total. Track the best-performing iteration by storing `BEST_SCORE` and `BEST_SHA`
-(the commit SHA of the skill file at that iteration). `BEST_SCORE` is defined as the fraction of test cases
+(the commit SHA of the instruction file at that iteration). `BEST_SCORE` is defined as the fraction of test cases
 that reached SPRT Accept. After each iteration, compare the current BEST_SCORE and update if higher. Stop
 iterating if the absolute improvement between consecutive rounds is less than 5 percentage points — restore
-the best skill version by running `git checkout {BEST_SHA} -- {SKILL_TEXT_PATH}` and committing with
+the best skill version by running `git checkout {BEST_SHA} -- {INSTRUCTION_TEXT_PATH}` and committing with
 message `test: restore best iteration [session: ${CLAUDE_SESSION_ID}]`, then report "test plateau
 reached." If the iteration cap is reached, apply the same rollback to `BEST_SHA` if the final iteration is
 not the best, then stop and report "test iteration cap reached (5 rounds) — presenting best result."
@@ -1065,7 +1083,7 @@ not the best, then stop and report "test iteration cap reached (5 rounds) — pr
 After the test phase converges, harden the instructions using alternating red-team and blue-team
 subagents. Run until convergence (no CRITICAL/HIGH loopholes remain).
 
-**Effort gate:** Read `effort` from `${CLAUDE_PROJECT_DIR}/.cat/config.json`. If `effort = low`, skip
+**Effort gate:** Read `curiosity` from the effective config (`get-config-output effective`). If `curiosity = low`, skip
 adversarial hardening entirely and proceed to Step 6.
 
 **Protocol:** Follow [plugin/concepts/adversarial-protocol.md](${CLAUDE_PLUGIN_ROOT}/concepts/adversarial-protocol.md)
@@ -1081,20 +1099,20 @@ shown in adversarial-protocol.md (fields: `file`, `line`, `type`, `description`,
 illustrative — the agent-specific schemas take precedence. The blue-team and diff-validation agents must
 process findings using the fields the red-team agent actually writes, not the protocol's generic schema.
 
-**Skill-builder-specific configuration:**
+**Instruction-builder-specific configuration:**
 
 | Parameter | Value |
 |-----------|-------|
-| `target_type` | `skill_instructions` |
-| `TARGET_FILE_PATH` | `{SKILL_FILE_PATH}` (the skill's SKILL.md or first-use.md being hardened) |
+| `target_type` | `instructions` |
+| `TARGET_FILE_PATH` | `{INSTRUCTION_FILE_PATH}` (the instruction file being hardened) |
 | `CURRENT_CONTENT` | Pass `TARGET_FILE_PATH` — subagents read the file from disk themselves. Do NOT embed file content inline in subagent prompts. |
 
-> **Invocation variants — target_type:** The default `skill_instructions` can be replaced to match
+> **Invocation variants — target_type:** The default `instructions` can be replaced to match
 > the content being hardened:
 >
 > | `target_type`       | Content being hardened          | `TARGET_FILE_PATH` points to |
 > |---------------------|---------------------------------|------------------------------|
-> | `skill_instructions`| Skill or agent Markdown file    | SKILL.md or agent .md file   |
+> | `instructions`| Skill or agent Markdown file    | SKILL.md or agent .md file   |
 > | `test_code`         | Test source file                | *Test.java or *Test.sh       |
 > | `source_code`       | Implementation source file      | *.java, *.sh, etc.           |
 
@@ -1108,7 +1126,7 @@ execution of the hardening algorithm. You are NOT the hardening engine — you a
 
 The ONLY valid execution path is:
 - Spawn red-team and blue-team subagents using the **Task tool** as defined in Step 5
-- Let the subagents read the target file from `SKILL_FILE_PATH` on disk, execute the loop, and commit changes
+- Let the subagents read the target file from `INSTRUCTION_FILE_PATH` on disk, execute the loop, and commit changes
 
 **Prohibited paths (will be treated as a protocol violation):**
 - Manually performing any part of the hardening loop yourself — including red-team analysis, blue-team
@@ -1120,31 +1138,32 @@ The ONLY valid execution path is:
 If you are reading this and thinking "I should now run the loop", stop — you are primed incorrectly.
 Return to Step 5 and spawn Task tool subagents.
 
-**Effort gate:** Read `effort` from `${CLAUDE_PROJECT_DIR}/.cat/config.json`. If `effort = low`, skip
-in-place hardening entirely and report "Skipping in-place hardening (effort=low)." to the user.
+**Effort gate:** Read `curiosity` from the effective config (`get-config-output effective`). If `curiosity = low`, skip
+in-place hardening entirely and report "Skipping in-place hardening (curiosity=low)." to the user.
 
-In-place hardening mode runs the adversarial TDD loop against a skill file in a worktree in a single session,
+In-place hardening mode runs the adversarial TDD loop against an instruction file in a worktree in a single session,
 producing one commit per round as the loop progresses.
 
-**Primary workflow — single skill file:**
+**Primary workflow — single instruction file:**
 
-In-place hardening mode activates when the caller passes a single skill file path inside the current worktree.
-This mode is intended for hardening existing, already-functional skills — it applies adversarial instruction
+In-place hardening mode activates when the caller passes a single instruction file path inside the current worktree.
+This mode is intended for hardening existing, already-functional instruction documents — it applies adversarial
+instruction
 review only and does NOT run the test evaluation loop (Step 4). Before entering in-place mode,
 the orchestrator must verify that a prior test exists for this skill by checking whether
 `${TEST_DIR}/test-results.json` exists (where `TEST_DIR` is `${CLAUDE_PROJECT_DIR}/plugin/tests/<path-to-file-without-extension>/`). If no prior test is found, the orchestrator must abort in-place mode and
 fall back to the full workflow (Steps 1-5) with the message: "No prior test found for this skill —
 running full workflow including test evaluation."
 
-1. Store the file path as `SKILL_FILE_PATH`. Do NOT read the file into `CURRENT_INSTRUCTIONS` and relay
-   it inline to subagents — subagents read the file from `SKILL_FILE_PATH` themselves. Determine
+1. Store the file path as `INSTRUCTION_FILE_PATH`. Do NOT read the file into `CURRENT_INSTRUCTIONS` and relay
+   it inline to subagents — subagents read the file from `INSTRUCTION_FILE_PATH` themselves. Determine
    the worktree root by running `git rev-parse --show-toplevel` from within the worktree; store as
    `WORKTREE_ROOT`. Pass `WORKTREE_ROOT` to all red-team and blue-team subagent prompts so they can
    construct absolute paths for **direct filesystem operations** (e.g., `cat {WORKTREE_ROOT}/findings.json`,
    `mkdir -p {WORKTREE_ROOT}/...`). For `git show` commands, subagents must use repo-relative paths
    (e.g., `git show <sha>:findings.json`) as specified in the shared adversarial protocol.
 2. Run the full RED→BLUE loop as defined in Step 5 and the shared adversarial protocol. Each round
-   produces commits from red-team (findings.json) and blue-team (patched skill file). The loop
+   produces commits from red-team (findings.json) and blue-team (patched instruction file). The loop
    continues until convergence (red-team returns `has_critical_high: false`).
 3. No additional write step is needed — the blue-team commits the hardened content directly each round.
 
@@ -1156,9 +1175,9 @@ files under the directory recursively. Apply the single-skill workflow to each f
 By default, process files **sequentially** (safe for all worktrees). Between sequential skills, delete the
 previous skill's `findings.json` (or `findings-<skill-name>.json` if using per-skill paths) before starting
 the next skill to prevent stale disputes from contaminating subsequent red-team analysis. Parallel processing
-is allowed when each skill file is independent (no shared skill-to-skill dependencies). In parallel mode,
+is allowed when each instruction file is independent (no shared file-to-file dependencies). In parallel mode,
 each subagent runs the full RED→BLUE loop for its own file, committing per-round — never touching other
-skill files. Each parallel subagent must use a skill-specific findings path
+instruction files. Each parallel subagent must use an instruction-specific findings path
 (`{WORKTREE_ROOT}/findings-<skill-name>.json`) instead of the shared `{WORKTREE_ROOT}/findings.json` to
 avoid overwrite collisions between concurrent red-team agents. Derive `<skill-name>` as
 `<directory-name>-<file-stem>` (e.g., `work-agent-first-use` for
@@ -1177,25 +1196,25 @@ red-team and blue-team commits in batch parallel mode. Each parallel subagent mu
 contention using the same backoff schedule: first retry after 1-2 seconds (randomized), second after
 2-4 seconds, third after 4-8 seconds.
 
-Skip files that are not valid skill files (missing Purpose or Procedure sections). If a skill file fails
-validation after blue-team patching, log the failure and continue to the next skill.
+Skip files that are not valid instruction files (missing Purpose or Procedure sections). If an instruction file
+fails validation after blue-team patching, log the failure and continue to the next file.
 
-After all skill files are processed (or user types `abort`), display a batch summary table:
+After all instruction files are processed (or user types `abort`), display a batch summary table:
 
-| Skill | Rounds | Loopholes Closed | Disputes Upheld | Patches Applied |
+| File | Rounds | Loopholes Closed | Disputes Upheld | Patches Applied |
 |-------|--------|-----------------|-----------------|-----------------|
 | ...   | ...    | ...             | ...             | ...             |
 
 ### Step 7: Compression Phase
 
-**Effort gate:** Read `effort` from `${CLAUDE_PROJECT_DIR}/.cat/config.json`. If `effort = low`, skip
-this entire step. The compression phase runs only when `effort = medium` or `high`.
+**Effort gate:** Read `curiosity` from the effective config (`get-config-output effective`). If `curiosity = low`, skip
+this entire step. The compression phase runs only when `curiosity = medium` or `high`.
 
 After hardening achieves compliance (Step 5 converges and SPRT re-test accepts), compress the skill
 file to minimize token cost while preserving behavioral compliance.
 
 **Hardening + testing + compression are always run together** — never one without the others when
-effort > low.
+curiosity > low.
 
 **Sequential phases, never interleaved:**
 1. Harden until compliant (only add text) — Step 5
@@ -1209,26 +1228,26 @@ Reset `BEST_SCORE` and `BEST_SHA` before this step — hardening may have change
 pre-hardening iteration tracking is stale and must not be used for rollback.
 
 Before compressing, run a full SPRT test on the hardened skill to confirm compliance. Use the same
-test cases from `${TEST_DIR}/test-cases.json` and identical SPRT parameters as Step 4.3.
+test cases from `${TEST_DIR}` (`.md` scenario files) and identical SPRT parameters as Step 4.3.
 Commit test results with message `test: post-hardening SPRT [session: ${CLAUDE_SESSION_ID}]`.
 Store SHA as `POST_HARDENING_SHA`. If any test case rejects, return to hardening (Step 5) to address the
 failures before proceeding to compression.
 
 #### Step 7.2: Compress
 
-Before invoking the compression subagent, derive `{skill-filename}` as the basename of `SKILL_TEXT_PATH`
-(e.g., `first-use` from `plugin/skills/my-skill/first-use.md`). Sanitize `{skill-filename}` by stripping
+Before invoking the compression subagent, derive `{instruction-filename}` as the basename of `INSTRUCTION_TEXT_PATH`
+(e.g., `first-use` from `plugin/skills/my-skill/first-use.md`). Sanitize `{instruction-filename}` by stripping
 any path separator characters (`/`, `\`, `..`) — reject and abort if the basename contains path traversal
 sequences. The resulting filename must be a simple name with no directory components.
 
-Invoke a general-purpose subagent to compress the skill file:
+Invoke a general-purpose subagent to compress the instruction file:
 
 ```
 Task tool:
-  description: "Compress skill: [skill name]"
+  description: "Compress instruction: [instruction name]"
   subagent_type: "general-purpose"
   prompt: |
-    Compress the skill file at {SKILL_TEXT_PATH} following the compression protocol below.
+    Compress the instruction file at {INSTRUCTION_TEXT_PATH} following the compression protocol below.
 
     ## Compression Protocol
     Read and follow: ${CLAUDE_PLUGIN_ROOT}/skills/instruction-builder-agent/compression-protocol.md
@@ -1239,21 +1258,21 @@ Task tool:
     All text listed there is mandatory preservation — treat it as decision-affecting requirements.}
 
     ## Output
-    Write the compressed file to: {TEST_DIR}/compressed-{skill-filename}.md
+    Write the compressed file to: {TEST_DIR}/compressed-{instruction-filename}.md
 
     RESTRICTION: The ONLY files you may read (via cat, head, tail, grep, wc, sort, uniq, diff, stat,
-    the Read tool, or any other mechanism) are: (1) the skill file at {SKILL_TEXT_PATH} (this is the
+    the Read tool, or any other mechanism) are: (1) the instruction file at {INSTRUCTION_TEXT_PATH} (this is the
     input to compress), (2) {TEST_DIR}/protected-sections.txt (if provided), and
     (3) ${CLAUDE_PLUGIN_ROOT}/skills/instruction-builder-agent/compression-protocol.md.
     Do NOT use any allowlisted command (including diff, sort, uniq, stat) against any file not in
     this list — doing so constitutes a file read even if the command is nominally "read-only".
-    Do NOT read any other file — including test-cases.json, test-results.json, findings.json, config
+    Do NOT read any other file — including scenario `.md` files, test-results.json, findings.json, config
     files, peer subagent output files, or any file not listed in (1)-(3) regardless of its location.
     Do NOT list or explore the skill directory's test/ subdirectory. Do NOT use the Glob or Grep tool
     to discover or enumerate files. Do NOT use grep with recursive flags (-r, -R, --include, -l combined
-    with directory paths) as this provides directory discovery. Do NOT modify {SKILL_TEXT_PATH}. Use
+    with directory paths) as this provides directory discovery. Do NOT modify {INSTRUCTION_TEXT_PATH}. Use
     the Write tool to write the compressed output to
-    {TEST_DIR}/compressed-{skill-filename}.md — this is the ONLY file you may write
+    {TEST_DIR}/compressed-{instruction-filename}.md — this is the ONLY file you may write
     and the Write tool is the ONLY permitted mechanism for writing it. Do NOT use the Edit tool,
     NotebookEdit tool, or the Skill tool. Do NOT invoke any skill (e.g., cat:batch-write-agent,
     cat:grep-and-read-agent, or any other cat: skill).
@@ -1262,7 +1281,7 @@ Task tool:
     copies, or deletes files.
 ```
 
-Commit the compressed file with message `refactor: compress skill [session: ${CLAUDE_SESSION_ID}]`.
+Commit the compressed file with message `refactor: compress instruction [session: ${CLAUDE_SESSION_ID}]`.
 Store SHA as `COMPRESSED_SHA`.
 
 #### Step 7.3: Semantic Pre-Check (Fast Gate)
@@ -1284,9 +1303,9 @@ Run SPRT re-test on the compressed version using identical test cases and parame
 **Acceptance criterion:** ALL test cases must reach SPRT Accept (log_ratio ≥ A).
 
 **On rejection:** Compression broke compliance. Identify protected text:
-1. Run `git diff {POST_HARDENING_SHA}..{COMPRESSED_SHA} -- {SKILL_TEXT_PATH}` to find removed/changed hunks
+1. Run `git diff {POST_HARDENING_SHA}..{COMPRESSED_SHA} -- {INSTRUCTION_TEXT_PATH}` to find removed/changed hunks
 2. Identify which test case(s) triggered SPRT rejection and which assertions failed
-3. Cross-reference failed assertions with their source semantic units (`semantic_unit_id` in test-cases.json)
+3. Cross-reference failed assertions with their source semantic units (identified by the scenario `.md` file stem)
 4. Cross-reference source semantic units with diff hunks via the `location` field in the extracted unit
 5. Mark the corresponding hunks as protected in `${TEST_DIR}/protected-sections.txt`:
 
@@ -1308,102 +1327,18 @@ Commit protected-sections.txt with message
 - After 3 failures: Accept the post-hardening (uncompressed) version as final; report "Compression could
   not preserve compliance after 3 retries — accepting uncompressed version."
 
-**On acceptance:** Copy compressed file to `SKILL_TEXT_PATH` (overwrite original), commit with message
+**On acceptance:** Copy compressed file to `INSTRUCTION_TEXT_PATH` (overwrite original), commit with message
 `refactor: accept final compression [session: ${CLAUDE_SESSION_ID}]`. Do NOT commit the post-compression SPRT results
-separately — they are intermediate verification artifacts only. The accepted compressed skill file is the
+separately — they are intermediate verification artifacts only. The accepted compressed instruction file is the
 permanent output; the SPRT run that verified it is transient and must not be persisted to the repository.
 
 Present the final size reduction and compliance metrics to the user.
 
-### Step 8: Create Organic Test Cases
-
-After the skill is finalized (Steps 4–7 complete), create organic test cases for the skill
-being built. These test cases verify that the skill is chosen when appropriate and followed correctly —
-using realistic prompts with no system_reminders priming.
-
-**Effort gate:** Read `effort` from `${CLAUDE_PROJECT_DIR}/.cat/config.json`. If `effort = low`, skip
-this step entirely.
-
-**8.1 Read the organic test standard:**
-
-Read `plugin/skills/instruction-builder-agent/testing.md` to understand the organic test design standard before
-writing any test cases. Do NOT proceed without reading it first.
-
-**8.2 Design test cases for the skill being built:**
-
-Design test cases following the organic standard. Use `TEST_DIR` (already computed in Step 4) as the
-test artifacts directory. For example, if `SKILL_TEXT_PATH` is `plugin/skills/my-skill/first-use.md`, then
-`TEST_DIR` is `${CLAUDE_PROJECT_DIR}/plugin/tests/skills/my-skill/first-use`. The test-cases file will be
-written to `${TEST_DIR}/test-cases.json`.
-
-Requirements:
-- **Positive cases (minimum 2):** Realistic work prompts that organically require this skill.
-  - Tier 1 assertion — skill chosen: `must_use_tools: ["Skill"]` (agent invoked the skill)
-  - Tier 2 assertion — skill followed correctly: a specific behavioral criterion verifying the agent
-    executed the skill's key procedure step, not just that a tool was called.
-
-    **Tier 2 examples (concrete):**
-    - `must_use_tools: ["Bash"]` with description "Agent ran git rebase or git reset to squash commits"
-      (for a squash skill — verifies the squash action occurred, not just skill selection)
-    - Output contains a string matching `^(feat|fix|refactor):` (for a commit-message skill — verifies
-      the message format required by the procedure, not just that the Skill tool was called)
-    - `must_use_tools: ["TaskCreate"]` with description "Agent created a task before writing any files"
-      (for a work skill — verifies step ordering required by the procedure)
-
-    **Tier 2 must be falsifiable:** it must fail when the agent selects the skill but skips or
-    misexecutes its key procedure step. Assertions that are always true regardless of procedure
-    execution (e.g., "output is non-empty", "agent produced some text") are Tier 1 at best — they
-    do not count as Tier 2.
-- **Negative cases (minimum 3):** Clearly out-of-scope prompts where the skill should NOT be invoked.
-  Cover distinct out-of-scope scenarios (e.g., search-only, explicit known paths, wrong tool count).
-- **No system_reminders:** Do not list available skills in any test case. Agents must choose the skill
-  based solely on its `description:` frontmatter.
-
-**8.3 Write test cases:**
-
-Create `${TEST_DIR}/` if it does not exist, then write the test cases to
-`${TEST_DIR}/test-cases.json`. Follow the format defined in `testing.md`.
-
-**8.4 Validate empirically:**
-
-Run the `empirical-test-runner` against the positive test cases to confirm ≥80% pass rate:
-
-```bash
-RUNNER="${CLAUDE_PLUGIN_ROOT}/client/bin/empirical-test-runner"
-"$RUNNER" \
-  --config "${TEST_DIR}/test-cases.json" \
-  --trials 3 \
-  --model "${TEST_MODEL}" \
-  --cwd "${CLAUDE_PROJECT_DIR}"
-```
-
-**Tool failure handling:** If `empirical-test-runner` exits with a non-zero code or is not found:
-- Record the error output verbatim in the commit message (Step 8.5).
-- Skip empirical validation and proceed to Step 8.5, noting: "empirical-test-runner unavailable —
-  test cases committed without pass-rate validation."
-- Do NOT block the commit or abort Step 8 on a tool failure. The test cases are still valuable as
-  static documentation even without empirical confirmation.
-
-**Revision loop (cap at 2 attempts):** If any positive case falls below 80%, revise the test prompts
-to be more discriminating (clearer signal that the skill should be invoked) and re-run once. If the
-pass rate is still below 80% after the second attempt, commit the test cases as-is and note in the
-commit message: "organic tests below 80% threshold after 2 revision attempts — prompts need
-further calibration." Do NOT lower the threshold — revise the prompts or note the shortfall.
-
-**8.5 Commit:**
-
-```bash
-git add "${TEST_DIR}/test-cases.json"
-git commit -m "test: add organic test cases for <skill-name>"
-```
-
----
-
 ## Output Format
 
-**Final skill output includes:**
+**Final instruction output includes:**
 
-1. **SKILL.md or first-use.md file** — The complete designed, tested, hardened, and compressed skill
+1. **Instruction file** — The complete designed, tested, hardened, and compressed instruction document
 2. **Frontmatter** — YAML with name, description (trigger-oriented), and optional argument-hint
 3. **Purpose section** — The goal statement from the backward chaining methodology
 4. **Procedure section** — Forward-execution steps calling extracted functions
@@ -1435,8 +1370,8 @@ implementation details (trust levels, internal architecture, etc.).
 
 - **subagent-context-minimization**: When to delegate to subagents and how to pass references instead of
   content — `plugin/concepts/subagent-context-minimization.md`
-- **skill-analyzer-agent**: Detects delegation opportunities and content relay anti-patterns in skill
-  procedures — `plugin/agents/skill-analyzer-agent.md`
+- **instruction-analyzer-agent**: Detects delegation opportunities and content relay anti-patterns in skill
+  procedures — `plugin/agents/instruction-analyzer-agent.md`
 - **Behavioral test cases**: SPRT calibration test cases for this skill are stored in
   `plugin/tests/skills/instruction-builder-agent/first-use/` (one `.md` file per test case). Test results are stored in
   `plugin/tests/skills/instruction-builder-agent/first-use/results.json` (skill_hash, model, session_id, timestamp,
@@ -1444,32 +1379,31 @@ implementation details (trust levels, internal architecture, etc.).
 
 ## Verification
 
-**Effort-gate note:** When a step was skipped by the effort gate (e.g., `effort = low` skips Steps
-4.1–4.4, 5, 7, and 8), mark the corresponding checklist items as **N/A** (not applicable), not failed.
+**Effort-gate note:** When a step was skipped by the effort gate (e.g., `curiosity = low` skips Steps
+4.1–4.4, 5, and 7), mark the corresponding checklist items as **N/A** (not applicable), not failed.
 Overall verification passes if all non-skipped items are checked and all skipped items are marked N/A.
 
-- [ ] Design subagent returned a complete skill draft
+- [ ] Design subagent returned a complete instruction draft
 - [ ] Test phase ran with auto-generated test cases (one per testable semantic unit)
-- [ ] Test cases include both deterministic and semantic assertion types where appropriate
-- [ ] Skill-builder maximizes deterministic-to-semantic assertion ratio when generating test cases
+- [ ] Test cases use plain-text semantic assertions in the ## Assertions section of each `.md` scenario file
+- [ ] Scenario `.md` files include YAML frontmatter with `category` field
 - [ ] Test commit message prefix uses `test:`
-- [ ] Test artifacts directory is `plugin/tests/<path-to-file-without-extension>/` (derived from SKILL_TEXT_PATH)
+- [ ] Test artifacts directory is `plugin/tests/<path-to-file-without-extension>/` (derived from INSTRUCTION_TEXT_PATH)
 - [ ] Variables use `TEST_DIR` and `TEST_SET_SHA`
 - [ ] SPRT decision logic uses p0=0.95, p1=0.85, α=0.05, β=0.05 with boundaries A≈2.944, B≈-2.944
 - [ ] Each test case runs its own independent SPRT; rejection of any case stops all remaining cases
 - [ ] SPRT check runs after each individual agent completion (pipelined), not batched per wave
-- [ ] TEST_MODEL is read from skill frontmatter via `${CLAUDE_PLUGIN_ROOT}/client/bin/skill-test-runner extract-model` at the start of Step 4
+- [ ] TEST_MODEL is read from skill frontmatter via `${CLAUDE_PLUGIN_ROOT}/client/bin/instruction-test-runner extract-model` at the start of Step 4
 - [ ] Eval-run subagents use `TEST_MODEL` (not hardcoded Haiku), fresh (non-resumed) per run
-- [ ] Eval-run subagents grade deterministic assertions inline before returning
-- [ ] Semantic assertions use separate `TEST_MODEL` grader subagents
+- [ ] All assertions use separate `TEST_MODEL` grader subagents (no inline grading by test-run subagent)
 - [ ] Run outputs written to temp files (not committed per-run); only test-results.json is committed after test
-- [ ] Eval-run subagent return format includes per-assertion pass/fail with null for semantic assertions
+- [ ] Eval-run subagent return format contains run_id, test_case_id, output_path, duration_ms, total_tokens only
 - [ ] TEST_DIR, CLAUDE_SESSION_ID, and TEST_MODEL passed as resolved literal strings to all subagents
 - [ ] Test results show meaningful signal (SPRT log_ratios indicate compliance level)
 - [ ] Re-test after hardening uses identical SPRT parameters and same test cases
-- [ ] Effort gate: hardening + testing + compression phase skipped entirely when effort = low
+- [ ] Effort gate: hardening + testing + compression phase skipped entirely when curiosity = low
 - [ ] Hardening and compression are never interleaved — harden first, then compress
-- [ ] Compression subagent does not read test-cases.json, test-results.json, or other test artifacts
+- [ ] Compression subagent does not read scenario `.md` files, test-results.json, or other test artifacts
 - [ ] Post-compression SPRT acceptance criteria identical to post-hardening test
 - [ ] Compression retries capped at 3 attempts; uncompressed version accepted after 3 failures
 - [ ] Semantic pre-check gates compression before full SPRT re-test
@@ -1478,7 +1412,7 @@ Overall verification passes if all non-skipped items are checked and all skipped
 - [ ] Step 2 draft validation checks that each required section contains non-empty content (not just headings)
 - [ ] Step 5 follows shared adversarial protocol from plugin/concepts/adversarial-protocol.md
 - [ ] Shared protocol performs final-round MEDIUM/LOW cleanup pass (no diff-validation; arbitration runs if blue-team returns has_new_disputes: true) before loop exit
-- [ ] Step 5 uses target_type: skill_instructions
+- [ ] Step 5 uses target_type: instructions
 - [ ] Step 5 main agent never reads findings.json directly — uses structured JSON returns from subagents
 - [ ] In-place hardening mode produces per-round commits (one from red-team, one from blue-team per round)
 - [ ] If batch mode was used: summary table shows Loopholes Closed, Disputes Upheld, and Patches Applied columns
@@ -1506,8 +1440,8 @@ Overall verification passes if all non-skipped items are checked and all skipped
 - [ ] Step 4.4 checks for priming sources (model defaults, escape clauses, output format priming)
 - [ ] Step 4.4 presents investigation findings to the user before asking whether to improve the skill
 - [ ] Step 4.4 recommends rerunning the test when conclusion is "test environment artifact"
-- [ ] Step 4.5 skill-analyzer-agent report includes Delegation Opportunities and Content Relay Anti-Patterns sections
-- [ ] Step 2 design subagent Read scope is restricted to methodology, conventions, and existing skill files only
+- [ ] Step 4.5 instruction-analyzer-agent report includes Delegation Opportunities and Content Relay Anti-Patterns sections
+- [ ] Step 2 design subagent Read scope is restricted to methodology, conventions, and existing instruction files only
 - [ ] Step 6 batch mode skill-name derivation is defined as `<directory-name>-<file-stem>` to avoid collisions
 - [ ] Step 6 batch parallel mode extends the concurrent commit retry protocol to red-team and blue-team commits
 - [ ] Step 4.3 test plateau tracks BEST_SCORE and BEST_SHA, rolls back to best iteration on plateau or cap
@@ -1521,16 +1455,16 @@ Overall verification passes if all non-skipped items are checked and all skipped
 - [ ] test-results.json sprt section includes `total_tokens` and `total_duration_ms` per test case and overall
 - [ ] Token usage summary table is displayed after SPRT completes showing per-test-case and aggregate totals
 - [ ] Token counts are accumulated from each test-run subagent return value (not estimated)
-- [ ] `test-cases.json` and `test-results.json` are committed directly to `${TEST_DIR}/` after SPRT completes (no separate persist step)
-- [ ] `${CLAUDE_PLUGIN_ROOT}/client/bin/skill-test-runner extract-model` falls back to "haiku" when skill has no model: frontmatter field
-- [ ] Step 3 compact-output pass applied to SKILL_DRAFT before writing to disk
+- [ ] Scenario `.md` files are committed to `${TEST_DIR}/` when test cases are generated; `test-results.json` is committed directly to `${TEST_DIR}/` after SPRT completes (no separate persist step)
+- [ ] `${CLAUDE_PLUGIN_ROOT}/client/bin/instruction-test-runner extract-model` falls back to "haiku" when instruction file has no model: frontmatter field
+- [ ] Step 3 compact-output pass applied to INSTRUCTION_DRAFT before writing to disk
 - [ ] Step 3 compact-output pass lists all correctness exemptions (YAML frontmatter, Makefile targets, fenced code blocks, semantic whitespace, visual alignment)
-- [ ] Step 3 compact-output pass does not modify SKILL_DRAFT when exemption conditions apply
+- [ ] Step 3 compact-output pass does not modify INSTRUCTION_DRAFT when exemption conditions apply
 - [ ] Both semantic and visual correctness take priority over compactness in the compact-output pass
-- [ ] Step 8 reads testing.md before designing organic test cases
-- [ ] Step 8 organic test cases include at least 2 positive cases (Tier 1 and Tier 2 criteria)
-- [ ] Step 8 organic test cases include at least 3 negative cases covering distinct out-of-scope scenarios
-- [ ] Step 8 test cases contain no system_reminders listing available skills
-- [ ] Step 8 empirical validation achieves ≥80% pass rate on positive cases before committing
-- [ ] Step 8 commit uses `test:` prefix
-- [ ] Step 8 skipped when effort = low
+- [ ] Step 4.1 positive scenario files: for skills, assert #1 is "The Skill tool was invoked"; for non-skill files,
+  assert #1 describes the primary compliance behavior
+- [ ] Step 4.1 generates at least 3 negative scenario files; for skills: assertion "The Skill tool was NOT invoked";
+  for non-skill files: assertion describes the out-of-scope behavior
+- [ ] No scenario file includes system_reminders listing available skills
+- [ ] Step 4.3 test-run subagents do not pre-load the skill (organic execution)
+- [ ] Step 8 skipped when curiosity = low
