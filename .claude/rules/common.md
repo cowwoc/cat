@@ -247,14 +247,14 @@ if (!SESSION_ID_PATTERN.matcher(value).matches()) {
 ## Configuration Reads in Worktrees
 
 **MANDATORY:** Agents must read `config.json` from disk **BEFORE** using behavioral configuration values (trust
-level, verify level, effort, patience). Branch names and issue paths come from the preparation phase parameters, not
+level, caution level, curiosity, perfection). Branch names and issue paths come from the preparation phase parameters, not
 from `config.json`.
 
 **Sources of truth:**
 
 | Value | Source |
 |-------|--------|
-| `trust`, `verify`, `effort` | `.cat/config.json` field values |
+| `trust`, `caution`, `curiosity`, `perfection` | `.cat/config.json` field values |
 | `target_branch`, `issue_id` | Parameters from `work-prepare` phase output |
 | Current branch | `git branch --show-current` |
 | Worktree path | Parameters from `work-prepare` phase output |

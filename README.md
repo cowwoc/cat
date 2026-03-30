@@ -131,9 +131,9 @@ During `/cat:init`, you configure preferences that apply consistently across you
 | Preference | What It Controls |
 |------------|------------------|
 | **Trust** | How much autonomy CAT has to make decisions |
-| **Verify** | What verification runs before presenting changes |
-| **Effort** | Whether CAT notes optimization opportunities beyond the task |
-| **Patience** | When CAT acts on discovered opportunities |
+| **Caution** | How cautiously CAT validates changes before the approval gate |
+| **Curiosity** | How broadly stakeholder review considers system context |
+| **Perfection** | How much CAT pursues perfection in the current task |
 
 **For Teams:** These preferences become your team's coding standards. Every developer, every project, every session
 follows the same rules.
@@ -251,9 +251,9 @@ Your CAT settings live in `.cat/config.json`:
 ```json
 {
   "trust": "medium",
-  "verify": "changed",
-  "effort": "medium",
-  "patience": "high",
+  "caution": "medium",
+  "curiosity": "medium",
+  "perfection": "medium",
   "fileWidth": 120,
   "displayWidth": 120
 }
@@ -264,9 +264,9 @@ Your CAT settings live in `.cat/config.json`:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `trust` | string | `medium` | Autonomy level (controls review and approval behavior) |
-| `verify` | string | `changed` | What verification runs before checkpoints |
-| `effort` | string | `medium` | How thoroughly CAT investigates during planning and review |
-| `patience` | string | `high` | When CAT acts on discovered opportunities |
+| `caution` | string | `medium` | How cautiously CAT validates changes before the approval gate |
+| `curiosity` | string | `medium` | How broadly stakeholder review considers system context |
+| `perfection` | string | `medium` | How much CAT pursues perfection in the current task |
 | `fileWidth` | number | `120` | Width in characters for content written to files |
 | `displayWidth` | number | `120` | Width in characters for content displayed in the terminal |
 
@@ -275,23 +275,22 @@ Your CAT settings live in `.cat/config.json`:
 - `medium` — CAT presents options for meaningful trade-offs; handles routine choices
 - `high` — CAT decides autonomously; only presents HIGH risk or architectural choices
 
-**verify** — What verification CAT runs before presenting changes:
-- `none` — No verification; fastest iteration
-- `changed` — Verify modified file/module only; balanced confidence
-- `all` — Verify entire project; highest confidence before checkpoint
+**caution** — How cautiously CAT validates changes before the approval gate:
+- `low` — Compile only (fastest feedback)
+- `medium` — Compile and unit tests (default)
+- `high` — Compile, unit tests, and E2E tests (maximum confidence)
 
-**effort** — How thoroughly CAT investigates during planning and review:
-- `low` — Concise plan assuming obvious approach; review changed lines only for obvious issues
-- `medium` — Plan explores alternatives and notes trade-offs; review changed lines plus surrounding context
-- `high` — Deep research plan with documented reasoning; review broader code impact and flag pre-existing issues
+**curiosity** — How broadly stakeholder review and research considers system context:
+- `low` — Skip automatic stakeholder review; review only runs if explicitly invoked
+- `medium` — Run automatic stakeholder review scoped to changed files and direct dependencies
+- `high` — Run automatic stakeholder review with holistic system integration scope
 
-**patience** — When CAT acts on opportunities discovered during work and how review concerns are handled. CAT weighs
-each concern's severity against the cost of fixing it, then decides whether to fix inline or defer:
-- `low` — Fixes most concerns inline; only defers low-value, high-cost changes
-- `medium` — Fixes concerns when the benefit clearly outweighs the cost; defers others to the backlog
-- `high` — Fixes only high-value, low-cost concerns; defers everything else to maximize focus on the current task
+**perfection** — How much CAT pursues perfection in the current task:
+- `low` — Stay focused on the primary goal, defer tangential improvements
+- `medium` — Fix issues that are easy to address, defer complex ones
+- `high` — Fix every issue encountered, even if tangential to the primary goal
 
-See [patience details](docs/patience.md) for the full cost/benefit framework and decision matrix.
+See [perfection details](docs/perfection.md) for the full cost/benefit framework and decision matrix.
 
 **fileWidth** — Width in characters for content written to files:
 - `120` — Desktop/Laptop (Recommended). Optimized for wide monitors
@@ -305,7 +304,7 @@ See [patience details](docs/patience.md) for the full cost/benefit framework and
 
 ### Stakeholder Reviews
 
-When `verify` is `changed` or `all`, CAT runs multi-perspective stakeholder reviews before merge:
+When `caution` is `medium` or `high`, CAT runs multi-perspective stakeholder reviews before merge:
 
 | Stakeholder | Focus |
 |-------------|-------|

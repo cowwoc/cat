@@ -34,7 +34,7 @@ Read, Glob, and Grep tools. This enables reviewers to catch:
 Positional space-separated arguments:
 
 ```
-<cat_agent_id> <issue_id> <worktree_path> <verify_level> <commits_compact>
+<cat_agent_id> <issue_id> <worktree_path> <caution_level> <commits_compact>
 ```
 
 | Position | Name | Example |
@@ -42,12 +42,12 @@ Positional space-separated arguments:
 | 0 | cat_agent_id | `0554aad8-90d4-44f7-bb3e-8706a82c90ce` |
 | 1 | issue_id | `2.1-issue-name` |
 | 2 | worktree_path | `${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name` |
-| 3 | verify_level | `quick` or `changed` or `all` |
+| 3 | caution_level | `quick` or `changed` or `all` |
 | 4 | commits_compact | `hash:type,hash:type` (e.g., `abc123:bugfix,def456:test`) |
 
 Parse from ARGUMENTS:
 ```bash
-read CAT_AGENT_ID ISSUE_ID WORKTREE_PATH VERIFY_LEVEL COMMITS_COMPACT <<< "$ARGUMENTS"
+read CAT_AGENT_ID ISSUE_ID WORKTREE_PATH CAUTION_LEVEL COMMITS_COMPACT <<< "$ARGUMENTS"
 ```
 
 Commits can be expanded by splitting on `,` then `:` to get hash and type.
@@ -596,8 +596,8 @@ The calling skill (work-with-issue) is responsible for:
 
 ## When to Run (Automatic Triggering)
 
-Review depends on verify_level (arg 3; NOT trust level). Authoritative source is the argument, not config.json.
-Fail if missing. Action: verify_level="none" → skip; "quick"|"changed"|"all" → run review.
+Review depends on caution_level (arg 3; NOT trust level). Authoritative source is the argument, not config.json.
+Fail if missing. Action: caution_level="none" → skip; "quick"|"changed"|"all" → run review.
 
 ## Verification Checklist
 

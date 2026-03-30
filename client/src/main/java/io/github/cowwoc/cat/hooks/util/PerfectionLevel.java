@@ -18,15 +18,15 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public enum PerfectionLevel
 {
   /**
-   * Low perfection: stay focused on the primary goal, defer tangential improvements.
+   * Stay focused on the primary goal, defer tangential improvements.
    */
   LOW,
   /**
-   * Medium perfection: fix issues that are easy to address, defer complex ones.
+   * Fix issues that are easy to address, defer complex ones.
    */
   MEDIUM,
   /**
-   * High perfection: fix every issue encountered, even if tangential to the primary goal.
+   * Fix every issue encountered, even if tangential to the primary goal.
    */
   HIGH;
 

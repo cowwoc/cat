@@ -219,7 +219,7 @@ Commit the file with message `feature: write instruction draft [session: ${CLAUD
 commit SHA as `INSTRUCTION_DRAFT_SHA`. The instruction text is now on disk and committed, so subagents can read it
 via `git show <SHA>:<INSTRUCTION_TEXT_PATH>` or `cat <INSTRUCTION_TEXT_PATH>`.
 
-**Effort gate:** Read `curiosity` from the effective config (`get-config-output effective`). If `curiosity = low`, skip
+**Curiosity gate:** Read `curiosity` from the effective config (`get-config-output effective`). If `curiosity = low`, skip
 the test evaluation loop (Steps 4.1–4.4), adversarial hardening (Step 5), and compression phase (Step 7) entirely.
 
 **MANDATORY when curiosity != low:** The full test evaluation loop (Steps 4.1–4.4) MUST execute. Do NOT
@@ -1089,7 +1089,7 @@ not the best, then stop and report "test iteration cap reached (5 rounds) — pr
 After the test phase converges, harden the instructions using alternating red-team and blue-team
 subagents. Run until convergence (no CRITICAL/HIGH loopholes remain).
 
-**Effort gate:** Read `curiosity` from the effective config (`get-config-output effective`). If `curiosity = low`, skip
+**Curiosity gate:** Read `curiosity` from the effective config (`get-config-output effective`). If `curiosity = low`, skip
 adversarial hardening entirely and proceed to Step 6.
 
 **Protocol:** Follow [plugin/concepts/adversarial-protocol.md](${CLAUDE_PLUGIN_ROOT}/concepts/adversarial-protocol.md)
@@ -1144,7 +1144,7 @@ The ONLY valid execution path is:
 If you are reading this and thinking "I should now run the loop", stop — you are primed incorrectly.
 Return to Step 5 and spawn Task tool subagents.
 
-**Effort gate:** Read `curiosity` from the effective config (`get-config-output effective`). If `curiosity = low`, skip
+**Curiosity gate:** Read `curiosity` from the effective config (`get-config-output effective`). If `curiosity = low`, skip
 in-place hardening entirely and report "Skipping in-place hardening (curiosity=low)." to the user.
 
 In-place hardening mode runs the adversarial TDD loop against an instruction file in a worktree in a single session,
@@ -1213,7 +1213,7 @@ After all instruction files are processed (or user types `abort`), display a bat
 
 ### Step 7: Compression Phase
 
-**Effort gate:** Read `curiosity` from the effective config (`get-config-output effective`). If `curiosity = low`, skip
+**Curiosity gate:** Read `curiosity` from the effective config (`get-config-output effective`). If `curiosity = low`, skip
 this entire step. The compression phase runs only when `curiosity = medium` or `high`.
 
 After hardening achieves compliance (Step 5 converges and SPRT re-test accepts), compress the skill
@@ -1385,7 +1385,7 @@ implementation details (trust levels, internal architecture, etc.).
 
 ## Verification
 
-**Effort-gate note:** When a step was skipped by the effort gate (e.g., `curiosity = low` skips Steps
+**Curiosity gate note:** When a step was skipped by the curiosity gate (e.g., `curiosity = low` skips Steps
 4.1–4.4, 5, and 7), mark the corresponding checklist items as **N/A** (not applicable), not failed.
 Overall verification passes if all non-skipped items are checked and all skipped items are marked N/A.
 
@@ -1407,7 +1407,7 @@ Overall verification passes if all non-skipped items are checked and all skipped
 - [ ] TEST_DIR, CLAUDE_SESSION_ID, and TEST_MODEL passed as resolved literal strings to all subagents
 - [ ] Test results show meaningful signal (SPRT log_ratios indicate compliance level)
 - [ ] Re-test after hardening uses identical SPRT parameters and same test cases
-- [ ] Effort gate: hardening + testing + compression phase skipped entirely when curiosity = low
+- [ ] Curiosity gate: hardening + testing + compression phase skipped entirely when curiosity = low
 - [ ] Hardening and compression are never interleaved — harden first, then compress
 - [ ] Compression subagent does not read scenario `.md` files, test-results.json, or other test artifacts
 - [ ] Post-compression SPRT acceptance criteria identical to post-hardening test
