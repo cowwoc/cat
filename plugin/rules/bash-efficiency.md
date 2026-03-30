@@ -1,6 +1,5 @@
 ---
 mainAgent: true
-subAgents: [all]
 ---
 ## Bash Command Chaining
 

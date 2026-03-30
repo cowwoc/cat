@@ -1,6 +1,5 @@
 ---
 mainAgent: true
-subAgents: [all]
 ---
 ## Qualified Names
 **MANDATORY**: Always use fully-qualified names when referencing issues, skills, and files.
