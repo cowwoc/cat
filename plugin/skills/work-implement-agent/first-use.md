@@ -5,7 +5,7 @@ See LICENSE.md in the project root for license terms.
 -->
 # Work Phase: Implement
 
-> See `${CLAUDE_PLUGIN_ROOT}/concepts/execution-model.md` for the full execution model and parallelism rules.
+> See `${CLAUDE_PLUGIN_ROOT}/concepts/work-decomposition.md` for the full execution model and parallelism rules.
 
 Implement phase for `/cat:work`. Displays preparing/implementing banners, verifies lock ownership,
 and orchestrates subagent execution of the implementation plan.

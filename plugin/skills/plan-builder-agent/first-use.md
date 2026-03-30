@@ -88,7 +88,7 @@ subagents to fabricate results.
 
 ## Jobs for Parallel Execution
 
-> See `${CLAUDE_PLUGIN_ROOT}/concepts/execution-model.md` for the full execution model, hierarchy, and
+> See `${CLAUDE_PLUGIN_ROOT}/concepts/work-decomposition.md` for the full execution model, hierarchy, and
 > parallelism rules.
 
 Use `## Jobs` with `### Job N` sections to organize work into parallel jobs. This is the **default

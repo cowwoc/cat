@@ -6,7 +6,7 @@ See LICENSE.md in the project root for license terms.
 # CAT Hierarchy: MAJOR > MINOR > ISSUE
 
 > **See also:** [version-paths.md](version-paths.md) for path construction functions and patterns.
-> **See also:** `plugin/concepts/execution-model.md` for the full execution hierarchy including jobs and subagents.
+> **See also:** `plugin/concepts/work-decomposition.md` for the full execution hierarchy including jobs and subagents.
 
 ## Structure
 

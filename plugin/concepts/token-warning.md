@@ -5,7 +5,7 @@ See LICENSE.md in the project root for license terms.
 -->
 # Workflow: Token Warning and Compaction Handling
 
-> See `plugin/concepts/execution-model.md` for the full execution hierarchy and sub-issue decomposition context.
+> See `plugin/concepts/work-decomposition.md` for the full execution hierarchy and sub-issue decomposition context.
 
 ## When to Load
 
