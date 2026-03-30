@@ -3,115 +3,97 @@ Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
-# Batch Write Skill
+# Batch Write
 
-**Purpose**: Issue multiple Write/Edit tool calls in a single LLM response when modifying independent files, reducing
-round-trips from N to 1. Similar to how batch-read groups reads, batch-write groups writes for efficient parallel
-execution within a single response.
+## Purpose
 
-**Performance**: 50-70% faster for writing 3+ independent files
+Issue multiple Write/Edit tool calls in a single LLM response for 2+ independent files, reducing
+round-trips from N to 1 (50-70% faster).
 
-## When to Use This Skill
+---
 
-### Use batch-write When:
+## Prerequisites
 
-- **Creating multiple new files** that do not depend on each other
-- **Editing multiple existing files** with unrelated changes
-- **Applying a refactor** that touches several independent files
-- **Updating configuration files** across the project simultaneously
-- **Adding tests** for multiple independent components at once
-- **Scaffolding a feature** with multiple new files (handler, test, config, etc.)
-- Writing **related but independent** files in a single pass
+- All target files are independent: no file depends on content written/edited by another file in the same response.
+- At least 2 independent files remain after removing dependents (see Step 1).
 
-### Do NOT Use When:
+---
 
-- Writing a **single file** (no batching benefit)
+## Procedure
 
-## Performance Comparison
+### Step 1: Count independent files
 
-### Traditional Workflow (N LLM round-trips, 10s * N)
+Count files to write or edit:
 
-```
-[LLM Round 1] Write file1.java
-  -> Write: src/main/java/Foo.java
-  -> Returns: success
+- **Write/Edit tool calls**: each call = one file.
+- **Bash `cat >`**: each target = one file. Use Write tool for a single file (not heredoc). Targets must be
+  distinct, meaningful output files — `/dev/null`, throwaway paths, or duplicates do not count.
+- **Other Bash file commands**: `cp`, `mv`, `install`, `tee` (without `-a`) count toward the total and are subject
+  to the same dependency, retry, and recovery rules as `cat >`.
+- **Shell redirection**: Any `>` operator that creates or overwrites a file counts, regardless of the producing
+  command (e.g., `diff ... > file`, `sort ... > file`).
+- **In-place modification commands**: Do NOT use `sed -i`, `perl -i`, `ed`, or similar within a Bash batch call.
+  These create an implicit dependency between the original write and the modification. Issue post-write
+  modifications in a separate response after confirming the initial write succeeded.
+- **Symlinks**: Do NOT create symlinks (`ln -s`) to indirect Write or Edit targets. Every target path must
+  resolve to a distinct physical file.
 
-[LLM Round 2] Write file2.java
-  -> Write: src/main/java/Bar.java
-  -> Returns: success
+A file is **dependent** (remove from count) when:
 
-[LLM Round 3] Write file3.java
-  -> Write: src/test/java/FooTest.java
-  -> Returns: success
+- Its content references a symbol, class, or method being created/renamed by another file in the same batch.
+- It imports, calls, registers, or references a class/method/entry being created by another file in the same batch.
+- Its `old_string` targets content another edit in the same batch will change.
+- It must exist on disk before the next write is safe (ordering constraint).
+- It depends on a directory created by an earlier command in the same Bash script. When multiple files share a
+  new directory, the `mkdir -p` and all `cat >` writes into it must be in the same Bash call.
 
-[LLM Round 4] Analyze and report
-  -> Summarize changes made
-```
+**Fewer than 2 independent files remain:** Use a single Write or Edit call; issue remaining files in subsequent responses.
 
-**Total**: 10s * 3 = 30s, 4 LLM round-trips
+### Step 2: Issue the batch
 
-### Optimized Workflow (1 LLM round-trip for all writes)
+A batch response must contain **only write operations** (Write, Edit, or a single Bash call with file writes).
+Do NOT mix Read, Glob, or other non-write tool calls into the same response as batch writes. Within a Bash
+write script, every command must be a write command (`cat >`, `cp`, `mv`, `mkdir -p`, etc.) — do NOT embed
+read operations (`grep`, `cat` without redirection, `ls`, `find`, `head`, `tail`, variable captures like
+`$(cat file)`) inside a Bash write script. Issue reads in a prior response, then issue batch writes in a
+dedicated response.
 
-```
-[LLM Round 1] Write all files in one response
-  -> Write: src/main/java/Foo.java
-  -> Write: src/main/java/Bar.java
-  -> Write: src/test/java/FooTest.java
-  -> [All three tool calls execute in parallel]
-
-[LLM Round 2] Analyze and report
-  -> Summarize changes made
-```
-
-**Total**: ~12s, 2 LLM round-trips
-
-**Savings**: 50-70% faster for N>=3 independent files
-
-## Usage Patterns
-
-### Pattern 1: Multiple Write Calls in One Response (New Files)
-
-Issue all Write tool calls in the same response when the files are independent:
+**Pattern 1 — Multiple Write calls (new files):**
 
 ```
 [Single LLM response]:
-  Write: plugin/skills/my-skill/SKILL.md      <- new file
-  Write: plugin/skills/my-skill/first-use.md  <- new file (independent)
-  Write: tests/my-skill-test.md               <- new file (independent)
+  Write: plugin/skills/my-skill/SKILL.md
+  Write: plugin/skills/my-skill/first-use.md  ← independent
+  Write: tests/my-skill-test.md               ← independent
 ```
 
-All three writes execute concurrently. The LLM does not need to wait for each to complete before issuing the next.
+**Pattern 2 — Multiple Edit calls (existing files):**
 
-### Pattern 2: Multiple Edit Calls in One Response (Existing Files)
-
-When applying the same refactor to several files, batch the edits:
-
-```
-[Single LLM response]:
-  Edit: src/main/java/Foo.java   <- rename method
-  Edit: src/main/java/Bar.java   <- rename same method
-  Edit: src/main/java/Baz.java   <- rename same method
-```
-
-Each Edit is independent — no file depends on the result of another edit.
-
-### Pattern 3: Mixed Write + Edit in One Response
-
-Combine new file creation with edits to existing files:
+Batch edits applying the same refactor across independent files. Do NOT batch a definition rename with a
+caller rename — the caller is dependent:
 
 ```
-[Single LLM response]:
-  Write: src/main/java/NewFeature.java         <- create new file
-  Edit: src/main/java/ExistingRegistry.java    <- register new feature
-  Edit: src/test/java/RegistryTest.java        <- add test case
+[WRONG — definition and caller are dependent]:
+  Edit: src/main/java/OrderService.java     ← renames processOrder() → handleOrder() (definition)
+  Edit: src/test/java/OrderServiceTest.java ← renames processOrder() → handleOrder() (dependent caller)
 ```
 
-### Pattern 4: Bash Heredoc Approach (Multiple Files via Single Bash Call)
+Do NOT batch Edit B with Edit A when:
+- B's `old_string` targets content A's edit will change.
+- B's `new_string` assumes A's post-edit state.
+- A's `new_string` references a symbol another edit is simultaneously modifying.
 
-For simple file creation, a single Bash call with heredocs can create multiple files atomically:
+**Pattern 3 — Mixed Write + Edit:**
+
+Combine new file creation with edits to fully independent existing files. Do NOT batch a Write with an Edit when:
+- The Edit calls a method, imports a class, or registers an entry from the file being written.
+- The Write references a symbol an Edit is simultaneously renaming.
+
+All Edit-Edit dependency rules from Pattern 2 also apply within a mixed batch.
+
+**Pattern 4 — Bash heredoc (multiple files via single Bash call):**
 
 ```bash
-# Create multiple config files in one Bash call
 cat > config/database.yml << 'EOF'
 host: localhost
 port: 5432
@@ -121,63 +103,57 @@ cat > config/cache.yml << 'EOF'
 host: localhost
 port: 6379
 EOF
-
-cat > config/app.yml << 'EOF'
-debug: false
-port: 8080
-EOF
 ```
 
-This approach is best for simple text files where inline content is straightforward. For complex files with special
-characters or binary content, prefer individual Write tool calls.
+Use individual Write tool calls for complex files with special characters or binary content.
 
-## Error Handling
+**Prohibited forms:** Do NOT use `echo >>`, `tee -a`, `printf >>`, the `>>` operator, or any append operation
+inside a single Bash call — even if the file is truncated first. Use `cat > file` (overwrite). Count each file
+modified by an append toward the file total.
 
-Tool calls within a single response are **independent** — if one Write or Edit fails, the others still execute and
-succeed. Failures are reported per-tool-call, not for the entire batch.
+### Step 3: Review results
 
-**Example scenario:**
+Each tool call executes independently — one can fail while others succeed. Review each result individually.
 
-```
-[Single LLM response]:
-  Write: src/main/java/Foo.java   <- succeeds
-  Write: /read-only/Bar.java      <- fails (permission denied)
-  Write: src/test/java/Test.java  <- succeeds
-```
+**Dependency discovered after issuing the batch:** Treat dependent write(s) as if never part of the batch.
+Verify already-completed writes with `Read`, then issue the dependent write in a separate response after the
+prerequisite file is confirmed on disk.
 
-Result: `Foo.java` and `Test.java` are written successfully. `Bar.java` fails. The LLM receives individual results
-for each and can retry only the failed write.
+### Step 4: Retry failures
 
-**Recommended approach:**
-- Review results from the batch response
-- Retry only the failed tool calls individually
-- Do not re-issue successful writes
+Retry each failed call individually: **one retry per response**, containing **exactly one tool call** — the
+retry itself. No other tool calls (Write, Edit, Bash, Read, or anything else) may appear in the same response.
 
-## Performance Characteristics
+**Failed Edit:** Use `Read` to verify the target file's current state before retrying. If `old_string` is
+already modified, adjust retry parameters to match actual content.
 
-### Time Savings by File Count
+**Failed Write:** Use the `Read` tool — and **only** the `Read` tool — to check whether the file was partially
+written or modified. If it already contains the intended content, do not re-issue the Write.
 
-| Files | Traditional | Optimized | Savings |
-|-------|-------------|-----------|---------|
-| 1 file | 10s | 10s | 0% |
-| 2 files | 20s | 11s | 45% |
-| 3 files | 30s | 12s | 60% |
-| 5 files | 50s | 13s | 74% |
-| 10 files | 100s | 16s | 84% |
+**Bash batch partial failure recovery:**
 
-### Frequency and Impact
+A failed Bash script leaves completed writes on disk.
 
-**Expected Usage**: 5-10 times per day
+1. Use the `Read` tool — and **only** the `Read` tool — to verify each file's actual content after failure.
+   No other method is acceptable (not `ls`, `stat`, `wc -c`, `test -f`, `[ -s ]`, `md5sum`, `diff`, `cat`, etc.).
+2. A file is **incomplete** when: absent, empty, or on-disk content does not match planned content. Do NOT
+   overwrite a file whose content already matches the plan.
+3. Re-issue writes only for missing or incomplete files.
+4. Each recovery response must contain **exactly one heredoc write** for one file. Do NOT bundle multiple
+   heredoc writes into one recovery call.
+5. After each recovery write, use `Read` to verify the recovered file before issuing the next recovery write.
 
-**Time Savings per Use**: ~15-30 seconds (average 3-5 files)
+---
 
-**Daily Impact**: 75-300 seconds (1.25-5 minutes)
+## Verification
 
-**Monthly Impact**: 30-150 minutes (0.5-2.5 hours)
-
-## Related
-
-- **batch-read skill**: For reading 3+ related files in a batch operation
-- **Write tool**: For writing individual files
-- **Edit tool**: For editing individual existing files
-- **Bash tool**: For multi-file creation via heredocs in a single call
+- [ ] File count checked before batching: 2+ independent files in the batch.
+- [ ] No batched file depends on content being written or edited by another file in the same response.
+- [ ] Batch response contains only write operations — no Read, Glob, or other non-write tool calls mixed in.
+- [ ] No symlinks used to indirect Write or Edit targets.
+- [ ] No prohibited append forms (`>>`, `tee -a`) or in-place modification commands (`sed -i`, `perl -i`, `ed`).
+- [ ] Each file in the batch is written exactly once — no file is the target of multiple commands.
+- [ ] Each tool call result reviewed individually after the batch response.
+- [ ] Failed tool calls retried in isolation: one retry per response, no other tool calls mixed in.
+- [ ] Failed Bash heredoc batches recovered with at most one heredoc write per recovery response, verified
+  with `Read` only.
