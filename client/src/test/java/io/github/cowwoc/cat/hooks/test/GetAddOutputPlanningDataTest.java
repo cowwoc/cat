@@ -14,6 +14,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -100,7 +101,10 @@ public class GetAddOutputPlanningDataTest
         {"status":"in-progress"}""");
       Files.writeString(versionDir.resolve("plan.md"),
         "# Plan\n\n## Goal\n\nTest version goal summary.\n");
-      Files.createDirectories(versionDir.resolve("my-issue"));
+      Path myIssueDir = versionDir.resolve("my-issue");
+      Files.createDirectories(myIssueDir);
+      Files.writeString(myIssueDir.resolve("index.json"), """
+        {"status":"open"}""");
 
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -323,7 +327,10 @@ public class GetAddOutputPlanningDataTest
       Files.writeString(versionDir.resolve("plan.md"), "# Plan\n\n## Goal\n\nGoal.\n");
       Files.writeString(versionDir.resolve("CHANGELOG.md"), "# Changelog\n");
       Files.writeString(versionDir.resolve("notes.txt"), "some notes");
-      Files.createDirectories(versionDir.resolve("real-issue"));
+      Path realIssueDir = versionDir.resolve("real-issue");
+      Files.createDirectories(realIssueDir);
+      Files.writeString(realIssueDir.resolve("index.json"), """
+        {"status":"open"}""");
 
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -354,8 +361,14 @@ public class GetAddOutputPlanningDataTest
       Files.createDirectories(versionDir);
       Files.writeString(versionDir.resolve("index.json"), """
         {"status":"open"}""");
-      Files.createDirectories(versionDir.resolve("fix-bug-123"));
-      Files.createDirectories(versionDir.resolve("add-feature-abc"));
+      Path fixBugDir = versionDir.resolve("fix-bug-123");
+      Files.createDirectories(fixBugDir);
+      Files.writeString(fixBugDir.resolve("index.json"), """
+        {"status":"open"}""");
+      Path addFeatureDir = versionDir.resolve("add-feature-abc");
+      Files.createDirectories(addFeatureDir);
+      Files.writeString(addFeatureDir.resolve("index.json"), """
+        {"status":"open"}""");
 
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -388,9 +401,13 @@ public class GetAddOutputPlanningDataTest
       Files.createDirectories(versionDir);
       Files.writeString(versionDir.resolve("index.json"), """
         {"status":"open"}""");
-      Files.createDirectories(versionDir.resolve("issue-a"));
-      Files.createDirectories(versionDir.resolve("issue-b"));
-      Files.createDirectories(versionDir.resolve("issue-c"));
+      for (String issueName : List.of("issue-a", "issue-b", "issue-c"))
+      {
+        Path issueDir = versionDir.resolve(issueName);
+        Files.createDirectories(issueDir);
+        Files.writeString(issueDir.resolve("index.json"), """
+          {"status":"open"}""");
+      }
 
       GetAddOutput handler = new GetAddOutput(scope);
       String result = handler.getOutput(new String[0]);
@@ -884,6 +901,119 @@ public class GetAddOutputPlanningDataTest
     {
       GetAddOutput handler = new GetAddOutput(scope);
       handler.getOutput(null);
+    }
+  }
+
+  // ==================== open-only issue filtering ====================
+
+  /**
+   * Verifies that closed issues are excluded from the existing_issues list, allowing new issues with the
+   * same name to be created without a false duplicate error.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  @SuppressWarnings("try")
+  public void closedIssueExcludedFromExistingIssues() throws IOException
+  {
+    try (TestClaudeTool scope = new TestClaudeTool())
+    {
+      Path projectPath = scope.getProjectPath();
+      Path issuesDir = projectPath.resolve(".cat/issues");
+      Path versionDir = issuesDir.resolve("v2/v2.1");
+      Files.createDirectories(versionDir);
+      Files.writeString(versionDir.resolve("index.json"), """
+        {"status":"open"}""");
+
+      Path closedIssueDir = versionDir.resolve("fix-bug");
+      Files.createDirectories(closedIssueDir);
+      Files.writeString(closedIssueDir.resolve("index.json"), """
+        {"status":"closed","resolution":"implemented"}""");
+
+      GetAddOutput handler = new GetAddOutput(scope);
+      String result = handler.getOutput(new String[0]);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode version = mapper.readTree(result).get("versions").get(0);
+      JsonNode existingIssues = version.get("existing_issues");
+
+      requireThat(existingIssues.size(), "existing_issues.size").isEqualTo(0);
+      requireThat(version.get("issue_count").asInt(), "issue_count").isEqualTo(0);
+    }
+  }
+
+  /**
+   * Verifies that open issues are included and closed issues are excluded from existing_issues.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  @SuppressWarnings("try")
+  public void openIssueIncludedClosedIssueExcluded() throws IOException
+  {
+    try (TestClaudeTool scope = new TestClaudeTool())
+    {
+      Path projectPath = scope.getProjectPath();
+      Path issuesDir = projectPath.resolve(".cat/issues");
+      Path versionDir = issuesDir.resolve("v2/v2.1");
+      Files.createDirectories(versionDir);
+      Files.writeString(versionDir.resolve("index.json"), """
+        {"status":"open"}""");
+
+      Path openIssueDir = versionDir.resolve("new-feature");
+      Files.createDirectories(openIssueDir);
+      Files.writeString(openIssueDir.resolve("index.json"), """
+        {"status":"open"}""");
+
+      Path closedIssueDir = versionDir.resolve("fix-bug");
+      Files.createDirectories(closedIssueDir);
+      Files.writeString(closedIssueDir.resolve("index.json"), """
+        {"status":"closed","resolution":"implemented"}""");
+
+      GetAddOutput handler = new GetAddOutput(scope);
+      String result = handler.getOutput(new String[0]);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode version = mapper.readTree(result).get("versions").get(0);
+      JsonNode existingIssues = version.get("existing_issues");
+
+      requireThat(existingIssues.size(), "existing_issues.size").isEqualTo(1);
+      requireThat(existingIssues.get(0).asString(), "existing_issues[0]").isEqualTo("new-feature");
+      requireThat(version.get("issue_count").asInt(), "issue_count").isEqualTo(1);
+    }
+  }
+
+  /**
+   * Verifies that an issue directory with no index.json is excluded from existing_issues, since its status
+   * cannot be determined as open.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  @SuppressWarnings("try")
+  public void issueWithMissingIndexJsonExcluded() throws IOException
+  {
+    try (TestClaudeTool scope = new TestClaudeTool())
+    {
+      Path projectPath = scope.getProjectPath();
+      Path issuesDir = projectPath.resolve(".cat/issues");
+      Path versionDir = issuesDir.resolve("v2/v2.1");
+      Files.createDirectories(versionDir);
+      Files.writeString(versionDir.resolve("index.json"), """
+        {"status":"open"}""");
+
+      Path noIndexIssueDir = versionDir.resolve("mystery-issue");
+      Files.createDirectories(noIndexIssueDir);
+
+      GetAddOutput handler = new GetAddOutput(scope);
+      String result = handler.getOutput(new String[0]);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode version = mapper.readTree(result).get("versions").get(0);
+      JsonNode existingIssues = version.get("existing_issues");
+
+      requireThat(existingIssues.size(), "existing_issues.size").isEqualTo(0);
+      requireThat(version.get("issue_count").asInt(), "issue_count").isEqualTo(0);
     }
   }
 }
