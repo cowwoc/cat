@@ -32,6 +32,14 @@ test -f /home/node/.config/claude/plugins/cache/cat/cat/2.1/client/bin/pre-bash 
 
 Store the result as HOOK_STATUS for use in Step 3.
 
+Then remove the `client` symlink from `CLAUDE_PLUGIN_ROOT` (if present) to prevent `claude plugin install`
+from copying it into the new cache, which would create a self-referential symlink. `session-start.sh`
+recreates this symlink on the next session start.
+
+```bash
+[[ -L "${CLAUDE_PLUGIN_ROOT}/client" ]] && unlink "${CLAUDE_PLUGIN_ROOT}/client"
+```
+
 Then uninstall the old plugin (if installed) and install the current version from the local workspace marketplace:
 
 ```bash
@@ -43,21 +51,13 @@ If the install command fails, stop and report the error.
 
 ### 3. Install jlink Runtime Image to Plugin Cache
 
-Remove the old client directory using the HOOK_STATUS captured in Step 2:
+Remove the old client directory using `rm -rf` directly. After plugin reinstall in Step 2, the new
+plugin cache symlinks in `client/bin/` (e.g., `get-skill`) point to the jlink runtime which does not
+exist yet — so `BlockUnsafeRemoval` hook binaries are non-functional regardless of HOOK_STATUS:
 
-- If HOOK_STATUS was `HOOKS_ACTIVE`: the `BlockUnsafeRemoval` hook was active before reinstall — use the
-  `cat:safe-rm-agent` skill to remove the directory:
-
-  ```
-  /cat:safe-rm-agent /home/node/.config/claude/plugins/cache/cat/cat/2.1/client
-  ```
-
-- If HOOK_STATUS was `NO_HOOKS`: the plugin was not previously installed and no hooks were active — use `rm -rf`
-  directly:
-
-  ```bash
-  rm -rf /home/node/.config/claude/plugins/cache/cat/cat/2.1/client
-  ```
+```bash
+rm -rf /home/node/.config/claude/plugins/cache/cat/cat/2.1/client
+```
 
 Then copy the new jlink image:
 
