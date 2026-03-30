@@ -45,7 +45,7 @@ public class GetAddOutputPlanningDataTest
       JsonNode root = mapper.readTree(result);
 
       requireThat(root.get("planning_valid").asBoolean(), "planning_valid").isFalse();
-      requireThat(root.get("error_message").asString(), "error_message").contains("Run /cat:init");
+      requireThat(root.get("error_message").asString(), "error_message").contains("Initialize the project first");
       requireThat(root.get("versions").size(), "versions.size").isEqualTo(0);
       requireThat(root.get("branch_strategy").asString(), "branch_strategy").isEmpty();
       requireThat(root.get("branch_pattern").asString(), "branch_pattern").isEmpty();

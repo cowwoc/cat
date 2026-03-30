@@ -146,7 +146,7 @@ public final class WarnBaseBranchEdit implements FileWriteHandler
                        "CAT workflow requires issue work to happen in isolated worktrees.\n" +
                        "\n" +
                        "If working on an issue:\n" +
-                       "1. Run /cat:work to create a worktree\n" +
+                       "1. `Work on <issue-name>` to create a worktree\n" +
                        "2. Or manually: git worktree add " +
                        scope.getCatWorkPath().resolve("worktrees").resolve("issue-name") +
                        " -b issue-branch\n" +
