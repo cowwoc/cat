@@ -562,7 +562,7 @@ public class GetWorkOutputTest
   }
 
   /**
-   * Verifies that getIssueCompleteLowTrust contains /cat:work command reference.
+   * Verifies that getIssueCompleteLowTrust contains work command reference.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -577,7 +577,7 @@ public class GetWorkOutputTest
         "next-task",
         "Next goal");
 
-      requireThat(result, "result").contains("/cat:work");
+      requireThat(result, "result").contains("`Work on next-task`");
     }
   }
 

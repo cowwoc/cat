@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.skills.SkillTestRunner;
+import io.github.cowwoc.cat.hooks.skills.InstructionTestRunner;
 import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -24,11 +24,11 @@ import java.util.List;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Tests for {@link SkillTestRunner}.
+ * Tests for {@link InstructionTestRunner}.
  * <p>
  * Each test is self-contained with no shared state.
  */
-public final class SkillTestRunnerTest
+public final class InstructionTestRunnerTest
 {
   /**
    * Verifies that extract-units returns line-numbered body when file has frontmatter.
@@ -52,7 +52,7 @@ public final class SkillTestRunnerTest
         Do more.
         """, StandardCharsets.UTF_8);
 
-      SkillTestRunner runner = new SkillTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope);
       String result = runner.extractUnits(new String[]{skillFile.toString()});
 
       // Body starts at line 5 (3 frontmatter lines + 1 closing ---)
@@ -83,7 +83,7 @@ public final class SkillTestRunnerTest
         Do something.
         """, StandardCharsets.UTF_8);
 
-      SkillTestRunner runner = new SkillTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope);
       String result = runner.extractUnits(new String[]{skillFile.toString()});
 
       requireThat(result, "result").contains("1\t# Step 1");
@@ -105,7 +105,7 @@ public final class SkillTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      SkillTestRunner runner = new SkillTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope);
       runner.extractUnits(new String[]{"/nonexistent/skill.md"});
     }
     finally
@@ -132,7 +132,7 @@ public final class SkillTestRunnerTest
         # Body
         """, StandardCharsets.UTF_8);
 
-      SkillTestRunner runner = new SkillTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope);
       String model = runner.extractModel(new String[]{skillFile.toString()});
       requireThat(model, "model").isEqualTo("sonnet");
     }
@@ -159,7 +159,7 @@ public final class SkillTestRunnerTest
         # Body
         """, StandardCharsets.UTF_8);
 
-      SkillTestRunner runner = new SkillTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope);
       String model = runner.extractModel(new String[]{skillFile.toString()});
       requireThat(model, "model").isEqualTo("haiku");
     }
@@ -191,7 +191,7 @@ public final class SkillTestRunnerTest
         """, StandardCharsets.UTF_8);
 
       String changedUnitsJson = "[\"unit_1\"]";
-      SkillTestRunner runner = new SkillTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope);
       String result = runner.mapUnits(new String[]{testCasesPath.toString(), changedUnitsJson});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -231,7 +231,7 @@ public final class SkillTestRunnerTest
         """, StandardCharsets.UTF_8);
 
       String changedUnitsJson = "[]";
-      SkillTestRunner runner = new SkillTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope);
       String result = runner.mapUnits(new String[]{testCasesPath.toString(), changedUnitsJson});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -259,7 +259,7 @@ public final class SkillTestRunnerTest
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       String rerunJson = "[\"TC1\",\"TC2\"]";
-      SkillTestRunner runner = new SkillTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope);
       String result = runner.initSprt(new String[]{rerunJson, "none"});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -299,7 +299,7 @@ public final class SkillTestRunnerTest
         """, StandardCharsets.UTF_8);
 
       String rerunJson = "[\"TC1\"]";
-      SkillTestRunner runner = new SkillTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope);
       String result = runner.initSprt(new String[]{rerunJson, priorPath.toString(), "--prior-boost"});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -331,7 +331,7 @@ public final class SkillTestRunnerTest
     {
       // Pass "none" as prior path to indicate no prior instruction-test
       String rerunJson = "[\"TC1\"]";
-      SkillTestRunner runner = new SkillTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope);
       String result = runner.initSprt(new String[]{rerunJson, "none"});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -366,7 +366,7 @@ public final class SkillTestRunnerTest
         """, StandardCharsets.UTF_8);
 
       // check-boundary on an ID not present in state returns default INCONCLUSIVE values
-      SkillTestRunner runner = new SkillTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope);
       String result = runner.checkBoundary(new String[]{statePath.toString(), "NONEXISTENT"});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -406,7 +406,7 @@ public final class SkillTestRunnerTest
       Files.createDirectories(artifactsDir);
       // Intentionally do NOT create test-cases.json
 
-      SkillTestRunner runner = new SkillTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope);
       runner.persistArtifacts(
         new String[]{"skill.md", artifactsDir.toString(), "sess1", repoDir.toString(), "initial"},
         System.out);
@@ -439,7 +439,7 @@ public final class SkillTestRunnerTest
         "decision":"INCONCLUSIVE","carried_forward":false,"smoke_runs_done":3}}}
         """, StandardCharsets.UTF_8);
 
-      SkillTestRunner runner = new SkillTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope);
       String result = runner.updateSprt(new String[]{statePath.toString(), "TC1", "true"});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -476,7 +476,7 @@ public final class SkillTestRunnerTest
         "decision":"INCONCLUSIVE","carried_forward":false,"smoke_runs_done":3}}}
         """, StandardCharsets.UTF_8);
 
-      SkillTestRunner runner = new SkillTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope);
       String result = runner.updateSprt(new String[]{statePath.toString(), "TC1", "false"});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -507,7 +507,7 @@ public final class SkillTestRunnerTest
         "decision":"INCONCLUSIVE","carried_forward":true,"smoke_runs_done":3}}}
         """, StandardCharsets.UTF_8);
 
-      SkillTestRunner runner = new SkillTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope);
       String result = runner.checkBoundary(new String[]{statePath.toString(), "TC1"});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -541,7 +541,7 @@ public final class SkillTestRunnerTest
         "decision":"INCONCLUSIVE","carried_forward":false,"smoke_runs_done":1}}}
         """, StandardCharsets.UTF_8);
 
-      SkillTestRunner runner = new SkillTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope);
       String result = runner.smokeStatus(new String[]{statePath.toString(), "TC1"});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -573,7 +573,7 @@ public final class SkillTestRunnerTest
         "decision":"INCONCLUSIVE","carried_forward":false,"smoke_runs_done":3}}}
         """, StandardCharsets.UTF_8);
 
-      SkillTestRunner runner = new SkillTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope);
       String result = runner.smokeStatus(new String[]{statePath.toString(), "TC1"});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -607,7 +607,7 @@ public final class SkillTestRunnerTest
         }}
         """, StandardCharsets.UTF_8);
 
-      SkillTestRunner runner = new SkillTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope);
       String result = runner.mergeResults(new String[]{statePath.toString(), "none", "[]"});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -642,7 +642,7 @@ public final class SkillTestRunnerTest
         }}
         """, StandardCharsets.UTF_8);
 
-      SkillTestRunner runner = new SkillTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope);
       String result = runner.mergeResults(new String[]{statePath.toString(), "none", "[]"});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -673,7 +673,7 @@ public final class SkillTestRunnerTest
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       PrintStream printStream = new PrintStream(baos, false, StandardCharsets.UTF_8);
 
-      SkillTestRunner runner = new SkillTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope);
       runner.run(new String[]{"map-units", testCasesPath.toString(), "[]"}, printStream);
       printStream.flush();
 
@@ -698,7 +698,7 @@ public final class SkillTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      SkillTestRunner runner = new SkillTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope);
       runner.run(new String[]{}, System.out);
     }
     finally
@@ -717,7 +717,7 @@ public final class SkillTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      SkillTestRunner runner = new SkillTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope);
       runner.run(new String[]{"nonexistent-command"}, System.out);
     }
     finally
@@ -762,7 +762,7 @@ public final class SkillTestRunnerTest
         ]}
         """, StandardCharsets.UTF_8);
 
-      SkillTestRunner runner = new SkillTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope);
       String result = runner.detectChanges(new String[]{sha, skillFile.toString(), testCasesPath.toString()});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -825,7 +825,7 @@ public final class SkillTestRunnerTest
         ]}
         """, StandardCharsets.UTF_8);
 
-      SkillTestRunner runner = new SkillTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope);
       String result = runner.detectChanges(new String[]{oldSha, skillFile.toString(), testCasesPath.toString()});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -885,7 +885,7 @@ public final class SkillTestRunnerTest
         {"test_cases":[{"test_case_id":"TC1","semantic_unit_id":"unit_1"}]}
         """, StandardCharsets.UTF_8);
 
-      SkillTestRunner runner = new SkillTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope);
       String result = runner.detectChanges(new String[]{oldSha, skillFile.toString(), testCasesPath.toString()});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -934,7 +934,7 @@ public final class SkillTestRunnerTest
       String sessionId = "test-session-001";
       String phase = "initial";
 
-      SkillTestRunner runner = new SkillTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope);
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(baos, false, StandardCharsets.UTF_8);
       runner.persistArtifacts(
@@ -990,7 +990,7 @@ public final class SkillTestRunnerTest
         """;
       Files.writeString(artifactsDir.resolve("test-cases.json"), testCasesContent, StandardCharsets.UTF_8);
 
-      SkillTestRunner runner = new SkillTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope);
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(baos, false, StandardCharsets.UTF_8);
       runner.persistArtifacts(
@@ -1024,7 +1024,7 @@ public final class SkillTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      SkillTestRunner runner = new SkillTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope);
       runner.persistArtifacts(
         new String[]{"skill.md", tempDir.toString(), "sess1", "/nonexistent/worktree/root", "initial"},
         System.out);
@@ -1064,7 +1064,7 @@ public final class SkillTestRunnerTest
         ]}
         """, StandardCharsets.UTF_8);
 
-      SkillTestRunner runner = new SkillTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope);
       // TC2 is in the carryforward set: its stats should come from prior instruction-test, not SPRT state
       String result = runner.mergeResults(
         new String[]{statePath.toString(), priorInstructionTestPath.toString(), "[\"TC2\"]"});

@@ -94,7 +94,7 @@ public final class GetStatusOutput implements SkillOutput
 
     Path catDir = scope.getCatDir();
     if (!Files.isDirectory(catDir))
-      return "No CAT project found. Run /cat:init to initialize.";
+      return "No CAT project found. Initialize one first.";
 
     LicenseValidator validator = new LicenseValidator(scope);
     LicenseResult licenseResult = validator.validate(projectPath);
@@ -128,7 +128,7 @@ public final class GetStatusOutput implements SkillOutput
     if (!Files.isDirectory(issuesDir))
     {
       StatusData data = new StatusData();
-      data.error = "No planning structure found. Run /cat:init to initialize.";
+      data.error = "No planning structure found. Initialize the project first.";
       return data;
     }
 
@@ -741,11 +741,11 @@ public final class GetStatusOutput implements SkillOutput
 
     if (!data.inProgressIssue.isEmpty())
     {
-      contentItems.add("📋 Current: /cat:work " + data.currentMinor + "-" + data.inProgressIssue);
+      contentItems.add("📋 Current: `Work on " + data.currentMinor + "-" + data.inProgressIssue + "`");
     }
     else if (!data.nextIssue.isEmpty())
     {
-      contentItems.add("📋 Next: /cat:work " + data.currentMinor + "-" + data.nextIssue);
+      contentItems.add("📋 Next: `Work on " + data.currentMinor + "-" + data.nextIssue + "`");
     }
     else
     {
@@ -788,8 +788,8 @@ public final class GetStatusOutput implements SkillOutput
 
         | Option | Action | Command |
         |--------|--------|----------|
-        | [**1**] | Execute an issue | `/cat:work {version}-<issue-name>` |
-        | [**2**] | Add new issue | `/cat:add` |
+        | [**1**] | Execute an issue | `Work on {version}-<issue-name>` |
+        | [**2**] | Add new issue | `Add an issue` |
         """);
 
     return result.toString();

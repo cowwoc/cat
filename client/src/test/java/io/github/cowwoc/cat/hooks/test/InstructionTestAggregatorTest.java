@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.skills.SkillTestAggregator;
+import io.github.cowwoc.cat.hooks.skills.InstructionTestAggregator;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -16,11 +16,11 @@ import java.nio.file.Path;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Tests for {@link SkillTestAggregator}.
+ * Tests for {@link InstructionTestAggregator}.
  * <p>
  * Each test is self-contained with no shared state.
  */
-public final class SkillTestAggregatorTest
+public final class InstructionTestAggregatorTest
 {
   /**
    * Verifies that the handler throws when no arguments are provided.
@@ -32,7 +32,7 @@ public final class SkillTestAggregatorTest
     Path tempDir = Files.createTempDirectory("test-instruction-test-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      SkillTestAggregator handler = new SkillTestAggregator(scope);
+      InstructionTestAggregator handler = new InstructionTestAggregator(scope);
       handler.getOutput(new String[]{});
     }
     finally
@@ -51,7 +51,7 @@ public final class SkillTestAggregatorTest
     Path tempDir = Files.createTempDirectory("test-instruction-test-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      SkillTestAggregator handler = new SkillTestAggregator(scope);
+      InstructionTestAggregator handler = new InstructionTestAggregator(scope);
       handler.getOutput(new String[]{"arg1", "arg2"});
     }
     finally
@@ -70,7 +70,7 @@ public final class SkillTestAggregatorTest
     Path tempDir = Files.createTempDirectory("test-instruction-test-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      SkillTestAggregator handler = new SkillTestAggregator(scope);
+      InstructionTestAggregator handler = new InstructionTestAggregator(scope);
       handler.getOutput(new String[]{"[]"});
     }
     finally
@@ -90,7 +90,7 @@ public final class SkillTestAggregatorTest
     Path tempDir = Files.createTempDirectory("test-instruction-test-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      SkillTestAggregator handler = new SkillTestAggregator(scope);
+      InstructionTestAggregator handler = new InstructionTestAggregator(scope);
       String input = """
         [
           {"config": "baseline", "assertions": [true, false, true], "duration_ms": 1200, "total_tokens": 500}
@@ -123,7 +123,7 @@ public final class SkillTestAggregatorTest
     Path tempDir = Files.createTempDirectory("test-instruction-test-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      SkillTestAggregator handler = new SkillTestAggregator(scope);
+      InstructionTestAggregator handler = new InstructionTestAggregator(scope);
       // Two runs under "baseline": durations 1000 and 3000 ms → mean=2000, stddev=1000
       String input = """
         [
@@ -157,7 +157,7 @@ public final class SkillTestAggregatorTest
     Path tempDir = Files.createTempDirectory("test-instruction-test-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      SkillTestAggregator handler = new SkillTestAggregator(scope);
+      InstructionTestAggregator handler = new InstructionTestAggregator(scope);
       // baseline: 2/3 pass rate, 1200ms, 500 tokens
       // with-skill: 3/3 pass rate, 800ms, 300 tokens
       String input = """
@@ -191,7 +191,7 @@ public final class SkillTestAggregatorTest
     Path tempDir = Files.createTempDirectory("test-instruction-test-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      SkillTestAggregator handler = new SkillTestAggregator(scope);
+      InstructionTestAggregator handler = new InstructionTestAggregator(scope);
       String input = """
         [
           {"config": "baseline", "assertions": [true], "duration_ms": 1000, "total_tokens": 200},
@@ -220,7 +220,7 @@ public final class SkillTestAggregatorTest
     Path tempDir = Files.createTempDirectory("test-instruction-test-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      SkillTestAggregator handler = new SkillTestAggregator(scope);
+      InstructionTestAggregator handler = new InstructionTestAggregator(scope);
       String input = """
         [
           {"config": "baseline", "assertions": [false, false, false], "duration_ms": 900,
@@ -247,7 +247,7 @@ public final class SkillTestAggregatorTest
     Path tempDir = Files.createTempDirectory("test-instruction-test-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      SkillTestAggregator handler = new SkillTestAggregator(scope);
+      InstructionTestAggregator handler = new InstructionTestAggregator(scope);
       String input = """
         [
           {"config": "baseline", "assertions": [true, true, true], "duration_ms": 1500,
@@ -274,7 +274,7 @@ public final class SkillTestAggregatorTest
     Path tempDir = Files.createTempDirectory("test-instruction-test-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      SkillTestAggregator handler = new SkillTestAggregator(scope);
+      InstructionTestAggregator handler = new InstructionTestAggregator(scope);
       // baseline: 1/2 = 0.5, with-skill: 2/2 = 1.0 → delta = 0.5
       String input = """
         [
@@ -306,7 +306,7 @@ public final class SkillTestAggregatorTest
     Path tempDir = Files.createTempDirectory("test-instruction-test-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      SkillTestAggregator handler = new SkillTestAggregator(scope);
+      InstructionTestAggregator handler = new InstructionTestAggregator(scope);
       String input = """
         [
           {"config": "baseline", "assertions": [], "duration_ms": 1000, "total_tokens": 400}
@@ -334,7 +334,7 @@ public final class SkillTestAggregatorTest
     Path tempDir = Files.createTempDirectory("test-instruction-test-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      SkillTestAggregator handler = new SkillTestAggregator(scope);
+      InstructionTestAggregator handler = new InstructionTestAggregator(scope);
       String input = """
         [
           {"config": "baseline", "assertions": [true], "duration_ms": -1, "total_tokens": 400}
@@ -358,7 +358,7 @@ public final class SkillTestAggregatorTest
     Path tempDir = Files.createTempDirectory("test-instruction-test-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      SkillTestAggregator handler = new SkillTestAggregator(scope);
+      InstructionTestAggregator handler = new InstructionTestAggregator(scope);
       String input = """
         [
           {"config": "baseline", "assertions": [true], "duration_ms": 1000, "total_tokens": -5}
@@ -382,7 +382,7 @@ public final class SkillTestAggregatorTest
     Path tempDir = Files.createTempDirectory("test-instruction-test-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      SkillTestAggregator handler = new SkillTestAggregator(scope);
+      InstructionTestAggregator handler = new InstructionTestAggregator(scope);
       String input = """
         [
           {"config": "baseline", "assertions": [true], "total_tokens": 400}
@@ -406,7 +406,7 @@ public final class SkillTestAggregatorTest
     Path tempDir = Files.createTempDirectory("test-instruction-test-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      SkillTestAggregator handler = new SkillTestAggregator(scope);
+      InstructionTestAggregator handler = new InstructionTestAggregator(scope);
       String input = """
         [
           {"config": "baseline", "assertions": [true], "duration_ms": 1000}
@@ -431,7 +431,7 @@ public final class SkillTestAggregatorTest
     Path tempDir = Files.createTempDirectory("test-instruction-test-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      SkillTestAggregator handler = new SkillTestAggregator(scope);
+      InstructionTestAggregator handler = new InstructionTestAggregator(scope);
       // baseline: 0/2 = 0.0, with-skill: 2/2 = 1.0 → delta = 1.0
       String input = """
         [

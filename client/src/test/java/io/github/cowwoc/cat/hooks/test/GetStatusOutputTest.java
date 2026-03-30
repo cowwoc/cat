@@ -83,7 +83,7 @@ public class GetStatusOutputTest
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
 
-      requireThat(result, "result").isEqualTo("No CAT project found. Run /cat:init to initialize.");
+      requireThat(result, "result").isEqualTo("No CAT project found. Initialize one first.");
     }
     finally
     {
@@ -108,7 +108,7 @@ public class GetStatusOutputTest
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
 
-      requireThat(result, "result").isEqualTo("No planning structure found. Run /cat:init to initialize.");
+      requireThat(result, "result").isEqualTo("No planning structure found. Initialize the project first.");
     }
     finally
     {
@@ -379,7 +379,7 @@ public class GetStatusOutputTest
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
 
-      requireThat(result, "result").contains("Current: /cat:work v1.0-active-task");
+      requireThat(result, "result").contains("Current: `Work on v1.0-active-task`");
     }
     finally
     {
@@ -409,7 +409,7 @@ public class GetStatusOutputTest
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
 
-      requireThat(result, "result").contains("Next: /cat:work v1.0-next-task");
+      requireThat(result, "result").contains("Next: `Work on v1.0-next-task`");
     }
     finally
     {
@@ -1175,8 +1175,8 @@ public class GetStatusOutputTest
 
       requireThat(result, "result").contains("**NEXT STEPS**").
         contains("| Option | Action | Command |").
-        contains("| [**1**] | Execute an issue | `/cat:work {version}-<issue-name>` |").
-        contains("| [**2**] | Add new issue | `/cat:add` |");
+        contains("| [**1**] | Execute an issue | `Work on {version}-<issue-name>` |").
+        contains("| [**2**] | Add new issue | `Add an issue` |");
     }
     finally
     {

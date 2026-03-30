@@ -155,7 +155,7 @@ public final class GetInitOutput implements SkillOutput
         "  - Major versions: all minor versions must complete              ",
         "                                                                  ",
         "  To customize gates for any version:                             ",
-        "  → /cat:config → 📊 Version Gates                                "),
+        "  → Configure gates per version                                   "),
       BOX_WIDTH);
   }
 
@@ -178,9 +178,9 @@ public final class GetInitOutput implements SkillOutput
         "  Stakeholder research was skipped during import.                 ",
         "                                                                  ",
         "  To research a pending version later:                            ",
-        "  → /cat:research {version}                                       ",
+        "  → Research a pending version                                    ",
         "                                                                  ",
-        "  Example: /cat:research " + exampleVersion + "                                      "),
+        "  Example: `Research " + exampleVersion + "`                                         "),
       BOX_WIDTH);
   }
 
@@ -234,7 +234,7 @@ public final class GetInitOutput implements SkillOutput
         perfectionLine,
         "                                                                  ",
         "  Your partner is ready. Let's build something solid.             ",
-        "  Adjust anytime: /cat:config                                     "),
+        "  Adjust anytime with the configure command.                      "),
       BOX_WIDTH);
   }
 
@@ -296,10 +296,10 @@ public final class GetInitOutput implements SkillOutput
         "                                                                  ",
         "  Your project is ready. When you want to start:                  ",
         "                                                                  ",
-        "  → /cat:work         Execute your first issue                    ",
-        "  → /cat:status       See project overview                        ",
-        "  → /cat:add          Add more tasks or versions                  ",
-        "  → /cat:help         Full command reference                      "),
+        "  → `Work on` a task  Execute your first issue                    ",
+        "  → `Status`          See project overview                        ",
+        "  → `Add an issue`    Add more tasks or versions                  ",
+        "  → `Help`            Full command reference                      "),
       BOX_WIDTH);
   }
 
@@ -316,12 +316,12 @@ public final class GetInitOutput implements SkillOutput
         "                                                                  ",
         "  Essential commands to get started:                              ",
         "                                                                  ",
-        "  → /cat:status       See what's happening                        ",
-        "  → /cat:add          Add versions and tasks                      ",
-        "  → /cat:work         Execute tasks                               ",
-        "  → /cat:help         Full command reference                      ",
+        "  → `Status`          See what's happening                        ",
+        "  → `Add an issue`    Add versions and tasks                      ",
+        "  → `Work on` a task  Execute tasks                               ",
+        "  → `Help`            Full command reference                      ",
         "                                                                  ",
-        "  Tip: Run /cat:status anytime to see suggested next steps.       "),
+        "  Tip: Ask for project status anytime to see suggested next steps."),
       BOX_WIDTH);
   }
 

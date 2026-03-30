@@ -52,7 +52,7 @@ public class GetAddOutputTest
       requireThat(result, "result").contains("Type: Feature");
       requireThat(result, "result").contains("Dependencies: None");
       requireThat(result, "result").contains("Issue Created");
-      requireThat(result, "result").contains("/cat:work 2.0-parse-tokens");
+      requireThat(result, "result").contains("`Work on 2.0-parse-tokens`");
     }
     finally
     {
@@ -105,7 +105,7 @@ public class GetAddOutputTest
       requireThat(result, "result").contains("3. add-logging");
       requireThat(result, "result").contains("Issues Created");
       requireThat(result, "result").contains("Version: 2.0");
-      requireThat(result, "result").contains("/cat:work 2.0-parse-tokens");
+      requireThat(result, "result").contains("`Work on 2.0-parse-tokens`");
     }
     finally
     {
@@ -132,7 +132,7 @@ public class GetAddOutputTest
       requireThat(result, "result").contains("Version Created");
       requireThat(result, "result").contains("Parent: v2.0");
       requireThat(result, "result").contains("Path: /path/to/version");
-      requireThat(result, "result").contains("/cat:add (to add issues)");
+      requireThat(result, "result").contains("`Add an issue`");
     }
     finally
     {

@@ -74,7 +74,7 @@ public final class EnforcePluginFileIsolation implements FileWriteHandler
         "\n" +
         "**Solution:**\n" +
         "1. Create task: `/cat:add <task-description>`\n" +
-        "2. Work in isolated worktree: `/cat:work`\n" +
+        "2. Work in isolated worktree: `Work on <issue-name>`\n" +
         "3. Make edits in the issue worktree\n" +
         "\n" +
         "**Why this matters:**\n" +
@@ -84,7 +84,7 @@ public final class EnforcePluginFileIsolation implements FileWriteHandler
         "\n" +
         "If this is truly maintenance work on the base branch:\n" +
         "1. Create an issue for it\n" +
-        "2. Use /cat:work to create proper worktree\n" +
+        "2. `Work on <issue-name>` to create a proper worktree\n" +
         "3. Make changes in isolated environment\n";
       return FileWriteHandler.Result.block(message);
     }

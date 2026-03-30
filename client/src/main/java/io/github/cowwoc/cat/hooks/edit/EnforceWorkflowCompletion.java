@@ -98,7 +98,7 @@ public final class EnforceWorkflowCompletion implements FileWriteHandler
            "\n" +
            "You are marking task '" + taskName + "' as closed.\n" +
            "\n" +
-           "Before completing a task via /cat:work, verify ALL phases are done:\n" +
+           "Before completing a task, verify ALL phases are done:\n" +
            "\n" +
            "1. **Setup** ✓ (worktree created, task loaded)\n" +
            "2. **Implementation** ✓ (code written, tests pass, committed)\n" +
@@ -109,7 +109,7 @@ public final class EnforceWorkflowCompletion implements FileWriteHandler
            "   - [ ] Ask user if they want to merge\n" +
            "   - [ ] Run squash_commits, merge, cleanup\n" +
            "\n" +
-           "If you skipped phases 3-4, STOP and return to the /cat:work workflow.\n" +
+           "If you skipped phases 3-4, STOP and complete them before marking this task as done.\n" +
            "Committing code does NOT complete the task - user review and merge are required.\n" +
            "\n" +
            "If this is a legitimate completion (all phases done), proceed with the edit.";

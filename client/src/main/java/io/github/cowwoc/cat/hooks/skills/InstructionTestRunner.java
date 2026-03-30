@@ -60,7 +60,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * on stdout with exit code 0. Unexpected errors are logged
  * to stderr and also reported as a block response on stdout with exit code 0.
  */
-public final class SkillTestRunner
+public final class InstructionTestRunner
 {
   /**
    * SPRT log-likelihood increment for a passing observation.
@@ -107,16 +107,16 @@ public final class SkillTestRunner
   private static final DateTimeFormatter ISO_UTC =
     DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC);
 
-  private final Logger log = LoggerFactory.getLogger(SkillTestRunner.class);
+  private final Logger log = LoggerFactory.getLogger(InstructionTestRunner.class);
   private final JvmScope scope;
 
   /**
-   * Creates a new SkillTestRunner.
+   * Creates a new InstructionTestRunner.
    *
    * @param scope the JVM scope providing shared services
    * @throws NullPointerException if {@code scope} is null
    */
-  public SkillTestRunner(JvmScope scope)
+  public InstructionTestRunner(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -137,7 +137,7 @@ public final class SkillTestRunner
     requireThat(out, "out").isNotNull();
     if (args.length == 0)
       throw new IllegalArgumentException(
-        "SkillTestRunner: no command specified.\n" +
+        "InstructionTestRunner: no command specified.\n" +
         "Usage: skill-test-runner <command> [args...]\n" +
         "Commands: extract-units, extract-model, detect-changes, map-units, " +
         "persist-artifacts, init-sprt, update-sprt, check-boundary, smoke-status, merge-results");
@@ -157,7 +157,7 @@ public final class SkillTestRunner
       case "smoke-status" -> out.println(smokeStatus(rest));
       case "merge-results" -> out.println(mergeResults(rest));
       default -> throw new IllegalArgumentException(
-        "SkillTestRunner: unknown command: " + command + "\n" +
+        "InstructionTestRunner: unknown command: " + command + "\n" +
         "Valid commands: extract-units, extract-model, detect-changes, map-units, " +
         "persist-artifacts, init-sprt, update-sprt, check-boundary, smoke-status, merge-results");
     }
@@ -179,12 +179,12 @@ public final class SkillTestRunner
     requireThat(args, "args").isNotNull();
     if (args.length != 1)
       throw new IllegalArgumentException(
-        "SkillTestRunner extract-units: expected 1 argument <skill_path>, got " + args.length + ".\n" +
+        "InstructionTestRunner extract-units: expected 1 argument <skill_path>, got " + args.length + ".\n" +
         "Usage: skill-test-runner extract-units <skill_path>");
     Path skillPath = Path.of(args[0]);
     if (Files.notExists(skillPath))
       throw new IllegalArgumentException(
-        "SkillTestRunner extract-units: file not found: " + skillPath);
+        "InstructionTestRunner extract-units: file not found: " + skillPath);
     return bodyWithLineNumbers(skillPath);
   }
 
@@ -204,18 +204,18 @@ public final class SkillTestRunner
     requireThat(args, "args").isNotNull();
     if (args.length != 1)
       throw new IllegalArgumentException(
-        "SkillTestRunner extract-model: expected 1 argument <skill_path>, got " + args.length + ".\n" +
+        "InstructionTestRunner extract-model: expected 1 argument <skill_path>, got " + args.length + ".\n" +
         "Usage: skill-test-runner extract-model <skill_path>");
     Path skillPath = Path.of(args[0]);
     if (Files.notExists(skillPath))
       throw new IllegalArgumentException(
-        "SkillTestRunner extract-model: file not found: " + skillPath);
+        "InstructionTestRunner extract-model: file not found: " + skillPath);
 
     ParsedSkill parsed = parseSkill(skillPath);
     String model = SkillDiscovery.extractField(parsed.frontmatter(), "model");
     if (model.isBlank())
     {
-      log.warn("SkillTestRunner extract-model: no 'model:' field in frontmatter of {}; falling back to 'haiku'",
+      log.warn("InstructionTestRunner extract-model: no 'model:' field in frontmatter of {}; falling back to 'haiku'",
         skillPath);
       return "haiku";
     }
@@ -238,7 +238,7 @@ public final class SkillTestRunner
     requireThat(args, "args").isNotNull();
     if (args.length != 3)
       throw new IllegalArgumentException(
-        "SkillTestRunner detect-changes: expected 3 arguments, got " + args.length + ".\n" +
+        "InstructionTestRunner detect-changes: expected 3 arguments, got " + args.length + ".\n" +
         "Usage: skill-test-runner detect-changes <old_skill_sha> <new_skill_path> <test_cases_path>");
 
     String oldSha = args[0];
@@ -247,14 +247,14 @@ public final class SkillTestRunner
 
     if (!oldSha.matches("[0-9a-f]{7,40}"))
       throw new IllegalArgumentException(
-        "SkillTestRunner detect-changes: invalid git SHA format: " + oldSha);
+        "InstructionTestRunner detect-changes: invalid git SHA format: " + oldSha);
 
     if (Files.notExists(newSkillPath))
       throw new IllegalArgumentException(
-        "SkillTestRunner detect-changes: new skill file not found: " + newSkillPath);
+        "InstructionTestRunner detect-changes: new skill file not found: " + newSkillPath);
     if (Files.notExists(testCasesPath))
       throw new IllegalArgumentException(
-        "SkillTestRunner detect-changes: test cases file not found: " + testCasesPath);
+        "InstructionTestRunner detect-changes: test cases file not found: " + testCasesPath);
 
     // Determine git repo root from the skill file's directory
     ProcessRunner.Result rootResult =
@@ -262,7 +262,7 @@ public final class SkillTestRunner
         "git", "rev-parse", "--show-toplevel");
     if (rootResult.exitCode() != 0 || rootResult.stdout().isBlank())
       throw new IOException(
-        "SkillTestRunner detect-changes: cannot determine git repo root from: " + newSkillPath);
+        "InstructionTestRunner detect-changes: cannot determine git repo root from: " + newSkillPath);
     Path repoRoot = Path.of(rootResult.stdout().strip());
 
     // Derive repo-relative path for git show (normalize path separators for git)
@@ -274,7 +274,7 @@ public final class SkillTestRunner
       ProcessRunner.run(repoRoot, "git", "show", oldSha + ":" + relPath);
     if (showResult.exitCode() != 0)
       throw new IOException(
-        "SkillTestRunner detect-changes: git show " + oldSha + ":" + relPath + " failed.\n" +
+        "InstructionTestRunner detect-changes: git show " + oldSha + ":" + relPath + " failed.\n" +
         "Verify that the SHA '" + oldSha + "' exists and the path '" + relPath + "' was tracked at that commit.");
 
     // Write old content to temp file, parse both
@@ -387,7 +387,7 @@ public final class SkillTestRunner
     requireThat(args, "args").isNotNull();
     if (args.length != 2)
       throw new IllegalArgumentException(
-        "SkillTestRunner map-units: expected 2 arguments, got " + args.length + ".\n" +
+        "InstructionTestRunner map-units: expected 2 arguments, got " + args.length + ".\n" +
         "Usage: skill-test-runner map-units <test_cases_path> <changed_units_json>");
 
     Path testCasesPath = Path.of(args[0]);
@@ -395,7 +395,7 @@ public final class SkillTestRunner
 
     if (Files.notExists(testCasesPath))
       throw new IllegalArgumentException(
-        "SkillTestRunner map-units: test cases file not found: " + testCasesPath);
+        "InstructionTestRunner map-units: test cases file not found: " + testCasesPath);
 
     // Parse changed_units_json: a JSON array of string IDs
     JsonMapper mapper = scope.getJsonMapper();
@@ -470,7 +470,7 @@ public final class SkillTestRunner
     requireThat(out, "out").isNotNull();
     if (args.length != 5)
       throw new IllegalArgumentException(
-        "SkillTestRunner persist-artifacts: expected 5 arguments, got " + args.length + ".\n" +
+        "InstructionTestRunner persist-artifacts: expected 5 arguments, got " + args.length + ".\n" +
         "Usage: skill-test-runner persist-artifacts <skill_path> <artifacts_dir> " +
         "<session_id> <worktree_root> <phase>");
 
@@ -482,21 +482,21 @@ public final class SkillTestRunner
 
     if (Files.notExists(worktreeRoot))
       throw new IllegalArgumentException(
-        "SkillTestRunner persist-artifacts: worktree root not found: " + worktreeRoot);
+        "InstructionTestRunner persist-artifacts: worktree root not found: " + worktreeRoot);
     if (Files.notExists(artifactsDir))
       throw new IllegalArgumentException(
-        "SkillTestRunner persist-artifacts: artifacts directory not found: " + artifactsDir);
+        "InstructionTestRunner persist-artifacts: artifacts directory not found: " + artifactsDir);
 
     Path absSkillPath = worktreeRoot.resolve(skillPathArg).normalize();
     validatePathWithinBoundary(worktreeRoot, absSkillPath);
     if (Files.notExists(absSkillPath))
       throw new IllegalArgumentException(
-        "SkillTestRunner persist-artifacts: skill file not found: " + absSkillPath);
+        "InstructionTestRunner persist-artifacts: skill file not found: " + absSkillPath);
 
     Path testCasesSrc = artifactsDir.resolve("test-cases.json");
     if (Files.notExists(testCasesSrc))
       throw new IllegalArgumentException(
-        "SkillTestRunner persist-artifacts: test-cases.json not found: " + testCasesSrc);
+        "InstructionTestRunner persist-artifacts: test-cases.json not found: " + testCasesSrc);
 
     // Compute skill directory and instruction-test subdirectory
     Path skillDir = absSkillPath.getParent();
@@ -570,7 +570,7 @@ public final class SkillTestRunner
         int baseSleepSeconds = 1 << (attempt + 1);
         int jitter = (int) (Math.random() * (baseSleepSeconds + 1));
         int sleepSeconds = baseSleepSeconds + jitter;
-        log.warn("SkillTestRunner: git commit failed (attempt {}/{}), retrying in {}s...",
+        log.warn("InstructionTestRunner: git commit failed (attempt {}/{}), retrying in {}s...",
           attempt + 1, maxRetries, sleepSeconds);
         try
         {
@@ -586,7 +586,7 @@ public final class SkillTestRunner
 
     if (!committed)
       throw new IOException(
-        "SkillTestRunner persist-artifacts: git commit failed after " + maxRetries + " attempts");
+        "InstructionTestRunner persist-artifacts: git commit failed after " + maxRetries + " attempts");
 
     out.println(
       "skill-test-runner: artifacts committed for phase=" + phase + ", session=" + sessionId);
@@ -608,7 +608,7 @@ public final class SkillTestRunner
     requireThat(args, "args").isNotNull();
     if (args.length < 2)
       throw new IllegalArgumentException(
-        "SkillTestRunner init-sprt: expected at least 2 arguments, got " + args.length + ".\n" +
+        "InstructionTestRunner init-sprt: expected at least 2 arguments, got " + args.length + ".\n" +
         "Usage: skill-test-runner init-sprt <rerun_tc_ids_json> <prior_instruction_test_json_path> [--prior-boost]");
 
     String rerunJson = args[0];
@@ -623,7 +623,7 @@ public final class SkillTestRunner
     boolean hasPrior = !priorPath.equals("none");
     if (hasPrior && Files.notExists(Path.of(priorPath)))
       throw new IllegalArgumentException(
-        "SkillTestRunner init-sprt: prior instruction-test file not found: " + priorPath);
+        "InstructionTestRunner init-sprt: prior instruction-test file not found: " + priorPath);
 
     JsonMapper mapper = scope.getJsonMapper();
 
@@ -748,7 +748,7 @@ public final class SkillTestRunner
     requireThat(args, "args").isNotNull();
     if (args.length != 3)
       throw new IllegalArgumentException(
-        "SkillTestRunner update-sprt: expected 3 arguments, got " + args.length + ".\n" +
+        "InstructionTestRunner update-sprt: expected 3 arguments, got " + args.length + ".\n" +
         "Usage: skill-test-runner update-sprt <sprt_state_path> <tc_id> <passed>");
 
     Path statePath = Path.of(args[0]);
@@ -757,10 +757,10 @@ public final class SkillTestRunner
 
     if (Files.notExists(statePath))
       throw new IllegalArgumentException(
-        "SkillTestRunner update-sprt: state file not found: " + statePath);
+        "InstructionTestRunner update-sprt: state file not found: " + statePath);
     if (!passedStr.equals("true") && !passedStr.equals("false"))
       throw new IllegalArgumentException(
-        "SkillTestRunner update-sprt: <passed> must be 'true' or 'false', got: " + passedStr);
+        "InstructionTestRunner update-sprt: <passed> must be 'true' or 'false', got: " + passedStr);
 
     boolean passed = passedStr.equals("true");
     JsonMapper mapper = scope.getJsonMapper();
@@ -857,7 +857,7 @@ public final class SkillTestRunner
     requireThat(args, "args").isNotNull();
     if (args.length != 2)
       throw new IllegalArgumentException(
-        "SkillTestRunner check-boundary: expected 2 arguments, got " + args.length + ".\n" +
+        "InstructionTestRunner check-boundary: expected 2 arguments, got " + args.length + ".\n" +
         "Usage: skill-test-runner check-boundary <sprt_state_path> <tc_id>");
 
     Path statePath = Path.of(args[0]);
@@ -865,7 +865,7 @@ public final class SkillTestRunner
 
     if (Files.notExists(statePath))
       throw new IllegalArgumentException(
-        "SkillTestRunner check-boundary: state file not found: " + statePath);
+        "InstructionTestRunner check-boundary: state file not found: " + statePath);
 
     JsonMapper mapper = scope.getJsonMapper();
     JsonNode stateRoot = mapper.readTree(statePath.toFile());
@@ -902,7 +902,7 @@ public final class SkillTestRunner
     requireThat(args, "args").isNotNull();
     if (args.length != 2)
       throw new IllegalArgumentException(
-        "SkillTestRunner smoke-status: expected 2 arguments, got " + args.length + ".\n" +
+        "InstructionTestRunner smoke-status: expected 2 arguments, got " + args.length + ".\n" +
         "Usage: skill-test-runner smoke-status <sprt_state_path> <tc_id>");
 
     Path statePath = Path.of(args[0]);
@@ -910,7 +910,7 @@ public final class SkillTestRunner
 
     if (Files.notExists(statePath))
       throw new IllegalArgumentException(
-        "SkillTestRunner smoke-status: state file not found: " + statePath);
+        "InstructionTestRunner smoke-status: state file not found: " + statePath);
 
     JsonMapper mapper = scope.getJsonMapper();
     JsonNode stateRoot = mapper.readTree(statePath.toFile());
@@ -949,7 +949,7 @@ public final class SkillTestRunner
     requireThat(args, "args").isNotNull();
     if (args.length != 3)
       throw new IllegalArgumentException(
-        "SkillTestRunner merge-results: expected 3 arguments, got " + args.length + ".\n" +
+        "InstructionTestRunner merge-results: expected 3 arguments, got " + args.length + ".\n" +
         "Usage: skill-test-runner merge-results <new_sprt_state_path> " +
         "<prior_instruction_test_json_path> <carryforward_ids_json>");
 
@@ -959,12 +959,12 @@ public final class SkillTestRunner
 
     if (Files.notExists(statePath))
       throw new IllegalArgumentException(
-        "SkillTestRunner merge-results: state file not found: " + statePath);
+        "InstructionTestRunner merge-results: state file not found: " + statePath);
 
     boolean hasPrior = !priorInstructionTestPath.equals("none");
     if (hasPrior && Files.notExists(Path.of(priorInstructionTestPath)))
       throw new IllegalArgumentException(
-        "SkillTestRunner merge-results: prior instruction-test file not found: " + priorInstructionTestPath);
+        "InstructionTestRunner merge-results: prior instruction-test file not found: " + priorInstructionTestPath);
 
     JsonMapper mapper = scope.getJsonMapper();
     JsonNode stateRoot = mapper.readTree(statePath.toFile());
@@ -1282,7 +1282,7 @@ public final class SkillTestRunner
     Path resolvedCandidate = candidate.toAbsolutePath().normalize();
     if (!resolvedCandidate.startsWith(resolvedBoundary))
       throw new IllegalArgumentException(
-        "SkillTestRunner: path traversal detected: '" + candidate + "' is outside '" + boundary + "'");
+        "InstructionTestRunner: path traversal detected: '" + candidate + "' is outside '" + boundary + "'");
   }
 
   /**
@@ -1336,7 +1336,7 @@ public final class SkillTestRunner
       }
       catch (RuntimeException | AssertionError e)
       {
-        Logger log = LoggerFactory.getLogger(SkillTestRunner.class);
+        Logger log = LoggerFactory.getLogger(InstructionTestRunner.class);
         log.error("Unexpected error", e);
         System.out.println(block(scope,
           Objects.toString(e.getMessage(), e.getClass().getSimpleName())));
@@ -1359,6 +1359,6 @@ public final class SkillTestRunner
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();
     requireThat(out, "out").isNotNull();
-    new SkillTestRunner(scope).run(args, out);
+    new InstructionTestRunner(scope).run(args, out);
   }
 }

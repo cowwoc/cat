@@ -121,7 +121,7 @@ public final class GetWorkOutput implements SkillOutput
       "No executable issues",
       List.of(
         "",
-        "Run /cat:status to see available issues"));
+        "No issues are available."));
   }
 
   /**
@@ -143,7 +143,7 @@ public final class GetWorkOutput implements SkillOutput
     content.add("");
     if (!suggestion.isEmpty())
       content.add("Did you mean: " + suggestion + "?");
-    content.add("Run /cat:status to see all issues");
+    content.add("Check project status to see all issues.");
 
     return display.buildSimpleBox(
       "❔",
@@ -418,7 +418,7 @@ public final class GetWorkOutput implements SkillOutput
       "**Next Up:** " + nextIssueName,
       nextGoal,
       "",
-      "`/clear` then `/cat:work` to continue");
+      "`Work on " + nextIssueName + "` to continue");
 
     List<String> footerContent = List.of("");
 

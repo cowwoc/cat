@@ -121,7 +121,7 @@ public final class GetAddOutput implements SkillOutput
       ObjectNode root = scope.getJsonMapper().createObjectNode();
       root.put("planning_valid", false);
       root.put("error_message",
-        "Planning structure not found: " + Config.CAT_DIR_NAME + "/issues. Run /cat:init to initialize.");
+        "Planning structure not found: " + Config.CAT_DIR_NAME + "/issues. Initialize the project first.");
       root.put("branch_strategy", "");
       root.put("branch_pattern", "");
       root.set("versions", scope.getJsonMapper().createArrayNode());
@@ -364,7 +364,7 @@ public final class GetAddOutput implements SkillOutput
     String finalBox = display.buildHeaderBox(header, contentItems, List.of(), BOX_MIN_WIDTH,
       DisplayUtils.HORIZONTAL_LINE + " ");
 
-    String nextCmd = "/cat:work " + version + "-" + itemName;
+    String nextCmd = "`Work on " + version + "-" + itemName + "`";
 
     return finalBox + "\n" +
       "\n" +
@@ -398,7 +398,7 @@ public final class GetAddOutput implements SkillOutput
     String finalBox = display.buildHeaderBox(header, contentItems, List.of(), BOX_MIN_WIDTH,
       DisplayUtils.HORIZONTAL_LINE + " ");
 
-    String nextCmd = "/cat:work " + version + "-" + itemNames.get(0);
+    String nextCmd = "`Work on " + version + "-" + itemNames.get(0) + "`";
 
     return finalBox + "\n" +
       "\n" +
@@ -432,7 +432,7 @@ public final class GetAddOutput implements SkillOutput
 
     return finalBox + "\n" +
       "\n" +
-      "Next: /clear, then /cat:add (to add issues)";
+      "Next: `Add an issue` to get started";
   }
 
   /**
