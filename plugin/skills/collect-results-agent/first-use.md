@@ -126,7 +126,7 @@ of structured subagent management.
 
 ### 4. Extract Discovered Issues
 
-If effort was medium or high, the subagent may have noted issues in `.completion.json`:
+If curiosity was medium or high, the subagent may have noted issues in `.completion.json`:
 
 ```bash
 COMPLETION_FILE="${WORKTREE}/.completion.json"
@@ -155,7 +155,7 @@ fi
 }
 ```
 
-**Important:** The main agent handles these issues based on the `patience` setting (see
+**Important:** The main agent handles these issues based on the `perfection` setting (see
 work.md handle_discovered_issues step). This skill only extracts them.
 
 ### 5. Read Subagent Work Products
@@ -231,7 +231,7 @@ Output format (do NOT wrap in ```):
 - Files changed: 12
 - Lines: +450 / -120
 
-**Discovered Issues:** 2 (will be handled by main agent based on patience setting)
+**Discovered Issues:** 2 (will be handled by main agent based on perfection setting)
 
 **Why mandatory:** Users cannot observe subagent execution. This report is the only visibility
 into what happened during subagent execution and whether quality may have degraded.

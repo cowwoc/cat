@@ -4,7 +4,7 @@ description: >
   then executes merge and cleanup. IMPORTANT: After invoking this skill, forward the AskUserQuestion
   tool call verbatim — do not respond conversationally.
 user-invocable: false
-argument-hint: "<cat_agent_id> <issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <commits_json_path> <trust> <verify>"
+argument-hint: "<cat_agent_id> <issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <commits_json_path> <trust> <caution>"
 allowed-tools:
   - Read
   - Bash

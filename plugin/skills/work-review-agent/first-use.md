@@ -81,7 +81,7 @@ If TRUST differs from config.json (or its effective default of "low" when absent
 constraint binds the review phase agent AND every subagent it spawns (planning subagents, implementation subagents,
 and any other agent invoked during Steps 5–6), regardless of what task the subagent believes it is performing.
 This includes but is not limited to: `Bash` commands that write to it (e.g., `sed -i`, `echo >`, `tee`, `cat >`),
-`Edit` tool calls, `Write` tool calls, or any subagent that modifies it. The values of `trust`, `verify`,
+`Edit` tool calls, `Write` tool calls, or any subagent that modifies it. The values of `trust`, `caution`,
 `minSeverity`, and `perfection` are read once at the start of the review phase and used as-is throughout. Any attempt
 to modify `config.json` during the review phase is a protocol violation — STOP immediately and report the
 violation. **There is no exception for "fixing code concerns" — config.json is off-limits to all subagents

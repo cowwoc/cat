@@ -128,27 +128,27 @@ AskUserQuestion:
      - label: "Low"
        description: "Compile only (fastest feedback){' (current)' if caution=='low'}"
      - label: "Medium"
-       description: "Compile and unit tests{' (current)' if caution=='medium'}"
+       description: "Compile and unit tests (default){' (current)' if caution=='medium'}"
      - label: "High"
        description: "Compile, unit tests, and E2E tests (maximum confidence){' (current)' if caution=='high'}"
-  3. question: "Curiosity — How broadly should CAT read the codebase?"
+  3. question: "Curiosity — How broadly should CAT run stakeholder review?"
      header: "Curiosity"
      options:
      - label: "Low"
-       description: "Investigate the issue as stated, no extra exploration{' (current)' if curiosity=='low'}"
+       description: "Skip automatic stakeholder review; review only runs if explicitly invoked{' (current)' if curiosity=='low'}"
      - label: "Medium"
-       description: "Notice related issues while investigating{' (current)' if curiosity=='medium'}"
+       description: "Run automatic stakeholder review scoped to changed files and direct dependencies{' (current)' if curiosity=='medium'}"
      - label: "High"
-       description: "Actively explore solutions and alternatives{' (current)' if curiosity=='high'}"
+       description: "Run automatic stakeholder review with holistic system integration scope{' (current)' if curiosity=='high'}"
   4. question: "Perfection — How much should CAT pursue perfection?"
      header: "Perfection"
      options:
      - label: "Low"
-       description: "Stay focused on the primary goal, defer improvements{' (current)' if perfection=='low'}"
+       description: "Stay focused on the primary goal, defer tangential improvements{' (current)' if perfection=='low'}"
      - label: "Medium"
-       description: "Fix issues within the current task scope{' (current)' if perfection=='medium'}"
+       description: "Fix issues that are easy to address, defer complex ones{' (current)' if perfection=='medium'}"
      - label: "High"
-       description: "Fix every issue encountered, expand scope as needed{' (current)' if perfection=='high'}"
+       description: "Fix every issue encountered, even if tangential to the primary goal{' (current)' if perfection=='high'}"
 
 Map answers: Low → "low", Medium → "medium", High → "high" for each respective setting.
 
@@ -226,7 +226,7 @@ Display current setting, then AskUserQuestion:
   - label: "Low"
     description: "Compile only (fastest feedback)"
   - label: "Medium (Default)"
-    description: "Compile and unit tests"
+    description: "Compile and unit tests (default)"
   - label: "High"
     description: "Compile, unit tests, and E2E tests (maximum confidence)"
   - label: "← Back"
@@ -240,18 +240,18 @@ On selection, call update-config with the derived value, then continue to step: 
 
 <step name="curiosity">
 
-**🔍 Curiosity — How curious the agent is when investigating problems and exploring solutions**
+**🔍 Curiosity — How broadly stakeholder review and research considers system context**
 
 Display current setting, then AskUserQuestion:
 - header: "Curiosity"
-- question: "How curious should CAT be when investigating problems? (Current: {curiosity || 'medium'})"
+- question: "How broadly should CAT run stakeholder reviews? (Current: {curiosity || 'medium'})"
 - options:
   - label: "Low"
-    description: "Investigate the issue as stated, no extra exploration"
+    description: "Skip automatic stakeholder review; review only runs if explicitly invoked"
   - label: "Medium (Default)"
-    description: "Notice related issues while investigating"
+    description: "Run automatic stakeholder review scoped to changed files and direct dependencies"
   - label: "High"
-    description: "Actively explore solutions and alternatives"
+    description: "Run automatic stakeholder review with holistic system integration scope"
   - label: "← Back"
     description: "Return to personality menu"
 
@@ -270,11 +270,11 @@ Display current setting, then AskUserQuestion:
 - question: "How much should CAT pursue perfection in the current task? (Current: {perfection || 'medium'})"
 - options:
   - label: "Low"
-    description: "Stay focused on the primary goal, defer improvements"
+    description: "Stay focused on the primary goal, defer tangential improvements"
   - label: "Medium (Default)"
-    description: "Fix issues within the current task scope"
+    description: "Fix issues that are easy to address, defer complex ones"
   - label: "High"
-    description: "Fix every issue encountered, expand scope as needed"
+    description: "Fix every issue encountered, even if tangential to the primary goal"
   - label: "← Back"
     description: "Return to personality menu"
 
@@ -812,14 +812,14 @@ INVOKE: Skill("cat:get-output-agent", args="config.no-changes")
 - `high` — Compile, unit tests, and E2E tests (maximum confidence).
 
 ### Curiosity Values
-- `low` — Investigate the issue as stated, no extra exploration.
-- `medium` — Notice related issues while investigating.
-- `high` — Actively explore solutions and alternatives.
+- `low` — Skip automatic stakeholder review; review only runs if explicitly invoked.
+- `medium` — Run automatic stakeholder review scoped to changed files and direct dependencies.
+- `high` — Run automatic stakeholder review with holistic system integration scope.
 
 ### Perfection Values
-- `high` — Fix every issue encountered, expand scope as needed.
-- `medium` — Fix issues within the current task scope.
-- `low` — Stay focused on the primary goal, defer improvements.
+- `high` — Fix every issue encountered, even if tangential to the primary goal.
+- `medium` — Fix issues that are easy to address, defer complex ones.
+- `low` — Stay focused on the primary goal, defer tangential improvements.
 
 ### Verbosity Values
 - `low` — Progress banners and errors only.
