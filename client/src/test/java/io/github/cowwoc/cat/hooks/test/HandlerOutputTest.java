@@ -147,7 +147,7 @@ public class HandlerOutputTest
         "",
         "");
 
-      requireThat(result, "result").contains("/cat:work").contains("2.0-my-task");
+      requireThat(result, "result").contains("`Work on 2.0-my-task`");
     }
   }
 
@@ -388,7 +388,7 @@ public class HandlerOutputTest
         "v2",
         "");
 
-      requireThat(result, "result").contains("/cat:add");
+      requireThat(result, "result").contains("`Add an issue`");
     }
   }
 

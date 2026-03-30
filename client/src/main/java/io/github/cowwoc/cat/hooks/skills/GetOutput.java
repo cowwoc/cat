@@ -132,7 +132,7 @@ public final class GetOutput implements SkillOutput
       case "work-complete" -> new GetIssueCompleteOutput(scope).getOutput(handlerArgs);
       case "statusline" -> new GetStatuslineOutput(scope).getOutput(handlerArgs);
       case "get-subagent-status" -> new GetSubagentStatusOutput(scope).getOutput(handlerArgs);
-      case "instruction-test-aggregator" -> new SkillTestAggregator(scope).getOutput(handlerArgs);
+      case "instruction-test-aggregator" -> new InstructionTestAggregator(scope).getOutput(handlerArgs);
       case "description-optimizer" -> new DescriptionOptimizer(scope).getOutput(handlerArgs);
       case "add" -> new GetAddOutput(scope).getOutput(handlerArgs);
       default -> throw new IllegalArgumentException("Unknown skill: '" + skill +

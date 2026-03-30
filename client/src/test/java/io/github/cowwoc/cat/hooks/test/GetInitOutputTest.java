@@ -141,7 +141,7 @@ public class GetInitOutputTest
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getResearchSkipped("v3.1");
 
-      requireThat(result, "result").contains("/cat:research v3.1");
+      requireThat(result, "result").contains("`Research v3.1`");
     }
   }
 
@@ -215,7 +215,7 @@ public class GetInitOutputTest
   }
 
   /**
-   * Verifies that CAT initialized box mentions /cat:config for adjustments.
+   * Verifies that CAT initialized box mentions configure command for adjustments.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -227,7 +227,7 @@ public class GetInitOutputTest
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getCatInitialized("medium", "medium", "medium");
 
-      requireThat(result, "result").contains("/cat:config");
+      requireThat(result, "result").contains("configure command");
     }
   }
 
@@ -346,8 +346,8 @@ public class GetInitOutputTest
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getAllSet();
 
-      requireThat(result, "result").contains("/cat:work").contains("/cat:status").
-        contains("/cat:add").contains("/cat:help");
+      requireThat(result, "result").contains("`Work on`").contains("`Status`").
+        contains("`Add an issue`").contains("`Help`");
     }
   }
 
@@ -381,13 +381,13 @@ public class GetInitOutputTest
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getExploreAtYourOwnPace();
 
-      requireThat(result, "result").contains("/cat:status").contains("/cat:add").
-        contains("/cat:work").contains("/cat:help");
+      requireThat(result, "result").contains("`Status`").contains("`Add an issue`").
+        contains("`Work on`").contains("`Help`");
     }
   }
 
   /**
-   * Verifies that explore box includes /cat:status tip.
+   * Verifies that explore box includes project status tip.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -399,7 +399,7 @@ public class GetInitOutputTest
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getExploreAtYourOwnPace();
 
-      requireThat(result, "result").contains("Tip:").contains("/cat:status");
+      requireThat(result, "result").contains("Tip:").contains("project status");
     }
   }
 
@@ -537,7 +537,7 @@ public class GetInitOutputTest
 
       requireThat(result, "result").
         contains("RESEARCH SKIPPED").
-        contains("/cat:research v2.0");
+        contains("`Research v2.0`");
     }
   }
 
