@@ -15,13 +15,13 @@ plan.md generation is consistent regardless of which workflow invokes it.
 Positional space-separated arguments:
 
 ```
-<cat_agent_id> <effort> <mode> <contextPath> [revision-context]
+<cat_agent_id> <curiosity> <mode> <contextPath> [revision-context]
 ```
 
 | Position | Name | Description |
 |----------|------|-------------|
 | 1 | cat_agent_id | CAT session identifier |
-| 2 | effort | Planning depth: `low`, `medium`, or `high` |
+| 2 | curiosity | Planning depth: `low`, `medium`, or `high` |
 | 3 | mode | `revise` |
 | 4 | contextPath | Path to a file containing context (see below) |
 | 5 | [revision-context] | Optional: Revision instructions for revise mode (e.g., 'add performance tests') |
@@ -34,7 +34,7 @@ implementation. The `contextPath` points to the issue directory (which contains 
 An additional revision description follows as remaining arguments:
 
 ```bash
-read CAT_AGENT_ID EFFORT MODE ISSUE_PATH REVISION_CONTEXT <<< "$ARGUMENTS"
+read CAT_AGENT_ID CURIOSITY MODE ISSUE_PATH REVISION_CONTEXT <<< "$ARGUMENTS"
 # REVISION_CONTEXT receives all remaining words after ISSUE_PATH (may contain spaces)
 ```
 
@@ -52,7 +52,7 @@ The skill reads the existing plan.md, applies the revision, and writes the updat
 
 ## Effort-Based Planning Depth
 
-Apply the following depth to plan.md content based on `$EFFORT`:
+Apply the following depth to plan.md content based on `$CURIOSITY`:
 
 - `low`: Generate a concise plan. Assume the obvious approach. Skip alternative analysis. List only essential steps
   and post-conditions.
@@ -213,9 +213,9 @@ file write to a subagent).
 
 ## Iterative Completeness Review
 
-Skip this section entirely if effort is `low`. The draft is already written to `PLAN_OUTPUT_PATH`.
+Skip this section entirely if curiosity is `low`. The draft is already written to `PLAN_OUTPUT_PATH`.
 
-For effort `medium` or `high`, delegate the entire review-and-fix loop to a single subagent. The subagent
+For curiosity `medium` or `high`, delegate the entire review-and-fix loop to a single subagent. The subagent
 reads the draft from disk, reviews it, fixes gaps directly in the file, and returns only the iteration count.
 No plan content flows through the main agent's context.
 

@@ -20,7 +20,7 @@ Separate subagents eliminate this bias. Reusing the same agent across rounds (vi
 than spawning fresh agents each round; to counter anchoring risk from reuse, agents are explicitly instructed
 to seek new attack vectors each round rather than revisiting prior findings.
 
-## Effort Gate
+## Curiosity Gate
 
 When the calling agent's configured curiosity level is `low`, skip the adversarial hardening loop entirely. The loop
 is most valuable for medium and high curiosity work where thoroughness justifies the additional rounds. Low-curiosity

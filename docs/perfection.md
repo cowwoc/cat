@@ -3,13 +3,13 @@ Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
-# Patience Decision Matrix
+# Perfection Decision Matrix
 
-Decision rule: fix inline if `benefit >= cost × patience_multiplier`
+Decision rule: fix inline if `benefit >= cost × perfection_multiplier`
 
 - **Benefit** = severity weight: CRITICAL=10, HIGH=6, MEDIUM=3, LOW=1
 - **Cost** = scope of out-of-scope changes: 0=in-scope, 1=minor, 4=moderate, 10=significant
-- **Patience multiplier**: low=0.5, medium=2, high=5
+- **Perfection multiplier**: low=0.5, medium=2, high=5
 
 ## All Combinations
 
@@ -36,23 +36,23 @@ Decision rule: fix inline if `benefit >= cost × patience_multiplier`
 
 ## Key Design Points
 
-- CRITICAL concerns always fixed at low and medium patience; only deferred at high when cost is moderate+
-- Even at high patience, CRITICAL/HIGH with minor cost are fixed (cheap high-value fixes are always worth it)
+- CRITICAL concerns always fixed at low and medium perfection; only deferred at high when cost is moderate+
+- Even at high perfection, CRITICAL/HIGH with minor cost are fixed (cheap high-value fixes are always worth it)
 - LOW severity only survives at low+minor; at medium/high, LOW+any-cost always defers
-- The 3 deferred cases at low patience all have benefit-to-cost ratios below 1:1
-- In-scope concerns (cost=0) always fixed regardless of severity or patience
+- The 3 deferred cases at low perfection all have benefit-to-cost ratios below 1:1
+- In-scope concerns (cost=0) always fixed regardless of severity or perfection
 
 ## Relationship to minSeverity
 
-`patience` operates on concerns that have already passed the `minSeverity` filter. The full concern pipeline is:
+`perfection` operates on concerns that have already passed the `minSeverity` filter. The full concern pipeline is:
 
 ```
-concern raised → minSeverity filter → patience fix/defer decision
+concern raised → minSeverity filter → perfection fix/defer decision
 ```
 
 - **`minSeverity`** — a hard floor: concerns below this threshold are silently ignored. They never reach the
-  patience decision. See [severity.md](severity.md) for details.
-- **`patience`** — a cost/benefit analysis: for concerns that pass `minSeverity`, determines whether to fix now
+  perfection decision. See [severity.md](severity.md) for details.
+- **`perfection`** — a cost/benefit analysis: for concerns that pass `minSeverity`, determines whether to fix now
   (inline) or defer to a future issue.
 
 ## FIX vs DEFER Outcomes
@@ -62,10 +62,10 @@ concern raised → minSeverity filter → patience fix/defer decision
 - **DEFER** — The concern should be tracked for a future version. DEFER concerns are created as follow-up issues
   instead of being fixed inline.
 
-Configure `patience` in `.cat/config.json`:
+Configure `perfection` in `.cat/config.json`:
 
 ```json
 {
-  "patience": "medium"
+  "perfection": "medium"
 }
 ```

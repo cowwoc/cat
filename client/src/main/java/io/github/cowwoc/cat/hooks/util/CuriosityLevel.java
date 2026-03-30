@@ -16,7 +16,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public enum CuriosityLevel
 {
   /**
-   * Skip automatic stakeholder review. Review only runs if the user explicitly invokes it.
+   * Skip automatic stakeholder review; review only runs if explicitly invoked.
    */
   LOW,
   /**
@@ -24,8 +24,7 @@ public enum CuriosityLevel
    */
   MEDIUM,
   /**
-   * Run automatic stakeholder review with holistic system integration scope. Reviewers consider broader codebase
-   * context, cross-cutting concerns, and downstream impact.
+   * Run automatic stakeholder review with holistic system integration scope.
    */
   HIGH;
 

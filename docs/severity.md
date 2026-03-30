@@ -118,18 +118,18 @@ The `minSeverity` config option sets a hard floor for which concerns require any
 threshold are **silently ignored** — not fixed, not deferred, not tracked. They simply cease to exist from the
 review's perspective.
 
-This is distinct from `patience` (see [patience.md](patience.md)), which controls whether an acknowledged concern is
+This is distinct from `perfection` (see [perfection.md](perfection.md)), which controls whether an acknowledged concern is
 fixed now or deferred to a future issue.
 
-**Concern pipeline:** `minSeverity` filter → `patience` fix/defer decision (FIX → auto-fix now, DEFER → follow-up issue)
+**Concern pipeline:** `minSeverity` filter → `perfection` fix/defer decision (FIX → auto-fix now, DEFER → follow-up issue)
 
-### minSeverity vs patience: a concrete example
+### minSeverity vs perfection: a concrete example
 
 A reviewer raises a MEDIUM concern: "High cyclomatic complexity in `PaymentService.process()`."
 
 - With `minSeverity: "high"` — the concern is **ignored**. It never appears in review results, is never tracked,
   and no one is asked about it. It ceases to exist.
-- With `minSeverity: "low"` and `patience: "high"` — the concern is **acknowledged but deferred**. It appears in
+- With `minSeverity: "low"` and `perfection: "high"` — the concern is **acknowledged but deferred**. It appears in
   review results, a tracking issue is created (or the user is asked how to handle it), and it will be addressed in
   a future issue. The concern is real; the team just decided "not now."
 
