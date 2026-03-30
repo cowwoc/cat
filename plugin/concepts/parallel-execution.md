@@ -5,7 +5,7 @@ See LICENSE.md in the project root for license terms.
 -->
 # Parallel Subagent Execution
 
-> See `plugin/concepts/execution-model.md` for the full execution model, hierarchy, and parallel job execution model.
+> See `plugin/concepts/work-decomposition.md` for the full execution model, hierarchy, and parallel job execution model.
 
 CAT supports running independent work items in parallel by spawning multiple implementation subagents, each working on
 its own set of items. Parallelism is the default: when plan.md contains a `## Jobs` section with

@@ -6,7 +6,7 @@ See LICENSE.md in the project root for license terms.
 # Decompose Issue
 
 See `${CLAUDE_PLUGIN_ROOT}/concepts/version-paths.md` for version path conventions used throughout this skill.
-See `${CLAUDE_PLUGIN_ROOT}/concepts/execution-model.md` for the full execution hierarchy, agent execution model, and
+See `${CLAUDE_PLUGIN_ROOT}/concepts/work-decomposition.md` for the full execution hierarchy, agent execution model, and
 sub-issue decomposition context.
 
 ## Purpose
@@ -31,7 +31,7 @@ Decompose an issue **only** when one or more of the following structural criteri
 - Compaction events (use job splitting instead)
 - "The issue feels large" without a structural boundary
 
-See `plugin/concepts/execution-model.md` for the full context management and decomposition model.
+See `plugin/concepts/work-decomposition.md` for the full context management and decomposition model.
 
 ## Naming Convention
 
