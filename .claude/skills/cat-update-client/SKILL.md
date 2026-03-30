@@ -20,9 +20,19 @@ mvn -f /workspace/client/pom.xml verify
 This builds the client JAR, patches automatic modules, creates the jlink image with launchers, and generates the AOT cache.
 If the build fails, stop and report the error.
 
-### 2. Reinstall the Plugin
+### 2. Check Hook Status and Reinstall the Plugin
 
-Uninstall the old plugin (if installed) and install the current version from the local workspace marketplace:
+Check whether the plugin was previously installed by testing if the `pre-bash` binary exists.
+**This check must happen before reinstalling** — the reinstall wipes the `client/` directory, making the
+binary unavailable afterward.
+
+```bash
+test -f /home/node/.config/claude/plugins/cache/cat/cat/2.1/client/bin/pre-bash && echo "HOOKS_ACTIVE" || echo "NO_HOOKS"
+```
+
+Store the result as HOOK_STATUS for use in Step 3.
+
+Then uninstall the old plugin (if installed) and install the current version from the local workspace marketplace:
 
 ```bash
 CLAUDECODE= claude plugin uninstall cat@cat 2>/dev/null; CLAUDECODE= claude plugin install cat@cat
@@ -33,9 +43,25 @@ If the install command fails, stop and report the error.
 
 ### 3. Install jlink Runtime Image to Plugin Cache
 
-```bash
-rm -rf /home/node/.config/claude/plugins/cache/cat/cat/2.1/client
+Remove the old client directory using the HOOK_STATUS captured in Step 2:
 
+- If HOOK_STATUS was `HOOKS_ACTIVE`: the `BlockUnsafeRemoval` hook was active before reinstall — use the
+  `cat:safe-rm-agent` skill to remove the directory:
+
+  ```
+  /cat:safe-rm-agent /home/node/.config/claude/plugins/cache/cat/cat/2.1/client
+  ```
+
+- If HOOK_STATUS was `NO_HOOKS`: the plugin was not previously installed and no hooks were active — use `rm -rf`
+  directly:
+
+  ```bash
+  rm -rf /home/node/.config/claude/plugins/cache/cat/cat/2.1/client
+  ```
+
+Then copy the new jlink image:
+
+```bash
 cp -r /workspace/client/target/jlink \
       /home/node/.config/claude/plugins/cache/cat/cat/2.1/client
 ```
