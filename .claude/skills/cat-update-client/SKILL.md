@@ -20,19 +20,9 @@ mvn -f /workspace/client/pom.xml verify
 This builds the client JAR, patches automatic modules, creates the jlink image with launchers, and generates the AOT cache.
 If the build fails, stop and report the error.
 
-### 2. Check Hook Status and Reinstall the Plugin
+### 2. Reinstall the Plugin
 
-Check whether the plugin was previously installed by testing if the `pre-bash` binary exists.
-**This check must happen before reinstalling** — the reinstall wipes the `client/` directory, making the
-binary unavailable afterward.
-
-```bash
-test -f /home/node/.config/claude/plugins/cache/cat/cat/2.1/client/bin/pre-bash && echo "HOOKS_ACTIVE" || echo "NO_HOOKS"
-```
-
-Store the result as HOOK_STATUS for use in Step 3.
-
-Then perform the symlink removal, plugin reinstall, and symlink recreation in a **single Bash call** to
+Perform the symlink removal, plugin reinstall, and symlink recreation in a **single Bash call** to
 avoid hook errors. The symlink must exist when `pre-bash` fires (before the call) and when `post-bash`
 fires (after the call). Splitting these into separate calls leaves the symlink absent between calls,
 causing hook binary resolution failures.
@@ -62,20 +52,13 @@ If any command fails, stop and report the error.
 
 ### 3. Install jlink Runtime Image to Plugin Cache
 
-Remove the old client directory using the HOOK_STATUS captured in Step 2. The symlink was recreated at
-the end of Step 2, so `cat:safe-rm-agent` is usable again:
+Remove the old client directory. After the plugin reinstall in Step 2, `installPath/client` no longer exists
+(the reinstall wipes it), so this is typically a no-op. Use `rm -rf` directly — the hook binary is inaccessible
+at this point because the symlink target (`installPath/client`) was wiped by the reinstall:
 
-- If HOOK_STATUS was `HOOKS_ACTIVE`: use the `cat:safe-rm-agent` skill to remove the directory:
-
-  ```
-  /cat:safe-rm-agent /home/node/.config/claude/plugins/cache/cat/cat/2.1/client
-  ```
-
-- If HOOK_STATUS was `NO_HOOKS`: use `rm -rf` directly:
-
-  ```bash
-  rm -rf /home/node/.config/claude/plugins/cache/cat/cat/2.1/client
-  ```
+```bash
+rm -rf /home/node/.config/claude/plugins/cache/cat/cat/2.1/client
+```
 
 Then copy the new jlink image:
 
