@@ -1,6 +1,5 @@
 ---
 mainAgent: true
-subAgents: [all]
 ---
 ## Tee Piped Process Output
 
@@ -25,9 +24,6 @@ some-command 2>&1 | tee "$LOG_FILE" | grep "pattern"
 grep -i "error" "$LOG_FILE"
 tail -50 "$LOG_FILE"
 ```
-
-**When NOT to tee:**
-- **Commands in `run_in_background`** -- background task output is already captured and retrievable
 
 **Cleanup:** Delete the log file when you no longer need it. Do not leave temporary log files behind after the task is
 complete.
