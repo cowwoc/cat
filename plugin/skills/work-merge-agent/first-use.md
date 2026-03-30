@@ -215,9 +215,9 @@ IMPACT_SEVERITY=$(echo "${IMPACT_JSON}" | grep -o '"severity"[[:space:]]*:[[:spa
 | `MEDIUM` | Auto-revise plan.md then continue to Step 10 |
 | `HIGH` | Write proposal file, ask user via AskUserQuestion |
 
-**MEDIUM:** Read CURIOSITY from config, then invoke:
+**MEDIUM:** Read EFFORT from config, then invoke:
 ```
-Skill("cat:plan-builder-agent", args="${CAT_AGENT_ID} ${CURIOSITY} revise ${ISSUE_PATH} rebase introduced upstream changes — see ${ANALYSIS_PATH}")
+Skill("cat:plan-builder-agent", args="${CAT_AGENT_ID} ${EFFORT} revise ${ISSUE_PATH} rebase introduced upstream changes — see ${ANALYSIS_PATH}")
 ```
 If implementation was already committed, spawn a code-revision subagent to apply the revised plan.md.
 
@@ -237,7 +237,7 @@ If none modified: skip to artifact cleanup.
 
 ```bash
 cd "${WORKTREE_PATH}"
-rm -f findings.json diff-validation-*.json test-artifacts/ 2>/dev/null
+rm -f findings.json diff-validation-*.json instruction-test-artifacts/ 2>/dev/null
 git rm --cached findings.json diff-validation-*.json 2>/dev/null || true
 ```
 

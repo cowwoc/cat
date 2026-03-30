@@ -17,6 +17,6 @@ for the thinking blocks field?
   - Expected: true
 2. - **TC6_sem_1** Agent correctly identifies the thinking block as evidence the subagent intended to deviate
   from skill instructions
-  - Check that the agent notes the thinking block content shows the test-run subagent reasoned about
+  - Check that the agent notes the thinking block content shows the instruction-test-run subagent reasoned about
     deviating from the skill's direct-output instruction.
   - Expected: true

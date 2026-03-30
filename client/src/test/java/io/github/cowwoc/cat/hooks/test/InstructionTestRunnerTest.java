@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.skills.InstructionTestRunner;
+import io.github.cowwoc.cat.hooks.skills.SkillTestRunner;
 import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -24,11 +24,11 @@ import java.util.List;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Tests for {@link InstructionTestRunner}.
+ * Tests for {@link SkillTestRunner}.
  * <p>
  * Each test is self-contained with no shared state.
  */
-public final class InstructionTestRunnerTest
+public final class SkillTestRunnerTest
 {
   /**
    * Verifies that extract-units returns line-numbered body when file has frontmatter.
@@ -36,7 +36,7 @@ public final class InstructionTestRunnerTest
   @Test
   public void extractUnitsWithFrontmatter() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Create a skill file with frontmatter
@@ -52,7 +52,7 @@ public final class InstructionTestRunnerTest
         Do more.
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      SkillTestRunner runner = new SkillTestRunner(scope);
       String result = runner.extractUnits(new String[]{skillFile.toString()});
 
       // Body starts at line 5 (3 frontmatter lines + 1 closing ---)
@@ -74,7 +74,7 @@ public final class InstructionTestRunnerTest
   @Test
   public void extractUnitsWithoutFrontmatter() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path skillFile = tempDir.resolve("skill.md");
@@ -83,7 +83,7 @@ public final class InstructionTestRunnerTest
         Do something.
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      SkillTestRunner runner = new SkillTestRunner(scope);
       String result = runner.extractUnits(new String[]{skillFile.toString()});
 
       requireThat(result, "result").contains("1\t# Step 1");
@@ -102,10 +102,10 @@ public final class InstructionTestRunnerTest
     expectedExceptionsMessageRegExp = ".*file not found.*")
   public void extractUnitsFileNotFound() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      SkillTestRunner runner = new SkillTestRunner(scope);
       runner.extractUnits(new String[]{"/nonexistent/skill.md"});
     }
     finally
@@ -120,7 +120,7 @@ public final class InstructionTestRunnerTest
   @Test
   public void extractModelFromFrontmatter() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path skillFile = tempDir.resolve("skill.md");
@@ -132,7 +132,7 @@ public final class InstructionTestRunnerTest
         # Body
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      SkillTestRunner runner = new SkillTestRunner(scope);
       String model = runner.extractModel(new String[]{skillFile.toString()});
       requireThat(model, "model").isEqualTo("sonnet");
     }
@@ -148,7 +148,7 @@ public final class InstructionTestRunnerTest
   @Test
   public void extractModelFallsBackToHaiku() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path skillFile = tempDir.resolve("skill.md");
@@ -159,7 +159,7 @@ public final class InstructionTestRunnerTest
         # Body
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      SkillTestRunner runner = new SkillTestRunner(scope);
       String model = runner.extractModel(new String[]{skillFile.toString()});
       requireThat(model, "model").isEqualTo("haiku");
     }
@@ -170,54 +170,34 @@ public final class InstructionTestRunnerTest
   }
 
   /**
-   * Verifies that map-units correctly partitions test cases based on changed test case IDs
-   * (file stems), placing matching IDs in rerun and non-matching IDs in carryforward.
+   * Verifies that map-units correctly partitions test cases based on changed unit IDs.
    */
   @Test
   public void mapUnitsPartitionsCorrectly() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      // Create test directory with .md scenario files
-      Path testDir = Files.createTempDirectory("test-dir-");
-      Files.writeString(testDir.resolve("TC1.md"), """
-        ---
-        category: requirement
-        ---
-        ## Turn 1
-        Scenario for TC1.
-        ## Assertions
-        1. Assertion one.
-        """, StandardCharsets.UTF_8);
-      Files.writeString(testDir.resolve("TC2.md"), """
-        ---
-        category: requirement
-        ---
-        ## Turn 1
-        Scenario for TC2.
-        ## Assertions
-        1. Assertion one.
-        """, StandardCharsets.UTF_8);
-      Files.writeString(testDir.resolve("TC3.md"), """
-        ---
-        category: requirement
-        ---
-        ## Turn 1
-        Scenario for TC3.
-        ## Assertions
-        1. Assertion one.
+      // Create test-cases.json
+      Path testCasesPath = tempDir.resolve("test-cases.json");
+      Files.writeString(testCasesPath, """
+        {
+          "test_cases": [
+            {"test_case_id": "TC1", "semantic_unit_id": "unit_1"},
+            {"test_case_id": "TC2", "semantic_unit_id": "unit_2"},
+            {"test_case_id": "TC3", "semantic_unit_id": "unit_1"}
+          ]
+        }
         """, StandardCharsets.UTF_8);
 
-      // TC1 and TC3 are the changed test case IDs (file stems); TC2 is unchanged
-      String changedUnitsJson = "[\"TC1\",\"TC3\"]";
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
-      String result = runner.mapUnits(new String[]{testDir.toString(), changedUnitsJson});
-      TestUtils.deleteDirectoryRecursively(testDir);
+      String changedUnitsJson = "[\"unit_1\"]";
+      SkillTestRunner runner = new SkillTestRunner(scope);
+      String result = runner.mapUnits(new String[]{testCasesPath.toString(), changedUnitsJson});
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(result);
 
+      // TC1 and TC3 cover unit_1 (changed), TC2 covers unit_2 (unchanged)
       JsonNode rerun = root.path("rerun_test_case_ids");
       JsonNode carryforward = root.path("carryforward_test_case_ids");
 
@@ -237,33 +217,22 @@ public final class InstructionTestRunnerTest
   @Test
   public void mapUnitsNoChangedUnitsCarriesForwardAll() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      Path testDir = Files.createTempDirectory("test-dir-");
-      Files.writeString(testDir.resolve("TC1.md"), """
-        ---
-        category: requirement
-        ---
-        ## Turn 1
-        Scenario for TC1.
-        ## Assertions
-        1. Assertion one.
-        """, StandardCharsets.UTF_8);
-      Files.writeString(testDir.resolve("TC2.md"), """
-        ---
-        category: requirement
-        ---
-        ## Turn 1
-        Scenario for TC2.
-        ## Assertions
-        1. Assertion one.
+      Path testCasesPath = tempDir.resolve("test-cases.json");
+      Files.writeString(testCasesPath, """
+        {
+          "test_cases": [
+            {"test_case_id": "TC1", "semantic_unit_id": "unit_1"},
+            {"test_case_id": "TC2", "semantic_unit_id": "unit_2"}
+          ]
+        }
         """, StandardCharsets.UTF_8);
 
       String changedUnitsJson = "[]";
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
-      String result = runner.mapUnits(new String[]{testDir.toString(), changedUnitsJson});
-      TestUtils.deleteDirectoryRecursively(testDir);
+      SkillTestRunner runner = new SkillTestRunner(scope);
+      String result = runner.mapUnits(new String[]{testCasesPath.toString(), changedUnitsJson});
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(result);
@@ -286,11 +255,11 @@ public final class InstructionTestRunnerTest
   @Test
   public void initSprtFreshStateNoPrior() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       String rerunJson = "[\"TC1\",\"TC2\"]";
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      SkillTestRunner runner = new SkillTestRunner(scope);
       String result = runner.initSprt(new String[]{rerunJson, "none"});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -318,10 +287,10 @@ public final class InstructionTestRunnerTest
   @Test
   public void initSprtUsePriorBoostWithAcceptPrior() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      // Prior test results has TC1 as ACCEPT
+      // Prior instruction-test has TC1 as ACCEPT
       Path priorPath = tempDir.resolve("prior.json");
       Files.writeString(priorPath, """
         {"test_cases":[
@@ -330,7 +299,7 @@ public final class InstructionTestRunnerTest
         """, StandardCharsets.UTF_8);
 
       String rerunJson = "[\"TC1\"]";
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      SkillTestRunner runner = new SkillTestRunner(scope);
       String result = runner.initSprt(new String[]{rerunJson, priorPath.toString(), "--prior-boost"});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -352,17 +321,17 @@ public final class InstructionTestRunnerTest
 
   /**
    * Verifies that init-sprt initializes with default values (log_ratio=0.0) when the prior path is 'none'
-   * (no prior test results available).
+   * (no prior instruction-test available).
    */
   @Test
   public void initSprtWithEmptyPrior() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      // Pass "none" as prior path to indicate no prior test results
+      // Pass "none" as prior path to indicate no prior instruction-test
       String rerunJson = "[\"TC1\"]";
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      SkillTestRunner runner = new SkillTestRunner(scope);
       String result = runner.initSprt(new String[]{rerunJson, "none"});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -387,7 +356,7 @@ public final class InstructionTestRunnerTest
   @Test
   public void checkBoundaryWithZeroTestCases() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       // SPRT state with no entries (empty object)
@@ -397,7 +366,7 @@ public final class InstructionTestRunnerTest
         """, StandardCharsets.UTF_8);
 
       // check-boundary on an ID not present in state returns default INCONCLUSIVE values
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      SkillTestRunner runner = new SkillTestRunner(scope);
       String result = runner.checkBoundary(new String[]{statePath.toString(), "NONEXISTENT"});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -415,15 +384,15 @@ public final class InstructionTestRunnerTest
   }
 
   /**
-   * Verifies that persist-artifacts throws IllegalArgumentException when test-results.json has
+   * Verifies that persist-artifacts throws IllegalArgumentException when instruction-test.json has
    * missing required fields (corrupted/empty artifacts directory).
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*scenarios.json not found.*")
-  public void persistArtifactsRejectsCorruptBenchmarkJson() throws IOException
+    expectedExceptionsMessageRegExp = ".*test-cases.json not found.*")
+  public void persistArtifactsRejectsCorruptInstructionTestJson() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Create skill file
@@ -432,12 +401,12 @@ public final class InstructionTestRunnerTest
       TestUtils.runGit(repoDir, "add", "skill.md");
       TestUtils.runGit(repoDir, "commit", "-m", "add skill");
 
-      // Create artifacts dir without scenarios.json (simulates corruption/missing file)
+      // Create artifacts dir without test-cases.json (simulates corruption/missing file)
       Path artifactsDir = tempDir.resolve("artifacts");
       Files.createDirectories(artifactsDir);
-      // Intentionally do NOT create scenarios.json
+      // Intentionally do NOT create test-cases.json
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      SkillTestRunner runner = new SkillTestRunner(scope);
       runner.persistArtifacts(
         new String[]{"skill.md", artifactsDir.toString(), "sess1", repoDir.toString(), "initial"},
         System.out);
@@ -459,7 +428,7 @@ public final class InstructionTestRunnerTest
   @Test
   public void updateSprtPassUpdatesLogRatioAndDecision() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Create initial state file with TC1 in INCONCLUSIVE state near ACCEPT boundary
@@ -470,7 +439,7 @@ public final class InstructionTestRunnerTest
         "decision":"INCONCLUSIVE","carried_forward":false,"smoke_runs_done":3}}}
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      SkillTestRunner runner = new SkillTestRunner(scope);
       String result = runner.updateSprt(new String[]{statePath.toString(), "TC1", "true"});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -497,7 +466,7 @@ public final class InstructionTestRunnerTest
   @Test
   public void updateSprtFailUpdatesLogRatioAndDecision() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path statePath = tempDir.resolve("sprt_state.json");
@@ -507,7 +476,7 @@ public final class InstructionTestRunnerTest
         "decision":"INCONCLUSIVE","carried_forward":false,"smoke_runs_done":3}}}
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      SkillTestRunner runner = new SkillTestRunner(scope);
       String result = runner.updateSprt(new String[]{statePath.toString(), "TC1", "false"});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -529,7 +498,7 @@ public final class InstructionTestRunnerTest
   @Test
   public void checkBoundaryReturnsCorrectFields() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path statePath = tempDir.resolve("sprt_state.json");
@@ -538,7 +507,7 @@ public final class InstructionTestRunnerTest
         "decision":"INCONCLUSIVE","carried_forward":true,"smoke_runs_done":3}}}
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      SkillTestRunner runner = new SkillTestRunner(scope);
       String result = runner.checkBoundary(new String[]{statePath.toString(), "TC1"});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -563,7 +532,7 @@ public final class InstructionTestRunnerTest
   @Test
   public void smokeStatusInSmokePhase() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path statePath = tempDir.resolve("sprt_state.json");
@@ -572,7 +541,7 @@ public final class InstructionTestRunnerTest
         "decision":"INCONCLUSIVE","carried_forward":false,"smoke_runs_done":1}}}
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      SkillTestRunner runner = new SkillTestRunner(scope);
       String result = runner.smokeStatus(new String[]{statePath.toString(), "TC1"});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -595,7 +564,7 @@ public final class InstructionTestRunnerTest
   @Test
   public void smokeStatusEscalates() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path statePath = tempDir.resolve("sprt_state.json");
@@ -604,7 +573,7 @@ public final class InstructionTestRunnerTest
         "decision":"INCONCLUSIVE","carried_forward":false,"smoke_runs_done":3}}}
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      SkillTestRunner runner = new SkillTestRunner(scope);
       String result = runner.smokeStatus(new String[]{statePath.toString(), "TC1"});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -625,7 +594,7 @@ public final class InstructionTestRunnerTest
   @Test
   public void mergeResultsAllAccept() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path statePath = tempDir.resolve("sprt_state.json");
@@ -638,7 +607,7 @@ public final class InstructionTestRunnerTest
         }}
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      SkillTestRunner runner = new SkillTestRunner(scope);
       String result = runner.mergeResults(new String[]{statePath.toString(), "none", "[]"});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -660,7 +629,7 @@ public final class InstructionTestRunnerTest
   @Test
   public void mergeResultsAnyRejectProducesRejectOverall() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path statePath = tempDir.resolve("sprt_state.json");
@@ -673,7 +642,7 @@ public final class InstructionTestRunnerTest
         }}
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      SkillTestRunner runner = new SkillTestRunner(scope);
       String result = runner.mergeResults(new String[]{statePath.toString(), "none", "[]"});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -693,28 +662,20 @@ public final class InstructionTestRunnerTest
   @Test
   public void runDispatchesToSubcommand() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      // Create a test directory with one .md scenario file
-      Path testDir = Files.createTempDirectory("test-dir-");
-      Files.writeString(testDir.resolve("TC1.md"), """
-        ---
-        category: requirement
-        ---
-        ## Turn 1
-        Test scenario.
-        ## Assertions
-        1. Assertion one.
+      Path testCasesPath = tempDir.resolve("test-cases.json");
+      Files.writeString(testCasesPath, """
+        {"test_cases":[{"test_case_id":"TC1","semantic_unit_id":"unit_1"}]}
         """, StandardCharsets.UTF_8);
 
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       PrintStream printStream = new PrintStream(baos, false, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
-      runner.run(new String[]{"map-units", testDir.toString(), "[]"}, printStream);
+      SkillTestRunner runner = new SkillTestRunner(scope);
+      runner.run(new String[]{"map-units", testCasesPath.toString(), "[]"}, printStream);
       printStream.flush();
-      TestUtils.deleteDirectoryRecursively(testDir);
 
       String output = baos.toString(StandardCharsets.UTF_8).strip();
       JsonMapper mapper = scope.getJsonMapper();
@@ -734,10 +695,10 @@ public final class InstructionTestRunnerTest
     expectedExceptionsMessageRegExp = ".*no command specified.*")
   public void runThrowsOnNoCommand() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      SkillTestRunner runner = new SkillTestRunner(scope);
       runner.run(new String[]{}, System.out);
     }
     finally
@@ -753,10 +714,10 @@ public final class InstructionTestRunnerTest
     expectedExceptionsMessageRegExp = ".*unknown command.*")
   public void runThrowsOnUnknownCommand() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      SkillTestRunner runner = new SkillTestRunner(scope);
       runner.run(new String[]{"nonexistent-command"}, System.out);
     }
     finally
@@ -773,7 +734,7 @@ public final class InstructionTestRunnerTest
   public void detectChangesNoChanges() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Create skill file and commit it
@@ -792,30 +753,17 @@ public final class InstructionTestRunnerTest
       // Get the SHA of the commit
       String sha = TestUtils.runGitCommandWithOutput(repoDir, "rev-parse", "HEAD");
 
-      // Create test directory with .md scenario files
-      Path testDir = Files.createTempDirectory("test-dir-");
-      Files.writeString(testDir.resolve("TC1.md"), """
-        ---
-        category: requirement
-        ---
-        ## Turn 1
-        Test scenario.
-        ## Assertions
-        1. Assertion one.
-        """, StandardCharsets.UTF_8);
-      Files.writeString(testDir.resolve("TC2.md"), """
-        ---
-        category: requirement
-        ---
-        ## Turn 1
-        Test scenario.
-        ## Assertions
-        1. Assertion one.
+      // Create test-cases.json
+      Path testCasesPath = tempDir.resolve("test-cases.json");
+      Files.writeString(testCasesPath, """
+        {"test_cases":[
+          {"test_case_id":"TC1","semantic_unit_id":"unit_1"},
+          {"test_case_id":"TC2","semantic_unit_id":"unit_2"}
+        ]}
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
-      String result = runner.detectChanges(new String[]{sha, skillFile.toString(), testDir.toString()});
-      TestUtils.deleteDirectoryRecursively(testDir);
+      SkillTestRunner runner = new SkillTestRunner(scope);
+      String result = runner.detectChanges(new String[]{sha, skillFile.toString(), testCasesPath.toString()});
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(result);
@@ -839,7 +787,7 @@ public final class InstructionTestRunnerTest
   public void detectChangesFrontmatterChanged() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Commit the old skill content
@@ -868,30 +816,17 @@ public final class InstructionTestRunnerTest
         Do something.
         """, StandardCharsets.UTF_8);
 
-      // Create test directory with .md scenario files
-      Path testDir = Files.createTempDirectory("test-dir-");
-      Files.writeString(testDir.resolve("TC1.md"), """
-        ---
-        category: requirement
-        ---
-        ## Turn 1
-        Test scenario.
-        ## Assertions
-        1. Assertion one.
-        """, StandardCharsets.UTF_8);
-      Files.writeString(testDir.resolve("TC2.md"), """
-        ---
-        category: requirement
-        ---
-        ## Turn 1
-        Test scenario.
-        ## Assertions
-        1. Assertion one.
+      // Create test-cases.json
+      Path testCasesPath = tempDir.resolve("test-cases.json");
+      Files.writeString(testCasesPath, """
+        {"test_cases":[
+          {"test_case_id":"TC1","semantic_unit_id":"unit_1"},
+          {"test_case_id":"TC2","semantic_unit_id":"unit_2"}
+        ]}
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
-      String result = runner.detectChanges(new String[]{oldSha, skillFile.toString(), testDir.toString()});
-      TestUtils.deleteDirectoryRecursively(testDir);
+      SkillTestRunner runner = new SkillTestRunner(scope);
+      String result = runner.detectChanges(new String[]{oldSha, skillFile.toString(), testCasesPath.toString()});
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(result);
@@ -915,7 +850,7 @@ public final class InstructionTestRunnerTest
   public void detectChangesBodyOnlyChanged() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Commit the old skill content
@@ -944,21 +879,14 @@ public final class InstructionTestRunnerTest
         Changed body content.
         """, StandardCharsets.UTF_8);
 
-      // Create test directory with a .md scenario file
-      Path testDir = Files.createTempDirectory("test-dir-");
-      Files.writeString(testDir.resolve("TC1.md"), """
-        ---
-        category: requirement
-        ---
-        ## Turn 1
-        Test scenario.
-        ## Assertions
-        1. Assertion one.
+      // Create test-cases.json
+      Path testCasesPath = tempDir.resolve("test-cases.json");
+      Files.writeString(testCasesPath, """
+        {"test_cases":[{"test_case_id":"TC1","semantic_unit_id":"unit_1"}]}
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
-      String result = runner.detectChanges(new String[]{oldSha, skillFile.toString(), testDir.toString()});
-      TestUtils.deleteDirectoryRecursively(testDir);
+      SkillTestRunner runner = new SkillTestRunner(scope);
+      String result = runner.detectChanges(new String[]{oldSha, skillFile.toString(), testCasesPath.toString()});
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(result);
@@ -975,13 +903,13 @@ public final class InstructionTestRunnerTest
   }
 
   /**
-   * Verifies that persist-artifacts writes test-results.json with expected JSON fields.
+   * Verifies that persist-artifacts writes instruction-test.json with expected JSON fields.
    */
   @Test
-  public void persistArtifactsWritesTestResultsJson() throws IOException
+  public void persistArtifactsWritesInstructionTestJson() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Create skill file inside the git repo
@@ -995,10 +923,10 @@ public final class InstructionTestRunnerTest
       TestUtils.runGit(repoDir, "add", "skill.md");
       TestUtils.runGit(repoDir, "commit", "-m", "add skill");
 
-      // Create an artifacts dir with scenarios.json
+      // Create an artifacts dir with test-cases.json
       Path artifactsDir = tempDir.resolve("artifacts");
       Files.createDirectories(artifactsDir);
-      Path testCasesJson = artifactsDir.resolve("scenarios.json");
+      Path testCasesJson = artifactsDir.resolve("test-cases.json");
       Files.writeString(testCasesJson, """
         {"test_cases":[{"test_case_id":"TC1","semantic_unit_id":"unit_1"}]}
         """, StandardCharsets.UTF_8);
@@ -1006,18 +934,18 @@ public final class InstructionTestRunnerTest
       String sessionId = "test-session-001";
       String phase = "initial";
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      SkillTestRunner runner = new SkillTestRunner(scope);
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(baos, false, StandardCharsets.UTF_8);
       runner.persistArtifacts(
         new String[]{"skill.md", artifactsDir.toString(), sessionId, repoDir.toString(), phase},
         out);
 
-      // Verify test-results.json was created
-      Path testResultsJson = repoDir.resolve("tests").resolve("test-results.json");
-      requireThat(Files.exists(testResultsJson), "testResultsJsonExists").isTrue();
+      // Verify instruction-test.json was created
+      Path instructionTestJson = repoDir.resolve("instruction-test").resolve("instruction-test.json");
+      requireThat(Files.exists(instructionTestJson), "instructionTestJsonExists").isTrue();
 
-      String content = Files.readString(testResultsJson, StandardCharsets.UTF_8);
+      String content = Files.readString(instructionTestJson, StandardCharsets.UTF_8);
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(content);
 
@@ -1025,12 +953,12 @@ public final class InstructionTestRunnerTest
       requireThat(root.path("phase").asString(), "phase").isEqualTo(phase);
       requireThat(root.path("skill").path("path").asString(), "skill.path").isEqualTo("skill.md");
       requireThat(root.path("skill").path("sha256").asString(""), "skill.sha256").isNotBlank();
-      requireThat(root.path("test_scenarios").path("sha256").asString(""), "test_scenarios.sha256").isNotBlank();
+      requireThat(root.path("test_cases").path("sha256").asString(""), "test_cases.sha256").isNotBlank();
 
       // Assert exclusivity: no undocumented fields
       List<String> fieldNames = new ArrayList<>(root.propertyNames());
       Collections.sort(fieldNames);
-      List<String> expectedFieldNames = List.of("phase", "session_id", "skill", "test_scenarios", "timestamp");
+      List<String> expectedFieldNames = List.of("phase", "session_id", "skill", "test_cases", "timestamp");
       requireThat(fieldNames, "fieldNames").isEqualTo(expectedFieldNames);
     }
     finally
@@ -1041,13 +969,13 @@ public final class InstructionTestRunnerTest
   }
 
   /**
-   * Verifies that persist-artifacts copies scenarios.json into the tests directory.
+   * Verifies that persist-artifacts copies test-cases.json into the instruction-test directory.
    */
   @Test
   public void persistArtifactsCopiesTestCasesJson() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path skillFile = repoDir.resolve("skill.md");
@@ -1060,17 +988,17 @@ public final class InstructionTestRunnerTest
       String testCasesContent = """
         {"test_cases":[{"test_case_id":"TC1","semantic_unit_id":"unit_1"}]}
         """;
-      Files.writeString(artifactsDir.resolve("scenarios.json"), testCasesContent, StandardCharsets.UTF_8);
+      Files.writeString(artifactsDir.resolve("test-cases.json"), testCasesContent, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      SkillTestRunner runner = new SkillTestRunner(scope);
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(baos, false, StandardCharsets.UTF_8);
       runner.persistArtifacts(
         new String[]{"skill.md", artifactsDir.toString(), "sess1", repoDir.toString(), "final"},
         out);
 
-      // Verify scenarios.json was copied into tests/
-      Path copiedTestCases = repoDir.resolve("tests").resolve("scenarios.json");
+      // Verify test-cases.json was copied into instruction-test/
+      Path copiedTestCases = repoDir.resolve("instruction-test").resolve("test-cases.json");
       requireThat(Files.exists(copiedTestCases), "testCasesJsonCopied").isTrue();
 
       // Verify the content matches
@@ -1093,10 +1021,10 @@ public final class InstructionTestRunnerTest
     expectedExceptionsMessageRegExp = ".*worktree root not found.*")
   public void persistArtifactsThrowsWhenWorktreeRootMissing() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      SkillTestRunner runner = new SkillTestRunner(scope);
       runner.persistArtifacts(
         new String[]{"skill.md", tempDir.toString(), "sess1", "/nonexistent/worktree/root", "initial"},
         System.out);
@@ -1108,12 +1036,12 @@ public final class InstructionTestRunnerTest
   }
 
   /**
-   * Verifies that merge-results uses prior test results stats for carryforward IDs instead of current SPRT state.
+   * Verifies that merge-results uses prior instruction-test stats for carryforward IDs instead of current SPRT state.
    */
   @Test
   public void mergeResultsCarryforwardUsePriorStats() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       // TC1 is ACCEPT in current SPRT state; TC2 is INCONCLUSIVE with low log_ratio
@@ -1127,19 +1055,19 @@ public final class InstructionTestRunnerTest
         }}
         """, StandardCharsets.UTF_8);
 
-      // Prior test results have TC2 as ACCEPT with high log_ratio — carryforward should use these values
-      Path priorTestResultsPath = tempDir.resolve("prior_test_results.json");
-      Files.writeString(priorTestResultsPath, """
+      // Prior instruction-test has TC2 as ACCEPT with high log_ratio — carryforward should use these values
+      Path priorInstructionTestPath = tempDir.resolve("prior_instruction_test.json");
+      Files.writeString(priorInstructionTestPath, """
         {"test_cases":[
           {"test_case_id":"TC1","log_ratio":2.8,"passes":9,"fails":0,"runs":9,"decision":"ACCEPT"},
           {"test_case_id":"TC2","log_ratio":3.5,"passes":12,"fails":1,"runs":13,"decision":"ACCEPT"}
         ]}
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
-      // TC2 is in the carryforward set: its stats should come from prior test results, not SPRT state
+      SkillTestRunner runner = new SkillTestRunner(scope);
+      // TC2 is in the carryforward set: its stats should come from prior instruction-test, not SPRT state
       String result = runner.mergeResults(
-        new String[]{statePath.toString(), priorTestResultsPath.toString(), "[\"TC2\"]"});
+        new String[]{statePath.toString(), priorInstructionTestPath.toString(), "[\"TC2\"]"});
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(result);
@@ -1159,135 +1087,11 @@ public final class InstructionTestRunnerTest
         }
     }
       requireThat(tc2, "tc2").isNotNull();
-      // Prior test results has TC2 log_ratio=3.5; SPRT state has 0.5 — must use prior value
+      // Prior instruction-test has TC2 log_ratio=3.5; SPRT state has 0.5 — must use prior value
       requireThat(tc2.path("log_ratio").asDouble(), "tc2.log_ratio").isEqualTo(3.5);
       requireThat(tc2.path("decision").asString(), "tc2.decision").isEqualTo("ACCEPT");
       requireThat(tc2.path("passes").asInt(), "tc2.passes").isEqualTo(12);
       requireThat(tc2.path("carried_forward").asBoolean(), "tc2.carried_forward").isTrue();
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that detect-changes derives test case IDs from .md file stems in the test directory.
-   */
-  @Test
-  public void detectChangesReadsTestCaseIdsFromMdFiles() throws IOException
-  {
-    Path repoDir = TestUtils.createTempGitRepo("main");
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
-    try (var scope = new TestClaudeTool(tempDir, tempDir))
-    {
-      // Commit the skill file
-      Path skillFile = repoDir.resolve("skill.md");
-      Files.writeString(skillFile, """
-        ---
-        description: Test skill
-        model: haiku
-        ---
-        # Step 1
-        Do something.
-        """, StandardCharsets.UTF_8);
-      TestUtils.runGit(repoDir, "add", "skill.md");
-      TestUtils.runGit(repoDir, "commit", "-m", "add skill");
-      String sha = TestUtils.runGitCommandWithOutput(repoDir, "rev-parse", "HEAD");
-
-      // Create test directory with .md scenario files (stems become test case IDs)
-      Path testDir = Files.createTempDirectory("test-dir-");
-      Files.writeString(testDir.resolve("unit_step1_guard.md"), """
-        ---
-        category: requirement
-        ---
-        ## Turn 1
-        Scenario for step 1 guard.
-        ## Assertions
-        1. Assertion one.
-        """, StandardCharsets.UTF_8);
-      Files.writeString(testDir.resolve("unit_step2_verify.md"), """
-        ---
-        category: conditional
-        ---
-        ## Turn 1
-        Scenario for step 2 verify.
-        ## Assertions
-        1. Assertion one.
-        """, StandardCharsets.UTF_8);
-
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
-      String result = runner.detectChanges(new String[]{sha, skillFile.toString(), testDir.toString()});
-      TestUtils.deleteDirectoryRecursively(testDir);
-
-      JsonMapper mapper = scope.getJsonMapper();
-      JsonNode root = mapper.readTree(result);
-
-      // all_test_case_ids must contain the file stems (not file names with .md extension)
-      JsonNode allIds = root.path("all_test_case_ids");
-      requireThat(allIds.size(), "allIdsCount").isEqualTo(2);
-      requireThat(allIds.get(0).asString(), "firstId").isEqualTo("unit_step1_guard");
-      requireThat(allIds.get(1).asString(), "secondId").isEqualTo("unit_step2_verify");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(repoDir);
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that map-units uses the file stem (test case ID) to partition test cases,
-   * matching against the provided changed unit IDs.
-   */
-  @Test
-  public void mapUnitsUsesFileStemAsTestCaseId() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-instruction-test-runner-");
-    try (var scope = new TestClaudeTool(tempDir, tempDir))
-    {
-      Path testDir = Files.createTempDirectory("test-dir-");
-      Files.writeString(testDir.resolve("unit_a.md"), """
-        ---
-        category: requirement
-        ---
-        ## Turn 1
-        Scenario for unit_a.
-        ## Assertions
-        1. Assertion one.
-        """, StandardCharsets.UTF_8);
-      Files.writeString(testDir.resolve("unit_b.md"), """
-        ---
-        category: requirement
-        ---
-        ## Turn 1
-        Scenario for unit_b.
-        ## Assertions
-        1. Assertion one.
-        """, StandardCharsets.UTF_8);
-      Files.writeString(testDir.resolve("unit_a_extra.md"), """
-        ---
-        category: conditional
-        ---
-        ## Turn 1
-        Extra scenario for unit_a.
-        ## Assertions
-        1. Assertion one.
-        """, StandardCharsets.UTF_8);
-
-      // Only unit_a (exact file stem) is in the changed set — unit_a.md reruns; unit_b.md and
-      // unit_a_extra.md carry forward because their stems do not exactly match "unit_a"
-      String changedUnitsJson = "[\"unit_a\"]";
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
-      String result = runner.mapUnits(new String[]{testDir.toString(), changedUnitsJson});
-      TestUtils.deleteDirectoryRecursively(testDir);
-
-      JsonMapper mapper = scope.getJsonMapper();
-      JsonNode root = mapper.readTree(result);
-
-      requireThat(root.path("rerun_test_case_ids").size(), "rerunCount").isEqualTo(1);
-      requireThat(root.path("rerun_test_case_ids").get(0).asString(), "rerunId").isEqualTo("unit_a");
-      requireThat(root.path("carryforward_test_case_ids").size(), "carryforwardCount").isEqualTo(2);
     }
     finally
     {
