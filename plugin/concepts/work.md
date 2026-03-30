@@ -176,7 +176,7 @@ Main agent tracks lock status but doesn't manage locks directly.
 
 Work phases write output files to two distinct locations based on ownership and lifecycle:
 
-**Verify files** — `${CLAUDE_PROJECT_DIR}/.cat/work/verify/${CLAUDE_SESSION_ID}/`
+**Verify files** — `${WORKTREE_PATH}/.cat/work/verify/${CLAUDE_SESSION_ID}/`
 - Owner: verify subagent; Scope: session-scoped
 - Ephemeral scratch files (`criteria-analysis.json`, `e2e-test-output.json`) written during confirm phase
 - Read by fix subagents to understand what failed; never committed to the issue branch

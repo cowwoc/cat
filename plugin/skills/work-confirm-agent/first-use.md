@@ -130,7 +130,7 @@ Task tool:
     3. Create the verify output directory and write detailed analysis files:
        ```bash
        source "${CLAUDE_PLUGIN_ROOT}/scripts/cat-env.sh"
-       VERIFY_DIR="${CLAUDE_PROJECT_DIR}/.cat/work/verify/${CLAUDE_SESSION_ID}"
+       VERIFY_DIR="${WORKTREE_PATH}/.cat/work/verify/${CLAUDE_SESSION_ID}"
        mkdir -p "${VERIFY_DIR}"
        ```
        - Write criterion-level details to: ${VERIFY_DIR}/criteria-analysis.json

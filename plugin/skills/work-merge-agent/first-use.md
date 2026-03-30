@@ -47,7 +47,7 @@ result is not in context, treat as State 1 and run the full merge workflow.
 ## Step 7: Post-Condition Gate Check (MANDATORY — BLOCKING)
 
 ```bash
-VERIFY_DIR="${CLAUDE_PROJECT_DIR}/.cat/work/verify/${CLAUDE_SESSION_ID}"
+VERIFY_DIR="${WORKTREE_PATH}/.cat/work/verify/${CLAUDE_SESSION_ID}"
 CRITERIA_FILE="${VERIFY_DIR}/criteria-analysis.json"
 ```
 
