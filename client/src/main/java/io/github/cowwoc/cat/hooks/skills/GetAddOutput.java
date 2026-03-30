@@ -19,7 +19,7 @@ import tools.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.io.PrintStream;
 
-import static io.github.cowwoc.cat.hooks.Strings.block;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -28,6 +28,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import static io.github.cowwoc.cat.hooks.Strings.block;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
@@ -215,15 +216,42 @@ public final class GetAddOutput implements SkillOutput
       summary = parseGoalSummary(planContent);
     }
 
-    try (Stream<Path> entries = Files.list(versionDir))
+    List<String> existingIssues = new ArrayList<>();
+    List<Path> issueDirs = new ArrayList<>();
+    try (DirectoryStream<Path> entries = Files.newDirectoryStream(versionDir))
     {
-      List<String> existingIssues = entries.
-        filter(Files::isDirectory).
-        map(p -> p.getFileName().toString()).
-        sorted().
-        toList();
-      return new VersionData(version, status, summary, existingIssues);
+      for (Path entry : entries)
+      {
+        if (Files.isDirectory(entry))
+          issueDirs.add(entry);
+      }
     }
+    for (Path issueDir : issueDirs)
+    {
+      if (isOpenIssue(issueDir))
+        existingIssues.add(issueDir.getFileName().toString());
+    }
+    return new VersionData(version, status, summary, existingIssues);
+  }
+
+  /**
+   * Returns true if the issue directory has an {@code index.json} with {@code "status": "open"}.
+   * Directories without an {@code index.json}, or with any other status, are not open issues.
+   *
+   * @param issueDir the candidate issue directory
+   * @return true if the issue is open
+   * @throws IOException if an I/O error occurs reading the index.json
+   */
+  private boolean isOpenIssue(Path issueDir) throws IOException
+  {
+    Path indexJson = issueDir.resolve("index.json");
+    if (Files.notExists(indexJson))
+      return false;
+    JsonNode indexNode = scope.getJsonMapper().readTree(indexJson.toFile());
+    JsonNode statusNode = indexNode.get("status");
+    if (statusNode == null || !statusNode.isString())
+      return false;
+    return statusNode.asString().equals("open");
   }
 
   /**
