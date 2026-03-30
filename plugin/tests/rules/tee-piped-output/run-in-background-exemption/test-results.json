@@ -1,0 +1,22 @@
+{
+  "test_case": "run-in-background-exemption",
+  "description": "Background piped commands: tee REQUIRED even when run_in_background: true (background task captures post-pipe output only)",
+  "sprt_status": "ACCEPTED",
+  "sprt_parameters": {
+    "p0": 0.95,
+    "p1": 0.85,
+    "alpha": 0.05,
+    "beta": 0.05
+  },
+  "sprt_boundaries": {
+    "accept_threshold": 2.944,
+    "reject_threshold": -2.944
+  },
+  "final_log_ratio": 3.1270,
+  "total_runs": 27,
+  "pass_count": 27,
+  "fail_count": 0,
+  "total_tokens": 920707,
+  "average_tokens_per_run": 34100,
+  "timestamp": "2026-03-30T01:50:00Z"
+}

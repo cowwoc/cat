@@ -220,8 +220,14 @@ commit SHA as `INSTRUCTION_DRAFT_SHA`. The instruction text is now on disk and c
 via `git show <SHA>:<INSTRUCTION_TEXT_PATH>` or `cat <INSTRUCTION_TEXT_PATH>`.
 
 **Effort gate:** Read `curiosity` from the effective config (`get-config-output effective`). If `curiosity = low`, skip
-the test evaluation loop (Steps 4.1–4.4), adversarial hardening (Step 5), and compression phase (Step 7) entirely. Before spawning the sanity check, compute
-`TEST_DIR` and `TEST_MODEL` using the **Model selection** paragraph below — these
+the test evaluation loop (Steps 4.1–4.4), adversarial hardening (Step 5), and compression phase (Step 7) entirely.
+
+**MANDATORY when curiosity != low:** The full test evaluation loop (Steps 4.1–4.4) MUST execute. Do NOT
+manually create test files or skip SPRT as a shortcut. The instruction is considered incomplete until
+`test-results.json` shows `overall_decision: "Accept"`. Skipping SPRT and then creating test files manually
+is a workflow violation — the SPRT run IS the test verification, not an optional add-on.
+
+Before spawning the sanity check, compute `TEST_DIR` and `TEST_MODEL` using the **Model selection** paragraph below — these
 values are required even for the sanity check. Then proceed directly to ## Output Format with a single-run
 sanity check: spawn one `TEST_MODEL` test-run
 subagent with the instruction active on a scenario that exercises the instruction's primary purpose (i.e., a
