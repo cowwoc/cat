@@ -81,8 +81,8 @@ plugin/agents/
 ├── blue-team-agent.md             # Internal subagent — closes loopholes identified by the red-team
 ├── diff-validation-agent.md       # Internal subagent — verifies blue-team patches address red-team findings
 ├── red-team-agent.md              # Internal subagent — adversarially probes a target for loopholes
-├── instruction-analyzer-agent.md        # Internal subagent — surfaces patterns from test results JSON
-├── instruction-grader-agent.md          # Internal subagent — grades assertions against test-case output, returns commit SHA
+├── skill-analyzer-agent.md        # Internal subagent — surfaces patterns from instruction-test JSON
+├── skill-grader-agent.md          # Internal subagent — grades assertions against test-case output, returns commit SHA
 ├── stakeholder-architecture.md    # Architecture review
 ├── stakeholder-business.md        # Commercial readiness review (sales + marketing)
 ├── stakeholder-deployment.md      # Deployment/release review

@@ -59,17 +59,17 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * The first distinct config name encountered in the input array is used as the baseline.
  * Stddev is computed as population stddev (divides by N, not N-1).
  */
-public final class InstructionTestAggregator implements SkillOutput
+public final class SkillTestAggregator implements SkillOutput
 {
   private final ClaudeTool scope;
 
   /**
-   * Creates an InstructionTestAggregator instance.
+   * Creates a SkillTestAggregator instance.
    *
    * @param scope the ClaudeTool for accessing shared services
    * @throws NullPointerException if {@code scope} is null
    */
-  public InstructionTestAggregator(ClaudeTool scope)
+  public SkillTestAggregator(ClaudeTool scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -91,7 +91,7 @@ public final class InstructionTestAggregator implements SkillOutput
     requireThat(args, "args").isNotNull();
     if (args.length != 1)
       throw new IllegalArgumentException(
-        "InstructionTestAggregator requires 1 argument: [run-results-json]. " +
+        "SkillTestAggregator requires 1 argument: [run-results-json]. " +
         "Got " + args.length + " argument(s).");
 
     String json = args[0];
@@ -99,7 +99,7 @@ public final class InstructionTestAggregator implements SkillOutput
 
     if (!root.isArray() || root.isEmpty())
       throw new IllegalArgumentException(
-        "InstructionTestAggregator requires at least one run result in the input array. " +
+        "SkillTestAggregator requires at least one run result in the input array. " +
         "Input must be a non-empty JSON array of run result objects.");
 
     // Group runs by config name, preserving insertion order for baseline detection
@@ -109,13 +109,13 @@ public final class InstructionTestAggregator implements SkillOutput
       String configName = node.path("config").asString("");
       if (configName.isBlank())
         throw new IllegalArgumentException(
-          "InstructionTestAggregator: each run result must have a non-empty 'config' field. " +
+          "SkillTestAggregator: each run result must have a non-empty 'config' field. " +
           "Found: " + node);
 
       JsonNode assertionsNode = node.path("assertions");
       if (!assertionsNode.isArray())
         throw new IllegalArgumentException(
-          "InstructionTestAggregator: 'assertions' must be a JSON boolean array in run result " +
+          "SkillTestAggregator: 'assertions' must be a JSON boolean array in run result " +
           "for config '" + configName + "'. Found: " + assertionsNode);
 
       List<Boolean> assertions = new ArrayList<>();
@@ -125,23 +125,23 @@ public final class InstructionTestAggregator implements SkillOutput
       JsonNode durationNode = node.path("duration_ms");
       if (durationNode.isMissingNode())
         throw new IllegalArgumentException(
-          "InstructionTestAggregator: 'duration_ms' field is missing in run result for config '" +
+          "SkillTestAggregator: 'duration_ms' field is missing in run result for config '" +
           configName + "'. Found: " + node);
       long durationMs = durationNode.asLong();
       if (durationMs < 0)
         throw new IllegalArgumentException(
-          "InstructionTestAggregator: 'duration_ms' must be >= 0 in run result for config '" +
+          "SkillTestAggregator: 'duration_ms' must be >= 0 in run result for config '" +
           configName + "'. Got: " + durationMs);
 
       JsonNode tokensNode = node.path("total_tokens");
       if (tokensNode.isMissingNode())
         throw new IllegalArgumentException(
-          "InstructionTestAggregator: 'total_tokens' field is missing in run result for config '" +
+          "SkillTestAggregator: 'total_tokens' field is missing in run result for config '" +
           configName + "'. Found: " + node);
       long totalTokens = tokensNode.asLong();
       if (totalTokens < 0)
         throw new IllegalArgumentException(
-          "InstructionTestAggregator: 'total_tokens' must be >= 0 in run result for config '" +
+          "SkillTestAggregator: 'total_tokens' must be >= 0 in run result for config '" +
           configName + "'. Got: " + totalTokens);
 
       byConfig.computeIfAbsent(configName, k -> new ArrayList<>()).
@@ -275,7 +275,7 @@ public final class InstructionTestAggregator implements SkillOutput
   }
 
   /**
-   * Holds the raw data for a single test run.
+   * Holds the raw data for a single instruction-test run.
    *
    * @param assertions  per-assertion pass/fail results
    * @param durationMs  elapsed time in milliseconds

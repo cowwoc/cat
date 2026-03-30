@@ -3,25 +3,25 @@ Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
-# Organic Benchmark Design Standard
+# Organic Instruction-Test Design Standard
 
-Reference standard for writing empirical benchmark tests that verify a skill is chosen AND followed correctly,
+Reference standard for writing empirical instruction-tests that verify a skill is chosen AND followed correctly,
 without priming the agent to select the skill.
 
 ## Rationale: Why No Priming
 
 A "primed" test injects the target skill name into `system_reminders`, telling the agent which skill is available.
 This inflates pass rates by removing the routing decision from the test — the agent knows what to use before reading
-the prompt. A primed benchmark measures only *whether the agent follows the skill procedure*, not *whether the agent
-recognizes when to use the skill*.
+the prompt. A primed instruction-test measures only *whether the agent follows the skill procedure*, not *whether the
+agent recognizes when to use the skill*.
 
-An **organic** benchmark keeps `system_reminders` empty. The agent must recognize the skill trigger from the SKILL.md
-`description` field, then choose the skill based on that description alone. This measures realistic behavior: an agent
-working on a real task with no hand-holding.
+An **organic** instruction-test keeps `system_reminders` empty. The agent must recognize the skill trigger from the
+SKILL.md `description` field, then choose the skill based on that description alone. This measures realistic behavior:
+an agent working on a real task with no hand-holding.
 
 ## Test Case Structure
 
-Each benchmark config maps a test name to a `messages` array:
+Each instruction-test config maps a test name to a `messages` array:
 
 ```json
 {
@@ -213,16 +213,16 @@ Negative cases must achieve ≥80% pass rate across 10 trials. If a negative cas
 invoking the skill when it should not), the skill's `description` may be over-broad; file a separate issue to tighten
 the description.
 
-## Running Benchmarks
+## Running Instruction-Tests
 
 ```bash
 RUNNER="/home/node/.config/claude/plugins/cache/cat/cat/2.1/client/bin/empirical-test-runner"
 "$RUNNER" \
-  --config plugin/skills/<skill-name>/benchmark/test-cases.json \
+  --config plugin/skills/<skill-name>/instruction-test/test-cases.json \
   --trials 3 \
   --model haiku \
   --cwd .
 ```
 
-Use `--trials 3` during development for fast iteration. Increase to `--trials 10` before accepting a benchmark
+Use `--trials 3` during development for fast iteration. Increase to `--trials 10` before accepting an instruction-test
 as the canonical pass rate.

@@ -282,7 +282,7 @@ public class GetOutputTest
 
   /**
    * Integration test: verifies that "instruction-test-aggregator" type routes through GetOutput dispatcher
-   * to InstructionTestAggregator and returns wrapped output with configs and no delta for
+   * to SkillTestAggregator and returns wrapped output with configs and no delta for
    * a single config.
    *
    * @throws IOException if an I/O error occurs
@@ -290,7 +290,7 @@ public class GetOutputTest
   @Test
   public void instructionTestAggregatorRoutesThroughDispatcher() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-get-output-instruction-");
+    Path tempDir = Files.createTempDirectory("test-get-output-instruction-test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetOutput handler = new GetOutput(scope);

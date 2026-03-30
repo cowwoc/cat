@@ -3,15 +3,15 @@ category: consequence
 ---
 ## Turn 1
 
-You are executing Step 4.4 investigation sub-step 5. session-analyzer analyze output shows that test runs
-TC1_run_1, TC1_run_2, and TC1_run_3 all share the same subagent ID 'agent-xyz789' (resume: true for runs 2
+You are executing Step 4.4 investigation sub-step 5. session-analyzer analyze output shows that instruction-test
+runs TC1_run_1, TC1_run_2, and TC1_run_3 all share the same subagent ID 'agent-xyz789' (resume: true for runs 2
 and 3). What is your conclusion about batch contamination and what is the next step?
 
 ## Assertions
 1. - **TC4_det_1** (string_match): Agent detects batch contamination when runs share a subagent ID
   - Pattern: `contamination`
   - Expected: true
-- **TC4_det_2** (regex): Agent recommends rerunning tests rather than modifying skill for test artifact
+- **TC4_det_2** (regex): Agent recommends rerunning instruction-test rather than modifying skill for test artifact
   - Pattern: `[Rr]erun|[Rr]e-run`
   - Expected: true
 - **TC4_det_3** (regex): Thinking block search uses correct pattern with context:10
