@@ -327,6 +327,25 @@ For each testable unit, generate a scenario file using the `.md` format:
 3. Generate plain-text assertions describing expected behavior. Each test case must have at least one
    assertion. All assertions are semantic (plain-text numbered list) — graded entirely by instruction-grader-agent.
 
+**Production-sequence prompt format (MANDATORY):** Test case prompts MUST mirror production input
+sequences — the exact type of message a real caller would send when invoking this skill in normal use.
+Prompts MUST NOT use Q&A format (posing a direct question to test knowledge recall).
+
+- **Prohibited (Q&A format):** `"Given you are implementing step 4, should you squash before or after
+  rebase?"` — tests verbal knowledge recall, not production behavior.
+- **Correct (production-sequence format):** `"I've finished implementing 2.1-my-issue and the commits
+  look good. Please merge it."` — mirrors real production input; assertion checks that the agent invokes
+  `cat:git-squash-agent` before the approval gate.
+
+**Action-based assertions (MANDATORY):** Assertions MUST verify what the agent does next — concrete,
+observable actions such as tool invocations, file writes, or Bash commands. Assertions MUST NOT verify
+what the agent says in a verbal response.
+
+- **Prohibited (verbal assertion):** `"Agent explains that squashing must happen before rebasing."` —
+  verifies knowledge verbalization, not behavior.
+- **Correct (action-based assertion):** `"The Skill tool was invoked with skill cat:git-squash-agent."` —
+  verifies the concrete action taken.
+
 **Scenario file naming:** Use domain-specific names for the file stem (e.g., `unit_step44_guard`,
 `unit_step44_reject`) rather than sequential IDs (e.g., `unit_1`, `unit_2`) to make each unit's intent
 self-describing.
