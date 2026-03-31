@@ -52,7 +52,7 @@ public final class InstructionTestRunnerTest
         Do more.
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String result = runner.extractUnits(new String[]{skillFile.toString()});
 
       // Body starts at line 5 (3 frontmatter lines + 1 closing ---)
@@ -83,7 +83,7 @@ public final class InstructionTestRunnerTest
         Do something.
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String result = runner.extractUnits(new String[]{skillFile.toString()});
 
       requireThat(result, "result").contains("1\t# Step 1");
@@ -105,7 +105,7 @@ public final class InstructionTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       runner.extractUnits(new String[]{"/nonexistent/skill.md"});
     }
     finally
@@ -132,9 +132,9 @@ public final class InstructionTestRunnerTest
         # Body
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String model = runner.extractModel(new String[]{skillFile.toString()});
-      requireThat(model, "model").isEqualTo("sonnet");
+      requireThat(model, "model").isEqualTo("claude-sonnet-4-6");
     }
     finally
     {
@@ -143,10 +143,11 @@ public final class InstructionTestRunnerTest
   }
 
   /**
-   * Verifies that extract-model falls back to "haiku" when no model field is present.
+   * Verifies that extract-model throws when no model field is present in frontmatter.
    */
-  @Test
-  public void extractModelFallsBackToHaiku() throws IOException
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = "(?s).*no 'model:' field in frontmatter.*")
+  public void extractModelThrowsWhenModelFieldMissing() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -159,9 +160,8 @@ public final class InstructionTestRunnerTest
         # Body
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
-      String model = runner.extractModel(new String[]{skillFile.toString()});
-      requireThat(model, "model").isEqualTo("haiku");
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      runner.extractModel(new String[]{skillFile.toString()});
     }
     finally
     {
@@ -191,7 +191,7 @@ public final class InstructionTestRunnerTest
         """, StandardCharsets.UTF_8);
 
       String changedUnitsJson = "[\"unit_1\"]";
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String result = runner.mapUnits(new String[]{testCasesPath.toString(), changedUnitsJson});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -231,7 +231,7 @@ public final class InstructionTestRunnerTest
         """, StandardCharsets.UTF_8);
 
       String changedUnitsJson = "[]";
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String result = runner.mapUnits(new String[]{testCasesPath.toString(), changedUnitsJson});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -259,8 +259,8 @@ public final class InstructionTestRunnerTest
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       String rerunJson = "[\"TC1\",\"TC2\"]";
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
-      String result = runner.initSprt(new String[]{rerunJson, "none"});
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      String result = runner.initSprt(new String[]{rerunJson, "none", "claude-haiku-4-5-20251001"});
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(result);
@@ -293,14 +293,15 @@ public final class InstructionTestRunnerTest
       // Prior instruction-test has TC1 as ACCEPT
       Path priorPath = tempDir.resolve("prior.json");
       Files.writeString(priorPath, """
-        {"test_cases":[
+        {"model_id":"claude-haiku-4-5-20251001","test_cases":[
           {"test_case_id":"TC1","log_ratio":3.0,"passes":10,"fails":0,"runs":10,"decision":"ACCEPT"}
         ]}
         """, StandardCharsets.UTF_8);
 
       String rerunJson = "[\"TC1\"]";
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
-      String result = runner.initSprt(new String[]{rerunJson, priorPath.toString(), "--prior-boost"});
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      String result = runner.initSprt(new String[]{rerunJson, priorPath.toString(),
+        "claude-haiku-4-5-20251001", "--prior-boost"});
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(result);
@@ -331,8 +332,8 @@ public final class InstructionTestRunnerTest
     {
       // Pass "none" as prior path to indicate no prior instruction-test
       String rerunJson = "[\"TC1\"]";
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
-      String result = runner.initSprt(new String[]{rerunJson, "none"});
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      String result = runner.initSprt(new String[]{rerunJson, "none", "claude-haiku-4-5-20251001"});
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(result);
@@ -366,7 +367,7 @@ public final class InstructionTestRunnerTest
         """, StandardCharsets.UTF_8);
 
       // check-boundary on an ID not present in state returns default INCONCLUSIVE values
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String result = runner.checkBoundary(new String[]{statePath.toString(), "NONEXISTENT"});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -397,7 +398,8 @@ public final class InstructionTestRunnerTest
     {
       // Create skill file
       Path skillFile = repoDir.resolve("skill.md");
-      Files.writeString(skillFile, "---\ndescription: Test\n---\n# Body\n", StandardCharsets.UTF_8);
+      Files.writeString(skillFile, "---\ndescription: Test\nmodel: haiku\n---\n# Body\n",
+        StandardCharsets.UTF_8);
       TestUtils.runGit(repoDir, "add", "skill.md");
       TestUtils.runGit(repoDir, "commit", "-m", "add skill");
 
@@ -406,7 +408,7 @@ public final class InstructionTestRunnerTest
       Files.createDirectories(artifactsDir);
       // Intentionally do NOT create test-cases.json
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       runner.persistArtifacts(
         new String[]{"skill.md", artifactsDir.toString(), "sess1", repoDir.toString(), "initial"},
         System.out);
@@ -439,7 +441,7 @@ public final class InstructionTestRunnerTest
         "decision":"INCONCLUSIVE","carried_forward":false,"smoke_runs_done":3}}}
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String result = runner.updateSprt(new String[]{statePath.toString(), "TC1", "true"});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -476,7 +478,7 @@ public final class InstructionTestRunnerTest
         "decision":"INCONCLUSIVE","carried_forward":false,"smoke_runs_done":3}}}
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String result = runner.updateSprt(new String[]{statePath.toString(), "TC1", "false"});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -507,7 +509,7 @@ public final class InstructionTestRunnerTest
         "decision":"INCONCLUSIVE","carried_forward":true,"smoke_runs_done":3}}}
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String result = runner.checkBoundary(new String[]{statePath.toString(), "TC1"});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -541,7 +543,7 @@ public final class InstructionTestRunnerTest
         "decision":"INCONCLUSIVE","carried_forward":false,"smoke_runs_done":1}}}
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String result = runner.smokeStatus(new String[]{statePath.toString(), "TC1"});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -573,7 +575,7 @@ public final class InstructionTestRunnerTest
         "decision":"INCONCLUSIVE","carried_forward":false,"smoke_runs_done":3}}}
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String result = runner.smokeStatus(new String[]{statePath.toString(), "TC1"});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -607,8 +609,9 @@ public final class InstructionTestRunnerTest
         }}
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
-      String result = runner.mergeResults(new String[]{statePath.toString(), "none", "[]"});
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      String result = runner.mergeResults(
+        new String[]{statePath.toString(), "none", "[]", "claude-haiku-4-5-20251001"});
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(result);
@@ -642,8 +645,9 @@ public final class InstructionTestRunnerTest
         }}
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
-      String result = runner.mergeResults(new String[]{statePath.toString(), "none", "[]"});
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      String result = runner.mergeResults(
+        new String[]{statePath.toString(), "none", "[]", "claude-haiku-4-5-20251001"});
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(result);
@@ -673,7 +677,7 @@ public final class InstructionTestRunnerTest
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       PrintStream printStream = new PrintStream(baos, false, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       runner.run(new String[]{"map-units", testCasesPath.toString(), "[]"}, printStream);
       printStream.flush();
 
@@ -698,7 +702,7 @@ public final class InstructionTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       runner.run(new String[]{}, System.out);
     }
     finally
@@ -717,7 +721,7 @@ public final class InstructionTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       runner.run(new String[]{"nonexistent-command"}, System.out);
     }
     finally
@@ -762,7 +766,7 @@ public final class InstructionTestRunnerTest
         ]}
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String result = runner.detectChanges(new String[]{sha, skillFile.toString(), testCasesPath.toString()});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -825,7 +829,7 @@ public final class InstructionTestRunnerTest
         ]}
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String result = runner.detectChanges(new String[]{oldSha, skillFile.toString(), testCasesPath.toString()});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -885,7 +889,7 @@ public final class InstructionTestRunnerTest
         {"test_cases":[{"test_case_id":"TC1","semantic_unit_id":"unit_1"}]}
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String result = runner.detectChanges(new String[]{oldSha, skillFile.toString(), testCasesPath.toString()});
 
       JsonMapper mapper = scope.getJsonMapper();
@@ -917,6 +921,7 @@ public final class InstructionTestRunnerTest
       Files.writeString(skillFile, """
         ---
         description: Test skill
+        model: haiku
         ---
         # Body
         """, StandardCharsets.UTF_8);
@@ -934,7 +939,7 @@ public final class InstructionTestRunnerTest
       String sessionId = "test-session-001";
       String phase = "initial";
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(baos, false, StandardCharsets.UTF_8);
       runner.persistArtifacts(
@@ -950,6 +955,7 @@ public final class InstructionTestRunnerTest
       JsonNode root = mapper.readTree(content);
 
       requireThat(root.path("session_id").asString(), "session_id").isEqualTo(sessionId);
+      requireThat(root.path("model_id").asString(), "model_id").isEqualTo("claude-haiku-4-5-20251001");
       requireThat(root.path("phase").asString(), "phase").isEqualTo(phase);
       requireThat(root.path("skill").path("path").asString(), "skill.path").isEqualTo("skill.md");
       requireThat(root.path("skill").path("sha256").asString(""), "skill.sha256").isNotBlank();
@@ -958,7 +964,7 @@ public final class InstructionTestRunnerTest
       // Assert exclusivity: no undocumented fields
       List<String> fieldNames = new ArrayList<>(root.propertyNames());
       Collections.sort(fieldNames);
-      List<String> expectedFieldNames = List.of("phase", "session_id", "skill", "test_cases", "timestamp");
+      List<String> expectedFieldNames = List.of("model_id", "phase", "session_id", "skill", "test_cases", "timestamp");
       requireThat(fieldNames, "fieldNames").isEqualTo(expectedFieldNames);
     }
     finally
@@ -979,7 +985,8 @@ public final class InstructionTestRunnerTest
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path skillFile = repoDir.resolve("skill.md");
-      Files.writeString(skillFile, "---\ndescription: Test\n---\n# Body\n", StandardCharsets.UTF_8);
+      Files.writeString(skillFile, "---\ndescription: Test\nmodel: haiku\n---\n# Body\n",
+        StandardCharsets.UTF_8);
       TestUtils.runGit(repoDir, "add", "skill.md");
       TestUtils.runGit(repoDir, "commit", "-m", "add skill");
 
@@ -990,7 +997,7 @@ public final class InstructionTestRunnerTest
         """;
       Files.writeString(artifactsDir.resolve("test-cases.json"), testCasesContent, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(baos, false, StandardCharsets.UTF_8);
       runner.persistArtifacts(
@@ -1024,7 +1031,7 @@ public final class InstructionTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       runner.persistArtifacts(
         new String[]{"skill.md", tempDir.toString(), "sess1", "/nonexistent/worktree/root", "initial"},
         System.out);
@@ -1064,10 +1071,11 @@ public final class InstructionTestRunnerTest
         ]}
         """, StandardCharsets.UTF_8);
 
-      InstructionTestRunner runner = new InstructionTestRunner(scope);
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       // TC2 is in the carryforward set: its stats should come from prior instruction-test, not SPRT state
       String result = runner.mergeResults(
-        new String[]{statePath.toString(), priorInstructionTestPath.toString(), "[\"TC2\"]"});
+        new String[]{statePath.toString(), priorInstructionTestPath.toString(), "[\"TC2\"]",
+          "claude-haiku-4-5-20251001"});
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(result);
