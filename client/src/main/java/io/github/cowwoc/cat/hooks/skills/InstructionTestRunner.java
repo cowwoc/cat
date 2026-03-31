@@ -109,17 +109,22 @@ public final class InstructionTestRunner
 
   private final Logger log = LoggerFactory.getLogger(InstructionTestRunner.class);
   private final JvmScope scope;
+  private final String claudeCodeVersion;
 
   /**
    * Creates a new InstructionTestRunner.
    *
-   * @param scope the JVM scope providing shared services
-   * @throws NullPointerException if {@code scope} is null
+   * @param scope             the JVM scope providing shared services
+   * @param claudeCodeVersion the Claude Code version string (e.g., {@code "2.1.87"})
+   * @throws NullPointerException     if {@code scope} or {@code claudeCodeVersion} are null
+   * @throws IllegalArgumentException if {@code claudeCodeVersion} is blank
    */
-  public InstructionTestRunner(JvmScope scope)
+  public InstructionTestRunner(JvmScope scope, String claudeCodeVersion)
   {
     requireThat(scope, "scope").isNotNull();
+    requireThat(claudeCodeVersion, "claudeCodeVersion").isNotBlank();
     this.scope = scope;
+    this.claudeCodeVersion = claudeCodeVersion;
   }
 
   /**
@@ -191,11 +196,12 @@ public final class InstructionTestRunner
   /**
    * Implements the {@code extract-model} command.
    * <p>
-   * Reads the YAML frontmatter of the skill and returns the value of the {@code model:} field,
-   * falling back to {@code "haiku"} when the field is absent.
+   * Reads the YAML frontmatter of the skill and returns the fully-qualified model identifier.
+   * The short name from the {@code model:} field is resolved via {@link ModelIdResolver}.
+   * Falls back to {@code "haiku"} (resolved to its fully-qualified ID) when the field is absent.
    *
    * @param args {@code [skill_path]}
-   * @return the model name
+   * @return the fully-qualified model identifier
    * @throws IllegalArgumentException if the argument count is wrong or the file is not found
    * @throws IOException              if the file cannot be read
    */
@@ -215,11 +221,11 @@ public final class InstructionTestRunner
     String model = SkillDiscovery.extractField(parsed.frontmatter(), "model");
     if (model.isBlank())
     {
-      log.warn("InstructionTestRunner extract-model: no 'model:' field in frontmatter of {}; falling back to 'haiku'",
-        skillPath);
-      return "haiku";
+      throw new IllegalArgumentException(
+        "InstructionTestRunner extract-model: no 'model:' field in frontmatter of " +
+        skillPath + ". Every skill must declare a model.");
     }
-    return model;
+    return ModelIdResolver.resolve(claudeCodeVersion, model);
   }
 
   /**
@@ -525,11 +531,23 @@ public final class InstructionTestRunner
 
     String timestamp = ISO_UTC.format(Instant.now());
 
+    // Resolve model_id from skill frontmatter
+    ParsedSkill parsed = parseSkill(absSkillPath);
+    String model = SkillDiscovery.extractField(parsed.frontmatter(), "model");
+    if (model.isBlank())
+    {
+      throw new IllegalArgumentException(
+        "InstructionTestRunner persist-artifacts: no 'model:' field in frontmatter of " +
+        absSkillPath + ". Every skill must declare a model.");
+    }
+    String modelId = ModelIdResolver.resolve(claudeCodeVersion, model);
+
     // Write instruction-test.json using Jackson to ensure proper escaping and formatting
     Path instructionTestJsonPath = instructionTestDir.resolve("instruction-test.json");
     JsonMapper mapper = scope.getJsonMapper();
     ObjectNode root = mapper.createObjectNode();
     root.put("session_id", sessionId);
+    root.put("model_id", modelId);
     root.put("phase", phase);
     root.put("timestamp", timestamp);
     ObjectNode skillNode = root.putObject("skill");
@@ -596,9 +614,11 @@ public final class InstructionTestRunner
    * Implements the {@code init-sprt} command.
    * <p>
    * Initialises per-test-case SPRT state: fresh state for re-run cases, and carry-forward state
-   * from the prior instruction-test for unchanged cases.
+   * from the prior instruction-test for unchanged cases. When the prior instruction-test was produced
+   * by a different model (detected via the {@code model_id} field), all prior results are treated as
+   * stale and carry-forward is skipped entirely.
    *
-   * @param args {@code [rerun_tc_ids_json, prior_instruction_test_json_path, (--prior-boost)?]}
+   * @param args {@code [rerun_tc_ids_json, prior_instruction_test_json_path, current_model_id, (--prior-boost)?]}
    * @return a JSON object containing the {@code sprt_state} map
    * @throws IllegalArgumentException if arguments are missing or the prior file is not found
    * @throws IOException              if the prior file cannot be read
@@ -606,15 +626,17 @@ public final class InstructionTestRunner
   public String initSprt(String[] args) throws IOException
   {
     requireThat(args, "args").isNotNull();
-    if (args.length < 2)
+    if (args.length < 3)
       throw new IllegalArgumentException(
-        "InstructionTestRunner init-sprt: expected at least 2 arguments, got " + args.length + ".\n" +
-        "Usage: skill-test-runner init-sprt <rerun_tc_ids_json> <prior_instruction_test_json_path> [--prior-boost]");
+        "InstructionTestRunner init-sprt: expected at least 3 arguments, got " + args.length + ".\n" +
+        "Usage: skill-test-runner init-sprt <rerun_tc_ids_json> <prior_instruction_test_json_path> " +
+        "<current_model_id> [--prior-boost]");
 
     String rerunJson = args[0];
     String priorPath = args[1];
+    String currentModelId = args[2];
     boolean usePriorBoost = false;
-    for (int i = 2; i < args.length; ++i)
+    for (int i = 3; i < args.length; ++i)
     {
       if (args[i].equals("--prior-boost"))
         usePriorBoost = true;
@@ -641,18 +663,32 @@ public final class InstructionTestRunner
 
     // Read prior instruction-test (if any), building a lookup map in a single pass over test_cases
     // so priorIds can be derived from the map's key set without a second traversal.
+    // When the prior model_id differs from the current model, invalidate all cached results.
     Map<String, JsonNode> priorByTestCaseId = new HashMap<>();
     if (hasPrior)
     {
       JsonNode priorRoot = mapper.readTree(Path.of(priorPath).toFile());
-      JsonNode priorTestCases = priorRoot.path("test_cases");
-      if (priorTestCases.isArray())
+      String priorModelId = priorRoot.path("model_id").asString("");
+      // Only carry forward prior results when model_id matches the current model
+      boolean modelMatches = !priorModelId.isBlank() && priorModelId.equals(currentModelId);
+      if (!priorModelId.isBlank() && !priorModelId.equals(currentModelId))
       {
-        for (JsonNode tc : priorTestCases)
+        log.warn("Model changed from {} to {}, invalidating cached SPRT results",
+          priorModelId, currentModelId);
+      }
+      else if (priorModelId.isBlank())
+        log.warn("Prior instruction-test has no model_id, invalidating cached SPRT results");
+      if (modelMatches)
+      {
+        JsonNode priorTestCases = priorRoot.path("test_cases");
+        if (priorTestCases.isArray())
         {
-          String tcId = tc.path("test_case_id").asString("");
-          if (!tcId.isBlank())
-            priorByTestCaseId.put(tcId, tc);
+          for (JsonNode tc : priorTestCases)
+          {
+            String tcId = tc.path("test_case_id").asString("");
+            if (!tcId.isBlank())
+              priorByTestCaseId.put(tcId, tc);
+          }
         }
       }
     }
@@ -937,25 +973,27 @@ public final class InstructionTestRunner
    * Implements the {@code merge-results} command.
    * <p>
    * Merges new SPRT decisions with carried-forward results to produce a complete instruction-test.json
-   * summary ready for committing.
+   * summary ready for committing. The {@code model_id} parameter is included in the output to enable
+   * staleness detection on subsequent runs.
    *
-   * @param args {@code [new_sprt_state_path, prior_instruction_test_json_path, carryforward_ids_json]}
-   * @return a JSON object with overall_decision, timestamp, incremental flag, and test_cases
+   * @param args {@code [new_sprt_state_path, prior_instruction_test_json_path, carryforward_ids_json, model_id]}
+   * @return a JSON object with model_id, overall_decision, timestamp, incremental flag, and test_cases
    * @throws IllegalArgumentException if arguments are invalid or the state file is not found
    * @throws IOException              if files cannot be read
    */
   public String mergeResults(String[] args) throws IOException
   {
     requireThat(args, "args").isNotNull();
-    if (args.length != 3)
+    if (args.length != 4)
       throw new IllegalArgumentException(
-        "InstructionTestRunner merge-results: expected 3 arguments, got " + args.length + ".\n" +
+        "InstructionTestRunner merge-results: expected 4 arguments, got " + args.length + ".\n" +
         "Usage: skill-test-runner merge-results <new_sprt_state_path> " +
-        "<prior_instruction_test_json_path> <carryforward_ids_json>");
+        "<prior_instruction_test_json_path> <carryforward_ids_json> <model_id>");
 
     Path statePath = Path.of(args[0]);
     String priorInstructionTestPath = args[1];
     String carryforwardIdsJson = args[2];
+    String modelId = args[3];
 
     if (Files.notExists(statePath))
       throw new IllegalArgumentException(
@@ -1062,6 +1100,7 @@ public final class InstructionTestRunner
 
     String timestamp = ISO_UTC.format(Instant.now());
     ObjectNode result = mapper.createObjectNode();
+    result.put("model_id", modelId);
     result.put("timestamp", timestamp);
     result.put("overall_decision", overallDecision);
     result.put("incremental", true);
@@ -1359,6 +1398,7 @@ public final class InstructionTestRunner
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();
     requireThat(out, "out").isNotNull();
-    new InstructionTestRunner(scope).run(args, out);
+    String claudeCodeVersion = ModelIdResolver.detectClaudeCodeVersion();
+    new InstructionTestRunner(scope, claudeCodeVersion).run(args, out);
   }
 }
