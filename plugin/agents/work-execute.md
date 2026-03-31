@@ -62,3 +62,15 @@ not a workaround commit.
   `git diff --stat`, `ls`) with `&&` in a single Bash call instead of issuing separate tool calls.
   This reduces round-trips. Only chain commands that can run independently — do NOT chain commands
   where a later command depends on the exit code or output of an earlier one.
+
+## Symbol Refactoring
+
+When plan steps involve renaming, removing, or moving a symbol across multiple files (e.g., a class name, method name,
+field name, or any identifier), invoke `cat:plan-before-edit-agent` via the Skill tool BEFORE making any file edits:
+
+```
+skill: "cat:plan-before-edit-agent", args: "<cat_agent_id> <Symbol1> [Symbol2 ...]"
+```
+
+Pass the symbol names as positional arguments after the cat_agent_id. The skill will scan all usages, build
+a change map, apply all edits, and compile once at the end.
