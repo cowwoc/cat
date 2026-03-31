@@ -1,4 +1,5 @@
 {
   "status": "closed",
-  "dependencies": ["rename-run-retrospective-skill"]
+  "resolution": "implemented",
+  "dependencies": ["rename-run-retrospective-skill", "2.1-refactor-add-wizard-proposal-ui"]
 }

@@ -1,5 +1,6 @@
 {
   "status": "closed",
   "resolution": "implemented with stakeholder review fixes applied (iterations 1-3)",
-  "target_branch": "v2.1"
+  "target_branch": "v2.1",
+  "dependencies": [ "2.1-refactor-add-wizard-proposal-ui" ]
 }

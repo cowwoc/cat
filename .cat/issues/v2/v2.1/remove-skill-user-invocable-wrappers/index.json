@@ -1,6 +1,6 @@
 {
   "status" : "closed",
   "resolution" : "implemented",
-  "dependencies" : [ "2.1-defer-plan-generation-to-work-phase", "2.1-fix-add-skill-index-json-format" ],
+  "dependencies" : [ "2.1-defer-plan-generation-to-work-phase", "2.1-fix-add-skill-index-json-format", "2.1-refactor-add-wizard-proposal-ui" ],
   "target_branch" : "v2.1"
 }
