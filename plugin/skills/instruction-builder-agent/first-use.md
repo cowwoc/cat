@@ -574,12 +574,24 @@ dispatched together in one parallel message. If any run in a wave fails or any T
   Wait for in-flight subagents to return (to avoid orphaned processes), discard their results, and proceed
   to hardening. Do NOT spawn any additional test-run or grader subagents.
 
+**Extract Turn sections before spawning test-run subagents:** Before spawning test-run subagents, extract
+each Turn section from each test case file into its own file. For each test case, use the `extract-turns`
+CLI tool to write one file per `## Turn N` section (excluding `## Assertions`):
+```
+"${CLAUDE_PLUGIN_ROOT}/client/bin/extract-turns" "{TEST_DIR}/{test_case_id}.md" "/tmp/test-runs/<CLAUDE_SESSION_ID>/{test_case_id}.md"
+```
+This creates `/tmp/test-runs/<CLAUDE_SESSION_ID>/{test_case_id}_turn1.md`,
+`/tmp/test-runs/<CLAUDE_SESSION_ID>/{test_case_id}_turn2.md`, etc. — one file per turn.
+For single-turn test cases (the common case), only `{test_case_id}_turn1.md` is created.
+
 **Spawn parallel test-run subagents:** Each subagent runs organically — the skill is NOT pre-loaded.
 Each test-run subagent executes exactly one run (one TC + one run index) and then terminates. Never
 assign more than one run to a single subagent.
 Each test-run subagent:
-1. Reads the assigned scenario from `cat {TEST_DIR}/{test_case_id}.md` and executes the scenario prompt
-   organically (no skill pre-loaded in context; the agent must choose the skill based on its description)
+1. Reads the first turn file from `/tmp/test-runs/<CLAUDE_SESSION_ID>/{test_case_id}_turn1.md` and executes
+   the scenario prompt organically. For multi-turn test cases, subsequent turn files (`_turn2.md`,
+   `_turn3.md`, etc.) are sent as follow-up messages by the main agent after the subagent responds to
+   each turn
 2. Records `duration_ms` (elapsed wall-clock time in milliseconds from subagent start to return) and
    `total_tokens` (sum of input and output tokens consumed by the subagent invocation, including any
    tool-use overhead)
@@ -593,14 +605,14 @@ Each test-run subagent:
    "duration_ms": <integer>, "total_tokens": <integer>}`
    On failure, returns `{"error": "<reason>"}`.
 
-Pass each subagent only scalar references (test case ID, run index, `TEST_DIR`,
-`CLAUDE_SESSION_ID`, model: `TEST_MODEL`) — do NOT embed test case content or assertion arrays inline in
-the prompt. The test-run subagent reads the scenario from `{TEST_DIR}/{test_case_id}.md`.
+Pass each subagent scalar references (test case ID, run index, `TEST_DIR`,
+`CLAUDE_SESSION_ID`, model: `TEST_MODEL`) plus the path to the first turn file. Do NOT embed
+assertion arrays inline in the prompt. Do NOT pass the full scenario file path — the test-run subagent
+receives ONLY turn file paths, never the full scenario file.
 
-The test-run subagent prompt must include the prohibition: "Do NOT read any test artifact files
-(other than your assigned scenario file), grading files, or run-output files from other subagents.
-The ONLY permitted read from {TEST_DIR} is `{test_case_id}.md` (the assigned scenario file for this run).
-Do NOT read any other file under {TEST_DIR} via any mechanism (Read tool, Bash, Grep, or otherwise).
+The test-run subagent prompt must include the prohibition: "Do NOT read any test artifact files,
+grading files, scenario files, or run-output files from other subagents.
+Do NOT read any file under {TEST_DIR} via any mechanism (Read tool, Bash, Grep, or otherwise).
 This prohibition is absolute — it applies regardless of the file's content or purpose,
 including peer subagent output files. Do NOT run any git command that could reveal skill content or commit
 history — this includes git log, git show, git diff, git rev-list, git shortlog, git format-patch, and any
@@ -611,10 +623,11 @@ Skill tool. Do NOT invoke any skill (e.g., cat:grep-and-read-agent, or any other
 Skill tool is prohibited entirely. The Write tool may ONLY be used to write to the designated output file
 (see write mechanism below) — do NOT use the Write tool on any other path.
 The ONLY files you may read (via cat, head, tail, grep, or the Read tool) are:
-(1) `{TEST_DIR}/{test_case_id}.md` (the assigned scenario file) and (2) your own output file at the path above.
+(1) the assigned turn file(s) at `/tmp/test-runs/<CLAUDE_SESSION_ID>/{test_case_id}_turnN.md`, and
+(2) your own output file at the designated path.
 Do NOT use cat, head, tail, grep, or the Read tool on any other path — including peer subagent output files
-under `/tmp/test-runs/`, other files under `{TEST_DIR}` (e.g., test-results.json), worktree files
-(e.g., findings.json), or any path not listed in (1)-(2).
+and turns files under `/tmp/test-runs/`, any files under `{TEST_DIR}` (e.g., test-results.json, scenario files),
+worktree files (e.g., findings.json), or any path not listed in (1)-(2).
 The ONLY file you may write is your output file at `/tmp/test-runs/<CLAUDE_SESSION_ID>/<case-id>_run_<N>.txt`
 (use `mkdir -p /tmp/test-runs/<CLAUDE_SESSION_ID>` to create the parent directory — mkdir may ONLY be used
 with this exact path pattern; do NOT use mkdir to create any other directory).
@@ -709,7 +722,7 @@ corroborating signals only — if spawn parameters were correct but symptoms app
       test_case_id: "TC1", run_index: 1, TEST_DIR: ".../plugin/skills/my-skill/tests",
       CLAUDE_SESSION_ID: "abc123", model: TEST_MODEL
 
-    Subagent reads scenario from {TEST_DIR}/TC1.md, executes the TC1 prompt.
+    Subagent reads turn from /tmp/test-runs/abc123/TC1_turn1.md, executes the TC1 prompt.
 
     Subagent writes output to: /tmp/test-runs/abc123/TC1_run_1.txt
 
@@ -722,14 +735,15 @@ corroborating signals only — if spawn parameters were correct but symptoms app
       "total_tokens": 1100
     }
 
-    Main agent spawns grader subagents for all assertions (read from {TEST_DIR}/TC1.md frontmatter).
+    Main agent reads the `## Assertions` section from {TEST_DIR}/TC1.md and spawns grader subagents for all assertions.
     Grader returns: {"assertion_results": [{"assertion": "The Skill tool was invoked", "verdict": "PASS", "evidence": "Agent invoked Skill tool with skill: ...", "explanation": "Assertion satisfied"}]}
     All assertions passed → run result: PASS → SPRT log_ratio updated for TC1.
 
 **Spawn `TEST_MODEL` grader subagents** for all assertions: After each test-run subagent returns,
 spawn one `TEST_MODEL` grader subagent per assertion (in parallel, each gets its own subagent). Each
 grader subagent:
-- Receives: the assertion text (read from the `## Assertions` section of `{TEST_DIR}/{test_case_id}.md`),
+- Receives: the assertion text (the main agent reads the `## Assertions` section of
+  `{TEST_DIR}/{test_case_id}.md` and passes the assertion text inline to the grader),
   the output file path (grader reads the file itself via the Read tool)
 - Is prohibited: "The ONLY file you may read (via the Read tool, cat, head, tail, wc, grep, or any
   other mechanism) is the specified output file at {output_path}. Do NOT read the instruction file,
