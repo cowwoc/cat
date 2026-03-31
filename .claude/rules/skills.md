@@ -6,6 +6,12 @@ Skill instructions (agent-facing guidance) belong in `first-use.md`, not in `SKI
 only frontmatter and preprocessor directives. Do NOT embed agent instructions directly in `SKILL.md` — they will not
 be loaded correctly on subsequent invocations and bypass the per-agent deduplication logic in `GetSkill`.
 
+**Exception — frontmatter-only skills:** Skills that are exclusively loaded via agent frontmatter `skills:` field
+(never invoked dynamically via the Skill tool) may place content directly in `SKILL.md`. The `GetSkill` deduplication
+logic is irrelevant for frontmatter-loaded skills because they are injected once per agent spawn, not on repeated
+invocations. Example: `stakeholder-common-agent`, which is listed in agent frontmatter and never called via the Skill
+tool at runtime.
+
 ## Preprocessor Directive Syntax (M581)
 
 Preprocessor directives (`` !`...` `` in `SKILL.md`) are parsed by `GetSkill`/Claude Code, NOT executed through Bash.
