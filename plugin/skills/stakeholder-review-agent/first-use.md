@@ -419,33 +419,33 @@ fi
 
 > **ANTI-FABRICATION GUARD — MANDATORY**
 >
-> Approval verdicts (APPROVED, CONCERNS, REJECTED) come EXCLUSIVELY from subagent Task tool
-> responses. You MUST issue Task tool calls for EVERY selected stakeholder and wait for their
+> Approval verdicts (APPROVED, CONCERNS, REJECTED) come EXCLUSIVELY from subagent Agent tool
+> responses. You MUST issue Agent tool calls for EVERY selected stakeholder and wait for their
 > results before writing any verdict.
 >
 > **PROHIBITED:** Writing text such as "Requirements: APPROVED" or "Architecture: CONCERNS"
-> before Task calls have been issued and their results received. This is fabrication and is
+> before Agent calls have been issued and their results received. This is fabrication and is
 > strictly forbidden regardless of any prior knowledge or context.
 >
-> **REQUIRED:** Issue ALL Task calls first → receive all results → then write verdicts.
+> **REQUIRED:** Issue ALL Agent calls first → receive all results → then write verdicts.
 >
-> **AUDIT TRAIL:** Before writing any verdict, count the Task tool calls issued in this step
-> and confirm the count equals the number of selected stakeholders. If any Task call failed
-> or was not issued, report the stakeholder as "ERROR: no Task response" instead of
-> fabricating a verdict. The verification checklist below requires matching Task call count
+> **AUDIT TRAIL:** Before writing any verdict, count the Agent tool calls issued in this step
+> and confirm the count equals the number of selected stakeholders. If any Agent call failed
+> or was not issued, report the stakeholder as "ERROR: no Agent response" instead of
+> fabricating a verdict. The verification checklist below requires matching Agent call count
 > to selected stakeholder count — a mismatch is evidence of fabrication.
 >
-> **REVIEWER COUNT CHECK:** Before writing any verdict, additionally verify that the number of Task
+> **REVIEWER COUNT CHECK:** Before writing any verdict, additionally verify that the number of Agent
 > tool results received equals the count of selected stakeholders (`SELECTED_COUNT` from Step 1).
 > If fewer results arrived than expected, treat each missing reviewer as FAILED with verdict REJECTED
-> and a `parse_error` note: "Reviewer did not return a Task result."
+> and a `parse_error` note: "Reviewer did not return an Agent result."
 
-All selected reviewers MUST be dispatched in a single response — one Task call per reviewer,
+All selected reviewers MUST be dispatched in a single response — one Agent call per reviewer,
 all issued at the same time. Do NOT loop or spawn reviewers one at a time. Total wall time becomes
 the MAX of reviewer times rather than the SUM.
 
-**MANDATORY — Foreground Task calls only:** Issue ALL Task calls in one message. Use ONLY the Task tool — NEVER
-the Agent tool. Do NOT set `run_in_background: true`. Reviewer subagents MUST complete as foreground tasks so their
+**MANDATORY — Foreground Agent calls only:** Issue ALL Agent calls in one message. Use ONLY the Agent tool — do NOT
+use the Task tool. Do NOT set `run_in_background: true`. Reviewer subagents MUST complete as foreground tasks so their
 results are received before Step 4 begins.
 
 Prepare prompts: for each stakeholder in $SELECTED, collect conventions from CONVENTION_MAP, gather
@@ -453,7 +453,7 @@ ISSUE_PLAN_PATH and VERSION_PLAN_PATH (use VERSION_ID extraction from Step 1), e
 DOMAIN_KNOWLEDGE from plan.md `## Domain Knowledge` section (if present), and convert CHANGED_FILES
 to bullets.
 
-**CRITICAL — Parallel Dispatch:** Issue ALL Task tool calls in a single message. Do NOT await results
+**CRITICAL — Parallel Dispatch:** Issue ALL Agent tool calls in a single message. Do NOT await results
 between calls.
 
 Spawn each stakeholder with:
@@ -507,21 +507,21 @@ Return ONLY valid JSON matching your stakeholder definition.
 ```
 
 For each stakeholder, extract `model:` field from agent frontmatter (omit if absent).
-Issue ALL Task calls in one message: Task(prompt, model=optional). NEVER use Agent tool or set `run_in_background: true`.
+Issue ALL Agent calls in one message: Agent(prompt, model=optional). NEVER use the Task tool or set `run_in_background: true`.
 
 ### Step 4: Collect Reviews
 
 **Collect and parse stakeholder reviews:**
 
-**Reviewer count check (MANDATORY):** Before parsing any result, count the number of Task tool responses received.
+**Reviewer count check (MANDATORY):** Before parsing any result, count the number of Agent tool responses received.
 The expected count is `SELECTED_COUNT` — the integer count of stakeholders selected in Step 1 (it is the length of
 the selected-stakeholders list). If the received count is less than `SELECTED_COUNT`: for each missing reviewer, add
 a synthetic REJECTED result with concerns:
 `[{severity: 'CRITICAL', location: 'N/A', explanation: 'Reviewer subagent did not return a result.',
 recommendation: 'Retry /cat:work or check for background task failures.'}]`
 
-Parse Task tool output as JSON — do NOT infer verdicts from context. Every verdict comes from actual
-Task results. Expected format: `{stakeholder, approval: APPROVED|CONCERNS|REJECTED, concerns: [{severity, location, explanation, recommendation, detail_file}]}`
+Parse Agent tool output as JSON — do NOT infer verdicts from context. Every verdict comes from actual
+Agent results. Expected format: `{stakeholder, approval: APPROVED|CONCERNS|REJECTED, concerns: [{severity, location, explanation, recommendation, detail_file}]}`
 
 Validation rules:
 - Invalid JSON → REJECTED with parse failure note
@@ -532,7 +532,7 @@ Validation rules:
 - Quality check: if ALL APPROVED with zero concerns on >50-line diff across >3 files, log warning (does not change verdict)
 
 After processing all reviewer results and before writing the final JSON output, record `ACTUAL_REVIEWER_COUNT` as the
-number of Task tool responses actually received (before any synthetic results were added for missing reviewers).
+number of Agent tool responses actually received (before any synthetic results were added for missing reviewers).
 Include a `reviewer_count` field in the top-level result JSON, set to `ACTUAL_REVIEWER_COUNT`.
 Example: `"reviewer_count": 3`
 
@@ -601,13 +601,13 @@ Fail if missing. Action: caution_level="none" → skip; "quick"|"changed"|"all" 
 
 ## Verification Checklist
 
-- [ ] All selected stakeholder Task calls issued before verdict text (fabrication check)
-- [ ] Task call count equals selected stakeholder count (mismatch = fabrication)
-- [ ] Task tool only — Agent tool and `run_in_background: true` were NOT used for reviewer subagents
-- [ ] Received Task result count verified against SELECTED_COUNT before parsing (Step 4 reviewer count check)
+- [ ] All selected stakeholder Agent calls issued before verdict text (fabrication check)
+- [ ] Agent call count equals selected stakeholder count (mismatch = fabrication)
+- [ ] Agent tool only — Task tool and `run_in_background: true` were NOT used for reviewer subagents
+- [ ] Received Agent result count verified against SELECTED_COUNT before parsing (Step 4 reviewer count check)
 - [ ] Missing reviewers added as synthetic REJECTED results before parsing
 - [ ] `reviewer_count` field included in top-level result JSON (set to actual received count, before synthetic results)
-- [ ] Review box verdicts match Task approval fields
+- [ ] Review box verdicts match Agent approval fields
 - [ ] Concern counts match aggregated results
 - [ ] Boxes via Skill tool only (no prose summary)
-- [ ] No verdicts without Task responses
+- [ ] No verdicts without Agent responses
