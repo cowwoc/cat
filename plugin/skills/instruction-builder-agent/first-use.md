@@ -1386,8 +1386,11 @@ argument-hint: "<args>" (if skill references $ARGUMENTS or $N)
 ---
 ```
 
-The description is used for intent routing — include trigger conditions and user synonyms, but exclude
-implementation details (trust levels, internal architecture, etc.).
+The description's sole purpose is skill-loading: it tells the agent whether to invoke this skill for
+the current user request. Include only what is relevant to that decision — trigger conditions, user
+synonyms, and disambiguation from similar skills. Never include information irrelevant to this
+decision: post-invocation behavior, agent instructions, trust levels, internal architecture, or
+anything the agent only needs after the skill is already loaded.
 
 ---
 
