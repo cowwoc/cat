@@ -2,6 +2,6 @@
   "status": "closed",
   "resolution": "implemented",
   "target_branch": "v2.1",
-  "dependencies": [],
+  "dependencies": [ "2.1-refactor-add-wizard-proposal-ui" ],
   "blocks": []
 }
