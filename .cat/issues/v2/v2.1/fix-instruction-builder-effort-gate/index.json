@@ -1,5 +1,5 @@
 {
   "status" : "open",
-  "dependencies" : [ "2.1-fix-instruction-builder-sprt-loop" ],
+  "dependencies" : [ "2.1-fix-instruction-builder-sprt-loop", "2.1-fix-sprt-test-run-assertion-priming" ],
   "blocks" : [ ]
 }
