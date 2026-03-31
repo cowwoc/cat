@@ -32,20 +32,42 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
-- In `plugin/skills/instruction-builder-agent/first-use.md`, locate Step 4.1 (Auto-Generate Test Cases, around
-  line 272-340). Add a convention box or note that specifies:
-  - Test case prompts MUST mirror production input sequences (what a real caller would provide), not Q&A questions
-  - Assertions MUST verify what the agent does next (concrete actions: file writes, tool calls, bash commands),
-    not what it says in a verbal response
-  - Q&A format (e.g., "Given you are working on X, which approach should you use?") is explicitly prohibited
-    because it tests knowledge recall, not production behavior
-  - Example of prohibited Q&A: prompt asks "should you squash before or after rebase?", assertion checks verbal
-    answer
-  - Example of correct production-sequence: prompt mirrors a real production scenario step with prerequisite
-    state established, assertion checks that the agent invokes the correct tool or produces the expected file change
+### Job 1
+- In `plugin/skills/instruction-builder-agent/first-use.md`, locate Step 4.1 around line 305 (`#### Step 4.1:
+  Auto-Generate Test Cases`). Read the file to find the exact insertion point: after step 3 of the algorithm
+  (`3. Generate plain-text assertions...` ending around line 329) and before the `**Scenario file naming:**`
+  heading (around line 331).
+- Insert the following block at that insertion point (between step 3 and `**Scenario file naming:**`):
+
+  ```
+  **Production-sequence prompt format (MANDATORY):** Test case prompts MUST mirror production input
+  sequences — the exact type of message a real caller would send when invoking this skill in normal use.
+  Prompts MUST NOT use Q&A format (posing a direct question to test knowledge recall).
+
+  - **Prohibited (Q&A format):** `"Given you are implementing step 4, should you squash before or after
+    rebase?"` — tests verbal knowledge recall, not production behavior.
+  - **Correct (production-sequence format):** `"I've finished implementing 2.1-my-issue and the commits
+    look good. Please merge it."` — mirrors real production input; assertion checks that the agent invokes
+    `cat:git-squash-agent` before the approval gate.
+
+  **Action-based assertions (MANDATORY):** Assertions MUST verify what the agent does next — concrete,
+  observable actions such as tool invocations, file writes, or Bash commands. Assertions MUST NOT verify
+  what the agent says in a verbal response.
+
+  - **Prohibited (verbal assertion):** `"Agent explains that squashing must happen before rebasing."` —
+    verifies knowledge verbalization, not behavior.
+  - **Correct (action-based assertion):** `"The Skill tool was invoked with skill cat:git-squash-agent."` —
+    verifies the concrete action taken.
+  ```
+
+- After inserting the block, verify the surrounding content is intact: step 3 of the algorithm still ends
+  the numbered list, the inserted block follows immediately, and `**Scenario file naming:**` immediately
+  follows the inserted block.
+- Update `.cat/issues/v2/v2.1/enforce-action-based-test-assertions/index.json` in the same commit: set
+  `"status": "closed"` and `"progress": 100`.
+- Commit with message: `refactor: enforce production-sequence prompts and action-based assertions in Step 4.1`
 
 ## Post-conditions
 - [ ] Step 4.1 in `plugin/skills/instruction-builder-agent/first-use.md` contains a clear convention specifying
