@@ -35,3 +35,9 @@
 | Circular package deps | A imports B, B imports A |
 | God classes | 20+ methods or 500+ lines |
 | Static-only utility classes | Should be instance methods |
+
+## Correctness
+| Pattern | Issue | Fix |
+|---------|-------|-----|
+| `!Files.exists(path)` | True for both "doesn't exist" and "can't determine" (permissions) | `Files.notExists(path)` |
+| `String.trim()` | Only handles ASCII whitespace (≤ U+0020), misses Unicode whitespace | `String.strip()` |

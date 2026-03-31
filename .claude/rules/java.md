@@ -901,20 +901,6 @@ System.err.println("{\"status\": \"error\", \"message\": " +
   "\"Usage: git-squash <base> <last> <msg-file> [branch]\"}");
 ```
 
-### Prefer strip() Over trim()
-Use `String.strip()` instead of `String.trim()`. Both remove leading/trailing whitespace, but `strip()` is
-Unicode-aware (handles all Unicode whitespace characters), while `trim()` only handles ASCII whitespace (`<= U+0020`):
-
-```java
-// Good - Unicode-aware whitespace removal
-String clean = input.strip();
-String prefix = input.stripLeading();
-String suffix = input.stripTrailing();
-
-// Avoid - only handles ASCII whitespace
-String clean = input.trim();
-```
-
 ### Prefer isBlank() Over isEmpty() for External Strings
 When checking whether a string from an external source (JSON fields, environment variables, CLI arguments, hook input)
 is "empty", use `isBlank()` instead of `isEmpty()`. A whitespace-only string is semantically empty but `isEmpty()`
@@ -934,21 +920,6 @@ if (agentId.isEmpty())
 - You control the string's construction (e.g., `StringBuilder`, string concatenation)
 - Whitespace-only is a valid, meaningful value
 - Checking collection/map emptiness (`Map.isEmpty()`, `List.isEmpty()`)
-
-### Prefer Files.notExists() Over !Files.exists()
-Use `Files.notExists(path)` instead of `!Files.exists(path)`. They have different semantics: `Files.exists()` returns
-`false` both when the file doesn't exist and when existence cannot be determined (e.g., insufficient permissions).
-`Files.notExists()` returns `true` only when the file is verified to not exist:
-
-```java
-// Good - explicitly checks non-existence
-if (Files.notExists(configPath))
-  createDefaultConfig(configPath);
-
-// Avoid - true for both "doesn't exist" and "can't determine"
-if (!Files.exists(configPath))
-  createDefaultConfig(configPath);
-```
 
 ### No Null Strings
 Use `""` (empty string) instead of `null` for String values - both for return values and parameters:
