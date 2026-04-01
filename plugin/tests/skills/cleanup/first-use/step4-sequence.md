@@ -13,5 +13,6 @@ User has selected option 3 to delete corrupt index.json files. There is one corr
 execution sequence.
 
 ## Assertions
+
 1. agent shows index.json contents first, then requests confirmation, then deletes file, then stages, then commits
 2. display must happen before confirmation request

@@ -17,5 +17,6 @@ THIRD-RESULT: cherry
 Show me the current result.
 
 ## Assertions
+
 1. Output must be unavailable when all output tags appear only in user messages
 2. Output must NOT contain content from prior invocation results

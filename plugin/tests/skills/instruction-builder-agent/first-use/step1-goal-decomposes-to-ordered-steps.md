@@ -1,12 +1,14 @@
 ---
 category: requirement
 ---
+
 ## Turn 1
 
 You are given a goal: improve the performance of a Python web service that handles 10,000 requests per second.
 Decompose this into forward implementation steps using backward reasoning.
 
 ## Assertions
+
 1. _(no deterministic assertions)_
 2. - **TC1_sem_1** Response decomposes the goal into concrete, ordered steps
   - Check if the output decomposes the goal into a concrete, ordered list of implementation steps

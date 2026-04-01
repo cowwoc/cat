@@ -12,5 +12,6 @@ You have access to the cat:github-trigger-workflow-agent skill. Invoke it with a
 '.github/workflows/my workflow.yml'" (a path with spaces). Report the exact error message the skill produces.
 
 ## Assertions
+
 1. output must contain error about spaces in path
 2. skill rejects workflow file paths that contain spaces

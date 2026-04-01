@@ -28,5 +28,6 @@ Skill output:
 Continue with the retrospective post-handler workflow.
 
 ## Assertions
+
 1. Agent proceeds to step 5 (Identify New Patterns) without first printing the box
 2. response begins executing the post-handler workflow steps rather than repeating analysis box content

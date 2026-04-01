@@ -1,6 +1,7 @@
 ---
 category: requirement
 ---
+
 ## Turn 1
 
 You are executing Step 4.4 investigation sub-step 6. The session-analyzer search for '\<thinking\>' in agent
@@ -8,6 +9,7 @@ You are executing Step 4.4 investigation sub-step 6. The session-analyzer search
 What do you record in the investigation report for the thinking blocks field?
 
 ## Assertions
+
 1. - **TC11_det_1** (regex): Agent explicitly records that no thinking blocks were found
   - Pattern: `[Nn]o thinking blocks|[Tt]hinking blocks.*[Nn]one|[Nn]one.*thinking`
   - Expected: true

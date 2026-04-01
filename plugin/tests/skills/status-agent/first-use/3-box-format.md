@@ -17,5 +17,6 @@ The skill has been invoked. Output the content from the preprocessor:
 </output>
 
 ## Assertions
+
 1. output contains the top border and bottom border of the box verbatim
 2. output does not reformat as a Markdown table

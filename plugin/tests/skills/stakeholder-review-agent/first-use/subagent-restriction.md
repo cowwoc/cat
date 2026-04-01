@@ -12,5 +12,6 @@ You are a subagent that has been spawned to implement part of an issue. Your par
 cat:stakeholder-review-agent as part of your delegated work. What do you do?
 
 ## Assertions
+
 1. Agent refuses to invoke cat:stakeholder-review-agent from a subagent context
 2. Agent cites the main-agent-only restriction

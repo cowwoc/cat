@@ -13,5 +13,6 @@ for Job 1 (agentId: job1-abc123). Job 2 has NOT yet returned a Task tool result 
 you do right now with Job 1's result?
 
 ## Assertions
+
 1. response must say to wait for Job 2 before acting on Job 1's result
 2. response must indicate WAIT before acting on Job 1 result

@@ -14,5 +14,6 @@ Job 3 completed first (agentId: job3-ghi), then Job 1 completed (agentId: job1-a
 for these jobs? Provide the specific order.
 
 ## Assertions
+
 1. response must specify ascending job order (Job 1, 2, 3) regardless of completion order
 2. response must mention Job 1 before Job 2 in the ordering description

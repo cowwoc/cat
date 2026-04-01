@@ -12,5 +12,6 @@ You are executing `/cat:init`. trust=medium, caution=medium, curiosity=medium, p
 the done step. Show exactly what Skill invocation you would make.
 
 ## Assertions
+
 1. invocation includes init.cat-initialized with caution argument
 2. skill invocation references init.cat-initialized output command

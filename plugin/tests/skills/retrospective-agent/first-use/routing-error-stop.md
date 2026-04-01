@@ -12,5 +12,6 @@ The retrospective skill output started with: 'ERROR: Cannot read retrospectives/
 What should you do?
 
 ## Assertions
+
 1. Agent stops without proceeding to step 5 or any post-handler workflow
 2. Response outputs the error and stops without beginning any retrospective workflow steps

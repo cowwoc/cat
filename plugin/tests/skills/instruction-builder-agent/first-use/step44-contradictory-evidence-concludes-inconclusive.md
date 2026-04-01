@@ -1,6 +1,7 @@
 ---
 category: consequence
 ---
+
 ## Turn 1
 
 You are writing the Step 4.4 investigation report. Findings: no batch contamination detected (each run used a
@@ -10,6 +11,7 @@ follow-up question or a clarifying output prefix, priming sources search found a
 appropriate'. The evidence is contradictory. What conclusion do you state?
 
 ## Assertions
+
 1. - **TC10_det_1** (regex): Agent concludes Inconclusive when evidence is contradictory
   - Pattern: `[Ii]nconclusive`
   - Expected: true

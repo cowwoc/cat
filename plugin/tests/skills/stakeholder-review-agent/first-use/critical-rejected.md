@@ -13,5 +13,6 @@ Design stakeholder returned CONCERNS with one CRITICAL severity issue. Architect
 What is the aggregate decision?
 
 ## Assertions
+
 1. Agent determines overall decision is REJECTED because there is a CRITICAL severity concern
 2. Agent outputs REJECTED as the decision and does not output CONCERNS as the aggregate decision

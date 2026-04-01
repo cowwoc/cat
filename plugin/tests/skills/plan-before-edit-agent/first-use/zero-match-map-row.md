@@ -13,5 +13,6 @@ zero grep matches. You are now building the change map table in Step 2. How shou
 the change map?
 
 ## Assertions
+
 1. response must include a table row with `(none)` in the File column for the symbol with no matches
 2. response must indicate "No usages found" in the Change column for that row

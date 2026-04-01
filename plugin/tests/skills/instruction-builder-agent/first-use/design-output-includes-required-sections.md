@@ -1,6 +1,7 @@
 ---
 category: sequence
 ---
+
 ## Turn 1
 
 Design a skill for a CAT plugin agent that creates a new git branch and commits a file. The skill must follow
@@ -8,6 +9,7 @@ the standard skill structure with Purpose, Procedure, and Verification sections,
 numbering starting at Step 1.
 
 ## Assertions
+
 1. - **TC2_det_1** (regex): Response contains a Purpose section heading
   - Pattern: `##\s+Purpose`
   - Expected: true

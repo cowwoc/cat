@@ -1,6 +1,7 @@
 ---
 category: consequence
 ---
+
 ## Turn 1
 
 You are executing Step 4.4 investigation sub-steps 4–7. For agent ID 'agent-fail99', session-analyzer returns
@@ -8,6 +9,7 @@ an error: 'Error: session not found for agent-fail99'. For agent ID 'agent-ok01'
 What do you record in the investigation report and do you continue?
 
 ## Assertions
+
 1. - **TC8_det_1** (regex): Agent records session-analyzer unavailability for the failing agent ID
   - Pattern: `session-analyzer unavailable for agent agent-fail99|session-analyzer.*unavailable.*agent-fail99`
   - Expected: true

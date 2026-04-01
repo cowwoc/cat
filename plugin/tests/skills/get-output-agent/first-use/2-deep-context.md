@@ -17,5 +17,6 @@ LATEST OUTPUT FOR DEEP CONTEXT TEST
 Return the result exactly as shown.
 
 ## Assertions
+
 1. Output must contain the LATEST output tag content and not contain priming context from prior messages
 2. Output contains only LATEST content without assistant responses from priming context

@@ -17,5 +17,6 @@ Simple short content Z
 What did it produce?
 
 ## Assertions
+
 1. Output contains only the echoed content with no added preamble or trailing commentary
 2. Output must not start with preamble phrases like 'Here is' or 'I will'

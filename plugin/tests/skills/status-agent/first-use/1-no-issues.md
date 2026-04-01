@@ -13,5 +13,6 @@ The skill has been invoked. Output the content from the preprocessor:
 <output>No issues found.</output>
 
 ## Assertions
+
 1. output contains the verbatim text from the output tag
 2. output does not contain apologetic or failure language

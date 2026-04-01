@@ -178,32 +178,64 @@ public final class InstructionTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      // Create test-cases.json
-      Path testCasesPath = tempDir.resolve("test-cases.json");
-      Files.writeString(testCasesPath, """
-        {
-          "test_cases": [
-            {"test_case_id": "TC1", "semantic_unit_id": "unit_1"},
-            {"test_case_id": "TC2", "semantic_unit_id": "unit_2"},
-            {"test_case_id": "TC3", "semantic_unit_id": "unit_1"}
-          ]
-        }
+      // Create .md test case files in a test directory; file stem = test case ID
+      Path testDir = tempDir.resolve("test-cases");
+      Files.createDirectories(testDir);
+      // filename stem = semantic unit ID; tc1 and tc3 are changed, tc2 is not
+      Files.writeString(testDir.resolve("tc1.md"), """
+        ---
+        category: REQUIREMENT
+        ---
+
+        ## Turn 1
+
+        Test prompt for tc1.
+
+        ## Assertions
+
+        1. The Skill tool was invoked
+        """, StandardCharsets.UTF_8);
+      Files.writeString(testDir.resolve("tc2.md"), """
+        ---
+        category: REQUIREMENT
+        ---
+
+        ## Turn 1
+
+        Test prompt for tc2.
+
+        ## Assertions
+
+        1. The Skill tool was invoked
+        """, StandardCharsets.UTF_8);
+      Files.writeString(testDir.resolve("tc3.md"), """
+        ---
+        category: REQUIREMENT
+        ---
+
+        ## Turn 1
+
+        Test prompt for tc3.
+
+        ## Assertions
+
+        1. The Skill tool was invoked
         """, StandardCharsets.UTF_8);
 
-      String changedUnitsJson = "[\"unit_1\"]";
+      String changedUnitsJson = "[\"tc1\", \"tc3\"]";
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
-      String result = runner.mapUnits(new String[]{testCasesPath.toString(), changedUnitsJson});
+      String result = runner.mapUnits(new String[]{testDir.toString(), changedUnitsJson});
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(result);
 
-      // TC1 and TC3 cover unit_1 (changed), TC2 covers unit_2 (unchanged)
+      // tc1 and tc3 are changed, tc2 is unchanged
       JsonNode rerun = root.path("rerun_test_case_ids");
       JsonNode carryforward = root.path("carryforward_test_case_ids");
 
       requireThat(rerun.size(), "rerunCount").isEqualTo(2);
       requireThat(carryforward.size(), "carryforwardCount").isEqualTo(1);
-      requireThat(carryforward.get(0).asString(), "carryforwardTc").isEqualTo("TC2");
+      requireThat(carryforward.get(0).asString(), "carryforwardTc").isEqualTo("tc2");
     }
     finally
     {
@@ -220,19 +252,38 @@ public final class InstructionTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      Path testCasesPath = tempDir.resolve("test-cases.json");
-      Files.writeString(testCasesPath, """
-        {
-          "test_cases": [
-            {"test_case_id": "TC1", "semantic_unit_id": "unit_1"},
-            {"test_case_id": "TC2", "semantic_unit_id": "unit_2"}
-          ]
-        }
+      Path testDir = tempDir.resolve("test-cases");
+      Files.createDirectories(testDir);
+      Files.writeString(testDir.resolve("tc1.md"), """
+        ---
+        category: REQUIREMENT
+        ---
+
+        ## Turn 1
+
+        Test prompt for tc1.
+
+        ## Assertions
+
+        1. The Skill tool was invoked
+        """, StandardCharsets.UTF_8);
+      Files.writeString(testDir.resolve("tc2.md"), """
+        ---
+        category: REQUIREMENT
+        ---
+
+        ## Turn 1
+
+        Test prompt for tc2.
+
+        ## Assertions
+
+        1. The Skill tool was invoked
         """, StandardCharsets.UTF_8);
 
       String changedUnitsJson = "[]";
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
-      String result = runner.mapUnits(new String[]{testCasesPath.toString(), changedUnitsJson});
+      String result = runner.mapUnits(new String[]{testDir.toString(), changedUnitsJson});
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(result);
@@ -351,7 +402,7 @@ public final class InstructionTestRunnerTest
   }
 
   /**
-   * Verifies that check-boundary handles an empty test-cases.json (zero test cases) gracefully:
+   * Verifies that check-boundary handles an empty test directory (zero test cases) gracefully:
    * the decision defaults to INCONCLUSIVE and log_ratio to 0.0.
    */
   @Test
@@ -385,12 +436,12 @@ public final class InstructionTestRunnerTest
   }
 
   /**
-   * Verifies that persist-artifacts throws IllegalArgumentException when instruction-test.json has
-   * missing required fields (corrupted/empty artifacts directory).
+   * Verifies that persist-artifacts throws IllegalArgumentException when the artifacts directory
+   * contains no .md test case files (simulates corruption or empty artifacts directory).
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*test-cases.json not found.*")
-  public void persistArtifactsRejectsCorruptInstructionTestJson() throws IOException
+    expectedExceptionsMessageRegExp = ".*no .md test case files found.*")
+  public void persistArtifactsRejectsEmptyArtifactsDir() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
@@ -403,10 +454,10 @@ public final class InstructionTestRunnerTest
       TestUtils.runGit(repoDir, "add", "skill.md");
       TestUtils.runGit(repoDir, "commit", "-m", "add skill");
 
-      // Create artifacts dir without test-cases.json (simulates corruption/missing file)
+      // Create artifacts dir without any .md test case files (simulates corruption/missing files)
       Path artifactsDir = tempDir.resolve("artifacts");
       Files.createDirectories(artifactsDir);
-      // Intentionally do NOT create test-cases.json
+      // Intentionally do NOT create any .md test case files
 
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       runner.persistArtifacts(
@@ -669,16 +720,27 @@ public final class InstructionTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      Path testCasesPath = tempDir.resolve("test-cases.json");
-      Files.writeString(testCasesPath, """
-        {"test_cases":[{"test_case_id":"TC1","semantic_unit_id":"unit_1"}]}
+      Path testDir = tempDir.resolve("test-cases");
+      Files.createDirectories(testDir);
+      Files.writeString(testDir.resolve("tc1.md"), """
+        ---
+        category: REQUIREMENT
+        ---
+
+        ## Turn 1
+
+        Test prompt for tc1.
+
+        ## Assertions
+
+        1. The Skill tool was invoked
         """, StandardCharsets.UTF_8);
 
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       PrintStream printStream = new PrintStream(baos, false, StandardCharsets.UTF_8);
 
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
-      runner.run(new String[]{"map-units", testCasesPath.toString(), "[]"}, printStream);
+      runner.run(new String[]{"map-units", testDir.toString(), "[]"}, printStream);
       printStream.flush();
 
       String output = baos.toString(StandardCharsets.UTF_8).strip();
@@ -757,17 +819,38 @@ public final class InstructionTestRunnerTest
       // Get the SHA of the commit
       String sha = TestUtils.runGitCommandWithOutput(repoDir, "rev-parse", "HEAD");
 
-      // Create test-cases.json
-      Path testCasesPath = tempDir.resolve("test-cases.json");
-      Files.writeString(testCasesPath, """
-        {"test_cases":[
-          {"test_case_id":"TC1","semantic_unit_id":"unit_1"},
-          {"test_case_id":"TC2","semantic_unit_id":"unit_2"}
-        ]}
+      // Create test directory with .md test case files
+      Path testDir = tempDir.resolve("test-cases");
+      Files.createDirectories(testDir);
+      Files.writeString(testDir.resolve("tc1.md"), """
+        ---
+        category: REQUIREMENT
+        ---
+
+        ## Turn 1
+
+        Test prompt for tc1.
+
+        ## Assertions
+
+        1. The Skill tool was invoked
+        """, StandardCharsets.UTF_8);
+      Files.writeString(testDir.resolve("tc2.md"), """
+        ---
+        category: REQUIREMENT
+        ---
+
+        ## Turn 1
+
+        Test prompt for tc2.
+
+        ## Assertions
+
+        1. The Skill tool was invoked
         """, StandardCharsets.UTF_8);
 
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
-      String result = runner.detectChanges(new String[]{sha, skillFile.toString(), testCasesPath.toString()});
+      String result = runner.detectChanges(new String[]{sha, skillFile.toString(), testDir.toString()});
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(result);
@@ -820,17 +903,38 @@ public final class InstructionTestRunnerTest
         Do something.
         """, StandardCharsets.UTF_8);
 
-      // Create test-cases.json
-      Path testCasesPath = tempDir.resolve("test-cases.json");
-      Files.writeString(testCasesPath, """
-        {"test_cases":[
-          {"test_case_id":"TC1","semantic_unit_id":"unit_1"},
-          {"test_case_id":"TC2","semantic_unit_id":"unit_2"}
-        ]}
+      // Create test directory with .md test case files
+      Path testDir = tempDir.resolve("test-cases");
+      Files.createDirectories(testDir);
+      Files.writeString(testDir.resolve("tc1.md"), """
+        ---
+        category: REQUIREMENT
+        ---
+
+        ## Turn 1
+
+        Test prompt for tc1.
+
+        ## Assertions
+
+        1. The Skill tool was invoked
+        """, StandardCharsets.UTF_8);
+      Files.writeString(testDir.resolve("tc2.md"), """
+        ---
+        category: REQUIREMENT
+        ---
+
+        ## Turn 1
+
+        Test prompt for tc2.
+
+        ## Assertions
+
+        1. The Skill tool was invoked
         """, StandardCharsets.UTF_8);
 
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
-      String result = runner.detectChanges(new String[]{oldSha, skillFile.toString(), testCasesPath.toString()});
+      String result = runner.detectChanges(new String[]{oldSha, skillFile.toString(), testDir.toString()});
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(result);
@@ -883,14 +987,25 @@ public final class InstructionTestRunnerTest
         Changed body content.
         """, StandardCharsets.UTF_8);
 
-      // Create test-cases.json
-      Path testCasesPath = tempDir.resolve("test-cases.json");
-      Files.writeString(testCasesPath, """
-        {"test_cases":[{"test_case_id":"TC1","semantic_unit_id":"unit_1"}]}
+      // Create test directory with .md test case file
+      Path testDir = tempDir.resolve("test-cases");
+      Files.createDirectories(testDir);
+      Files.writeString(testDir.resolve("tc1.md"), """
+        ---
+        category: REQUIREMENT
+        ---
+
+        ## Turn 1
+
+        Test prompt for tc1.
+
+        ## Assertions
+
+        1. The Skill tool was invoked
         """, StandardCharsets.UTF_8);
 
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
-      String result = runner.detectChanges(new String[]{oldSha, skillFile.toString(), testCasesPath.toString()});
+      String result = runner.detectChanges(new String[]{oldSha, skillFile.toString(), testDir.toString()});
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(result);
@@ -916,8 +1031,10 @@ public final class InstructionTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      // Create skill file inside the git repo
-      Path skillFile = repoDir.resolve("skill.md");
+      // Create skill file inside proper directory structure
+      Path skillDir = repoDir.resolve("plugin/skills/test-skill");
+      Files.createDirectories(skillDir);
+      Path skillFile = skillDir.resolve("skill.md");
       Files.writeString(skillFile, """
         ---
         description: Test skill
@@ -925,15 +1042,24 @@ public final class InstructionTestRunnerTest
         ---
         # Body
         """, StandardCharsets.UTF_8);
-      TestUtils.runGit(repoDir, "add", "skill.md");
+      TestUtils.runGit(repoDir, "add", "plugin/skills/test-skill/skill.md");
       TestUtils.runGit(repoDir, "commit", "-m", "add skill");
 
-      // Create an artifacts dir with test-cases.json
+      // Create an artifacts dir with .md test case files
       Path artifactsDir = tempDir.resolve("artifacts");
       Files.createDirectories(artifactsDir);
-      Path testCasesJson = artifactsDir.resolve("test-cases.json");
-      Files.writeString(testCasesJson, """
-        {"test_cases":[{"test_case_id":"TC1","semantic_unit_id":"unit_1"}]}
+      Files.writeString(artifactsDir.resolve("tc1.md"), """
+        ---
+        category: REQUIREMENT
+        ---
+
+        ## Turn 1
+
+        Test prompt for tc1.
+
+        ## Assertions
+
+        1. The Skill tool was invoked
         """, StandardCharsets.UTF_8);
 
       String sessionId = "test-session-001";
@@ -942,12 +1068,18 @@ public final class InstructionTestRunnerTest
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(baos, false, StandardCharsets.UTF_8);
-      runner.persistArtifacts(
-        new String[]{"skill.md", artifactsDir.toString(), sessionId, repoDir.toString(), phase},
-        out);
+      String[] args = {
+        "plugin/skills/test-skill/skill.md",
+        artifactsDir.toString(),
+        sessionId,
+        repoDir.toString(),
+        phase
+      };
+      runner.persistArtifacts(args, out);
 
-      // Verify instruction-test.json was created
-      Path instructionTestJson = repoDir.resolve("instruction-test").resolve("instruction-test.json");
+      // Verify instruction-test.json was created in .cat/work/instruction-test/{skillName}/
+      // skillName is extracted from the skill directory name
+      Path instructionTestJson = repoDir.resolve(".cat/work/instruction-test/test-skill/instruction-test.json");
       requireThat(Files.exists(instructionTestJson), "instructionTestJsonExists").isTrue();
 
       String content = Files.readString(instructionTestJson, StandardCharsets.UTF_8);
@@ -955,11 +1087,16 @@ public final class InstructionTestRunnerTest
       JsonNode root = mapper.readTree(content);
 
       requireThat(root.path("session_id").asString(), "session_id").isEqualTo(sessionId);
-      requireThat(root.path("model_id").asString(), "model_id").isEqualTo("claude-haiku-4-5-20251001");
+      requireThat(root.path("model_id").asString(), "model_id").
+        isEqualTo("claude-haiku-4-5-20251001");
       requireThat(root.path("phase").asString(), "phase").isEqualTo(phase);
-      requireThat(root.path("skill").path("path").asString(), "skill.path").isEqualTo("skill.md");
+      requireThat(root.path("skill").path("path").asString(), "skill.path").
+        isEqualTo("plugin/skills/test-skill/skill.md");
       requireThat(root.path("skill").path("sha256").asString(""), "skill.sha256").isNotBlank();
-      requireThat(root.path("test_cases").path("sha256").asString(""), "test_cases.sha256").isNotBlank();
+      requireThat(root.path("test_cases").path("path").asString(), "test_cases.path").
+        isEqualTo("plugin/skills/test-skill/first-use");
+      requireThat(root.path("test_cases").path("sha256").asString(""), "test_cases.sha256").
+        isNotBlank();
 
       // Assert exclusivity: no undocumented fields
       List<String> fieldNames = new ArrayList<>(root.propertyNames());
@@ -975,44 +1112,59 @@ public final class InstructionTestRunnerTest
   }
 
   /**
-   * Verifies that persist-artifacts copies test-cases.json into the instruction-test directory.
+   * Verifies that persist-artifacts copies .md test case files into the instruction-test directory.
    */
   @Test
-  public void persistArtifactsCopiesTestCasesJson() throws IOException
+  public void persistArtifactsCopiesMdFiles() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      Path skillFile = repoDir.resolve("skill.md");
+      Path skillDir = repoDir.resolve("plugin/skills/test-skill");
+      Files.createDirectories(skillDir);
+      Path skillFile = skillDir.resolve("skill.md");
       Files.writeString(skillFile, "---\ndescription: Test\nmodel: haiku\n---\n# Body\n",
         StandardCharsets.UTF_8);
-      TestUtils.runGit(repoDir, "add", "skill.md");
+      TestUtils.runGit(repoDir, "add", "plugin/skills/test-skill/skill.md");
       TestUtils.runGit(repoDir, "commit", "-m", "add skill");
 
       Path artifactsDir = tempDir.resolve("artifacts");
       Files.createDirectories(artifactsDir);
-      String testCasesContent = """
-        {"test_cases":[{"test_case_id":"TC1","semantic_unit_id":"unit_1"}]}
+      String tc1Content = """
+        ---
+        category: REQUIREMENT
+        ---
+
+        ## Turn 1
+
+        Test prompt for tc1.
+
+        ## Assertions
+
+        1. The Skill tool was invoked
         """;
-      Files.writeString(artifactsDir.resolve("test-cases.json"), testCasesContent, StandardCharsets.UTF_8);
+      Files.writeString(artifactsDir.resolve("tc1.md"), tc1Content, StandardCharsets.UTF_8);
 
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(baos, false, StandardCharsets.UTF_8);
-      runner.persistArtifacts(
-        new String[]{"skill.md", artifactsDir.toString(), "sess1", repoDir.toString(), "final"},
-        out);
+      String[] args2 = {
+        "plugin/skills/test-skill/skill.md",
+        artifactsDir.toString(),
+        "sess1",
+        repoDir.toString(),
+        "final"
+      };
+      runner.persistArtifacts(args2, out);
 
-      // Verify test-cases.json was copied into instruction-test/
-      Path copiedTestCases = repoDir.resolve("instruction-test").resolve("test-cases.json");
-      requireThat(Files.exists(copiedTestCases), "testCasesJsonCopied").isTrue();
+      // Verify tc1.md was copied into first-use/
+      Path copiedTestCase = repoDir.resolve("plugin/skills/test-skill/first-use/tc1.md");
+      requireThat(Files.exists(copiedTestCase), "tc1MdCopied").isTrue();
 
       // Verify the content matches
-      String copiedContent = Files.readString(copiedTestCases, StandardCharsets.UTF_8);
-      JsonMapper mapper = scope.getJsonMapper();
-      JsonNode root = mapper.readTree(copiedContent);
-      requireThat(root.path("test_cases").size(), "testCasesCount").isEqualTo(1);
+      String copiedContent = Files.readString(copiedTestCase, StandardCharsets.UTF_8);
+      requireThat(copiedContent, "copiedContent").contains("category: REQUIREMENT");
     }
     finally
     {

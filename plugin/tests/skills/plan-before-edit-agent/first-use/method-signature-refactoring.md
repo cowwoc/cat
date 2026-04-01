@@ -1,6 +1,7 @@
 ---
 category: sequence
 ---
+
 ## Turn 1
 
 You are a work-execute agent. You need to refactor method calls for the method `processOrder`. The signature changes from `processOrder(OrderRequest req)` to `processOrder(Order order, Metadata meta)`. Invoke the plan-before-edit-agent skill with this symbol.

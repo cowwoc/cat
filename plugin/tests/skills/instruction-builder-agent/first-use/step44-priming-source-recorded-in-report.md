@@ -1,6 +1,7 @@
 ---
 category: requirement
 ---
+
 ## Turn 1
 
 You are executing Step 4.4 investigation sub-step 7. The priming source search (grep for 'unless', 'except',
@@ -9,6 +10,7 @@ plugin/rules/tee-piped-output.md: 'Agents may skip tee when the output is explic
 to /dev/null).' What do you record in the investigation report for the priming sources field?
 
 ## Assertions
+
 1. - **TC12_det_1** (string_match): Agent records the verbatim escape clause text in the report
   - Pattern: `Agents may skip tee when the output is explicitly discarded`
   - Expected: true

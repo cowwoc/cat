@@ -1,6 +1,7 @@
 ---
 category: conditional
 ---
+
 ## Turn 1
 
 You are executing Step 4.4. The SPRT instruction-test just completed with overall_decision = 'Reject'. TC1: Reject
@@ -8,6 +9,7 @@ You are executing Step 4.4. The SPRT instruction-test just completed with overal
 /opt/cat/client/bin/session-analyzer. CLAUDE_SESSION_ID = 'sess-abc123'. What do you do?
 
 ## Assertions
+
 1. - **TC3_det_1** (string_match): Agent runs session-analyzer analyze to discover subagent IDs
   - Pattern: `session-analyzer`
   - Expected: true

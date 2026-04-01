@@ -17,5 +17,6 @@ FRESH-CONTENT-CURRENT
 Give me the latest result verbatim.
 
 ## Assertions
+
 1. Output contains only LATEST <output> tag content, no prior invocation or session message content
 2. Output must contain the LATEST output tag content and must NOT contain stale content from earlier invocation

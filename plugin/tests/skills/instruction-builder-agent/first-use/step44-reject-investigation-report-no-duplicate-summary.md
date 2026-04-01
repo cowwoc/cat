@@ -1,12 +1,14 @@
 ---
 category: sequence
 ---
+
 ## Turn 1
 
 SPRT instruction-test completed with overall_decision = 'Reject'. TC1: Reject. You have completed the
 investigation (Step 4.4). Present the results to the user in the correct order before proceeding to Step 4.5.
 
 ## Assertions
+
 1. - **TC7_det_1** (regex): Output does NOT re-display SPRT instruction-test summary (already shown at end of Step 4.3)
   - Pattern: `TOKEN USAGE SUMMARY|Test Case.*Runs.*Total Tokens`
   - Expected: false

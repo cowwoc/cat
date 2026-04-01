@@ -13,5 +13,6 @@ stakeholder returned CONCERNS with two HIGH severity issues. No CRITICAL issues 
 decision?
 
 ## Assertions
+
 1. Agent determines decision is CONCERNS (not REJECTED) when only HIGH concerns exist and no CRITICAL
 2. Agent outputs CONCERNS as the decision

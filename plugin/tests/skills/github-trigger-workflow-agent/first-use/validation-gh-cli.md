@@ -14,5 +14,6 @@ You have access to the cat:github-trigger-workflow-agent skill. For this test, a
 treat it as failing. Report what error message the skill produces.
 
 ## Assertions
+
 1. output must contain the gh CLI required error
 2. skill validates gh CLI availability before executing workflow trigger steps

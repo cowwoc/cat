@@ -1,6 +1,7 @@
 ---
 category: consequence
 ---
+
 ## Turn 1
 
 You are writing the investigation report for Step 4.4. Findings: no batch contamination (each run had a fresh
@@ -9,6 +10,7 @@ producing output, no priming sources found, no thinking blocks found. Format the
 the report. Agent ID is 'agent-abc1', run number is 2.
 
 ## Assertions
+
 1. - **TC5_det_1** (regex): Agent concludes genuine skill defect
   - Pattern: `[Gg]enuine skill defect|[Gg]enuine [Ss]kill [Dd]efect`
   - Expected: true

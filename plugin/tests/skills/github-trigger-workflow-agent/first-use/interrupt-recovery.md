@@ -15,6 +15,7 @@ The temporary push trigger remains in the workflow file and the temporary commit
 to clean up this orphaned state.
 
 ## Assertions
+
 1. interrupt recovery must instruct detecting orphaned push trigger with grep, manual cleanup of trigger from
 workflow file, and committing and pushing the cleanup
 2. recovery steps include git add, git commit, and git push to finalize cleanup of orphaned state

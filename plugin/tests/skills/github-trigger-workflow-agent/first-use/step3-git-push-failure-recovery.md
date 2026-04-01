@@ -15,5 +15,6 @@ Step 3 instructions for handling git push failure. Describe the exact recovery s
 they properly revert the local commit and restore the workflow file to its original state.
 
 ## Assertions
+
 1. skill must instruct git reset --soft HEAD~1 to revert the commit and restore the workflow file to original state
 2. skill must provide clear error message about push failure and instruct re-running the skill to retry

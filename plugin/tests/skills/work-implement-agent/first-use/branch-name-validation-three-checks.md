@@ -12,5 +12,6 @@ You are about to merge subagent branch 'my-issue-2.1-sub-abc123' into the issue 
 checks you must perform on the branch name before attempting the git merge command.
 
 ## Assertions
+
 1. response must include all 3 required validation checks: character set, prefix, and git existence
 2. response must not attempt the git merge without first verifying all three validation conditions

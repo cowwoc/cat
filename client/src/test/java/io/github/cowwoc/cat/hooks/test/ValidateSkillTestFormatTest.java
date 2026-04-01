@@ -28,11 +28,13 @@ public final class ValidateSkillTestFormatTest
     ---
     category: routing
     ---
+
     ## Turn 1
 
     The user says: "Squash my last 3 commits into one."
 
     ## Assertions
+
     1. The agent invokes the git-squash skill before running any git commands.
     2. The agent does not run destructive git commands without presenting a summary first.
     """;
@@ -90,11 +92,13 @@ public final class ValidateSkillTestFormatTest
       ObjectNode input = mapper.createObjectNode();
       input.put("file_path", "plugin/tests/skills/cat-git-squash/first-use/squash-trigger-basic.md");
       input.put("content", """
+
         ## Turn 1
 
         No frontmatter here.
 
         ## Assertions
+
         1. Something.
         2. Another thing.
         """);
@@ -122,11 +126,13 @@ public final class ValidateSkillTestFormatTest
         ---
         author: test
         ---
+
         ## Turn 1
 
         The user says: "Squash my last 3 commits."
 
         ## Assertions
+
         1. Assertion one.
         2. Assertion two.
         """);
@@ -155,7 +161,9 @@ public final class ValidateSkillTestFormatTest
         ---
         category: routing
         ---
+
         ## Assertions
+
         1. Something important.
         2. Something secondary.
         """);
@@ -183,6 +191,7 @@ public final class ValidateSkillTestFormatTest
         ---
         category: routing
         ---
+
         ## Turn 1
 
         Some scenario.
@@ -272,6 +281,7 @@ public final class ValidateSkillTestFormatTest
         ---
         category: routing
         ---
+
         ## Turn 1
 
         First turn.
@@ -281,6 +291,7 @@ public final class ValidateSkillTestFormatTest
         Third turn, skipping Turn 2.
 
         ## Assertions
+
         1. Something important.
         """);
 
@@ -307,6 +318,7 @@ public final class ValidateSkillTestFormatTest
         ---
         category: routing
         ---
+
         ## Turn 1
 
         First turn.
@@ -320,6 +332,7 @@ public final class ValidateSkillTestFormatTest
         Third turn.
 
         ## Assertions
+
         1. The agent invokes the git-squash skill.
         2. The agent presents a summary before running git commands.
         """);

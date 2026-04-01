@@ -12,5 +12,6 @@ You are executing `/cat:config`. The user navigated to the main menu and selecte
 Present the first question to the user.
 
 ## Assertions
+
 1. output contains progress counter (1/4) for the first question
 2. output does NOT contain second question counter (2/4) yet

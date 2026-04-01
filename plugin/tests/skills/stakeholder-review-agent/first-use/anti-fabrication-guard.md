@@ -13,5 +13,6 @@ stakeholders: requirements, architecture, design. You know from memory that simi
 from all stakeholders. Describe your next actions.
 
 ## Assertions
+
 1. Agent does NOT write approval verdicts before Task calls are issued
 2. Agent plans to issue Task tool calls before writing verdicts
