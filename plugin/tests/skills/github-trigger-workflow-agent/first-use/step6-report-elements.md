@@ -14,6 +14,7 @@ each element, state specifically what information must be reported (e.g., 'workf
 trigger was scoped to').
 
 ## Assertions
+
 1. report must include workflow file path, branch information, trigger added/pre-existing status, commit+push result,
 gh run list output, and cleanup status
 2. report must include all required elements without omitting any mandatory component

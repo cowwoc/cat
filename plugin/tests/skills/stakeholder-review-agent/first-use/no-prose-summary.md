@@ -13,5 +13,6 @@ just invoked cat:stakeholder-review-box-agent and cat:stakeholder-concern-box-ag
 write after the boxes?
 
 ## Assertions
+
 1. Agent states it will NOT write any additional prose summary after the review boxes
 2. Agent indicates boxes are the complete or sole output

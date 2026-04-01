@@ -13,5 +13,6 @@ order (Job 1 first, then Job 2, etc.) rather than in the order jobs happen to co
 this ordering requirement.
 
 ## Assertions
+
 1. response must explain that ascending order ensures consistent/reproducible metrics aggregation
 2. response must connect ascending job order to predictable and comparable output across multiple runs

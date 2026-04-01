@@ -14,5 +14,6 @@ a git repository (as if running outside any git repo). Invoke the skill with arg
 fail. Report what error message the skill produces.
 
 ## Assertions
+
 1. output must contain error about not being in a git repository
 2. skill validates git repository context before executing steps

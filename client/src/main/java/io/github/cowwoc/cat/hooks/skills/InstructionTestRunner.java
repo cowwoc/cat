@@ -36,6 +36,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.HexFormat;
@@ -47,6 +48,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -234,7 +236,7 @@ public final class InstructionTestRunner
    * Compares the old skill (at the given git SHA) against the current skill file and identifies
    * which test cases need re-running based on changed line ranges.
    *
-   * @param args {@code [old_skill_sha, new_skill_path, test_cases_path]}
+   * @param args {@code [old_skill_sha, new_skill_path, test_dir_path]}
    * @return a JSON object describing changed ranges and test case partitioning
    * @throws IllegalArgumentException if arguments are missing or files are not found
    * @throws IOException              if files cannot be read or git commands fail
@@ -245,11 +247,11 @@ public final class InstructionTestRunner
     if (args.length != 3)
       throw new IllegalArgumentException(
         "InstructionTestRunner detect-changes: expected 3 arguments, got " + args.length + ".\n" +
-        "Usage: skill-test-runner detect-changes <old_skill_sha> <new_skill_path> <test_cases_path>");
+        "Usage: skill-test-runner detect-changes <old_skill_sha> <new_skill_path> <test_dir_path>");
 
     String oldSha = args[0];
     Path newSkillPath = Path.of(args[1]);
-    Path testCasesPath = Path.of(args[2]);
+    Path testDirPath = Path.of(args[2]);
 
     if (!oldSha.matches("[0-9a-f]{7,40}"))
       throw new IllegalArgumentException(
@@ -258,9 +260,9 @@ public final class InstructionTestRunner
     if (Files.notExists(newSkillPath))
       throw new IllegalArgumentException(
         "InstructionTestRunner detect-changes: new skill file not found: " + newSkillPath);
-    if (Files.notExists(testCasesPath))
+    if (Files.notExists(testDirPath) || !Files.isDirectory(testDirPath))
       throw new IllegalArgumentException(
-        "InstructionTestRunner detect-changes: test cases file not found: " + testCasesPath);
+        "InstructionTestRunner detect-changes: test directory not found: " + testDirPath);
 
     // Determine git repo root from the skill file's directory
     ProcessRunner.Result rootResult =
@@ -310,7 +312,7 @@ public final class InstructionTestRunner
         boolean skillChanged = frontmatterChanged || bodyChanged;
 
         // Collect all test case IDs
-        List<String> allTestCaseIds = readAllTestCaseIds(testCasesPath);
+        List<String> allTestCaseIds = readAllTestCaseIds(testDirPath);
 
         JsonMapper mapper = scope.getJsonMapper();
         ObjectNode result = mapper.createObjectNode();
@@ -358,7 +360,7 @@ public final class InstructionTestRunner
           result.put("semantic_units_path_hint",
             "Run: skill-test-runner extract-units " + args[1] +
             " to get line-numbered body, then apply semantic unit extraction, then run: " +
-            "skill-test-runner map-units " + args[2] + " <changed_unit_ids_json>");
+            "skill-test-runner map-units " + testDirPath + " <changed_unit_ids_json>");
         }
 
         // Produce compact single-line JSON to match Bash output style
@@ -380,13 +382,15 @@ public final class InstructionTestRunner
   /**
    * Implements the {@code map-units} command.
    * <p>
-   * Given test-cases.json and a JSON array of changed semantic unit IDs, determines which test
-   * cases must re-run and which carry forward.
+   * Given a test directory of {@code .md} files and a JSON array of changed semantic unit IDs,
+   * determines which test cases must re-run and which carry forward.
+   * <p>
+   * Each {@code .md} file's filename stem serves as both the test case ID and the semantic unit ID.
    *
-   * @param args {@code [test_cases_path, changed_units_json]}
+   * @param args {@code [test_dir_path, changed_units_json]}
    * @return a JSON object with rerun and carryforward test case ID lists
-   * @throws IllegalArgumentException if arguments are missing or the file is not found
-   * @throws IOException              if the file cannot be read
+   * @throws IllegalArgumentException if arguments are missing or the directory is not found
+   * @throws IOException              if files cannot be read
    */
   public String mapUnits(String[] args) throws IOException
   {
@@ -394,14 +398,14 @@ public final class InstructionTestRunner
     if (args.length != 2)
       throw new IllegalArgumentException(
         "InstructionTestRunner map-units: expected 2 arguments, got " + args.length + ".\n" +
-        "Usage: skill-test-runner map-units <test_cases_path> <changed_units_json>");
+        "Usage: skill-test-runner map-units <test_dir_path> <changed_units_json>");
 
-    Path testCasesPath = Path.of(args[0]);
+    Path testDirPath = Path.of(args[0]);
     String changedUnitsJson = args[1];
 
-    if (Files.notExists(testCasesPath))
+    if (Files.notExists(testDirPath) || !Files.isDirectory(testDirPath))
       throw new IllegalArgumentException(
-        "InstructionTestRunner map-units: test cases file not found: " + testCasesPath);
+        "InstructionTestRunner map-units: test directory not found: " + testDirPath);
 
     // Parse changed_units_json: a JSON array of string IDs
     JsonMapper mapper = scope.getJsonMapper();
@@ -416,28 +420,22 @@ public final class InstructionTestRunner
       }
     }
 
-    // Read test cases file and partition by whether semantic_unit_id is in changed set
-    JsonNode root = mapper.readTree(testCasesPath.toFile());
-    JsonNode testCasesArray = root.path("test_cases");
-
+    // Enumerate .md files in the test directory; filename stem is both test case ID and semantic unit ID
     List<String> allIds = new ArrayList<>();
     List<String> rerunIds = new ArrayList<>();
     List<String> carryforwardIds = new ArrayList<>();
 
-    if (testCasesArray.isArray())
+    List<Path> mdFiles = listMdFiles(testDirPath);
+    for (Path mdFile : mdFiles)
     {
-      for (JsonNode tc : testCasesArray)
-      {
-        String testCaseId = tc.path("test_case_id").asString("");
-        if (testCaseId.isBlank())
-          continue;
-        allIds.add(testCaseId);
-        String semanticUnitId = tc.path("semantic_unit_id").asString("");
-        if (changedUnits.isEmpty() || !changedUnits.contains(semanticUnitId))
-          carryforwardIds.add(testCaseId);
-        else
-          rerunIds.add(testCaseId);
-      }
+      String testCaseId = stemOf(mdFile);
+      if (testCaseId.isBlank())
+        continue;
+      allIds.add(testCaseId);
+      if (changedUnits.isEmpty() || !changedUnits.contains(testCaseId))
+        carryforwardIds.add(testCaseId);
+      else
+        rerunIds.add(testCaseId);
     }
 
     ObjectNode result = mapper.createObjectNode();
@@ -463,7 +461,7 @@ public final class InstructionTestRunner
    * Implements the {@code persist-artifacts} command.
    * <p>
    * Records instruction-test run artifacts: computes SHA-256 hashes, writes instruction-test.json, copies
-   * test-cases.json into the skill's instruction-test directory, and commits via git.
+   * .md test case files into the skill's instruction-test directory, and commits via git.
    *
    * @param args {@code [skill_path, artifacts_dir, session_id, worktree_root, phase]}
    * @param out  the stream to write status messages to
@@ -499,35 +497,42 @@ public final class InstructionTestRunner
       throw new IllegalArgumentException(
         "InstructionTestRunner persist-artifacts: skill file not found: " + absSkillPath);
 
-    Path testCasesSrc = artifactsDir.resolve("test-cases.json");
-    if (Files.notExists(testCasesSrc))
+    // Enumerate .md test case files from the artifacts directory
+    List<Path> testCaseMdFiles = listMdFiles(artifactsDir);
+    if (testCaseMdFiles.isEmpty())
       throw new IllegalArgumentException(
-        "InstructionTestRunner persist-artifacts: test-cases.json not found: " + testCasesSrc);
+        "InstructionTestRunner persist-artifacts: no .md test case files found in: " + artifactsDir);
 
-    // Compute skill directory and instruction-test subdirectory
+    // Compute skill directory for test case copy destination
     Path skillDir = absSkillPath.getParent();
-    Path instructionTestDir = skillDir.resolve("instruction-test");
-    Files.createDirectories(instructionTestDir);
+    // Extract skill name from path (e.g., "grep-and-read-agent")
+    String skillName = skillDir.getFileName().toString();
 
-    // Copy test-cases.json
-    Path testCasesDest = instructionTestDir.resolve("test-cases.json");
-    validatePathWithinBoundary(skillDir, testCasesDest);
-    Files.copy(testCasesSrc, testCasesDest, StandardCopyOption.REPLACE_EXISTING);
-
-    // Compute hashes
-    String skillHash = sha256File(absSkillPath);
-    String testCasesHash = sha256File(testCasesDest);
-
-    // Compute worktree-relative paths
+    // Copy each .md test case file into the skill's test directory (first-use/)
+    Path testCaseDir = skillDir.resolve("first-use");
+    Files.createDirectories(testCaseDir);
+    List<String> relTestCasePaths = new ArrayList<>();
     Path skillParent = Path.of(skillPathArg).getParent();
     Path skillParentOrDot;
     if (skillParent != null)
       skillParentOrDot = skillParent;
     else
       skillParentOrDot = Path.of(".");
-    String relTestCasesPath = skillParentOrDot.resolve("instruction-test").resolve("test-cases.json").toString();
-    String relInstructionTestJson = skillParentOrDot.resolve("instruction-test").
-      resolve("instruction-test.json").toString();
+    for (Path srcFile : testCaseMdFiles)
+    {
+      Path destFile = testCaseDir.resolve(srcFile.getFileName());
+      validatePathWithinBoundary(skillDir, destFile);
+      Files.copy(srcFile, destFile, StandardCopyOption.REPLACE_EXISTING);
+      relTestCasePaths.add(
+        skillParentOrDot.resolve("first-use").resolve(srcFile.getFileName()).toString());
+    }
+
+    // Compute hashes and paths for instruction-test.json (stored in .cat/work/instruction-test/{skill}/)
+    String skillHash = sha256File(absSkillPath);
+    String relInstructionTestDir = skillParentOrDot.resolve("first-use").toString();
+    Path catWorkInstructionTestDir = worktreeRoot.resolve(".cat").resolve("work").resolve("instruction-test").
+      resolve(skillName);
+    Files.createDirectories(catWorkInstructionTestDir);
 
     String timestamp = ISO_UTC.format(Instant.now());
 
@@ -542,8 +547,8 @@ public final class InstructionTestRunner
     }
     String modelId = ModelIdResolver.resolve(claudeCodeVersion, model);
 
-    // Write instruction-test.json using Jackson to ensure proper escaping and formatting
-    Path instructionTestJsonPath = instructionTestDir.resolve("instruction-test.json");
+    // Write instruction-test.json to .cat/work/instruction-test/{skill}/instruction-test.json
+    Path instructionTestJsonPath = catWorkInstructionTestDir.resolve("instruction-test.json");
     JsonMapper mapper = scope.getJsonMapper();
     ObjectNode root = mapper.createObjectNode();
     root.put("session_id", sessionId);
@@ -553,21 +558,22 @@ public final class InstructionTestRunner
     ObjectNode skillNode = root.putObject("skill");
     skillNode.put("path", skillPathArg);
     skillNode.put("sha256", skillHash);
+    // Record the test cases directory as the location of .md test files
+    String testCasesHash = sha256Directory(artifactsDir);
     ObjectNode testCasesNode = root.putObject("test_cases");
-    testCasesNode.put("path", relTestCasesPath);
+    testCasesNode.put("path", relInstructionTestDir);
     testCasesNode.put("sha256", testCasesHash);
     String instructionTestContent = mapper.writeValueAsString(root);
     Files.writeString(instructionTestJsonPath, instructionTestContent, StandardCharsets.UTF_8);
 
-    // Stage files
-    ProcessRunner.Result addTestCases = ProcessRunner.run(worktreeRoot, "git", "add", relTestCasesPath);
-    if (addTestCases.exitCode() != 0)
-      throw new IOException("git add failed for " + relTestCasesPath +
-        ": exit code " + addTestCases.exitCode() + ", output: " + addTestCases.stdout());
-    ProcessRunner.Result addInstructionTest = ProcessRunner.run(worktreeRoot, "git", "add", relInstructionTestJson);
-    if (addInstructionTest.exitCode() != 0)
-      throw new IOException("git add failed for " + relInstructionTestJson +
-        ": exit code " + addInstructionTest.exitCode() + ", output: " + addInstructionTest.stdout());
+    // Stage all copied .md test case files
+    for (String relPath : relTestCasePaths)
+    {
+      ProcessRunner.Result addResult = ProcessRunner.run(worktreeRoot, "git", "add", relPath);
+      if (addResult.exitCode() != 0)
+        throw new IOException("git add failed for " + relPath +
+          ": exit code " + addResult.exitCode() + ", output: " + addResult.stdout());
+    }
 
     // Commit with retry on lock contention (exponential backoff)
     String commitMessage =
@@ -1234,6 +1240,33 @@ public final class InstructionTestRunner
   }
 
   /**
+   * Computes a combined SHA-256 hex digest over all .md files in a directory, sorted by filename for
+   * determinism.
+   *
+   * @param directory the directory containing .md files
+   * @return lowercase hex SHA-256 digest
+   * @throws IOException if reading fails
+   */
+  private String sha256Directory(Path directory) throws IOException
+  {
+    List<Path> mdFiles = listMdFiles(directory);
+    try
+    {
+      MessageDigest digest = MessageDigest.getInstance("SHA-256");
+      for (Path file : mdFiles)
+      {
+        digest.update(file.getFileName().toString().getBytes(StandardCharsets.UTF_8));
+        digest.update(Files.readAllBytes(file));
+      }
+      return HexFormat.of().formatHex(digest.digest());
+    }
+    catch (NoSuchAlgorithmException e)
+    {
+      throw new AssertionError("SHA-256 algorithm not available", e);
+    }
+  }
+
+  /**
    * Runs a unified diff between two body files and returns the changed line ranges in the new file.
    *
    * @param oldBodyFile path to the old body file
@@ -1284,28 +1317,65 @@ public final class InstructionTestRunner
   }
 
   /**
-   * Reads all test case IDs from a test-cases.json file.
+   * Reads all test case IDs from a directory of {@code .md} test case files.
+   * <p>
+   * Each {@code .md} file's filename stem (without the {@code .md} extension) is its test case ID.
+   * Files are returned in sorted order for determinism.
    *
-   * @param testCasesPath path to test-cases.json
-   * @return list of test case ID strings in document order
-   * @throws IOException if the file cannot be read
+   * @param testDirPath path to the directory containing {@code .md} test case files
+   * @return list of test case ID strings in sorted filename order
+   * @throws IOException if the directory cannot be read
    */
-  private List<String> readAllTestCaseIds(Path testCasesPath) throws IOException
+  private List<String> readAllTestCaseIds(Path testDirPath) throws IOException
   {
-    JsonMapper mapper = scope.getJsonMapper();
-    JsonNode root = mapper.readTree(testCasesPath.toFile());
-    JsonNode testCasesArray = root.path("test_cases");
     List<String> ids = new ArrayList<>();
-    if (testCasesArray.isArray())
+    for (Path mdFile : listMdFiles(testDirPath))
     {
-      for (JsonNode tc : testCasesArray)
-      {
-        String id = tc.path("test_case_id").asString("");
-        if (!id.isBlank())
-          ids.add(id);
-      }
+      String id = stemOf(mdFile);
+      if (!id.isBlank())
+        ids.add(id);
     }
     return ids;
+  }
+
+  /**
+   * Lists all {@code .md} files in the given directory, sorted by filename for determinism.
+   *
+   * @param directory the directory to scan
+   * @return list of {@code .md} file paths in sorted order
+   * @throws IOException if the directory cannot be read
+   */
+  private List<Path> listMdFiles(Path directory) throws IOException
+  {
+    List<Path> result = new ArrayList<>();
+    try (Stream<Path> entries = Files.list(directory))
+    {
+      List<Path> sorted = entries.sorted(
+        Comparator.comparing(p -> p.getFileName().toString())).
+        toList();
+      for (Path entry : sorted)
+      {
+        String name = entry.getFileName().toString();
+        if (name.endsWith(".md") && Files.isRegularFile(entry))
+          result.add(entry);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Returns the filename stem (name without the last {@code .} extension) of the given path.
+   *
+   * @param path the file path
+   * @return the stem portion of the filename
+   */
+  private String stemOf(Path path)
+  {
+    String name = path.getFileName().toString();
+    int dotIndex = name.lastIndexOf('.');
+    if (dotIndex > 0)
+      return name.substring(0, dotIndex);
+    return name;
   }
 
   /**

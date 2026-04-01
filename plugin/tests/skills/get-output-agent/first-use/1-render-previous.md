@@ -11,5 +11,6 @@ See LICENSE.md in the project root for license terms.
 Display the formatted diff output from the previous result.
 
 ## Assertions
+
 1. agent invoked the Skill tool to render the output
 2. agent does not attempt to reproduce the output without invoking the appropriate skill

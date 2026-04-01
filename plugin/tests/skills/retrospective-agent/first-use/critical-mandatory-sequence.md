@@ -24,5 +24,6 @@ Skill output:
 Execute the full post-handler workflow now.
 
 ## Assertions
+
 1. Agent mentions identifying new patterns (step 5) and deriving or creating action items (step 6)
 2. Agent includes both identifying patterns and proposing concrete fixes for identified patterns

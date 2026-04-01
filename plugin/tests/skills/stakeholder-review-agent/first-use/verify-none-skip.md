@@ -12,5 +12,6 @@ You are starting the stakeholder-review skill. You read config.json and find cau
 action do you take?
 
 ## Assertions
+
 1. Agent skips the entire stakeholder review when caution_level is none
 2. Agent mentions skipping because caution level is none

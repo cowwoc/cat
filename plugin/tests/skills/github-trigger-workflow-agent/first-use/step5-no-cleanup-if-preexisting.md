@@ -15,6 +15,7 @@ proceed through to Step 5. In your response, explicitly state whether the skill 
 file during cleanup (Step 5) when ADDED_TRIGGER=false.
 
 ## Assertions
+
 1. skill must NOT instruct modifying the workflow file during cleanup when push trigger was pre-existing
 (ADDED_TRIGGER=false)
 2. response correctly states no modification should occur when the trigger was already present

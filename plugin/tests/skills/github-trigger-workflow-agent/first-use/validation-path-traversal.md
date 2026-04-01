@@ -12,5 +12,6 @@ You have access to the cat:github-trigger-workflow-agent skill. Invoke it with a
 ../../../etc/passwd" (a path containing '..' for traversal) and report the exact error message the skill produces.
 
 ## Assertions
+
 1. output must contain error about path traversal
 2. skill rejects paths containing '..' or absolute path components

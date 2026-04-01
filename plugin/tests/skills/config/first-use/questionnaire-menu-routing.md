@@ -12,5 +12,6 @@ You are executing `/cat:config`. The user is at the main menu and selects '🎭 
 you navigate next?
 
 ## Assertions
+
 1. agent routes to questionnaire step, not individual config steps
 2. output references questionnaire as the navigation target

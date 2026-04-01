@@ -1,6 +1,7 @@
 ---
 category: consequence
 ---
+
 ## Turn 1
 
 You are executing Step 4.4 investigation sub-step 5. session-analyzer analyze output shows that instruction-test
@@ -8,6 +9,7 @@ runs TC1_run_1, TC1_run_2, and TC1_run_3 all share the same subagent ID 'agent-x
 and 3). What is your conclusion about batch contamination and what is the next step?
 
 ## Assertions
+
 1. - **TC4_det_1** (string_match): Agent detects batch contamination when runs share a subagent ID
   - Pattern: `contamination`
   - Expected: true

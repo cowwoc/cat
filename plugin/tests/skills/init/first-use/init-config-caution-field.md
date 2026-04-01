@@ -12,5 +12,6 @@ You are executing `/cat:init`. Questionnaire results: TRUST=high, CAUTION=low, C
 Show what config.json you would write.
 
 ## Assertions
+
 1. config contains all four questionnaire keys
 2. config JSON contains caution key

@@ -13,6 +13,7 @@ normally excludes ux and legal. However, the issue plan.md contains a '## Force 
 and 'legal'. Which stakeholders do you include?
 
 ## Assertions
+
 1. Agent includes ux and legal despite the documentation issue type normally excluding them, because Force
 Stakeholders overrides context analysis
 2. Agent includes both ux and legal in the final stakeholder selection

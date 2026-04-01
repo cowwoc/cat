@@ -12,5 +12,6 @@ You have access to the cat:github-trigger-workflow-agent skill. Invoke it with a
 .github/workflows/does-not-exist-xyz-abc.yml". Report the exact error message the skill produces.
 
 ## Assertions
+
 1. output must contain 'Workflow file not found'
 2. skill validates that the workflow file exists before proceeding

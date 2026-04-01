@@ -14,6 +14,7 @@ current branch (e.g., 'feature/my-branch'). Invoke the skill and follow Step 1. 
 what the skill determines about the existing trigger and what value it sets for ADDED_TRIGGER.
 
 ## Assertions
+
 1. skill must detect existing push trigger but recognize it does not cover current branch, then set ADDED_TRIGGER=true
 to add a scoped trigger
 2. skill correctly identifies that the trigger exists but does NOT cover the current branch

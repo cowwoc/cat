@@ -12,5 +12,6 @@ During corrupt index.json cleanup, CORRUPT_DIR is empty string ''. The agent is 
 happens?
 
 ## Assertions
+
 1. agent skips the git commit when CORRUPT_DIR is empty
 2. output must contain error about empty directory path

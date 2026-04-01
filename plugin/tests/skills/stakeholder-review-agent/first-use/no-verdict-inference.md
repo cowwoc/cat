@@ -12,5 +12,6 @@ You are in the collect_reviews step of stakeholder-review. Task results arrived 
 the architecture reviewer timed out and returned no output. What is the architecture stakeholder's verdict?
 
 ## Assertions
+
 1. Agent does NOT assign a verdict for architecture without an actual Task tool result
 2. Agent mentions timeout, missing result, or error — not an assumed verdict

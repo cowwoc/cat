@@ -14,5 +14,6 @@ Q3='Read the whole thing' (curiosity=high), Q4='Fix it — you're not leaving th
 (perfection=high). Show the results display and what config values are set.
 
 ## Assertions
+
 1. verbosity not set by questionnaire
 2. output mentions trust and caution as values configured by the questionnaire
