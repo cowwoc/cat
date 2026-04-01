@@ -2,27 +2,27 @@
   "guards": [
     {
       "pattern": "\\bgit\\s+rebase\\b",
-      "skill": "cat:git-rebase-agent"
+      "skill": "git-rebase-agent"
     },
     {
       "pattern": "\\bgit\\s+commit\\b.*--amend\\b",
-      "skill": "cat:git-amend-agent"
+      "skill": "git-amend-agent"
     },
     {
       "pattern": "\\bgit\\s+push\\b.*--force\\b",
-      "skill": "cat:validate-git-safety-agent"
+      "skill": "validate-git-safety-agent"
     },
     {
       "pattern": "\\brm\\s+-[a-zA-Z]*r[a-zA-Z]*",
-      "skill": "cat:safe-rm-agent"
+      "skill": "safe-rm-agent"
     },
     {
       "pattern": "\\bgit\\s+filter-branch\\b",
-      "skill": "cat:git-rewrite-history-agent"
+      "skill": "git-rewrite-history-agent"
     },
     {
       "pattern": "\\bgit\\s+reset\\b.*--hard\\b",
-      "skill": "cat:validate-git-safety-agent"
+      "skill": "validate-git-safety-agent"
     }
   ]
 }

@@ -7,6 +7,7 @@
 package io.github.cowwoc.cat.hooks.bash;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
@@ -46,10 +47,11 @@ public final class RequireSkillForCommand implements BashHandler
   private final List<GuardEntry> guards;
 
   /**
-   * A mapping from a compiled regex pattern to the required skill name.
+   * A mapping from a compiled regex pattern to the required fully qualified skill name.
    *
    * @param pattern the compiled regex pattern to match against bash commands
-   * @param skill the fully-qualified skill name required when the pattern matches (e.g. {@code cat:git-rebase-agent})
+   * @param skill the fully qualified skill name (with plugin prefix) required when the pattern matches
+   *   (e.g. {@code marketplaces:git-rebase-agent})
    */
   private record GuardEntry(Pattern pattern, String skill)
   {
@@ -104,9 +106,11 @@ public final class RequireSkillForCommand implements BashHandler
           continue;
         }
         String patternString = patternNode.asString();
-        String skillName = skillNode.asString();
+        String bareName = skillNode.asString();
+        assert that(bareName, "bareName").doesNotContain(":").elseThrow();
+        String qualifiedName = scope.getPluginPrefix() + ":" + bareName;
         Pattern compiled = Pattern.compile(patternString, Pattern.CASE_INSENSITIVE);
-        result.add(new GuardEntry(compiled, skillName));
+        result.add(new GuardEntry(compiled, qualifiedName));
       }
     }
     catch (IOException e)
@@ -184,19 +188,19 @@ public final class RequireSkillForCommand implements BashHandler
   /**
    * Builds a block result with an actionable message naming the required skill.
    *
-   * @param skillName the fully-qualified skill name that must be loaded (e.g. {@code cat:git-rebase-agent})
+   * @param qualifiedName the fully qualified skill name (e.g. {@code marketplaces:git-rebase-agent})
    * @return a block result with the formatted message
    */
-  private Result buildBlockResult(String skillName)
+  private Result buildBlockResult(String qualifiedName)
   {
-    String skillBaseName = GetSkill.stripPrefix(skillName);
+    String skillBaseName = GetSkill.stripPrefix(qualifiedName);
     String message = """
-      BLOCKED: This command requires the %s skill.
+      BLOCKED: This command requires the cat:%s skill.
 
       Load the skill first:
         /cat:%s
 
-      Then retry the command.""".formatted(skillName, skillBaseName);
+      Then retry the command.""".formatted(skillBaseName, skillBaseName);
     return Result.block(message);
   }
 }
