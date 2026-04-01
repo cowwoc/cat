@@ -29,12 +29,9 @@ public interface ClaudePluginScope extends JvmScope
   Path getPluginRoot();
 
   /**
-   * Returns the plugin prefix (e.g., {@code "cat"}).
-   * <p>
-   * Derived from the plugin root path structure ({@code .../{prefix}/{slug}/{version}/}).
+   * Returns the plugin marketplace prefix ({@code "cat"}).
    *
    * @return the plugin prefix, never blank
-   * @throws AssertionError if the prefix cannot be derived from the plugin root path
    * @throws IllegalStateException if this scope is closed
    */
   String getPluginPrefix();

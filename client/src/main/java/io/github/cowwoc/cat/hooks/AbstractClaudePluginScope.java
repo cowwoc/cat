@@ -26,10 +26,11 @@ import java.nio.file.Path;
  */
 public abstract class AbstractClaudePluginScope extends AbstractJvmScope implements ClaudePluginScope
 {
+  /**
+   * The plugin marketplace prefix.
+   */
+  private static final String PLUGIN_PREFIX = "cat";
   private final Path pluginRoot;
-  @SuppressWarnings("this-escape")
-  private final ConcurrentLazyReference<String> pluginPrefix = ConcurrentLazyReference.create(
-    this::derivePluginPrefix);
   private final Path claudeConfigPath;
   @SuppressWarnings("this-escape")
   private final ConcurrentLazyReference<DisplayUtils> displayUtils = ConcurrentLazyReference.create(() ->
@@ -72,31 +73,7 @@ public abstract class AbstractClaudePluginScope extends AbstractJvmScope impleme
   public String getPluginPrefix()
   {
     ensureOpen();
-    return pluginPrefix.getValue();
-  }
-
-  /**
-   * Derives the plugin prefix from the plugin root path structure.
-   *
-   * @return the plugin prefix, never blank
-   * @throws AssertionError if the prefix cannot be derived from the plugin root path
-   */
-  private String derivePluginPrefix()
-  {
-    Path absolutePluginRoot = this.pluginRoot.toAbsolutePath().normalize();
-    Path slugDir = absolutePluginRoot.getParent();
-    if (slugDir == null)
-      throw new AssertionError("Plugin root has no parent directory: " + absolutePluginRoot);
-    Path prefixDir = slugDir.getParent();
-    if (prefixDir == null)
-      throw new AssertionError("Plugin slug directory has no parent: " + slugDir);
-    Path prefixName = prefixDir.getFileName();
-    if (prefixName == null)
-    {
-      throw new AssertionError("Cannot determine plugin prefix from path: " + absolutePluginRoot +
-        ". Expected structure: .../{prefix}/{slug}/{version}/");
-    }
-    return prefixName.toString();
+    return PLUGIN_PREFIX;
   }
 
   @Override
