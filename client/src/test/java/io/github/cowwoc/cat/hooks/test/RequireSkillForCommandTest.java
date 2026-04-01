@@ -30,8 +30,8 @@ public final class RequireSkillForCommandTest
   private static final String REGISTRY_JSON = """
     {
       "guards": [
-        {"pattern": "\\\\bgit\\\\s+rebase\\\\b", "skill": "cat:git-rebase-agent"},
-        {"pattern": "\\\\brm\\\\s+-[a-zA-Z]*r[a-zA-Z]*", "skill": "cat:safe-rm-agent"}
+        {"pattern": "\\\\bgit\\\\s+rebase\\\\b", "skill": "git-rebase-agent"},
+        {"pattern": "\\\\brm\\\\s+-[a-zA-Z]*r[a-zA-Z]*", "skill": "safe-rm-agent"}
       ]
     }
     """;
@@ -204,6 +204,46 @@ public final class RequireSkillForCommandTest
 
         requireThat(result.blocked(), "blocked").isFalse();
         requireThat(result.reason(), "reason").isEmpty();
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+      TestUtils.deleteDirectoryRecursively(tempProjectDir);
+    }
+  }
+
+  /**
+   * Verifies that a guarded command is blocked when the loaded skill has a different plugin prefix than
+   * the canonical one.
+   * <p>
+   * The registry stores bare skill names that are qualified with the canonical plugin prefix at load time.
+   * A marker file with a different prefix (e.g. {@code marketplaces:git-rebase-agent} vs the test scope's
+   * canonical {@code cat:git-rebase-agent}) must not match — the handler blocks the command because the
+   * fully qualified names differ.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void guardedCommandBlockedWhenSkillLoadedWithDifferentPrefix() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("plugin-");
+    Path tempProjectDir = Files.createTempDirectory("project-");
+    try
+    {
+      writeRegistry(tempPluginRoot);
+      String payload = buildPayload("git rebase origin/main", "test-session-id");
+      try (TestClaudeHook scope = new TestClaudeHook(payload, tempProjectDir, tempPluginRoot, tempProjectDir))
+      {
+        // Marker written with "marketplaces:" prefix — differs from canonical "cat:" prefix
+        writeSkillsLoaded(scope, "test-session-id", "marketplaces:git-rebase-agent\n");
+        RequireSkillForCommand handler = new RequireSkillForCommand(scope);
+
+        BashHandler.Result result = handler.check(scope);
+
+        requireThat(result.blocked(), "blocked").isTrue();
+        requireThat(result.reason(), "reason").contains("BLOCKED");
+        requireThat(result.reason(), "reason").contains("cat:git-rebase-agent");
       }
     }
     finally
