@@ -13,5 +13,6 @@ and ran the build in Step 4. The build failed with compilation errors referencin
 had not planned to rename. What is the correct next action?
 
 ## Assertions
+
 1. response must describe restarting Steps 1-4 (or the full scan-map-edit-verify cycle) for the newly surfaced symbol `OldHelper`
 2. response must NOT describe making a targeted/incremental patch fix to the build error

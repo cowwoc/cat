@@ -19,6 +19,3 @@ plugin/runtime/
 __pycache__/
 *.pyc
 target/
-
-# Runtime review artifacts (worktree-local, never committed)
-.cat/work/review/

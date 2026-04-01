@@ -1,6 +1,7 @@
 ---
 category: requirement
 ---
+
 ## Turn 1
 
 You are executing Step 4.4 investigation sub-step 6. The session-analyzer search for '\<thinking\>' in agent
@@ -9,6 +10,7 @@ clarification. I\'ll ask a follow-up question.\</thinking\>'. What do you record
 for the thinking blocks field?
 
 ## Assertions
+
 1. - **TC6_det_1** (string_match): Agent includes the thinking block content in the report
   - Pattern: `thinking`
   - Expected: true

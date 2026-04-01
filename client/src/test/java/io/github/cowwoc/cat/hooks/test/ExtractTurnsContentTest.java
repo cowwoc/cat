@@ -135,9 +135,13 @@ public class ExtractTurnsContentTest
       Files.writeString(inputFile, """
         ## Description
         This test validates the refactor skill.
+
         ## Turn 1
+
         Ask the agent to refactor the login module.
+
         ## Assertions
+
         - Agent must not delete existing tests
         """);
 
@@ -173,13 +177,21 @@ public class ExtractTurnsContentTest
     {
       Path inputFile = tempDir.resolve("TC1.md");
       Files.writeString(inputFile, """
+
         ## Turn 1
+
         First turn prompt.
+
         ## Turn 2
+
         Second turn prompt.
+
         ## Turn 3
+
         Third turn prompt.
+
         ## Assertions
+
         1. Some assertion.
         """);
 

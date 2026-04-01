@@ -1,6 +1,7 @@
 ---
 category: sequence
 ---
+
 ## Turn 1
 
 You are a work-execute agent. You need to remove the deprecated class `LegacyConnectionPool` from the codebase. Invoke the plan-before-edit-agent skill with this symbol argument.

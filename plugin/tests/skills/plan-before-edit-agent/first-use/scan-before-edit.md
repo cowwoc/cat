@@ -13,5 +13,6 @@ across the codebase. You have not searched for any occurrences yet.
 What is the VERY FIRST action you must take before making any file edits?
 
 ## Assertions
+
 1. response must describe scanning/searching for all occurrences of the symbol before making any edits
 2. response must NOT describe making any edits or Edit tool calls before the scan step

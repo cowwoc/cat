@@ -12,5 +12,6 @@ The retrospective skill output started with: 'Retrospective not triggered (6 day
 No analysis performed.' What should you do?
 
 ## Assertions
+
 1. Agent stops without executing post-handler workflow steps
 2. Response contains the status message text and does not begin executing retrospective workflow steps

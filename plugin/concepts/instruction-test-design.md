@@ -19,42 +19,93 @@ An **organic** instruction-test keeps `system_reminders` empty. The agent must r
 SKILL.md `description` field, then choose the skill based on that description alone. This measures realistic behavior:
 an agent working on a real task with no hand-holding.
 
-## Test Case Structure
+## Test Case File Format
 
-Each instruction-test config maps a test name to a `messages` array:
+Each test case is a single `.md` file stored in the skill's test directory (`plugin/tests/{skill_name}/`).
+The file stem is the test case ID used by `InstructionTestRunner` and SPRT tracking.
 
-```json
-{
-  "target_description": "<hypothesis: what behavior this test verifies>",
-  "system_reminders": [],
-  "system_prompt": "<skill description injected as it appears at runtime — see Skill Availability below>",
-  "configs": {
-    "positive_case_name": {
-      "messages": [
-        {
-          "prompt": "<realistic work prompt>",
-          "success_criteria": {
-            "must_use_tools": ["Skill"],
-            "_metadata": {
-              "uses_tool:Skill": {
-                "description": "Tier 1 — agent chose to invoke the skill",
-                "severity": "HIGH"
-              }
-            }
-          }
-        }
-      ]
-    }
-  }
-}
+### Frontmatter
+
+Every test case file begins with a YAML frontmatter block declaring the category:
+
 ```
+---
+category: <CATEGORY>
+---
+```
+
+Valid categories:
+
+| Category | Description |
+|----------|-------------|
+| `REQUIREMENT` | Verifies a behavior the instruction mandates |
+| `PROHIBITION` | Verifies a behavior the instruction forbids |
+| `CONDITIONAL` | Verifies a behavior that applies only under a specific condition |
+| `SEQUENCE` | Verifies an ordering or sequencing constraint |
+| `DEPENDENCY` | Verifies prerequisite or precondition enforcement |
+| `negative` | Verifies the skill is NOT invoked for an out-of-scope prompt |
+
+### Section Headings
+
+After the frontmatter, every test case file contains exactly two sections:
+
+- `## Turn 1` — the realistic user prompt sent to the agent under test
+- `## Assertions` — a numbered plain-text list of behavioral assertions graded by the instruction-grader-agent
+
+### Assertion Syntax
+
+Assertions are a numbered list of plain-text sentences. All assertions are semantic (no deterministic
+patterns). For skill instruction files, assertion 1 is always `The Skill tool was invoked`. For negative
+test cases, assertion 1 is always `The Skill tool was NOT invoked`.
 
 **Key rules:**
 
-- `system_reminders` must be an empty array (`[]`) — never list available skills here.
-- `system_prompt` injects the skill description as it would appear at runtime (see below).
-- `target_description` must state a falsifiable hypothesis: what behavior the test proves or disproves.
-- Each test config is a single scenario; use separate configs rather than one config with many messages.
+- `system_reminders` must remain empty in test execution — never list available skills in the prompt.
+- `system_prompt` injects the skill description at runtime (see Skill Availability below).
+- The file stem serves as the test case ID; choose descriptive names (e.g., `unit_step44_guard.md`).
+- One scenario per file; use separate files for positive and negative cases.
+
+### Positive Test Case Template
+
+```
+---
+category: <CATEGORY>
+---
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
+## Turn 1
+
+<realistic user prompt that organically requires this skill — do not name or hint at the skill>
+
+## Assertions
+
+1. The Skill tool was invoked
+2. <behavioral assertion describing expected skill behavior>
+3. <additional behavioral assertion>
+```
+
+### Negative Test Case Template
+
+```
+---
+category: negative
+---
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
+## Turn 1
+
+<realistic out-of-scope prompt where this skill should not fire>
+
+## Assertions
+
+1. The Skill tool was NOT invoked
+```
 
 ## Skill Availability in Tests
 
@@ -62,10 +113,15 @@ Skills with `user-invocable: false` are only available to agents that explicitly
 frontmatter. When the empirical test runner launches an isolated claude session, these skills are not automatically
 available.
 
-To replicate real runtime conditions, inject the skill's `description` field into the `system_prompt`:
+To replicate real runtime conditions, inject the skill's `description` field into the test runner's `system_prompt`
+configuration (set at the instruction-test level, not in individual `.md` test case files):
 
-```json
-"system_prompt": "You have access to the following skill:\n- cat:grep-and-read-agent: PREFER when searching pattern AND reading matches - single operation (50-70% faster than sequential)\n\nInvoke skills using the Skill tool: Skill(skill=\"cat:grep-and-read-agent\", args=\"<cat_agent_id>\")"
+```
+You have access to the following skill:
+- cat:grep-and-read-agent: PREFER when searching pattern AND reading matches - single operation (50-70% faster
+  than sequential)
+
+Invoke skills using the Skill tool: Skill(skill="cat:grep-and-read-agent", args="<cat_agent_id>")
 ```
 
 This is NOT priming — it replicates how the skill description appears in the agent's context at runtime. The test
@@ -81,9 +137,7 @@ Every positive test case must verify two things:
 
 The agent invoked the Skill tool with the target skill name. This confirms the routing decision was correct.
 
-```json
-"must_use_tools": ["Skill"]
-```
+In a `.md` test case, Tier 1 is captured as assertion 1: `The Skill tool was invoked`.
 
 ### Tier 2 — Skill Followed Correctly
 
@@ -99,8 +153,8 @@ operation — the internal Grep and Read calls run inside the skill, not as sepa
 **Pattern: tool-call sequence verification**
 
 For skills where the procedure requires a specific external tool call sequence visible to the outer agent, add
-`must_use_tools` or `must_not_use_tools` criteria. Example: if the skill must call Bash for a git operation
-before committing, add `"must_use_tools": ["Skill", "Bash"]`.
+assertions describing the expected tool invocations. Example: if the skill must call Bash for a git operation
+before committing, add an assertion: `The agent invoked Bash for the git operation before calling the Skill tool.`
 
 ## Positive Case Design Rules
 
@@ -137,71 +191,71 @@ canonical out-of-scope categories:
 | Single known file | The task names exactly one file to read | "Read plugin/foo/SKILL.md" |
 | Two explicit paths | The task provides exactly two file paths | "Read file A and file B" |
 
-Negative case format:
+Negative case format (file named e.g. `grep_and_read_agent_negative_1.md`):
 
-```json
-"negative_search_only": {
-  "messages": [
-    {
-      "prompt": "List all Java files that reference HookHandler — just the paths, not their contents.",
-      "success_criteria": {
-        "must_not_use_tools": ["Skill"],
-        "_metadata": {
-          "not_uses_tool:Skill": {
-            "description": "Search-only task — skill must not be invoked",
-            "severity": "HIGH"
-          }
-        }
-      }
-    }
-  ]
-}
+```
+---
+category: negative
+---
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
+## Turn 1
+
+List all Java files that reference HookHandler — just the paths, not their contents.
+
+## Assertions
+
+1. The Skill tool was NOT invoked
 ```
 
-## Example Test Case File
+## Example Test Case Files
 
-Complete example for `grep-and-read-agent`:
+Complete examples for `grep-and-read-agent` stored in `plugin/tests/skills/grep-and-read-agent/`:
 
-```json
-{
-  "target_description": "Agent uses grep-and-read-agent when asked to search and read multiple files at unknown paths",
-  "system_reminders": [],
-  "system_prompt": "You have access to the following skill:\n- cat:grep-and-read-agent: PREFER when searching pattern AND reading matches - single operation (50-70% faster than sequential)\n\nInvoke skills using the Skill tool: Skill(skill=\"cat:grep-and-read-agent\", args=\"<cat_agent_id>\")",
-  "configs": {
-    "positive_find_implementations": {
-      "messages": [
-        {
-          "prompt": "I need to understand how HookHandler is implemented across the codebase. Search for all Java files that contain HookHandler and read their contents so you can explain what each implementation does.",
-          "success_criteria": {
-            "must_use_tools": ["Skill"],
-            "_metadata": {
-              "uses_tool:Skill": {
-                "description": "Tier 1 — agent invoked grep-and-read-agent to search and read multiple files in one operation",
-                "severity": "HIGH"
-              }
-            }
-          }
-        }
-      ]
-    },
-    "negative_search_only": {
-      "messages": [
-        {
-          "prompt": "List all Java files that reference HookHandler — just the paths, not their contents.",
-          "success_criteria": {
-            "must_not_use_tools": ["Skill"],
-            "_metadata": {
-              "not_uses_tool:Skill": {
-                "description": "Search-only — skill should not be invoked",
-                "severity": "HIGH"
-              }
-            }
-          }
-        }
-      ]
-    }
-  }
-}
+**`unit_grep_files_with_matches.md`** (positive case):
+
+```
+---
+category: REQUIREMENT
+---
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
+## Turn 1
+
+I need to understand how HookHandler is implemented across the codebase. Search for all Java files that
+contain HookHandler and read their contents so you can explain what each implementation does.
+
+## Assertions
+
+1. The Skill tool was invoked
+2. The agent searched for HookHandler using Grep with output_mode: files_with_matches before reading any files
+3. The agent returned the full contents of each matched file, not just paths
+```
+
+**`grep_and_read_agent_negative_1.md`** (negative case):
+
+```
+---
+category: negative
+---
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
+## Turn 1
+
+List all Java files that reference HookHandler — just the paths, not their contents.
+
+## Assertions
+
+1. The Skill tool was NOT invoked
 ```
 
 ## Pass Threshold
@@ -218,7 +272,7 @@ the description.
 ```bash
 RUNNER="/home/node/.config/claude/plugins/cache/cat/cat/2.1/client/bin/empirical-test-runner"
 "$RUNNER" \
-  --config plugin/skills/<skill-name>/instruction-test/test-cases.json \
+  --test-dir plugin/tests/skills/<skill-name>/ \
   --trials 3 \
   --model haiku \
   --cwd .

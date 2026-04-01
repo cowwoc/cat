@@ -1,6 +1,7 @@
 ---
 category: requirement
 ---
+
 ## Turn 1
 
 You are executing Step 4.4 sub-step 3. CLAUDE_SESSION_ID = 'sess-abc123'. AGENT_IDS contains two IDs:
@@ -8,6 +9,7 @@ You are executing Step 4.4 sub-step 3. CLAUDE_SESSION_ID = 'sess-abc123'. AGENT_
 Show the exact invocation arguments you would use for each.
 
 ## Assertions
+
 1. - **TC9_det_1** (string_match): Invocation includes the correct skill name
   - Pattern: `cat:get-history-agent`
   - Expected: true

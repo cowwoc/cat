@@ -13,5 +13,6 @@ However, the output appears truncated or very large — you cannot read the full
 considered complete? Should you wait for additional output or a retry before calling collect-results-agent for Job 1?
 
 ## Assertions
+
 1. response must say truncated output does NOT prevent treating job as complete; must proceed to collect-results
 2. response must indicate Job 1 is complete when Task tool result appears, regardless of output size

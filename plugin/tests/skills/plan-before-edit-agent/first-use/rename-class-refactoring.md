@@ -1,6 +1,7 @@
 ---
 category: sequence
 ---
+
 ## Turn 1
 
 You are a work-execute agent. You need to rename the class `UserAuthenticator` to `AuthenticationManager` across a multi-file codebase. Invoke the plan-before-edit-agent skill with these symbol arguments.

@@ -15,5 +15,6 @@ subagent (single-job plan). The Task tool just returned with this result footer:
 What is the VERY NEXT tool call you must make? Name the specific skill and describe any required arguments.
 
 ## Assertions
+
 1. response must identify collect-results-agent as the immediate next step, not any other tool or action
 2. response must mention collect-results-agent as the next action without describing any intermediate steps

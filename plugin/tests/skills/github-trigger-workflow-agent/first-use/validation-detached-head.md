@@ -14,5 +14,6 @@ but on a detached HEAD state (no current branch name). Invoke the skill with arg
 --show-current returns empty. Report what error message the skill produces.
 
 ## Assertions
+
 1. output must contain error about detached HEAD
 2. skill produces a clear error when git is in detached HEAD state

@@ -12,5 +12,6 @@ You are executing `/cat:config`. The personality questionnaire finished and conf
 values. What step do you proceed to next?
 
 ## Assertions
+
 1. agent proceeds to display-settings after questionnaire
 2. output references display-settings step

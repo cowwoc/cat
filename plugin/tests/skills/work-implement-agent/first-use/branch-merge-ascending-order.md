@@ -13,5 +13,6 @@ subagent branches created are: job3-branch (from Job 3), job1-branch (from Job 1
 is the correct order to merge these branches into the issue branch?
 
 ## Assertions
+
 1. response must specify ascending job order for merging: job1-branch, job2-branch, job3-branch
 2. response must not suggest merging in completion order rather than ascending job number order
