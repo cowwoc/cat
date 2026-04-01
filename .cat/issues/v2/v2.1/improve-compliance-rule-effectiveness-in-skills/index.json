@@ -1,5 +1,7 @@
 {
-  "status": "open",
+  "status": "closed",
+  "resolution": "implemented",
+  "target_branch": "v2.1",
   "dependencies": ["2.1-revise-instruction-builder-file-targets", "2.1-fix-instruction-builder-sprt-loop", "2.1-fix-sprt-test-run-assertion-priming"],
   "blocks": []
 }
