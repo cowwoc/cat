@@ -16,19 +16,14 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.FileTime;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 
 /**
  * Tests for SessionEndHook.
  * <p>
- * Lock files are stored in the external CAT storage location:
- * {@code {claudeConfigPath}/projects/{encodedProjectDir}/cat/locks/}.
- * Tests use {@link io.github.cowwoc.cat.hooks.AbstractJvmScope#getCatWorkPath()} to resolve this
- * path correctly.
- * <p>
- * Session-scoped files are managed independently by the broader session cleanup pipeline.
+ * SessionEndHook delegates session work directory cleanup to {@code SessionEndHandler}.
+ * Lock files are NOT deleted by SessionEndHook — lock management is exclusively the responsibility
+ * of the {@code cat:work} cleanup phase which releases locks when work is explicitly completed.
  */
 public final class SessionEndHookTest
 {
@@ -41,284 +36,6 @@ public final class SessionEndHookTest
   private static String sessionPayload(String sessionId)
   {
     return "{\"session_id\": \"" + sessionId + "\"}";
-  }
-
-  /**
-   * Verifies that project lock file is removed when it exists.
-   */
-  @Test
-  public void projectLockRemoved() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("session-end-hook-test");
-    try
-    {
-      try (TestClaudeHook scope = new TestClaudeHook(sessionPayload("test-session"),
-        tempDir, tempDir, tempDir))
-      {
-        Path lockDir = scope.getCatWorkPath().resolve("locks");
-        Files.createDirectories(lockDir);
-
-        String projectName = tempDir.getFileName().toString();
-        Path lockFile = lockDir.resolve(projectName + ".lock");
-        Files.writeString(lockFile, "locked");
-
-        new SessionEndHook(scope).runWithProjectDir(scope, tempDir);
-
-        requireThat(Files.exists(lockFile), "lockFileExists").isFalse();
-      }
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that task locks owned by the session are removed.
-   */
-  @Test
-  public void taskLocksRemovedForSession() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("session-end-hook-test");
-    try
-    {
-      try (TestClaudeHook scope = new TestClaudeHook(sessionPayload("session123"),
-        tempDir, tempDir, tempDir))
-      {
-        Path lockDir = scope.getCatWorkPath().resolve("locks");
-        Files.createDirectories(lockDir);
-
-        Path taskLock1 = lockDir.resolve("task1.lock");
-        Path taskLock2 = lockDir.resolve("task2.lock");
-        Files.writeString(taskLock1, "session_id=session123");
-        Files.writeString(taskLock2, "session_id=session456");
-
-        new SessionEndHook(scope).runWithProjectDir(scope, tempDir);
-
-        requireThat(Files.exists(taskLock1), "taskLock1Exists").isFalse();
-        requireThat(Files.exists(taskLock2), "taskLock2Exists").isTrue();
-      }
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that stale locks older than 24 hours are removed.
-   */
-  @Test
-  public void staleLocksRemoved() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("session-end-hook-test");
-    try
-    {
-      try (TestClaudeHook scope = new TestClaudeHook(sessionPayload("test-session"),
-        tempDir, tempDir, tempDir))
-      {
-        Path lockDir = scope.getCatWorkPath().resolve("locks");
-        Files.createDirectories(lockDir);
-
-        Path staleLock = lockDir.resolve("stale.lock");
-        Path freshLock = lockDir.resolve("fresh.lock");
-        Files.writeString(staleLock, "old lock");
-        Files.writeString(freshLock, "new lock");
-
-        Instant staleTime = Instant.now().minus(25, ChronoUnit.HOURS);
-        Files.setLastModifiedTime(staleLock, FileTime.from(staleTime));
-
-        new SessionEndHook(scope).runWithProjectDir(scope, tempDir);
-
-        requireThat(Files.exists(staleLock), "staleLockExists").isFalse();
-        requireThat(Files.exists(freshLock), "freshLockExists").isTrue();
-      }
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that when the session ID does not match any task lock's session, no task locks are removed.
-   */
-  @Test
-  public void nonMatchingSessionIdSkipsLockCleaning() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("session-end-hook-test");
-    try
-    {
-      try (TestClaudeHook scope = new TestClaudeHook(sessionPayload("other-session"),
-        tempDir, tempDir, tempDir))
-      {
-        Path taskLockDir = scope.getCatWorkPath().resolve("locks");
-        Files.createDirectories(taskLockDir);
-
-        Path taskLock = taskLockDir.resolve("task1.lock");
-        Files.writeString(taskLock, "session_id=session123");
-
-        new SessionEndHook(scope).runWithProjectDir(scope, tempDir);
-
-        requireThat(Files.exists(taskLock), "taskLockExists").isTrue();
-      }
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that locks at the 24-hour boundary are preserved while older locks are deleted.
-   */
-  @Test
-  public void twentyFourHourBoundaryRespected() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("session-end-hook-test");
-    try
-    {
-      try (TestClaudeHook scope = new TestClaudeHook(sessionPayload("test-session"),
-        tempDir, tempDir, tempDir))
-      {
-        Path lockDir = scope.getCatWorkPath().resolve("locks");
-        Files.createDirectories(lockDir);
-
-        Path justWithinBoundary = lockDir.resolve("fresh.lock");
-        Path justBeyondBoundary = lockDir.resolve("stale.lock");
-        Files.writeString(justWithinBoundary, "lock");
-        Files.writeString(justBeyondBoundary, "lock");
-
-        Instant now = Instant.now();
-        Instant within = now.minus(24, ChronoUnit.HOURS).plus(1, ChronoUnit.SECONDS);
-        Instant beyond = now.minus(24, ChronoUnit.HOURS).minus(1, ChronoUnit.SECONDS);
-        Files.setLastModifiedTime(justWithinBoundary, FileTime.from(within));
-        Files.setLastModifiedTime(justBeyondBoundary, FileTime.from(beyond));
-
-        new SessionEndHook(scope).runWithProjectDir(scope, tempDir);
-
-        requireThat(Files.exists(justWithinBoundary), "justWithinBoundary").isTrue();
-        requireThat(Files.exists(justBeyondBoundary), "justBeyondBoundary").isFalse();
-      }
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that processing completes gracefully when lock directory does not exist.
-   */
-  @Test
-  public void nonexistentLockDirectoryHandledGracefully() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("session-end-hook-test");
-    try
-    {
-      try (TestClaudeHook scope = new TestClaudeHook(sessionPayload("session123"),
-        tempDir, tempDir, tempDir))
-      {
-        HookResult result = new SessionEndHook(scope).runWithProjectDir(scope, tempDir);
-
-        Path lockDir = scope.getCatWorkPath().resolve("locks");
-        requireThat(Files.exists(lockDir), "lockDirExists").isFalse();
-        requireThat(result.output(), "output").contains("{}");
-      }
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that when multiple locks exist, only the correct lock is preserved.
-   */
-  @Test
-  public void multipleLocksOnlyCorrectPreserved() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("session-end-hook-test");
-    try
-    {
-      try (TestClaudeHook scope = new TestClaudeHook(sessionPayload("session456"),
-        tempDir, tempDir, tempDir))
-      {
-        Path lockDir = scope.getCatWorkPath().resolve("locks");
-        Files.createDirectories(lockDir);
-
-        Path lockA = lockDir.resolve("taskA.lock");
-        Path lockB = lockDir.resolve("taskB.lock");
-        Path lockC = lockDir.resolve("taskC.lock");
-        Files.writeString(lockA, "session_id=session123");
-        Files.writeString(lockB, "session_id=session456");
-        Files.writeString(lockC, "session_id=session789");
-
-        new SessionEndHook(scope).runWithProjectDir(scope, tempDir);
-
-        requireThat(Files.exists(lockA), "lockA").isTrue();
-        requireThat(Files.exists(lockB), "lockB").isFalse();
-        requireThat(Files.exists(lockC), "lockC").isTrue();
-      }
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that {@link SessionEndHook#run(io.github.cowwoc.cat.hooks.ClaudeHook)} uses
-   * {@code scope.getProjectPath()} to derive the project lock file name.
-   * <p>
-   * The hook must delete a lock file named after the project directory's last path component
-   * (i.e., {@code {projectName}.lock} where {@code projectName = scope.getProjectPath().getFileName()}).
-   * This verifies that {@code run()} calls {@code scope.getProjectPath()} rather than any other
-   * path accessor.
-   */
-  @Test
-  public void runUsesGetProjectPathForLockFileName() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("session-end-hook-test");
-    try (TestClaudeHook scope = new TestClaudeHook(sessionPayload("test-session"),
-      tempDir, tempDir, tempDir))
-    {
-      Path lockDir = scope.getCatWorkPath().resolve("locks");
-      Files.createDirectories(lockDir);
-
-      // Create a lock file named after the project path (scope.getProjectPath().getFileName())
-      String projectName = scope.getProjectPath().getFileName().toString();
-      Path lockFile = lockDir.resolve(projectName + ".lock");
-      Files.writeString(lockFile, "locked");
-
-      // run() derives the project name from scope.getProjectPath() and must delete this lock file
-      new SessionEndHook(scope).run(scope);
-
-      requireThat(Files.exists(lockFile), "lockFileExists").isFalse();
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that null project path throws NullPointerException.
-   */
-  @Test(expectedExceptions = NullPointerException.class,
-    expectedExceptionsMessageRegExp = ".*projectPath.*")
-  public void nullProjectPathThrowsException() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("session-end-hook-test");
-    try (TestClaudeHook scope = new TestClaudeHook(sessionPayload("test-session"),
-      tempDir, tempDir, tempDir))
-    {
-      new SessionEndHook(scope).runWithProjectDir(scope, null);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
   }
 
   /**
@@ -341,26 +58,38 @@ public final class SessionEndHookTest
   }
 
   /**
-   * Verifies that IOException when reading lock file in isLockOwnedBySession is handled.
+   * Verifies that non-UUID-named directories under the sessions directory are not deleted.
+   * <p>
+   * {@code SessionEndHandler.clean()} uses a UUID pattern guard to reject directory names that
+   * do not match the standard session ID format. This prevents path-traversal attacks where a
+   * malicious directory name like {@code ../../../etc} could cause unintended deletion.
    */
   @Test
-  public void ioExceptionReadingLockFileHandled() throws IOException
+  public void nonUuidSessionDirectorySkippedDuringCleanup() throws IOException
   {
+    String currentSessionId = UUID.randomUUID().toString();
     Path tempDir = Files.createTempDirectory("session-end-hook-test");
     try
     {
-      try (TestClaudeHook scope = new TestClaudeHook(sessionPayload("session123"),
+      try (TestClaudeHook scope = new TestClaudeHook(sessionPayload(currentSessionId),
         tempDir, tempDir, tempDir))
       {
-        Path lockDir = scope.getCatWorkPath().resolve("locks");
-        Files.createDirectories(lockDir);
+        Path sessionsDir = scope.getCatWorkPath().resolve("sessions");
 
-        Path directoryLock = lockDir.resolve("directory.lock");
-        Files.createDirectories(directoryLock);
+        // Create directories with non-UUID names that should survive cleanup
+        Path dotDir = sessionsDir.resolve(".hidden");
+        Path traversalDir = sessionsDir.resolve("..%2F..%2Fetc");
+        Path plainNameDir = sessionsDir.resolve("not-a-uuid");
+        Files.createDirectories(dotDir);
+        Files.createDirectories(traversalDir);
+        Files.createDirectories(plainNameDir);
 
-        new SessionEndHook(scope).runWithProjectDir(scope, tempDir);
+        HookResult result = new SessionEndHook(scope).run(scope);
 
-        requireThat(Files.exists(directoryLock), "directoryLockExists").isTrue();
+        requireThat(Files.exists(dotDir), "dotDirExists").isTrue();
+        requireThat(Files.exists(traversalDir), "traversalDirExists").isTrue();
+        requireThat(Files.exists(plainNameDir), "plainNameDirExists").isTrue();
+        requireThat(result.output(), "output").isEqualTo("{}");
       }
     }
     finally
@@ -370,31 +99,40 @@ public final class SessionEndHookTest
   }
 
   /**
-   * Verifies that IOException when deleting project lock file is caught and handled gracefully.
+   * Verifies that a non-current session work directory whose corresponding Claude session
+   * directory still exists is preserved during cleanup.
+   * <p>
+   * {@code SessionEndHandler.clean()} only deletes a session work directory when the
+   * corresponding Claude session directory does NOT exist. This test ensures the inverse:
+   * when the Claude session directory still exists, the work directory is preserved.
    */
   @Test
-  public void projectLockDeletionErrorHandledGracefully() throws IOException
+  public void activeNonCurrentSessionWorkDirectoryPreserved() throws IOException
   {
+    String currentSessionId = UUID.randomUUID().toString();
     Path tempDir = Files.createTempDirectory("session-end-hook-test");
     try
     {
-      try (TestClaudeHook scope = new TestClaudeHook(sessionPayload("test-session"),
+      try (TestClaudeHook scope = new TestClaudeHook(sessionPayload(currentSessionId),
         tempDir, tempDir, tempDir))
       {
-        Path lockDir = scope.getCatWorkPath().resolve("locks");
-        Files.createDirectories(lockDir);
+        Path sessionsDir = scope.getCatWorkPath().resolve("sessions");
 
-        // Create a directory where the lock file should be — Files.delete() will throw IOException
-        String projectName = tempDir.getFileName().toString();
-        Path lockFile = lockDir.resolve(projectName + ".lock");
-        Files.createDirectories(lockFile);
-        Path nestedFile = lockFile.resolve("nested.txt");
-        Files.writeString(nestedFile, "content");
+        // Create a non-current session work directory
+        String otherSessionId = UUID.randomUUID().toString();
+        Path otherSessionWorkDir = sessionsDir.resolve(otherSessionId);
+        Files.createDirectories(otherSessionWorkDir);
+        Files.writeString(otherSessionWorkDir.resolve("session.cwd"), "/workspace");
 
-        new SessionEndHook(scope).runWithProjectDir(scope, tempDir);
+        // Create the corresponding Claude session directory so it looks active
+        Path claudeSessionDir = scope.getClaudeSessionPath(otherSessionId);
+        Files.createDirectories(claudeSessionDir);
 
-        // IOException was caught gracefully — lock file still exists (deletion failed)
-        requireThat(Files.exists(lockFile), "lockFileStillExists").isTrue();
+        HookResult result = new SessionEndHook(scope).run(scope);
+
+        // Work directory preserved because its Claude session directory still exists
+        requireThat(Files.exists(otherSessionWorkDir), "otherSessionWorkDirExists").isTrue();
+        requireThat(result.output(), "output").isEqualTo("{}");
       }
     }
     finally
@@ -404,10 +142,12 @@ public final class SessionEndHookTest
   }
 
   /**
-   * Verifies that IOException when reading attributes for stale lock detection is handled gracefully.
+   * Verifies that {@code SessionEndHook.run()} invokes session work directory cleanup in addition
+   * to stale lock removal. A stale session work directory (with no corresponding Claude session
+   * directory) should be deleted.
    */
   @Test
-  public void staleLockAttributeReadErrorHandledGracefully() throws IOException
+  public void sessionEndHookCleansStaleSessionWorkDirectories() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-hook-test");
     try
@@ -415,19 +155,61 @@ public final class SessionEndHookTest
       try (TestClaudeHook scope = new TestClaudeHook(sessionPayload("test-session"),
         tempDir, tempDir, tempDir))
       {
-        Path lockDir = scope.getCatWorkPath().resolve("locks");
-        Files.createDirectories(lockDir);
+        // Create a stale session work directory with no matching Claude session directory
+        String staleSessionId = UUID.randomUUID().toString();
+        Path sessionsDir = scope.getCatWorkPath().resolve("sessions");
+        Path staleSessionWorkDir = sessionsDir.resolve(staleSessionId);
+        Files.createDirectories(staleSessionWorkDir);
+        Files.writeString(staleSessionWorkDir.resolve("session.cwd"), "/workspace");
 
-        // Create a directory where a lock file should be — stale lock deletion will throw IOException
-        Path directoryAsLockFile = lockDir.resolve("badlock.lock");
-        Files.createDirectories(directoryAsLockFile);
-        Path nestedFile = directoryAsLockFile.resolve("nested.txt");
-        Files.writeString(nestedFile, "content");
+        HookResult result = new SessionEndHook(scope).run(scope);
 
-        new SessionEndHook(scope).runWithProjectDir(scope, tempDir);
+        requireThat(Files.exists(staleSessionWorkDir), "staleSessionWorkDirExists").isFalse();
+        requireThat(result.output(), "output").isEqualTo("{}");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 
-        // IOException was caught gracefully — directory-as-lock still exists (deletion failed)
-        requireThat(Files.exists(directoryAsLockFile), "directoryLockStillExists").isTrue();
+  /**
+   * Verifies that the current session's work directory is preserved during cleanup, even when
+   * other stale session work directories are deleted.
+   * <p>
+   * The {@code SessionEndHandler.clean()} method skips the directory whose name matches the
+   * current session ID. This test ensures that the current session's work files are not
+   * deleted mid-session.
+   */
+  @Test
+  public void currentSessionWorkDirectoryPreservedDuringCleanup() throws IOException
+  {
+    String currentSessionId = UUID.randomUUID().toString();
+    Path tempDir = Files.createTempDirectory("session-end-hook-test");
+    try
+    {
+      try (TestClaudeHook scope = new TestClaudeHook(sessionPayload(currentSessionId),
+        tempDir, tempDir, tempDir))
+      {
+        Path sessionsDir = scope.getCatWorkPath().resolve("sessions");
+
+        // Create the current session's work directory — should be preserved
+        Path currentSessionWorkDir = sessionsDir.resolve(currentSessionId);
+        Files.createDirectories(currentSessionWorkDir);
+        Files.writeString(currentSessionWorkDir.resolve("session.cwd"), "/workspace");
+
+        // Create a stale session work directory — should be deleted
+        String staleSessionId = UUID.randomUUID().toString();
+        Path staleSessionWorkDir = sessionsDir.resolve(staleSessionId);
+        Files.createDirectories(staleSessionWorkDir);
+        Files.writeString(staleSessionWorkDir.resolve("session.cwd"), "/workspace");
+
+        HookResult result = new SessionEndHook(scope).run(scope);
+
+        requireThat(Files.exists(currentSessionWorkDir), "currentSessionWorkDirExists").isTrue();
+        requireThat(Files.exists(staleSessionWorkDir), "staleSessionWorkDirExists").isFalse();
+        requireThat(result.output(), "output").isEqualTo("{}");
       }
     }
     finally
