@@ -15,8 +15,9 @@ workflow based on user selection.
 **Shortcut:** When invoked with a description argument (e.g., say 'add an issue: make installation easier'),
 treats the argument as a issue description and skips directly to issue creation workflow.
 
-**Efficiency:** Independent questions are batched into single AskUserQuestion calls (up to 4 questions per call)
-to minimize wizard interactions and reduce user friction.
+**Research-then-propose model:** Instead of a multi-step wizard, the skill researches all fields upfront
+(versions, requirements, skill dependencies, name suggestions), renders a single proposal display box, then asks
+conversationally for approval. Zero AskUserQuestion calls on the happy path.
 
 **Post-completion workflow:** After issue or version creation completes, offer any next-step workflow
 progression using AskUserQuestion — do NOT mention internal slash commands (e.g., `/cat:work`,
@@ -32,7 +33,6 @@ progression using AskUserQuestion — do NOT mention internal slash commands (e.
 - See `${CLAUDE_PLUGIN_ROOT}/concepts/version-paths.md` for version path conventions.
 
 </objective>
-
 
 <process>
 
@@ -63,7 +63,7 @@ If the skill was invoked with arguments (e.g., user said 'add an issue: make ins
   version creation intent (e.g., uses synonyms or indirect phrasing), treat it as version intent.
 - If version intent is detected: continue to step: select_type (do NOT capture as ISSUE_DESCRIPTION)
 - If no version intent detected: capture the full argument string as ISSUE_DESCRIPTION and skip directly to
-  step: issue_read_config (bypassing select_type and the freeform description question)
+  step: issue_research_proposal (bypassing select_type and the freeform description question)
 
 If no arguments provided:
 - Continue to step: select_type
@@ -110,28 +110,28 @@ Use AskUserQuestion:
 
 <step name="issue_gather_intent">
 
-**Gather issue intent BEFORE selecting version:**
+**Gather issue intent BEFORE researching:**
 
-The goal is to understand what the user wants to accomplish first, then intelligently suggest which
-version it belongs to.
+If ISSUE_DESCRIPTION already set (from command args):
+- Continue directly to step: issue_research_proposal
 
-**If ISSUE_DESCRIPTION already set (from command args):**
-- Skip the freeform question
-- Continue directly to step: issue_read_config
-
-**Otherwise, ask for description (FREEFORM):**
+Otherwise, ask for description (FREEFORM):
 
 Ask inline: "What do you want to accomplish? Describe the issue you have in mind."
 
-Capture as ISSUE_DESCRIPTION, then continue to step: issue_read_config.
+Capture as ISSUE_DESCRIPTION, then continue to step: issue_research_proposal.
 
 </step>
 
-<step name="issue_read_config">
+<step name="issue_research_proposal">
 
-**Read and validate configuration:**
+**Research all fields upfront and prepare proposal data:**
 
-Read the `curiosity` value from effective config and store it for all downstream steps:
+This step performs all analysis needed to render a comprehensive proposal without wizard questions.
+
+**1. Read and validate configuration:**
+
+Read the `curiosity` value from effective config:
 
 ```bash
 CONFIG=$("${CLAUDE_PLUGIN_ROOT}/client/bin/get-config-output" effective)
@@ -143,211 +143,24 @@ CURIOSITY=$(echo "$CONFIG" | grep -o '"curiosity"[[:space:]]*:[[:space:]]*"[^"]*
   | sed 's/.*"curiosity"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 if [[ -z "$CURIOSITY" ]]; then
     echo "ERROR: 'curiosity' key not found in effective config." >&2
-    echo "Add: \"curiosity\": \"low|medium|high\" to .cat/config.json" >&2
-    exit 1
-fi
-if [[ "$CURIOSITY" != "low" && "$CURIOSITY" != "medium" && "$CURIOSITY" != "high" ]]; then
-    echo "ERROR: Invalid curiosity value '$CURIOSITY' in effective config." >&2
-    echo "Valid values: low, medium, high" >&2
     exit 1
 fi
 ```
 
-Store CURIOSITY for use in issue_smart_questioning, issue_impact_analysis, and issue_create.
+Store CURIOSITY for use in downstream steps.
 
-</step>
+**2. Analyze issue description:**
 
-<step name="issue_clarify_intent">
+Analyze ISSUE_DESCRIPTION to determine likely:
+- Issue type (feature/bugfix/refactor/performance) based on action verbs and context
+- Scope estimate (1-2 files, 3-5 files, or 6+ files) based on description and type
+- Key skill dependencies by scanning for patterns like `plugin/skills/<name>/` or "modify <name> skill"
 
-**Clarify vague requirements if needed:**
+Store these as ISSUE_TYPE, SCOPE_ESTIMATE, and SKILL_NAMES list.
 
-Analyze ISSUE_DESCRIPTION for vagueness indicators:
-- Less than 10 words
-- Contains generic terms like "improve", "fix", "make better" without specifics
-- Missing what/where/why context
+**3. Generate standard post-conditions:**
 
-**If description appears vague:**
-
-Use AskUserQuestion:
-- header: "Clarification"
-- question: "Can you provide more details about this issue?"
-- options:
-  - "Describe the expected behavior" - What should happen when complete?
-  - "Describe the current problem" - What's wrong or missing now?
-  - "Show an example" - Provide a concrete use case
-  - "Description is complete" - Proceed without clarification
-
-**If user provides more details:**
-Append clarification to ISSUE_DESCRIPTION.
-
-**If "Description is complete":**
-Continue to next step.
-
-</step>
-
-<step name="issue_smart_questioning">
-
-**Probe for ambiguities in the issue description (curiosity-scaled):**
-
-Use the CURIOSITY value set in issue_read_config.
-
-**If CURIOSITY is "low":**
-
-Skip this step entirely. Continue to step: issue_analyze_versions.
-
-**If CURIOSITY is "medium":**
-
-Analyze ISSUE_DESCRIPTION for the following ambiguity indicators:
-- **Scope ambiguity:** The description could apply to multiple subsystems, layers, or components without specifying which
-- **Conflicting requirements:** The description implies goals that are difficult to achieve simultaneously (e.g., "faster and more thorough")
-- **Unclear success criteria:** No observable outcome is described (e.g., "improve the UX" without saying what "improved" looks like)
-
-If one or more ambiguities are detected, use AskUserQuestion to present them. Ask only the ambiguities that were
-actually detected (omit questions where no ambiguity exists). Batch all detected ambiguities into a single
-AskUserQuestion call.
-
-Example questions (adapt to the specific ambiguity found):
-
-- **Scope ambiguity detected:**
-  - question: "Your description could apply to multiple areas. Which scope is intended?"
-  - options: [Two or three concrete scope interpretations derived from the description] + "Covers all of the above"
-
-- **Conflicting requirements detected:**
-  - question: "The description implies [goal A] and [goal B], which may be in tension. Which takes priority?"
-  - options: ["Prioritize [goal A]", "Prioritize [goal B]", "Balance both — I understand the trade-off", "Clarify description"]
-
-- **Unclear success criteria detected:**
-  - question: "How will we know this issue is complete? What should a user observe?"
-  - options: [Two or three concrete observable outcomes derived from context] + "I'll describe it: (free text)"
-
-If user provides clarification, append it to ISSUE_DESCRIPTION.
-
-If no ambiguities are detected, skip to step: issue_analyze_versions.
-
-**If CURIOSITY is "high":**
-
-Perform a deeper analysis of ISSUE_DESCRIPTION covering:
-- All medium-level checks above
-- **Edge cases:** Are there boundary conditions or unusual inputs the description does not address?
-- **Trade-offs:** Does the approach imply architectural trade-offs (e.g., memory vs. speed, simplicity vs. flexibility)?
-- **Alternative interpretations:** Are there materially different ways to read the description?
-- **Missing context:** Are there referenced systems, components, or dependencies that are not named?
-
-For each detected concern, batch into AskUserQuestion calls (up to 4 questions per call).
-
-In addition to the medium-level questions, include:
-
-- **Edge case gap detected:**
-  - question: "The description doesn't address [specific edge case]. Should it?"
-  - options: ["Yes, include edge case handling", "No, out of scope for this issue", "Add to UNKNOWNS for research"]
-
-- **Trade-off detected:**
-  - question: "This approach implies a trade-off between [A] and [B]. Which is preferred?"
-  - options: ["Prioritize [A]", "Prioritize [B]", "Document the trade-off and decide during implementation"]
-
-- **Alternative interpretation detected:**
-  - question: "The description could mean [interpretation 1] or [interpretation 2]. Which is correct?"
-  - options: ["[Interpretation 1]", "[Interpretation 2]", "Both — describe the full scope", "Neither — clarify description"]
-
-- **Missing context detected:**
-  - question: "The description references [component/system] without specifying [what's missing]. Please clarify:"
-  - options: [Two or three reasonable defaults derived from context] + "I'll describe it: (free text)"
-
-If user provides clarification, append it to ISSUE_DESCRIPTION.
-
-If no concerns are detected at any level, skip silently to step: issue_analyze_versions.
-
-</step>
-
-<step name="issue_analyze_versions">
-
-**Analyze existing versions and suggest best fit:**
-
-Use version data from output.versions. The handler has pre-filtered closed versions.
-
-**1. Extract version information:**
-
-For each version in output.versions:
-- version: Version number (e.g., "2.1")
-- status: Current status (open or in-progress)
-- summary: Brief description from plan.md goals
-- issue_count: Number of existing issues
-
-All versions in output.versions are already filtered to exclude closed versions.
-
-**2. Build version summaries:**
-
-Create a mental map of each version's focus using the pre-loaded summaries.
-
-**3. Compare issue to version focuses:**
-
-Analyze ISSUE_DESCRIPTION against each version's focus:
-- Keyword matching (e.g., "parser" matches parser-focused versions)
-- Domain alignment (e.g., UI issue matches UI-focused versions)
-- Scope fit (bugfix in active development version vs new feature in upcoming version)
-
-**4. Rank versions by fit:**
-
-Score each version based on:
-- Topic alignment (high weight)
-- Logical grouping with existing issues (medium weight)
-
-</step>
-
-<step name="issue_ask_type_and_criteria">
-
-**Ask issue type, custom post-conditions, and version selection in a single batch:**
-
-This step combines type selection, post-conditions, and version selection into one AskUserQuestion call.
-
-First, build the version options from the analysis performed in issue_analyze_versions:
-- If a clear best match exists, list it first as "{best_match} (Recommended) — {brief_reason}"
-- Include the second-best match if applicable
-- Always include "Show all versions" and "Create new minor" as trailing options
-
-Use AskUserQuestion with multiple questions:
-- questions:
-    - question: "What type of work is this?"
-      header: "Issue Type"
-      options:
-        - label: "Feature"
-          description: "Add new functionality"
-        - label: "Bugfix"
-          description: "Fix a problem"
-        - label: "Refactor"
-          description: "Improve code structure"
-        - label: "Performance"
-          description: "Improve speed/efficiency"
-      multiSelect: false
-
-    - question: "Standard post-conditions (functionality, tests, no regressions) will be applied. Any additional
-      post-conditions?"
-      header: "Custom Post-conditions"
-      options:
-        - label: "No, standard post-conditions are sufficient"
-          description: "Use the default post-conditions for this issue type"
-        - label: "Yes, add custom post-conditions"
-          description: "I have specific requirements beyond the standard"
-      multiSelect: false
-
-    - question: "Based on your issue description, which version should this issue be added to?"
-      header: "Target Version"
-      options:
-        - "{best_match} (Recommended)" - {version_focus_summary}
-        - "{second_match}" - {version_focus_summary} (if applicable)
-        - "Show all versions" - See complete list
-        - "Create new minor" - This doesn't fit existing versions
-      multiSelect: false
-
-Capture issue type as ISSUE_TYPE.
-
-**If "Yes, add custom post-conditions":**
-
-Ask inline: "What additional post-conditions should be met?"
-
-Append custom post-conditions to the standard list for ISSUE_TYPE.
-
-**Standard post-conditions by type (applied automatically):**
+Based on ISSUE_TYPE, set POSTCONDITIONS to standard post-conditions:
 
 | Type | Standard Post-conditions |
 |------|--------------------------|
@@ -356,357 +169,125 @@ Append custom post-conditions to the standard list for ISSUE_TYPE.
 | Refactor | User-visible behavior unchanged, Tests passing, Code quality improved, E2E verification |
 | Performance | Target met, Benchmarks added, No functionality regression, E2E verification |
 
-**E2E verification post-condition:** For all implementation issues (feature, bugfix, refactor, performance), always
-include at least one post-condition that verifies the change works end-to-end in its real environment, not just that
-unit tests pass. Describe an observable outcome (e.g., "Spawn a subagent and confirm it receives the skill listing",
-"Run the hook and verify output contains expected fields", or "Reproduce the bug scenario and confirm it no longer
-occurs"). This ensures the change is tested as a whole before review.
+**4. Suggest issue name:**
 
-Set POSTCONDITIONS to standard post-conditions for ISSUE_TYPE, plus any custom additions.
+Generate 2-3 suggested names based on ISSUE_DESCRIPTION and ISSUE_TYPE:
+- Extract key verbs and nouns from description
+- Apply standard prefixes (add-, fix-, refactor-, optimize-, etc.)
+- Keep names under 50 characters, lowercase with hyphens
+- Check uniqueness against existing issues in all versions
 
-**If "Show all versions" selected:**
+Store as NAME_SUGGESTIONS list with first suggestion as PRIMARY_NAME.
 
-List all available minor versions with their focus summaries:
+**5. Analyze versions:**
+
+Use version data from output.versions (pre-filtered to exclude closed versions).
+
+For each version:
+- Extract version number, status, and issue_count
+- Score fit against ISSUE_DESCRIPTION using keyword matching and domain alignment
+- Rank by fit (topic alignment weighted higher than issue grouping)
+
+Identify BEST_FIT_VERSION and second-best match if applicable.
+
+**6. Detect skill dependencies:**
+
+If SKILL_NAMES is non-empty, scan open issues for plan.md files that reference the same skills.
+Collect matching issue IDs into AUTO_DETECTED_DEPS (deduplicated).
+
+If AUTO_DETECTED_DEPS is non-empty, store for proposal display.
+
+**7. Read parent version requirements:**
+
+Extract REQ-XXX items from the best-fit version's plan.md.
+Store as VERSION_REQUIREMENTS (may be empty).
+
+**8. Prepare proposal structure:**
+
+Organize all researched data into a proposal object containing:
+- issue_description
+- issue_type
+- primary_name
+- name_suggestions
+- best_fit_version
+- version_alternatives (up to 2 other versions)
+- scope_estimate
+- auto_detected_deps (if non-empty)
+- version_requirements (if non-empty)
+
+Continue to step: issue_render_proposal.
+
+</step>
+
+<step name="issue_render_proposal">
+
+**Render proposal display box via cat:get-output-agent:**
+
+Invoke the output rendering skill to display the proposal as a formatted box:
 
 ```bash
-find .cat -maxdepth 2 -type d -name "v[0-9]*.[0-9]*" 2>/dev/null | \
-    sed 's|.*/v\([0-9]*\)/v\1\.\([0-9]*\)|\1.\2|' | sort -V
+PROPOSAL_JSON=$(cat <<'PROPOSAL_EOF'
+{
+  "issue_description": "${ISSUE_DESCRIPTION}",
+  "issue_type": "${ISSUE_TYPE}",
+  "primary_name": "${PRIMARY_NAME}",
+  "name_suggestions": [${NAME_SUGGESTIONS}],
+  "best_fit_version": "${BEST_FIT_VERSION}",
+  "version_alternatives": [${VERSION_ALTERNATIVES}],
+  "scope_estimate": "${SCOPE_ESTIMATE}",
+  "auto_detected_deps": [${AUTO_DETECTED_DEPS}],
+  "version_requirements": [${VERSION_REQUIREMENTS}]
+}
+PROPOSAL_EOF
+)
+
+${CLAUDE_PLUGIN_ROOT}/client/bin/get-output-agent proposal-issue "$PROPOSAL_JSON"
 ```
 
-Use AskUserQuestion:
-- header: "All Versions"
-- question: "Select a version for this issue:"
-- options: [List of all versions with focus summaries] + "Create new minor version"
+The output agent renders a comprehensive display box showing:
+- Proposed issue name with alternatives
+- Issue description and type
+- Target version (with reason for selection)
+- Scope estimate
+- Any auto-detected skill dependencies
+- Parent version requirements (if any)
 
-**If no versions exist or "Create new minor version" selected:**
-- Go to step: minor_select_major
+After rendering, continue to step: issue_approve_proposal.
 
 </step>
 
-<step name="issue_validate_version">
+<step name="issue_approve_proposal">
 
-**Validate selected version exists AND is not completed:**
+**Ask conversationally for approval:**
 
-Verify the selected version exists in output.versions:
-- Check if version number matches a version in the list
-- Verify status is not "closed" (should already be filtered, but double-check)
+Display message: "Does this look good? Should I create it?"
 
-If version not found in output.versions:
-- Output error: "Version {major}.{minor} does not exist or is closed"
-- STOP execution
+This is a conversational check (not AskUserQuestion) — allow user to:
+- Say "yes" / "looks good" / "create it" to proceed to step: issue_validate_criteria
+- Ask clarifying questions about the proposal
+- Request changes to specific fields
 
-</step>
+**If user asks for changes:**
 
-<step name="issue_suggest_names">
+Guide the user to redefine specific fields:
+- To change the name: "I'll use {new-name} instead"
+- To change the type: "I'll mark this as a {new-type}"
+- To change the version: "I'll target {new-version}"
+- To add/remove dependencies: "I'll {add/remove} {dependency}"
 
-**Generate and present issue name suggestions:**
+Apply any user-specified changes and re-render the proposal (loop back to issue_render_proposal).
 
-Based on ISSUE_DESCRIPTION and ISSUE_TYPE, generate 3-4 suggested names:
+**If user approves (conversational yes):**
 
-**Name generation rules:**
-1. Extract key action verbs and nouns from description
-2. Use standard prefixes based on ISSUE_TYPE:
-   - Feature: `add-`, `implement-`, `create-`, `enable-`
-   - Bugfix: `fix-`, `resolve-`, `correct-`
-   - Refactor: `refactor-`, `restructure-`, `simplify-`, `extract-`
-   - Performance: `optimize-`, `speed-up-`, `improve-`
-3. Keep names under 50 characters
-4. Use lowercase letters, numbers, and hyphens only
-5. Make names descriptive but concise
-
-**Example generation:**
-- Description: "Add the ability to export reports to PDF format"
-- Type: Feature
-- Suggestions: `add-pdf-export`, `implement-pdf-reports`, `enable-report-export`
-
-**Present suggestions:**
-
-Use AskUserQuestion:
-- header: "Issue Name"
-- question: "Choose a name for this issue (or enter a custom name):"
-- options:
-  - "{suggestion1}" - Based on key terms in description
-  - "{suggestion2}" - Alternative phrasing
-  - "{suggestion3}" - Shorter variant (if applicable)
-
-**If user selects "Other" (custom name):**
-Capture custom input as ISSUE_NAME.
-
-Otherwise, capture selected suggestion as ISSUE_NAME.
-
-</step>
-
-<step name="issue_validate_name">
-
-**Validate issue name:**
-
-Use output.versions[selected_version].existing_issues to check both format and uniqueness.
-
-**Format validation:**
-
-Check that ISSUE_NAME matches the regex pattern: `^[a-z][a-z0-9-]{0,48}[a-z0-9]$`
-
-If format is invalid:
-- Output error: "Invalid issue name. Use lowercase letters, numbers, and hyphens only."
-- Provide examples: parse-tokens, fix-memory-leak, add-user-auth
-- Prompt user to select different suggestion or enter valid custom name
-
-**Uniqueness check:**
-
-Check if ISSUE_NAME appears in output.versions[selected_version].existing_issues list.
-
-If name already exists:
-- Output error: "Issue '{ISSUE_NAME}' already exists in version {major}.{minor}"
-- Return to issue_suggest_names step with different suggestions
-
-</step>
-
-<step name="issue_detect_skill_deps">
-
-**Detect skill dependencies from issue description and suggest dependent issues:**
-
-This step runs only when the new issue involves modifying a skill file. It scans open issues for references to the
-same skill and suggests adding them as dependents (i.e., they should depend on the new issue completing first,
-because the new issue changes the skill they rely on).
-
-**1. Detect target skill names from ISSUE_DESCRIPTION:**
-
-Scan ISSUE_DESCRIPTION for patterns that indicate a skill file is being modified:
-- Explicit skill file path: `plugin/skills/<skill-name>/` (e.g., `plugin/skills/add-agent/first-use.md`)
-- Skill name reference: phrases like "modify the <skill-name> skill", "update <skill-name> skill",
-  "add a step to <skill-name>", "change <skill-name> first-use.md"
-
-Extract all skill names mentioned. Store as SKILL_NAMES list (may be empty).
-
-**If SKILL_NAMES is empty:**
-- Skip to step: issue_discuss_and_requirements (no skill involvement detected)
-
-**2. Scan open issues for skill references:**
-
-The scanning uses a two-level loop structure:
-
-- **Outer loop** — iterates over each skill name in SKILL_NAMES. A single issue description may reference more than
-  one skill (e.g., both `add` and `add-agent`), so every skill name must be checked independently.
-- **Inner loop** — for each skill name, iterates over all index.json files found under ISSUES_DIR (excluding the
-  current issue). It reads the STATUS field and, for open issues, checks whether the corresponding plan.md contains
-  a reference to `plugin/skills/<skill_name>/`.
-
-Deduplication is handled after the outer loop by collecting all matched issue IDs into a single array and running
-`sort -u`. An issue is included at most once even if its plan.md references multiple skills that are all in
-SKILL_NAMES.
-
-```bash
-source "${CLAUDE_PLUGIN_ROOT}/skills/add-agent/skill_dep_helpers.sh"
-
-ISSUES_DIR="${CLAUDE_PROJECT_DIR}/.cat/issues"
-
-# Accumulate all matching issues across all skill names (deduplicated)
-AUTO_DETECTED_DEPS=()
-AUTO_DETECTED_DEP_PATHS=()
-ALL_MATCHED_IDS=()
-ALL_MATCHED_PATHS=()
-
-for SKILL_NAME in "${SKILL_NAMES[@]}"; do
-    # Direct call (not subshell) required to propagate MATCHING_ISSUES and MATCHING_ISSUE_PATHS
-    run_detection "$SKILL_NAME" "$ISSUE_NAME"
-    ALL_MATCHED_IDS+=("${MATCHING_ISSUES[@]+"${MATCHING_ISSUES[@]}"}")
-    ALL_MATCHED_PATHS+=("${MATCHING_ISSUE_PATHS[@]+"${MATCHING_ISSUE_PATHS[@]}"}")
-done
-
-# Deduplicate: build final arrays preserving first occurrence of each issue ID
-seen_ids=()
-for idx in "${!ALL_MATCHED_IDS[@]}"; do
-    ISSUE_ID="${ALL_MATCHED_IDS[$idx]}"
-    already_found=false
-    for existing in "${seen_ids[@]+"${seen_ids[@]}"}"; do
-        if [[ "$existing" == "$ISSUE_ID" ]]; then
-            already_found=true
-            break
-        fi
-    done
-    if [[ "$already_found" == false ]]; then
-        seen_ids+=("$ISSUE_ID")
-        AUTO_DETECTED_DEPS+=("$ISSUE_ID")
-        AUTO_DETECTED_DEP_PATHS+=("${ALL_MATCHED_PATHS[$idx]}")
-    fi
-done
-```
-
-Exclude the current issue being created from results. Collect all matching issue IDs across all skill names into
-AUTO_DETECTED_DEPS (deduplicated list). Collect corresponding full index.json paths into AUTO_DETECTED_DEP_PATHS.
-
-**3. Present suggestions if matches found:**
-
-**If AUTO_DETECTED_DEPS is empty:**
-- Skip to step: issue_discuss_and_requirements (no dependent issues found)
-
-**If AUTO_DETECTED_DEPS is non-empty:**
-
-Display context to the user before the question:
-
-```
-Auto-detected: The following open issues reference the skill(s) you are modifying:
-{for each issue in AUTO_DETECTED_DEPS: "  - {issue-id}"}
-
-These issues use the skill being changed. If your change alters the skill's interface
-or behavior, those issues should depend on this one completing first.
-```
-
-Use AskUserQuestion:
-- header: "Skill Dependency Suggestion"
-- question: "Should any of these issues be marked as depending on the new issue?"
-- options:
-  - label: "Yes, mark all as dependents"
-    description: "All listed issues will depend on this new issue"
-  - label: "Yes, let me choose"
-    description: "Show the list and I'll select which ones"
-  - label: "No, skip"
-    description: "None of these issues need to depend on the new issue"
-
-**If "Yes, mark all as dependents":**
-- AUTO_DETECTED_DEPS is already set from the scan above
-- AUTO_DETECTED_DEP_PATHS is already set from the scan above
-- Continue to step: issue_discuss_and_requirements
-
-**If "Yes, let me choose":**
-
-Use AskUserQuestion:
-- header: "Select Dependent Issues"
-- question: "Which issues should depend on this new issue? (Select all that apply)"
-- options: [One entry per issue in AUTO_DETECTED_DEPS with its ID]
-- multiSelect: true
-
-Capture selected issue IDs as AUTO_DETECTED_DEPS. Populate AUTO_DETECTED_DEP_PATHS with the corresponding
-paths from the original AUTO_DETECTED_DEP_PATHS. Always look up each selected ID in the original
-AUTO_DETECTED_DEPS array to find its index, then use that index to get the corresponding path from
-AUTO_DETECTED_DEP_PATHS. Never use positional order of selected items — always resolve by ID match.
-Continue to step: issue_discuss_and_requirements.
-
-**If "No, skip":**
-- Set AUTO_DETECTED_DEPS = []
-- Set AUTO_DETECTED_DEP_PATHS = []
-- Continue to step: issue_discuss_and_requirements
-
-</step>
-
-<step name="issue_discuss_and_requirements">
-
-**Gather additional issue context and requirements in a single batch:**
-
-Note: Issue description and type were already captured in issue_gather_intent step.
-Use ISSUE_DESCRIPTION and ISSUE_TYPE from that step.
-
-Initialize UNKNOWNS as empty list.
-
-**1. Check if version has existing issues:**
-
-Use output.versions[selected_version].issue_count to determine if this is the first issue.
-
-**2. Scope estimation (LLM inference):**
-
-Estimate the number of files this issue will touch based on the description and type:
-- Consider the issue type (Feature, Bugfix, Refactor, Performance)
-- Analyze the scope described in ISSUE_DESCRIPTION
-- Estimate whether it's likely 1-2 files, 3-5 files, or 6+ files
-
-Store the estimate internally as SCOPE_ESTIMATE (do not ask user).
-
-**3. Read parent version requirements:**
-
-```bash
-# VERSION_PLAN is set to the parent version path (works for any level: major, minor, or patch)
-VERSION_PLAN=".cat/issues/v$MAJOR/v$MAJOR.$MINOR/plan.md"
-```
-
-Extract REQ-XXX items from plan.md. Store as VERSION_REQUIREMENTS (may be empty).
-
-**4. Batch question strategy:**
-
-**If issue_count = 0 (first issue in version):**
-- Set DEPENDENCIES = [] (no issues to depend on)
-- Set BLOCKS = [] (no issues to block)
-- Only ask requirements (if any exist):
-  - If VERSION_REQUIREMENTS is non-empty: use AskUserQuestion with the requirements question below
-  - If VERSION_REQUIREMENTS is empty: set Parent Requirements = None, skip to step: issue_research
-
-**If issue_count > 0 (version has existing issues):**
-- Batch dependencies, blocks, and requirements into a single AskUserQuestion call (3 questions):
-
-Use AskUserQuestion with multiple questions:
-- questions:
-    - question: "Does this issue depend on other issues completing first?"
-      header: "Dependencies"
-      options:
-        - label: "No dependencies"
-          description: "Can start immediately"
-        - label: "Yes, select dependencies"
-          description: "Show issue list to choose from"
-      multiSelect: false
-
-    - question: "Does this issue block any existing issues?"
-      header: "Blocks"
-      options:
-        - label: "No, doesn't block anything"
-          description: "Continue without blockers"
-        - label: "Yes, select blocked issues"
-          description: "Show issue list to choose from"
-      multiSelect: false
-
-    - question: "Which requirements does this issue satisfy? (Select all that apply)"
-      header: "Parent Requirements"
-      options: [List of REQ-XXX from VERSION_REQUIREMENTS] + "None - infrastructure/setup issue"
-      multiSelect: true
-      (omit this question entirely if VERSION_REQUIREMENTS is empty; set Parent Requirements = None)
-
-**5. Conditional follow-ups:**
-
-**If SCOPE_ESTIMATE is "6+ files":**
-
-Use AskUserQuestion:
-- header: "Issue Size"
-- question: "This seems like a large issue. Should we split it into multiple smaller issues?"
-- options:
-  - "Split into multiple issues" - Create several focused issues
-  - "Keep as single issue" - I understand the token risk
-
-If "Split into multiple issues" -> guide user to define multiple issues, loop this command.
-
-**If Dependencies = "Yes, select dependencies":**
-
-List existing issues in same minor version for selection using AskUserQuestion with multiSelect.
-
-**If Blocks = "Yes, select blocked issues":**
-
-List existing issues in same minor version for selection using AskUserQuestion with multiSelect.
-When blockers are selected, store the selected issue IDs as BLOCKED_ISSUES. The dependency updates to
-their index.json files are deferred to issue_create (after the new issue is committed), following the
-same pattern as AUTO_DETECTED_DEPS. Do NOT modify blocked issues' index.json files at this point.
+Continue to step: issue_validate_criteria.
 
 </step>
 
 <step name="issue_research">
 
-**Run research if unknowns exist:**
+**Research-then-propose flow complete, continue to creation:**
 
-**If UNKNOWNS list is not empty:**
-
-Display to user:
-```
-Research needed for: {UNKNOWNS}
-Running research to gather information...
-```
-
-Invoke the research skill:
-```bash
-# Use Skill tool to invoke research
-Skill: "cat:research-agent"
-Args: "{ISSUE_DESCRIPTION}"
-```
-
-Capture research findings as RESEARCH_FINDINGS.
-
-**If UNKNOWNS is empty:**
-Skip to step: issue_validate_criteria.
+The research and proposal phases are now complete. Continue to step: issue_create to finalize the issue creation.
 
 </step>
 
@@ -1009,14 +590,14 @@ argument. Index content is written to a temp file and does not need JSON escapin
 
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/client/bin/create-issue" --json '{
-  "major": "{major}",
-  "minor": "{minor}",
-  "issue_name": "{issue-name}",
-  "issue_type": "{issue-type}",
-  "dependencies": ["{dep1}", "{dep2}"],
+  "major": "${BEST_FIT_VERSION%.*}",
+  "minor": "${BEST_FIT_VERSION#*.}",
+  "issue_name": "${PRIMARY_NAME}",
+  "issue_type": "${ISSUE_TYPE}",
+  "dependencies": [${AUTO_DETECTED_DEPS_JSON}],
   "index_file": "'"${index_temp_file}"'",
   "plan_file": "'"${plan_temp_file}"'",
-  "commit_description": "{one-line description}"
+  "commit_description": "${ISSUE_DESCRIPTION}"
 }'
 ```
 
@@ -1056,26 +637,6 @@ update_state_dependency "$STATE_FILE" "$NEW_ISSUE_ID"
 
 After updating all auto-detected dependency index.json files, commit with a `planning:` commit message such as:
 `planning: add {new-issue-id} as dependency of auto-detected dependent issues`
-
-**Apply blocker dependency updates (if any):**
-
-If BLOCKED_ISSUES is non-empty (from issue_discuss_and_requirements), for each blocked issue, add the new
-issue as a dependency in that blocked issue's index.json. BLOCKED_ISSUES contains bare issue directory names
-(e.g., `fix-something`, not full issue IDs like `2.1-fix-something`). The AskUserQuestion in
-issue_discuss_and_requirements must present options using bare directory names only. Iterate over each entry:
-
-```bash
-NEW_ISSUE_ID="{new-issue-id}"
-for BLOCKED_ISSUE_NAME in "${BLOCKED_ISSUES[@]}"; do
-    BLOCKED_ISSUE_DIR=".cat/issues/v$MAJOR/v$MAJOR.$MINOR/$BLOCKED_ISSUE_NAME"
-    BLOCKED_STATE_FILE="$BLOCKED_ISSUE_DIR/index.json"
-
-    update_state_dependency "$BLOCKED_STATE_FILE" "$NEW_ISSUE_ID"
-done
-```
-
-After updating all blocked issues' index.json files, commit with a `planning:` commit message such as:
-`planning: add {new-issue-id} as dependency of blocked issues`
 
 </step>
 
@@ -1121,7 +682,7 @@ Run the renderer and output its result verbatim:
 
 ```bash
 CLIENT_BIN="${CLAUDE_PROJECT_DIR}/client/target/jlink/bin"
-"$CLIENT_BIN/get-add-output" --type issue --name "{issue-name}" --version "{version}" --issue-type "{type}" --dependencies "{dependencies}"
+"$CLIENT_BIN/get-add-output" --type issue --name "${PRIMARY_NAME}" --version "${BEST_FIT_VERSION}" --issue-type "${ISSUE_TYPE}" --dependencies "${AUTO_DETECTED_DEPS_JSON}"
 ```
 
 </step>

@@ -1,5 +1,6 @@
 {
-  "status" : "open",
+  "status" : "closed",
+  "resolution" : "implemented",
   "target_branch" : "v2.1",
   "dependencies" : [ ],
   "blocks" : [ "2.1-add-verify-script-integration-tests", "2.1-split-user-agent-skill-variants", "2.1-refactor-sonnet-model-fallback", "2.1-fix-add-skill-multiline-arguments", "2.1-remove-skill-user-invocable-wrappers", "2.1-add-temp-file-cleanup-tests", "2.1-remove-askuserquestion-from-allowed-tools", "2.1-add-auto-skill-dependency-to-add-wizard", "2.1-restore-askuserquestion-in-allowed-tools", "2.1-extract-shared-planning-approach", "2.1-refactor-verify-script-duplicate-guards", "2.1-fix-add-agent-duplicate-detection-open-only", "2.1-rename-config-options", "2.1-fix-slash-commands-in-user-facing-guidance", "2.1-fix-create-issue-json-file-arg" ]
