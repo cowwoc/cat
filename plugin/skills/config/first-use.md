@@ -7,28 +7,27 @@ See LICENSE.md in the project root for license terms.
 
 Interactive configuration wizard to customize CAT settings.
 
-<objective>
+## Purpose
 
-Interactive configuration wizard to customize CAT settings. Displays current configuration and guides
-users through modifying their preferences.
+Display current CAT configuration and guide users through modifying their preferences via an interactive wizard.
+Supports personality settings (trust, caution, curiosity, perfection, verbosity), width settings, completion
+workflow, min severity, and version pre/post-conditions.
 
-</objective>
+## Procedure
 
-<process>
-
-<step name="read-config">
-
-**Read current configuration:**
+### Step 1: Read current configuration
 
 ```bash
-cat .cat/config.json
+"${CLAUDE_PLUGIN_ROOT}/client/bin/get-config-output" effective
 ```
 
-If file doesn't exist, inform user to run `/cat:init` first.
+If the command fails, inform the user to run `/cat:init` first.
 
-</step>
+Extract the following values from the JSON output for use in subsequent steps:
+- `trust`, `caution`, `curiosity`, `perfection`, `verbosity`
+- `fileWidth`, `displayWidth`, `completionWorkflow`, `minSeverity`
 
-<step name="display-settings">
+### Step 2: Display settings box
 
 **MANDATORY - Display-Before-Prompt Protocol:**
 
@@ -36,19 +35,13 @@ BLOCKING REQUIREMENT: You MUST output a visual display box BEFORE calling AskUse
 
 INVOKE: Skill("cat:get-output-agent", args="config.settings")
 
-The user wants an interactive wizard — go directly to the main-menu.
+### Step 3: Present main menu
 
-Continue to step: main-menu
-
-</step>
-
-<step name="main-menu">
-
-**CHECKPOINT: Verify settings box was displayed in previous step. If not, STOP and output it now.**
+**CHECKPOINT: Verify settings box was displayed in Step 2. If not, STOP and output it now.**
 
 **Present main menu using AskUserQuestion:**
 
-Show current values in descriptions using data from read-config step.
+Show current values in descriptions using data from Step 1.
 
 - header: "Settings"
 - question: "What would you like to configure?"
@@ -65,20 +58,17 @@ Show current values in descriptions using data from read-config step.
     description: "Pre/post-conditions for versions"
 
 Dispatch based on selection:
-- "🎭 Personality" → go to step "personality-menu"
-- "📏 Width Settings" → go to step "width-settings"
-- "🔀 Completion Workflow" → go to step "completion-workflow"
-- "📈 Min Severity" → go to step "min-severity"
-- "📊 Version Conditions" → go to step "version-conditions"
+- "🎭 Personality" → go to Step 4 (personality menu)
+- "📏 Width Settings" → go to Step 6 (width settings)
+- "🔀 Completion Workflow" → go to Step 7 (completion workflow)
+- "📈 Min Severity" → go to Step 8 (min severity)
+- "📊 Version Conditions" → go to Step 9 (version conditions)
 
-If user selects "Other" and types "done", "exit", or "back", proceed to exit step.
+If user selects "Other" and types "done", "exit", or "back", proceed to Step 11 (exit).
 
 **Note:** Context limits are fixed and not configurable. See agent-architecture.md § Context Limit Constants.
 
-</step>
-
-
-<step name="personality-menu">
+### Step 4: Personality menu
 
 **🎭 Personality — derive or set all personality settings**
 
@@ -94,523 +84,11 @@ AskUserQuestion:
     description: "Return to main menu"
 
 Dispatch based on selection:
-- "🧭 Guided setup" → Continue to step: questionnaire
-- "⚙️ Manual settings" → Continue to step: manual-settings
-- "← Back" → Continue to step: main-menu
-
-</step>
-
-<step name="manual-settings">
-
-**⚙️ Manual Settings — set all personality settings directly**
-
-Present two pages. Read current values from config (loaded in read-config step) to mark the current selection
-in each option description with " (current)".
-
-**Page 1 of 2 — Behavior:**
-
-AskUserQuestion:
-- header: "Behavior (1/2)"
-- question: "Set your behavior preferences:"
-- questions array (4 questions):
-  1. question: "Trust — How much autonomy should CAT have?"
-     header: "Trust"
-     options:
-     - label: "Low"
-       description: "Stops frequently to request approval{' (current)' if trust=='low'}"
-     - label: "Medium"
-       description: "Auto-continues between issues, stops at approval gates{' (current)' if trust=='medium'}"
-     - label: "High"
-       description: "Fully autonomous, skips approval gates{' (current)' if trust=='high'}"
-  2. question: "Caution — How thoroughly should CAT test before merging?"
-     header: "Caution"
-     options:
-     - label: "Low"
-       description: "Compile only (fastest feedback){' (current)' if caution=='low'}"
-     - label: "Medium"
-       description: "Compile and unit tests (default){' (current)' if caution=='medium'}"
-     - label: "High"
-       description: "Compile, unit tests, and E2E tests (maximum confidence){' (current)' if caution=='high'}"
-  3. question: "Curiosity — How broadly should CAT run stakeholder review?"
-     header: "Curiosity"
-     options:
-     - label: "Low"
-       description: "Skip automatic stakeholder review; review only runs if explicitly invoked{' (current)' if curiosity=='low'}"
-     - label: "Medium"
-       description: "Run automatic stakeholder review scoped to changed files and direct dependencies{' (current)' if curiosity=='medium'}"
-     - label: "High"
-       description: "Run automatic stakeholder review with holistic system integration scope{' (current)' if curiosity=='high'}"
-  4. question: "Perfection — How much should CAT pursue perfection?"
-     header: "Perfection"
-     options:
-     - label: "Low"
-       description: "Stay focused on the primary goal, defer tangential improvements{' (current)' if perfection=='low'}"
-     - label: "Medium"
-       description: "Fix issues that are easy to address, defer complex ones{' (current)' if perfection=='medium'}"
-     - label: "High"
-       description: "Fix every issue encountered, even if tangential to the primary goal{' (current)' if perfection=='high'}"
-
-Map answers: Low → "low", Medium → "medium", High → "high" for each respective setting.
-
-**Page 2 of 2 — Communication:**
-
-AskUserQuestion:
-- header: "Communication (2/2)"
-- question: "Set your communication preference:"
-- questions array (1 question):
-  1. question: "Verbosity — How much should CAT explain its reasoning?"
-     header: "Verbosity"
-     options:
-     - label: "Low"
-       description: "Progress banners and errors only — no reasoning, no summaries beyond phase markers{' (current)' if verbosity=='low'}"
-     - label: "Medium"
-       description: "Phase-transition summaries — what was done, key decisions{' (current)' if verbosity=='medium'}"
-     - label: "High"
-       description: "Full reasoning — alternatives considered, tradeoffs noted, rationale for each decision{' (current)' if verbosity=='high'}"
-
-Map answer: Low → "low", Medium → "medium", High → "high" for verbosity.
-
-**After collecting all answers from both pages, update config.json:**
-
-1. Read the current `.cat/config.json` content using the Read tool.
-2. Update all five personality keys with the selected values:
-   - `"trust"`: selected trust value
-   - `"caution"`: selected caution value
-   - `"curiosity"`: selected curiosity value
-   - `"perfection"`: selected perfection value
-   - `"verbosity"`: selected verbosity value
-3. Write the complete updated JSON back using the Write tool.
-
-Do NOT use `python3`, `jq`, or any external tool. Use the Write tool directly.
-
-INVOKE: Skill("cat:get-output-agent", args="config.setting-updated personality {old-summary} {new-summary}")
-
-Where `{old-summary}` is the previous values joined as "trust:X caution:X curiosity:X perfection:X verbosity:X"
-and `{new-summary}` is the new values in the same format.
-
-Continue to step: main-menu
-
-</step>
-
-<step name="trust">
-
-**🤝 Trust — How much autonomy CAT has to act independently**
-
-Display current setting, then AskUserQuestion:
-- header: "Trust"
-- question: "How much autonomy should CAT have when making decisions? (Current: {trust || 'medium'})"
-- options:
-  - label: "Low"
-    description: "Stops frequently to request approval"
-  - label: "Medium (Default)"
-    description: "Auto-continues between issues, stops at approval gates"
-  - label: "High"
-    description: "Fully autonomous, skips approval gates"
-  - label: "← Back"
-    description: "Return to personality menu"
-
-Map: Low → `trust: "low"`, Medium → `trust: "medium"`, High → `trust: "high"`
-
-On selection, call update-config with the derived value, then continue to step: confirm.
-
-</step>
-
-<step name="caution">
-
-**✅ Caution — How cautiously the agent validates changes**
-
-Display current setting, then AskUserQuestion:
-- header: "Caution"
-- question: "How cautious should the agent be when validating changes? (Current: {caution || 'medium'})"
-- options:
-  - label: "Low"
-    description: "Compile only (fastest feedback)"
-  - label: "Medium (Default)"
-    description: "Compile and unit tests (default)"
-  - label: "High"
-    description: "Compile, unit tests, and E2E tests (maximum confidence)"
-  - label: "← Back"
-    description: "Return to personality menu"
-
-Map: Low → `caution: "low"`, Medium → `caution: "medium"`, High → `caution: "high"`
-
-On selection, call update-config with the derived value, then continue to step: confirm.
-
-</step>
-
-<step name="curiosity">
-
-**🔍 Curiosity — How broadly stakeholder review and research considers system context**
-
-Display current setting, then AskUserQuestion:
-- header: "Curiosity"
-- question: "How broadly should CAT run stakeholder reviews? (Current: {curiosity || 'medium'})"
-- options:
-  - label: "Low"
-    description: "Skip automatic stakeholder review; review only runs if explicitly invoked"
-  - label: "Medium (Default)"
-    description: "Run automatic stakeholder review scoped to changed files and direct dependencies"
-  - label: "High"
-    description: "Run automatic stakeholder review with holistic system integration scope"
-  - label: "← Back"
-    description: "Return to personality menu"
-
-Map: Low → `curiosity: "low"`, Medium → `curiosity: "medium"`, High → `curiosity: "high"`
-
-On selection, call update-config with the derived value, then continue to step: confirm.
-
-</step>
-
-<step name="perfection">
-
-**⏳ Perfection — How much the agent pursues perfection in the current task**
-
-Display current setting, then AskUserQuestion:
-- header: "Perfection"
-- question: "How much should CAT pursue perfection in the current task? (Current: {perfection || 'medium'})"
-- options:
-  - label: "Low"
-    description: "Stay focused on the primary goal, defer tangential improvements"
-  - label: "Medium (Default)"
-    description: "Fix issues that are easy to address, defer complex ones"
-  - label: "High"
-    description: "Fix every issue encountered, even if tangential to the primary goal"
-  - label: "← Back"
-    description: "Return to personality menu"
-
-Map: Low → `perfection: "low"`, Medium → `perfection: "medium"`, High → `perfection: "high"`
-
-On selection, call update-config with the derived value, then continue to step: confirm.
-
-**Priority-based deferral (when perfection is low):**
-- High benefit, low cost → Current or next version
-- Moderate → Next major version
-- Low benefit, high cost → Backlog or distant future
-
-</step>
-
-<step name="verbosity">
-
-**🗣️ Verbosity — How much CAT explains itself during task execution**
-
-Display current setting, then AskUserQuestion:
-- header: "Verbosity"
-- question: "How much should CAT explain its reasoning? (Current: {verbosity || 'medium'})"
-- options:
-  - label: "Low"
-    description: "Progress banners and errors only — no reasoning, no summaries beyond phase markers"
-  - label: "Medium (Default)"
-    description: "Phase-transition summaries — what was done, key decisions"
-  - label: "High"
-    description: "Full reasoning — alternatives considered, tradeoffs noted, rationale for each decision"
-  - label: "← Back"
-    description: "Return to personality menu"
-
-Map: Low → `verbosity: "low"`, Medium → `verbosity: "medium"`, High → `verbosity: "high"`
-
-On selection, call update-config with the derived value, then continue to step: confirm.
-
-</step>
-
-<step name="width-settings">
-
-**📏 Width Settings:**
-
-AskUserQuestion:
-- header: "Width Settings"
-- question: "Which width would you like to configure?"
-- options:
-  - label: "📄 File Width"
-    description: "Currently: {fileWidth || 120} — wrapping for content written to files (e.g., markdown docs)"
-  - label: "🖥️ Display Width"
-    description: "Currently: {displayWidth || 120} — wrapping for terminal rendering (e.g., diffs, status boxes)"
-  - label: "← Back"
-    description: "Return to main menu"
-
-**If File Width selected:**
-
-AskUserQuestion:
-- header: "File Width"
-- question: "What device are you primarily writing files on?"
-- options:
-  - label: "🖥️ Desktop/Laptop (Default)"
-    description: "120 characters - standard for wide monitors and markdown editors"
-  - label: "⚙️ Custom value"
-    description: "Enter a specific width (40-200)"
-  - label: "← Back"
-    description: "Return to width menu"
-
-Map selections:
-- Desktop/Laptop → `fileWidth: 120`
-- Custom → prompt for value, validate 40-200
-
-**If Display Width selected:**
-
-AskUserQuestion:
-- header: "Display Width"
-- question: "What device are you primarily using?"
-- options:
-  - label: "🖥️ Desktop/Laptop (Default)"
-    description: "120 characters - optimized for wide monitors"
-  - label: "📱 Mobile"
-    description: "50 characters - optimized for phones and narrow screens"
-  - label: "⚙️ Custom value"
-    description: "Enter a specific width (40-200)"
-  - label: "← Back"
-    description: "Return to width menu"
-
-Map selections:
-- Desktop/Laptop → `displayWidth: 120`
-- Mobile → `displayWidth: 50`
-- Custom → prompt for value, validate 40-200
-
-**If Custom value selected (for either):**
-
-AskUserQuestion:
-- header: "Custom Width"
-- question: "Enter width (40-200):"
-- options: ["← Back"]
-
-Validate input is a number between 40-200. If invalid, show error and re-prompt.
-
-**Update config using the Write tool:**
-
-1. Read the current `.cat/config.json` content using the Read tool.
-2. Merge the new `fileWidth` or `displayWidth` integer value into the existing config object (update or add the key).
-3. Write the complete updated JSON back using the Write tool.
-
-Example: if the current config has `{"trust": "medium"}` and the user set displayWidth to 100, write:
-
-```json
-{
-  "trust": "medium",
-  "displayWidth": 100
-}
-```
-
-Example: if the user also set fileWidth to 120, write:
-
-```json
-{
-  "trust": "medium",
-  "displayWidth": 100,
-  "fileWidth": 120
-}
-```
-
-Do NOT use `python3`, `jq`, or any external tool. Use the Write tool directly.
-
-</step>
-
-<step name="completion-workflow">
-
-**🔀 Completion Workflow selection:**
-
-AskUserQuestion:
-- header: "Completion Workflow"
-- question: "How should completed issues be integrated? (Current: {completionWorkflow || 'merge'})"
-- options:
-  - label: "🔀 Merge (Default)"
-    description: "Merge source branch directly to target branch after approval"
-  - label: "📝 Pull Request"
-    description: "Create a PR instead of merging directly"
-  - label: "← Back"
-    description: "Return to main menu"
-
-Map: Merge → `completionWorkflow: "merge"`, Pull Request → `completionWorkflow: "pr"`
-
-**Update config using the Write tool:**
-
-1. Read the current `.cat/config.json` content using the Read tool.
-2. Merge the new `completionWorkflow` string value into the existing config object (update or add the key).
-3. Write the complete updated JSON back using the Write tool.
-
-Example: if the current config has `{"trust": "medium"}` and the user selected "Pull Request", write:
-
-```json
-{
-  "trust": "medium",
-  "completionWorkflow": "pr"
-}
-```
-
-Do NOT use `python3`, `jq`, or any external tool. Use the Write tool directly.
-
-</step>
-
-<step name="min-severity">
-
-**📊 Min Severity configuration:**
-
-Min severity controls the minimum concern severity level that is visible at all. Concerns below this level are
-silently ignored — not fixed, not deferred, not tracked.
-
-AskUserQuestion:
-- header: "Min Severity — Concern Visibility"
-- question: "Minimum severity level to make visible? (Current: {minSeverity || 'low'})"
-- options:
-  - label: "LOW (Default)"
-    description: "All concerns visible (CRITICAL, HIGH, MEDIUM, and LOW)"
-  - label: "MEDIUM"
-    description: "MEDIUM, HIGH, and CRITICAL concerns visible; LOW are ignored"
-  - label: "HIGH"
-    description: "HIGH and CRITICAL concerns visible; MEDIUM and LOW are ignored"
-  - label: "CRITICAL"
-    description: "Only CRITICAL concerns visible; HIGH, MEDIUM, and LOW are ignored"
-  - label: "← Back"
-    description: "Return to main menu"
-
-Map selections:
-- LOW → `minSeverity: "low"`
-- MEDIUM → `minSeverity: "medium"`
-- HIGH → `minSeverity: "high"`
-- CRITICAL → `minSeverity: "critical"`
-
-**Update config using the Write tool:**
-
-1. Read the current `.cat/config.json` content using the Read tool.
-2. Merge the new `minSeverity` string value into the existing config object (update or add the key).
-3. Write the complete updated JSON back using the Write tool.
-
-Example: if the current config has `{"trust": "medium"}` and the user selected "HIGH", write:
-
-```json
-{
-  "trust": "medium",
-  "minSeverity": "high"
-}
-```
-
-Do NOT use `python3`, `jq`, or any external tool. Use the Write tool directly.
-
-</step>
-
-<step name="version-conditions">
-
-**📊 Version Conditions configuration:**
-
-INVOKE: Skill("cat:get-output-agent", args="config.versions")
-
-**Step 1: Select version to configure**
-
-First, scan for available versions:
-```bash
-ls -1d .cat/v[0-9]*/v[0-9]*.[0-9]* 2>/dev/null | \
-  sed 's|.cat/v[0-9]*/v||' | sort -V
-```
-
-Determine current minor version from ROADMAP.md (first non-completed).
-
-Use AskUserQuestion:
-- header: "Select Version"
-- question: "Which version's conditions do you want to configure?"
-- options:
-  - "v{X}.{Y-1} - Previous minor" (if exists)
-  - "v{X}.{Y} - Current minor" (highlighted)
-  - "v{X}.{Y+1} - Next minor" (if exists)
-  - "Enter version number" - Custom input
-
-**If "Enter version number":**
-
-Use AskUserQuestion:
-- header: "Version"
-- question: "Enter the version number (e.g., 0.5 or just 0 for major):"
-- options: ["← Back"]
-
-Parse input to determine if major (single digit) or minor (X.Y format).
-
-**Step 2: Display current conditions**
-
-Read the plan.md for selected version:
-```bash
-cat .cat/issues/v{major}/v{major}.{minor}/plan.md 2>/dev/null || \
-cat .cat/issues/v{major}/plan.md 2>/dev/null
-```
-
-Extract the `## Pre-conditions` and `## Post-conditions` sections.
-
-INVOKE: Skill("cat:get-output-agent", args="config.conditions-for-version {version} {preconditions} {postconditions}")
-
-Replace `{version}`, `{preconditions}`, and `{postconditions}` with actual values extracted from plan.md.
-Empty conditions should be represented as "(none)".
-
-**Step 3: Choose action**
-
-Use AskUserQuestion:
-- header: "Action"
-- question: "What would you like to do?"
-- options:
-  - label: "Edit pre-conditions"
-    description: "Change when work can start"
-  - label: "Edit post-conditions"
-    description: "Change completion criteria"
-  - label: "View another version"
-    description: "Select a different version"
-  - label: "← Back"
-    description: "Return to main menu"
-
-**Step 4a: Edit pre-conditions**
-
-Use AskUserQuestion:
-- header: "Pre-conditions"
-- question: "Select entry conditions (current: {current conditions}):"
-- multiSelect: true
-- options:
-  - "Previous version complete" - sequential dependency
-  - "Specific issue(s) complete" - named issues required
-  - "Specific version(s) complete" - named versions required
-  - "Manual approval required" - explicit sign-off
-
-If "Specific issue(s) complete":
-- Ask: "Which issue(s)? (e.g., 0.5-design-review, comma-separated)"
-
-If "Specific version(s) complete":
-- Ask: "Which version(s)? (e.g., 0.3, 0.4, comma-separated)"
-
-**Step 4b: Edit post-conditions**
-
-Use AskUserQuestion:
-- header: "Post-conditions"
-- question: "Select exit conditions (current: {current conditions}):"
-- multiSelect: true
-- options:
-  - "All issues complete" - every issue in version done
-  - "Specific issue(s) complete" - only named issues required
-  - "Tests passing" - test suite must pass
-  - "Manual sign-off" - explicit approval
-
-If "Specific issue(s) complete":
-- Ask: "Which issue(s)? (comma-separated)"
-
-**Step 5: Update plan.md**
-
-Read the version's plan.md, update the `## Pre-conditions` and `## Post-conditions` sections:
-
-```markdown
-## Pre-conditions
-- {condition 1}
-- {condition 2}
-
-## Post-conditions
-- {condition 1}
-- {condition 2}
-```
-
-If the plan.md doesn't have these sections, insert them after `## Focus` or `## Vision`.
-
-Write the updated plan.md using the Write tool.
-
-**Step 6: Confirm and loop**
-
-INVOKE: Skill("cat:get-output-agent", args="config.conditions-updated {version} {new-preconditions} {new-postconditions}")
-
-Replace `{version}`, `{new-preconditions}`, `{new-postconditions}` with actual values.
-
-Return to Step 3 (Choose action) to allow further edits or navigation.
-
-</step>
-
-<step name="questionnaire">
+- "🧭 Guided setup" → go to Step 5 (questionnaire)
+- "⚙️ Manual settings" → go to Step 5a (manual settings)
+- "← Back" → return to Step 3 (main menu)
+
+### Step 5: Questionnaire
 
 **Personality Questionnaire — re-derive all behavior settings from situational questions**
 
@@ -720,16 +198,14 @@ You can update any of these later with /cat:config.
 
 **Update config.json with all 5 derived values:**
 
-1. Read the current `.cat/config.json` content using the Read tool.
-2. Update all five personality keys with derived values:
-   - `"trust"`: TRUST value
-   - `"caution"`: CAUTION value
-   - `"curiosity"`: CURIOSITY value
-   - `"perfection"`: PERFECTION value
-   - `"verbosity"`: VERBOSITY value
-3. Write the complete updated JSON back using the Write tool.
+```bash
+"${CLAUDE_PLUGIN_ROOT}/client/bin/update-config" \
+  "trust={TRUST}" "caution={CAUTION}" "curiosity={CURIOSITY}" \
+  "perfection={PERFECTION}" "verbosity={VERBOSITY}"
+```
 
-Do NOT use `python3`, `jq`, or any external tool. Use the Write tool directly.
+Where each value is the lowercase derived value (e.g., "low", "medium", "high").
+If the command outputs `{"status":"ERROR",...}`, display the error message.
 
 **Manual Testing:**
 To test the questionnaire behavior manually:
@@ -738,38 +214,368 @@ To test the questionnaire behavior manually:
 3. Verify all 5 questions appear in sequence
 4. Provide one answer to each question
 5. Verify the result display shows all 5 values with correct explanations (verify against template)
-6. Confirm config.json was updated with all 5 values (use `cat .cat/config.json` to verify)
+6. Confirm config.json was updated with all 5 values
 
-**After updating config.json**, continue to step: display-settings (re-displays settings box and main menu).
+After updating config.json, return to Step 2 (display settings box and main menu).
 
-</step>
+### Step 5a: Manual settings
 
-<step name="update-config">
+**⚙️ Manual Settings — set all personality settings directly**
 
-**Update configuration file:**
+Present two pages. Read current values from config (loaded in Step 1) to mark the current selection
+in each option description with " (current)".
 
-Use the Read tool to read `.cat/config.json`, modify the target setting value, then use the Write tool to
-write the updated JSON back to the same path.
+**Page 1 of 2 — Behavior:**
 
-</step>
+AskUserQuestion:
+- header: "Behavior (1/2)"
+- question: "Set your behavior preferences:"
+- questions array (4 questions):
+  1. question: "Trust — How much autonomy should CAT have?"
+     header: "Trust"
+     options:
+     - label: "Low"
+       description: "Stops frequently to request approval{' (current)' if trust=='low'}"
+     - label: "Medium"
+       description: "Auto-continues between issues, stops at approval gates{' (current)' if trust=='medium'}"
+     - label: "High"
+       description: "Fully autonomous, skips approval gates{' (current)' if trust=='high'}"
+  2. question: "Caution — How thoroughly should CAT test before merging?"
+     header: "Caution"
+     options:
+     - label: "Low"
+       description: "Compile only (fastest feedback){' (current)' if caution=='low'}"
+     - label: "Medium"
+       description: "Compile and unit tests (default){' (current)' if caution=='medium'}"
+     - label: "High"
+       description: "Compile, unit tests, and E2E tests (maximum confidence){' (current)' if caution=='high'}"
+  3. question: "Curiosity — How broadly should CAT run stakeholder review?"
+     header: "Curiosity"
+     options:
+     - label: "Low"
+       description: "Skip automatic stakeholder review; review only runs if explicitly invoked{' (current)' if curiosity=='low'}"
+     - label: "Medium"
+       description: "Run automatic stakeholder review scoped to changed files and direct dependencies{' (current)' if curiosity=='medium'}"
+     - label: "High"
+       description: "Run automatic stakeholder review with holistic system integration scope{' (current)' if curiosity=='high'}"
+  4. question: "Perfection — How much should CAT pursue perfection?"
+     header: "Perfection"
+     options:
+     - label: "Low"
+       description: "Stay focused on the primary goal, defer tangential improvements{' (current)' if perfection=='low'}"
+     - label: "Medium"
+       description: "Fix issues that are easy to address, defer complex ones{' (current)' if perfection=='medium'}"
+     - label: "High"
+       description: "Fix every issue encountered, even if tangential to the primary goal{' (current)' if perfection=='high'}"
 
-<step name="confirm">
+Map answers: Low → "low", Medium → "medium", High → "high" for each respective setting.
+
+**Page 2 of 2 — Communication:**
+
+AskUserQuestion:
+- header: "Communication (2/2)"
+- question: "Set your communication preference:"
+- questions array (1 question):
+  1. question: "Verbosity — How much should CAT explain its reasoning?"
+     header: "Verbosity"
+     options:
+     - label: "Low"
+       description: "Progress banners and errors only — no reasoning, no summaries beyond phase markers{' (current)' if verbosity=='low'}"
+     - label: "Medium"
+       description: "Phase-transition summaries — what was done, key decisions{' (current)' if verbosity=='medium'}"
+     - label: "High"
+       description: "Full reasoning — alternatives considered, tradeoffs noted, rationale for each decision{' (current)' if verbosity=='high'}"
+
+Map answer: Low → "low", Medium → "medium", High → "high" for verbosity.
+
+**After collecting all answers from both pages, update config.json:**
+
+```bash
+"${CLAUDE_PLUGIN_ROOT}/client/bin/update-config" \
+  "trust={trust_value}" "caution={caution_value}" "curiosity={curiosity_value}" \
+  "perfection={perfection_value}" "verbosity={verbosity_value}"
+```
+
+Where `{trust_value}`, `{caution_value}`, etc. are the lowercase values selected above (e.g., "low", "medium", "high").
+If the command outputs `{"status":"ERROR",...}`, display the error message and do not proceed.
+
+INVOKE: Skill("cat:get-output-agent", args="config.setting-updated personality {old_summary} {new_summary}")
+
+Where `{old_summary}` is the previous values joined as "trust:X caution:X curiosity:X perfection:X verbosity:X"
+and `{new_summary}` is the new values in the same format.
+
+Return to Step 3 (main menu).
+
+### Step 6: Width settings
+
+**📏 Width Settings:**
+
+AskUserQuestion:
+- header: "Width Settings"
+- question: "Which width would you like to configure?"
+- options:
+  - label: "📄 File Width"
+    description: "Currently: {fileWidth || 120} — wrapping for content written to files (e.g., markdown docs)"
+  - label: "🖥️ Display Width"
+    description: "Currently: {displayWidth || 120} — wrapping for terminal rendering (e.g., diffs, status boxes)"
+  - label: "← Back"
+    description: "Return to main menu"
+
+**If File Width selected:**
+
+AskUserQuestion:
+- header: "File Width"
+- question: "What device are you primarily writing files on?"
+- options:
+  - label: "🖥️ Desktop/Laptop (Default)"
+    description: "120 characters - standard for wide monitors and markdown editors"
+  - label: "⚙️ Custom value"
+    description: "Enter a specific width (40-200)"
+  - label: "← Back"
+    description: "Return to width menu"
+
+Map selections:
+- Desktop/Laptop → `fileWidth: 120`
+- Custom → prompt for value, validate 40-200
+
+**If Display Width selected:**
+
+AskUserQuestion:
+- header: "Display Width"
+- question: "What device are you primarily using?"
+- options:
+  - label: "🖥️ Desktop/Laptop (Default)"
+    description: "120 characters - optimized for wide monitors"
+  - label: "📱 Mobile"
+    description: "50 characters - optimized for phones and narrow screens"
+  - label: "⚙️ Custom value"
+    description: "Enter a specific width (40-200)"
+  - label: "← Back"
+    description: "Return to width menu"
+
+Map selections:
+- Desktop/Laptop → `displayWidth: 120`
+- Mobile → `displayWidth: 50`
+- Custom → prompt for value, validate 40-200
+
+**If Custom value selected (for either):**
+
+AskUserQuestion:
+- header: "Custom Width"
+- question: "Enter width (40-200):"
+- options: ["← Back"]
+
+Validate input is a number between 40-200. If invalid, show error and re-prompt.
+
+**Update config:**
+
+```bash
+"${CLAUDE_PLUGIN_ROOT}/client/bin/update-config" "fileWidth={value}"
+```
+(or `displayWidth={value}` as appropriate). Replace `{value}` with the integer value selected.
+If the command outputs `{"status":"ERROR",...}`, display the error message.
+
+Return to Step 3 (main menu) after updating.
+
+### Step 7: Completion workflow
+
+**🔀 Completion Workflow selection:**
+
+AskUserQuestion:
+- header: "Completion Workflow"
+- question: "How should completed issues be integrated? (Current: {completionWorkflow || 'merge'})"
+- options:
+  - label: "🔀 Merge (Default)"
+    description: "Merge source branch directly to target branch after approval"
+  - label: "📝 Pull Request"
+    description: "Create a PR instead of merging directly"
+  - label: "← Back"
+    description: "Return to main menu"
+
+Map: Merge → `completionWorkflow: "merge"`, Pull Request → `completionWorkflow: "pr"`
+
+**Update config:**
+
+```bash
+"${CLAUDE_PLUGIN_ROOT}/client/bin/update-config" "completionWorkflow={value}"
+```
+Replace `{value}` with the mapped value ("merge" or "pr").
+If the command outputs `{"status":"ERROR",...}`, display the error message.
+
+Return to Step 3 (main menu) after updating.
+
+### Step 8: Min severity
+
+**📈 Min Severity configuration:**
+
+Min severity controls the minimum concern severity level that is visible at all. Concerns below this level are
+silently ignored — not fixed, not deferred, not tracked.
+
+AskUserQuestion:
+- header: "Min Severity — Concern Visibility"
+- question: "Minimum severity level to make visible? (Current: {minSeverity || 'low'})"
+- options:
+  - label: "LOW (Default)"
+    description: "All concerns visible (CRITICAL, HIGH, MEDIUM, and LOW)"
+  - label: "MEDIUM"
+    description: "MEDIUM, HIGH, and CRITICAL concerns visible; LOW are ignored"
+  - label: "HIGH"
+    description: "HIGH and CRITICAL concerns visible; MEDIUM and LOW are ignored"
+  - label: "CRITICAL"
+    description: "Only CRITICAL concerns visible; HIGH, MEDIUM, and LOW are ignored"
+  - label: "← Back"
+    description: "Return to main menu"
+
+Map selections:
+- LOW → `minSeverity: "low"`
+- MEDIUM → `minSeverity: "medium"`
+- HIGH → `minSeverity: "high"`
+- CRITICAL → `minSeverity: "critical"`
+
+**Update config:**
+
+```bash
+"${CLAUDE_PLUGIN_ROOT}/client/bin/update-config" "minSeverity={value}"
+```
+Replace `{value}` with the mapped severity ("low", "medium", "high", or "critical").
+If the command outputs `{"status":"ERROR",...}`, display the error message.
+
+Return to Step 3 (main menu) after updating.
+
+### Step 9: Version conditions
+
+**📊 Version Conditions configuration:**
+
+INVOKE: Skill("cat:get-output-agent", args="config.versions")
+
+**Step 9.1: Select version to configure**
+
+First, scan for available versions:
+```bash
+ls -1d .cat/v[0-9]*/v[0-9]*.[0-9]* 2>/dev/null | \
+  sed 's|.cat/v[0-9]*/v||' | sort -V
+```
+
+Determine current minor version from ROADMAP.md (first non-completed).
+
+Use AskUserQuestion:
+- header: "Select Version"
+- question: "Which version's conditions do you want to configure?"
+- options:
+  - "v{X}.{Y-1} - Previous minor" (if exists)
+  - "v{X}.{Y} - Current minor" (highlighted)
+  - "v{X}.{Y+1} - Next minor" (if exists)
+  - "Enter version number" - Custom input
+
+**If "Enter version number":**
+
+Use AskUserQuestion:
+- header: "Version"
+- question: "Enter the version number (e.g., 0.5 or just 0 for major):"
+- options: ["← Back"]
+
+Parse input to determine if major (single digit) or minor (X.Y format).
+
+**Step 9.2: Display current conditions**
+
+Read the plan.md for selected version:
+```bash
+cat .cat/issues/v{major}/v{major}.{minor}/plan.md 2>/dev/null || \
+cat .cat/issues/v{major}/plan.md 2>/dev/null
+```
+
+Extract the `## Pre-conditions` and `## Post-conditions` sections.
+
+INVOKE: Skill("cat:get-output-agent", args="config.conditions-for-version {version} {preconditions} {postconditions}")
+
+Replace `{version}`, `{preconditions}`, and `{postconditions}` with actual values extracted from plan.md.
+Empty conditions should be represented as "(none)".
+
+**Step 9.3: Choose action**
+
+Use AskUserQuestion:
+- header: "Action"
+- question: "What would you like to do?"
+- options:
+  - label: "Edit pre-conditions"
+    description: "Change when work can start"
+  - label: "Edit post-conditions"
+    description: "Change completion criteria"
+  - label: "View another version"
+    description: "Select a different version"
+  - label: "← Back"
+    description: "Return to main menu"
+
+**Step 9.4a: Edit pre-conditions**
+
+Use AskUserQuestion:
+- header: "Pre-conditions"
+- question: "Select entry conditions (current: {current conditions}):"
+- multiSelect: true
+- options:
+  - "Previous version complete" - sequential dependency
+  - "Specific issue(s) complete" - named issues required
+  - "Specific version(s) complete" - named versions required
+  - "Manual approval required" - explicit sign-off
+
+If "Specific issue(s) complete":
+- Ask: "Which issue(s)? (e.g., 0.5-design-review, comma-separated)"
+
+If "Specific version(s) complete":
+- Ask: "Which version(s)? (e.g., 0.3, 0.4, comma-separated)"
+
+**Step 9.4b: Edit post-conditions**
+
+Use AskUserQuestion:
+- header: "Post-conditions"
+- question: "Select exit conditions (current: {current conditions}):"
+- multiSelect: true
+- options:
+  - "All issues complete" - every issue in version done
+  - "Specific issue(s) complete" - only named issues required
+  - "Tests passing" - test suite must pass
+  - "Manual sign-off" - explicit approval
+
+If "Specific issue(s) complete":
+- Ask: "Which issue(s)? (comma-separated)"
+
+**Step 9.5: Update plan.md**
+
+Read the version's plan.md, update the `## Pre-conditions` and `## Post-conditions` sections:
+
+```markdown
+## Pre-conditions
+- {condition 1}
+- {condition 2}
+
+## Post-conditions
+- {condition 1}
+- {condition 2}
+```
+
+If the plan.md doesn't have these sections, insert them after `## Focus` or `## Vision`.
+
+Write the updated plan.md using the Write tool.
+
+**Step 9.6: Confirm and loop**
+
+INVOKE: Skill("cat:get-output-agent", args="config.conditions-updated {version} {new_preconditions} {new_postconditions}")
+
+Replace `{version}`, `{new_preconditions}`, `{new_postconditions}` with actual values.
+
+Return to Step 9.3 (Choose action) to allow further edits or navigation.
+
+### Step 10: Confirm change
 
 **Confirm change and return to parent menu:**
 
-INVOKE: Skill("cat:get-output-agent", args="config.setting-updated {setting-name} {old-value} {new-value}")
+INVOKE: Skill("cat:get-output-agent", args="config.setting-updated {setting_name} {old_value} {new_value}")
 
-Replace `{setting-name}`, `{old-value}`, `{new-value}` with actual values.
+Replace `{setting_name}`, `{old_value}`, `{new_value}` with actual values.
 
 **After confirming**: Return to the **parent menu** and re-display its options.
 
-Examples:
-- Changed "Trust" → return to CAT Behavior menu
-- Changed "Context window size" → return to Context Limits menu
-
-</step>
-
-<step name="exit">
+### Step 11: Exit
 
 **Exit screen:**
 
@@ -781,9 +587,21 @@ If no changes:
 
 INVOKE: Skill("cat:get-output-agent", args="config.no-changes")
 
-</step>
+## Verification
 
-</process>
+<success_criteria>
+
+- [ ] Current configuration displayed
+- [ ] User navigated wizard successfully
+- [ ] Settings updated in config.json using the update-config binary
+- [ ] Version conditions viewable and editable via wizard
+- [ ] Gate changes saved to version plan.md files
+- [ ] Changes confirmed with before/after values
+- [ ] Personality submenu presents Guided setup and Manual settings options
+- [ ] Manual settings wizard covers all 5 personality settings across two pages
+- [ ] Current values highlighted in Manual settings options
+
+</success_criteria>
 
 <configuration_reference>
 
@@ -837,17 +655,3 @@ INVOKE: Skill("cat:get-output-agent", args="config.no-changes")
 - `critical` — Only CRITICAL concerns visible; HIGH, MEDIUM, and LOW are ignored.
 
 </configuration_reference>
-
-<success_criteria>
-
-- [ ] Current configuration displayed
-- [ ] User navigated wizard successfully
-- [ ] Settings updated in config.json using Write tool
-- [ ] Version conditions viewable and editable via wizard
-- [ ] Gate changes saved to version plan.md files
-- [ ] Changes confirmed with before/after values
-- [ ] Personality submenu presents Guided setup and Manual settings options
-- [ ] Manual settings wizard covers all 5 personality settings across two pages
-- [ ] Current values highlighted in Manual settings options
-
-</success_criteria>
