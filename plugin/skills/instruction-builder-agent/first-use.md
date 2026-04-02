@@ -54,39 +54,6 @@ Store as `CURIOSITY`. This value gates later steps:
 
 ---
 
-## Subagent Command Allowlist
-
-All subagents spawned by this skill operate under a strict command allowlist. Deviations are a constraint
-violation and must be treated as prohibition failures.
-
-**Test-run subagents** (no tool restrictions):
-- Test-run subagents execute organically with full tool access to test natural behavior
-- Filesystem isolation (orphan-branch worktree) ensures assertions are structurally absent
-
-**Grader and analyzer subagents** (read-only):
-- Allowed: `cat`, `head`, `tail`, `wc`, `grep`, `sort`, `uniq`, `diff`, `stat`
-
-**Grader and analyzer restrictions** (applies to grader and analyzer subagents only — NOT test-run):
-- This allowlist covers external commands AND all shell built-ins (echo, printf, read, source, eval,
-  set, export, type, compgen, declare, test, mapfile, readarray, command, builtin, trap, enable, hash,
-  kill, wait, and any other built-in not on the allowlist)
-- Do NOT use process substitution (`<(...)`, `>(...)`), command substitution, shell glob expansion
-  (`*`, `?`, `[...]`), or pipe operators (`|`) in arguments to or between allowlisted commands
-- Do NOT use shell redirection operators (`>`, `>>`, `<`, `<<`, `2>`) for any purpose
-- Do NOT use any Bash command not on the allowlist
-
-**Isolation model:** Test-run subagents execute in worktrees created from an orphan branch where assertions
-have been structurally removed (see § Test-Runner Filesystem Isolation in Step 6). This provides filesystem-level
-isolation: assertions do not exist on the test-runner's disk and cannot be recovered via git history. The command
-allowlist and instruction-based prohibitions serve as a secondary defense layer. Grader subagents run in the main
-issue worktree where assertions are present.
-
-All test cases use the `.md` scenario format committed to `plugin/tests/{skill_name}/`. Scenarios run
-organically — without the skill pre-loaded — so each run tests both trigger selection and behavioral
-compliance in a single pass. SPRT operates on the combined pass/fail outcome.
-
----
-
 ## Document Structure: XML vs Markdown
 
 Skills and commands can use either XML-based structure or pure markdown sections.
@@ -163,6 +130,39 @@ Before creating a new skill/command, answer:
 4. Is it a simple linear procedure? → **Markdown** (use `## Purpose/Procedure/Verification`)
 
 **Default**: Use pure markdown unless you need XML-specific features.
+
+---
+
+## Subagent Command Allowlist
+
+All subagents spawned by this skill operate under a strict command allowlist. Deviations are a constraint
+violation and must be treated as prohibition failures.
+
+**Test-run subagents** (no tool restrictions):
+- Test-run subagents execute organically with full tool access to test natural behavior
+- Filesystem isolation (orphan-branch worktree) ensures assertions are structurally absent
+
+**Grader and analyzer subagents** (read-only):
+- Allowed: `cat`, `head`, `tail`, `wc`, `grep`, `sort`, `uniq`, `diff`, `stat`
+
+**Grader and analyzer restrictions** (applies to grader and analyzer subagents only — NOT test-run):
+- This allowlist covers external commands AND all shell built-ins (echo, printf, read, source, eval,
+  set, export, type, compgen, declare, test, mapfile, readarray, command, builtin, trap, enable, hash,
+  kill, wait, and any other built-in not on the allowlist)
+- Do NOT use process substitution (`<(...)`, `>(...)`), command substitution, shell glob expansion
+  (`*`, `?`, `[...]`), or pipe operators (`|`) in arguments to or between allowlisted commands
+- Do NOT use shell redirection operators (`>`, `>>`, `<`, `<<`, `2>`) for any purpose
+- Do NOT use any Bash command not on the allowlist
+
+**Isolation model:** Test-run subagents execute in worktrees created from an orphan branch where assertions
+have been structurally removed (see § Test-Runner Filesystem Isolation in Step 6). This provides filesystem-level
+isolation: assertions do not exist on the test-runner's disk and cannot be recovered via git history. The command
+allowlist and instruction-based prohibitions serve as a secondary defense layer. Grader subagents run in the main
+issue worktree where assertions are present.
+
+All test cases use the `.md` scenario format committed to `plugin/tests/{skill_name}/`. Scenarios run
+organically — without the skill pre-loaded — so each run tests both trigger selection and behavioral
+compliance in a single pass. SPRT operates on the combined pass/fail outcome.
 
 ---
 
@@ -1511,14 +1511,27 @@ Overall verification passes if all non-skipped items are checked and all skipped
 - [ ] Protected text identification cross-references SPRT failure data with diff hunks to prevent hardening from
   weakening verification assertions
 
+### Failure analysis
+
+- [ ] instruction-analyzer-agent spawned correctly with `TEST_SHA`, `TEST_PATH`, `INSTRUCTION_TEXT_PATH`,
+  `WORKTREE_ROOT`, `TEST_DIR`, and `CLAUDE_SESSION_ID`
+- [ ] Analysis report presented to user along with SPRT test summary
+- [ ] User offered 3 choices: remove/replace test cases, improve skill and re-run, or accept current version
+- [ ] Iteration cap of 5 respected; best iteration tracked via `BEST_SCORE` and `BEST_SHA`
+- [ ] Plateau detection: iteration stops when improvement < 5 percentage points; best version restored
+
 ### Adversarial hardening
 
 - [ ] Follows shared adversarial protocol from `plugin/concepts/adversarial-protocol.md`; `target_type: instructions`
 - [ ] Main agent never reads findings.json directly — uses structured JSON returns from subagents
 - [ ] Subagents read `TARGET_FILE_PATH` from disk; file content not embedded inline in prompts
 - [ ] In-place mode: verifies prior `test-results.json` before skipping Steps 1–5; per-round commits
+- [ ] In-place mode: precondition check passes (`${TEST_DIR}/test-results.json` exists); falls back to full
+  workflow with explanatory message when absent
 - [ ] Batch mode: skill-name derived as `<directory-name>-<file-stem>`; per-skill `FINDINGS_PATH`; findings.json
   deleted between sequential skills
+- [ ] Batch mode: batch summary table displayed after all files processed (File, Rounds, Loopholes Closed,
+  Disputes Upheld, Patches Applied)
 
 ### Compression
 
