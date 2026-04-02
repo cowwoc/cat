@@ -54,6 +54,7 @@ readonly -a HANDLERS=(
   "get-issue-complete-box:skills.GetIssueCompleteOutput"
   "get-next-issue-box:skills.GetNextIssueOutput"
   "get-config-output:skills.GetConfigOutput"
+  "update-config:util.UpdateConfig"
   "get-output:skills.GetOutput"
   "get-cleanup-output:skills.GetCleanupOutput"
   "create-issue:util.IssueCreator"

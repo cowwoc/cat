@@ -76,6 +76,16 @@ public final class Config
   }
 
   /**
+   * Returns the set of all known configuration keys.
+   *
+   * @return an immutable set of known configuration key names
+   */
+  public static Set<String> knownKeys()
+  {
+    return Set.copyOf(DEFAULTS.keySet());
+  }
+
+  /**
    * Load configuration with three-layer override.
    * <p>
    * Loading order (later overrides earlier):
