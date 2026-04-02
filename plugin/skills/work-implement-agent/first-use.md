@@ -253,7 +253,13 @@ Skill tool:
 plan. Add Jobs or Execution Steps section with detailed step-by-step implementation guidance."
 ```
 
-3. After plan-builder-agent returns, re-read the updated plan.md in subsequent steps.
+3. After plan-builder-agent returns, commit the updated plan.md:
+
+```bash
+cd "${WORKTREE_PATH}" && git add "${ISSUE_PATH}/plan.md" && git commit -m "planning: generate implementation steps for ${ISSUE_ID}"
+```
+
+4. Re-read the updated plan.md in subsequent steps.
 
 **If `hasSteps=true`** (full plan with implementation steps): skip plan-builder-agent invocation. Proceed directly
 to "Read plan.md and Invoke Main Agent Jobs".
@@ -376,13 +382,13 @@ subagent's worktree. All changes must be committed before spawning so the subage
 cd "${WORKTREE_PATH}" && git status --porcelain  # Must be empty before spawning
 ```
 
-**CRITICAL: plan.md and index.json must NOT be committed here.** Before committing, run:
+**CRITICAL: index.json must NOT be committed here.** Before committing, run:
 
 ```bash
 cd "${WORKTREE_PATH}" && git status --porcelain | awk '{print $NF}' | \
   while IFS= read -r filepath; do
     basename=$(basename "$filepath")
-    if echo "$basename" | grep -Eqi '^plan\.md$|^state\.md$|^index\.json$'; then
+    if echo "$basename" | grep -Eqi '^index\.json$'; then
       echo "BLOCKED: dirty planning file detected: $filepath"
       exit 1
     fi
@@ -390,12 +396,12 @@ cd "${WORKTREE_PATH}" && git status --porcelain | awk '{print $NF}' | \
 ```
 
 If this check prints any `BLOCKED:` line, STOP immediately and return FAILED status.
-Do NOT stage, commit, or otherwise alter plan.md or index.json before spawning.
+Do NOT stage, commit, or otherwise alter index.json before spawning.
 
 Note: `-E` (extended regex) is required so that `|` acts as alternation, not a literal pipe
 character. Without `-E`, the pattern would only match a filename literally containing a pipe.
 
-If the worktree is dirty with other files (non-plan.md, non-index.json), stage only those specific files by
+If the worktree is dirty with other files (non-index.json), stage only those specific files by
 **explicitly listing each file path** and commit:
 
 ```bash
