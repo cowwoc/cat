@@ -24,19 +24,22 @@
 set -euo pipefail
 
 # --- Configuration ---
+# Note: variables used by generate_launchers (OUTPUT_DIR, MODULE_NAME, HANDLERS, ENABLE_ASSERTIONS)
+# are intentionally not declared readonly so tests can source this file and override them.
 
-readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly PROJECT_DIR="$SCRIPT_DIR"
-readonly TARGET_DIR="${PROJECT_DIR}/target"
-readonly STAGING_DIR="${TARGET_DIR}/jlink-staging"
-readonly PATCH_DIR="${TARGET_DIR}/module-patches"
-readonly OUTPUT_DIR="${TARGET_DIR}/jlink"
-readonly HOOKS_JAR="${TARGET_DIR}/cat-client-2.1.jar"
-readonly MODULE_NAME="io.github.cowwoc.cat.hooks"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$SCRIPT_DIR"
+TARGET_DIR="${PROJECT_DIR}/target"
+STAGING_DIR="${TARGET_DIR}/jlink-staging"
+PATCH_DIR="${TARGET_DIR}/module-patches"
+OUTPUT_DIR="${TARGET_DIR}/jlink"
+HOOKS_JAR="${TARGET_DIR}/cat-client-2.1.jar"
+MODULE_NAME="io.github.cowwoc.cat.hooks"
+ENABLE_ASSERTIONS=false
 
 # Handler registry: launcher-name:ClassName
 # Each entry generates a bin/<launcher-name> script in the jlink image.
-readonly -a HANDLERS=(
+declare -a HANDLERS=(
   "pre-bash:PreToolUseHook"
   "post-bash:PostBashHook"
   "pre-read:PreReadHook"
@@ -356,6 +359,8 @@ generate_launchers() {
 #!/bin/sh
 DIR=`dirname $0`
 exec "$DIR/java" \
+  ${CAT_JVM_OPTS:-} \
+  ASSERTIONS_FLAG \
   -Xms16m -Xmx96m \
   -Dstdin.encoding=UTF-8 \
   -Dstdout.encoding=UTF-8 \
@@ -366,12 +371,27 @@ exec "$DIR/java" \
   -m MODULE_CLASS "$@"
 EOF
 
-    # Replace MODULE_CLASS placeholder
-    sed "s|MODULE_CLASS|$main_class|g" "$launcher" > "${launcher}.tmp" && mv "${launcher}.tmp" "$launcher"
-    # Validate launcher generation: check file is non-empty, placeholder was removed, and main class is present
+    # Replace MODULE_CLASS and handle ASSERTIONS_FLAG
+    if [[ "$ENABLE_ASSERTIONS" == "true" ]]; then
+      sed -e "s|MODULE_CLASS|$main_class|g" -e "s|ASSERTIONS_FLAG|-ea|g" \
+        "$launcher" > "${launcher}.tmp"
+    else
+      sed -e "s|MODULE_CLASS|$main_class|g" -e "/ASSERTIONS_FLAG/d" \
+        "$launcher" > "${launcher}.tmp"
+    fi
+    mv "${launcher}.tmp" "$launcher"
+
+    # Validation
     [[ -s "$launcher" ]] || error "Failed to generate launcher: $name (empty file)"
     ! grep -q "MODULE_CLASS" "$launcher" || error "Failed to generate launcher: $name (placeholder not removed)"
     grep -q "$main_class" "$launcher" || error "Failed to generate launcher: $name (main class not found)"
+    ! grep -q "ASSERTIONS_FLAG" "$launcher" || \
+      error "Failed to generate launcher: $name (assertions placeholder not removed)"
+    grep -q "CAT_JVM_OPTS" "$launcher" || \
+      error "Failed to generate launcher: $name (CAT_JVM_OPTS not found)"
+    if [[ "$ENABLE_ASSERTIONS" == "true" ]]; then
+      grep -q "\-ea" "$launcher" || error "Failed to generate launcher: $name (-ea flag not found)"
+    fi
     chmod +x "$launcher"
   done
 
@@ -402,6 +422,14 @@ verify_image() {
 main() {
   log "Starting jlink build process..."
 
+  ENABLE_ASSERTIONS=false
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --enable-assertions) ENABLE_ASSERTIONS=true; shift ;;
+      *) error "Unknown argument: $1" ;;
+    esac
+  done
+
   ensure_hooks_jar
   stage_dependencies
   patch_automatic_modules
@@ -418,4 +446,6 @@ main() {
   done
 }
 
-main "$@"
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  main "$@"
+fi
