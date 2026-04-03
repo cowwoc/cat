@@ -14,7 +14,7 @@ Build the Java client first, then reinstall the CAT plugin and install the updat
 ### 1. Build with Maven
 
 ```bash
-mvn -f /workspace/client/pom.xml verify
+mvn -f /workspace/client/pom.xml verify -Djlink.extra.args=--enable-assertions
 ```
 
 This builds the client JAR, patches automatic modules, creates the jlink image with launchers, and generates the AOT cache.

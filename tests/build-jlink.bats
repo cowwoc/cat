@@ -13,13 +13,21 @@
 # keeps tests fast and eliminates the need for a real jlink build.
 
 HARNESS="$BATS_TEST_DIRNAME/aot-harness.sh"
+BUILD_JLINK="$BATS_TEST_DIRNAME/../client/build-jlink.sh"
 
 setup() {
     FAKE_BIN_DIR="$(mktemp -d)"
+    # Setup for launcher generation tests
+    OUTPUT_DIR="$(mktemp -d)"
+    mkdir -p "$OUTPUT_DIR/bin"
+    MODULE_NAME="io.github.cowwoc.cat.hooks"
+    HANDLERS=("test-launcher:PreToolUseHook")
+    ENABLE_ASSERTIONS=false
 }
 
 teardown() {
     rm -rf "${FAKE_BIN_DIR:-}"
+    rm -rf "${OUTPUT_DIR:-}"
 }
 
 # Creates a fake java binary in FAKE_BIN_DIR/bin/java with configurable behavior.
@@ -91,4 +99,53 @@ EOF
     run bash "$HARNESS" "$FAKE_BIN_DIR"
 
     [ "$status" -eq 0 ]
+}
+
+# ============================================================================
+# Launcher generation tests
+# ============================================================================
+
+@test "launcher always contains CAT_JVM_OPTS expansion" {
+    local test_output_dir="$OUTPUT_DIR"
+    source "$BUILD_JLINK"
+    OUTPUT_DIR="$test_output_dir"
+    HANDLERS=("test-launcher:PreToolUseHook")
+    ENABLE_ASSERTIONS=false
+    generate_launchers
+
+    launcher="$OUTPUT_DIR/bin/test-launcher"
+    grep -q 'CAT_JVM_OPTS' "$launcher" || \
+        { echo "Expected CAT_JVM_OPTS in launcher. Got:"; cat "$launcher"; false; }
+}
+
+@test "launcher without --enable-assertions does not contain -ea" {
+    local test_output_dir="$OUTPUT_DIR"
+    source "$BUILD_JLINK"
+    OUTPUT_DIR="$test_output_dir"
+    HANDLERS=("test-launcher:PreToolUseHook")
+    ENABLE_ASSERTIONS=false
+    generate_launchers
+
+    launcher="$OUTPUT_DIR/bin/test-launcher"
+    ! grep -q '\-ea' "$launcher" || \
+        { echo "Expected no -ea in launcher without assertions. Got:"; cat "$launcher"; false; }
+}
+
+@test "launcher with --enable-assertions contains -ea" {
+    local test_output_dir="$OUTPUT_DIR"
+    source "$BUILD_JLINK"
+    OUTPUT_DIR="$test_output_dir"
+    HANDLERS=("test-launcher:PreToolUseHook")
+    ENABLE_ASSERTIONS=true
+    generate_launchers
+
+    launcher="$OUTPUT_DIR/bin/test-launcher"
+    grep -q '\-ea' "$launcher" || \
+        { echo "Expected -ea in launcher with assertions. Got:"; cat "$launcher"; false; }
+}
+
+@test "build-jlink.sh exits non-zero on unknown argument" {
+    run bash "$BUILD_JLINK" --unknown-flag
+
+    [ "$status" -ne 0 ]
 }

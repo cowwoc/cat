@@ -16,6 +16,7 @@
 		<maven.version>3.9.12</maven.version>
 		<maven.compiler.release>26</maven.compiler.release>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<jlink.extra.args></jlink.extra.args>
 		<jackson.version>3.1.0</jackson.version>
 		<testng.version>7.12.0</testng.version>
 		<requirements.version>13.2</requirements.version>
@@ -176,6 +177,7 @@
 						<configuration>
 							<executable>${project.basedir}/build-jlink.sh</executable>
 							<workingDirectory>${project.basedir}</workingDirectory>
+							<commandlineArgs>${jlink.extra.args}</commandlineArgs>
 						</configuration>
 					</execution>
 				</executions>
