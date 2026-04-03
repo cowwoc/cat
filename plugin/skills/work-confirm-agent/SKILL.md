@@ -7,6 +7,7 @@ allowed-tools:
   - Bash
   - Task
   - Skill
+effort: medium
 ---
 
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" work-confirm-agent "$ARGUMENTS"`

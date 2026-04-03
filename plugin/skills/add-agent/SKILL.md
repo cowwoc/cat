@@ -13,6 +13,7 @@ allowed-tools:
   - Skill
 argument-hint: "<cat_agent_id> [description]"
 user-invocable: false
+effort: medium
 ---
 
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" add-agent "$ARGUMENTS"`

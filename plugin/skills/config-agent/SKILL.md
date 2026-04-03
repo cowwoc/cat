@@ -4,6 +4,7 @@ description: >
   IMPORTANT: After invoking this skill, forward the AskUserQuestion tool call verbatim — do not respond
   conversationally.
 model: haiku
+effort: low
 context: fork
 allowed-tools:
   - Bash

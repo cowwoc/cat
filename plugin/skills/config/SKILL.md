@@ -1,6 +1,7 @@
 ---
 description: Customize CAT settings and preferences with an interactive wizard.
 model: haiku
+effort: low
 context: fork
 allowed-tools:
   - Bash

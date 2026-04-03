@@ -4,6 +4,7 @@ description: >
   Trigger words: "check subagents", "subagent status", "subagents using", "running subagents".
   Shows subagent token/context usage. For current session tokens, use /cat:token-report instead.
 model: haiku
+effort: low
 user-invocable: false
 argument-hint: "<cat_agent_id>"
 ---

@@ -10,6 +10,7 @@ allowed-tools:
   - Bash
   - Glob
   - Grep
+effort: medium
 ---
 
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" rebase-impact-agent "$ARGUMENTS"`

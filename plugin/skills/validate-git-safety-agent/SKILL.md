@@ -1,6 +1,7 @@
 ---
 description: "MANDATORY: Run before git push --force, rebase, or reset to verify safety"
 model: haiku
+effort: low
 user-invocable: false
 argument-hint: "<cat_agent_id>"
 ---

@@ -11,6 +11,7 @@ allowed-tools:
   - Task
   - Skill
   - AskUserQuestion
+effort: high
 ---
 
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" work-with-issue-agent "$ARGUMENTS"`

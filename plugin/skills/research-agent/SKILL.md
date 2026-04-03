@@ -10,6 +10,7 @@ allowed-tools:
   - Task
   - AskUserQuestion
 user-invocable: false
+effort: high
 ---
 
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" research-agent "$ARGUMENTS"`

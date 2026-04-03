@@ -1,6 +1,7 @@
 ---
 description: Quick reference for all CAT commands and skills.
 model: haiku
+effort: low
 allowed-tools:
   - Skill
 disable-model-invocation: true

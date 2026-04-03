@@ -3,6 +3,7 @@ description: >
   Use for quick token health check during sessions, after subagent completion,
   or before deciding whether to decompose remaining work
 model: haiku
+effort: low
 user-invocable: false
 argument-hint: "<cat_agent_id>"
 ---

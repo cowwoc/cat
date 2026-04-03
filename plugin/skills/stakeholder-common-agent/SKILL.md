@@ -1,6 +1,7 @@
 ---
 description: Common instructions shared across all stakeholder review agents - working directory and pre-review steps
 model: haiku
+effort: low
 user-invocable: false
 disable-model-invocation: true
 ---

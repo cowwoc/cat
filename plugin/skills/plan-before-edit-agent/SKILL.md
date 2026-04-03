@@ -3,6 +3,7 @@ description: Use when renaming, removing, or moving a symbol across multiple fil
   first, build a complete file-to-changes plan, apply all edits without intermediate compilation, then verify
   the build once. Use instead of cat:batch-write-agent when changes are coordinated across a shared symbol.
 model: haiku
+effort: medium
 user-invocable: false
 allowed-tools: Bash, Grep, Read, Edit
 argument-hint: "<cat_agent_id> <symbol> [symbol] ..."

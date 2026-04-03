@@ -1,6 +1,7 @@
 ---
 description: Use when session crashed or locks blocking - cleans abandoned worktrees, lock files, and orphaned branches
 model: haiku
+effort: low
 context: fork
 allowed-tools:
   - Bash

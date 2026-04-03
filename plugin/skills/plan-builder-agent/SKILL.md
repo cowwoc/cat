@@ -16,6 +16,7 @@ allowed-tools:
   - WebFetch
 argument-hint: "<cat_agent_id> <curiosity> <mode> <contextPath> [revision-context]"
 user-invocable: false
+effort: high
 ---
 
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" plan-builder-agent "$ARGUMENTS"`
