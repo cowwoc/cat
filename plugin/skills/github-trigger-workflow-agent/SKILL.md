@@ -7,6 +7,7 @@ description: >
 argument-hint: "<cat_agent_id> <workflow_file>"
 user-invocable: true
 model: sonnet
+effort: medium
 disable-model-invocation: true
 ---
 

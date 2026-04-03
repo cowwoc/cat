@@ -1,6 +1,7 @@
 ---
 description: Check token and context usage for running subagents.
 model: haiku
+effort: low
 disable-model-invocation: true
 ---
 

@@ -1,6 +1,7 @@
 ---
 description: Show project issues and completion status.
 model: haiku
+effort: low
 disable-model-invocation: true
 ---
 

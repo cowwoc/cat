@@ -1,6 +1,7 @@
 ---
 description: Clean up abandoned worktrees, lock files, and orphaned branches after a session crash or stale lock.
 model: haiku
+effort: low
 context: fork
 allowed-tools:
   - Bash

@@ -1,6 +1,7 @@
 ---
 description: Internal - renders a stakeholder concern box during review
 model: haiku
+effort: low
 user-invocable: false
 argument-hint: "<severity> <stakeholder> <description> <location>"
 ---

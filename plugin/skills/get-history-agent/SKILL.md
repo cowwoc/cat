@@ -1,6 +1,7 @@
 ---
 description: Use when you need to examine past conversation, session logs, or raw chat history
 model: haiku
+effort: low
 user-invocable: false
 argument-hint: "<cat_agent_id>"
 ---

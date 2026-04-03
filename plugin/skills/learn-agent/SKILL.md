@@ -6,6 +6,7 @@ description: >
   Integrates token tracking for context-related failures.
 user-invocable: false
 argument-hint: "<cat_agent_id>"
+effort: medium
 ---
 
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" learn-agent "$0"`

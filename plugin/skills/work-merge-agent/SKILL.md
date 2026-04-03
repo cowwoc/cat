@@ -11,6 +11,7 @@ allowed-tools:
   - Task
   - Skill
   - AskUserQuestion
+effort: medium
 ---
 
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" work-merge-agent "$ARGUMENTS"`

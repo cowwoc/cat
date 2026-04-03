@@ -1,6 +1,7 @@
 ---
 description: PREFER when searching pattern AND reading matches - single operation (50-70% faster than sequential)
 model: haiku
+effort: low
 user-invocable: false
 allowed-tools: Grep, Read, Bash
 argument-hint: "<cat_agent_id>"

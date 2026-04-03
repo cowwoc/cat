@@ -1,6 +1,7 @@
 ---
 description: "Internal - silently extract investigation context from the current session for the learn skill"
 model: haiku
+effort: low
 user-invocable: false
 argument-hint: "<keywords...>"
 ---
