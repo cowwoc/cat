@@ -19,6 +19,36 @@ An **organic** instruction-test keeps `system_reminders` empty. The agent must r
 SKILL.md `description` field, then choose the skill based on that description alone. This measures realistic behavior:
 an agent working on a real task with no hand-holding.
 
+## Test Runner Prompt Isolation
+
+Test runners that dispatch SPRT (Sequential Probability Ratio Test) trials must produce clean delegation prompts
+containing ONLY the test case file content and minimal working-directory scaffolding. Test runner prompts must NOT
+contain explicit behavioral expectations, expected output descriptions, assessment criteria, or hints about what the
+test measures.
+
+**Priming patterns to avoid in test runner prompts:**
+
+- **Algorithm exposure:** "You must implement using algorithm X" → Agent executes the prescribed
+  approach instead of discovering it
+- **Output format priming:** "The output should contain fields A, B, C (value: 1.0)" → Agent
+  fabricates expected outputs
+- **Behavioral expectations:** "Handle failures gracefully by recording the error" → Agent
+  performs scripted behavior instead of following skill instructions
+- **Assessment criteria:** "Key behaviors: (a) ..., (b) ..." → Agent learns test objectives
+  and executes test-aware responses
+- **CRITICAL enforcement:** "CRITICAL: You must record this finding explicitly" → Agent
+  anchors on enforcement language instead of instruction content
+- **Cost/efficiency language:** "This approach spawns 2 subagents (expensive)" → Agent takes
+  shortcuts to minimize cost instead of following procedure
+
+Test runner prompts must deliver ONLY: (1) the Turn file content (exactly as written in the test case),
+(2) optional working-directory setup (git init, initial files), and (3) no additional context describing expected
+behaviors or test objectives.
+
+**Consequence of prompt priming:** All test runs with primed prompts are invalid and must be re-run with clean prompts.
+A "primed SPRT" measures agent compliance with the prompt, not agent compliance with the skill instructions. The test
+result is corrupted and cannot be used to evaluate instruction quality.
+
 ## Test Case File Format
 
 Each test case is a single `.md` file stored in the skill's test directory (`plugin/tests/{skill_name}/`).

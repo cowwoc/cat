@@ -87,16 +87,16 @@ public final class WarnBaseBranchEdit implements FileWriteHandler
    * Check if the edit should be warned about.
    *
    * @param toolInput the tool input JSON
-   * @param sessionId the session ID
+   * @param catAgentId the CAT agent ID (sessionId for main agent, sessionId/subagents/agentXxx for subagents)
    * @return the check result
-   * @throws NullPointerException if toolInput or sessionId is null
-   * @throws IllegalArgumentException if sessionId is blank
+   * @throws NullPointerException if toolInput or catAgentId is null
+   * @throws IllegalArgumentException if catAgentId is blank
    */
   @Override
-  public FileWriteHandler.Result check(JsonNode toolInput, String sessionId)
+  public FileWriteHandler.Result check(JsonNode toolInput, String catAgentId)
   {
     requireThat(toolInput, "toolInput").isNotNull();
-    requireThat(sessionId, "sessionId").isNotBlank();
+    requireThat(catAgentId, "catAgentId").isNotBlank();
 
     JsonNode filePathNode = toolInput.get("file_path");
     String filePath;
@@ -158,7 +158,7 @@ public final class WarnBaseBranchEdit implements FileWriteHandler
     }
 
     WorktreeContext worktreeContext = WorktreeContext.forSession(
-      scope.getCatWorkPath(), scope.getProjectPath(), scope.getJsonMapper(), sessionId).orElse(null);
+      scope.getCatWorkPath(), scope.getProjectPath(), scope.getJsonMapper(), catAgentId).orElse(null);
     if (worktreeContext != null && filePath.startsWith(scope.getProjectPath().toString()))
     {
       Path absoluteFilePath = Path.of(filePath).toAbsolutePath().normalize();

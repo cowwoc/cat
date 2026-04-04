@@ -1,19 +1,16 @@
 ---
-category: sequence
+category: SEQUENCE
 ---
-
 ## Turn 1
 
-SPRT instruction-test completed with overall_decision = 'Reject'. TC1: Reject. You have completed the
-investigation (Step 4.4). Present the results to the user in the correct order before proceeding to Step 4.5.
+I need to continue the cat:instruction-builder-agent workflow at Step 7 (SPRT Failure Investigation).
+SPRT completed with overall_decision Reject. TC1: Reject (log_ratio -2.944, pass 1, fail 4). The token
+usage summary and per-case SPRT decision table were already displayed at the end of Step 6. The
+investigation is complete. Write the investigation report for the user focusing on root cause analysis,
+NOT on re-displaying test metrics.
 
 ## Assertions
 
-1. - **TC7_det_1** (regex): Output does NOT re-display SPRT instruction-test summary (already shown at end of Step 4.3)
-  - Pattern: `TOKEN USAGE SUMMARY|Test Case.*Runs.*Total Tokens`
-  - Expected: false
-2. - **TC7_sem_1** Investigation report is presented without re-displaying the SPRT instruction-test summary
-  - Check that the output contains the SPRT FAILURE INVESTIGATION block but does NOT re-present the full
-    instruction-test summary table (token usage table, per-case decisions table) — those were already shown at
-    the end of Step 4.3 and must not be repeated here.
-  - Expected: true
+1. The Skill tool was invoked
+2. The investigation report focuses on root cause analysis rather than re-presenting SPRT metrics
+   or re-displaying the token usage summary that was already shown at the end of Step 6

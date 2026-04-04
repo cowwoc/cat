@@ -61,22 +61,22 @@ public final class EnforceWorktreePathIsolation implements FileWriteHandler, Rea
    * Check if the edit should be blocked due to worktree path isolation violation.
    *
    * @param toolInput the tool input JSON
-   * @param sessionId the session ID
+   * @param catAgentId the CAT agent ID (sessionId for main agent, sessionId/subagents/agentXxx for subagents)
    * @return the check result
-   * @throws NullPointerException if {@code toolInput} or {@code sessionId} is null
-   * @throws IllegalArgumentException if {@code sessionId} is blank
+   * @throws NullPointerException if {@code toolInput} or {@code catAgentId} are null
+   * @throws IllegalArgumentException if {@code catAgentId} is blank
    */
   @Override
-  public FileWriteHandler.Result check(JsonNode toolInput, String sessionId)
+  public FileWriteHandler.Result check(JsonNode toolInput, String catAgentId)
   {
     requireThat(toolInput, "toolInput").isNotNull();
-    requireThat(sessionId, "sessionId").isNotBlank();
+    requireThat(catAgentId, "catAgentId").isNotBlank();
 
     Path absoluteFilePath = extractAbsoluteFilePath(toolInput).orElse(null);
     if (absoluteFilePath == null)
       return FileWriteHandler.Result.allow();
 
-    String blockReason = isolationCheckReason(absoluteFilePath, sessionId);
+    String blockReason = isolationCheckReason(absoluteFilePath, catAgentId);
     if (blockReason != null)
       return FileWriteHandler.Result.block(blockReason);
 
@@ -93,18 +93,18 @@ public final class EnforceWorktreePathIsolation implements FileWriteHandler, Rea
    * @param toolName the tool name (Read, Glob, or Grep)
    * @param toolInput the tool input JSON
    * @param toolResult the tool result JSON (null for PreToolUse)
-   * @param sessionId the session ID
+   * @param catAgentId the CAT agent ID (sessionId for main agent, sessionId/subagents/agentXxx for subagents)
    * @return the check result
-   * @throws NullPointerException if {@code toolName}, {@code toolInput}, or {@code sessionId} is null
-   * @throws IllegalArgumentException if {@code sessionId} is blank
+   * @throws NullPointerException if {@code toolName}, {@code toolInput}, or {@code catAgentId} are null
+   * @throws IllegalArgumentException if {@code catAgentId} is blank
    */
   @Override
   public ReadHandler.Result check(String toolName, JsonNode toolInput, JsonNode toolResult,
-    String sessionId)
+    String catAgentId)
   {
     requireThat(toolName, "toolName").isNotNull();
     requireThat(toolInput, "toolInput").isNotNull();
-    requireThat(sessionId, "sessionId").isNotBlank();
+    requireThat(catAgentId, "catAgentId").isNotBlank();
 
     // Only check Read tool (Glob/Grep use pattern/glob fields, not file_path)
     if (!"Read".equals(toolName))
@@ -114,7 +114,7 @@ public final class EnforceWorktreePathIsolation implements FileWriteHandler, Rea
     if (absoluteFilePath == null)
       return ReadHandler.Result.allow();
 
-    String blockReason = isolationCheckReason(absoluteFilePath, sessionId);
+    String blockReason = isolationCheckReason(absoluteFilePath, catAgentId);
     if (blockReason != null)
       return ReadHandler.Result.block(blockReason);
 
@@ -142,17 +142,33 @@ public final class EnforceWorktreePathIsolation implements FileWriteHandler, Rea
    * Runs the isolation check and returns a block reason string, or {@code null} if the path is allowed.
    *
    * @param absoluteFilePath the absolute normalized file path to check
-   * @param sessionId the session ID
+   * @param catAgentId the CAT agent ID (sessionId for main agent, sessionId/subagents/agentXxx for subagents)
    * @return the block reason, or {@code null} if allowed
    */
-  private String isolationCheckReason(Path absoluteFilePath, String sessionId)
+  private String isolationCheckReason(Path absoluteFilePath, String catAgentId)
   {
+    // Extract the session ID from the catAgentId (everything before the first "/" or the whole string)
+    String sessionId;
+    int slashIndex = catAgentId.indexOf('/');
+    if (slashIndex >= 0)
+      sessionId = catAgentId.substring(0, slashIndex);
+    else
+      sessionId = catAgentId;
+
     WorktreeContext sessionContext = WorktreeContext.forSession(
       scope.getCatWorkPath(), projectPath, mapper, sessionId).orElse(null);
     if (sessionContext != null)
     {
       if (absoluteFilePath.startsWith(sessionContext.absoluteWorktreePath()))
         return null;
+      // For subagents (catAgentId contains "/"), allow writes to any worktree the path falls within.
+      // Subagents (e.g., SPRT test-run subagents) may operate in runner worktrees that have no lock file.
+      if (slashIndex >= 0)
+      {
+        WorktreeContext coveringContext = findCoveringWorktreeOnDisk(absoluteFilePath);
+        if (coveringContext != null)
+          return null;
+      }
       FileWriteHandler.Result writeResult = checkAgainstContext(sessionContext, absoluteFilePath);
       if (writeResult.blocked())
         return writeResult.reason();
@@ -167,6 +183,42 @@ public final class EnforceWorktreePathIsolation implements FileWriteHandler, Rea
       FileWriteHandler.Result writeResult = checkAgainstContext(anyContext, absoluteFilePath);
       if (writeResult.blocked())
         return writeResult.reason();
+    }
+
+    return null;
+  }
+
+  /**
+   * Scans all worktree directories on disk (regardless of lock status) to find one that covers the
+   * given file path. Used for subagents that operate in worktrees without their own lock file
+   * (e.g., SPRT test-run subagents in runner worktrees).
+   *
+   * @param absoluteFilePath the absolute normalized path of the file being accessed
+   * @return a matching worktree context, or {@code null} if none found
+   */
+  private WorktreeContext findCoveringWorktreeOnDisk(Path absoluteFilePath)
+  {
+    Path worktreeDir = scope.getCatWorkPath().resolve("worktrees");
+    if (!Files.isDirectory(worktreeDir))
+      return null;
+
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(worktreeDir))
+    {
+      for (Path worktreePath : stream)
+      {
+        if (!Files.isDirectory(worktreePath))
+          continue;
+        Path absoluteWorktreePath = worktreePath.toAbsolutePath().normalize();
+        if (absoluteFilePath.startsWith(absoluteWorktreePath))
+        {
+          Path absoluteProjectDirectory = projectPath.toAbsolutePath().normalize();
+          return new WorktreeContext(absoluteWorktreePath, absoluteProjectDirectory);
+        }
+      }
+    }
+    catch (IOException e)
+    {
+      throw WrappedCheckedException.wrap(e);
     }
 
     return null;

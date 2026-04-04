@@ -113,34 +113,6 @@ public final class DetectGivingUpTest
   }
 
   /**
-   * Verifies permission seeking pattern detection.
-   */
-  @Test
-  public void detectsPermissionSeeking()
-  {
-    DetectGivingUp handler = new DetectGivingUp();
-    String prompt =
-      "Would you like me to continue with implementation " +
-        "or select a different task?";
-    String result = handler.check(prompt, "test-session");
-    requireThat(result, "result").contains("PROTOCOL VIOLATION DETECTED");
-    requireThat(result, "result").contains("AUTONOMOUS COMPLETION REQUIRED");
-  }
-
-  /**
-   * Verifies time estimate permission seeking pattern.
-   */
-  @Test
-  public void detectsTimeEstimatePermissionSeeking()
-  {
-    DetectGivingUp handler = new DetectGivingUp();
-    String prompt =
-      "This will take 2-3 days for implementation. Should I proceed?";
-    String result = handler.check(prompt, "test-session");
-    requireThat(result, "result").contains("PROTOCOL VIOLATION DETECTED");
-  }
-
-  /**
    * Verifies quoted text is ignored to prevent false positives.
    */
   @Test
@@ -264,20 +236,6 @@ public final class DetectGivingUpTest
       "To fix the compilation error, I'll remove the exception handler.";
     String result = handler.check(prompt, "test-session");
     requireThat(result, "result").contains("CODE DISABLING ANTI-PATTERN DETECTED");
-  }
-
-  /**
-   * Verifies numbered options with permission language is detected.
-   */
-  @Test
-  public void detectsNumberedOptionsWithPermission()
-  {
-    DetectGivingUp handler = new DetectGivingUp();
-    String prompt =
-      "Would you like to: 1. Continue with this approach " +
-        "2. Try a different method?";
-    String result = handler.check(prompt, "test-session");
-    requireThat(result, "result").contains("PROTOCOL VIOLATION DETECTED");
   }
 
   /**

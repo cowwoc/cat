@@ -97,7 +97,8 @@ public final class PreReadHook implements HookHandler
 
     JsonNode toolInput = scope.getToolInput();
     String sessionId = scope.getSessionId();
-    requireThat(sessionId, "sessionId").isNotBlank();
+    String catAgentId = scope.getCatAgentId(sessionId);
+    requireThat(catAgentId, "catAgentId").isNotBlank();
     List<String> warnings = new ArrayList<>();
     List<String> errorWarnings = new ArrayList<>();
 
@@ -106,7 +107,7 @@ public final class PreReadHook implements HookHandler
     {
       try
       {
-        ReadHandler.Result result = handler.check(toolName, toolInput, null, sessionId);
+        ReadHandler.Result result = handler.check(toolName, toolInput, null, catAgentId);
         if (result.blocked())
         {
           String jsonOutput;

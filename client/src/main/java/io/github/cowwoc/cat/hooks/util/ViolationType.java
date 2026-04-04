@@ -32,12 +32,6 @@ public enum ViolationType
   COMPILATION_ABANDONMENT,
 
   /**
-   * The agent asks the user for permission to continue a task that should be completed
-   * autonomously.
-   */
-  PERMISSION_SEEKING,
-
-  /**
    * The agent references token usage or context limits as justification for reducing work
    * scope or quality.
    */

@@ -143,11 +143,11 @@ public final class InstructionTestRunnerTest
   }
 
   /**
-   * Verifies that extract-model throws when no model field is present in frontmatter.
+   * Verifies that extract-model defaults to haiku when no model field is present in frontmatter
+   * and the skill is not listed in skill-models.md.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = "(?s).*no 'model:' field in frontmatter.*")
-  public void extractModelThrowsWhenModelFieldMissing() throws IOException
+  @Test
+  public void extractModelDefaultsToHaikuWhenFieldMissing() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -161,7 +161,8 @@ public final class InstructionTestRunnerTest
         """, StandardCharsets.UTF_8);
 
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
-      runner.extractModel(new String[]{skillFile.toString()});
+      String result = runner.extractModel(new String[]{skillFile.toString()});
+      requireThat(result, "result").contains("haiku");
     }
     finally
     {
@@ -1018,6 +1019,298 @@ public final class InstructionTestRunnerTest
     {
       TestUtils.deleteDirectoryRecursively(repoDir);
       TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that detect-changes reports skill_changed=true and transitive_dependency_changed=true
+   * when a sibling .md file (e.g., first-use.md) changes while SKILL.md itself is unmodified.
+   * <p>
+   * SKILL.md loads companion files via preprocessor directives; a change in a companion file is
+   * semantically equivalent to a change in the skill itself.
+   */
+  @Test
+  public void detectChangesTransitiveDependencyChanged() throws IOException
+  {
+    Path repoDir = TestUtils.createTempGitRepo("main");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Path skillDir = repoDir.resolve("plugin/skills/my-skill");
+      Files.createDirectories(skillDir);
+
+      // Create SKILL.md and first-use.md (sibling companion file)
+      Path skillFile = skillDir.resolve("SKILL.md");
+      Files.writeString(skillFile, """
+        ---
+        description: My skill
+        ---
+        !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" my-skill "$0"`
+        """, StandardCharsets.UTF_8);
+      Path firstUseMd = skillDir.resolve("first-use.md");
+      Files.writeString(firstUseMd, """
+        # My Skill
+
+        Original content.
+        """, StandardCharsets.UTF_8);
+
+      TestUtils.runGit(repoDir, "add", "plugin/skills/my-skill/SKILL.md",
+        "plugin/skills/my-skill/first-use.md");
+      TestUtils.runGit(repoDir, "commit", "-m", "add skill");
+      String oldSha = TestUtils.runGitCommandWithOutput(repoDir, "rev-parse", "HEAD").strip();
+
+      // Create test directory
+      Path testDir = tempDir.resolve("tests");
+      Files.createDirectories(testDir);
+      Files.writeString(testDir.resolve("tc1.md"), """
+        ---
+        category: requirement
+        ---
+
+        ## Turn 1
+
+        Test prompt.
+
+        ## Assertions
+
+        1. Something.
+        """, StandardCharsets.UTF_8);
+
+      // Modify only first-use.md (SKILL.md unchanged)
+      Files.writeString(firstUseMd, """
+        # My Skill
+
+        Updated content that changes behavior.
+        """, StandardCharsets.UTF_8);
+
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      String result = runner.detectChanges(new String[]{oldSha, skillFile.toString(), testDir.toString()});
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode root = mapper.readTree(result);
+
+      requireThat(root.path("skill_changed").asBoolean(), "skill_changed").isTrue();
+      requireThat(root.path("body_changed").asBoolean(), "body_changed").isFalse();
+      requireThat(root.path("frontmatter_changed").asBoolean(), "frontmatter_changed").isFalse();
+      // All test cases must re-run because skill_changed=true
+      JsonNode rerunIds = root.path("rerun_test_case_ids");
+      requireThat(rerunIds.isArray(), "rerun_test_case_ids.isArray").isTrue();
+      requireThat(rerunIds.size(), "rerun_test_case_ids.size").isEqualTo(1);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(repoDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that detect-changes reports skill_changed=false and transitive_dependency_changed=false
+   * when neither SKILL.md nor any sibling .md file changed.
+   */
+  @Test
+  public void detectChangesNoTransitiveDependencyChange() throws IOException
+  {
+    Path repoDir = TestUtils.createTempGitRepo("main");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Path skillDir = repoDir.resolve("plugin/skills/my-skill");
+      Files.createDirectories(skillDir);
+
+      Path skillFile = skillDir.resolve("SKILL.md");
+      Files.writeString(skillFile, """
+        ---
+        description: My skill
+        ---
+        !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" my-skill "$0"`
+        """, StandardCharsets.UTF_8);
+      Path firstUseMd = skillDir.resolve("first-use.md");
+      Files.writeString(firstUseMd, """
+        # My Skill
+
+        Stable content.
+        """, StandardCharsets.UTF_8);
+
+      TestUtils.runGit(repoDir, "add", "plugin/skills/my-skill/SKILL.md",
+        "plugin/skills/my-skill/first-use.md");
+      TestUtils.runGit(repoDir, "commit", "-m", "add skill");
+      String oldSha = TestUtils.runGitCommandWithOutput(repoDir, "rev-parse", "HEAD").strip();
+
+      Path testDir = tempDir.resolve("tests");
+      Files.createDirectories(testDir);
+      Files.writeString(testDir.resolve("tc1.md"), """
+        ---
+        category: requirement
+        ---
+
+        ## Turn 1
+
+        Test prompt.
+
+        ## Assertions
+
+        1. Something.
+        """, StandardCharsets.UTF_8);
+
+      // No changes to SKILL.md or first-use.md
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      String result = runner.detectChanges(new String[]{oldSha, skillFile.toString(), testDir.toString()});
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode root = mapper.readTree(result);
+
+      requireThat(root.path("skill_changed").asBoolean(), "skill_changed").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(repoDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that extract-model returns the sonnet model ID when the skill is listed in skill-models.md
+   * and SKILL.md has no model: frontmatter field.
+   */
+  @Test
+  public void extractModelUsesSkillModelsMappingForSonnetSkill() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-extract-model-");
+    Path pluginRoot = tempDir.resolve("plugin");
+    try
+    {
+      // Create plugin root with skill-models.md listing the test skill
+      Path rulesDir = pluginRoot.resolve("rules");
+      Files.createDirectories(rulesDir);
+      Files.writeString(rulesDir.resolve("skill-models.md"), """
+        ## Model Selection for Skills
+
+        **Sonnet-preferred skills**:
+
+        - `cat:my-sonnet-skill`
+        """, StandardCharsets.UTF_8);
+
+      // Create skill dir with SKILL.md that has no model: field
+      Path skillDir = pluginRoot.resolve("skills").resolve("my-sonnet-skill");
+      Files.createDirectories(skillDir);
+      Path skillFile = skillDir.resolve("SKILL.md");
+      Files.writeString(skillFile, """
+        ---
+        description: My skill
+        ---
+        """, StandardCharsets.UTF_8);
+
+      Path projectDir = tempDir.resolve("project");
+      Files.createDirectories(projectDir);
+      try (var scope = new TestClaudeTool(projectDir, pluginRoot))
+      {
+        InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+        String result = runner.extractModel(new String[]{skillFile.toString()});
+
+        // Result is a fully-qualified model ID; verify it contains "sonnet"
+        requireThat(result, "result").contains("sonnet");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that extract-model falls back to haiku when the skill is not listed in skill-models.md
+   * and SKILL.md has no model: frontmatter field.
+   */
+  @Test
+  public void extractModelFallsBackToHaikuWhenNotInSkillModels() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-extract-model-");
+    Path pluginRoot = tempDir.resolve("plugin");
+    try
+    {
+      // Create plugin root with skill-models.md that does NOT list the test skill
+      Path rulesDir = pluginRoot.resolve("rules");
+      Files.createDirectories(rulesDir);
+      Files.writeString(rulesDir.resolve("skill-models.md"), """
+        ## Model Selection for Skills
+
+        **Sonnet-preferred skills**:
+
+        - `cat:some-other-skill`
+        """, StandardCharsets.UTF_8);
+
+      // Create skill dir with SKILL.md that has no model: field
+      Path skillDir = pluginRoot.resolve("skills").resolve("my-haiku-skill");
+      Files.createDirectories(skillDir);
+      Path skillFile = skillDir.resolve("SKILL.md");
+      Files.writeString(skillFile, """
+        ---
+        description: My skill
+        ---
+        """, StandardCharsets.UTF_8);
+
+      Path projectDir = tempDir.resolve("project");
+      Files.createDirectories(projectDir);
+      try (var scope = new TestClaudeTool(projectDir, pluginRoot))
+      {
+        InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+        String result = runner.extractModel(new String[]{skillFile.toString()});
+
+        // Result is a fully-qualified model ID; verify it contains "haiku"
+        requireThat(result, "result").contains("haiku");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that extract-test-dir correctly maps a plugin skill path to its test directory.
+   */
+  @Test
+  public void extractTestDirMapsPluginSkillPath()
+  {
+    Path tempDir = Path.of("/tmp/fake-project");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      String result = runner.extractTestDir(
+        new String[]{"plugin/skills/foo/first-use.md", "/workspace"});
+      requireThat(result, "result").isEqualTo("/workspace/plugin/tests/skills/foo/first-use");
+    }
+  }
+
+  /**
+   * Verifies that extract-test-dir correctly maps a non-plugin path (no "plugin/" prefix stripping).
+   */
+  @Test
+  public void extractTestDirMapsNonPluginPath()
+  {
+    Path tempDir = Path.of("/tmp/fake-project");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      String result = runner.extractTestDir(new String[]{"CLAUDE.md", "/workspace"});
+      requireThat(result, "result").isEqualTo("/workspace/plugin/tests/CLAUDE");
+    }
+  }
+
+  /**
+   * Verifies that extract-test-dir handles nested non-plugin paths.
+   */
+  @Test
+  public void extractTestDirMapsNestedNonPluginPath()
+  {
+    Path tempDir = Path.of("/tmp/fake-project");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      String result = runner.extractTestDir(
+        new String[]{".claude/rules/common.md", "/workspace"});
+      requireThat(result, "result").isEqualTo("/workspace/plugin/tests/.claude/rules/common");
     }
   }
 

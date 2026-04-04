@@ -18,8 +18,10 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
-import java.io.BufferedReader;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -1074,31 +1076,69 @@ public final class SessionAnalyzer
     requireThat(filePath, "filePath").isNotNull();
 
     List<JsonNode> entries = new ArrayList<>();
-    try (BufferedReader reader = Files.newBufferedReader(filePath))
+    // Read file as bytes, accumulating each line into a ByteArrayOutputStream and parsing via
+    // readTree(byte[]) instead of readLine() + readTree(String). This avoids the 2x memory
+    // overhead of String (1 char = 2 bytes) while still supporting per-line error recovery.
+    try (InputStream input = new BufferedInputStream(Files.newInputStream(filePath)))
     {
-      String line;
+      ByteArrayOutputStream lineBytes = new ByteArrayOutputStream(4096);
       int lineNum = 0;
-      while (true)
+      int b = input.read();
+      while (b != -1)
       {
-        line = reader.readLine();
-        if (line == null)
-          break;
+        if (b == '\n')
+        {
+          ++lineNum;
+          parseAndAddJsonLine(lineBytes, filePath, lineNum, entries);
+          lineBytes.reset();
+        }
+        else
+          lineBytes.write(b);
+        b = input.read();
+      }
+      // Parse any final line that has no trailing newline
+      if (lineBytes.size() > 0)
+      {
         ++lineNum;
-        line = line.trim();
-        if (line.isEmpty())
-          continue;
-
-        try
-        {
-          entries.add(scope.getJsonMapper().readTree(line));
-        }
-        catch (JacksonException e)
-        {
-          log.warn("Skipping malformed line {} in {}: {}", lineNum, filePath, e.getMessage());
-        }
+        parseAndAddJsonLine(lineBytes, filePath, lineNum, entries);
       }
     }
     return entries;
+  }
+
+  /**
+   * Parses one JSONL line from a byte buffer and appends the result to {@code entries}.
+   * <p>
+   * Skips blank lines and logs a warning for malformed JSON without aborting the caller's loop.
+   *
+   * @param lineBytes accumulated bytes for this line (may be empty)
+   * @param filePath  source file path, used only for log messages
+   * @param lineNum   1-based line number, used only for log messages
+   * @param entries   list to append successfully parsed nodes to
+   */
+  private void parseAndAddJsonLine(ByteArrayOutputStream lineBytes, Path filePath, int lineNum,
+    List<JsonNode> entries)
+  {
+    byte[] bytes = lineBytes.toByteArray();
+    // Trim whitespace manually to avoid creating a String
+    int start = 0;
+    int end = bytes.length;
+    while (start < end && bytes[start] <= ' ')
+      ++start;
+    while (end > start && bytes[end - 1] <= ' ')
+      --end;
+    if (start == end)
+      return;
+    try
+    {
+      JsonNode node = scope.getJsonMapper().readTree(bytes, start, end - start);
+      if (node != null && !node.isNull() && !node.isMissingNode())
+        entries.add(node);
+    }
+    catch (JacksonException e)
+    {
+      log.warn("Skipping malformed line {} in {}: {}", lineNum, filePath, e.getMessage());
+    }
   }
 
   /**

@@ -388,6 +388,10 @@ Present a summary report to the user:
 
 ## Tips
 
+- **Pass rates are NOT SPRT decisions** — a 100% pass rate over 5 trials does not mean the test case has been
+  formally ACCEPTED by SPRT. The SPRT accept boundary requires log_ratio ≥ 2.944, which needs a minimum of 27
+  consecutive passes at +0.1112 per pass. Empirical-test-runner reports pass rates for iterative debugging; formal
+  SPRT Accept/Reject decisions are only made by the instruction-builder-agent's Step 6 pipeline.
 - **Start with haiku** — it's cheaper and more sensitive to prompt issues. If haiku passes, sonnet will too.
 - **Use 1 trial** for baseline and isolation (quick signal), **5 trials** for confirmation, **10 trials** for
   final validation.
@@ -405,6 +409,8 @@ Present a summary report to the user:
 
 - `cat:learn` - Record the mistake and root cause analysis
 - `cat:instruction-builder-agent` - Create or update skills with compliance-tested patterns
+- `cat:claude-runner` - Launch an isolated Claude instance with updated plugin cache (used internally by
+  `empirical-test-runner` for process spawning and stream-json I/O)
 
 ---
 

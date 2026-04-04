@@ -6,6 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks;
 
+import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner;
 import io.github.cowwoc.cat.hooks.util.IssueDiscovery;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -33,6 +34,7 @@ public final class SharedSecrets
   private static PostToolUseHookAccess postToolUseHookAccess;
   private static PostToolUseFailureHookAccess postToolUseFailureHookAccess;
   private static IssueDiscoveryAccess issueDiscoveryAccess;
+  private static EmpiricalTestRunnerAccess empiricalTestRunnerAccess;
 
   private SharedSecrets()
   {
@@ -123,6 +125,50 @@ public final class SharedSecrets
   }
 
   /**
+   * Registers the access object for {@link EmpiricalTestRunner}.
+   *
+   * @param access the access object
+   * @throws NullPointerException if {@code access} is null
+   */
+  public static void setEmpiricalTestRunnerAccess(EmpiricalTestRunnerAccess access)
+  {
+    requireThat(access, "access").isNotNull();
+    empiricalTestRunnerAccess = access;
+  }
+
+  /**
+   * Creates an isolated git worktree for a single empirical test run.
+   *
+   * @param baseRepo the base git repository to branch from
+   * @return the path of the newly created worktree
+   * @throws NullPointerException if {@code baseRepo} is null
+   * @throws IOException if the temporary directory cannot be created or the git command fails
+   */
+  public static Path createTestWorktree(Path baseRepo) throws IOException
+  {
+    requireThat(baseRepo, "baseRepo").isNotNull();
+    if (empiricalTestRunnerAccess == null)
+      initialize(EmpiricalTestRunner.class);
+    return empiricalTestRunnerAccess.createTestWorktree(baseRepo);
+  }
+
+  /**
+   * Removes a test worktree created by {@link #createTestWorktree(Path)}.
+   *
+   * @param baseRepo     the base git repository
+   * @param worktreePath the worktree path to remove
+   * @throws NullPointerException if {@code baseRepo} or {@code worktreePath} are null
+   */
+  public static void removeTestWorktree(Path baseRepo, Path worktreePath)
+  {
+    requireThat(baseRepo, "baseRepo").isNotNull();
+    requireThat(worktreePath, "worktreePath").isNotNull();
+    if (empiricalTestRunnerAccess == null)
+      initialize(EmpiricalTestRunner.class);
+    empiricalTestRunnerAccess.removeTestWorktree(baseRepo, worktreePath);
+  }
+
+  /**
    * Initializes a class. If the class is already initialized, this method has no effect.
    *
    * @param clazz the class
@@ -185,5 +231,28 @@ public final class SharedSecrets
      * @throws IOException if parsing fails
      */
     String getIssueStatus(String content, Path indexPath, JsonMapper mapper) throws IOException;
+  }
+
+  /**
+   * Provides access to {@link EmpiricalTestRunner} trial worktree management.
+   */
+  public interface EmpiricalTestRunnerAccess
+  {
+    /**
+     * Creates an isolated git worktree for a single test run.
+     *
+     * @param baseRepo the base git repository to branch from
+     * @return the path of the newly created worktree
+     * @throws IOException if the worktree cannot be created
+     */
+    Path createTestWorktree(Path baseRepo) throws IOException;
+
+    /**
+     * Removes a test worktree.
+     *
+     * @param baseRepo     the base git repository
+     * @param worktreePath the worktree path to remove
+     */
+    void removeTestWorktree(Path baseRepo, Path worktreePath);
   }
 }

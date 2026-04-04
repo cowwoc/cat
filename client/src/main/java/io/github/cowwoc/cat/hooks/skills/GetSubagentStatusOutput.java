@@ -513,39 +513,45 @@ public final class GetSubagentStatusOutput implements SkillOutput
     int totalTokens = 0;
     int compactionCount = 0;
 
-    List<String> lines = Files.readAllLines(sessionFile, StandardCharsets.UTF_8);
-    for (String line : lines)
+    // Stream line-by-line to avoid loading the entire (potentially multi-MB) session file.
+    try (BufferedReader reader = new BufferedReader(
+      new InputStreamReader(Files.newInputStream(sessionFile), StandardCharsets.UTF_8)))
     {
-      if (line.isBlank())
-        continue;
+      String line = reader.readLine();
+      while (line != null)
+      {
+        if (!line.isBlank())
+        {
+          JsonNode node = mapper.readTree(line);
+          String type = "";
+          if (node.has("type"))
+          {
+            String typeValue = node.get("type").asString();
+            if (typeValue != null)
+              type = typeValue;
+          }
 
-      JsonNode node = mapper.readTree(line);
-      String type = "";
-      if (node.has("type"))
-      {
-        String typeValue = node.get("type").asString();
-        if (typeValue != null)
-          type = typeValue;
-      }
-
-      if ("assistant".equals(type) && node.has("message") && node.get("message").has("usage"))
-      {
-        JsonNode usage = node.get("message").get("usage");
-        int inputTokens;
-        if (usage.has("input_tokens"))
-          inputTokens = usage.get("input_tokens").asInt(0);
-        else
-          inputTokens = 0;
-        int outputTokens;
-        if (usage.has("output_tokens"))
-          outputTokens = usage.get("output_tokens").asInt(0);
-        else
-          outputTokens = 0;
-        totalTokens += inputTokens + outputTokens;
-      }
-      else if ("summary".equals(type))
-      {
-        ++compactionCount;
+          if ("assistant".equals(type) && node.has("message") && node.get("message").has("usage"))
+          {
+            JsonNode usage = node.get("message").get("usage");
+            int inputTokens;
+            if (usage.has("input_tokens"))
+              inputTokens = usage.get("input_tokens").asInt(0);
+            else
+              inputTokens = 0;
+            int outputTokens;
+            if (usage.has("output_tokens"))
+              outputTokens = usage.get("output_tokens").asInt(0);
+            else
+              outputTokens = 0;
+            totalTokens += inputTokens + outputTokens;
+          }
+          else if ("summary".equals(type))
+          {
+            ++compactionCount;
+          }
+        }
+        line = reader.readLine();
       }
     }
 

@@ -10,12 +10,16 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
+import io.github.cowwoc.cat.hooks.SharedSecrets;
 
 import static io.github.cowwoc.cat.hooks.Strings.block;
-import java.io.BufferedReader;
+
+import io.github.cowwoc.cat.hooks.skills.ClaudeRunner.ParsedOutput;
+import io.github.cowwoc.cat.hooks.skills.ClaudeRunner.ProcessResult;
+import io.github.cowwoc.cat.hooks.skills.ClaudeRunner.TurnOutput;
+
 import java.io.IOException;
 import java.io.PrintStream;
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -28,20 +32,15 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectWriter;
-import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
@@ -58,10 +57,6 @@ public final class EmpiricalTestRunner
    */
   private static final int MAX_TRIALS = 1000;
   /**
-   * Default timeout for the claude CLI process.
-   */
-  private static final int DEFAULT_TIMEOUT_SECONDS = 180;
-  /**
    * Maximum characters in an output preview string.
    */
   private static final int MAX_PREVIEW_CHARS = 200;
@@ -69,18 +64,9 @@ public final class EmpiricalTestRunner
    * Maximum number of tool uses to retain per trial.
    */
   private static final int MAX_TOOL_USES_DISPLAYED = 5;
-  /**
-   * Maximum bytes buffered from a single Claude process output.
-   * Outputs exceeding this limit are truncated before parsing.
-   */
-  private static final int MAX_OUTPUT_BYTES = 10 * 1024 * 1024;
   private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>()
   {
   };
-  /**
-   * Allowed model name values for the {@code --model} flag.
-   */
-  private static final Set<String> ALLOWED_MODELS = Set.of("haiku", "sonnet", "opus");
   /**
    * Comparator that orders {@link Severity} values HIGH first, then MEDIUM, then LOW.
    */
@@ -94,7 +80,25 @@ public final class EmpiricalTestRunner
 
   private final ClaudeTool scope;
   private final Path sessionsPath;
-  private final ObjectWriter compactWriter;
+  private final ClaudeRunner claudeRunner;
+
+  static
+  {
+    SharedSecrets.setEmpiricalTestRunnerAccess(new SharedSecrets.EmpiricalTestRunnerAccess()
+    {
+      @Override
+      public Path createTestWorktree(Path baseRepo) throws IOException
+      {
+        return EmpiricalTestRunner.createTestWorktree(baseRepo);
+      }
+
+      @Override
+      public void removeTestWorktree(Path baseRepo, Path worktreePath)
+      {
+        EmpiricalTestRunner.removeTestWorktree(baseRepo, worktreePath);
+      }
+    });
+  }
 
   /**
    * Creates a new empirical test runner.
@@ -107,7 +111,7 @@ public final class EmpiricalTestRunner
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
     this.sessionsPath = scope.getClaudeSessionsPath();
-    this.compactWriter = scope.getJsonMapper().writer().without(SerializationFeature.INDENT_OUTPUT);
+    this.claudeRunner = new ClaudeRunner(scope);
   }
 
   /**
@@ -127,10 +131,10 @@ public final class EmpiricalTestRunner
   {
     requireThat(configPath, "configPath").isNotNull();
     requireThat(model, "model").isNotBlank();
-    if (!ALLOWED_MODELS.contains(model))
+    if (!ClaudeRunner.ALLOWED_MODELS.contains(model))
     {
       throw new IllegalArgumentException("Invalid model '" + model +
-        "'. Valid values: " + ALLOWED_MODELS);
+        "'. Valid values: " + ClaudeRunner.ALLOWED_MODELS);
     }
     requireThat(cwd, "cwd").isNotNull();
     requireThat(trials, "trials").isBetween(1, true, MAX_TRIALS, true);
@@ -313,22 +317,47 @@ public final class EmpiricalTestRunner
         {
           if (failFast.get())
             return;
-          TrialResult result = runMultiMessageTrial(primingMessages, systemReminders, messages,
-            model, systemPrompt, cwd);
-          results.add(result);
 
-          if (!result.pass())
+          Path trialCwd;
+          try
+          {
+            trialCwd = createTestWorktree(cwd);
+          }
+          catch (IOException e)
+          {
+            TrialResult errorResult = new TrialResult(false, new HashMap<>(), 0,
+              "", new ArrayList<>(), "worktree: " + e.getMessage(),
+              List.of(), List.of());
+            results.add(errorResult);
             failFast.set(true);
+            System.out.println("  t" + (trialIndex + 1) + " FAIL [ERROR: worktree: " +
+              e.getMessage() + "]");
+            return;
+          }
 
-          String status;
-          if (result.pass())
-            status = "PASS";
-          else
-            status = "FAIL";
+          try
+          {
+            TrialResult result = runMultiMessageTrial(primingMessages, systemReminders, messages,
+              model, systemPrompt, trialCwd);
+            results.add(result);
 
-          String preview = formatTrialPreview(result);
-          System.out.println("  t" + (trialIndex + 1) + " " + status + " (" +
-            result.elapsed() + "s)" + preview);
+            if (!result.pass())
+              failFast.set(true);
+
+            String status;
+            if (result.pass())
+              status = "PASS";
+            else
+              status = "FAIL";
+
+            String preview = formatTrialPreview(result);
+            System.out.println("  t" + (trialIndex + 1) + " " + status + " (" +
+              result.elapsed() + "s)" + preview);
+          }
+          finally
+          {
+            removeTestWorktree(cwd, trialCwd);
+          }
         }, executor);
         futures.add(future);
       }
@@ -397,104 +426,6 @@ public final class EmpiricalTestRunner
   }
 
   /**
-   * Builds the claude CLI command with appropriate flags.
-   *
-   * @param model the model name
-   * @param systemPrompt the system prompt to append via CLI flag, or empty string for none
-   * @return the command as a list of strings
-   * @throws NullPointerException if {@code model} or {@code systemPrompt} are null
-   */
-  public List<String> buildCommand(String model, String systemPrompt)
-  {
-    requireThat(model, "model").isNotBlank();
-    if (!ALLOWED_MODELS.contains(model))
-    {
-      throw new IllegalArgumentException("Invalid model '" + model +
-        "'. Valid values: " + ALLOWED_MODELS);
-    }
-    requireThat(systemPrompt, "systemPrompt").isNotNull();
-    List<String> command = new ArrayList<>();
-    command.add("claude");
-    command.add("-p");
-    command.add("--model");
-    command.add(model);
-    command.add("--input-format");
-    command.add("stream-json");
-    command.add("--output-format");
-    command.add("stream-json");
-    command.add("--verbose");
-    command.add("--dangerously-skip-permissions");
-    if (!systemPrompt.isEmpty())
-    {
-      command.add("--append-system-prompt");
-      command.add(systemPrompt);
-    }
-    return command;
-  }
-
-  /**
-   * Executes the claude CLI process with the given input.
-   *
-   * @param command the command to execute
-   * @param input the input to send to the process
-   * @param cwd the working directory
-   * @return the process result with output, elapsed time, and error
-   */
-  private ProcessResult executeClaudeProcess(List<String> command, String input, Path cwd)
-  {
-    long startTime = System.currentTimeMillis();
-    try
-    {
-      ProcessBuilder pb = new ProcessBuilder(command);
-      Map<String, String> env = pb.environment();
-      // Remove CLAUDECODE so the spawned claude process does not inherit the hook-suppression flag
-      // and behaves as a standalone CLI invocation. All other parent env vars are intentionally
-      // inherited so the subprocess picks up PATH, HOME, CLAUDE_SESSION_ID, and any user-configured
-      // model settings needed for the empirical trial.
-      env.remove("CLAUDECODE");
-      pb.directory(cwd.toFile());
-      pb.redirectErrorStream(true);
-
-      try (Process process = pb.start())
-      {
-        process.getOutputStream().write(input.getBytes(StandardCharsets.UTF_8));
-        process.getOutputStream().close();
-
-        StringBuilder output = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(
-          new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
-        {
-          String line = reader.readLine();
-          while (line != null)
-          {
-            if (output.length() + line.length() + 1 <= MAX_OUTPUT_BYTES)
-              output.append(line).append('\n');
-            else
-              break;
-            line = reader.readLine();
-          }
-        }
-
-        boolean completed = process.waitFor(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        long elapsed = (System.currentTimeMillis() - startTime) / 1000;
-
-        if (!completed)
-        {
-          process.destroyForcibly();
-          return new ProcessResult("", elapsed, "timeout");
-        }
-
-        return new ProcessResult(output.toString(), elapsed, "");
-      }
-    }
-    catch (IOException | InterruptedException e)
-    {
-      long elapsed = (System.currentTimeMillis() - startTime) / 1000;
-      return new ProcessResult("", elapsed, e.getMessage());
-    }
-  }
-
-  /**
    * Runs a single multi-message trial and evaluates each turn against its corresponding
    * message's criteria.
    *
@@ -510,17 +441,20 @@ public final class EmpiricalTestRunner
     List<String> systemReminders, List<TestMessage> messages, String model,
     String systemPrompt, Path cwd)
   {
-    List<String> command = buildCommand(model, systemPrompt);
+    List<String> command = claudeRunner.buildCommand(model, systemPrompt);
 
-    String input = buildInput(primingMessages, messages, systemReminders);
+    List<String> prompts = new ArrayList<>();
+    for (TestMessage msg : messages)
+      prompts.add(msg.prompt());
+    String input = claudeRunner.buildInput(primingMessages, prompts, systemReminders);
 
-    ProcessResult processResult = executeClaudeProcess(command, input, cwd);
+    ProcessResult processResult = claudeRunner.executeProcess(command, input, cwd);
 
     if (!processResult.error().isEmpty())
       return new TrialResult(false, new HashMap<>(), processResult.elapsed(), "",
         new ArrayList<>(), processResult.error(), List.of(), List.of());
 
-    ParsedOutput parsed = parseOutput(processResult.output());
+    ParsedOutput parsed = processResult.parsed();
 
     // Calculate number of priming turns to skip.
     // Each UserMessage produces 1 turn, each ToolUse produces 1 turn.
@@ -545,6 +479,7 @@ public final class EmpiricalTestRunner
       // For multi-message configs, turns are split evenly across messages.
       List<String> aggregatedTexts = new ArrayList<>();
       List<String> aggregatedToolUses = new ArrayList<>();
+      List<String> aggregatedWriteContents = new ArrayList<>();
       if (messages.size() == 1)
       {
         // Single message: all turns belong to it
@@ -552,6 +487,7 @@ public final class EmpiricalTestRunner
         {
           aggregatedTexts.addAll(turn.texts());
           aggregatedToolUses.addAll(turn.toolUses());
+          aggregatedWriteContents.addAll(turn.writeContents());
         }
       }
       else if (i < testTurns.size())
@@ -560,10 +496,11 @@ public final class EmpiricalTestRunner
         TurnOutput turn = testTurns.get(i);
         aggregatedTexts.addAll(turn.texts());
         aggregatedToolUses.addAll(turn.toolUses());
+        aggregatedWriteContents.addAll(turn.writeContents());
       }
 
       EvaluationResult evaluation = evaluateOutput(aggregatedTexts, aggregatedToolUses,
-        msg.criteria());
+        aggregatedWriteContents, msg.criteria());
 
       String turnPreview = String.join("\n", aggregatedTexts);
       String truncatedTurnPreview = truncatePreview(turnPreview, MAX_PREVIEW_CHARS).replace("\n", "\\n");
@@ -605,222 +542,6 @@ public final class EmpiricalTestRunner
   }
 
   /**
-   * Builds stream-json input with priming messages followed by multiple test messages.
-   * System reminders are appended to each test message.
-   *
-   * @param primingMessages the priming messages
-   * @param messages the list of test messages
-   * @param systemReminders list of system reminder strings to append to each test message,
-   *                        each wrapped in {@code <system-reminder>} tags
-   * @return the stream-json input string
-   * @throws NullPointerException if {@code primingMessages}, {@code messages}, or
-   *                              {@code systemReminders} are null
-   */
-  public String buildInput(List<PrimingMessage> primingMessages, List<TestMessage> messages,
-    List<String> systemReminders)
-  {
-    requireThat(primingMessages, "primingMessages").isNotNull();
-    requireThat(messages, "messages").isNotNull();
-    requireThat(systemReminders, "systemReminders").isNotNull();
-    StringJoiner joiner = new StringJoiner("\n");
-    int toolUseCounter = 0;
-    for (PrimingMessage msg : primingMessages)
-    {
-      switch (msg)
-      {
-        case PrimingMessage.UserMessage userMsg ->
-          joiner.add(makeUserMessage(userMsg.text()));
-        case PrimingMessage.ToolUse toolUse ->
-        {
-          String toolUseId = "toolu_priming_" + toolUseCounter;
-          ++toolUseCounter;
-          joiner.add(makeToolUseMessage(toolUseId, toolUse.tool(), toolUse.input()));
-          joiner.add(makeToolResultMessage(toolUseId, toolUse.output()));
-        }
-      }
-    }
-    for (TestMessage testMsg : messages)
-    {
-      String finalPrompt = testMsg.prompt();
-      if (!systemReminders.isEmpty())
-      {
-        StringBuilder sb = new StringBuilder(testMsg.prompt());
-        for (String reminder : systemReminders)
-        {
-          sb.append("\n<system-reminder>\n").
-            append(reminder).
-            append("\n</system-reminder>");
-        }
-        finalPrompt = sb.toString();
-      }
-      joiner.add(makeUserMessage(finalPrompt));
-    }
-    return joiner.toString();
-  }
-
-  /**
-   * Creates a stream-json message with the common envelope structure.
-   *
-   * @param envelopeType the type field for the outer envelope ("user" or "assistant")
-   * @param role the role field for the inner message ("user" or "assistant")
-   * @param contentBlock the content block to include in the message
-   * @return the compact JSON string
-   */
-  private String buildMessage(String envelopeType, String role, ObjectNode contentBlock)
-  {
-    ObjectNode message = scope.getJsonMapper().createObjectNode();
-    message.put("type", envelopeType);
-
-    ObjectNode msg = scope.getJsonMapper().createObjectNode();
-    msg.put("role", role);
-    msg.set("content", scope.getJsonMapper().createArrayNode().add(contentBlock));
-    message.set("message", msg);
-
-    return compactWriter.writeValueAsString(message);
-  }
-
-  /**
-   * Creates a stream-json user message.
-   *
-   * @param text the message text
-   * @return the JSON message string
-   */
-  private String makeUserMessage(String text)
-  {
-    ObjectNode content = scope.getJsonMapper().createObjectNode();
-    content.put("type", "text");
-    content.put("text", text);
-    return buildMessage("user", "user", content);
-  }
-
-  /**
-   * Creates a stream-json assistant message with tool_use.
-   *
-   * @param toolUseId the unique ID for the tool use
-   * @param toolName the name of the tool
-   * @param toolInput the tool input as a map
-   * @return the JSON message string
-   */
-  private String makeToolUseMessage(String toolUseId, String toolName,
-    Map<String, Object> toolInput)
-  {
-    ObjectNode content = scope.getJsonMapper().createObjectNode();
-    content.put("type", "tool_use");
-    content.put("id", toolUseId);
-    content.put("name", toolName);
-    content.set("input", scope.getJsonMapper().valueToTree(toolInput));
-    return buildMessage("assistant", "assistant", content);
-  }
-
-  /**
-   * Creates a stream-json user message with tool_result.
-   *
-   * @param toolUseId the ID from the tool_use message
-   * @param toolOutput the tool output content
-   * @return the JSON message string
-   */
-  private String makeToolResultMessage(String toolUseId, String toolOutput)
-  {
-    ObjectNode content = scope.getJsonMapper().createObjectNode();
-    content.put("type", "tool_result");
-    content.put("tool_use_id", toolUseId);
-    content.put("content", toolOutput);
-    return buildMessage("user", "user", content);
-  }
-
-  /**
-   * Parses stream-json output to extract assistant text blocks and tool uses.
-   *
-   * @param output the raw output from claude CLI
-   * @return the parsed output
-   * @throws NullPointerException if {@code output} is null
-   */
-  public ParsedOutput parseOutput(String output)
-  {
-    requireThat(output, "output").isNotNull();
-    List<String> texts = new ArrayList<>();
-    List<String> toolUses = new ArrayList<>();
-    List<TurnOutput> turns = new ArrayList<>();
-    List<String> currentTurnTexts = new ArrayList<>();
-    List<String> currentTurnToolUses = new ArrayList<>();
-    String sessionId = "";
-
-    for (String line : output.split("\n"))
-    {
-      String trimmed = line.strip();
-      if (trimmed.isEmpty())
-        continue;
-
-      try
-      {
-        JsonNode event = scope.getJsonMapper().readTree(trimmed);
-        String type = event.path("type").asString("");
-
-        if (sessionId.isEmpty())
-        {
-          String id = event.path("session_id").asString("");
-          if (!id.isEmpty())
-            sessionId = id;
-        }
-
-        if (type.equals("assistant"))
-        {
-          // Each assistant event starts a new turn
-          if (!currentTurnTexts.isEmpty() || !currentTurnToolUses.isEmpty())
-          {
-            turns.add(new TurnOutput(List.copyOf(currentTurnTexts),
-              List.copyOf(currentTurnToolUses)));
-            currentTurnTexts = new ArrayList<>();
-            currentTurnToolUses = new ArrayList<>();
-          }
-          JsonNode content = event.path("message").path("content");
-          if (content.isArray())
-          {
-            for (JsonNode block : content)
-            {
-              String blockType = block.path("type").asString("");
-              if (blockType.equals("text"))
-              {
-                String text = block.path("text").asString("");
-                texts.add(text);
-                currentTurnTexts.add(text);
-              }
-              else if (blockType.equals("tool_use"))
-              {
-                String name = block.path("name").asString("");
-                toolUses.add(name);
-                currentTurnToolUses.add(name);
-              }
-            }
-          }
-        }
-        else if (type.equals("result"))
-        {
-          String result = event.path("result").asString("");
-          if (!result.isEmpty())
-          {
-            texts.add(result);
-            currentTurnTexts.add(result);
-          }
-        }
-      }
-      catch (Exception _)
-      {
-        // Skip malformed JSON lines (e.g., error messages from the CLI)
-      }
-    }
-
-    // Flush the last turn
-    if (!currentTurnTexts.isEmpty() || !currentTurnToolUses.isEmpty())
-    {
-      turns.add(new TurnOutput(List.copyOf(currentTurnTexts),
-        List.copyOf(currentTurnToolUses)));
-    }
-
-    return new ParsedOutput(texts, toolUses, turns, sessionId);
-  }
-
-  /**
    * Evaluates criteria by checking whether items are present or absent in a searchable collection,
    * and adds results to the checks map.
    *
@@ -847,20 +568,25 @@ public final class EmpiricalTestRunner
   /**
    * Evaluates output against success criteria.
    *
-   * @param texts the text outputs
-   * @param toolUses the tool uses
-   * @param criteria the success criteria map
+   * @param texts         the text outputs
+   * @param toolUses      the tool uses
+   * @param writeContents the content strings passed to Write tool calls
+   * @param criteria      the success criteria map
    * @return the evaluation result
-   * @throws NullPointerException if {@code texts}, {@code toolUses}, or {@code criteria} are null
+   * @throws NullPointerException if {@code texts}, {@code toolUses}, {@code writeContents}, or
+   *                              {@code criteria} are null
    */
   public EvaluationResult evaluateOutput(List<String> texts, List<String> toolUses,
-    Map<String, Object> criteria)
+    List<String> writeContents, Map<String, Object> criteria)
   {
     requireThat(texts, "texts").isNotNull();
     requireThat(toolUses, "toolUses").isNotNull();
+    requireThat(writeContents, "writeContents").isNotNull();
     requireThat(criteria, "criteria").isNotNull();
     String fullText = String.join("\n", texts);
     String lowerText = fullText.toLowerCase(Locale.ROOT);
+    String fullWriteText = String.join("\n", writeContents);
+    String lowerWriteText = fullWriteText.toLowerCase(Locale.ROOT);
 
     Map<String, Boolean> checks = new HashMap<>();
 
@@ -885,6 +611,18 @@ public final class EmpiricalTestRunner
     List<String> mustNotUseTools = (List<String>) criteria.get("must_not_use_tools");
     if (mustNotUseTools != null)
       evaluateCriteria(mustNotUseTools, "not_uses_tool", false, toolUses::contains, checks);
+
+    @SuppressWarnings("unchecked")
+    List<String> writeMustContain = (List<String>) criteria.get("write_must_contain");
+    if (writeMustContain != null)
+      evaluateCriteria(writeMustContain, "write_contains", true,
+        term -> lowerWriteText.contains(term.toLowerCase(Locale.ROOT)), checks);
+
+    @SuppressWarnings("unchecked")
+    List<String> writeMustNotContain = (List<String>) criteria.get("write_must_not_contain");
+    if (writeMustNotContain != null)
+      evaluateCriteria(writeMustNotContain, "write_not_contains", false,
+        term -> lowerWriteText.contains(term.toLowerCase(Locale.ROOT)), checks);
 
     boolean allPass = checks.isEmpty() || checks.values().stream().allMatch(v -> v);
     return new EvaluationResult(allPass, checks);
@@ -1461,6 +1199,77 @@ public final class EmpiricalTestRunner
   }
 
   /**
+   * Creates an isolated git worktree for a single test run.
+   * <p>
+   * Each test run gets its own isolated working tree so that files written by one run are not
+   * visible to parallel runs executing in the same batch.
+   *
+   * @param baseRepo the base git repository to branch from
+   * @return the path of the newly created worktree
+   * @throws IOException if the temporary directory cannot be created or the git command fails
+   */
+  private static Path createTestWorktree(Path baseRepo) throws IOException
+  {
+    Path worktreePath = Files.createTempDirectory("empirical-trial-");
+    // git worktree add requires the destination to not exist yet
+    Files.delete(worktreePath);
+    ProcessBuilder pb = new ProcessBuilder("git", "-C", baseRepo.toString(),
+      "worktree", "add", "--detach", worktreePath.toString());
+    pb.redirectErrorStream(true);
+    try (Process process = pb.start())
+    {
+      String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+      try
+      {
+        int exitCode = process.waitFor();
+        if (exitCode != 0)
+          throw new IOException("git worktree add failed (exit " + exitCode + "): " + output.strip());
+      }
+      catch (InterruptedException e)
+      {
+        Thread.currentThread().interrupt();
+        throw new IOException("Interrupted while creating trial worktree at: " + worktreePath, e);
+      }
+    }
+    return worktreePath;
+  }
+
+  /**
+   * Removes a test worktree created by {@link #createTestWorktree(Path)}.
+   * <p>
+   * Failures are logged as warnings rather than propagated because the trial result has already
+   * been captured at this point.
+   *
+   * @param baseRepo     the base git repository
+   * @param worktreePath the worktree path to remove
+   */
+  private static void removeTestWorktree(Path baseRepo, Path worktreePath)
+  {
+    try
+    {
+      ProcessBuilder pb = new ProcessBuilder("git", "-C", baseRepo.toString(),
+        "worktree", "remove", "--force", worktreePath.toString());
+      pb.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+      pb.redirectErrorStream(true);
+      try (Process process = pb.start())
+      {
+        process.waitFor();
+      }
+    }
+    catch (InterruptedException e)
+    {
+      Thread.currentThread().interrupt();
+      Logger log = LoggerFactory.getLogger(EmpiricalTestRunner.class);
+      log.warn("Failed to remove trial worktree: {}", worktreePath, e);
+    }
+    catch (IOException e)
+    {
+      Logger log = LoggerFactory.getLogger(EmpiricalTestRunner.class);
+      log.warn("Failed to remove trial worktree: {}", worktreePath, e);
+    }
+  }
+
+  /**
    * Main entry point for CLI invocation.
    *
    * @param args command-line arguments
@@ -1628,30 +1437,6 @@ public final class EmpiricalTestRunner
   }
 
   /**
-   * Result of executing the claude CLI process.
-   *
-   * @param output the process output
-   * @param elapsed the elapsed time in seconds
-   * @param error the error message, or empty string if none
-   */
-  private record ProcessResult(String output, long elapsed, String error)
-  {
-    /**
-     * Creates a new process result.
-     *
-     * @param output  the process output
-     * @param elapsed the elapsed time in seconds
-     * @param error   the error message, or empty string if none
-     * @throws NullPointerException if {@code output} or {@code error} are null
-     */
-    ProcessResult
-    {
-      requireThat(output, "output").isNotNull();
-      requireThat(error, "error").isNotNull();
-    }
-  }
-
-  /**
    * A single message in a multi-message test conversation.
    *
    * @param prompt the prompt text to send
@@ -1670,28 +1455,6 @@ public final class EmpiricalTestRunner
     {
       requireThat(prompt, "prompt").isNotNull();
       requireThat(criteria, "criteria").isNotNull();
-    }
-  }
-
-  /**
-   * Output from a single conversation turn.
-   *
-   * @param texts the text blocks from this turn
-   * @param toolUses the tool use names from this turn
-   */
-  public record TurnOutput(List<String> texts, List<String> toolUses)
-  {
-    /**
-     * Creates a new turn output.
-     *
-     * @param texts the text blocks from this turn
-     * @param toolUses the tool use names from this turn
-     * @throws NullPointerException if {@code texts} or {@code toolUses} are null
-     */
-    public TurnOutput
-    {
-      requireThat(texts, "texts").isNotNull();
-      requireThat(toolUses, "toolUses").isNotNull();
     }
   }
 
@@ -1719,36 +1482,6 @@ public final class EmpiricalTestRunner
     {
       requireThat(checks, "checks").isNotNull();
       requireThat(outputPreview, "outputPreview").isNotNull();
-    }
-  }
-
-  /**
-   * Parsed output containing text blocks, tool uses, and per-turn breakdown.
-   *
-   * @param texts the list of text outputs (flat, all turns combined)
-   * @param toolUses the list of tool use names (flat, all turns combined)
-   * @param turns the per-turn breakdown of output
-   * @param sessionId the session ID extracted from the output, or empty string if not found
-   */
-  public record ParsedOutput(List<String> texts, List<String> toolUses, List<TurnOutput> turns,
-    String sessionId)
-  {
-    /**
-     * Creates a new parsed output.
-     *
-     * @param texts     the list of text outputs (flat, all turns combined)
-     * @param toolUses  the list of tool use names (flat, all turns combined)
-     * @param turns     the per-turn breakdown of output
-     * @param sessionId the session ID extracted from the output, or empty string if not found
-     * @throws NullPointerException if {@code texts}, {@code toolUses}, {@code turns}, or
-     *                              {@code sessionId} are null
-     */
-    public ParsedOutput
-    {
-      requireThat(texts, "texts").isNotNull();
-      requireThat(toolUses, "toolUses").isNotNull();
-      requireThat(turns, "turns").isNotNull();
-      requireThat(sessionId, "sessionId").isNotNull();
     }
   }
 

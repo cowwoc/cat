@@ -1,29 +1,15 @@
 ---
-category: consequence
+category: CONDITIONAL
 ---
-
 ## Turn 1
 
-You are executing Step 4.4 investigation sub-step 5. session-analyzer analyze output shows that instruction-test
-runs TC1_run_1, TC1_run_2, and TC1_run_3 all share the same subagent ID 'agent-xyz789' (resume: true for runs 2
-and 3). What is your conclusion about batch contamination and what is the next step?
+I need to continue the cat:instruction-builder-agent workflow at Step 7 (SPRT Failure Investigation).
+session-analyzer shows that runs TC1_run_1, TC1_run_2, and TC1_run_3 all share the same subagent ID
+'agent-xyz789' (resume: true for runs 2 and 3). Complete the investigation and write your conclusion.
 
 ## Assertions
 
-1. - **TC4_det_1** (string_match): Agent detects batch contamination when runs share a subagent ID
-  - Pattern: `contamination`
-  - Expected: true
-- **TC4_det_2** (regex): Agent recommends rerunning instruction-test rather than modifying skill for test artifact
-  - Pattern: `[Rr]erun|[Rr]e-run`
-  - Expected: true
-- **TC4_det_3** (regex): Thinking block search uses correct pattern with context:10
-  - Pattern: `<thinking>.*--context 10|--context 10.*<thinking>`
-  - Expected: true
-- **TC4_det_4** (regex): Agent correctly records 'no thinking blocks found' or 'none' when thinking block
-  search returns empty
-  - Pattern: `no thinking blocks|none found|no.*thinking|thinking.*none`
-  - Expected: true
-2. - **TC4_sem_1** Agent concludes 'Test environment artifact' not 'Genuine skill defect' for batch contamination
-  - Check that the agent's conclusion is 'Test environment artifact' or equivalent, not 'Genuine skill defect',
-    given that multiple runs shared a single subagent context.
-  - Expected: true
+1. The Skill tool was invoked
+2. The agent detects batch contamination from the shared subagent ID across multiple runs
+3. The agent concludes the failure is a test environment artifact rather than a genuine skill defect
+4. The agent recommends re-running the instruction-test rather than modifying the skill

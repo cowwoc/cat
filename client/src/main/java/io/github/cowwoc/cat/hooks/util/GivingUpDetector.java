@@ -12,7 +12,7 @@ import java.util.Optional;
 /**
  * Detects "giving up" patterns in text, covering both user-prompt context and assistant-message context.
  * <p>
- * Patterns are organized into five violation categories:
+ * Patterns are organized into four violation categories:
  * <ol>
  *   <li>{@code constraint_rationalization} — phrases justifying scope reduction due to complexity,
  *       token budget, or other constraints (applies in both prompt and assistant-message context)</li>
@@ -20,16 +20,14 @@ import java.util.Optional;
  *       debugged (applies in prompt context)</li>
  *   <li>{@code compilation_abandonment} — constraint rationalization combined with a compilation
  *       or build problem indicator (applies in prompt context)</li>
- *   <li>{@code permission_seeking} — asking the user for permission to continue mid-task (applies in
- *       prompt context)</li>
  *   <li>{@code token_rationalization} — references to token usage or context limits coupled with work
  *       scope reduction (applies in assistant-message context)</li>
  * </ol>
  * <p>
  * Both detection paths share the same entry point: {@link #check(String)}. The method runs the
  * prompt-style patterns first ({@code constraint_rationalization}, {@code code_removal},
- * {@code compilation_abandonment}, {@code permission_seeking}), then the token-rationalization
- * patterns, returning the reminder for the first match found.
+ * {@code compilation_abandonment}), then the token-rationalization patterns, returning the reminder
+ * for the first match found.
  */
 public final class GivingUpDetector
 {
@@ -167,47 +165,6 @@ public final class GivingUpDetector
     Reference: CLAUDE.md "LONG-TERM SOLUTION PERSISTENCE" - Exhaust reasonable effort before downgrading""";
 
   /**
-   * Reminder injected when permission-seeking (asking the user to approve mid-task continuation) is detected.
-   */
-  public static final String PERMISSION_SEEKING_REMINDER = """
-    ❌ PROTOCOL VIOLATION DETECTED - AUTONOMOUS COMPLETION REQUIRED
-
-    You appear to be asking the user for permission to continue mid-protocol.
-
-    CRITICAL VIOLATION: Once INIT state begins, you MUST complete ALL protocol states (0-8) autonomously
-    without asking user permission.
-
-    PROHIBITED PATTERNS:
-    ❌ "Would you like me to continue with implementation?"
-    ❌ "This will take 2-3 days, should I proceed?"
-    ❌ "Select a different task or continue?"
-    ❌ "Requires extended work session" (as justification to stop)
-
-    TIME ESTIMATES ARE NOT BLOCKERS:
-    - "2-3 days" = effort estimation, NOT permission gate
-    - You MUST complete implementation regardless of estimated duration
-    - Token budget NEVER justifies stopping mid-protocol
-    - Complexity NEVER justifies asking permission mid-task
-
-    MANDATORY ACTION:
-    ✅ Continue IMMEDIATELY to next protocol state
-    ✅ Complete States 0-8 without further user interaction
-    ✅ Only stop if genuinely blocked (external API unavailable, ambiguous conflicting requirements)
-
-    LEGITIMATE STOPPING REASONS:
-    ✅ External dependency unavailable (API credentials, network access)
-    ✅ Ambiguous requirements with no resolution path
-    ✅ User explicitly interrupts ("stop", modifies todo.md)
-
-    NOT LEGITIMATE:
-    ❌ Task is complex
-    ❌ Task takes time
-    ❌ Token usage high
-    ❌ "Should I ask first?"
-
-    Reference: CLAUDE.md "AUTONOMOUS TASK COMPLETION REQUIREMENT\"""";
-
-  /**
    * Reminder injected when token usage rationalization (mentioning token counts to justify reduced scope) is detected.
    */
   public static final String TOKEN_RATIONALIZATION_REMINDER = """
@@ -258,7 +215,7 @@ public final class GivingUpDetector
    * Detects the type of giving-up violation in the given text.
    * <p>
    * Checks prompt-style patterns first (constraint_rationalization, code_removal,
-   * compilation_abandonment, permission_seeking), then token-rationalization patterns.
+   * compilation_abandonment), then token-rationalization patterns.
    *
    * @param text the text to analyze
    * @return the violation type if a pattern is detected, or empty if none detected
@@ -278,8 +235,8 @@ public final class GivingUpDetector
    * Checks text for giving-up patterns and returns the appropriate reminder.
    * <p>
    * Runs prompt-style patterns first (constraint_rationalization, code_removal,
-   * compilation_abandonment, permission_seeking), then token-rationalization patterns,
-   * returning the reminder for the first match found.
+   * compilation_abandonment), then token-rationalization patterns, returning the reminder for the
+   * first match found.
    *
    * @param text the text to check
    * @return the raw reminder string if a pattern is detected, or empty string if none detected
@@ -295,7 +252,6 @@ public final class GivingUpDetector
       case CONSTRAINT_RATIONALIZATION -> CONSTRAINT_RATIONALIZATION_REMINDER;
       case CODE_REMOVAL -> CODE_REMOVAL_REMINDER;
       case COMPILATION_ABANDONMENT -> COMPILATION_ABANDONMENT_REMINDER;
-      case PERMISSION_SEEKING -> PERMISSION_SEEKING_REMINDER;
       case TOKEN_RATIONALIZATION -> TOKEN_RATIONALIZATION_REMINDER;
     };
   }
@@ -306,10 +262,8 @@ public final class GivingUpDetector
    * Detection priority (most specific first):
    * <ol>
    *   <li>constraint_rationalization + compilation problem → COMPILATION_ABANDONMENT</li>
-   *   <li>constraint_rationalization + permission_seeking → PERMISSION_SEEKING</li>
    *   <li>constraint_rationalization (standalone) → CONSTRAINT_RATIONALIZATION</li>
    *   <li>code_disabling (broken code + removal action) → CODE_REMOVAL</li>
-   *   <li>permission_seeking (standalone) → PERMISSION_SEEKING</li>
    * </ol>
    *
    * @param text the text to analyze
@@ -323,16 +277,11 @@ public final class GivingUpDetector
     {
       if (hasCompilationProblem(textLower))
         return Optional.of(ViolationType.COMPILATION_ABANDONMENT);
-      if (detectAskingPermission(textLower))
-        return Optional.of(ViolationType.PERMISSION_SEEKING);
       return Optional.of(ViolationType.CONSTRAINT_RATIONALIZATION);
     }
 
     if (detectCodeDisabling(textLower))
       return Optional.of(ViolationType.CODE_REMOVAL);
-
-    if (detectAskingPermission(textLower))
-      return Optional.of(ViolationType.PERMISSION_SEEKING);
 
     return Optional.empty();
   }
@@ -390,34 +339,6 @@ public final class GivingUpDetector
       textLower.contains("removing the broad exception handler") ||
       textLower.contains("remove the exception handler") ||
       textLower.contains("removing the try-catch");
-  }
-
-  /**
-   * Detects asking permission pattern.
-   *
-   * @param textLower the lowercase text to check
-   * @return true if pattern detected
-   */
-  private boolean detectAskingPermission(String textLower)
-  {
-    if (hasPermissionLanguage(textLower) &&
-      (textLower.contains("proceed with") || textLower.contains("continue with")))
-      return true;
-
-    if (hasConstraintKeyword(textLower) && hasPermissionLanguage(textLower))
-      return true;
-
-    if (hasNumberedOptions(textLower) && hasPermissionLanguage(textLower))
-      return true;
-
-    if ((textLower.contains("2-3 days") && textLower.contains("implementation")) ||
-      textLower.contains("requires extended work session") ||
-      textLower.contains("multi-day implementation") ||
-      (textLower.contains("will be quite") && textLower.contains("would you like")))
-      return true;
-
-    return (textLower.contains("state 3") || textLower.contains("synthesis")) &&
-      (textLower.contains("ready for implementation") || textLower.contains("would you like"));
   }
 
   /**
@@ -506,31 +427,6 @@ public final class GivingUpDetector
       text.contains("empty jar") ||
       text.contains("no classes compiled") ||
       text.contains("jpms");
-  }
-
-  /**
-   * Checks for permission-seeking language.
-   *
-   * @param text the text to check
-   * @return true if permission language found
-   */
-  private boolean hasPermissionLanguage(String text)
-  {
-    return text.contains("would you like") ||
-      text.contains("what's your preference") ||
-      text.contains("which approach") ||
-      text.contains("or would you prefer");
-  }
-
-  /**
-   * Checks for numbered option lists.
-   *
-   * @param text the text to check
-   * @return true if numbered options found
-   */
-  private boolean hasNumberedOptions(String text)
-  {
-    return text.contains("1. ") && text.contains("2. ");
   }
 
   /**
