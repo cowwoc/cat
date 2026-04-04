@@ -14,5 +14,24 @@
     "prevention_verified" : false,
     "recurrence_of" : null,
     "correct_behavior" : ""
+  }, {
+    "id" : "M614",
+    "timestamp" : "2026-04-04T20:37:20Z",
+    "category" : "",
+    "description" : "",
+    "root_cause" : "",
+    "cause_signature" : "knowledge_gap:doc_missing:skill_execution",
+    "prevention_type" : "skill",
+    "prevention_path" : "plugin/skills/empirical-test-agent/first-use.md",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : true,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
   } ]
 }
