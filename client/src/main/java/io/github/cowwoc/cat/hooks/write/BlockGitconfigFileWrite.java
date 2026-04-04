@@ -41,16 +41,16 @@ public final class BlockGitconfigFileWrite implements FileWriteHandler
    * Check if the write should be blocked due to targeting a canonical gitconfig file.
    *
    * @param toolInput the tool input JSON
-   * @param sessionId the session ID
+   * @param catAgentId the CAT agent ID (sessionId for main agent, sessionId/subagents/agentXxx for subagents)
    * @return the check result
-   * @throws NullPointerException if {@code toolInput} or {@code sessionId} is null
-   * @throws IllegalArgumentException if {@code sessionId} is blank
+   * @throws NullPointerException if {@code toolInput} or {@code catAgentId} is null
+   * @throws IllegalArgumentException if {@code catAgentId} is blank
    */
   @Override
-  public Result check(JsonNode toolInput, String sessionId)
+  public Result check(JsonNode toolInput, String catAgentId)
   {
     requireThat(toolInput, "toolInput").isNotNull();
-    requireThat(sessionId, "sessionId").isNotBlank();
+    requireThat(catAgentId, "catAgentId").isNotBlank();
 
     JsonNode filePathNode = toolInput.get("file_path");
     String filePath;

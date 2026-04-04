@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudePluginScope;
 import io.github.cowwoc.cat.hooks.skills.InstructionTestRunner;
 import org.testng.annotations.Test;
 
@@ -18,7 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * Tests for {@link InstructionTestRunner#run(JvmScope, String[], PrintStream)} CLI error path handling.
+ * Tests for {@link InstructionTestRunner#run(ClaudePluginScope, String[], PrintStream)} CLI error path handling.
  */
 public class InstructionTestRunnerMainTest
 {
@@ -32,7 +32,7 @@ public class InstructionTestRunnerMainTest
   public void noArgsThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("instruction-test-runner-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudePluginScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -54,7 +54,7 @@ public class InstructionTestRunnerMainTest
   public void nullArgsThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("instruction-test-runner-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudePluginScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       InstructionTestRunner.run(scope, null,
         new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8));
@@ -75,7 +75,7 @@ public class InstructionTestRunnerMainTest
   public void nullOutThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("instruction-test-runner-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudePluginScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       InstructionTestRunner.run(scope, new String[]{}, null);
     }

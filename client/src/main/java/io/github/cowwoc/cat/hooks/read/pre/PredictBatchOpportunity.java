@@ -49,9 +49,9 @@ public final class PredictBatchOpportunity implements ReadHandler
   }
 
   @Override
-  public Result check(String toolName, JsonNode toolInput, JsonNode toolResult, String sessionId)
+  public Result check(String toolName, JsonNode toolInput, JsonNode toolResult, String catAgentId)
   {
-    requireThat(sessionId, "sessionId").isNotBlank();
+    requireThat(catAgentId, "catAgentId").isNotBlank();
     if (!SUPPORTED_TOOLS.contains(toolName))
       return Result.allow();
 
@@ -72,7 +72,7 @@ public final class PredictBatchOpportunity implements ReadHandler
     }
 
     int timestamp = (int) (System.currentTimeMillis() / 1000);
-    Path trackerFile = Path.of("/tmp/batch_tracker_" + sessionId + ".json");
+    Path trackerFile = Path.of("/tmp/batch_tracker_" + catAgentId + ".json");
     TrackerState state = loadTracker(trackerFile);
 
     // Add this operation

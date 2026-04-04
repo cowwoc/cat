@@ -11,6 +11,8 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import io.github.cowwoc.cat.hooks.ClaudeHook;
 import io.github.cowwoc.cat.hooks.PostToolHandler;
 import io.github.cowwoc.cat.hooks.util.ConversationLogUtils;
+import io.github.cowwoc.cat.hooks.util.SessionFileUtils;
+import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -21,8 +23,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Detects validation or verification claims in assistant messages that lack corresponding skill invocation
@@ -72,7 +72,15 @@ public final class DetectValidationWithoutEvidence implements PostToolHandler
     if (!Files.exists(conversationLog))
       return Result.allow();
 
-    List<String> allLines = readAllLines(conversationLog);
+    List<String> allLines;
+    try
+    {
+      allLines = readAllLines(conversationLog);
+    }
+    catch (IOException e)
+    {
+      throw WrappedCheckedException.wrap(e);
+    }
     if (allLines.isEmpty())
       return Result.allow();
 
@@ -148,20 +156,12 @@ public final class DetectValidationWithoutEvidence implements PostToolHandler
    * avoided to prevent resource exhaustion on long sessions.
    *
    * @param conversationLog the path to the conversation log
-   * @return list of the last {@code TAIL_READ_LIMIT} lines, or empty list on error
+   * @return list of the last {@code TAIL_READ_LIMIT} lines
+   * @throws IOException if reading the file fails
    */
-  private List<String> readAllLines(Path conversationLog)
+  private List<String> readAllLines(Path conversationLog) throws IOException
   {
-    try (Stream<String> lines = Files.lines(conversationLog))
-    {
-      List<String> allLines = lines.collect(Collectors.toList());
-      int total = allLines.size();
-      return allLines.subList(Math.max(0, total - TAIL_READ_LIMIT), total);
-    }
-    catch (IOException _)
-    {
-      return List.of();
-    }
+    return SessionFileUtils.getRecentLines(conversationLog, TAIL_READ_LIMIT);
   }
 
   /**

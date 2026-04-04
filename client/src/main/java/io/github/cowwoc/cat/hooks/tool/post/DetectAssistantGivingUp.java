@@ -15,9 +15,13 @@ import io.github.cowwoc.cat.hooks.util.GivingUpDetector;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 
 /**
@@ -97,20 +101,28 @@ public final class DetectAssistantGivingUp implements PostToolHandler
   {
     try
     {
-      List<String> allLines = Files.readAllLines(conversationLog);
-      List<String> assistantTexts = allLines.stream().
-        filter(line -> line.contains("\"role\":\"assistant\"")).
-        map(line -> ConversationLogUtils.extractTextContent(line, mapper)).
-        filter(text -> !text.isEmpty()).
-        toList();
-
-      int total = assistantTexts.size();
-      if (total <= MESSAGE_LIMIT)
-        return assistantTexts;
-
-      return assistantTexts.stream().
-        skip(total - MESSAGE_LIMIT).
-        toList();
+      // Use a bounded deque to keep only the last MESSAGE_LIMIT assistant messages,
+      // avoiding loading the entire (potentially multi-MB) session file into memory.
+      Deque<String> buffer = new ArrayDeque<>(MESSAGE_LIMIT + 1);
+      try (BufferedReader reader = Files.newBufferedReader(conversationLog))
+      {
+        String line = reader.readLine();
+        while (line != null)
+        {
+          if (line.contains("\"role\":\"assistant\""))
+          {
+            String text = ConversationLogUtils.extractTextContent(line, mapper);
+            if (!text.isEmpty())
+            {
+              buffer.addLast(text);
+              if (buffer.size() > MESSAGE_LIMIT)
+                buffer.removeFirst();
+            }
+          }
+          line = reader.readLine();
+        }
+      }
+      return new ArrayList<>(buffer);
     }
     catch (IOException _)
     {

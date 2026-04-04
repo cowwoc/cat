@@ -285,8 +285,8 @@ public final class GetConfigOutput implements SkillOutput
   /**
    * Generates a config output box for the requested page.
    *
-   * @param args the page argument and optional extra args: [effective | settings | versions | saved | no-changes |
-   *             conditions-for-version version preconditions postconditions |
+   * @param args the page argument and optional extra args: [effective | settings | versions |
+   *             saved | no-changes | conditions-for-version version preconditions postconditions |
    *             setting-updated name old new | conditions-updated version preconditions postconditions]
    * @return the formatted box
    * @throws IOException if an I/O error occurs
@@ -329,8 +329,8 @@ public final class GetConfigOutput implements SkillOutput
         yield getConditionsUpdated(args[1], args[2], args[3]);
       }
       default -> throw new IllegalArgumentException("Unknown page: '" + page +
-        "'. Valid pages: effective, settings, versions, saved, no-changes, conditions-for-version, " +
-        "setting-updated, conditions-updated");
+        "'. Valid pages: effective, settings, versions, saved, no-changes, " +
+        "conditions-for-version, setting-updated, conditions-updated");
     };
   }
 

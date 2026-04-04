@@ -66,16 +66,16 @@ public final class ValidateSkillTestFormat implements FileWriteHandler
    * Check if the write should be blocked due to skill test file format violations.
    *
    * @param toolInput the tool input JSON
-   * @param sessionId the session ID
+   * @param catAgentId the CAT agent ID (sessionId for main agent, sessionId/subagents/agentXxx for subagents)
    * @return the check result
-   * @throws NullPointerException     if {@code toolInput} or {@code sessionId} are null
-   * @throws IllegalArgumentException if {@code sessionId} is blank
+   * @throws NullPointerException     if {@code toolInput} or {@code catAgentId} are null
+   * @throws IllegalArgumentException if {@code catAgentId} is blank
    */
   @Override
-  public FileWriteHandler.Result check(JsonNode toolInput, String sessionId)
+  public FileWriteHandler.Result check(JsonNode toolInput, String catAgentId)
   {
     requireThat(toolInput, "toolInput").isNotNull();
-    requireThat(sessionId, "sessionId").isNotBlank();
+    requireThat(catAgentId, "catAgentId").isNotBlank();
 
     String filePath = getStringOrDefault(toolInput, "file_path", "");
     if (filePath.isEmpty())
@@ -185,6 +185,36 @@ public final class ValidateSkillTestFormat implements FileWriteHandler
   }
 
   /**
+   * Strips the content inside fenced code blocks, preserving the fence lines themselves.
+   * <p>
+   * Lines between opening and closing {@code ```} markers are replaced with empty strings so that
+   * section-heading patterns ({@code ## Turn N}, {@code ## Assertions}) inside code blocks are not
+   * mistakenly detected as actual markdown sections.
+   *
+   * @param content the raw markdown content
+   * @return the content with code block interiors blanked out
+   */
+  private String stripFencedCodeBlockContent(String content)
+  {
+    StringBuilder result = new StringBuilder(content.length());
+    boolean insideCodeBlock = false;
+    for (String line : content.split("\n", -1))
+    {
+      if (line.startsWith("```"))
+      {
+        insideCodeBlock = !insideCodeBlock;
+        result.append(line);
+      }
+      else if (insideCodeBlock)
+        result.append("");
+      else
+        result.append(line);
+      result.append('\n');
+    }
+    return result.toString();
+  }
+
+  /**
    * Validate that all required markdown sections are present and turn sections are contiguous.
    *
    * @param content  the full markdown content
@@ -193,7 +223,8 @@ public final class ValidateSkillTestFormat implements FileWriteHandler
    */
   private FileWriteHandler.Result validateSections(String content, String filePath)
   {
-    if (!content.contains("## Assertions"))
+    String strippedContent = stripFencedCodeBlockContent(content);
+    if (!strippedContent.contains("## Assertions"))
     {
       return FileWriteHandler.Result.block("""
         Skill test format violation in %s: missing required section '## Assertions'. \
@@ -203,7 +234,7 @@ Each test case file must contain at least ## Turn 1 and ## Assertions.
         formatted(filePath));
     }
 
-    if (!content.contains("## Turn 1"))
+    if (!strippedContent.contains("## Turn 1"))
     {
       return FileWriteHandler.Result.block("""
         Skill test format violation in %s: missing required section '## Turn 1'. \
@@ -214,7 +245,7 @@ Each test case file must contain at least ## Turn 1 and ## Assertions.
     }
 
     // Collect all ## Turn N numbers and verify they form a contiguous sequence starting at 1
-    Matcher turnMatcher = TURN_SECTION_PATTERN.matcher(content);
+    Matcher turnMatcher = TURN_SECTION_PATTERN.matcher(strippedContent);
     List<Integer> turnNumbers = new ArrayList<>();
     while (turnMatcher.find())
       turnNumbers.add(Integer.parseInt(turnMatcher.group(1)));

@@ -50,14 +50,14 @@ public final class DetectSequentialTools implements ReadHandler
   }
 
   @Override
-  public Result check(String toolName, JsonNode toolInput, JsonNode toolResult, String sessionId)
+  public Result check(String toolName, JsonNode toolInput, JsonNode toolResult, String catAgentId)
   {
-    requireThat(sessionId, "sessionId").isNotBlank();
+    requireThat(catAgentId, "catAgentId").isNotBlank();
     if (!BATCHABLE_TOOLS.contains(toolName))
       return Result.allow();
 
     int currentTime = (int) (System.currentTimeMillis() / 1000);
-    Path stateFile = Path.of("/tmp/sequential-tool-tracker-" + sessionId + ".json");
+    Path stateFile = Path.of("/tmp/sequential-tool-tracker-" + catAgentId + ".json");
     TrackerState state = loadState(stateFile);
 
     // If more than 30 seconds since last tool, reset

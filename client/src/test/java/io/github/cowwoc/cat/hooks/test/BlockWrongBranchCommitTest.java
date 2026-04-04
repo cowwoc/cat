@@ -510,4 +510,46 @@ public final class BlockWrongBranchCommitTest
       TestUtils.deleteDirectoryRecursively(mainRepo);
     }
   }
+
+  /**
+   * Verifies that committing on the shared sanitized branch ({issue-branch-name}-sanitized) is allowed
+   * even when inside a CAT issue worktree.
+   * <p>
+   * The instruction-builder-agent Step 6 pipeline creates an orphan branch named
+   * {@code {issue-branch-name}-sanitized} (e.g. {@code 2.1-my-issue-sanitized}) and commits stripped
+   * test-case files to it. Per-runner branches ({@code {issue-branch-name}-tcN-rM}) are then
+   * branched from this sanitized branch. This branch name differs from the worktree's expected issue
+   * branch but must not be blocked.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void testIsolationBranchCommitIsAllowed() throws IOException
+  {
+    Path mainRepo = TestUtils.createTempGitRepo("v2.1");
+    try (TestClaudeTool scope = new TestClaudeTool(mainRepo, mainRepo))
+    {
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+      Path worktreeDir = TestUtils.createWorktree(mainRepo, worktreesDir, "2.1-my-issue");
+      try
+      {
+        TestUtils.runGit(worktreeDir, "checkout", "--orphan", "2.1-my-issue-sanitized");
+        BlockWrongBranchCommit handler = new BlockWrongBranchCommit();
+        BashHandler.Result result = handler.check(
+          TestUtils.bashHook("git commit -m \"test-runner workspace\"",
+            worktreeDir.toString(), SESSION_ID, scope));
+        requireThat(result.blocked(), "blocked").isFalse();
+      }
+      finally
+      {
+        TestUtils.runGit(mainRepo, "worktree", "remove", "--force", worktreeDir.toString());
+        TestUtils.deleteDirectoryRecursively(worktreeDir);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+    }
+  }
 }

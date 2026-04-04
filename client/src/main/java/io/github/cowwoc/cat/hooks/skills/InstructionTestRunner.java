@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.skills;
 
-import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ClaudePluginScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import static io.github.cowwoc.cat.hooks.Strings.block;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
@@ -55,7 +55,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 /**
  * Incremental instruction-test driver for instruction-builder-agent.
  * <p>
- * Dispatches 10 subcommands: extract-units, detect-changes, map-units, extract-model,
+ * Dispatches 11 subcommands: extract-units, detect-changes, map-units, extract-model, extract-test-dir,
  * persist-artifacts, init-sprt, update-sprt, check-boundary, smoke-status, merge-results.
  * <p>
  * All output is written to stdout as JSON. Expected errors are reported as a block response
@@ -110,7 +110,7 @@ public final class InstructionTestRunner
     DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC);
 
   private final Logger log = LoggerFactory.getLogger(InstructionTestRunner.class);
-  private final JvmScope scope;
+  private final ClaudePluginScope scope;
   private final String claudeCodeVersion;
 
   /**
@@ -121,7 +121,7 @@ public final class InstructionTestRunner
    * @throws NullPointerException     if {@code scope} or {@code claudeCodeVersion} are null
    * @throws IllegalArgumentException if {@code claudeCodeVersion} is blank
    */
-  public InstructionTestRunner(JvmScope scope, String claudeCodeVersion)
+  public InstructionTestRunner(ClaudePluginScope scope, String claudeCodeVersion)
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(claudeCodeVersion, "claudeCodeVersion").isNotBlank();
@@ -146,7 +146,7 @@ public final class InstructionTestRunner
       throw new IllegalArgumentException(
         "InstructionTestRunner: no command specified.\n" +
         "Usage: skill-test-runner <command> [args...]\n" +
-        "Commands: extract-units, extract-model, detect-changes, map-units, " +
+        "Commands: extract-units, extract-model, extract-test-dir, detect-changes, map-units, " +
         "persist-artifacts, init-sprt, update-sprt, check-boundary, smoke-status, merge-results");
 
     String command = args[0];
@@ -155,6 +155,7 @@ public final class InstructionTestRunner
     {
       case "extract-units" -> out.println(extractUnits(rest));
       case "extract-model" -> out.println(extractModel(rest));
+      case "extract-test-dir" -> out.println(extractTestDir(rest));
       case "detect-changes" -> out.println(detectChanges(rest));
       case "map-units" -> out.println(mapUnits(rest));
       case "persist-artifacts" -> persistArtifacts(rest, out);
@@ -165,7 +166,7 @@ public final class InstructionTestRunner
       case "merge-results" -> out.println(mergeResults(rest));
       default -> throw new IllegalArgumentException(
         "InstructionTestRunner: unknown command: " + command + "\n" +
-        "Valid commands: extract-units, extract-model, detect-changes, map-units, " +
+        "Valid commands: extract-units, extract-model, extract-test-dir, detect-changes, map-units, " +
         "persist-artifacts, init-sprt, update-sprt, check-boundary, smoke-status, merge-results");
     }
   }
@@ -222,19 +223,98 @@ public final class InstructionTestRunner
     ParsedSkill parsed = parseSkill(skillPath);
     String model = SkillDiscovery.extractField(parsed.frontmatter(), "model");
     if (model.isBlank())
-    {
-      throw new IllegalArgumentException(
-        "InstructionTestRunner extract-model: no 'model:' field in frontmatter of " +
-        skillPath + ". Every skill must declare a model.");
-    }
+      model = lookupModelInSkillModels(skillPath);
     return ModelIdResolver.resolve(claudeCodeVersion, model);
+  }
+
+  /**
+   * Looks up the model for a skill in {@code skill-models.md}.
+   * <p>
+   * Derives the skill name from the file path (e.g., {@code .../skills/foo/SKILL.md} → {@code cat:foo}),
+   * then scans {@code ${pluginRoot}/rules/skill-models.md} for a matching entry. Returns {@code "sonnet"}
+   * if the skill is listed there, {@code "haiku"} otherwise.
+   *
+   * @param skillPath the path to the skill file (SKILL.md or first-use.md)
+   * @return the model short name ({@code "sonnet"} or {@code "haiku"})
+   * @throws IOException if skill-models.md cannot be read
+   */
+  private String lookupModelInSkillModels(Path skillPath) throws IOException
+  {
+    // Derive skill directory name from path: .../skills/<name>/SKILL.md or .../skills/<name>/first-use.md
+    Path skillDir = skillPath.getParent();
+    if (skillDir == null)
+      return "haiku";
+    String skillName = "cat:" + skillDir.getFileName().toString();
+
+    Path skillModelsPath = scope.getPluginRoot().resolve("rules/skill-models.md");
+    if (Files.notExists(skillModelsPath))
+      return "haiku";
+
+    // Scan for the skill name in the skill-models.md list entries (e.g., "- `cat:foo`")
+    for (String line : Files.readAllLines(skillModelsPath, StandardCharsets.UTF_8))
+    {
+      String trimmed = line.trim();
+      if (trimmed.equals("- `" + skillName + "`"))
+        return "sonnet";
+    }
+    return "haiku";
+  }
+
+  /**
+   * Implements the {@code extract-test-dir} command.
+   * <p>
+   * Computes the test directory path for a given instruction file path. Maps plugin-relative paths by
+   * stripping the {@code plugin/} prefix, then prefixes with {@code {projectDir}/plugin/tests/}.
+   * <p>
+   * Examples:
+   * <ul>
+   * <li>{@code plugin/skills/foo/first-use.md} → {@code {projectDir}/plugin/tests/skills/foo/first-use}</li>
+   * <li>{@code CLAUDE.md} → {@code {projectDir}/plugin/tests/CLAUDE}</li>
+   * <li>{@code .claude/rules/common.md} → {@code {projectDir}/plugin/tests/.claude/rules/common}</li>
+   * </ul>
+   *
+   * @param args {@code [instruction-text-path, project-dir]} where {@code instruction-text-path} is
+   *             worktree-relative
+   * @return the absolute test directory path (no trailing slash)
+   * @throws IllegalArgumentException if the wrong number of arguments is supplied
+   */
+  public String extractTestDir(String[] args)
+  {
+    if (args.length != 2)
+      throw new IllegalArgumentException(
+        "InstructionTestRunner extract-test-dir: expected 2 arguments <instruction-path> <project-dir>, got " +
+        args.length + ".\nUsage: instruction-test-runner extract-test-dir " +
+        "<instruction-text-path> <project-dir>");
+    String instructionPath = args[0];
+    String projectDir = args[1];
+
+    // Strip file extension
+    int dotIndex = instructionPath.lastIndexOf('.');
+    String noExtension;
+    if (dotIndex > 0 && dotIndex > instructionPath.lastIndexOf('/'))
+      noExtension = instructionPath.substring(0, dotIndex);
+    else
+      noExtension = instructionPath;
+
+    // Strip "plugin/" prefix for plugin files so tests mirror the plugin/ structure
+    String testRelative;
+    if (noExtension.startsWith("plugin/"))
+      testRelative = noExtension.substring("plugin/".length());
+    else
+      testRelative = noExtension;
+
+    return projectDir + "/plugin/tests/" + testRelative;
   }
 
   /**
    * Implements the {@code detect-changes} command.
    * <p>
-   * Compares the old skill (at the given git SHA) against the current skill file and identifies
-   * which test cases need re-running based on changed line ranges.
+   * Compares the old skill (at the given git SHA) against the current skill file and its transitive
+   * dependencies, and identifies which test cases need re-running based on changed line ranges.
+   * <p>
+   * Transitive dependencies are all {@code .md} files co-located in the same directory as the skill file.
+   * SKILL.md loads {@code first-use.md} and other companion files via preprocessor directives; changing
+   * any of these is semantically equivalent to changing the skill itself.
    *
    * @param args {@code [old_skill_sha, new_skill_path, test_dir_path]}
    * @return a JSON object describing changed ranges and test case partitioning
@@ -309,7 +389,14 @@ public final class InstructionTestRunner
 
         List<int[]> changedRanges = diffBodies(oldBodyFile, newBodyFile);
         boolean bodyChanged = !changedRanges.isEmpty();
-        boolean skillChanged = frontmatterChanged || bodyChanged;
+
+        // Check transitive dependencies: all sibling .md files in the same directory.
+        // SKILL.md loads companion files (e.g., first-use.md) via preprocessor directives;
+        // a change in any companion file is semantically equivalent to a skill change.
+        boolean transitiveDependencyChanged =
+          hasTransitiveDependencyChanged(repoRoot, oldSha, relPath);
+
+        boolean skillChanged = frontmatterChanged || bodyChanged || transitiveDependencyChanged;
 
         // Collect all test case IDs
         List<String> allTestCaseIds = readAllTestCaseIds(testDirPath);
@@ -343,9 +430,11 @@ public final class InstructionTestRunner
           result.put("semantic_units_path_hint",
             "Run: skill-test-runner extract-units " + args[1]);
         }
-        else if (frontmatterChanged)
+        else if (frontmatterChanged || transitiveDependencyChanged)
         {
-          // Frontmatter changed: all test cases must re-run
+          // Frontmatter or transitive dependency changed: all test cases must re-run.
+          // Companion file changes (e.g., first-use.md) cannot be attributed to specific test cases,
+          // so the same full-rerun rule applies as for frontmatter changes.
           result.set("rerun_test_case_ids", allIdsArray.deepCopy());
           result.set("carryforward_test_case_ids", mapper.createArrayNode());
           result.put("semantic_units_path_hint",
@@ -377,6 +466,45 @@ public final class InstructionTestRunner
       Files.deleteIfExists(oldTempFile);
       Files.deleteIfExists(newTempFile);
     }
+  }
+
+  /**
+   * Returns {@code true} if any {@code .md} file in the same directory as the skill file, other
+   * than the skill file itself, changed between the old git SHA and the current working tree.
+   * <p>
+   * SKILL.md loads companion files (e.g., {@code first-use.md}) via preprocessor directives. Any
+   * change to a companion file is semantically equivalent to a change in the skill itself, because
+   * the agent reads the fully-expanded skill content at test time.
+   *
+   * @param repoRoot     the repository root directory
+   * @param oldSha       the git commit SHA representing the old skill state
+   * @param skillRelPath the repo-relative path of the skill file (forward-slash separated)
+   * @return {@code true} if any companion {@code .md} file changed since {@code oldSha}
+   * @throws IOException if git commands fail
+   */
+  private boolean hasTransitiveDependencyChanged(Path repoRoot, String oldSha,
+    String skillRelPath) throws IOException
+  {
+    // Determine the repo-relative directory containing the skill file
+    String skillDirRelPath;
+    if (skillRelPath.contains("/"))
+      skillDirRelPath = skillRelPath.substring(0, skillRelPath.lastIndexOf('/'));
+    else
+      skillDirRelPath = ".";
+
+    // List all .md files in the skill directory that changed between oldSha and the working tree
+    ProcessRunner.Result diffResult = ProcessRunner.run(repoRoot,
+      "git", "diff", "--name-only", oldSha, "--", skillDirRelPath);
+    if (diffResult.exitCode() != 0 || diffResult.stdout().isBlank())
+      return false;
+
+    for (String changedFile : diffResult.stdout().split("\n"))
+    {
+      String trimmed = changedFile.trim();
+      if (trimmed.endsWith(".md") && !trimmed.equals(skillRelPath))
+        return true;
+    }
+    return false;
   }
 
   /**
@@ -1456,14 +1584,14 @@ public final class InstructionTestRunner
   /**
    * Executes the skill test runner logic with a caller-provided output stream.
    *
-   * @param scope the JVM scope
+   * @param scope the plugin scope
    * @param args  command line arguments
    * @param out   the output stream to write to
    * @throws NullPointerException     if {@code scope}, {@code args} or {@code out} are null
    * @throws IllegalArgumentException if arguments are invalid
    * @throws IOException              if an I/O error occurs
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  public static void run(ClaudePluginScope scope, String[] args, PrintStream out) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();

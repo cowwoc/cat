@@ -303,6 +303,51 @@ public final class ValidateSkillTestFormatTest
   }
 
   /**
+   * Verifies that {@code ## Turn} and {@code ## Assertions} headings inside fenced code blocks are
+   * ignored during section validation, so they do not cause false-positive contiguity violations.
+   */
+  @Test
+  public void headingsInsideCodeBlocksAreIgnored() throws IOException
+  {
+    try (JvmScope scope = new TestClaudeTool())
+    {
+      ValidateSkillTestFormat handler = new ValidateSkillTestFormat();
+      JsonMapper mapper = scope.getJsonMapper();
+      ObjectNode input = mapper.createObjectNode();
+      input.put("file_path", "plugin/tests/skills/instruction-builder-agent/first-use/test.md");
+      input.put("content", """
+        ---
+        category: consequence
+        ---
+
+        ## Turn 1
+
+        The test directory contains a test case file TC1.md with content:
+
+        ```
+        ## Turn 1
+
+        Ask the agent to refactor.
+
+        ## Assertions
+
+        1. Agent must preserve the API
+        ```
+
+        Describe what happens after stripping assertions.
+
+        ## Assertions
+
+        1. Agent confirms assertions are stripped.
+        """);
+
+      FileWriteHandler.Result result = handler.check(input, "test-session");
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+  }
+
+  /**
    * Verifies that a test case file with multiple contiguous turn sections is accepted.
    */
   @Test

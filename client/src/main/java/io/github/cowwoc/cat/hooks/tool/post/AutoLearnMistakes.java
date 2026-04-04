@@ -14,11 +14,13 @@ import tools.jackson.databind.JsonNode;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -201,21 +203,39 @@ public final class AutoLearnMistakes implements PostToolHandler
 
     try
     {
-      List<String> lines = Files.readAllLines(convLog);
-      int currentCount = lines.size();
       int lastChecked = sessionIdToLineCount.getOrDefault(sessionId, 0);
+
+      // Stream the file line-by-line to avoid loading the entire (potentially multi-MB) session
+      // file into memory. Lines before lastChecked are counted but discarded. Lines after
+      // lastChecked are kept in a bounded deque of MAX_RECENT_LINES to bound peak memory.
+      Deque<String> buffer = new ArrayDeque<>(MAX_RECENT_LINES + 1);
+      int currentCount = 0;
+      try (BufferedReader reader = Files.newBufferedReader(convLog))
+      {
+        String line = reader.readLine();
+        while (line != null)
+        {
+          ++currentCount;
+          if (currentCount > lastChecked)
+          {
+            buffer.addLast(line);
+            if (buffer.size() > MAX_RECENT_LINES)
+              buffer.removeFirst();
+          }
+          line = reader.readLine();
+        }
+      }
 
       if (currentCount <= lastChecked)
         return "";
 
       sessionIdToLineCount.put(sessionId, currentCount);
-      // Only examine the most recent MAX_RECENT_LINES new lines to bound memory usage
-      int startIndex = Math.max(lastChecked, currentCount - MAX_RECENT_LINES);
       StringBuilder result = new StringBuilder();
       int count = 0;
-      for (int i = startIndex; i < currentCount && count < 5; ++i)
+      for (String line : buffer)
       {
-        String line = lines.get(i);
+        if (count >= MAX_RECENT_LINES)
+          break;
         if (line.contains("\"role\":\"assistant\""))
         {
           if (!result.isEmpty())

@@ -127,7 +127,8 @@ public final class PreWriteHook implements HookHandler
 
     JsonNode toolInput = scope.getToolInput();
     String sessionId = scope.getSessionId();
-    requireThat(sessionId, "sessionId").isNotBlank();
+    String catAgentId = scope.getCatAgentId(sessionId);
+    requireThat(catAgentId, "catAgentId").isNotBlank();
     List<String> warnings = new ArrayList<>();
 
     StringBuilder additionalContextAccumulator = new StringBuilder();
@@ -135,7 +136,7 @@ public final class PreWriteHook implements HookHandler
     {
       try
       {
-        FileWriteHandler.Result result = handler.check(toolInput, sessionId);
+        FileWriteHandler.Result result = handler.check(toolInput, catAgentId);
         if (result.blocked())
         {
           String jsonOutput;

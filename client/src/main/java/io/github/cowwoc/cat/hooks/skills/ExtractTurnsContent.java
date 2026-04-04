@@ -51,16 +51,19 @@ public final class ExtractTurnsContent
     requireThat(lines, "lines").isNotNull();
     List<String> turns = new ArrayList<>();
     StringJoiner currentTurn = null;
+    boolean insideCodeBlock = false;
     for (String line : lines)
     {
-      if (line.startsWith("## Turn "))
+      if (line.startsWith("```"))
+        insideCodeBlock = !insideCodeBlock;
+      if (!insideCodeBlock && line.startsWith("## Turn "))
       {
         if (currentTurn != null)
           turns.add(currentTurn.toString());
         currentTurn = new StringJoiner("\n");
         continue;
       }
-      if (currentTurn != null && line.equals("## Assertions"))
+      if (!insideCodeBlock && currentTurn != null && line.equals("## Assertions"))
       {
         turns.add(currentTurn.toString());
         currentTurn = null;

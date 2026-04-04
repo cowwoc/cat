@@ -14,13 +14,14 @@ import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner.CriterionGrade;
 import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner.CriterionMetadata;
 import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner.EvaluationResult;
 import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner.GradingReport;
-import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner.ParsedOutput;
+import io.github.cowwoc.cat.hooks.skills.ClaudeRunner;
+import io.github.cowwoc.cat.hooks.skills.ClaudeRunner.ParsedOutput;
 import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner.PostHocAnalysis;
 import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner.RubricScore;
 import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner.Severity;
-import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner.TestMessage;
-import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner.TurnOutput;
+import io.github.cowwoc.cat.hooks.skills.ClaudeRunner.TurnOutput;
 import io.github.cowwoc.cat.hooks.skills.PrimingMessage;
+import io.github.cowwoc.cat.hooks.SharedSecrets;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -46,11 +47,11 @@ public final class EmpiricalTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
       JsonMapper mapper = scope.getJsonMapper();
 
-      String result = runner.buildInput(new ArrayList<>(),
-        List.of(new TestMessage("hello world", Map.of())), List.of());
+      String result = launcher.buildInput(new ArrayList<>(),
+        List.of("hello world"), List.of());
 
       // Should be a single line (one user message)
       String[] lines = result.split("\n");
@@ -80,15 +81,15 @@ public final class EmpiricalTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
       JsonMapper mapper = scope.getJsonMapper();
 
       List<PrimingMessage> priming = List.of(
         new PrimingMessage.UserMessage("first message"),
         new PrimingMessage.UserMessage("second message"));
 
-      String result = runner.buildInput(priming,
-        List.of(new TestMessage("test prompt", Map.of())), List.of());
+      String result = launcher.buildInput(priming,
+        List.of("test prompt"), List.of());
 
       String[] lines = result.split("\n");
       requireThat(lines.length, "lineCount").isEqualTo(3);
@@ -124,14 +125,14 @@ public final class EmpiricalTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
       JsonMapper mapper = scope.getJsonMapper();
 
       List<PrimingMessage> priming = List.of(
         new PrimingMessage.ToolUse("Bash", Map.of("command", "ls"), "file1.txt\nfile2.txt"));
 
-      String result = runner.buildInput(priming,
-        List.of(new TestMessage("test prompt", Map.of())), List.of());
+      String result = launcher.buildInput(priming,
+        List.of("test prompt"), List.of());
 
       // tool_use generates 2 messages (assistant + user tool_result), plus test message = 3 lines
       String[] lines = result.split("\n");
@@ -179,15 +180,15 @@ public final class EmpiricalTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
       JsonMapper mapper = scope.getJsonMapper();
 
       List<PrimingMessage> priming = List.of(
         new PrimingMessage.UserMessage("user prompt"),
         new PrimingMessage.ToolUse("Read", Map.of("file_path", "/tmp/test.txt"), "contents"));
 
-      String result = runner.buildInput(priming,
-        List.of(new TestMessage("final prompt", Map.of())), List.of());
+      String result = launcher.buildInput(priming,
+        List.of("final prompt"), List.of());
 
       // 1 user message + 2 tool messages + 1 test message = 4 lines
       String[] lines = result.split("\n");
@@ -322,7 +323,7 @@ public final class EmpiricalTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
       JsonMapper mapper = scope.getJsonMapper();
 
       List<PrimingMessage> priming = List.of(
@@ -330,8 +331,8 @@ public final class EmpiricalTestRunnerTest
         new PrimingMessage.ToolUse("Bash", Map.of("command", "echo 'hello\nworld'"),
           "hello\nworld"));
 
-      String result = runner.buildInput(priming,
-        List.of(new TestMessage("test", Map.of())), List.of());
+      String result = launcher.buildInput(priming,
+        List.of("test"), List.of());
 
       // Each line should be parseable as JSON individually
       for (String line : result.split("\n"))
@@ -355,13 +356,13 @@ public final class EmpiricalTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
 
       String output = """
         {"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Hello world"}]}}
         """;
 
-      ParsedOutput parsed = runner.parseOutput(output);
+      ParsedOutput parsed = launcher.parseOutput(output);
       requireThat(parsed.texts().size(), "textCount").isEqualTo(1);
       requireThat(parsed.texts().get(0), "text").isEqualTo("Hello world");
       requireThat(parsed.toolUses().isEmpty(), "noToolUses").isTrue();
@@ -381,16 +382,46 @@ public final class EmpiricalTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
 
       String output = "{\"type\":\"assistant\",\"message\":{\"role\":\"assistant\"," +
         "\"content\":[{\"type\":\"tool_use\",\"name\":\"Bash\"," +
         "\"id\":\"123\",\"input\":{\"command\":\"ls\"}}]}}\n";
 
-      ParsedOutput parsed = runner.parseOutput(output);
+      ParsedOutput parsed = launcher.parseOutput(output);
       requireThat(parsed.toolUses().size(), "toolUseCount").isEqualTo(1);
       requireThat(parsed.toolUses().get(0), "toolName").isEqualTo("Bash");
       requireThat(parsed.texts().isEmpty(), "noTexts").isTrue();
+      requireThat(parsed.writeContents().isEmpty(), "noWriteContents").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that parseOutput extracts Write tool content into writeContents.
+   */
+  @Test
+  public void parseOutputExtractsWriteToolContent() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
+
+      String output = "{\"type\":\"assistant\",\"message\":{\"role\":\"assistant\"," +
+        "\"content\":[{\"type\":\"tool_use\",\"name\":\"Write\"," +
+        "\"id\":\"456\",\"input\":{\"file_path\":\"report.md\"," +
+        "\"content\":\"Agents may skip tee when the output is explicitly discarded.\"}}]}}\n";
+
+      ParsedOutput parsed = launcher.parseOutput(output);
+      requireThat(parsed.toolUses().size(), "toolUseCount").isEqualTo(1);
+      requireThat(parsed.toolUses().get(0), "toolName").isEqualTo("Write");
+      requireThat(parsed.writeContents().size(), "writeContentCount").isEqualTo(1);
+      requireThat(parsed.writeContents().get(0), "writeContent").isEqualTo(
+        "Agents may skip tee when the output is explicitly discarded.");
     }
     finally
     {
@@ -407,13 +438,13 @@ public final class EmpiricalTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
 
       String output = """
         {"type":"result","result":"Final answer"}
         """;
 
-      ParsedOutput parsed = runner.parseOutput(output);
+      ParsedOutput parsed = launcher.parseOutput(output);
       requireThat(parsed.texts().size(), "textCount").isEqualTo(1);
       requireThat(parsed.texts().get(0), "text").isEqualTo("Final answer");
     }
@@ -424,25 +455,24 @@ public final class EmpiricalTestRunnerTest
   }
 
   /**
-   * Verifies that parseOutput gracefully handles malformed JSON lines.
+   * Verifies that parseOutput throws on malformed JSON lines (fail-fast behavior).
    */
-  @Test
-  public void parseOutputHandlesMalformedJson() throws IOException
+  @Test(expectedExceptions = RuntimeException.class)
+  public void parseOutputThrowsOnMalformedJson() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
 
+      // The pre-filter skips non-assistant/result lines to avoid parsing large user-echo events.
+      // Malformed JSON must appear in an assistant or result line to trigger the fail-fast check.
       String output = """
-        not valid json
+        {"type":"assistant", not valid json
         {"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"valid"}]}}
-        also not json {{{
         """;
 
-      ParsedOutput parsed = runner.parseOutput(output);
-      requireThat(parsed.texts().size(), "textCount").isEqualTo(1);
-      requireThat(parsed.texts().get(0), "text").isEqualTo("valid");
+      launcher.parseOutput(output);
     }
     finally
     {
@@ -459,13 +489,13 @@ public final class EmpiricalTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
 
       String output = """
         {"message":{"role":"assistant","content":[{"type":"text","text":"no envelope type"}]}}
         """;
 
-      ParsedOutput parsed = runner.parseOutput(output);
+      ParsedOutput parsed = launcher.parseOutput(output);
       requireThat(parsed.texts().isEmpty(), "noTexts").isTrue();
     }
     finally
@@ -483,13 +513,13 @@ public final class EmpiricalTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
 
       String output = """
         {"type":"assistant","message":{"role":"assistant","content":[{"text":"no block type"}]}}
         """;
 
-      ParsedOutput parsed = runner.parseOutput(output);
+      ParsedOutput parsed = launcher.parseOutput(output);
       // Block without type should be skipped
       requireThat(parsed.texts().isEmpty(), "noTexts").isTrue();
       requireThat(parsed.toolUses().isEmpty(), "noToolUses").isTrue();
@@ -509,13 +539,13 @@ public final class EmpiricalTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
 
       String output = """
         {"type":"assistant","message":{"role":"assistant","content":[{"type":123,"text":"numeric type"}]}}
         """;
 
-      ParsedOutput parsed = runner.parseOutput(output);
+      ParsedOutput parsed = launcher.parseOutput(output);
       // Non-string type should not match "text" or "tool_use"
       requireThat(parsed.texts().isEmpty(), "noTexts").isTrue();
     }
@@ -534,9 +564,9 @@ public final class EmpiricalTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
 
-      ParsedOutput parsed = runner.parseOutput("");
+      ParsedOutput parsed = launcher.parseOutput("");
       requireThat(parsed.texts().isEmpty(), "noTexts").isTrue();
       requireThat(parsed.toolUses().isEmpty(), "noToolUses").isTrue();
     }
@@ -561,7 +591,7 @@ public final class EmpiricalTestRunnerTest
       List<String> toolUses = new ArrayList<>();
       Map<String, Object> criteria = Map.of("must_contain", List.of("hello world"));
 
-      EvaluationResult result = runner.evaluateOutput(texts, toolUses, criteria);
+      EvaluationResult result = runner.evaluateOutput(texts, toolUses, List.of(), criteria);
       requireThat(result.pass(), "pass").isTrue();
       requireThat(result.checks().get("contains:hello world"), "check").isTrue();
     }
@@ -586,7 +616,7 @@ public final class EmpiricalTestRunnerTest
       List<String> toolUses = new ArrayList<>();
       Map<String, Object> criteria = Map.of("must_contain", List.of("hello"));
 
-      EvaluationResult result = runner.evaluateOutput(texts, toolUses, criteria);
+      EvaluationResult result = runner.evaluateOutput(texts, toolUses, List.of(), criteria);
       requireThat(result.pass(), "pass").isFalse();
       requireThat(result.checks().get("contains:hello"), "check").isFalse();
     }
@@ -611,7 +641,7 @@ public final class EmpiricalTestRunnerTest
       List<String> toolUses = new ArrayList<>();
       Map<String, Object> criteria = Map.of("must_not_contain", List.of("error"));
 
-      EvaluationResult result = runner.evaluateOutput(texts, toolUses, criteria);
+      EvaluationResult result = runner.evaluateOutput(texts, toolUses, List.of(), criteria);
       requireThat(result.pass(), "pass").isTrue();
       requireThat(result.checks().get("not_contains:error"), "check").isTrue();
     }
@@ -636,7 +666,7 @@ public final class EmpiricalTestRunnerTest
       List<String> toolUses = new ArrayList<>();
       Map<String, Object> criteria = Map.of("must_not_contain", List.of("error"));
 
-      EvaluationResult result = runner.evaluateOutput(texts, toolUses, criteria);
+      EvaluationResult result = runner.evaluateOutput(texts, toolUses, List.of(), criteria);
       requireThat(result.pass(), "pass").isFalse();
     }
     finally
@@ -660,7 +690,7 @@ public final class EmpiricalTestRunnerTest
       List<String> toolUses = List.of("Bash", "Read");
       Map<String, Object> criteria = Map.of("must_use_tools", List.of("Bash"));
 
-      EvaluationResult result = runner.evaluateOutput(texts, toolUses, criteria);
+      EvaluationResult result = runner.evaluateOutput(texts, toolUses, List.of(), criteria);
       requireThat(result.pass(), "pass").isTrue();
       requireThat(result.checks().get("uses_tool:Bash"), "check").isTrue();
     }
@@ -685,7 +715,7 @@ public final class EmpiricalTestRunnerTest
       List<String> toolUses = List.of("Read");
       Map<String, Object> criteria = Map.of("must_use_tools", List.of("Bash"));
 
-      EvaluationResult result = runner.evaluateOutput(texts, toolUses, criteria);
+      EvaluationResult result = runner.evaluateOutput(texts, toolUses, List.of(), criteria);
       requireThat(result.pass(), "pass").isFalse();
     }
     finally
@@ -709,7 +739,7 @@ public final class EmpiricalTestRunnerTest
       List<String> toolUses = List.of("Read");
       Map<String, Object> criteria = Map.of("must_not_use_tools", List.of("Bash"));
 
-      EvaluationResult result = runner.evaluateOutput(texts, toolUses, criteria);
+      EvaluationResult result = runner.evaluateOutput(texts, toolUses, List.of(), criteria);
       requireThat(result.pass(), "pass").isTrue();
       requireThat(result.checks().get("not_uses_tool:Bash"), "check").isTrue();
     }
@@ -734,7 +764,7 @@ public final class EmpiricalTestRunnerTest
       List<String> toolUses = List.of("Bash");
       Map<String, Object> criteria = Map.of("must_not_use_tools", List.of("Bash"));
 
-      EvaluationResult result = runner.evaluateOutput(texts, toolUses, criteria);
+      EvaluationResult result = runner.evaluateOutput(texts, toolUses, List.of(), criteria);
       requireThat(result.pass(), "pass").isFalse();
     }
     finally
@@ -758,7 +788,7 @@ public final class EmpiricalTestRunnerTest
       List<String> toolUses = List.of("Bash");
       Map<String, Object> criteria = new HashMap<>();
 
-      EvaluationResult result = runner.evaluateOutput(texts, toolUses, criteria);
+      EvaluationResult result = runner.evaluateOutput(texts, toolUses, List.of(), criteria);
       requireThat(result.pass(), "pass").isTrue();
       requireThat(result.checks().isEmpty(), "noChecks").isTrue();
     }
@@ -784,7 +814,7 @@ public final class EmpiricalTestRunnerTest
       List<String> toolUses = new ArrayList<>();
       Map<String, Object> criteria = Map.of("must_contain", List.of(longTerm));
 
-      EvaluationResult result = runner.evaluateOutput(texts, toolUses, criteria);
+      EvaluationResult result = runner.evaluateOutput(texts, toolUses, List.of(), criteria);
       requireThat(result.pass(), "pass").isTrue();
 
       String expectedKey = "contains:" + longTerm;
@@ -806,7 +836,7 @@ public final class EmpiricalTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
       JsonMapper mapper = scope.getJsonMapper();
 
       Map<String, Object> complexInput = new HashMap<>();
@@ -817,8 +847,8 @@ public final class EmpiricalTestRunnerTest
       List<PrimingMessage> priming = List.of(
         new PrimingMessage.ToolUse("Bash", complexInput, "abc123 Initial commit"));
 
-      String result = runner.buildInput(priming,
-        List.of(new TestMessage("test", Map.of())), List.of());
+      String result = launcher.buildInput(priming,
+        List.of("test"), List.of());
 
       String[] lines = result.split("\n");
       JsonNode assistantMsg = mapper.readTree(lines[0]);
@@ -844,13 +874,13 @@ public final class EmpiricalTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
 
       String output = """
         {"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"123","input":{}}]}}
         """;
 
-      ParsedOutput parsed = runner.parseOutput(output);
+      ParsedOutput parsed = launcher.parseOutput(output);
       // Should still extract a tool use, with empty name
       requireThat(parsed.toolUses().size(), "toolUseCount").isEqualTo(1);
       requireThat(parsed.toolUses().get(0), "toolName").isEqualTo("");
@@ -910,7 +940,7 @@ public final class EmpiricalTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
       JsonMapper mapper = scope.getJsonMapper();
 
       List<PrimingMessage> priming = List.of(
@@ -918,8 +948,8 @@ public final class EmpiricalTestRunnerTest
         new PrimingMessage.ToolUse("Read", Map.of("file_path", "/tmp/test"), "output2"),
         new PrimingMessage.ToolUse("Write", Map.of("file_path", "/tmp/out"), "output3"));
 
-      String result = runner.buildInput(priming,
-        List.of(new TestMessage("test", Map.of())), List.of());
+      String result = launcher.buildInput(priming,
+        List.of("test"), List.of());
 
       String[] lines = result.split("\n");
       // 3 tool uses = 6 messages (assistant + user for each) + 1 test message = 7 lines
@@ -979,7 +1009,7 @@ public final class EmpiricalTestRunnerTest
       List<String> toolUses = new ArrayList<>();
       Map<String, Object> criteria = Map.of("must_contain", List.of("hello", "missing"));
 
-      EvaluationResult result = runner.evaluateOutput(texts, toolUses, criteria);
+      EvaluationResult result = runner.evaluateOutput(texts, toolUses, List.of(), criteria);
       requireThat(result.pass(), "pass").isFalse();
       requireThat(result.checks().get("contains:hello"), "helloCheck").isTrue();
       requireThat(result.checks().get("contains:missing"), "missingCheck").isFalse();
@@ -999,7 +1029,7 @@ public final class EmpiricalTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
 
       String output = """
         {"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"thinking"}]}}
@@ -1008,7 +1038,7 @@ public final class EmpiricalTestRunnerTest
         {"type":"result","result":"done"}
         """;
 
-      ParsedOutput parsed = runner.parseOutput(output);
+      ParsedOutput parsed = launcher.parseOutput(output);
       requireThat(parsed.texts().size(), "textCount").isEqualTo(2);
       requireThat(parsed.texts().get(0), "firstText").isEqualTo("thinking");
       requireThat(parsed.texts().get(1), "secondText").isEqualTo("done");
@@ -1041,8 +1071,8 @@ public final class EmpiricalTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
-      runner.buildInput(null, List.of(new TestMessage("prompt", Map.of())), List.of());
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
+      launcher.buildInput(null, List.of("prompt"), List.of());
     }
     finally
     {
@@ -1051,17 +1081,17 @@ public final class EmpiricalTestRunnerTest
   }
 
   /**
-   * Verifies that buildInput rejects null messages list.
+   * Verifies that buildInput rejects null prompts list.
    */
   @Test(expectedExceptions = NullPointerException.class,
-    expectedExceptionsMessageRegExp = ".*messages.*")
+    expectedExceptionsMessageRegExp = ".*prompts.*")
   public void buildInputRejectsNullMessages() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
-      runner.buildInput(List.of(), null, List.of());
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
+      launcher.buildInput(List.of(), null, List.of());
     }
     finally
     {
@@ -1079,8 +1109,8 @@ public final class EmpiricalTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
-      runner.parseOutput(null);
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
+      launcher.parseOutput((String) null);
     }
     finally
     {
@@ -1099,7 +1129,7 @@ public final class EmpiricalTestRunnerTest
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
-      runner.evaluateOutput(null, List.of(), Map.of());
+      runner.evaluateOutput(null, List.of(), List.of(), Map.of());
     }
     finally
     {
@@ -1118,7 +1148,7 @@ public final class EmpiricalTestRunnerTest
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
-      runner.evaluateOutput(List.of(), null, Map.of());
+      runner.evaluateOutput(List.of(), null, List.of(), Map.of());
     }
     finally
     {
@@ -1137,7 +1167,103 @@ public final class EmpiricalTestRunnerTest
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
-      runner.evaluateOutput(List.of(), List.of(), null);
+      runner.evaluateOutput(List.of(), List.of(), List.of(), null);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that evaluateOutput rejects null writeContents.
+   */
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*writeContents.*")
+  public void evaluateOutputRejectsNullWriteContents() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      runner.evaluateOutput(List.of(), List.of(), null, Map.of());
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that evaluateOutput with write_must_contain passes when the term appears in Write content.
+   */
+  @Test
+  public void evaluateOutputWriteMustContainPasses() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+
+      List<String> texts = List.of("File written.");
+      List<String> toolUses = List.of("Write");
+      List<String> writeContents = List.of("Agents may skip tee when the output is discarded.");
+      Map<String, Object> criteria = Map.of("write_must_contain", List.of("skip tee"));
+
+      EvaluationResult result = runner.evaluateOutput(texts, toolUses, writeContents, criteria);
+      requireThat(result.pass(), "pass").isTrue();
+      requireThat(result.checks().get("write_contains:skip tee"), "check").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that evaluateOutput with write_must_contain fails when the term is absent from Write content.
+   */
+  @Test
+  public void evaluateOutputWriteMustContainFailsWhenAbsent() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+
+      List<String> texts = List.of("File written.");
+      List<String> toolUses = List.of("Write");
+      List<String> writeContents = List.of("Some other content.");
+      Map<String, Object> criteria = Map.of("write_must_contain", List.of("skip tee"));
+
+      EvaluationResult result = runner.evaluateOutput(texts, toolUses, writeContents, criteria);
+      requireThat(result.pass(), "pass").isFalse();
+      requireThat(result.checks().get("write_contains:skip tee"), "check").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that evaluateOutput with write_must_contain is case-insensitive.
+   */
+  @Test
+  public void evaluateOutputWriteMustContainIsCaseInsensitive() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+
+      List<String> texts = List.of();
+      List<String> toolUses = List.of("Write");
+      List<String> writeContents = List.of("Agents MAY SKIP TEE when the output is discarded.");
+      Map<String, Object> criteria = Map.of("write_must_contain", List.of("skip tee"));
+
+      EvaluationResult result = runner.evaluateOutput(texts, toolUses, writeContents, criteria);
+      requireThat(result.pass(), "pass").isTrue();
     }
     finally
     {
@@ -1267,13 +1393,13 @@ public final class EmpiricalTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
       JsonMapper mapper = scope.getJsonMapper();
 
       List<String> reminders = List.of("You are a helpful assistant.", "Always be concise.");
 
-      String result = runner.buildInput(new ArrayList<>(),
-        List.of(new TestMessage("hello world", Map.of())), reminders);
+      String result = launcher.buildInput(new ArrayList<>(),
+        List.of("hello world"), reminders);
 
       // Should be a single line (one user message with reminders appended)
       String[] lines = result.split("\n");
@@ -1301,15 +1427,15 @@ public final class EmpiricalTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
       JsonMapper mapper = scope.getJsonMapper();
 
       List<PrimingMessage> priming = List.of(
         new PrimingMessage.UserMessage("first message"));
       List<String> reminders = List.of("Reminder content here.");
 
-      String result = runner.buildInput(priming,
-        List.of(new TestMessage("test prompt", Map.of())), reminders);
+      String result = launcher.buildInput(priming,
+        List.of("test prompt"), reminders);
 
       String[] lines = result.split("\n");
       requireThat(lines.length, "lineCount").isEqualTo(2);
@@ -1340,9 +1466,9 @@ public final class EmpiricalTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
 
-      List<String> command = runner.buildCommand("haiku", "You are a cat expert.");
+      List<String> command = launcher.buildCommand("haiku", "You are a cat expert.");
 
       requireThat(command, "command").contains("claude").contains("--append-system-prompt");
       // Verify the system prompt value follows the flag
@@ -1366,9 +1492,9 @@ public final class EmpiricalTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
 
-      List<String> command = runner.buildCommand("haiku", "");
+      List<String> command = launcher.buildCommand("haiku", "");
 
       requireThat(command, "command").contains("claude");
       requireThat(command.contains("--append-system-prompt"), "noSystemPromptFlag").isFalse();
@@ -1389,11 +1515,11 @@ public final class EmpiricalTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
       JsonMapper mapper = scope.getJsonMapper();
 
-      String result = runner.buildInput(new ArrayList<>(),
-        List.of(new TestMessage("hello world", Map.of())), List.of());
+      String result = launcher.buildInput(new ArrayList<>(),
+        List.of("hello world"), List.of());
 
       String[] lines = result.split("\n");
       requireThat(lines.length, "lineCount").isEqualTo(1);
@@ -1459,7 +1585,7 @@ public final class EmpiricalTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
 
       String turn1Json = "{\"type\":\"assistant\",\"message\":{\"role\":\"assistant\"," +
         "\"content\":[{\"type\":\"text\",\"text\":\"Turn 1 text\"}]}}";
@@ -1469,7 +1595,7 @@ public final class EmpiricalTestRunnerTest
       String resultJson = "{\"type\":\"result\",\"result\":\"Final result\"}";
       String output = turn1Json + "\n" + turn2Json + "\n" + resultJson + "\n";
 
-      ParsedOutput parsed = runner.parseOutput(output);
+      ParsedOutput parsed = launcher.parseOutput(output);
 
       // Flat lists should contain all items
       requireThat(parsed.texts().size(), "textCount").isEqualTo(3);
@@ -1506,15 +1632,12 @@ public final class EmpiricalTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
       JsonMapper mapper = scope.getJsonMapper();
 
-      List<TestMessage> messages = List.of(
-        new TestMessage("First prompt", Map.of("must_contain", List.of("a"))),
-        new TestMessage("Second prompt", Map.of("must_contain", List.of("b"))),
-        new TestMessage("Third prompt", Map.of("must_contain", List.of("c"))));
+      List<String> prompts = List.of("First prompt", "Second prompt", "Third prompt");
 
-      String result = runner.buildInput(List.of(), messages, List.of());
+      String result = launcher.buildInput(List.of(), prompts, List.of());
 
       String[] lines = result.split("\n");
       requireThat(lines.length, "lineCount").isEqualTo(3);
@@ -1547,15 +1670,13 @@ public final class EmpiricalTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
       JsonMapper mapper = scope.getJsonMapper();
 
-      List<TestMessage> messages = List.of(
-        new TestMessage("First prompt", Map.of()),
-        new TestMessage("Second prompt", Map.of()));
+      List<String> prompts = List.of("First prompt", "Second prompt");
       List<String> reminders = List.of("Always be helpful.");
 
-      String result = runner.buildInput(List.of(), messages, reminders);
+      String result = launcher.buildInput(List.of(), prompts, reminders);
 
       String[] lines = result.split("\n");
       requireThat(lines.length, "lineCount").isEqualTo(2);
@@ -2902,8 +3023,8 @@ public final class EmpiricalTestRunnerTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
-      runner.buildCommand("not-a-real-model-xyz", "system prompt");
+      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
+      launcher.buildCommand("not-a-real-model-xyz", "system prompt");
     }
     finally
     {
@@ -3090,6 +3211,65 @@ public final class EmpiricalTestRunnerTest
     finally
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a test worktree is created in a separate directory from the base repo.
+   */
+  @Test
+  public void testWorktreeIsIsolatedFromBaseRepo() throws IOException
+  {
+    Path mainRepo = TestUtils.createTempGitRepo("main");
+    try
+    {
+      Path testWorktree = SharedSecrets.createTestWorktree(mainRepo);
+      try
+      {
+        requireThat(Files.isDirectory(testWorktree), "isDirectory").isTrue();
+        requireThat(testWorktree.equals(mainRepo), "differentFromBaseRepo").isFalse();
+
+        // Files written to the test worktree must not appear in the base repo
+        Files.writeString(testWorktree.resolve("test-report.txt"), "test output");
+        requireThat(Files.exists(mainRepo.resolve("test-report.txt")), "notInBaseRepo").isFalse();
+      }
+      finally
+      {
+        SharedSecrets.removeTestWorktree(mainRepo, testWorktree);
+      }
+      requireThat(Files.exists(testWorktree), "worktreeRemoved").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+    }
+  }
+
+  /**
+   * Verifies that two concurrent test worktrees do not share files.
+   */
+  @Test
+  public void twoTestWorktreesAreIsolatedFromEachOther() throws IOException
+  {
+    Path mainRepo = TestUtils.createTempGitRepo("main");
+    try
+    {
+      Path worktree1 = SharedSecrets.createTestWorktree(mainRepo);
+      Path worktree2 = SharedSecrets.createTestWorktree(mainRepo);
+      try
+      {
+        Files.writeString(worktree1.resolve("report.txt"), "test 1 output");
+        requireThat(Files.exists(worktree2.resolve("report.txt")), "notInWorktree2").isFalse();
+      }
+      finally
+      {
+        SharedSecrets.removeTestWorktree(mainRepo, worktree1);
+        SharedSecrets.removeTestWorktree(mainRepo, worktree2);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(mainRepo);
     }
   }
 }

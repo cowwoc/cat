@@ -1,7 +1,10 @@
 # LLM-to-Java Extraction Policy
 
 **MANDATORY goal:** When adding new features to the plugin or updating existing features, extract as much
-logic as possible from LLM skills (Markdown instructions, referenced files) into Java code.
+logic as possible from LLM skills into Java code. This applies to **all files in the skill's transitive
+reference graph**, rooted at `SKILL.md` — including `first-use.md` (loaded by the `SKILL.md` preprocessor
+directive), any `.md` file listed in `execution_context`, any referenced concept or rules file, and any
+Bash scripts invoked from skill steps.
 
 The aim is to make processes deterministic wherever possible. Only leave in the LLM layer:
 - Contextual decision-making that genuinely requires reasoning

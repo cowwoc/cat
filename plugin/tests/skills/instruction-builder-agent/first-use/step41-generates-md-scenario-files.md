@@ -1,23 +1,17 @@
 ---
-category: requirement
+category: REQUIREMENT
 ---
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 ## Turn 1
 
-You are the instruction-builder-agent working in Step 4.1. The skill being tested is a fictional skill
-"log-analyzer-agent" with one semantic unit: unit_log_1 (REQUIREMENT: always summarize findings in a
-table). Generate the test case for unit_log_1 using the .md format. Show the complete file content you
-would write to plugin/tests/skills/log-analyzer-agent/first-use/unit_log_1.md.
+I have a skill called instruction-builder-agent with one key requirement: it must always summarize findings in
+a table. Create a test case file for this requirement and write it to
+plugin/tests/skills/instruction-builder-agent/first-use/step41-generates-scenario.md
 
 ## Assertions
 
-1. response must produce a file path like plugin/tests/skills/log-analyzer-agent/first-use/unit_log_1.md
-2. response must show markdown file content with YAML frontmatter block delimited by --- markers
-3. frontmatter must include a category field
-4. file must include a ## Turn 1 section containing a scenario prompt
-5. file must include a ## Assertions section with at least one numbered assertion
-7. response must NOT include any JSON structure with test_cases array or assertion_id fields
+1. The Skill tool was invoked
+2. A file was written at plugin/tests/skills/instruction-builder-agent/first-use/step41-generates-scenario.md
+   containing YAML frontmatter delimited by --- markers with a category field
+3. The written file includes a ## Turn 1 section containing a scenario prompt
+4. The written file includes a ## Assertions section with at least one numbered assertion
+5. The response does not include any JSON structure with test_cases array or assertion_id fields

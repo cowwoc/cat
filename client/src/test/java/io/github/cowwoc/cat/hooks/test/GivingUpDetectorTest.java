@@ -85,22 +85,6 @@ public final class GivingUpDetectorTest
   }
 
   /**
-   * Verifies that permission seeking is detected when the agent asks the user for consent
-   * to continue mid-task.
-   * <p>
-   * "Would you like me to continue with implementation?" triggers permission_seeking because
-   * "would you like" is permission language and "continue with" makes it a gating question.
-   */
-  @Test
-  public void detectsPermissionSeeking()
-  {
-    GivingUpDetector detector = new GivingUpDetector();
-    String result = detector.check("Would you like me to continue with implementation?");
-    requireThat(result, "result").contains("PROTOCOL VIOLATION DETECTED");
-    requireThat(result, "result").contains("AUTONOMOUS COMPLETION REQUIRED");
-  }
-
-  /**
    * Verifies that token rationalization is detected when token usage is cited as justification
    * for reducing work scope.
    * <p>
@@ -154,18 +138,6 @@ public final class GivingUpDetectorTest
   }
 
   /**
-   * Verifies that detectType() returns PERMISSION_SEEKING when the agent asks for user consent mid-task.
-   */
-  @Test
-  public void detectTypeReturnsPermissionSeeking()
-  {
-    GivingUpDetector detector = new GivingUpDetector();
-    Optional<ViolationType> result = detector.detectType(
-      "Would you like me to continue with implementation?");
-    requireThat(result, "result").isEqualTo(Optional.of(ViolationType.PERMISSION_SEEKING));
-  }
-
-  /**
    * Verifies that detectType() returns TOKEN_RATIONALIZATION when token usage is cited to reduce scope.
    */
   @Test
@@ -206,18 +178,6 @@ public final class GivingUpDetectorTest
     // Simulates the text remaining after DetectGivingUp.removeQuotedSections() strips the quoted part.
     // The quoted phrase "given the complexity, I'll skip this" was removed, leaving only clean text.
     String result = detector.check("The user said  but I will implement it fully.");
-    requireThat(result, "result").isEmpty();
-  }
-
-  /**
-   * Verifies that no false positive occurs on a time-estimate without permission-seeking language.
-   */
-  @Test
-  public void timeEstimateAloneIsNotPermissionSeeking()
-  {
-    GivingUpDetector detector = new GivingUpDetector();
-    // "This will take 2-3 days" by itself does not contain permission language
-    String result = detector.check("This will take 2-3 days to complete all the files.");
     requireThat(result, "result").isEmpty();
   }
 

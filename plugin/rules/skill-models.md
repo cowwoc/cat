@@ -18,7 +18,6 @@ preference:
 - `cat:github-trigger-workflow-agent`
 - `cat:init`
 - `cat:instruction-builder-agent`
-- `cat:instruction-organizer-agent`
 - `cat:learn`
 - `cat:learn-agent`
 - `cat:optimize-execution`

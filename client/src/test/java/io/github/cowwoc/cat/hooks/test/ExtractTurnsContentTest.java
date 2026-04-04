@@ -122,6 +122,38 @@ public class ExtractTurnsContentTest
   }
 
   /**
+   * Verifies that {@code ## Turn} and {@code ## Assertions} headings inside fenced code blocks are
+   * treated as regular content and do not split turns or terminate extraction prematurely.
+   */
+  @Test
+  public void headingsInsideCodeBlocksAreIgnored()
+  {
+    List<String> lines = List.of(
+      "## Turn 1",
+      "The test case file contains:",
+      "```",
+      "## Turn 1",
+      "Ask the agent to refactor.",
+      "## Assertions",
+      "1. Agent must preserve the API",
+      "```",
+      "Describe what happens.",
+      "## Assertions",
+      "1. Agent confirms assertions are stripped.");
+
+    List<String> turns = ExtractTurnsContent.extractTurns(lines);
+    requireThat(turns, "turns").size().isEqualTo(1);
+    String turn1 = turns.get(0);
+    requireThat(turn1, "turn1").contains("The test case file contains:");
+    requireThat(turn1, "turn1").contains("## Turn 1");
+    requireThat(turn1, "turn1").contains("Ask the agent to refactor.");
+    requireThat(turn1, "turn1").contains("## Assertions");
+    requireThat(turn1, "turn1").contains("Agent must preserve the API");
+    requireThat(turn1, "turn1").contains("Describe what happens.");
+    requireThat(turn1, "turn1").doesNotContain("Agent confirms assertions are stripped.");
+  }
+
+  /**
    * Verifies that run() reads from an input file, extracts a single Turn section, and writes it
    * to a separate output file with the turn number appended before the extension.
    */

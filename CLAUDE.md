@@ -116,13 +116,11 @@ Write failing tests first, then implement the fix to make them pass.
 **MANDATORY: Run all tests before presenting any task for user review.**
 
 ```bash
-mvn -f client/pom.xml test
+mvn -f client/pom.xml verify -e
 ```
 
-All tests must pass (exit code 0) before requesting user approval.
-
-Do not assume tests still pass after modifications. The fix may have introduced regressions or the test expectations may
-need updating.
+All tests must pass (exit code 0) before requesting user approval. Do not assume tests still pass after
+modifications — the fix may have introduced regressions or the test expectations may need updating.
 
 ## License Headers
 

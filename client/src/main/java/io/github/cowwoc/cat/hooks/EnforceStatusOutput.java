@@ -12,14 +12,16 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
 
@@ -46,11 +48,6 @@ import org.slf4j.LoggerFactory;
  */
 public final class EnforceStatusOutput
 {
-  /**
-   * Maximum transcript file size to read, in bytes (100 MB).
-   */
-  private static final long MAX_TRANSCRIPT_SIZE = 100L * 1024 * 1024;
-
   private EnforceStatusOutput()
   {
     // Utility class
@@ -210,20 +207,22 @@ public final class EnforceStatusOutput
       return new CheckResult(false, true);
 
     Path path = Paths.get(transcriptPath);
-    List<String> lines;
-    try
+    // Read only the last 10 lines via a bounded deque, avoiding loading the entire
+    // (potentially multi-MB) transcript file into the 96MB heap.
+    Deque<String> buffer = new ArrayDeque<>(11);
+    try (BufferedReader reader = Files.newBufferedReader(path))
     {
-      long fileSize = Files.size(path);
-      if (fileSize > MAX_TRANSCRIPT_SIZE)
-        return new CheckResult(false, true);
-      lines = Files.readAllLines(path);
-    }
-    catch (NoSuchFileException _)
-    {
-      return new CheckResult(false, true);
+      String line = reader.readLine();
+      while (line != null)
+      {
+        buffer.addLast(line);
+        if (buffer.size() > 10)
+          buffer.removeFirst();
+        line = reader.readLine();
+      }
     }
 
-    List<String> recentLines = getRecentLines(lines, 10);
+    List<String> recentLines = new ArrayList<>(buffer);
 
     boolean statusInvoked = false;
     boolean hasBoxOutput = false;
@@ -336,21 +335,6 @@ public final class EnforceStatusOutput
     }
 
     return false;
-  }
-
-  /**
-   * Get the last N lines from a list.
-   *
-   * @param lines all lines
-   * @param count number of lines to return
-   * @return the last count lines, or all lines if fewer than count
-   */
-  private static List<String> getRecentLines(List<String> lines, int count)
-  {
-    if (lines.size() <= count)
-      return lines;
-
-    return new ArrayList<>(lines.subList(lines.size() - count, lines.size()));
   }
 
   /**

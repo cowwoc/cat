@@ -69,6 +69,7 @@ declare -a HANDLERS=(
   "get-stakeholder-concern-box:skills.GetStakeholderConcernBox"
   "verify-audit:skills.VerifyAudit"
   "empirical-test-runner:skills.EmpiricalTestRunner"
+  "claude-runner:skills.ClaudeRunner"
   "merge-and-cleanup:util.MergeAndCleanup"
   "git-squash:util.GitSquash"
   "git-merge-linear:util.GitMergeLinear"

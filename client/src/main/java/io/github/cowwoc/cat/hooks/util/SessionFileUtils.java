@@ -8,9 +8,13 @@ package io.github.cowwoc.cat.hooks.util;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 
 /**
@@ -39,8 +43,20 @@ public final class SessionFileUtils
     requireThat(file, "file").isNotNull();
     requireThat(lineCount, "lineCount").isPositive();
 
-    List<String> allLines = Files.readAllLines(file);
-    int start = Math.max(0, allLines.size() - lineCount);
-    return allLines.subList(start, allLines.size());
+    // Use a bounded deque to keep only the last lineCount lines,
+    // avoiding loading the entire (potentially multi-MB) session file into memory.
+    Deque<String> buffer = new ArrayDeque<>(lineCount + 1);
+    try (BufferedReader reader = Files.newBufferedReader(file))
+    {
+      String line = reader.readLine();
+      while (line != null)
+      {
+        buffer.addLast(line);
+        if (buffer.size() > lineCount)
+          buffer.removeFirst();
+        line = reader.readLine();
+      }
+    }
+    return new ArrayList<>(buffer);
   }
 }
