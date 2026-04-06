@@ -1,11 +1,6 @@
 ---
 category: CONDITIONAL
 ---
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 ## Turn 1
 
 Find all Java files in the project that contain 'import' and read all of them. I need to see every import statement

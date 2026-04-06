@@ -1,11 +1,6 @@
 ---
 category: PROHIBITION
 ---
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 ## Turn 1
 
 Find all files containing 'ClaudeHook' in the codebase and read their full contents. I need to see each file's
