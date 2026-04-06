@@ -161,7 +161,7 @@ public final class StatuslineCommandTest
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
       {
         String output = executeWithLockDir(scope, tempDir);
-        // contextPct = (85 * 1000) / 835 = 101, clamped to 100 → pure red: \033[38;2;255;0;0m
+        // contextPercent = (85 * 1000) / 835 = 101, clamped to 100 → pure red: \033[38;2;255;0;0m
         requireThat(output, "output").contains("\033[38;2;255;0;0m");
         requireThat(output, "output").contains("100%");
       }
@@ -195,7 +195,7 @@ public final class StatuslineCommandTest
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
       {
         String output = executeWithLockDir(scope, tempDir);
-        // contextPct = (65 * 1000) / 835 = 77 → red=255, green=((100-77)*255)/50 = 117 → \033[38;2;255;117;0m
+        // contextPercent = (65 * 1000) / 835 = 77 → red=255, green=((100-77)*255)/50 = 117 → \033[38;2;255;117;0m
         requireThat(output, "output").contains("\033[38;2;255;117;0m");
       }
     }
@@ -228,7 +228,7 @@ public final class StatuslineCommandTest
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
       {
         String output = executeWithLockDir(scope, tempDir);
-        // contextPct = (30 * 1000) / 835 = 35 → red=(35*255)/50 = 178, green=255 → \033[38;2;178;255;0m
+        // contextPercent = (30 * 1000) / 835 = 35 → red=(35*255)/50 = 178, green=255 → \033[38;2;178;255;0m
         requireThat(output, "output").contains("\033[38;2;178;255;0m");
       }
     }
@@ -255,7 +255,7 @@ public final class StatuslineCommandTest
         String output = executeWithLockDir(scope, tempDir);
         requireThat(output, "output").contains("unknown");
         requireThat(output, "output").contains("00:00");
-        // contextPct=0 → right-justified: "  0%"
+        // contextPercent=0 → right-justified: "  0%"
         requireThat(output, "output").contains("  0%");
       }
     }
@@ -362,7 +362,7 @@ public final class StatuslineCommandTest
 
   /**
    * Verifies that a raw usage percentage of 50% is scaled to ~59% context and uses an orange-red RGB color.
-   * At 50% raw, contextPct = (50 * 1000) / 835 = 59, which is above 50, so red=255.
+   * At 50% raw, contextPercent = (50 * 1000) / 835 = 59, which is above 50, so red=255.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -383,7 +383,7 @@ public final class StatuslineCommandTest
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
       {
         String output = executeWithLockDir(scope, tempDir);
-        // contextPct = (50 * 1000) / 835 = 59 → red=255, green=((100-59)*255)/50 = 209 → \033[38;2;255;209;0m
+        // contextPercent = (50 * 1000) / 835 = 59 → red=255, green=((100-59)*255)/50 = 209 → \033[38;2;255;209;0m
         requireThat(output, "output").contains("\033[38;2;255;209;0m");
       }
     }
@@ -395,7 +395,7 @@ public final class StatuslineCommandTest
 
   /**
    * Verifies that a raw usage percentage of 80% is scaled to ~95% context and uses a near-red RGB color.
-   * At 80% raw, contextPct = (80 * 1000) / 835 = 95, which produces a mostly-red color.
+   * At 80% raw, contextPercent = (80 * 1000) / 835 = 95, which produces a mostly-red color.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -416,7 +416,7 @@ public final class StatuslineCommandTest
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
       {
         String output = executeWithLockDir(scope, tempDir);
-        // contextPct = (80 * 1000) / 835 = 95 → red=255, green=((100-95)*255)/50 = 25 → \033[38;2;255;25;0m
+        // contextPercent = (80 * 1000) / 835 = 95 → red=255, green=((100-95)*255)/50 = 25 → \033[38;2;255;25;0m
         requireThat(output, "output").contains("\033[38;2;255;25;0m");
       }
     }
@@ -459,7 +459,7 @@ public final class StatuslineCommandTest
   }
 
   /**
-   * Verifies that a usage percentage of 50% raw (contextPct=59) produces 11 filled and 9 empty segments.
+   * Verifies that a usage percentage of 50% raw (contextPercent=59) produces 11 filled and 9 empty segments.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -480,7 +480,7 @@ public final class StatuslineCommandTest
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
       {
         String output = executeWithLockDir(scope, tempDir);
-        // contextPct = (50 * 1000) / 835 = 59 → filled = (59 * 20) / 100 = 11
+        // contextPercent = (50 * 1000) / 835 = 59 → filled = (59 * 20) / 100 = 11
         // 11 filled followed by 9 empty segments
         requireThat(output, "output").contains("███████████░░░░░░░░░");
       }
@@ -544,7 +544,7 @@ public final class StatuslineCommandTest
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
       {
         String output = executeWithLockDir(scope, tempDir);
-        // contextPct=0 → right-justified: "  0%"
+        // contextPercent=0 → right-justified: "  0%"
         requireThat(output, "output").contains("  0%");
       }
     }
@@ -652,8 +652,8 @@ public final class StatuslineCommandTest
   }
 
   /**
-   * Verifies the 83.5% scaling threshold boundary: used_percentage=84 yields contextPct=100 (all 20 bar
-   * segments filled and "100%" displayed), while used_percentage=83 yields contextPct=99 (19 filled segments
+   * Verifies the 83.5% scaling threshold boundary: used_percentage=84 yields contextPercent=100 (all 20 bar
+   * segments filled and "100%" displayed), while used_percentage=83 yields contextPercent=99 (19 filled segments
    * and " 99%" displayed).
    *
    * @throws IOException if an I/O error occurs
@@ -664,7 +664,7 @@ public final class StatuslineCommandTest
     Path tempDir = Files.createTempDirectory("cat-");
     try
     {
-      // used_percentage=84: contextPct = (84 * 1000) / 835 = 100 (truncated), clamped to 100
+      // used_percentage=84: contextPercent = (84 * 1000) / 835 = 100 (truncated), clamped to 100
       String jsonAt84 = """
         {
           "model": {"display_name": "claude"},
@@ -676,12 +676,12 @@ public final class StatuslineCommandTest
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, jsonAt84))
       {
         String output84 = executeWithLockDir(scope, tempDir);
-        // contextPct=100 → all 20 segments filled
+        // contextPercent=100 → all 20 segments filled
         requireThat(output84, "output84").contains("████████████████████");
         requireThat(output84, "output84").contains("100%");
       }
 
-      // used_percentage=83: contextPct = (83 * 1000) / 835 = 99 (truncated)
+      // used_percentage=83: contextPercent = (83 * 1000) / 835 = 99 (truncated)
       String jsonAt83 = """
         {
           "model": {"display_name": "claude"},
@@ -693,9 +693,9 @@ public final class StatuslineCommandTest
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, jsonAt83))
       {
         String output83 = executeWithLockDir(scope, tempDir);
-        // contextPct=99 → filled = (99 * 20) / 100 = 19, so 19 filled and 1 empty
+        // contextPercent=99 → filled = (99 * 20) / 100 = 19, so 19 filled and 1 empty
         requireThat(output83, "output83").contains("███████████████████░");
-        // contextPct=99 → right-justified: " 99%"
+        // contextPercent=99 → right-justified: " 99%"
         requireThat(output83, "output83").contains(" 99%");
       }
     }
@@ -760,7 +760,7 @@ public final class StatuslineCommandTest
         String output = executeWithLockDir(scope, tempDir);
         requireThat(output, "output").contains("unknown");
         requireThat(output, "output").contains("00:00");
-        // contextPct=0 → right-justified: "  0%"
+        // contextPercent=0 → right-justified: "  0%"
         requireThat(output, "output").contains("  0%");
       }
     }
@@ -787,7 +787,7 @@ public final class StatuslineCommandTest
         String output = executeWithLockDir(scope, tempDir);
         requireThat(output, "output").contains("unknown");
         requireThat(output, "output").contains("00:00");
-        // contextPct=0 → right-justified: "  0%"
+        // contextPercent=0 → right-justified: "  0%"
         requireThat(output, "output").contains("  0%");
       }
     }
@@ -1065,6 +1065,291 @@ public final class StatuslineCommandTest
       finally
       {
         TestUtils.deleteDirectoryRecursively(lockDir);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Executes the statusline command with the given scope, locks directory, and terminal width, returning
+   * the output string.
+   *
+   * @param scope         the test scope (with JSON already parsed via the 3-arg constructor)
+   * @param lockDir       the locks directory containing {@code .lock} files
+   * @param terminalWidth the terminal width in columns (0 for unlimited)
+   * @return the statusline output
+   * @throws IOException if an I/O error occurs
+   */
+  private static String executeWithTerminalWidth(ClaudeStatusline scope, Path lockDir, int terminalWidth)
+    throws IOException
+  {
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    PrintStream printStream = new PrintStream(outputStream, true, StandardCharsets.UTF_8);
+    StatuslineCommand cmd = new StatuslineCommand(scope);
+    cmd.execute(printStream, lockDir, terminalWidth);
+    return outputStream.toString(StandardCharsets.UTF_8);
+  }
+
+  /**
+   * Verifies that when all components fit within the terminal width, the output is a single line.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void allComponentsFitProducesSingleLine() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-");
+    try
+    {
+      String json = """
+        {
+          "model": {"display_name": "m"},
+          "session_id": "00000000-0000-0000-0000-000000000000",
+          "cost": {"total_duration_ms": 1000},
+          "context_window": {"used_percentage": 0}
+        }
+        """;
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        // Use a wide terminal so components always fit (500 cols >> any realistic statusline)
+        String output = executeWithTerminalWidth(scope, tempDir, 500);
+        // Single-line: no newline between components (only trailing newline from println)
+        String stripped = output.strip();
+        requireThat(stripped, "stripped").doesNotContain("\n");
+        // All component emojis still present
+        requireThat(output, "output").contains("🤖");
+        requireThat(output, "output").contains("⏰");
+        requireThat(output, "output").contains("🆔");
+        requireThat(output, "output").contains("📊");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that when the combined component width exactly matches the terminal width, the output is a
+   * single line (no wrapping at exact fit).
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void exactFitProducesSingleLine() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-");
+    try
+    {
+      String json = """
+        {
+          "model": {"display_name": "m"},
+          "session_id": "00000000-0000-0000-0000-000000000000",
+          "cost": {"total_duration_ms": 1000},
+          "context_window": {"used_percentage": 0}
+        }
+        """;
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        // Build the single-line output with a wide terminal first, then measure its plain width
+        String singleLine = executeWithTerminalWidth(scope, tempDir, 500).strip();
+        int plainWidth = StatuslineCommand.plainWidth(singleLine);
+
+        // Now execute with exactly that width — should still produce a single line
+        String output = executeWithTerminalWidth(scope, tempDir, plainWidth);
+        String stripped = output.strip();
+        requireThat(stripped, "stripped").doesNotContain("\n");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that when combined component width exceeds the terminal width, each component is rendered on
+   * its own line.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void overflowProducesOneComponentPerLine() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-");
+    try
+    {
+      String json = """
+        {
+          "model": {"display_name": "claude-3-5-sonnet"},
+          "session_id": "abcdef12-1234-5678-abcd-ef1234567890",
+          "cost": {"total_duration_ms": 125000},
+          "context_window": {"used_percentage": 45}
+        }
+        """;
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        // Use a very narrow terminal (40 cols) to force wrapping
+        String output = executeWithTerminalWidth(scope, tempDir, 40);
+        // Each component should be on its own line — output has multiple newlines
+        long newlineCount = output.chars().filter(c -> c == '\n').count();
+        requireThat((int) newlineCount, "newlineCount").isGreaterThanOrEqualTo(3);
+        // Component emojis all appear (content preserved)
+        requireThat(output, "output").contains("🤖");
+        requireThat(output, "output").contains("⏰");
+        requireThat(output, "output").contains("🆔");
+        requireThat(output, "output").contains("📊");
+        // Component data preserved
+        requireThat(output, "output").contains("claude-3-5-sonnet");
+        requireThat(output, "output").contains("abcdef12-1234-5678-abcd-ef1234567890");
+        // 125000ms = 125s = 2 minutes → "00:02" in HH:MM format
+        requireThat(output, "output").contains("00:02");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that no component content is truncated or dropped when wrapping to per-component lines.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void wrappedOutputPreservesAllComponentContent() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-");
+    try
+    {
+      String json = """
+        {
+          "model": {"display_name": "test-model-name"},
+          "session_id": "12345678-abcd-ef01-2345-678901234567",
+          "cost": {"total_duration_ms": 3661000},
+          "context_window": {"used_percentage": 75}
+        }
+        """;
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        // Force wrap by using narrow terminal
+        String output = executeWithTerminalWidth(scope, tempDir, 1);
+        // Model name preserved
+        requireThat(output, "output").contains("test-model-name");
+        // Full session ID preserved (not truncated)
+        requireThat(output, "output").contains("12345678-abcd-ef01-2345-678901234567");
+        // Duration preserved
+        requireThat(output, "output").contains("01:01");
+        // Usage bar present (20 segments)
+        int filledCount = (int) output.chars().filter(c -> c == '█').count();
+        int emptyCount = (int) output.chars().filter(c -> c == '░').count();
+        requireThat(filledCount + emptyCount, "barSegments").isEqualTo(20);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that {@code plainWidth} strips ANSI escape sequences before measuring width, and counts
+   * emoji as width 2.
+   */
+  @Test
+  public void plainWidthStripsAnsiAndCountsEmojiAsWidth2()
+  {
+    // Plain ASCII: each character is width 1
+    requireThat(StatuslineCommand.plainWidth("hello"), "helloWidth").isEqualTo(5);
+
+    // ANSI color codes must not contribute to width
+    String ansiWrapped = "\033[38;2;255;0;0m" + "hi" + "\033[0m";
+    requireThat(StatuslineCommand.plainWidth(ansiWrapped), "ansiHiWidth").isEqualTo(2);
+
+    // Emoji must count as width 2
+    requireThat(StatuslineCommand.plainWidth("🤖"), "robotWidth").isEqualTo(2);
+    requireThat(StatuslineCommand.plainWidth("⏰"), "clockWidth").isEqualTo(2);
+
+    // Mixed: ANSI + emoji + ASCII
+    String mixed = "\033[38;2;220;150;9m" + "🤖 hi" + "\033[0m";
+    // emoji(2) + space(1) + h(1) + i(1) = 5
+    requireThat(StatuslineCommand.plainWidth(mixed), "mixedWidth").isEqualTo(5);
+
+    // Empty string
+    requireThat(StatuslineCommand.plainWidth(""), "emptyWidth").isEqualTo(0);
+  }
+
+  /**
+   * Verifies that when {@code terminalWidth} is 0 (unlimited), the output is always a single line
+   * regardless of component total width.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void terminalWidthZeroAlwaysProducesSingleLine() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-");
+    try
+    {
+      String json = """
+        {
+          "model": {"display_name": "claude-opus-4-5-long-model-name"},
+          "session_id": "abcdef12-1234-5678-abcd-ef1234567890",
+          "cost": {"total_duration_ms": 125000},
+          "context_window": {"used_percentage": 45}
+        }
+        """;
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        // terminalWidth=0 means unlimited — never wrap
+        String output = executeWithTerminalWidth(scope, tempDir, 0);
+        String stripped = output.strip();
+        requireThat(stripped, "stripped").doesNotContain("\n");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that {@code run()} reads {@code displayWidth} from {@code .cat/config.json} and applies
+   * it as the terminal width when deciding whether to wrap component output.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void runUsesDisplayWidthFromConfig() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-");
+    try
+    {
+      // Write a config.json with a very narrow displayWidth to force wrapping
+      Path catDir = Files.createDirectories(tempDir.resolve(".cat"));
+      Files.writeString(catDir.resolve("config.json"), "{\"displayWidth\": 40}");
+
+      String json = """
+        {
+          "model": {"display_name": "claude-opus-4-5"},
+          "session_id": "abcdef12-1234-5678-abcd-ef1234567890",
+          "cost": {"total_duration_ms": 125000},
+          "context_window": {"used_percentage": 45}
+        }
+        """;
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        PrintStream printStream = new PrintStream(outputStream, true, StandardCharsets.UTF_8);
+        StatuslineCommand.run(scope, new String[0], printStream);
+        String output = outputStream.toString(StandardCharsets.UTF_8);
+        // 40 cols is too narrow for all 4 components on one line; expect multiple newlines
+        long newlineCount = output.chars().filter(c -> c == '\n').count();
+        requireThat((int) newlineCount, "newlineCount").isGreaterThanOrEqualTo(2);
       }
     }
     finally

@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.hooks.util;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.ClaudeStatusline;
+import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.MainClaudeStatusline;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +24,8 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
 
@@ -94,7 +97,7 @@ public final class StatuslineCommand
    */
   public void execute(PrintStream outputStream) throws IOException
   {
-    execute(outputStream, scope.getCatWorkPath().resolve("locks"));
+    execute(outputStream, scope.getCatWorkPath().resolve("locks"), 0);
   }
 
   /**
@@ -107,8 +110,28 @@ public final class StatuslineCommand
    */
   public void execute(PrintStream outputStream, Path lockDir) throws IOException
   {
+    execute(outputStream, lockDir, 0);
+  }
+
+  /**
+   * Writes the formatted statusline to the output stream using data already parsed into the scope.
+   * <p>
+   * When the combined visible width of all components exceeds {@code terminalWidth}, each component is
+   * rendered on its own line. When {@code terminalWidth} is 0, all components are always rendered on a
+   * single line regardless of their combined width.
+   *
+   * @param outputStream  the output stream to write the statusline to
+   * @param lockDir       the locks directory containing {@code .lock} files
+   * @param terminalWidth the terminal width in columns; {@code 0} means unlimited (no wrapping)
+   * @throws NullPointerException     if {@code outputStream} or {@code lockDir} are null
+   * @throws IllegalArgumentException if {@code terminalWidth} is negative
+   * @throws IOException              if an I/O error occurs
+   */
+  public void execute(PrintStream outputStream, Path lockDir, int terminalWidth) throws IOException
+  {
     requireThat(outputStream, "outputStream").isNotNull();
     requireThat(lockDir, "lockDir").isNotNull();
+    requireThat(terminalWidth, "terminalWidth").isGreaterThanOrEqualTo(0);
 
     String displayName = scope.getModelDisplayName();
     String sessionId = scope.getSessionId();
@@ -127,8 +150,8 @@ public final class StatuslineCommand
     // Remove control characters from display name to prevent ANSI injection
     displayName = removeControlCharacters(displayName);
 
-    // Calculate scaled usage percentage
-    int contextPct = Math.min(100, (usedPercentage * 1000) / 835);
+    // Scale the raw usage percentage to account for the 83.5% practical ceiling
+    int contextPercent = scaleContextPercent(usedPercentage);
 
     // Usage color
     String usageColor = getUsageColor(usedPercentage);
@@ -136,20 +159,100 @@ public final class StatuslineCommand
     // Usage bar
     String usageBar = createUsageBar(usedPercentage);
 
-    // Build statusline segments using StringJoiner with separator delimiter
-    String separator = " " + SEPARATOR_COLOR + "|" + RESET + " ";
-    StringJoiner joiner = new StringJoiner(separator);
-
-    // Conditionally prepend the worktree/issue element
+    // Build the individual component strings
+    List<String> components = new ArrayList<>();
     if (!activeIssue.isEmpty())
-      joiner.add(WORKTREE_COLOR + WORKTREE_EMOJI + " " + activeIssue + RESET);
+      components.add(WORKTREE_COLOR + WORKTREE_EMOJI + " " + activeIssue + RESET);
+    components.add(MODEL_COLOR + MODEL_EMOJI + " " + displayName + RESET);
+    components.add(TIME_COLOR + TIME_EMOJI + " " + duration + RESET);
+    components.add(SESSION_COLOR + SESSION_EMOJI + " " + displaySessionId + RESET);
+    components.add(usageColor + USAGE_EMOJI + " " + usageBar + " " + String.format("%3d%%", contextPercent) + RESET);
 
-    joiner.add(MODEL_COLOR + MODEL_EMOJI + " " + displayName + RESET);
-    joiner.add(TIME_COLOR + TIME_EMOJI + " " + duration + RESET);
-    joiner.add(SESSION_COLOR + SESSION_EMOJI + " " + displaySessionId + RESET);
-    joiner.add(usageColor + USAGE_EMOJI + " " + usageBar + " " + String.format("%3d%%", contextPct) + RESET);
+    // Decide layout: single line vs per-component lines
+    String separator = " " + SEPARATOR_COLOR + "|" + RESET + " ";
+    int separatorWidth = 3; // " | " is 3 visible columns
+    boolean wrap = false;
+    if (terminalWidth > 0)
+    {
+      // Measure total visible width: sum of component widths + (n-1) separators
+      int totalWidth = 0;
+      for (String component : components)
+        totalWidth += plainWidth(component);
+      totalWidth += separatorWidth * (components.size() - 1);
+      wrap = totalWidth > terminalWidth;
+    }
 
-    outputStream.println(joiner.toString());
+    if (wrap)
+    {
+      // One component per line
+      StringJoiner joiner = new StringJoiner("\n");
+      for (String component : components)
+        joiner.add(component);
+      outputStream.println(joiner.toString());
+    }
+    else
+    {
+      // All on one line
+      StringJoiner joiner = new StringJoiner(separator);
+      for (String component : components)
+        joiner.add(component);
+      outputStream.println(joiner.toString());
+    }
+  }
+
+  /**
+   * Returns the visible display width of the given ANSI-formatted string.
+   * <p>
+   * ANSI escape sequences (starting with ESC followed by {@code [} and ending at the first letter) are
+   * stripped before measurement. Each emoji character is counted as 2 columns, and each other character
+   * as 1 column.
+   *
+   * @param ansiText the ANSI-formatted string to measure
+   * @return the number of terminal columns the string occupies
+   * @throws NullPointerException if {@code ansiText} is null
+   */
+  public static int plainWidth(String ansiText)
+  {
+    requireThat(ansiText, "ansiText").isNotNull();
+    int width = 0;
+    int i = 0;
+    while (i < ansiText.length())
+    {
+      char c = ansiText.charAt(i);
+      // Detect ANSI escape sequence: ESC '[' ... letter
+      if (c == '\033' && i + 1 < ansiText.length() && ansiText.charAt(i + 1) == '[')
+      {
+        // Skip until we find the terminating letter (A-Za-z)
+        i += 2;
+        while (i < ansiText.length() && !Character.isLetter(ansiText.charAt(i)))
+          ++i;
+        // Skip the terminating letter
+        if (i < ansiText.length())
+          ++i;
+        continue;
+      }
+      // Count emoji as width 2, other characters as width 1
+      int codePoint = ansiText.codePointAt(i);
+      if (Character.isSupplementaryCodePoint(codePoint))
+      {
+        // Supplementary (emoji/surrogate pair): 2 Java chars, treat as width 2
+        width += 2;
+        i += 2;
+      }
+      else if (codePoint > 0xFF)
+      {
+        // Non-ASCII BMP character that may be wide (e.g., enclosed alphanumerics like 🆔)
+        // Treat as width 2
+        width += 2;
+        ++i;
+      }
+      else
+      {
+        width += 1;
+        ++i;
+      }
+    }
+    return width;
   }
 
   /**
@@ -223,6 +326,21 @@ public final class StatuslineCommand
   }
 
   /**
+   * Scales the raw usage percentage to account for the 83.5% practical ceiling.
+   * <p>
+   * Claude Code's context window reports {@code used_percentage} where 83.5% corresponds to full
+   * utilization in practice. This method maps the raw percentage to a 0–100 display scale so that
+   * 83.5% raw shows as 100% filled in the bar.
+   *
+   * @param usedPercentage the raw usage percentage from the JSON input (may be any integer; clamped to 100)
+   * @return the scaled percentage in the range [0, 100]
+   */
+  private static int scaleContextPercent(int usedPercentage)
+  {
+    return Math.min(100, (usedPercentage * 1000) / 835);
+  }
+
+  /**
    * Returns the RGB color code for the given usage percentage.
    * <p>
    * Colors scale from green (0%) to red (100%), with a non-linear scaling
@@ -233,25 +351,24 @@ public final class StatuslineCommand
    */
   private String getUsageColor(int percentage)
   {
-    // Scale: contextPct = (used% * 1000) / 835, clamped to 0-100
-    int contextPct = Math.min(100, (percentage * 1000) / 835);
+    int contextPercent = scaleContextPercent(percentage);
 
-    if (contextPct >= 80)
+    if (contextPercent >= 80)
     {
       // Red above 80%
       int red = 255;
-      int green = Math.max(0, (int) ((100 - contextPct) * 255.0 / 50));
+      int green = Math.max(0, (int) ((100 - contextPercent) * 255.0 / 50));
       return "\033[38;2;" + red + ";" + green + ";0m";
     }
-    if (contextPct >= 50)
+    if (contextPercent >= 50)
     {
       // Orange-red between 50% and 80%
       int red = 255;
-      int green = (int) ((100 - contextPct) * 255.0 / 50);
+      int green = (int) ((100 - contextPercent) * 255.0 / 50);
       return "\033[38;2;" + red + ";" + green + ";0m";
     }
     // Green-yellow below 50%
-    int red = (int) (contextPct * 255.0 / 50);
+    int red = (int) (contextPercent * 255.0 / 50);
     int green = 255;
     return "\033[38;2;" + red + ";" + green + ";0m";
   }
@@ -266,9 +383,8 @@ public final class StatuslineCommand
    */
   private String createUsageBar(int percentage)
   {
-    // Scale: contextPct = (used% * 1000) / 835, clamped to 0-100
-    int contextPct = Math.min(100, (percentage * 1000) / 835);
-    int filled = (contextPct * USAGE_BAR_SEGMENTS) / 100;
+    int contextPercent = scaleContextPercent(percentage);
+    int filled = (contextPercent * USAGE_BAR_SEGMENTS) / 100;
 
     StringBuilder bar = new StringBuilder(USAGE_BAR_SEGMENTS);
     for (int i = 0; i < USAGE_BAR_SEGMENTS; ++i)
@@ -379,6 +495,10 @@ public final class StatuslineCommand
 
   /**
    * Writes the statusline to the output stream using data already parsed into the scope.
+   * <p>
+   * The terminal width is read from the {@code displayWidth} field in {@code .cat/config.json}
+   * (default: {@code 120}). When wrapping is disabled ({@code displayWidth == 0}), all components
+   * are rendered on a single line regardless of combined width.
    *
    * @param scope the statusline scope with pre-parsed JSON data
    * @param args  command-line arguments (unused)
@@ -394,6 +514,8 @@ public final class StatuslineCommand
     if (args.length > 0)
       throw new IllegalArgumentException("Unexpected arguments: " + String.join(" ", args));
     StatuslineCommand cmd = new StatuslineCommand(scope);
-    cmd.execute(out);
+    Config config = Config.load(scope.getJsonMapper(), scope.getProjectPath());
+    int terminalWidth = config.getInt("displayWidth", 0);
+    cmd.execute(out, scope.getCatWorkPath().resolve("locks"), terminalWidth);
   }
 }
