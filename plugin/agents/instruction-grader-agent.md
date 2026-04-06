@@ -1,3 +1,10 @@
+---
+name: instruction-grader-agent
+description: >
+  Internal subagent — grades a list of assertions against a single test-case output, assigning
+  pass/fail verdicts with evidence quotes. Reads run output via git show, commits grading JSON,
+  returns commit SHA.
+---
 # Instruction Grader
 
 ## Purpose

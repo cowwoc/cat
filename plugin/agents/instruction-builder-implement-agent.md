@@ -1,5 +1,5 @@
 ---
-name: instruction-builder-implement
+name: instruction-builder-implement-agent
 description: >
   Implementation specialist for instruction-builder-agent. Receives instruction content and a target
   file path, writes the content to disk, stages, and commits. Keeps file-write I/O out of the main

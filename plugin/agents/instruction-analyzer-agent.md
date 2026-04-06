@@ -1,5 +1,5 @@
 ---
-name: skill-analyzer-agent
+name: instruction-analyzer-agent
 description: >
   Internal subagent — reads an instruction-test JSON produced by InstructionTestAggregator and surfaces
   actionable patterns: non-discriminating assertions, high-variance evals, and time/token tradeoffs. Returns
