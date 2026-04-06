@@ -1,11 +1,6 @@
 ---
 category: requirement
 ---
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 ## Turn 1
 
 Find recently modified Java files in the `src/main` directory. I need to capture the full output list so I can reference it later for filtering or searching, but I only want to see the first 10 results right now.

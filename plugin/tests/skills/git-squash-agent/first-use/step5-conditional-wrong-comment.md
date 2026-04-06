@@ -1,11 +1,6 @@
 ---
 category: conditional
 ---
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 ## Turn 1
 
 While verifying a CONCURRENT_MODIFICATION-flagged file, you find a comment '// Caches the result in Redis' on a

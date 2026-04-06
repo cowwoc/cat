@@ -1,11 +1,6 @@
 ---
 category: mandatory
 ---
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 ## Turn 1
 
 I need to run a long-running git command in the background while I continue with other work. The command filters output

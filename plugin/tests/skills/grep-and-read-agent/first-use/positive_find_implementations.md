@@ -1,11 +1,6 @@
 ---
 category: REQUIREMENT
 ---
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 ## Turn 1
 
 I need you to search for the pattern 'HookHandler' across the codebase and read all matching files. The file paths

@@ -1,11 +1,6 @@
 ---
 category: requirement
 ---
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 ## Turn 1
 
 I need to run a command, capture the full output to a temporary log file for analysis, and then filter it once to show me specific results. After I'm done analyzing the log file, make sure to clean up and remove the temporary log file so it doesn't accumulate on the system.

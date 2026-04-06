@@ -1,11 +1,6 @@
 ---
 category: REQUIREMENT
 ---
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 ## Turn 1
 
 Search for 'WorkPrepare' across all Java files in the project and read the matching files. I need the complete

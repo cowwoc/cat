@@ -1,11 +1,6 @@
 ---
 category: requirement
 ---
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 ## Turn 1
 
 I'm debugging a long process with multiple piped commands. I want to capture the output of one pipeline stage to a temporary file, then re-use that captured output for filtering and analysis in several places. Please set up the commands so I can reference the same log file throughout the script.

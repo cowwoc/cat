@@ -1,11 +1,6 @@
 ---
 category: requirement
 ---
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 ## Turn 1
 
 Run a quick one-liner to get a list of active services, but I want to capture the full list in case I need to reference it again for filtering. The command is simple, just `systemctl list-units | grep service`. Please set it up so I can access the full output if needed later.
