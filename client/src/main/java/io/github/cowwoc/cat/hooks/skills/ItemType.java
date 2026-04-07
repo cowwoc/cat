@@ -7,7 +7,7 @@
 package io.github.cowwoc.cat.hooks.skills;
 
 /**
- * Types of items that can be created via /cat:add.
+ * Types of items that can be created via /cat:add-agent.
  */
 public enum ItemType
 {

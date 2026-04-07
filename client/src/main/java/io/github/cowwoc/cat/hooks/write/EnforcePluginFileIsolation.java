@@ -73,7 +73,7 @@ public final class EnforcePluginFileIsolation implements FileWriteHandler
         "File: " + filePath + "\n" +
         "\n" +
         "**Solution:**\n" +
-        "1. Create task: `/cat:add <task-description>`\n" +
+        "1. Create task: `/cat:add-agent <task-description>`\n" +
         "2. Work in isolated worktree: `Work on <issue-name>`\n" +
         "3. Make edits in the issue worktree\n" +
         "\n" +

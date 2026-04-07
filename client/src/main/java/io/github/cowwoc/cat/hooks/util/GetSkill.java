@@ -109,7 +109,7 @@ public final class GetSkill
    * Name of the directory that tracks which skills and files have been loaded by an agent.
    * <p>
    * Marker files for loaded skills use the URL-encoded skill name as the filename
-   * (e.g., {@code cat%3Aadd} for {@code cat:add}). Marker files for loaded files use the
+   * (e.g., {@code cat%3Aadd-agent} for {@code cat:add-agent}). Marker files for loaded files use the
    * URL-encoded absolute file path as the filename.
    */
   public static final String LOADED_DIR = "loaded";

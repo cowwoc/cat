@@ -641,7 +641,7 @@ the rule using all four components:
 > Do NOT use: Edit tool on plugin/**, Write tool on plugin/**,
 > Bash commands that write to plugin/** (cat >, echo >>, tee, sed -i, etc.)
 >
-> Instead: Create an issue via /cat:add and work in an isolated worktree via /cat:work.
+> Instead: Create an issue via /cat:add-agent and work in an isolated worktree via /cat:work.
 
 **Escalation from Documentation Prevention:** If a similar documentation rule for this violation
 already exists AND the agent violated it anyway, do NOT add another documentation rule. Escalate to a
@@ -880,7 +880,7 @@ orchestrate the next phase. Copy and fill in the values:
   ],
   "issue_creation_info": {
     "suggested_title": "Short title for prevention issue",
-    "suggested_description": "Detailed description for /cat:add",
+    "suggested_description": "Detailed description for /cat:add-agent",
     "suggested_acceptance_criteria": ["criterion 1", "criterion 2"]
   }
 }

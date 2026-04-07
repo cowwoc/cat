@@ -369,7 +369,7 @@ public class HandlerOutputTest
   }
 
   /**
-   * Verifies that version display includes the /cat:add next command hint.
+   * Verifies that version display includes the /cat:add-agent next command hint.
    *
    * @throws IOException if an I/O error occurs
    */

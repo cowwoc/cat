@@ -32,7 +32,7 @@ import static io.github.cowwoc.cat.hooks.Strings.block;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Output generator for the /cat:add skill. Generates planning data JSON (version status, summaries,
+ * Output generator for the /cat:add-agent skill. Generates planning data JSON (version status, summaries,
  * existing issues) when invoked with no arguments, and box displays for issue/version creation completion
  * when invoked with CLI arguments.
  */
@@ -64,7 +64,7 @@ public final class GetAddOutput implements SkillOutput
   }
 
   /**
-   * Generates planning data for the /cat:add skill. Returns raw JSON containing
+   * Generates planning data for the /cat:add-agent skill. Returns raw JSON containing
    * version data (status, summary, existing issues) used by first-use.md.
    * <p>
    * The JSON is wrapped in {@code <output type="add">} tags by GetOutput (the centralized dispatcher).

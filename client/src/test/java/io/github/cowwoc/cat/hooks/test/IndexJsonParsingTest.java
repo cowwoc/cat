@@ -52,7 +52,7 @@ public class IndexJsonParsingTest
   }
 
   /**
-   * Verifies that Markdown content (as incorrectly written by the /cat:add bug) throws
+   * Verifies that Markdown content (as incorrectly written by the /cat:add-agent bug) throws
    * {@link StreamReadException} when parsed as JSON.
    *
    * @throws IOException if JSON parsing fails with the expected exception
