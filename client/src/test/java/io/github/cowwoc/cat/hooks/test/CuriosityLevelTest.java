@@ -9,10 +9,15 @@ package io.github.cowwoc.cat.hooks.test;
 import io.github.cowwoc.cat.hooks.util.CuriosityLevel;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Tests for CuriosityLevel enum behavior.
+ * Tests for {@link CuriosityLevel} enum behavior and curiosity-related plugin file conventions.
  */
 public class CuriosityLevelTest
 {
@@ -84,5 +89,21 @@ public class CuriosityLevelTest
     requireThat(CuriosityLevel.LOW.toString(), "LOW.toString()").isEqualTo("low");
     requireThat(CuriosityLevel.MEDIUM.toString(), "MEDIUM.toString()").isEqualTo("medium");
     requireThat(CuriosityLevel.HIGH.toString(), "HIGH.toString()").isEqualTo("high");
+  }
+
+  /**
+   * Verifies that the SPRT test scenario file for the instruction-builder-agent curiosity gate uses
+   * {@code curiosity} terminology, not the legacy {@code effort} terminology.
+   */
+  @Test
+  public void sprtTestScenarioUsesCuriosityTerminology() throws IOException
+  {
+    Path sprtFile = Paths.get(System.getProperty("user.dir"), "..",
+      "plugin/tests/skills/instruction-builder-agent/first-use/" +
+        "step43-sprt-runs-when-curiosity-not-low.md").normalize();
+    requireThat(sprtFile.toFile().exists(), "sprtFile").isTrue();
+    String content = Files.readString(sprtFile);
+    requireThat(content, "content").doesNotContain("effort level");
+    requireThat(content, "content").contains("curiosity level");
   }
 }
