@@ -58,6 +58,22 @@ The stopping condition is left to the agent's discretion, which led to early ter
     continue running until log_ratio ≥ A (Accept)
   - Files: `plugin/skills/instruction-builder-agent/first-use.md` (and any others found)
 
+### Job 2 — E2E: SPRT boundary enforcement verification
+
+- Select `plugin/skills/instruction-builder-agent` as the test skill for the live SPRT run
+- Invoke `cat:instruction-builder-agent` via `/cat:empirical-test-agent` with SPRT enabled, targeting
+  `plugin/skills/instruction-builder-agent/first-use.md`
+- After each wave, extract `log_ratio` from the session's `test-results.json` using Bash pattern matching
+  (no `jq`):
+  ```bash
+  grep -o '"log_ratio"[[:space:]]*:[[:space:]]*[0-9.-]*' test-results.json \
+    | sed 's/.*:[[:space:]]*//'
+  ```
+- Continue running SPRT waves until `log_ratio` value in `test-results.json` reaches ≥ 2.944 (Accept boundary)
+  or the run reaches Reject boundary (log_ratio ≤ -2.944); do NOT stop at Inconclusive
+- Once the Accept boundary is crossed, confirm `test-results.json` records `status: "Accept"` before committing
+- Document the final `log_ratio` value and wave count in the commit message for traceability
+
 ## Post-conditions
 
 - [ ] All SPRT-using skills require running until the Accept boundary (log_ratio ≥ A) is crossed

@@ -825,6 +825,12 @@ dispatched together in one parallel message. If any run in a wave fails or any T
    prior subagents.
 5. Loop terminates when all test cases have accepted or any test case has rejected.
 
+**MANDATORY: Inconclusive is not a stopping state.** If all active test cases remain Inconclusive after
+a wave, continue dispatching waves. Do NOT stop, commit results, or declare SPRT complete while any test
+case has `decision: "INCONCLUSIVE"`. The only valid outcomes that end the loop are Accept (log_ratio ≥ A)
+or Reject (log_ratio ≤ B, or runs ≥ 50). Running 10 or 12 waves with all passes but log_ratio < 2.944 is
+NOT sufficient — the Accept boundary must be formally crossed.
+
 **Pipelining edge cases:**
 - **Early-accept:** TC reaches `log_ratio >= A`. Stop spawning subagents for it immediately. If a
   subagent is already in-flight, wait for it to return (to collect timing/token data), then discard its
@@ -1236,6 +1242,11 @@ test-run subagent works in its own isolated worktree; `cat:collect-results-agent
 results after each wave. The final `test-results.json` is committed once SPRT completes. If a commit
 fails, retry up to 3 times with exponential backoff: 1–2s, 2–4s, 4–8s (randomized). If all retries
 fail, return `{"error": "commit failed: <reason>"}`.
+
+**MANDATORY: Do NOT commit test-results.json until `overall_decision = "Accept"` or `overall_decision = "Reject"`.** A
+test-results.json with `overall_decision: "Inconclusive"` or `overall_decision: "Inconclusive (trending Accept)"` must
+NOT be committed — it means SPRT has not completed. Continue dispatching waves until the formal Accept or Reject
+boundary is crossed.
 
 **After SPRT completes:** Write results to `${TEST_DIR}/test-results.json` with per-test-case
 SPRT log_ratios, pass/fail counts, final decision (Accept/Reject), and token/timing aggregates. The
@@ -2133,7 +2144,8 @@ Overall verification passes if all non-skipped items are checked and all skipped
 - [ ] Each test run uses a fresh non-resumed `TEST_MODEL` subagent (no `resume` or `conversation_id` fields)
 - [ ] `TEST_MODEL` read from skill frontmatter via `extract-model`; never hardcoded
 - [ ] Each assertion graded by a separate `TEST_MODEL` grader subagent (no inline grading)
-- [ ] Run outputs written to temp files only; `test-results.json` committed once after SPRT completes
+- [ ] Run outputs written to temp files only; `test-results.json` committed once after SPRT completes with Accept or Reject
+- [ ] SPRT waves continued until Accept boundary (log_ratio ≥ 2.944) formally crossed — Inconclusive is never a final state
 - [ ] Test results show meaningful signal: SPRT log_ratios demonstrate non-trivial discrimination (not all cases
   pass/reject trivially)
 - [ ] Result Inspection Checklist (4 checks) performed before updating SPRT log_ratio

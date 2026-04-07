@@ -1,5 +1,7 @@
 {
-  "status": "open",
-  "dependencies": ["2.1-fix-instruction-builder-sprt-loop", "2.1-fix-sprt-test-run-assertion-priming", "2.1-reorganize-instruction-builder-first-use"],
-  "blocks": []
+  "status" : "closed",
+  "resolution" : "implemented",
+  "dependencies" : [ "2.1-fix-instruction-builder-sprt-loop", "2.1-fix-sprt-test-run-assertion-priming", "2.1-reorganize-instruction-builder-first-use" ],
+  "blocks" : [ ],
+  "target_branch" : "v2.1"
 }
