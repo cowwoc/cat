@@ -16,11 +16,11 @@ See LICENSE.md in the project root for license terms.
 ├── ROADMAP.md
 ├── config.json
 └── v<n>/
-    ├── STATE.md
+    ├── index.json
     ├── PLAN.md
     ├── CHANGELOG.md          # Aggregates closed issues
     └── v<n>.<m>/
-        ├── STATE.md
+        ├── index.json
         ├── PLAN.md
         ├── CHANGELOG.md      # Aggregates closed issues
         └── <issue-name>/

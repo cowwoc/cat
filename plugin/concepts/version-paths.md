@@ -38,7 +38,7 @@ Example (MAJOR.MINOR scheme):
 .cat/issues/
 └── v1/
     └── v1.0/
-        ├── STATE.md
+        ├── index.json
         ├── PLAN.md
         ├── CHANGELOG.md
         └── my-issue-name/      ← Issue directory (directly under version)
@@ -144,7 +144,7 @@ find_issues_in_version() {
 | Issue dir | `$(get_version_path $MAJOR $MINOR)/${ISSUE_NAME}` |
 | Issue index.json | `$(get_issue_path $MAJOR $MINOR $ISSUE_NAME)/index.json` |
 | Issue plan.md | `$(get_issue_path $MAJOR $MINOR $ISSUE_NAME)/plan.md` |
-| Version STATE.md | `$(get_version_path $MAJOR $MINOR)/STATE.md` |
+| Version index.json | `$(get_version_path $MAJOR $MINOR)/index.json` |
 | Version CHANGELOG.md | `$(get_version_path $MAJOR $MINOR)/CHANGELOG.md` |
 
 ### Glob Patterns
