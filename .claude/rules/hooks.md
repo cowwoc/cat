@@ -196,7 +196,7 @@ BLOCKED: Cannot edit source files outside of an issue worktree.
 File: plugin/skills/foo.md
 
 Solution:
-1. Create task: /cat:add <task-description>
+1. Create task: /cat:add-agent <task-description>
 2. Work in isolated worktree: /cat:work
 3. Make edits in the issue worktree
 

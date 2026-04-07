@@ -31,7 +31,7 @@ When a user says "update skill X to do Y", "modify plugin Z to support W", or "u
 JDK 26", treat this as a feature request requiring the CAT issue workflow — do NOT directly read, analyze, or
 edit `plugin/` or `client/` source files.
 
-**Correct interpretation:** Create an issue via `/cat:add` that captures the requested change as work to be
+**Correct interpretation:** Create an issue via `/cat:add-agent` that captures the requested change as work to be
 done. The issue's PLAN.md describes what to update and why. Implementation happens later via `/cat:work`.
 
 **Wrong interpretation:** Reading source code, analyzing it, and proposing or making edits inline — whether
@@ -42,7 +42,7 @@ that protects the codebase. Every `plugin/` or `client/` change goes through an 
 frames the request as an immediate action or a "simple update."
 
 **Exception:** If the user explicitly asks for a "quick fix" or "one-line change" AND the change is trivial
-enough to fit in a single commit, create a minimal worktree branch via `/cat:add` + `/cat:work` (still not
+enough to fit in a single commit, create a minimal worktree branch via `/cat:add-agent` + `/cat:work` (still not
 direct edits to main workspace, and still not a raw `git worktree add` without a CAT issue).
 
 ## Approval Gate Workflow
