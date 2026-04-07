@@ -7,6 +7,7 @@
 package io.github.cowwoc.cat.hooks;
 
 import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner;
+import io.github.cowwoc.cat.hooks.skills.InstructionTestRunner;
 import io.github.cowwoc.cat.hooks.util.IssueDiscovery;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -35,6 +36,7 @@ public final class SharedSecrets
   private static PostToolUseFailureHookAccess postToolUseFailureHookAccess;
   private static IssueDiscoveryAccess issueDiscoveryAccess;
   private static EmpiricalTestRunnerAccess empiricalTestRunnerAccess;
+  private static InstructionTestRunnerAccess instructionTestRunnerAccess;
 
   private SharedSecrets()
   {
@@ -169,6 +171,33 @@ public final class SharedSecrets
   }
 
   /**
+   * Registers the access object for {@link InstructionTestRunner}.
+   *
+   * @param access the access object
+   * @throws NullPointerException if {@code access} is null
+   */
+  public static void setInstructionTestRunnerAccess(InstructionTestRunnerAccess access)
+  {
+    requireThat(access, "access").isNotNull();
+    instructionTestRunnerAccess = access;
+  }
+
+  /**
+   * Computes the SHA-256 hex digest of the given bytes.
+   *
+   * @param bytes the bytes to hash
+   * @return lowercase hex SHA-256 digest
+   * @throws NullPointerException if {@code bytes} is null
+   */
+  public static String sha256Bytes(byte[] bytes)
+  {
+    requireThat(bytes, "bytes").isNotNull();
+    if (instructionTestRunnerAccess == null)
+      initialize(InstructionTestRunner.class);
+    return instructionTestRunnerAccess.sha256Bytes(bytes);
+  }
+
+  /**
    * Initializes a class. If the class is already initialized, this method has no effect.
    *
    * @param clazz the class
@@ -231,6 +260,21 @@ public final class SharedSecrets
      * @throws IOException if parsing fails
      */
     String getIssueStatus(String content, Path indexPath, JsonMapper mapper) throws IOException;
+  }
+
+  /**
+   * Provides access to {@link InstructionTestRunner} cryptographic helpers.
+   */
+  @FunctionalInterface
+  public interface InstructionTestRunnerAccess
+  {
+    /**
+     * Computes the SHA-256 hex digest of the given bytes.
+     *
+     * @param bytes the bytes to hash
+     * @return lowercase hex SHA-256 digest
+     */
+    String sha256Bytes(byte[] bytes);
   }
 
   /**

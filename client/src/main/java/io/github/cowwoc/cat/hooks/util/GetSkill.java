@@ -13,6 +13,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
+import io.github.cowwoc.cat.hooks.SharedSecrets;
 import io.github.cowwoc.cat.hooks.ShellParser;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -24,11 +25,8 @@ import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -124,7 +122,6 @@ public final class GetSkill
   private static final Pattern POSITIONAL_INDEXED_ARG_PATTERN = Pattern.compile("\\$(\\d+)");
   private static final Pattern ARGUMENTS_INDEXED_PATTERN = Pattern.compile("\\$ARGUMENTS\\[(\\d+)]");
   private static final String LAUNCHER_DIRECTORY = "client/bin";
-  private static final HexFormat HEX_FORMAT = HexFormat.of();
 
   private final ClaudeTool scope;
   private final Path pluginRoot;
@@ -785,17 +782,7 @@ public final class GetSkill
         "first-use.md not found for skill '" + skillName + "': " + firstUsePath + ". " +
           "Every skill must have a first-use.md file.");
     byte[] fileBytes = Files.readAllBytes(firstUsePath);
-    try
-    {
-      MessageDigest digest = MessageDigest.getInstance("SHA-256");
-      byte[] hashBytes = digest.digest(fileBytes);
-      return HEX_FORMAT.formatHex(hashBytes);
-    }
-    catch (NoSuchAlgorithmException e)
-    {
-      // SHA-256 is guaranteed by the Java SE specification to be available on all compliant JVMs.
-      throw new AssertionError("SHA-256 MessageDigest not available", e);
-    }
+    return SharedSecrets.sha256Bytes(fileBytes);
   }
 
   /**

@@ -6,6 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
+import io.github.cowwoc.cat.hooks.SharedSecrets;
 import io.github.cowwoc.cat.hooks.skills.InstructionTestRunner;
 import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
@@ -795,30 +796,28 @@ public final class InstructionTestRunnerTest
 
   /**
    * Verifies that detect-changes reports skill_changed=false and all IDs carried forward
-   * when the skill file is identical at both commits.
+   * when the SHA-256 of the current skill file matches the provided hash.
    */
   @Test
-  public void detectChangesNoChanges() throws IOException
+  public void detectChangesSha256MatchAllCarriedForward() throws IOException
   {
-    Path repoDir = TestUtils.createTempGitRepo("main");
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      // Create skill file and commit it
-      Path skillFile = repoDir.resolve("skill.md");
-      Files.writeString(skillFile, """
+      // Create a skill file
+      Path skillFile = tempDir.resolve("skill.md");
+      String skillContent = """
         ---
         description: Test skill
         model: haiku
         ---
         # Step 1
         Do something.
-        """, StandardCharsets.UTF_8);
-      TestUtils.runGit(repoDir, "add", "skill.md");
-      TestUtils.runGit(repoDir, "commit", "-m", "add skill");
+        """;
+      Files.writeString(skillFile, skillContent, StandardCharsets.UTF_8);
 
-      // Get the SHA of the commit
-      String sha = TestUtils.runGitCommandWithOutput(repoDir, "rev-parse", "HEAD");
+      // Compute SHA-256 of the file content using the production helper
+      String sha256 = SharedSecrets.sha256Bytes(Files.readAllBytes(skillFile));
 
       // Create test directory with .md test case files
       Path testDir = tempDir.resolve("test-cases");
@@ -851,7 +850,7 @@ public final class InstructionTestRunnerTest
         """, StandardCharsets.UTF_8);
 
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
-      String result = runner.detectChanges(new String[]{sha, skillFile.toString(), testDir.toString()});
+      String result = runner.detectChanges(new String[]{sha256, skillFile.toString(), testDir.toString()});
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(result);
@@ -859,50 +858,41 @@ public final class InstructionTestRunnerTest
       requireThat(root.path("skill_changed").asBoolean(), "skill_changed").isFalse();
       requireThat(root.path("rerun_test_case_ids").size(), "rerunCount").isEqualTo(0);
       requireThat(root.path("carryforward_test_case_ids").size(), "carryforwardCount").isEqualTo(2);
+      // semantic_units_path_hint must be present when skill has not changed
+      requireThat(root.path("semantic_units_path_hint").isMissingNode(),
+        "semanticUnitsPathHintMissing").isFalse();
+      requireThat(root.path("semantic_units_path_hint").asString(),
+        "semanticUnitsPathHint").contains("skill-test-runner extract-units");
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(repoDir);
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
   /**
-   * Verifies that detect-changes reports frontmatter_changed=true and all IDs in rerun
-   * when the frontmatter differs between commits.
+   * Verifies that detect-changes reports skill_changed=true and all IDs in rerun
+   * when the SHA-256 of the current skill file does not match the provided hash.
    */
   @Test
-  public void detectChangesFrontmatterChanged() throws IOException
+  public void detectChangesSha256MismatchAllRerun() throws IOException
   {
-    Path repoDir = TestUtils.createTempGitRepo("main");
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      // Commit the old skill content
-      Path skillFile = repoDir.resolve("skill.md");
+      // Create a skill file
+      Path skillFile = tempDir.resolve("skill.md");
       Files.writeString(skillFile, """
         ---
-        description: Old description
+        description: Test skill
         model: haiku
         ---
         # Step 1
         Do something.
         """, StandardCharsets.UTF_8);
-      TestUtils.runGit(repoDir, "add", "skill.md");
-      TestUtils.runGit(repoDir, "commit", "-m", "add skill");
 
-      // Capture old SHA
-      String oldSha = TestUtils.runGitCommandWithOutput(repoDir, "rev-parse", "HEAD");
-
-      // Write new skill file with changed frontmatter (same body)
-      Files.writeString(skillFile, """
-        ---
-        description: New description
-        model: haiku
-        ---
-        # Step 1
-        Do something.
-        """, StandardCharsets.UTF_8);
+      // Use the SHA-256 of an empty string — deliberately wrong hash
+      String wrongSha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 
       // Create test directory with .md test case files
       Path testDir = tempDir.resolve("test-cases");
@@ -935,236 +925,120 @@ public final class InstructionTestRunnerTest
         """, StandardCharsets.UTF_8);
 
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
-      String result = runner.detectChanges(new String[]{oldSha, skillFile.toString(), testDir.toString()});
-
-      JsonMapper mapper = scope.getJsonMapper();
-      JsonNode root = mapper.readTree(result);
-
-      requireThat(root.path("frontmatter_changed").asBoolean(), "frontmatter_changed").isTrue();
-      requireThat(root.path("rerun_test_case_ids").size(), "rerunCount").isEqualTo(2);
-      requireThat(root.path("carryforward_test_case_ids").size(), "carryforwardCount").isEqualTo(0);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(repoDir);
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that detect-changes reports body_changed=true and frontmatter_changed=false
-   * and requires_unit_mapping=true when only the body differs between commits.
-   */
-  @Test
-  public void detectChangesBodyOnlyChanged() throws IOException
-  {
-    Path repoDir = TestUtils.createTempGitRepo("main");
-    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
-    try (var scope = new TestClaudeTool(tempDir, tempDir))
-    {
-      // Commit the old skill content
-      Path skillFile = repoDir.resolve("skill.md");
-      Files.writeString(skillFile, """
-        ---
-        description: Test skill
-        model: haiku
-        ---
-        # Step 1
-        Original body content.
-        """, StandardCharsets.UTF_8);
-      TestUtils.runGit(repoDir, "add", "skill.md");
-      TestUtils.runGit(repoDir, "commit", "-m", "add skill");
-
-      // Capture old SHA
-      String oldSha = TestUtils.runGitCommandWithOutput(repoDir, "rev-parse", "HEAD");
-
-      // Write new skill file with same frontmatter but different body
-      Files.writeString(skillFile, """
-        ---
-        description: Test skill
-        model: haiku
-        ---
-        # Step 1
-        Changed body content.
-        """, StandardCharsets.UTF_8);
-
-      // Create test directory with .md test case file
-      Path testDir = tempDir.resolve("test-cases");
-      Files.createDirectories(testDir);
-      Files.writeString(testDir.resolve("tc1.md"), """
-        ---
-        category: REQUIREMENT
-        ---
-
-        ## Turn 1
-
-        Test prompt for tc1.
-
-        ## Assertions
-
-        1. The Skill tool was invoked
-        """, StandardCharsets.UTF_8);
-
-      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
-      String result = runner.detectChanges(new String[]{oldSha, skillFile.toString(), testDir.toString()});
-
-      JsonMapper mapper = scope.getJsonMapper();
-      JsonNode root = mapper.readTree(result);
-
-      requireThat(root.path("body_changed").asBoolean(), "body_changed").isTrue();
-      requireThat(root.path("frontmatter_changed").asBoolean(), "frontmatter_changed").isFalse();
-      requireThat(root.path("requires_unit_mapping").asBoolean(), "requires_unit_mapping").isTrue();
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(repoDir);
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that detect-changes reports skill_changed=true and transitive_dependency_changed=true
-   * when a sibling .md file (e.g., first-use.md) changes while SKILL.md itself is unmodified.
-   * <p>
-   * SKILL.md loads companion files via preprocessor directives; a change in a companion file is
-   * semantically equivalent to a change in the skill itself.
-   */
-  @Test
-  public void detectChangesTransitiveDependencyChanged() throws IOException
-  {
-    Path repoDir = TestUtils.createTempGitRepo("main");
-    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
-    try (var scope = new TestClaudeTool(tempDir, tempDir))
-    {
-      Path skillDir = repoDir.resolve("plugin/skills/my-skill");
-      Files.createDirectories(skillDir);
-
-      // Create SKILL.md and first-use.md (sibling companion file)
-      Path skillFile = skillDir.resolve("SKILL.md");
-      Files.writeString(skillFile, """
-        ---
-        description: My skill
-        ---
-        !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" my-skill "$0"`
-        """, StandardCharsets.UTF_8);
-      Path firstUseMd = skillDir.resolve("first-use.md");
-      Files.writeString(firstUseMd, """
-        # My Skill
-
-        Original content.
-        """, StandardCharsets.UTF_8);
-
-      TestUtils.runGit(repoDir, "add", "plugin/skills/my-skill/SKILL.md",
-        "plugin/skills/my-skill/first-use.md");
-      TestUtils.runGit(repoDir, "commit", "-m", "add skill");
-      String oldSha = TestUtils.runGitCommandWithOutput(repoDir, "rev-parse", "HEAD").strip();
-
-      // Create test directory
-      Path testDir = tempDir.resolve("tests");
-      Files.createDirectories(testDir);
-      Files.writeString(testDir.resolve("tc1.md"), """
-        ---
-        category: requirement
-        ---
-
-        ## Turn 1
-
-        Test prompt.
-
-        ## Assertions
-
-        1. Something.
-        """, StandardCharsets.UTF_8);
-
-      // Modify only first-use.md (SKILL.md unchanged)
-      Files.writeString(firstUseMd, """
-        # My Skill
-
-        Updated content that changes behavior.
-        """, StandardCharsets.UTF_8);
-
-      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
-      String result = runner.detectChanges(new String[]{oldSha, skillFile.toString(), testDir.toString()});
+      String result = runner.detectChanges(new String[]{wrongSha256, skillFile.toString(),
+        testDir.toString()});
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(result);
 
       requireThat(root.path("skill_changed").asBoolean(), "skill_changed").isTrue();
-      requireThat(root.path("body_changed").asBoolean(), "body_changed").isFalse();
-      requireThat(root.path("frontmatter_changed").asBoolean(), "frontmatter_changed").isFalse();
-      // All test cases must re-run because skill_changed=true
-      JsonNode rerunIds = root.path("rerun_test_case_ids");
-      requireThat(rerunIds.isArray(), "rerun_test_case_ids.isArray").isTrue();
-      requireThat(rerunIds.size(), "rerun_test_case_ids.size").isEqualTo(1);
+      requireThat(root.path("rerun_test_case_ids").size(), "rerunCount").isEqualTo(2);
+      requireThat(root.path("carryforward_test_case_ids").size(), "carryforwardCount").isEqualTo(0);
+      // semantic_units_path_hint must be absent when skill has changed
+      requireThat(root.path("semantic_units_path_hint").isMissingNode(),
+        "semanticUnitsPathHintMissing").isTrue();
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(repoDir);
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
   /**
-   * Verifies that detect-changes reports skill_changed=false and transitive_dependency_changed=false
-   * when neither SKILL.md nor any sibling .md file changed.
+   * Verifies that detect-changes throws IllegalArgumentException when given a short (non-64-char)
+   * hex string — the old git SHA format is rejected.
    */
-  @Test
-  public void detectChangesNoTransitiveDependencyChange() throws IOException
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*64.*")
+  public void detectChangesInvalidShaShortStringThrowsIllegalArgument() throws IOException
   {
-    Path repoDir = TestUtils.createTempGitRepo("main");
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      Path skillDir = repoDir.resolve("plugin/skills/my-skill");
-      Files.createDirectories(skillDir);
-
-      Path skillFile = skillDir.resolve("SKILL.md");
-      Files.writeString(skillFile, """
-        ---
-        description: My skill
-        ---
-        !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" my-skill "$0"`
-        """, StandardCharsets.UTF_8);
-      Path firstUseMd = skillDir.resolve("first-use.md");
-      Files.writeString(firstUseMd, """
-        # My Skill
-
-        Stable content.
-        """, StandardCharsets.UTF_8);
-
-      TestUtils.runGit(repoDir, "add", "plugin/skills/my-skill/SKILL.md",
-        "plugin/skills/my-skill/first-use.md");
-      TestUtils.runGit(repoDir, "commit", "-m", "add skill");
-      String oldSha = TestUtils.runGitCommandWithOutput(repoDir, "rev-parse", "HEAD").strip();
-
+      Path skillFile = tempDir.resolve("skill.md");
+      Files.writeString(skillFile, "# Skill\n", StandardCharsets.UTF_8);
       Path testDir = tempDir.resolve("tests");
       Files.createDirectories(testDir);
-      Files.writeString(testDir.resolve("tc1.md"), """
-        ---
-        category: requirement
-        ---
 
-        ## Turn 1
-
-        Test prompt.
-
-        ## Assertions
-
-        1. Something.
-        """, StandardCharsets.UTF_8);
-
-      // No changes to SKILL.md or first-use.md
+      // A 9-character git commit SHA abbreviation — invalid under the new contract
+      String shortGitSha = "b40012f59";
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
-      String result = runner.detectChanges(new String[]{oldSha, skillFile.toString(), testDir.toString()});
+      runner.detectChanges(new String[]{shortGitSha, skillFile.toString(), testDir.toString()});
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that detect-changes throws IllegalArgumentException when given a 64-character string
+   * that contains non-hex characters.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*64.*")
+  public void detectChangesInvalidShaNotHexThrowsIllegalArgument() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Path skillFile = tempDir.resolve("skill.md");
+      Files.writeString(skillFile, "# Skill\n", StandardCharsets.UTF_8);
+      Path testDir = tempDir.resolve("tests");
+      Files.createDirectories(testDir);
+
+      // 64 chars but contains uppercase G — not valid lowercase hex
+      String notHex = "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG";
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      runner.detectChanges(new String[]{notHex, skillFile.toString(), testDir.toString()});
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that detect-changes with an empty test directory returns empty arrays for all ID fields.
+   */
+  @Test
+  public void detectChangesEmptyTestDirectoryReturnsEmptyArrays() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      // Create a skill file
+      Path skillFile = tempDir.resolve("skill.md");
+      String skillContent = """
+        ---
+        description: Test skill
+        model: haiku
+        ---
+        # Step 1
+        Do something.
+        """;
+      Files.writeString(skillFile, skillContent, StandardCharsets.UTF_8);
+
+      // Compute SHA using the production helper
+      String sha256 = SharedSecrets.sha256Bytes(Files.readAllBytes(skillFile));
+
+      // Create an empty test directory (no .md files)
+      Path testDir = tempDir.resolve("test-cases");
+      Files.createDirectories(testDir);
+
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      String result = runner.detectChanges(new String[]{sha256, skillFile.toString(), testDir.toString()});
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(result);
 
       requireThat(root.path("skill_changed").asBoolean(), "skill_changed").isFalse();
+      requireThat(root.path("all_test_case_ids").size(), "allCount").isEqualTo(0);
+      requireThat(root.path("rerun_test_case_ids").size(), "rerunCount").isEqualTo(0);
+      requireThat(root.path("carryforward_test_case_ids").size(), "carryforwardCount").isEqualTo(0);
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(repoDir);
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }

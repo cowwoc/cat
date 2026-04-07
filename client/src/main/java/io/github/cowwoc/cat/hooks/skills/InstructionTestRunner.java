@@ -10,6 +10,7 @@ import io.github.cowwoc.cat.hooks.ClaudePluginScope;
 import io.github.cowwoc.cat.hooks.ClaudeTool;
 import static io.github.cowwoc.cat.hooks.Strings.block;
 import io.github.cowwoc.cat.hooks.MainClaudeTool;
+import io.github.cowwoc.cat.hooks.SharedSecrets;
 import io.github.cowwoc.cat.hooks.util.ProcessRunner;
 import io.github.cowwoc.cat.hooks.util.SkillDiscovery;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
@@ -21,10 +22,8 @@ import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -46,8 +45,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -99,15 +96,15 @@ public final class InstructionTestRunner
    */
   private static final double PRIOR_BOOST = 1.112;
   /**
-   * Pattern matching unified diff hunk headers: {@code @@ -old +new,count @@}.
-   */
-  private static final Pattern HUNK_PATTERN =
-    Pattern.compile("^@@ -\\d+(?:,\\d+)? \\+(\\d+)(?:,(\\d+))? @@");
-  /**
    * ISO-8601 UTC timestamp formatter.
    */
   private static final DateTimeFormatter ISO_UTC =
     DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC);
+
+  static
+  {
+    SharedSecrets.setInstructionTestRunnerAccess(InstructionTestRunner::sha256Bytes);
+  }
 
   private final Logger log = LoggerFactory.getLogger(InstructionTestRunner.class);
   private final ClaudePluginScope scope;
@@ -309,17 +306,15 @@ public final class InstructionTestRunner
   /**
    * Implements the {@code detect-changes} command.
    * <p>
-   * Compares the old skill (at the given git SHA) against the current skill file and its transitive
-   * dependencies, and identifies which test cases need re-running based on changed line ranges.
-   * <p>
-   * Transitive dependencies are all {@code .md} files co-located in the same directory as the skill file.
-   * SKILL.md loads {@code first-use.md} and other companion files via preprocessor directives; changing
-   * any of these is semantically equivalent to changing the skill itself.
+   * Compares the SHA-256 content hash of the current skill file against the provided hash,
+   * and partitions test cases into rerun vs carry-forward.
    *
-   * @param args {@code [old_skill_sha, new_skill_path, test_dir_path]}
-   * @return a JSON object describing changed ranges and test case partitioning
-   * @throws IllegalArgumentException if arguments are missing or files are not found
-   * @throws IOException              if files cannot be read or git commands fail
+   * @param args {@code [old_skill_sha256, new_skill_path, test_dir_path]}
+   * @return a JSON object with {@code skill_changed}, {@code all_test_case_ids},
+   *   {@code rerun_test_case_ids}, and {@code carryforward_test_case_ids}
+   * @throws IllegalArgumentException if arguments are missing, the SHA-256 is malformed, or files
+   *   are not found
+   * @throws IOException if files cannot be read
    */
   public String detectChanges(String[] args) throws IOException
   {
@@ -327,15 +322,16 @@ public final class InstructionTestRunner
     if (args.length != 3)
       throw new IllegalArgumentException(
         "InstructionTestRunner detect-changes: expected 3 arguments, got " + args.length + ".\n" +
-        "Usage: skill-test-runner detect-changes <old_skill_sha> <new_skill_path> <test_dir_path>");
+        "Usage: skill-test-runner detect-changes <old_skill_sha256> <new_skill_path> <test_dir_path>");
 
     String oldSha = args[0];
     Path newSkillPath = Path.of(args[1]);
     Path testDirPath = Path.of(args[2]);
 
-    if (!oldSha.matches("[0-9a-f]{7,40}"))
+    if (!oldSha.matches("[0-9a-f]{64}"))
       throw new IllegalArgumentException(
-        "InstructionTestRunner detect-changes: invalid git SHA format: " + oldSha);
+        "InstructionTestRunner detect-changes: invalid SHA-256 content hash format: '" + oldSha +
+        "'. Expected 64 lowercase hex characters (got " + oldSha.length() + " characters).");
 
     if (Files.notExists(newSkillPath))
       throw new IllegalArgumentException(
@@ -344,167 +340,34 @@ public final class InstructionTestRunner
       throw new IllegalArgumentException(
         "InstructionTestRunner detect-changes: test directory not found: " + testDirPath);
 
-    // Determine git repo root from the skill file's directory
-    ProcessRunner.Result rootResult =
-      ProcessRunner.run(newSkillPath.toAbsolutePath().getParent(),
-        "git", "rev-parse", "--show-toplevel");
-    if (rootResult.exitCode() != 0 || rootResult.stdout().isBlank())
-      throw new IOException(
-        "InstructionTestRunner detect-changes: cannot determine git repo root from: " + newSkillPath);
-    Path repoRoot = Path.of(rootResult.stdout().strip());
+    String currentSha = sha256File(newSkillPath);
+    boolean skillChanged = !currentSha.equals(oldSha);
+    List<String> allTestCaseIds = readAllTestCaseIds(testDirPath);
 
-    // Derive repo-relative path for git show (normalize path separators for git)
-    String relPath = repoRoot.relativize(newSkillPath.toAbsolutePath()).toString().
-      replace(java.io.File.separatorChar, '/');
+    JsonMapper mapper = scope.getJsonMapper();
+    ObjectNode result = mapper.createObjectNode();
+    result.put("skill_changed", skillChanged);
 
-    // Retrieve old skill content via git show
-    ProcessRunner.Result showResult =
-      ProcessRunner.run(repoRoot, "git", "show", oldSha + ":" + relPath);
-    if (showResult.exitCode() != 0)
-      throw new IOException(
-        "InstructionTestRunner detect-changes: git show " + oldSha + ":" + relPath + " failed.\n" +
-        "Verify that the SHA '" + oldSha + "' exists and the path '" + relPath + "' was tracked at that commit.");
+    ArrayNode allIdsArray = mapper.createArrayNode();
+    for (String id : allTestCaseIds)
+      allIdsArray.add(id);
+    result.set("all_test_case_ids", allIdsArray);
 
-    // Write old content to temp file, parse both
-    Path oldTempFile = Files.createTempFile("instruction-test-old-", ".md");
-    Path newTempFile = Files.createTempFile("instruction-test-new-", ".md");
-    try
+    if (skillChanged)
     {
-      Files.writeString(oldTempFile, showResult.stdout(), StandardCharsets.UTF_8);
-      Files.copy(newSkillPath, newTempFile, StandardCopyOption.REPLACE_EXISTING);
-
-      ParsedSkill oldSkill = parseSkill(oldTempFile);
-      ParsedSkill newSkill = parseSkill(newTempFile);
-
-      boolean frontmatterChanged =
-        !sha256String(oldSkill.frontmatter()).equals(sha256String(newSkill.frontmatter()));
-
-      // Write body lines to temp files for diff
-      Path oldBodyFile = Files.createTempFile("instruction-test-old-body-", ".txt");
-      Path newBodyFile = Files.createTempFile("instruction-test-new-body-", ".txt");
-      try
-      {
-        Files.write(oldBodyFile, oldSkill.bodyLines(), StandardCharsets.UTF_8);
-        Files.write(newBodyFile, newSkill.bodyLines(), StandardCharsets.UTF_8);
-
-        List<int[]> changedRanges = diffBodies(oldBodyFile, newBodyFile);
-        boolean bodyChanged = !changedRanges.isEmpty();
-
-        // Check transitive dependencies: all sibling .md files in the same directory.
-        // SKILL.md loads companion files (e.g., first-use.md) via preprocessor directives;
-        // a change in any companion file is semantically equivalent to a skill change.
-        boolean transitiveDependencyChanged =
-          hasTransitiveDependencyChanged(repoRoot, oldSha, relPath);
-
-        boolean skillChanged = frontmatterChanged || bodyChanged || transitiveDependencyChanged;
-
-        // Collect all test case IDs
-        List<String> allTestCaseIds = readAllTestCaseIds(testDirPath);
-
-        JsonMapper mapper = scope.getJsonMapper();
-        ObjectNode result = mapper.createObjectNode();
-        result.put("skill_changed", skillChanged);
-        result.put("frontmatter_changed", frontmatterChanged);
-        result.put("body_changed", bodyChanged);
-
-        ArrayNode rangesArray = mapper.createArrayNode();
-        for (int[] range : changedRanges)
-        {
-          ObjectNode rangeNode = mapper.createObjectNode();
-          rangeNode.put("start", range[0]);
-          rangeNode.put("end", range[1]);
-          rangesArray.add(rangeNode);
-        }
-        result.set("changed_ranges", rangesArray);
-
-        ArrayNode allIdsArray = mapper.createArrayNode();
-        for (String id : allTestCaseIds)
-          allIdsArray.add(id);
-        result.set("all_test_case_ids", allIdsArray);
-
-        if (!skillChanged)
-        {
-          // No changes: all test cases carry forward
-          result.set("rerun_test_case_ids", mapper.createArrayNode());
-          result.set("carryforward_test_case_ids", allIdsArray.deepCopy());
-          result.put("semantic_units_path_hint",
-            "Run: skill-test-runner extract-units " + args[1]);
-        }
-        else if (frontmatterChanged || transitiveDependencyChanged)
-        {
-          // Frontmatter or transitive dependency changed: all test cases must re-run.
-          // Companion file changes (e.g., first-use.md) cannot be attributed to specific test cases,
-          // so the same full-rerun rule applies as for frontmatter changes.
-          result.set("rerun_test_case_ids", allIdsArray.deepCopy());
-          result.set("carryforward_test_case_ids", mapper.createArrayNode());
-          result.put("semantic_units_path_hint",
-            "Run: skill-test-runner extract-units " + args[1]);
-        }
-        else
-        {
-          // Body changed only: agent must apply semantic unit location filtering
-          result.set("rerun_test_case_ids", mapper.createArrayNode());
-          result.set("carryforward_test_case_ids", mapper.createArrayNode());
-          result.put("requires_unit_mapping", true);
-          result.put("semantic_units_path_hint",
-            "Run: skill-test-runner extract-units " + args[1] +
-            " to get line-numbered body, then apply semantic unit extraction, then run: " +
-            "skill-test-runner map-units " + testDirPath + " <changed_unit_ids_json>");
-        }
-
-        // Produce compact single-line JSON to match Bash output style
-        return compactJson(result);
-      }
-      finally
-      {
-        Files.deleteIfExists(oldBodyFile);
-        Files.deleteIfExists(newBodyFile);
-      }
+      result.set("rerun_test_case_ids", allIdsArray.deepCopy());
+      result.set("carryforward_test_case_ids", mapper.createArrayNode());
     }
-    finally
-    {
-      Files.deleteIfExists(oldTempFile);
-      Files.deleteIfExists(newTempFile);
-    }
-  }
-
-  /**
-   * Returns {@code true} if any {@code .md} file in the same directory as the skill file, other
-   * than the skill file itself, changed between the old git SHA and the current working tree.
-   * <p>
-   * SKILL.md loads companion files (e.g., {@code first-use.md}) via preprocessor directives. Any
-   * change to a companion file is semantically equivalent to a change in the skill itself, because
-   * the agent reads the fully-expanded skill content at test time.
-   *
-   * @param repoRoot     the repository root directory
-   * @param oldSha       the git commit SHA representing the old skill state
-   * @param skillRelPath the repo-relative path of the skill file (forward-slash separated)
-   * @return {@code true} if any companion {@code .md} file changed since {@code oldSha}
-   * @throws IOException if git commands fail
-   */
-  private boolean hasTransitiveDependencyChanged(Path repoRoot, String oldSha,
-    String skillRelPath) throws IOException
-  {
-    // Determine the repo-relative directory containing the skill file
-    String skillDirRelPath;
-    if (skillRelPath.contains("/"))
-      skillDirRelPath = skillRelPath.substring(0, skillRelPath.lastIndexOf('/'));
     else
-      skillDirRelPath = ".";
-
-    // List all .md files in the skill directory that changed between oldSha and the working tree
-    ProcessRunner.Result diffResult = ProcessRunner.run(repoRoot,
-      "git", "diff", "--name-only", oldSha, "--", skillDirRelPath);
-    if (diffResult.exitCode() != 0 || diffResult.stdout().isBlank())
-      return false;
-
-    for (String changedFile : diffResult.stdout().split("\n"))
     {
-      String trimmed = changedFile.trim();
-      if (trimmed.endsWith(".md") && !trimmed.equals(skillRelPath))
-        return true;
+      result.set("rerun_test_case_ids", mapper.createArrayNode());
+      result.set("carryforward_test_case_ids", allIdsArray.deepCopy());
+      result.put("semantic_units_path_hint",
+        "Run: skill-test-runner extract-units " + args[1]);
     }
-    return false;
+
+    // Produce compact single-line JSON to match Bash output style
+    return compactJson(result);
   }
 
   /**
@@ -805,7 +668,7 @@ public final class InstructionTestRunner
       String priorModelId = priorRoot.path("model_id").asString("");
       // Only carry forward prior results when model_id matches the current model
       boolean modelMatches = !priorModelId.isBlank() && priorModelId.equals(currentModelId);
-      if (!priorModelId.isBlank() && !priorModelId.equals(currentModelId))
+      if (!modelMatches && !priorModelId.isBlank())
       {
         log.warn("Model changed from {} to {}, invalidating cached SPRT results",
           priorModelId, currentModelId);
@@ -1331,7 +1194,7 @@ public final class InstructionTestRunner
    * @param bytes the bytes to hash
    * @return lowercase hex SHA-256 digest
    */
-  private String sha256Bytes(byte[] bytes)
+  private static String sha256Bytes(byte[] bytes)
   {
     try
     {
@@ -1354,17 +1217,6 @@ public final class InstructionTestRunner
   private String sha256File(Path filePath) throws IOException
   {
     return sha256Bytes(Files.readAllBytes(filePath));
-  }
-
-  /**
-   * Computes the SHA-256 hex digest of a string.
-   *
-   * @param text the text to hash
-   * @return lowercase hex SHA-256 digest
-   */
-  private String sha256String(String text)
-  {
-    return sha256Bytes(text.getBytes(StandardCharsets.UTF_8));
   }
 
   /**
@@ -1392,56 +1244,6 @@ public final class InstructionTestRunner
     {
       throw new AssertionError("SHA-256 algorithm not available", e);
     }
-  }
-
-  /**
-   * Runs a unified diff between two body files and returns the changed line ranges in the new file.
-   *
-   * @param oldBodyFile path to the old body file
-   * @param newBodyFile path to the new body file
-   * @return list of {@code [start, end]} pairs (1-based, inclusive)
-   * @throws IOException if the diff command fails
-   */
-  private List<int[]> diffBodies(Path oldBodyFile, Path newBodyFile) throws IOException
-  {
-    ProcessRunner.Result diffResult =
-      ProcessRunner.run("diff", "-u", oldBodyFile.toString(), newBodyFile.toString());
-    // diff exits 1 when files differ — that's expected
-    if (diffResult.exitCode() > 1)
-      throw new IOException("diff command failed unexpectedly");
-
-    String diffOutput = diffResult.stdout();
-    if (diffOutput.isBlank())
-      return List.of();
-
-    List<int[]> ranges = new ArrayList<>();
-    try (BufferedReader reader = new BufferedReader(new StringReader(diffOutput)))
-    {
-      String line = reader.readLine();
-      while (line != null)
-      {
-        Matcher matcher = HUNK_PATTERN.matcher(line);
-        if (!matcher.find())
-        {
-          line = reader.readLine();
-          continue;
-        }
-        int newStart = Integer.parseInt(matcher.group(1));
-        int count;
-        if (matcher.group(2) != null)
-          count = Integer.parseInt(matcher.group(2));
-        else
-          count = 1;
-        int newEnd;
-        if (count == 0)
-          newEnd = newStart;
-        else
-          newEnd = newStart + count - 1;
-        ranges.add(new int[]{newStart, newEnd});
-        line = reader.readLine();
-      }
-    }
-    return ranges;
   }
 
   /**
