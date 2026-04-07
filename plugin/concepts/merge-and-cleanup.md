@@ -185,10 +185,10 @@ git branch -d {major}.{minor}-{issue-name}-sub-*
 
 ### 10. Update Parent State Files
 
-Update minor and major STATE.md progress (issue index.json already updated in step 6):
+Update minor and major index.json progress (issue index.json already updated in step 6):
 
-- Minor STATE.md: recalculate progress based on closed issues
-- Major STATE.md: recalculate progress based on closed minor versions
+- Minor index.json: recalculate progress based on closed issues
+- Major index.json: recalculate progress based on closed minor versions
 - ROADMAP.md: update if version status changed
 
 ### 11. Update Changelogs
