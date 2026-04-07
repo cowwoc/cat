@@ -60,6 +60,13 @@ This reduces extraction variance during validation and improves execution equiva
 - **Meta-commentary**: Explanatory comments about the document (NOT structural metadata)
 - **Non-essential examples**: Examples that don't add new information
 - **Elaboration**: Extended justifications or background that don't affect decisions
+  - **Exception — Prohibition WHY reasoning:** A WHY paragraph that is the primary justification for a
+    prohibition or requirement rule must be preserved even when it reads as elaboration. Indicators that a
+    paragraph is a prohibition WHY: it uses causal connectors ("because", "otherwise", "this prevents",
+    "this ensures", "without this"); it immediately precedes or follows a PROHIBITION semantic unit; or
+    removing it would leave the prohibition with no stated reason. WHY reasoning tied to prohibition rules
+    is not decoration — it is the mechanism by which Claude evaluates whether to comply. Stripping it
+    degrades compliance in proportion to the temptation to bypass the rule.
 
 ---
 
@@ -76,6 +83,10 @@ This reduces extraction variance during validation and improves execution equiva
 - Remove "Definition" sections that explain obvious terms
 - Combine related claims into single statements where possible
 - Use high-level principle statements instead of exhaustive enumeration (when appropriate)
+- **Exception — Prohibition WHY:** Do not condense or remove WHY paragraphs that are the sole
+  justification for a prohibition or requirement rule. Condensing a prohibition's WHY to zero words
+  is equivalent to stripping it. This exception itself is a prohibition rule and must not be
+  compressed or reframed to a positive form.
 
 ---
 
