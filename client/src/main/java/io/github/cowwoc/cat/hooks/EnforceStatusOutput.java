@@ -138,8 +138,13 @@ public final class EnforceStatusOutput
    * @param transcriptPath path to the transcript JSONL file, or empty string if unavailable
    * @param stopHookActive whether Claude Code set {@code stop_hook_active=true} on this invocation
    * @param scope the JVM scope for building hook responses
-   * @param sessionId the session ID, or empty string if unavailable
-   * @param sessionBasePath the base path for session directories, or null if unavailable
+   * @param sessionId the session ID, or empty string if unavailable; when empty, the
+   *                  pending-agent-result check is skipped entirely
+   * @param sessionBasePath the base path for session directories (used as the fallback transcript
+   *                        path per the upstream Claude Code workaround for issue 44450:
+   *                        {@code transcript_path} uses the cwd hash in worktrees while
+   *                        {@code sessionBasePath} uses the correct {@code CLAUDE_PROJECT_DIR} hash);
+   *                        can be dropped once that bug is fixed; {@code null} if unavailable
    * @return JSON string representing the hook decision
    * @throws IOException if the transcript file cannot be read
    */
@@ -147,9 +152,9 @@ public final class EnforceStatusOutput
     JvmScope scope, String sessionId, Path sessionBasePath) throws IOException
   {
     // Check for pending-agent-result flag before any other enforcement
-    if (!sessionId.isEmpty() && sessionBasePath != null)
+    if (!sessionId.isEmpty())
     {
-      Path flagPath = sessionBasePath.resolve(sessionId).resolve("pending-agent-result");
+      Path flagPath = scope.getCatSessionPath(sessionId).resolve("pending-agent-result");
       if (Files.exists(flagPath))
       {
         String reason = """
@@ -167,7 +172,40 @@ public final class EnforceStatusOutput
       }
     }
 
-    CheckResult result = checkTranscriptForStatusSkill(mapper, transcriptPath);
+    // Resolve transcript path in priority order:
+    // 1. transcriptPath from payload — correct in normal (non-worktree) sessions
+    // 2. sessionBasePath + sessionId + ".jsonl" — WORKAROUND: https://github.com/anthropics/claude-code/issues/44450
+    //    transcript_path uses cwd hash in worktrees; sessionBasePath uses CLAUDE_PROJECT_DIR hash (correct).
+    // 3. Neither found — fail fast
+    Path resolvedTranscriptPath = null;
+    if (!transcriptPath.isBlank())
+    {
+      Path primary = Paths.get(transcriptPath).toAbsolutePath().normalize();
+      if (Files.exists(primary))
+        resolvedTranscriptPath = primary;
+    }
+    if (resolvedTranscriptPath == null && !sessionId.isEmpty() && sessionBasePath != null)
+    {
+      // WORKAROUND: https://github.com/anthropics/claude-code/issues/44450
+      Path fallback = sessionBasePath.resolve(sessionId + ".jsonl");
+      if (Files.exists(fallback))
+        resolvedTranscriptPath = fallback;
+    }
+    if (resolvedTranscriptPath == null)
+    {
+      // When the hook has no session context at all, skip enforcement rather than block
+      if (transcriptPath.isBlank() && sessionId.isEmpty())
+        return Strings.empty();
+      // StringBuilder used to avoid inline conditional; Checkstyle's AvoidInlineConditionals
+      // rejects the equivalent ternary-based string concatenation.
+      StringBuilder msg = new StringBuilder(256);
+      msg.append("Transcript file not found. transcript_path=").append(transcriptPath);
+      if (sessionBasePath != null)
+        msg.append(", sessionBasePath=").append(sessionBasePath.resolve(sessionId + ".jsonl"));
+      throw new IOException(msg.toString());
+    }
+
+    CheckResult result = checkTranscriptForStatusSkill(mapper, resolvedTranscriptPath);
 
     if (result.statusInvoked && !result.hasBoxOutput)
     {
@@ -197,20 +235,16 @@ public final class EnforceStatusOutput
    * Check the transcript to see if /cat:status was invoked and if output was correct.
    *
    * @param mapper the JSON mapper to use for parsing
-   * @param transcriptPath path to the transcript file
+   * @param transcriptPath path to the transcript file (must exist)
    * @return result indicating whether status was invoked and whether response had box output
    * @throws IOException if the transcript file cannot be read
    */
-  private static CheckResult checkTranscriptForStatusSkill(JsonMapper mapper, String transcriptPath) throws IOException
+  private static CheckResult checkTranscriptForStatusSkill(JsonMapper mapper, Path transcriptPath) throws IOException
   {
-    if (transcriptPath.isBlank())
-      return new CheckResult(false, true);
-
-    Path path = Paths.get(transcriptPath);
     // Read only the last 10 lines via a bounded deque, avoiding loading the entire
     // (potentially multi-MB) transcript file into the 96MB heap.
     Deque<String> buffer = new ArrayDeque<>(11);
-    try (BufferedReader reader = Files.newBufferedReader(path))
+    try (BufferedReader reader = Files.newBufferedReader(transcriptPath))
     {
       String line = reader.readLine();
       while (line != null)

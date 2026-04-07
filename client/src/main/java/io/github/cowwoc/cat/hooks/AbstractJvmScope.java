@@ -108,7 +108,15 @@ public abstract class AbstractJvmScope implements JvmScope
   public Path getCatSessionPath(String sessionId)
   {
     requireThat(sessionId, "sessionId").isNotBlank();
-    return getCatWorkPath().resolve("sessions").resolve(sessionId);
+    // Defense-in-depth: ensure sessionId cannot traverse outside the sessions directory.
+    // sessionId originates from the Claude Code runtime (a trusted local process), but path
+    // traversal validation prevents accidental or malicious escapes if the value is ever
+    // sourced from a less-trusted context in the future.
+    Path sessionsDir = getCatWorkPath().resolve("sessions").normalize();
+    Path result = sessionsDir.resolve(sessionId).normalize();
+    if (!result.startsWith(sessionsDir))
+      throw new IllegalArgumentException("sessionId would escape sessions directory: " + sessionId);
+    return result;
   }
 
   @Override
