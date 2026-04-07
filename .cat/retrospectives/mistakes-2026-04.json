@@ -61,5 +61,24 @@
     "prevention_verified" : false,
     "recurrence_of" : null,
     "correct_behavior" : ""
+  }, {
+    "id" : "M617",
+    "timestamp" : "2026-04-07T20:47:31Z",
+    "category" : "protocol_violation",
+    "description" : "",
+    "root_cause" : "The git-amend-agent/first-use.md did not include a mandatory pre-amend staging step. The staging requirement appeared only as a passive checklist item in Success Criteria, not as a blocking verification step before Script Invocation.",
+    "cause_signature" : "compliance_failure:doc_missing:git_operations",
+    "prevention_type" : "skill",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : true,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : "After editing files via Edit tool, run git status to verify staging state, then stage all modified files with git add before invoking the amend script."
   } ]
 }

@@ -1331,6 +1331,371 @@ If the skill will be delegated to subagents:
 **Anti-pattern**: Telling a subagent "validation score must be 1.0" primes fabrication.
 Instead: "Run validation and report the actual score."
 
+---
+
+## Lean Intra-Agent Communication
+
+### Principle
+
+Every token in a subagent prompt, return contract, or exchanged file costs context. Agents only process data they
+actually use — explanatory prose, repeated constraints, and per-invocation rationale all inflate token usage without
+changing behavior.
+
+**What this covers:**
+- Subagent prompts (instructions passed when spawning a subagent)
+- Return contracts (JSON or structured output a subagent returns)
+- Agent-to-agent files (files written by one agent and read by the next)
+
+**What this does NOT cover:**
+- User-facing output (dialogs, progress banners, explanations shown to users)
+- Terminal messages read by humans
+
+The rule is simple: if a human never reads it, every character should earn its place.
+
+**Why this matters:** Subagent prompts are read on every invocation. A 500-token prompt repeated 10 times costs 5,000
+tokens. Refactoring that prompt to 150 tokens by externalizing constraints to a shared file saves 3,500 tokens with
+zero behavior change. At scale — skills with many subagent invocations or high-frequency skills — this compounds
+dramatically.
+
+### Start Lean — Add Only What Tests Demand
+
+Begin with the leanest design that could plausibly work. Add verbosity only when SPRT tests or compliance
+testing reveals that agents are missing the instruction:
+
+1. **Design lean first**: Apply all guidance in this section. Omit explanations, rationale, repeated constraints.
+2. **Test**: Run SPRT or skill tests against the lean design.
+3. **Add only what fails**: If a specific instruction is missed, add that instruction. If tests pass, ship lean.
+
+Verbosity added to fix a concrete test failure is justified. Verbosity added "just in case" is waste.
+
+**Anti-pattern**: Pre-emptively adding rationale ("…because agents sometimes miss this") before testing whether
+the lean version actually fails. Test first; add only what the tests demand.
+
+### Redundancy Elimination
+
+Constraints, rationale, and parameter explanations written inline in subagent prompts get re-read on every invocation.
+Consolidate them into shared files referenced by path.
+
+**Anti-pattern — constraints repeated per invocation:**
+
+```markdown
+## ❌ WRONG - Constraint block embedded in every subagent prompt
+
+Spawn extraction-agent with:
+"""
+Extract the skill name, description, and parameters from the input.
+
+Constraints:
+- Skill names must be lowercase with hyphens only (e.g., "my-skill")
+- Descriptions must be under 80 characters
+- Parameter names use snake_case
+- Do not invent parameters not present in the source
+- Preserve the exact description wording from the source
+"""
+```
+
+**Correct — consolidated reference:**
+
+```markdown
+## ✅ CORRECT - Constraints in external file, referenced once
+
+Spawn extraction-agent with:
+"""
+Extract skill name, description, and parameters from the input.
+Apply constraints from: {skill-directory}/extraction-constraints.md
+"""
+```
+
+The `extraction-constraints.md` file is read once per agent context, not once per invocation.
+
+**Anti-pattern — rationale embedded in prompt:**
+
+```markdown
+## ❌ WRONG - Explanation of why the step exists
+
+Spawn validator-agent with:
+"""
+Validate the extracted parameters. We run this step to ensure the extraction agent
+didn't hallucinate field names. The validator must independently re-derive the
+expected fields from the source and compare them — this two-agent approach prevents
+the extractor from self-validating its own output, which would defeat the purpose.
+
+Run: validate-extraction --input {extraction-output} --source {source-file}
+Report the actual validation score.
+"""
+```
+
+**Correct — rationale belongs in design docs, not prompts:**
+
+```markdown
+## ✅ CORRECT - Just the action
+
+Spawn validator-agent with:
+"""
+Run: validate-extraction --input {extraction-output} --source {source-file}
+Report the actual validation score.
+"""
+```
+
+Rationale belongs in the skill's design documentation (read once when designing), not in prompts (read every
+invocation).
+
+### File References Over Inline Content
+
+When a subagent needs to read or process a document, pass a file path instead of embedding the content inline.
+Inline content forces the agent to parse a large block during prompt ingestion. A file path enables on-demand
+reading — the agent reads exactly what it needs when it needs it.
+
+**Anti-pattern — document embedded inline:**
+
+```markdown
+## ❌ WRONG - Full document pasted into prompt
+
+Spawn review-agent with:
+"""
+Review this skill document:
+
+---
+# my-skill/first-use.md
+
+## Overview
+This skill performs the main workflow for...
+
+[200 lines of skill content]
+---
+
+Check for compliance violations.
+"""
+```
+
+**Correct — path reference:**
+
+```markdown
+## ✅ CORRECT - File path, not inline content
+
+Spawn review-agent with:
+"""
+Review: {skill-directory}/first-use.md
+Check for compliance violations.
+"""
+```
+
+**Size threshold for inline vs. file reference:**
+
+| Content size | Approach |
+|---|---|
+| < 200 characters (short data, a few values) | Inline is acceptable |
+| 200–500 characters | Prefer file reference if content is stable |
+| > 500 characters | Always use file reference |
+
+**Agent-only files (not user-facing) must be minimal:** When writing a file that one agent produces for another to
+consume, include only the data the consuming agent needs. No narrative, no context headers, no explanatory prose.
+
+**Anti-pattern — agent file with narrative headers:**
+
+```markdown
+## ❌ WRONG - Narrative in agent-to-agent file
+
+# Conceptual Decomposition
+
+This file contains the result of decomposing the issue into subtasks. The following
+subtasks were identified based on the issue description and scope analysis.
+
+## Subtask 1: Validate inputs
+...
+```
+
+**Correct — data only:**
+
+```markdown
+## ✅ CORRECT - Data only
+
+subtask_1: validate-inputs
+subtask_2: extract-parameters
+subtask_3: generate-output
+```
+
+### Compact Return Contracts
+
+Return JSON should contain required fields only. Do not embed prose explanations of the return format inside
+subagent prompts — put format documentation in a separate reference file, not in the invocation.
+
+**Anti-pattern — return format explained per invocation:**
+
+```markdown
+## ❌ WRONG - Return format prose in prompt
+
+Spawn extraction-agent with:
+"""
+Extract the parameters and return a JSON object. The JSON must contain:
+- "skill_name": the name of the skill as a string
+- "description": the skill description, kept under 80 characters
+- "parameters": an array of parameter objects, each with "name" (snake_case string),
+  "required" (boolean), and "description" (string under 60 characters)
+- "status": either "success" or "error"
+- "error_message": present only when status is "error", contains the reason
+
+Return only the JSON object with no surrounding text.
+"""
+```
+
+**Correct — schema in reference file, prompt stays minimal:**
+
+```markdown
+## ✅ CORRECT - Contract documented once, referenced when needed
+
+Spawn extraction-agent with:
+"""
+Extract skill parameters. Output format: {skill-directory}/extraction-return-schema.md
+"""
+```
+
+The `extraction-return-schema.md` file documents the contract once. The subagent reads it on first invocation;
+subsequent invocations don't re-parse the explanation.
+
+**For inline return contracts (small, stable schemas), use terse JSON:**
+
+```markdown
+## ✅ ACCEPTABLE - Terse inline schema for small contracts
+
+Return:
+{"status": "success|error", "skill_name": "...", "parameters": [...]}
+```
+
+One line is acceptable. A paragraph is not.
+
+**Skip "returns the complete X" prose:**
+
+```markdown
+## ❌ WRONG
+The agent returns the complete skill document after applying all transformations,
+formatted according to the project's markdown conventions.
+
+## ✅ CORRECT
+Return the transformed skill document.
+```
+
+### Minimal Agent-to-Agent Files
+
+Files exchanged between agents (not shown to users) should contain only the data the receiving agent needs.
+Remove explanatory prose, rationale, context sections, and implementation details.
+
+**Anti-pattern — file with context and explanation:**
+
+```markdown
+## ❌ WRONG - agent-handoff.md
+
+# Handoff from Phase 1
+
+This file was produced by the decomposition agent in Phase 1. It contains the
+conceptual breakdown of the issue, which was derived from the issue description
+and scope analysis. Phase 2 should use this to drive the implementation plan.
+
+## Scope Analysis
+The issue scope was determined to be...
+
+## Subtasks
+
+The following subtasks were identified:
+1. Validate inputs — ensures...
+2. Extract parameters — reads...
+```
+
+**Correct — data only:**
+
+```markdown
+## ✅ CORRECT - agent-handoff.md
+
+subtask_1: validate-inputs
+subtask_2: extract-parameters
+subtask_3: generate-output
+scope: narrow
+```
+
+**Why:** The receiving agent doesn't benefit from knowing how the handoff file was produced. It needs only the data
+it will act on. Every explanatory line is a token cost paid by the consuming agent.
+
+**Apply the same principle to intermediate result files:** When one agent writes analysis results for the next, write
+only the structured result. Don't include the analysis process, discarded alternatives, or commentary.
+
+**Anti-pattern — intermediate result with process commentary:**
+
+```json
+{
+  "note": "After considering several approaches, the following schema was selected...",
+  "schema": {...},
+  "alternatives_considered": ["approach A", "approach B"]
+}
+```
+
+**Correct:**
+
+```json
+{
+  "schema": {...}
+}
+```
+
+### Terse Procedure Language
+
+Step descriptions in subagent prompts should be short imperative statements. Agents execute steps — they don't
+benefit from multi-sentence explanations of what each step does or why it exists.
+
+**Anti-pattern — verbose step descriptions:**
+
+```markdown
+## ❌ WRONG
+
+Step 1: Validate the input parameters to ensure they conform to the expected schema.
+This is important because downstream processing assumes valid inputs, and passing
+invalid data will cause cryptic failures that are hard to diagnose.
+
+Step 2: Extract the skill name from the input by parsing the frontmatter. The skill
+name appears in the `name:` field of the YAML frontmatter block at the top of the file.
+Make sure to strip any surrounding whitespace from the value.
+
+Step 3: Write the extracted data to the output file so that the next agent in the
+pipeline can consume it without needing to re-parse the source document.
+```
+
+**Correct — terse imperative steps:**
+
+```markdown
+## ✅ CORRECT
+
+Step 1: Validate inputs against {skill-directory}/input-schema.md.
+Step 2: Extract skill name from frontmatter `name:` field.
+Step 3: Write extracted data to {output-file}.
+```
+
+**Rules for step language:**
+
+| Verbose pattern | Terse alternative |
+|---|---|
+| "Validate inputs to ensure they conform to..." | "Validate inputs against {schema}." |
+| "Extract the X by parsing the Y field of Z" | "Extract X from Y.Z." |
+| "Write the results to the output file so that the next agent can..." | "Write results to {output-file}." |
+| "Check whether the operation succeeded and if not, report the error" | "Check result; report error on failure." |
+| "This step is necessary because..." | (delete entirely) |
+
+Rationale sentences ("This is important because...", "This step is necessary because...") never belong in subagent
+prompt steps. If a step needs justification, it belongs in the skill's design documentation.
+
+### Checklist: Lean Intra-Agent Communication
+
+When delegating to subagents, verify:
+
+- [ ] Subagent prompt does NOT repeat constraints/rationale already in external files
+- [ ] Long documents (> 500 characters) are referenced via file path, not embedded inline
+- [ ] Return contract JSON is terse (required fields only, not explained in prose per invocation)
+- [ ] Agent-to-agent files contain only data needed by the receiving agent
+- [ ] Step descriptions are imperative one-liners, not multi-sentence explanations
+- [ ] Rationale belongs in design docs (read once), not in subagent prompts (read every invocation)
+- [ ] No "for reference" or "for context" sections in subagent prompts for data agents won't use
+- [ ] Inline content under 200 characters; anything larger uses a file reference
+
+---
+
 ### Reference Information Check
 
 Formatting details belong in preprocessing scripts, not skill documentation:
