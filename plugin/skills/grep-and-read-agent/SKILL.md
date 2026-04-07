@@ -1,5 +1,5 @@
 ---
-description: PREFER when searching pattern AND reading matches - single operation (50-70% faster than sequential)
+description: "MUST USE (not Grep+Read) when searching for files by pattern AND reading their contents — paths unknown"
 model: haiku
 effort: low
 user-invocable: false
