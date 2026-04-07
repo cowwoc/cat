@@ -17,9 +17,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Tests for {@link GetIssueCompleteOutput#run(JvmScope, String[], PrintStream)} CLI error path handling.
+ * Tests for {@link GetIssueCompleteOutput#run(ClaudeTool, String[], PrintStream)} CLI error path handling.
  */
 public class GetIssueCompleteOutputMainTest
 {
@@ -101,6 +102,56 @@ public class GetIssueCompleteOutputMainTest
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
       GetIssueCompleteOutput.run(scope, new String[]{"--bogus", "value"}, out);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that --scope-complete produces a non-blank scope complete box.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void scopeCompleteHappyPath() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("get-issue-complete-output-main-test-");
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+      GetIssueCompleteOutput.run(scope, new String[]{"--scope-complete", "v2.1"}, out);
+      String output = buffer.toString(StandardCharsets.UTF_8).strip();
+      requireThat(output, "output").isNotBlank();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that --issue-name with --target-branch produces a non-blank box even when no issues are found
+   * in an empty project (falls back to scope-complete box).
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void issueNameHappyPath() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("get-issue-complete-output-main-test-");
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      // IssueDiscovery requires a .cat directory to exist in the project root
+      Files.createDirectories(tempDir.resolve(".cat").resolve("issues"));
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+      GetIssueCompleteOutput.run(scope,
+        new String[]{"--issue-name", "2.1-my-issue", "--target-branch", "main"}, out);
+      String output = buffer.toString(StandardCharsets.UTF_8).strip();
+      requireThat(output, "output").isNotBlank();
     }
     finally
     {

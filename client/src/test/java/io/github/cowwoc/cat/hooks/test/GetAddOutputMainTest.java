@@ -131,4 +131,141 @@ public class GetAddOutputMainTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that --type issue with --name and --version produces non-blank output.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void issueTypeHappyPath() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("get-add-output-main-test-");
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+      GetAddOutput.run(scope, new String[]{"--type", "issue", "--name", "my-issue", "--version", "2.1"}, out);
+      String output = buffer.toString(StandardCharsets.UTF_8).strip();
+      requireThat(output, "output").isNotBlank();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that --type version with --name and --version produces non-blank output.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void versionTypeHappyPath() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("get-add-output-main-test-");
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+      GetAddOutput.run(scope, new String[]{"--type", "version", "--name", "1.0", "--version", "2.1"}, out);
+      String output = buffer.toString(StandardCharsets.UTF_8).strip();
+      requireThat(output, "output").isNotBlank();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that an invalid --type value throws IllegalArgumentException.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*bogus.*")
+  public void invalidTypeThrowsException() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("get-add-output-main-test-");
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+      GetAddOutput.run(scope, new String[]{"--type", "bogus", "--name", "test", "--version", "2.1"}, out);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that omitting --name throws IllegalArgumentException.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*--name.*")
+  public void missingNameThrowsException() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("get-add-output-main-test-");
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+      GetAddOutput.run(scope, new String[]{"--type", "issue", "--version", "2.1"}, out);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that omitting --version throws IllegalArgumentException.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*--version.*")
+  public void missingVersionThrowsException() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("get-add-output-main-test-");
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+      GetAddOutput.run(scope, new String[]{"--type", "issue", "--name", "test"}, out);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that --issue-type bugfix with --type issue produces non-blank output.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void bugfixIssueTypeHappyPath() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("get-add-output-main-test-");
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+      GetAddOutput.run(scope,
+        new String[]{"--issue-type", "bugfix", "--type", "issue", "--name", "my-bug", "--version", "2.1"},
+        out);
+      String output = buffer.toString(StandardCharsets.UTF_8).strip();
+      requireThat(output, "output").isNotBlank();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }

@@ -133,4 +133,26 @@ public class GetCleanupOutputMainTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that an invalid --phase value throws IllegalArgumentException.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Unknown.*phase.*bogus.*")
+  public void invalidPhaseThrowsException() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("get-cleanup-output-main-test-");
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+      GetCleanupOutput.run(scope, new String[]{"--phase", "bogus"}, out);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }
