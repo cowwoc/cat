@@ -69,9 +69,9 @@ None
   (or alongside) `transcriptPath`
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/EnforceStatusOutput.java`
 - In `check()` / `checkTranscriptForStatusSkill()`, resolve the transcript path in priority order:
-  1. `sessionBasePath.resolve(sessionId + ".jsonl")` if it exists → use it
-  2. `Paths.get(transcriptPath)` if non-blank and exists → use it
-  3. Neither found → return `CheckResult(false, true)` (skip enforcement, don't block)
+  1. `Paths.get(transcriptPath)` if non-blank and exists → use it (correct in normal sessions)
+  2. `sessionBasePath.resolve(sessionId + ".jsonl")` if it exists → use it (workaround for worktrees)
+  3. Neither found → throw `IOException` (fail fast — missing transcript is an error, not a skip)
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/EnforceStatusOutput.java`
 - Add a test that simulates a worktree scenario: `transcript_path` points to a non-existent
   worktree-derived path, but the session file exists at the `sessionBasePath`-derived path → hook

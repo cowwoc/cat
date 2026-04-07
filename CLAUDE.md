@@ -122,6 +122,16 @@ mvn -f client/pom.xml verify -e
 All tests must pass (exit code 0) before requesting user approval. Do not assume tests still pass after
 modifications — the fix may have introduced regressions or the test expectations may need updating.
 
+## Bug Workaround Convention
+
+When writing code that works around an external bug, add a comment using this syntax:
+
+```
+// WORKAROUND: <link to bug report>
+```
+
+This makes workarounds easy to find and remove once the upstream bug is fixed.
+
 ## License Headers
 
 **MANDATORY:** All new source files must include a license header at the top. Before adding a header to any file, you
