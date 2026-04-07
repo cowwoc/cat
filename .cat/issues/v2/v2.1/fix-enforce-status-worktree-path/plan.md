@@ -2,59 +2,59 @@
 
 ## Problem
 
-When Claude Code runs in a git worktree (e.g., `/workspace/.claude/worktrees/NAME`), it computes
-the project directory hash from the worktree path. The `enforce-status` stop hook receives a
-`transcript_path` pointing to the worktree-specific project directory (e.g.,
-`~/.claude/projects/-workspace--claude-worktrees-NAME/{session_id}.jsonl`), but the actual session
-JSONL file lives in the main workspace's project directory
-(`~/.claude/projects/-workspace/{session_id}.jsonl`). The hook throws `NoSuchFileException` and
-permanently blocks the session with:
-`❌ Hook error: /home/node/.config/claude/projects/-workspace--claude-worktrees-NAME/{session_id}.jsonl`
+When Claude Code runs in a git worktree, the `enforce-status` stop hook is permanently blocked with:
+
+```
+❌ Hook error: ~/.claude/projects/-workspace--claude-worktrees-NAME/{session_id}.jsonl
+```
+
+The file at that path does not exist.
+
+## Root Cause
+
+`EnforceStatusOutput.run()` reads `transcript_path` from the hook payload (line 105) and passes it to
+`checkTranscriptForStatusSkill()`. Claude Code constructs `transcript_path` from the **current working
+directory** — but in a worktree session, the cwd is the worktree path
+(`/workspace/.claude/worktrees/NAME`), which encodes to `-workspace--claude-worktrees-NAME`.
+
+The actual session JSONL is stored under **`CLAUDE_PROJECT_DIR`** (`/workspace` → `-workspace`).
+
+The hook already has everything needed to derive the correct path:
+- `sessionId = scope.getSessionId()` — correct session ID
+- `sessionBasePath = scope.getClaudeSessionsPath()` — computed from `CLAUDE_PROJECT_DIR`, points to
+  `~/.claude/projects/-workspace/` ← **correct**
+
+But it ignores these and trusts `transcript_path` from the payload, which points to the wrong
+(worktree-derived) directory.
 
 ## Parent Requirements
 
 None
 
-## Reproduction Code
-
-```
-# Start Claude Code in a git worktree (e.g., /workspace/.claude/worktrees/my-branch)
-# End any session turn → stop hook fires → error appears, blocking all output
-```
-
 ## Expected vs Actual
 
-- **Expected:** Hook finds the session JSONL file (or skips enforcement if unavailable) and allows the session to proceed
-- **Actual:** Hook throws `NoSuchFileException` on the worktree-specific path and permanently blocks the session
-
-## Root Cause
-
-`EnforceStatusOutput.checkTranscriptForStatusSkill()` calls `Files.newBufferedReader(path)` directly
-without checking if the file exists first. When Claude Code is invoked in a worktree, the
-`transcript_path` it provides points to the wrong project directory. The fix has two layers:
-
-1. **Worktree fallback:** If the transcript file doesn't exist at the given path AND the path contains
-   `--claude-worktrees-`, strip the worktree suffix from the encoded project path and look for the
-   session file in the parent workspace's project directory.
-2. **Graceful skip:** If the file still can't be found, return `CheckResult(false, true)` to skip
-   enforcement rather than throwing.
+- **Expected:** `checkTranscriptForStatusSkill` reads the session JSONL from the `CLAUDE_PROJECT_DIR`-based
+  path (`~/.claude/projects/-workspace/{session_id}.jsonl`)
+- **Actual:** It attempts to read from the cwd-based path
+  (`~/.claude/projects/-workspace--claude-worktrees-NAME/{session_id}.jsonl`), which does not exist,
+  throwing `NoSuchFileException` and permanently blocking the session
 
 ## Risk Assessment
 
 - **Risk Level:** LOW
-- **Regression Risk:** Enforcement could be silently skipped if transcript_path is wrong for unrelated reasons
-- **Mitigation:** Worktree detection is specific (pattern `--claude-worktrees-`); fallback only activates for known worktree paths
+- **Regression Risk:** Slight — replacing `transcript_path` with a constructed path means hooks no longer
+  defer to Claude Code's provided path. If Claude Code ever legitimately stores session files somewhere
+  other than `sessionBasePath`, the hook would miss them.
+- **Mitigation:** Keep `transcript_path` as a fallback: try `sessionBasePath + sessionId + ".jsonl"` first;
+  if it doesn't exist, fall back to `transcript_path`; if that also doesn't exist, skip enforcement.
 
 ## Files to Modify
 
-- `client/src/main/java/io/github/cowwoc/cat/hooks/EnforceStatusOutput.java` — add `resolveTranscriptPath()` helper and use it in `checkTranscriptForStatusSkill()`
-- `client/src/test/java/io/github/cowwoc/cat/hooks/test/EnforceStatusOutputTest.java` — add test cases for missing file and worktree fallback
-
-## Test Cases
-
-- [ ] Transcript path points to non-existent file → returns `CheckResult(false, true)` (no block)
-- [ ] Transcript path contains `--claude-worktrees-NAME` but file exists in parent workspace path → resolves and reads correctly
-- [ ] Transcript path file exists normally → existing behavior unchanged
+- `client/src/main/java/io/github/cowwoc/cat/hooks/EnforceStatusOutput.java` — change
+  `checkTranscriptForStatusSkill` to accept `sessionBasePath` + `sessionId` and construct the path
+  itself rather than using the `transcript_path` payload field directly
+- `client/src/test/java/io/github/cowwoc/cat/hooks/test/EnforceStatusOutputTest.java` — add test
+  case for worktree scenario where `transcript_path` points to wrong directory
 
 ## Pre-conditions
 
@@ -64,21 +64,25 @@ without checking if the file exists first. When Claude Code is invoked in a work
 
 ### Job 1
 
-- Add `resolveTranscriptPath(String transcriptPath)` private static method to `EnforceStatusOutput`
+- In `EnforceStatusOutput.run()`, construct the preferred transcript path as
+  `sessionBasePath.resolve(sessionId + ".jsonl")` and pass it to `check()` instead of
+  (or alongside) `transcriptPath`
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/EnforceStatusOutput.java`
-  - If `transcriptPath` is blank: return `null`
-  - If file exists at given path: return `Paths.get(transcriptPath)`
-  - If path contains `--claude-worktrees-`: extract the prefix before `--claude-worktrees-`, reconstruct the parent workspace path, return that path if it exists
-  - Otherwise: return `null` (skip enforcement)
-- Replace `Path path = Paths.get(transcriptPath)` in `checkTranscriptForStatusSkill()` with `Path path = resolveTranscriptPath(transcriptPath); if (path == null) return new CheckResult(false, true);`
+- In `check()` / `checkTranscriptForStatusSkill()`, resolve the transcript path in priority order:
+  1. `sessionBasePath.resolve(sessionId + ".jsonl")` if it exists → use it
+  2. `Paths.get(transcriptPath)` if non-blank and exists → use it
+  3. Neither found → return `CheckResult(false, true)` (skip enforcement, don't block)
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/EnforceStatusOutput.java`
-- Add unit tests covering the three cases above
+- Add a test that simulates a worktree scenario: `transcript_path` points to a non-existent
+  worktree-derived path, but the session file exists at the `sessionBasePath`-derived path → hook
+  reads it correctly and applies normal enforcement
   - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/EnforceStatusOutputTest.java`
 - Run all tests: `python3 /workspace/run_tests.py`
 
 ## Post-conditions
 
-- [ ] `EnforceStatusOutput` no longer throws when `transcript_path` points to a non-existent worktree-specific path
-- [ ] Worktree sessions resolve transcript from parent workspace project directory when available
+- [ ] `EnforceStatusOutput` reads the session JSONL from the `CLAUDE_PROJECT_DIR`-based path even when
+  running in a git worktree
+- [ ] Hook no longer throws when `transcript_path` points to the wrong (worktree-derived) directory
 - [ ] All existing tests pass with no regressions
-- [ ] New test cases cover missing-file and worktree-fallback scenarios
+- [ ] New test case covers the worktree scenario
