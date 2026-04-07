@@ -1,5 +1,5 @@
 ---
-description: PREFER when writing 3+ independent files - batch operation eliminates round-trips (50-70% faster)
+description: MUST USE when writing 2+ independent files in one task - issues all Write/Edit calls in a single response (50-70% faster)
 model: haiku
 effort: low
 user-invocable: false
