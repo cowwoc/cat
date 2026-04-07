@@ -97,6 +97,7 @@ declare -a HANDLERS=(
   "write-and-commit:util.WriteAndCommit"
   "get-subagent-status:skills.GetSubagentStatusOutput"
   "extract-turns:skills.ExtractTurnsContent"
+  "update-skill-description:skills.UpdateSkillDescription"
 )
 
 # --- Logging ---

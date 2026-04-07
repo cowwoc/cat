@@ -15,8 +15,6 @@ import tools.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -53,13 +51,6 @@ public final class DescriptionOptimizer implements SkillOutput
    * Minimum eval set size accepted by this handler.
    */
   private static final int MIN_EVAL_SET_SIZE = 2;
-
-  /**
-   * Pattern to extract the description field from YAML frontmatter.
-   * Handles both single-line and block scalar (>) formats.
-   */
-  private static final Pattern DESCRIPTION_PATTERN =
-    Pattern.compile("^description:\\s*>?\\s*(.+?)(?=^\\w|^---)", Pattern.MULTILINE | Pattern.DOTALL);
 
   private final ClaudeTool scope;
 
@@ -128,7 +119,7 @@ public final class DescriptionOptimizer implements SkillOutput
         ". Provide an absolute or relative path to a SKILL.md file.");
 
     String skillContent = Files.readString(skillFile);
-    String currentDescription = extractDescription(skillContent, skillPath);
+    String currentDescription = SkillFrontmatter.extractDescription(skillContent, skillPath);
 
     // Parse eval set
     JsonNode evalSetNode = scope.getJsonMapper().readTree(evalSetJson);
@@ -196,40 +187,6 @@ public final class DescriptionOptimizer implements SkillOutput
 
     return formatOptimizationPrompt(currentDescription, skillPath, modelId, maxIterations,
       trainSize, testSize, splitJson);
-  }
-
-  /**
-   * Extracts the description value from YAML frontmatter.
-   *
-   * @param content   the full SKILL.md content
-   * @param skillPath the file path (for error messages)
-   * @return the extracted description text, with leading/trailing whitespace removed
-   * @throws IllegalArgumentException if no description field is found
-   */
-  private String extractDescription(String content, String skillPath)
-  {
-    int firstDash = content.indexOf("---");
-    if (firstDash < 0)
-      throw new IllegalArgumentException(
-        "No YAML frontmatter found in skill file: " + skillPath +
-        ". SKILL.md files must start with --- frontmatter.");
-
-    int secondDash = content.indexOf("---", firstDash + 3);
-    if (secondDash < 0)
-      throw new IllegalArgumentException(
-        "Unclosed YAML frontmatter in skill file: " + skillPath +
-        ". Frontmatter must be closed with ---.");
-
-    String frontmatter = content.substring(firstDash + 3, secondDash);
-
-    Matcher matcher = DESCRIPTION_PATTERN.matcher(frontmatter);
-    if (!matcher.find())
-      throw new IllegalArgumentException(
-        "No 'description:' field found in frontmatter of: " + skillPath +
-        ". Every SKILL.md must have a description field for intent routing.");
-
-    String rawDescription = matcher.group(1);
-    return rawDescription.replaceAll("\\s+", " ").strip();
   }
 
   /**
