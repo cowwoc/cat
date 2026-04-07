@@ -23,17 +23,17 @@ approval gate before they can proceed.
 **Why:** Manual `git reset --soft` captures the working directory, which may contain stale files when the base
 advanced. This skill uses `commit-tree` to build commits from HEAD's tree object, ignoring the working directory.
 
-## Read PROJECT.md Squash Policy
+## Read project.md Squash Policy
 
-**Check PROJECT.md for configured squash preferences before proceeding.**
+**Check project.md for configured squash preferences before proceeding.**
 
 ```bash
-SQUASH_POLICY=$(grep -A10 "### Squash Policy" .cat/PROJECT.md 2>/dev/null | grep "Strategy:" | \
+SQUASH_POLICY=$(grep -A10 "### Squash Policy" .cat/project.md 2>/dev/null | grep "Strategy:" | \
   sed 's/.*Strategy:\s*//' | head -1)
 ```
 
 - `keep all` / `Keep all` / `keep-all`: **MANDATORY** — do NOT proceed until the user explicitly confirms the
-  override. Ask: "PROJECT.md is configured for 'keep all commits'. Override and squash anyway?" The agent's own
+  override. Ask: "project.md is configured for 'keep all commits'. Override and squash anyway?" The agent's own
   invocation does NOT count as confirmation.
 - `single` / `Single`: all commits squashed into one (not by type)
 - `by-type` / `by type`: commits grouped by type prefix

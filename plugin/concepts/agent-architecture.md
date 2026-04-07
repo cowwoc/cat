@@ -43,7 +43,7 @@ The delegation boundary exists for quality and traceability, not efficiency.
 BEFORE using the Edit tool on ANY source file (.java, .md code docs, etc.), STOP and verify:
 
 1. **Am I the main agent?** (orchestrating a CAT issue)
-2. **Is this a source/documentation file?** (not index.json, plan.md, CHANGELOG.md)
+2. **Is this a source/documentation file?** (not index.json, plan.md, changelog.md)
 3. **Is a subagent already running or could one be spawned?**
 
 If answers are YES/YES/YES → **SPAWN SUBAGENT INSTEAD**

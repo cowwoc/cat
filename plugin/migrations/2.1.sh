@@ -43,6 +43,10 @@ set -euo pipefail
 #     Strips Progress, Last Updated, Completed, and any narrative content.
 # 20. Rename targetBranch → target_branch in all index.json files under .cat/issues/
 # 21. Rename caution config values: none→low, changed→medium, all→high
+# 22. Rename CHANGELOG.md → changelog.md in version directories under .cat/issues/ and at project root
+# 23. Rename .cat/ROADMAP.md → .cat/roadmap.md
+# 24. Rename .cat/PROJECT.md → .cat/project.md
+# 25. Rename .cat/rules/INDEX.md → .cat/rules/index.md
 
 trap 'echo "ERROR in 2.1.sh at line $LINENO: $BASH_COMMAND" >&2; exit 1' ERR
 
@@ -1550,7 +1554,7 @@ log_migration "Phase 20 complete: $phase20_migrated files updated, $phase20_skip
 phase21_migrated=0
 phase21_skipped=0
 
-for config_file in "${project_root}/.cat/config.json" "${project_root}/.cat/config.local.json"; do
+for config_file in ".cat/config.json" ".cat/config.local.json"; do
     [[ -f "$config_file" ]] || continue
     if grep -q '"caution"' "$config_file" 2>/dev/null; then
         caution_value=$(grep -o '"caution"[[:space:]]*:[[:space:]]*"[^"]*"' "$config_file" | \
@@ -1581,6 +1585,114 @@ for config_file in "${project_root}/.cat/config.json" "${project_root}/.cat/conf
 done
 
 log_migration "Phase 21 complete: $phase21_migrated files updated, $phase21_skipped already up to date"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Phase 22: Rename CHANGELOG.md → changelog.md in version directories and at root
+# ──────────────────────────────────────────────────────────────────────────────
+# Idempotent: only renames files that still have uppercase CHANGELOG.md name
+
+log_migration "Phase 22: Rename CHANGELOG.md → changelog.md in version directories"
+
+phase22_migrated=0
+phase22_skipped=0
+
+# Rename CHANGELOG.md files in version directories (v*/v*/ level under .cat/issues/)
+# These are at depth 3 from .cat/issues/ and contain version metadata
+version_changelog_files=$(find .cat/issues -name "CHANGELOG.md" -mindepth 3 -maxdepth 3 -type f \
+    2>/dev/null || true)
+
+if [[ -z "$version_changelog_files" ]]; then
+    log_migration "  No version-level CHANGELOG.md files found"
+else
+    totalCount=$(echo "$version_changelog_files" | grep -c . || echo 0)
+    log_migration "  Found $totalCount version-level CHANGELOG.md files to rename"
+
+    while IFS= read -r changelog_file; do
+        [[ -z "$changelog_file" ]] && continue
+        changelog_dir=$(dirname "$changelog_file")
+        lowercase_file="${changelog_dir}/changelog.md"
+
+        if [[ -f "$lowercase_file" ]]; then
+            # Already migrated - file already has lowercase name
+            ((phase22_skipped++)) || true
+        else
+            # Rename uppercase to lowercase
+            mv "$changelog_file" "$lowercase_file"
+            log_migration "    Renamed: $changelog_file → $lowercase_file"
+            ((phase22_migrated++)) || true
+        fi
+    done < <(echo "$version_changelog_files")
+fi
+
+# Rename root CHANGELOG.md if it exists (at project root)
+if [[ -f "CHANGELOG.md" ]]; then
+    if [[ -f "changelog.md" ]]; then
+        # Already migrated
+        ((phase22_skipped++)) || true
+    else
+        mv "CHANGELOG.md" "changelog.md"
+        log_migration "    Renamed: CHANGELOG.md → changelog.md (project root)"
+        ((phase22_migrated++)) || true
+    fi
+else
+    ((phase22_skipped++)) || true
+fi
+
+log_migration "Phase 22 complete: $phase22_migrated files renamed, $phase22_skipped already migrated"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Phase 23: Rename .cat/ROADMAP.md → .cat/roadmap.md
+# ──────────────────────────────────────────────────────────────────────────────
+# Idempotent: only renames the file if it still has the uppercase name
+
+log_migration "Phase 23: Rename .cat/ROADMAP.md → .cat/roadmap.md"
+
+if [[ -f ".cat/ROADMAP.md" ]]; then
+    if [[ -f ".cat/roadmap.md" ]]; then
+        log_migration "  Phase 23: .cat/roadmap.md already exists - skipping"
+    else
+        mv ".cat/ROADMAP.md" ".cat/roadmap.md"
+        log_migration "  Renamed: .cat/ROADMAP.md → .cat/roadmap.md"
+    fi
+else
+    log_migration "  Phase 23: .cat/ROADMAP.md not found - skipping"
+fi
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Phase 24: Rename .cat/PROJECT.md → .cat/project.md
+# ──────────────────────────────────────────────────────────────────────────────
+# Idempotent: only renames the file if it still has the uppercase name
+
+log_migration "Phase 24: Rename .cat/PROJECT.md → .cat/project.md"
+
+if [[ -f ".cat/PROJECT.md" ]]; then
+    if [[ -f ".cat/project.md" ]]; then
+        log_migration "  Phase 24: .cat/project.md already exists - skipping"
+    else
+        mv ".cat/PROJECT.md" ".cat/project.md"
+        log_migration "  Renamed: .cat/PROJECT.md → .cat/project.md"
+    fi
+else
+    log_migration "  Phase 24: .cat/PROJECT.md not found - skipping"
+fi
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Phase 25: Rename .cat/rules/INDEX.md → .cat/rules/index.md
+# ──────────────────────────────────────────────────────────────────────────────
+# Idempotent: only renames the file if it still has the uppercase name
+
+log_migration "Phase 25: Rename .cat/rules/INDEX.md → .cat/rules/index.md"
+
+if [[ -f ".cat/rules/INDEX.md" ]]; then
+    if [[ -f ".cat/rules/index.md" ]]; then
+        log_migration "  Phase 25: .cat/rules/index.md already exists - skipping"
+    else
+        mv ".cat/rules/INDEX.md" ".cat/rules/index.md"
+        log_migration "  Renamed: .cat/rules/INDEX.md → .cat/rules/index.md"
+    fi
+else
+    log_migration "  Phase 25: .cat/rules/INDEX.md not found - skipping"
+fi
 
 log_success "Migration to 2.1 completed"
 exit 0

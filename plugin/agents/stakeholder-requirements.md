@@ -153,11 +153,11 @@ Parent Requirements section?"*
    - The `## Parent Requirements` section (list of REQ-XXX IDs, if any)
    - The `## Success Criteria` section (issue-local acceptance criteria, if any)
    - The `## Target State` or goal description (what the implementation should produce)
-2. **Read the parent minor version's PLAN.md** to get the full requirement descriptions
-   - Path: `.cat/issues/v{major}/v{major}.{minor}/PLAN.md`
+2. **Read the parent minor version's plan.md** to get the full requirement descriptions
+   - Path: `.cat/issues/v{major}/v{major}.{minor}/plan.md`
    - Extract the Requirements table with ID, description, priority, and acceptance criteria
 3. **For each claimed requirement** (REQ-XXX IDs):
-   - Locate the requirement definition in the minor version PLAN.md
+   - Locate the requirement definition in the minor version plan.md
    - Map the requirement to implementation evidence in the issue's code
    - Verify the acceptance criteria are met
 4. **For each Success Criteria item** (issue-local criteria):

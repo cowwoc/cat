@@ -138,7 +138,7 @@ public final class GetStatusOutput implements SkillOutput
     GetCleanupOutput cleanupOutput = new GetCleanupOutput(scope);
     data.corruptIssues.addAll(cleanupOutput.gatherCorruptIssues(catDir.getParent()));
 
-    Path projectFile = catDir.resolve("PROJECT.md");
+    Path projectFile = catDir.resolve("project.md");
     data.projectName = "Unknown Project";
     if (Files.exists(projectFile))
     {
@@ -149,7 +149,7 @@ public final class GetStatusOutput implements SkillOutput
         data.projectName = matcher.group(1);
     }
 
-    Path roadmapFile = catDir.resolve("ROADMAP.md");
+    Path roadmapFile = catDir.resolve("roadmap.md");
     String roadmapContent = "";
     if (Files.exists(roadmapFile))
       roadmapContent = Files.readString(roadmapFile);
@@ -395,13 +395,13 @@ public final class GetStatusOutput implements SkillOutput
   }
 
   /**
-   * Parses the status field from STATE.md content.
+   * Parses the status field from index.json content.
    * <p>
    * Throws IOException if the Status field is missing or contains an unrecognized value,
    * enforcing canonical status validation at read time.
    *
-   * @param content the STATE.md file content
-   * @param sourcePath the file path to include in error messages (e.g., "v2/v2.1/my-issue/STATE.md")
+   * @param content the index.json file content
+   * @param sourcePath the file path to include in error messages (e.g., "v2/v2.1/my-issue/index.json")
    * @return the parsed status
    * @throws IOException if the Status field is missing or its value is not a recognized canonical value
    */

@@ -22,7 +22,7 @@ import java.util.UUID;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Tests for wave-section token estimation in PLAN.md.
+ * Tests for wave-section token estimation in plan.md.
  * <p>
  * Tests verify that WorkPrepare correctly counts items in ## Execution Waves / ### Wave N
  * sections for token estimation.

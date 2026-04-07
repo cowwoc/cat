@@ -59,8 +59,8 @@ Output: [Working, tested feature]
 </objective>
 
 <context>
-[Project overview](.planning/PROJECT.md)
-[Product roadmap](.planning/ROADMAP.md)
+[Project overview](.planning/project.md)
+[Product roadmap](.planning/roadmap.md)
 [Relevant source files](relevant/source/files.ts)
 </context>
 

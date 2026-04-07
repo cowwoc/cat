@@ -218,7 +218,7 @@
       "id": "M253",
       "timestamp": "2026-01-26T00:30:00Z",
       "category": "detection_gap",
-      "description": "Scripts silently accepted unknown STATE.md status values like 'complete' instead of 'completed', causing tasks to appear pending when already merged",
+      "description": "Scripts silently accepted unknown index.json status values like 'complete' instead of 'completed', causing tasks to appear pending when already merged",
       "root_cause": "Scripts accept any status value without validation against allowed values - no fail-fast on invalid input",
       "rca_method": "B",
       "rca_method_name": "taxonomy",
@@ -228,7 +228,7 @@
         "status",
         "validation",
         "fail-fast",
-        "STATE.md",
+        "index.json",
         "typo"
       ],
       "prevention_implemented": true,
@@ -412,8 +412,8 @@
       "id": "M260",
       "timestamp": "2026-01-26T11:30:00Z",
       "category": "prompt_engineering",
-      "description": "Subagent prompt did not include PLAN.md acceptance criteria, causing subagent to miss required deliverables",
-      "root_cause": "spawn-subagent skill does not require transferring acceptance criteria from PLAN.md to subagent prompt",
+      "description": "Subagent prompt did not include plan.md acceptance criteria, causing subagent to miss required deliverables",
+      "root_cause": "spawn-subagent skill does not require transferring acceptance criteria from plan.md to subagent prompt",
       "rca_method": "A",
       "rca_method_name": "5-whys",
       "prevention_type": "skill",
@@ -421,7 +421,7 @@
       "pattern_keywords": [
         "subagent",
         "acceptance criteria",
-        "PLAN.md",
+        "plan.md",
         "prompt",
         "deliverables"
       ],
@@ -433,7 +433,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "When spawning subagent, copy acceptance criteria from PLAN.md into the subagent prompt so subagent knows what must be delivered"
+      "correct_behavior": "When spawning subagent, copy acceptance criteria from plan.md into the subagent prompt so subagent knows what must be delivered"
     },
     {
       "id": "M261",
@@ -467,7 +467,7 @@
       "id": "M262",
       "timestamp": "2026-01-26T12:30:00Z",
       "category": "protocol_violation",
-      "description": "Agent ignored ERROR output from get-available-issues.sh indicating invalid status decomposed in STATE.md. Proceeded with task execution instead of fail-fast.",
+      "description": "Agent ignored ERROR output from get-available-issues.sh indicating invalid status decomposed in index.json. Proceeded with task execution instead of fail-fast.",
       "root_cause": "No fail-fast behavior when ERROR prefix appears in script output - agent processed JSON result despite ERROR being reported",
       "rca_method": "B",
       "rca_method_name": "taxonomy",
@@ -493,7 +493,7 @@
       "id": "M263",
       "timestamp": "2026-01-26T12:50:00Z",
       "category": "logical_error",
-      "description": "Parent task STATE.md used invalid status decomposed instead of keeping in-progress until all subtasks complete. Skill documentation taught incorrect pattern.",
+      "description": "Parent task index.json used invalid status decomposed instead of keeping in-progress until all subtasks complete. Skill documentation taught incorrect pattern.",
       "root_cause": "decompose-task skill documentation showed status: decomposed as example, which is not a valid status value. Valid values are: pending, in-progress, completed, blocked.",
       "rca_method": "C",
       "rca_method_name": "causal-barrier",
@@ -707,7 +707,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Parent agent must verify subagent output contains evidence of PLAN.md acceptance criteria satisfaction before proceeding to approval gate"
+      "correct_behavior": "Parent agent must verify subagent output contains evidence of plan.md acceptance criteria satisfaction before proceeding to approval gate"
     },
     {
       "id": "M271",
@@ -898,7 +898,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "After subagent completes and before approval gate, read PLAN.md acceptance criteria, run any required validations, and FAIL-FAST if criteria not met"
+      "correct_behavior": "After subagent completes and before approval gate, read plan.md acceptance criteria, run any required validations, and FAIL-FAST if criteria not met"
     },
     {
       "id": "M278",
@@ -1032,7 +1032,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Check version STATE.md dependencies before scanning tasks in that version. Skip versions whose dependencies are not satisfied."
+      "correct_behavior": "Check version index.json dependencies before scanning tasks in that version. Skip versions whose dependencies are not satisfied."
     },
     {
       "id": "M283",
@@ -1414,7 +1414,7 @@
       "timestamp": "2026-01-28T00:15:00Z",
       "category": "protocol_violation",
       "description": "Main agent manually compressed files and committed without running /compare-docs validation or reporting execution equivalence scores",
-      "root_cause": "Rationalized skipping validation as 'efficient for just 2 files' despite PLAN.md acceptance criteria requiring score = 1.0 from /compare-docs",
+      "root_cause": "Rationalized skipping validation as 'efficient for just 2 files' despite plan.md acceptance criteria requiring score = 1.0 from /compare-docs",
       "rca_method": "C",
       "rca_method_name": "causal-barrier",
       "prevention_type": "skill",
@@ -1556,7 +1556,7 @@
       "timestamp": "2026-01-28T09:51:00Z",
       "category": "process_violation",
       "description": "Created JDK infrastructure without writing tests first - violated TDD workflow",
-      "root_cause": "PLAN.md template had acceptance criteria but execution steps did not enforce TDD order (tests first)",
+      "root_cause": "plan.md template had acceptance criteria but execution steps did not enforce TDD order (tests first)",
       "rca_method": "B",
       "rca_method_name": "taxonomy",
       "prevention_type": "skill",
@@ -2216,8 +2216,8 @@
       "id": "M326",
       "timestamp": "2026-01-31T07:30:00Z",
       "category": "protocol_violation",
-      "description": "Edited STATE.md in main workspace before creating issue worktree, causing merge conflict later",
-      "root_cause": "Eager status update before worktree creation - should have waited until in worktree to update STATE.md",
+      "description": "Edited index.json in main workspace before creating issue worktree, causing merge conflict later",
+      "root_cause": "Eager status update before worktree creation - should have waited until in worktree to update index.json",
       "rca_method": "C",
       "rca_method_name": "causal-barrier",
       "prevention_type": "process",
@@ -2225,7 +2225,7 @@
       "pattern_keywords": [
         "worktree",
         "isolation",
-        "STATE.md",
+        "index.json",
         "M101"
       ],
       "prevention_implemented": true,
@@ -2236,7 +2236,7 @@
         "fragility": "medium",
         "catches_variations": true
       },
-      "correct_behavior": "Only update STATE.md after cd into worktree directory"
+      "correct_behavior": "Only update index.json after cd into worktree directory"
     },
     {
       "id": "M327",
@@ -2396,8 +2396,8 @@
       "id": "M333",
       "timestamp": "2026-01-31T20:56:55Z",
       "category": "protocol_violation",
-      "description": "Subagent delegated to compress templates manually instead of invoking /cat:shrink-doc skill as specified in PLAN.md execution steps",
-      "root_cause": "Delegation prompt instructed manual compression techniques instead of following PLAN.md execution steps which specified skill invocation with validation",
+      "description": "Subagent delegated to compress templates manually instead of invoking /cat:shrink-doc skill as specified in plan.md execution steps",
+      "root_cause": "Delegation prompt instructed manual compression techniques instead of following plan.md execution steps which specified skill invocation with validation",
       "rca_method": "A",
       "rca_method_name": "5-whys",
       "prevention_type": "skill",
@@ -2416,7 +2416,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "When PLAN.md execution steps reference a skill (e.g., /cat:shrink-doc), the subagent must invoke that skill rather than manually implementing its functionality"
+      "correct_behavior": "When plan.md execution steps reference a skill (e.g., /cat:shrink-doc), the subagent must invoke that skill rather than manually implementing its functionality"
     },
     {
       "id": "M334",

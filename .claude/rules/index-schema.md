@@ -1,9 +1,9 @@
 ---
-paths: ["STATE.md", "**/STATE.md"]
+paths: ["index.json", "**/index.json"]
 ---
-# STATE.md Schema
+# index.json Schema
 
-All issue STATE.md files must conform to this standardized schema.
+All issue index.json files must conform to this standardized schema.
 
 ## Mandatory Keys (All Issues)
 
@@ -74,7 +74,7 @@ The following keys are no longer part of the schema:
 - **Completed** - Completion date is determined by Last Updated on closed issues
 - **Completed At** - Variant of Completed
 - **Version** - Determined by parent folder structure
-- **Tokens Used** - Not part of STATE.md schema
+- **Tokens Used** - Not part of index.json schema
 - **Started** - Start date tracking removed
 - **Reason** - Folded into Resolution parenthetical
 - **Closed Reason** - Folded into Resolution parenthetical

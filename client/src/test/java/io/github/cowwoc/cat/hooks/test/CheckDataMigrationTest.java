@@ -194,7 +194,7 @@ public final class CheckDataMigrationTest
     Path tempDir = Files.createTempDirectory("phase7-awk-test-");
     try
     {
-      Path planFile = tempDir.resolve("PLAN.md");
+      Path planFile = tempDir.resolve("plan.md");
       Files.writeString(planFile, input);
 
       ProcessBuilder pb = new ProcessBuilder("awk", PHASE7_AWK, planFile.toString());
@@ -392,7 +392,7 @@ public final class CheckDataMigrationTest
    *   <li>If neither heading is present, returns the content unchanged.</li>
    * </ul>
    *
-   * @param content the PLAN.md file content to transform
+   * @param content the plan.md file content to transform
    * @return the transformed content, or the original content if no transformation is needed
    */
   private static String applyPhase7Migration(String content)

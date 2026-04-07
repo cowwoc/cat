@@ -8,7 +8,7 @@ Cross-cutting rules that apply to all CAT development work.
 
 | System | Tool/Location | Purpose | Example |
 |--------|---------------|---------|---------|
-| **CAT Issues** | `/cat:status`, STATE.md files | Project work items across sessions | `v2.1-compress-skills-md` |
+| **CAT Issues** | `/cat:status`, index.json files | Project work items across sessions | `v2.1-compress-skills-md` |
 | **Claude TaskList** | `TaskList`, `TaskCreate` tools | Within-session work tracking | "Fix the login bug" |
 
 **When reporting status:**
@@ -328,7 +328,7 @@ adding a field that already exists).
 issues contain the same file formats as open issues and must be migrated to maintain consistency. The CLAUDE.md rule
 about not modifying closed issues applies only to manual agent edits, not automated migrations.
 
-**Planning file schema changes:** When an issue modifies the schema of planning files (STATE.md, plan.md headings,
+**Planning file schema changes:** When an issue modifies the schema of planning files (index.json, plan.md headings,
 field names, section structure), the issue MUST include updating the current version's `plugin/migrations/` script to
 transform existing files. The migration is part of the same issue — do not defer it to a separate issue.
 
@@ -371,7 +371,7 @@ This applies to all file types, including Java Javadoc, inline comments, and Mar
 * <li>{@code {sessionDir}/skills-loaded-*} — legacy flat-file markers (deleted when found)</li>
 ```
 
-**Exception:** Files specifically designed for history tracking (e.g., `CHANGELOG.md`).
+**Exception:** Files specifically designed for history tracking (e.g., `changelog.md`).
 
 **Rationale:** Code and documentation should describe current state and intent, not narrate their own evolution. Git
 history provides the authoritative record of changes.

@@ -8,7 +8,7 @@ disable-model-invocation: true
 **Purpose**: Release a new version of a Claude Code plugin by merging to main, tagging, and preparing
 the next version branch.
 
-**CRITICAL**: Always use this skill for releases. Update CHANGELOG.md before running `git tag`.
+**CRITICAL**: Always use this skill for releases. Update changelog.md before running `git tag`.
 The skill ensures changelog, version files, and tags stay synchronized.
 
 **When to Use**:
@@ -40,7 +40,7 @@ This runs both BATS tests (shell scripts) and pytest tests (Python handlers).
 ### 2. Validate CAT CHANGELOGs (if CAT-managed project)
 
 If the project uses CAT planning (`.cat/` directory exists), validate that all versions being
-released have complete CHANGELOG.md files. This ensures release documentation is comprehensive.
+released have complete changelog.md files. This ensures release documentation is comprehensive.
 
 **Validation process:**
 
@@ -59,7 +59,7 @@ if [[ -d ".cat/issues" ]]; then
   MINOR=$(echo "$CURRENT_VERSION" | cut -d. -f2)
 
   # Validate minor version CHANGELOG
-  MINOR_CHANGELOG=".cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/CHANGELOG.md"
+  MINOR_CHANGELOG=".cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/changelog.md"
   if [[ ! -f "$MINOR_CHANGELOG" ]]; then
     echo "ERROR: Missing CHANGELOG at $MINOR_CHANGELOG"
     echo "Run: Generate CHANGELOG from closed issues in this version"
@@ -67,7 +67,7 @@ if [[ -d ".cat/issues" ]]; then
   fi
 
   # Validate major version CHANGELOG
-  MAJOR_CHANGELOG=".cat/issues/v${MAJOR}/CHANGELOG.md"
+  MAJOR_CHANGELOG=".cat/issues/v${MAJOR}/changelog.md"
   if [[ ! -f "$MAJOR_CHANGELOG" ]]; then
     echo "ERROR: Missing CHANGELOG at $MAJOR_CHANGELOG"
     exit 1
@@ -90,12 +90,12 @@ fi
 
 **Auto-update capability:**
 
-If CHANGELOG is missing or incomplete, offer to auto-populate from STATE.md:
+If CHANGELOG is missing or incomplete, offer to auto-populate from index.json:
 
 ```bash
 # Find all closed issues in this minor version
 CLOSED_ISSUES=$(find ".cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}" \
-  -name "STATE.md" -exec grep -l "Status:** closed" {} \; 2>/dev/null \
+  -name "index.json" -exec grep -l "Status:** closed" {} \; 2>/dev/null \
   | xargs -I {} dirname {} | xargs -I {} basename {})
 
 if [[ -n "$CLOSED_ISSUES" ]]; then
@@ -143,9 +143,9 @@ echo "plugin.json:" && jq '.version' .claude-plugin/plugin.json
 
 **If versions differ**, fix them before proceeding. Both files must match.
 
-### 4. Update Plugin CHANGELOG.md for Current Version
+### 4. Update Plugin changelog.md for Current Version
 
-Before merging, ensure the root CHANGELOG.md documents what's in this release:
+Before merging, ensure the root changelog.md documents what's in this release:
 
 1. Verify the "Current Version" table shows CURRENT_VERSION
 2. Verify the version history entry for CURRENT_VERSION lists all changes
@@ -153,7 +153,7 @@ Before merging, ensure the root CHANGELOG.md documents what's in this release:
 
 ```bash
 # If CHANGELOG needs updates
-git add CHANGELOG.md
+git add changelog.md
 git commit -m "docs: update CHANGELOG for v${CURRENT_VERSION}"
 ```
 
@@ -272,9 +272,9 @@ jq --arg ver "$NEXT_VERSION" --arg script "${NEXT_VERSION}.sh" \
   migrations/registry.json > migrations/registry.json.tmp && mv migrations/registry.json.tmp migrations/registry.json
 ```
 
-### 13. Update Plugin CHANGELOG.md for Next Version
+### 13. Update Plugin changelog.md for Next Version
 
-If the project has a CHANGELOG.md:
+If the project has a changelog.md:
 
 1. Update the "Current Version" table to show NEXT_VERSION
 2. Add an empty version history section for NEXT_VERSION (to be filled during development)
@@ -282,7 +282,7 @@ If the project has a CHANGELOG.md:
 ### 14. Commit Version Bump
 
 ```bash
-git add package.json .claude-plugin/plugin.json CHANGELOG.md README.md migrations/
+git add package.json .claude-plugin/plugin.json changelog.md README.md migrations/
 git commit -m "config: bump version to ${NEXT_VERSION}"
 ```
 
@@ -311,15 +311,15 @@ Releasing v1.4 and preparing v1.5:
 npm run test:all
 
 # 2. Validate CAT CHANGELOGs (if CAT-managed)
-# - Check .cat/issues/v1/v1.4/CHANGELOG.md exists
-# - Check .cat/issues/v1/CHANGELOG.md exists
+# - Check .cat/issues/v1/v1.4/changelog.md exists
+# - Check .cat/issues/v1/changelog.md exists
 # - Auto-generate if missing
 
 # 3. Verify versions match
 jq '.version' package.json           # "1.4"
 jq '.version' .claude-plugin/plugin.json  # "1.4"
 
-# 4. Verify plugin CHANGELOG.md is complete for v1.4
+# 4. Verify plugin changelog.md is complete for v1.4
 # - Current Version table shows 1.4
 # - Version history has v1.4 entry with all changes listed
 
@@ -361,7 +361,7 @@ jq '.migrations += [{"version": "1.5", "script": "1.5.sh", "description": "Migra
 # - Add empty v1.5 section to history
 
 # 14. Commit version bump
-git add package.json .claude-plugin/plugin.json CHANGELOG.md README.md migrations/
+git add package.json .claude-plugin/plugin.json changelog.md README.md migrations/
 git commit -m "config: bump version to 1.5"
 
 # 15. Push everything
@@ -390,7 +390,7 @@ v1.5 branch ─────────●── (bump version, commit - NO tag 
 
 After release, verify:
 
-- [ ] CAT CHANGELOGs complete (if CAT-managed): minor and major level CHANGELOG.md files exist
+- [ ] CAT CHANGELOGs complete (if CAT-managed): minor and major level changelog.md files exist
 - [ ] Main updated: `git log main --oneline -1` shows merged commits
 - [ ] Tag exists: `git tag -l v{CURRENT_VERSION}`
 - [ ] Tag pushed: `git ls-remote --tags origin v{CURRENT_VERSION}`

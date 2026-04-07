@@ -7,28 +7,28 @@ See LICENSE.md in the project root for license terms.
 
 **Purpose**: Provide guidance for writing clear, descriptive commit messages that explain WHAT the code does and WHY.
 
-## PROJECT.md Commit Format (If Configured)
+## project.md Commit Format (If Configured)
 
-**Before writing a commit message, check if PROJECT.md specifies commit format rules.**
+**Before writing a commit message, check if project.md specifies commit format rules.**
 
 ```bash
-# Check for configured commit format in PROJECT.md
-COMMIT_FORMAT=$(grep -A10 "### Commit Format" .cat/PROJECT.md 2>/dev/null)
+# Check for configured commit format in project.md
+COMMIT_FORMAT=$(grep -A10 "### Commit Format" .cat/project.md 2>/dev/null)
 
 if [[ -n "$COMMIT_FORMAT" ]]; then
-  echo "Using commit format from PROJECT.md:"
+  echo "Using commit format from project.md:"
   echo "$COMMIT_FORMAT"
   echo ""
-  echo "Apply any MUST rules from PROJECT.md to the commit message."
+  echo "Apply any MUST rules from project.md to the commit message."
 fi
 ```
 
-**When PROJECT.md has commit format rules:**
+**When project.md has commit format rules:**
 - MUST rules are mandatory - follow them exactly
 - SHOULD rules are recommended - follow unless you have a good reason not to
 - MAY rules are optional - use your judgment
 
-**If no PROJECT.md configuration exists:** Use the default rules below.
+**If no project.md configuration exists:** Use the default rules below.
 
 ## Core Principles
 

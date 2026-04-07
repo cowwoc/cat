@@ -28,7 +28,7 @@ progression using AskUserQuestion — do NOT mention internal slash commands (e.
 - See `${CLAUDE_PLUGIN_ROOT}/templates/issue-plan.md` for issue plan.md templates.
 - See `${CLAUDE_PLUGIN_ROOT}/templates/major-state.md` and `${CLAUDE_PLUGIN_ROOT}/templates/major-plan.md` for major version templates.
 - See `${CLAUDE_PLUGIN_ROOT}/templates/minor-state.md` and `${CLAUDE_PLUGIN_ROOT}/templates/minor-plan.md` for minor version templates.
-- See `${CLAUDE_PLUGIN_ROOT}/templates/changelog.md` for the CHANGELOG.md template.
+- See `${CLAUDE_PLUGIN_ROOT}/templates/changelog.md` for the changelog.md template.
 - See `${CLAUDE_PLUGIN_ROOT}/concepts/questioning.md` for smart questioning guidance.
 - See `${CLAUDE_PLUGIN_ROOT}/concepts/version-paths.md` for version path conventions.
 
@@ -975,24 +975,24 @@ for p in $(ls -1d "$PARENT_PATH"/v$MAJOR.$MINOR.[0-9]* 2>/dev/null | sed "s|$PAR
 done
 ```
 
-**Update ROADMAP.md with new version numbers.** Apply the same version renumbering to `.cat/ROADMAP.md`:
+**Update roadmap.md with new version numbers.** Apply the same version renumbering to `.cat/roadmap.md`:
 
 ```bash
-if [ -f .cat/ROADMAP.md ]; then
+if [ -f .cat/roadmap.md ]; then
     if [ "$VERSION_TYPE" = "major" ]; then
         for v in $(seq $((REQUESTED_NUMBER + $(ls -1d .cat/issues/v[0-9]* 2>/dev/null | wc -l) - REQUESTED_NUMBER)) -1 "$REQUESTED_NUMBER"); do
             NEW_V=$((v + 1))
-            sed -i "s/v${v}\.\([0-9]\)/v${NEW_V}.\1/g; s/\bMajor ${v}\b/Major ${NEW_V}/g; s/\b${v}\.\([0-9][0-9]*-\)/${NEW_V}.\1/g" .cat/ROADMAP.md
+            sed -i "s/v${v}\.\([0-9]\)/v${NEW_V}.\1/g; s/\bMajor ${v}\b/Major ${NEW_V}/g; s/\b${v}\.\([0-9][0-9]*-\)/${NEW_V}.\1/g" .cat/roadmap.md
         done
     elif [ "$VERSION_TYPE" = "minor" ]; then
         for v in $(seq $((REQUESTED_NUMBER + $(ls -1d "$PARENT_PATH"/v$MAJOR.[0-9]* 2>/dev/null | wc -l) - REQUESTED_NUMBER)) -1 "$REQUESTED_NUMBER"); do
             NEW_V=$((v + 1))
-            sed -i "s/v$MAJOR\.$v\b/v$MAJOR.$NEW_V/g; s/\b$MAJOR\.$v-/$MAJOR.$NEW_V-/g" .cat/ROADMAP.md
+            sed -i "s/v$MAJOR\.$v\b/v$MAJOR.$NEW_V/g; s/\b$MAJOR\.$v-/$MAJOR.$NEW_V-/g" .cat/roadmap.md
         done
     elif [ "$VERSION_TYPE" = "patch" ]; then
         for p in $(seq $((REQUESTED_NUMBER + $(ls -1d "$PARENT_PATH"/v$MAJOR.$MINOR.[0-9]* 2>/dev/null | wc -l) - REQUESTED_NUMBER)) -1 "$REQUESTED_NUMBER"); do
             NEW_P=$((p + 1))
-            sed -i "s/v$MAJOR\.$MINOR\.$p\b/v$MAJOR.$MINOR.$NEW_P/g; s/\b$MAJOR\.$MINOR\.$p-/$MAJOR.$MINOR.$NEW_P-/g" .cat/ROADMAP.md
+            sed -i "s/v$MAJOR\.$MINOR\.$p\b/v$MAJOR.$MINOR.$NEW_P/g; s/\b$MAJOR\.$MINOR\.$p-/$MAJOR.$MINOR.$NEW_P-/g" .cat/roadmap.md
         done
     fi
 fi
@@ -1001,7 +1001,7 @@ fi
 **Commit renumbered versions immediately** to prevent an inconsistent working tree if subsequent steps fail:
 
 ```bash
-git add .cat/issues/ .cat/ROADMAP.md && \
+git add .cat/issues/ .cat/roadmap.md && \
 git commit -m "$(cat <<'EOF'
 planning: renumber versions to make room for v{version_number}
 
@@ -1172,10 +1172,10 @@ EOF
 [ -f "$VERSION_PATH/plan.md" ] || echo "ERROR: Major plan.md not created"
 ```
 
-**Create major CHANGELOG.md:**
+**Create major changelog.md:**
 
 ```bash
-cat > "$VERSION_PATH/CHANGELOG.md" << EOF
+cat > "$VERSION_PATH/changelog.md" << EOF
 # Major Version $MAJOR Changelog
 
 ## [Unreleased]
@@ -1186,7 +1186,7 @@ cat > "$VERSION_PATH/CHANGELOG.md" << EOF
 ---
 *Major version started: $(date +%Y-%m-%d)*
 EOF
-[ -f "$VERSION_PATH/CHANGELOG.md" ] || echo "ERROR: Major CHANGELOG.md not created"
+[ -f "$VERSION_PATH/changelog.md" ] || echo "ERROR: Major changelog.md not created"
 ```
 
 **Create initial minor version (X.0):**
@@ -1199,7 +1199,7 @@ VERSION_PATH="$VERSION_PATH/v$MAJOR.$MINOR"
 VERSION_SUMMARY="Initial release for major version $MAJOR"
 ```
 
-Then execute the three "Create minor [STATE/PLAN/CHANGELOG].md" bash blocks in the minor version
+Then execute the three "Create minor [index/plan/changelog].md" bash blocks in the minor version
 section below. The templates use `$VERSION_PATH`, `$MAJOR`, `$MINOR`, and `$VERSION_SUMMARY`.
 
 **If VERSION_TYPE is "minor":**
@@ -1244,10 +1244,10 @@ EOF
 [ -f "$VERSION_PATH/plan.md" ] || echo "ERROR: Minor plan.md not created"
 ```
 
-**Create minor CHANGELOG.md:**
+**Create minor changelog.md:**
 
 ```bash
-cat > "$VERSION_PATH/CHANGELOG.md" << EOF
+cat > "$VERSION_PATH/changelog.md" << EOF
 # Minor $MAJOR.$MINOR Changelog
 
 ## [Unreleased]
@@ -1258,7 +1258,7 @@ cat > "$VERSION_PATH/CHANGELOG.md" << EOF
 ---
 *Minor version started: $(date +%Y-%m-%d)*
 EOF
-[ -f "$VERSION_PATH/CHANGELOG.md" ] || echo "ERROR: Minor CHANGELOG.md not created"
+[ -f "$VERSION_PATH/changelog.md" ] || echo "ERROR: Minor changelog.md not created"
 ```
 
 **If VERSION_TYPE is "patch":**
@@ -1302,10 +1302,10 @@ EOF
 [ -f "$VERSION_PATH/plan.md" ] || echo "ERROR: Patch plan.md not created"
 ```
 
-**Create CHANGELOG.md:**
+**Create changelog.md:**
 
 ```bash
-cat > "$VERSION_PATH/CHANGELOG.md" << EOF
+cat > "$VERSION_PATH/changelog.md" << EOF
 # Patch $MAJOR.$MINOR.$PATCH Changelog
 
 ## [Unreleased]
@@ -1316,17 +1316,17 @@ cat > "$VERSION_PATH/CHANGELOG.md" << EOF
 ---
 *Patch started: $(date +%Y-%m-%d)*
 EOF
-[ -f "$VERSION_PATH/CHANGELOG.md" ] || echo "ERROR: Patch CHANGELOG.md not created"
+[ -f "$VERSION_PATH/changelog.md" ] || echo "ERROR: Patch changelog.md not created"
 ```
 
 </step>
 
 <step name="version_update_roadmap">
 
-**Update ROADMAP.md with new version entry:**
+**Update roadmap.md with new version entry:**
 
 ```bash
-ROADMAP=".cat/ROADMAP.md"
+ROADMAP=".cat/roadmap.md"
 ```
 
 **If VERSION_TYPE is "major":**
@@ -1337,7 +1337,7 @@ cat >> "$ROADMAP" << EOF
 ## Version $MAJOR: $VERSION_TITLE (PLANNED)
 - **$MAJOR.0:** Initial Release (PENDING)
 EOF
-grep -q "## Version $MAJOR:" "$ROADMAP" || echo "ERROR: Major version section not added to ROADMAP.md"
+grep -q "## Version $MAJOR:" "$ROADMAP" || echo "ERROR: Major version section not added to roadmap.md"
 ```
 
 **If VERSION_TYPE is "minor":**
@@ -1347,9 +1347,9 @@ if grep -q "^## Version $MAJOR:" "$ROADMAP"; then
   LINE_NUM=$(grep -n "^## Version $MAJOR:" "$ROADMAP" | cut -d: -f1)
   sed -i "$((LINE_NUM + 1))a - **$MAJOR.$MINOR:** $VERSION_DESCRIPTION (PENDING)" "$ROADMAP"
 else
-  echo "WARNING: Major version $MAJOR section not found in ROADMAP.md"
+  echo "WARNING: Major version $MAJOR section not found in roadmap.md"
 fi && \
-grep -q "$MAJOR.$MINOR" "$ROADMAP" || echo "WARNING: Minor not added to ROADMAP.md"
+grep -q "$MAJOR.$MINOR" "$ROADMAP" || echo "WARNING: Minor not added to roadmap.md"
 ```
 
 **If VERSION_TYPE is "patch":**
@@ -1359,9 +1359,9 @@ if grep -q "^- \*\*$MAJOR.$MINOR:\*\*" "$ROADMAP"; then
   LINE_NUM=$(grep -n "^- \*\*$MAJOR.$MINOR:\*\*" "$ROADMAP" | cut -d: -f1)
   sed -i "$((LINE_NUM))a\  - **$MAJOR.$MINOR.$PATCH:** $VERSION_DESCRIPTION (PENDING)" "$ROADMAP"
 else
-  echo "WARNING: Minor version $MAJOR.$MINOR entry not found in ROADMAP.md"
+  echo "WARNING: Minor version $MAJOR.$MINOR entry not found in roadmap.md"
 fi && \
-grep -q "$MAJOR.$MINOR.$PATCH" "$ROADMAP" || echo "WARNING: Patch not added to ROADMAP.md"
+grep -q "$MAJOR.$MINOR.$PATCH" "$ROADMAP" || echo "WARNING: Patch not added to roadmap.md"
 ```
 
 </step>
@@ -1412,7 +1412,7 @@ grep -q "v$MAJOR.$MINOR.$PATCH" "$PARENT_STATE" || echo "ERROR: Patch version no
 **If VERSION_TYPE is "major":**
 
 ```bash
-git add ".cat/issues/v$MAJOR/" ".cat/ROADMAP.md" && \
+git add ".cat/issues/v$MAJOR/" ".cat/roadmap.md" && \
 git commit -m "$(cat <<'EOF'
 planning: add major version {major}
 
@@ -1426,7 +1426,7 @@ EOF
 **If VERSION_TYPE is "minor":**
 
 ```bash
-git add "$VERSION_PATH/" ".cat/ROADMAP.md" "$PARENT_PATH/index.json" && \
+git add "$VERSION_PATH/" ".cat/roadmap.md" "$PARENT_PATH/index.json" && \
 git commit -m "$(cat <<'EOF'
 planning: add minor version {major}.{minor}
 
@@ -1438,7 +1438,7 @@ EOF
 **If VERSION_TYPE is "patch":**
 
 ```bash
-git add "$VERSION_PATH/" ".cat/ROADMAP.md" "$PARENT_PATH/index.json" && \
+git add "$VERSION_PATH/" ".cat/roadmap.md" "$PARENT_PATH/index.json" && \
 git commit -m "$(cat <<'EOF'
 planning: add patch version {major}.{minor}.{patch}
 
@@ -1482,7 +1482,7 @@ CLIENT_BIN="${CLAUDE_PROJECT_DIR}/client/target/jlink/bin"
 - [ ] Requirements derived
 - [ ] Gates configured
 - [ ] Directory structure created
-- [ ] Files created and ROADMAP.md updated
+- [ ] Files created and roadmap.md updated
 - [ ] Parent index.json updated (if applicable)
 - [ ] All committed to git
 

@@ -8,12 +8,12 @@ See LICENSE.md in the project root for license terms.
 Initialize CAT planning structure for new or existing projects.
 
 <objective>
-Initialize CAT planning structure. Creates `.cat/` with PROJECT.md, ROADMAP.md, config.json,
+Initialize CAT planning structure. Creates `.cat/` with project.md, roadmap.md, config.json,
 `.claude/rules/` for universal rules, and `.cat/rules/` for audience-filtered standards.
 
 **Reference files** — read on demand as needed:
-- See `${CLAUDE_PLUGIN_ROOT}/templates/project.md` for the PROJECT.md template.
-- See `${CLAUDE_PLUGIN_ROOT}/templates/roadmap.md` for the ROADMAP.md template.
+- See `${CLAUDE_PLUGIN_ROOT}/templates/project.md` for the project.md template.
+- See `${CLAUDE_PLUGIN_ROOT}/templates/roadmap.md` for the roadmap.md template.
 - See `${CLAUDE_PLUGIN_ROOT}/templates/config.json` for the config.json template.
 </objective>
 
@@ -24,7 +24,7 @@ Initialize CAT planning structure. Creates `.cat/` with PROJECT.md, ROADMAP.md, 
 <step name="verify">
 
 ```bash
-[ -f .cat/PROJECT.md ] && echo "ERROR: CAT already initialized" && exit 1
+[ -f .cat/project.md ] && echo "ERROR: CAT already initialized" && exit 1
 CODE_COUNT=$(find . -name "*.ts" -o -name "*.js" -o -name "*.py" -o -name "*.go" \
   -o -name "*.rs" -o -name "*.java" -o -name "*.swift" 2>/dev/null \
   | grep -v node_modules | grep -v .git | wc -l)
@@ -74,7 +74,7 @@ echo "Configured: receive.denyCurrentBranch=updateInstead"
 ```
 
 **If "No, I'll merge manually":**
-Note in PROJECT.md:
+Note in project.md:
 ```markdown
 ## Notes
 - Worktree push disabled. Merge issue branches manually from main worktree.
@@ -109,13 +109,13 @@ fi
 3. Core: "If you could only nail one thing?"
 4. Scope: "What's explicitly NOT in v1?"
 5. Constraints: "Any hard constraints?"
-6. Gate: "Ready to create PROJECT.md?" / "Ask more" / "Add context" - loop until ready
+6. Gate: "Ready to create project.md?" / "Ask more" / "Add context" - loop until ready
 
 </step>
 
 <step name="new_project" condition="New project">
 
-Create `.cat/PROJECT.md`:
+Create `.cat/project.md`:
 ```markdown
 # [Project Name]
 
@@ -142,7 +142,7 @@ Create `.cat/PROJECT.md`:
 | [Choice] | [Why] | Pending |
 ```
 
-Create `.cat/ROADMAP.md`:
+Create `.cat/roadmap.md`:
 ```markdown
 # Roadmap
 ## Major 1: [Name]
@@ -169,11 +169,11 @@ git log --oneline -20 2>/dev/null || echo "No history"
 <step name="existing_check_planning" condition="Existing codebase">
 
 ```bash
-find . -maxdepth 3 -name "PROJECT.md" -type f 2>/dev/null | head -5
+find . -maxdepth 3 -name "project.md" -type f 2>/dev/null | head -5
 find . -maxdepth 3 -type d \( -name "releases" -o -name "roadmap" \) 2>/dev/null | head -5
 ```
 
-**If structured planning exists**: Read PROJECT.md, extract description/requirements/constraints. SKIP questioning,
+**If structured planning exists**: Read project.md, extract description/requirements/constraints. SKIP questioning,
 proceed to infer_state.
 
 </step>
@@ -235,9 +235,9 @@ if [[ ! -f .cat/.gitignore ]]; then
 fi
 ```
 
-Create PROJECT.md with inferred state (existing capabilities → Validated requirements).
+Create project.md with inferred state (existing capabilities → Validated requirements).
 
-Create ROADMAP.md:
+Create roadmap.md:
 ```markdown
 # Roadmap
 ## Version 1: [Name]
@@ -353,7 +353,7 @@ Then:
 - options: ["All issues complete", "Specific conditions", "No criteria"]
 
 **If "Skip for now":**
-- Note in PROJECT.md: "Gates not configured. Use `/cat:config` to set up version gates."
+- Note in project.md: "Gates not configured. Use `/cat:config` to set up version gates."
 
 </step>
 
@@ -400,7 +400,7 @@ Running stakeholder research for pending versions...
 
 **If "Skip for now":**
 
-Note in PROJECT.md:
+Note in project.md:
 ```markdown
 ## Notes
 - Research not run during init. Ask Claude to research pending versions (e.g., "research v1.0").
@@ -544,7 +544,7 @@ Store derived values for use in the config step:
 **Configure Git Workflow Preferences**
 
 This step captures the user's preferred git workflow through a conversational wizard.
-The answers are used to generate RFC 2119-formatted rules in PROJECT.md.
+The answers are used to generate RFC 2119-formatted rules in project.md.
 
 **Step 1: Ask about branching strategy**
 
@@ -654,7 +654,7 @@ Create `.cat/config.json`:
 }
 ```
 
-**Generate Git Workflow section for PROJECT.md:**
+**Generate Git Workflow section for project.md:**
 
 Based on the values captured in the git_workflow step, generate the Git Workflow section using
 RFC 2119 terminology (MUST, SHOULD, MAY).
@@ -865,7 +865,7 @@ Append after commit format:
 {GIT_CUSTOM_NOTES content}
 ```
 
-Append to PROJECT.md (after Key Decisions):
+Append to project.md (after Key Decisions):
 ```markdown
 
 ## Conventions
@@ -901,7 +901,7 @@ paths: ["*.java"]      # default: always (omit to always inject)
 **Structure:**
 ```
 .cat/rules/
-├── INDEX.md              # Summary of all rules with audience information
+├── index.md              # Summary of all rules with audience information
 ├── common.md             # Common conventions (main + all subagents)
 ├── {language}.md         # Language-specific with paths: frontmatter
 └── {topic}.md            # Topic-specific rules
@@ -942,7 +942,7 @@ Replace `{trust}`, `{caution}`, `{curiosity}`, `{perfection}`, `{verbosity}` wit
 
 **New projects:**
 ```
-Initialized: PROJECT.md, ROADMAP.md, config.json, rules/, conventions/
+Initialized: project.md, roadmap.md, config.json, rules/, conventions/
 Next: /clear -> ask Claude to add a major version
 ```
 
@@ -1046,8 +1046,8 @@ INVOKE: Skill("cat:get-output-agent", args="init.explore-at-your-own-pace")
 | Criterion | New | Existing |
 |-----------|-----|----------|
 | Deep questioning completed | ✓ | If no planning |
-| PROJECT.md captures context | ✓ | ✓ (inferred) |
-| ROADMAP.md created | ✓ | ✓ (with history) |
+| project.md captures context | ✓ | ✓ (inferred) |
+| roadmap.md created | ✓ | ✓ (with history) |
 | .claude/rules/ directory | ✓ | ✓ |
 | .cat/rules/ directory | ✓ | ✓ |
 | Issue dirs with PLAN/STATE | - | ✓ (full content) |

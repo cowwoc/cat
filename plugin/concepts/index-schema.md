@@ -54,7 +54,7 @@ validation. See `plugin/templates/major-state.md`, `minor-state.md`, and `patch-
 
 ## Migration
 
-Run `plugin/migrations/2.1.sh` to convert existing `STATE.md` files to `index.json` format. The script is
+Run `plugin/migrations/2.1.sh` to convert existing `index.json` files to `index.json` format. The script is
 idempotent — running it multiple times produces the same result.
 
 ## Validation

@@ -13,7 +13,7 @@ The git log should read like a changelog of what shipped, not a diary of plannin
 
 | Event | Commit? | Why |
 |-------|---------|-----|
-| PROJECT.md + ROADMAP.md created | YES | Project initialization |
+| project.md + roadmap.md created | YES | Project initialization |
 | plan.md created | NO | Intermediate - commit with first issue |
 | RESEARCH.md created | NO | Intermediate artifact |
 | **Issue closed** | YES | Implementation + planning metadata |
@@ -35,14 +35,14 @@ Use ONLY these types when committing in a CAT-managed project:
 | `docs` | User-facing docs (README, API docs) | `docs: add API documentation` |
 | `style` | Formatting, linting fixes | `style: format auth module` |
 | `config` | Config, tooling, deps, **Claude-facing docs** | `config: update CLAUDE.md rules` |
-| `planning` | Planning system updates (ROADMAP, STATE) | `planning: add issue 5 summary` |
+| `planning` | Planning system updates (ROADMAP, index.json) | `planning: add issue 5 summary` |
 
 **Commit Type by File Location:**
 
 | File Location | Commit Type | Examples |
 |---------------|-------------|----------|
-| `.cat/*.md` | `planning:` | PROJECT.md, ROADMAP.md |
-| `.cat/issues/v*/` | `planning:` | index.json, plan.md, CHANGELOG.md |
+| `.cat/*.md` | `planning:` | project.md, roadmap.md |
+| `.cat/issues/v*/` | `planning:` | index.json, plan.md, changelog.md |
 | `.cat/retrospectives/` | `config:` | index.json, mistakes-*.json, retrospectives-*.json (Claude-facing) |
 | `.claude/hooks/`, `.claude/settings.json` | `config:` | hooks, Claude Code settings |
 | `CLAUDE.md`, skills, workflows | `config:` | Claude-facing behavior rules |

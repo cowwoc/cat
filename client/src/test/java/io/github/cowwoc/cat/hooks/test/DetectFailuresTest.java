@@ -248,9 +248,9 @@ public final class DetectFailuresTest
     ObjectNode toolResult = mapper.createObjectNode();
     toolResult.put("exit_code", 0);
     toolResult.put("stdout", """
-      diff --git a/PLAN.md b/PLAN.md
-      --- a/PLAN.md
-      +++ b/PLAN.md
+      diff --git a/plan.md b/plan.md
+      --- a/plan.md
+      +++ b/plan.md
       @@ -1,3 +1,4 @@
       +This discusses test_failure detection and FAILURE patterns in diffs.
       """);
@@ -281,7 +281,7 @@ public final class DetectFailuresTest
     toolResult.put("stdout", "This file discusses Exception handling and FAILURE modes in test scenarios.");
     toolResult.put("stderr", "");
 
-    try (TestClaudeHook scope = TestUtils.bashHookWithToolResult("cat PLAN.md", "", "test-session",
+    try (TestClaudeHook scope = TestUtils.bashHookWithToolResult("cat plan.md", "", "test-session",
       toolResult))
     {
       DetectFailures handler = new DetectFailures();
@@ -295,7 +295,7 @@ public final class DetectFailuresTest
   /**
    * Verifies that get-output get-diff output with failure keywords does not trigger a warning.
    * <p>
-   * A common false positive: the get-output get-diff skill renders diffs that include PLAN.md content
+   * A common false positive: the get-output get-diff skill renders diffs that include plan.md content
    * with words like "failure" or "test" in it.
    */
   @Test

@@ -222,8 +222,8 @@
       "id": "M351",
       "timestamp": "2026-02-18T18:38:00Z",
       "category": "protocol_violation",
-      "description": "Main agent presented approval gate before verifying STATE.md was closed; implementation subagent committed code but STATE.md remained in-progress",
-      "root_cause": "work-with-issue-first-use/SKILL.md Step 7 (Approval Gate) has no verification that STATE.md is closed before presenting the gate. The skill instructs the subagent to close STATE.md (Step 3 delegation prompt) but never verifies compliance prior to the approval gate.",
+      "description": "Main agent presented approval gate before verifying index.json was closed; implementation subagent committed code but index.json remained in-progress",
+      "root_cause": "work-with-issue-first-use/SKILL.md Step 7 (Approval Gate) has no verification that index.json is closed before presenting the gate. The skill instructs the subagent to close index.json (Step 3 delegation prompt) but never verifies compliance prior to the approval gate.",
       "rca_method": "A",
       "rca_method_name": "5-whys",
       "prevention_type": "skill",
@@ -244,7 +244,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Before presenting the approval gate in Step 7, verify STATE.md status is 'closed'. If not closed, update STATE.md and amend the last commit to include the closure before proceeding."
+      "correct_behavior": "Before presenting the approval gate in Step 7, verify index.json status is 'closed'. If not closed, update index.json and amend the last commit to include the closure before proceeding."
     },
     {
       "id": "M352",
@@ -572,14 +572,14 @@
       "id": "M363",
       "timestamp": "2026-02-20T14:19:18.468Z",
       "category": "environment_state_mismatch",
-      "description": "Worktree captured stale STATE.md for another issue (closed\u2192open regression) during implementation commit",
-      "root_cause": "Worktree was branched from v2.1 before fix-status-instruction-ordering was merged. Implementation commit included the stale open STATE.md for that issue. No validation existed to detect STATE.md regressions for other issues before squashing.",
+      "description": "Worktree captured stale index.json for another issue (closed\u2192open regression) during implementation commit",
+      "root_cause": "Worktree was branched from v2.1 before fix-status-instruction-ordering was merged. Implementation commit included the stale open index.json for that issue. No validation existed to detect index.json regressions for other issues before squashing.",
       "rca_method": "A",
       "rca_method_name": "5-whys",
       "prevention_type": "skill",
       "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-merge-first-use/SKILL.md",
       "pattern_keywords": [
-        "STATE.md",
+        "index.json",
         "worktree",
         "stale",
         "regression",
@@ -595,14 +595,14 @@
         "fragility": "medium",
         "catches_variations": true
       },
-      "correct_behavior": "Before squashing, verify that no other issues' STATE.md files regressed from closed to open. Restore from base branch if regression detected."
+      "correct_behavior": "Before squashing, verify that no other issues' index.json files regressed from closed to open. Restore from base branch if regression detected."
     },
     {
       "id": "M364",
       "timestamp": "2026-02-20T16:29:42Z",
       "category": "protocol_violation",
       "description": "Stakeholder review subagents read files from /workspace/ (main worktree) instead of the issue worktree, causing false-positive rejection findings",
-      "root_cause": "Delegation prompt instructed subagents to work within the worktree path but subagents ignored the directive and used their default cwd (/workspace/). Issue context files (PLAN.md) were not pre-fetched with absolute paths, leaving subagents to discover them independently via relative paths that resolved to the wrong workspace.",
+      "root_cause": "Delegation prompt instructed subagents to work within the worktree path but subagents ignored the directive and used their default cwd (/workspace/). Issue context files (plan.md) were not pre-fetched with absolute paths, leaving subagents to discover them independently via relative paths that resolved to the wrong workspace.",
       "rca_method": "B",
       "rca_method_name": "taxonomy",
       "prevention_type": "skill",
@@ -1199,7 +1199,7 @@
       "id": "M386",
       "timestamp": "2026-02-22T17:00:00Z",
       "category": "tool_misuse",
-      "description": "Merge subagent moved branch pointer without updating main workspace working tree, causing stale STATE.md (showed open when HEAD had closed)",
+      "description": "Merge subagent moved branch pointer without updating main workspace working tree, causing stale index.json (showed open when HEAD had closed)",
       "root_cause": "MergeAndCleanup.fastForwardMerge() uses 'git push . HEAD:baseBranch' which is a pointer-only operation. It moves the base branch pointer in the main repo from the worktree context, but does not update the main workspace working tree files. After worktree removal, reading files from main workspace returns stale content not matching the new HEAD commit.",
       "rca_method": "C",
       "rca_method_name": "causal-barrier",
@@ -1309,7 +1309,7 @@
       "timestamp": "2026-02-23T02:00:00Z",
       "category": "stakeholder_review_quality",
       "description": "Requirements stakeholder missed 2-level-only version scheme limitation during porting task review: IssueDiscovery.java only handled major (v2) and major.minor (v2.1), not major.minor.patch (v2.1.3)",
-      "root_cause": "Requirements stakeholder Review Process only covers REQ-XXX formal requirements from parent PLAN.md, not task-local Success Criteria (e.g., produce identical output, match bash implementation) and does not mandate reading original source files to verify behavioral parity. The PLAN.md stated identical JSON output and matched bash implementation in Success Criteria, but the review process skipped those in favor of checking formal REQ-IDs (which this task had none of - only a parent issue reference).",
+      "root_cause": "Requirements stakeholder Review Process only covers REQ-XXX formal requirements from parent plan.md, not task-local Success Criteria (e.g., produce identical output, match bash implementation) and does not mandate reading original source files to verify behavioral parity. The plan.md stated identical JSON output and matched bash implementation in Success Criteria, but the review process skipped those in favor of checking formal REQ-IDs (which this task had none of - only a parent issue reference).",
       "rca_method": "B",
       "rca_method_name": "taxonomy",
       "prevention_type": "skill",
@@ -1330,7 +1330,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Requirements stakeholder should read both task PLAN.md Success Criteria AND Satisfies REQ-XXX IDs. For porting tasks, the stakeholder must read original source file(s) to enumerate all supported inputs/behaviors and verify the new implementation covers the same scope (e.g., all 3 version schemes: major, major.minor, major.minor.patch)."
+      "correct_behavior": "Requirements stakeholder should read both task plan.md Success Criteria AND Satisfies REQ-XXX IDs. For porting tasks, the stakeholder must read original source file(s) to enumerate all supported inputs/behaviors and verify the new implementation covers the same scope (e.g., all 3 version schemes: major, major.minor, major.minor.patch)."
     },
     {
       "id": "M390",
@@ -1412,7 +1412,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "When a decomposed parent issue is selected (all sub-issues closed), verify all PLAN.md acceptance criteria are satisfied before offering to close the parent. The sequence is: children closed \u2192 criteria verified \u2192 offer closure."
+      "correct_behavior": "When a decomposed parent issue is selected (all sub-issues closed), verify all plan.md acceptance criteria are satisfied before offering to close the parent. The sequence is: children closed \u2192 criteria verified \u2192 offer closure."
     },
     {
       "id": "M393",
@@ -1446,14 +1446,14 @@
       "id": "M394",
       "timestamp": "2026-02-23T11:00:00Z",
       "category": "protocol_violation",
-      "description": "Agent presented implementation for review without closing STATE.md in the same commit",
-      "root_cause": "The work-with-issue squash+verification step lacks a blocking check that STATE.md is closed in the final commit before proceeding to the approval gate. The rule exists in documentation (CLAUDE.md M487 and delegation prompt) but without a verification gate, the agent can proceed to review with STATE.md still open.",
+      "description": "Agent presented implementation for review without closing index.json in the same commit",
+      "root_cause": "The work-with-issue squash+verification step lacks a blocking check that index.json is closed in the final commit before proceeding to the approval gate. The rule exists in documentation (CLAUDE.md M487 and delegation prompt) but without a verification gate, the agent can proceed to review with index.json still open.",
       "rca_method": "C",
       "rca_method_name": "causal-barrier",
       "prevention_type": "validation",
       "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue/first-use.md",
       "pattern_keywords": [
-        "STATE.md",
+        "index.json",
         "closed",
         "approval gate",
         "same commit",
@@ -1467,7 +1467,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Before presenting the approval gate, verify that STATE.md shows Status: closed in the HEAD commit. If not, amend the implementation commit to include the STATE.md closure before proceeding."
+      "correct_behavior": "Before presenting the approval gate, verify that index.json shows Status: closed in the HEAD commit. If not, amend the implementation commit to include the index.json closure before proceeding."
     },
     {
       "id": "M395",
@@ -1657,7 +1657,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "When blocked_tasks shows not_found for a dependency, verify the dependency STATE.md directly. The diagnostic is for context only; the selection result is authoritative. The code fix (remove .limit(1000) from buildIssueIndex) is tracked as task M401-fix."
+      "correct_behavior": "When blocked_tasks shows not_found for a dependency, verify the dependency index.json directly. The diagnostic is for context only; the selection result is authoritative. The code fix (remove .limit(1000) from buildIssueIndex) is tracked as task M401-fix."
     },
     {
       "id": "M402",
@@ -2070,8 +2070,8 @@
       "id": "M417",
       "timestamp": "2026-02-27T11:17:24Z",
       "category": "protocol_violation",
-      "description": "Interactive rebase dropped STATE.md changes from pre-squash-range commit, regressing closed issue back to open",
-      "root_cause": "git-squash skill STATE.md regression check only existed for Quick Workflow, not Interactive Rebase Workflow. When commits outside the squash range are dropped during interactive rebase, the post-squash git diff check may miss STATE.md regressions.",
+      "description": "Interactive rebase dropped index.json changes from pre-squash-range commit, regressing closed issue back to open",
+      "root_cause": "git-squash skill index.json regression check only existed for Quick Workflow, not Interactive Rebase Workflow. When commits outside the squash range are dropped during interactive rebase, the post-squash git diff check may miss index.json regressions.",
       "rca_method": "A",
       "rca_method_name": "5-whys",
       "prevention_type": "skill",
@@ -2079,7 +2079,7 @@
       "pattern_keywords": [
         "state-regression",
         "interactive-rebase",
-        "STATE.md",
+        "index.json",
         "squash",
         "closed-issue"
       ],
@@ -2091,7 +2091,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "After any interactive rebase that drops or squashes commits, run STATE.md regression check comparing backup branch STATE.md status fields against current; fail if any closed issue regressed to open"
+      "correct_behavior": "After any interactive rebase that drops or squashes commits, run index.json regression check comparing backup branch index.json status fields against current; fail if any closed issue regressed to open"
     },
     {
       "id": "M418",
@@ -2449,7 +2449,7 @@
       "timestamp": "2026-02-27T21:20:03Z",
       "category": "incorrect_implementation",
       "description": "centralize-verbatim-output-skill: get-output SKILL.md used load-skill instead of binary launcher, and GetOutput.java was not registered in build-jlink.sh, breaking all 10 migrated skills",
-      "root_cause": "Agent creating a new Java-dispatching skill used load-skill (SkillLoader) in SKILL.md preprocessor instead of calling the Java binary launcher directly. Additionally, GetOutput.java was not registered in build-jlink.sh HANDLERS array, so no binary existed. No E2E verification was run (mvn verify + empirical test) before merge, leaving both defects undetected. PLAN.md Steps 6-7 (build + empirical test) were skipped entirely.",
+      "root_cause": "Agent creating a new Java-dispatching skill used load-skill (SkillLoader) in SKILL.md preprocessor instead of calling the Java binary launcher directly. Additionally, GetOutput.java was not registered in build-jlink.sh HANDLERS array, so no binary existed. No E2E verification was run (mvn verify + empirical test) before merge, leaving both defects undetected. plan.md Steps 6-7 (build + empirical test) were skipped entirely.",
       "rca_method": "B",
       "rca_method_name": "taxonomy",
       "prevention_type": "skill",
@@ -2514,7 +2514,7 @@
       "id": "M433",
       "timestamp": "2026-02-27T23:25:50Z",
       "category": "protocol_violation",
-      "description": "Proceeded to stakeholder review and approval gate when verify returned PARTIAL with unrun empirical post-conditions (post-conditions 8 and 9 in PLAN.md)",
+      "description": "Proceeded to stakeholder review and approval gate when verify returned PARTIAL with unrun empirical post-conditions (post-conditions 8 and 9 in plan.md)",
       "root_cause": "work-with-issue/first-use.md PARTIAL handler said only \"Note partial status in metrics - Continue to Step 5\" without requiring empirical-test criteria to be run. The verify-implementation subagent cannot execute empirical tests; it marks them PARTIAL. The skill gave no instruction to run them before proceeding, so the orchestrator treated PARTIAL as equivalent to COMPLETE for progression purposes.",
       "rca_method": "B",
       "rca_method_name": "taxonomy",
@@ -2704,8 +2704,8 @@
       "id": "M440",
       "timestamp": "2026-02-28T21:53:01Z",
       "category": "protocol_violation",
-      "description": "work-merge closed issue STATE.md without setting Resolution field",
-      "root_cause": "merge-and-cleanup.md Step 6 omitted Resolution from STATE.md closure fields, leaving subagent without guidance to set Resolution: implemented",
+      "description": "work-merge closed issue index.json without setting Resolution field",
+      "root_cause": "merge-and-cleanup.md Step 6 omitted Resolution from index.json closure fields, leaving subagent without guidance to set Resolution: implemented",
       "rca_method": "C",
       "rca_method_name": "causal-barrier",
       "prevention_type": "skill",
@@ -2724,7 +2724,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Set Status: closed, Progress: 100%, Resolution: implemented, and Completed: {date} together in STATE.md when closing an issue via work-merge"
+      "correct_behavior": "Set Status: closed, Progress: 100%, Resolution: implemented, and Completed: {date} together in index.json when closing an issue via work-merge"
     },
     {
       "id": "M441",
@@ -2755,7 +2755,7 @@
       "id": "M442",
       "timestamp": "2026-02-28T22:30:00Z",
       "category": "protocol_violation",
-      "description": "work-merge subagent wrote Status: completed in STATE.md instead of Status: closed, breaking /cat:status",
+      "description": "work-merge subagent wrote Status: completed in index.json instead of Status: closed, breaking /cat:status",
       "root_cause": "SUBAGENT-PROMPT-CHECKLIST.md instructed subagents to set Status: completed but the only valid closed status value is 'closed'. The checklist was the source document read by work-merge subagents, causing them to write the wrong value.",
       "rca_method": "B",
       "rca_method_name": "taxonomy",
@@ -2776,7 +2776,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Set Status: closed (not Status: completed) in STATE.md when closing an issue. Valid status values are: blocked, closed, in-progress, open."
+      "correct_behavior": "Set Status: closed (not Status: completed) in index.json when closing an issue. Valid status values are: blocked, closed, in-progress, open."
     },
     {
       "id": "M443",

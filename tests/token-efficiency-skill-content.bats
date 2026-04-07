@@ -5,7 +5,7 @@
 # See LICENSE.md in the project root for license terms.
 #
 # Tests verifying that optimize-execution and instruction-builder skills contain the required
-# token-efficiency guidance, exemption rules, and report structure as specified in PLAN.md.
+# token-efficiency guidance, exemption rules, and report structure as specified in plan.md.
 #
 # Wave 1: E2E Acceptance Criteria Validation (items 1 and 2)
 # Wave 2: Exemption Rule Testing (item 3)

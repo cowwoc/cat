@@ -3,5 +3,5 @@
   "resolution": "implemented",
   "dependencies": [],
   "blocks": ["2.1-remove-skill-user-invocable-wrappers", "2.1-add-feature-branch-workflow-trigger"],
-  "targetBranch": "v2.1"
+  "target_branch": "v2.1"
 }

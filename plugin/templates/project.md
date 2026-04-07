@@ -64,5 +64,5 @@ After:  feature: add login with validation
 [Quick start instructions]
 
 ## Related Documentation
-- [ROADMAP.md](ROADMAP.md) - Version roadmap
+- [roadmap.md](roadmap.md) - Version roadmap
 - [config.json](config.json) - CAT configuration

@@ -527,7 +527,7 @@ This will permanently delete:
 - {minor_count} minor
   versions
 - {issue_count} issues
-- All associated index.json, plan.md, CHANGELOG.md files
+- All associated index.json, plan.md, changelog.md files
 
 This action cannot be
   undone (except via git). Are you absolutely sure?"
@@ -558,7 +558,7 @@ Use AskUserQuestion:
 This will delete:
 - $ISSUE_COUNT issues
 - All index.json,
-  plan.md, CHANGELOG.md files"
+  plan.md, changelog.md files"
 - options:
   - "Yes, remove it" - Proceed
   - "No, cancel" - Abort
@@ -579,10 +579,10 @@ rm -rf "$VERSION_PATH"
 
 <step name="version_update_roadmap">
 
-**Update ROADMAP.md:**
+**Update roadmap.md:**
 
 ```bash
-ROADMAP=".cat/ROADMAP.md"
+ROADMAP=".cat/roadmap.md"
 ```
 
 **If VERSION_TYPE is "major":**
@@ -592,23 +592,23 @@ Remove the entire section for this major version.
 **If VERSION_TYPE is "minor":**
 
 ```bash
-# Remove the minor version entry from ROADMAP.md
+# Remove the minor version entry from roadmap.md
 # Format being removed: - **X.Y:** Description (STATUS)
 sed -i "/^- \*\*$MAJOR\.$MINOR:\*\*/d" "$ROADMAP"
 
 # Verify removal
-! grep -q "^- \*\*$MAJOR\.$MINOR:\*\*" "$ROADMAP" || echo "ERROR: Minor version entry not removed from ROADMAP.md"
+! grep -q "^- \*\*$MAJOR\.$MINOR:\*\*" "$ROADMAP" || echo "ERROR: Minor version entry not removed from roadmap.md"
 ```
 
 **If VERSION_TYPE is "patch":**
 
 ```bash
-# Remove the patch version entry from ROADMAP.md
+# Remove the patch version entry from roadmap.md
 # Format being removed:   - **X.Y.Z:** Description (STATUS)
 sed -i "/^[[:space:]]*- \*\*$MAJOR\.$MINOR\.$PATCH:\*\*/d" "$ROADMAP"
 
 # Verify removal
-! grep -q "$MAJOR\.$MINOR\.$PATCH" "$ROADMAP" || echo "ERROR: Patch version entry not removed from ROADMAP.md"
+! grep -q "$MAJOR\.$MINOR\.$PATCH" "$ROADMAP" || echo "ERROR: Patch version entry not removed from roadmap.md"
 ```
 
 </step>
@@ -683,7 +683,7 @@ EOF
 
 ```bash
 git add -A ".cat/issues/v$MAJOR/"
-git add ".cat/ROADMAP.md"
+git add ".cat/roadmap.md"
 git commit -m "$(cat <<'EOF'
 docs: remove minor version {major}.{minor}
 
@@ -697,7 +697,7 @@ EOF
 
 ```bash
 git add -A ".cat/issues/v$MAJOR/v$MAJOR.$MINOR/"
-git add ".cat/ROADMAP.md"
+git add ".cat/roadmap.md"
 git commit -m "$(cat <<'EOF'
 docs: remove patch version {major}.{minor}.{patch}
 
@@ -786,7 +786,7 @@ Use `/cat:status` to see current state.
 - [ ] Statistics gathered for user awareness
 - [ ] User confirmation obtained
 - [ ] Version directory removed
-- [ ] ROADMAP.md updated
+- [ ] roadmap.md updated
 - [ ] Parent index.json updated (if applicable)
 - [ ] Removal committed to git
 - [ ] Recovery instructions provided (for major)

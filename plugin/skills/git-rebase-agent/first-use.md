@@ -7,26 +7,26 @@ See LICENSE.md in the project root for license terms.
 
 **Purpose**: Safely rebase branches with automatic backup, conflict detection, and recovery guidance.
 
-## PROJECT.md Merge Policy Check
+## project.md Merge Policy Check
 
-**Check PROJECT.md for configured merge preferences before rebasing.**
+**Check project.md for configured merge preferences before rebasing.**
 
 ```bash
-# Check if Git Workflow section exists in PROJECT.md
-MERGE_POLICY=$(grep -A10 "### Merge Policy" .cat/PROJECT.md 2>/dev/null)
+# Check if Git Workflow section exists in project.md
+MERGE_POLICY=$(grep -A10 "### Merge Policy" .cat/project.md 2>/dev/null)
 
 if echo "$MERGE_POLICY" | grep -qi "MUST.*merge commit"; then
-  echo "⚠️ WARNING: PROJECT.md prefers merge commits over rebase"
+  echo "⚠️ WARNING: project.md prefers merge commits over rebase"
   echo "Rebasing may conflict with configured workflow."
   echo ""
-  echo "PROJECT.md specifies merge commits should be used, which preserves"
+  echo "project.md specifies merge commits should be used, which preserves"
   echo "branch history. Rebasing rewrites history to be linear."
   echo ""
   echo "Proceed only if you understand the implications:"
   echo "  - Rebasing will create linear history (no merge commits)"
-  echo "  - This overrides the PROJECT.md preference"
+  echo "  - This overrides the project.md preference"
   echo ""
-  echo "To honor PROJECT.md preference, use 'git merge --no-ff' instead."
+  echo "To honor project.md preference, use 'git merge --no-ff' instead."
 fi
 ```
 

@@ -18,9 +18,9 @@
 - `plugin/**/README.md` is `docs:`, not a plugin file
 - Mixed commits: if a commit touches plugin files, the type follows the plugin work (even if `.claude/` files are also modified)
 - **Convention changes belong with their application:** When adding a new convention to a language or style file (e.g., `java.md`) AND applying it across files in the same session, include the convention file change in the SAME commit as the files that apply it. Group by topic (establish + apply = one unit), not by file location.
-- **STATE.md belongs with implementation:** When closing an issue, STATE.md updates belong in the SAME commit as the implementation work, using the implementation's commit type (feature:/bugfix:/docs:/etc), NOT in a separate planning: commit
+- **index.json belongs with implementation:** When closing an issue, index.json updates belong in the SAME commit as the implementation work, using the implementation's commit type (feature:/bugfix:/docs:/etc), NOT in a separate planning: commit
 - If a commit would touch both docs and non-docs files, split it into separate commits
-- **Do not update closed issue files:** Never modify plan.md or STATE.md of closed issues unless the user explicitly
+- **Do not update closed issue files:** Never modify plan.md or index.json of closed issues unless the user explicitly
   instructs you to. Closed issues are historical records. **Exception:** Automated migration scripts under
   `plugin/migrations/` must process all issues including closed ones to ensure consistent file formats across the
   entire issue tree.
