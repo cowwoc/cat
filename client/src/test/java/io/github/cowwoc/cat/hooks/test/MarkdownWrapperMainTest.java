@@ -140,4 +140,86 @@ public class MarkdownWrapperMainTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that run() throws NullPointerException when the input stream is null.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*in.*")
+  public void nullInThrowsException() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("markdown-wrapper-main-test-");
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+      MarkdownWrapper.run(scope, new String[]{}, null, out);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that run() with --width 20 wraps stdin content so no output line exceeds 20 characters.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void customWidthIsApplied() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("markdown-wrapper-main-test-");
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      String input = "word1 word2 word3 word4 word5 word6 word7 word8 word9 word10 word11 word12 word13";
+      ByteArrayInputStream in = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+
+      MarkdownWrapper.run(scope, new String[]{"--width", "20"}, in, out);
+
+      String output = buffer.toString(StandardCharsets.UTF_8);
+      requireThat(output, "output").isNotBlank();
+      for (String line : output.split("\n"))
+        requireThat(line.length(), "line.length()").isLessThanOrEqualTo(20);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that run() with a file path argument wraps the file in place.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void filePathArgWrapsFileInPlace() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("markdown-wrapper-main-test-");
+    Path tempFile = Files.createTempFile("markdown-wrapper-test-", ".md");
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      String longContent = "word1 word2 word3 word4 word5 word6 word7 word8 word9 word10";
+      Files.writeString(tempFile, longContent, StandardCharsets.UTF_8);
+
+      ByteArrayInputStream in = new ByteArrayInputStream(new byte[0]);
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+
+      MarkdownWrapper.run(scope, new String[]{tempFile.toString(), "--width", "20"}, in, out);
+
+      String newContent = Files.readString(tempFile, StandardCharsets.UTF_8);
+      requireThat(newContent, "newContent").isNotEqualTo(longContent);
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }

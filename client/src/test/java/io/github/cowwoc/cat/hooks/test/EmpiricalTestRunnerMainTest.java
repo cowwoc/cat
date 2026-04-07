@@ -156,4 +156,24 @@ public class EmpiricalTestRunnerMainTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that passing a non-integer value to --trials throws NumberFormatException.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = NumberFormatException.class)
+  public void trialsNonIntegerThrowsException() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("empirical-test-runner-main-test-");
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      EmpiricalTestRunner.run(scope, new String[]{"--trials", "not-a-number"},
+        new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8));
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }

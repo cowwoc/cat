@@ -17,6 +17,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+
 /**
  * Tests for {@link GetNextIssueOutput#run(JvmScope, String[], PrintStream)} CLI error path handling.
  */
@@ -100,6 +102,85 @@ public class GetNextIssueOutputMainTest
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
       GetNextIssueOutput.run(scope, new String[]{"--bogus", "value"}, out);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that omitting --completed-issue throws IllegalArgumentException with Usage message.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Usage.*")
+  public void missingCompletedIssueThrowsException() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("get-next-issue-output-main-test-");
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+      GetNextIssueOutput.run(scope,
+        new String[]{"--target-branch", "main", "--session-id", "test-session",
+          "--project-dir", tempDir.toString()},
+        out);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that providing all four required flags produces a non-blank box, even when the project has no
+   * issues (graceful fallback to scope-complete box).
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void allRequiredFlagsHappyPath() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("get-next-issue-output-main-test-");
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+      GetNextIssueOutput.run(scope,
+        new String[]{"--completed-issue", "2.1-my-issue", "--target-branch", "main",
+          "--session-id", "test-session", "--project-dir", tempDir.toString()},
+        out);
+      String output = buffer.toString(StandardCharsets.UTF_8).strip();
+      requireThat(output, "output").isNotBlank();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that the --exclude-pattern flag is recognized and does not throw an exception.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void excludePatternFlagIsRecognized() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("get-next-issue-output-main-test-");
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+      GetNextIssueOutput.run(scope,
+        new String[]{"--completed-issue", "2.1-my-issue", "--target-branch", "main",
+          "--session-id", "test-session", "--project-dir", tempDir.toString(),
+          "--exclude-pattern", "skip-*"},
+        out);
+      String output = buffer.toString(StandardCharsets.UTF_8).strip();
+      requireThat(output, "output").isNotBlank();
     }
     finally
     {
