@@ -216,7 +216,7 @@ If this is truly maintenance work on the base branch:
 Names the invalid value, lists valid alternatives, and provides migration guidance:
 
 ```
-STATE.md schema violation: Invalid Status value 'Done'.
+index.json schema violation: Invalid Status value 'Done'.
 
 Status must be one of: closed, in-progress, open
 

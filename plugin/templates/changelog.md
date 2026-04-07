@@ -2,7 +2,7 @@
 
 > **PURPOSE**: This is a USER-FACING release notes document. Content should describe what
 > END-USERS get from this version, NOT internal issue names. When the version is released,
-> this content is copied to the root CHANGELOG.md.
+> this content is copied to the root changelog.md.
 
 **{Version Theme/Tagline}**
 
@@ -39,7 +39,7 @@ Issues that were resolved:
 
 ## Internal Reference
 
-*(This section is for development tracking only - do NOT copy to root CHANGELOG.md)*
+*(This section is for development tracking only - do NOT copy to root changelog.md)*
 
 Issues closed: {count} issues across {count} commits
 

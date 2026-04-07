@@ -927,7 +927,7 @@ public class GitRebaseTest
    * as the target branch, including documentation files that mention the old path.
    * <p>
    * Scenario: main renames {@code .claude/cat/} to {@code .cat/} via {@code git mv}. The feature branch
-   * independently performs the same rename AND has a {@code PLAN.md} that mentions the old path
+   * independently performs the same rename AND has a {@code plan.md} that mentions the old path
    * {@code .claude/cat} in its content (because the feature branch's purpose is to do the rename).
    * The current branch has already handled the rename, so the rebase should NOT flag it as an error.
    * This prevents false positives when the feature branch's purpose is to do the same rename as the target.
@@ -947,12 +947,12 @@ public class GitRebaseTest
         TestUtils.runGit(repoDir, "add", ".claude/");
         TestUtils.runGit(repoDir, "commit", "-m", "add .claude/cat/config.json");
 
-        // Create feature branch from this point, perform the same rename, and add PLAN.md that
+        // Create feature branch from this point, perform the same rename, and add plan.md that
         // mentions the old path (simulating the feature branch's purpose being the rename itself)
         TestUtils.runGit(repoDir, "checkout", "-b", "feature");
         TestUtils.runGit(repoDir, "mv", ".claude/cat", ".cat");
-        Files.writeString(repoDir.resolve("PLAN.md"), "Rename .claude/cat to .cat");
-        TestUtils.runGit(repoDir, "add", "PLAN.md");
+        Files.writeString(repoDir.resolve("plan.md"), "Rename .claude/cat to .cat");
+        TestUtils.runGit(repoDir, "add", "plan.md");
         TestUtils.runGit(repoDir, "commit", "-m", "feature: rename .claude/cat to .cat");
 
         // On main: also perform the same rename independently

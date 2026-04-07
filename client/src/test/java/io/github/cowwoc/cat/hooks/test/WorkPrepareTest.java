@@ -103,7 +103,7 @@ public class WorkPrepareTest
   }
 
   /**
-   * Verifies that execute returns OVERSIZED when the PLAN.md estimates too many tokens.
+   * Verifies that execute returns OVERSIZED when the plan.md estimates too many tokens.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -579,7 +579,7 @@ public class WorkPrepareTest
   }
 
   /**
-   * Verifies that execute includes goal in READY result when PLAN.md has a Goal section.
+   * Verifies that execute includes goal in READY result when plan.md has a Goal section.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -864,7 +864,7 @@ public class WorkPrepareTest
   }
 
   /**
-   * Verifies that execute returns READY with goal "No goal found" when PLAN.md lacks a Goal section.
+   * Verifies that execute returns READY with goal "No goal found" when plan.md lacks a Goal section.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -877,7 +877,7 @@ public class WorkPrepareTest
     {
       createIssue(projectPath, "2", "1", "no-goal", "open");
 
-      // Create a PLAN.md without a Goal section
+      // Create a plan.md without a Goal section
       Path issueDir = projectPath.resolve(".cat").resolve("issues").
         resolve("v2").resolve("v2.1").resolve("no-goal");
       String planContent = """
@@ -1219,7 +1219,7 @@ public class WorkPrepareTest
   }
 
   /**
-   * Creates a PLAN.md with enough files and steps to produce an oversized estimate (&gt; 160000 tokens).
+   * Creates a plan.md with enough files and steps to produce an oversized estimate (&gt; 160000 tokens).
    *
    * @param projectPath the project root directory
    * @param major the major version number
@@ -1246,7 +1246,7 @@ public class WorkPrepareTest
   }
 
   /**
-   * Creates a simple PLAN.md with a few files and steps.
+   * Creates a simple plan.md with a few files and steps.
    *
    * @param projectPath the project root directory
    * @param major the major version number
@@ -1284,7 +1284,7 @@ public class WorkPrepareTest
   }
 
   /**
-   * Creates a PLAN.md with a specific goal text.
+   * Creates a plan.md with a specific goal text.
    *
    * @param projectPath the project root directory
    * @param major the major version number
@@ -2392,7 +2392,7 @@ public class WorkPrepareTest
   /**
    * Verifies that execute returns issuePath pointing to the worktree, not the main workspace.
    * <p>
-   * Agents use issuePath to read PLAN.md via the Read tool, which is blocked by
+   * Agents use issuePath to read plan.md via the Read tool, which is blocked by
    * EnforceWorktreePathIsolation when the path points outside the active worktree.
    *
    * @throws IOException if an I/O error occurs
@@ -2792,7 +2792,7 @@ public class WorkPrepareTest
   }
 
   /**
-   * Verifies that a PLAN.md containing backtick-quoted text with regex metacharacters
+   * Verifies that a plan.md containing backtick-quoted text with regex metacharacters
    * (e.g., "[]") does not cause a PatternSyntaxException during execute.
    *
    * @throws IOException if an I/O error occurs
@@ -3191,10 +3191,10 @@ public class WorkPrepareTest
 
   /**
    * Verifies that a decomposed parent issue whose sub-issues are all closed returns READY (not OVERSIZED),
-   * even when the parent PLAN.md is large enough to normally trigger the OVERSIZED threshold.
+   * even when the parent plan.md is large enough to normally trigger the OVERSIZED threshold.
    * <p>
    * Regression test for the bug where the token estimation check ran before decomposed-parent detection,
-   * causing the large parent PLAN.md to trigger the size limit even though only closure work is needed.
+   * causing the large parent plan.md to trigger the size limit even though only closure work is needed.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -3207,7 +3207,7 @@ public class WorkPrepareTest
     {
       try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
       {
-        // Create only the PLAN.md for the parent (createOversizedPlan writes only PLAN.md)
+        // Create only the plan.md for the parent (createOversizedPlan writes only plan.md)
         createOversizedPlan(projectPath, "2", "1", "big-parent");
 
         // Write the parent's index.json manually with a decomposedInto array
@@ -3233,7 +3233,7 @@ public class WorkPrepareTest
 
         // A decomposed parent with all sub-issues closed needs only closure work — must be READY
         requireThat(node.path("status").asString(), "status").isEqualTo("READY");
-        // Token estimate must be the minimal closure estimate (at most 5000), not the large PLAN.md size
+        // Token estimate must be the minimal closure estimate (at most 5000), not the large plan.md size
         requireThat(node.path("estimated_tokens").asInt(), "estimatedTokens").
           isLessThanOrEqualTo(5000);
 

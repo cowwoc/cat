@@ -183,7 +183,7 @@
     {
       "id": "optimize-doc-1",
       "skill": "optimize-doc",
-      "prompt": "Shrink the PLAN.md file to reduce token usage",
+      "prompt": "Shrink the plan.md file to reduce token usage",
       "category": "explicit"
     },
     {
@@ -279,7 +279,7 @@
     {
       "id": "optimize-doc-with-args",
       "skill": "optimize-doc",
-      "prompt": "Shrink the STATE.md file in the current directory",
+      "prompt": "Shrink the index.json file in the current directory",
       "category": "explicit"
     },
     {

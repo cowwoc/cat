@@ -80,8 +80,8 @@ concern wouldn't block a release, it's not CRITICAL.
 
 | Severity | Example |
 |----------|---------|
-| CRITICAL | A core requirement from PLAN.md is not implemented at all — the feature is missing entirely |
-| HIGH | Requirement partially implemented; a key acceptance criterion listed in PLAN.md is not satisfied |
+| CRITICAL | A core requirement from plan.md is not implemented at all — the feature is missing entirely |
+| HIGH | Requirement partially implemented; a key acceptance criterion listed in plan.md is not satisfied |
 | MEDIUM | Implementation satisfies the stated requirement but an unspecified edge case is unhandled |
 | LOW | Minor deviation from spec wording with no functional impact on behavior |
 

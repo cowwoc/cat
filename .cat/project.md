@@ -42,9 +42,9 @@ decomposition to prevent context overflow.
 ```
 claude-code-cat/
 ├── .cat/           # CAT planning structure (this directory)
-│   ├── PROJECT.md         # Project overview
-│   ├── ROADMAP.md         # Version roadmap
-│   ├── cat-config.json    # User preferences
+│   ├── project.md         # Project overview
+│   ├── roadmap.md         # Version roadmap
+│   ├── config.json        # User preferences
 │   ├── rules/             # Coding standards and audience-filtered rules
 │   ├── references/        # Reference documentation
 │   ├── templates/         # Document templates
@@ -77,11 +77,11 @@ audience-aware injection via CAT hooks.
 └── common.md             # Truly universal content (auto-loaded by Claude Code for ALL agents)
 
 .cat/rules/
-├── INDEX.md              # Summary of all rules with audience information
+├── index.md              # Summary of all rules with audience information
 ├── common.md             # Common CAT conventions (main + all subagents)
 ├── hooks.md              # Hook registration rules (main agent only)
 ├── {language}.md         # Language-specific (java.md, etc.) with paths: frontmatter
-└── state-schema.md       # STATE.md schema reference
+└── index-schema.md       # index.json schema reference
 ```
 
 **Frontmatter properties:**
@@ -110,5 +110,5 @@ These preferences shape how CAT makes autonomous decisions:
 Update anytime with: `/cat:config`
 
 ## Related Documentation
-- [ROADMAP.md](ROADMAP.md) - Version roadmap
-- [cat-config.json](cat-config.json) - CAT configuration
+- [roadmap.md](roadmap.md) - Version roadmap
+- [config.json](config.json) - CAT configuration

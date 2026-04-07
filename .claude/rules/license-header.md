@@ -99,4 +99,4 @@ The following files do not require license headers:
 - Files in `.cat/` (planning artifacts, config, runtime data)
 - `LICENSE.md` itself
 - Build artifacts (`target/`, `node_modules/`, etc.)
-- Project root documentation (`README.md`, `CHANGELOG.md`)
+- Project root documentation (`README.md`, `changelog.md`)

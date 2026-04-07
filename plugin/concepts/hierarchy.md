@@ -12,17 +12,17 @@ See LICENSE.md in the project root for license terms.
 
 ```
 .cat/
-├── PROJECT.md
-├── ROADMAP.md
+├── project.md
+├── roadmap.md
 ├── config.json
 └── v<n>/
     ├── index.json
-    ├── PLAN.md
-    ├── CHANGELOG.md          # Aggregates closed issues
+    ├── plan.md
+    ├── changelog.md          # Aggregates closed issues
     └── v<n>.<m>/
         ├── index.json
-        ├── PLAN.md
-        ├── CHANGELOG.md      # Aggregates closed issues
+        ├── plan.md
+        ├── changelog.md      # Aggregates closed issues
         └── <issue-name>/
             ├── index.json
             └── plan.md
@@ -30,7 +30,7 @@ See LICENSE.md in the project root for license terms.
 
 > **See also:** [state-schema.md](state-schema.md) for the current index.json field schema.
 
-> **NOTE**: Issue-level CHANGELOG.md is not created. Issue changelog content is embedded
+> **NOTE**: Issue-level changelog.md is not created. Issue changelog content is embedded
 > in commit messages (see commit message format in work command).
 
 ## Version Semantics
@@ -55,7 +55,7 @@ See [version-scheme.md](version-scheme.md) for:
 Requirements are defined at the **minor version level** and traced to issues:
 
 ```
-Minor PLAN.md                    Issue plan.md
+Minor plan.md                    Issue plan.md
 ┌─────────────────────┐         ┌──────────────────────────┐
 │ ## Requirements     │         │ ## Parent Requirements   │
 │ | REQ-001 | ...     │ ◄────── │ - REQ-001               │
@@ -65,7 +65,7 @@ Minor PLAN.md                    Issue plan.md
 ```
 
 **Key rules:**
-- Requirements live in minor version PLAN.md (not issue level)
+- Requirements live in minor version plan.md (not issue level)
 - Issues reference requirements via `## Parent Requirements` field (zero or more)
 - A minor version cannot complete until all must-have requirements are satisfied (implicit check)
 - The Requirements stakeholder verifies issues satisfy their claimed requirements

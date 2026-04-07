@@ -456,7 +456,7 @@ ls -1d .cat/v[0-9]*/v[0-9]*.[0-9]* 2>/dev/null | \
   sed 's|.cat/v[0-9]*/v||' | sort -V
 ```
 
-Determine current minor version from ROADMAP.md (first non-completed).
+Determine current minor version from roadmap.md (first non-completed).
 
 Use AskUserQuestion:
 - header: "Select Version"

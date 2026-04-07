@@ -754,7 +754,7 @@
   }, {
     "id" : "A018",
     "priority" : "medium",
-    "description" : "Fix squash workflow to require rebase-before-squash and clarify STATE.md grouping with implementation files, not as separate config commit.",
+    "description" : "Fix squash workflow to require rebase-before-squash and clarify index.json grouping with implementation files, not as separate config commit.",
     "category" : "incorrect_implementation",
     "pattern_id" : "PATTERN-016",
     "status" : "implemented",

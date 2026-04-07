@@ -69,17 +69,17 @@ fi
 
 ### Verify and Finalize Version CHANGELOG
 
-**MANDATORY**: Before marking a version complete, verify the version-level CHANGELOG.md is ready for release.
+**MANDATORY**: Before marking a version complete, verify the version-level changelog.md is ready for release.
 
-> **Purpose**: Version-level CHANGELOG.md contains user-facing release notes that get copied to the
-> root CHANGELOG.md. This step ensures the content is complete and properly formatted.
+> **Purpose**: Version-level changelog.md contains user-facing release notes that get copied to the
+> root changelog.md. This step ensures the content is complete and properly formatted.
 
-1. **Check CHANGELOG.md exists**:
+1. **Check changelog.md exists**:
 
    ```bash
-   VERSION_CHANGELOG=".cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/CHANGELOG.md"
+   VERSION_CHANGELOG=".cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/changelog.md"
    if [[ ! -f "$VERSION_CHANGELOG" ]]; then
-     echo "ERROR: Version CHANGELOG.md not found at $VERSION_CHANGELOG"
+     echo "ERROR: Version changelog.md not found at $VERSION_CHANGELOG"
      echo "Create it using the template from plugin/templates/changelog.md"
      exit 1
    fi
@@ -91,7 +91,7 @@ fi
 
    ```bash
    if grep -q "To be filled" "$VERSION_CHANGELOG"; then
-     echo "⚠️ Version CHANGELOG.md contains placeholder text"
+     echo "⚠️ Version changelog.md contains placeholder text"
      echo "Please update with actual user-facing release notes before completing version."
    fi
    ```
@@ -117,9 +117,9 @@ fi
    - Open the file for editing: `$VERSION_CHANGELOG`
    - Return to this step after edits are saved
 
-### Update Root CHANGELOG.md
+### Update Root changelog.md
 
-**MANDATORY**: Copy the version's release notes to the root CHANGELOG.md.
+**MANDATORY**: Copy the version's release notes to the root changelog.md.
 
 1. **Extract user-facing content from version CHANGELOG**:
 
@@ -141,12 +141,12 @@ fi
    ${VERSION_CONTENT}"
    ```
 
-3. **Insert into root CHANGELOG.md**:
+3. **Insert into root changelog.md**:
 
    Insert the new entry after the "## Version History" line:
 
    ```bash
-   ROOT_CHANGELOG="CHANGELOG.md"
+   ROOT_CHANGELOG="changelog.md"
 
    # Find the line with "## Version History" and insert after it
    # Skip any existing "In Development" section for this version
@@ -235,7 +235,7 @@ their requirements.
 
 ```bash
 for MINOR_DIR in .cat/issues/v${MAJOR}/v${MAJOR}.*/; do
-  MINOR_CHANGELOG="${MINOR_DIR}CHANGELOG.md"
+  MINOR_CHANGELOG="${MINOR_DIR}changelog.md"
   if [[ ! -f "$MINOR_CHANGELOG" ]]; then
     echo "⚠️ Missing CHANGELOG: $MINOR_CHANGELOG"
   elif grep -q "To be filled" "$MINOR_CHANGELOG"; then

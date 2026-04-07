@@ -9,27 +9,27 @@ Merge source branch to its target branch using WORKTREE_PATH parameter. Fast-for
 
 ## Step 0: Read Git Workflow Preferences
 
-**Check PROJECT.md for configured merge preferences before proceeding.**
+**Check project.md for configured merge preferences before proceeding.**
 
 ```bash
-# Check if Git Workflow section exists in PROJECT.md
-WORKFLOW_SECTION=$(grep -A30 "^## Git Workflow" .cat/PROJECT.md 2>/dev/null)
+# Check if Git Workflow section exists in project.md
+WORKFLOW_SECTION=$(grep -A30 "^## Git Workflow" .cat/project.md 2>/dev/null)
 
 if [[ -n "$WORKFLOW_SECTION" ]]; then
   # Check if linear merge is allowed by workflow config
   MERGE_METHOD=$(echo "$WORKFLOW_SECTION" | grep "MUST use" | head -1)
 
   if echo "$MERGE_METHOD" | grep -qi "merge commit"; then
-    echo "⚠️ WARNING: PROJECT.md specifies merge commits, but this skill uses fast-forward."
+    echo "⚠️ WARNING: project.md specifies merge commits, but this skill uses fast-forward."
     echo "Consider using standard 'git merge --no-ff' instead."
     echo ""
     echo "To proceed anyway, continue with this skill."
-    echo "To honor PROJECT.md preference, abort and use: git merge --no-ff {branch}"
+    echo "To honor project.md preference, abort and use: git merge --no-ff {branch}"
     # Don't exit - user may choose to override
   fi
 
   if echo "$MERGE_METHOD" | grep -qi "squash"; then
-    echo "⚠️ WARNING: PROJECT.md specifies squash merge, but this skill uses fast-forward."
+    echo "⚠️ WARNING: project.md specifies squash merge, but this skill uses fast-forward."
     echo "Consider using 'git merge --squash' instead."
     echo ""
     # Don't exit - user may choose to override

@@ -189,14 +189,14 @@ Update minor and major index.json progress (issue index.json already updated in 
 
 - Minor index.json: recalculate progress based on closed issues
 - Major index.json: recalculate progress based on closed minor versions
-- ROADMAP.md: update if version status changed
+- roadmap.md: update if version status changed
 
 ### 11. Update Changelogs
 
-Update minor/major CHANGELOG.md to include closed issue summary.
+Update minor/major changelog.md to include closed issue summary.
 
 > **NOTE**: Issue changelog content is embedded in commit messages, not separate files.
-> Minor/major version CHANGELOG.md files aggregate closed issues.
+> Minor/major version changelog.md files aggregate closed issues.
 
 ## High Trust Mode Differences
 

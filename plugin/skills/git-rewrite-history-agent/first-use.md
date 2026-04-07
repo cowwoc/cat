@@ -23,7 +23,7 @@ standalone binary). Always use this skill instead of `git filter-branch`.
 
 - **Path-based filtering**: `--path X --invert-paths` targets specific files or directories by exact path.
   Filename-only tools accidentally remove ALL files with a matching name across all directories — making
-  them unsafe for files like `PLAN.md` that exist in many directories.
+  them unsafe for files like `plan.md` that exist in many directories.
 - **Actively maintained and recommended by git itself** as the preferred history rewriting tool.
 - **No Python requirement**: a standalone binary is downloaded on first use if Python is not installed.
 

@@ -13,7 +13,7 @@ Select the appropriate template based on issue type.
 [1-2 sentences: what this feature accomplishes]
 
 ## Parent Requirements
-[List requirement IDs from parent version PLAN.md, or "None" for infrastructure issues]
+[List requirement IDs from parent version plan.md, or "None" for infrastructure issues]
 - REQ-001
 
 ## Approaches (optional - include if multiple viable paths exist)

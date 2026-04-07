@@ -325,7 +325,7 @@ public class GetAddOutputPlanningDataTest
       Files.writeString(versionDir.resolve("index.json"), """
         {"status":"open"}""");
       Files.writeString(versionDir.resolve("plan.md"), "# Plan\n\n## Goal\n\nGoal.\n");
-      Files.writeString(versionDir.resolve("CHANGELOG.md"), "# Changelog\n");
+      Files.writeString(versionDir.resolve("changelog.md"), "# Changelog\n");
       Files.writeString(versionDir.resolve("notes.txt"), "some notes");
       Path realIssueDir = versionDir.resolve("real-issue");
       Files.createDirectories(realIssueDir);

@@ -106,7 +106,7 @@ Ask Claude to work at different scopes:
 
 ### /cat:init Details
 
-- Creates PROJECT.md, ROADMAP.md, config.json
+- Creates project.md, roadmap.md, config.json
 - Asks for trust level (how much autonomy your partner has)
 - For new projects: gathers project context through guided questions
 - For existing codebases: detects patterns and infers current state
@@ -127,8 +127,8 @@ CAT supports 2-level (MAJOR → MINOR → ISSUE) and 3-level (MAJOR → MINOR �
 
 ```
 .cat/
-├── PROJECT.md              # Project overview
-├── ROADMAP.md              # Version summaries
+├── project.md              # Project overview
+├── roadmap.md              # Version summaries
 ├── config.json             # Configuration
 └── v{major}/
     └── v{major}.{minor}/

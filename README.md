@@ -148,7 +148,7 @@ follows the same rules.
 
 Each task follows this path:
 
-1. **Planning** → PLAN.md defines the task objectives
+1. **Planning** → plan.md defines the task objectives
 2. **Approach Selection** → At forks in the road, you choose the path
 3. **Execution** → Subagent works in isolation (no risk to your main branch)
 4. **Verification** → Build, test, lint—all must pass
@@ -174,12 +174,12 @@ CAT includes safeguards that protect your codebase and ensure consistent deliver
 
 ### Issue
 An **issue** is an atomic unit of work tracked by CAT. Each issue has a unique ID (e.g., `v2.1-setup-auth`),
-associated files (STATE.md and PLAN.md), and tracks progress from planning through completion.
+associated files (index.json and plan.md), and tracks progress from planning through completion.
 
 ### Sub-issue
 A **sub-issue** is a child issue created when a parent issue exceeds context limits and must be decomposed.
 Sub-issues follow the same structure as regular issues but exist to break down work into manageable chunks.
-The parent issue's STATE.md lists all sub-issues and their relationships.
+The parent issue's index.json lists all sub-issues and their relationships.
 
 ### Wave
 A **wave** is a dependency-ordered group of sub-issues that can execute in parallel. Waves are numbered sequentially
@@ -187,7 +187,7 @@ A **wave** is a dependency-ordered group of sub-issues that can execute in paral
 Wave 1 contains sub-issues with no dependencies. Wave 2 contains sub-issues that depend only on Wave 1, and so on.
 
 Waves are an internal execution concept used during issue decomposition and orchestration. They are not exposed to
-end users but appear in STATE.md files for decomposed issues.
+end users but appear in index.json files for decomposed issues.
 
 **Example:** The `migrate-python-to-java` issue decomposes into 5 waves:
 - Wave 1: Foundation (1 sub-issue)
@@ -308,7 +308,7 @@ When `caution` is `medium` or `high`, CAT runs multi-perspective stakeholder rev
 
 | Stakeholder | Focus |
 |-------------|-------|
-| **requirements** | Verifies task satisfies its claimed requirements from PLAN.md |
+| **requirements** | Verifies task satisfies its claimed requirements from plan.md |
 | **architect** | System design, module boundaries, API design, dependencies |
 | **security** | Vulnerabilities, injection, auth, input validation |
 | **quality** | Code duplication, complexity, maintainability, obvious bugs |
@@ -343,17 +343,17 @@ After `/cat:init`, your project gains a planning structure:
 ```
 your-project/
 └── .cat/
-    ├── PROJECT.md          # Project overview
-    ├── ROADMAP.md          # The big picture
+    ├── project.md          # Project overview
+    ├── roadmap.md          # The big picture
     ├── config.json         # Your preferences
     └── v1/                 # Major version 1
-        ├── STATE.md        # Chapter progress
-        ├── PLAN.md         # Chapter objectives
+        ├── index.json        # Chapter progress
+        ├── plan.md         # Chapter objectives
         └── v1.0/           # Minor version
-            ├── STATE.md    # Section progress
+            ├── index.json    # Section progress
             └── setup-auth/ # Individual task
-                ├── STATE.md
-                └── PLAN.md
+                ├── index.json
+                └── plan.md
 ```
 
 ---

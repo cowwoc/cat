@@ -1,8 +1,9 @@
 # Plan: lowercase-planning-file-names
 
 ## Goal
-Rename all uppercase planning and state file names (CHANGELOG.md, PLAN.md, STATE.md) to lowercase/json
-(changelog.md, plan.md, index.json) in the filesystem and update all references to these names across the codebase.
+Rename all uppercase planning and state file names (CHANGELOG.md, PLAN.md, STATE.md, ROADMAP.md, PROJECT.md) to
+lowercase/json (changelog.md, plan.md, index.json, roadmap.md, project.md) in the filesystem and update all
+references to these names across the codebase.
 
 ## Parent Requirements
 None
@@ -18,20 +19,21 @@ refactor
 ## Files to Modify
 - All `.cat/issues/v*/v*/CHANGELOG.md` files — rename to `changelog.md` (17 files via migration)
 - All `.cat/issues/v*/v*/**/STATE.md` files — rename to `index.json` (via migration, already complete)
-- `CHANGELOG.md` (root) — rename to `changelog.md`
-- `CLAUDE.md` — update "CHANGELOG.md", "PLAN.md", and "STATE.md" string references
-- `README.md` — update "CHANGELOG.md", "PLAN.md", and "STATE.md" string references
-- `plugin/concepts/hierarchy.md` — update references to STATE.md/index.json
-- `plugin/concepts/version-paths.md` — update references to STATE.md/index.json
-- `plugin/concepts/merge-and-cleanup.md` — update references to STATE.md/index.json
+- `CHANGELOG.md` (root) — rename to `changelog.md` (already complete)
+- `.cat/ROADMAP.md` — rename to `.cat/roadmap.md`
+- `.cat/PROJECT.md` — rename to `.cat/project.md`
+- `CLAUDE.md` — update all uppercase planning file name string references
+- `README.md` — update all uppercase planning file name string references
+- `plugin/concepts/hierarchy.md` — update references
+- `plugin/concepts/version-paths.md` — update references
+- `plugin/concepts/merge-and-cleanup.md` — update references
 - `plugin/concepts/agent-architecture.md` — update references
 - `plugin/concepts/commit-types.md` — update references
 - `plugin/concepts/version-completion.md` — update references
 - `plugin/templates/changelog.md` — update any self-references
-- `plugin/migrations/2.1.sh` — verify migration phase handling STATE.md → index.json completed
-- `plugin/migrations/2.2.sh` — add migration phase to rename CHANGELOG.md → changelog.md
+- `plugin/migrations/2.1.sh` — add phases to rename ROADMAP.md → roadmap.md, PROJECT.md → project.md
 - `client/src/main/java/io/github/cowwoc/cat/hooks/write/WarnBaseBranchEdit.java` — update protected file list
-- All other files containing "CHANGELOG.md", "PLAN.md", or "STATE.md" string references
+- All other files containing "ROADMAP.md" or "PROJECT.md" string references
 
 ## Pre-conditions
 - [ ] All dependent issues are closed
@@ -82,8 +84,8 @@ refactor
   - `client/src/test/java/io/github/cowwoc/cat/hooks/test/GetStatusOutputTest.java`
   - `tests/eval/test_cases.json`, `tests/eval/results/results.json`
 - Rename concept/rules files that describe the STATE.md schema:
-  - `plugin/concepts/state-schema.md` → `plugin/concepts/index-schema.md` (update all references to it)
-  - `.claude/rules/state-schema.md` → `.claude/rules/index-schema.md` (update all references to it)
+  - `plugin/concepts/index-schema.md` → `plugin/concepts/index-schema.md` (update all references to it)
+  - `.claude/rules/index-schema.md` → `.claude/rules/index-schema.md` (update all references to it)
 - Leave `plugin/migrations/2.0.sh` and `plugin/migrations/2.1.sh` unchanged — these scripts target
   `STATE.md` by design (they run on the old format before renaming)
 - Leave `tests/hooks/migration-2.1.bats` unchanged — migration tests create `STATE.md` fixtures
@@ -91,13 +93,36 @@ refactor
 - Verify with `git grep -l "STATE\.md"` that only migration scripts and migration tests remain
   after the update; all other tracked files must reference `index.json`
 
+### Job 6: Rename .cat/ROADMAP.md and .cat/PROJECT.md
+- Add Phase 23 to `plugin/migrations/2.1.sh` to rename `.cat/ROADMAP.md` → `.cat/roadmap.md` (idempotent)
+- Add Phase 24 to `plugin/migrations/2.1.sh` to rename `.cat/PROJECT.md` → `.cat/project.md` (idempotent)
+- Run the migration in the worktree to rename existing files
+  - Files: `.cat/ROADMAP.md`, `.cat/PROJECT.md`
+
+### Job 7: Update all string references to ROADMAP.md and PROJECT.md
+- Replace all occurrences of `ROADMAP.md` with `roadmap.md` in all tracked files
+- Replace all occurrences of `PROJECT.md` with `project.md` in all tracked files
+  - Key files: `CLAUDE.md`, `README.md`, plugin concepts, plugin skills, `.cat/` files, Java source
+- Leave `plugin/migrations/2.1.sh` references unchanged where they target the old filename for migration
+- Verify with `git grep -l "ROADMAP\.md"` and `git grep -l "PROJECT\.md"` that only migration scripts
+  remain after the update; all other tracked files must reference lowercase names
+
 ## Post-conditions
-- [ ] `git grep -l "CHANGELOG\.md"` returns no tracked files (all references lowercase)
-- [ ] `git grep -l "PLAN\.md"` returns no tracked files (all references lowercase)
+- [ ] `git grep -l "CHANGELOG\.md"` returns only `plugin/migrations/2.1.sh` (Phase 22 targets it for renaming)
+  and `changelog.md` (historical changelog entries); all other tracked files use lowercase
+- [ ] `git grep -l "PLAN\.md"` returns only `plugin/migrations/2.0.sh`, `plugin/migrations/2.1.sh`,
+  `plugin/migrations/registry.json`, `tests/hooks/migration-2.1.bats`,
+  and `tests/hooks/block-merge-commits.bats` (migration scripts and tests process pre-rename state);
+  all other tracked files use lowercase `plan.md`
 - [ ] `git grep -l "STATE\.md"` returns only `plugin/migrations/2.0.sh`, `plugin/migrations/2.1.sh`,
   and `tests/hooks/migration-2.1.bats` (all other files updated to index.json)
+- [ ] `git grep -l "ROADMAP\.md"` returns no tracked files (all references lowercase)
+- [ ] `git grep -l "PROJECT\.md"` returns no tracked files (all references lowercase)
 - [ ] No `CHANGELOG.md` files exist under `.cat/issues/` (all renamed to `changelog.md`)
-- [ ] Root `CHANGELOG.md` renamed to `changelog.md`
-- [ ] Migration script `plugin/migrations/2.2.sh` handles CHANGELOG.md → changelog.md rename
-  and is idempotent
+- [ ] Root `CHANGELOG.md` renamed to `changelog.md` (already complete)
+- [ ] `.cat/ROADMAP.md` renamed to `.cat/roadmap.md`
+- [ ] `.cat/PROJECT.md` renamed to `.cat/project.md`
+- [ ] `.cat/rules/INDEX.md` renamed to `.cat/rules/index.md`
+- [ ] Migration script `plugin/migrations/2.1.sh` Phases 23-25 handle ROADMAP.md, PROJECT.md, and INDEX.md
+  renames and are idempotent
 - [ ] `mvn -f client/pom.xml verify -e` passes with no test failures

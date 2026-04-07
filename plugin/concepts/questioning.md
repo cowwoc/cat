@@ -180,15 +180,15 @@ If gaps remain, weave questions naturally into the conversation. Don't suddenly 
 When you feel you understand the vision, use AskUserQuestion:
 
 - header: "Ready?"
-- question: "Ready to create PROJECT.md, or explore more?"
+- question: "Ready to create project.md, or explore more?"
 - options (ALL THREE REQUIRED):
-  - "Create PROJECT.md" - Finalize and continue
+  - "Create project.md" - Finalize and continue
   - "Ask more questions" - I'll dig into areas we haven't covered
   - "Let me add context" - You have more to share
 
 If "Ask more questions" → identify gaps from coverage check → ask naturally → return to gate.
 
-Loop until "Create PROJECT.md" selected.
+Loop until "Create project.md" selected.
 </decision_gate>
 
 <anti_patterns>

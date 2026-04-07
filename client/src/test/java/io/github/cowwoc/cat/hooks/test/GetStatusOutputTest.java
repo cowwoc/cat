@@ -457,7 +457,7 @@ public class GetStatusOutputTest
   }
 
   /**
-   * Verifies that major version shows correct name from ROADMAP.md.
+   * Verifies that major version shows correct name from roadmap.md.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -470,7 +470,7 @@ public class GetStatusOutputTest
     Path majorDir = issuesDir.resolve("v2");
     Files.createDirectories(majorDir);
 
-    Files.writeString(catDir.resolve("ROADMAP.md"),
+    Files.writeString(catDir.resolve("roadmap.md"),
       "# Roadmap\n" +
       "\n" +
       "## Version 2: Major Refactor (2024)\n");
@@ -489,7 +489,7 @@ public class GetStatusOutputTest
   }
 
   /**
-   * Verifies that minor version shows description from ROADMAP.md.
+   * Verifies that minor version shows description from roadmap.md.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -505,7 +505,7 @@ public class GetStatusOutputTest
     Files.createDirectories(issueDir);
 
     Files.writeString(issueDir.resolve("index.json"), "{\"status\":\"open\"}");
-    Files.writeString(catDir.resolve("ROADMAP.md"),
+    Files.writeString(catDir.resolve("roadmap.md"),
       "# Roadmap\n" +
       "\n" +
       "## Version 2: Major Refactor\n" +
@@ -526,7 +526,7 @@ public class GetStatusOutputTest
   }
 
   /**
-   * Verifies that project name is read from PROJECT.md.
+   * Verifies that project name is read from project.md.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -538,7 +538,7 @@ public class GetStatusOutputTest
     Path issuesDir = catDir.resolve("issues");
     Files.createDirectories(issuesDir);
 
-    Files.writeString(catDir.resolve("PROJECT.md"), "# My Awesome Project\n");
+    Files.writeString(catDir.resolve("project.md"), "# My Awesome Project\n");
 
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
@@ -815,7 +815,7 @@ public class GetStatusOutputTest
       GetStatusOutput handler = new GetStatusOutput(scope);
       String content = "- **Status:** in-progress\n- **Owner:** alice\n";
 
-      String status = handler.parseStatusFromContent(content, "test/STATE.md");
+      String status = handler.parseStatusFromContent(content, "test/index.json");
 
       requireThat(status, "status").isEqualTo("in-progress");
     }
@@ -838,7 +838,7 @@ public class GetStatusOutputTest
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String content = "- **Status:** invalid-value\n";
-      handler.parseStatusFromContent(content, "test/STATE.md");
+      handler.parseStatusFromContent(content, "test/index.json");
     }
     finally
     {
@@ -860,7 +860,7 @@ public class GetStatusOutputTest
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String content = "- **Owner:** alice\n- **Created:** 2024-01-01\n";
-      handler.parseStatusFromContent(content, "test/STATE.md");
+      handler.parseStatusFromContent(content, "test/index.json");
     }
     finally
     {
@@ -882,7 +882,7 @@ public class GetStatusOutputTest
       GetStatusOutput handler = new GetStatusOutput(scope);
       String content = "- **Status:** CLOSED\n";
 
-      String status = handler.parseStatusFromContent(content, "test/STATE.md");
+      String status = handler.parseStatusFromContent(content, "test/index.json");
 
       requireThat(status, "status").isEqualTo("closed");
     }
@@ -908,7 +908,7 @@ public class GetStatusOutputTest
       for (IssueStatus expected : IssueStatus.values())
       {
         String content = "- **Status:** " + expected.toString() + "\n";
-        String actual = handler.parseStatusFromContent(content, "test/STATE.md");
+        String actual = handler.parseStatusFromContent(content, "test/index.json");
         requireThat(actual, "status").isEqualTo(expected.toString());
       }
     }
@@ -1116,7 +1116,7 @@ public class GetStatusOutputTest
       GetStatusOutput handler = new GetStatusOutput(scope);
 
       String[] wrongSuffixPaths = {
-        ".cat/issues/v1/v1.0/task/PLAN.md",
+        ".cat/issues/v1/v1.0/task/plan.md",
         ".cat/issues/v1/v1.0/task/README.md",
         ".cat/issues/v1/v1.0/task/state.md"
       };

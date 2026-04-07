@@ -764,7 +764,7 @@
     "timestamp" : "2026-03-05T20:29:45Z",
     "category" : "incorrect_implementation",
     "description" : "",
-    "root_cause" : "The audit implementation subagent misinterpreted the scope of 'search and update all STATE.md examples' as including creation of new issue directories. The subagent created planning files for issues that don't exist on the target branch, likely from generating examples or confusing issue exploration with issue creation.",
+    "root_cause" : "The audit implementation subagent misinterpreted the scope of 'search and update all index.json examples' as including creation of new issue directories. The subagent created planning files for issues that don't exist on the target branch, likely from generating examples or confusing issue exploration with issue creation.",
     "rca_method" : "B",
     "rca_method_name" : "taxonomy",
     "prevention_type" : "documentation",
@@ -1019,7 +1019,7 @@
     "timestamp" : "2026-03-06T20:16:33Z",
     "category" : "protocol_violation",
     "description" : "",
-    "root_cause" : "The merge phase (work-merge-agent) did not enforce the constraint that ONLY the current issue's STATE.md should be modified during merge.",
+    "root_cause" : "The merge phase (work-merge-agent) did not enforce the constraint that ONLY the current issue's index.json should be modified during merge.",
     "rca_method" : "C",
     "rca_method_name" : "causal-barrier",
     "prevention_type" : "skill",
@@ -1982,7 +1982,7 @@
     "timestamp" : "2026-03-15T12:25:00Z",
     "category" : "environment_mismatch",
     "description" : "work-prepare returned OVERSIZED for a decomposed parent issue (2.1-rename-cat-config-files) instead of skipping it and selecting the available sub-issue (2.1-rename-config-tests). The agent correctly invoked decompose-issue-agent then retried, but work-prepare still returned OVERSIZED because the underlying bug was not fixed. The skill provided no guidance for when OVERSIZED persists after 2 attempts, so the agent improvised by trying to specify the sub-issue directly, finding it locked by another session.",
-    "root_cause" : "SYSTEM BUG: IssueDiscovery.allSubissuesClosed() uses QUALIFIED_NAME_PATTERN to resolve sub-issue names from the 'Decomposed Into' section of STATE.md. When sub-issue names are stored as bare names (e.g., 'rename-config-tests') rather than qualified names (e.g., '2.1-rename-config-tests'), the pattern fails to match and the sub-issue is silently skipped via 'continue'. With all sub-issues skipped, the method returns true (falsely claiming all sub-issues are closed), causing the decomposed parent to be treated as an executable issue rather than being skipped. Work-prepare then selected the OVERSIZED parent instead of the available sub-issue.",
+    "root_cause" : "SYSTEM BUG: IssueDiscovery.allSubissuesClosed() uses QUALIFIED_NAME_PATTERN to resolve sub-issue names from the 'Decomposed Into' section of index.json. When sub-issue names are stored as bare names (e.g., 'rename-config-tests') rather than qualified names (e.g., '2.1-rename-config-tests'), the pattern fails to match and the sub-issue is silently skipped via 'continue'. With all sub-issues skipped, the method returns true (falsely claiming all sub-issues are closed), causing the decomposed parent to be treated as an executable issue rather than being skipped. Work-prepare then selected the OVERSIZED parent instead of the available sub-issue.",
     "cause_signature" : "environment_mismatch:validation_absent:issue_workflow",
     "prevention_type" : "code_fix",
     "prevention_path" : "client/src/main/java/io/github/cowwoc/cat/hooks/util/IssueDiscovery.java",
@@ -1995,7 +1995,7 @@
       "fragility" : "low",
       "catches_variations" : true
     },
-    "correct_behavior" : "allSubissuesClosed() must handle bare sub-issue names by resolving them against the parent version directory. When a sub-issue name lacks the version prefix, derive the directory path directly from the bare name (e.g., 'rename-config-tests' -> parentVersionDir/rename-config-tests/STATE.md). If the sub-issue STATE.md does not exist or is not closed, return false. This ensures the decomposed parent is skipped and work-prepare selects the available sub-issue instead."
+    "correct_behavior" : "allSubissuesClosed() must handle bare sub-issue names by resolving them against the parent version directory. When a sub-issue name lacks the version prefix, derive the directory path directly from the bare name (e.g., 'rename-config-tests' -> parentVersionDir/rename-config-tests/index.json). If the sub-issue index.json does not exist or is not closed, return false. This ensures the decomposed parent is skipped and work-prepare selects the available sub-issue instead."
   }, {
     "id" : "M547",
     "timestamp" : "2026-03-15T12:44:01Z",
@@ -2283,7 +2283,7 @@
     "id" : "M562",
     "timestamp" : "2026-03-15T22:36:00Z",
     "category" : "tool_misuse",
-    "description" : "BFG --delete-files flag matches by filename only, not path. Subagent ran java -jar bfg.jar --delete-files PLAN.md and --delete-files STATE.md to remove root-level files, but BFG deleted ALL files named PLAN.md and STATE.md from all history — including hundreds of .cat/issues/*/PLAN.md and .cat/issues/*/STATE.md files — erasing their entire git history.",
+    "description" : "BFG --delete-files flag matches by filename only, not path. Subagent ran java -jar bfg.jar --delete-files plan.md and --delete-files index.json to remove root-level files, but BFG deleted ALL files named plan.md and index.json from all history — including hundreds of .cat/issues/*/plan.md and .cat/issues/*/index.json files — erasing their entire git history.",
     "root_cause" : "DOCUMENTATION GAP: git-rewrite-history-agent/first-use.md documents --delete-files without warning that it matches by filename only (not by path). No guidance exists for path-specific file removal, which requires git filter-repo instead of BFG. The skill example (--delete-files secrets.txt) appears to work for simple cases, priming agents to use --delete-files for any named-file removal without considering files sharing the same name elsewhere in the tree.",
     "cause_signature" : "knowledge_gap:skill_incomplete:git_operations",
     "rca_method" : "B",
@@ -2294,10 +2294,10 @@
     "prevention_implemented" : false,
     "prevention_verified" : false,
     "recurrence_of" : null,
-    "correct_behavior" : "Use --delete-files only when removing a filename from ALL locations. For path-specific removal (e.g., only root-level PLAN.md), use git filter-repo --path PLAN.md --invert-paths instead.",
+    "correct_behavior" : "Use --delete-files only when removing a filename from ALL locations. For path-specific removal (e.g., only root-level plan.md), use git filter-repo --path plan.md --invert-paths instead.",
     "issue_creation_info" : {
       "suggested_title" : "Add BFG --delete-files path-specificity warning to git-rewrite-history skill",
-      "suggested_description" : "The git-rewrite-history-agent/first-use.md skill documents --delete-files without warning that it matches by filename only (not by path). This caused M562: BFG deleted ALL PLAN.md and STATE.md files from git history (including .cat/issues/*/) instead of only root-level files. Add a critical warning section to the Remove a File from All History section explaining the filename-only behavior and documenting git filter-repo as the correct tool for path-specific deletion.",
+      "suggested_description" : "The git-rewrite-history-agent/first-use.md skill documents --delete-files without warning that it matches by filename only (not by path). This caused M562: BFG deleted ALL plan.md and index.json files from git history (including .cat/issues/*/) instead of only root-level files. Add a critical warning section to the Remove a File from All History section explaining the filename-only behavior and documenting git filter-repo as the correct tool for path-specific deletion.",
       "suggested_acceptance_criteria" : [ "first-use.md --delete-files section includes CRITICAL warning that it matches by filename only", "first-use.md documents git filter-repo --path X --invert-paths as the path-specific alternative", "first-use.md includes bash command to pre-check for files sharing the same name before using --delete-files" ]
     }
   }, {
@@ -2305,8 +2305,8 @@
     "timestamp" : "2026-03-16T01:44:12Z",
     "category" : "detection_gap",
     "type" : "false_positive",
-    "description" : "AutoLearnMistakes false-positive (fourth recurrence of M461/M466/M555): git diff output containing deleted PLAN.md content matched Pattern 3 (PROTOCOL VIOLATION|VIOLATION) because filterJsonContent() does not filter git diff lines (lines starting with -). The deleted unify-giving-up-detection/PLAN.md contained the phrase \"4 violation types\" which triggered a spurious protocol_violation detection during stakeholder review diff gathering.",
-    "root_cause" : "FILTER GAP (fourth recurrence of M461 root cause): AutoLearnMistakes.filterJsonContent() only strips JSON-structured lines. It does not strip git diff lines (lines starting with +, -, or @@). When a git diff includes deleted file content (lines starting with -), keyword-matching patterns in that content can match AutoLearnMistakes detection patterns even though no actual mistake occurred. Specifically, deleted PLAN.md content containing \"violation types\" matched Pattern 3 (PROTOCOL VIOLATION|VIOLATION).",
+    "description" : "AutoLearnMistakes false-positive (fourth recurrence of M461/M466/M555): git diff output containing deleted plan.md content matched Pattern 3 (PROTOCOL VIOLATION|VIOLATION) because filterJsonContent() does not filter git diff lines (lines starting with -). The deleted unify-giving-up-detection/plan.md contained the phrase \"4 violation types\" which triggered a spurious protocol_violation detection during stakeholder review diff gathering.",
+    "root_cause" : "FILTER GAP (fourth recurrence of M461 root cause): AutoLearnMistakes.filterJsonContent() only strips JSON-structured lines. It does not strip git diff lines (lines starting with +, -, or @@). When a git diff includes deleted file content (lines starting with -), keyword-matching patterns in that content can match AutoLearnMistakes detection patterns even though no actual mistake occurred. Specifically, deleted plan.md content containing \"violation types\" matched Pattern 3 (PROTOCOL VIOLATION|VIOLATION).",
     "rca_method" : "C",
     "rca_method_name" : "causal-barrier",
     "cause_signature" : "tool_limitation:validation_absent:post_tool_use",
@@ -2459,7 +2459,7 @@
     "timestamp" : "2026-03-18T19:00:00Z",
     "category" : "data_loss",
     "description" : "Squash subagent deleted Java production source files (RemindGitSquash.java, GetCleanupOutput.java, EnforceStatusOutput.java) while resolving git rebase 'deleted by us' conflicts during a pre-squash rebase, causing 1285+ test failures with NoClassDefFoundError.",
-    "root_cause" : "MISSING GUIDANCE: The git-rebase-agent skill's '## Handling Conflicts' section provided no numbered steps and no coverage of 'deleted by us' conflict scenarios. When git status showed 'deleted by us' for STATE.md files (the issue branch had renamed STATE.md → index.json, but v2.1 had since updated those files), the subagent had no guidance on how to distinguish delete-mode conflicts (accept deletion vs. restore target version). With no structured protocol, the subagent improvised and accidentally deleted unrelated Java source files that happened to be listed in the conflicting area, corrupting the build.",
+    "root_cause" : "MISSING GUIDANCE: The git-rebase-agent skill's '## Handling Conflicts' section provided no numbered steps and no coverage of 'deleted by us' conflict scenarios. When git status showed 'deleted by us' for index.json files (the issue branch had renamed index.json → index.json, but v2.1 had since updated those files), the subagent had no guidance on how to distinguish delete-mode conflicts (accept deletion vs. restore target version). With no structured protocol, the subagent improvised and accidentally deleted unrelated Java source files that happened to be listed in the conflicting area, corrupting the build.",
     "rca_method" : "C",
     "rca_method_name" : "causal-barrier",
     "prevention_type" : "skill",
