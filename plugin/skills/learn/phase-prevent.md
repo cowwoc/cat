@@ -607,6 +607,47 @@ language** that guides toward correct behavior rather than warning against mista
 Keep negative language only when no actionable positive alternative exists (e.g., security warnings
 where the "don't" is the entire point).
 
+**Instruction Effectiveness for Compliance Rules (for prohibition-type preventions)**
+
+(See also `skill-conventions.md` § Instruction Effectiveness for Compliance Rules for the canonical
+definition.)
+
+When the prevention implements a new prohibition rule (type: documentation, level: skill), structure
+the rule using all four components:
+
+1. **Short label** — One of: `BLOCKED:`, `REQUIRED:`, `PROHIBITED:`, `MANDATORY:`, `CRITICAL:`
+   - Use at most 5 such labels per skill document
+   - Reserve for rules where violation causes irreversible harm
+
+2. **WHY paragraph** — Causal explanation of what goes wrong if the rule is violated
+   - Must use one of: "because", "otherwise", "this prevents", "this ensures", "without this"
+   - Minimum 1 sentence, maximum 3 sentences
+   - Do NOT say "This is required" — say what happens if it is not followed
+
+3. **Prohibited list** — Explicit enumeration of forbidden actions or patterns
+   - List each variant separately (do not bundle under one vague description)
+   - This prevents the "different workaround" bypass vector
+
+4. **Positive alternative** — The exact thing the agent should do instead
+   - Must be concrete enough that the agent can act on it without further research
+
+**Example structure:**
+
+> BLOCKED: Do not edit plugin/ files in the main workspace.
+>
+> Because the worktree isolation hook cannot protect the main branch if edits bypass it — every
+> edit made outside a worktree goes directly to the protected branch without review.
+>
+> Do NOT use: Edit tool on plugin/**, Write tool on plugin/**,
+> Bash commands that write to plugin/** (cat >, echo >>, tee, sed -i, etc.)
+>
+> Instead: Create an issue via /cat:add and work in an isolated worktree via /cat:work.
+
+**Escalation from Documentation Prevention:** If a similar documentation rule for this violation
+already exists AND the agent violated it anyway, do NOT add another documentation rule. Escalate to a
+hook (prevention level: hook). Documentation that was already ignored will continue to be ignored.
+(See Step 8 for the full escalation ladder from documentation → config → hook → code_fix.)
+
 **Fail-Fast Error Handling:**
 
 When implementing prevention that modifies error handling, apply the fail-fast principle:

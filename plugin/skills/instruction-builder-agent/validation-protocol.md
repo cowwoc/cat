@@ -271,6 +271,34 @@ For each normalized form in Doc B:
 
 **Special rule:** EXCLUSION units are always HIGH.
 
+**CONSEQUENCE severity upgrade rule:** A CONSEQUENCE unit is classified as HIGH (not MEDIUM) when
+it is the primary justification for a sibling PROHIBITION or REQUIREMENT unit.
+
+**Definition of "sibling":** A CONSEQUENCE unit is a sibling of a PROHIBITION/REQUIREMENT unit when
+both appear within 5 lines of each other in the original source document AND share the same subject
+(i.e., the CONSEQUENCE describes what goes wrong if the PROHIBITION is violated). The extraction
+algorithm stores units as a flat list with no explicit relationship fields — use document proximity
+and shared subject matter as the detection heuristic. Measure this proximity in the original source
+document, not the compressed output — compression can reorganize line spacing and render this
+heuristic unreliable if applied post-compression.
+
+Indicators that the upgrade applies:
+- The CONSEQUENCE unit uses causal language about what goes wrong if the prohibition is violated
+  (e.g., "Agents bypass the rule because they cannot see why it exists")
+- The sibling PROHIBITION unit has no other stated justification within those 5 lines
+- Removing the CONSEQUENCE would leave the prohibition unjustified
+
+When the upgrade rule applies, losing this CONSEQUENCE unit during compression is a FAIL, not a WARN.
+
+**Limitation — WHY expressed as prose elaboration:** The upgrade rule applies only when the WHY content
+is semantically classified as a CONSEQUENCE unit by the extraction algorithm. A WHY paragraph written as
+prose elaboration (explaining the rationale in flowing text, not using causal markers like "causes",
+"results in", or "leads to") may not be extracted as a CONSEQUENCE unit at all, and therefore will not
+trigger this upgrade. Such prose-form WHY content is still preserved by `compression-protocol.md`'s
+WHY-preservation exception for prohibition rules — but the gate does not independently detect or protect
+it. This is a known limitation: the upgrade gate and the WHY-preservation exception operate independently
+and do not cross-reference each other.
+
 #### Step 4: Determine Gate Decision
 
 ```
@@ -284,6 +312,10 @@ If no LOST units:
 
 **Note:** ADDED units are informational only. A document can pass the gate even with additions (compressed
 doc adding clarifications is acceptable). Only LOST units trigger the gate.
+
+**Note — CONSEQUENCE upgrade feeds into this gate:** A CONSEQUENCE unit upgraded to HIGH by the severity
+upgrade rule (Step 3) is treated as HIGH for gate evaluation. If such a unit is LOST, the gate decision
+is FAIL, not WARN. Apply the upgrade rule before evaluating the gate condition.
 
 ---
 
@@ -332,8 +364,12 @@ Use this table when identifying which LOST units to mark as protected:
 | REQUIREMENT | HIGH | Immediately retry compression; mark as protected |
 | CONDITIONAL | HIGH | Immediately retry compression; mark as protected |
 | EXCLUSION | HIGH | Immediately retry compression; mark as protected |
-| CONSEQUENCE | MEDIUM | Proceed to SPRT (warn only) |
+| CONSEQUENCE | MEDIUM* | Proceed to SPRT (warn only) |
 | DEPENDENCY | MEDIUM | Proceed to SPRT (warn only) |
 | SEQUENCE | MEDIUM | Proceed to SPRT (warn only) |
 | CONJUNCTION | LOW | Informational only |
 | REFERENCE | LOW | Informational only |
+
+*\* **CONSEQUENCE upgrade exception:** When a CONSEQUENCE unit is the primary justification for a sibling
+PROHIBITION or REQUIREMENT unit (see Step 3 upgrade rule), its severity is HIGH — immediately retry
+compression and mark as protected.

@@ -471,6 +471,94 @@ If script fails, skill expansion fails visibly.
 - No fallback path means no error-prone manual computation
 - Forces fixing the root cause (broken script) rather than masking it
 
+## Instruction Effectiveness for Compliance Rules
+
+When writing prohibition rules, fail-fast guards, and mandatory behaviors in skills, structure each
+rule using all four components below. Missing any component degrades compliance.
+
+### The Four-Component Structure
+
+| Component | Purpose | Example |
+|-----------|---------|---------|
+| **Short label** | Anchors attention at the start of the rule | `BLOCKED:`, `REQUIRED:`, `PROHIBITED:` |
+| **WHY paragraph** | Causal explanation using one of: "because", "otherwise", "this prevents", "this ensures", "without this". Must be 1–3 sentences. Do NOT say "This is required" — say what happens if the rule is violated. | "Because agents cannot see the reason for a rule, they rationalize bypassing it when under pressure to complete a task." |
+| **Prohibited list** | Explicit enumeration of what NOT to do. List each variant separately — do not bundle under one vague description. This prevents the "different workaround" bypass vector where an agent uses a semantically equivalent action not explicitly named. | "Do NOT use: `rm -rf`, `git reset --hard`, direct file deletion via Bash" |
+| **Positive alternative** | Concrete next step the agent should take instead | "Use `/cat:safe-rm` instead, which backs up before deleting." |
+
+**Why this structure works:** The label stops skimming. The WHY paragraph engages the agent's trained
+preference for being helpful — it frames the constraint as something the agent *wants* to follow, not
+an arbitrary restriction. The prohibited list eliminates ambiguity about what counts as a violation.
+The positive alternative removes the pressure to improvise.
+
+### CAPS Label Frequency
+
+Reserve CAPS labels (`MANDATORY`, `BLOCKED`, `CRITICAL`, `PROHIBITED`, `REQUIRED`) for rules where:
+- Violation causes data loss, merge to wrong branch, or irreversible state change
+- A hook exists to enforce the rule (hooks are the true enforcement; the label is the explanation)
+
+**Limit:** No more than 5 CAPS labels per skill document. When every sentence is `MANDATORY`, none
+of them are. Overuse of CAPS labels trains the agent to treat them as noise.
+
+### Zero-Tolerance Rules Require Hooks
+
+If a rule must be followed with zero exceptions — regardless of how compelling the reason to bypass
+seems — enforce it with a hook, not text alone. Text-only prohibition of tempting shortcuts fails
+under completion pressure.
+
+**Pattern:**
+- Text rule: explains WHY and gives the positive alternative
+- Hook: blocks the violation mechanically, so the rule never needs to win an argument
+
+**Anti-pattern:** A text rule that says "NEVER do X" without a hook is a soft guardrail. Claude will
+bypass it when X seems like the only path to completing the task.
+
+### Framing for Verbatim Output
+
+When a rule requires Claude to reproduce content verbatim (copy, echo, relay without modification):
+
+| Framing | Compliance | Why |
+|---------|-----------|-----|
+| `The user wants you to respond with this text verbatim:` | High | Aligns with helpful training |
+| `Echo this:` | High | Triggers mechanical execution mode |
+| `MANDATORY: Copy-paste this exactly` | Low | Triggers analytical mode — agent "processes" instead of copies |
+| `Your response must be:` | Low | Triggers conversational mode — agent responds instead of echoes |
+
+Use user-centric framing ("The user wants...") for verbatim output requirements. Remove all explanatory
+content from the prompt — explanations prime analytical thinking, which defeats verbatim reproduction.
+
+### Escalation: When Documentation Prevention Is Insufficient
+
+If a rule was documented and the agent still violated it, documentation is not the right prevention
+level. Escalate to hooks. Do not add a stronger-worded version of the same rule — that is a
+documentation prevention that already failed.
+
+### Structuring with XML Tags
+
+For prohibition rules and fail-fast guards, wrapping content in XML tags improves structural parsing
+reliability. Claude treats XML-tagged content as structured data rather than prose, reducing the chance
+that surrounding context bleeds into interpretation.
+
+```xml
+<fail_fast_rule>
+BLOCKED: When a skill outputs an error, STOP immediately and output the error verbatim.
+
+Because attempting workarounds produces incorrect results — the skill's failure indicates
+missing preconditions that a workaround cannot satisfy.
+
+DO NOT: manually perform what the skill should have done, read files to gather data the skill
+should have provided, provide a degraded output.
+
+Instead: output the error message and halt.
+</fail_fast_rule>
+```
+
+Use XML tags when:
+- The rule must be unambiguous (no surrounding prose should influence interpretation)
+- The prohibition is embedded in a longer document where it might be skimmed past
+- The rule has a clear four-component structure (label + WHY + prohibited list + alternative)
+
+Do NOT use XML tags for general guidance or explanations — reserve them for enforcement rules.
+
 ### Script Extraction: Deterministic Bash Must Be External
 
 **Skills must not contain inline bash for deterministic operations** — because inline bash in skill

@@ -385,7 +385,12 @@ For each testable unit, generate a scenario file using the `.md` format:
 1. Extract the constraint from the semantic unit's `original` text
 2. Design a scenario that exercises the constraint:
    - For REQUIREMENT: scenario where the requirement should be applied
-   - For PROHIBITION: scenario where the forbidden action is tempting but must be avoided
+   - For PROHIBITION: two scenarios using different bypass vectors:
+     1. Direct bypass: situation where the forbidden action is the most obvious path and the agent
+        must choose not to take it (canonical violation test)
+     2. Plausible workaround: situation where the agent might use a semantically equivalent
+        alternative that still violates the rule — verifies the prohibition generalizes beyond
+        "don't do X literally" to "don't accomplish X via Y either"
    - For CONDITIONAL: two scenarios — one triggering the condition, one not (see below)
    - For SEQUENCE: scenario requiring multiple ordered steps
    - For DEPENDENCY: scenario with dependency present, scenario with dependency absent
