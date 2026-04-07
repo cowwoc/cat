@@ -439,6 +439,21 @@ See LICENSE.md in the project root for license terms.
 3. <additional behavioral assertion>
 ```
 
+- **Prohibited (Q&A format for Turn 1):**
+  ```
+  ## Turn 1
+  Is the prohibition against calling cat:git-squash-agent before rebasing well-formed?
+  ```
+  Tests knowledge recall, not production behavior. Turn 1 must present a production-sequence input, not pose a
+  question to the agent.
+- **Correct (production-sequence format for Turn 1):**
+  ```
+  ## Turn 1
+  I've finished implementing 2.1-my-issue and the commits look good. Please merge it.
+  ```
+  Mirrors real production input; assertions check that the agent invokes `cat:git-squash-agent` before the
+  approval gate.
+
 For skill instruction files (`plugin/skills/`): Assert #1 is always `The Skill tool was invoked` (trigger
 assertion). Behavioral assertions follow.
 For non-skill instruction files (CLAUDE.md, rules files, etc.): Assert #1 describes the primary compliance
@@ -583,7 +598,17 @@ you do next", "what is your next step"):
   HALT: "Test case {tc_id} turn {N} prompts for narration instead of organic execution. Revise the
   turn to be a direct user request that triggers the behavior being tested."
 
-On halt, propose a revised test case that satisfies both constraints, or recommend moving the test
+**Check 3 — No Q&A format in Turn 1:** Read the Turn 1 content from each test case. If Turn 1
+contains a question mark OR begins with an interrogative opener (Is, Does, Should, Can, Would, Are,
+Has, Have, Was, Were, Do, Will, Could):
+  HALT: "Test case {tc_id} Turn 1 uses Q&A format (question mark or interrogative opener detected).
+  Turn 1 must present a production-sequence input — the type of message a real caller sends when
+  invoking the skill. Replace the question with a realistic user request that organically triggers
+  the behavior under test. Example: instead of 'Should the agent squash before rebasing?' use
+  'I have finished 2.1-my-issue. Please merge it.'"
+This check applies only to Turn 1. Subsequent turns in multi-turn test cases may contain questions.
+
+On halt, propose a revised test case that satisfies all constraints, or recommend moving the test
 to Java unit tests if the behavior is structurally untestable via SPRT.
 
 #### Test Case Selection (Re-testing only)
