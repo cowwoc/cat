@@ -86,3 +86,13 @@ None
 - [ ] Hook no longer throws when `transcript_path` points to the wrong (worktree-derived) directory
 - [ ] All existing tests pass with no regressions
 - [ ] New test case covers the worktree scenario
+
+## Project Convention Established
+
+WORKAROUND comments must use format:
+
+```
+// WORKAROUND: <link to bug report>
+```
+
+This makes workarounds easy to find and remove once the upstream bug is fixed.
