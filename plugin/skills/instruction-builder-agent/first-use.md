@@ -49,7 +49,7 @@ CURIOSITY=$("${CLAUDE_PLUGIN_ROOT}/client/bin/get-config-output" effective \
 
 Store as `CURIOSITY`. This value gates later steps:
 
-- `CURIOSITY = low` → skip Steps 6–13 (test evaluation, adversarial hardening, compression, organic tests, and
+- `CURIOSITY = low` → skip Steps 5–12 (test evaluation, adversarial hardening, compression, organic tests, and
   cross-file reorganization)
 - `CURIOSITY = medium` or `high` → run all steps
 
@@ -138,7 +138,7 @@ Before creating a new skill/command, answer:
 
 Skill tests are markdown files in `plugin/tests/skills/<skill-name>/first-use/` that define scenarios and
 assertions for empirically verifying agent compliance. They are executed through this skill's SPRT pipeline
-(Step 7), not through Maven.
+(Step 6), not through Maven.
 
 **When to run:**
 
@@ -172,7 +172,7 @@ violation and must be treated as prohibition failures.
 - Do NOT use any Bash command not on the allowlist
 
 **Isolation model:** Test-run subagents execute in worktrees created from an orphan branch where assertions
-have been structurally removed (see § Test-Runner Filesystem Isolation in Step 7). This provides filesystem-level
+have been structurally removed (see § Test-Runner Filesystem Isolation in Step 6). This provides filesystem-level
 isolation: assertions do not exist on the test-runner's disk and cannot be recovered via git history. The command
 allowlist and instruction-based prohibitions serve as a secondary defense layer. Grader subagents run in the main
 issue worktree where assertions are present.
@@ -357,7 +357,7 @@ The subagent returns `{"status": "success", "commit_sha": "<SHA>"}`. Store the S
 `INSTRUCTION_DRAFT_SHA`. The instruction text is now on disk and committed, so subagents can read it via
 `git show <SHA>:<INSTRUCTION_TEXT_PATH>` or `cat <INSTRUCTION_TEXT_PATH>`.
 
-**If CURIOSITY = low:** Skip Steps 6–13 entirely and proceed to Output Format.
+**If CURIOSITY = low:** Skip Steps 5–12 entirely and proceed to Output Format.
 
 **MANDATORY when CURIOSITY != low:** The full test evaluation loop (Steps 6–9) MUST execute. Do NOT
 manually create test files or skip SPRT as a shortcut. The instruction is considered incomplete until
@@ -367,7 +367,7 @@ is a workflow violation — the SPRT run IS the test verification, not an option
 **Ad-hoc batch runs are NOT SPRT decisions:** Running `empirical-test-runner --trials 5` and seeing 5/5 passes
 is NOT equivalent to an SPRT ACCEPT decision. SPRT Accept requires log_ratio ≥ 2.944, which needs a minimum of
 27 consecutive passes. Use empirical-test-runner only for debugging isolated compliance failures — formal SPRT
-decisions must go through this Step 7 pipeline.
+decisions must go through this Step 6 pipeline.
 
 Compute `TEST_DIR` and `TEST_MODEL` now — these values are required for all subsequent steps, including the
 sanity check below.
@@ -598,7 +598,7 @@ names), use the current skill's own instruction file and test directory. For exa
 `plugin/skills/foo-agent/first-use.md` must reference only paths under `plugin/skills/foo-agent/` and
 `plugin/tests/skills/foo-agent/`.
 
-### Step 7: SPRT Test Execution
+### Step 6: SPRT Test Execution
 
 **Autonomous execution — MANDATORY throughout this step:** All behavior in this step is fully automated with
 no human interaction. Produce direct output without requesting clarification, user approval, or feedback.
@@ -620,7 +620,7 @@ Do not ask clarifying questions, do not read files first, do not proceed to vali
 need re-running (see § Test Case Selection below).
 
 **Context derivation (continuation entry):** If `INSTRUCTION_TEXT_PATH` or `TEST_DIR` are not established
-in the current session context (e.g., Step 7 is invoked as a standalone continuation message after the
+in the current session context (e.g., Step 6 is invoked as a standalone continuation message after the
 skill restarts), derive them from git history before proceeding — do NOT ask the user:
 
 ```bash
@@ -1090,11 +1090,11 @@ done
 
 2. **After failed SPRT (any Reject), just before restarting:** Keep the sanitized branch and runner
    worktrees alive through Steps 8–9 (investigation and analysis) so the main agent and graders can
-   still inspect them. Clean them up as the FIRST action when about to restart Step 7 (before creating
+   still inspect them. Clean them up as the FIRST action when about to restart Step 6 (before creating
    the new sanitized branch).
 
 ```bash
-# Run after successful SPRT, OR as the first step of a Step 7 restart.
+# Run after successful SPRT, OR as the first step of a Step 6 restart.
 # Per-wave cleanup handles individual runner worktrees; this block also removes the sanitized branch.
 git worktree list --porcelain \
   | grep "worktree.*${ISSUE_NAME}-tc" \
@@ -1351,7 +1351,7 @@ Display SPRT results to the user: per-test-case decision, log_ratio, pass/fail c
 investigation report, do NOT output the text `SPRT FAILURE INVESTIGATION`, and do NOT run any
 investigation sub-steps. Proceed directly and silently to Step 9.
 
-**Design-flaw entry point:** If Step 7 routed here with `design_flaw=true`, skip sub-steps 1–7.
+**Design-flaw entry point:** If Step 6 routed here with `design_flaw=true`, skip sub-steps 1–7.
 Proceed directly to sub-step 8 using the design-flaw evidence recorded in Check 3. The investigation
 report must cover the design-flaw classification (see "Decision criteria" below).
 
@@ -1555,7 +1555,7 @@ Use the EXACT word "Inconclusive" — do NOT substitute "inconclusive", "unclear
 The conclusion line MUST use the exact phrase from the criteria above (e.g., `Conclusion: Genuine skill defect`).
 Do not paraphrase or substitute synonyms — the exact phrase is required for downstream routing and test assertions.
 
-Do NOT re-display the SPRT test results summary (already presented at end of Step 7). Present ONLY the
+Do NOT re-display the SPRT test results summary (already presented at end of Step 6). Present ONLY the
 investigation report:
 
 ```
@@ -1706,14 +1706,14 @@ Task tool:
       <paste updated INSTRUCTION_DRAFT verbatim here>
 ```
 
-Store the returned commit SHA as `INSTRUCTION_DRAFT_SHA` before returning to Step 7.
+Store the returned commit SHA as `INSTRUCTION_DRAFT_SHA` before returning to Step 6.
 
 **Continuation shortcut — when returning from a re-run request:** If the conversation context states that
 (a) the user already chose to improve the skill, (b) changes are already committed, and (c) a new
-`INSTRUCTION_DRAFT_SHA` is provided — proceed directly to Step 7 (SPRT re-run) with that SHA. Do NOT ask
+`INSTRUCTION_DRAFT_SHA` is provided — proceed directly to Step 6 (SPRT re-run) with that SHA. Do NOT ask
 what skill to test, do NOT look for workflow state files, do NOT ask for clarification. All test cases must
 be re-run because the instruction changed. Example trigger: "You have already applied targeted changes...
-committed with new INSTRUCTION_DRAFT_SHA abc123. Continue with the workflow." → go straight to Step 7.
+committed with new INSTRUCTION_DRAFT_SHA abc123. Continue with the workflow." → go straight to Step 6.
 
 Cap at 5 test iterations total. Track the best-performing iteration by storing `BEST_SCORE` and `BEST_SHA`
 (the commit SHA of the instruction file at that iteration). `BEST_SCORE` is the fraction of test cases that
@@ -1725,9 +1725,9 @@ points — restore the best skill version by running
 If the iteration cap is reached, apply the same rollback to `BEST_SHA` if the final iteration is not the
 best, then stop and report "test iteration cap reached (5 rounds) — presenting best result."
 
-**Re-run isolation:** Before returning to Step 7 after a fix, run the cleanup block from § "Cleanup
+**Re-run isolation:** Before returning to Step 6 after a fix, run the cleanup block from § "Cleanup
 timing" (the "just before restarting" path). This removes the stale sanitized branch and any leftover
-runner worktrees. Step 7 will then create a fresh sanitized branch from the updated HEAD before
+runner worktrees. Step 6 will then create a fresh sanitized branch from the updated HEAD before
 dispatching waves. This is MANDATORY — a stale sanitized branch contains the old instruction and would
 cause re-run agents to test the old (unfixed) version, producing invalid results.
 
@@ -1735,7 +1735,7 @@ cause re-run agents to test the old (unfixed) version, producing invalid results
 - Apply improvements based on the analysis findings directly — do NOT ask how to improve the instruction
 - Do NOT request confirmation before applying changes to the file
 - Do NOT ask for approval before re-running SPRT tests
-- Commit changes, delete old isolation branch, and proceed to Step 7 autonomously
+- Commit changes, delete old isolation branch, and proceed to Step 6 autonomously
 
 ### Step 10: Adversarial TDD Loop
 
@@ -1847,7 +1847,7 @@ redirected to this path." This overrides the default `{WORKTREE_ROOT}/findings.j
 receiving agent's procedure.
 Parallel subagents must not commit shared files (e.g., index files or aggregated docs) to avoid merge
 conflicts; those are updated once after all parallel subagents complete. The concurrent commit safety
-retry protocol (exponential backoff with jitter, up to 3 retries) from Step 7 also applies to all
+retry protocol (exponential backoff with jitter, up to 3 retries) from Step 6 also applies to all
 red-team and blue-team commits in batch parallel mode. Each parallel subagent must retry on ref-lock
 contention using the same backoff schedule: first retry after 1-2 seconds (randomized), second after
 2-4 seconds, third after 4-8 seconds.
@@ -1883,7 +1883,7 @@ Reset `BEST_SCORE` and `BEST_SHA` before this step — hardening may have change
 pre-hardening iteration tracking is stale and must not be used for rollback.
 
 Before compressing, run a full SPRT test on the hardened skill to confirm compliance. Use the same
-test cases from `${TEST_DIR}` (`.md` scenario files) and identical SPRT parameters as Step 7.
+test cases from `${TEST_DIR}` (`.md` scenario files) and identical SPRT parameters as Step 6.
 Commit test results with message `test: post-hardening SPRT [session: ${CLAUDE_SESSION_ID}]`.
 Store SHA as `POST_HARDENING_SHA`. If any test case rejects, return to hardening (Step 10) to address the
 failures before proceeding to compression.
@@ -2160,10 +2160,10 @@ anything the agent only needs after the skill is already loaded.
 
 ## Verification
 
-- [ ] Curiosity gate verified: when `CURIOSITY = low`, Steps 6–13 skipped entirely; corresponding
+- [ ] Curiosity gate verified: when `CURIOSITY = low`, Steps 5–12 skipped entirely; corresponding
   checklist items marked N/A (not applicable)
 
-**Curiosity gate note:** When a step was skipped because `CURIOSITY = low` (Steps 6–13), mark the
+**Curiosity gate note:** When a step was skipped because `CURIOSITY = low` (Steps 5–12), mark the
 corresponding checklist items as **N/A** (not applicable), not failed.
 Overall verification passes if all non-skipped items are checked and all skipped items are marked N/A.
 
