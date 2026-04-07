@@ -15,6 +15,18 @@ Only amend when ALL conditions are met:
 2. **Commit has NOT been pushed** to remote
 3. **You intend to modify HEAD** (not an earlier commit)
 
+## Stage All Changes Before Amending
+
+Before invoking the amend script, verify the working tree state and stage any edited files:
+
+```bash
+git -C "$WORKTREE_PATH" status --short
+git -C "$WORKTREE_PATH" add <edited-files>
+```
+
+If `git status` shows modified files that belong in this commit, stage them now. Running the amend script
+without staging first silently omits those edits from the commit.
+
 ## Script Invocation
 
 For deterministic amend with TOCTOU race detection:
