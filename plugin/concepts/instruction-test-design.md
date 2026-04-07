@@ -300,7 +300,7 @@ the description.
 ## Running Instruction-Tests
 
 ```bash
-RUNNER="/home/node/.config/claude/plugins/cache/cat/cat/2.1/client/bin/empirical-test-runner"
+RUNNER="${CLAUDE_PLUGIN_ROOT}/client/bin/empirical-test-runner"
 "$RUNNER" \
   --test-dir plugin/tests/skills/<skill-name>/ \
   --trials 3 \

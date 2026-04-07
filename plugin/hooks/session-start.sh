@@ -377,41 +377,11 @@ main() {
 
   debug "Plugin version: $plugin_version"
 
-  # Determine the runtime download target and symlink bridge.
-  # Claude Code sets CLAUDE_PLUGIN_ROOT to the marketplace source directory for hooks/skills,
-  # but the agent Bash environment uses installPath (versioned cache). The runtime is downloaded
-  # to installPath/client (the cache), and plugin_root/client is symlinked to it so binaries are
-  # accessible from both paths.
   local jdk_path="${plugin_root}/${JDK_SUBDIR}"
-  local download_target="$jdk_path"
-
-  local installed_plugins_json="${HOME}/.config/claude/plugins/installed_plugins.json"
-  if [[ -f "$installed_plugins_json" ]]; then
-    local install_path
-    install_path=$(grep -o '"installPath"[[:space:]]*:[[:space:]]*"[^"]*"' "$installed_plugins_json" \
-      | head -1 | sed 's/.*"\([^"]*\)"$/\1/')
-    if [[ -n "$install_path" && "$install_path" != "$plugin_root" ]]; then
-      download_target="${install_path}/${JDK_SUBDIR}"
-      # Create symlink plugin_root/client -> installPath/client BEFORE downloading,
-      # so that even if the download fails, an existing cached runtime is reused.
-      if [[ ! -d "$jdk_path" && ! -L "$jdk_path" ]]; then
-        debug "Creating symlink: ${jdk_path} -> ${download_target}"
-        ln -sfn "$download_target" "$jdk_path"
-      elif [[ -L "$jdk_path" ]]; then
-        local current_target
-        current_target=$(readlink "$jdk_path")
-        if [[ "$current_target" != "$download_target" ]]; then
-          debug "Updating symlink: ${jdk_path} -> ${download_target} (was ${current_target})"
-          ln -sfn "$download_target" "$jdk_path"
-        fi
-      fi
-    fi
-  fi
 
   debug "JDK path: $jdk_path"
-  debug "Download target: $download_target"
 
-  if try_acquire_runtime "$download_target" "$plugin_version"; then
+  if try_acquire_runtime "$jdk_path" "$plugin_version"; then
     debug "JDK runtime ready, invoking Java dispatcher"
 
     # Invoke the SessionStartHook Java dispatcher

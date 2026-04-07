@@ -88,6 +88,7 @@ Scan changed files for violations of project conventions encoded as `cat-rules` 
 Read the curiosity level from config:
 
 ```bash
+CLIENT_BIN="${CLAUDE_PLUGIN_ROOT}/client/bin"
 CONFIG=$("${CLIENT_BIN}/get-config-output" effective 2>/dev/null || echo '{"curiosity":"medium"}')
 CURIOSITY=$(echo "$CONFIG" | grep -o '"curiosity"[[:space:]]*:[[:space:]]*"[^"]*"' \
   | sed 's/.*"curiosity"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/' | tr '[:upper:]' '[:lower:]')
@@ -158,10 +159,7 @@ silently.
 Read the caution level from config:
 
 ```bash
-CLIENT_BIN="${WORKTREE_PATH}/client/target/jlink/bin"
-if [ ! -x "$CLIENT_BIN/get-config-output" ]; then
-  CLIENT_BIN="/home/node/.config/claude/plugins/cache/cat/cat/2.1/client/bin"
-fi
+CLIENT_BIN="${CLAUDE_PLUGIN_ROOT}/client/bin"
 CONFIG=$("${CLIENT_BIN}/get-config-output" effective 2>/dev/null || echo '{"caution":"medium"}')
 CAUTION=$(echo "$CONFIG" | grep -o '"caution"[[:space:]]*:[[:space:]]*"[^"]*"' \
   | sed 's/.*"caution"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/' | tr '[:upper:]' '[:lower:]')
