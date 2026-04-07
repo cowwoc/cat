@@ -5,179 +5,57 @@ See LICENSE.md in the project root for license terms.
 -->
 # Batch Write Skill
 
-**Purpose**: Issue multiple Write/Edit tool calls in a single LLM response when modifying independent files, reducing
-round-trips from N to 1. Similar to how batch-read groups reads, batch-write groups writes for efficient parallel
-execution within a single response.
+## Purpose
 
-**Performance**: 50-70% faster for writing 3+ independent files
+Issue all independent Write/Edit tool calls in a single LLM response when 2+ files need to be written or edited,
+reducing write round-trips from N to 1.
 
-## When to Use This Skill
+**Independence criterion**: Two writes are independent if neither file's content depends on the write result of the
+other. When claiming writes are dependent, state which file depends on which other file's write result and why.
+Multiple operations on the same file (e.g., Write then Edit) are dependent and count as one file.
 
-### Use batch-write When:
+**Scope**: Controls write batching only. Does not override existing write restrictions (hooks, worktree isolation,
+file-type rules). Every file in the batch must be a legitimate write target under the current workflow's rules.
 
-- **Creating multiple new files** that do not depend on each other
-- **Editing multiple existing files** with unrelated changes
-- **Applying a refactor** that touches several independent files
-- **Updating configuration files** across the project simultaneously
-- **Adding tests** for multiple independent components at once
-- **Scaffolding a feature** with multiple new files (handler, test, config, etc.)
-- Writing **related but independent** files in a single pass
+---
 
-### Do NOT Use When:
+## Procedure
 
-- Writing a **single file** (no batching benefit)
+### Step 1: Count pending independent writes
 
-## Performance Comparison
+Identify all distinct file paths to be written or edited. Count each path once, regardless of how many operations
+target it. Count only mutually independent writes.
 
-### Traditional Workflow (N LLM round-trips, 10s * N)
+### Step 2: Check batch threshold
 
-```
-[LLM Round 1] Write file1.java
-  -> Write: src/main/java/Foo.java
-  -> Returns: success
+- If count < 2: proceed with normal Write/Edit calls. Do NOT use this skill.
+- If count >= 2: continue to Step 3. Include all independent writes in a single batch; do not split across responses.
 
-[LLM Round 2] Write file2.java
-  -> Write: src/main/java/Bar.java
-  -> Returns: success
+### Step 3: Collect all write targets
 
-[LLM Round 3] Write file3.java
-  -> Write: src/test/java/FooTest.java
-  -> Returns: success
+Before issuing any Write or Edit call, determine the complete set of file paths and their full content. Read each
+file to be edited (not newly created) using the Read tool before this step. All content must be complete and final
+before the first tool call — no placeholders, TODO comments, or empty stubs.
 
-[LLM Round 4] Analyze and report
-  -> Summarize changes made
-```
+### Step 4: Issue all Write/Edit calls in a single response
 
-**Total**: 10s * 3 = 30s, 4 LLM round-trips
+In a **single LLM response**, issue every Write or Edit tool call for the batch. All calls in the same response
+execute concurrently. Never batch two operations targeting the same file path in one response (e.g., Write to create
+then Edit to modify); sequential operations on the same file must be issued in separate responses.
 
-### Optimized Workflow (1 LLM round-trip for all writes)
+### Step 5: Review results and retry failures
 
-```
-[LLM Round 1] Write all files in one response
-  -> Write: src/main/java/Foo.java
-  -> Write: src/main/java/Bar.java
-  -> Write: src/test/java/FooTest.java
-  -> [All three tool calls execute in parallel]
+After the batch returns, review per-call results. Retry only failed calls, up to 2 times each. Do not re-issue
+successful writes. If a call still fails after 2 retries, stop and report the error to the user.
 
-[LLM Round 2] Analyze and report
-  -> Summarize changes made
-```
+### Step 6: Verify
 
-**Total**: ~12s, 2 LLM round-trips
+Confirm every item in the Verification checklist below before proceeding with other work.
 
-**Savings**: 50-70% faster for N>=3 independent files
+---
 
-## Usage Patterns
+## Verification
 
-### Pattern 1: Multiple Write Calls in One Response (New Files)
-
-Issue all Write tool calls in the same response when the files are independent:
-
-```
-[Single LLM response]:
-  Write: plugin/skills/my-skill/SKILL.md      <- new file
-  Write: plugin/skills/my-skill/first-use.md  <- new file (independent)
-  Write: tests/my-skill-test.md               <- new file (independent)
-```
-
-All three writes execute concurrently. The LLM does not need to wait for each to complete before issuing the next.
-
-### Pattern 2: Multiple Edit Calls in One Response (Existing Files)
-
-When applying the same refactor to several files, batch the edits:
-
-```
-[Single LLM response]:
-  Edit: src/main/java/Foo.java   <- rename method
-  Edit: src/main/java/Bar.java   <- rename same method
-  Edit: src/main/java/Baz.java   <- rename same method
-```
-
-Each Edit is independent — no file depends on the result of another edit.
-
-### Pattern 3: Mixed Write + Edit in One Response
-
-Combine new file creation with edits to existing files:
-
-```
-[Single LLM response]:
-  Write: src/main/java/NewFeature.java         <- create new file
-  Edit: src/main/java/ExistingRegistry.java    <- register new feature
-  Edit: src/test/java/RegistryTest.java        <- add test case
-```
-
-### Pattern 4: Bash Heredoc Approach (Multiple Files via Single Bash Call)
-
-For simple file creation, a single Bash call with heredocs can create multiple files atomically:
-
-```bash
-# Create multiple config files in one Bash call
-cat > config/database.yml << 'EOF'
-host: localhost
-port: 5432
-EOF
-
-cat > config/cache.yml << 'EOF'
-host: localhost
-port: 6379
-EOF
-
-cat > config/app.yml << 'EOF'
-debug: false
-port: 8080
-EOF
-```
-
-This approach is best for simple text files where inline content is straightforward. For complex files with special
-characters or binary content, prefer individual Write tool calls.
-
-## Error Handling
-
-Tool calls within a single response are **independent** — if one Write or Edit fails, the others still execute and
-succeed. Failures are reported per-tool-call, not for the entire batch.
-
-**Example scenario:**
-
-```
-[Single LLM response]:
-  Write: src/main/java/Foo.java   <- succeeds
-  Write: /read-only/Bar.java      <- fails (permission denied)
-  Write: src/test/java/Test.java  <- succeeds
-```
-
-Result: `Foo.java` and `Test.java` are written successfully. `Bar.java` fails. The LLM receives individual results
-for each and can retry only the failed write.
-
-**Recommended approach:**
-- Review results from the batch response
-- Retry only the failed tool calls individually
-- Do not re-issue successful writes
-
-## Performance Characteristics
-
-### Time Savings by File Count
-
-| Files | Traditional | Optimized | Savings |
-|-------|-------------|-----------|---------|
-| 1 file | 10s | 10s | 0% |
-| 2 files | 20s | 11s | 45% |
-| 3 files | 30s | 12s | 60% |
-| 5 files | 50s | 13s | 74% |
-| 10 files | 100s | 16s | 84% |
-
-### Frequency and Impact
-
-**Expected Usage**: 5-10 times per day
-
-**Time Savings per Use**: ~15-30 seconds (average 3-5 files)
-
-**Daily Impact**: 75-300 seconds (1.25-5 minutes)
-
-**Monthly Impact**: 30-150 minutes (0.5-2.5 hours)
-
-## Related
-
-- **batch-read skill**: For reading 3+ related files in a batch operation
-- **Write tool**: For writing individual files
-- **Edit tool**: For editing individual existing files
-- **Bash tool**: For multi-file creation via heredocs in a single call
+- [ ] All 2+ independent writes were issued within a single LLM response.
+- [ ] No write call was issued in a separate response that could have been batched.
+- [ ] Failed writes were retried individually without re-issuing successful ones.

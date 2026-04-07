@@ -1,0 +1,18 @@
+{
+  "test_set_sha": "b40012f59",
+  "sprt": {
+    "test_cases": [
+      {"test_case_id": "tc1", "original_id": "first-use_negative_1", "decision": "ACCEPT", "log_ratio": 3.0024, "pass_count": 27, "fail_count": 0, "total_runs": 27},
+      {"test_case_id": "tc2", "original_id": "first-use_negative_3", "decision": "ACCEPT", "log_ratio": 3.0024, "pass_count": 27, "fail_count": 0, "total_runs": 27},
+      {"test_case_id": "tc3", "original_id": "first-use_positive_2", "decision": "ACCEPT", "log_ratio": 3.0024, "pass_count": 27, "fail_count": 0, "total_runs": 27},
+      {"test_case_id": "tc4", "original_id": "positive_rename_method_four_java_files", "decision": "INCONCLUSIVE", "log_ratio": 0.0, "pass_count": 0, "fail_count": 0, "total_runs": 0},
+      {"test_case_id": "tc5", "original_id": "positive_scaffold_three_independent_files", "decision": "INCONCLUSIVE", "log_ratio": -0.8762, "pass_count": 2, "fail_count": 1, "total_runs": 3},
+      {"test_case_id": "tc6", "original_id": "positive_update_version_five_configs", "decision": "INCONCLUSIVE", "log_ratio": 0.0, "pass_count": 0, "fail_count": 0, "total_runs": 0},
+      {"test_case_id": "tc7", "original_id": "unit_concurrent_writes_single_response", "decision": "INCONCLUSIVE", "log_ratio": 0.0, "pass_count": 0, "fail_count": 0, "total_runs": 0},
+      {"test_case_id": "tc8", "original_id": "unit_same_symbol_edits_are_independent", "decision": "INCONCLUSIVE", "log_ratio": 0.0, "pass_count": 0, "fail_count": 0, "total_runs": 0}
+    ],
+    "overall_decision": "ACCEPT",
+    "model_id": "claude-haiku-4-5-20251001",
+    "phase": "post-hardening"
+  }
+}
