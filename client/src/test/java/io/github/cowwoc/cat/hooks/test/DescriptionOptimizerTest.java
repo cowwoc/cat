@@ -534,4 +534,74 @@ public final class DescriptionOptimizerTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that a skill file with a description of exactly 250 characters is accepted.
+   */
+  @Test
+  public void acceptsDescriptionOfExactly250Chars() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-desc-opt-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      // Build a SKILL.md with a description of exactly 250 characters
+      String description250 = "A".repeat(250);
+      String skillContent = "---\ndescription: " + description250 +
+        "\nuser-invocable: false\n---\n# Skill\n";
+      Path skillFile = tempDir.resolve("SKILL.md");
+      Files.writeString(skillFile, skillContent);
+
+      String evalSet = """
+        [{"query": "test", "should_trigger": true}, {"query": "other", "should_trigger": false}]
+        """;
+
+      DescriptionOptimizer handler = new DescriptionOptimizer(scope);
+      // Should not throw
+      handler.getOutput(new String[]{
+        skillFile.toString(),
+        evalSet,
+        "claude-sonnet-4-5",
+        "1"
+      });
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a skill file with a description exceeding 250 characters is rejected.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*exceeds 250-character limit.*")
+  public void rejectsDescriptionExceeding250Chars() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-desc-opt-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      // Build a SKILL.md with a description of exactly 251 characters
+      String description251 = "A".repeat(251);
+      String skillContent = "---\ndescription: " + description251 +
+        "\nuser-invocable: false\n---\n# Skill\n";
+      Path skillFile = tempDir.resolve("SKILL.md");
+      Files.writeString(skillFile, skillContent);
+
+      String evalSet = """
+        [{"query": "test", "should_trigger": true}, {"query": "other", "should_trigger": false}]
+        """;
+
+      DescriptionOptimizer handler = new DescriptionOptimizer(scope);
+      handler.getOutput(new String[]{
+        skillFile.toString(),
+        evalSet,
+        "claude-sonnet-4-5",
+        "1"
+      });
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }
