@@ -229,7 +229,7 @@ grep -qE '^## (Jobs|Execution Steps)' "${PLAN_MD}" && \
 echo "hasSteps=true" || echo "hasSteps=false"
 ```
 
-**If `hasSteps=false`** (lightweight plan created by `/cat:add`): invoke `cat:plan-builder-agent` in revise mode to
+**If `hasSteps=false`** (lightweight plan created by `/cat:add-agent`): invoke `cat:plan-builder-agent` in revise mode to
 generate full implementation steps before spawning the implementation subagent:
 
 1. Read CURIOSITY from config:
