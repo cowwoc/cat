@@ -840,8 +840,20 @@ Wrong:
 [response 2] Agent(tc2, run 3)   ← sequential, not parallel
 ```
 
-Track `WAVE_SLOTS` (initial value: 2, maximum: 16). After each wave where every run passed, double
-`WAVE_SLOTS`: `WAVE_SLOTS = min(WAVE_SLOTS * 2, 16)`. A "wave" is the set of test-run subagents
+Before starting wave dispatch, detect the concurrency cap from the host CPU count:
+
+```bash
+MAX_WAVE_SLOTS=$(nproc 2>/dev/null)
+if [[ ! "$MAX_WAVE_SLOTS" =~ ^[0-9]+$ ]] || [[ "$MAX_WAVE_SLOTS" -le 0 ]]; then
+  MAX_WAVE_SLOTS=8
+fi
+```
+
+This sets `MAX_WAVE_SLOTS` to the number of CPU cores reported by `nproc`, or 8 if `nproc` is
+unavailable or returns a non-positive value.
+
+Track `WAVE_SLOTS` (initial value: 2, maximum: `MAX_WAVE_SLOTS`). After each wave where every run passed, double
+`WAVE_SLOTS`: `WAVE_SLOTS = min(WAVE_SLOTS * 2, MAX_WAVE_SLOTS)`. A "wave" is the set of test-run subagents
 dispatched together in one parallel message. If any run in a wave fails or any TC rejects, keep
 `WAVE_SLOTS` unchanged for the next wave.
 
@@ -869,7 +881,7 @@ dispatched together in one parallel message. If any run in a wave fails or any T
       - Fail: `✗ [tc_id] run [N]: FAIL (log_ratio: X.XX)`
    d. Check boundaries: if Accept or Reject, stop spawning new subagents for that test case.
 3. After all wave results are processed and graded:
-   - If ALL runs in the wave passed: `WAVE_SLOTS = min(WAVE_SLOTS * 2, 16)`. Dispatch next wave.
+   - If ALL runs in the wave passed: `WAVE_SLOTS = min(WAVE_SLOTS * 2, MAX_WAVE_SLOTS)`. Dispatch next wave.
    - If ANY run failed or any TC rejected: keep `WAVE_SLOTS` unchanged. If early-reject triggered,
      freeze SPRT state — do not update log-ratio values from in-flight results, even if they return
      before you begin hardening. Log-ratio updates are only valid pre-reject.
