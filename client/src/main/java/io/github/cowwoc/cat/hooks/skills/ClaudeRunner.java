@@ -72,6 +72,7 @@ public final class ClaudeRunner implements AutoCloseable
 private final ClaudePluginScope scope;
   private final ObjectWriter compactWriter;
   private Path isolatedConfigDir;
+  private Path isolatedPluginRoot;
 
   /**
    * Creates a new process launcher without config isolation.
@@ -117,17 +118,17 @@ private final ClaudePluginScope scope;
     copyDirectoryRecursively(sourceConfigDir, isolatedConfigDir);
 
     // Update plugin cache with current plugin source files
-    Path cachePluginDir = isolatedConfigDir.resolve("plugins").resolve("cache").
+    isolatedPluginRoot = isolatedConfigDir.resolve("plugins").resolve("cache").
       resolve("cat").resolve("cat").resolve(pluginVersion);
     // Remove old plugin files and replace with current source
-    if (Files.isDirectory(cachePluginDir))
-      deleteDirectoryContents(cachePluginDir);
+    if (Files.isDirectory(isolatedPluginRoot))
+      deleteDirectoryContents(isolatedPluginRoot);
     else
-      Files.createDirectories(cachePluginDir);
-    copyDirectoryRecursively(pluginSourceDir, cachePluginDir);
+      Files.createDirectories(isolatedPluginRoot);
+    copyDirectoryRecursively(pluginSourceDir, isolatedPluginRoot);
 
     // Update jlink binaries in the cache
-    Path cacheBinDir = cachePluginDir.resolve("client").resolve("bin");
+    Path cacheBinDir = isolatedPluginRoot.resolve("client").resolve("bin");
     if (Files.isDirectory(jlinkBinDir))
     {
       Files.createDirectories(cacheBinDir);
@@ -242,7 +243,8 @@ private final ClaudePluginScope scope;
    * claude CLI.
    * <p>
    * Removes the {@code CLAUDECODE} env var so the spawned process does not inherit the
-   * hook-suppression flag. Sets {@code CLAUDE_CONFIG_DIR} when isolation is active.
+   * hook-suppression flag. Sets {@code CLAUDE_CONFIG_DIR} and {@code CLAUDE_PLUGIN_ROOT} when
+   * isolation is active so that all consumers read from the isolated plugin copy.
    *
    * @param command the command to execute
    * @param cwd     the working directory
@@ -255,7 +257,10 @@ private final ClaudePluginScope scope;
     Map<String, String> env = pb.environment();
     env.remove("CLAUDECODE");
     if (isolatedConfigDir != null)
+    {
       env.put("CLAUDE_CONFIG_DIR", isolatedConfigDir.toString());
+      env.put("CLAUDE_PLUGIN_ROOT", isolatedPluginRoot.toString());
+    }
     pb.directory(cwd.toFile());
     pb.redirectErrorStream(true);
     return pb;
