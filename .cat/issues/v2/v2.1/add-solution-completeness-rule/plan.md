@@ -5,6 +5,8 @@ Add `plugin/rules/solution-completeness.md` to counter the simplicity bias baked
 behavior. Two rules: (1) investigation depth must not be sacrificed for communication brevity, and (2)
 choose the correct and complete implementation, not the simplest one that passes surface checks.
 
+Inspired by: https://gist.github.com/roman01la/483d1db15043018096ac3babf5688881
+
 ## Parent Requirements
 None
 
