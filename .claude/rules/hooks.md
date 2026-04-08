@@ -1,3 +1,6 @@
+---
+paths: ["plugin/hooks/**", ".claude/settings.json", "client/**"]
+---
 # Hook Registration Locations (M406)
 
 CAT uses two distinct hook registration systems. See `.cat/rules/hooks.md` for full documentation

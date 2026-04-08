@@ -1,3 +1,6 @@
+---
+paths: ["*.java"]
+---
 # Jackson Conventions
 
 ## JsonMapper Usage

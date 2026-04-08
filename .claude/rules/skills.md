@@ -1,3 +1,6 @@
+---
+paths: ["plugin/skills/**"]
+---
 # Skill Conventions
 
 ## Skill Instruction Location (M580)
