@@ -62,7 +62,7 @@ public final class EnforceApprovalBeforeMergeTest
   }
 
   /**
-   * Creates a tool input JSON node for spawning a cat:work-merge subagent.
+   * Creates a tool input JSON node for spawning a cat:work-merge-agent subagent.
    *
    * @param mapper the JSON mapper
    * @return the tool input JSON node
@@ -71,7 +71,7 @@ public final class EnforceApprovalBeforeMergeTest
   private static JsonNode createMergeToolInput(JsonMapper mapper) throws IOException
   {
     return mapper.readTree("""
-      {"subagent_type": "cat:work-merge"}""");
+      {"subagent_type": "cat:work-merge-agent"}""");
   }
 
   /**
@@ -577,9 +577,9 @@ public final class EnforceApprovalBeforeMergeTest
   }
 
   /**
-   * Verifies that a Skill tool invocation of cat:work-merge is blocked without approval.
+   * Verifies that a Skill tool invocation of cat:work-merge-agent is blocked without approval.
    * <p>
-   * Agents can bypass Task-tool enforcement by invoking cat:work-merge via the Skill tool directly.
+   * Agents can bypass Task-tool enforcement by invoking cat:work-merge-agent via the Skill tool directly.
    * The handler must detect the Skill tool path (using the "skill" field instead of "subagent_type").
    *
    * @throws IOException if test setup fails
@@ -598,7 +598,7 @@ public final class EnforceApprovalBeforeMergeTest
 
       EnforceApprovalBeforeMerge handler = new EnforceApprovalBeforeMerge(scope);
       JsonNode toolInput = mapper.readTree("""
-        {"skill": "cat:work-merge", "args": "session-id issue-id"}""");
+        {"skill": "cat:work-merge-agent", "args": "session-id issue-id"}""");
 
       TaskHandler.Result result = handler.check(toolInput, SESSION_ID, "");
 
@@ -611,7 +611,7 @@ public final class EnforceApprovalBeforeMergeTest
   }
 
   /**
-   * Verifies that a Skill tool invocation of cat:work-merge is allowed when approval was given.
+   * Verifies that a Skill tool invocation of cat:work-merge-agent is allowed when approval was given.
    * <p>
    * The handler must allow the merge when explicit user approval is present in the session history,
    * regardless of whether the invocation uses the Task or Skill tool.
@@ -632,7 +632,7 @@ public final class EnforceApprovalBeforeMergeTest
 
       EnforceApprovalBeforeMerge handler = new EnforceApprovalBeforeMerge(scope);
       JsonNode toolInput = mapper.readTree("""
-        {"skill": "cat:work-merge", "args": "session-id issue-id"}""");
+        {"skill": "cat:work-merge-agent", "args": "session-id issue-id"}""");
 
       TaskHandler.Result result = handler.check(toolInput, SESSION_ID, "");
 
@@ -647,7 +647,7 @@ public final class EnforceApprovalBeforeMergeTest
   /**
    * Verifies that Skill tool invocations of other skills are not affected.
    * <p>
-   * The handler must only intercept cat:work-merge skill invocations, not other skills.
+   * The handler must only intercept cat:work-merge-agent skill invocations, not other skills.
    *
    * @throws IOException if test setup fails
    */

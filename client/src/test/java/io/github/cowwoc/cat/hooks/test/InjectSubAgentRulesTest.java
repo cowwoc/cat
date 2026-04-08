@@ -342,7 +342,7 @@ public final class InjectSubAgentRulesTest
   {
     Path tempDir = Files.createTempDirectory("inject-subagent-rules-type-mismatch-");
     try (TestClaudeHook scope = new TestClaudeHook(
-      "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"subagent_type\": \"cat:git-commit\"}",
+      "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"subagent_type\": \"cat:git-commit-agent\"}",
       tempDir, tempDir, tempDir))
     {
       Path rulesDir = scope.getProjectPath().resolve(".cat/rules");

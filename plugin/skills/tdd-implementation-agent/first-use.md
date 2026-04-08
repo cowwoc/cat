@@ -457,11 +457,11 @@ Behavior 2: Invalid email detection
 
 ### Pre-Review Phase: Squash by Topic
 
-Before requesting review, use `cat:git-squash` to consolidate behavior cycles by topic:
+Before requesting review, use `cat:git-squash-agent` to consolidate behavior cycles by topic:
 
 ```bash
 # Squash all email validation commits into logical groups:
-cat:git-squash --topic "email-validation"
+cat:git-squash-agent --topic "email-validation"
 
 # Result: single focused commit per topic
 # Example output:

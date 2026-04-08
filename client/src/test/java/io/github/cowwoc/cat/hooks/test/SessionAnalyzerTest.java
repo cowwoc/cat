@@ -2192,11 +2192,11 @@ public final class SessionAnalyzerTest
 
       JsonNode preparePhase = phases.get(0);
       requireThat(preparePhase.path("name").asString(),
-        "phase_0_name").isEqualTo("work-prepare");
+        "phase_0_name").isEqualTo("work-prepare-agent");
 
       JsonNode implementPhase = phases.get(1);
       requireThat(implementPhase.path("name").asString(),
-        "phase_1_name").isEqualTo("work-implement");
+        "phase_1_name").isEqualTo("work-implement-agent");
 
       JsonNode implementTools = implementPhase.path("tools");
       requireThat(implementTools.isArray(), "implement_tools_is_array").isTrue();
@@ -2386,11 +2386,11 @@ public final class SessionAnalyzerTest
       JsonNode timing = result.path("timing");
       requireThat(timing.isMissingNode(), "timing_present").isFalse();
       JsonNode phases = timing.path("phases");
-      // Only "work-prepare" from "cat:work-prepare-agent" is a valid phase marker;
+      // Only "work-prepare-agent" from "cat:work-prepare-agent" is a valid phase marker;
       // "cat:git-commit-agent" must not register as a phase
       requireThat(phases.isArray(), "phases_is_array").isTrue();
       requireThat(phases.size(), "phase_count").isEqualTo(1);
-      requireThat(phases.get(0).path("name").asString(), "phase_name").isEqualTo("work-prepare");
+      requireThat(phases.get(0).path("name").asString(), "phase_name").isEqualTo("work-prepare-agent");
     }
     finally
     {
@@ -2458,10 +2458,10 @@ public final class SessionAnalyzerTest
       requireThat(phases.isArray(), "phases_is_array").isTrue();
       requireThat(phases.size(), "phase_count").isEqualTo(4);
 
-      requireThat(phases.get(0).path("name").asString(), "phase_0").isEqualTo("work-prepare");
-      requireThat(phases.get(1).path("name").asString(), "phase_1").isEqualTo("work-implement");
-      requireThat(phases.get(2).path("name").asString(), "phase_2").isEqualTo("work-review");
-      requireThat(phases.get(3).path("name").asString(), "phase_3").isEqualTo("work-merge");
+      requireThat(phases.get(0).path("name").asString(), "phase_0").isEqualTo("work-prepare-agent");
+      requireThat(phases.get(1).path("name").asString(), "phase_1").isEqualTo("work-implement-agent");
+      requireThat(phases.get(2).path("name").asString(), "phase_2").isEqualTo("work-review-agent");
+      requireThat(phases.get(3).path("name").asString(), "phase_3").isEqualTo("work-merge-agent");
     }
     finally
     {

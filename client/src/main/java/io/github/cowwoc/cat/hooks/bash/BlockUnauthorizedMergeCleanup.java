@@ -129,8 +129,8 @@ public final class BlockUnauthorizedMergeCleanup implements BashHandler
       1. Complete Step 7 (Squash Commits by Topic): invoke cat:git-squash-agent
       2. Complete Step 8 (Rebase onto Target Branch): invoke cat:git-rebase-agent
       3. Complete Step 9 (Approval Gate): present AskUserQuestion to the user
-      4. After user selects "Approve and merge", invoke merge via Task tool (subagent_type: cat:work-merge)
-         or Skill tool (skill: cat:work-merge)
+      4. After user selects "Approve and merge", invoke merge via Task tool (subagent_type: cat:work-merge-agent)
+         or Skill tool (skill: cat:work-merge-agent)
 
       Do NOT invoke merge-and-cleanup directly via Bash - this bypasses the approval gate.
 

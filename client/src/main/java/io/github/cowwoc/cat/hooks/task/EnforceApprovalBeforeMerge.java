@@ -27,7 +27,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 /**
- * Block work-merge invocations when trust=medium/low without explicit user approval.
+ * Block work-merge-agent invocations when trust=medium/low without explicit user approval.
  * <p>
  * This handler enforces the trust-based approval requirement:
  * <ul>
@@ -35,8 +35,8 @@ import java.util.function.Predicate;
  *   <li>trust=medium/low: MUST have explicit user approval before merge</li>
  * </ul>
  * <p>
- * Prevention: Blocks Task tool (subagent_type=cat:work-merge) and Skill tool (skill=cat:work-merge)
- * invocations without prior approval.
+ * Prevention: Blocks Task tool (subagent_type=cat:work-merge-agent) and Skill tool
+ * (skill=cat:work-merge-agent) invocations without prior approval.
  */
 public final class EnforceApprovalBeforeMerge implements TaskHandler
 {
@@ -80,7 +80,7 @@ public final class EnforceApprovalBeforeMerge implements TaskHandler
     requireThat(sessionId, "sessionId").isNotBlank();
     requireThat(cwd, "cwd").isNotNull();
 
-    // Detect work-merge via Task tool (subagent_type) or Skill tool (skill)
+    // Detect work-merge-agent via Task tool (subagent_type) or Skill tool (skill)
     JsonNode subagentTypeNode = toolInput.get("subagent_type");
     String subagentType;
     if (subagentTypeNode != null)
@@ -95,7 +95,7 @@ public final class EnforceApprovalBeforeMerge implements TaskHandler
     else
       skill = "";
 
-    if (!subagentType.equals("cat:work-merge") && !skill.equals("cat:work-merge"))
+    if (!subagentType.equals("cat:work-merge-agent") && !skill.equals("cat:work-merge-agent"))
       return Result.allow();
 
     TrustLevel trust;

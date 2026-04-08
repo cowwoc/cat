@@ -128,7 +128,7 @@ public final class InvestigationContextExtractorTest
     try
     {
       String jsonl = assistantLine("t1", "Skill",
-        "\"skill\":\"cat:git-squash\",\"args\":\"--dry-run\"", "2026-01-03T00:00:00Z") + "\n";
+        "\"skill\":\"cat:git-squash-agent\",\"args\":\"--dry-run\"", "2026-01-03T00:00:00Z") + "\n";
       Files.writeString(tempFile, jsonl);
 
       InvestigationContextExtractor extractor =
@@ -137,7 +137,7 @@ public final class InvestigationContextExtractorTest
 
       JsonNode skills = result.path("skill_invocations");
       requireThat(skills.size(), "skillsSize").isEqualTo(1);
-      requireThat(skills.get(0).path("skill").asString(), "skill").isEqualTo("cat:git-squash");
+      requireThat(skills.get(0).path("skill").asString(), "skill").isEqualTo("cat:git-squash-agent");
       requireThat(skills.get(0).path("args").asString(), "args").isEqualTo("--dry-run");
       requireThat(skills.get(0).path("timestamp").asString(),
         "timestamp").isEqualTo("2026-01-03T00:00:00Z");
