@@ -28,11 +28,6 @@ All issue index.json files must conform to this standardized schema.
 
 **Description:** List of issue IDs that cannot be completed until this issue is closed.
 
-### Last Updated
-**Format:** `Last Updated: YYYY-MM-DD`
-
-**Description:** Date of last meaningful update to the issue.
-
 ## Mandatory Keys (Closed Issues Only)
 
 ### Resolution
