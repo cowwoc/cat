@@ -323,7 +323,7 @@ public final class GivingUpDetector
    */
   private boolean detectCodeDisabling(String textLower)
   {
-    if (hasBrokenCodeIndicator(textLower) && hasRemovalAction(textLower))
+    if (hasFirstPersonCodeRemoval(textLower))
       return true;
 
     return textLower.contains("temporarily disable") ||
@@ -385,32 +385,29 @@ public final class GivingUpDetector
   }
 
   /**
-   * Checks for broken code indicators.
+   * Checks for first-person intent to remove or disable broken code.
+   * <p>
+   * Matches phrases that pair a first-person subject with a removal action, indicating the agent
+   * intends to disable or skip code rather than debug it. This avoids false positives on technical
+   * discussion that mentions broken code or removal actions in a third-person or negated context.
    *
-   * @param text the text to check
-   * @return true if broken code indicator found
+   * @param text the lowercase text to check
+   * @return true if a first-person code-removal phrase is found
    */
-  private boolean hasBrokenCodeIndicator(String text)
+  private boolean hasFirstPersonCodeRemoval(String text)
   {
-    return text.contains("broken") ||
-      text.contains("failing") ||
-      text.contains("test passes without") ||
-      text.contains("works without");
-  }
-
-  /**
-   * Checks for removal action keywords.
-   *
-   * @param text the text to check
-   * @return true if removal action keyword found
-   */
-  private boolean hasRemovalAction(String text)
-  {
-    return text.contains("remove") ||
-      text.contains("disable") ||
-      text.contains("skip") ||
-      text.contains("comment out") ||
-      text.contains("temporarily");
+    return text.contains("i'll remove") ||
+      text.contains("i'll disable") ||
+      text.contains("i'll skip") ||
+      text.contains("i will remove") ||
+      text.contains("i will disable") ||
+      text.contains("i will skip") ||
+      text.contains("let me remove") ||
+      text.contains("let me disable") ||
+      text.contains("let me skip") ||
+      text.contains("i'm going to remove") ||
+      text.contains("i'm going to disable") ||
+      text.contains("i'm going to skip");
   }
 
   /**
