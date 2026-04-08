@@ -58,8 +58,7 @@ public final class StatuslineCommandTest
         {
           "model": {"display_name": "claude-3-5-sonnet"},
           "session_id": "abcdef12-1234-5678-abcd-ef1234567890",
-          "cost": {"total_duration_ms": 125000},
-          "context_window": {"used_percentage": 45}
+          "cost": {"total_duration_ms": 125000}
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -91,8 +90,7 @@ public final class StatuslineCommandTest
         {
           "model": {"display_name": "claude"},
           "session_id": "00000000-0000-0000-0000-000000000000",
-          "cost": {"total_duration_ms": 45000},
-          "context_window": {"used_percentage": 0}
+          "cost": {"total_duration_ms": 45000}
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -122,8 +120,7 @@ public final class StatuslineCommandTest
         {
           "model": {"display_name": "claude"},
           "session_id": "00000000-0000-0000-0000-000000000000",
-          "cost": {"total_duration_ms": 3725000},
-          "context_window": {"used_percentage": 0}
+          "cost": {"total_duration_ms": 3725000}
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -158,7 +155,10 @@ public final class StatuslineCommandTest
           "model": {"display_name": "claude"},
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_tokens": 200000}
+          "context_window": {
+            "current_usage": {"input_tokens": 200000},
+            "context_window_size": 200000
+          }
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -194,7 +194,10 @@ public final class StatuslineCommandTest
           "model": {"display_name": "claude"},
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_tokens": 161935}
+          "context_window": {
+            "current_usage": {"input_tokens": 161935},
+            "context_window_size": 200000
+          }
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -229,7 +232,10 @@ public final class StatuslineCommandTest
           "model": {"display_name": "claude"},
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_tokens": 92425}
+          "context_window": {
+            "current_usage": {"input_tokens": 92425},
+            "context_window_size": 200000
+          }
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -246,25 +252,21 @@ public final class StatuslineCommandTest
   }
 
   /**
-   * Verifies that missing JSON fields use default values gracefully.
+   * Verifies that an empty JSON object throws an {@code IllegalArgumentException} for the first missing
+   * required field.
+   * <p>
+   * All of {@code model}, {@code session_id}, and {@code cost} are required to display correct information.
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
-  public void emptyJsonObjectUsesDefaults() throws IOException
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = "(?s).*model.*missing.*")
+  public void missingRequiredFieldsThrowsIllegalArgumentException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
     try
     {
-      String json = "{}";
-      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
-      {
-        String output = executeWithLockDir(scope, tempDir);
-        requireThat(output, "output").contains("unknown");
-        requireThat(output, "output").contains("00:00");
-        // contextPercent=0 → right-justified: "  0%"
-        requireThat(output, "output").contains("  0%");
-      }
+      new TestClaudeStatusline(tempDir, tempDir, "{}").close();
     }
     finally
     {
@@ -290,7 +292,10 @@ public final class StatuslineCommandTest
           "model": {"display_name": "claude"},
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_tokens": 300000}
+          "context_window": {
+            "current_usage": {"input_tokens": 300000},
+            "context_window_size": 200000
+          }
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -324,7 +329,10 @@ public final class StatuslineCommandTest
           "model": {"display_name": "claude"},
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_tokens": 200000}
+          "context_window": {
+            "current_usage": {"input_tokens": 200000},
+            "context_window_size": 200000
+          }
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -355,8 +363,7 @@ public final class StatuslineCommandTest
         {
           "model": {"display_name": "claude"},
           "session_id": "12345678-abcd-ef01-2345-678901234567",
-          "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_percentage": 0}
+          "cost": {"total_duration_ms": 1000}
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -390,7 +397,10 @@ public final class StatuslineCommandTest
           "model": {"display_name": "claude"},
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_tokens": 132145}
+          "context_window": {
+            "current_usage": {"input_tokens": 132145},
+            "context_window_size": 200000
+          }
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -425,7 +435,10 @@ public final class StatuslineCommandTest
           "model": {"display_name": "claude"},
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_tokens": 191725}
+          "context_window": {
+            "current_usage": {"input_tokens": 191725},
+            "context_window_size": 200000
+          }
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -456,8 +469,7 @@ public final class StatuslineCommandTest
         {
           "model": {"display_name": "claude"},
           "session_id": "00000000-0000-0000-0000-000000000000",
-          "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_percentage": 0}
+          "cost": {"total_duration_ms": 1000}
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -493,7 +505,10 @@ public final class StatuslineCommandTest
           "model": {"display_name": "claude"},
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_tokens": 132145}
+          "context_window": {
+            "current_usage": {"input_tokens": 132145},
+            "context_window_size": 200000
+          }
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -525,8 +540,7 @@ public final class StatuslineCommandTest
         {
           "model": {"display_name": "claude"},
           "session_id": "00000000-0000-0000-0000-000000000000",
-          "cost": {"total_duration_ms": -5000},
-          "context_window": {"used_percentage": 0}
+          "cost": {"total_duration_ms": -5000}
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -542,12 +556,16 @@ public final class StatuslineCommandTest
   }
 
   /**
-   * Verifies that a negative usage percentage is clamped to 0, resulting in "  0%" (right-justified) in the output.
+   * Verifies that negative input tokens throw an {@code IllegalArgumentException}.
+   * <p>
+   * Negative token counts are invalid and must be rejected rather than silently clamped to zero,
+   * which would produce an incorrect context percentage.
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
-  public void negativeUsagePercentageClampedToZero() throws IOException
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = "(?s).*input_tokens.*negative.*")
+  public void negativeInputTokensThrowsIllegalArgumentException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
     try
@@ -557,15 +575,13 @@ public final class StatuslineCommandTest
           "model": {"display_name": "claude"},
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_percentage": -10}
+          "context_window": {
+            "current_usage": {"input_tokens": -10},
+            "context_window_size": 200000
+          }
         }
         """;
-      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
-      {
-        String output = executeWithLockDir(scope, tempDir);
-        // contextPercent=0 → right-justified: "  0%"
-        requireThat(output, "output").contains("  0%");
-      }
+      new TestClaudeStatusline(tempDir, tempDir, json).close();
     }
     finally
     {
@@ -596,7 +612,10 @@ public final class StatuslineCommandTest
             "model": {"display_name": "claude"},
             "session_id": "00000000-0000-0000-0000-000000000000",
             "cost": {"total_duration_ms": 1000},
-            "context_window": {"used_percentage": 50}
+            "context_window": {
+              "current_usage": {"input_tokens": 100000},
+              "context_window_size": 200000
+            }
           }
           """;
         try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -643,7 +662,10 @@ public final class StatuslineCommandTest
             "model": {"display_name": "claude"},
             "session_id": "00000000-0000-0000-0000-000000000000",
             "cost": {"total_duration_ms": 1000},
-            "context_window": {"used_percentage": 50}
+            "context_window": {
+              "current_usage": {"input_tokens": 100000},
+              "context_window_size": 200000
+            }
           }
           """;
         try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -691,7 +713,10 @@ public final class StatuslineCommandTest
           "model": {"display_name": "claude"},
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_tokens": 200000}
+          "context_window": {
+            "current_usage": {"input_tokens": 200000},
+            "context_window_size": 200000
+          }
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, jsonFull))
@@ -708,7 +733,10 @@ public final class StatuslineCommandTest
           "model": {"display_name": "claude"},
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_tokens": 199834}
+          "context_window": {
+            "current_usage": {"input_tokens": 199834},
+            "context_window_size": 200000
+          }
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, jsonNearFull))
@@ -741,8 +769,7 @@ public final class StatuslineCommandTest
         {
           "model": {"display_name": "claude"},
           "session_id": "abc123",
-          "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_percentage": 0}
+          "cost": {"total_duration_ms": 1000}
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -758,12 +785,16 @@ public final class StatuslineCommandTest
   }
 
   /**
-   * Verifies that explicit null JSON field values produce the same defaults as missing fields.
+   * Verifies that explicit null values for required JSON fields throw an {@code IllegalArgumentException}.
+   * <p>
+   * Null values for required fields are treated the same as missing fields — both indicate that the
+   * statusline cannot display correct information.
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
-  public void nullJsonFieldsUseDefaults() throws IOException
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = "(?s).*display_name.*missing.*")
+  public void nullRequiredFieldsThrowsIllegalArgumentException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
     try
@@ -773,17 +804,10 @@ public final class StatuslineCommandTest
           "model": {"display_name": null},
           "session_id": null,
           "cost": {"total_duration_ms": null},
-          "context_window": {"used_percentage": null}
+          "context_window": null
         }
         """;
-      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
-      {
-        String output = executeWithLockDir(scope, tempDir);
-        requireThat(output, "output").contains("unknown");
-        requireThat(output, "output").contains("00:00");
-        // contextPercent=0 → right-justified: "  0%"
-        requireThat(output, "output").contains("  0%");
-      }
+      new TestClaudeStatusline(tempDir, tempDir, json).close();
     }
     finally
     {
@@ -923,8 +947,7 @@ public final class StatuslineCommandTest
         {
           "model": {"display_name": "claude-3-5-sonnet"},
           "session_id": "aaaaaaaa-1111-2222-3333-444444444444",
-          "cost": {"total_duration_ms": 0},
-          "context_window": {"used_percentage": 0}
+          "cost": {"total_duration_ms": 0}
         }""";
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
       {
@@ -964,8 +987,7 @@ public final class StatuslineCommandTest
           {
             "model": {"display_name": "claude-3-5-sonnet"},
             "session_id": "aaaaaaaa-1111-2222-3333-444444444444",
-            "cost": {"total_duration_ms": 0},
-            "context_window": {"used_percentage": 0}
+            "cost": {"total_duration_ms": 0}
           }""";
         try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
         {
@@ -1129,8 +1151,7 @@ public final class StatuslineCommandTest
         {
           "model": {"display_name": "m"},
           "session_id": "00000000-0000-0000-0000-000000000000",
-          "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_percentage": 0}
+          "cost": {"total_duration_ms": 1000}
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -1169,8 +1190,7 @@ public final class StatuslineCommandTest
         {
           "model": {"display_name": "m"},
           "session_id": "00000000-0000-0000-0000-000000000000",
-          "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_percentage": 0}
+          "cost": {"total_duration_ms": 1000}
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -1208,7 +1228,10 @@ public final class StatuslineCommandTest
           "model": {"display_name": "claude-3-5-sonnet"},
           "session_id": "abcdef12-1234-5678-abcd-ef1234567890",
           "cost": {"total_duration_ms": 125000},
-          "context_window": {"used_tokens": 108975}
+          "context_window": {
+            "current_usage": {"input_tokens": 108975},
+            "context_window_size": 200000
+          }
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -1252,7 +1275,10 @@ public final class StatuslineCommandTest
           "model": {"display_name": "test-model-name"},
           "session_id": "12345678-abcd-ef01-2345-678901234567",
           "cost": {"total_duration_ms": 3661000},
-          "context_window": {"used_tokens": 158625}
+          "context_window": {
+            "current_usage": {"input_tokens": 158625},
+            "context_window_size": 200000
+          }
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -1321,7 +1347,10 @@ public final class StatuslineCommandTest
           "model": {"display_name": "claude-opus-4-5-long-model-name"},
           "session_id": "abcdef12-1234-5678-abcd-ef1234567890",
           "cost": {"total_duration_ms": 125000},
-          "context_window": {"used_tokens": 108975}
+          "context_window": {
+            "current_usage": {"input_tokens": 108975},
+            "context_window_size": 200000
+          }
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -1359,7 +1388,10 @@ public final class StatuslineCommandTest
           "model": {"display_name": "claude-opus-4-5"},
           "session_id": "abcdef12-1234-5678-abcd-ef1234567890",
           "cost": {"total_duration_ms": 125000},
-          "context_window": {"used_tokens": 108975}
+          "context_window": {
+            "current_usage": {"input_tokens": 108975},
+            "context_window_size": 200000
+          }
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -1538,25 +1570,29 @@ public final class StatuslineCommandTest
   }
 
   /**
-   * Verifies that a model display name containing "(1M context)" maps to a 1,000,000-token context window
-   * and renders the context bar using the 1M scale.
+   * Verifies that a 1M context window size is used when {@code context_window_size} is 1,000,000.
    * <p>
-   * At 517,250 tokens on a 1M model: contextPercent=50 → 10 filled and 10 empty bar segments.
+   * At 517,250 tokens on a 1M context window: usableContext = 965,500.
+   * effectiveUsed = 517,250 - 34,500 = 482,750. 482,750 * 100 / 965,500 = 50%.
+   * Fills 10 of 20 bar segments.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void oneMillionContextModelUsesLargerContextWindow() throws IOException
+  public void oneMillionContextWindowSizeUsesLargerContextWindow() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
     try
     {
       String json = """
         {
-          "model": {"display_name": "claude-3-7-sonnet (1M context)"},
+          "model": {"display_name": "claude-3-7-sonnet"},
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_tokens": 517250}
+          "context_window": {
+            "current_usage": {"input_tokens": 517250},
+            "context_window_size": 1000000
+          }
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -1574,14 +1610,16 @@ public final class StatuslineCommandTest
   }
 
   /**
-   * Verifies that a model without "(1M context)" in the display name maps to a 200,000-token context window.
+   * Verifies that a 200,000-token context window size is used when {@code context_window_size} is 200,000.
    * <p>
-   * At 117,250 tokens on a 200k model: contextPercent=50 → 10 filled and 10 empty bar segments.
+   * At 117,250 tokens on a 200k context window: usableContext = 165,500.
+   * effectiveUsed = 117,250 - 34,500 = 82,750. 82,750 * 100 / 165,500 = 50%.
+   * Fills 10 of 20 bar segments.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void standardModelUses200kContextWindow() throws IOException
+  public void standardContextWindowSizeUses200kScale() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
     try
@@ -1591,7 +1629,10 @@ public final class StatuslineCommandTest
           "model": {"display_name": "claude-3-5-sonnet"},
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_tokens": 117250}
+          "context_window": {
+            "current_usage": {"input_tokens": 117250},
+            "context_window_size": 200000
+          }
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -1601,6 +1642,209 @@ public final class StatuslineCommandTest
         requireThat(output, "output").contains("██████████░░░░░░░░░░");
         requireThat(output, "output").contains(" 50%");
       }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that when {@code context_window} is absent (no context data yet), the statusline shows 0%
+   * context usage without throwing.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void nullCurrentUsageBeforeFirstApiCallShowsZeroPercent() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-");
+    try
+    {
+      // No context_window at all — before the first API call, Claude Code omits this field
+      String json = """
+        {
+          "model": {"display_name": "claude-3-5-sonnet"},
+          "session_id": "00000000-0000-0000-0000-000000000000",
+          "cost": {"total_duration_ms": 1000}
+        }
+        """;
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        String output = executeWithLockDir(scope, tempDir);
+        requireThat(output, "output").contains("  0%");
+        requireThat(output, "output").contains("░░░░░░░░░░░░░░░░░░░░");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a null current_usage with a valid context_window_size shows 0% usage.
+   * <p>
+   * When current_usage is absent, there is no token consumption to report, so the output must show 0%.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void nullCurrentUsageShowsZeroPercent() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-");
+    try
+    {
+      String json = """
+        {
+          "model": {"display_name": "claude"},
+          "session_id": "00000000-0000-0000-0000-000000000000",
+          "cost": {"total_duration_ms": 1000},
+          "context_window": {
+            "context_window_size": 200000
+          }
+        }
+        """;
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        String output = executeWithLockDir(scope, tempDir);
+        requireThat(output, "output").contains("0%");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a missing context_window_size throws IllegalArgumentException with a message indicating the
+   * field is missing or non-positive.
+   * <p>
+   * Without context_window_size, the percentage calculation has no denominator and must fail fast.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = "(?s).*missing or non-positive.*")
+  public void missingContextWindowSizeThrowsIllegalArgumentException() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-");
+    try
+    {
+      String json = """
+        {
+          "model": {"display_name": "claude"},
+          "session_id": "00000000-0000-0000-0000-000000000000",
+          "cost": {"total_duration_ms": 1000},
+          "context_window": {
+            "current_usage": {"input_tokens": 100000}
+          }
+        }
+        """;
+      new TestClaudeStatusline(tempDir, tempDir, json).close();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a context_window_size of zero throws IllegalArgumentException with a message indicating the
+   * field is missing or non-positive.
+   * <p>
+   * Zero is not a valid denominator for percentage calculation.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = "(?s).*missing or non-positive.*")
+  public void zeroContextWindowSizeThrowsIllegalArgumentException() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-");
+    try
+    {
+      String json = """
+        {
+          "model": {"display_name": "claude"},
+          "session_id": "00000000-0000-0000-0000-000000000000",
+          "cost": {"total_duration_ms": 1000},
+          "context_window": {
+            "current_usage": {"input_tokens": 100000},
+            "context_window_size": 0
+          }
+        }
+        """;
+      new TestClaudeStatusline(tempDir, tempDir, json).close();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a negative context_window_size throws IllegalArgumentException with a message indicating the
+   * field is missing or non-positive.
+   * <p>
+   * Negative values are not valid for a context window size.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = "(?s).*missing or non-positive.*")
+  public void negativeContextWindowSizeThrowsIllegalArgumentException() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-");
+    try
+    {
+      String json = """
+        {
+          "model": {"display_name": "claude"},
+          "session_id": "00000000-0000-0000-0000-000000000000",
+          "cost": {"total_duration_ms": 1000},
+          "context_window": {
+            "current_usage": {"input_tokens": 100000},
+            "context_window_size": -1
+          }
+        }
+        """;
+      new TestClaudeStatusline(tempDir, tempDir, json).close();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a current_usage object missing input_tokens throws IllegalArgumentException with a message
+   * indicating the field is missing.
+   * <p>
+   * Without input_tokens there is no token count to use as a numerator, so the constructor must fail fast.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = "(?s).*missing.*")
+  public void missingInputTokensThrowsIllegalArgumentException() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-");
+    try
+    {
+      String json = """
+        {
+          "model": {"display_name": "claude"},
+          "session_id": "00000000-0000-0000-0000-000000000000",
+          "cost": {"total_duration_ms": 1000},
+          "context_window": {
+            "current_usage": {},
+            "context_window_size": 200000
+          }
+        }
+        """;
+      new TestClaudeStatusline(tempDir, tempDir, json).close();
     }
     finally
     {

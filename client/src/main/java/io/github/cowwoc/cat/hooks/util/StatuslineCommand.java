@@ -44,10 +44,13 @@ import java.util.StringJoiner;
  * <p>
  * Input JSON fields (from Claude Code):
  * <ul>
- *   <li>{@code model.display_name} - model display name (defaults to "unknown")</li>
- *   <li>{@code session_id} - session ID (defaults to "unknown")</li>
- *   <li>{@code cost.total_duration_ms} - session duration in milliseconds (defaults to 0)</li>
- *   <li>{@code context_window.used_tokens} - number of tokens used in the context window (defaults to 0)</li>
+ *   <li>{@code model.display_name} - model display name (required)</li>
+ *   <li>{@code session_id} - session ID (required)</li>
+ *   <li>{@code cost.total_duration_ms} - session duration in milliseconds (required)</li>
+ *   <li>{@code context_window.current_usage.input_tokens} - number of input tokens used (required when
+ *       {@code current_usage} is present; defaults to 0 when {@code current_usage} is absent)</li>
+ *   <li>{@code context_window.context_window_size} - total context window size in tokens (required when
+ *       {@code context_window} is present)</li>
  * </ul>
  */
 public final class StatuslineCommand
@@ -163,10 +166,14 @@ public final class StatuslineCommand
     // Remove control characters from display name to prevent ANSI injection
     displayName = removeControlCharacters(displayName);
 
-    int totalContext = contextSizeFromDisplayName(displayName);
+    int totalContext = scope.getTotalContext();
 
-    // Scale used tokens against the usable context window
-    int contextPercent = scaleContextPercent(usedTokens, totalContext);
+    // Scale used tokens against the usable context window; skip scaling when no context data yet
+    int contextPercent;
+    if (totalContext == 0)
+      contextPercent = 0;
+    else
+      contextPercent = scaleContextPercent(usedTokens, totalContext);
 
     // Usage color
     String usageColor = getUsageColor(contextPercent);
@@ -338,22 +345,6 @@ public final class StatuslineCommand
     long minutes = (totalSeconds % 3600) / 60;
 
     return String.format("%02d:%02d", hours, minutes);
-  }
-
-  /**
-   * Returns the total context window size in tokens based on the model display name.
-   * <p>
-   * Models whose display name contains {@code "(1M context)"} have a 1,000,000-token context window.
-   * All other models use a 200,000-token context window.
-   *
-   * @param displayName the model display name (with control characters already removed)
-   * @return the total context size in tokens
-   */
-  private static int contextSizeFromDisplayName(String displayName)
-  {
-    if (displayName.contains("(1M context)"))
-      return 1_000_000;
-    return 200_000;
   }
 
   /**

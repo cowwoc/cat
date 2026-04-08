@@ -40,4 +40,11 @@ public interface ClaudeStatusline extends JvmScope
    * @return the number of used tokens, or {@code 0} if not present in the input
    */
   int getUsedTokens();
+
+  /**
+   * Returns the total context window size in tokens, as parsed from the statusline JSON.
+   *
+   * @return the total context size in tokens, or {@code 0} if not present in the input
+   */
+  int getTotalContext();
 }
