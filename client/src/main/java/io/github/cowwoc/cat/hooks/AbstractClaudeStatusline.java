@@ -155,7 +155,18 @@ public abstract class AbstractClaudeStatusline extends AbstractJvmScope implemen
               "context_window.current_usage.input_tokens is negative in statusline JSON. Value: " +
                 inputTokensValue);
           }
-          parsedUsedTokens = inputTokensValue;
+          // Prompt caching splits the total input token count across three fields. When caching is
+          // active, input_tokens contains only the non-cached portion (often near zero), so summing
+          // all three fields is required to compute the true context usage.
+          JsonNode cacheReadNode = currentUsageNode.get("cache_read_input_tokens");
+          int cacheReadValue = 0;
+          if (cacheReadNode != null && !cacheReadNode.isNull() && cacheReadNode.canConvertToInt())
+            cacheReadValue = cacheReadNode.intValue();
+          JsonNode cacheCreationNode = currentUsageNode.get("cache_creation_input_tokens");
+          int cacheCreationValue = 0;
+          if (cacheCreationNode != null && !cacheCreationNode.isNull() && cacheCreationNode.canConvertToInt())
+            cacheCreationValue = cacheCreationNode.intValue();
+          parsedUsedTokens = inputTokensValue + cacheReadValue + cacheCreationValue;
         }
       }
     }
