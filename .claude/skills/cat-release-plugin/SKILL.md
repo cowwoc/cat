@@ -120,7 +120,7 @@ EOF
 
   # Append each issue
   for issue_name in $CLOSED_ISSUES; do
-    ISSUE_PLAN=".cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/${issue_name}/PLAN.md"
+    ISSUE_PLAN=".cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/${issue_name}/plan.md"
     if [[ -f "$ISSUE_PLAN" ]]; then
       GOAL=$(grep -A1 "^## Goal" "$ISSUE_PLAN" | tail -1 | head -c 50)
       echo "| ${issue_name} | - | ${GOAL}... | implemented |" >> "$MINOR_CHANGELOG"

@@ -1,8 +1,8 @@
 # Plan: lowercase-planning-file-names
 
 ## Goal
-Rename all uppercase planning file names (CHANGELOG.md, PLAN.md) to lowercase (changelog.md, plan.md)
-in the filesystem and update all references to these names across the codebase.
+Rename all uppercase planning and state file names (CHANGELOG.md, PLAN.md, STATE.md) to lowercase/json
+(changelog.md, plan.md, index.json) in the filesystem and update all references to these names across the codebase.
 
 ## Parent Requirements
 None
@@ -17,19 +17,21 @@ refactor
 
 ## Files to Modify
 - All `.cat/issues/v*/v*/CHANGELOG.md` files — rename to `changelog.md` (17 files via migration)
+- All `.cat/issues/v*/v*/**/STATE.md` files — rename to `index.json` (via migration, already complete)
 - `CHANGELOG.md` (root) — rename to `changelog.md`
-- `CLAUDE.md` — update "CHANGELOG.md" and "PLAN.md" string references
-- `README.md` — update "CHANGELOG.md" and "PLAN.md" string references
-- `plugin/concepts/hierarchy.md` — update references
-- `plugin/concepts/version-paths.md` — update references
-- `plugin/concepts/merge-and-cleanup.md` — update references
+- `CLAUDE.md` — update "CHANGELOG.md", "PLAN.md", and "STATE.md" string references
+- `README.md` — update "CHANGELOG.md", "PLAN.md", and "STATE.md" string references
+- `plugin/concepts/hierarchy.md` — update references to STATE.md/index.json
+- `plugin/concepts/version-paths.md` — update references to STATE.md/index.json
+- `plugin/concepts/merge-and-cleanup.md` — update references to STATE.md/index.json
 - `plugin/concepts/agent-architecture.md` — update references
 - `plugin/concepts/commit-types.md` — update references
 - `plugin/concepts/version-completion.md` — update references
 - `plugin/templates/changelog.md` — update any self-references
+- `plugin/migrations/2.1.sh` — verify migration phase handling STATE.md → index.json completed
 - `plugin/migrations/2.2.sh` — add migration phase to rename CHANGELOG.md → changelog.md
 - `client/src/main/java/io/github/cowwoc/cat/hooks/write/WarnBaseBranchEdit.java` — update protected file list
-- All other files containing "CHANGELOG.md" or "PLAN.md" string references
+- All other files containing "CHANGELOG.md", "PLAN.md", or "STATE.md" string references
 
 ## Pre-conditions
 - [ ] All dependent issues are closed
@@ -66,10 +68,20 @@ refactor
 - Verify with `git grep -l "PLAN\.md"` that no tracked files still contain uppercase references
   after the update
 
+### Job 5: Update all string references to STATE.md
+- Replace all occurrences of the string `STATE.md` with `index.json` in all tracked files
+  - Key files: `CLAUDE.md`, `README.md`, plugin concepts, plugin skills, Java source, client code,
+    `.cat/retrospectives/mistakes-*.json`
+- Note: Migration to index.json in `.cat/issues/` was already completed in v2.1-redesign-issue-file-structure
+- Verify with `git grep -l "STATE\.md"` that no tracked files still contain uppercase references
+  after the update
+
 ## Post-conditions
 - [ ] `git grep -l "CHANGELOG\.md"` returns no tracked files (all references lowercase)
 - [ ] `git grep -l "PLAN\.md"` returns no tracked files (all references lowercase)
+- [ ] `git grep -l "STATE\.md"` returns no tracked files (all references changed to index.json)
 - [ ] No `CHANGELOG.md` files exist under `.cat/issues/` (all renamed to `changelog.md`)
+- [ ] No `STATE.md` files exist in tracked codebase (all references changed to `index.json`)
 - [ ] Root `CHANGELOG.md` renamed to `changelog.md`
 - [ ] Migration script `plugin/migrations/2.2.sh` handles CHANGELOG.md → changelog.md rename
   and is idempotent
