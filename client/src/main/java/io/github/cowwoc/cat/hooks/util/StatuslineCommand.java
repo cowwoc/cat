@@ -11,6 +11,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import io.github.cowwoc.cat.hooks.ClaudeStatusline;
 import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.MainClaudeStatusline;
+import io.github.cowwoc.cat.hooks.SharedSecrets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.core.JacksonException;
@@ -46,7 +47,7 @@ import java.util.StringJoiner;
  *   <li>{@code model.display_name} - model display name (defaults to "unknown")</li>
  *   <li>{@code session_id} - session ID (defaults to "unknown")</li>
  *   <li>{@code cost.total_duration_ms} - session duration in milliseconds (defaults to 0)</li>
- *   <li>{@code context_window.used_percentage} - context usage percentage 0-100 (defaults to 0, clamped to 100)</li>
+ *   <li>{@code context_window.used_tokens} - number of tokens used in the context window (defaults to 0)</li>
  * </ul>
  */
 public final class StatuslineCommand
@@ -65,12 +66,24 @@ public final class StatuslineCommand
 
   private static final int USAGE_BAR_SEGMENTS = 20;
 
+  private static final int SYSTEM_PROMPT_TOKENS = 6_400;
+  private static final int TOOL_DEFINITIONS_TOKENS = 7_100;
+  private static final int CONVERSATION_HISTORY_TOKENS = 21_000;
+  // Sum of fixed overhead components that are always present regardless of actual conversation content
+  private static final int OVERHEAD_TOKENS =
+    SYSTEM_PROMPT_TOKENS + TOOL_DEFINITIONS_TOKENS + CONVERSATION_HISTORY_TOKENS;
+
   // Component emojis
   private static final String WORKTREE_EMOJI = "🌿";
   private static final String MODEL_EMOJI = "🤖";
   private static final String TIME_EMOJI = "⏰";
   private static final String SESSION_EMOJI = "🆔";
   private static final String USAGE_EMOJI = "📊";
+
+  static
+  {
+    SharedSecrets.setStatuslineCommandAccess(StatuslineCommand::scaleContextPercent);
+  }
 
   private final ClaudeStatusline scope;
   private final JsonMapper mapper;
@@ -136,7 +149,7 @@ public final class StatuslineCommand
     String displayName = scope.getModelDisplayName();
     String sessionId = scope.getSessionId();
     Duration totalDuration = scope.getTotalDuration();
-    int usedPercentage = scope.getUsedPercentage();
+    int usedTokens = scope.getUsedTokens();
 
     // Get active issue for the current session
     String activeIssue = getActiveIssue(sessionId, lockDir);
@@ -150,14 +163,16 @@ public final class StatuslineCommand
     // Remove control characters from display name to prevent ANSI injection
     displayName = removeControlCharacters(displayName);
 
-    // Scale the raw usage percentage to account for the 83.5% practical ceiling
-    int contextPercent = scaleContextPercent(usedPercentage);
+    int totalContext = contextSizeFromDisplayName(displayName);
+
+    // Scale used tokens against the usable context window
+    int contextPercent = scaleContextPercent(usedTokens, totalContext);
 
     // Usage color
-    String usageColor = getUsageColor(usedPercentage);
+    String usageColor = getUsageColor(contextPercent);
 
     // Usage bar
-    String usageBar = createUsageBar(usedPercentage);
+    String usageBar = createUsageBar(contextPercent);
 
     // Build the individual component strings
     List<String> components = new ArrayList<>();
@@ -326,33 +341,50 @@ public final class StatuslineCommand
   }
 
   /**
-   * Scales the raw usage percentage to account for the 83.5% practical ceiling.
+   * Returns the total context window size in tokens based on the model display name.
    * <p>
-   * Claude Code's context window reports {@code used_percentage} where 83.5% corresponds to full
-   * utilization in practice. This method maps the raw percentage to a 0–100 display scale so that
-   * 83.5% raw shows as 100% filled in the bar.
+   * Models whose display name contains {@code "(1M context)"} have a 1,000,000-token context window.
+   * All other models use a 200,000-token context window.
    *
-   * @param usedPercentage the raw usage percentage from the JSON input (may be any integer; clamped to 100)
+   * @param displayName the model display name (with control characters already removed)
+   * @return the total context size in tokens
+   */
+  private static int contextSizeFromDisplayName(String displayName)
+  {
+    if (displayName.contains("(1M context)"))
+      return 1_000_000;
+    return 200_000;
+  }
+
+  /**
+   * Scales used tokens against the usable context window to produce a 0–100 display percentage.
+   * <p>
+   * The usable context is {@code totalContext - OVERHEAD_TOKENS}. Tokens at or below the overhead
+   * level map to 0%; a full context maps to 100%.
+   *
+   * @param usedTokens   the number of tokens used in the context window
+   * @param totalContext the total context window size in tokens
    * @return the scaled percentage in the range [0, 100]
    */
-  private static int scaleContextPercent(int usedPercentage)
+  private static int scaleContextPercent(int usedTokens, int totalContext)
   {
-    return Math.min(100, (usedPercentage * 1000) / 835);
+    int usableContext = totalContext - OVERHEAD_TOKENS;
+    if (usableContext <= 0)
+      return 0;
+    int effectiveUsed = usedTokens - OVERHEAD_TOKENS;
+    return Math.min(100, Math.max(0, effectiveUsed * 100 / usableContext));
   }
 
   /**
    * Returns the RGB color code for the given usage percentage.
    * <p>
-   * Colors scale from green (0%) to red (100%), with a non-linear scaling
-   * where 83.5% raw becomes 100% scaled.
+   * Colors scale from green (0%) to red (100%).
    *
-   * @param percentage the usage percentage (0-100)
+   * @param contextPercent the scaled context usage percentage (0–100)
    * @return the RGB color escape code string
    */
-  private String getUsageColor(int percentage)
+  private String getUsageColor(int contextPercent)
   {
-    int contextPercent = scaleContextPercent(percentage);
-
     if (contextPercent >= 80)
     {
       // Red above 80%
@@ -378,12 +410,11 @@ public final class StatuslineCommand
    * <p>
    * Filled segments use "█" and empty segments use "░".
    *
-   * @param percentage the usage percentage (0-100)
+   * @param contextPercent the scaled context usage percentage (0–100)
    * @return the usage bar string
    */
-  private String createUsageBar(int percentage)
+  private String createUsageBar(int contextPercent)
   {
-    int contextPercent = scaleContextPercent(percentage);
     int filled = (contextPercent * USAGE_BAR_SEGMENTS) / 100;
 
     StringBuilder bar = new StringBuilder(USAGE_BAR_SEGMENTS);

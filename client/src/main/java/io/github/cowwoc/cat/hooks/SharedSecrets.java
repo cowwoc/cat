@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.hooks;
 import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner;
 import io.github.cowwoc.cat.hooks.skills.InstructionTestRunner;
 import io.github.cowwoc.cat.hooks.util.IssueDiscovery;
+import io.github.cowwoc.cat.hooks.util.StatuslineCommand;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
@@ -37,6 +38,7 @@ public final class SharedSecrets
   private static IssueDiscoveryAccess issueDiscoveryAccess;
   private static EmpiricalTestRunnerAccess empiricalTestRunnerAccess;
   private static InstructionTestRunnerAccess instructionTestRunnerAccess;
+  private static StatuslineCommandAccess statuslineCommandAccess;
 
   private SharedSecrets()
   {
@@ -198,6 +200,35 @@ public final class SharedSecrets
   }
 
   /**
+   * Registers the access object for {@link StatuslineCommand}.
+   *
+   * @param access the access object
+   * @throws NullPointerException if {@code access} is null
+   */
+  public static void setStatuslineCommandAccess(StatuslineCommandAccess access)
+  {
+    requireThat(access, "access").isNotNull();
+    statuslineCommandAccess = access;
+  }
+
+  /**
+   * Scales the number of used tokens against the usable context window.
+   * <p>
+   * The usable context window is the total context minus a fixed overhead. Tokens at or below overhead
+   * map to 0%; tokens at the total context ceiling map to 100%.
+   *
+   * @param usedTokens   the number of tokens used in the context window
+   * @param totalContext the total context window size in tokens
+   * @return the scaled percentage in the range [0, 100]
+   */
+  public static int scaleContextPercent(int usedTokens, int totalContext)
+  {
+    if (statuslineCommandAccess == null)
+      initialize(StatuslineCommand.class);
+    return statuslineCommandAccess.scaleContextPercent(usedTokens, totalContext);
+  }
+
+  /**
    * Initializes a class. If the class is already initialized, this method has no effect.
    *
    * @param clazz the class
@@ -298,5 +329,21 @@ public final class SharedSecrets
      * @param worktreePath the worktree path to remove
      */
     void removeTestWorktree(Path baseRepo, Path worktreePath);
+  }
+
+  /**
+   * Provides access to {@link StatuslineCommand} context percent scaling.
+   */
+  @FunctionalInterface
+  public interface StatuslineCommandAccess
+  {
+    /**
+     * Scales the number of used tokens against the usable context window.
+     *
+     * @param usedTokens   the number of tokens used in the context window
+     * @param totalContext the total context window size in tokens
+     * @return the scaled percentage in the range [0, 100]
+     */
+    int scaleContextPercent(int usedTokens, int totalContext);
   }
 }

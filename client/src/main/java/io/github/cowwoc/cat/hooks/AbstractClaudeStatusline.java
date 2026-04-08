@@ -30,7 +30,7 @@ public abstract class AbstractClaudeStatusline extends AbstractJvmScope implemen
   private String modelDisplayName = "unknown";
   private String sessionId = "unknown";
   private Duration totalDuration = Duration.ZERO;
-  private int usedPercentage;
+  private int usedTokens;
 
   /**
    * Creates a new abstract Claude statusline scope with default field values.
@@ -82,7 +82,7 @@ public abstract class AbstractClaudeStatusline extends AbstractJvmScope implemen
     String parsedModelDisplayName = "unknown";
     String parsedSessionId = "unknown";
     Duration parsedTotalDuration = Duration.ZERO;
-    int parsedUsedPercentage = 0;
+    int parsedUsedTokens = 0;
 
     try
     {
@@ -111,9 +111,9 @@ public abstract class AbstractClaudeStatusline extends AbstractJvmScope implemen
       JsonNode contextNode = root.get("context_window");
       if (contextNode != null && !contextNode.isNull())
       {
-        JsonNode percentageNode = contextNode.get("used_percentage");
-        if (percentageNode != null && !percentageNode.isNull() && percentageNode.canConvertToInt())
-          parsedUsedPercentage = percentageNode.intValue();
+        JsonNode usedTokensNode = contextNode.get("used_tokens");
+        if (usedTokensNode != null && !usedTokensNode.isNull() && usedTokensNode.canConvertToInt())
+          parsedUsedTokens = usedTokensNode.intValue();
       }
     }
     catch (JacksonException _)
@@ -124,15 +124,13 @@ public abstract class AbstractClaudeStatusline extends AbstractJvmScope implemen
     // Clamp values to valid ranges
     if (parsedTotalDuration.isNegative())
       parsedTotalDuration = Duration.ZERO;
-    if (parsedUsedPercentage < 0)
-      parsedUsedPercentage = 0;
-    if (parsedUsedPercentage > 100)
-      parsedUsedPercentage = 100;
+    if (parsedUsedTokens < 0)
+      parsedUsedTokens = 0;
 
     this.modelDisplayName = parsedModelDisplayName;
     this.sessionId = parsedSessionId;
     this.totalDuration = parsedTotalDuration;
-    this.usedPercentage = parsedUsedPercentage;
+    this.usedTokens = parsedUsedTokens;
   }
 
   /**
@@ -169,13 +167,13 @@ public abstract class AbstractClaudeStatusline extends AbstractJvmScope implemen
   }
 
   /**
-   * Returns the context window usage percentage parsed from the statusline JSON.
+   * Returns the number of tokens used in the context window, as parsed from the statusline JSON.
    *
-   * @return the usage percentage (0–100), or {@code 0} if not yet parsed or absent
+   * @return the number of used tokens, or {@code 0} if not present in the input
    */
   @Override
-  public int getUsedPercentage()
+  public int getUsedTokens()
   {
-    return usedPercentage;
+    return usedTokens;
   }
 }

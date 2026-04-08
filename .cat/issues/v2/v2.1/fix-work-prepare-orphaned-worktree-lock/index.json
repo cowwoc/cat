@@ -1,0 +1,5 @@
+{
+  "status" : "open",
+  "issue_type" : "bugfix",
+  "dependencies" : [ "2.1-refactor-phase-skill-subagent-isolation" ]
+}
