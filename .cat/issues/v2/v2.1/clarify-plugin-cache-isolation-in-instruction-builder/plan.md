@@ -51,3 +51,46 @@ The main plugin cache must NEVER be modified during testing because:
 
 - `fix-claude-runner-plugin-root-isolation` — must be implemented first so the documented behavior
   (both `CLAUDE_CONFIG_DIR` and `CLAUDE_PLUGIN_ROOT` are set in isolated sessions) is accurate
+
+## Jobs
+
+### Job 1
+
+- Edit `plugin/skills/instruction-builder-agent/first-use.md`:
+  Replace the "Plugin cache refresh" paragraph (lines 915–917) with an expanded "Plugin cache
+  isolation" section that:
+  1. Explicitly names `CLAUDE_PLUGIN_ROOT` as the shared main cache — off-limits for writing during SPRT
+  2. States the prohibition: **Never write plugin files to `CLAUDE_PLUGIN_ROOT`** during SPRT
+  3. Explains why: it is shared across all active Claude sessions; writing to it affects every
+     concurrent live session, not just the current test run
+  4. Describes how `--plugin-source` achieves isolation: `ClaudeRunner` copies the specified directory
+     into a per-test isolated config dir, then sets both `CLAUDE_CONFIG_DIR` and `CLAUDE_PLUGIN_ROOT`
+     in the child process environment to point at that isolated copy
+  5. Clarifies that no manual cache sync or `/reload-plugins` is needed
+
+  **Replacement text (exact):**
+  Replace:
+  ```
+  **Plugin cache refresh:** `ClaudeRunner` automatically syncs the current plugin source from the worktree
+  into the isolated plugin cache before each test-run process starts. Skills loaded via the Skill tool within
+  a test-run process always use the current worktree version.
+  ```
+  With:
+  ```
+  **Plugin cache isolation:** `CLAUDE_PLUGIN_ROOT` is the main plugin cache shared across all active Claude
+  sessions. **Never write plugin files to `CLAUDE_PLUGIN_ROOT`** during SPRT — doing so modifies the live
+  shared cache and affects every concurrent Claude session, not just the test run.
+
+  The correct mechanism is `claude-runner --plugin-source <worktree>/plugin`. Before launching the nested
+  Claude process, `ClaudeRunner` copies the directory specified by `--plugin-source` into an isolated per-test
+  config directory, then sets both `CLAUDE_CONFIG_DIR` and `CLAUDE_PLUGIN_ROOT` in the child process environment
+  to point at that isolated copy. The nested process reads plugin files exclusively from this isolated copy —
+  never from the main cache.
+
+  Skills invoked within a test-run process automatically use the current worktree version. No manual cache
+  sync or `/reload-plugins` is needed.
+  ```
+
+- Update `.cat/issues/v2/v2.1/clarify-plugin-cache-isolation-in-instruction-builder/index.json` in the same commit:
+  set `status` to `closed` and `progress` to `100`
+- Commit message: `docs: clarify plugin cache isolation in instruction-builder-agent`

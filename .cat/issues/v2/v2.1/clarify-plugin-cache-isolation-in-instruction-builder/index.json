@@ -1,1 +1,7 @@
-{"status":"open","dependencies":["fix-claude-runner-plugin-root-isolation"],"blocks":[]}
+{
+  "status" : "closed",
+  "resolution" : "implemented",
+  "dependencies" : [ "fix-claude-runner-plugin-root-isolation" ],
+  "blocks" : [ ],
+  "target_branch" : "v2.1"
+}
