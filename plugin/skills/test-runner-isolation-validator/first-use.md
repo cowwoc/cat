@@ -291,5 +291,5 @@ options:
 ## Related Concepts
 
 - Test isolation patterns in `plugin/rules/test-isolation.md`
-- Temp file handling best practices in `.claude/rules/common.md`
-- Multi-instance safety requirements in `.claude/rules/common.md`
+- Temp file handling best practices in `plugin/rules/shell-efficiency.md`
+- Multi-instance safety requirements in `plugin/rules/multi-instance-safety.md`
