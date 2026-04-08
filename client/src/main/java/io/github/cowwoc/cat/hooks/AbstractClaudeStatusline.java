@@ -31,6 +31,7 @@ public abstract class AbstractClaudeStatusline extends AbstractJvmScope implemen
   private String sessionId = "unknown";
   private Duration totalDuration = Duration.ZERO;
   private int usedTokens;
+  private int totalContext;
 
   /**
    * Creates a new abstract Claude statusline scope with default field values.
@@ -69,11 +70,17 @@ public abstract class AbstractClaudeStatusline extends AbstractJvmScope implemen
   /**
    * Parses Claude Code hook JSON input and stores the extracted data internally.
    * <p>
-   * On JSON parse failure or missing fields, default values are used for graceful degradation:
+   * Required fields ({@code model.display_name}, {@code session_id}, {@code cost.total_duration_ms},
+   * {@code context_window.context_window_size} when {@code context_window} is present, and
+   * {@code context_window.current_usage.input_tokens} when {@code current_usage} is present) throw
+   * {@link IllegalArgumentException} when absent or invalid.
+   * <p>
+   * On JSON parse failure (malformed JSON), all fields fall back to defaults:
    * {@code "unknown"} for string fields and {@code 0} for numeric fields.
    *
    * @param jsonInput the JSON string to parse (from Claude Code's hook stdin)
-   * @throws NullPointerException if {@code jsonInput} is null
+   * @throws NullPointerException     if {@code jsonInput} is null
+   * @throws IllegalArgumentException if a required field is missing or invalid
    */
   protected void parseStatuslineJson(String jsonInput)
   {
@@ -83,37 +90,73 @@ public abstract class AbstractClaudeStatusline extends AbstractJvmScope implemen
     String parsedSessionId = "unknown";
     Duration parsedTotalDuration = Duration.ZERO;
     int parsedUsedTokens = 0;
+    int parsedTotalContext = 0;
 
     try
     {
       JsonNode root = getJsonMapper().readTree(jsonInput);
 
       JsonNode modelNode = root.get("model");
-      if (modelNode != null && !modelNode.isNull())
-      {
-        JsonNode displayNameNode = modelNode.get("display_name");
-        if (displayNameNode != null && !displayNameNode.isNull())
-          parsedModelDisplayName = displayNameNode.asString();
-      }
+      if (modelNode == null || modelNode.isNull())
+        throw new IllegalArgumentException("model is missing in statusline JSON");
+      JsonNode displayNameNode = modelNode.get("display_name");
+      if (displayNameNode == null || displayNameNode.isNull())
+        throw new IllegalArgumentException("model.display_name is missing in statusline JSON");
+      parsedModelDisplayName = displayNameNode.asString();
 
       JsonNode sessionIdNode = root.get("session_id");
-      if (sessionIdNode != null && !sessionIdNode.isNull())
-        parsedSessionId = sessionIdNode.asString();
+      if (sessionIdNode == null || sessionIdNode.isNull())
+        throw new IllegalArgumentException("session_id is missing in statusline JSON");
+      parsedSessionId = sessionIdNode.asString();
 
       JsonNode costNode = root.get("cost");
-      if (costNode != null && !costNode.isNull())
-      {
-        JsonNode durationNode = costNode.get("total_duration_ms");
-        if (durationNode != null && !durationNode.isNull() && durationNode.canConvertToLong())
-          parsedTotalDuration = Duration.ofMillis(durationNode.longValue());
-      }
+      if (costNode == null || costNode.isNull())
+        throw new IllegalArgumentException("cost is missing in statusline JSON");
+      JsonNode durationNode = costNode.get("total_duration_ms");
+      if (durationNode == null || durationNode.isNull() || !durationNode.canConvertToLong())
+        throw new IllegalArgumentException("cost.total_duration_ms is missing in statusline JSON");
+      parsedTotalDuration = Duration.ofMillis(durationNode.longValue());
 
       JsonNode contextNode = root.get("context_window");
       if (contextNode != null && !contextNode.isNull())
       {
-        JsonNode usedTokensNode = contextNode.get("used_tokens");
-        if (usedTokensNode != null && !usedTokensNode.isNull() && usedTokensNode.canConvertToInt())
-          parsedUsedTokens = usedTokensNode.intValue();
+        JsonNode contextSizeNode = contextNode.get("context_window_size");
+        int contextSizeValue;
+        if (contextSizeNode != null && !contextSizeNode.isNull() && contextSizeNode.canConvertToInt())
+          contextSizeValue = contextSizeNode.intValue();
+        else
+          contextSizeValue = 0;
+        if (contextSizeValue <= 0)
+        {
+          String contextSizeStr;
+          if (contextSizeNode == null)
+            contextSizeStr = "null";
+          else
+            contextSizeStr = contextSizeNode.toString();
+          throw new IllegalArgumentException(
+            "context_window.context_window_size is missing or non-positive in statusline JSON. Value: " +
+              contextSizeStr);
+        }
+        parsedTotalContext = contextSizeValue;
+
+        JsonNode currentUsageNode = contextNode.get("current_usage");
+        if (currentUsageNode != null && !currentUsageNode.isNull())
+        {
+          JsonNode inputTokensNode = currentUsageNode.get("input_tokens");
+          if (inputTokensNode == null || inputTokensNode.isNull() || !inputTokensNode.canConvertToInt())
+          {
+            throw new IllegalArgumentException(
+              "context_window.current_usage.input_tokens is missing in statusline JSON");
+          }
+          int inputTokensValue = inputTokensNode.intValue();
+          if (inputTokensValue < 0)
+          {
+            throw new IllegalArgumentException(
+              "context_window.current_usage.input_tokens is negative in statusline JSON. Value: " +
+                inputTokensValue);
+          }
+          parsedUsedTokens = inputTokensValue;
+        }
       }
     }
     catch (JacksonException _)
@@ -121,16 +164,15 @@ public abstract class AbstractClaudeStatusline extends AbstractJvmScope implemen
       // Use defaults on parse failure (graceful degradation)
     }
 
-    // Clamp values to valid ranges
+    // Clamp display-only values to valid ranges
     if (parsedTotalDuration.isNegative())
       parsedTotalDuration = Duration.ZERO;
-    if (parsedUsedTokens < 0)
-      parsedUsedTokens = 0;
 
     this.modelDisplayName = parsedModelDisplayName;
     this.sessionId = parsedSessionId;
     this.totalDuration = parsedTotalDuration;
     this.usedTokens = parsedUsedTokens;
+    this.totalContext = parsedTotalContext;
   }
 
   /**
@@ -175,5 +217,16 @@ public abstract class AbstractClaudeStatusline extends AbstractJvmScope implemen
   public int getUsedTokens()
   {
     return usedTokens;
+  }
+
+  /**
+   * Returns the total context window size in tokens, as parsed from the statusline JSON.
+   *
+   * @return the total context size in tokens, or {@code 0} if not present in the input
+   */
+  @Override
+  public int getTotalContext()
+  {
+    return totalContext;
   }
 }
