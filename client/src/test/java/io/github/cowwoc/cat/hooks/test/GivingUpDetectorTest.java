@@ -208,4 +208,115 @@ public final class GivingUpDetectorTest
     String result = detector.check("given token usage, let me complete a few more");
     requireThat(result, "result").isEqualTo(GivingUpDetector.TOKEN_RATIONALIZATION_REMINDER);
   }
+
+  /**
+   * Verifies that technical discussion mentioning broken code as a topic does not trigger code-removal
+   * detection.
+   * <p>
+   * The phrase "allow fixing adjacent broken code — don't skip error handling" describes a coding practice,
+   * not agent intent to disable code. The word "broken" is a topic being discussed and "skip" appears in a
+   * negated instruction ("don't skip"), neither of which reflects first-person intent to remove or disable
+   * code. The detector must not fire CODE_REMOVAL_REMINDER on this input.
+   */
+  @Test
+  public void technicalDiscussionAboutBrokenCodeIsNotFalsePositive()
+  {
+    GivingUpDetector detector = new GivingUpDetector();
+    String result = detector.check("allow fixing adjacent broken code — don't skip error handling");
+    requireThat(result, "result").isEmpty();
+  }
+
+  /**
+   * Verifies that "i'll remove" and "i'll skip" phrases are detected.
+   * "i'll disable" is covered by detectsCodeRemoval().
+   */
+  @Test
+  public void illRemovalPhrasesAreDetected()
+  {
+    GivingUpDetector detector = new GivingUpDetector();
+    String removeResult = detector.check("the test is broken so i'll remove this temporarily");
+    requireThat(removeResult, "removeResult").contains("CODE DISABLING ANTI-PATTERN DETECTED");
+    String skipResult = detector.check("this keeps failing so i'll skip the validation");
+    requireThat(skipResult, "skipResult").contains("CODE DISABLING ANTI-PATTERN DETECTED");
+  }
+
+  /**
+   * Verifies that "i will remove", "i will disable", and "i will skip" phrases are detected.
+   */
+  @Test
+  public void iWillRemovalPhrasesAreDetected()
+  {
+    GivingUpDetector detector = new GivingUpDetector();
+    String removeResult = detector.check("since this fails i will remove the exception handler");
+    requireThat(removeResult, "removeResult").contains("CODE DISABLING ANTI-PATTERN DETECTED");
+    String disableResult = detector.check("since this fails i will disable the check");
+    requireThat(disableResult, "disableResult").contains("CODE DISABLING ANTI-PATTERN DETECTED");
+    String skipResult = detector.check("since this fails i will skip the validation");
+    requireThat(skipResult, "skipResult").contains("CODE DISABLING ANTI-PATTERN DETECTED");
+  }
+
+  /**
+   * Verifies that "let me remove", "let me disable", and "let me skip" phrases are detected.
+   */
+  @Test
+  public void letMeRemovalPhrasesAreDetected()
+  {
+    GivingUpDetector detector = new GivingUpDetector();
+    String removeResult = detector.check("let me remove the failing assertion");
+    requireThat(removeResult, "removeResult").contains("CODE DISABLING ANTI-PATTERN DETECTED");
+    String disableResult = detector.check("let me disable this check");
+    requireThat(disableResult, "disableResult").contains("CODE DISABLING ANTI-PATTERN DETECTED");
+    String skipResult = detector.check("let me skip this test");
+    requireThat(skipResult, "skipResult").contains("CODE DISABLING ANTI-PATTERN DETECTED");
+  }
+
+  /**
+   * Verifies that "i'm going to remove", "i'm going to disable", and "i'm going to skip" phrases
+   * are detected.
+   */
+  @Test
+  public void imGoingToRemovalPhrasesAreDetected()
+  {
+    GivingUpDetector detector = new GivingUpDetector();
+    String removeResult = detector.check("i'm going to remove this broken test");
+    requireThat(removeResult, "removeResult").contains("CODE DISABLING ANTI-PATTERN DETECTED");
+    String disableResult = detector.check("i'm going to disable the handler");
+    requireThat(disableResult, "disableResult").contains("CODE DISABLING ANTI-PATTERN DETECTED");
+    String skipResult = detector.check("i'm going to skip the validation");
+    requireThat(skipResult, "skipResult").contains("CODE DISABLING ANTI-PATTERN DETECTED");
+  }
+
+  /**
+   * Verifies that passive voice describing past removal is not a false positive.
+   */
+  @Test
+  public void passiveVoiceRemovalIsNotFalsePositive()
+  {
+    GivingUpDetector detector = new GivingUpDetector();
+    String result = detector.check("the handler was removed in a previous commit");
+    requireThat(result, "result").isEmpty();
+  }
+
+  /**
+   * Verifies that negated removal instructions are not false positives.
+   */
+  @Test
+  public void negatedRemovalIsNotFalsePositive()
+  {
+    GivingUpDetector detector = new GivingUpDetector();
+    String result = detector.check("do not remove this guard clause");
+    requireThat(result, "result").isEmpty();
+  }
+
+  /**
+   * Verifies that bare imperative removal instructions without a first-person subject are not false
+   * positives.
+   */
+  @Test
+  public void bareImperativeIsNotFalsePositive()
+  {
+    GivingUpDetector detector = new GivingUpDetector();
+    String result = detector.check("remove the unused import");
+    requireThat(result, "result").isEmpty();
+  }
 }
