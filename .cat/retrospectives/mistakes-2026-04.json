@@ -80,5 +80,19 @@
       "catches_variations" : true
     },
     "correct_behavior" : "After editing files via Edit tool, run git status to verify staging state, then stage all modified files with git add before invoking the amend script."
+  }, {
+    "id" : "M618",
+    "timestamp" : "2026-04-08T04:31:39Z",
+    "category" : "protocol_violation",
+    "description" : "work-prepare skill missing lock verification after lock acquisition in Orphaned Worktree Recovery Protocol Step 2 item 4",
+    "root_cause" : "Lock session_id validation is mandatory for worktree isolation but is only implemented in work-implement-agent Step 2. The work-prepare skill is missing this validation step after acquiring the lock in Orphaned Worktree Recovery Protocol item 4.",
+    "cause_signature" : "compliance_failure:validation_absent:pre_tool_use",
+    "prevention_type" : "skill",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "correct_behavior" : ""
   } ]
 }
