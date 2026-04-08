@@ -912,9 +912,18 @@ normally) but test case files under `${TEST_DIR}/` have their `## Assertions` se
 the branch is orphaned, `git log`, `git diff`, and `git show` cannot recover the assertions — they never
 existed in this branch's history.
 
-**Plugin cache refresh:** `ClaudeRunner` automatically syncs the current plugin source from the worktree
-into the isolated plugin cache before each test-run process starts. Skills loaded via the Skill tool within
-a test-run process always use the current worktree version.
+**Plugin cache isolation:** `CLAUDE_PLUGIN_ROOT` is the main plugin cache shared across all active Claude
+sessions. **Never write plugin files to `CLAUDE_PLUGIN_ROOT`** during SPRT — doing so modifies the live
+shared cache and affects every concurrent Claude session, not just the test run.
+
+The correct mechanism is `claude-runner --plugin-source <worktree>/plugin`. Before launching the nested
+Claude process, `ClaudeRunner` copies the directory specified by `--plugin-source` into an isolated per-test
+config directory, then sets both `CLAUDE_CONFIG_DIR` and `CLAUDE_PLUGIN_ROOT` in the child process environment
+to point at that isolated copy. The nested process reads plugin files exclusively from this isolated copy —
+never from the main cache.
+
+Skills invoked within a test-run process automatically use the current worktree version. No manual cache
+sync or `/reload-plugins` is needed.
 
 **Create the sanitized branch (once per SPRT run, before any waves):**
 
