@@ -69,19 +69,34 @@ refactor
   after the update
 
 ### Job 5: Update all string references to STATE.md
-- Replace all occurrences of the string `STATE.md` with `index.json` in all tracked files
-  - Key files: `CLAUDE.md`, `README.md`, plugin concepts, plugin skills, Java source, client code,
-    `.cat/retrospectives/mistakes-*.json`
-- Note: Migration to index.json in `.cat/issues/` was already completed in v2.1-redesign-issue-file-structure
-- Verify with `git grep -l "STATE\.md"` that no tracked files still contain uppercase references
-  after the update
+- Note: Filesystem rename (STATE.md → index.json under `.cat/issues/`) was already completed in
+  v2.1-redesign-issue-file-structure. This job updates textual references only.
+- Replace `STATE.md` with `index.json` in documentation and source files:
+  - `CLAUDE.md`, `README.md`, `CHANGELOG.md`
+  - `.cat/PROJECT.md`, `.cat/retrospectives/mistakes-*.json`, `.cat/retrospectives/index.json`
+  - `.claude/rules/common.md`, `.claude/rules/hooks.md`
+  - `.claude/skills/cat-release-plugin/SKILL.md`
+  - `plugin/concepts/hierarchy.md`, `plugin/concepts/version-paths.md`,
+    `plugin/concepts/merge-and-cleanup.md`, `plugin/concepts/version-completion.md`
+  - `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetStatusOutput.java`
+  - `client/src/test/java/io/github/cowwoc/cat/hooks/test/GetStatusOutputTest.java`
+  - `tests/eval/test_cases.json`, `tests/eval/results/results.json`
+- Rename concept/rules files that describe the STATE.md schema:
+  - `plugin/concepts/state-schema.md` → `plugin/concepts/index-schema.md` (update all references to it)
+  - `.claude/rules/state-schema.md` → `.claude/rules/index-schema.md` (update all references to it)
+- Leave `plugin/migrations/2.0.sh` and `plugin/migrations/2.1.sh` unchanged — these scripts target
+  `STATE.md` by design (they run on the old format before renaming)
+- Leave `tests/hooks/migration-2.1.bats` unchanged — migration tests create `STATE.md` fixtures
+  to simulate pre-migration state
+- Verify with `git grep -l "STATE\.md"` that only migration scripts and migration tests remain
+  after the update; all other tracked files must reference `index.json`
 
 ## Post-conditions
 - [ ] `git grep -l "CHANGELOG\.md"` returns no tracked files (all references lowercase)
 - [ ] `git grep -l "PLAN\.md"` returns no tracked files (all references lowercase)
-- [ ] `git grep -l "STATE\.md"` returns no tracked files (all references changed to index.json)
+- [ ] `git grep -l "STATE\.md"` returns only `plugin/migrations/2.0.sh`, `plugin/migrations/2.1.sh`,
+  and `tests/hooks/migration-2.1.bats` (all other files updated to index.json)
 - [ ] No `CHANGELOG.md` files exist under `.cat/issues/` (all renamed to `changelog.md`)
-- [ ] No `STATE.md` files exist in tracked codebase (all references changed to `index.json`)
 - [ ] Root `CHANGELOG.md` renamed to `changelog.md`
 - [ ] Migration script `plugin/migrations/2.2.sh` handles CHANGELOG.md → changelog.md rename
   and is idempotent
