@@ -243,4 +243,68 @@ public final class ClaudeRunnerTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that buildProcessBuilder sets CLAUDE_PLUGIN_ROOT to the isolated plugin cache path
+   * when isolation is active.
+   */
+  @Test
+  public void buildProcessBuilderSetsPluginRootWhenIsolated() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Path sourceConfig = tempDir.resolve("source-config");
+      Files.createDirectories(sourceConfig);
+      Path pluginSource = tempDir.resolve("plugin");
+      Files.createDirectories(pluginSource);
+      Path jlinkBin = tempDir.resolve("jlink-bin");
+      Files.createDirectories(jlinkBin);
+
+      try (ClaudeRunner runner = new ClaudeRunner(scope))
+      {
+        runner.createIsolatedConfig(sourceConfig, pluginSource, jlinkBin, "2.1");
+        String isolatedConfigDir = runner.getIsolatedConfigDir();
+
+        ProcessBuilder pb = runner.buildProcessBuilder(List.of("claude"), tempDir);
+
+        String expectedPluginRoot = Path.of(isolatedConfigDir).resolve("plugins").resolve("cache").
+          resolve("cat").resolve("cat").resolve("2.1").toString();
+        requireThat(pb.environment().get("CLAUDE_PLUGIN_ROOT"), "CLAUDE_PLUGIN_ROOT").
+          isEqualTo(expectedPluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that buildProcessBuilder does NOT override CLAUDE_PLUGIN_ROOT when no isolation is active.
+   * <p>
+   * The env is inherited from the parent process unchanged; no isolation-specific value is injected.
+   */
+  @Test
+  public void buildProcessBuilderDoesNotSetPluginRootWithoutIsolation() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try (ClaudeRunner runner = new ClaudeRunner(scope))
+      {
+        String parentValue = System.getenv("CLAUDE_PLUGIN_ROOT");
+
+        ProcessBuilder pb = runner.buildProcessBuilder(List.of("claude"), tempDir);
+
+        // The ProcessBuilder inherits the parent env; without isolation no override is injected.
+        requireThat(pb.environment().get("CLAUDE_PLUGIN_ROOT"), "CLAUDE_PLUGIN_ROOT").
+          isEqualTo(parentValue);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }
