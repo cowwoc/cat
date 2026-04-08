@@ -22,16 +22,16 @@ import java.util.UUID;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Tests for wave-section token estimation in plan.md.
+ * Tests for job-section token estimation in plan.md.
  * <p>
- * Tests verify that WorkPrepare correctly counts items in ## Execution Waves / ### Wave N
+ * Tests verify that WorkPrepare correctly counts items in ## Jobs / ### Job N
  * sections for token estimation.
  */
 public class ParallelSubagentTest
 {
   /**
-   * Verifies that token estimation works correctly with Execution Waves format.
-   * Plans with two waves (Wave 1 with 2 items, Wave 2 with 1 item) should count 3 items total.
+   * Verifies that token estimation works correctly with Jobs format.
+   * Plans with two jobs (Job 1 with 2 items, Job 2 with 1 item) should count 3 items total.
    * Expected tokens: 3 items * 2000 + 10000 base = 16000.
    *
    * @throws IOException if an I/O error occurs
@@ -72,7 +72,7 @@ public class ParallelSubagentTest
 
   /**
    * Verifies that token estimation correctly ignores sub-items (indented bullets).
-   * Wave items with indented sub-bullets should not be counted as top-level items.
+   * Job items with indented sub-bullets should not be counted as top-level items.
    * Expected tokens: 2 top-level items * 2000 + 10000 base = 14000.
    *
    * @throws IOException if an I/O error occurs
@@ -211,7 +211,7 @@ public class ParallelSubagentTest
   }
 
   /**
-   * Creates a plan.md with ## Execution Waves section.
+   * Creates a plan.md with ## Jobs section.
    *
    * @param projectPath the project root directory
    * @param major the major version
@@ -232,15 +232,15 @@ public class ParallelSubagentTest
       # Plan: %s
 
       ## Goal
-      Test feature with execution waves.
+      Test feature with jobs.
 
-      ## Execution Waves
+      ## Jobs
 
-      ### Wave 1
+      ### Job 1
       - Implement module A
       - Add tests for module A
 
-      ### Wave 2
+      ### Job 2
       - Integrate with system
 
       ## Post-conditions
@@ -251,7 +251,7 @@ public class ParallelSubagentTest
   }
 
   /**
-   * Creates a plan.md with execution waves containing sub-items.
+   * Creates a plan.md with job sections containing sub-items.
    *
    * @param projectPath the project root directory
    * @param major the major version
@@ -272,11 +272,11 @@ public class ParallelSubagentTest
       # Plan: %s
 
       ## Goal
-      Test feature with wave sub-items.
+      Test feature with job sub-items.
 
-      ## Execution Waves
+      ## Jobs
 
-      ### Wave 1
+      ### Job 1
       - Implement module A
         - Files: ModuleA.java
         - Sub-item should be ignored

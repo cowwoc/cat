@@ -61,10 +61,10 @@ public final class WorkPrepare
   private static final Pattern FILES_TO_MODIFY_PATTERN =
     Pattern.compile("## Files to Modify\\s+(.*?)(?=\\n## [^#]|\\Z)", Pattern.DOTALL);
   /**
-   * Matches the "Execution Waves" section in plan.md.
+   * Matches the "Jobs" section in plan.md.
    */
-  private static final Pattern EXECUTION_WAVES_PATTERN =
-    Pattern.compile("## Execution Waves\\s+(.*?)(?=\\n## [^#]|\\Z)", Pattern.DOTALL);
+  private static final Pattern JOBS_PATTERN =
+    Pattern.compile("## Jobs\\s+(.*?)(?=\\n## [^#]|\\Z)", Pattern.DOTALL);
   /**
    * Matches a CAT agent ID token at the start of a string. The token is either a plain UUID or a
    * subagent ID of the form {@code uuid/subagents/name}. Skills expand {@code $ARGUMENTS} to include
@@ -1449,13 +1449,13 @@ public final class WorkPrepare
 
     int testFiles = testFilesInCreate + testFilesInModify;
 
-    // Count items in Execution Waves (### Wave N sections with bullet items)
+    // Count items in Jobs (### Job N sections with bullet items)
     int executionItems = 0;
-    Matcher wavesSection = EXECUTION_WAVES_PATTERN.matcher(content);
-    if (wavesSection.find())
+    Matcher jobsSection = JOBS_PATTERN.matcher(content);
+    if (jobsSection.find())
     {
-      String wavesContent = wavesSection.group(1);
-      for (String line : wavesContent.split("\n"))
+      String jobsContent = jobsSection.group(1);
+      for (String line : jobsContent.split("\n"))
       {
         // Count top-level bullet items only; top-level items start with "- " (zero indent)
         if (line.startsWith("- "))

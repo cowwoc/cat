@@ -7,7 +7,7 @@
 # Tests for the HAS_STEPS detection logic used in work-implement-agent Step 4.
 #
 # The grep command under test (from plugin/skills/work-implement-agent/first-use.md):
-#   grep -qE '^## (Sub-Agent Waves|Execution Steps)' "${PLAN_MD}" && \
+#   grep -qE '^## (Jobs|Execution Steps)' "${PLAN_MD}" && \
 #   echo "hasSteps=true" || echo "hasSteps=false"
 
 setup() {
@@ -21,12 +21,12 @@ teardown() {
 
 # Helper: run the HAS_STEPS detection against PLAN_MD and return hasSteps=true or hasSteps=false.
 run_detection() {
-    grep -qE '^## (Sub-Agent Waves|Execution Steps)' "${PLAN_MD}" && \
+    grep -qE '^## (Jobs|Execution Steps)' "${PLAN_MD}" && \
     echo "hasSteps=true" || echo "hasSteps=false"
 }
 
-@test "Sub-Agent Waves header: hasSteps=true" {
-    printf '## Sub-Agent Waves\n' > "${PLAN_MD}"
+@test "Jobs header: hasSteps=true" {
+    printf '## Jobs\n' > "${PLAN_MD}"
     result=$(run_detection)
     [ "$result" = "hasSteps=true" ]
 }
@@ -49,20 +49,20 @@ run_detection() {
     [ "$result" = "hasSteps=false" ]
 }
 
-@test "leading whitespace before ## Sub-Agent Waves: hasSteps=false" {
-    printf ' ## Sub-Agent Waves\n' > "${PLAN_MD}"
+@test "leading whitespace before ## Jobs: hasSteps=false" {
+    printf ' ## Jobs\n' > "${PLAN_MD}"
     result=$(run_detection)
     [ "$result" = "hasSteps=false" ]
 }
 
-@test "wrong header level ### Sub-Agent Waves: hasSteps=false" {
-    printf '### Sub-Agent Waves\n' > "${PLAN_MD}"
+@test "wrong header level ### Jobs: hasSteps=false" {
+    printf '### Jobs\n' > "${PLAN_MD}"
     result=$(run_detection)
     [ "$result" = "hasSteps=false" ]
 }
 
 @test "both valid headers present: hasSteps=true" {
-    printf '## Sub-Agent Waves\n## Execution Steps\n' > "${PLAN_MD}"
+    printf '## Jobs\n## Execution Steps\n' > "${PLAN_MD}"
     result=$(run_detection)
     [ "$result" = "hasSteps=true" ]
 }

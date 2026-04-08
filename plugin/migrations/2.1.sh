@@ -1694,5 +1694,44 @@ else
     log_migration "  Phase 25: .cat/rules/INDEX.md not found - skipping"
 fi
 
+# ──────────────────────────────────────────────────────────────────────────────
+# Phase 26: Rename ## Sub-Agent Waves → ## Jobs and ### Wave N → ### Job N in plan.md files
+# ──────────────────────────────────────────────────────────────────────────────
+# Idempotent: skips files that already use ## Jobs
+
+log_migration "Phase 26: Rename ## Sub-Agent Waves → ## Jobs and ### Wave N → ### Job N in plan.md files"
+
+all_plan_files_26=$(find .cat/issues -name "plan.md" -type f 2>/dev/null || true)
+
+if [[ -z "$all_plan_files_26" ]]; then
+    log_migration "No plan.md files found - skipping phase 26"
+else
+    phase26_migrated=0
+    phase26_skipped=0
+
+    while IFS= read -r planFile; do
+        [[ -z "$planFile" ]] && continue
+
+        # Idempotency: skip files already using the new section name
+        if grep -q "^## Jobs" "$planFile" 2>/dev/null; then
+            ((phase26_skipped++)) || true
+            continue
+        fi
+
+        # Skip files with neither old section heading nor old wave subsections
+        if ! grep -qE "^## Sub-Agent Waves|^### Wave " "$planFile" 2>/dev/null; then
+            continue
+        fi
+
+        sed -i 's/^## Sub-Agent Waves$/## Jobs/' "$planFile"
+        sed -i 's/^### Wave \(.*\)$/### Job \1/' "$planFile"
+        ((phase26_migrated++)) || true
+        log_migration "  Updated: $planFile"
+
+    done <<< "$all_plan_files_26"
+
+    log_migration "Phase 26 complete: $phase26_migrated files migrated, $phase26_skipped already up to date"
+fi
+
 log_success "Migration to 2.1 completed"
 exit 0
