@@ -56,4 +56,3 @@ Any content following the key-value section is preserved as-is. Common patterns:
 - Sub-issues tables
 - Summary sections
 - Implementation notes
-
