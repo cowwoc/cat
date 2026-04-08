@@ -1,3 +1,6 @@
+---
+paths: ["plugin/**", "client/**"]
+---
 # LLM-to-Java Extraction Policy
 
 **MANDATORY goal:** When adding new features to the plugin or updating existing features, extract as much

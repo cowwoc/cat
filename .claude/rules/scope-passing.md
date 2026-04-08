@@ -1,3 +1,6 @@
+---
+paths: ["*.java"]
+---
 # Scope Passing Convention
 
 ## Pass Scope Objects, Not Their Parts
