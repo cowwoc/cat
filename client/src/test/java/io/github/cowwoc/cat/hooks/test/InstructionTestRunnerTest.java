@@ -145,7 +145,7 @@ public final class InstructionTestRunnerTest
 
   /**
    * Verifies that extract-model defaults to haiku when no model field is present in frontmatter
-   * and the skill is not listed in skill-models.md.
+   * and the skill is not listed in model-selection.md.
    */
   @Test
   public void extractModelDefaultsToHaikuWhenFieldMissing() throws IOException
@@ -1044,20 +1044,20 @@ public final class InstructionTestRunnerTest
   }
 
   /**
-   * Verifies that extract-model returns the sonnet model ID when the skill is listed in skill-models.md
+   * Verifies that extract-model returns the sonnet model ID when the skill is listed in model-selection.md
    * and SKILL.md has no model: frontmatter field.
    */
   @Test
-  public void extractModelUsesSkillModelsMappingForSonnetSkill() throws IOException
+  public void extractModelUsesModelSelectionMappingForSonnetSkill() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-extract-model-");
     Path pluginRoot = tempDir.resolve("plugin");
     try
     {
-      // Create plugin root with skill-models.md listing the test skill
+      // Create plugin root with model-selection.md listing the test skill
       Path rulesDir = pluginRoot.resolve("rules");
       Files.createDirectories(rulesDir);
-      Files.writeString(rulesDir.resolve("skill-models.md"), """
+      Files.writeString(rulesDir.resolve("model-selection.md"), """
         ## Model Selection for Skills
 
         **Sonnet-preferred skills**:
@@ -1093,20 +1093,20 @@ public final class InstructionTestRunnerTest
   }
 
   /**
-   * Verifies that extract-model falls back to haiku when the skill is not listed in skill-models.md
+   * Verifies that extract-model falls back to haiku when the skill is not listed in model-selection.md
    * and SKILL.md has no model: frontmatter field.
    */
   @Test
-  public void extractModelFallsBackToHaikuWhenNotInSkillModels() throws IOException
+  public void extractModelFallsBackToHaikuWhenNotInModelSelection() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-extract-model-");
     Path pluginRoot = tempDir.resolve("plugin");
     try
     {
-      // Create plugin root with skill-models.md that does NOT list the test skill
+      // Create plugin root with model-selection.md that does NOT list the test skill
       Path rulesDir = pluginRoot.resolve("rules");
       Files.createDirectories(rulesDir);
-      Files.writeString(rulesDir.resolve("skill-models.md"), """
+      Files.writeString(rulesDir.resolve("model-selection.md"), """
         ## Model Selection for Skills
 
         **Sonnet-preferred skills**:

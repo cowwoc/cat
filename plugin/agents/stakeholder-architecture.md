@@ -2,7 +2,6 @@
 name: stakeholder-architecture
 description: "Architecture stakeholder for code review and research. Focus: system architecture, module boundaries, design patterns"
 tools: Read, Grep, Glob, WebSearch, WebFetch
-model: sonnet
 skills: [cat:stakeholder-common-agent]
 ---
 
