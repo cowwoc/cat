@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.hooks.test;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.ClaudeStatusline;
+import io.github.cowwoc.cat.hooks.SharedSecrets;
 import io.github.cowwoc.cat.hooks.util.StatuslineCommand;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -139,8 +140,10 @@ public final class StatuslineCommandTest
   }
 
   /**
-   * Verifies that a usage percentage above 80% uses an RGB red color code in ANSI output.
-   * After context scaling (85% raw * 1000/835 = 101, clamped to 100), the bar color is pure red RGB.
+   * Verifies that 200,000 used tokens (full context, 200k model) uses an RGB red color code and shows 100%.
+   * <p>
+   * With 200k model: usableContext = 165,500. effectiveUsed = 200,000 - 34,500 = 165,500. 165,500 * 100 /
+   * 165,500 = 100%.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -155,13 +158,13 @@ public final class StatuslineCommandTest
           "model": {"display_name": "claude"},
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_percentage": 85}
+          "context_window": {"used_tokens": 200000}
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
       {
         String output = executeWithLockDir(scope, tempDir);
-        // contextPercent = (85 * 1000) / 835 = 101, clamped to 100 → pure red: \033[38;2;255;0;0m
+        // contextPercent=100 → pure red: \033[38;2;255;0;0m
         requireThat(output, "output").contains("\033[38;2;255;0;0m");
         requireThat(output, "output").contains("100%");
       }
@@ -173,8 +176,10 @@ public final class StatuslineCommandTest
   }
 
   /**
-   * Verifies that a usage percentage between 50% and 80% uses an RGB orange-red color code.
-   * After context scaling (65% raw * 1000/835 = 77), the bar color is a warm orange-red.
+   * Verifies that 161,935 used tokens (77% of usable context, 200k model) uses an RGB orange-red color code.
+   * <p>
+   * With 200k model: usableContext = 165,500. effectiveUsed = 161,935 - 34,500 = 127,435.
+   * 127,435 * 100 / 165,500 = 77%. red=255, green=((100-77)*255)/50 = 117 → orange-red.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -189,13 +194,13 @@ public final class StatuslineCommandTest
           "model": {"display_name": "claude"},
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_percentage": 65}
+          "context_window": {"used_tokens": 161935}
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
       {
         String output = executeWithLockDir(scope, tempDir);
-        // contextPercent = (65 * 1000) / 835 = 77 → red=255, green=((100-77)*255)/50 = 117 → \033[38;2;255;117;0m
+        // contextPercent=77 → red=255, green=((100-77)*255)/50 = 117 → \033[38;2;255;117;0m
         requireThat(output, "output").contains("\033[38;2;255;117;0m");
       }
     }
@@ -206,8 +211,10 @@ public final class StatuslineCommandTest
   }
 
   /**
-   * Verifies that a usage percentage under 50% uses an RGB green-yellow color code.
-   * After context scaling (30% raw * 1000/835 = 35), the bar color is a yellow-green.
+   * Verifies that 92,425 used tokens (35% of usable context, 200k model) uses an RGB green-yellow color code.
+   * <p>
+   * With 200k model: usableContext = 165,500. effectiveUsed = 92,425 - 34,500 = 57,925.
+   * 57,925 * 100 / 165,500 = 35%. red=(35*255)/50 = 178, green=255 → yellow-green.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -222,13 +229,13 @@ public final class StatuslineCommandTest
           "model": {"display_name": "claude"},
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_percentage": 30}
+          "context_window": {"used_tokens": 92425}
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
       {
         String output = executeWithLockDir(scope, tempDir);
-        // contextPercent = (30 * 1000) / 835 = 35 → red=(35*255)/50 = 178, green=255 → \033[38;2;178;255;0m
+        // contextPercent=35 → red=(35*255)/50 = 178, green=255 → \033[38;2;178;255;0m
         requireThat(output, "output").contains("\033[38;2;178;255;0m");
       }
     }
@@ -266,7 +273,9 @@ public final class StatuslineCommandTest
   }
 
   /**
-   * Verifies that a usage percentage exceeding 100 is clamped to 100 after context scaling.
+   * Verifies that used tokens exceeding the total context window are clamped to 100%.
+   * <p>
+   * 300,000 used tokens against a 200k model exceeds the total context; the result is clamped to 100%.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -281,7 +290,7 @@ public final class StatuslineCommandTest
           "model": {"display_name": "claude"},
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_percentage": 150}
+          "context_window": {"used_tokens": 300000}
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -298,7 +307,9 @@ public final class StatuslineCommandTest
   }
 
   /**
-   * Verifies that the usage bar shows 20 filled segments when context usage is 100%.
+   * Verifies that the usage bar shows 20 filled segments when context usage is at full context (200k model).
+   * <p>
+   * 200,000 used tokens with a 200k model yields contextPercent=100, filling all 20 bar segments.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -313,7 +324,7 @@ public final class StatuslineCommandTest
           "model": {"display_name": "claude"},
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_percentage": 100}
+          "context_window": {"used_tokens": 200000}
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -361,8 +372,10 @@ public final class StatuslineCommandTest
   }
 
   /**
-   * Verifies that a raw usage percentage of 50% is scaled to ~59% context and uses an orange-red RGB color.
-   * At 50% raw, contextPercent = (50 * 1000) / 835 = 59, which is above 50, so red=255.
+   * Verifies that 132,145 used tokens (59% of usable context, 200k model) uses an orange-red RGB color.
+   * <p>
+   * With 200k model: usableContext = 165,500. effectiveUsed = 132,145 - 34,500 = 97,645.
+   * 97,645 * 100 / 165,500 = 59%. red=255, green=((100-59)*255)/50 = 209 → orange-red.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -377,13 +390,13 @@ public final class StatuslineCommandTest
           "model": {"display_name": "claude"},
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_percentage": 50}
+          "context_window": {"used_tokens": 132145}
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
       {
         String output = executeWithLockDir(scope, tempDir);
-        // contextPercent = (50 * 1000) / 835 = 59 → red=255, green=((100-59)*255)/50 = 209 → \033[38;2;255;209;0m
+        // contextPercent=59 → red=255, green=((100-59)*255)/50 = 209 → \033[38;2;255;209;0m
         requireThat(output, "output").contains("\033[38;2;255;209;0m");
       }
     }
@@ -394,8 +407,10 @@ public final class StatuslineCommandTest
   }
 
   /**
-   * Verifies that a raw usage percentage of 80% is scaled to ~95% context and uses a near-red RGB color.
-   * At 80% raw, contextPercent = (80 * 1000) / 835 = 95, which produces a mostly-red color.
+   * Verifies that 191,725 used tokens (95% of usable context, 200k model) uses a near-red RGB color.
+   * <p>
+   * With 200k model: usableContext = 165,500. effectiveUsed = 191,725 - 34,500 = 157,225.
+   * 157,225 * 100 / 165,500 = 95%. red=255, green=((100-95)*255)/50 = 25 → near-red.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -410,13 +425,13 @@ public final class StatuslineCommandTest
           "model": {"display_name": "claude"},
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_percentage": 80}
+          "context_window": {"used_tokens": 191725}
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
       {
         String output = executeWithLockDir(scope, tempDir);
-        // contextPercent = (80 * 1000) / 835 = 95 → red=255, green=((100-95)*255)/50 = 25 → \033[38;2;255;25;0m
+        // contextPercent=95 → red=255, green=((100-95)*255)/50 = 25 → \033[38;2;255;25;0m
         requireThat(output, "output").contains("\033[38;2;255;25;0m");
       }
     }
@@ -459,7 +474,11 @@ public final class StatuslineCommandTest
   }
 
   /**
-   * Verifies that a usage percentage of 50% raw (contextPercent=59) produces 11 filled and 9 empty segments.
+   * Verifies that 132,145 used tokens (59% of usable context, 200k model) produces 11 filled and 9 empty bar
+   * segments.
+   * <p>
+   * With 200k model: usableContext = 165,500. effectiveUsed = 132,145 - 34,500 = 97,645.
+   * 97,645 * 100 / 165,500 = 59%. filled = (59 * 20) / 100 = 11.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -474,13 +493,13 @@ public final class StatuslineCommandTest
           "model": {"display_name": "claude"},
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_percentage": 50}
+          "context_window": {"used_tokens": 132145}
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
       {
         String output = executeWithLockDir(scope, tempDir);
-        // contextPercent = (50 * 1000) / 835 = 59 → filled = (59 * 20) / 100 = 11
+        // contextPercent=59 → filled = (59 * 20) / 100 = 11
         // 11 filled followed by 9 empty segments
         requireThat(output, "output").contains("███████████░░░░░░░░░");
       }
@@ -652,9 +671,11 @@ public final class StatuslineCommandTest
   }
 
   /**
-   * Verifies the 83.5% scaling threshold boundary: used_percentage=84 yields contextPercent=100 (all 20 bar
-   * segments filled and "100%" displayed), while used_percentage=83 yields contextPercent=99 (19 filled segments
-   * and " 99%" displayed).
+   * Verifies the context scaling boundary: full context (200,000 tokens) yields 100% (all 20 bar segments
+   * filled), while one token below full context yields 99% (19 filled segments and " 99%" displayed).
+   * <p>
+   * With 200k model: usableContext = 165,500. At 200,000 tokens: effectiveUsed = 165,500 → 100%.
+   * At 199,834 tokens: effectiveUsed = 165,334 → 165,334 * 100 / 165,500 = 99%.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -664,39 +685,39 @@ public final class StatuslineCommandTest
     Path tempDir = Files.createTempDirectory("cat-");
     try
     {
-      // used_percentage=84: contextPercent = (84 * 1000) / 835 = 100 (truncated), clamped to 100
-      String jsonAt84 = """
+      // Full context: 200,000 tokens → contextPercent=100
+      String jsonFull = """
         {
           "model": {"display_name": "claude"},
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_percentage": 84}
+          "context_window": {"used_tokens": 200000}
         }
         """;
-      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, jsonAt84))
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, jsonFull))
       {
-        String output84 = executeWithLockDir(scope, tempDir);
+        String outputFull = executeWithLockDir(scope, tempDir);
         // contextPercent=100 → all 20 segments filled
-        requireThat(output84, "output84").contains("████████████████████");
-        requireThat(output84, "output84").contains("100%");
+        requireThat(outputFull, "outputFull").contains("████████████████████");
+        requireThat(outputFull, "outputFull").contains("100%");
       }
 
-      // used_percentage=83: contextPercent = (83 * 1000) / 835 = 99 (truncated)
-      String jsonAt83 = """
+      // 199,834 tokens: effectiveUsed = 165,334 → 165,334 * 100 / 165,500 = 99
+      String jsonNearFull = """
         {
           "model": {"display_name": "claude"},
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
-          "context_window": {"used_percentage": 83}
+          "context_window": {"used_tokens": 199834}
         }
         """;
-      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, jsonAt83))
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, jsonNearFull))
       {
-        String output83 = executeWithLockDir(scope, tempDir);
+        String outputNearFull = executeWithLockDir(scope, tempDir);
         // contextPercent=99 → filled = (99 * 20) / 100 = 19, so 19 filled and 1 empty
-        requireThat(output83, "output83").contains("███████████████████░");
+        requireThat(outputNearFull, "outputNearFull").contains("███████████████████░");
         // contextPercent=99 → right-justified: " 99%"
-        requireThat(output83, "output83").contains(" 99%");
+        requireThat(outputNearFull, "outputNearFull").contains(" 99%");
       }
     }
     finally
@@ -1187,7 +1208,7 @@ public final class StatuslineCommandTest
           "model": {"display_name": "claude-3-5-sonnet"},
           "session_id": "abcdef12-1234-5678-abcd-ef1234567890",
           "cost": {"total_duration_ms": 125000},
-          "context_window": {"used_percentage": 45}
+          "context_window": {"used_tokens": 108975}
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -1231,7 +1252,7 @@ public final class StatuslineCommandTest
           "model": {"display_name": "test-model-name"},
           "session_id": "12345678-abcd-ef01-2345-678901234567",
           "cost": {"total_duration_ms": 3661000},
-          "context_window": {"used_percentage": 75}
+          "context_window": {"used_tokens": 158625}
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -1300,7 +1321,7 @@ public final class StatuslineCommandTest
           "model": {"display_name": "claude-opus-4-5-long-model-name"},
           "session_id": "abcdef12-1234-5678-abcd-ef1234567890",
           "cost": {"total_duration_ms": 125000},
-          "context_window": {"used_percentage": 45}
+          "context_window": {"used_tokens": 108975}
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -1338,7 +1359,7 @@ public final class StatuslineCommandTest
           "model": {"display_name": "claude-opus-4-5"},
           "session_id": "abcdef12-1234-5678-abcd-ef1234567890",
           "cost": {"total_duration_ms": 125000},
-          "context_window": {"used_percentage": 45}
+          "context_window": {"used_tokens": 108975}
         }
         """;
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
@@ -1381,6 +1402,204 @@ public final class StatuslineCommandTest
       finally
       {
         TestUtils.deleteDirectoryRecursively(lockDir);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that 0 used tokens on a 200k model yields 0% (below-overhead tokens are clamped to 0).
+   * <p>
+   * OVERHEAD_TOKENS = 34,500. usableContext = 200,000 - 34,500 = 165,500.
+   * effectiveUsed = 0 - 34,500 = -34,500 → clamped to 0%.
+   */
+  @Test
+  public void scale200kZeroTokensYields0()
+  {
+    int result = SharedSecrets.scaleContextPercent(0, 200_000);
+    requireThat(result, "result").isEqualTo(0);
+  }
+
+  /**
+   * Verifies that exactly overhead tokens on a 200k model yields 0%.
+   * <p>
+   * OVERHEAD_TOKENS = 34,500. effectiveUsed = 34,500 - 34,500 = 0 → 0%.
+   */
+  @Test
+  public void scale200kOverheadTokensYields0()
+  {
+    int result = SharedSecrets.scaleContextPercent(34_500, 200_000);
+    requireThat(result, "result").isEqualTo(0);
+  }
+
+  /**
+   * Verifies that full context (200,000 tokens) on a 200k model yields 100%.
+   * <p>
+   * usableContext = 165,500. effectiveUsed = 200,000 - 34,500 = 165,500.
+   * 165,500 * 100 / 165,500 = 100%.
+   */
+  @Test
+  public void scale200kFullContextYields100()
+  {
+    int result = SharedSecrets.scaleContextPercent(200_000, 200_000);
+    requireThat(result, "result").isEqualTo(100);
+  }
+
+  /**
+   * Verifies that the midpoint of usable context on a 200k model yields 50%.
+   * <p>
+   * Midpoint = 34,500 + 165,500 / 2 = 117,250 (using integer arithmetic: 34,500 + 82,750 = 117,250).
+   * effectiveUsed = 117,250 - 34,500 = 82,750. 82,750 * 100 / 165,500 = 50%.
+   */
+  @Test
+  public void scale200kMidpointYields50()
+  {
+    int result = SharedSecrets.scaleContextPercent(117_250, 200_000);
+    requireThat(result, "result").isEqualTo(50);
+  }
+
+  /**
+   * Verifies that 0 used tokens on a 1M model yields 0% (below-overhead tokens are clamped to 0).
+   * <p>
+   * OVERHEAD_TOKENS = 34,500. usableContext = 1,000,000 - 34,500 = 965,500.
+   * effectiveUsed = 0 - 34,500 = -34,500 → clamped to 0%.
+   */
+  @Test
+  public void scale1MZeroTokensYields0()
+  {
+    int result = SharedSecrets.scaleContextPercent(0, 1_000_000);
+    requireThat(result, "result").isEqualTo(0);
+  }
+
+  /**
+   * Verifies that exactly overhead tokens on a 1M model yields 0%.
+   * <p>
+   * OVERHEAD_TOKENS = 34,500. effectiveUsed = 34,500 - 34,500 = 0 → 0%.
+   */
+  @Test
+  public void scale1MOverheadTokensYields0()
+  {
+    int result = SharedSecrets.scaleContextPercent(34_500, 1_000_000);
+    requireThat(result, "result").isEqualTo(0);
+  }
+
+  /**
+   * Verifies that full context (1,000,000 tokens) on a 1M model yields 100%.
+   * <p>
+   * usableContext = 965,500. effectiveUsed = 1,000,000 - 34,500 = 965,500.
+   * 965,500 * 100 / 965,500 = 100%.
+   */
+  @Test
+  public void scale1MFullContextYields100()
+  {
+    int result = SharedSecrets.scaleContextPercent(1_000_000, 1_000_000);
+    requireThat(result, "result").isEqualTo(100);
+  }
+
+  /**
+   * Verifies that the midpoint of usable context on a 1M model yields 50%.
+   * <p>
+   * Midpoint = 34,500 + 965,500 / 2 = 34,500 + 482,750 = 517,250.
+   * effectiveUsed = 517,250 - 34,500 = 482,750. 482,750 * 100 / 965,500 = 50%.
+   */
+  @Test
+  public void scale1MMidpointYields50()
+  {
+    int result = SharedSecrets.scaleContextPercent(517_250, 1_000_000);
+    requireThat(result, "result").isEqualTo(50);
+  }
+
+  /**
+   * Verifies that tokens below overhead are clamped to 0% (not negative) for a 200k model.
+   * <p>
+   * 10,000 tokens is well below OVERHEAD_TOKENS (34,500). effectiveUsed = -24,500 → clamped to 0%.
+   */
+  @Test
+  public void scale200kBelowOverheadClampsTo0()
+  {
+    int result = SharedSecrets.scaleContextPercent(10_000, 200_000);
+    requireThat(result, "result").isEqualTo(0);
+  }
+
+  /**
+   * Verifies that tokens exceeding the total context are clamped to 100% for a 200k model.
+   * <p>
+   * 300,000 tokens exceeds 200,000 total context. effectiveUsed = 265,500 → 265,500 * 100 / 165,500 > 100
+   * → clamped to 100%.
+   */
+  @Test
+  public void scale200kAboveFullContextClampedTo100()
+  {
+    int result = SharedSecrets.scaleContextPercent(300_000, 200_000);
+    requireThat(result, "result").isEqualTo(100);
+  }
+
+  /**
+   * Verifies that a model display name containing "(1M context)" maps to a 1,000,000-token context window
+   * and renders the context bar using the 1M scale.
+   * <p>
+   * At 517,250 tokens on a 1M model: contextPercent=50 → 10 filled and 10 empty bar segments.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void oneMillionContextModelUsesLargerContextWindow() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-");
+    try
+    {
+      String json = """
+        {
+          "model": {"display_name": "claude-3-7-sonnet (1M context)"},
+          "session_id": "00000000-0000-0000-0000-000000000000",
+          "cost": {"total_duration_ms": 1000},
+          "context_window": {"used_tokens": 517250}
+        }
+        """;
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        String output = executeWithLockDir(scope, tempDir);
+        // contextPercent=50 → filled = (50 * 20) / 100 = 10
+        requireThat(output, "output").contains("██████████░░░░░░░░░░");
+        requireThat(output, "output").contains(" 50%");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a model without "(1M context)" in the display name maps to a 200,000-token context window.
+   * <p>
+   * At 117,250 tokens on a 200k model: contextPercent=50 → 10 filled and 10 empty bar segments.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void standardModelUses200kContextWindow() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-");
+    try
+    {
+      String json = """
+        {
+          "model": {"display_name": "claude-3-5-sonnet"},
+          "session_id": "00000000-0000-0000-0000-000000000000",
+          "cost": {"total_duration_ms": 1000},
+          "context_window": {"used_tokens": 117250}
+        }
+        """;
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        String output = executeWithLockDir(scope, tempDir);
+        // contextPercent=50 → filled = (50 * 20) / 100 = 10
+        requireThat(output, "output").contains("██████████░░░░░░░░░░");
+        requireThat(output, "output").contains(" 50%");
       }
     }
     finally

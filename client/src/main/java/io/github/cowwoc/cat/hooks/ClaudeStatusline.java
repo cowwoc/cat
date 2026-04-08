@@ -35,9 +35,9 @@ public interface ClaudeStatusline extends JvmScope
   Duration getTotalDuration();
 
   /**
-   * Returns the context window usage percentage parsed from the statusline JSON.
+   * Returns the number of tokens used in the context window, as parsed from the statusline JSON.
    *
-   * @return the usage percentage (0–100), or {@code 0} if not yet parsed or absent
+   * @return the number of used tokens, or {@code 0} if not present in the input
    */
-  int getUsedPercentage();
+  int getUsedTokens();
 }
