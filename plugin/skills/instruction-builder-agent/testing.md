@@ -14,7 +14,7 @@ A positive test case is a prompt that **should** trigger the skill being tested.
 
 - Describe a realistic work scenario a user might actually type (not a contrived test prompt).
 - Contain enough semantic signal for the agent to choose the skill without being told it exists.
-- Do NOT name the skill directly (e.g., "use cat:git-squash to…") — the agent must infer the correct skill.
+- Do NOT name the skill directly (e.g., "use cat:git-squash-agent to…") — the agent must infer the correct skill.
 - Do NOT include a `system_reminder` field that lists available skills or enumerates skill names.
 - Are written in natural language that a developer, operator, or end-user would actually produce.
 
@@ -23,11 +23,11 @@ A positive test case is a prompt that **should** trigger the skill being tested.
 Squash my last 3 commits into one before I open the PR — keep the commit message from the most recent one.
 ```
 This is good: it describes the user's intent without naming the skill, and a well-calibrated agent should
-recognize that `cat:git-squash` handles this.
+recognize that `cat:git-squash-agent` handles this.
 
 **Counter-example (too explicit):**
 ```
-Run cat:git-squash on my last 3 commits.
+Run cat:git-squash-agent on my last 3 commits.
 ```
 This is bad: it names the skill, so it cannot test whether the agent selects it organically.
 
@@ -77,8 +77,8 @@ that the skill's procedure requires.
 
 | Skill | Tier 2 assertion |
 |-------|-----------------|
-| `cat:git-squash` | `must_use_tools: ["Bash"]` with a command matching `git rebase -i` or `git reset --soft` |
-| `cat:git-commit` | Output contains a commit message in conventional format (regex: `^(feat\|fix\|refactor):`) |
+| `cat:git-squash-agent` | `must_use_tools: ["Bash"]` with a command matching `git rebase -i` or `git reset --soft` |
+| `cat:git-commit-agent` | Output contains a commit message in conventional format (regex: `^(feat\|fix\|refactor):`) |
 | `cat:work` | The `TaskCreate` tool was called before any `Edit` or `Write` tool call |
 | `cat:status` | Output contains a table listing issues with Status column |
 
@@ -125,7 +125,7 @@ Organic test cases follow this schema:
           "tier": 1,
           "type": "must_not_use_tools",
           "tools": ["Skill"],
-          "description": "Agent did NOT invoke cat:git-squash"
+          "description": "Agent did NOT invoke cat:git-squash-agent"
         }
       ]
     }

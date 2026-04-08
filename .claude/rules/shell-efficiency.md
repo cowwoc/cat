@@ -14,4 +14,4 @@ git branch --show-current && git log --oneline -3 && git diff --stat
 ```
 
 **Worktree directory safety:** You may `cd` into worktrees to work. However, before removing a directory (via `rm`,
-`git worktree remove`, etc.), ensure your shell is NOT inside the directory being removed. See `/cat:safe-rm`.
+`git worktree remove`, etc.), ensure your shell is NOT inside the directory being removed. See `/cat:safe-rm-agent`.

@@ -14,13 +14,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * Block work-merge subagent spawn when the shell's CWD is inside the worktree being deleted.
+ * Block work-merge-agent subagent spawn when the shell's CWD is inside the worktree being deleted.
  * <p>
  * When the main agent's shell CWD is inside a worktree and a merge subagent removes that worktree,
  * the shell's CWD becomes invalid. All subsequent Bash commands fail with exit code 1 until Claude
  * Code is restarted.
  * <p>
- * This handler blocks Task spawning of cat:work-merge when the agent's CWD is inside a worktree
+ * This handler blocks Task spawning of cat:work-merge-agent when the agent's CWD is inside a worktree
  * directory. The agent must first {@code cd /workspace} before spawning the merge subagent.
  */
 public final class EnforceWorktreeSafetyBeforeMerge implements TaskHandler
@@ -46,7 +46,7 @@ public final class EnforceWorktreeSafetyBeforeMerge implements TaskHandler
     else
       subagentType = "";
 
-    if (!subagentType.equals("cat:work-merge"))
+    if (!subagentType.equals("cat:work-merge-agent"))
       return Result.allow();
 
     if (cwd.isEmpty())

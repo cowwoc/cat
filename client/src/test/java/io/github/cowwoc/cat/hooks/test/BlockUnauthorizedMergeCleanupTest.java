@@ -257,7 +257,7 @@ public final class BlockUnauthorizedMergeCleanupTest
       requireThat(result.reason(), "reason").contains("cat:git-squash-agent");
       requireThat(result.reason(), "reason").contains("cat:git-rebase-agent");
       requireThat(result.reason(), "reason").contains("AskUserQuestion");
-      requireThat(result.reason(), "reason").contains("cat:work-merge");
+      requireThat(result.reason(), "reason").contains("cat:work-merge-agent");
 
       // Verify correct ordering: Step 7 before Step 8 before Step 9
       String reason = result.reason();

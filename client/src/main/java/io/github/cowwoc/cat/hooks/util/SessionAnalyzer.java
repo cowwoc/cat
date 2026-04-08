@@ -56,7 +56,7 @@ public final class SessionAnalyzer
   private static final int MIN_SCRIPT_EXTRACTION_OCCURRENCES = 2;
   private static final int MIN_SCRIPT_EXTRACTION_LENGTH = 2;
   private static final Set<String> CAT_PHASE_SKILLS = Set.of(
-    "work-prepare", "work-implement", "work-review", "work-merge");
+    "work-prepare-agent", "work-implement-agent", "work-review-agent", "work-merge-agent");
   private static final Pattern AGENT_ID_PATTERN = Pattern.compile("\"agentId\"\\s*:\\s*\"([^\"]+)\"");
   private static final Pattern SAFE_AGENT_ID_PATTERN = Pattern.compile("^[A-Za-z0-9_-]+$");
   private static final Pattern ERROR_PATTERN = Pattern.compile(

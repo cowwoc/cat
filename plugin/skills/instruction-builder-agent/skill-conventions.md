@@ -483,7 +483,7 @@ rule using all four components below. Missing any component degrades compliance.
 | **Short label** | Anchors attention at the start of the rule | `BLOCKED:`, `REQUIRED:`, `PROHIBITED:` |
 | **WHY paragraph** | Causal explanation using one of: "because", "otherwise", "this prevents", "this ensures", "without this". Must be 1–3 sentences. Do NOT say "This is required" — say what happens if the rule is violated. | "Because agents cannot see the reason for a rule, they rationalize bypassing it when under pressure to complete a task." |
 | **Prohibited list** | Explicit enumeration of what NOT to do. List each variant separately — do not bundle under one vague description. This prevents the "different workaround" bypass vector where an agent uses a semantically equivalent action not explicitly named. | "Do NOT use: `rm -rf`, `git reset --hard`, direct file deletion via Bash" |
-| **Positive alternative** | Concrete next step the agent should take instead | "Use `/cat:safe-rm` instead, which backs up before deleting." |
+| **Positive alternative** | Concrete next step the agent should take instead | "Use `/cat:safe-rm-agent` instead, which backs up before deleting." |
 
 **Why this structure works:** The label stops skimming. The WHY paragraph engages the agent's trained
 preference for being helpful — it frames the constraint as something the agent *wants* to follow, not

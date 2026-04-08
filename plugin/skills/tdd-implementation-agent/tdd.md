@@ -290,7 +290,7 @@ Cycle 3 - Edge cases (if needed):
 
 ### Pre-Review Phase: Squash for Release
 
-Before creating a pull request, use `cat:git-squash` to combine cycles by topic:
+Before creating a pull request, use `cat:git-squash-agent` to combine cycles by topic:
 
 ```bash
 # During development: granular commits (6-9+ commits for 3 behaviors)
@@ -303,7 +303,7 @@ git log --oneline
 # f8a0a7t test: add failing test for valid email formats
 
 # After squash: focused commits per topic
-cat:git-squash --topic "email-validation"
+cat:git-squash-agent --topic "email-validation"
 
 git log --oneline
 # x1z3c5a feature: implement email validation
@@ -359,7 +359,7 @@ When pausing mid-feature:
 1. Complete the current RED-GREEN-REFACTOR cycle (commit the last behavior)
 2. Document remaining behaviors in issue comments or index.json
 3. Next session picks up at STEP 1 (RED) for the next behavior
-4. Final session uses `cat:git-squash` to consolidate all cycles before review
+4. Final session uses `cat:git-squash-agent` to consolidate all cycles before review
 
 Single feature focus within each cycle ensures full quality throughout the development process.
 </context_budget>

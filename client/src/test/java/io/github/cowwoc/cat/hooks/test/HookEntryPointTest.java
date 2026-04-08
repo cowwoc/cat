@@ -742,7 +742,7 @@ public class HookEntryPointTest
   }
 
   /**
-   * Verifies that EnforceWorktreeSafetyBeforeMerge blocks work-merge spawn when CWD is inside a worktree.
+   * Verifies that EnforceWorktreeSafetyBeforeMerge blocks work-merge-agent spawn when CWD is inside a worktree.
    */
   @Test
   public void enforceWorktreeSafetyBlocksMergeWhenCwdInsideWorktree() throws IOException
@@ -750,7 +750,7 @@ public class HookEntryPointTest
     try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      JsonNode toolInput = mapper.readTree("{\"subagent_type\": \"cat:work-merge\"}");
+      JsonNode toolInput = mapper.readTree("{\"subagent_type\": \"cat:work-merge-agent\"}");
       EnforceWorktreeSafetyBeforeMerge handler =
         new EnforceWorktreeSafetyBeforeMerge();
       String worktreePath =
@@ -763,7 +763,7 @@ public class HookEntryPointTest
   }
 
   /**
-   * Verifies that EnforceWorktreeSafetyBeforeMerge allows work-merge spawn when CWD is not inside a worktree.
+   * Verifies that EnforceWorktreeSafetyBeforeMerge allows work-merge-agent spawn when CWD is not inside a worktree.
    */
   @Test
   public void enforceWorktreeSafetyAllowsMergeWhenCwdIsWorkspace() throws IOException
@@ -771,7 +771,7 @@ public class HookEntryPointTest
     try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      JsonNode toolInput = mapper.readTree("{\"subagent_type\": \"cat:work-merge\"}");
+      JsonNode toolInput = mapper.readTree("{\"subagent_type\": \"cat:work-merge-agent\"}");
       EnforceWorktreeSafetyBeforeMerge handler =
         new EnforceWorktreeSafetyBeforeMerge();
       TaskHandler.Result result = handler.check(toolInput, "test-session", "/workspace");
@@ -780,7 +780,7 @@ public class HookEntryPointTest
   }
 
   /**
-   * Verifies that EnforceWorktreeSafetyBeforeMerge allows work-merge spawn when CWD is empty.
+   * Verifies that EnforceWorktreeSafetyBeforeMerge allows work-merge-agent spawn when CWD is empty.
    */
   @Test
   public void enforceWorktreeSafetyAllowsMergeWhenCwdIsEmpty() throws IOException
@@ -788,7 +788,7 @@ public class HookEntryPointTest
     try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      JsonNode toolInput = mapper.readTree("{\"subagent_type\": \"cat:work-merge\"}");
+      JsonNode toolInput = mapper.readTree("{\"subagent_type\": \"cat:work-merge-agent\"}");
       EnforceWorktreeSafetyBeforeMerge handler =
         new EnforceWorktreeSafetyBeforeMerge();
       TaskHandler.Result result = handler.check(toolInput, "test-session", "");
@@ -805,7 +805,7 @@ public class HookEntryPointTest
     try (TestClaudeTool scope = new TestClaudeTool())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      JsonNode toolInput = mapper.readTree("{\"subagent_type\": \"cat:work-merge\"}");
+      JsonNode toolInput = mapper.readTree("{\"subagent_type\": \"cat:work-merge-agent\"}");
       EnforceWorktreeSafetyBeforeMerge handler =
         new EnforceWorktreeSafetyBeforeMerge();
       String subdirPath =
