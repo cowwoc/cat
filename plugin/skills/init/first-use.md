@@ -276,13 +276,12 @@ mkdir -p ".cat/issues/v{major}/v{major}.{minor}/{issue-name}"
 # State
 
 - **Status:** closed
-- **Progress:** 100%
 - **Resolution:** implemented
 - **Dependencies:** []
 - **Blocks:** []
 ```
 
-**index.json** (open): status: open, progress: 0%
+**index.json** (open): status: open
 
 </step>
 
@@ -902,7 +901,6 @@ paths: ["*.java"]      # default: always (omit to always inject)
 ```
 .cat/rules/
 ├── index.md              # Summary of all rules with audience information
-├── common.md             # Common conventions (main + all subagents)
 ├── {language}.md         # Language-specific with paths: frontmatter
 └── {topic}.md            # Topic-specific rules
 ```
@@ -1006,7 +1004,6 @@ mkdir -p ".cat/issues/v0/v0.0/${ISSUE_NAME}"
 # State
 
 - **Status:** open
-- **Progress:** 0%
 - **Dependencies:** []
 - **Blocks:** []
 ```

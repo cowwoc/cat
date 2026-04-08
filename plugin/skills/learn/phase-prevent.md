@@ -458,7 +458,7 @@ If the file content does NOT contain your change, the edit failed - you MUST ret
 **Line-Length Verification (MANDATORY after editing any Markdown or Java file):**
 
 After every Edit or Write tool call on a `.md` or `.java` file, verify that every line you added or
-modified is at most 120 characters (per `common.md` § Documentation Style). Wrap any line that exceeds
+modified is at most 120 characters (per `documentation-style.md` § Documentation Style). Wrap any line that exceeds
 the limit before proceeding to the next step.
 
 ```yaml
@@ -467,7 +467,7 @@ line_length_check:
   applies_to: [".md", ".java"]
   trigger: "after every Edit or Write tool call"
   action: "Wrap any added/modified line that exceeds 120 characters"
-  source_rule: "common.md § Documentation Style"
+  source_rule: "documentation-style.md § Documentation Style"
 ```
 
 **Escalation and Layered Prevention:**

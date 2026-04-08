@@ -1909,7 +1909,7 @@ public void emptyInput_returnsEmptyJson() throws IOException
 ```
 
 ### Parallel Execution and Test Isolation
-Tests run in parallel. In addition to the cross-language test isolation rules in `common.md`, Java tests must follow
+Tests run in parallel. In addition to the cross-language test isolation rules in `testing-conventions.md`, Java tests must follow
 these Java-specific constraints:
 
 1. **No class fields** - use local variables only

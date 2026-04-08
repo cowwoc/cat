@@ -112,10 +112,10 @@ Use this table to decide where content belongs:
 Never delete production databases without explicit user confirmation.
 ```
 
-### Convention for all agents (`.claude/rules/common.md`)
+### Convention for all agents (`.claude/rules/naming-conventions.md`)
 
 ```markdown
-# Common Conventions
+# Naming Conventions
 ...
 ```
 

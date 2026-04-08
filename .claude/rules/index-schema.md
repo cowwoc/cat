@@ -18,11 +18,6 @@ All issue index.json files must conform to this standardized schema.
 - `blocked` - Work cannot proceed until a dependency is resolved
 - `closed` - Issue is completed or resolved
 
-### Progress
-**Format:** `Progress: 0-100%`
-
-**Description:** Percentage completion estimate.
-
 ### Dependencies
 **Format:** `Dependencies: []` or `Dependencies: [issue-id-1, issue-id-2]`
 
@@ -67,28 +62,3 @@ Any content following the key-value section is preserved as-is. Common patterns:
 - Summary sections
 - Implementation notes
 
-## Removed Keys
-
-The following keys are no longer part of the schema:
-
-- **Completed** - Completion date is determined by Last Updated on closed issues
-- **Completed At** - Variant of Completed
-- **Version** - Determined by parent folder structure
-- **Tokens Used** - Not part of index.json schema
-- **Started** - Start date tracking removed
-- **Reason** - Folded into Resolution parenthetical
-- **Closed Reason** - Folded into Resolution parenthetical
-- **Obsolete Reason** - Folded into Resolution parenthetical
-- **Abandoned** - Folded into Resolution
-- **Decomposed At** - Removed
-- **Decomposed** - Removed
-- **Duplicate Of** - Folded into Resolution as "duplicate (issue-id)"
-- **Assignee** - Removed
-- **Priority** - Removed
-- **Worktree** - Removed
-- **Merged** - Removed
-- **Commit** - Removed
-- **Note** - Removed
-- **Scope Note** - Removed
-- **Completion Notes** - Removed
-- **Created From** - Renamed to Parent
