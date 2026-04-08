@@ -47,8 +47,12 @@ import java.util.StringJoiner;
  *   <li>{@code model.display_name} - model display name (required)</li>
  *   <li>{@code session_id} - session ID (required)</li>
  *   <li>{@code cost.total_duration_ms} - session duration in milliseconds (required)</li>
- *   <li>{@code context_window.current_usage.input_tokens} - number of input tokens used (required when
+ *   <li>{@code context_window.current_usage.input_tokens} - non-cached input tokens used (required when
  *       {@code current_usage} is present; defaults to 0 when {@code current_usage} is absent)</li>
+ *   <li>{@code context_window.current_usage.cache_read_input_tokens} - tokens read from the prompt cache
+ *       (optional; defaults to 0 when absent)</li>
+ *   <li>{@code context_window.current_usage.cache_creation_input_tokens} - tokens written to the prompt cache
+ *       (optional; defaults to 0 when absent)</li>
  *   <li>{@code context_window.context_window_size} - total context window size in tokens (required when
  *       {@code context_window} is present)</li>
  * </ul>

@@ -1851,4 +1851,138 @@ public final class StatuslineCommandTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that when prompt caching is active, the sum of {@code input_tokens},
+   * {@code cache_read_input_tokens}, and {@code cache_creation_input_tokens} is used to compute
+   * context usage, producing a non-zero percentage.
+   * <p>
+   * Reproduces the real Claude Code JSON structure observed in live sessions where {@code input_tokens}
+   * is near zero (3) and the bulk of usage is in the cache fields. Using real values:
+   * {@code input_tokens=3}, {@code cache_read_input_tokens=99144},
+   * {@code cache_creation_input_tokens=1157}, {@code context_window_size=200000}.
+   * <p>
+   * total = 3 + 99144 + 1157 = 100304. effectiveUsed = 100304 - 34500 = 65804.
+   * contextPercent = 65804 * 100 / 165500 = 39%.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void cacheTokensIncludedInContextUsage() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-");
+    try
+    {
+      String json = """
+        {
+          "model": {"display_name": "claude"},
+          "session_id": "00000000-0000-0000-0000-000000000000",
+          "cost": {"total_duration_ms": 1000},
+          "context_window": {
+            "current_usage": {
+              "input_tokens": 3,
+              "cache_read_input_tokens": 99144,
+              "cache_creation_input_tokens": 1157
+            },
+            "context_window_size": 200000
+          }
+        }
+        """;
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        String output = executeWithLockDir(scope, tempDir);
+        // contextPercent=39 → non-zero, not "  0%"
+        requireThat(output, "output").doesNotContain("  0%");
+        requireThat(output, "output").contains(" 39%");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that when only {@code input_tokens} is near zero (as occurs with prompt caching), the
+   * context usage percentage is 0%, confirming that the non-cached field alone is insufficient to
+   * represent actual usage.
+   * <p>
+   * With {@code input_tokens=3} and no cache fields, total = 3. effectiveUsed = 3 - 34500 = clamped
+   * to 0 → 0%. This documents the old (broken) behavior that the three-field sum fix corrects.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void inputTokensAloneProducesZeroWhenBelowOverhead() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-");
+    try
+    {
+      String json = """
+        {
+          "model": {"display_name": "claude"},
+          "session_id": "00000000-0000-0000-0000-000000000000",
+          "cost": {"total_duration_ms": 1000},
+          "context_window": {
+            "current_usage": {
+              "input_tokens": 3
+            },
+            "context_window_size": 200000
+          }
+        }
+        """;
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        String output = executeWithLockDir(scope, tempDir);
+        // input_tokens=3 is below OVERHEAD_TOKENS (34500); effectiveUsed clamps to 0 → 0%
+        requireThat(output, "output").contains("  0%");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that {@code cache_read_input_tokens} absent from the JSON defaults to 0 and does not
+   * cause an error, with only the sum of present fields used for context usage.
+   * <p>
+   * With {@code input_tokens=100000} and no cache fields, the result is identical to the legacy
+   * single-field behavior: effectiveUsed = 100000 - 34500 = 65500. contextPercent = 65500 * 100 /
+   * 165500 = 39%.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void absentCacheTokensDefaultToZero() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-");
+    try
+    {
+      String json = """
+        {
+          "model": {"display_name": "claude"},
+          "session_id": "00000000-0000-0000-0000-000000000000",
+          "cost": {"total_duration_ms": 1000},
+          "context_window": {
+            "current_usage": {
+              "input_tokens": 100000
+            },
+            "context_window_size": 200000
+          }
+        }
+        """;
+      try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
+      {
+        String output = executeWithLockDir(scope, tempDir);
+        // effectiveUsed = 100000 - 34500 = 65500; contextPercent = 65500 * 100 / 165500 = 39%
+        requireThat(output, "output").contains(" 39%");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }

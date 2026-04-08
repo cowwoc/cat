@@ -45,9 +45,9 @@ public final class EmpiricalTestRunnerTest
   public void buildInputWithEmptyPriming() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
       JsonMapper mapper = scope.getJsonMapper();
 
       String result = launcher.buildInput(new ArrayList<>(),
@@ -79,9 +79,9 @@ public final class EmpiricalTestRunnerTest
   public void buildInputWithStringOnlyPriming() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
       JsonMapper mapper = scope.getJsonMapper();
 
       List<PrimingMessage> priming = List.of(
@@ -123,9 +123,9 @@ public final class EmpiricalTestRunnerTest
   public void buildInputWithToolUseOnlyPriming() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
       JsonMapper mapper = scope.getJsonMapper();
 
       List<PrimingMessage> priming = List.of(
@@ -178,9 +178,9 @@ public final class EmpiricalTestRunnerTest
   public void buildInputWithMixedPriming() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
       JsonMapper mapper = scope.getJsonMapper();
 
       List<PrimingMessage> priming = List.of(
@@ -321,9 +321,9 @@ public final class EmpiricalTestRunnerTest
   public void buildInputProducesValidJsonl() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
       JsonMapper mapper = scope.getJsonMapper();
 
       List<PrimingMessage> priming = List.of(
@@ -354,10 +354,9 @@ public final class EmpiricalTestRunnerTest
   public void parseOutputExtractsText() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
-
       String output = """
         {"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Hello world"}]}}
         """;
@@ -380,10 +379,9 @@ public final class EmpiricalTestRunnerTest
   public void parseOutputExtractsToolUse() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
-
       String output = "{\"type\":\"assistant\",\"message\":{\"role\":\"assistant\"," +
         "\"content\":[{\"type\":\"tool_use\",\"name\":\"Bash\"," +
         "\"id\":\"123\",\"input\":{\"command\":\"ls\"}}]}}\n";
@@ -407,10 +405,9 @@ public final class EmpiricalTestRunnerTest
   public void parseOutputExtractsWriteToolContent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
-
       String output = "{\"type\":\"assistant\",\"message\":{\"role\":\"assistant\"," +
         "\"content\":[{\"type\":\"tool_use\",\"name\":\"Write\"," +
         "\"id\":\"456\",\"input\":{\"file_path\":\"report.md\"," +
@@ -436,10 +433,9 @@ public final class EmpiricalTestRunnerTest
   public void parseOutputExtractsResultText() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
-
       String output = """
         {"type":"result","result":"Final answer"}
         """;
@@ -461,10 +457,9 @@ public final class EmpiricalTestRunnerTest
   public void parseOutputThrowsOnMalformedJson() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
-
       // The pre-filter skips non-assistant/result lines to avoid parsing large user-echo events.
       // Malformed JSON must appear in an assistant or result line to trigger the fail-fast check.
       String output = """
@@ -487,10 +482,9 @@ public final class EmpiricalTestRunnerTest
   public void parseOutputHandlesMissingTypeField() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
-
       String output = """
         {"message":{"role":"assistant","content":[{"type":"text","text":"no envelope type"}]}}
         """;
@@ -511,10 +505,9 @@ public final class EmpiricalTestRunnerTest
   public void parseOutputHandlesContentBlockMissingType() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
-
       String output = """
         {"type":"assistant","message":{"role":"assistant","content":[{"text":"no block type"}]}}
         """;
@@ -537,10 +530,9 @@ public final class EmpiricalTestRunnerTest
   public void parseOutputHandlesNonStringTypeField() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
-
       String output = """
         {"type":"assistant","message":{"role":"assistant","content":[{"type":123,"text":"numeric type"}]}}
         """;
@@ -562,10 +554,9 @@ public final class EmpiricalTestRunnerTest
   public void parseOutputHandlesEmptyOutput() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
-
       ParsedOutput parsed = launcher.parseOutput("");
       requireThat(parsed.texts().isEmpty(), "noTexts").isTrue();
       requireThat(parsed.toolUses().isEmpty(), "noToolUses").isTrue();
@@ -834,9 +825,9 @@ public final class EmpiricalTestRunnerTest
   public void buildInputWithToolUseComplexInput() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
       JsonMapper mapper = scope.getJsonMapper();
 
       Map<String, Object> complexInput = new HashMap<>();
@@ -872,10 +863,9 @@ public final class EmpiricalTestRunnerTest
   public void parseOutputHandlesToolUseWithNullFields() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
-
       String output = """
         {"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"123","input":{}}]}}
         """;
@@ -938,9 +928,9 @@ public final class EmpiricalTestRunnerTest
   public void buildInputWithMultipleToolUsesGeneratesSequentialIds() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
       JsonMapper mapper = scope.getJsonMapper();
 
       List<PrimingMessage> priming = List.of(
@@ -1027,10 +1017,9 @@ public final class EmpiricalTestRunnerTest
   public void parseOutputWithMixedContent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
-
       String output = """
         {"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"thinking"}]}}
         {"type":"assistant","message":{"role":"assistant","content":\
@@ -1069,9 +1058,9 @@ public final class EmpiricalTestRunnerTest
   public void buildInputRejectsNullPrimingMessages() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
       launcher.buildInput(null, List.of("prompt"), List.of());
     }
     finally
@@ -1088,9 +1077,9 @@ public final class EmpiricalTestRunnerTest
   public void buildInputRejectsNullMessages() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
       launcher.buildInput(List.of(), null, List.of());
     }
     finally
@@ -1107,9 +1096,9 @@ public final class EmpiricalTestRunnerTest
   public void parseOutputRejectsNullOutput() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
       launcher.parseOutput((String) null);
     }
     finally
@@ -1391,9 +1380,9 @@ public final class EmpiricalTestRunnerTest
   public void buildInputWithSystemReminders() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
       JsonMapper mapper = scope.getJsonMapper();
 
       List<String> reminders = List.of("You are a helpful assistant.", "Always be concise.");
@@ -1425,9 +1414,9 @@ public final class EmpiricalTestRunnerTest
   public void buildInputWithSystemRemindersAndPriming() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
       JsonMapper mapper = scope.getJsonMapper();
 
       List<PrimingMessage> priming = List.of(
@@ -1464,10 +1453,9 @@ public final class EmpiricalTestRunnerTest
   public void buildCommandWithSystemPrompt() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
-
       List<String> command = launcher.buildCommand("haiku", "You are a cat expert.");
 
       requireThat(command, "command").contains("claude").contains("--append-system-prompt");
@@ -1490,10 +1478,9 @@ public final class EmpiricalTestRunnerTest
   public void buildCommandWithoutSystemPrompt() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
-
       List<String> command = launcher.buildCommand("haiku", "");
 
       requireThat(command, "command").contains("claude");
@@ -1513,9 +1500,9 @@ public final class EmpiricalTestRunnerTest
   public void buildInputWithEmptySystemReminders() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
       JsonMapper mapper = scope.getJsonMapper();
 
       String result = launcher.buildInput(new ArrayList<>(),
@@ -1583,10 +1570,9 @@ public final class EmpiricalTestRunnerTest
   public void parseOutputGroupsTurnsByAssistantEvents() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
-
       String turn1Json = "{\"type\":\"assistant\",\"message\":{\"role\":\"assistant\"," +
         "\"content\":[{\"type\":\"text\",\"text\":\"Turn 1 text\"}]}}";
       String turn2Json = "{\"type\":\"assistant\",\"message\":{\"role\":\"assistant\"," +
@@ -1630,9 +1616,9 @@ public final class EmpiricalTestRunnerTest
   public void buildInputWithMultipleTestMessages() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
       JsonMapper mapper = scope.getJsonMapper();
 
       List<String> prompts = List.of("First prompt", "Second prompt", "Third prompt");
@@ -1668,9 +1654,9 @@ public final class EmpiricalTestRunnerTest
   public void buildInputWithMultipleMessagesAndSystemReminders() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
       JsonMapper mapper = scope.getJsonMapper();
 
       List<String> prompts = List.of("First prompt", "Second prompt");
@@ -3021,9 +3007,9 @@ public final class EmpiricalTestRunnerTest
   public void buildCommandRejectsInvalidModel() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      ClaudeRunner launcher = new ClaudeRunner(scope); // NOPMD - close() is no-op without isolation
       launcher.buildCommand("not-a-real-model-xyz", "system prompt");
     }
     finally
