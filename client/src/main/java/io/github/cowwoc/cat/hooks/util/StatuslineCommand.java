@@ -75,10 +75,11 @@ public final class StatuslineCommand
 
   private static final int SYSTEM_PROMPT_TOKENS = 6_400;
   private static final int TOOL_DEFINITIONS_TOKENS = 7_100;
-  private static final int CONVERSATION_HISTORY_TOKENS = 21_000;
-  // Sum of fixed overhead components that are always present regardless of actual conversation content
-  private static final int OVERHEAD_TOKENS =
-    SYSTEM_PROMPT_TOKENS + TOOL_DEFINITIONS_TOKENS + CONVERSATION_HISTORY_TOKENS;
+  // Fixed overhead always present in usedTokens; subtracted from both numerator and denominator
+  private static final int FIXED_OVERHEAD = SYSTEM_PROMPT_TOKENS + TOOL_DEFINITIONS_TOKENS;
+  // Reserved space Claude holds back as the autocompact buffer; not included in usedTokens,
+  // so it only reduces the denominator (usable context), never the numerator
+  private static final int AUTOCOMPACT_BUFFER_TOKENS = 21_000;
 
   // Component emojis
   private static final String WORKTREE_EMOJI = "🌿";
@@ -354,8 +355,11 @@ public final class StatuslineCommand
   /**
    * Scales used tokens against the usable context window to produce a 0–100 display percentage.
    * <p>
-   * The usable context is {@code totalContext - OVERHEAD_TOKENS}. Tokens at or below the overhead
-   * level map to 0%; a full context maps to 100%.
+   * The usable context is {@code totalContext - FIXED_OVERHEAD - AUTOCOMPACT_BUFFER_TOKENS}.
+   * The effective used tokens are {@code usedTokens - FIXED_OVERHEAD}. The autocompact buffer
+   * ({@code AUTOCOMPACT_BUFFER_TOKENS}) is reserved capacity not included in {@code usedTokens},
+   * so it only reduces the denominator (usable context), not the numerator. Tokens at or below
+   * the fixed overhead map to 0%; a full context maps to 100%.
    *
    * @param usedTokens   the number of tokens used in the context window
    * @param totalContext the total context window size in tokens
@@ -363,10 +367,10 @@ public final class StatuslineCommand
    */
   private static int scaleContextPercent(int usedTokens, int totalContext)
   {
-    int usableContext = totalContext - OVERHEAD_TOKENS;
+    int usableContext = totalContext - FIXED_OVERHEAD - AUTOCOMPACT_BUFFER_TOKENS;
     if (usableContext <= 0)
       return 0;
-    int effectiveUsed = usedTokens - OVERHEAD_TOKENS;
+    int effectiveUsed = usedTokens - FIXED_OVERHEAD;
     return Math.min(100, Math.max(0, effectiveUsed * 100 / usableContext));
   }
 
