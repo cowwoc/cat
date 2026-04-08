@@ -1014,3 +1014,101 @@ EOF
     run grep "^- 2\.1-rename-config-java-core$" ".cat/issues/v2/v2.1/parent-issue/STATE.md"
     [ "$status" -eq 0 ]
 }
+
+# ─── Phase 26: Rename ## Sub-Agent Waves → ## Jobs and ### Wave N → ### Job N ─
+
+@test "2.1.sh phase 26: renames Sub-Agent Waves section to Jobs in plan.md" {
+    mkdir -p "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue"
+    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue/plan.md" <<'EOF'
+## Goal
+Refactor something.
+
+## Sub-Agent Waves
+
+### Wave 1
+Do the first thing.
+
+### Wave 2
+Do the second thing.
+EOF
+    setup_config_fixture
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    run grep "^## Jobs$" ".cat/issues/v2/v2.1/test-issue/plan.md"
+    [ "$status" -eq 0 ]
+    run grep "^### Job 1$" ".cat/issues/v2/v2.1/test-issue/plan.md"
+    [ "$status" -eq 0 ]
+    run grep "^### Job 2$" ".cat/issues/v2/v2.1/test-issue/plan.md"
+    [ "$status" -eq 0 ]
+    run grep "^## Sub-Agent Waves$" ".cat/issues/v2/v2.1/test-issue/plan.md"
+    [ "$status" -ne 0 ]
+}
+
+@test "2.1.sh phase 26: renames Wave N headers with suffix (e.g. Wave 1 (Concurrent))" {
+    mkdir -p "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue"
+    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue/plan.md" <<'EOF'
+## Sub-Agent Waves
+
+### Wave 1 (Concurrent)
+Content.
+EOF
+    setup_config_fixture
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    run grep "^### Job 1 (Concurrent)$" ".cat/issues/v2/v2.1/test-issue/plan.md"
+    [ "$status" -eq 0 ]
+    run grep "^### Wave 1" ".cat/issues/v2/v2.1/test-issue/plan.md"
+    [ "$status" -ne 0 ]
+}
+
+@test "2.1.sh phase 26: idempotent - skips plan.md already using ## Jobs" {
+    mkdir -p "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue"
+    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue/plan.md" <<'EOF'
+## Goal
+Already migrated.
+
+## Jobs
+
+### Job 1
+Do the thing.
+EOF
+    setup_config_fixture
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    # Content should be unchanged
+    run grep "^## Jobs$" ".cat/issues/v2/v2.1/test-issue/plan.md"
+    [ "$status" -eq 0 ]
+    run grep "^### Job 1$" ".cat/issues/v2/v2.1/test-issue/plan.md"
+    [ "$status" -eq 0 ]
+    # No Sub-Agent Waves should have been introduced
+    run grep "^## Sub-Agent Waves" ".cat/issues/v2/v2.1/test-issue/plan.md"
+    [ "$status" -ne 0 ]
+}
+
+@test "2.1.sh phase 26: leaves plan.md unchanged when it has neither Sub-Agent Waves nor Wave headers" {
+    mkdir -p "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue"
+    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue/plan.md" <<'EOF'
+## Goal
+Simple plan.
+
+## Execution Steps
+- Step 1: Do something
+- Step 2: Do something else
+EOF
+    setup_config_fixture
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    # File should be unchanged - no Jobs section added
+    run grep "^## Jobs" ".cat/issues/v2/v2.1/test-issue/plan.md"
+    [ "$status" -ne 0 ]
+    run grep "^## Goal" ".cat/issues/v2/v2.1/test-issue/plan.md"
+    [ "$status" -eq 0 ]
+}

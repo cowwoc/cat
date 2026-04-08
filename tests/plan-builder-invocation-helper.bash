@@ -7,11 +7,11 @@
 # Testable shell functions extracted from work-implement-agent first-use.md Step 4.
 # These functions encapsulate the plan-builder invocation conditional logic.
 
-# Detects whether plan.md contains Sub-Agent Waves or Execution Steps sections.
+# Detects whether plan.md contains Jobs or Execution Steps sections.
 # $1 - path to plan.md
 # Prints "true" or "false" to stdout.
 detect_has_steps() {
-    grep -qE '^## (Sub-Agent Waves|Execution Steps)' "$1" && echo "true" || echo "false"
+    grep -qE '^## (Jobs|Execution Steps)' "$1" && echo "true" || echo "false"
 }
 
 # Extracts the effort field from get-config-output JSON.
@@ -28,7 +28,7 @@ extract_effort() {
 # $3 - ISSUE_PATH
 # Prints the args string to stdout.
 build_plan_builder_args() {
-    echo "$1 $2 revise $3 Generate full implementation steps for this lightweight plan. Add Sub-Agent Waves or Execution Steps section with detailed step-by-step implementation guidance."
+    echo "$1 $2 revise $3 Generate full implementation steps for this lightweight plan. Add Jobs or Execution Steps section with detailed step-by-step implementation guidance."
 }
 
 # Orchestrates the full conditional flow for plan-builder invocation.

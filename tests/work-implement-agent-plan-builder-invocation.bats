@@ -50,8 +50,8 @@ SCRIPT
     [ "$result" = "false" ]
 }
 
-@test "detect_has_steps returns true when plan has Sub-Agent Waves" {
-    printf '## Goal\n\nSome goal.\n\n## Sub-Agent Waves\n\n### Wave 1\n' > "${PLAN_MD}"
+@test "detect_has_steps returns true when plan has Jobs" {
+    printf '## Goal\n\nSome goal.\n\n## Jobs\n\n### Job 1\n' > "${PLAN_MD}"
     result=$(detect_has_steps "${PLAN_MD}")
     [ "$result" = "true" ]
 }
@@ -93,7 +93,7 @@ SCRIPT
 
 @test "build_plan_builder_args constructs correct args string" {
     result=$(build_plan_builder_args "agent-123" "high" "/path/to/issue")
-    [ "$result" = "agent-123 high revise /path/to/issue Generate full implementation steps for this lightweight plan. Add Sub-Agent Waves or Execution Steps section with detailed step-by-step implementation guidance." ]
+    [ "$result" = "agent-123 high revise /path/to/issue Generate full implementation steps for this lightweight plan. Add Jobs or Execution Steps section with detailed step-by-step implementation guidance." ]
 }
 
 @test "build_plan_builder_args propagates effort value" {
@@ -104,7 +104,7 @@ SCRIPT
 # --- should_invoke_plan_builder tests ---
 
 @test "should_invoke_plan_builder prints SKIP when hasSteps is true" {
-    printf '## Sub-Agent Waves\n\n### Wave 1\n' > "${PLAN_MD}"
+    printf '## Jobs\n\n### Job 1\n' > "${PLAN_MD}"
     result=$(should_invoke_plan_builder "${PLAN_MD}" "${MOCK_BIN}/get-config-output" "agent-id" "/issue/path")
     [ "$result" = "SKIP" ]
 }

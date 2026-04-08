@@ -32,7 +32,7 @@ Implement trust approval gates for the work workflow.
 - trust=high auto-merges on clean review
 
 ## Execution Plan
-### Wave 1
+### Job 1
 ...
 EOF
 
