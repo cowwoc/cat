@@ -220,39 +220,62 @@ public final class InstructionTestRunner
     ParsedSkill parsed = parseSkill(skillPath);
     String model = SkillDiscovery.extractField(parsed.frontmatter(), "model");
     if (model.isBlank())
-      model = lookupModelInSkillModels(skillPath);
+      model = getModel(skillPath);
     return ModelIdResolver.resolve(claudeCodeVersion, model);
   }
 
   /**
-   * Looks up the model for a skill in {@code skill-models.md}.
+   * Gets the model for a skill or agent by looking it up in {@code model-selection.md}.
    * <p>
-   * Derives the skill name from the file path (e.g., {@code .../skills/foo/SKILL.md} → {@code cat:foo}),
-   * then scans {@code ${pluginRoot}/rules/skill-models.md} for a matching entry. Returns {@code "sonnet"}
-   * if the skill is listed there, {@code "haiku"} otherwise.
+   * Derives the skill/agent name from the file path (e.g., {@code .../skills/foo/SKILL.md} → {@code cat:foo}),
+   * then scans {@code ${pluginRoot}/rules/model-selection.md} for a matching entry. Returns the model
+   * associated with the section the entry appears in ({@code "sonnet"} or {@code "opus"}), or
+   * {@code "haiku"} if the entry is not listed.
    *
-   * @param skillPath the path to the skill file (SKILL.md or first-use.md)
-   * @return the model short name ({@code "sonnet"} or {@code "haiku"})
-   * @throws IOException if skill-models.md cannot be read
+   * @param skillOrSubagent the path to the skill or agent file (SKILL.md, first-use.md, or agent .md)
+   * @return the model short name ({@code "sonnet"}, {@code "opus"}, or {@code "haiku"})
+   * @throws IOException if model-selection.md cannot be read
    */
-  private String lookupModelInSkillModels(Path skillPath) throws IOException
+  private String getModel(Path skillOrSubagent) throws IOException
   {
-    // Derive skill directory name from path: .../skills/<name>/SKILL.md or .../skills/<name>/first-use.md
-    Path skillDir = skillPath.getParent();
-    if (skillDir == null)
-      return "haiku";
-    String skillName = "cat:" + skillDir.getFileName().toString();
+    // Skills use a subdirectory per skill: .../skills/<name>/SKILL.md → parent dir name is the skill name.
+    // Agents are flat files: .../agents/<name>.md → file stem is the agent name.
+    String fileName = skillOrSubagent.getFileName().toString();
+    String entryName;
+    if (fileName.equals("SKILL.md") || fileName.equals("first-use.md"))
+    {
+      Path parentDir = skillOrSubagent.getParent();
+      if (parentDir == null)
+        return "haiku";
+      entryName = "cat:" + parentDir.getFileName().toString();
+    }
+    else
+    {
+      // Strip .md extension to get agent name
+      String stem;
+      if (fileName.endsWith(".md"))
+        stem = fileName.substring(0, fileName.length() - 3);
+      else
+        stem = fileName;
+      entryName = "cat:" + stem;
+    }
 
-    Path skillModelsPath = scope.getPluginRoot().resolve("rules/skill-models.md");
-    if (Files.notExists(skillModelsPath))
+    Path modelSelectionPath = scope.getPluginRoot().resolve("rules/model-selection.md");
+    if (Files.notExists(modelSelectionPath))
       return "haiku";
 
-    // Scan for the skill name in the skill-models.md list entries (e.g., "- `cat:foo`")
-    for (String line : Files.readAllLines(skillModelsPath, StandardCharsets.UTF_8))
+    // Track which section we're in to know which model to return.
+    // Section headers use bold markdown: "**Sonnet-preferred ...**" or "**Opus-preferred ...**".
+    String currentModel = "haiku";
+    for (String line : Files.readAllLines(modelSelectionPath, StandardCharsets.UTF_8))
     {
       String trimmed = line.trim();
-      if (trimmed.equals("- `" + skillName + "`"))
-        return "sonnet";
+      if (trimmed.startsWith("**Sonnet-preferred"))
+        currentModel = "sonnet";
+      else if (trimmed.startsWith("**Opus-preferred"))
+        currentModel = "opus";
+      else if (trimmed.equals("- `" + entryName + "`"))
+        return currentModel;
     }
     return "haiku";
   }

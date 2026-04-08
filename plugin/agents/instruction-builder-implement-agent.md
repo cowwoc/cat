@@ -4,7 +4,6 @@ description: >
   Implementation specialist for instruction-builder-agent. Receives instruction content and a target
   file path, writes the content to disk, stages, and commits. Keeps file-write I/O out of the main
   agent's context window.
-model: sonnet
 ---
 
 You are an implementation specialist for the instruction-builder workflow. Your sole responsibility is

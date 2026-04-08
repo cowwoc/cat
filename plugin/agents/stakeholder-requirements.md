@@ -2,7 +2,6 @@
 name: stakeholder-requirements
 description: "Requirements Engineer stakeholder for code review and research. Focus: functional correctness, requirement satisfaction, specification compliance"
 tools: Read, Grep, Glob, WebSearch, WebFetch
-model: sonnet
 skills: [cat:stakeholder-common-agent]
 ---
 

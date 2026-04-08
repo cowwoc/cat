@@ -388,12 +388,13 @@ TEST_MODEL=$("${CLAUDE_PLUGIN_ROOT}/client/bin/instruction-test-runner" extract-
 ```
 The script falls back to `haiku` when the field is absent.
 <p>
-**CAT plugin skill model convention:** For skills in this plugin, omit the `model:` frontmatter from
-`SKILL.md` unless the model is `haiku`. Sonnet-preferred skills are listed in
-`${CLAUDE_PLUGIN_ROOT}/rules/skill-models.md` — add or update entries there rather than setting
-`model:` in `SKILL.md`. The `extract-model` binary reads only `SKILL.md` frontmatter and falls back to
-`haiku`; the `skill-models.md` mapping is used at runtime by the calling agent (not by `extract-model`).
-This means SPRT trials for sonnet-preferred skills run with the `haiku` fallback unless the test
+**CAT plugin skill model convention:** For skills and agents in this plugin, omit the `model:` frontmatter
+unless the model is `haiku`. Sonnet-preferred and opus-preferred skills and agents are listed in
+`${CLAUDE_PLUGIN_ROOT}/rules/model-selection.md` — add or update entries there rather than setting
+`model:` in `SKILL.md` or agent files. The `extract-model` binary reads `SKILL.md` frontmatter first; if
+`model:` is absent, it falls back to scanning `model-selection.md` for the skill name (returning `sonnet`
+if listed, `haiku` otherwise). Agent model selection uses `model-selection.md` at runtime by the calling
+agent. This means SPRT trials for sonnet-preferred skills run with the `haiku` fallback unless the test
 explicitly overrides TEST_MODEL — which is acceptable for unit-level skill tests.
 Store the result as `TEST_MODEL` and pass it as a resolved literal string to all test-run and grader
 subagents. **CRITICAL: Do NOT hardcode `haiku` or any other model name** — always use the value from

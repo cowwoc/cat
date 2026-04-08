@@ -1,7 +1,7 @@
 ---
 mainAgent: true
 ---
-## Model Selection for Skills
+## Model Selection for Skills and Agents
 
 When invoking skills via the Skill tool or spawning subagents via the Agent/Task tool, use the following model
 preference:
@@ -9,7 +9,7 @@ preference:
 **Sonnet-preferred skills** (use `model: sonnet` by default, fall back to `model: opus` if Sonnet is rate-limited):
 
 - `cat:add-agent`
-- `cat:decompose-issue-agent`
+- `cat:claude-runner`
 - `cat:empirical-test-agent`
 - `cat:git-merge-linear-agent`
 - `cat:git-rebase-agent`
@@ -31,6 +31,7 @@ preference:
 - `cat:skill-comparison-agent`
 - `cat:stakeholder-review-agent`
 - `cat:tdd-implementation-agent`
+- `cat:test-runner-isolation-validator`
 - `cat:verify-implementation-agent`
 - `cat:work-agent`
 - `cat:work-confirm-agent`
@@ -39,6 +40,29 @@ preference:
 - `cat:work-prepare-agent`
 - `cat:work-review-agent`
 - `cat:work-with-issue-agent`
+
+**Opus-preferred skills** (use `model: opus`; these require the highest reasoning capability):
+
+- `cat:decompose-issue-agent`
+
+**Sonnet-preferred agents** (use `model: sonnet` by default, fall back to `model: opus` if Sonnet is rate-limited):
+
+- `cat:instruction-analyzer-agent`
+- `cat:instruction-builder-implement-agent`
+- `cat:instruction-grader-agent`
+- `cat:plan-review-agent`
+- `cat:stakeholder-architecture`
+- `cat:stakeholder-design`
+- `cat:stakeholder-performance`
+- `cat:stakeholder-requirements`
+- `cat:stakeholder-security`
+- `cat:work-execute`
+- `cat:work-verify`
+
+**Opus-preferred agents** (use `model: opus`; these require the highest reasoning capability):
+
+- `cat:blue-team-agent`
+- `cat:red-team-agent`
 
 **Fallback behavior:** If Sonnet returns a rate-limit error, retry the same skill invocation using Opus. Do not
 ask the user before falling back — rate-limit fallback is automatic.
@@ -54,5 +78,4 @@ Perform the delegated work with opus model instead of manually performing the wo
 subagent work must be retried via the same delegation mechanism (Agent/Task/Skill tool) with opus, not
 absorbed into the calling agent's context.
 
-**Skills not listed above** use their SKILL.md `model:` frontmatter (typically `haiku` for lightweight tasks).
-Do not override their model selection.
+**Default model:** Skills and agents not listed above, and without a `model:` frontmatter entry, default to `haiku`.
