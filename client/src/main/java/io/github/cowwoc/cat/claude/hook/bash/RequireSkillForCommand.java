@@ -13,6 +13,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import io.github.cowwoc.cat.claude.hook.BashHandler;
 import io.github.cowwoc.cat.claude.hook.ClaudeHook;
 import io.github.cowwoc.cat.claude.hook.util.GetSkill;
+import io.github.cowwoc.cat.claude.util.PathUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.databind.JsonNode;
@@ -147,7 +148,7 @@ public final class RequireSkillForCommand implements BashHandler
     Set<String> loadedSkills;
     try
     {
-      Path agentDir = GetSkill.resolveAndValidateContainment(baseDir, catAgentId, "catAgentId");
+      Path agentDir = PathUtils.normalize(baseDir, catAgentId, "catAgentId");
       Path loadedDir = agentDir.resolve(GetSkill.LOADED_DIR);
       try (java.util.stream.Stream<Path> stream = Files.list(loadedDir))
       {

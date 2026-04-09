@@ -11,6 +11,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.claude.tool.ClaudeTool;
 import io.github.cowwoc.cat.claude.tool.MainClaudeTool;
+import io.github.cowwoc.cat.claude.util.PathUtils;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URLEncoder;
@@ -98,7 +99,7 @@ public final class GetFile implements SkillOutput
 
     // Resolve per-agent marker directory using catAgentId
     Path baseDir = scope.getCatWorkPath().resolve("sessions").toAbsolutePath().normalize();
-    Path agentDir = GetSkill.resolveAndValidateContainment(baseDir, catAgentId, "catAgentId");
+    Path agentDir = PathUtils.normalize(baseDir, catAgentId, "catAgentId");
 
     // Marker file: URL-encoded path to avoid collisions between different file paths
     String encodedPath = URLEncoder.encode(filePath, StandardCharsets.UTF_8);

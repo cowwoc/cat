@@ -92,6 +92,7 @@ declare -a HANDLERS=(
   "statusline-install:util.StatuslineInstall"
   "record-learning:util.RecordLearning"
   "write-session-marker:util.WriteSessionMarker"
+  "read-session-marker:util.ReadSessionMarker"
   "instruction-test-runner:skills.InstructionTestRunner"
   "verify-defer-plan-generation:util.VerifyDeferPlanGeneration"
   "write-and-commit:util.WriteAndCommit"

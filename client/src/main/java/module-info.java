@@ -17,6 +17,7 @@ module io.github.cowwoc.cat.client.claude
   requires org.slf4j;
   requires ch.qos.logback.classic;
 
+  exports io.github.cowwoc.cat.claude.util;
   exports io.github.cowwoc.cat.claude.tool;
   exports io.github.cowwoc.cat.claude.tool.post;
   exports io.github.cowwoc.cat.claude.hook;
