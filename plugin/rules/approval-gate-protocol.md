@@ -61,7 +61,7 @@ Trust level "high" skips the approval gate entirely and proceeds directly to mer
 
 If a merge or destructive operation executes without explicit approval gate selection:
 
-1. Invoke the `/cat:learn` workflow immediately
+1. Invoke the `/cat:learn-agent` skill immediately
 2. Document the specific conversational signal that was misinterpreted as approval
 3. Update enforcement rules to prevent the same misinterpretation in future sessions
 4. Record which step in the workflow failed to enforce the gate
