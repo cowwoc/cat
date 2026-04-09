@@ -60,10 +60,10 @@ The squash phase (`git-squash-agent`) has no awareness of `index.json` closure.
 ### Job 1: Update git-squash-agent SKILL.md
 
 - Read `plugin/skills/git-squash-agent/SKILL.md` to understand the current squash steps.
-- Add a post-squash step: after all topic commits are squashed, resolve the issue's `index.json` path from
-  the current branch name (same logic as `IssueDiscovery.branchToIndexJsonPath`). If the file exists and its
-  `"status"` field is not `"closed"`, update it to `"closed"` and stage + commit it as a `planning:` commit
-  (e.g., `planning: close index.json for <issue-name>`). If the file is already closed, skip silently.
+- Before the squash reset (`git reset --soft`), resolve the issue's `index.json` path from the current
+  branch name (same logic as `IssueDiscovery.branchToIndexJsonPath`). If the file exists and its `"status"`
+  field is not `"closed"`, update it to `"closed"` and `git add` it so it is staged before the reset. This
+  ensures `index.json` is absorbed into the squashed bugfix/feature commit rather than committed separately.
 
 ### Job 2: Update VerifyStateInCommit hook
 
