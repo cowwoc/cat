@@ -925,12 +925,15 @@ public class HookEntryPointTest
   }
 
   /**
-   * Verifies that WarnApprovalWithoutRenderDiff allows when CLAUDE_PROJECT_DIR is missing.
+   * Verifies that WarnApprovalWithoutRenderDiff allows when the render-diff state is absent.
+   * <p>
+   * Uses a non-CAT branch so {@code VerifyStateInCommit} skips the index.json check
+   * and the test focuses on the {@code WarnApprovalWithoutRenderDiff} handler only.
    */
   @Test
   public void warnApprovalWithoutRenderDiffAllowsMissingProjectDir() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("hook-test-");
+    Path tempDir = TestUtils.createTempGitRepo("main");
     try (TestClaudeHook scope = new TestClaudeHook(
       "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Approve?\"}, " +
       "\"session_id\": \"test\"}", tempDir, tempDir, tempDir))
@@ -950,11 +953,14 @@ public class HookEntryPointTest
 
   /**
    * Verifies that WarnUnsquashedApproval containsApprove method works correctly.
+   * <p>
+   * Uses a non-CAT branch so {@code VerifyStateInCommit} skips the index.json check
+   * and the test focuses on {@code WarnUnsquashedApproval} behavior only.
    */
   @Test
   public void warnUnsquashedApprovalDetectsApproveInInput() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("hook-test-");
+    Path tempDir = TestUtils.createTempGitRepo("main");
     try (TestClaudeHook scope = new TestClaudeHook(
       "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Ready to approve?\"}, " +
       "\"session_id\": \"test\"}", tempDir, tempDir, tempDir))
@@ -962,7 +968,7 @@ public class HookEntryPointTest
       HookResult hookResult = new PreAskHook(scope).run(scope);
 
       String result = hookResult.output().trim();
-      // WarnUnsquashedApproval also checks git state - outside a task worktree it allows
+      // WarnUnsquashedApproval checks git state — outside a task worktree it allows
       requireThat(result, "result").isEqualTo("{}");
     }
     finally
@@ -973,11 +979,14 @@ public class HookEntryPointTest
 
   /**
    * Verifies that WarnUnsquashedApproval detects uppercase APPROVE.
+   * <p>
+   * Uses a non-CAT branch so {@code VerifyStateInCommit} skips the index.json check
+   * and the test focuses on {@code WarnUnsquashedApproval} behavior only.
    */
   @Test
   public void warnUnsquashedApprovalDetectsUppercaseApprove() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("hook-test-");
+    Path tempDir = TestUtils.createTempGitRepo("main");
     try (TestClaudeHook scope = new TestClaudeHook(
       "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"APPROVE changes?\"}, " +
       "\"session_id\": \"test\"}", tempDir, tempDir, tempDir))
@@ -985,7 +994,7 @@ public class HookEntryPointTest
       HookResult hookResult = new PreAskHook(scope).run(scope);
 
       String result = hookResult.output().trim();
-      // WarnUnsquashedApproval also checks git state - outside a task worktree it allows
+      // WarnUnsquashedApproval checks git state — outside a task worktree it allows
       requireThat(result, "result").isEqualTo("{}");
     }
     finally

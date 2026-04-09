@@ -82,6 +82,57 @@ The squash phase (`git-squash-agent`) has no awareness of `index.json` closure.
   "allows bugfix commit without index.json staged", "blocks approval gate when issue not closed",
   "allows approval gate when issue is closed".
 
+### Job 3: Enable runtime E2E verification via cat:git-amend-agent
+
+The squash auto-close step in `git-squash-agent` SKILL.md uses `git commit --amend` to absorb `index.json`
+into the squashed commit. This requires the `cat:git-amend-agent` skill rather than a raw `git commit --amend`
+command, because the hook environment blocks bare amend calls. Update `plugin/skills/git-squash-agent/SKILL.md`
+to invoke `cat:git-amend-agent` instead of `git commit --amend` in the auto-close step.
+
+- Read `plugin/skills/git-squash-agent/SKILL.md` and locate the auto-close index.json step that calls
+  `git commit --amend`.
+- Replace that call with an invocation of `cat:git-amend-agent` (using the Skill tool) so the amend
+  succeeds in a live hook environment without being blocked by `PreToolUse`.
+- Verify that no other `git commit --amend` calls remain in the squash skill's auto-close logic.
+
+### Job 4: Add a runtime E2E integration test for the squash-then-approve flow
+
+Write a shell-based integration test (or a Java integration test using `ProcessBuilder`) that:
+
+1. Creates a temporary git repository with a CAT worktree structure (a branch named with the
+   `MAJOR.MINOR-issue-slug` pattern and a corresponding `.cat/issues/.../index.json` with
+   `"status": "in-progress"`).
+2. Makes a `bugfix:` commit without staging `index.json`.
+3. Invokes the squash step (calls the relevant logic extracted from `git-squash-agent`) to simulate
+   the auto-close: checks that `index.json` is updated to `"status": "closed"` and absorbed into the
+   commit.
+4. Calls `VerifyStateInCommit` (the approval gate variant) on the resulting state and asserts it
+   returns EXIT 0 (allowed).
+5. Resets `index.json` to `"status": "in-progress"` and calls `VerifyStateInCommit` again, asserting
+   it returns a non-zero exit code (blocked) with the expected error message.
+
+Place the test in `client/src/test/java/io/github/cowwoc/cat/hooks/test/` following the existing test
+conventions. Run `mvn -f client/pom.xml verify -e` to confirm all tests pass before the approval gate.
+
+### Job 5: Extract index.json auto-close to Java CLI tool
+
+Replace the bash `sed -i` block in `work-squash.md` Step 3 with a Java CLI tool `auto-close-index`
+that uses Jackson to safely manipulate the JSON. The bash regex approach is fragile and can corrupt
+JSON if field ordering or whitespace differs from expectation; Jackson reads and rewrites the full
+document correctly.
+
+- Create `client/src/main/java/io/github/cowwoc/cat/claude/hook/util/AutoCloseIndexJson.java`
+  with args `<worktree_path> <branch>`. Uses `IssueDiscovery.branchToIndexJsonPath()` to derive
+  the path, reads/updates the JSON with `scope.getJsonMapper()`, runs `git add` via
+  `GitCommands.runGit()`, and outputs `{"index_updated": true/false, "index_path": "..."}`.
+- Add `"auto-close-index:util.AutoCloseIndexJson"` to the HANDLERS array in `client/build-jlink.sh`.
+- Update `plugin/agents/work-squash.md` Step 3 to invoke
+  `"${CLAUDE_PLUGIN_ROOT}/client/bin/auto-close-index" "${WORKTREE_PATH}" "${BRANCH}"` and parse
+  the JSON output to determine whether to proceed with the amend step.
+- Add `client/src/test/java/io/github/cowwoc/cat/client/test/AutoCloseIndexJsonTest.java`
+  covering: non-CAT branch (skipped), absent index.json (skipped), already closed (skipped),
+  updates in-progress to closed.
+
 ## Post-conditions
 
 - [ ] `bugfix:`/`feature:` commits in a CAT worktree are NOT blocked when `index.json` is absent from staging

@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.claude.hook;
 import static io.github.cowwoc.cat.claude.hook.Strings.equalsIgnoreCase;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.claude.hook.ask.VerifyStateInCommit;
 import io.github.cowwoc.cat.claude.hook.ask.WarnApprovalWithoutRenderDiff;
 import io.github.cowwoc.cat.claude.hook.ask.WarnUnsquashedApproval;
 import org.slf4j.LoggerFactory;
@@ -42,7 +43,8 @@ public final class PreAskHook implements HookHandler
     requireThat(scope, "scope").isNotNull();
     this.handlers = List.of(
       new WarnUnsquashedApproval(),
-      new WarnApprovalWithoutRenderDiff(scope));
+      new WarnApprovalWithoutRenderDiff(scope),
+      new VerifyStateInCommit(scope));
   }
 
   /**

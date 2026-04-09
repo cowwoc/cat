@@ -24,7 +24,6 @@ import io.github.cowwoc.cat.claude.hook.bash.RequireSkillForCommand;
 import io.github.cowwoc.cat.claude.hook.bash.ValidateCommitType;
 import io.github.cowwoc.cat.claude.hook.bash.ValidateGitFilterBranch;
 import io.github.cowwoc.cat.claude.hook.bash.ValidateGitOperations;
-import io.github.cowwoc.cat.claude.hook.bash.VerifyStateInCommit;
 import io.github.cowwoc.cat.claude.hook.bash.WarnFileExtraction;
 import io.github.cowwoc.cat.claude.hook.bash.WarnMainWorkspaceCommit;
 import io.github.cowwoc.cat.claude.hook.bash.WarnPipedWithoutTee;
@@ -81,7 +80,6 @@ public final class PreToolUseHook implements HookHandler
       new ValidateCommitType(),
       new ValidateGitFilterBranch(),
       new ValidateGitOperations(),
-      new VerifyStateInCommit(),
       new WarnFileExtraction(),
       new WarnMainWorkspaceCommit(),
       new WarnPipedWithoutTee(),
