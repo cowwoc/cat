@@ -6,11 +6,14 @@
  */
 package io.github.cowwoc.cat.claude.hook;
 
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Shared shell parsing utilities for hook handlers.
@@ -20,6 +23,12 @@ import java.util.List;
  */
 public final class ShellParser
 {
+  // Matches ${VAR} (group 1) or $VAR (group 2) for environment variable expansion.
+  // Does not match $ARGUMENTS, $ARGUMENTS[N], or $N positional forms — those are skill-specific.
+  // The $VAR form (group 2) stops at non-word characters.
+  private static final Pattern ENV_VAR_EXPAND_PATTERN =
+    Pattern.compile("\\$\\{([^}]+)}|\\$(\\w+)");
+
   /**
    * Prevent instantiation.
    */
@@ -116,5 +125,41 @@ public final class ShellParser
     if (p.isAbsolute())
       return p.normalize();
     return Path.of(base, path).normalize();
+  }
+
+  /**
+   * Expands {@code $VAR} and {@code ${VAR}} references in a string using the hook process
+   * environment.
+   * <p>
+   * Returns {@code null} if any variable is unset, so the caller can fall back to conservative
+   * behavior rather than evaluating a partially-expanded path.
+   *
+   * @param target the string containing variable references to expand
+   * @return the fully expanded string, or {@code null} if any variable was undefined
+   * @throws NullPointerException if {@code target} is null
+   */
+  public static String expandEnvVars(String target)
+  {
+    requireThat(target, "target").isNotNull();
+    Matcher varMatcher = ENV_VAR_EXPAND_PATTERN.matcher(target);
+    StringBuilder result = new StringBuilder();
+    int lastEnd = 0;
+    while (varMatcher.find())
+    {
+      result.append(target, lastEnd, varMatcher.start());
+      // group(1) is the name from ${VAR}; group(2) is the name from $VAR
+      String varName;
+      if (varMatcher.group(1) != null)
+        varName = varMatcher.group(1);
+      else
+        varName = varMatcher.group(2);
+      String value = System.getenv(varName);
+      if (value == null)
+        return null;
+      result.append(value);
+      lastEnd = varMatcher.end();
+    }
+    result.append(target, lastEnd, target.length());
+    return result.toString();
   }
 }
