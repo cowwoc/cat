@@ -13,7 +13,12 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import io.github.cowwoc.cat.claude.tool.ClaudeTool;
 import io.github.cowwoc.cat.claude.hook.JvmScope;
 import io.github.cowwoc.cat.claude.tool.MainClaudeTool;
+<<<<<<< HEAD
 import io.github.cowwoc.cat.claude.internal.SharedSecrets;
+=======
+import io.github.cowwoc.cat.claude.util.PathUtils;
+import io.github.cowwoc.cat.claude.hook.SharedSecrets;
+>>>>>>> 24c744cac (feature: add read-session-marker CLI tool, PathUtils.normalize() path validation utility)
 import io.github.cowwoc.cat.claude.hook.ShellParser;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -224,7 +229,7 @@ public final class GetSkill
     this.pluginPrefix = scope.getPluginPrefix();
 
     Path baseDir = scope.getClaudeSessionsPath().toAbsolutePath().normalize();
-    Path agentDir = resolveAndValidateContainment(baseDir, catAgentId,
+    Path agentDir = PathUtils.normalize(baseDir, catAgentId,
       "catAgentId");
     this.loadedDir = agentDir.resolve(LOADED_DIR);
 
@@ -819,33 +824,6 @@ public final class GetSkill
     if (skillName.contains(":"))
       return skillName;
     return pluginPrefix + ":" + skillName;
-  }
-
-  /**
-   * Resolves a relative path against the projects base directory and validates that the result does not escape
-   * the base directory via path traversal.
-   *
-   * @param baseDir the base directory (must already be absolute and normalized)
-   * @param relativePath the relative path to resolve
-   * @param parameterDescription a description of the parameter(s) for use in error messages
-   * @return the resolved and normalized path
-   * @throws NullPointerException if any argument is null
-   * @throws IllegalArgumentException if the resolved path escapes {@code baseDir}
-   */
-  public static Path resolveAndValidateContainment(Path baseDir, String relativePath,
-    String parameterDescription)
-  {
-    requireThat(baseDir, "baseDir").isNotNull();
-    requireThat(relativePath, "relativePath").isNotNull();
-    requireThat(parameterDescription, "parameterDescription").isNotNull();
-
-    Path resolved = baseDir.resolve(relativePath).toAbsolutePath().normalize();
-    if (!resolved.startsWith(baseDir))
-    {
-      throw new IllegalArgumentException(parameterDescription + " contains path traversal: '" +
-        relativePath + "'. Expected path under: " + baseDir);
-    }
-    return resolved;
   }
 
   /**

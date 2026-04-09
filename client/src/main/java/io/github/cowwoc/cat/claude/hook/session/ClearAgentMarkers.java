@@ -11,6 +11,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import io.github.cowwoc.cat.claude.hook.ClaudeHook;
 import io.github.cowwoc.cat.claude.hook.util.FileUtils;
 import io.github.cowwoc.cat.claude.hook.util.GetSkill;
+import io.github.cowwoc.cat.claude.util.PathUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -62,7 +63,7 @@ public final class ClearAgentMarkers
   {
     requireThat(sessionId, "sessionId").isNotBlank();
     Path baseDir = scope.getCatWorkPath().resolve("sessions").toAbsolutePath().normalize();
-    Path sessionDir = GetSkill.resolveAndValidateContainment(baseDir, sessionId, "sessionId");
+    Path sessionDir = PathUtils.normalize(baseDir, sessionId, "sessionId");
     if (!Files.isDirectory(sessionDir))
       return "";
     return deleteLoadedDir(sessionDir.resolve(GetSkill.LOADED_DIR));
@@ -83,7 +84,7 @@ public final class ClearAgentMarkers
     requireThat(agentId, "agentId").isNotBlank();
     Path baseDir = scope.getCatWorkPath().resolve("sessions").toAbsolutePath().normalize();
     String subagentPath = sessionId + "/" + GetSkill.SUBAGENTS_DIR + "/" + agentId;
-    Path agentDir = GetSkill.resolveAndValidateContainment(baseDir, subagentPath,
+    Path agentDir = PathUtils.normalize(baseDir, subagentPath,
       "sessionId or agentId");
     return deleteLoadedDir(agentDir.resolve(GetSkill.LOADED_DIR));
   }
