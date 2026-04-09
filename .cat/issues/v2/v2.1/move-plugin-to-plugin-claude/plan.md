@@ -2,11 +2,13 @@
 
 ## Current State
 All Claude-specific plugin resources (skills, rules, agents, hooks, scripts, templates, etc.) live directly
-under `plugin/`. `CLAUDE_PLUGIN_ROOT` resolves to the `plugin/` directory.
+under `plugin/`. The Java client lives under `client/`. `CLAUDE_PLUGIN_ROOT` resolves to the `plugin/`
+directory.
 
 ## Target State
 All resources are moved to `plugin/claude/`, so that `plugin/codex/` can be added alongside it in a future
-issue. `CLAUDE_PLUGIN_ROOT` is updated to resolve to `plugin/claude/`.
+issue. The Java client is moved to `plugin/client/`, co-locating it with the plugin. `CLAUDE_PLUGIN_ROOT` is
+updated to resolve to `plugin/claude/`.
 
 ## Parent Requirements
 None
@@ -14,16 +16,18 @@ None
 ## Risk Assessment
 - **Risk Level:** HIGH
 - **Breaking Changes:** `CLAUDE_PLUGIN_ROOT` path changes; any hardcoded `plugin/` references in settings,
-  scripts, or skill files that do not use `${CLAUDE_PLUGIN_ROOT}` will break
-- **Mitigation:** Grep for all hardcoded `plugin/` path references before and after the move; verify the
-  plugin loads correctly after the change
+  scripts, or skill files that do not use `${CLAUDE_PLUGIN_ROOT}` will break; `client/` references in Maven
+  commands, CI configs, and CLAUDE.md will break
+- **Mitigation:** Grep for all hardcoded `plugin/` and `client/` path references before and after the move;
+  verify the plugin loads correctly and the client builds after the change
 
 ## Files to Modify
 - `plugin/` — all subdirectories and files moved into `plugin/claude/`
+- `client/` — all subdirectories and files moved into `plugin/client/`
 - `.claude/settings.json` (or equivalent) — update `CLAUDE_PLUGIN_ROOT` to point to `plugin/claude/`
-- `CLAUDE.md` — update any path references from `plugin/` to `plugin/claude/`
+- `CLAUDE.md` — update path references from `plugin/` to `plugin/claude/` and `client/` to `plugin/client/`
 - `plugin/migrations/` — add a migration phase to update any stored absolute paths in planning or config files
-- Any file outside `plugin/` that contains a hardcoded reference to a `plugin/` subpath
+- Any file outside `plugin/` that contains a hardcoded reference to a `plugin/` or `client/` subpath
 
 ## Pre-conditions
 - [ ] All dependent issues are closed
@@ -33,6 +37,8 @@ None
 ### Job 1: Move files
 - Use `git mv` to move all contents of `plugin/` into `plugin/claude/` to preserve history
   - Files: `plugin/*` → `plugin/claude/*`
+- Use `git mv` to move all contents of `client/` into `plugin/client/` to preserve history
+  - Files: `client/*` → `plugin/client/*`
 
 ### Job 2: Update CLAUDE_PLUGIN_ROOT configuration
 - Find where `CLAUDE_PLUGIN_ROOT` is defined or injected (settings.json, hooks, launcher scripts)
@@ -41,8 +47,10 @@ None
 
 ### Job 3: Update hardcoded references
 - Grep for any remaining hardcoded `plugin/` path references outside the new `plugin/claude/` tree
-- Update CLAUDE.md path references from `plugin/` to `plugin/claude/`
-  - Files: `CLAUDE.md`, any scripts or configs outside `plugin/` with hardcoded plugin paths
+- Grep for any remaining hardcoded `client/` path references outside the new `plugin/client/` tree
+- Update CLAUDE.md path references from `plugin/` to `plugin/claude/` and `client/` to `plugin/client/`
+- Update Maven commands (`mvn -f client/pom.xml`) to use `mvn -f plugin/client/pom.xml`
+  - Files: `CLAUDE.md`, any scripts or configs outside `plugin/` with hardcoded plugin or client paths
 
 ### Job 4: Add migration script
 - Add a migration phase to `plugin/claude/migrations/` that updates any stored absolute or relative paths
@@ -51,6 +59,9 @@ None
 
 ## Post-conditions
 - [ ] `git mv` history is intact — `git log --follow plugin/claude/skills/` shows pre-move commits
+- [ ] `git mv` history is intact — `git log --follow plugin/client/` shows pre-move commits
 - [ ] `CLAUDE_PLUGIN_ROOT` resolves to `plugin/claude/` in all invocation contexts
 - [ ] No hardcoded references to `plugin/<subdir>` remain outside `plugin/claude/` (grep clean)
+- [ ] No hardcoded references to `client/` remain outside `plugin/client/` (grep clean)
+- [ ] `mvn -f plugin/client/pom.xml verify` builds and tests pass
 - [ ] E2E: A new Claude Code session loads the plugin without errors after the move
