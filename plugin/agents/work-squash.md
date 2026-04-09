@@ -117,7 +117,32 @@ git rebase "${TARGET_BRANCH}"
   }
   ```
 
-## Step 3: Squash Commits
+## Step 3: Auto-Close index.json
+
+Before squashing, ensure the issue's `index.json` is closed so the squash absorbs it with the
+implementation commit rather than leaving it as a separate planning commit.
+
+```bash
+BRANCH=$(cd "${WORKTREE_PATH}" && git branch --show-current)
+AUTO_CLOSE_OUTPUT=$("${CLAUDE_PLUGIN_ROOT}/client/bin/auto-close-index" "${WORKTREE_PATH}" "${BRANCH}")
+INDEX_UPDATED=$(echo "$AUTO_CLOSE_OUTPUT" | grep -o '"index_updated"[[:space:]]*:[[:space:]]*[^,}]*' | \
+  sed 's/.*"index_updated"[[:space:]]*:[[:space:]]*//' | tr -d ' ')
+echo "INDEX_UPDATED=${INDEX_UPDATED}"
+```
+
+If `INDEX_UPDATED=true`, amend the last commit to include the updated `index.json`:
+
+```
+Skill("cat:git-amend-agent", args="${CAT_AGENT_ID} --no-edit")
+```
+
+The `--no-edit` flag preserves the existing commit message. Pass `CAT_AGENT_ID` from the inputs provided
+by the parent.
+
+If `INDEX_UPDATED=false` (branch is not a CAT issue, `index.json` is absent, or status is already
+closed), skip the amend step.
+
+## Step 4: Squash Commits
 
 Use git-squash to consolidate implementation commits into a single clean commit. The `git-squash` tool squashes all
 commits ahead of `TARGET_BRANCH` into one. Planning commits (e.g., `planning:` prefixed) that only modify files
@@ -189,7 +214,7 @@ Capture stderr output and return FAILED status:
 }
 ```
 
-## Step 4: Verify Squash Quality
+## Step 5: Verify Squash Quality
 
 After squashing, verify that no further squashing is needed.
 
@@ -239,10 +264,10 @@ git log --format="%H %s" "${TARGET_BRANCH}..HEAD"
    `feature:` or `bugfix:` commit, suggesting the refactor is part of the same work.
 
 **If any indicator triggers:** Increment `RESQUASH_COUNT`. If `RESQUASH_COUNT >= 3`, log a warning and proceed to
-Step 5 without further re-squashing (squash is best-effort). Otherwise, re-run the git-squash command to consolidate
+Step 6 without further re-squashing (squash is best-effort). Otherwise, re-run the git-squash command to consolidate
 the affected commits, then re-verify by returning to the top of this step.
 
-## Step 5: Verify index.json Closure (BLOCKING)
+## Step 6: Verify index.json Closure (BLOCKING)
 
 Verify that index.json exists and is closed in the final commit:
 
@@ -275,7 +300,7 @@ if [ "$STATUS_IN_COMMIT" != "closed" ]; then
 fi
 ```
 
-## Step 6: Return Result
+## Step 7: Return Result
 
 Return a compact JSON result:
 

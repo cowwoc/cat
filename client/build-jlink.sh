@@ -93,6 +93,7 @@ declare -a HANDLERS=(
   "record-learning:util.RecordLearning"
   "write-session-marker:util.WriteSessionMarker"
   "read-session-marker:util.ReadSessionMarker"
+  "auto-close-index:util.AutoCloseIndexJson"
   "instruction-test-runner:skills.InstructionTestRunner"
   "verify-defer-plan-generation:util.VerifyDeferPlanGeneration"
   "write-and-commit:util.WriteAndCommit"
