@@ -39,8 +39,10 @@ import java.util.regex.Pattern;
  * Only paths under the project directory are checked. Writes to {@code /tmp} or other locations
  * outside the project directory are allowed. If no session lock exists, all commands are allowed.
  * <p>
- * Commands containing shell variable references (e.g., {@code $VAR/path}) in write targets are
- * conservatively blocked because variable expansion cannot be verified statically.
+ * Write targets containing {@code $VAR} or {@code ${VAR}} references are expanded using
+ * {@link ShellParser#expandEnvVars(String)} before the isolation check. If any variable is unset,
+ * the path cannot be verified and the command is blocked conservatively. Backtick expressions
+ * (e.g., {@code `cmd`}) cannot be expanded statically and are always blocked conservatively.
  */
 public final class BlockWorktreeIsolationViolation implements BashHandler
 {
@@ -102,17 +104,36 @@ public final class BlockWorktreeIsolationViolation implements BashHandler
 
     for (String target : targets)
     {
-      // Block variable-expanded paths conservatively — they cannot be verified statically
-      if (target.contains("$") || target.contains("`"))
+      if (target.contains("`"))
       {
         String message = """
-          WARNING: Cannot verify Bash redirect to variable-expanded path: %s
+          WARNING: Cannot verify Bash redirect to backtick-expanded path: %s
 
+          Backtick expressions cannot be evaluated statically.
           If this targets a path outside your worktree, it bypasses worktree isolation.
           Use the Edit or Write tools with an explicit absolute path instead:
             Use: %s/plugin/file.txt
-            Not: $CLAUDE_PROJECT_DIR/plugin/file.txt""".formatted(target, context.absoluteWorktreePath());
+            Not: `command`/plugin/file.txt""".formatted(target, context.absoluteWorktreePath());
         return Result.block(message);
+      }
+      if (target.contains("$"))
+      {
+        String expanded = ShellParser.expandEnvVars(target);
+        if (expanded == null)
+        {
+          String message = """
+            WARNING: Cannot verify Bash redirect to variable-expanded path: %s
+
+            One or more variables in the path are unset in the hook process environment.
+            If this targets a path outside your worktree, it bypasses worktree isolation.
+            Use the Edit or Write tools with an explicit absolute path instead:
+              Use: %s/plugin/file.txt
+              Not: $UNSET_VAR/plugin/file.txt""".formatted(target, context.absoluteWorktreePath());
+          return Result.block(message);
+        }
+        // Replacing the variable reference with the concrete path lets the worktree isolation
+        // check below evaluate it the same way it handles any literal redirect target.
+        target = expanded;
       }
 
       Path targetPath = ShellParser.resolvePath(target, workingDirectory);

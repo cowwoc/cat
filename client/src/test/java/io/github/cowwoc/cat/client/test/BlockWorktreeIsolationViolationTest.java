@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.client.test;
 import io.github.cowwoc.cat.claude.hook.BashHandler;
 
 import io.github.cowwoc.cat.claude.hook.bash.BlockWorktreeIsolationViolation;
+import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -540,9 +541,10 @@ public final class BlockWorktreeIsolationViolationTest
   }
 
   /**
-   * Verifies that a redirect targeting a variable-expanded path using {@code $} is blocked.
+   * Verifies that a redirect targeting a variable-expanded path with an unset variable is blocked.
    * <p>
-   * Variable-expanded paths cannot be verified statically, so they are conservatively blocked.
+   * When a variable in the redirect path is unset in the hook process environment, the path cannot
+   * be expanded and must be conservatively blocked.
    *
    * @throws IOException if test setup fails
    */
@@ -554,14 +556,14 @@ public final class BlockWorktreeIsolationViolationTest
     {
       TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
       Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
-      String command = "echo \"text\" > $CLAUDE_PROJECT_DIR/plugin/file.txt";
+      String command = "echo \"text\" > ${BWIV_TEST_UNDEFINED_ENV_VAR}/plugin/file.txt";
 
       BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
       BashHandler.Result result = handler.check(
         TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("variable-expanded");
+      requireThat(result.reason(), "reason").contains("unset in the hook process environment");
       requireThat(result.reason(), "reason").contains(
         worktreeDir.toAbsolutePath().normalize().toString());
     }
@@ -574,7 +576,7 @@ public final class BlockWorktreeIsolationViolationTest
   /**
    * Verifies that a redirect targeting a backtick-expanded path is blocked.
    * <p>
-   * Backtick-expanded paths cannot be verified statically, so they are conservatively blocked.
+   * Backtick expressions cannot be evaluated statically, so they are conservatively blocked.
    *
    * @throws IOException if test setup fails
    */
@@ -593,7 +595,7 @@ public final class BlockWorktreeIsolationViolationTest
         TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("variable-expanded");
+      requireThat(result.reason(), "reason").contains("backtick");
       requireThat(result.reason(), "reason").contains(
         worktreeDir.toAbsolutePath().normalize().toString());
     }
@@ -656,6 +658,143 @@ public final class BlockWorktreeIsolationViolationTest
         TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that a redirect is allowed when an environment variable expands to a path inside the
+   * worktree.
+   * <p>
+   * When the variable reference in the redirect path resolves to the worktree directory, the write
+   * is within the isolation boundary and must be permitted.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void allowsRedirectWhenEnvVarExpandsToWorktreePath() throws IOException
+  {
+    String home = System.getenv("HOME");
+    if (home == null || home.isBlank())
+      throw new SkipException("HOME environment variable is not set; skipping env-var expansion test");
+    Path projectPath = Files.createTempDirectory(Path.of(home), "bwiv-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+    {
+      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
+      String relativePath = Path.of(home).relativize(worktreeDir.resolve("file.txt")).toString();
+      String command = "echo foo > ${HOME}/" + relativePath;
+
+      BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
+      BashHandler.Result result = handler.check(
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that a redirect is allowed when a bare (no-braces) environment variable expands to a
+   * path inside the worktree.
+   * <p>
+   * Both {@code $VAR} and {@code ${VAR}} syntax must be handled; this test exercises the bare form.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void allowsRedirectWhenBareEnvVarExpandsToWorktreePath() throws IOException
+  {
+    String home = System.getenv("HOME");
+    if (home == null || home.isBlank())
+      throw new SkipException("HOME environment variable is not set; skipping env-var expansion test");
+    Path projectPath = Files.createTempDirectory(Path.of(home), "bwiv-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+    {
+      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
+      String relativePath = Path.of(home).relativize(worktreeDir.resolve("file.txt")).toString();
+      String command = "echo foo > $HOME/" + relativePath;
+
+      BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
+      BashHandler.Result result = handler.check(
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that a redirect is blocked when an environment variable expands to a path outside the
+   * worktree but inside the project directory.
+   * <p>
+   * Even when the variable expands successfully, the expanded path must still satisfy the worktree
+   * isolation check.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void blocksRedirectWhenEnvVarExpandsOutsideWorktree() throws IOException
+  {
+    String home = System.getenv("HOME");
+    if (home == null || home.isBlank())
+      throw new SkipException("HOME environment variable is not set; skipping env-var expansion test");
+    Path projectPath = Files.createTempDirectory(Path.of(home), "bwiv-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+    {
+      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      TestUtils.createWorktreeDir(scope, ISSUE_ID);
+      String relativePath = Path.of(home).relativize(projectPath.resolve("plugin/file.txt")).toString();
+      String command = "echo foo > ${HOME}/" + relativePath;
+
+      BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
+      BashHandler.Result result = handler.check(
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("isolation violation");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that a redirect to a backtick-expanded path is blocked.
+   * <p>
+   * Backtick expressions cannot be evaluated statically and must be conservatively blocked
+   * regardless of their apparent target.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void blocksRedirectToBacktickExpression() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("bwiv-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+    {
+      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
+      String command = "echo foo > `pwd`/file.txt";
+
+      BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
+      BashHandler.Result result = handler.check(
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("backtick");
+      requireThat(result.reason(), "reason").contains(worktreeDir.toString());
     }
     finally
     {
