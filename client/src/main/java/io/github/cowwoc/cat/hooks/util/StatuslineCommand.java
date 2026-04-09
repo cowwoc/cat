@@ -74,12 +74,12 @@ public final class StatuslineCommand
   private static final int USAGE_BAR_SEGMENTS = 20;
 
   private static final int SYSTEM_PROMPT_TOKENS = 6_400;
-  private static final int TOOL_DEFINITIONS_TOKENS = 7_100;
+  private static final int TOOL_DEFINITIONS_TOKENS = 6_800;
   // Fixed overhead always present in usedTokens; subtracted from both numerator and denominator
   private static final int FIXED_OVERHEAD = SYSTEM_PROMPT_TOKENS + TOOL_DEFINITIONS_TOKENS;
   // Reserved space Claude holds back as the autocompact buffer; not included in usedTokens,
   // so it only reduces the denominator (usable context), never the numerator
-  private static final int AUTOCOMPACT_BUFFER_TOKENS = 21_000;
+  private static final int AUTOCOMPACT_BUFFER_TOKENS = 33_000;
 
   // Component emojis
   private static final String WORKTREE_EMOJI = "🌿";
