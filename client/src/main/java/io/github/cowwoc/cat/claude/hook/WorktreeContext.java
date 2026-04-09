@@ -1,0 +1,100 @@
+/*
+ * Copyright (c) 2026 Gili Tzabari. All rights reserved.
+ *
+ * Licensed under the CAT Commercial License.
+ * See LICENSE.md in the project root for license terms.
+ */
+package io.github.cowwoc.cat.claude.hook;
+
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+
+import io.github.cowwoc.pouch10.core.WrappedCheckedException;
+import tools.jackson.databind.json.JsonMapper;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Optional;
+
+/**
+ * Resolved worktree context for a session.
+ * <p>
+ * Encapsulates the resolved absolute paths for the worktree and project directory, providing
+ * methods to check path containment and compute corrected worktree-relative paths.
+ *
+ * @param absoluteWorktreePath the absolute normalized path to the worktree directory
+ * @param absoluteProjectDirectory the absolute normalized path to the project root directory
+ */
+public record WorktreeContext(Path absoluteWorktreePath, Path absoluteProjectDirectory)
+{
+  /**
+   * Creates a new worktree context.
+   *
+   * @throws NullPointerException if {@code absoluteWorktreePath} or {@code absoluteProjectDirectory} are null
+   */
+  public WorktreeContext
+  {
+    requireThat(absoluteWorktreePath, "absoluteWorktreePath").isNotNull();
+    requireThat(absoluteProjectDirectory, "absoluteProjectDirectory").isNotNull();
+  }
+
+  /**
+   * Resolves the worktree context for a session by looking up the session's lock file and
+   * deriving the worktree path.
+   * <p>
+   * A session holds at most one active lock at a time. Returns an empty optional if no
+   * active worktree is found for the session (no lock file or worktree directory does not exist).
+   *
+   * @param projectCatDir the project CAT directory ({@code {claudeProjectPath}/.cat/work/})
+   * @param projectPath the project root directory
+   * @param mapper the JSON mapper for reading lock files
+   * @param sessionId the session ID to look up
+   * @return the resolved worktree context, or empty if no active worktree exists
+   * @throws NullPointerException if any parameter is null
+   * @throws IllegalArgumentException if {@code sessionId} is blank
+   */
+  public static Optional<WorktreeContext> forSession(Path projectCatDir, Path projectPath, JsonMapper mapper,
+    String sessionId)
+  {
+    requireThat(projectCatDir, "projectCatDir").isNotNull();
+    requireThat(projectPath, "projectPath").isNotNull();
+    requireThat(mapper, "mapper").isNotNull();
+    requireThat(sessionId, "sessionId").isNotBlank();
+
+    try
+    {
+      String issueId = WorktreeLock.findIssueIdForSession(projectCatDir, mapper, sessionId);
+      if (issueId == null)
+        return Optional.empty();
+
+      Path worktreePath = projectCatDir.resolve("worktrees").resolve(issueId);
+      if (!Files.isDirectory(worktreePath))
+        return Optional.empty();
+
+      Path absoluteWorktreePath = worktreePath.toAbsolutePath().normalize();
+      Path absoluteProjectDirectory = projectPath.toAbsolutePath().normalize();
+      return Optional.of(new WorktreeContext(absoluteWorktreePath, absoluteProjectDirectory));
+    }
+    catch (IOException e)
+    {
+      throw WrappedCheckedException.wrap(e);
+    }
+  }
+
+  /**
+   * Computes the corrected worktree path for a file that targets the project directory.
+   * <p>
+   * Given a path under the project directory, relativizes it against the project root and
+   * resolves it under the worktree directory instead.
+   *
+   * @param targetPath the absolute normalized path to correct
+   * @return the corresponding path inside the worktree
+   * @throws NullPointerException if {@code targetPath} is null
+   */
+  public Path correctedPath(Path targetPath)
+  {
+    requireThat(targetPath, "targetPath").isNotNull();
+    Path relativePath = absoluteProjectDirectory.relativize(targetPath);
+    return absoluteWorktreePath.resolve(relativePath);
+  }
+}

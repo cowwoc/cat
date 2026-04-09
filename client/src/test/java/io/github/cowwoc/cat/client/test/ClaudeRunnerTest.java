@@ -1,0 +1,310 @@
+/*
+ * Copyright (c) 2026 Gili Tzabari. All rights reserved.
+ *
+ * Licensed under the CAT Commercial License.
+ * See LICENSE.md in the project root for license terms.
+ */
+package io.github.cowwoc.cat.client.test;
+
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+
+import io.github.cowwoc.cat.claude.hook.skills.ClaudeRunner;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import org.testng.annotations.Test;
+
+/**
+ * Tests for {@link ClaudeRunner}.
+ */
+public final class ClaudeRunnerTest
+{
+  /**
+   * Verifies that createIsolatedConfig copies plugin source files into the cache directory.
+   */
+  @Test
+  public void isolatedConfigCopiesPluginSource() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      // Create a mock source config directory
+      Path sourceConfig = tempDir.resolve("source-config");
+      Files.createDirectories(sourceConfig);
+      Files.writeString(sourceConfig.resolve("settings.json"), "{}");
+
+      // Create a mock plugin source directory with a skill file
+      Path pluginSource = tempDir.resolve("plugin");
+      Path skillDir = pluginSource.resolve("skills").resolve("test-skill");
+      Files.createDirectories(skillDir);
+      Files.writeString(skillDir.resolve("SKILL.md"), "# Test Skill");
+      Files.writeString(skillDir.resolve("first-use.md"), "# Instructions");
+
+      // Create a mock jlink binary directory
+      Path jlinkBin = tempDir.resolve("jlink-bin");
+      Files.createDirectories(jlinkBin);
+      Files.writeString(jlinkBin.resolve("test-tool"), "#!/bin/bash\necho hello");
+
+      try (ClaudeRunner runner = new ClaudeRunner(scope))
+      {
+        runner.createIsolatedConfig(sourceConfig, pluginSource, jlinkBin, "2.1");
+
+        String isolatedDir = runner.getIsolatedConfigDir();
+        requireThat(isolatedDir, "isolatedDir").isNotBlank();
+
+        Path isolatedPath = Path.of(isolatedDir);
+
+        // Verify original config file was copied
+        requireThat(Files.exists(isolatedPath.resolve("settings.json")),
+          "settingsCopied").isTrue();
+
+        // Verify plugin source files were copied into the cache
+        Path cacheSkillDir = isolatedPath.resolve("plugins").resolve("cache").
+          resolve("cat").resolve("cat").resolve("2.1").
+          resolve("skills").resolve("test-skill");
+        requireThat(Files.exists(cacheSkillDir.resolve("SKILL.md")),
+          "skillMdInCache").isTrue();
+        requireThat(Files.exists(cacheSkillDir.resolve("first-use.md")),
+          "firstUseMdInCache").isTrue();
+        requireThat(Files.readString(cacheSkillDir.resolve("SKILL.md")),
+          "skillMdContent").isEqualTo("# Test Skill");
+
+        // Verify jlink binaries were copied
+        Path cacheBinDir = isolatedPath.resolve("plugins").resolve("cache").
+          resolve("cat").resolve("cat").resolve("2.1").
+          resolve("client").resolve("bin");
+        requireThat(Files.exists(cacheBinDir.resolve("test-tool")),
+          "testToolInCache").isTrue();
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that close() deletes the isolated config directory.
+   */
+  @Test
+  public void closeDeletesIsolatedConfig() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Path sourceConfig = tempDir.resolve("source-config");
+      Files.createDirectories(sourceConfig);
+      Path pluginSource = tempDir.resolve("plugin");
+      Files.createDirectories(pluginSource);
+      Path jlinkBin = tempDir.resolve("jlink-bin");
+      Files.createDirectories(jlinkBin);
+
+      Path isolatedPath;
+      try (ClaudeRunner runner = new ClaudeRunner(scope))
+      {
+        runner.createIsolatedConfig(sourceConfig, pluginSource, jlinkBin, "2.1");
+        isolatedPath = Path.of(runner.getIsolatedConfigDir());
+        requireThat(Files.exists(isolatedPath), "existsBeforeClose").isTrue();
+      }
+      // After close(), the directory should be deleted
+      requireThat(Files.exists(isolatedPath), "existsAfterClose").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that createIsolatedConfig replaces existing cache contents rather than merging.
+   */
+  @Test
+  public void isolatedConfigReplacesExistingCache() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      // Create source config with pre-existing cache
+      Path sourceConfig = tempDir.resolve("source-config");
+      Path existingCache = sourceConfig.resolve("plugins").resolve("cache").
+        resolve("cat").resolve("cat").resolve("2.1");
+      Files.createDirectories(existingCache);
+      Files.writeString(existingCache.resolve("old-file.txt"), "stale content");
+
+      // Create new plugin source (should replace the old cache)
+      Path pluginSource = tempDir.resolve("plugin");
+      Files.createDirectories(pluginSource);
+      Files.writeString(pluginSource.resolve("new-file.txt"), "fresh content");
+
+      Path jlinkBin = tempDir.resolve("jlink-bin");
+      Files.createDirectories(jlinkBin);
+
+      try (ClaudeRunner runner = new ClaudeRunner(scope))
+      {
+        runner.createIsolatedConfig(sourceConfig, pluginSource, jlinkBin, "2.1");
+
+        Path isolatedCache = Path.of(runner.getIsolatedConfigDir()).resolve("plugins").
+          resolve("cache").resolve("cat").resolve("cat").resolve("2.1");
+
+        // Old file should be gone (cache was replaced, not merged)
+        requireThat(Files.exists(isolatedCache.resolve("old-file.txt")),
+          "oldFileRemoved").isFalse();
+        // New file should be present
+        requireThat(Files.exists(isolatedCache.resolve("new-file.txt")),
+          "newFilePresent").isTrue();
+        requireThat(Files.readString(isolatedCache.resolve("new-file.txt")),
+          "newFileContent").isEqualTo("fresh content");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getIsolatedConfigDir returns empty string when no isolation is configured.
+   */
+  @Test
+  public void noIsolationReturnsEmptyConfigDir() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try (ClaudeRunner runner = new ClaudeRunner(scope))
+      {
+        requireThat(runner.getIsolatedConfigDir(), "configDir").isEmpty();
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that buildProcessBuilder sets CLAUDE_CONFIG_DIR when isolation is active.
+   */
+  @Test
+  public void buildProcessBuilderSetsConfigDirWhenIsolated() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Path sourceConfig = tempDir.resolve("source-config");
+      Files.createDirectories(sourceConfig);
+      Path pluginSource = tempDir.resolve("plugin");
+      Files.createDirectories(pluginSource);
+      Path jlinkBin = tempDir.resolve("jlink-bin");
+      Files.createDirectories(jlinkBin);
+
+      try (ClaudeRunner runner = new ClaudeRunner(scope))
+      {
+        runner.createIsolatedConfig(sourceConfig, pluginSource, jlinkBin, "2.1");
+        String expectedConfigDir = runner.getIsolatedConfigDir();
+
+        ProcessBuilder pb = runner.buildProcessBuilder(List.of("claude"), tempDir);
+        requireThat(pb.environment().get("CLAUDE_CONFIG_DIR"), "CLAUDE_CONFIG_DIR").
+          isEqualTo(expectedConfigDir);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that buildProcessBuilder does NOT override CLAUDE_CONFIG_DIR when no isolation is active.
+   * <p>
+   * The env is inherited from the parent process unchanged; no isolation-specific value is injected.
+   */
+  @Test
+  public void buildProcessBuilderDoesNotSetConfigDirWithoutIsolation() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try (ClaudeRunner runner = new ClaudeRunner(scope))
+      {
+        String parentValue = System.getenv("CLAUDE_CONFIG_DIR");
+
+        ProcessBuilder pb = runner.buildProcessBuilder(List.of("claude"), tempDir);
+
+        // The ProcessBuilder inherits the parent env; without isolation no override is injected.
+        requireThat(pb.environment().get("CLAUDE_CONFIG_DIR"), "CLAUDE_CONFIG_DIR").
+          isEqualTo(parentValue);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that buildProcessBuilder sets CLAUDE_PLUGIN_ROOT to the isolated plugin cache path
+   * when isolation is active.
+   */
+  @Test
+  public void buildProcessBuilderSetsPluginRootWhenIsolated() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Path sourceConfig = tempDir.resolve("source-config");
+      Files.createDirectories(sourceConfig);
+      Path pluginSource = tempDir.resolve("plugin");
+      Files.createDirectories(pluginSource);
+      Path jlinkBin = tempDir.resolve("jlink-bin");
+      Files.createDirectories(jlinkBin);
+
+      try (ClaudeRunner runner = new ClaudeRunner(scope))
+      {
+        runner.createIsolatedConfig(sourceConfig, pluginSource, jlinkBin, "2.1");
+        String isolatedConfigDir = runner.getIsolatedConfigDir();
+
+        ProcessBuilder pb = runner.buildProcessBuilder(List.of("claude"), tempDir);
+
+        String expectedPluginRoot = Path.of(isolatedConfigDir).resolve("plugins").resolve("cache").
+          resolve("cat").resolve("cat").resolve("2.1").toString();
+        requireThat(pb.environment().get("CLAUDE_PLUGIN_ROOT"), "CLAUDE_PLUGIN_ROOT").
+          isEqualTo(expectedPluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that buildProcessBuilder does NOT override CLAUDE_PLUGIN_ROOT when no isolation is active.
+   * <p>
+   * The env is inherited from the parent process unchanged; no isolation-specific value is injected.
+   */
+  @Test
+  public void buildProcessBuilderDoesNotSetPluginRootWithoutIsolation() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try (ClaudeRunner runner = new ClaudeRunner(scope))
+      {
+        String parentValue = System.getenv("CLAUDE_PLUGIN_ROOT");
+
+        ProcessBuilder pb = runner.buildProcessBuilder(List.of("claude"), tempDir);
+
+        // The ProcessBuilder inherits the parent env; without isolation no override is injected.
+        requireThat(pb.environment().get("CLAUDE_PLUGIN_ROOT"), "CLAUDE_PLUGIN_ROOT").
+          isEqualTo(parentValue);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+}

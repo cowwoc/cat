@@ -33,8 +33,8 @@ TARGET_DIR="${PROJECT_DIR}/target"
 STAGING_DIR="${TARGET_DIR}/jlink-staging"
 PATCH_DIR="${TARGET_DIR}/module-patches"
 OUTPUT_DIR="${TARGET_DIR}/jlink"
-HOOKS_JAR="${TARGET_DIR}/cat-client-2.1.jar"
-MODULE_NAME="io.github.cowwoc.cat.hooks"
+CLIENT_JAR="${TARGET_DIR}/cat-client-2.1.jar"
+MODULE_NAME="io.github.cowwoc.cat.client.claude"
 ENABLE_ASSERTIONS=false
 
 # Handler registry: launcher-name:ClassName
@@ -109,7 +109,7 @@ error() { echo "[build-jlink] ERROR: $*" >&2; exit 1; }
 
 # Fully qualified main class for a handler class name
 handler_main() {
-  echo "${MODULE_NAME}/${MODULE_NAME}.$1"
+  echo "${MODULE_NAME}/io.github.cowwoc.cat.claude.hook.$1"
 }
 
 # Run a Java command against every handler, feeding '{}' on stdin.
@@ -128,9 +128,9 @@ run_all_handlers() {
 
 # --- Phase 1: Build client JAR ---
 
-ensure_hooks_jar() {
-  if [[ -f "$HOOKS_JAR" ]]; then
-    log "Engine JAR already exists: $HOOKS_JAR"
+ensure_client_jar() {
+  if [[ -f "$CLIENT_JAR" ]]; then
+    log "Engine JAR already exists: $CLIENT_JAR"
     return 0
   fi
 
@@ -138,7 +138,7 @@ ensure_hooks_jar() {
   cd "$PROJECT_DIR"
   ./mvnw package -DskipTests -q
 
-  [[ -f "$HOOKS_JAR" ]] || error "Failed to build client JAR"
+  [[ -f "$CLIENT_JAR" ]] || error "Failed to build client JAR"
   log "Engine JAR built successfully"
 }
 
@@ -274,7 +274,7 @@ patch_automatic_modules() {
 build_jlink_image() {
   log "Building jlink image..."
 
-  local module_path="${HOOKS_JAR}:${STAGING_DIR}"
+  local module_path="${CLIENT_JAR}:${STAGING_DIR}"
 
   rm -rf "$OUTPUT_DIR"
 
@@ -432,7 +432,7 @@ main() {
     esac
   done
 
-  ensure_hooks_jar
+  ensure_client_jar
   stage_dependencies
   patch_automatic_modules
   build_jlink_image

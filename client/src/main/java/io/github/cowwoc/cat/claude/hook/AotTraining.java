@@ -1,0 +1,156 @@
+/*
+ * Copyright (c) 2026 Gili Tzabari. All rights reserved.
+ *
+ * Licensed under the CAT Commercial License.
+ * See LICENSE.md in the project root for license terms.
+ */
+package io.github.cowwoc.cat.claude.hook;
+
+import io.github.cowwoc.cat.claude.hook.skills.EmpiricalTestRunner;
+import io.github.cowwoc.cat.claude.hook.skills.GetCheckpointOutput;
+import io.github.cowwoc.cat.claude.hook.skills.GetCleanupOutput;
+import io.github.cowwoc.cat.claude.hook.skills.GetIssueCompleteOutput;
+import io.github.cowwoc.cat.claude.hook.skills.GetNextIssueOutput;
+import io.github.cowwoc.cat.claude.hook.skills.GetDiffOutput;
+import io.github.cowwoc.cat.claude.hook.skills.GetOutput;
+import io.github.cowwoc.cat.claude.hook.skills.GetStatusOutput;
+import io.github.cowwoc.cat.claude.hook.skills.GetSubagentStatusOutput;
+import io.github.cowwoc.cat.claude.hook.skills.ProgressBanner;
+import io.github.cowwoc.cat.claude.hook.skills.VerifyAudit;
+import io.github.cowwoc.cat.claude.hook.util.BatchReader;
+import io.github.cowwoc.cat.claude.hook.util.Feedback;
+import io.github.cowwoc.cat.claude.hook.util.HookRegistrar;
+import io.github.cowwoc.cat.claude.hook.util.MarkdownWrapper;
+import io.github.cowwoc.cat.claude.hook.util.SessionAnalyzer;
+import io.github.cowwoc.cat.claude.hook.util.GetFile;
+import io.github.cowwoc.cat.claude.hook.util.GetSkill;
+import io.github.cowwoc.cat.claude.hook.util.StatusAlignmentValidator;
+import io.github.cowwoc.cat.claude.hook.util.WorkPrepare;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+
+/**
+ * Exercises all handler code paths in a single JVM invocation for AOT training.
+ * <p>
+ * During the build, this replaces 20 separate JVM launches with one, reducing AOT recording time from ~19s
+ * to ~1s.
+ */
+public final class AotTraining
+{
+  private AotTraining()
+  {
+    // Utility class
+  }
+
+  /**
+   * Runs all handlers with empty input to generate AOT training data.
+   * <p>
+   * SYNC: Keep handler list synchronized with HANDLERS array in hooks/build-jlink.sh.
+   * When adding a new handler, update both locations:
+   * <ul>
+   *   <li>Add launcher entry to HANDLERS array in build-jlink.sh</li>
+   *   <li>Add training invocation to this method</li>
+   * </ul>
+   *
+   * @param args command line arguments (unused)
+   * @throws Exception if training fails
+   */
+  @SuppressWarnings({"ResultOfMethodCallIgnored", "PMD.CloseResource"})
+  public static void main(String[] args) throws Exception
+  {
+    // Redirect stdin so MainClaudeHook can parse the hook JSON payload during construction.
+    // originalIn is System.in which must not be closed; PMD.CloseResource is suppressed intentionally.
+    InputStream originalIn = System.in;
+    System.setIn(new ByteArrayInputStream(
+      "{\"session_id\": \"aot-training-session\", \"agent_id\": \"aot-training-agent\"}".getBytes(
+        StandardCharsets.UTF_8)));
+    try (AbstractClaudeHook scope = new MainClaudeHook())
+    {
+      System.setIn(originalIn);
+      System.exit(run(scope));
+    }
+  }
+
+  /**
+   * Exercises all hook handler and skill constructor code paths for AOT training.
+   * <p>
+   * SYNC: Keep handler list synchronized with HANDLERS array in hooks/build-jlink.sh.
+   * When adding a new handler, update both locations:
+   * <ul>
+   *   <li>Add launcher entry to HANDLERS array in build-jlink.sh</li>
+   *   <li>Add training invocation to this method</li>
+   * </ul>
+   *
+   * @param scope the hook scope providing access to services and configuration
+   * @throws NullPointerException if {@code scope} is null
+   * @throws Exception if training fails
+   * @return 0 on success, non-zero on failure
+   */
+  @SuppressWarnings("ResultOfMethodCallIgnored")
+  public static int run(AbstractClaudeHook scope) throws Exception
+  {
+    requireThat(scope, "scope").isNotNull();
+
+    // Hook handlers all accept the unified ClaudeHook scope
+    new PreToolUseHook(scope).run(scope);
+    new PostBashHook().run(scope);
+    new PreReadHook(scope).run(scope);
+    new PostReadHook(scope).run(scope);
+    new PostToolUseHook(scope).run(scope);
+    new UserPromptSubmitHook(scope).run(scope);
+    new PreAskHook(scope).run(scope);
+    new PreWriteHook(scope).run(scope);
+    new PreIssueHook(scope).run(scope);
+    new SessionEndHook(scope).run(scope);
+    new SessionStartHook(scope, Path.of("/tmp/aot-training-env")).run(scope);
+    new SubagentStartHook(scope).run(scope);
+
+    // Skill handlers - construct to load class graphs.
+    // Calling getOutput() would read the filesystem, which is unnecessary for training.
+    // All SkillOutput constructors require ClaudeTool; use referenceClass() since this hook scope
+    // is AbstractClaudeHook which does not implement ClaudeTool.
+    referenceClass(GetDiffOutput.class);
+    referenceClass(GetCleanupOutput.class);
+    referenceClass(GetStatusOutput.class);
+    referenceClass(GetOutput.class);
+
+    // Reference arg-based classes to force class loading without invoking main()
+    // (their main() calls System.exit on missing args, or require ClaudeTool scope)
+    referenceClass(VerifyAudit.class);
+    referenceClass(EnforceStatusOutput.class);
+    referenceClass(TokenCounter.class);
+    referenceClass(GetCheckpointOutput.class);
+    referenceClass(GetIssueCompleteOutput.class);
+    referenceClass(GetNextIssueOutput.class);
+    referenceClass(SessionAnalyzer.class);
+    referenceClass(ProgressBanner.class);
+    referenceClass(EmpiricalTestRunner.class);
+    referenceClass(WorkPrepare.class);
+    referenceClass(MarkdownWrapper.class);
+    referenceClass(BatchReader.class);
+    referenceClass(GetSubagentStatusOutput.class);
+    referenceClass(HookRegistrar.class);
+    referenceClass(StatusAlignmentValidator.class);
+    referenceClass(GetSkill.class);
+    referenceClass(GetFile.class);
+    referenceClass(Feedback.class);
+    return 0;
+  }
+
+  /**
+   * Forces class loading without instantiation. Ensuring the class is loaded triggers static initializers
+   * and class linking, which is sufficient for AOT training.
+   *
+   * @param clazz the class to reference
+   * @return the class name (consumed to satisfy PMD's UselessPureMethodCall rule)
+   */
+  private static String referenceClass(Class<?> clazz)
+  {
+    return clazz.getName();
+  }
+}

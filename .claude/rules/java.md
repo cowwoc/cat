@@ -74,7 +74,7 @@ try (java.util.stream.Stream<Path> walk = Files.walk(dir))
 
 ```java
 // Good - import nested class directly
-import io.github.cowwoc.cat.hooks.util.IssueDiscovery.DiscoveryResult.ExistingWorktree;
+import io.github.cowwoc.cat.claude.hook.util.IssueDiscovery.DiscoveryResult.ExistingWorktree;
 
 if (discoveryResult instanceof ExistingWorktree existingWorktree)
 {
@@ -670,7 +670,7 @@ if ("Skill".equals(toolName))
 Use `Strings.equalsIgnoreCase()` for null-safe case-insensitive comparison:
 
 ```java
-import static io.github.cowwoc.cat.hooks.Strings.equalsIgnoreCase;
+import static io.github.cowwoc.cat.claude.hook.Strings.equalsIgnoreCase;
 
 // Good - null-safe, reads naturally
 if (equalsIgnoreCase(toolName, "Bash"))
@@ -753,7 +753,7 @@ in executable code. Use the simple class name in the Javadoc tag:
 
 ```java
 // Good - import added, simple name in {@link}
-import io.github.cowwoc.cat.hooks.DisplayUtils;
+import io.github.cowwoc.cat.claude.hook.skills.DisplayUtils;
 
 /**
  * This file is consumed by {@link DisplayUtils}.
@@ -761,7 +761,7 @@ import io.github.cowwoc.cat.hooks.DisplayUtils;
 
 // Avoid - fully qualified name in {@link}
 /**
- * This file is consumed by {@link io.github.cowwoc.cat.hooks.DisplayUtils}.
+ * This file is consumed by {@link io.github.cowwoc.cat.claude.hook.skills.DisplayUtils}.
  */
 ```
 
@@ -2097,31 +2097,32 @@ All modules must define `module-info.java`. Tests reside in a separate module fr
 ### Naming Convention
 | Implementation | Test Module | Test Package |
 |----------------|-------------|--------------|
-| `io.github.cowwoc.cat.hooks` | `io.github.cowwoc.cat.hooks.test` | `io.github.cowwoc.cat.hooks.test` |
+| `io.github.cowwoc.cat.client.claude` | `io.github.cowwoc.cat.client.claude.test` | `io.github.cowwoc.cat.client.test` |
 | `com.example.foo` | `com.example.foo.test` | `com.example.foo.test` |
 
 ### Module Exports for Testing
 The implementation module must export internal packages to the test module:
 
 ```java
-// module-info.java for io.github.cowwoc.cat.hooks
-module io.github.cowwoc.cat.hooks
+// module-info.java for io.github.cowwoc.cat.client.claude (module name; packages are io.github.cowwoc.cat.claude.hook/tool)
+module io.github.cowwoc.cat.client.claude
 {
   requires tools.jackson.databind;
 
-  // Public API
-  exports io.github.cowwoc.cat.hooks;
+  // Public API — packages are under claude.hook and claude.tool
+  exports io.github.cowwoc.cat.claude.hook;
+  exports io.github.cowwoc.cat.claude.tool;
 
   // Internal packages exported only to test module
-  exports io.github.cowwoc.cat.hooks.internal to io.github.cowwoc.cat.hooks.test;
+  exports io.github.cowwoc.cat.claude.hook.internal to io.github.cowwoc.cat.client.claude.test;
 }
 ```
 
 ```java
-// module-info.java for io.github.cowwoc.cat.hooks.test
-module io.github.cowwoc.cat.hooks.test
+// module-info.java for io.github.cowwoc.cat.client.claude.test
+module io.github.cowwoc.cat.client.claude.test
 {
-  requires io.github.cowwoc.cat.hooks;
+  requires io.github.cowwoc.cat.client.claude;
   requires org.testng;
   requires io.github.cowwoc.requirements13.java;
 }
@@ -2151,14 +2152,17 @@ client/                      # Maven project root
 ├── pom.xml
 ├── build.sh
 ├── mvnw
-├── src/main/java/           # Implementation module (io.github.cowwoc.cat.hooks)
-│   └── io/github/cowwoc/cat/hooks/
-│       ├── module-info.java
-│       ├── Config.java
-│       ├── HookInput.java
-│       ├── HookOutput.java
-│       └── Get*Output.java
-└── src/test/java/           # Test module (io.github.cowwoc.cat.hooks.test)
-    └── io/github/cowwoc/cat/hooks/test/
+├── src/main/java/           # Implementation module (io.github.cowwoc.cat.client.claude) — packages under io.github.cowwoc.cat.claude.hook/tool
+│   ├── module-info.java     # Module io.github.cowwoc.cat.client.claude
+│   └── io/github/cowwoc/cat/
+│       └── claude/
+│           ├── tool/          # Tool-related classes
+│           │   └── post/
+│           └── hook/          # Hook-related classes
+│               ├── ask/
+│               ├── bash/
+│               └── ...
+└── src/test/java/           # Test module (io.github.cowwoc.cat.client.claude.test)
+    └── io/github/cowwoc/cat/client/test/
         └── module-info.java
 ```

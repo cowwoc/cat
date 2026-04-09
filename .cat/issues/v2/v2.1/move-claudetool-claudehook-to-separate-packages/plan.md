@@ -66,10 +66,25 @@ None
   - Files: `.claude/rules/hooks.md` and any other rule files mentioning hook package paths
 - Update references to point to new package locations if documentation includes Java source path examples
 
-### Job 6: Comprehensive verification
+### Job 6: Update documentation examples in java.md
 
-- Run grep to verify no import of `io.github.cowwoc.cat.hooks` remains in any `.java` file
-  (should be zero matches across entire codebase)
+The post-condition "Grep for `io.github.cowwoc.cat.hooks` returns zero matches" is PARTIAL because
+`.claude/rules/java.md` contains example code snippets in the Module Naming section that still reference
+old package names. The module name `io.github.cowwoc.cat.hooks` in `module-info.java` and the test module
+`io.github.cowwoc.cat.hooks.test` are intentional and correct by design (module naming follows Java conventions
+independent of package structure), but documentation examples should be updated for consistency.
+
+- Open `.claude/rules/java.md` and locate the Module Naming section
+- Update all code example snippets that reference `io.github.cowwoc.cat.hooks` to instead show
+  `io.github.cowwoc.cat.claude.hook` (or `io.github.cowwoc.cat.claude.tool` where appropriate)
+- Verify the updated examples accurately illustrate the new package structure
+- Note: Do NOT change the actual module name in `module-info.java` — only documentation examples
+
+### Job 7: Comprehensive verification
+
+- Run grep to verify no reference to `io.github.cowwoc.cat.hooks` remains outside of:
+  - `module-info.java` (module name declaration — intentional)
+  - Test module declarations (e.g., `io.github.cowwoc.cat.hooks.test` — intentional by convention)
 - Run `mvn -f client/pom.xml verify -e` and confirm exit code 0
 
 ## Post-conditions
