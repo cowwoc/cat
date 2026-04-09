@@ -1,5 +1,5 @@
 {
   "status" : "open",
-  "dependencies" : [ ],
+  "dependencies" : [ "2.1-move-plugin-to-plugin-claude" ],
   "blocks" : [ ]
 }
