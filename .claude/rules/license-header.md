@@ -32,7 +32,7 @@ Block comment before `package` declaration. For `module-info.java`, place at the
  * Licensed under the CAT Commercial License.
  * See LICENSE.md in the project root for license terms.
  */
-package io.github.cowwoc.cat.hooks;
+package io.github.cowwoc.cat.claude.hook;
 ```
 
 ### Shell Scripts (*.sh)

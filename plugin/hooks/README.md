@@ -115,7 +115,7 @@ exec "$DIR/java" \
   -XX:+UseSerialGC \
   -XX:TieredStopAtLevel=1 \
   -XX:AOTCache="$DIR/../lib/server/aot-cache.aot" \
-  -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.ClassName "$@"
+  -m io.github.cowwoc.cat.client.claude/io.github.cowwoc.cat.claude.hook.ClassName "$@"
 ```
 
 JVM flags: 16-64MB heap, serial GC (minimal overhead for short-lived processes), tier-1 compilation only (fastest
@@ -168,7 +168,7 @@ absolute paths. See `plugin/concepts/skill-loading.md` § "Referencing Files Fro
 
 ### Handler Classes
 
-Handler classes implement `io.github.cowwoc.cat.hooks.util.SkillOutput` interface:
+Handler classes implement `io.github.cowwoc.cat.claude.hook.util.SkillOutput` interface:
 - Constructor accepting `JvmScope` parameter
 - `getOutput(String[])` method returning dynamic content
 - Instantiated and invoked in-process via preprocessor directives (no subprocess spawn)

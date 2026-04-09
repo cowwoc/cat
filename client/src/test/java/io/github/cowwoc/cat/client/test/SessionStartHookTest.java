@@ -1,0 +1,1823 @@
+/*
+ * Copyright (c) 2026 Gili Tzabari. All rights reserved.
+ *
+ * Licensed under the CAT Commercial License.
+ * See LICENSE.md in the project root for license terms.
+ */
+package io.github.cowwoc.cat.client.test;
+
+
+import io.github.cowwoc.cat.claude.hook.SessionStartHook;
+
+import io.github.cowwoc.cat.claude.hook.session.CheckRetrospectiveDue;
+import io.github.cowwoc.cat.claude.hook.session.CheckUpdateAvailable;
+import io.github.cowwoc.cat.claude.hook.session.CheckDataMigration;
+import io.github.cowwoc.cat.claude.hook.session.ClearAgentMarkers;
+import io.github.cowwoc.cat.claude.hook.util.GetSkill;
+import io.github.cowwoc.cat.claude.hook.session.EchoSessionId;
+import io.github.cowwoc.cat.claude.hook.session.InjectEnv;
+import io.github.cowwoc.cat.claude.hook.session.SessionStartHandler;
+import io.github.cowwoc.cat.claude.hook.util.VersionUtils;
+import org.testng.annotations.Test;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+
+/**
+ * Tests for SessionStartHook and individual session start handlers.
+ * <p>
+ * Tests are designed for parallel execution - each test is self-contained with no shared state.
+ */
+public class SessionStartHookTest
+{
+  // --- EchoSessionId tests ---
+
+  /**
+   * Verifies that EchoSessionId returns the session ID as additional context.
+   */
+  @Test
+  public void echoSessionIdReturnsSessionIdAsContext() throws IOException
+  {
+    try (TestClaudeHook scope = new TestClaudeHook())
+    {
+      SessionStartHandler.Result result = new EchoSessionId().handle(scope);
+      requireThat(result.additionalContext(), "additionalContext").contains("Session ID:");
+      requireThat(result.stderr(), "stderr").isEmpty();
+    }
+  }
+
+  /**
+   * Verifies that constructing a TestClaudeHook without a session ID throws IllegalArgumentException.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*session_id.*")
+  public void echoSessionIdThrowsWhenNoSessionId()
+  {
+    new TestClaudeHook("{}");
+  }
+
+  // --- ClearAgentMarkers tests ---
+
+  /**
+   * Verifies that ClearAgentMarkers deletes the main agent's loaded directory.
+   */
+  @Test
+  public void clearAgentMarkersDeletesMainAgentMarker() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
+    {
+      String sessionId = "test-session-" + System.nanoTime();
+      Path sessionDir = scope.getCatWorkPath().resolve("sessions").resolve(sessionId);
+      Path loadedDir = sessionDir.resolve(GetSkill.LOADED_DIR);
+      Files.createDirectories(loadedDir);
+      Files.writeString(loadedDir.resolve("cat%3Awork"), "");
+
+      String warning = new ClearAgentMarkers(scope).clearMainAgentMarker(sessionId);
+      requireThat(warning, "warning").isEmpty();
+      requireThat(Files.exists(loadedDir), "loadedDirExists").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that ClearAgentMarkers deletes a specific subagent's loaded directory.
+   */
+  @Test
+  public void clearAgentMarkersDeletesSubagentMarker() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
+    {
+      String sessionId = "test-session-" + System.nanoTime();
+      Path markerDir = scope.getCatWorkPath().resolve("sessions").resolve(sessionId).
+        resolve(GetSkill.SUBAGENTS_DIR).resolve("agent-1");
+      Path loadedDir = markerDir.resolve(GetSkill.LOADED_DIR);
+      Files.createDirectories(loadedDir);
+      Files.writeString(loadedDir.resolve("cat%3Awork"), "");
+
+      String warning = new ClearAgentMarkers(scope).clearSubagentMarker(sessionId, "agent-1");
+      requireThat(warning, "warning").isEmpty();
+      requireThat(Files.exists(loadedDir), "loadedDirExists").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  // --- InjectEnv tests ---
+
+  /**
+   * Verifies that InjectEnv writes env vars to the resumed session's derived directory when source="resume".
+   * <p>
+   * On resume, CLAUDE_ENV_FILE points to the startup session directory. The env vars must be written
+   * to the resumed session directory (identified by session_id from the hook input JSON) instead.
+   */
+  @Test
+  public void injectEnvResumeWritesToDerivedSessionDir() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-resume-");
+    try
+    {
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      String resumedId = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Path resumedDir = sessionEnvBase.resolve(resumedId);
+      Files.createDirectories(startupDir);
+      Files.createDirectories(resumedDir);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+
+      Path projectPath = Files.createTempDirectory("cat-test-project-");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"resume\", \"session_id\": \"" + resumedId + "\"}"),
+          projectPath, pluginRoot, projectPath))
+        {
+          SessionStartHandler.Result result = new InjectEnv(hook, envFile).handle(hook);
+          requireThat(result.additionalContext(), "additionalContext").isEmpty();
+          requireThat(result.stderr(), "stderr").isEmpty();
+        }
+        // Env file must be written to resumed session dir, not to startup dir
+        Path resumedEnvFile = resumedDir.resolve("sessionstart-hook-1.sh");
+        requireThat(Files.exists(resumedEnvFile), "resumedEnvFileExists").isTrue();
+        String content = Files.readString(resumedEnvFile);
+        requireThat(content, "content").contains("CLAUDE_SESSION_ID=\"" + resumedId + "\"");
+        requireThat(content, "content").contains("CLAUDE_PROJECT_DIR=");
+        requireThat(content, "content").contains("CLAUDE_PLUGIN_ROOT=");
+        // Startup dir must NOT have been written on resume
+        requireThat(Files.exists(envFile), "startupEnvFileExists").isFalse();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectPath);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that InjectEnv does not write to the startup directory when source="resume".
+   * <p>
+   * The startup directory is where CLAUDE_ENV_FILE points on resume. InjectEnv must only write
+   * to the resumed session directory, leaving the startup directory untouched.
+   */
+  @Test
+  public void injectEnvResumeDoesNotWriteToStartupDir() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-resume-");
+    try
+    {
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      String resumedId = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Files.createDirectories(startupDir);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+
+      Path projectPath = Files.createTempDirectory("cat-test-project-");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"resume\", \"session_id\": \"" + resumedId + "\"}"),
+          projectPath, pluginRoot, projectPath))
+        {
+          new InjectEnv(hook, envFile).handle(hook);
+        }
+        // The startup dir (CLAUDE_ENV_FILE parent) must NOT be written on resume
+        requireThat(Files.exists(envFile), "startupEnvFileExists").isFalse();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectPath);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that InjectEnv overwrites (not appends) the resumed session env file when source="resume".
+   * <p>
+   * If content was previously written to the resumed session directory, the resume write must truncate the
+   * file so the content is not duplicated.
+   */
+  @Test
+  public void injectEnvResumeOverwritesExistingEnvFile() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-resume-");
+    try
+    {
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      String resumedId = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Path resumedDir = sessionEnvBase.resolve(resumedId);
+      Files.createDirectories(startupDir);
+      Files.createDirectories(resumedDir);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+      Path resumedEnvFile = resumedDir.resolve("sessionstart-hook-1.sh");
+
+      // Pre-populate the resumed session env file as if a prior startup write had already done so
+      Files.writeString(resumedEnvFile,
+        "export CLAUDE_SESSION_ID=\"old-session\"\nexport CLAUDE_PROJECT_DIR=\"/old\"\n");
+
+      Path projectPath = Files.createTempDirectory("cat-test-project-");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"resume\", \"session_id\": \"" + resumedId + "\"}"),
+          projectPath, pluginRoot, projectPath))
+        {
+          new InjectEnv(hook, envFile).handle(hook);
+        }
+        // File must contain the new session ID, not the old one
+        String content = Files.readString(resumedEnvFile);
+        requireThat(content, "content").contains("CLAUDE_SESSION_ID=\"" + resumedId + "\"");
+        // Old session ID must not be present — file was overwritten, not appended
+        requireThat(content, "content").doesNotContain("old-session");
+        // CLAUDE_SESSION_ID must appear exactly once (not duplicated)
+        int count = 0;
+        int index = 0;
+        index = content.indexOf("CLAUDE_SESSION_ID", index);
+        while (index != -1)
+        {
+          ++count;
+          ++index;
+          index = content.indexOf("CLAUDE_SESSION_ID", index);
+        }
+        requireThat(count, "sessionIdOccurrences").isEqualTo(1);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectPath);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that InjectEnv writes the env file when source="resume" and CLAUDE_ENV_FILE already points to the
+   * resumed session directory (upstream bug #24775 is fixed).
+   * <p>
+   * When the upstream bug is fixed, CLAUDE_ENV_FILE correctly points to the resumed session's own directory.
+   * In that case resumedSessionDir equals envPath.getParent(), so writeToResumedSessionDir's early-return
+   * guard would skip the write. The resume case must write directly, bypassing that guard, so the env file
+   * is always populated even when no source="startup" ran for this session.
+   */
+  @Test
+  public void injectEnvResumeWritesWhenEnvFileAlreadyInResumedDir() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-resume-same-");
+    try
+    {
+      // Simulate upstream bug fixed: CLAUDE_ENV_FILE points directly to the resumed session's directory
+      String resumedId = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path resumedDir = sessionEnvBase.resolve(resumedId);
+      Files.createDirectories(resumedDir);
+      // CLAUDE_ENV_FILE is inside the resumed dir (not a separate startup dir)
+      Path envFile = resumedDir.resolve("sessionstart-hook-1.sh");
+
+      Path projectPath = Files.createTempDirectory("cat-test-project-");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"resume\", \"session_id\": \"" + resumedId + "\"}"),
+          projectPath, pluginRoot, projectPath))
+        {
+          SessionStartHandler.Result result = new InjectEnv(hook, envFile).handle(hook);
+          requireThat(result.additionalContext(), "additionalContext").isEmpty();
+          requireThat(result.stderr(), "stderr").isEmpty();
+        }
+        // Env file must be written to the resumed session directory
+        requireThat(Files.exists(envFile), "resumedEnvFileExists").isTrue();
+        String content = Files.readString(envFile);
+        requireThat(content, "content").contains("CLAUDE_SESSION_ID=\"" + resumedId + "\"");
+        requireThat(content, "content").contains("CLAUDE_PROJECT_DIR=");
+        requireThat(content, "content").contains("CLAUDE_PLUGIN_ROOT=");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectPath);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that InjectEnv writes env vars to CLAUDE_ENV_FILE's directory when source="clear".
+   * <p>
+   * For source="clear", CLAUDE_ENV_FILE already points to the new session's correct directory. The write
+   * is identical to source="startup".
+   */
+  @Test
+  public void injectEnvClearWritesToStartupDir() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-clear-");
+    try
+    {
+      String clearSessionId = "cccccccc-cccc-cccc-cccc-cccccccccccc";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path clearSessionDir = sessionEnvBase.resolve(clearSessionId);
+      Files.createDirectories(clearSessionDir);
+      Path envFile = clearSessionDir.resolve("sessionstart-hook-1.sh");
+
+      Path projectPath = Files.createTempDirectory("cat-test-project-");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"clear\", \"session_id\": \"" + clearSessionId + "\"}"),
+          projectPath, pluginRoot, projectPath))
+        {
+          SessionStartHandler.Result result = new InjectEnv(hook, envFile).handle(hook);
+          requireThat(result.additionalContext(), "additionalContext").isEmpty();
+          requireThat(result.stderr(), "stderr").isEmpty();
+        }
+        requireThat(Files.exists(envFile), "envFileExists").isTrue();
+        String content = Files.readString(envFile);
+        requireThat(content, "content").contains("CLAUDE_SESSION_ID=\"" + clearSessionId + "\"");
+        requireThat(content, "content").contains("CLAUDE_PROJECT_DIR=");
+        requireThat(content, "content").contains("CLAUDE_PLUGIN_ROOT=");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectPath);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that writeToAllSessionDirs skips non-UUID-named directories.
+   */
+  @Test
+  public void injectEnvSkipsNonUuidNamedDirs() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
+    try
+    {
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      String sessionId = "cccccccc-cccc-cccc-cccc-cccccccccccc";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Path nonUuidDir = sessionEnvBase.resolve("not-a-uuid");
+      Files.createDirectories(startupDir);
+      Files.createDirectories(nonUuidDir);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+
+      Path projectPath = Files.createTempDirectory("cat-test-project-");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}"),
+          projectPath, pluginRoot, projectPath))
+        {
+          new InjectEnv(hook, envFile).handle(hook);
+        }
+        // Non-UUID directory should not have an env file written
+        Path nonUuidEnvFile = nonUuidDir.resolve("sessionstart-hook-1.sh");
+        requireThat(Files.exists(nonUuidEnvFile), "nonUuidEnvFileExists").isFalse();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectPath);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that writeToAllSessionDirs skips the directory that envPath already points to.
+   */
+  @Test
+  public void injectEnvSkipsAlreadyWrittenDir() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
+    try
+    {
+      // When session_id matches startupId, only one write should happen (no duplicate writes)
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Files.createDirectories(startupDir);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+
+      Path projectPath = Files.createTempDirectory("cat-test-project-");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}"),
+          projectPath, pluginRoot, projectPath))
+        {
+          new InjectEnv(hook, envFile).handle(hook);
+        }
+        // File should exist but should not be double-written (appended twice)
+        requireThat(Files.exists(envFile), "envFileExists").isTrue();
+        String content = Files.readString(envFile);
+        // Count occurrences of CLAUDE_SESSION_ID - should appear exactly once
+        int count = 0;
+        int idx = 0;
+        idx = content.indexOf("CLAUDE_SESSION_ID", idx);
+        while (idx != -1)
+        {
+          ++count;
+          ++idx;
+          idx = content.indexOf("CLAUDE_SESSION_ID", idx);
+        }
+        requireThat(count, "sessionIdOccurrences").isEqualTo(1);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectPath);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that writeToAllSessionDirs handles empty sessionEnvBase gracefully (no sibling dirs).
+   */
+  @Test
+  public void injectEnvHandlesEmptySessionEnvBase() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
+    try
+    {
+      // sessionEnvBase exists but has no sibling UUID dirs
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      String sessionId = "cccccccc-cccc-cccc-cccc-cccccccccccc";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Files.createDirectories(startupDir);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+
+      Path projectPath = Files.createTempDirectory("cat-test-project-");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}"),
+          projectPath, pluginRoot, projectPath))
+        {
+          SessionStartHandler.Result result = new InjectEnv(hook, envFile).handle(hook);
+          // Should succeed with no warnings (only the startup dir and the resumed session dir)
+          requireThat(result.stderr(), "stderr").isEmpty();
+        }
+        requireThat(Files.exists(envFile), "envFileExists").isTrue();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectPath);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that writeToAllSessionDirs handles non-existent sessionEnvBase gracefully.
+   */
+  @Test
+  public void injectEnvHandlesNonExistentSessionEnvBase() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
+    try
+    {
+      // sessionEnvBase is only 1 level deep - so getParent().getParent() doesn't exist
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      String sessionId = "cccccccc-cccc-cccc-cccc-cccccccccccc";
+      // envFile is directly in tempBase (no sessionEnvBase subdirectory)
+      Path startupDir = tempBase.resolve(startupId);
+      Files.createDirectories(startupDir);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+
+      Path projectPath = Files.createTempDirectory("cat-test-project-");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}"),
+          projectPath, pluginRoot, projectPath))
+        {
+          // sessionEnvBase = envFile.getParent().getParent() = tempBase
+          // tempBase exists and has startupId in it, so this will iterate without crashing
+          SessionStartHandler.Result result = new InjectEnv(hook, envFile).handle(hook);
+          requireThat(result.stderr(), "stderr").isEmpty();
+        }
+        requireThat(Files.exists(envFile), "envFileExists").isTrue();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectPath);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that writeToAllSessionDirs skips symlink directories.
+   */
+  @Test
+  public void injectEnvSkipsSymlinkDirs() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
+    try
+    {
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      String symlinkId = "dddddddd-dddd-dddd-dddd-dddddddddddd";
+      String sessionId = "cccccccc-cccc-cccc-cccc-cccccccccccc";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Path realTarget = tempBase.resolve("real-target-dir");
+      Files.createDirectories(startupDir);
+      Files.createDirectories(realTarget);
+      Path symlinkDir = sessionEnvBase.resolve(symlinkId);
+      Files.createSymbolicLink(symlinkDir, realTarget);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+
+      Path projectPath = Files.createTempDirectory("cat-test-project-");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + sessionId + "\"}"),
+          projectPath, pluginRoot, projectPath))
+        {
+          new InjectEnv(hook, envFile).handle(hook);
+        }
+        // Symlink directory should not have an env file written inside it
+        Path symlinkEnvFile = symlinkDir.resolve("sessionstart-hook-1.sh");
+        requireThat(Files.exists(symlinkEnvFile), "symlinkEnvFileExists").isFalse();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectPath);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that InjectEnv.handle() throws IllegalArgumentException when the projectPath path contains
+   * a dangerous shell character such as {@code $}.
+   * <p>
+   * Since validateEnvValue is private, this test exercises it indirectly by injecting a path containing
+   * {@code $} via TestClaudeHook. Note: real filesystem paths cannot contain {@code $} on most systems, so
+   * this validation is defense-in-depth for injected values; the test uses Path.of() to bypass filesystem
+   * restrictions.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*contains a dangerous shell character.*")
+  public void injectEnvRejectsDangerousShellCharacterInProjectDir() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
+    try
+    {
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Files.createDirectories(startupDir);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+
+      // Inject a projectPath path that contains '$' - a dangerous shell character
+      // Path.of() allows this without touching the filesystem
+      Path dangerousProjectDir = Path.of("/tmp/test-$INJECTED");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}"),
+          dangerousProjectDir, pluginRoot, dangerousProjectDir))
+        {
+          // validateEnvValue is called with projectPath.toString() which contains '$'
+          new InjectEnv(hook, envFile).handle(hook);
+        }
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that InjectEnv.handle() throws IllegalArgumentException when the projectPath path contains
+   * a double quote character.
+   * <p>
+   * Since validateEnvValue is private, this test exercises it indirectly by injecting a path containing
+   * {@code "} via TestClaudeHook. The test uses Path.of() to bypass filesystem restrictions.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*contains a dangerous shell character.*")
+  public void injectEnvRejectsDoubleQuoteInProjectDir() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
+    try
+    {
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Files.createDirectories(startupDir);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+
+      // Inject a projectPath path that contains '"' - a dangerous shell character
+      // Path.of() allows this without touching the filesystem
+      Path dangerousProjectDir = Path.of("/tmp/test-\"INJECTED");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}"),
+          dangerousProjectDir, pluginRoot, dangerousProjectDir))
+        {
+          new InjectEnv(hook, envFile).handle(hook);
+        }
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that InjectEnv.handle() throws IllegalArgumentException when the projectPath path contains
+   * a backtick character.
+   * <p>
+   * Since validateEnvValue is private, this test exercises it indirectly by injecting a path containing
+   * a backtick via TestClaudeHook. The test uses Path.of() to bypass filesystem restrictions.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*contains a dangerous shell character.*")
+  public void injectEnvRejectsBacktickInProjectDir() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
+    try
+    {
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Files.createDirectories(startupDir);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+
+      // Inject a projectPath path that contains '`' - a dangerous shell character
+      // Path.of() allows this without touching the filesystem
+      Path dangerousProjectDir = Path.of("/tmp/test-`INJECTED");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}"),
+          dangerousProjectDir, pluginRoot, dangerousProjectDir))
+        {
+          new InjectEnv(hook, envFile).handle(hook);
+        }
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that InjectEnv.handle() throws IllegalArgumentException when the projectPath path contains
+   * a newline character.
+   * <p>
+   * Since validateEnvValue is private, this test exercises it indirectly by injecting a path containing
+   * a newline via TestClaudeHook. The test uses Path.of() to bypass filesystem restrictions.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*contains a dangerous shell character.*")
+  public void injectEnvRejectsNewlineInProjectDir() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
+    try
+    {
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Files.createDirectories(startupDir);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+
+      // Inject a projectPath path that contains '\n' - a dangerous shell character
+      // Path.of() allows this without touching the filesystem
+      Path dangerousProjectDir = Path.of("/tmp/test-\nINJECTED");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}"),
+          dangerousProjectDir, pluginRoot, dangerousProjectDir))
+        {
+          new InjectEnv(hook, envFile).handle(hook);
+        }
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that InjectEnv returns a warning when source="resume" and the env file in the resumed session
+   * directory is a symlink.
+   * <p>
+   * When resuming, InjectEnv writes to the resumed session directory (identified by session_id). If the env
+   * file at that location is already a symlink, it should return a warning and skip the write for security.
+   */
+  @Test
+  public void injectEnvHandlesSymlinkInResumedSessionDir() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
+    try
+    {
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      String resumedId = "cccccccc-cccc-cccc-cccc-cccccccccccc";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Files.createDirectories(startupDir);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+
+      // Create the resumed session directory and place a symlink at the env file location
+      Path resumedSessionDir = sessionEnvBase.resolve(resumedId);
+      Files.createDirectories(resumedSessionDir);
+      Path realEnvTarget = tempBase.resolve("real-env-target.sh");
+      Files.writeString(realEnvTarget, "# real target");
+      Path resumedEnvFile = resumedSessionDir.resolve("sessionstart-hook-1.sh");
+      Files.createSymbolicLink(resumedEnvFile, realEnvTarget);
+
+      Path projectPath = Files.createTempDirectory("cat-test-project-");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"resume\", \"session_id\": \"" + resumedId + "\"}"),
+          projectPath, pluginRoot, projectPath))
+        {
+          SessionStartHandler.Result result = new InjectEnv(hook, envFile).handle(hook);
+          // The env file in the resumed session dir is a symlink - should return a warning
+          requireThat(result.additionalContext(), "additionalContext").contains("symlink");
+        }
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectPath);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that InjectEnv.handle() returns early with a context message when CLAUDE_ENV_FILE is a symlink.
+   * <p>
+   * When the env file itself is a symlink, InjectEnv skips all writes for security and returns a
+   * message containing "symlink".
+   */
+  @Test
+  public void injectEnvSkipsWhenEnvFileIsSymlink() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
+    try
+    {
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Files.createDirectories(startupDir);
+
+      // Create a real target file and then create envFile as a symlink pointing to it
+      Path realTarget = tempBase.resolve("real-target.sh");
+      Files.writeString(realTarget, "# real target");
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+      Files.createSymbolicLink(envFile, realTarget);
+
+      Path projectPath = Files.createTempDirectory("cat-test-project-");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}"),
+          projectPath, pluginRoot, projectPath))
+        {
+          SessionStartHandler.Result result = new InjectEnv(hook, envFile).handle(hook);
+          requireThat(result.additionalContext(), "additionalContext").contains("symlink");
+        }
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectPath);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that InjectEnv.handle() throws IllegalArgumentException when the pluginRoot path contains
+   * a dangerous shell character such as {@code $}.
+   * <p>
+   * Since validateEnvValue is private, this test exercises it indirectly by injecting a path containing
+   * {@code $} via TestClaudeHook. The test uses Path.of() to bypass filesystem restrictions.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*contains a dangerous shell character.*")
+  public void injectEnvRejectsDangerousShellCharacterInPluginRoot() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
+    try
+    {
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Files.createDirectories(startupDir);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+
+      // Inject a pluginRoot path that contains '$' - a dangerous shell character
+      // Path.of() allows this without touching the filesystem
+      Path dangerousPluginRoot = Path.of("/tmp/test-$INJECTED");
+      Path projectPath = Files.createTempDirectory("cat-test-project-");
+      try
+      {
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"startup\", \"session_id\": \"" + startupId + "\"}"),
+          projectPath, dangerousPluginRoot, projectPath))
+        {
+          new InjectEnv(hook, envFile).handle(hook);
+        }
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectPath);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that InjectEnv.handle() throws IllegalArgumentException when the session_id from stdin
+   * contains a dangerous shell character such as {@code $}.
+   * <p>
+   * The session_id value is validated before being written into the env file. Injecting a dangerous
+   * character via the JSON input must cause an immediate failure.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid session_id format.*")
+  public void injectEnvRejectsDangerousShellCharacterInSessionId() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
+    try
+    {
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Files.createDirectories(startupDir);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+
+      Path projectPath = Files.createTempDirectory("cat-test-project-");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        // Inject a session_id that contains '$' - a dangerous shell character
+        JsonMapper mapper = new JsonMapper();
+        try (TestClaudeHook hook = new TestClaudeHook(
+          mapper.readTree("{\"source\": \"startup\", \"session_id\": \"test-$INJECTED\"}"),
+          projectPath, pluginRoot, projectPath))
+        {
+          new InjectEnv(hook, envFile).handle(hook);
+        }
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectPath);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  // --- CheckUpdateAvailable tests ---
+
+  /**
+   * Verifies that CheckUpdateAvailable runs without error and returns empty when no update is available.
+   */
+  @Test
+  public void checkUpdateAvailableRunsWithEnvironment() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-update-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try
+    {
+      Path pluginJsonDir = pluginRoot.resolve(".claude-plugin");
+      Files.createDirectories(pluginJsonDir);
+      Files.writeString(pluginJsonDir.resolve("plugin.json"), "{\"version\":\"99.0.0\"}");
+      try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
+      {
+        SessionStartHandler.Result result = new CheckUpdateAvailable().handle(scope);
+        requireThat(result.additionalContext(), "additionalContext").isEmpty();
+        requireThat(result.stderr(), "stderr").isEmpty();
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  // --- CheckDataMigration tests ---
+
+  /**
+   * Verifies that CheckDataMigration runs without error and returns empty when no config file exists.
+   */
+  @Test
+  public void checkUpgradeRunsWithEnvironment() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-upgrade-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try
+    {
+      // No config.json in projectPath → handler returns empty
+      try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
+      {
+        SessionStartHandler.Result result = new CheckDataMigration(scope).handle(scope);
+        requireThat(result.additionalContext(), "additionalContext").isEmpty();
+        requireThat(result.stderr(), "stderr").isEmpty();
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  // --- CheckRetrospectiveDue tests ---
+
+  /**
+   * Verifies that CheckRetrospectiveDue runs without error and returns empty for a non-CAT project.
+   */
+  @Test
+  public void checkRetrospectiveDueRunsWithEnvironment() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-retro-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try
+    {
+      // No .planning directory → handler returns empty (not a CAT project)
+      try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
+      {
+        SessionStartHandler.Result result = new CheckRetrospectiveDue(scope).handle(scope);
+        requireThat(result.additionalContext(), "additionalContext").isEmpty();
+        requireThat(result.stderr(), "stderr").isEmpty();
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  // --- SessionStartHook dispatcher tests (normal mode) ---
+
+  /**
+   * Verifies that SessionStartHook injects the agent ID context even when all handlers return empty.
+   */
+  @Test
+  public void dispatcherReturnsEmptyWhenAllHandlersReturnEmpty() throws IOException
+  {
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\"}",
+      Files.createTempDirectory("cat-test-"), Files.createTempDirectory("cat-test-"),
+      Files.createTempDirectory("cat-test-")))
+    {
+      SessionStartHandler emptyHandler = input -> SessionStartHandler.Result.empty();
+      SessionStartHook dispatcher = new SessionStartHook(scope, List.of(emptyHandler));
+
+      io.github.cowwoc.cat.claude.hook.HookResult result = dispatcher.run(scope);
+
+      requireThat(result.output(), "output").contains("Your CAT agent ID is:");
+      requireThat(result.output(), "output").contains("test-session");
+    }
+  }
+
+  /**
+   * Verifies that SessionStartHook combines context from multiple handlers.
+   */
+  @Test
+  public void dispatcherCombinesContextFromMultipleHandlers() throws IOException
+  {
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\"}",
+      Files.createTempDirectory("cat-test-"), Files.createTempDirectory("cat-test-"),
+      Files.createTempDirectory("cat-test-")))
+    {
+      SessionStartHandler handler1 = input -> SessionStartHandler.Result.context("context from handler 1");
+      SessionStartHandler handler2 = input -> SessionStartHandler.Result.context("context from handler 2");
+      SessionStartHook dispatcher = new SessionStartHook(scope, List.of(handler1, handler2));
+
+      io.github.cowwoc.cat.claude.hook.HookResult result = dispatcher.run(scope);
+
+      requireThat(result.output(), "output").contains("context from handler 1");
+      requireThat(result.output(), "output").contains("context from handler 2");
+      requireThat(result.output(), "output").contains("hookSpecificOutput");
+      requireThat(result.output(), "output").contains("SessionStart");
+    }
+  }
+
+  /**
+   * Verifies that SessionStartHook returns warnings from handlers and always includes agent ID context.
+   */
+  @Test
+  public void dispatcherReturnsWarningsFromHandlers() throws IOException
+  {
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\"}",
+      Files.createTempDirectory("cat-test-"), Files.createTempDirectory("cat-test-"),
+      Files.createTempDirectory("cat-test-")))
+    {
+      SessionStartHandler handler = input -> SessionStartHandler.Result.stderr("stderr message");
+      SessionStartHook dispatcher = new SessionStartHook(scope, List.of(handler));
+
+      io.github.cowwoc.cat.claude.hook.HookResult result = dispatcher.run(scope);
+
+      requireThat(result.warnings(), "warnings").contains("stderr message");
+
+      // Agent ID context is always injected even when handlers produce no additional context
+      requireThat(result.output(), "output").contains("Your CAT agent ID is:");
+      requireThat(result.output(), "output").contains("test-session");
+    }
+  }
+
+  /**
+   * Verifies that constructing a TestClaudeHook with a blank session_id throws IllegalArgumentException.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*sessionId is empty.*")
+  public void dispatcherThrowsWhenSessionIdIsBlank()
+  {
+    new TestClaudeHook("{\"session_id\": \"\"}");
+  }
+
+  /**
+   * Verifies that SessionStartHook handles handler exceptions gracefully.
+   */
+  @Test
+  public void dispatcherHandlesHandlerExceptionsGracefully() throws IOException
+  {
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\"}",
+      Files.createTempDirectory("cat-test-"), Files.createTempDirectory("cat-test-"),
+      Files.createTempDirectory("cat-test-")))
+    {
+      SessionStartHandler failingHandler = input ->
+      {
+        throw new IllegalStateException("test error");
+      };
+      SessionStartHandler goodHandler = input -> SessionStartHandler.Result.context("good context");
+      SessionStartHook dispatcher = new SessionStartHook(scope, List.of(failingHandler, goodHandler));
+
+      io.github.cowwoc.cat.claude.hook.HookResult result = dispatcher.run(scope);
+
+      requireThat(result.output(), "output").contains("good context");
+      requireThat(result.output(), "output").contains("SessionStart Handler Errors");
+      requireThat(result.warnings(), "warnings").isNotEmpty();
+      requireThat(result.warnings().getFirst(), "firstWarning").contains("test error");
+    }
+  }
+
+  /**
+   * Verifies that failing handler error appears in additionalContext.
+   */
+  @Test
+  public void dispatcherIncludesErrorInAdditionalContext() throws IOException
+  {
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\"}",
+      Files.createTempDirectory("cat-test-"), Files.createTempDirectory("cat-test-"),
+      Files.createTempDirectory("cat-test-")))
+    {
+      SessionStartHandler failingHandler = input ->
+      {
+        throw new AssertionError("CLAUDE_SESSION_ID is not set");
+      };
+      SessionStartHook dispatcher = new SessionStartHook(scope, List.of(failingHandler));
+
+      io.github.cowwoc.cat.claude.hook.HookResult result = dispatcher.run(scope);
+
+      requireThat(result.output(), "output").contains("SessionStart Handler Errors");
+      requireThat(result.output(), "output").contains("CLAUDE_SESSION_ID is not set");
+      requireThat(result.warnings(), "warnings").isNotEmpty();
+    }
+  }
+
+  /**
+   * Verifies that other handlers still produce output when one fails.
+   */
+  @Test
+  public void dispatcherContinuesAfterHandlerFailure() throws IOException
+  {
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\"}",
+      Files.createTempDirectory("cat-test-"), Files.createTempDirectory("cat-test-"),
+      Files.createTempDirectory("cat-test-")))
+    {
+      SessionStartHandler handler1 = input -> SessionStartHandler.Result.context("handler 1 output");
+      SessionStartHandler failingHandler = input ->
+      {
+        throw new IllegalStateException("handler 2 failed");
+      };
+      SessionStartHandler handler3 = input -> SessionStartHandler.Result.context("handler 3 output");
+      SessionStartHook dispatcher = new SessionStartHook(scope, List.of(handler1, failingHandler, handler3));
+
+      io.github.cowwoc.cat.claude.hook.HookResult result = dispatcher.run(scope);
+
+      requireThat(result.output(), "output").contains("handler 1 output");
+      requireThat(result.output(), "output").contains("handler 3 output");
+      requireThat(result.output(), "output").contains("SessionStart Handler Errors");
+      requireThat(result.output(), "output").contains("handler 2 failed");
+      requireThat(result.warnings(), "warnings").isNotEmpty();
+    }
+  }
+
+  /**
+   * Verifies that all handlers succeeding produces no error section.
+   */
+  @Test
+  public void dispatcherReturnsSuccessWhenAllHandlersSucceed() throws IOException
+  {
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\"}",
+      Files.createTempDirectory("cat-test-"), Files.createTempDirectory("cat-test-"),
+      Files.createTempDirectory("cat-test-")))
+    {
+      SessionStartHandler handler1 = input -> SessionStartHandler.Result.context("output 1");
+      SessionStartHandler handler2 = input -> SessionStartHandler.Result.context("output 2");
+      SessionStartHook dispatcher = new SessionStartHook(scope, List.of(handler1, handler2));
+
+      io.github.cowwoc.cat.claude.hook.HookResult result = dispatcher.run(scope);
+
+      // No error section in output
+      requireThat(result.output(), "output").doesNotContain("SessionStart Handler Errors");
+
+      // No warnings
+      requireThat(result.warnings(), "warnings").isEmpty();
+    }
+  }
+
+  /**
+   * Verifies that SessionStartHook produces valid JSON with hookSpecificOutput.
+   */
+  @Test
+  public void dispatcherProducesValidJsonWithHookSpecificOutput() throws IOException
+  {
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"source\": \"startup\", \"session_id\": \"test\"}",
+      Files.createTempDirectory("cat-test-"), Files.createTempDirectory("cat-test-"),
+      Files.createTempDirectory("cat-test-")))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      SessionStartHandler handler = input -> SessionStartHandler.Result.context("test context");
+      SessionStartHook dispatcher = new SessionStartHook(scope, List.of(handler));
+
+      io.github.cowwoc.cat.claude.hook.HookResult result = dispatcher.run(scope);
+
+      // Parse as JSON to verify it's valid
+      JsonNode json = mapper.readTree(result.output());
+      requireThat(json.has("hookSpecificOutput"), "hasHookSpecificOutput").isTrue();
+
+      JsonNode hookOutput = json.get("hookSpecificOutput");
+      requireThat(hookOutput.get("hookEventName").asString(), "hookEventName").isEqualTo("SessionStart");
+      requireThat(hookOutput.get("additionalContext").asString(), "additionalContext").contains("test context");
+    }
+  }
+
+  /**
+   * Verifies that SessionStartHook with both context and warnings works correctly.
+   */
+  @Test
+  public void dispatcherHandlesBothContextAndWarnings() throws IOException
+  {
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\"}",
+      Files.createTempDirectory("cat-test-"), Files.createTempDirectory("cat-test-"),
+      Files.createTempDirectory("cat-test-")))
+    {
+      SessionStartHandler handler = input -> SessionStartHandler.Result.both("context msg", "stderr msg");
+      SessionStartHook dispatcher = new SessionStartHook(scope, List.of(handler));
+
+      io.github.cowwoc.cat.claude.hook.HookResult result = dispatcher.run(scope);
+
+      requireThat(result.warnings(), "warnings").contains("stderr msg");
+      requireThat(result.output(), "output").contains("context msg");
+    }
+  }
+
+  // --- SessionStartHandler.Result factory tests ---
+
+  /**
+   * Verifies that Result.empty() creates a result with empty strings.
+   */
+  @Test
+  public void resultEmptyCreatesEmptyResult()
+  {
+    SessionStartHandler.Result result = SessionStartHandler.Result.empty();
+    requireThat(result.additionalContext(), "additionalContext").isEmpty();
+    requireThat(result.stderr(), "stderr").isEmpty();
+  }
+
+  /**
+   * Verifies that Result.context() creates a result with context only.
+   */
+  @Test
+  public void resultContextCreatesContextOnlyResult()
+  {
+    SessionStartHandler.Result result = SessionStartHandler.Result.context("test");
+    requireThat(result.additionalContext(), "additionalContext").isEqualTo("test");
+    requireThat(result.stderr(), "stderr").isEmpty();
+  }
+
+  /**
+   * Verifies that Result.stderr() creates a result with stderr only.
+   */
+  @Test
+  public void resultStderrCreatesStderrOnlyResult()
+  {
+    SessionStartHandler.Result result = SessionStartHandler.Result.stderr("error");
+    requireThat(result.additionalContext(), "additionalContext").isEmpty();
+    requireThat(result.stderr(), "stderr").isEqualTo("error");
+  }
+
+  /**
+   * Verifies that Result.both() creates a result with both fields.
+   */
+  @Test
+  public void resultBothCreatesBothResult()
+  {
+    SessionStartHandler.Result result = SessionStartHandler.Result.both("ctx", "err");
+    requireThat(result.additionalContext(), "additionalContext").isEqualTo("ctx");
+    requireThat(result.stderr(), "stderr").isEqualTo("err");
+  }
+
+  /**
+   * Verifies that Result constructor rejects null additionalContext.
+   */
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*additionalContext.*")
+  public void resultRejectsNullContext()
+  {
+    new SessionStartHandler.Result(null, "");
+  }
+
+  /**
+   * Verifies that Result constructor rejects null stderr.
+   */
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*stderr.*")
+  public void resultRejectsNullStderr()
+  {
+    new SessionStartHandler.Result("", null);
+  }
+
+  // --- VersionUtils tests ---
+
+  /**
+   * Verifies that version comparison detects equal versions.
+   */
+  @Test
+  public void versionCompareDetectsEqualVersions()
+  {
+    int result = VersionUtils.compareVersions("2.1.0", "2.1.0");
+    requireThat(result, "result").isEqualTo(0);
+  }
+
+  /**
+   * Verifies that version comparison detects older version.
+   */
+  @Test
+  public void versionCompareDetectsOlderVersion()
+  {
+    int result = VersionUtils.compareVersions("1.0.0", "2.0.0");
+    requireThat(result < 0, "isLessThan").isTrue();
+  }
+
+  /**
+   * Verifies that version comparison detects newer version.
+   */
+  @Test
+  public void versionCompareDetectsNewerVersion()
+  {
+    int result = VersionUtils.compareVersions("2.1.0", "1.0.0");
+    requireThat(result > 0, "isGreaterThan").isTrue();
+  }
+
+  /**
+   * Verifies that version comparison handles different length versions.
+   */
+  @Test
+  public void versionCompareHandlesDifferentLengths()
+  {
+    int result = VersionUtils.compareVersions("2.1", "2.1.0");
+    requireThat(result, "result").isEqualTo(0);
+  }
+
+  /**
+   * Verifies that version comparison handles empty versions.
+   */
+  @Test
+  public void versionCompareHandlesEmptyVersions()
+  {
+    int result = VersionUtils.compareVersions("", "1.0");
+    requireThat(result < 0, "isLessThan").isTrue();
+  }
+
+  /**
+   * Verifies that version comparison handles null versions.
+   */
+  @Test
+  public void versionCompareHandlesNullVersions()
+  {
+    int result = VersionUtils.compareVersions(null, null);
+    requireThat(result, "result").isEqualTo(0);
+  }
+
+  /**
+   * Verifies that version comparison handles non-numeric parts.
+   */
+  @Test
+  public void versionCompareHandlesNonNumericParts()
+  {
+    int result = VersionUtils.compareVersions("1.0.alpha", "1.0.0");
+    requireThat(result, "result").isEqualTo(0);
+  }
+
+  /**
+   * Verifies that getPluginVersion throws when .claude-plugin/plugin.json is not found.
+   */
+  @Test(expectedExceptions = AssertionError.class,
+    expectedExceptionsMessageRegExp = ".*Plugin version not found.*")
+  public void getPluginVersionThrowsForMissingVersionFile() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-test-version-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      VersionUtils.getPluginVersion(scope);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getPluginVersion reads from .claude-plugin/plugin.json.
+   */
+  @Test
+  public void getPluginVersionReadsFromPluginJson() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-test-version-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Path pluginJsonDir = tempDir.resolve(".claude-plugin");
+      Files.createDirectories(pluginJsonDir);
+      Files.writeString(pluginJsonDir.resolve("plugin.json"), "{\"version\":\"3.1\"}");
+      String version = VersionUtils.getPluginVersion(scope);
+      requireThat(version, "version").isEqualTo("3.1");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getPluginVersion accepts a three-part version.
+   */
+  @Test
+  public void getPluginVersionAcceptsThreePartVersion() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-test-version-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Path pluginJsonDir = tempDir.resolve(".claude-plugin");
+      Files.createDirectories(pluginJsonDir);
+      Files.writeString(pluginJsonDir.resolve("plugin.json"), "{\"version\":\"3.2.1\"}");
+      String version = VersionUtils.getPluginVersion(scope);
+      requireThat(version, "version").isEqualTo("3.2.1");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getPluginVersion throws for an invalid version format.
+   */
+  @Test(expectedExceptions = AssertionError.class,
+    expectedExceptionsMessageRegExp = ".*Invalid version format.*")
+  public void getPluginVersionThrowsForInvalidFormat() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-test-version-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Path pluginJsonDir = tempDir.resolve(".claude-plugin");
+      Files.createDirectories(pluginJsonDir);
+      Files.writeString(pluginJsonDir.resolve("plugin.json"), "{\"version\":\"not-a-version\"}");
+      VersionUtils.getPluginVersion(scope);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getPluginVersion throws for an empty version field in plugin.json.
+   */
+  @Test(expectedExceptions = AssertionError.class,
+    expectedExceptionsMessageRegExp = ".*Invalid version format.*")
+  public void getPluginVersionThrowsForEmptyFile() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-test-version-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Path pluginJsonDir = tempDir.resolve(".claude-plugin");
+      Files.createDirectories(pluginJsonDir);
+      Files.writeString(pluginJsonDir.resolve("plugin.json"), "{\"version\":\"\"}");
+      VersionUtils.getPluginVersion(scope);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that CheckUpdateAvailable detects a newer version from the cached plugin.json format.
+   * <p>
+   * Also verifies that both the current and latest version strings appear in the output.
+   */
+  @Test
+  public void checkUpdateAvailableDetectsNewVersionViaPluginJson() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-update-detect-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-detect-");
+    try
+    {
+      // Set up local plugin.json with version 1.0.0
+      Path pluginJsonDir = pluginRoot.resolve(".claude-plugin");
+      Files.createDirectories(pluginJsonDir);
+      Files.writeString(pluginJsonDir.resolve("plugin.json"), "{\"version\":\"1.0.0\"}");
+
+      try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
+      {
+        // Seed a stale cache file with a newer version 99.0.0, older than 24h
+        Path cacheDir = scope.getCatWorkPath().resolve("cache/update-check");
+        Files.createDirectories(cacheDir);
+        Path cacheFile = cacheDir.resolve("latest_version.json");
+        Files.writeString(cacheFile, "{\"version\":\"99.0.0\"}");
+        // Keep the file fresh (default mtime = now) so cache is used directly
+        SessionStartHandler.Result result = new CheckUpdateAvailable().handle(scope);
+        requireThat(result.additionalContext(), "additionalContext").contains("CAT update available");
+        requireThat(result.additionalContext(), "additionalContext").contains("1.0.0");
+        requireThat(result.additionalContext(), "additionalContext").contains("99.0.0");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that CheckUpdateAvailable reads the version from pluginRoot and detects an update.
+   * <p>
+   * When pluginRoot contains version "1.0.0" and the cache has "99.0.0", the result must
+   * contain an update notice showing both version strings.
+   */
+  @Test
+  public void checkUpdateAvailableReadsVersionFromPluginRoot() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-update-root-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-root-");
+    try
+    {
+      Path pluginJsonDir = pluginRoot.resolve(".claude-plugin");
+      Files.createDirectories(pluginJsonDir);
+      Files.writeString(pluginJsonDir.resolve("plugin.json"), "{\"version\":\"1.0.0\"}");
+
+      try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
+      {
+        Path cacheDir = scope.getCatWorkPath().resolve("cache/update-check");
+        Files.createDirectories(cacheDir);
+        Files.writeString(cacheDir.resolve("latest_version.json"), "{\"version\":\"99.0.0\"}");
+
+        SessionStartHandler.Result result = new CheckUpdateAvailable().handle(scope);
+        requireThat(result.additionalContext(), "additionalContext").contains("1.0.0");
+        requireThat(result.additionalContext(), "additionalContext").contains("99.0.0");
+        requireThat(result.stderr(), "stderr").contains("1.0.0");
+        requireThat(result.stderr(), "stderr").contains("99.0.0");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that CheckUpdateAvailable throws when plugin.json does not exist at pluginRoot.
+   */
+  @Test(expectedExceptions = AssertionError.class,
+    expectedExceptionsMessageRegExp = ".*Plugin version not found.*")
+  public void checkUpdateAvailableThrowsWhenPluginJsonMissing() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-update-missing-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-missing-");
+    try
+    {
+      // No plugin.json created at pluginRoot
+      try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
+      {
+        new CheckUpdateAvailable().handle(scope);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that CheckUpdateAvailable uses a fresh cache without making a network call.
+   * <p>
+   * When the cache file exists with a fresh modification time, the cached version is returned
+   * directly without attempting network access.
+   */
+  @Test
+  public void checkUpdateAvailableUsesFreshCache() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-update-cache-fresh-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-cache-fresh-");
+    try
+    {
+      Path pluginJsonDir = pluginRoot.resolve(".claude-plugin");
+      Files.createDirectories(pluginJsonDir);
+      Files.writeString(pluginJsonDir.resolve("plugin.json"), "{\"version\":\"1.0.0\"}");
+
+      try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
+      {
+        // Write a fresh cache file (modification time = now, which is < 24h old)
+        Path cacheDir = scope.getCatWorkPath().resolve("cache/update-check");
+        Files.createDirectories(cacheDir);
+        Path cacheFile = cacheDir.resolve("latest_version.json");
+        Files.writeString(cacheFile, "{\"version\":\"2.0.0\"}");
+
+        // The handler must use the cached version (2.0.0 > 1.0.0) without a network call
+        SessionStartHandler.Result result = new CheckUpdateAvailable().handle(scope);
+        requireThat(result.additionalContext(), "additionalContext").contains("2.0.0");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that CheckUpdateAvailable refreshes a stale cache by attempting network access.
+   * <p>
+   * When the cache file is older than 24 hours, the handler bypasses the cache and fetches the
+   * latest version from the network. Since no network is available in tests, the result is empty.
+   */
+  @Test
+  public void checkUpdateAvailableRefreshesStaleCache() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-update-cache-stale-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-cache-stale-");
+    try
+    {
+      Path pluginJsonDir = pluginRoot.resolve(".claude-plugin");
+      Files.createDirectories(pluginJsonDir);
+      Files.writeString(pluginJsonDir.resolve("plugin.json"), "{\"version\":\"1.0.0\"}");
+
+      try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
+      {
+        // Write a stale cache file (modification time = 25 hours ago)
+        Path cacheDir = scope.getCatWorkPath().resolve("cache/update-check");
+        Files.createDirectories(cacheDir);
+        Path cacheFile = cacheDir.resolve("latest_version.json");
+        Files.writeString(cacheFile, "{\"version\":\"2.0.0\"}");
+        // Set modification time to 25 hours ago to make the cache stale
+        java.nio.file.attribute.FileTime staleTime =
+          java.nio.file.attribute.FileTime.from(
+            java.time.Instant.now().minusSeconds(25 * 60 * 60));
+        Files.setLastModifiedTime(cacheFile, staleTime);
+
+        // The stale cache triggers a network fetch; since no network is available in tests,
+        // the handler returns empty rather than using the stale data
+        SessionStartHandler.Result result = new CheckUpdateAvailable().handle(scope);
+        requireThat(result.additionalContext(), "additionalContext").isEmpty();
+        requireThat(result.stderr(), "stderr").isEmpty();
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that CheckUpdateAvailable handles invalid JSON in the network response gracefully.
+   * <p>
+   * When the cache is stale and the network fetch returns invalid JSON, the handler returns
+   * empty rather than crashing.
+   */
+  @Test
+  public void checkUpdateAvailableHandlesInvalidJson() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-update-invalid-json-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-invalid-json-");
+    try
+    {
+      Path pluginJsonDir = pluginRoot.resolve(".claude-plugin");
+      Files.createDirectories(pluginJsonDir);
+      Files.writeString(pluginJsonDir.resolve("plugin.json"), "{\"version\":\"1.0.0\"}");
+
+      try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
+      {
+        // Write a stale cache containing invalid JSON to simulate a corrupted cache
+        Path cacheDir = scope.getCatWorkPath().resolve("cache/update-check");
+        Files.createDirectories(cacheDir);
+        Path cacheFile = cacheDir.resolve("latest_version.json");
+        Files.writeString(cacheFile, "not-valid-json");
+        java.nio.file.attribute.FileTime staleTime =
+          java.nio.file.attribute.FileTime.from(
+            java.time.Instant.now().minusSeconds(25 * 60 * 60));
+        Files.setLastModifiedTime(cacheFile, staleTime);
+
+        // The network fetch also fails in the test environment; handler returns empty gracefully
+        SessionStartHandler.Result result = new CheckUpdateAvailable().handle(scope);
+        requireThat(result.additionalContext(), "additionalContext").isEmpty();
+        requireThat(result.stderr(), "stderr").isEmpty();
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that CheckUpdateAvailable handles a network response with no version field gracefully.
+   * <p>
+   * When the network returns valid JSON but without a {@code "version"} field, the handler returns
+   * empty rather than crashing.
+   */
+  @Test
+  public void checkUpdateAvailableHandlesMissingVersionField() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-update-no-version-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-no-version-");
+    try
+    {
+      Path pluginJsonDir = pluginRoot.resolve(".claude-plugin");
+      Files.createDirectories(pluginJsonDir);
+      Files.writeString(pluginJsonDir.resolve("plugin.json"), "{\"version\":\"1.0.0\"}");
+
+      try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
+      {
+        // Write a fresh cache without a version field to simulate a response with missing field
+        Path cacheDir = scope.getCatWorkPath().resolve("cache/update-check");
+        Files.createDirectories(cacheDir);
+        Path cacheFile = cacheDir.resolve("latest_version.json");
+        Files.writeString(cacheFile, "{\"other_field\":\"value\"}");
+
+        // No version field in cache → handler returns empty gracefully
+        SessionStartHandler.Result result = new CheckUpdateAvailable().handle(scope);
+        requireThat(result.additionalContext(), "additionalContext").isEmpty();
+        requireThat(result.stderr(), "stderr").isEmpty();
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+}

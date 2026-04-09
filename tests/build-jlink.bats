@@ -20,7 +20,7 @@ setup() {
     # Setup for launcher generation tests
     OUTPUT_DIR="$(mktemp -d)"
     mkdir -p "$OUTPUT_DIR/bin"
-    MODULE_NAME="io.github.cowwoc.cat.hooks"
+    MODULE_NAME="io.github.cowwoc.cat.client.claude"
     HANDLERS=("test-launcher:PreToolUseHook")
     ENABLE_ASSERTIONS=false
 }

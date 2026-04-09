@@ -26,10 +26,10 @@ aot_cache="${OUTPUT_DIR}/lib/server/aot-cache.aot"
 log()   { echo "[aot-harness] $*"; }
 error() { echo "[aot-harness] ERROR: $*" >&2; exit 1; }
 
-MODULE_NAME="io.github.cowwoc.cat.hooks"
+MODULE_NAME="io.github.cowwoc.cat.client.claude"
 
 handler_main() {
-  echo "${MODULE_NAME}/${MODULE_NAME}.$1"
+  echo "${MODULE_NAME}/io.github.cowwoc.cat.claude.hook.$1"
 }
 
 log "Recording AOT training data..."

@@ -1,0 +1,1443 @@
+/*
+ * Copyright (c) 2026 Gili Tzabari. All rights reserved.
+ *
+ * Licensed under the CAT Commercial License.
+ * See LICENSE.md in the project root for license terms.
+ */
+package io.github.cowwoc.cat.client.test;
+
+import io.github.cowwoc.cat.claude.hook.util.IssueLock;
+import io.github.cowwoc.cat.claude.hook.util.IssueLock.LockListEntry;
+import io.github.cowwoc.cat.claude.hook.util.IssueLock.LockResult;
+import org.testng.annotations.Test;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+
+/**
+ * Tests for IssueLock.
+ * <p>
+ * Tests verify lock acquisition, release, force-release, check, and list operations.
+ * Each test is self-contained with temporary directories to support parallel execution.
+ */
+public class IssueLockTest
+{
+  /**
+   * Verifies that acquiring a lock succeeds when no lock exists.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void acquireSucceedsWhenNoLockExists() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId = UUID.randomUUID().toString();
+
+        LockResult result = lock.acquire("test-issue", sessionId, "/path/to/worktree");
+
+        requireThat(result, "result").isInstanceOf(LockResult.Acquired.class);
+        LockResult.Acquired acquired = (LockResult.Acquired) result;
+        requireThat(acquired.status(), "status").isEqualTo("acquired");
+        requireThat(acquired.message(), "message").contains("successfully");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that acquiring a lock is idempotent when the same session tries again.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void acquireIsIdempotentForSameSession() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId = UUID.randomUUID().toString();
+
+        lock.acquire("test-issue", sessionId, "/path/to/worktree");
+        LockResult result = lock.acquire("test-issue", sessionId, "/path/to/worktree");
+
+        requireThat(result, "result").isInstanceOf(LockResult.Acquired.class);
+        LockResult.Acquired acquired = (LockResult.Acquired) result;
+        requireThat(acquired.status(), "status").isEqualTo("acquired");
+        requireThat(acquired.message(), "message").contains("already held");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that acquiring a lock fails when another session holds it.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void acquireFailsWhenLockedByAnotherSession() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId1 = UUID.randomUUID().toString();
+        String sessionId2 = UUID.randomUUID().toString();
+
+        lock.acquire("test-issue", sessionId1, "/path/to/worktree");
+        LockResult result = lock.acquire("test-issue", sessionId2, "/path/to/worktree");
+
+        requireThat(result, "result").isInstanceOf(LockResult.Locked.class);
+        LockResult.Locked locked = (LockResult.Locked) result;
+        requireThat(locked.status(), "status").isEqualTo("locked");
+        requireThat(locked.message(), "message").contains("another session");
+        requireThat(locked.owner(), "owner").isEqualTo(sessionId1);
+        requireThat(locked.action(), "action").isEqualTo("FIND_ANOTHER_ISSUE");
+        requireThat(locked.guidance(), "guidance").contains("Do NOT investigate");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that acquire rejects invalid session IDs.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid session_id format.*")
+  public void acquireRejectsInvalidSessionId() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+
+        lock.acquire("test-issue", "not-a-uuid", "/path/to/worktree");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that release succeeds when the lock is owned by the session.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void releaseSucceedsWhenLockOwned() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId = UUID.randomUUID().toString();
+
+        lock.acquire("test-issue", sessionId, "/path/to/worktree");
+        LockResult result = lock.release("test-issue", sessionId);
+
+        requireThat(result, "result").isInstanceOf(LockResult.Released.class);
+        LockResult.Released released = (LockResult.Released) result;
+        requireThat(released.status(), "status").isEqualTo("released");
+        requireThat(released.message(), "message").contains("successfully");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that release fails when the lock is owned by a different session.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void releaseFailsWhenLockOwnedByAnotherSession() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId1 = UUID.randomUUID().toString();
+        String sessionId2 = UUID.randomUUID().toString();
+
+        lock.acquire("test-issue", sessionId1, "/path/to/worktree");
+        LockResult result = lock.release("test-issue", sessionId2);
+
+        requireThat(result, "result").isInstanceOf(LockResult.Error.class);
+        LockResult.Error error = (LockResult.Error) result;
+        requireThat(error.status(), "status").isEqualTo("error");
+        requireThat(error.message(), "message").contains("different session");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that release succeeds when no lock exists.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void releaseSucceedsWhenNoLockExists() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId = UUID.randomUUID().toString();
+
+        LockResult result = lock.release("test-issue", sessionId);
+
+        requireThat(result, "result").isInstanceOf(LockResult.Released.class);
+        LockResult.Released released = (LockResult.Released) result;
+        requireThat(released.status(), "status").isEqualTo("released");
+        requireThat(released.message(), "message").contains("No lock exists");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that force release removes a lock regardless of owner.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void forceReleaseRemovesLockRegardlessOfOwner() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId = UUID.randomUUID().toString();
+
+        lock.acquire("test-issue", sessionId, "/path/to/worktree");
+        LockResult result = lock.forceRelease("test-issue");
+
+        requireThat(result, "result").isInstanceOf(LockResult.Released.class);
+        LockResult.Released released = (LockResult.Released) result;
+        requireThat(released.status(), "status").isEqualTo("released");
+        requireThat(released.message(), "message").contains("forcibly released");
+        requireThat(released.message(), "message").contains(sessionId);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that force release succeeds when no lock exists.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void forceReleaseSucceedsWhenNoLockExists() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+
+        LockResult result = lock.forceRelease("test-issue");
+
+        requireThat(result, "result").isInstanceOf(LockResult.Released.class);
+        LockResult.Released released = (LockResult.Released) result;
+        requireThat(released.status(), "status").isEqualTo("released");
+        requireThat(released.message(), "message").contains("No lock exists");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that check returns unlocked status when no lock exists.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void checkReturnsUnlockedWhenNoLockExists() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+
+        LockResult result = lock.check("test-issue");
+
+        requireThat(result, "result").isInstanceOf(LockResult.CheckUnlocked.class);
+        LockResult.CheckUnlocked checkUnlocked = (LockResult.CheckUnlocked) result;
+        requireThat(checkUnlocked.locked(), "locked").isFalse();
+        requireThat(checkUnlocked.message(), "message").contains("not locked");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that check returns locked status with details when lock exists.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void checkReturnsLockedStatusWhenLockExists() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId = UUID.randomUUID().toString();
+
+        lock.acquire("test-issue", sessionId, "/path/to/worktree");
+        LockResult result = lock.check("test-issue");
+
+        requireThat(result, "result").isInstanceOf(LockResult.CheckLocked.class);
+        LockResult.CheckLocked checkLocked = (LockResult.CheckLocked) result;
+        requireThat(checkLocked.locked(), "locked").isTrue();
+        requireThat(checkLocked.sessionId(), "sessionId").isEqualTo(sessionId);
+        requireThat(checkLocked.worktree(), "worktree").isEqualTo("/path/to/worktree");
+        requireThat(checkLocked.ageSeconds(), "ageSeconds").isGreaterThanOrEqualTo(0);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that list returns empty list when no locks exist.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void listReturnsEmptyListWhenNoLocksExist() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        ByteArrayOutputStream warningBytes = new ByteArrayOutputStream();
+        PrintStream warnings = new PrintStream(warningBytes, true, StandardCharsets.UTF_8);
+        IssueLock lock = new IssueLock(scope, Clock.systemUTC(), warnings);
+
+        List<LockListEntry> locks = lock.list();
+
+        requireThat(locks, "locks").isEmpty();
+        requireThat(warningBytes.toString(StandardCharsets.UTF_8), "warnings").isEmpty();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that list returns all locks.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void listReturnsAllLocks() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        ByteArrayOutputStream warningBytes = new ByteArrayOutputStream();
+        PrintStream warnings = new PrintStream(warningBytes, true, StandardCharsets.UTF_8);
+        IssueLock lock = new IssueLock(scope, Clock.systemUTC(), warnings);
+        String sessionId1 = UUID.randomUUID().toString();
+        String sessionId2 = UUID.randomUUID().toString();
+
+        lock.acquire("issue-1", sessionId1, "/path/1");
+        lock.acquire("issue-2", sessionId2, "/path/2");
+
+        List<LockListEntry> locks = lock.list();
+
+        requireThat(locks.size(), "size").isEqualTo(2);
+        requireThat(warningBytes.toString(StandardCharsets.UTF_8), "warnings").isEmpty();
+
+        boolean foundIssue1 = false;
+        boolean foundIssue2 = false;
+
+        for (LockListEntry entry : locks)
+        {
+          if (entry.issue().equals("issue-1"))
+          {
+            requireThat(entry.session(), "session1").isEqualTo(sessionId1);
+            foundIssue1 = true;
+          }
+          if (entry.issue().equals("issue-2"))
+          {
+            requireThat(entry.session(), "session2").isEqualTo(sessionId2);
+            foundIssue2 = true;
+          }
+        }
+
+        requireThat(foundIssue1, "foundIssue1").isTrue();
+        requireThat(foundIssue2, "foundIssue2").isTrue();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that list skips malformed lock files.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void listSkipsMalformedLockFiles() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        ByteArrayOutputStream warningBytes = new ByteArrayOutputStream();
+        PrintStream warnings = new PrintStream(warningBytes, true, StandardCharsets.UTF_8);
+        IssueLock lock = new IssueLock(scope, Clock.systemUTC(), warnings);
+        String sessionId = UUID.randomUUID().toString();
+
+        lock.acquire("valid-issue", sessionId, "/path/to/worktree");
+
+        Path lockDir = scope.getCatWorkPath().resolve("locks");
+        Path corruptedLock = lockDir.resolve("corrupted.lock");
+        Files.writeString(corruptedLock, "this is not valid JSON");
+
+        List<LockListEntry> locks = lock.list();
+
+        requireThat(locks.size(), "size").isEqualTo(1);
+        requireThat(locks.get(0).issue(), "issue").isEqualTo("valid-issue");
+        String warningOutput = warningBytes.toString(StandardCharsets.UTF_8);
+        requireThat(warningOutput, "warningOutput").contains("Skipping malformed lock file");
+        requireThat(warningOutput, "warningOutput").contains("corrupted.lock");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that check throws IOException for a lock file with a missing worktrees map.
+   */
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = ".*(?=.*test-issue)(?=.*empty or missing worktrees).*")
+  public void checkThrowsOnMissingWorktreesMap() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        Path lockDir = scope.getCatWorkPath().resolve("locks");
+        Files.createDirectories(lockDir);
+
+        Path lockFile = lockDir.resolve("test-issue.lock");
+        String invalidLock = "{\"session_id\": \"12345678-1234-1234-1234-123456789012\"}";
+        Files.writeString(lockFile, invalidLock);
+
+        IssueLock lock = new IssueLock(scope);
+        lock.check("test-issue");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that lock acquisition rejects issue IDs containing forward slashes.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*characters not allowed.*")
+  public void lockFileSanitizesIssueIdWithSlashes() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId = UUID.randomUUID().toString();
+
+        lock.acquire("v2.1/fix-bug", sessionId, "/path/to/worktree");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that toJson produces correct field values for acquired status.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void toJsonProducesCorrectFormatForAcquired() throws IOException
+  {
+    try (TestClaudeTool scope = new TestClaudeTool())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      LockResult.Acquired result = new LockResult.Acquired("acquired", "Lock acquired successfully");
+
+      String json = result.toJson(mapper);
+      JsonNode parsed = mapper.readTree(json);
+
+      requireThat(parsed.get("status").asString(), "status").isEqualTo("acquired");
+      requireThat(parsed.get("message").asString(), "message").isEqualTo("Lock acquired successfully");
+    }
+  }
+
+  /**
+   * Verifies that toJson produces correct field values for locked status.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void toJsonProducesCorrectFormatForLocked() throws IOException
+  {
+    try (TestClaudeTool scope = new TestClaudeTool())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      LockResult.Locked result = new LockResult.Locked("locked", "Issue locked", "session-123",
+        "FIND_ANOTHER_ISSUE", "guidance text");
+
+      String json = result.toJson(mapper);
+      JsonNode parsed = mapper.readTree(json);
+
+      requireThat(parsed.get("status").asString(), "status").isEqualTo("locked");
+      requireThat(parsed.get("message").asString(), "message").isEqualTo("Issue locked");
+      requireThat(parsed.get("owner").asString(), "owner").isEqualTo("session-123");
+      requireThat(parsed.get("action").asString(), "action").isEqualTo("FIND_ANOTHER_ISSUE");
+      requireThat(parsed.get("guidance").asString(), "guidance").isEqualTo("guidance text");
+    }
+  }
+
+  /**
+   * Verifies that toJson produces correct field values for check locked result.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void toJsonProducesCorrectFormatForCheckLocked() throws IOException
+  {
+    try (TestClaudeTool scope = new TestClaudeTool())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      LockResult.CheckLocked result = new LockResult.CheckLocked(true, "session-id", 300, "/path");
+
+      String json = result.toJson(mapper);
+      JsonNode parsed = mapper.readTree(json);
+
+      requireThat(parsed.get("locked").asBoolean(), "locked").isTrue();
+      requireThat(parsed.get("session_id").asString(), "session_id").isEqualTo("session-id");
+      requireThat(parsed.get("age_seconds").asLong(), "age_seconds").isEqualTo(300L);
+      requireThat(parsed.get("worktree").asString(), "worktree").isEqualTo("/path");
+    }
+  }
+
+  /**
+   * Verifies that toJson produces correct field values for check unlocked result.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void toJsonProducesCorrectFormatForCheckUnlocked() throws IOException
+  {
+    try (TestClaudeTool scope = new TestClaudeTool())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      LockResult.CheckUnlocked result = new LockResult.CheckUnlocked(false, "Issue not locked");
+
+      String json = result.toJson(mapper);
+      JsonNode parsed = mapper.readTree(json);
+
+      requireThat(parsed.get("locked").asBoolean(), "locked").isFalse();
+      requireThat(parsed.get("message").asString(), "message").isEqualTo("Issue not locked");
+    }
+  }
+
+  /**
+   * Verifies that lock acquisition rejects issue IDs containing backslashes.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*characters not allowed.*")
+  public void lockFileSanitizesBackslashesInIssueId() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId = UUID.randomUUID().toString();
+
+        lock.acquire("v2.1\\fix-bug", sessionId, "/path/to/worktree");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that lock acquisition rejects issue IDs containing colons.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*characters not allowed.*")
+  public void lockFileSanitizesColonsInIssueId() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId = UUID.randomUUID().toString();
+
+        lock.acquire("issue:123", sessionId, "/path/to/worktree");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that acquire stores the session ID in the worktrees map of the lock file.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void acquireStoresSessionIdInLockFile() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId = UUID.randomUUID().toString();
+
+        lock.acquire("test-issue", sessionId, "/path/to/worktree");
+
+        Path lockDir = scope.getCatWorkPath().resolve("locks");
+        Path lockFile = lockDir.resolve("test-issue.lock");
+        String content = Files.readString(lockFile);
+
+        requireThat(content, "content").contains("\"worktrees\"");
+        requireThat(content, "content").contains("\"session_id\"");
+        requireThat(content, "content").contains(sessionId);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that acquire returns Locked when the stale lock has been replaced by a concurrent session
+   * between the initial staleness check and the overwrite attempt.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void acquireRejectsLockRefreshedByConcurrentSession() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        // Create a stale lock from an old session
+        String oldSessionId = UUID.randomUUID().toString();
+        Instant now = Instant.parse("2025-06-01T12:00:00Z");
+        Instant staleLockTime = now.minusSeconds(4 * 3600 + 1);
+
+        JsonMapper mapper = scope.getJsonMapper();
+        Path lockDirPath = scope.getCatWorkPath().resolve("locks");
+        Files.createDirectories(lockDirPath);
+        Path lockFile = lockDirPath.resolve("test-issue.lock");
+
+        Map<String, Object> staleLockData = Map.of(
+          "session_id", oldSessionId,
+          "worktrees", Map.of("/old/worktree", oldSessionId),
+          "created_at", staleLockTime.getEpochSecond(),
+          "created_iso", "2025-06-01T08:00:00Z");
+        Files.writeString(lockFile, mapper.writeValueAsString(staleLockData));
+
+        // Simulate a concurrent session refreshing the lock (different session_id)
+        String concurrentSessionId = UUID.randomUUID().toString();
+        Map<String, Object> refreshedLockData = Map.of(
+          "session_id", concurrentSessionId,
+          "worktrees", Map.of("/concurrent/worktree", concurrentSessionId),
+          "created_at", now.getEpochSecond(),
+          "created_iso", "2025-06-01T12:00:00Z");
+        Files.writeString(lockFile, mapper.writeValueAsString(refreshedLockData));
+
+        // Now try to acquire with a new session using a clock fixed at 'now'
+        // The initial stale check data (oldSessionId, staleLockTime) no longer matches the file
+        // so overwriteWithFreshLock should detect the change and return Locked
+        String newSessionId = UUID.randomUUID().toString();
+        Clock fixedClock = Clock.fixed(now, ZoneOffset.UTC);
+        IssueLock lock = new IssueLock(scope, fixedClock);
+
+        // The lock file now contains concurrentSessionId (not oldSessionId),
+        // so acquire() will read it as a non-stale active lock and return Locked
+        LockResult result = lock.acquire("test-issue", newSessionId, "/new/worktree");
+
+        requireThat(result, "result").isInstanceOf(LockResult.Locked.class);
+        LockResult.Locked locked = (LockResult.Locked) result;
+        requireThat(locked.owner(), "owner").isEqualTo(concurrentSessionId);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that acquire overwrites a stale lock from a different session.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void acquireOverwritesStaleLockFromDifferentSession() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        // Set up a stale lock from a different session (>4 hours old)
+        String oldSessionId = UUID.randomUUID().toString();
+        Instant now = Instant.parse("2025-01-01T12:00:00Z");
+        Instant staleLockTime = now.minusSeconds(4 * 3600 + 1);  // 4 hours + 1 second old
+
+        JsonMapper mapper = scope.getJsonMapper();
+        Path lockDir = scope.getCatWorkPath().resolve("locks");
+        Files.createDirectories(lockDir);
+        Path lockFile = lockDir.resolve("test-issue.lock");
+
+        Map<String, Object> staleLockData = Map.of(
+          "session_id", oldSessionId,
+          "worktrees", Map.of("/old/worktree", oldSessionId),
+          "created_at", staleLockTime.getEpochSecond(),
+          "created_iso", "2025-01-01T08:00:00Z");
+
+        Files.writeString(lockFile, mapper.writeValueAsString(staleLockData));
+
+        // Verify the stale lock was created
+        requireThat(Files.exists(lockFile), "staleLockExists").isTrue();
+
+        // Acquire with a fixed clock at 'now' and new session ID
+        String newSessionId = UUID.randomUUID().toString();
+        Clock fixedClock = Clock.fixed(now, ZoneOffset.UTC);
+        IssueLock lock = new IssueLock(scope, fixedClock);
+
+        LockResult result = lock.acquire("test-issue", newSessionId, "/new/worktree");
+
+        // Verify the stale lock was overwritten (result should be Acquired)
+        requireThat(result, "result").isInstanceOf(LockResult.Acquired.class);
+        LockResult.Acquired acquired = (LockResult.Acquired) result;
+        requireThat(acquired.status(), "status").isEqualTo("acquired");
+
+        // Verify the lock file contains the new session ID and recent timestamp
+        String content = Files.readString(lockFile);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> updatedLockData = mapper.readValue(content, Map.class);
+        requireThat(updatedLockData.get("session_id"), "sessionId").isEqualTo(newSessionId);
+        long createdAtValue = ((Number) updatedLockData.get("created_at")).longValue();
+        requireThat(createdAtValue, "createdAt").isEqualTo(now.getEpochSecond());
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that acquire rejects a non-stale lock from a different session.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void acquireRejectsNonStaleLockFromDifferentSession() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        // Set up a non-stale lock from a different session (<4 hours old)
+        String otherSessionId = UUID.randomUUID().toString();
+        Instant now = Instant.parse("2025-01-01T12:00:00Z");
+        Instant recentLockTime = now.minusSeconds(3600);  // 1 hour old (non-stale)
+
+        JsonMapper mapper = scope.getJsonMapper();
+        Path lockDir = scope.getCatWorkPath().resolve("locks");
+        Files.createDirectories(lockDir);
+        Path lockFile = lockDir.resolve("test-issue.lock");
+
+        Map<String, Object> recentLockData = Map.of(
+          "session_id", otherSessionId,
+          "worktrees", Map.of("/other/worktree", otherSessionId),
+          "created_at", recentLockTime.getEpochSecond(),
+          "created_iso", "2025-01-01T11:00:00Z");
+
+        Files.writeString(lockFile, mapper.writeValueAsString(recentLockData));
+
+        // Verify the non-stale lock was created
+        requireThat(Files.exists(lockFile), "lockExists").isTrue();
+
+        // Try to acquire with a fixed clock at 'now' and different session ID
+        String newSessionId = UUID.randomUUID().toString();
+        Clock fixedClock = Clock.fixed(now, ZoneOffset.UTC);
+        IssueLock lock = new IssueLock(scope, fixedClock);
+
+        LockResult result = lock.acquire("test-issue", newSessionId, "/new/worktree");
+
+        // Verify the non-stale lock was NOT overwritten (result should be Locked)
+        requireThat(result, "result").isInstanceOf(LockResult.Locked.class);
+        LockResult.Locked locked = (LockResult.Locked) result;
+        requireThat(locked.status(), "status").isEqualTo("locked");
+        requireThat(locked.owner(), "owner").isEqualTo(otherSessionId);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that acquire() populates the worktrees map immediately without requiring a separate update() call.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void acquirePopulatesWorktreesMapImmediately() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId = UUID.randomUUID().toString();
+        String worktreePath = "/workspace/.cat/worktrees/2.1-my-issue";
+
+        LockResult result = lock.acquire("test-issue", sessionId, worktreePath);
+
+        requireThat(result, "result").isInstanceOf(LockResult.Acquired.class);
+
+        Path lockFile = scope.getCatWorkPath().resolve("locks").resolve("test-issue.lock");
+        String content = Files.readString(lockFile);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> lockData = scope.getJsonMapper().readValue(content, Map.class);
+        @SuppressWarnings("unchecked")
+        Map<String, String> worktrees = (Map<String, String>) lockData.get("worktrees");
+
+        requireThat(worktrees, "worktrees").isNotNull();
+        requireThat(worktrees.size(), "worktreesSize").isEqualTo(1);
+        requireThat(worktrees.get(worktreePath), "worktreeValue").isEqualTo(sessionId);
+
+        String lockSessionId = (String) lockData.get("session_id");
+        requireThat(lockSessionId, "lockSessionId").isNotBlank();
+        requireThat(lockSessionId, "lockSessionId").isEqualTo(sessionId);
+
+        long createdAt = ((Number) lockData.get("created_at")).longValue();
+        requireThat(createdAt > 0L, "createdAtPositive").isTrue();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that acquire() throws IllegalArgumentException when the worktree path is blank.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*worktree.*")
+  public void acquireRejectsBlankWorktreePath() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId = UUID.randomUUID().toString();
+
+        lock.acquire("test-issue", sessionId, "");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that acquire fails when the same session already holds a lock for a different issue.
+   * <p>
+   * A session may only hold one lock at a time to prevent subagents from inheriting an ambiguous
+   * active-worktree context.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void acquireFailsWhenSessionAlreadyHoldsLockForDifferentIssue() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId = UUID.randomUUID().toString();
+
+        lock.acquire("issue-a", sessionId, "/worktree-a");
+        LockResult result = lock.acquire("issue-b", sessionId, "/worktree-b");
+
+        requireThat(result, "result").isInstanceOf(LockResult.Error.class);
+        LockResult.Error error = (LockResult.Error) result;
+        requireThat(error.status(), "status").isEqualTo("error");
+        requireThat(error.message(), "message").contains("issue-a");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that acquire succeeds for a different issue after the prior lock is released.
+   * <p>
+   * Once the first issue lock is released, the session is free to acquire a lock for another issue.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void acquireSucceedsAfterReleasingPriorLock() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId = UUID.randomUUID().toString();
+
+        lock.acquire("issue-a", sessionId, "/worktree-a");
+        lock.release("issue-a", sessionId);
+        LockResult result = lock.acquire("issue-b", sessionId, "/worktree-b");
+
+        requireThat(result, "result").isInstanceOf(LockResult.Acquired.class);
+        LockResult.Acquired acquired = (LockResult.Acquired) result;
+        requireThat(acquired.status(), "status").isEqualTo("acquired");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that same-session re-acquire of the same issue is idempotent.
+   * <p>
+   * The conflict scan must skip the lock file for the issue being re-acquired; otherwise
+   * idempotent re-acquire would incorrectly return an error.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void acquireIsIdempotentForSameIssueReacquire() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId = UUID.randomUUID().toString();
+
+        lock.acquire("issue-a", sessionId, "/worktree-a");
+        LockResult result = lock.acquire("issue-a", sessionId, "/worktree-a");
+
+        requireThat(result, "result").isInstanceOf(LockResult.Acquired.class);
+        LockResult.Acquired acquired = (LockResult.Acquired) result;
+        requireThat(acquired.status(), "status").isEqualTo("acquired");
+        requireThat(acquired.message(), "message").contains("already held");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that two distinct sessions can each hold a lock for a different issue without blocking each other.
+   * <p>
+   * The conflict detection must only reject a session that already owns a lock, not a different session.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void acquireAllowsDifferentSessionsToHoldSeparateIssues() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId1 = UUID.randomUUID().toString();
+        String sessionId2 = UUID.randomUUID().toString();
+
+        LockResult result1 = lock.acquire("issue-a", sessionId1, "/worktree-a");
+        LockResult result2 = lock.acquire("issue-b", sessionId2, "/worktree-b");
+
+        requireThat(result1, "result1").isInstanceOf(LockResult.Acquired.class);
+        requireThat(result2, "result2").isInstanceOf(LockResult.Acquired.class);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that acquire() succeeds when the locks directory contains a corrupted lock file.
+   * The corrupted file should be silently skipped during the conflict scan.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void acquireSucceedsDespiteCorruptedLockFileInScanPath() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String otherSessionId = UUID.randomUUID().toString();
+
+        // Create a valid lock for a different issue with a different session
+        lock.acquire("issue-other", otherSessionId, "/worktree-other");
+
+        // Write a malformed/invalid JSON lock file into the locks directory
+        Path lockDir = scope.getCatWorkPath().resolve("locks");
+        Path corruptedLock = lockDir.resolve("corrupted-issue.lock");
+        Files.writeString(corruptedLock, "this is not valid JSON {{{");
+
+        // Acquire a lock for a third issue with yet another new session
+        String newSessionId = UUID.randomUUID().toString();
+        LockResult result = lock.acquire("issue-new", newSessionId, "/worktree-new");
+
+        // Acquisition must succeed despite the corrupted file being present
+        requireThat(result, "result").isInstanceOf(LockResult.Acquired.class);
+        LockResult.Acquired acquired = (LockResult.Acquired) result;
+        requireThat(acquired.status(), "status").isEqualTo("acquired");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that acquire() correctly detects a conflict when many lock files exist in the locks directory.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void acquireCorrectlyDetectsConflictWithManyLockFiles() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+
+        // Create 50 lock files for different issues, each with a unique session ID
+        for (int i = 0; i < 50; ++i)
+        {
+          String uniqueSessionId = UUID.randomUUID().toString();
+          lock.acquire("issue-" + i, uniqueSessionId, "/worktree-" + i);
+        }
+
+        // Acquire a lock for "issue-target" with a known session ID
+        String targetSessionId = UUID.randomUUID().toString();
+        lock.acquire("issue-target", targetSessionId, "/worktree-target");
+
+        // Now attempt to acquire a different issue using the same session that holds "issue-target"
+        LockResult result = lock.acquire("issue-new", targetSessionId, "/worktree-new");
+
+        // Verify that acquire() returns LockResult.Error containing "issue-target" in the message
+        requireThat(result, "result").isInstanceOf(LockResult.Error.class);
+        LockResult.Error error = (LockResult.Error) result;
+        requireThat(error.message(), "message").contains("issue-target");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that transfer succeeds when the lock is held by the expected session.
+   * The lock file should be updated to the new session ID after transfer.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void transferSucceedsWhenLockHeldByExpectedSession() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String oldSessionId = UUID.randomUUID().toString();
+        String newSessionId = UUID.randomUUID().toString();
+        String issueId = "test-issue";
+        String worktree = "/path/to/worktree";
+
+        // First, acquire a lock for the old session
+        lock.acquire(issueId, oldSessionId, worktree);
+
+        // Transfer the lock to the new session
+        LockResult result = lock.transfer(issueId, oldSessionId, newSessionId, worktree);
+
+        requireThat(result, "result").isInstanceOf(LockResult.Acquired.class);
+        LockResult.Acquired acquired = (LockResult.Acquired) result;
+        requireThat(acquired.status(), "status").isEqualTo("acquired");
+
+        // Verify the lock file now contains the new session ID
+        Path lockFile = lock.getLockFile(issueId);
+        String content = Files.readString(lockFile);
+        JsonMapper mapper = scope.getJsonMapper();
+        JsonNode lockData = mapper.readTree(content);
+        String actualSessionId = lockData.get("session_id").asString();
+        requireThat(actualSessionId, "actualSessionId").isEqualTo(newSessionId);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that transfer fails when the lock is not held by the expected session.
+   * A LockResult.Locked is returned with the actual owner.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void transferFailsWhenLockNotHeldByExpectedSession() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String someOtherSessionId = UUID.randomUUID().toString();
+        String oldSessionId = UUID.randomUUID().toString();
+        String newSessionId = UUID.randomUUID().toString();
+        String issueId = "test-issue";
+        String worktree = "/path/to/worktree";
+
+        // Create a lock held by someOtherSessionId (not oldSessionId)
+        lock.acquire(issueId, someOtherSessionId, worktree);
+
+        // Attempt to transfer, claiming oldSessionId holds the lock
+        LockResult result = lock.transfer(issueId, oldSessionId, newSessionId, worktree);
+
+        requireThat(result, "result").isInstanceOf(LockResult.Locked.class);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that transfer fails when no lock exists for the issue.
+   * A LockResult.Error is returned indicating no lock to transfer.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void transferFailsWhenNoLockExists() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String oldSessionId = UUID.randomUUID().toString();
+        String newSessionId = UUID.randomUUID().toString();
+        String issueId = "test-issue";
+        String worktree = "/path/to/worktree";
+
+        // Call transfer with no lock file present
+        LockResult result = lock.transfer(issueId, oldSessionId, newSessionId, worktree);
+
+        requireThat(result, "result").isInstanceOf(LockResult.Error.class);
+        LockResult.Error error = (LockResult.Error) result;
+        requireThat(error.message(), "message").contains(issueId);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that list() filters on the filename component only, not on ancestor directory names.
+   * <p>
+   * Creates a temp directory hierarchy where a parent directory's name ends in ".lock" and places a
+   * valid lock file inside the locks sub-directory. Confirms that the filter uses {@code getFileName()}
+   * rather than {@code toString()} on the full path, so the parent directory name does not cause a
+   * false match.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void listFiltersOnFilenameNotFullPath() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("issue-lock-test");
+    Path tempParent = tempBase.resolve("parent.lock");
+    Path tempDir = tempParent.resolve("project");
+    Files.createDirectories(tempDir);
+    try
+    {
+      try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+      {
+        try
+        {
+          IssueLock lock = new IssueLock(scope);
+          String sessionId = UUID.randomUUID().toString();
+
+          lock.acquire("test-issue", sessionId, "/path/to/worktree");
+
+          List<LockListEntry> locks = lock.list();
+
+          requireThat(locks.size(), "size").isEqualTo(1);
+          requireThat(locks.get(0).issue(), "issue").isEqualTo("test-issue");
+        }
+        finally
+        {
+          TestUtils.deleteDirectoryRecursively(tempDir);
+        }
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that scanForConflictingLock() (called internally by acquire()) emits a warning
+   * when a lock file cannot be parsed as JSON.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void scanForConflictingLockWarnsOnMalformedFile() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        ByteArrayOutputStream warningBytes = new ByteArrayOutputStream();
+        PrintStream warnings = new PrintStream(warningBytes, true, StandardCharsets.UTF_8);
+        IssueLock lock = new IssueLock(scope, Clock.systemUTC(), warnings);
+
+        // Place a malformed lock file in the locks directory before calling acquire()
+        Path lockDirPath = scope.getCatWorkPath().resolve("locks");
+        Files.createDirectories(lockDirPath);
+        Path malformedFile = lockDirPath.resolve("other-issue.lock");
+        Files.writeString(malformedFile, "this is not valid json");
+
+        // Acquire a different issue to trigger scanForConflictingLock()
+        String sessionId = UUID.randomUUID().toString();
+        lock.acquire("test-issue", sessionId, "/path/to/worktree");
+
+        String warningOutput = warningBytes.toString(StandardCharsets.UTF_8);
+        requireThat(warningOutput, "warningOutput").contains("WARNING: Skipping malformed lock file");
+        requireThat(warningOutput, "warningOutput").contains("other-issue.lock");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that a typical CAT issue ID passes validation without throwing.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void sanitizeIssueIdAcceptsValidId() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId = UUID.randomUUID().toString();
+
+        // A typical CAT issue ID — must not throw IllegalArgumentException
+        lock.acquire("2.1-fix-something", sessionId, "/path/to/worktree");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that an issue ID containing a forward slash is rejected with {@link IllegalArgumentException}.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*characters not allowed.*")
+  public void sanitizeIssueIdRejectsInvalidCharacters() throws IOException
+  {
+    Path tempDir = TestUtils.createTempDir("issue-lock-test");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try
+      {
+        IssueLock lock = new IssueLock(scope);
+        String sessionId = UUID.randomUUID().toString();
+
+        // Forward slash is not allowed — sanitizeIssueId() throws before any I/O
+        lock.acquire("foo/bar", sessionId, "/path/to/worktree");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+}
