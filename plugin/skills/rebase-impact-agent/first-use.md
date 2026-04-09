@@ -226,7 +226,7 @@ The calling agent reads only this compact JSON; detailed findings are in the ana
 
 ## Manual E2E Verification
 
-A developer can follow this checklist in a live `/cat:work` session to verify all severity levels and routing actions.
+A developer can follow this checklist in a live `/cat:work-agent` session to verify all severity levels and routing actions.
 Run against a real issue in the project; the steps create isolated, reversible test conditions.
 
 **Step 1 — Set up test conditions**
@@ -251,9 +251,9 @@ NEW=$(git rev-parse v2.1)
 
 This simulates an upstream change that was merged to the target branch while the issue was in flight.
 
-**Step 3 — Trigger `/cat:work` on the test issue and observe rebase-impact-agent invocation**
+**Step 3 — Trigger `/cat:work-agent` on the test issue and observe rebase-impact-agent invocation**
 
-Run `/cat:work` on the test issue. When the rebase step executes, `work-with-issue-agent` should invoke
+Run `/cat:work-agent` on the test issue. When the rebase step executes, `work-with-issue-agent` should invoke
 `rebase-impact-agent` with arguments:
 
 ```
@@ -267,7 +267,7 @@ Confirm the file does NOT appear inside the worktree directory.
 **Step 4 — Verify NO_IMPACT / LOW routing: silent continuation**
 
 Repeat Step 2, but this time make a cosmetic-only edit to a file that is NOT listed in the test issue's plan.md
-(e.g., add a trailing newline to an unrelated skill file). Re-run `/cat:work`. Confirm:
+(e.g., add a trailing newline to an unrelated skill file). Re-run `/cat:work-agent`. Confirm:
 
 - The compact JSON returned by `rebase-impact-agent` has `"severity": "NO_IMPACT"` or `"severity": "LOW"`.
 - The main agent continues the implementation phase without prompting the user.
@@ -275,7 +275,7 @@ Repeat Step 2, but this time make a cosmetic-only edit to a file that is NOT lis
 **Step 5 — Verify MEDIUM routing: plan-builder-agent invoked automatically**
 
 Repeat Step 2 with a structural edit to a file that IS in the test issue's plan.md `## Files to Modify` list,
-where the change has one obvious correct update to the plan (e.g., a renamed constant). Re-run `/cat:work`. Confirm:
+where the change has one obvious correct update to the plan (e.g., a renamed constant). Re-run `/cat:work-agent`. Confirm:
 
 - The compact JSON has `"severity": "MEDIUM"`.
 - `work-with-issue-agent` automatically invokes `plan-builder-agent` to revise plan.md.
@@ -284,7 +284,7 @@ where the change has one obvious correct update to the plan (e.g., a renamed con
 **Step 6 — Verify HIGH routing: proposal file written and user prompted**
 
 Repeat Step 2 with a structural edit that introduces conflicting requirements (e.g., two mutually exclusive
-approaches to the same feature in an upstream change). Re-run `/cat:work`. Confirm:
+approaches to the same feature in an upstream change). Re-run `/cat:work-agent`. Confirm:
 
 - The compact JSON has `"severity": "HIGH"`.
 - A proposal file is written (path logged in the transcript).

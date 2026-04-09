@@ -12,7 +12,7 @@ set -euo pipefail
 # 2. Adds ## Requirements section to Feature-type PLAN.md files
 # 3. Adds ### Requirements Traceability to detailed specs
 #
-# Note: Sections are added as templates. Run /cat:research to populate with
+# Note: Sections are added as templates. Run /cat:research-agent to populate with
 # stakeholder findings, or fill manually.
 
 # shellcheck source=lib/utils.sh
@@ -38,7 +38,7 @@ traceability_added=0
 # Research section template
 RESEARCH_TEMPLATE='## Research
 
-*Populated by stakeholder research. Run `/cat:research` to fill, or add manually.*
+*Populated by stakeholder research. Run `/cat:research-agent` to fill, or add manually.*
 
 ### Stack
 | Library | Purpose | Version | Rationale |
@@ -50,7 +50,7 @@ RESEARCH_TEMPLATE='## Research
 - **Integration:** *TBD*
 
 ### Pitfalls
-- *Run /cat:research to populate*
+- *Run /cat:research-agent to populate*
 
 '
 
@@ -148,7 +148,7 @@ log_success "  - Traceability sections added: $traceability_added"
 if [[ $research_added -gt 0 ]]; then
     log_migration ""
     log_migration "To populate Research sections with stakeholder findings:"
-    log_migration "  /cat:research [version or task path]"
+    log_migration "  /cat:research-agent [version or task path]"
 fi
 
 # =============================================================================

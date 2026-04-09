@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
 /**
  * Block or warn when presenting approval gate without get-diff output.
  * <p>
- * This handler detects when an approval gate is being presented during /cat:work
+ * This handler detects when an approval gate is being presented during /cat:work-agent
  * and blocks if cat:get-diff wasn't used to display the diff. Sessions that involve
  * git-only operations (force pushes, filter-repo) are exempt
  * from blocking because those workflows do not change the working tree.
@@ -111,7 +111,7 @@ public final class WarnApprovalWithoutRenderDiff implements AskHandler
           Approval gate REQUIRES 4-column table diff format.
 
           BEFORE presenting approval:
-          1. Invoke: /cat:get-diff
+          1. Invoke: /cat:get-diff-agent
           2. Present the VERBATIM output (must have ╭╮╰╯│ box characters)
           3. DO NOT reformat, summarize, or excerpt the output
           4. Then show the approval question

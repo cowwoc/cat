@@ -2720,7 +2720,7 @@ public class WorkPrepareTest
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
 
       String sessionId = UUID.randomUUID().toString();
-      // Pass UUID as the sole --arguments token — simulates /cat:work invocation with no explicit issue
+      // Pass UUID as the sole --arguments token — simulates /cat:work-agent invocation with no explicit issue
       String uuid = "92289cdd-76a1-4d7e-8cf3-be5618ec270a";
       WorkPrepare.run(scope, new String[]{"--session-id", sessionId, "--arguments", uuid}, out);
 
@@ -2767,7 +2767,7 @@ public class WorkPrepareTest
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
 
       String sessionId = UUID.randomUUID().toString();
-      // Pass UUID + issue name as --arguments — simulates /cat:work invocation with an explicit issue
+      // Pass UUID + issue name as --arguments — simulates /cat:work-agent invocation with an explicit issue
       String arguments = "92289cdd-76a1-4d7e-8cf3-be5618ec270a my-feature";
       WorkPrepare.run(scope, new String[]{"--session-id", sessionId, "--arguments", arguments}, out);
 

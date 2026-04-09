@@ -31,7 +31,7 @@ import java.nio.file.Paths;
 /**
  * Merge issue branch and clean up worktree, branch, and lock.
  * <p>
- * Handles the happy path of the merging phase for CAT's /cat:work command:
+ * Handles the happy path of the merging phase for CAT's /cat:work-agent command:
  * 1. Fast-forward merge issue branch to target branch in the main worktree
  * 2. Remove the issue worktree
  * 3. Delete the issue branch

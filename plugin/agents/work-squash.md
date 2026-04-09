@@ -1,6 +1,6 @@
 ---
 name: work-squash
-description: Squash phase for /cat:work - rebases issue branch, squashes commits, verifies index.json closure.
+description: Squash phase for /cat:work-agent - rebases issue branch, squashes commits, verifies index.json closure.
 model: haiku
 ---
 

@@ -48,7 +48,7 @@ BASE_BRANCH=$(cat "$CONFIG_FILE" 2>/dev/null || echo "main")
 # ✅ CORRECT: Fail-fast with clear error
 if [[ ! -f "$CONFIG_FILE" ]]; then
   echo "ERROR: Config file not found: $CONFIG_FILE" >&2
-  echo "Solution: Run /cat:work to create worktree properly." >&2
+  echo "Solution: Run /cat:work-agent to create worktree properly." >&2
   exit 1
 fi
 BASE_BRANCH=$(cat "$CONFIG_FILE")

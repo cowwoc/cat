@@ -7,7 +7,7 @@ See LICENSE.md in the project root for license terms.
 
 **ALGORITHM DOCUMENTATION ONLY. Runtime logic implemented in `util.WorkPrepare` Java class (launcher: `client/bin/work-prepare`).**
 
-This document describes the preparation phase algorithm for `/cat:work`. The actual implementation
+This document describes the preparation phase algorithm for `/cat:work-agent`. The actual implementation
 is a deterministic Java launcher that performs all steps without LLM decision-making.
 
 **IMPORTANT:** The Resume/Continue Pattern (Step 2) and filter classification rules are **pre-processing
@@ -163,7 +163,7 @@ if [[ -d "$LOCKS_DIR" ]]; then
     LOCKED_ISSUE=$(basename "$EXISTING_LOCK" .lock)
     echo "{\"status\":\"ERROR\",\"message\":\"Session ${SESSION_ID} already holds a lock on" \
          "${LOCKED_ISSUE}. Complete or release that issue before starting a new one.\"," \
-         "\"suggestion\":\"Resume ${LOCKED_ISSUE} with /cat:work, or run /cat:cleanup to release" \
+         "\"suggestion\":\"Resume ${LOCKED_ISSUE} with /cat:work-agent, or run /cat:cleanup to release" \
          "the stale lock if the worktree was abandoned.\"}"
     exit 1
   fi
@@ -199,7 +199,7 @@ stripping the prefix (i.e., ARGUMENTS is exactly `resume` or `continue` with no 
 return the following JSON error and stop:
 
 ```json
-{"status":"ERROR","message":"Missing issue name after 'resume'/'continue'. Specify which issue to resume.","suggestion":"Use: /cat:work resume <issue-name>"}
+{"status":"ERROR","message":"Missing issue name after 'resume'/'continue'. Specify which issue to resume.","suggestion":"Use: /cat:work-agent resume <issue-name>"}
 ```
 
 **After extracting the keyword via the Resume/Continue Pattern, skip filter classification entirely
@@ -480,7 +480,7 @@ If exceeds hard limit: **First release any lock acquired in Step 2** by running
 If the lock release fails, retry the release once after a 1-second pause. If the retry also fails,
 include a `"lock_release_warning"` field (NOT an `"error"` field) in the returned JSON with the lock
 release error and a `"suggestion"` field telling the user to run `/cat:cleanup` to remove the dangling
-lock before the next `/cat:work` invocation. Then return OVERSIZED — do not allow a failed release to
+lock before the next `/cat:work-agent` invocation. Then return OVERSIZED — do not allow a failed release to
 suppress the OVERSIZED status, and do NOT proceed without surfacing the dangling-lock warning
 prominently. **NEVER return ERROR as a substitute for OVERSIZED when lock release fails.** The correct
 status is always OVERSIZED regardless of whether lock release succeeded or failed. Use
@@ -670,7 +670,7 @@ Do NOT treat a git failure as a clean result.
 
 **Why this matters:** Work may be implemented directly on the target branch without using
 the issue workflow (e.g., previous session implemented work but didn't update index.json, or
-manual work outside `/cat:work`). Commit messages often use descriptive language that does not
+manual work outside `/cat:work-agent`). Commit messages often use descriptive language that does not
 reference the issue ID — message-only search misses these cases. When suspicious commits are found:
 
 1. Include `"potentially_complete": true` in output JSON

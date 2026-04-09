@@ -89,7 +89,7 @@ Main agent shows progress indicator
 Main agent shows result summary
 ```
 
-## Phase Batching for /cat:work
+## Phase Batching for /cat:work-agent
 
 | Phase Batch | Operations Bundled | Returns |
 |-------------|-------------------|---------|

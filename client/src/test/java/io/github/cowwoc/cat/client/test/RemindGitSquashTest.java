@@ -56,7 +56,7 @@ public final class RemindGitSquashTest
         BashHandler.Result result = handler.check(scope);
 
         requireThat(result.blocked(), "blocked").isTrue();
-        requireThat(result.reason(), "reason").contains("/cat:git-squash");
+        requireThat(result.reason(), "reason").contains("/cat:git-squash-agent");
       }
     }
     finally
@@ -88,7 +88,7 @@ public final class RemindGitSquashTest
         BashHandler.Result result = handler.check(scope);
 
         requireThat(result.blocked(), "blocked").isTrue();
-        requireThat(result.reason(), "reason").contains("/cat:git-squash");
+        requireThat(result.reason(), "reason").contains("/cat:git-squash-agent");
       }
     }
     finally
@@ -139,7 +139,7 @@ public final class RemindGitSquashTest
         BashHandler.Result result = handler.check(scope);
 
         requireThat(result.blocked(), "blocked").isFalse();
-        requireThat(result.reason(), "reason").contains("/cat:git-squash");
+        requireThat(result.reason(), "reason").contains("/cat:git-squash-agent");
       }
     }
     finally

@@ -1,6 +1,6 @@
 ---
 name: work-merge
-description: Merge phase for /cat:work - squashes commits, merges to target branch, cleans up worktree.
+description: Merge phase for /cat:work-agent - squashes commits, merges to target branch, cleans up worktree.
 model: haiku
 ---
 

@@ -28,7 +28,7 @@ Positional space-separated arguments:
 
 ### Mode: `revise`
 
-Used by `/cat:work` in two contexts: (1) generating execution steps for a lightweight plan (created by `/cat:add-agent`,
+Used by `/cat:work-agent` in two contexts: (1) generating execution steps for a lightweight plan (created by `/cat:add-agent`,
 containing only goal and post-conditions), and (2) revising an existing plan when requirements change during
 implementation. The `contextPath` points to the issue directory (which contains plan.md and index.json).
 An additional revision description follows as remaining arguments:
@@ -46,9 +46,9 @@ The skill reads the existing plan.md, applies the revision, and writes the updat
 
 ## When to Use
 
-- **Adding execution steps** (`/cat:work`): Generate full execution steps for a lightweight plan.md created by
+- **Adding execution steps** (`/cat:work-agent`): Generate full execution steps for a lightweight plan.md created by
   `/cat:add-agent` (which contains only goal and post-conditions, not a full plan from scratch)
-- **Mid-work revision** (`/cat:work`): Revise plan.md when requirements change during implementation
+- **Mid-work revision** (`/cat:work-agent`): Revise plan.md when requirements change during implementation
 
 ## Effort-Based Planning Depth
 

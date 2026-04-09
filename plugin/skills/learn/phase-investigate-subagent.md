@@ -67,7 +67,7 @@ Agents defined in `plugin/agents/` can specify skills to preload:
 ```yaml
 ---
 name: work-merge
-description: Merge phase for /cat:work
+description: Merge phase for /cat:work-agent
 tools: Read, Bash, Grep, Glob
 model: haiku
 skills:

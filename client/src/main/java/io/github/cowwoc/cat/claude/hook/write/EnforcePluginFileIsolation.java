@@ -21,7 +21,7 @@ import java.nio.file.Paths;
  * <p>
  * Blocks Edit/Write operations on plugin/ and client/ files when not in an issue worktree.
  * A CAT issue worktree is identified by its git directory ending with {@code worktrees/<branch-name>},
- * matching the structure created by {@code /cat:work}. All source development must happen in issue
+ * matching the structure created by {@code /cat:work-agent}. All source development must happen in issue
  * worktrees.
  */
 public final class EnforcePluginFileIsolation implements FileWriteHandler
@@ -93,7 +93,7 @@ public final class EnforcePluginFileIsolation implements FileWriteHandler
   }
 
   /**
-   * Check if the given directory is an issue worktree created by {@code /cat:work}.
+   * Check if the given directory is an issue worktree created by {@code /cat:work-agent}.
    * <p>
    * A CAT issue worktree has a git directory ending with {@code worktrees/<branch-name>}
    * (the path returned by {@code git rev-parse --git-dir}).

@@ -45,7 +45,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
 
 /**
- * Deterministic preparation phase for /cat:work. Orchestrates issue discovery, lock acquisition,
+ * Deterministic preparation phase for /cat:work-agent. Orchestrates issue discovery, lock acquisition,
  * worktree creation, and metadata collection to produce a JSON result for the work skill.
  */
 public final class WorkPrepare
@@ -301,7 +301,7 @@ public final class WorkPrepare
       Map<String, Object> oversizedResult = new LinkedHashMap<>();
       oversizedResult.put("status", "OVERSIZED");
       oversizedResult.put("message", "Issue estimated at " + estimatedTokens + " tokens (limit: " + TOKEN_LIMIT + ")");
-      oversizedResult.put("suggestion", "Use /cat:decompose-issue to break into smaller issues");
+      oversizedResult.put("suggestion", "Use /cat:decompose-issue-agent to break into smaller issues");
       oversizedResult.put("issue_id", issueId);
       oversizedResult.put("estimated_tokens", estimatedTokens);
       return mapper.writeValueAsString(oversizedResult);
@@ -667,7 +667,7 @@ public final class WorkPrepare
       oversizedResult.put("status", "OVERSIZED");
       oversizedResult.put("message", "Issue estimated at " + estimatedTokens +
         " tokens (limit: " + TOKEN_LIMIT + ")");
-      oversizedResult.put("suggestion", "Use /cat:decompose-issue to break into smaller issues");
+      oversizedResult.put("suggestion", "Use /cat:decompose-issue-agent to break into smaller issues");
       oversizedResult.put("issue_id", existing.issueId());
       oversizedResult.put("estimated_tokens", estimatedTokens);
       return mapper.writeValueAsString(oversizedResult);

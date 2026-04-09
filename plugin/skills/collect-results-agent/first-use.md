@@ -43,7 +43,7 @@ Display collection progress using visible feedback symbols:
   → Discovered issues: {N}
 ```
 
-These symbols match the phase-based progress format used in `/cat:work`.
+These symbols match the phase-based progress format used in `/cat:work-agent`.
 
 Steps: Verify completion, Extract commits, Parse metrics, Extract issues, Report to user, Update index.json
 
@@ -242,7 +242,7 @@ into what happened during subagent execution and whether quality may have degrad
 ⚠️ CONTEXT COMPACTION DETECTED
 
 The subagent experienced context pressure and may have produced lower quality output.
-Consider invoking /cat:decompose-issue for similar issues in the future.
+Consider invoking /cat:decompose-issue-agent for similar issues in the future.
 ```
 
 ### 8. Update Parent index.json

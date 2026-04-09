@@ -37,7 +37,7 @@ instead.
 - `Use BEFORE` - Should be loaded before an action (e.g., "Use BEFORE creating or updating any skill")
 - `Use after` - Post-action skill (e.g., "Use after complex issues to analyze session efficiency")
 - `Use instead of` - Replaces a dangerous operation (e.g., "Use instead of `git commit --amend`")
-- `Internal` - For non-user-facing skills (e.g., "Internal (invoked by /cat:work) - merge phase")
+- `Internal` - For non-user-facing skills (e.g., "Internal (invoked by /cat:work-agent) - merge phase")
 
 ```
 Format: "<trigger-pattern> [condition] - [what it does briefly]"
@@ -1168,7 +1168,7 @@ This text gets echoed to the user verbatim because the agent treats it as output
 | Args | Receives args from `getOutput(String[] args)` | References `$ARGUMENTS` for conditional logic |
 | Changes | Different output each call | Same instructions, reused via reference.md |
 
-For skills with argument-dependent behavior (e.g., `/cat:work` vs `/cat:work 2.1-task`), the handler
+For skills with argument-dependent behavior (e.g., `/cat:work-agent` vs `/cat:work-agent 2.1-task`), the handler
 generates argument-specific output while skill content contains the static conditional logic
 ("if ARGUMENTS contains a filter, do X"). Both work correctly on subsequent invocations: the handler
 re-runs via `get-output` with new args, and the agent follows the already-loaded skill content instructions.

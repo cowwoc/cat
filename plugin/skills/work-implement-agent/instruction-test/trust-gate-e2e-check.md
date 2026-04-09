@@ -6,13 +6,13 @@ See LICENSE.md in the project root for license terms.
 # Trust Gate E2E Verification Checklist
 
 Manual end-to-end checklist for verifying that trust-level gate routing behaves correctly when running
-`/cat:work` with a real issue. Run each scenario in sequence using an isolated test issue.
+`/cat:work-agent` with a real issue. Run each scenario in sequence using an isolated test issue.
 
 ## Prerequisites
 
 - A test issue with a valid `plan.md` containing `## Goal` and `## Post-conditions` sections.
 - The CAT config file at `.cat/config.json` must be writable to change the `trust` value between runs.
-- Run each scenario from a fresh worktree (re-run `/cat:work` after changing trust level).
+- Run each scenario from a fresh worktree (re-run `/cat:work-agent` after changing trust level).
 
 ---
 

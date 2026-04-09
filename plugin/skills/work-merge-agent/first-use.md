@@ -5,7 +5,7 @@ See LICENSE.md in the project root for license terms.
 -->
 # Work Phase: Merge
 
-Merge phase for `/cat:work`. Handles pre-merge squash and rebase, approval gate, then executes
+Merge phase for `/cat:work-agent`. Handles pre-merge squash and rebase, approval gate, then executes
 commit squashing, branch merging, worktree cleanup, and state updates.
 
 ## MANDATORY STEPS
@@ -92,7 +92,7 @@ ${UNMET_DETAILS}
 
 Required action:
 1. Return to the implementation phase and address each unmet criterion.
-2. Re-run /cat:work to complete confirm → review → merge in sequence.
+2. Re-run /cat:work-agent to complete confirm → review → merge in sequence.
 3. Do NOT manually squash commits or force-present the approval gate.
 
 The gate protects users from approving incomplete work. Fix the implementation first.
@@ -330,13 +330,13 @@ If `REVIEW_RESULT_FILE` exists:
   ```
   ERROR: Review result file at ${REVIEW_RESULT_FILE} exists but contains no valid status.
   All reviewer subagents must complete before the approval gate can be presented.
-  Re-run /cat:work to retry the review phase.
+  Re-run /cat:work-agent to retry the review phase.
   ```
 - If `PERSISTED_STATUS == "FAILED"`: STOP with error:
   ```
   ERROR: Review phase reported FAILED status. One or more reviewer subagents did not return a result.
   All reviewer subagents must complete before the approval gate can be presented.
-  Re-run /cat:work to retry the review phase.
+  Re-run /cat:work-agent to retry the review phase.
   ```
 
 If `REVIEW_RESULT_FILE` does not exist AND `CAUTION != "low"` (i.e., review was not explicitly skipped):
@@ -345,7 +345,7 @@ If `REVIEW_RESULT_FILE` does not exist AND `CAUTION != "low"` (i.e., review was 
   ERROR: Review result file not found at ${REVIEW_RESULT_FILE}.
   The review phase must complete successfully before the approval gate is shown.
   Ensure the review phase ran and all reviewer subagents returned results.
-  Re-run /cat:work to retry.
+  Re-run /cat:work-agent to retry.
   ```
 
 ### Present Changes Before Approval Gate (BLOCKING)

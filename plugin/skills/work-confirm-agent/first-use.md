@@ -5,7 +5,7 @@ See LICENSE.md in the project root for license terms.
 -->
 # Work Phase: Confirm
 
-Confirm phase for `/cat:work`. Verifies that plan.md post-conditions were implemented before
+Confirm phase for `/cat:work-agent`. Verifies that plan.md post-conditions were implemented before
 stakeholder quality review. Spawns a verify subagent, handles fix iteration if criteria are missing.
 
 ## Arguments Format
