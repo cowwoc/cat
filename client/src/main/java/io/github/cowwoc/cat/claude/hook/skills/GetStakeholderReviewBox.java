@@ -24,7 +24,7 @@ import java.util.List;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Generates the stakeholder review box for /cat:stakeholder-review skill.
+ * Generates the stakeholder review box for /cat:stakeholder-review-agent skill.
  * <p>
  * Displays the aggregated review outcome showing per-reviewer statuses, overall result, and summary.
  */

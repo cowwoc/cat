@@ -55,7 +55,7 @@ Commit messages are available via `git log` in the worktree if needed.
 
 ## When to Use
 
-- After implementation phase completes in `/cat:work`
+- After implementation phase completes in `/cat:work-agent`
 - Before the user approval gate
 - When significant code changes need multi-perspective validation
 
@@ -189,7 +189,7 @@ SELECTED=$(echo "$SELECTED" | tr ' ' '\n' | sort -u | tr '\n' ' ')
 GIT_DIR=$(git rev-parse --git-dir 2>/dev/null)
 GIT_DIR_PARENT=$(dirname "$GIT_DIR")
 if [[ "$(basename "$GIT_DIR_PARENT")" != "worktrees" ]]; then
-    echo "ERROR: Not in a CAT issue worktree. Stakeholder review requires worktree context. Run via /cat:work." >&2
+    echo "ERROR: Not in a CAT issue worktree. Stakeholder review requires worktree context. Run via /cat:work-agent." >&2
     exit 1
 fi
 if [[ -z "${TARGET_BRANCH:-}" ]]; then
@@ -322,7 +322,7 @@ fi
 GIT_DIR=$(git rev-parse --git-dir 2>/dev/null)
 GIT_DIR_PARENT=$(dirname "$GIT_DIR")
 if [[ "$(basename "$GIT_DIR_PARENT")" != "worktrees" ]]; then
-    echo "ERROR: Not in a CAT issue worktree. Stakeholder review requires worktree context. Run via /cat:work." >&2
+    echo "ERROR: Not in a CAT issue worktree. Stakeholder review requires worktree context. Run via /cat:work-agent." >&2
     exit 1
 fi
 if [[ -z "${TARGET_BRANCH:-}" ]]; then
@@ -518,7 +518,7 @@ The expected count is `SELECTED_COUNT` — the integer count of stakeholders sel
 the selected-stakeholders list). If the received count is less than `SELECTED_COUNT`: for each missing reviewer, add
 a synthetic REJECTED result with concerns:
 `[{severity: 'CRITICAL', location: 'N/A', explanation: 'Reviewer subagent did not return a result.',
-recommendation: 'Retry /cat:work or check for background task failures.'}]`
+recommendation: 'Retry /cat:work-agent or check for background task failures.'}]`
 
 Parse Agent tool output as JSON — do NOT infer verdicts from context. Every verdict comes from actual
 Agent results. Expected format: `{stakeholder, approval: APPROVED|CONCERNS|REJECTED, concerns: [{severity, location, explanation, recommendation, detail_file}]}`

@@ -20,7 +20,7 @@ treats the argument as a issue description and skips directly to issue creation 
 conversationally for approval. Zero AskUserQuestion calls on the happy path.
 
 **Post-completion workflow:** After issue or version creation completes, offer any next-step workflow
-progression using AskUserQuestion — do NOT mention internal slash commands (e.g., `/cat:work`,
+progression using AskUserQuestion — do NOT mention internal slash commands (e.g., `/cat:work-agent`,
 `/cat:status`) in conversational text. Internal slash commands are not visible to users.
 
 **Reference files** — read on demand as needed:

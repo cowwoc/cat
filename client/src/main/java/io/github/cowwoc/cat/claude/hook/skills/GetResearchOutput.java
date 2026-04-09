@@ -13,7 +13,7 @@ import java.util.Map;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Output generator for /cat:research skill.
+ * Output generator for /cat:research-agent skill.
  *
  * Provides utility functions for rendering stakeholder research display elements:
  * - Rating circles conversion

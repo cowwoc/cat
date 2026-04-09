@@ -28,7 +28,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * Detects repeated consecutive tool failures and suggests drift recovery.
  * <p>
  * Tracks consecutive PostToolUseFailure events per session. When 2 or more consecutive failures are
- * detected, injects a system-reminder suggesting {@code /cat:recover-from-drift}.
+ * detected, injects a system-reminder suggesting {@code /cat:recover-from-drift-agent}.
  * <p>
  * Failure counts are persisted in {@code {catSessionPath}/cat-failure-tracking-<sessionId>.count}.
  * Files older than 1 day are cleaned up at most every 6 hours.
@@ -192,7 +192,7 @@ public final class DetectRepeatedFailures implements PostToolHandler
       2. **Legitimate Error**: The current step has a genuine technical issue
 
       **RECOMMENDED ACTION**:
-      Consider running `/cat:recover-from-drift` to verify you are aligned with the current execution step.
+      Consider running `/cat:recover-from-drift-agent` to verify you are aligned with the current execution step.
 
       The recovery skill will:
       - Read the current plan.md

@@ -66,7 +66,7 @@ needed.
 Verify actual event sequence using get-history:
 
 ```bash
-/cat:get-history
+/cat:get-history-agent
 # Look for: When stated? Action order? User corrections? Actual trigger?
 ```
 

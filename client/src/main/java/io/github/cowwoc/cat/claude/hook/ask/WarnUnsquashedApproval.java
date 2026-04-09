@@ -20,7 +20,7 @@ import java.util.Locale;
 /**
  * Warn when presenting approval gate with unsquashed commits.
  * <p>
- * This handler detects when an approval gate is being presented during /cat:work
+ * This handler detects when an approval gate is being presented during /cat:work-agent
  * and warns if commits haven't been squashed yet.
  * <p>
  * Also checks main workspace for recent issue commits that should be squashed.

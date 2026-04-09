@@ -52,9 +52,9 @@ public final class BlockMergeCommits implements BashHandler
         - `git merge --ff-only <branch>` - Fast-forward only, fails if not possible
         - `git rebase <branch>` - Rebase for linear history
 
-        Or use the `/cat:git-merge-linear` skill which handles this correctly.
+        Or use the `/cat:git-merge-linear-agent` skill which handles this correctly.
 
-        Use `/cat:git-merge-linear` to merge with linear history.""");
+        Use `/cat:git-merge-linear-agent` to merge with linear history.""");
     }
 
     // BLOCK: git merge without --ff-only or --squash
@@ -68,9 +68,9 @@ public final class BlockMergeCommits implements BashHandler
         - `git merge --squash <branch>` - Squash commits into one
         - `git rebase <branch>` - Rebase for linear history
 
-        Or use the `/cat:git-merge-linear` skill which handles this correctly.
+        Or use the `/cat:git-merge-linear-agent` skill which handles this correctly.
 
-        Use `/cat:git-merge-linear` to merge with linear history.""");
+        Use `/cat:git-merge-linear-agent` to merge with linear history.""");
     }
 
     return Result.allow();

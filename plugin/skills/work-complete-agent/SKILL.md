@@ -1,5 +1,5 @@
 ---
-description: Internal (invoked by /cat:work after merge) - generates the Issue Complete summary box
+description: Internal (invoked by /cat:work-agent after merge) - generates the Issue Complete summary box
 model: haiku
 effort: low
 user-invocable: false

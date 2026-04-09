@@ -7,7 +7,7 @@ See LICENSE.md in the project root for license terms.
 
 > See `${CLAUDE_PLUGIN_ROOT}/concepts/work-decomposition.md` for the full execution model and parallelism rules.
 
-Implement phase for `/cat:work`. Displays preparing/implementing banners, verifies lock ownership,
+Implement phase for `/cat:work-agent`. Displays preparing/implementing banners, verifies lock ownership,
 and orchestrates subagent execution of the implementation plan.
 
 ## Arguments Format
@@ -177,7 +177,7 @@ If either `ISSUE_GOAL` or `POST_CONDITIONS` is empty, STOP immediately:
 ```
 ERROR: plan.md is missing required sections (Goal or Post-conditions).
 Cannot present pre-implementation gate without these sections.
-Fix plan.md and retry /cat:work.
+Fix plan.md and retry /cat:work-agent.
 ```
 
 Present the pre-implementation review gate:
@@ -210,7 +210,7 @@ Gate result handling:
   ```
   Return:
   ```json
-  {"status": "BLOCKED", "message": "User requested changes to the plan before implementation. Edit plan.md and re-invoke /cat:work."}
+  {"status": "BLOCKED", "message": "User requested changes to the plan before implementation. Edit plan.md and re-invoke /cat:work-agent."}
   ```
 - **"Abort"**: release lock (same command as above). Return:
   ```json

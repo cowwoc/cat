@@ -166,7 +166,7 @@ public class EnforcePluginFileIsolationTest
   /**
    * Verifies that plugin files in a worktree directory are allowed.
    * <p>
-   * Worktrees created by /cat:work have a git directory ending with {@code worktrees/<branch-name>}
+   * Worktrees created by /cat:work-agent have a git directory ending with {@code worktrees/<branch-name>}
    * and edits in them must be permitted.
    */
   @Test

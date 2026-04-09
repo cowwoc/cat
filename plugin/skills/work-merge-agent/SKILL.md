@@ -1,6 +1,6 @@
 ---
 description: >
-  Internal merge phase (invoked by /cat:work-with-issue) - pre-merge squash/rebase, approval gate,
+  Internal merge phase (invoked by /cat:work-with-issue-agent) - pre-merge squash/rebase, approval gate,
   then executes merge and cleanup. IMPORTANT: After invoking this skill, forward the AskUserQuestion
   tool call verbatim — do not respond conversationally.
 user-invocable: false

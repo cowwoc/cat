@@ -54,7 +54,7 @@ public final class ValidateGitFilterBranch implements BashHandler
         2. Use git-filter-repo with explicit refs:
            git filter-repo --refs main --refs feature-branch
 
-        **See**: /cat:git-rewrite-history skill for proper usage""");
+        **See**: /cat:git-rewrite-history-agent skill for proper usage""");
     }
 
     return Result.allow();

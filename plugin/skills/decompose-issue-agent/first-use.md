@@ -168,7 +168,7 @@ When a issue is decomposed, the parent issue status follows this lifecycle:
 
 **Closing Decomposed Parents:**
 
-When /cat:work selects a decomposed parent (all sub-issues closed), verify parent acceptance criteria before closure:
+When /cat:work-agent selects a decomposed parent (all sub-issues closed), verify parent acceptance criteria before closure:
 
 1. **Read parent plan.md** - Review all acceptance criteria listed
 2. **Verify each criterion** - Check codebase/tests to confirm each criterion is actually satisfied

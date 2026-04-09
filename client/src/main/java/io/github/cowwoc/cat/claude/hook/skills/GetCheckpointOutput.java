@@ -22,7 +22,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /**
- * Output generator for checkpoint boxes used by the {@code /cat:work} skill's review phase.
+ * Output generator for checkpoint boxes used by the {@code /cat:work-agent} skill's review phase.
  * <p>
  * Generates two types of checkpoint boxes:
  * <ul>

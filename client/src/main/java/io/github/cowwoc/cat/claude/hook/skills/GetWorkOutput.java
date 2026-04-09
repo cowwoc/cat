@@ -17,7 +17,7 @@ import java.util.List;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Output generator for /cat:work skill.
+ * Output generator for /cat:work-agent skill.
  *
  * Provides status boxes for the work skill (skill output).
  * Progress banners are handled by silent preprocessing via get-progress-banner.sh.

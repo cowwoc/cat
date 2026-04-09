@@ -118,7 +118,7 @@ public final class WarnMainWorkspaceCommit implements BashHandler
    * Checks whether the given directory is inside a CAT worktree.
    * <p>
    * A directory is inside a CAT worktree if its git directory ends with {@code worktrees/<branch-name>},
-   * matching the structure created by {@code /cat:work}.
+   * matching the structure created by {@code /cat:work-agent}.
    *
    * @param directory the directory to check
    * @return {@code true} if the directory is inside a CAT worktree

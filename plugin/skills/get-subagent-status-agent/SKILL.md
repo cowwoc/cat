@@ -2,7 +2,7 @@
 description: >
   Check status and progress of RUNNING SUBAGENTS specifically (not current session).
   Trigger words: "check subagents", "subagent status", "subagents using", "running subagents".
-  Shows subagent token/context usage. For current session tokens, use /cat:token-report instead.
+  Shows subagent token/context usage. For current session tokens, use /cat:token-report-agent instead.
 model: haiku
 effort: low
 user-invocable: false

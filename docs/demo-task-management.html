@@ -328,7 +328,7 @@
                     No more manual tracking or wondering what to do next.
                 </p>
                 <p>
-                    The <code>/cat:work</code> command handles everything: finding the next available task,
+                    The <code>/cat:work-agent</code> command handles everything: finding the next available task,
                     setting up an isolated workspace, executing the plan, running quality reviews, and
                     merging completed work. You focus on the code; CAT handles the orchestration.
                 </p>
@@ -367,7 +367,7 @@
                 </div>
                 <div class="code-content">
                     <pre><span class="comment"># Add a new task to the current version</span>
-<span class="keyword">$</span> <span class="function">/cat:add</span> <span class="string">2.0-implement-auth</span>
+<span class="keyword">$</span> <span class="function">/cat:add-agent</span> <span class="string">2.0-implement-auth</span>
 
 <span class="comment"># Check project status and see what's ready</span>
 <span class="keyword">$</span> <span class="function">/cat:status</span>
@@ -377,7 +377,7 @@
   <span class="comment">- api-endpoints (completed)</span>
 
 <span class="comment"># Start working on the next available task</span>
-<span class="keyword">$</span> <span class="function">/cat:work</span>
+<span class="keyword">$</span> <span class="function">/cat:work-agent</span>
 <span class="string">Loading task: 2.0-user-dashboard</span>
 <span class="string">Context loaded. Ready to continue implementation.</span></pre>
                 </div>

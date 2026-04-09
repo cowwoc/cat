@@ -1,6 +1,6 @@
 ---
 description: >
-  Internal orchestration (invoked by /cat:work) - runs implement, confirm, review, and merge phases.
+  Internal orchestration (invoked by /cat:work-agent) - runs implement, confirm, review, and merge phases.
   IMPORTANT: After invoking this skill, forward the AskUserQuestion tool call verbatim — do not respond
   conversationally.
 user-invocable: false

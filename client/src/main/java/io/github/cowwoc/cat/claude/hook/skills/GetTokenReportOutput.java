@@ -31,7 +31,7 @@ import static io.github.cowwoc.cat.claude.hook.skills.JsonHelper.getStringOrDefa
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Output generator for /cat:token-report skill.
+ * Output generator for /cat:token-report-agent skill.
  *
  * Reads session JSONL directly and computes token table in Java,
  * eliminating the Python subprocess call.

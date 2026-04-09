@@ -5,10 +5,10 @@ See LICENSE.md in the project root for license terms.
 -->
 # Work With Issue: Phase Orchestrator
 
-Thin orchestrator for `/cat:work`. Delegates each work phase to its dedicated phase skill in sequence.
+Thin orchestrator for `/cat:work-agent`. Delegates each work phase to its dedicated phase skill in sequence.
 Each phase skill loads only its own content, reducing per-phase context load.
 
-**Architecture:** This skill is invoked by `/cat:work` after issue discovery (Phase 1). The main agent
+**Architecture:** This skill is invoked by `/cat:work-agent` after issue discovery (Phase 1). The main agent
 delegates each phase to a dedicated skill:
 - Implement: `cat:work-implement-agent` (banners, lock verify, subagent delegation)
 - Confirm: `cat:work-confirm-agent` (verify-implementation, fix iteration)
@@ -35,7 +35,7 @@ was merged. If either check cannot be confirmed, treat the issue as not yet merg
 ## MANDATORY STEPS
 
 The following steps are **mandatory** and must not be skipped without explicit user permission. Mandatory steps do not
-require user permission to execute — they are pre-approved as part of the `/cat:work` workflow. Steps marked **BLOCKING**
+require user permission to execute — they are pre-approved as part of the `/cat:work-agent` workflow. Steps marked **BLOCKING**
 are additionally enforced by hooks or explicit STOP instructions that block progress mechanically if skipped.
 
 - **Step 5: Review Phase (Stakeholder Review)** — always invoke `cat:stakeholder-review-agent` except for config-driven
@@ -49,7 +49,7 @@ are additionally enforced by hooks or explicit STOP instructions that block prog
 
 ## Arguments and Configuration
 
-The main `/cat:work` skill invokes this with positional space-separated arguments:
+The main `/cat:work-agent` skill invokes this with positional space-separated arguments:
 `<issue_id> <issue_path> <worktree_path> <issue_branch> <target_branch> <estimated_tokens> <trust> <caution>`
 
 ```bash
@@ -80,7 +80,7 @@ Only suggest a replacement when a path segment differs from `.cat` by one charac
 substitution). Do not suggest replacements for unrelated segments like `.catalog` or `.cattle`.
 
 ```
-STOP. Fix the issue_path before re-invoking /cat:work.
+STOP. Fix the issue_path before re-invoking /cat:work-agent.
 ```
 
 **WORKTREE_PATH:** Check that `WORKTREE_PATH` is a non-empty absolute path (starts with `/`). If not, STOP with an
@@ -175,7 +175,7 @@ approves merge, requests changes, or aborts.
 
 ## Return Result
 
-Return the final status to the `/cat:work` skill:
+Return the final status to the `/cat:work-agent` skill:
 
 ```json
 {

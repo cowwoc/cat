@@ -27,7 +27,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * Centralized dispatcher for all verbatim output skills.
  * <p>
  * Routes output type arguments to the appropriate {@code SkillOutput} handler implementation.
- * This class enables composition: higher-level skills invoke {@code /cat:get-output} with a
+ * This class enables composition: higher-level skills invoke {@code /cat:get-output-agent} with a
  * dot-notation type (e.g., {@code config.settings}) and receive the output wrapped in an
  * {@code <output type="...">} tag.
  * <p>

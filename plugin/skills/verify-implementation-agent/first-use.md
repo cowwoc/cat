@@ -11,17 +11,17 @@ the codebase.
 ## Purpose
 
 Verify that the implementation matches what was planned in the issue's plan.md file. This is a read-only audit that
-reports findings without making changes. The skill is invoked automatically by `/cat:work` between the execute and
+reports findings without making changes. The skill is invoked automatically by `/cat:work-agent` between the execute and
 review phases.
 
 ## When to Use
 
-- Invoked by `/cat:work` between execute and review phases to verify plan.md post-conditions before stakeholder
+- Invoked by `/cat:work-agent` between execute and review phases to verify plan.md post-conditions before stakeholder
   quality review
 
 ## Arguments Format
 
-This skill receives JSON arguments with execution context from `/cat:work`:
+This skill receives JSON arguments with execution context from `/cat:work-agent`:
 
 ```json
 {
@@ -217,8 +217,8 @@ implementation or accept the current state.
 
 ## Example Usage
 
-Invoked automatically by `/cat:work`:
+Invoked automatically by `/cat:work-agent`:
 ```
 # Invoked automatically between execute and review phases
-# No manual invocation needed - /cat:work provides JSON arguments
+# No manual invocation needed - /cat:work-agent provides JSON arguments
 ```

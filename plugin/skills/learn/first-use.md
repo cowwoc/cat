@@ -40,7 +40,7 @@ The skill runs the extractor invisibly via preprocessing and returns the pre-ext
 
 Determine execution mode before spawning the subagent:
 
-- **BACKGROUND:** Learn was triggered mid-operation (while working on an issue via `/cat:work`) AND the learn results
+- **BACKGROUND:** Learn was triggered mid-operation (while working on an issue via `/cat:work-agent`) AND the learn results
   (recording to mistakes JSON, updating counter, committing prevention) do not affect the current issue's remaining git
   operations. Note: `record-learning` commits to the active worktree branch (not the main workspace), so the counter
   increment and prevention commit are isolated to the worktree until merge. Background is safe mid-operation as long as

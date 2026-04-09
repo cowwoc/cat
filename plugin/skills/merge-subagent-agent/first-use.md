@@ -20,7 +20,7 @@ state.
 
 ## Concurrent Execution Safety
 
-This skill operates under the issue lock held by `/cat:work`. The issue lock is released by
+This skill operates under the issue lock held by `/cat:work-agent`. The issue lock is released by
 `work` finalization step after all subagent work is merged.
 
 ## Workflow

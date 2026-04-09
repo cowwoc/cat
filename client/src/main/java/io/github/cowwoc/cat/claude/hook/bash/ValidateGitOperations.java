@@ -62,7 +62,7 @@ public final class ValidateGitOperations implements BashHandler
         This command discards all uncommitted changes permanently.
 
         If you're sure:
-        - In a worktree: Use /cat:git-rebase skill
+        - In a worktree: Use /cat:git-rebase-agent skill
         - Main worktree: Add # ACKNOWLEDGED comment
 
         Consider: git stash to save work before reset.""");

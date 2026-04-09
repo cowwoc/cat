@@ -5,7 +5,7 @@ See LICENSE.md in the project root for license terms.
 -->
 # Work Phase: Review
 
-Review phase for `/cat:work`. Runs stakeholder review (Step 5) and deferred concern wizard (Step 6).
+Review phase for `/cat:work-agent`. Runs stakeholder review (Step 5) and deferred concern wizard (Step 6).
 
 ## Arguments Format
 
@@ -224,7 +224,7 @@ If `CURIOSITY == "low"`, output: "Review skipped (curiosity: low)" and return:
 
 **Proceed automatically without asking the user.** The review phase is a mandatory workflow step, not an optional
 operation. Do NOT ask for permission to run it, even though it spawns reviewer subagents. Asking for permission here
-interrupts the workflow unnecessarily — the user already approved the workflow by invoking `/cat:work`.
+interrupts the workflow unnecessarily — the user already approved the workflow by invoking `/cat:work-agent`.
 
 **If CURIOSITY == "high", invoke `cat:research-agent` before running stakeholder review:**
 
@@ -276,7 +276,7 @@ work-with-issue. Release the lock:
 
 Then return FAILED status:
 ```json
-{"status": "FAILED", "message": "Reviewer completion gate failed: only ${reviewer_count} of ${total_stakeholder_count} reviewers returned results. All reviewer subagents must complete before the approval gate can be presented. Re-run /cat:work to retry."}
+{"status": "FAILED", "message": "Reviewer completion gate failed: only ${reviewer_count} of ${total_stakeholder_count} reviewers returned results. All reviewer subagents must complete before the approval gate can be presented. Re-run /cat:work-agent to retry."}
 ```
 
 ### Handle Review Result

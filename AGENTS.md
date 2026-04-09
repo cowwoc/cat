@@ -32,7 +32,7 @@ JDK 26", treat this as a feature request requiring the CAT issue workflow — do
 edit `plugin/` or `client/` source files.
 
 **Correct interpretation:** Create an issue via `/cat:add-agent` that captures the requested change as work to be
-done. The issue's plan.md describes what to update and why. Implementation happens later via `/cat:work`.
+done. The issue's plan.md describes what to update and why. Implementation happens later via `/cat:work-agent`.
 
 **Wrong interpretation:** Reading source code, analyzing it, and proposing or making edits inline — whether
 to `plugin/` files, `client/` files, or configuration files inside those directories (e.g., `client/pom.xml`).
@@ -42,7 +42,7 @@ that protects the codebase. Every `plugin/` or `client/` change goes through an 
 frames the request as an immediate action or a "simple update."
 
 **Exception:** If the user explicitly asks for a "quick fix" or "one-line change" AND the change is trivial
-enough to fit in a single commit, create a minimal worktree branch via `/cat:add-agent` + `/cat:work` (still not
+enough to fit in a single commit, create a minimal worktree branch via `/cat:add-agent` + `/cat:work-agent` (still not
 direct edits to main workspace, and still not a raw `git worktree add` without a CAT issue).
 
 ## Approval Gate Workflow
@@ -68,7 +68,7 @@ The squashing is not a one-time operation; it is part of every approval gate pre
 
 **MANDATORY: Invoke `cat:tdd-implementation` before implementing any bugfix or feature with testable inputs/outputs.**
 
-This applies to all implementation contexts: formal `/cat:work` issue workflows AND ad-hoc user-requested fixes.
+This applies to all implementation contexts: formal `/cat:work-agent` issue workflows AND ad-hoc user-requested fixes.
 Write failing tests first, then implement the fix to make them pass.
 
 **MANDATORY: Run all tests before presenting any task for user review.**

@@ -24,7 +24,7 @@ import java.util.List;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Generates the stakeholder selection box for /cat:stakeholder-review skill.
+ * Generates the stakeholder selection box for /cat:stakeholder-review-agent skill.
  * <p>
  * Displays the context-aware stakeholder selection, showing which stakeholders are running
  * and which were skipped with reasons.

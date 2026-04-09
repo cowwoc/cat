@@ -1,5 +1,5 @@
 ---
-description: Internal prepare phase (invoked by /cat:work) - finds next issue, acquires lock, creates worktree
+description: Internal prepare phase (invoked by /cat:work-agent) - finds next issue, acquires lock, creates worktree
 user-invocable: false
 argument-hint: "<cat_agent_id>"
 effort: medium

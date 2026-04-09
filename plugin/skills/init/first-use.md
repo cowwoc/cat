@@ -947,7 +947,7 @@ Next: /clear -> ask Claude to add a major version
 **Existing codebases:**
 ```
 Initialized with [N] major versions, [N] minor versions, [N] issues
-Next: /clear -> /cat:work {issue} OR ask Claude to add an issue
+Next: /clear -> /cat:work-agent {issue} OR ask Claude to add an issue
 ```
 
 </step>
@@ -1019,8 +1019,8 @@ git commit -m "docs: add first issue - ${ISSUE_NAME}"
    Replace `{ISSUE_NAME}` with the actual sanitized issue name.
 
 AskUserQuestion: header="Start Work", question="Ready to start working on this issue?", options=[
-  "Yes, let's go! (Recommended)" - Run /cat:work immediately,
-  "No, I'll start later" - Exit with /cat:work pointer
+  "Yes, let's go! (Recommended)" - Run /cat:work-agent immediately,
+  "No, I'll start later" - Exit with /cat:work-agent pointer
 ]
 
 **If "Yes, let's go!":**
