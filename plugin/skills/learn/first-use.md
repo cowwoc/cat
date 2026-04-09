@@ -158,7 +158,7 @@ display this recovery message and stop waiting:
 The background learn task appears to be stalled (no notification received after 150 seconds).
 Options:
 1. Check task logs: Invoke /cat:get-subagent-status-agent to inspect background task status
-2. Manual recovery: Invoke /cat:learn in foreground mode to re-run the analysis
+2. Manual recovery: Invoke /cat:learn-agent in foreground mode to re-run the analysis
 ```
 Timeout enforcement example (MANDATORY in code):
 ```bash

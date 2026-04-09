@@ -135,7 +135,7 @@ public final class AutoLearnMistakes implements PostToolHandler
 
     return Result.context(
       "MISTAKE DETECTED: " + detection.type() + "\n\n" +
-      "**MANDATORY**: Run `/cat:learn` to record this mistake and prevent recurrence, then use " +
+      "**MANDATORY**: Run `/cat:learn-agent` to record this mistake and prevent recurrence, then use " +
       "TaskCreate to track this investigation:\n" +
       "- subject: \"" + taskSubject + "\"\n" +
       "- description: \"Investigate " + detection.type() + " detected during " +
