@@ -303,39 +303,58 @@ generate_startup_archives() {
   local aot_config="${OUTPUT_DIR}/lib/server/aot-config.aotconf"
   local aot_cache="${OUTPUT_DIR}/lib/server/aot-cache.aot"
 
+  # JVM AOT messages (warnings, informational) go to stdout. The five lines below are
+  # known-harmless: Jackson's SQL extension classes reference java.sql types not included
+  # in the jlink image. All other AOT output is forwarded to stderr.
+  local suppress_pattern
+  suppress_pattern='Preload Warning: Verification failed for tools\.jackson\.databind\.ext\.sql\.JavaSqlBlobSerializer'
+  suppress_pattern+='|Preload Warning: Verification failed for tools\.jackson\.databind\.ext\.sql\.JavaSqlDateSerializer'
+  suppress_pattern+='|Skipping tools/jackson/databind/ext/sql/JavaSqlBlobSerializer'
+  suppress_pattern+='|Skipping tools/jackson/databind/ext/sql/JavaSqlDateSerializer'
+  suppress_pattern+='|Skipping tools/jackson/databind/ext/beans/JavaBeansAnnotationsImpl'
+
   # Leyden AOT: record training data, then create pre-linked cache.
   # Uses a single AotTraining class that exercises all handlers in one JVM invocation,
   # replacing 20 separate JVM launches (~19s -> ~1s).
   log "Recording AOT training data..."
   # Set environment variables required by MainJvmScope so handlers can initialize.
-  # Capture stderr: suppress expected JVM AOT warnings on success, show them on failure.
-  local aot_stderr
-  aot_stderr=$(mktemp)
+  # Capture stdout+stderr: filter known-harmless Jackson SQL warnings on success, show all on failure.
+  local aot_output
+  aot_output=$(mktemp)
   # shellcheck disable=SC2064
-  trap "rm -f '$aot_stderr'" RETURN
+  trap "rm -f '$aot_output'" RETURN
   if ! CLAUDE_PROJECT_DIR="${PROJECT_DIR%/*}" CLAUDE_PLUGIN_ROOT="${PROJECT_DIR%/*}/plugin" \
     "$java_bin" \
       -XX:AOTMode=record \
       -XX:AOTConfiguration="$aot_config" \
       -m "$(handler_main AotTraining)" \
-      2>"$aot_stderr"; then
-    cat "$aot_stderr" >&2
+      >"$aot_output" 2>&1; then
+    cat "$aot_output" >&2
     error "Failed to record AOT training data"
   fi
-  rm -f "$aot_stderr"
+  grep -Ev "$suppress_pattern" "$aot_output" >&2 || true
+  rm -f "$aot_output"
   trap - RETURN
 
   [[ -f "$aot_config" ]] || error "AOT configuration file not created: $aot_config"
 
+  local create_output
+  create_output=$(mktemp)
+  # shellcheck disable=SC2064
+  trap "rm -f '$create_output'" RETURN
   if ! "$java_bin" \
     -XX:AOTMode=create \
     -XX:AOTConfiguration="$aot_config" \
     -XX:AOTCache="$aot_cache" \
     -XX:+AOTClassLinking \
     -m "$(handler_main PreToolUseHook)" \
-    2>&1; then
+    >"$create_output" 2>&1; then
+    cat "$create_output" >&2
     error "Failed to create AOT cache"
   fi
+  grep -Ev "$suppress_pattern" "$create_output" >&2 || true
+  rm -f "$create_output"
+  trap - RETURN
 
   rm -f "$aot_config"
   log "  AOT cache: $(du -h "$aot_cache" | cut -f1)"
