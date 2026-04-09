@@ -176,10 +176,10 @@ public final class StatuslineCommandTest
   }
 
   /**
-   * Verifies that 140,935 used tokens (77% of usable context, 200k model) uses an RGB orange-red color code.
+   * Verifies that 132,000 used tokens (77% of usable context, 200k model) uses an RGB orange-red color code.
    * <p>
-   * With 200k model: usableContext = 165,500. effectiveUsed = 140,935 - 13,500 = 127,435.
-   * 127,435 * 100 / 165,500 = 77%. red=255, green=((100-77)*255)/50 = 117 → orange-red.
+   * With 200k model: usableContext = 153,800. effectiveUsed = 132,000 - 13,200 = 118,800.
+   * 118,800 * 100 / 153,800 = 77%. red=255, green=((100-77)*255)/50 = 117 → orange-red.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -195,7 +195,7 @@ public final class StatuslineCommandTest
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
           "context_window": {
-            "current_usage": {"input_tokens": 140935},
+            "current_usage": {"input_tokens": 132000},
             "context_window_size": 200000
           }
         }
@@ -214,10 +214,10 @@ public final class StatuslineCommandTest
   }
 
   /**
-   * Verifies that 71,425 used tokens (35% of usable context, 200k model) uses an RGB green-yellow color code.
+   * Verifies that 67,030 used tokens (35% of usable context, 200k model) uses an RGB green-yellow color code.
    * <p>
-   * With 200k model: usableContext = 165,500. effectiveUsed = 71,425 - 13,500 = 57,925.
-   * 57,925 * 100 / 165,500 = 35%. red=(35*255)/50 = 178, green=255 → yellow-green.
+   * With 200k model: usableContext = 153,800. effectiveUsed = 67,030 - 13,200 = 53,830.
+   * 53,830 * 100 / 153,800 = 35%. red=(35*255)/50 = 178, green=255 → yellow-green.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -233,7 +233,7 @@ public final class StatuslineCommandTest
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
           "context_window": {
-            "current_usage": {"input_tokens": 71425},
+            "current_usage": {"input_tokens": 67030},
             "context_window_size": 200000
           }
         }
@@ -379,10 +379,10 @@ public final class StatuslineCommandTest
   }
 
   /**
-   * Verifies that 111,145 used tokens (59% of usable context, 200k model) uses an orange-red RGB color.
+   * Verifies that 103,942 used tokens (59% of usable context, 200k model) uses an orange-red RGB color.
    * <p>
-   * With 200k model: usableContext = 165,500. effectiveUsed = 111,145 - 13,500 = 97,645.
-   * 97,645 * 100 / 165,500 = 59%. red=255, green=((100-59)*255)/50 = 209 → orange-red.
+   * With 200k model: usableContext = 153,800. effectiveUsed = 103,942 - 13,200 = 90,742.
+   * 90,742 * 100 / 153,800 = 59%. red=255, green=((100-59)*255)/50 = 209 → orange-red.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -398,7 +398,7 @@ public final class StatuslineCommandTest
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
           "context_window": {
-            "current_usage": {"input_tokens": 111145},
+            "current_usage": {"input_tokens": 103942},
             "context_window_size": 200000
           }
         }
@@ -417,10 +417,10 @@ public final class StatuslineCommandTest
   }
 
   /**
-   * Verifies that 170,725 used tokens (95% of usable context, 200k model) uses a near-red RGB color.
+   * Verifies that 159,310 used tokens (95% of usable context, 200k model) uses a near-red RGB color.
    * <p>
-   * With 200k model: usableContext = 165,500. effectiveUsed = 170,725 - 13,500 = 157,225.
-   * 157,225 * 100 / 165,500 = 95%. red=255, green=((100-95)*255)/50 = 25 → near-red.
+   * With 200k model: usableContext = 153,800. effectiveUsed = 159,310 - 13,200 = 146,110.
+   * 146,110 * 100 / 153,800 = 95%. red=255, green=((100-95)*255)/50 = 25 → near-red.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -436,7 +436,7 @@ public final class StatuslineCommandTest
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
           "context_window": {
-            "current_usage": {"input_tokens": 170725},
+            "current_usage": {"input_tokens": 159310},
             "context_window_size": 200000
           }
         }
@@ -486,11 +486,11 @@ public final class StatuslineCommandTest
   }
 
   /**
-   * Verifies that 111,145 used tokens (59% of usable context, 200k model) produces 11 filled and 9 empty bar
+   * Verifies that 103,942 used tokens (59% of usable context, 200k model) produces 11 filled and 9 empty bar
    * segments.
    * <p>
-   * With 200k model: usableContext = 165,500. effectiveUsed = 111,145 - 13,500 = 97,645.
-   * 97,645 * 100 / 165,500 = 59%. filled = (59 * 20) / 100 = 11.
+   * With 200k model: usableContext = 153,800. effectiveUsed = 103,942 - 13,200 = 90,742.
+   * 90,742 * 100 / 153,800 = 59%. filled = (59 * 20) / 100 = 11.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -506,7 +506,7 @@ public final class StatuslineCommandTest
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
           "context_window": {
-            "current_usage": {"input_tokens": 111145},
+            "current_usage": {"input_tokens": 103942},
             "context_window_size": 200000
           }
         }
@@ -694,10 +694,10 @@ public final class StatuslineCommandTest
 
   /**
    * Verifies the context scaling boundary: full context (200,000 tokens) yields 100% (all 20 bar segments
-   * filled), while 177,345 tokens yields 99% (19 filled segments and " 99%" displayed).
+   * filled), while 165,462 tokens yields 99% (19 filled segments and " 99%" displayed).
    * <p>
-   * With 200k model: usableContext = 165,500. At 200,000 tokens: effectiveUsed = 186,500 → clamped to 100%.
-   * At 177,345 tokens: effectiveUsed = 163,845 → 163,845 * 100 / 165,500 = 99%.
+   * With 200k model: usableContext = 153,800. At 200,000 tokens: effectiveUsed = 186,800 → clamped to 100%.
+   * At 165,462 tokens: effectiveUsed = 152,262 → 152,262 * 100 / 153,800 = 99%.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -727,14 +727,14 @@ public final class StatuslineCommandTest
         requireThat(outputFull, "outputFull").contains("100%");
       }
 
-      // 177,345 tokens: effectiveUsed = 163,845 → 163,845 * 100 / 165,500 = 99
+      // 165,462 tokens: effectiveUsed = 152,262 → 152,262 * 100 / 153,800 = 99
       String jsonNearFull = """
         {
           "model": {"display_name": "claude"},
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
           "context_window": {
-            "current_usage": {"input_tokens": 177345},
+            "current_usage": {"input_tokens": 165462},
             "context_window_size": 200000
           }
         }
@@ -1445,8 +1445,8 @@ public final class StatuslineCommandTest
   /**
    * Verifies that 0 used tokens on a 200k model yields 0% (below-overhead tokens are clamped to 0).
    * <p>
-   * FIXED_OVERHEAD = 13,500. usableContext = 200,000 - 34,500 = 165,500.
-   * effectiveUsed = 0 - 13,500 = -13,500 → clamped to 0%.
+   * FIXED_OVERHEAD = 13,200. usableContext = 200,000 - 46,200 = 153,800.
+   * effectiveUsed = 0 - 13,200 = -13,200 → clamped to 0%.
    */
   @Test
   public void scale200kZeroTokensYields0()
@@ -1458,20 +1458,20 @@ public final class StatuslineCommandTest
   /**
    * Verifies that exactly FIXED_OVERHEAD tokens on a 200k model yields 0%.
    * <p>
-   * FIXED_OVERHEAD = 13,500. effectiveUsed = 13,500 - 13,500 = 0 → 0%.
+   * FIXED_OVERHEAD = 13,200. effectiveUsed = 13,200 - 13,200 = 0 → 0%.
    */
   @Test
   public void scale200kOverheadTokensYields0()
   {
-    int result = SharedSecrets.scaleContextPercent(13_500, 200_000);
+    int result = SharedSecrets.scaleContextPercent(13_200, 200_000);
     requireThat(result, "result").isEqualTo(0);
   }
 
   /**
    * Verifies that full context (200,000 tokens) on a 200k model yields 100%.
    * <p>
-   * usableContext = 165,500. effectiveUsed = 200,000 - 13,500 = 186,500.
-   * 186,500 * 100 / 165,500 = 112% → clamped to 100%.
+   * usableContext = 153,800. effectiveUsed = 200,000 - 13,200 = 186,800.
+   * 186,800 * 100 / 153,800 = 121% → clamped to 100%.
    */
   @Test
   public void scale200kFullContextYields100()
@@ -1483,21 +1483,21 @@ public final class StatuslineCommandTest
   /**
    * Verifies that the midpoint of usable context on a 200k model yields 50%.
    * <p>
-   * Midpoint = 13,500 + 165,500 / 2 = 96,250 (using integer arithmetic: 13,500 + 82,750 = 96,250).
-   * effectiveUsed = 96,250 - 13,500 = 82,750. 82,750 * 100 / 165,500 = 50%.
+   * Midpoint = 13,200 + 153,800 / 2 = 90,100 (using integer arithmetic: 13,200 + 76,900 = 90,100).
+   * effectiveUsed = 90,100 - 13,200 = 76,900. 76,900 * 100 / 153,800 = 50%.
    */
   @Test
   public void scale200kMidpointYields50()
   {
-    int result = SharedSecrets.scaleContextPercent(96_250, 200_000);
+    int result = SharedSecrets.scaleContextPercent(90_100, 200_000);
     requireThat(result, "result").isEqualTo(50);
   }
 
   /**
    * Verifies that 0 used tokens on a 1M model yields 0% (below-overhead tokens are clamped to 0).
    * <p>
-   * FIXED_OVERHEAD = 13,500. usableContext = 1,000,000 - 34,500 = 965,500.
-   * effectiveUsed = 0 - 13,500 = -13,500 → clamped to 0%.
+   * FIXED_OVERHEAD = 13,200. usableContext = 1,000,000 - 46,200 = 953,800.
+   * effectiveUsed = 0 - 13,200 = -13,200 → clamped to 0%.
    */
   @Test
   public void scale1MZeroTokensYields0()
@@ -1509,20 +1509,20 @@ public final class StatuslineCommandTest
   /**
    * Verifies that exactly FIXED_OVERHEAD tokens on a 1M model yields 0%.
    * <p>
-   * FIXED_OVERHEAD = 13,500. effectiveUsed = 13,500 - 13,500 = 0 → 0%.
+   * FIXED_OVERHEAD = 13,200. effectiveUsed = 13,200 - 13,200 = 0 → 0%.
    */
   @Test
   public void scale1MOverheadTokensYields0()
   {
-    int result = SharedSecrets.scaleContextPercent(13_500, 1_000_000);
+    int result = SharedSecrets.scaleContextPercent(13_200, 1_000_000);
     requireThat(result, "result").isEqualTo(0);
   }
 
   /**
    * Verifies that full context (1,000,000 tokens) on a 1M model yields 100%.
    * <p>
-   * usableContext = 965,500. effectiveUsed = 1,000,000 - 13,500 = 986,500.
-   * 986,500 * 100 / 965,500 = 102% → clamped to 100%.
+   * usableContext = 953,800. effectiveUsed = 1,000,000 - 13,200 = 986,800.
+   * 986,800 * 100 / 953,800 = 103% → clamped to 100%.
    */
   @Test
   public void scale1MFullContextYields100()
@@ -1534,20 +1534,20 @@ public final class StatuslineCommandTest
   /**
    * Verifies that the midpoint of usable context on a 1M model yields 50%.
    * <p>
-   * Midpoint = 13,500 + 965,500 / 2 = 13,500 + 482,750 = 496,250.
-   * effectiveUsed = 496,250 - 13,500 = 482,750. 482,750 * 100 / 965,500 = 50%.
+   * Midpoint = 13,200 + 953,800 / 2 = 13,200 + 476,900 = 490,100.
+   * effectiveUsed = 490,100 - 13,200 = 476,900. 476,900 * 100 / 953,800 = 50%.
    */
   @Test
   public void scale1MMidpointYields50()
   {
-    int result = SharedSecrets.scaleContextPercent(496_250, 1_000_000);
+    int result = SharedSecrets.scaleContextPercent(490_100, 1_000_000);
     requireThat(result, "result").isEqualTo(50);
   }
 
   /**
    * Verifies that tokens below overhead are clamped to 0% (not negative) for a 200k model.
    * <p>
-   * 10,000 tokens is well below FIXED_OVERHEAD (13,500). effectiveUsed = -3,500 → clamped to 0%.
+   * 10,000 tokens is well below FIXED_OVERHEAD (13,200). effectiveUsed = -3,200 → clamped to 0%.
    */
   @Test
   public void scale200kBelowOverheadClampsTo0()
@@ -1559,7 +1559,7 @@ public final class StatuslineCommandTest
   /**
    * Verifies that tokens exceeding the total context are clamped to 100% for a 200k model.
    * <p>
-   * 300,000 tokens exceeds 200,000 total context. effectiveUsed = 286,500 → 286,500 * 100 / 165,500 > 100
+   * 300,000 tokens exceeds 200,000 total context. effectiveUsed = 286,800 → 286,800 * 100 / 153,800 > 100
    * → clamped to 100%.
    */
   @Test
@@ -1572,8 +1572,8 @@ public final class StatuslineCommandTest
   /**
    * Verifies that a 1M context window size is used when {@code context_window_size} is 1,000,000.
    * <p>
-   * At 496,250 tokens on a 1M context window: usableContext = 965,500.
-   * effectiveUsed = 496,250 - 13,500 = 482,750. 482,750 * 100 / 965,500 = 50%.
+   * At 490,100 tokens on a 1M context window: usableContext = 953,800.
+   * effectiveUsed = 490,100 - 13,200 = 476,900. 476,900 * 100 / 953,800 = 50%.
    * Fills 10 of 20 bar segments.
    *
    * @throws IOException if an I/O error occurs
@@ -1590,7 +1590,7 @@ public final class StatuslineCommandTest
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
           "context_window": {
-            "current_usage": {"input_tokens": 496250},
+            "current_usage": {"input_tokens": 490100},
             "context_window_size": 1000000
           }
         }
@@ -1612,8 +1612,8 @@ public final class StatuslineCommandTest
   /**
    * Verifies that a 200,000-token context window size is used when {@code context_window_size} is 200,000.
    * <p>
-   * At 96,250 tokens on a 200k context window: usableContext = 165,500.
-   * effectiveUsed = 96,250 - 13,500 = 82,750. 82,750 * 100 / 165,500 = 50%.
+   * At 90,100 tokens on a 200k context window: usableContext = 153,800.
+   * effectiveUsed = 90,100 - 13,200 = 76,900. 76,900 * 100 / 153,800 = 50%.
    * Fills 10 of 20 bar segments.
    *
    * @throws IOException if an I/O error occurs
@@ -1630,7 +1630,7 @@ public final class StatuslineCommandTest
           "session_id": "00000000-0000-0000-0000-000000000000",
           "cost": {"total_duration_ms": 1000},
           "context_window": {
-            "current_usage": {"input_tokens": 96250},
+            "current_usage": {"input_tokens": 90100},
             "context_window_size": 200000
           }
         }
@@ -1858,12 +1858,12 @@ public final class StatuslineCommandTest
    * context usage, producing a non-zero percentage.
    * <p>
    * Reproduces the real Claude Code JSON structure observed in live sessions where {@code input_tokens}
-   * is near zero (3) and the bulk of usage is in the cache fields. Using real values:
-   * {@code input_tokens=3}, {@code cache_read_input_tokens=99144},
-   * {@code cache_creation_input_tokens=1157}, {@code context_window_size=200000}.
+   * is near zero (3) and the bulk of usage is in the cache fields. Using adjusted values:
+   * {@code input_tokens=3}, {@code cache_read_input_tokens=91870},
+   * {@code cache_creation_input_tokens=1303}, {@code context_window_size=200000}.
    * <p>
-   * total = 3 + 99144 + 1157 = 100304. effectiveUsed = 100304 - 13500 = 86804.
-   * contextPercent = 86804 * 100 / 165500 = 52%.
+   * total = 3 + 91870 + 1303 = 93176. effectiveUsed = 93176 - 13200 = 79976.
+   * contextPercent = 79976 * 100 / 153800 = 52%.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -1881,8 +1881,8 @@ public final class StatuslineCommandTest
           "context_window": {
             "current_usage": {
               "input_tokens": 3,
-              "cache_read_input_tokens": 99144,
-              "cache_creation_input_tokens": 1157
+              "cache_read_input_tokens": 91870,
+              "cache_creation_input_tokens": 1303
             },
             "context_window_size": 200000
           }
@@ -1907,7 +1907,7 @@ public final class StatuslineCommandTest
    * context usage percentage is 0%, confirming that the non-cached field alone is insufficient to
    * represent actual usage.
    * <p>
-   * With {@code input_tokens=3} and no cache fields, total = 3. effectiveUsed = 3 - 13500 = clamped
+   * With {@code input_tokens=3} and no cache fields, total = 3. effectiveUsed = 3 - 13200 = clamped
    * to 0 → 0%. This documents the old (broken) behavior that the three-field sum fix corrects.
    *
    * @throws IOException if an I/O error occurs
@@ -1934,7 +1934,7 @@ public final class StatuslineCommandTest
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
       {
         String output = executeWithLockDir(scope, tempDir);
-        // input_tokens=3 is below FIXED_OVERHEAD (13500); effectiveUsed clamps to 0 → 0%
+        // input_tokens=3 is below FIXED_OVERHEAD (13200); effectiveUsed clamps to 0 → 0%
         requireThat(output, "output").contains("  0%");
       }
     }
@@ -1948,8 +1948,8 @@ public final class StatuslineCommandTest
    * Verifies that {@code cache_read_input_tokens} absent from the JSON defaults to 0 and does not
    * cause an error, with only the sum of present fields used for context usage.
    * <p>
-   * With {@code input_tokens=100000} and no cache fields: effectiveUsed = 100000 - 13500 = 86500.
-   * contextPercent = 86500 * 100 / 165500 = 52%.
+   * With {@code input_tokens=93176} and no cache fields: effectiveUsed = 93176 - 13200 = 79976.
+   * contextPercent = 79976 * 100 / 153800 = 52%.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -1966,7 +1966,7 @@ public final class StatuslineCommandTest
           "cost": {"total_duration_ms": 1000},
           "context_window": {
             "current_usage": {
-              "input_tokens": 100000
+              "input_tokens": 93176
             },
             "context_window_size": 200000
           }
@@ -1975,7 +1975,7 @@ public final class StatuslineCommandTest
       try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir, json))
       {
         String output = executeWithLockDir(scope, tempDir);
-        // effectiveUsed = 100000 - 13500 = 86500; contextPercent = 86500 * 100 / 165500 = 52%
+        // effectiveUsed = 93176 - 13200 = 79976; contextPercent = 79976 * 100 / 153800 = 52%
         requireThat(output, "output").contains(" 52%");
       }
     }
@@ -1986,35 +1986,35 @@ public final class StatuslineCommandTest
   }
 
   /**
-   * Regression test: verifies that 37,500 used tokens on a 200k model yields 14%.
+   * Regression test: verifies that 34,732 used tokens on a 200k model yields 14%.
    * <p>
-   * With 200k model: usableContext = 165,500. effectiveUsed = 37,500 - 13,500 = 24,000.
-   * 24,000 * 100 / 165,500 = 14%. The old (broken) formula subtracted the autocompact buffer
+   * With 200k model: usableContext = 153,800. effectiveUsed = 34,732 - 13,200 = 21,532.
+   * 21,532 * 100 / 153,800 = 14%. The old (broken) formula subtracted the autocompact buffer
    * from the numerator, yielding 1% instead of 14%.
    */
   @Test
   public void scaleContextPercent37500on200kYields14()
   {
-    int result = SharedSecrets.scaleContextPercent(37_500, 200_000);
+    int result = SharedSecrets.scaleContextPercent(34_732, 200_000);
     requireThat(result, "result").isEqualTo(14);
   }
 
   /**
-   * Verifies that exactly FIXED_OVERHEAD (13,500) tokens on a 200k model yields 0%.
+   * Verifies that exactly FIXED_OVERHEAD (13,200) tokens on a 200k model yields 0%.
    * <p>
-   * With 200k model: effectiveUsed = 13,500 - 13,500 = 0. 0 * 100 / 165,500 = 0%.
+   * With 200k model: effectiveUsed = 13,200 - 13,200 = 0. 0 * 100 / 153,800 = 0%.
    */
   @Test
   public void scaleContextPercent13500on200kYields0()
   {
-    int result = SharedSecrets.scaleContextPercent(13_500, 200_000);
+    int result = SharedSecrets.scaleContextPercent(13_200, 200_000);
     requireThat(result, "result").isEqualTo(0);
   }
 
   /**
    * Verifies that 200,000 tokens (full context) on a 200k model yields 100%.
    * <p>
-   * With 200k model: effectiveUsed = 186,500 → 186,500 * 100 / 165,500 = 112% → clamped to 100%.
+   * With 200k model: effectiveUsed = 186,800 → 186,800 * 100 / 153,800 = 121% → clamped to 100%.
    */
   @Test
   public void scaleContextPercent200000on200kYields100()
@@ -2026,7 +2026,7 @@ public final class StatuslineCommandTest
   /**
    * Verifies that 0 tokens on a 200k model yields 0% (negative effectiveUsed clamped to 0).
    * <p>
-   * With 200k model: effectiveUsed = 0 - 13,500 = -13,500 → clamped to 0%.
+   * With 200k model: effectiveUsed = 0 - 13,200 = -13,200 → clamped to 0%.
    */
   @Test
   public void scaleContextPercent0on200kYields0()
