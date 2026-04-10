@@ -563,7 +563,7 @@ public final class BlockWorktreeIsolationViolationTest
         TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("could not be resolved");
+      requireThat(result.reason(), "reason").contains("Undefined variable(s): BWIV_TEST_UNDEFINED_ENV_VAR");
       requireThat(result.reason(), "reason").contains(
         worktreeDir.toAbsolutePath().normalize().toString());
     }
@@ -935,7 +935,7 @@ public final class BlockWorktreeIsolationViolationTest
         TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("could not be resolved");
+      requireThat(result.reason(), "reason").contains("Undefined variable(s): OUT");
     }
     finally
     {
