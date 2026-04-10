@@ -145,13 +145,29 @@ public final class BlockWorktreeIsolationViolation implements BashHandler
       }
       if (target.contains("$"))
       {
-        String expanded = ShellParser.expandEnvVars(target, envLookup);
+        // First, extract any literal variable assignments defined earlier in the same script
+        // (e.g. OUT="/path/file.txt") and merge them with the process environment so that
+        // redirects to "${OUT}" can be statically resolved without blocking needlessly.
+        Map<String, String> scriptVars = ShellParser.parseScriptAssignments(command);
+        Function<String, String> mergedLookup = varName ->
+        {
+          String scriptValue = scriptVars.get(varName);
+          if (scriptValue != null)
+            return scriptValue;
+          return envLookup.apply(varName);
+        };
+        String expanded = ShellParser.expandEnvVars(target, mergedLookup);
         if (expanded == null)
         {
           String message = """
             WARNING: Cannot verify Bash redirect to variable-expanded path: %s
 
-            One or more variables in the path are unset in the hook process environment.
+            One or more variables in the path could not be resolved.
+            Variables must be defined earlier in the same script as a simple literal assignment, e.g.:
+              VAR="/absolute/path"
+              cmd > "${VAR}"
+
+            Variables set via command substitution ($(...)) or unset variables cannot be resolved statically.
             If this targets a path outside your worktree, it bypasses worktree isolation.
             Use the Edit or Write tools with an explicit absolute path instead:
               Use: %s/plugin/file.txt

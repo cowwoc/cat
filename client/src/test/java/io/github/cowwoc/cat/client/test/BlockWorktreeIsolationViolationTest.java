@@ -563,7 +563,7 @@ public final class BlockWorktreeIsolationViolationTest
         TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
       requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("unset in the hook process environment");
+      requireThat(result.reason(), "reason").contains("could not be resolved");
       requireThat(result.reason(), "reason").contains(
         worktreeDir.toAbsolutePath().normalize().toString());
     }
@@ -834,6 +834,108 @@ public final class BlockWorktreeIsolationViolationTest
       Path expectedCorrected = worktreeDir.resolve("plugin/file.txt").toAbsolutePath().normalize();
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains(expectedCorrected.toString());
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that a redirect is allowed when the variable is defined as a literal path earlier
+   * in the same script block and that path is inside the active worktree.
+   * <p>
+   * The hook must scan the script for {@code VAR="/path"} assignments and use them to resolve
+   * the redirect target without relying on the process environment.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void redirectAllowedWhenVariableDefinedLiterallyInScript() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("bwiv-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+    {
+      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
+      String insidePath = worktreeDir.resolve("plugin/file.txt").toString();
+      // Embed the literal assignment in the same script block as the redirect
+      String command = "OUT=\"" + insidePath + "\"\nsome-command > \"${OUT}\"";
+      Map<String, String> env = Map.of();  // variable not in env — must come from script
+
+      BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope, env);
+      BashHandler.Result result = handler.check(
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that a redirect is blocked when the variable is defined as a literal path earlier
+   * in the same script but that path is outside the active worktree (inside the project directory).
+   * <p>
+   * Resolving the variable successfully does not grant permission — the resolved path must still
+   * pass the worktree-isolation check.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void redirectBlockedWhenLiteralVariableResolvesOutsideWorktree() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("bwiv-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+    {
+      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      TestUtils.createWorktreeDir(scope, ISSUE_ID);
+      Path outsidePath = projectPath.resolve("plugin/file.txt");
+      String command = "OUT=\"" + outsidePath + "\"\nsome-command > \"${OUT}\"";
+      Map<String, String> env = Map.of();
+
+      BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope, env);
+      BashHandler.Result result = handler.check(
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Worktree isolation violation");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that a redirect remains blocked when the variable is assigned via command
+   * substitution ({@code VAR=$(mktemp)}) rather than a literal value.
+   * <p>
+   * Command substitutions cannot be evaluated statically, so the hook must conservatively
+   * block the redirect even if the variable name appears in the script.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void redirectRemainsBlockedWhenVariableAssignedViaCommandSubstitution() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("bwiv-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+    {
+      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      TestUtils.createWorktreeDir(scope, ISSUE_ID);
+      // Command substitution: $(mktemp) cannot be statically resolved
+      String command = "OUT=$(mktemp)\nsome-command > \"${OUT}\"";
+      Map<String, String> env = Map.of();
+
+      BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope, env);
+      BashHandler.Result result = handler.check(
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("could not be resolved");
     }
     finally
     {
