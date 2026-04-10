@@ -6,8 +6,10 @@
  */
 package io.github.cowwoc.cat.claude.hook.util;
 
+import java.util.Collection;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Detects "giving up" patterns in text, covering both user-prompt context and assistant-message context.
@@ -23,6 +25,11 @@ import java.util.Optional;
  *   <li>{@code token_rationalization} — references to token usage or context limits coupled with work
  *       scope reduction (applies in assistant-message context)</li>
  * </ol>
+ * <p>
+ * Detection splits the text into sentences on {@code .}, {@code !}, {@code ?}, or newline, then applies
+ * ordered keyword checks within each sentence using {@link #indexOf(String, Collection, int)}. This
+ * prevents false positives when constraint and abandonment keywords appear in two separate, unrelated
+ * sentences.
  * <p>
  * Both detection paths share the same entry point: {@link #check(String)}. The method runs the
  * prompt-style patterns first ({@code constraint_rationalization}, {@code code_removal},
@@ -96,7 +103,8 @@ public final class GivingUpDetector
     Reference: CLAUDE.md "LONG-TERM SOLUTION PERSISTENCE" and "GIVING UP DETECTION PATTERNS\"""";
 
   /**
-   * Reminder injected when compilation abandonment (avoiding build errors by removing dependencies) is detected.
+   * Reminder injected when compilation abandonment (avoiding build errors by removing dependencies) is
+   * detected.
    */
   public static final String COMPILATION_ABANDONMENT_REMINDER = """
     🚨 COMPILATION DEBUGGING ABANDONMENT DETECTED - SYSTEMATIC APPROACH REQUIRED
@@ -165,7 +173,8 @@ public final class GivingUpDetector
     Reference: CLAUDE.md "LONG-TERM SOLUTION PERSISTENCE" - Exhaust reasonable effort before downgrading""";
 
   /**
-   * Reminder injected when token usage rationalization (mentioning token counts to justify reduced scope) is detected.
+   * Reminder injected when token usage rationalization (mentioning token counts to justify reduced scope)
+   * is detected.
    */
   public static final String TOKEN_RATIONALIZATION_REMINDER = """
     🚨 ASSISTANT GIVING-UP PATTERN DETECTED - TOKEN POLICY VIOLATION
@@ -203,6 +212,57 @@ public final class GivingUpDetector
     ✅ Never mention token usage in relation to work scope
 
     Reference: CLAUDE.md "Token Usage Policy" and "Prohibited Downgrade Patterns\"""";
+
+  /**
+   * Preamble phrases that open a constraint-rationalization sentence.
+   */
+  private static final Set<String> CONSTRAINT_PREAMBLES = Set.of("given", "due to");
+
+  /**
+   * Complexity or difficulty signal words.
+   */
+  private static final Set<String> COMPLEXITY_KEYWORDS = Set.of("complexity", "difficulty");
+
+  /**
+   * Constraint-type keywords used after a preamble ("given/due to … [keyword]").
+   */
+  private static final Set<String> CONSTRAINT_KEYWORDS = Set.of(
+    "token budget", "token constraints", "time constraints", "context constraints", "context status");
+
+  /**
+   * Constraint keywords that act as the sentence subject without a preceding preamble.
+   */
+  private static final Set<String> CONSTRAINT_SUBJECT_KEYWORDS = Set.of(
+    "context constraints", "token constraints", "time constraints", "token budget");
+
+  /**
+   * First-person introductory phrases that precede an abandonment verb, including causal forms
+   * ("force me to", "i need to").
+   */
+  private static final Set<String> FIRST_PERSON_INTROS = Set.of(
+    "force me to", "let me", "i'll", "i will", "i'm going to", "i need to");
+
+  /**
+   * Abandonment verbs that follow a first-person intro in constraint-rationalization patterns.
+   */
+  private static final Set<String> ABANDONMENT_VERBS = Set.of(
+    "move on", "skip", "defer", "simplify", "step back", "drop", "omit",
+    "take a different", "take a simpler", "reduce", "summarize", "remove", "recommend", "wrap");
+
+  /**
+   * Approach qualifiers that follow "so i recommend" in subject-led constraint sentences.
+   */
+  private static final Set<String> APPROACH_QUALIFIERS = Set.of("different approach", "simpler approach");
+
+  /**
+   * First-person introductory phrases used in code-removal patterns.
+   */
+  private static final Set<String> CODE_REMOVAL_INTROS = Set.of("i'll", "i will", "let me", "i'm going to");
+
+  /**
+   * Removal action words that immediately follow an intro in code-removal patterns.
+   */
+  private static final Set<String> CODE_REMOVAL_ACTIONS = Set.of("remove", "disable", "skip");
 
   /**
    * Creates a new giving-up detector.
@@ -275,7 +335,7 @@ public final class GivingUpDetector
 
     if (detectConstraintRationalization(textLower))
     {
-      if (hasCompilationProblem(textLower))
+      if (containsCompilationIndicator(textLower))
         return Optional.of(ViolationType.COMPILATION_ABANDONMENT);
       return Optional.of(ViolationType.CONSTRAINT_RATIONALIZATION);
     }
@@ -287,187 +347,319 @@ public final class GivingUpDetector
   }
 
   /**
-   * Detects constraint rationalization pattern.
+   * Returns {@code true} if the text matches a constraint-rationalization pattern.
+   * <p>
+   * Each check operates on individual sentences so that keyword matches cannot span sentence
+   * boundaries. Within a sentence, components are required to appear in left-to-right order using
+   * {@link #indexOf(String, Collection, int)} chaining.
    *
    * @param textLower the lowercase text to check
-   * @return true if pattern detected
+   * @return {@code true} if a pattern matches
    */
   private boolean detectConstraintRationalization(String textLower)
   {
-    if (hasConstraintKeyword(textLower) && hasAbandonmentAction(textLower))
-      return true;
-
-    return textLower.contains("given the complexity of properly implementing") ||
-      textLower.contains("given the evidence that this requires significant changes") ||
-      textLower.contains("rather than diving deeper into this complex issue") ||
-      textLower.contains("instead of implementing the full solution") ||
-      textLower.contains("this appears to be beyond the current scope") ||
-      textLower.contains("let me focus on completing the task protocol instead") ||
-      textLower.contains("let me focus on features that provide more immediate value") ||
-      textLower.contains("let me move on to easier tasks") ||
-      textLower.contains("due to complexity and token usage") ||
-      textLower.contains("i'll create a solid mvp") ||
-      textLower.contains("due to session length, let me") ||
-      (textLower.contains("given the") && textLower.contains("complexity and") &&
-        textLower.contains("token budget")) ||
-      textLower.contains("due to token constraints and the need to complete this workflow, " +
-        "i'll summarize the remaining steps") ||
-      textLower.contains("given the extensive work already completed");
+    for (String sentence : splitSentences(textLower))
+    {
+      // Patterns 1 and 2 share a common preamble ("given" or "due to").
+      int preambleEnd = indexOf(sentence, CONSTRAINT_PREAMBLES, 0);
+      if (preambleEnd >= 0)
+      {
+        // Pattern 1: preamble → complexity keyword → first-person intro → abandonment verb
+        if (keywordThenAbandonment(sentence, COMPLEXITY_KEYWORDS, preambleEnd))
+          return true;
+        // Pattern 2: preamble → constraint keyword → first-person intro → abandonment verb
+        if (keywordThenAbandonment(sentence, CONSTRAINT_KEYWORDS, preambleEnd))
+          return true;
+      }
+      // Pattern 3: "due to session length" → first-person intro → abandonment verb
+      int sessionLengthEnd = indexOf(sentence, "due to session length", 0);
+      if (sessionLengthEnd >= 0 && abandonmentFollows(sentence, sessionLengthEnd))
+        return true;
+      // Pattern 4: "given the extensive work already completed" → first-person intro → abandonment verb
+      int extensiveWorkEnd = indexOf(sentence, "given the extensive work already completed", 0);
+      if (extensiveWorkEnd >= 0 && abandonmentFollows(sentence, extensiveWorkEnd))
+        return true;
+      // Pattern 5: constraint as sentence subject → first-person intro → abandonment verb
+      //            OR constraint as subject → "so i recommend" → approach qualifier
+      int subjectEnd = indexOf(sentence, CONSTRAINT_SUBJECT_KEYWORDS, 0);
+      if (subjectEnd >= 0)
+      {
+        if (abandonmentFollows(sentence, subjectEnd))
+          return true;
+        int recommendEnd = indexOf(sentence, "so i recommend", subjectEnd);
+        if (recommendEnd >= 0 && indexOf(sentence, APPROACH_QUALIFIERS, recommendEnd) >= 0)
+          return true;
+      }
+      // Pattern 6: "given the" → "complexity and" → "token budget" (both constraint signals present)
+      int givenTheEnd = indexOf(sentence, "given the", 0);
+      if (givenTheEnd >= 0)
+      {
+        int complexityAndEnd = indexOf(sentence, "complexity and", givenTheEnd);
+        if (complexityAndEnd >= 0 && indexOf(sentence, "token budget", complexityAndEnd) >= 0)
+          return true;
+      }
+      // Self-sufficient giving-up phrases that need no pairing
+      if (sentence.contains("rather than diving deeper") || sentence.contains("rather than going deeper"))
+        return true;
+      if (sentence.contains("instead of implementing the full solution"))
+        return true;
+      int beyondEnd = indexOf(sentence, "this appears to be beyond", 0);
+      if (beyondEnd >= 0 && indexOf(sentence, "scope", beyondEnd) >= 0)
+        return true;
+      int focusEnd = indexOf(sentence, "let me focus on", 0);
+      if (focusEnd >= 0 && indexOf(sentence, "instead", focusEnd) >= 0)
+        return true;
+      if (sentence.contains("let me focus on features that provide more immediate value"))
+        return true;
+      if (sentence.contains("let me move on to easier tasks"))
+        return true;
+      if (sentence.contains("i'll create a solid mvp"))
+        return true;
+      if (sentence.contains("due to complexity and token usage"))
+        return true;
+      int dueToTokenEnd = indexOf(sentence, "due to token constraints", 0);
+      if (dueToTokenEnd >= 0 && indexOf(sentence, "i'll summarize the remaining steps", dueToTokenEnd) >= 0)
+        return true;
+    }
+    return false;
   }
 
   /**
-   * Detects code disabling pattern.
+   * Returns {@code true} if the text matches a code-disabling pattern.
    *
    * @param textLower the lowercase text to check
-   * @return true if pattern detected
+   * @return {@code true} if a pattern matches
    */
   private boolean detectCodeDisabling(String textLower)
   {
-    if (hasFirstPersonCodeRemoval(textLower))
-      return true;
-
-    return textLower.contains("temporarily disable") ||
-      textLower.contains("disable for now") ||
-      textLower.contains("skip for now") ||
-      textLower.contains("skipping it for now") ||
-      textLower.contains("skipping this for now") ||
-      textLower.contains("recommend skipping") ||
-      (textLower.contains("i recommend") && textLower.contains("skip")) ||
-      (textLower.contains("simplifying the implementation") && textLower.contains("remove")) ||
-      (textLower.contains("simpler approach") && textLower.contains("remove")) ||
-      textLower.contains("simplify by removing") ||
-      textLower.contains("removing the broad exception handler") ||
-      textLower.contains("remove the exception handler") ||
-      textLower.contains("removing the try-catch");
+    for (String sentence : splitSentences(textLower))
+    {
+      // "i'll/i will/let me/i'm going to remove/disable/skip" (intro immediately precedes action)
+      for (String intro : CODE_REMOVAL_INTROS)
+        for (String action : CODE_REMOVAL_ACTIONS)
+          if (sentence.contains(intro + " " + action))
+            return true;
+      // Literal disabling phrases
+      if (sentence.contains("temporarily disable"))
+        return true;
+      if (sentence.contains("disable for now"))
+        return true;
+      if (sentence.contains("skip for now"))
+        return true;
+      if (sentence.contains("skipping it for now") || sentence.contains("skipping this for now"))
+        return true;
+      if (sentence.contains("recommend skipping"))
+        return true;
+      // Sentence-local combos where context makes the intent unambiguous
+      if (containsSequence(sentence, "i recommend", "skip"))
+        return true;
+      if (containsSequence(sentence, "simplifying the implementation", "remove"))
+        return true;
+      if (containsSequence(sentence, "simpler approach", "remove"))
+        return true;
+      // Specific exception-handling removal phrases
+      if (sentence.contains("simplify by removing"))
+        return true;
+      if (sentence.contains("removing the broad exception handler"))
+        return true;
+      if (sentence.contains("remove the exception handler"))
+        return true;
+      if (sentence.contains("removing the try-catch"))
+        return true;
+    }
+    return false;
   }
 
   /**
-   * Checks for constraint keywords.
-   *
-   * @param text the text to check
-   * @return true if constraint keyword found
-   */
-  private boolean hasConstraintKeyword(String text)
-  {
-    return text.contains("time constraints") ||
-      text.contains("complexity") ||
-      text.contains("complex") ||
-      text.contains("token budget") ||
-      text.contains("token constraints") ||
-      text.contains("context constraints") ||
-      text.contains("context status") ||
-      (text.contains("context") && text.contains("tokens")) ||
-      text.contains("lengthy") ||
-      text.contains("difficult") ||
-      text.contains("large number") ||
-      text.contains("volume");
-  }
-
-  /**
-   * Checks for abandonment action keywords.
-   *
-   * @param text the text to check
-   * @return true if abandonment action keyword found
-   */
-  private boolean hasAbandonmentAction(String text)
-  {
-    return text.contains("skip") ||
-      text.contains("simplify") ||
-      text.contains("remove") ||
-      text.contains("different approach") ||
-      text.contains("move on") ||
-      text.contains("defer") ||
-      text.contains("let me") ||
-      text.contains("i'll") ||
-      text.contains("i need to") ||
-      text.contains("recommend") ||
-      text.contains("redesign");
-  }
-
-  /**
-   * Checks for first-person intent to remove or disable broken code.
+   * Returns {@code true} if the text contains a keyword indicating a compilation or build problem.
    * <p>
-   * Matches phrases that pair a first-person subject with a removal action, indicating the agent
-   * intends to disable or skip code rather than debug it. This avoids false positives on technical
-   * discussion that mentions broken code or removal actions in a third-person or negated context.
+   * Searches the full text rather than individual sentences because compilation indicators are
+   * standalone signals that need not be paired with any other keyword.
    *
-   * @param text the lowercase text to check
-   * @return true if a first-person code-removal phrase is found
+   * @param textLower the lowercase text to check
+   * @return {@code true} if a compilation keyword is found
    */
-  private boolean hasFirstPersonCodeRemoval(String text)
+  private boolean containsCompilationIndicator(String textLower)
   {
-    return text.contains("i'll remove") ||
-      text.contains("i'll disable") ||
-      text.contains("i'll skip") ||
-      text.contains("i will remove") ||
-      text.contains("i will disable") ||
-      text.contains("i will skip") ||
-      text.contains("let me remove") ||
-      text.contains("let me disable") ||
-      text.contains("let me skip") ||
-      text.contains("i'm going to remove") ||
-      text.contains("i'm going to disable") ||
-      text.contains("i'm going to skip");
+    return textLower.contains("compilation error") ||
+      textLower.contains("module not found") ||
+      textLower.contains("build fails") ||
+      textLower.contains("empty jar") ||
+      textLower.contains("no classes compiled") ||
+      textLower.contains("jpms");
   }
 
   /**
-   * Checks for compilation problem indicators.
-   *
-   * @param text the text to check
-   * @return true if compilation problem indicator found
-   */
-  private boolean hasCompilationProblem(String text)
-  {
-    return text.contains("compilation error") ||
-      text.contains("module not found") ||
-      text.contains("build fails") ||
-      text.contains("empty jar") ||
-      text.contains("no classes compiled") ||
-      text.contains("jpms");
-  }
-
-  /**
-   * Detects token-rationalization giving-up patterns in a single assistant message's text.
+   * Returns {@code true} if the assistant message matches a token-rationalization pattern.
    *
    * @param messageText the text content of one assistant message
-   * @return true if a token-rationalization pattern is detected
+   * @return {@code true} if a pattern matches
    */
   private boolean detectGivingUpPattern(String messageText)
   {
     String lower = messageText.toLowerCase(Locale.ENGLISH);
-    return containsPattern(lower, "given", "token usage", "let me") ||
-      containsPattern(lower, "given", "token usage", "i'll") ||
-      containsPattern(lower, "given", "token usage", "strategic", "optimization") ||
-      containsPattern(lower, "token usage", "complete a few more") ||
-      containsPattern(lower, "token usage", "then proceed to") ||
-      containsPattern(lower, "token usage (", "/", ")") ||
-      containsPattern(lower, "tokens used", "let me") ||
-      containsPattern(lower, "tokens remaining", "i'll") ||
-      containsPattern(lower, "given our token", "complete") ||
-      containsPattern(lower, "given our context", "complete") ||
-      containsPattern(lower, "token budget", "a few more") ||
-      containsPattern(lower, "context constraints", "strategic") ||
-      containsPattern(lower, "i've optimized", "let me", "then proceed") ||
-      containsPattern(lower, "completed", "token", "continue with");
+    for (String sentence : splitSentences(lower))
+    {
+      // "given ... token usage ... let me/i'll"
+      // "given ... token usage ... strategic ... optimization"
+      int givenEnd = indexOf(sentence, "given", 0);
+      if (givenEnd >= 0)
+      {
+        int tokenUsageEnd = indexOf(sentence, "token usage", givenEnd);
+        if (tokenUsageEnd >= 0)
+        {
+          if (indexOf(sentence, "let me", tokenUsageEnd) >= 0 ||
+            indexOf(sentence, "i'll", tokenUsageEnd) >= 0)
+            return true;
+          int strategicEnd = indexOf(sentence, "strategic", tokenUsageEnd);
+          if (strategicEnd >= 0 && indexOf(sentence, "optimization", strategicEnd) >= 0)
+            return true;
+        }
+      }
+      // "token usage ... complete a few more"
+      // "token usage ... then proceed to"
+      if (containsSequence(sentence, "token usage", "complete a few more"))
+        return true;
+      if (containsSequence(sentence, "token usage", "then proceed to"))
+        return true;
+      // "token usage (NNN/NNN)" — open paren followed by a slash in the same sentence
+      int tokenUsageParenEnd = indexOf(sentence, "token usage (", 0);
+      if (tokenUsageParenEnd >= 0 && sentence.indexOf('/', tokenUsageParenEnd) >= 0)
+        return true;
+      // "tokens used ... let me"
+      if (containsSequence(sentence, "tokens used", "let me"))
+        return true;
+      // "tokens remaining ... i'll"
+      if (containsSequence(sentence, "tokens remaining", "i'll"))
+        return true;
+      // "given our token ... complete"
+      if (containsSequence(sentence, "given our token", "complete"))
+        return true;
+      // "given our context ... complete"
+      if (containsSequence(sentence, "given our context", "complete"))
+        return true;
+      // "token budget ... a few more"
+      if (containsSequence(sentence, "token budget", "a few more"))
+        return true;
+      // "context constraints ... strategic"
+      if (containsSequence(sentence, "context constraints", "strategic"))
+        return true;
+      // "i've optimized ... let me ... then proceed"
+      int optimizedEnd = indexOf(sentence, "i've optimized", 0);
+      if (optimizedEnd >= 0)
+      {
+        int letMeEnd = indexOf(sentence, "let me", optimizedEnd);
+        if (letMeEnd >= 0 && indexOf(sentence, "then proceed", letMeEnd) >= 0)
+          return true;
+      }
+      // "completed ... token ... continue with"
+      int completedEnd = indexOf(sentence, "completed", 0);
+      if (completedEnd >= 0)
+      {
+        int tokenEnd = indexOf(sentence, "token", completedEnd);
+        if (tokenEnd >= 0 && indexOf(sentence, "continue with", tokenEnd) >= 0)
+          return true;
+      }
+    }
+    return false;
   }
 
   /**
-   * Checks if text contains all patterns in order.
+   * Returns {@code true} if one of {@code keywords} appears in {@code sentence} at or after
+   * {@code fromIndex}, followed by a first-person intro and an abandonment verb.
    *
-   * @param text the text to search
-   * @param patterns the patterns to find in order
-   * @return true if all patterns are found in order
+   * @param sentence  the text to search within
+   * @param keywords  the candidate keywords to match
+   * @param fromIndex the minimum start index for the search
+   * @return {@code true} if the pattern matches
    */
-  private boolean containsPattern(String text, String... patterns)
+  private static boolean keywordThenAbandonment(String sentence, Collection<String> keywords, int fromIndex)
   {
-    int position = 0;
-    for (String pattern : patterns)
+    int keywordEnd = indexOf(sentence, keywords, fromIndex);
+    return keywordEnd >= 0 && abandonmentFollows(sentence, keywordEnd);
+  }
+
+  /**
+   * Returns {@code true} if a first-person intro followed by an abandonment verb appears in
+   * {@code sentence} at or after {@code fromIndex}.
+   *
+   * @param sentence  the text to search within
+   * @param fromIndex the minimum start index for the search
+   * @return {@code true} if the pattern matches
+   */
+  private static boolean abandonmentFollows(String sentence, int fromIndex)
+  {
+    int introEnd = indexOf(sentence, FIRST_PERSON_INTROS, fromIndex);
+    return introEnd >= 0 && indexOf(sentence, ABANDONMENT_VERBS, introEnd) >= 0;
+  }
+
+  /**
+   * Returns {@code true} if {@code second} appears after {@code first} in {@code sentence},
+   * searching from position 0.
+   *
+   * @param sentence the text to search within
+   * @param first    the term that must appear first
+   * @param second   the term that must follow
+   * @return {@code true} if both terms are found in order
+   */
+  private static boolean containsSequence(String sentence, String first, String second)
+  {
+    int firstEnd = indexOf(sentence, first, 0);
+    return firstEnd >= 0 && indexOf(sentence, second, firstEnd) >= 0;
+  }
+
+  /**
+   * Splits text into sentences on {@code .}, {@code !}, {@code ?}, or newline.
+   *
+   * @param text the text to split
+   * @return the sentences; may include empty strings for adjacent delimiters
+   * @throws NullPointerException if {@code text} is null
+   */
+  private static String[] splitSentences(String text)
+  {
+    return text.split("[.!?\\n]");
+  }
+
+  /**
+   * Returns the index of the character immediately after the first occurrence of {@code term} at or
+   * after {@code fromIndex}, or {@code -1} if not found.
+   *
+   * @param sentence  the text to search within
+   * @param term      the term to find
+   * @param fromIndex the minimum start index for the search
+   * @return the index after the last character of the match, or {@code -1}
+   */
+  private static int indexOf(String sentence, String term, int fromIndex)
+  {
+    int start = sentence.indexOf(term, fromIndex);
+    if (start < 0)
+      return -1;
+    return start + term.length();
+  }
+
+  /**
+   * Returns the index of the character immediately after the earliest-starting match among
+   * {@code terms} at or after {@code fromIndex}, or {@code -1} if none found.
+   *
+   * @param sentence  the text to search within
+   * @param terms     the candidate terms
+   * @param fromIndex the minimum start index for the search
+   * @return the index after the last character of the earliest match, or {@code -1}
+   * @throws NullPointerException if {@code sentence} or {@code terms} are null
+   */
+  private static int indexOf(String sentence, Collection<String> terms, int fromIndex)
+  {
+    int earliestStart = -1;
+    int correspondingEnd = -1;
+    for (String term : terms)
     {
-      int found = text.indexOf(pattern, position);
-      if (found == -1)
-        return false;
-      position = found + pattern.length();
+      int start = sentence.indexOf(term, fromIndex);
+      if (start >= 0 && (earliestStart < 0 || start < earliestStart))
+      {
+        earliestStart = start;
+        correspondingEnd = start + term.length();
+      }
     }
-    return true;
+    return correspondingEnd;
   }
 }
