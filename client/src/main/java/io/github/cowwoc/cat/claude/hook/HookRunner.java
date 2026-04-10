@@ -33,8 +33,6 @@ import java.io.PrintStream;
  */
 public final class HookRunner
 {
-  private static final Logger LOG = LoggerFactory.getLogger(HookRunner.class);
-
   private HookRunner()
   {
   }
@@ -64,7 +62,8 @@ public final class HookRunner
     catch (RuntimeException | AssertionError e)
     {
       // Scope creation failed - cannot use JsonMapper
-      LOG.error("Failed to create JVM scope", e);
+      Logger log = LoggerFactory.getLogger(HookRunner.class);
+      log.error("Failed to create JVM scope", e);
       System.err.println("Hook failed: " + e.getMessage());
     }
     // Method returns normally → JVM exits with code 0.
@@ -103,7 +102,8 @@ public final class HookRunner
     }
     catch (IOException | RuntimeException | AssertionError e)
     {
-      LOG.error("Hook execution failed", e);
+      Logger log = LoggerFactory.getLogger(HookRunner.class);
+      log.error("Hook execution failed", e);
 
       // Output error using Claude Code's universal JSON fields.
       // "systemMessage" is a warning shown to the user.

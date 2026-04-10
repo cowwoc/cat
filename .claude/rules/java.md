@@ -1835,6 +1835,57 @@ catch (IOException e)
 type, preserving the original exception as the cause. This avoids proliferation of different
 unchecked wrapper types (`UncheckedIOException`, custom wrappers, etc.).
 
+## Logging
+
+### Logger Instantiation
+
+Loggers must always be **non-static** instance fields. Use `getClass()` for non-final classes
+(captures the runtime subclass name); use a concrete class literal for `final` classes (no
+subclasses possible):
+
+```java
+// Correct — non-final class uses getClass()
+public class MyClass
+{
+  private final Logger log = LoggerFactory.getLogger(getClass());
+  ...
+}
+
+// Correct — final class uses concrete literal
+public final class MyClass
+{
+  private final Logger log = LoggerFactory.getLogger(MyClass.class);
+  ...
+}
+```
+
+If a logger is needed inside a `static` method (e.g., `main()` or a static utility), create it
+locally inside that method on demand. Never declare a `static Logger` class field.
+
+```java
+// Correct — on-demand in static context
+public static void main(String[] args)
+{
+  try
+  {
+    ...
+  }
+  catch (RuntimeException | AssertionError e)
+  {
+    Logger log = LoggerFactory.getLogger(MyClass.class);
+    log.error("Unexpected error", e);
+  }
+}
+
+// Avoid — static logger field
+private static final Logger log = LoggerFactory.getLogger(MyClass.class);
+```
+
+**Why:** Non-static loggers use `getClass()` which correctly captures the runtime subclass name in
+inheritance hierarchies. Static loggers always report the declaring class, hiding which subclass
+actually ran the code. Creating a logger on demand in static contexts is equivalent — `LoggerFactory`
+caches instances internally so there is no meaningful overhead.
+
 ## Testing
 
 ### Exception Testing
