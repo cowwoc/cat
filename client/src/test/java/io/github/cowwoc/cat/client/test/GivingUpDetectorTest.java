@@ -17,9 +17,8 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 /**
  * Tests for GivingUpDetector.
  * <p>
- * Covers all five violation categories (constraint_rationalization, code_removal,
- * compilation_abandonment, permission_seeking, token_rationalization) plus false-positive
- * suppression tests.
+ * Covers all four violation categories (constraint_rationalization, code_removal,
+ * compilation_abandonment, token_rationalization) plus false-positive suppression tests.
  */
 public final class GivingUpDetectorTest
 {
@@ -70,16 +69,16 @@ public final class GivingUpDetectorTest
    * Verifies that compilation abandonment is detected when a constraint keyword plus
    * a compilation problem indicator trigger an abandonment action.
    * <p>
-   * "Due to complex JPMS issues, I'll simplify by removing the dependency" triggers
-   * compilation_abandonment because "complex" is a constraint keyword, "jpms" is a compilation
-   * problem indicator, and "simplify by removing" is an abandonment phrase.
+   * "Due to token budget constraints and the compilation error, I'll remove the module" triggers
+   * compilation_abandonment because "token budget" is a constraint keyword, "compilation error" is
+   * a compilation problem indicator, and "i'll remove" is an abandonment phrase.
    */
   @Test
   public void detectsCompilationAbandonment()
   {
     GivingUpDetector detector = new GivingUpDetector();
     String result = detector.check(
-      "Due to complex JPMS issues, I'll simplify by removing the dependency");
+      "Due to token budget constraints and the compilation error, I'll remove the module");
     requireThat(result, "result").contains("COMPILATION DEBUGGING ABANDONMENT DETECTED");
     requireThat(result, "result").contains("SYSTEMATIC APPROACH REQUIRED");
   }
@@ -133,7 +132,7 @@ public final class GivingUpDetectorTest
   {
     GivingUpDetector detector = new GivingUpDetector();
     Optional<ViolationType> result = detector.detectType(
-      "Due to complex JPMS issues, I'll simplify by removing the dependency");
+      "Due to token budget constraints and the compilation error, I'll remove the module");
     requireThat(result, "result").isEqualTo(Optional.of(ViolationType.COMPILATION_ABANDONMENT));
   }
 
@@ -318,5 +317,65 @@ public final class GivingUpDetectorTest
     GivingUpDetector detector = new GivingUpDetector();
     String result = detector.check("remove the unused import");
     requireThat(result, "result").isEmpty();
+  }
+
+  /**
+   * Verifies that "Let me run the complex Maven build" does NOT trigger CONSTRAINT_RATIONALIZATION.
+   * <p>
+   * The word "complex" alone is a common adjective in technical discussion and must not be treated
+   * as a giving-up signal. Only multi-word constraint phrases (e.g., "token budget") qualify.
+   */
+  @Test
+  public void complexAdjectiveAloneIsNotConstraintRationalization()
+  {
+    GivingUpDetector detector = new GivingUpDetector();
+    String result = detector.check("Let me run the complex Maven build");
+    requireThat(result, "result").isEmpty();
+  }
+
+  /**
+   * Verifies that "I'll run the difficult migration script" does NOT trigger CONSTRAINT_RATIONALIZATION.
+   * <p>
+   * The word "difficult" alone is a common adjective in technical discussion. Combining it with
+   * "I'll" must not be treated as a scope-reduction signal.
+   */
+  @Test
+  public void difficultAdjectiveAloneIsNotConstraintRationalization()
+  {
+    GivingUpDetector detector = new GivingUpDetector();
+    String result = detector.check("I'll run the difficult migration script");
+    requireThat(result, "result").isEmpty();
+  }
+
+  /**
+   * Verifies that token budget combined with an abandonment action IS detected as
+   * CONSTRAINT_RATIONALIZATION.
+   * <p>
+   * Multi-word constraint phrases like "token budget" are unambiguous giving-up signals when
+   * paired with an abandonment action.
+   */
+  @Test
+  public void tokenBudgetWithAbandonmentIsConstraintRationalization()
+  {
+    GivingUpDetector detector = new GivingUpDetector();
+    String result = detector.check("Given the token budget, let me simplify the approach");
+    requireThat(result, "result").contains("GIVING UP PATTERN DETECTED");
+  }
+
+  /**
+   * Verifies that "let me remove X" in a compound message (text + tool_use) is a known
+   * false-positive source suppressed at the ConversationLogUtils layer, not by GivingUpDetector.
+   * <p>
+   * When this text appears in a pure-text context (direct input to GivingUpDetector), it DOES
+   * trigger CODE_REMOVAL — because in a pure-text turn, "let me remove" indicates real intent.
+   * The suppression for compound messages is handled by ConversationLogUtils.extractTextContent()
+   * returning "" for compound messages before they reach GivingUpDetector.
+   */
+  @Test
+  public void letMeRemoveInPureTextTriggesCodeRemoval()
+  {
+    GivingUpDetector detector = new GivingUpDetector();
+    String result = detector.check("Let me remove the stale worktrees.");
+    requireThat(result, "result").contains("CODE DISABLING ANTI-PATTERN DETECTED");
   }
 }

@@ -49,7 +49,7 @@ public final class DetectGivingUpTest
   {
     DetectGivingUp handler = new DetectGivingUp();
     String prompt =
-      "Given the complexity of this task, I'll skip the advanced features.";
+      "Given the token budget, I'll skip the advanced features.";
     String result = handler.check(prompt, "test-session");
     requireThat(result, "result").contains("GIVING UP PATTERN DETECTED");
     requireThat(result, "result").contains("PERSISTENCE REQUIRED");
@@ -105,7 +105,7 @@ public final class DetectGivingUpTest
   {
     DetectGivingUp handler = new DetectGivingUp();
     String prompt =
-      "Due to the compilation error with complex JPMS issues, " +
+      "Due to token budget pressure and the compilation error, " +
         "I'll simplify by removing the dependency.";
     String result = handler.check(prompt, "test-session");
     requireThat(result, "result").contains("COMPILATION DEBUGGING ABANDONMENT DETECTED");
@@ -133,7 +133,7 @@ public final class DetectGivingUpTest
   public void unbalancedQuotesKept()
   {
     DetectGivingUp handler = new DetectGivingUp();
-    String prompt = "Due to complexity\" I'll skip this feature.";
+    String prompt = "Due to time constraints\" I'll skip this feature.";
     String result = handler.check(prompt, "test-session");
     requireThat(result, "result").contains("GIVING UP PATTERN DETECTED");
   }
@@ -149,9 +149,8 @@ public final class DetectGivingUpTest
     String[] prompts = {
       "Due to time constraints, I'll defer this.",
       "The token budget is too high, so I'll skip this.",
-      "Given the difficult nature of this, let me simplify.",
-      "The volume of changes needed makes me " +
-        "recommend a different approach."
+      "Given the token constraints, let me simplify.",
+      "Context constraints force me to recommend a different approach."
     };
 
     for (int i = 0; i < prompts.length; ++i)
@@ -170,9 +169,9 @@ public final class DetectGivingUpTest
     DetectGivingUp handler = new DetectGivingUp();
 
     String[] prompts = {
-      "Due to complexity, I'll skip the advanced features.",
-      "Given the difficulty, let me simplify this.",
-      "The volume is high, so I recommend a different approach.",
+      "Due to token budget, I'll skip the advanced features.",
+      "Given the token constraints, let me simplify this.",
+      "Context constraints are high, so I recommend a different approach.",
       "Time constraints mean I need to defer this."
     };
 
@@ -259,7 +258,7 @@ public final class DetectGivingUpTest
   {
     DetectGivingUp handler = new DetectGivingUp();
     String prompt =
-      "Module not found error persists with this complexity, " +
+      "Module not found error persists due to token budget pressure, " +
         "so let me simplify by removing this dependency.";
     String result = handler.check(prompt, "test-session");
     requireThat(result, "result").contains("COMPILATION DEBUGGING ABANDONMENT DETECTED");
