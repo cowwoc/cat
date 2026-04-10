@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -159,10 +160,22 @@ public final class BlockWorktreeIsolationViolation implements BashHandler
         String expanded = ShellParser.expandEnvVars(target, mergedLookup);
         if (expanded == null)
         {
+          List<String> undefinedVars = ShellParser.findUndefinedVars(target, mergedLookup);
+          if (undefinedVars.isEmpty())
+          {
+            // expandEnvVars returned null only when a variable is undefined, so this list
+            // cannot be empty. A non-empty list here means the pattern missed a $(...) form.
+            throw new AssertionError(
+              "findUndefinedVars returned empty list after expandEnvVars returned null for: " + target);
+          }
+          StringJoiner joiner = new StringJoiner(", ");
+          for (String varName : undefinedVars)
+            joiner.add(varName);
+          String variableLine = "Undefined variable(s): " + joiner;
           String message = """
             WARNING: Cannot verify Bash redirect to variable-expanded path: %s
 
-            One or more variables in the path could not be resolved.
+            %s
             Variables must be defined earlier in the same script as a simple literal assignment, e.g.:
               VAR="/absolute/path"
               cmd > "${VAR}"
@@ -171,7 +184,7 @@ public final class BlockWorktreeIsolationViolation implements BashHandler
             If this targets a path outside your worktree, it bypasses worktree isolation.
             Use the Edit or Write tools with an explicit absolute path instead:
               Use: %s/plugin/file.txt
-              Not: $UNSET_VAR/plugin/file.txt""".formatted(target, context.absoluteWorktreePath());
+              Not: $UNSET_VAR/plugin/file.txt""".formatted(target, variableLine, context.absoluteWorktreePath());
           return Result.block(message);
         }
         // Replacing the variable reference with the concrete path lets the worktree isolation

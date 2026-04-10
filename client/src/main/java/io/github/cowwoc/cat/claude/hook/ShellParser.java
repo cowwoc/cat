@@ -177,12 +177,7 @@ public final class ShellParser
     while (varMatcher.find())
     {
       result.append(target, lastEnd, varMatcher.start());
-      // group(1) is the name from ${VAR}; group(2) is the name from $VAR
-      String varName;
-      if (varMatcher.group(1) != null)
-        varName = varMatcher.group(1);
-      else
-        varName = varMatcher.group(2);
+      String varName = extractVarName(varMatcher);
       String value = envLookup.apply(varName);
       if (value == null)
         return null;
@@ -191,6 +186,52 @@ public final class ShellParser
     }
     result.append(target, lastEnd, target.length());
     return result.toString();
+  }
+
+  /**
+   * Returns the names of all {@code $VAR} and {@code ${VAR}} references in {@code target} whose
+   * values are not present in {@code envLookup}.
+   * <p>
+   * This method performs a second-pass scan used when {@link #expandEnvVars(String, Function)}
+   * already returned {@code null}, to report which specific variable(s) could not be resolved.
+   *
+   * @param target    the string containing variable references to inspect
+   * @param envLookup a function mapping variable names to their values; returns {@code null} if
+   *                  the variable is unset
+   * @return a list of variable names for which {@code envLookup} returned {@code null}, in the
+   *         order they appear in {@code target}; empty if all variables are defined
+   * @throws NullPointerException if {@code target} or {@code envLookup} are null
+   */
+  public static List<String> findUndefinedVars(String target, Function<String, String> envLookup)
+  {
+    requireThat(target, "target").isNotNull();
+    requireThat(envLookup, "envLookup").isNotNull();
+    List<String> undefined = new ArrayList<>();
+    Matcher varMatcher = ENV_VAR_EXPAND_PATTERN.matcher(target);
+    while (varMatcher.find())
+    {
+      String varName = extractVarName(varMatcher);
+      if (envLookup.apply(varName) == null)
+        undefined.add(varName);
+    }
+    return undefined;
+  }
+
+  /**
+   * Extracts the variable name from a matcher positioned on a match of
+   * {@code ENV_VAR_EXPAND_PATTERN}.
+   * <p>
+   * Group 1 captures the name from the {@code ${VAR}} form; group 2 captures it from
+   * the {@code $VAR} form. Exactly one of the two groups is non-null on every match.
+   *
+   * @param matcher a matcher that has just found a match
+   * @return the captured variable name
+   */
+  private static String extractVarName(Matcher matcher)
+  {
+    if (matcher.group(1) != null)
+      return matcher.group(1);
+    return matcher.group(2);
   }
 
   /**

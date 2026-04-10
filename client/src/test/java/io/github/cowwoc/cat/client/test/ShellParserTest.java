@@ -209,4 +209,117 @@ public class ShellParserTest
     List<String> tokens = ShellParser.tokenize("\"unclosed content");
     requireThat(tokens, "tokens").isEqualTo(List.of("unclosed content"));
   }
+
+  /**
+   * Verifies that a path containing one undefined variable returns a list with that variable name.
+   */
+  @Test
+  public void findUndefinedVarsReturnsOneUndefinedVariable()
+  {
+    List<String> result = ShellParser.findUndefinedVars("${SESSION_DIR}/file", name -> null);
+    requireThat(result, "result").isEqualTo(List.of("SESSION_DIR"));
+  }
+
+  /**
+   * Verifies that a path containing two undefined variables returns both variable names in order.
+   */
+  @Test
+  public void findUndefinedVarsReturnsTwoUndefinedVariables()
+  {
+    List<String> result = ShellParser.findUndefinedVars(
+      "${SESSION_DIR}/squash-complete-${ISSUE_ID}", name -> null);
+    requireThat(result, "result").isEqualTo(List.of("SESSION_DIR", "ISSUE_ID"));
+  }
+
+  /**
+   * Verifies that a path where all variables are defined returns an empty list.
+   */
+  @Test
+  public void findUndefinedVarsReturnsEmptyListWhenAllDefined()
+  {
+    List<String> result = ShellParser.findUndefinedVars(
+      "${SESSION_DIR}/file", name -> "/tmp");
+    requireThat(result, "result").isEmpty();
+  }
+
+  /**
+   * Verifies that when only some variables are defined the method returns only the
+   * undefined names, leaving out defined ones.
+   */
+  @Test
+  public void findUndefinedVarsReturnsOnlyUndefinedWhenMixed()
+  {
+    // SESSION_DIR is defined; ISSUE_ID is not
+    List<String> result = ShellParser.findUndefinedVars(
+      "${SESSION_DIR}/squash-complete-${ISSUE_ID}",
+      name ->
+      {
+        if (name.equals("SESSION_DIR"))
+          return "/tmp";
+        return null;
+      });
+    requireThat(result, "result").isEqualTo(List.of("ISSUE_ID"));
+  }
+
+  /**
+   * Verifies that an empty input string returns an empty list.
+   */
+  @Test
+  public void findUndefinedVarsReturnsEmptyListForEmptyInput()
+  {
+    List<String> result = ShellParser.findUndefinedVars("", name -> null);
+    requireThat(result, "result").isEmpty();
+  }
+
+  /**
+   * Verifies that a path containing no variable references returns an empty list.
+   */
+  @Test
+  public void findUndefinedVarsReturnsEmptyListForLiteralPath()
+  {
+    List<String> result = ShellParser.findUndefinedVars("/tmp/output.log", name -> null);
+    requireThat(result, "result").isEmpty();
+  }
+
+  /**
+   * Verifies that the unbraced {@code $VAR} form is recognized and reported when undefined.
+   */
+  @Test
+  public void findUndefinedVarsRecognizesUnbracedForm()
+  {
+    List<String> result = ShellParser.findUndefinedVars("$SESSION_DIR/file", name -> null);
+    requireThat(result, "result").isEqualTo(List.of("SESSION_DIR"));
+  }
+
+  /**
+   * Verifies that a path mixing braced and unbraced forms reports both undefined variables.
+   */
+  @Test
+  public void findUndefinedVarsHandlesMixedBracedAndUnbracedForms()
+  {
+    List<String> result = ShellParser.findUndefinedVars(
+      "${SESSION_DIR}/squash-$ISSUE_ID", name -> null);
+    requireThat(result, "result").isEqualTo(List.of("SESSION_DIR", "ISSUE_ID"));
+  }
+
+  /**
+   * Verifies that the same variable referenced twice appears twice in the result list,
+   * preserving occurrence order.
+   */
+  @Test
+  public void findUndefinedVarsReturnsDuplicateOccurrences()
+  {
+    List<String> result = ShellParser.findUndefinedVars(
+      "${SESSION_DIR}/${SESSION_DIR}", name -> null);
+    requireThat(result, "result").isEqualTo(List.of("SESSION_DIR", "SESSION_DIR"));
+  }
+
+  /**
+   * Verifies that passing a null target throws a NullPointerException.
+   */
+  @Test(expectedExceptions = NullPointerException.class)
+  public void findUndefinedVarsThrowsNullPointerExceptionWhenTargetIsNull()
+  {
+    ShellParser.findUndefinedVars(null, name -> null);
+  }
 }
