@@ -2,6 +2,8 @@
 
 ## Goal
 
+Inspired by: https://gist.github.com/roman01la/483d1db15043018096ac3babf5688881
+
 Add a plugin rule that guides agents to apply abstraction judgment during implementation, scaled by the `perfection` config value. The rule replaces any mechanical line-count heuristic ("3 similar lines = don't abstract") with a decision matrix based on two axes: **maintenance risk** (how much pain will this duplication cause — divergence risk, shotgun surgery, conceptual coupling) and **abstraction cost** (how complex/invasive is the proposed abstraction).
 
 Per-level behavior:
