@@ -11,7 +11,9 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -29,6 +31,13 @@ public final class ShellParser
   // The $VAR form (group 2) stops at non-word characters.
   private static final Pattern ENV_VAR_EXPAND_PATTERN =
     Pattern.compile("\\$\\{([^}]+)}|\\$(\\w+)");
+
+  // Matches a literal shell variable assignment at the start of a line:
+  //   VAR="value"  (double-quoted: no $, backtick, or backslash — ensures pure literal)
+  //   VAR='value'  (single-quoted: always literal)
+  // Groups: 1=name, 2=double-quoted value, 3=single-quoted value
+  private static final Pattern SCRIPT_ASSIGNMENT_PATTERN =
+    Pattern.compile("(?m)^\\s*([A-Za-z_][A-Za-z0-9_]*)=(?:\"([^\"$`\\\\]*)\"|'([^']*)')");
 
   /**
    * Prevent instantiation.
@@ -182,5 +191,39 @@ public final class ShellParser
     }
     result.append(target, lastEnd, target.length());
     return result.toString();
+  }
+
+  /**
+   * Scans {@code script} for simple literal variable assignments and returns them as a map.
+   * <p>
+   * Only assignments whose value is a pure literal — double-quoted strings containing no
+   * {@code $}, backtick, or backslash characters, or single-quoted strings — are captured.
+   * Assignments via command substitution ({@code VAR=$(...)}) and unquoted assignments are
+   * ignored because they cannot be evaluated statically.
+   * <p>
+   * When the same variable is assigned multiple times, the last assignment wins (matching
+   * bash semantics where each assignment shadows the previous).
+   *
+   * @param script the full bash command or script text to scan
+   * @return a mutable map from variable name to its literal value; empty if no literal
+   *         assignments are found
+   * @throws NullPointerException if {@code script} is null
+   */
+  public static Map<String, String> parseScriptAssignments(String script)
+  {
+    requireThat(script, "script").isNotNull();
+    Map<String, String> assignments = new LinkedHashMap<>();
+    Matcher assignmentMatcher = SCRIPT_ASSIGNMENT_PATTERN.matcher(script);
+    while (assignmentMatcher.find())
+    {
+      String varName = assignmentMatcher.group(1);
+      String value;
+      if (assignmentMatcher.group(2) != null)
+        value = assignmentMatcher.group(2);
+      else
+        value = assignmentMatcher.group(3);
+      assignments.put(varName, value);
+    }
+    return assignments;
   }
 }
