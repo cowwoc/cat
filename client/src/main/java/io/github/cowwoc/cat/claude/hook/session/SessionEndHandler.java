@@ -35,7 +35,6 @@ import java.util.regex.Pattern;
  */
 public final class SessionEndHandler
 {
-  private static final Logger LOG = LoggerFactory.getLogger(SessionEndHandler.class);
   /**
    * Matches a standard UUID session ID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (case-insensitive).
    * <p>
@@ -45,6 +44,7 @@ public final class SessionEndHandler
   private static final Pattern SESSION_ID_PATTERN = Pattern.compile(
     "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
     Pattern.CASE_INSENSITIVE);
+  private final Logger log = LoggerFactory.getLogger(SessionEndHandler.class);
   private final ClaudeHook scope;
 
   /**
@@ -86,7 +86,7 @@ public final class SessionEndHandler
         // Reject non-UUID names to prevent path traversal: only process standard UUID session IDs
         if (!SESSION_ID_PATTERN.matcher(candidateSessionId).matches())
         {
-          LOG.warn("Skipping non-UUID entry in sessions directory: {}", candidateSessionId);
+          log.warn("Skipping non-UUID entry in sessions directory: {}", candidateSessionId);
           continue;
         }
 
@@ -101,7 +101,7 @@ public final class SessionEndHandler
     }
     catch (IOException e)
     {
-      LOG.warn("Failed to scan sessions directory {}: {}", sessionsDir, e.getMessage());
+      log.warn("Failed to scan sessions directory {}: {}", sessionsDir, e.getMessage());
     }
   }
 
@@ -119,11 +119,11 @@ public final class SessionEndHandler
     List<IOException> failures = new ArrayList<>();
     FileUtils.deleteDirectoryRecursively(sessionWorkDir, failures);
     if (failures.isEmpty())
-      LOG.debug("Deleted stale session work directory: {}", sessionWorkDir);
+      log.debug("Deleted stale session work directory: {}", sessionWorkDir);
     else
     {
       for (IOException failure : failures)
-        LOG.debug("Could not delete in {}: {}", sessionWorkDir, failure.getMessage());
+        log.debug("Could not delete in {}: {}", sessionWorkDir, failure.getMessage());
     }
   }
 }
