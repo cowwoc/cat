@@ -9,12 +9,12 @@ package io.github.cowwoc.cat.client.test;
 import io.github.cowwoc.cat.claude.hook.BashHandler;
 
 import io.github.cowwoc.cat.claude.hook.bash.BlockWorktreeIsolationViolation;
-import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -677,26 +677,28 @@ public final class BlockWorktreeIsolationViolationTest
   @Test
   public void allowsRedirectWhenEnvVarExpandsToWorktreePath() throws IOException
   {
-    String home = System.getenv("HOME");
-    if (home == null || home.isBlank())
-      throw new SkipException("HOME environment variable is not set; skipping env-var expansion test");
-    Path projectPath = Files.createTempDirectory(Path.of(home), "bwiv-test-");
-    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+    Path fakeHome = Files.createTempDirectory("fake-home-");
+    try
     {
-      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
-      Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
-      String relativePath = Path.of(home).relativize(worktreeDir.resolve("file.txt")).toString();
-      String command = "echo foo > ${HOME}/" + relativePath;
+      Path projectPath = Files.createTempDirectory(fakeHome, "bwiv-test-");
+      try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+      {
+        TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+        Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
+        String relativePath = fakeHome.relativize(worktreeDir.resolve("file.txt")).toString();
+        String command = "echo foo > ${HOME}/" + relativePath;
+        Map<String, String> env = Map.of("HOME", fakeHome.toString());
 
-      BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
-      BashHandler.Result result = handler.check(
-        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
+        BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope, env);
+        BashHandler.Result result = handler.check(
+          TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
-      requireThat(result.blocked(), "blocked").isFalse();
+        requireThat(result.blocked(), "blocked").isFalse();
+      }
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(fakeHome);
     }
   }
 
@@ -711,26 +713,28 @@ public final class BlockWorktreeIsolationViolationTest
   @Test
   public void allowsRedirectWhenBareEnvVarExpandsToWorktreePath() throws IOException
   {
-    String home = System.getenv("HOME");
-    if (home == null || home.isBlank())
-      throw new SkipException("HOME environment variable is not set; skipping env-var expansion test");
-    Path projectPath = Files.createTempDirectory(Path.of(home), "bwiv-test-");
-    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+    Path fakeHome = Files.createTempDirectory("fake-home-");
+    try
     {
-      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
-      Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
-      String relativePath = Path.of(home).relativize(worktreeDir.resolve("file.txt")).toString();
-      String command = "echo foo > $HOME/" + relativePath;
+      Path projectPath = Files.createTempDirectory(fakeHome, "bwiv-test-");
+      try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+      {
+        TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+        Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
+        String relativePath = fakeHome.relativize(worktreeDir.resolve("file.txt")).toString();
+        String command = "echo foo > $HOME/" + relativePath;
+        Map<String, String> env = Map.of("HOME", fakeHome.toString());
 
-      BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
-      BashHandler.Result result = handler.check(
-        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
+        BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope, env);
+        BashHandler.Result result = handler.check(
+          TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
-      requireThat(result.blocked(), "blocked").isFalse();
+        requireThat(result.blocked(), "blocked").isFalse();
+      }
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(fakeHome);
     }
   }
 
@@ -746,27 +750,29 @@ public final class BlockWorktreeIsolationViolationTest
   @Test
   public void blocksRedirectWhenEnvVarExpandsOutsideWorktree() throws IOException
   {
-    String home = System.getenv("HOME");
-    if (home == null || home.isBlank())
-      throw new SkipException("HOME environment variable is not set; skipping env-var expansion test");
-    Path projectPath = Files.createTempDirectory(Path.of(home), "bwiv-test-");
-    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+    Path fakeHome = Files.createTempDirectory("fake-home-");
+    try
     {
-      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
-      TestUtils.createWorktreeDir(scope, ISSUE_ID);
-      String relativePath = Path.of(home).relativize(projectPath.resolve("plugin/file.txt")).toString();
-      String command = "echo foo > ${HOME}/" + relativePath;
+      Path projectPath = Files.createTempDirectory(fakeHome, "bwiv-test-");
+      try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+      {
+        TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+        TestUtils.createWorktreeDir(scope, ISSUE_ID);
+        String relativePath = fakeHome.relativize(projectPath.resolve("plugin/file.txt")).toString();
+        String command = "echo foo > ${HOME}/" + relativePath;
+        Map<String, String> env = Map.of("HOME", fakeHome.toString());
 
-      BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope);
-      BashHandler.Result result = handler.check(
-        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
+        BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope, env);
+        BashHandler.Result result = handler.check(
+          TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
 
-      requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("isolation violation");
+        requireThat(result.blocked(), "blocked").isTrue();
+        requireThat(result.reason(), "reason").contains("isolation violation");
+      }
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(fakeHome);
     }
   }
 

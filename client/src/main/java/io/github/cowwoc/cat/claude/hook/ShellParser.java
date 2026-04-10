@@ -12,6 +12,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -140,7 +141,27 @@ public final class ShellParser
    */
   public static String expandEnvVars(String target)
   {
+    return expandEnvVars(target, System::getenv);
+  }
+
+  /**
+   * Expands {@code $VAR} and {@code ${VAR}} references in a string using the supplied lookup
+   * function.
+   * <p>
+   * Returns {@code null} if any variable is unset (i.e., the lookup function returns {@code null}
+   * for that variable name), so the caller can fall back to conservative behavior rather than
+   * evaluating a partially-expanded path.
+   *
+   * @param target    the string containing variable references to expand
+   * @param envLookup a function mapping variable names to their values; returns {@code null} if
+   *                  the variable is unset
+   * @return the fully expanded string, or {@code null} if any variable was undefined
+   * @throws NullPointerException if {@code target} or {@code envLookup} are null
+   */
+  public static String expandEnvVars(String target, Function<String, String> envLookup)
+  {
     requireThat(target, "target").isNotNull();
+    requireThat(envLookup, "envLookup").isNotNull();
     Matcher varMatcher = ENV_VAR_EXPAND_PATTERN.matcher(target);
     StringBuilder result = new StringBuilder();
     int lastEnd = 0;
@@ -153,7 +174,7 @@ public final class ShellParser
         varName = varMatcher.group(1);
       else
         varName = varMatcher.group(2);
-      String value = System.getenv(varName);
+      String value = envLookup.apply(varName);
       if (value == null)
         return null;
       result.append(value);

@@ -17,6 +17,8 @@ import tools.jackson.databind.json.JsonMapper;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,8 +41,9 @@ import java.util.regex.Pattern;
  * Only paths under the project directory are checked. Writes to {@code /tmp} or other locations
  * outside the project directory are allowed. If no session lock exists, all commands are allowed.
  * <p>
- * Write targets containing {@code $VAR} or {@code ${VAR}} references are expanded using
- * {@link ShellParser#expandEnvVars(String)} before the isolation check. If any variable is unset,
+ * Write targets containing {@code $VAR} or {@code ${VAR}} references are expanded before the
+ * isolation check. Use the second constructor to inject a controlled environment lookup for
+ * testing, or the first constructor to use the system environment. If any variable is unset,
  * the path cannot be verified and the command is blocked conservatively. Backtick expressions
  * (e.g., {@code `cmd`}) cannot be expanded statically and are always blocked conservatively.
  */
@@ -71,9 +74,12 @@ public final class BlockWorktreeIsolationViolation implements BashHandler
 
   private final Path projectPath;
   private final JsonMapper mapper;
+  private final Function<String, String> envLookup;
 
   /**
    * Creates a new handler for blocking worktree isolation violations.
+   * <p>
+   * Uses the system environment when expanding shell variable references in write targets.
    *
    * @param scope the JVM scope providing access to shared resources
    * @throws NullPointerException if {@code scope} is null
@@ -82,6 +88,27 @@ public final class BlockWorktreeIsolationViolation implements BashHandler
   {
     this.projectPath = scope.getProjectPath();
     this.mapper = scope.getJsonMapper();
+    this.envLookup = System::getenv;
+  }
+
+  /**
+   * Creates a new handler for blocking worktree isolation violations with an injectable
+   * environment map.
+   * <p>
+   * Uses the provided environment map when expanding shell variable references in write targets.
+   * This constructor is intended for testing, where a controlled fake environment can be
+   * substituted for the system environment.
+   *
+   * @param scope the JVM scope providing access to shared resources
+   * @param env   the environment map used for shell variable expansion
+   * @throws NullPointerException if {@code scope} or {@code env} are null
+   */
+  public BlockWorktreeIsolationViolation(ClaudeHook scope, Map<String, String> env)
+  {
+    requireThat(env, "env").isNotNull();
+    this.projectPath = scope.getProjectPath();
+    this.mapper = scope.getJsonMapper();
+    this.envLookup = env::get;
   }
 
   @Override
@@ -118,7 +145,7 @@ public final class BlockWorktreeIsolationViolation implements BashHandler
       }
       if (target.contains("$"))
       {
-        String expanded = ShellParser.expandEnvVars(target);
+        String expanded = ShellParser.expandEnvVars(target, envLookup);
         if (expanded == null)
         {
           String message = """

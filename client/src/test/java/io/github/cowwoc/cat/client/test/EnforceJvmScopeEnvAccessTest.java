@@ -146,7 +146,8 @@ public final class EnforceJvmScopeEnvAccessTest
       boolean fileExists = Files.exists(filePath);
       requireThat(fileExists, "fileExists").withContext(relativePath, "whitelistedFile").isTrue();
       String content = Files.readString(filePath);
-      boolean hasGetenv = content.contains("System.getenv(");
+      // Accept both direct call System.getenv( and method reference System::getenv
+      boolean hasGetenv = content.contains("System.getenv(") || content.contains("System::getenv");
       requireThat(hasGetenv, "hasGetenv").withContext(relativePath, "whitelistedFile").isTrue();
     }
   }
