@@ -1,0 +1,6 @@
+{
+  "status" : "open",
+  "dependencies" : [ "2.1-fix-giving-up-detector-broad-compound-patterns" ],
+  "blocks" : [ ],
+  "target_branch" : "v2.1"
+}
