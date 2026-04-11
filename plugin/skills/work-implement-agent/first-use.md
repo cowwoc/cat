@@ -72,7 +72,8 @@ PLAN_MD="${ISSUE_PATH}/plan.md" && \
 Capture the exit code and stdout separately:
 
 ```bash
-BANNER_STDERR_FILE=$(mktemp)
+mkdir -p .cat/work/tmp
+BANNER_STDERR_FILE=$(mktemp -p .cat/work/tmp)
 BANNER_OUT=$("${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" "${ISSUE_ID}" --phase preparing 2>"${BANNER_STDERR_FILE}")
 BANNER_EXIT=$?
 ```
@@ -140,7 +141,8 @@ Display the **Implementing phase** banner by running:
 Capture the exit code and stdout separately:
 
 ```bash
-BANNER_STDERR_FILE=$(mktemp)
+mkdir -p .cat/work/tmp
+BANNER_STDERR_FILE=$(mktemp -p .cat/work/tmp)
 BANNER_OUT=$("${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" "${ISSUE_ID}" --phase implementing 2>"${BANNER_STDERR_FILE}")
 BANNER_EXIT=$?
 ```

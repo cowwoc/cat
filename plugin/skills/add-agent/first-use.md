@@ -550,7 +550,8 @@ later by `cat:work-implement-agent` when work begins.
 1. Create a unique temporary plan.md file (multi-instance safe):
 
 ```bash
-plan_temp_file=$(mktemp --suffix=.md)
+mkdir -p .cat/work/tmp
+plan_temp_file=$(mktemp -p .cat/work/tmp --suffix=.md)
 ```
 
 2. Write the lightweight plan.md to `${plan_temp_file}` using the Write tool with the following structure:
@@ -576,7 +577,8 @@ ${ISSUE_DESCRIPTION}
 3. Write the index.json content to a unique temporary file (multi-instance safe):
 
 ```bash
-index_temp_file=$(mktemp /tmp/cat-index-XXXXXX.json)
+mkdir -p .cat/work/tmp
+index_temp_file=$(mktemp -p .cat/work/tmp --suffix=.json)
 cat > "${index_temp_file}" << 'INDEXEOF'
 {full index.json content}
 INDEXEOF

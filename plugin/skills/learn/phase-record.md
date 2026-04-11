@@ -17,7 +17,8 @@ Save the Phase 3 JSON output to a temporary file, then invoke the CLI tool:
 # Save Phase 3 output to temp file using variable assignment (safest pattern)
 # This prevents heredoc injection and ensures complete JSON is written
 PHASE3_JSON="{...Phase 3 JSON output...}"
-PHASE3_TMP=$(mktemp /tmp/phase3-output.XXXXXX.json)
+mkdir -p .cat/work/tmp
+PHASE3_TMP=$(mktemp -p .cat/work/tmp --suffix=.json)
 printf '%s' "$PHASE3_JSON" > "$PHASE3_TMP"
 
 # Run the record-learning tool

@@ -39,6 +39,18 @@ public final class ShellParser
   private static final Pattern SCRIPT_ASSIGNMENT_PATTERN =
     Pattern.compile("(?m)^\\s*([A-Za-z_][A-Za-z0-9_]*)=(?:\"([^\"$`\\\\]*)\"|'([^']*)')");
 
+  // Matches a variable assignment via mktemp command substitution, both $(...) and backtick forms:
+  //   VAR=$(mktemp ...)
+  //   VAR=`mktemp ...`
+  // Groups: 1=variable name, 2=mktemp options (from $(...) form), 3=mktemp options (from backtick form)
+  private static final Pattern MKTEMP_ASSIGNMENT_PATTERN =
+    Pattern.compile("(?m)^\\s*([A-Za-z_][A-Za-z0-9_]*)=(?:\\$\\(mktemp\\b([^)]*)\\)|`mktemp\\b([^`]*)`)");
+
+  // Extracts the argument following -p in a mktemp options string (e.g. "-p /some/path --suffix=.md")
+  // Group 1 captures the path value, which may be quoted (single or double quotes) or unquoted.
+  private static final Pattern MKTEMP_P_FLAG_PATTERN =
+    Pattern.compile("-p\\s+(?:\"([^\"]*)\"|'([^']*)'|(\\S+))");
+
   /**
    * Prevent instantiation.
    */
@@ -266,5 +278,72 @@ public final class ShellParser
       assignments.put(varName, value);
     }
     return assignments;
+  }
+
+  /**
+   * Scans {@code script} for variable assignments via {@code mktemp} command substitution and
+   * returns a map from variable name to the {@code -p} directory path argument, if present.
+   * <p>
+   * Recognizes both the {@code $(...)} and backtick command substitution forms:
+   * <ul>
+   *   <li>{@code VARNAME=$(mktemp [-p <path>] ...)}
+   *   <li>{@code VARNAME=`mktemp [-p <path>] ...`}
+   * </ul>
+   * <p>
+   * When the mktemp invocation includes a {@code -p <path>} argument, the entry value is the
+   * path string (stripped of any surrounding quotes). When no {@code -p} argument is present,
+   * the entry value is {@code null}, indicating that the file's location is unresolvable at
+   * hook evaluation time.
+   * <p>
+   * When the same variable is assigned multiple times, the last assignment wins (matching
+   * bash semantics where each assignment shadows the previous).
+   *
+   * @param script the full bash command or script text to scan
+   * @return a mutable map from variable name to the {@code -p} directory path (or {@code null}
+   *         if {@code -p} was not supplied); empty if no mktemp assignments are found
+   * @throws NullPointerException if {@code script} is null
+   */
+  public static Map<String, String> parseMktempAssignments(String script)
+  {
+    requireThat(script, "script").isNotNull();
+    Map<String, String> assignments = new LinkedHashMap<>();
+    Matcher assignmentMatcher = MKTEMP_ASSIGNMENT_PATTERN.matcher(script);
+    while (assignmentMatcher.find())
+    {
+      String varName = assignmentMatcher.group(1);
+      // Group 2 is the options string from the $(...) form; group 3 from the backtick form.
+      String options;
+      if (assignmentMatcher.group(2) != null)
+        options = assignmentMatcher.group(2);
+      else
+        options = assignmentMatcher.group(3);
+      String directory = extractMktempDirectory(options);
+      assignments.put(varName, directory);
+    }
+    return assignments;
+  }
+
+  /**
+   * Extracts the {@code -p <path>} argument from a mktemp options string.
+   * <p>
+   * Returns {@code null} when the options string contains no {@code -p} flag, signalling that
+   * the generated file's parent directory is unknown.
+   *
+   * @param options the options portion of a mktemp invocation (everything after "mktemp")
+   * @return the path argument following {@code -p}, with surrounding quotes stripped; or
+   *         {@code null} if {@code -p} is not present
+   */
+  private static String extractMktempDirectory(String options)
+  {
+    assert that(options, "options").isNotNull().elseThrow();
+    Matcher flagMatcher = MKTEMP_P_FLAG_PATTERN.matcher(options);
+    if (!flagMatcher.find())
+      return null;
+    // Group 1: double-quoted path; group 2: single-quoted path; group 3: unquoted path.
+    if (flagMatcher.group(1) != null)
+      return flagMatcher.group(1);
+    if (flagMatcher.group(2) != null)
+      return flagMatcher.group(2);
+    return flagMatcher.group(3);
   }
 }
