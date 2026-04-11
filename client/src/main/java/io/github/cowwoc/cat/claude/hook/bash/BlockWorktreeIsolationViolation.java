@@ -150,11 +150,29 @@ public final class BlockWorktreeIsolationViolation implements BashHandler
         // (e.g. OUT="/path/file.txt") and merge them with the process environment so that
         // redirects to "${OUT}" can be statically resolved without blocking needlessly.
         Map<String, String> scriptVars = ShellParser.parseScriptAssignments(command);
+        // Also extract mktemp assignments (e.g. tmp=$(mktemp -p .cat/work/tmp)) so that
+        // redirects to "$tmp" can be resolved when the mktemp directory is inside the worktree.
+        Map<String, String> mktempVars = ShellParser.parseMktempAssignments(command);
         Function<String, String> mergedLookup = varName ->
         {
           String scriptValue = scriptVars.get(varName);
           if (scriptValue != null)
             return scriptValue;
+          // If the variable was assigned via mktemp -p <dir>, resolve the directory. The
+          // worktree-boundary check below uses Path.startsWith(), so containment of the
+          // directory itself is equivalent to containment of any file inside it — no
+          // placeholder filename is needed. Only add the entry when the mktemp map has the
+          // variable (even if the value is null); a null value means no -p was given, so we
+          // leave the variable unresolved to trigger the conservative block.
+          if (mktempVars.containsKey(varName))
+          {
+            String mktempDir = mktempVars.get(varName);
+            // A null value means mktemp was invoked without -p, so the directory is unknown.
+            // Leave the variable unresolved to trigger the conservative block below.
+            if (mktempDir == null)
+              return null;
+            return ShellParser.resolvePath(mktempDir, workingDirectory).toString();
+          }
           return envLookup.apply(varName);
         };
         String expanded = ShellParser.expandEnvVars(target, mergedLookup);

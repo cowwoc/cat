@@ -161,8 +161,9 @@ download_runtime() {
   debug "Downloading runtime from ${asset_url}"
 
   local temp="" temp_sha256=""
-  temp=$(mktemp --suffix=.tar.gz) || { debug "Failed to create temp file"; return 1; }
-  temp_sha256=$(mktemp --suffix=.sha256) || { rm -f "$temp"; debug "Failed to create sha256 temp file"; return 1; }
+  mkdir -p "${CLAUDE_PROJECT_DIR}/.cat/work/tmp"
+  temp=$(mktemp -p "${CLAUDE_PROJECT_DIR}/.cat/work/tmp" --suffix=.tar.gz) || { debug "Failed to create temp file"; return 1; }
+  temp_sha256=$(mktemp -p "${CLAUDE_PROJECT_DIR}/.cat/work/tmp" --suffix=.sha256) || { rm -f "$temp"; debug "Failed to create sha256 temp file"; return 1; }
 
   cleanup_temp() {
     rm -f "$temp" "$temp_sha256"

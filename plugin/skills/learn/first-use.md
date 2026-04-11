@@ -453,9 +453,10 @@ for FIELD in category description root_cause prevention_type; do
 done
 
 # Write Phase 3 output to temp file using a variable to avoid injection
-# mktemp generates a unique path per invocation via random suffix (XXXXXX), ensuring
-# multi-instance safety even though /tmp is a shared directory.
-PHASE3_TMP=$(mktemp /tmp/phase3-output.XXXXXX.json)
+# mktemp generates a unique path per invocation via random suffix, ensuring
+# multi-instance safety.
+mkdir -p .cat/work/tmp
+PHASE3_TMP=$(mktemp -p .cat/work/tmp --suffix=.json)
 printf '%s' "$PHASE3_JSON" > "$PHASE3_TMP"
 
 # Run the record-learning tool — reads Phase 3 JSON from stdin, outputs recording result JSON to stdout

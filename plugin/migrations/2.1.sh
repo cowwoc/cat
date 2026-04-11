@@ -948,17 +948,18 @@ else
     old_ext_worktrees_prefix="${ext_project_cat_dir}/worktrees/"
     new_worktrees_prefix="${project_dir}/.cat/work/worktrees/"
     if [[ -d ".cat/issues" ]]; then
+        mkdir -p .cat/work/tmp
         while IFS= read -r state_file; do
             changed=false
             if grep -qF "${old_dot_cat_worktrees_prefix}" "$state_file" 2>/dev/null; then
-                tmp=$(mktemp)
+                tmp=$(mktemp -p .cat/work/tmp)
                 sed "s|${old_dot_cat_worktrees_prefix}|${new_worktrees_prefix}|g" "$state_file" > "$tmp" \
                     && mv "$tmp" "$state_file"
                 log_migration "  Updated .cat/worktrees/ refs in: $state_file"
                 changed=true
             fi
             if grep -qF "${old_ext_worktrees_prefix}" "$state_file" 2>/dev/null; then
-                tmp=$(mktemp)
+                tmp=$(mktemp -p .cat/work/tmp)
                 sed "s|${old_ext_worktrees_prefix}|${new_worktrees_prefix}|g" "$state_file" > "$tmp" \
                     && mv "$tmp" "$state_file"
                 log_migration "  Updated external storage refs in: $state_file"

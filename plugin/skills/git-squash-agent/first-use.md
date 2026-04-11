@@ -231,7 +231,8 @@ BACKUP="backup-before-squash-$(date +%Y%m%d-%H%M%S)"
 git branch "$BACKUP"
 
 # 3. Create isolated temp directory (multi-instance safe)
-SQUASH_TMPDIR=$(mktemp -d)
+mkdir -p .cat/work/tmp
+SQUASH_TMPDIR=$(mktemp -d -p .cat/work/tmp)
 
 # 4. Create sequence editor script
 FIRST_COMMIT="<first-commit-to-squash>"

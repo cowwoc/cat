@@ -942,4 +942,173 @@ public final class BlockWorktreeIsolationViolationTest
       TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
+
+  /**
+   * Verifies that a redirect to a variable assigned via {@code $(mktemp -p .cat/work/tmp)} is allowed
+   * when the relative mktemp directory resolves inside the active worktree.
+   * <p>
+   * The working directory is set to the worktree root, so {@code .cat/work/tmp} resolves to a path
+   * inside the worktree. Because mktemp will create a file inside the worktree directory, the write
+   * must be permitted.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void mktempWithRelativeWorktreePathIsAllowed() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("bwiv-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+    {
+      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
+      // Working directory is the worktree root, so .cat/work/tmp resolves inside it
+      String command = "tmp=$(mktemp -p .cat/work/tmp) && echo foo > \"$tmp\"";
+      Map<String, String> env = Map.of();
+
+      BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope, env);
+      BashHandler.Result result = handler.check(
+        TestUtils.bashHook(command, worktreeDir.toString(), SESSION_ID, scope));
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that a redirect to a variable assigned via {@code $(mktemp -p <absolutePath>)} is allowed
+   * when the absolute mktemp directory is inside the active worktree.
+   * <p>
+   * An explicit absolute path pointing into the worktree must be recognized as safe, regardless of
+   * the working directory.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void mktempWithAbsoluteWorktreePathIsAllowed() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("bwiv-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+    {
+      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
+      String absoluteTmpDir = worktreeDir.resolve(".cat/work/tmp").toAbsolutePath().toString();
+      String command = "tmp=$(mktemp -p " + absoluteTmpDir + ") && echo foo > \"$tmp\"";
+      Map<String, String> env = Map.of();
+
+      BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope, env);
+      BashHandler.Result result = handler.check(
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that a redirect to a variable assigned via plain {@code $(mktemp)} (no {@code -p} flag)
+   * is blocked conservatively.
+   * <p>
+   * Without a {@code -p} directory argument, the mktemp path cannot be statically resolved, so the
+   * hook cannot determine whether the resulting file will be inside the worktree. The write must be
+   * blocked to prevent undetected isolation violations.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void mktempWithoutPathFlagIsBlocked() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("bwiv-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+    {
+      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      TestUtils.createWorktreeDir(scope, ISSUE_ID);
+      // No -p flag: path is unresolvable, must be conservatively blocked
+      String command = "tmp=$(mktemp) && echo foo > \"$tmp\"";
+      Map<String, String> env = Map.of();
+
+      BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope, env);
+      BashHandler.Result result = handler.check(
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
+
+      requireThat(result.blocked(), "blocked").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that a redirect to a variable assigned via {@code $(mktemp -p /tmp)} is allowed when
+   * the mktemp directory is outside the project directory.
+   * <p>
+   * The {@code /tmp} directory is not under the project root, so any file created there is outside
+   * the project. Writes to paths outside the project are always permitted by this hook.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void mktempWithSystemTmpPathIsAllowed() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("bwiv-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+    {
+      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      TestUtils.createWorktreeDir(scope, ISSUE_ID);
+      // /tmp is outside the project directory — always allowed
+      String command = "tmp=$(mktemp -p /tmp) && echo foo > \"$tmp\"";
+      Map<String, String> env = Map.of();
+
+      BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope, env);
+      BashHandler.Result result = handler.check(
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that a redirect to a variable assigned via {@code $(mktemp -p <path>)} is blocked when
+   * the mktemp directory is inside the project but outside the active worktree.
+   * <p>
+   * Even though the mktemp path is statically resolvable, if it falls within the project directory
+   * but outside the worktree boundary, the write must still be blocked to enforce isolation.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void mktempWithProjectPathOutsideWorktreeIsBlocked() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("bwiv-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+    {
+      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      TestUtils.createWorktreeDir(scope, ISSUE_ID);
+      // Path is inside the project but outside the worktree — must be blocked
+      String absolutePluginDir = projectPath.resolve("plugin").toAbsolutePath().toString();
+      String command = "tmp=$(mktemp -p " + absolutePluginDir + ") && echo foo > \"$tmp\"";
+      Map<String, String> env = Map.of();
+
+      BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope, env);
+      BashHandler.Result result = handler.check(
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("isolation violation");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
 }
