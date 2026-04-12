@@ -16,8 +16,8 @@ None
 
 ## Files to Modify
 
-- `client/src/main/java/io/github/cowwoc/cat/hooks/prompt/DetectGivingUp.java` — add detection pattern
-- `client/src/test/java/io/github/cowwoc/cat/hooks/test/DetectGivingUpTest.java` — add test cases
+- `client/src/main/java/io/github/cowwoc/cat/claude/hook/util/GivingUpDetector.java` — add detection pattern
+- `client/src/test/java/io/github/cowwoc/cat/client/test/DetectGivingUpTest.java` — add test cases
 
 ## Pre-conditions
 
@@ -27,31 +27,54 @@ None
 
 ### Job 1: Add detection pattern to DetectGivingUp hook
 
-Pattern to detect:
+Pattern variants to detect:
+
+**Variant 1: Bulleted list format**
 ```
 Given:
 - Full instruction-builder flow = multi-hour process
 - Current token usage: NNN/200K
 ```
 
-Or more generally: "Given:" followed by bulleted list containing references to:
-- Process duration ("multi-hour", "hours", "large task")
-- Token usage ("NNN/200K", "token usage")
+**Variant 2: Inline format**
+```
+Given token usage (127K/200K) and complexity remaining (create isolation branch, run trials, grade, report)
+```
+
+More generally:
+- Bulleted: "Given:" followed by bulleted list containing process duration AND/OR token usage
+- Inline: "Given" followed by "token usage" AND "complexity remaining" or similar scope indicators
+
+**Current implementation status:**
+- Line 526-528 already detects "token usage (" with slash (covers `token usage (NNN/NNN)`)
+- Inline variant needs explicit "complexity remaining" or "remaining" detection after token usage
 
 Implementation:
 1. Read DetectGivingUp.java to understand current pattern structure
-2. Add new pattern matching "Given:" prefix with context bullets
-3. Ensure pattern does NOT trigger on CURIOSITY level mentions alone
-4. Files: `client/src/main/java/io/github/cowwoc/cat/hooks/prompt/DetectGivingUp.java`
+2. Verify existing "token usage (" pattern (line 526-528) handles inline variant
+3. Add detection for "and complexity remaining" or "and X remaining" after "token usage"
+4. Consider whether bulleted-list variant is distinct enough to warrant separate detection
+5. Files: `client/src/main/java/io/github/cowwoc/cat/claude/hook/util/GivingUpDetector.java`
 
 ### Job 2: Add test coverage
 
 Create test cases covering:
-- Positive: "Given: - Full flow = multi-hour process - Token usage: 100K/200K"
-- Negative: Legitimate context provision without giving-up intent
-- Edge: "Given:" without duration/token context (should not trigger)
 
-Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/DetectGivingUpTest.java`
+**Positive cases (should trigger):**
+- Bulleted format: "Given:\n- Full flow = multi-hour process\n- Token usage: 100K/200K"
+- Inline format: "Given token usage (127K/200K) and complexity remaining (create isolation branch, run trials, grade, report)"
+- Inline variant: "Given token usage (100K/200K) and remaining work (write tests, update docs)"
+
+**Negative cases (should NOT trigger):**
+- Token usage without scope indicator: "Given token usage (50K/200K)"
+- Legitimate context: "Given the requirements, here's the implementation plan"
+- Bulleted list without token/duration context: "Given:\n- User requirements\n- Current implementation"
+
+**Edge cases:**
+- "Given:" without duration/token context (should not trigger)
+- Token usage alone without "and X remaining" pattern
+
+Files: `client/src/test/java/io/github/cowwoc/cat/client/test/DetectGivingUpTest.java`
 
 ## Post-conditions
 
