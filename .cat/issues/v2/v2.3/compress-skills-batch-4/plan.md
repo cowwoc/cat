@@ -25,7 +25,7 @@ None - sub-issue of parent
 | 33 | plugin/skills/skill-builder/SKILL.md |
 | 34 | plugin/skills/stakeholder-review/SKILL.md |
 | 35 | plugin/skills/status/SKILL.md |
-| 36 | plugin/skills/tdd-implementation-agent/SKILL.md |
+| 36 | plugin/skills/tdd-implementation/SKILL.md |
 
 ## Post-conditions
 - [ ] All 9 files compressed
@@ -36,6 +36,6 @@ None - sub-issue of parent
 
 ### Wave 1
 1. Use /cat:delegate to process all files in parallel: `/cat:delegate --skill optimize-doc file1.md file2.md ...` (M369)
-2. Commit changes with message: "config: compress skills batch 4 (research through tdd-implementation-agent)"
+2. Commit changes with message: "config: compress skills batch 4 (research through tdd-implementation)"
 
 **Note (M427):** Use delegate for batch operations - parallel execution is faster than sequential.

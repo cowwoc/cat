@@ -720,7 +720,7 @@ it manually. Manual reproduction produces misaligned boxes. Preprocessing script
 aligned output every time.
 
 **Important distinction**: This rule applies to skills that **output boxes to users**. Documentation
-diagrams in skills that **do not produce boxes** (e.g., state machine diagrams in tdd-implementation-agent,
+diagrams in skills that **do not produce boxes** (e.g., state machine diagrams in tdd-implementation,
 architecture flowcharts) are acceptable because:
 - They illustrate concepts for human readers, not templates for agent output
 - The agent is not asked to recreate or render them
