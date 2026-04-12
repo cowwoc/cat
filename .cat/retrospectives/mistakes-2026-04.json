@@ -94,5 +94,19 @@
     "prevention_verified" : false,
     "recurrence_of" : null,
     "correct_behavior" : ""
+  }, {
+    "id" : "M619",
+    "timestamp" : "2026-04-12T09:09:51Z",
+    "category" : "test_design",
+    "description" : "newWorktreeExcludesClaude() test validates git behavior (file absence) instead of product behavior (sparse-checkout command invocation)",
+    "root_cause" : "Test was written to validate that the business requirement (exclude .claude) works by checking the filesystem result, rather than validating that code correctly invokes the sparse-checkout command with correct arguments. Tests should verify your code's behavior, not 3rd-party tool behavior.",
+    "cause_signature" : "test_antipattern:external_tool_side_effects",
+    "prevention_type" : "convention",
+    "prevention_path" : ".claude/rules/testing-conventions.md",
+    "pattern_keywords" : [ "Files.exists", "filesystem check", "git command", "sparse-checkout" ],
+    "prevention_implemented" : true,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "correct_behavior" : "Test that code invokes git with correct arguments (mock/verify) or test business outcome (no duplicate rules loaded). Do not test that git produces expected filesystem state."
   } ]
 }
