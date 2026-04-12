@@ -66,7 +66,7 @@ The squashing is not a one-time operation; it is part of every approval gate pre
 
 ## Testing Requirements
 
-**MANDATORY: Invoke `cat:tdd-implementation` before implementing any bugfix or feature with testable inputs/outputs.**
+**MANDATORY: Invoke `cat:tdd-implementation-agent` before implementing any bugfix or feature with testable inputs/outputs.**
 
 This applies to all implementation contexts: formal `/cat:work-agent` issue workflows AND ad-hoc user-requested fixes.
 Write failing tests first, then implement the fix to make them pass.

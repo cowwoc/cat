@@ -88,7 +88,7 @@ public final class UserIssues implements PromptHandler
       "  3. Fix the code\n" +
       "  4. Verify the test PASSES\n" +
       "\n" +
-      "  Invoke: Skill: tdd-implementation";
+      "  Invoke: Skill: tdd-implementation-agent";
   }
 
   /**
