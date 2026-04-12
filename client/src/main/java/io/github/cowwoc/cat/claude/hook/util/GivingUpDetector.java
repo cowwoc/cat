@@ -421,7 +421,8 @@ public final class GivingUpDetector
       if (dueToTokenEnd >= 0 && indexOf(sentence, "i'll summarize the remaining steps", dueToTokenEnd) >= 0)
         return true;
     }
-    return false;
+    // Pattern: "Given:" followed by list items containing "Token usage:"
+    return detectGivenWithTokenUsageList(textLower);
   }
 
   /**
@@ -606,6 +607,34 @@ public final class GivingUpDetector
   {
     int firstEnd = indexOf(sentence, first, 0);
     return firstEnd >= 0 && indexOf(sentence, second, firstEnd) >= 0;
+  }
+
+  /**
+   * Returns {@code true} if the text matches the "Given:" list pattern where one list item contains
+   * "Token usage:".
+   * <p>
+   * Pattern: "Given:" followed by bulleted list items (lines starting with "-"), where at least one
+   * item contains the substring "token usage:" (case-insensitive).
+   *
+   * @param textLower the lowercase text to check
+   * @return {@code true} if the pattern matches
+   */
+  private boolean detectGivenWithTokenUsageList(String textLower)
+  {
+    int givenColonIndex = textLower.indexOf("given:");
+    if (givenColonIndex < 0)
+      return false;
+    String afterGiven = textLower.substring(givenColonIndex + "given:".length());
+    String[] lines = afterGiven.split("\n");
+    for (String line : lines)
+    {
+      String trimmed = line.trim();
+      if (trimmed.startsWith("-") && trimmed.contains("token usage:"))
+        return true;
+      if (!trimmed.startsWith("-") && !trimmed.isEmpty())
+        break;
+    }
+    return false;
   }
 
   /**
