@@ -378,4 +378,60 @@ public final class GivingUpDetectorTest
     String result = detector.check("Let me remove the stale worktrees.");
     requireThat(result, "result").contains("CODE DISABLING ANTI-PATTERN DETECTED");
   }
+
+  /**
+   * Verifies that "Given:" followed by a list with "Token usage:" item triggers constraint rationalization.
+   * <p>
+   * This is the primary positive case from plan.md: "Given:" prefix with bulleted list where one item
+   * contains "Token usage:".
+   */
+  @Test
+  public void givenListWithTokenUsageTriggersConstraintRationalization()
+  {
+    GivingUpDetector detector = new GivingUpDetector();
+    String text = """
+      Given:
+      - Full instruction-builder flow = multi-hour process
+      - Token usage: 100K/200K
+      """;
+    String result = detector.check(text);
+    requireThat(result, "result").contains("GIVING UP PATTERN DETECTED");
+    requireThat(result, "result").contains("PERSISTENCE REQUIRED");
+  }
+
+  /**
+   * Verifies that "Given:" without "Token usage:" in list items does not trigger detection.
+   * <p>
+   * This is a negative case from plan.md: "Given:" without "Token usage:" should not trigger.
+   */
+  @Test
+  public void givenListWithoutTokenUsageDoesNotTrigger()
+  {
+    GivingUpDetector detector = new GivingUpDetector();
+    String text = """
+      Given:
+      - Full instruction-builder flow = multi-hour process
+      - Process duration: 2 hours
+      """;
+    String result = detector.check(text);
+    requireThat(result, "result").isEmpty();
+  }
+
+  /**
+   * Verifies that "Token usage:" without "Given:" prefix does not trigger detection.
+   * <p>
+   * This is a negative case from plan.md: "Token usage:" alone without "Given:" should not trigger.
+   */
+  @Test
+  public void tokenUsageWithoutGivenDoesNotTrigger()
+  {
+    GivingUpDetector detector = new GivingUpDetector();
+    String text = """
+      Current status:
+      - Token usage: 100K/200K
+      - Files processed: 25
+      """;
+    String result = detector.check(text);
+    requireThat(result, "result").isEmpty();
+  }
 }

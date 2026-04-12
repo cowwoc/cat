@@ -263,4 +263,56 @@ public final class DetectGivingUpTest
     String result = handler.check(prompt, "test-session");
     requireThat(result, "result").contains("COMPILATION DEBUGGING ABANDONMENT DETECTED");
   }
+
+  /**
+   * Verifies "Given:" context listing with "Token usage:" is detected.
+   */
+  @Test
+  public void detectsGivenContextListingWithTokenUsage()
+  {
+    DetectGivingUp handler = new DetectGivingUp();
+    String prompt = """
+      Given:
+      - Full instruction-builder flow = multi-hour process
+      - Token usage: 100K/200K
+
+      Let me take a different approach.""";
+    String result = handler.check(prompt, "test-session");
+    requireThat(result, "result").contains("GIVING UP PATTERN DETECTED");
+    requireThat(result, "result").contains("PERSISTENCE REQUIRED");
+  }
+
+  /**
+   * Verifies "Given:" without "Token usage:" in list items does not trigger.
+   */
+  @Test
+  public void givenWithoutTokenUsageDoesNotTrigger()
+  {
+    DetectGivingUp handler = new DetectGivingUp();
+    String prompt = """
+      Given:
+      - Current state of implementation
+      - Requirements already met
+
+      Let me proceed with the next step.""";
+    String result = handler.check(prompt, "test-session");
+    requireThat(result, "result").isEmpty();
+  }
+
+  /**
+   * Verifies "Token usage:" without "Given:" prefix does not trigger.
+   */
+  @Test
+  public void tokenUsageWithoutGivenDoesNotTrigger()
+  {
+    DetectGivingUp handler = new DetectGivingUp();
+    String prompt = """
+      Current status:
+      - Token usage: 50K/200K
+      - Files processed: 10
+
+      Continuing with implementation.""";
+    String result = handler.check(prompt, "test-session");
+    requireThat(result, "result").isEmpty();
+  }
 }

@@ -16,8 +16,8 @@ None
 
 ## Files to Modify
 
-- `client/src/main/java/io/github/cowwoc/cat/claude/hook/util/GivingUpDetector.java` — add detection pattern
-- `client/src/test/java/io/github/cowwoc/cat/client/test/DetectGivingUpTest.java` — add test cases
+- `client/src/main/java/io/github/cowwoc/cat/hooks/prompt/DetectGivingUp.java` — add detection pattern
+- `client/src/test/java/io/github/cowwoc/cat/hooks/test/DetectGivingUpTest.java` — add test cases
 
 ## Pre-conditions
 
@@ -27,54 +27,31 @@ None
 
 ### Job 1: Add detection pattern to DetectGivingUp hook
 
-Pattern variants to detect:
+Pattern to detect: "Given:" followed by a list where one of the items contains "Token usage:"
 
-**Variant 1: Bulleted list format**
+Example trigger text:
 ```
 Given:
 - Full instruction-builder flow = multi-hour process
-- Current token usage: NNN/200K
+- Token usage: 100K/200K
 ```
 
-**Variant 2: Inline format**
-```
-Given token usage (127K/200K) and complexity remaining (create isolation branch, run trials, grade, report)
-```
-
-More generally:
-- Bulleted: "Given:" followed by bulleted list containing process duration AND/OR token usage
-- Inline: "Given" followed by "token usage" AND "complexity remaining" or similar scope indicators
-
-**Current implementation status:**
-- Line 526-528 already detects "token usage (" with slash (covers `token usage (NNN/NNN)`)
-- Inline variant needs explicit "complexity remaining" or "remaining" detection after token usage
+Specific pattern: Match "Given:" followed by bulleted list items, where at least one item contains the substring "Token usage:" (case-sensitive).
 
 Implementation:
 1. Read DetectGivingUp.java to understand current pattern structure
-2. Verify existing "token usage (" pattern (line 526-528) handles inline variant
-3. Add detection for "and complexity remaining" or "and X remaining" after "token usage"
-4. Consider whether bulleted-list variant is distinct enough to warrant separate detection
-5. Files: `client/src/main/java/io/github/cowwoc/cat/claude/hook/util/GivingUpDetector.java`
+2. Add new pattern matching "Given:" prefix with list items containing "Token usage:"
+3. Ensure pattern does NOT trigger on CURIOSITY level mentions alone
+4. Files: `client/src/main/java/io/github/cowwoc/cat/hooks/prompt/DetectGivingUp.java`
 
 ### Job 2: Add test coverage
 
 Create test cases covering:
+- Positive: "Given:" followed by list with "Token usage:" item
+- Negative: "Given:" without "Token usage:" in list items (should not trigger)
+- Negative: "Token usage:" without "Given:" prefix (should not trigger)
 
-**Positive cases (should trigger):**
-- Bulleted format: "Given:\n- Full flow = multi-hour process\n- Token usage: 100K/200K"
-- Inline format: "Given token usage (127K/200K) and complexity remaining (create isolation branch, run trials, grade, report)"
-- Inline variant: "Given token usage (100K/200K) and remaining work (write tests, update docs)"
-
-**Negative cases (should NOT trigger):**
-- Token usage without scope indicator: "Given token usage (50K/200K)"
-- Legitimate context: "Given the requirements, here's the implementation plan"
-- Bulleted list without token/duration context: "Given:\n- User requirements\n- Current implementation"
-
-**Edge cases:**
-- "Given:" without duration/token context (should not trigger)
-- Token usage alone without "and X remaining" pattern
-
-Files: `client/src/test/java/io/github/cowwoc/cat/client/test/DetectGivingUpTest.java`
+Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/DetectGivingUpTest.java`
 
 ## Post-conditions
 
