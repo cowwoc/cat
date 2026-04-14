@@ -132,10 +132,7 @@ transcript before generating recommendations. Do NOT use theoretical estimates �
 
 **If no Task tool calls are present in the session, skip directly to Step 5.**
 
-This step has three subsections: Terminology defines key metrics used throughout, Primary Method covers the
-session-analyzer tool for routine analysis, and Manual Extraction covers direct JSONL inspection for debugging.
-The Measurements section at the end collects per-delegation data for the output in Step 6. Start with Terminology
-if you are unfamiliar with delegation metrics; otherwise go straight to Primary Method.
+Start with Terminology if unfamiliar with delegation metrics; otherwise go straight to Primary Method.
 
 #### Terminology
 
@@ -166,28 +163,7 @@ Use this output to populate the per-delegation analysis in the output format bel
 - If no subagent turns are found, report: "No delegations detected — skipping delegation analysis"
 - If output is incomplete (e.g., truncated JSONL), note which delegations could not be fully measured
 
-#### Manual Extraction (advanced / debugging)
-
-If session-analyzer is unavailable or you need to inspect raw data, extract directly from JSONL:
-
-```bash
-# Locate the session JSONL file
-SESSION_FILE="${CLAUDE_PROJECT_DIR}/.cat/sessions/${CLAUDE_SESSION_ID}.jsonl"
-
-# Extract main agent assistant turns (no parentToolUseID), deduplicated by message ID
-# Each line has input_tokens, cache_read_input_tokens, cache_creation_input_tokens
-# Note: sort -t'"' -k4,4 -u deduplicates by the 4th double-quoted field (message uuid).
-# This assumes standard Claude JSONL field order: {"type":"...", "uuid":"..."}
-# If field order changes, this deduplication will silently fail — prefer session-analyzer.
-grep '"type":"assistant"' "$SESSION_FILE" | grep -v '"parentToolUseID"' | \
-  sort -t'"' -k4,4 -u
-
-# Extract subagent assistant turns (has parentToolUseID), deduplicated by message ID
-grep '"type":"assistant"' "$SESSION_FILE" | grep '"parentToolUseID"' | \
-  sort -t'"' -k4,4 -u
-
-# Per turn: total_context = input_tokens + cache_read_input_tokens + cache_creation_input_tokens
-```
+If session-analyzer is unavailable, see [delegation-analysis.md](plugin/skills/optimize-execution/delegation-analysis.md) for manual JSONL extraction steps.
 
 #### Measurements to collect
 
@@ -357,63 +333,15 @@ Compile analysis into actionable recommendations based on the skill output:
    For each flagged pattern, estimate output-token savings (e.g., "removes ~200 tokens per invocation").
    Report these as a "Token Efficiency" category in the Issues Found section, ordered by estimated savings.
 
-Generate a comprehensive analysis report with specific recommendations for:
-- Which operations to batch together
-- Which results to cache or reference from context
-- Which independent operations to parallelize
-- Which tool outputs to hide or summarize
-- Configuration rules for Claude Code UX
-
 ### Optimization Pattern Details
-
-#### Pipelining Opportunities
-
-**Definition**: Dependent operations where phase N+1 can start with partial output from phase N, rather than waiting for complete output.
-
-**Detection Criteria**: Sequential phases where phase N+1 only needs partial output from phase N to begin work.
-
-**Examples**:
-- Stakeholder review spawn after diff available, before commit squash (review needs diff, not squash order)
-- plan.md read overlapping with lock acquisition (independent operations masked as sequential)
-- Implementation subagent start after first execution step read, before full plan.md parse
-
-**Applicability Note**: Claude Code tool calls are sequential within a message. Pipelining applies when skill steps have false serial dependencies - reordering steps to overlap output availability with consumption can reduce total wall-clock time even though tool calls remain sequential.
 
 #### Script Extraction Opportunities
 
-**Principle**: Skills must not contain inline bash for deterministic operations. All deterministic bash
-belongs in external script files. Skills contain only: when to use, script invocation, result handling,
-and judgment-dependent guidance.
+**Principle**: Skills must not contain inline bash for deterministic operations — all such bash belongs in external scripts. Skills contain only: when to use, script invocation, result handling, and judgment-dependent guidance. This principle is enforced by `/cat:instruction-builder-agent`.
 
-This principle is enforced by `/cat:instruction-builder-agent`. When optimize-execution detects skill files with
-inline bash, recommend running `/cat:instruction-builder-agent` on the skill to extract deterministic operations
-into scripts.
-
-**Detection**: Any skill file containing bash code blocks with deterministic operations (no judgment
-branching, no user interaction) is a candidate for script extraction.
-
-**Impact**: High — reduces token consumption (Claude doesn't read/reason about implementation), ensures
-deterministic execution, and produces fewer tool call round-trips.
-
-See `/cat:instruction-builder-agent` for the full script extraction architecture and hybrid workflow pattern.
+**Detection**: Any skill file containing bash code blocks with deterministic operations (no judgment branching, no user interaction) is a candidate for script extraction.
 
 #### Token Efficiency Patterns
-
-**Definition**: Skill output patterns that waste output tokens without adding value, making each invocation
-more expensive without improving correctness or readability.
-
-**Correctness takes priority** — both semantic correctness (meaning/parsing) and visual correctness
-(user-facing output alignment and readability) override any compactness gain. Never flag a pattern as wasteful
-when fixing it would change meaning, break parsing, or degrade visual presentation.
-
-**Correctness exemptions — do NOT flag as wasteful when:**
-- Inside YAML frontmatter (whitespace is syntax)
-- Inside Makefile targets (tabs are required, spaces are wrong)
-- Inside fenced code blocks where indentation is part of the example
-- In any context where changing whitespace would change meaning or break parsing
-- In display tables, boxes, or formatted reports where spacing is part of the visual design
-
-**Detection patterns:**
 
 | Pattern | Detection | Estimated Savings |
 |---------|-----------|-------------------|
@@ -422,12 +350,6 @@ when fixing it would change meaning, break parsing, or degrade visual presentati
 | Boilerplate repeated across steps | Identical or near-identical guidance block appears 2+ times | ~50-200 tokens/invocation |
 | Unused output sections | Section always produces empty table, list, or block | ~20-100 tokens/invocation |
 | Receiver-irrelevant output | Content sent to caller that caller cannot use | ~100-500 tokens/invocation |
-
-**Reporting format:** Each flagged pattern should include:
-- Location: skill file and section name
-- Pattern type: one of the types above
-- Sample text (abbreviated)
-- Estimated savings: tokens saved per invocation
 
 #### Subagent Content Relay Anti-Pattern
 
@@ -463,8 +385,7 @@ instead of letting the subagent read it costs `2k * remaining_main_turns` additi
 
 ### Step 7: Present Results
 
-After collecting all analysis data from Steps 1-6, present results as a human-readable markdown report.
-Do NOT output raw JSON to the user. Use the JSON data internally to populate the sections below.
+Present results as a human-readable markdown report. Do NOT output raw JSON. Use JSON data internally to populate the sections below.
 
 #### Report Structure
 
@@ -673,50 +594,7 @@ Delegating would have saved ~59.1% tokens. Recommend delegating this phase.
 | 5 | Remove repeated boilerplate in work-agent/first-use.md steps 3-5 | ~150 tokens/invocation |
 ```
 
-## Worked Example: Subagent Delegation Trade-off Analysis
-
-The following uses empirical token measurements extracted from a real session JSONL transcript.
-
-**Session context:** Main agent delegated codebase exploration to a Haiku subagent for research.
-
-```
-Phase: explore (haiku subagent for codebase research)
-Main context at delegation: 40,396 tokens
-Subagent turns: 15
-Subagent first turn: 17,761 (cache_read: 9,539, cache_create: 8,219, new: 3)
-Subagent last turn: 62,294
-
-Raw token comparison:
-  Inline estimate:    15 * 40,396 = 605,940 cumulative tokens  [conservative lower bound: actual inline cost
-                      would be higher as main context grows with each turn's output]
-  Actual delegation:  80,792 (main: 2 turns at ~40,396 each) + 503,859 (subagent: 15 turns) = 584,651
-  Delta:              -21,289 tokens (-3.5%)
-  Note: inline_cost is a conservative lower bound — if delegation is cost-effective against this estimate,
-        actual savings vs. true inline execution are likely even better.
-
-Cost-weighted comparison:
-  Subagent cache hit rate: 54-99% per turn (high due to shared prompt cache)
-  Cost-weighted inline:     605,940 * ~0.65 effective rate = ~393,861 cost-equivalent tokens
-  Cost-weighted delegation: main (80,792 at main rates) + subagent (503,859 at subagent rates with high cache hits)
-                            = ~52,515 + ~87,673 = ~140,188 cost-equivalent tokens
-  Cost-weighted delta:      -253,673 cost-equivalent tokens (-64.4%)
-```
-
-**Key insight from empirical data:** The raw token savings from delegation are modest (~3-5%) because
-subagent context grows across turns. The **cost-weighted savings are dramatically larger** (60-70%) because
-subagents achieve very high cache hit rates — the shared system prompt, tool definitions, and CLAUDE.md
-are all cache reads at 0.1x pricing. A 78% cache hit rate on the subagent effectively prices those tokens
-at 10 cents on the dollar, making delegation highly cost-efficient even when raw token counts are similar.
-
-**When delegation helps most:**
-- Subagent work has many turns (more turns = more cache reuse at 0.1x)
-- Main agent context is large (high C_main = high inline cost per turn)
-- Subagent work is cache-friendly (repeated reads of shared context)
-
-**When delegation may not help:**
-- Few subagent turns (overhead of spawning exceeds savings)
-- Subagent work requires many unique new tokens (low cache hit rate)
-- Main agent context is small (low C_main = low inline cost baseline)
+See [delegation-analysis.md](plugin/skills/optimize-execution/delegation-analysis.md) for a worked example with full token calculations.
 
 ## Integration with Other Skills
 

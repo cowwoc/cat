@@ -1,8 +1,3 @@
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # Skill Loading Reference
 
 How to register, invoke, and reference skills for main agents and subagents in Claude Code.

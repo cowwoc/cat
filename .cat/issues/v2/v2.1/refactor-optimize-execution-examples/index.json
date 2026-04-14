@@ -1,5 +1,6 @@
 {
-  "status" : "in-progress",
+  "status" : "closed",
+  "resolution" : "implemented",
   "dependencies" : [ ],
   "blocks" : [ ],
   "target_branch" : "v2.1"

@@ -1,8 +1,3 @@
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # Parallel Subagent Execution
 
 > See `plugin/concepts/work-decomposition.md` for the full execution model, hierarchy, and parallel job execution model.

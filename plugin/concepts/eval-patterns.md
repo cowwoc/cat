@@ -1,8 +1,3 @@
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # Eval Patterns
 
 Methodology for post-hoc comparison of skill versions using rubric scoring, winner determination, and
