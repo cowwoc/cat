@@ -1,8 +1,3 @@
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # Empirical Evaluation Patterns
 
 Reference patterns for structured grading, blind comparison, post-hoc analysis, and hypothesis-driven

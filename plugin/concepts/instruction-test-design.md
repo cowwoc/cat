@@ -1,8 +1,3 @@
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # Organic Instruction-Test Design Standard
 
 Reference standard for writing empirical instruction-tests that verify a skill is chosen AND followed correctly, or a rule is applied correctly, without priming the agent to select the skill or apply the rule.

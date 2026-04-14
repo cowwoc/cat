@@ -1,8 +1,3 @@
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # Workflow: Token Warning and Compaction Handling
 
 > See `plugin/concepts/work-decomposition.md` for the full execution hierarchy and sub-issue decomposition context.

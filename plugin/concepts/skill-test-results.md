@@ -1,8 +1,3 @@
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # Skill Test Results Schema
 
 After a test run against a skill's `test/` directory, the results are written to a `results.json`

@@ -1,8 +1,3 @@
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # Adversarial Protocol for Instruction Hardening
 
 This document defines the unified adversarial TDD loop used by instruction-builder-agent and tdd-implementation-agent

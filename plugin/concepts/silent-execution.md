@@ -1,8 +1,3 @@
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # Silent Execution Pattern
 
 Run commands invisibly through skill preprocessing so users see clean output instead of noisy
