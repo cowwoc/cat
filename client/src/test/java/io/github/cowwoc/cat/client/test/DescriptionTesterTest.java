@@ -185,28 +185,28 @@ public final class DescriptionTesterTest
   }
 
   /**
-   * Verifies that a description of exactly 250 characters is accepted without throwing.
+   * Verifies that a description of exactly {@value SkillFrontmatter#MAX_DESCRIPTION_LENGTH} characters
+   * is accepted without throwing.
    */
   @Test
-  public void acceptsDescriptionOfExactly250Chars()
+  public void acceptsDescriptionAtMaxLength()
   {
-    // Build a description that is exactly 250 characters after normalization
-    String description250 = "A".repeat(250);
-    String content = "---\ndescription: " + description250 + "\nuser-invocable: false\n---\n# Skill\n";
+    String description = "A".repeat(SkillFrontmatter.MAX_DESCRIPTION_LENGTH);
+    String content = "---\ndescription: " + description + "\nuser-invocable: false\n---\n# Skill\n";
     // Should not throw
     SkillFrontmatter.extractDescription(content, "SKILL.md");
   }
 
   /**
-   * Verifies that a description exceeding 250 characters is rejected with a clear error.
+   * Verifies that a description exceeding {@value SkillFrontmatter#MAX_DESCRIPTION_LENGTH} characters
+   * is rejected with a clear error.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*exceeds 250-character limit.*")
-  public void rejectsDescriptionExceeding250Chars()
+    expectedExceptionsMessageRegExp = ".*exceeds " + SkillFrontmatter.MAX_DESCRIPTION_LENGTH + "-character limit.*")
+  public void rejectsDescriptionExceedingMaxLength()
   {
-    // Build a description that is exactly 251 characters after normalization
-    String description251 = "A".repeat(251);
-    String content = "---\ndescription: " + description251 + "\nuser-invocable: false\n---\n# Skill\n";
+    String description = "A".repeat(SkillFrontmatter.MAX_DESCRIPTION_LENGTH + 1);
+    String content = "---\ndescription: " + description + "\nuser-invocable: false\n---\n# Skill\n";
     SkillFrontmatter.extractDescription(content, "SKILL.md");
   }
 

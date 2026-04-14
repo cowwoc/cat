@@ -18,9 +18,11 @@ import java.util.regex.Pattern;
  * <p>
  * Reads file content from stdin. Operates in two modes:
  * <ul>
- *   <li><b>Extract mode (0 args):</b> prints the description to stdout; exits 0 if ≤250 characters,
- *       exits 1 if the description exceeds 250 characters.</li>
- *   <li><b>Replace mode (1 arg):</b> validates the new description is ≤250 characters, replaces the
+ *   <li><b>Extract mode (0 args):</b> prints the description to stdout; exits 0 if
+ *       ≤{@value SkillFrontmatter#MAX_DESCRIPTION_LENGTH} characters, exits 1 if the description
+ *       exceeds {@value SkillFrontmatter#MAX_DESCRIPTION_LENGTH} characters.</li>
+ *   <li><b>Replace mode (1 arg):</b> validates the new description is
+ *       ≤{@value SkillFrontmatter#MAX_DESCRIPTION_LENGTH} characters, replaces the
  *       {@code description:} field in the frontmatter, and writes the updated content to stdout.
  *       Exits non-zero with an error message if validation fails.</li>
  * </ul>
@@ -40,8 +42,6 @@ public final class UpdateSkillDescription
    */
   private static final Pattern DESCRIPTION_REPLACE_PATTERN =
     Pattern.compile("^description:.*(?:\\n[ \\t]+.*)*", Pattern.MULTILINE);
-
-  private static final int MAX_DESCRIPTION_LENGTH = 250;
 
   private UpdateSkillDescription()
   {
@@ -89,18 +89,19 @@ public final class UpdateSkillDescription
    * @param newDescription the replacement description text
    * @return the updated content with the new description substituted
    * @throws NullPointerException     if {@code content} or {@code newDescription} are null
-   * @throws IllegalArgumentException if the new description exceeds 250 characters, if the content has
-   *                                  no YAML frontmatter, or if the frontmatter has no description field
+   * @throws IllegalArgumentException if the new description exceeds {@value SkillFrontmatter#MAX_DESCRIPTION_LENGTH}
+   *                                  characters, if the content has no YAML frontmatter, or if the frontmatter
+   *                                  has no description field
    */
   public static String replaceDescription(String content, String newDescription)
   {
     requireThat(content, "content").isNotNull();
     requireThat(newDescription, "newDescription").isNotNull();
 
-    if (newDescription.length() > MAX_DESCRIPTION_LENGTH)
+    if (newDescription.length() > SkillFrontmatter.MAX_DESCRIPTION_LENGTH)
       throw new IllegalArgumentException(
-        "Description exceeds 250-character limit: " + newDescription.length() +
-        " characters. Shorten the description before using this tool.");
+        "Description exceeds " + SkillFrontmatter.MAX_DESCRIPTION_LENGTH + "-character limit: " +
+        newDescription.length() + " characters. Shorten the description before using this tool.");
 
     int firstDash = content.indexOf("---");
     if (firstDash < 0)
@@ -128,7 +129,8 @@ public final class UpdateSkillDescription
    * CLI entry point.
    * <p>
    * In extract mode (0 args), reads content from stdin, prints the description to stdout, and exits 0
-   * if the description is ≤250 characters or exits 1 if it exceeds 250 characters.
+   * if the description is ≤{@value SkillFrontmatter#MAX_DESCRIPTION_LENGTH} characters or exits 1 if it exceeds
+   * {@value SkillFrontmatter#MAX_DESCRIPTION_LENGTH} characters.
    * <p>
    * In replace mode (1 arg), reads content from stdin, validates the new description length, replaces
    * the {@code description:} field, and writes the updated content to stdout. Exits 1 if validation
@@ -156,7 +158,7 @@ public final class UpdateSkillDescription
       {
         String description = getDescription(content);
         System.out.print(description);
-        if (description.length() > MAX_DESCRIPTION_LENGTH)
+        if (description.length() > SkillFrontmatter.MAX_DESCRIPTION_LENGTH)
           System.exit(1);
       }
       catch (IllegalArgumentException e)

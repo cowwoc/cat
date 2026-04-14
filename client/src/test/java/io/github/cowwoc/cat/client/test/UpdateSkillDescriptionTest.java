@@ -6,6 +6,7 @@
  */
 package io.github.cowwoc.cat.client.test;
 
+import io.github.cowwoc.cat.claude.hook.skills.SkillFrontmatter;
 import io.github.cowwoc.cat.claude.hook.skills.UpdateSkillDescription;
 import org.testng.annotations.Test;
 
@@ -37,28 +38,30 @@ public final class UpdateSkillDescriptionTest
   }
 
   /**
-   * Verifies that getDescription returns a description of exactly 250 characters without throwing.
+   * Verifies that getDescription returns a description of exactly {@value SkillFrontmatter#MAX_DESCRIPTION_LENGTH}
+   * characters without throwing.
    */
   @Test
-  public void getDescriptionAcceptsExactly250Chars()
+  public void getDescriptionAcceptsDescriptionAtMaxLength()
   {
-    String description250 = "A".repeat(250);
-    String content = "---\ndescription: " + description250 + "\nuser-invocable: false\n---\n# Skill\n";
+    String description = "A".repeat(SkillFrontmatter.MAX_DESCRIPTION_LENGTH);
+    String content = "---\ndescription: " + description + "\nuser-invocable: false\n---\n# Skill\n";
     String result = UpdateSkillDescription.getDescription(content);
-    requireThat(result.length(), "length").isEqualTo(250);
+    requireThat(result.length(), "length").isEqualTo(SkillFrontmatter.MAX_DESCRIPTION_LENGTH);
   }
 
   /**
-   * Verifies that getDescription returns a description exceeding 250 characters without throwing.
+   * Verifies that getDescription returns a description exceeding {@value SkillFrontmatter#MAX_DESCRIPTION_LENGTH}
+   * characters without throwing.
    * Extract mode does not enforce the length limit; it is the caller's responsibility to check.
    */
   @Test
-  public void getDescriptionReturnsDescriptionExceeding250Chars()
+  public void getDescriptionReturnsDescriptionExceedingMaxLength()
   {
-    String description251 = "A".repeat(251);
-    String content = "---\ndescription: " + description251 + "\nuser-invocable: false\n---\n# Skill\n";
+    String description = "A".repeat(SkillFrontmatter.MAX_DESCRIPTION_LENGTH + 1);
+    String content = "---\ndescription: " + description + "\nuser-invocable: false\n---\n# Skill\n";
     String result = UpdateSkillDescription.getDescription(content);
-    requireThat(result.length(), "length").isEqualTo(251);
+    requireThat(result.length(), "length").isEqualTo(SkillFrontmatter.MAX_DESCRIPTION_LENGTH + 1);
   }
 
   /**
@@ -103,24 +106,26 @@ public final class UpdateSkillDescriptionTest
   }
 
   /**
-   * Verifies that replaceDescription accepts a new description of exactly 250 characters.
+   * Verifies that replaceDescription accepts a new description of exactly
+   * {@value SkillFrontmatter#MAX_DESCRIPTION_LENGTH} characters.
    */
   @Test
-  public void replaceDescriptionAcceptsExactly250Chars()
+  public void replaceDescriptionAcceptsDescriptionAtMaxLength()
   {
-    String description250 = "A".repeat(250);
-    String updated = UpdateSkillDescription.replaceDescription(SIMPLE_SKILL, description250);
-    requireThat(updated, "updated").contains("description: " + description250);
+    String description = "A".repeat(SkillFrontmatter.MAX_DESCRIPTION_LENGTH);
+    String updated = UpdateSkillDescription.replaceDescription(SIMPLE_SKILL, description);
+    requireThat(updated, "updated").contains("description: " + description);
   }
 
   /**
-   * Verifies that replaceDescription rejects a new description exceeding 250 characters.
+   * Verifies that replaceDescription rejects a new description exceeding
+   * {@value SkillFrontmatter#MAX_DESCRIPTION_LENGTH} characters.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*exceeds 250-character limit.*")
-  public void replaceDescriptionRejectsDescriptionExceeding250Chars()
+    expectedExceptionsMessageRegExp = ".*exceeds " + SkillFrontmatter.MAX_DESCRIPTION_LENGTH + "-character limit.*")
+  public void replaceDescriptionRejectsDescriptionExceedingMaxLength()
   {
-    UpdateSkillDescription.replaceDescription(SIMPLE_SKILL, "B".repeat(251));
+    UpdateSkillDescription.replaceDescription(SIMPLE_SKILL, "B".repeat(SkillFrontmatter.MAX_DESCRIPTION_LENGTH + 1));
   }
 
   /**

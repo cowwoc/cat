@@ -7,6 +7,7 @@
 package io.github.cowwoc.cat.client.test;
 
 import io.github.cowwoc.cat.claude.hook.skills.DescriptionOptimizer;
+import io.github.cowwoc.cat.claude.hook.skills.SkillFrontmatter;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -536,17 +537,17 @@ public final class DescriptionOptimizerTest
   }
 
   /**
-   * Verifies that a skill file with a description of exactly 250 characters is accepted.
+   * Verifies that a skill file with a description of exactly {@value SkillFrontmatter#MAX_DESCRIPTION_LENGTH}
+   * characters is accepted.
    */
   @Test
-  public void acceptsDescriptionOfExactly250Chars() throws IOException
+  public void acceptsDescriptionAtMaxLength() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-desc-opt-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      // Build a SKILL.md with a description of exactly 250 characters
-      String description250 = "A".repeat(250);
-      String skillContent = "---\ndescription: " + description250 +
+      String description = "A".repeat(SkillFrontmatter.MAX_DESCRIPTION_LENGTH);
+      String skillContent = "---\ndescription: " + description +
         "\nuser-invocable: false\n---\n# Skill\n";
       Path skillFile = tempDir.resolve("SKILL.md");
       Files.writeString(skillFile, skillContent);
@@ -571,18 +572,18 @@ public final class DescriptionOptimizerTest
   }
 
   /**
-   * Verifies that a skill file with a description exceeding 250 characters is rejected.
+   * Verifies that a skill file with a description exceeding
+   * {@value SkillFrontmatter#MAX_DESCRIPTION_LENGTH} characters is rejected.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*exceeds 250-character limit.*")
-  public void rejectsDescriptionExceeding250Chars() throws IOException
+    expectedExceptionsMessageRegExp = ".*exceeds " + SkillFrontmatter.MAX_DESCRIPTION_LENGTH + "-character limit.*")
+  public void rejectsDescriptionExceedingMaxLength() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-desc-opt-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      // Build a SKILL.md with a description of exactly 251 characters
-      String description251 = "A".repeat(251);
-      String skillContent = "---\ndescription: " + description251 +
+      String description = "A".repeat(SkillFrontmatter.MAX_DESCRIPTION_LENGTH + 1);
+      String skillContent = "---\ndescription: " + description +
         "\nuser-invocable: false\n---\n# Skill\n";
       Path skillFile = tempDir.resolve("SKILL.md");
       Files.writeString(skillFile, skillContent);

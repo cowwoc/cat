@@ -283,7 +283,7 @@ If no changes were made, proceed without noting it — this pass is silent unles
 
 ### Step 4: Validate Description Length
 
-After compaction, extract the description from `INSTRUCTION_DRAFT` and enforce the 250-character limit.
+After compaction, extract the description from `INSTRUCTION_DRAFT` and enforce the 1536-character limit.
 
 ```bash
 DESC_TOO_LONG=false
@@ -296,26 +296,26 @@ echo "Description length: ${DESC_LEN} characters"
 If `DESC_TOO_LONG` is `true`, display a hard-reject message and present AskUserQuestion:
 
 ```
-REJECT: Description exceeds 250-character limit ({DESC_LEN} characters).
+REJECT: Description exceeds 1536-character limit ({DESC_LEN} characters).
 
 Skill descriptions are used for intent routing and must remain concise.
 Current description:
   {DESCRIPTION}
 
-Please provide a shorter version (≤250 characters).
+Please provide a shorter version (≤1536 characters).
 ```
 
 ```
 AskUserQuestion:
   header: "Description Too Long"
   question: |
-    The skill description is {DESC_LEN} characters, which exceeds the 250-character limit.
+    The skill description is {DESC_LEN} characters, which exceeds the 1536-character limit.
     Skill descriptions are used for intent routing — keep them concise.
 
     Current ({DESC_LEN} chars):
       {DESCRIPTION}
 
-    Enter a shorter description (≤250 characters):
+    Enter a shorter description (≤1536 characters):
   options:
     - "Enter shorter description" (user types new description in a follow-up message)
 ```
@@ -328,7 +328,7 @@ INSTRUCTION_DRAFT=$(printf '%s' "${INSTRUCTION_DRAFT}" | \
   "${CLAUDE_PLUGIN_ROOT}/client/bin/update-skill-description" "${NEW_DESCRIPTION}")
 ```
 
-Re-extract and re-check length. If still > 250, present the AskUserQuestion again (no limit on
+Re-extract and re-check length. If still > 1536, present the AskUserQuestion again (no limit on
 retries — require compliance before writing to disk).
 
 If `DESC_TOO_LONG` is `false`, continue to Step 5.
@@ -2197,10 +2197,10 @@ Overall verification passes if all non-skipped items are checked and all skipped
 
 ### Description validation
 
-- [ ] New Step 4 rejects descriptions > 250 characters with hard reject (displays char count)
+- [ ] New Step 4 rejects descriptions > 1536 characters with hard reject (displays char count)
 - [ ] AskUserQuestion presented with current description and character count
 - [ ] INSTRUCTION_DRAFT updated with user-provided replacement before writing to disk
-- [ ] Descriptions of exactly 250 characters are accepted without prompting
+- [ ] Descriptions of exactly 1536 characters are accepted without prompting
 
 ### Test generation
 
