@@ -1,5 +1,6 @@
 {
-  "status": "open",
-  "dependencies": [],
-  "blocks": []
+  "status" : "in-progress",
+  "dependencies" : [ ],
+  "blocks" : [ ],
+  "target_branch" : "v2.1"
 }

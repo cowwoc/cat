@@ -67,3 +67,23 @@ None — token efficiency improvement
 - [ ] `plugin/concepts/delegation-analysis.md` does not overlap with `plugin/concepts/subagent-delegation.md` (different content: trade-off math vs. delegation principles)
 - [ ] `first-use.md` token count reduced by ≥900 tokens (measured via `wc -w` before/after)
 - [ ] Tests passing: `mvn -f client/pom.xml verify -e` exits 0
+
+## Fix Steps (iteration 1)
+
+### Fix 1: Reduce first-use.md word count by ≥123 additional words to meet the ≥900 wc -w threshold
+Current reduction is 777 words (4913 → 4136). Need ≥900 words total reduction (i.e., target ≤4013 words).
+- Audit Step 6 ("Generate Recommendations") in `plugin/skills/optimize-execution/first-use.md` for remaining
+  verbose prose that reiterates earlier detection criteria — remove any restatement sentences that do not add
+  new instruction value
+- Review the preamble/introduction and any other narrative paragraphs outside the 7 numbered steps for
+  redundant or human-reader-oriented prose that agents do not need during execution; remove or compress to
+  single-sentence summaries
+- After edits, verify: `wc -w plugin/skills/optimize-execution/first-use.md` produces a value ≤4013
+  (i.e., original 4913 minus ≥900)
+- Re-confirm all 7 analysis steps (Steps 1–7) and the detection table and "Subagent Content Relay
+  Anti-Pattern" section are still present after edits
+
+Note on GradeJsonTransformerTest failures: The 4 failures in GradeJsonTransformerTest (binaryExists,
+validGraderJsonIsAccepted, missingVerdictFieldIsRejected, wrongFieldNameStatusIsRejected) are pre-existing
+infrastructure failures on the v2.1 branch due to a broken symlink for the grade-json-transformer binary.
+This issue makes no Java changes; these failures are out of scope and should not block merge.
