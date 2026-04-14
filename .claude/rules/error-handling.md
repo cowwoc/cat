@@ -1,3 +1,6 @@
+---
+paths: ["client/**", "plugin/**"]
+---
 # Error Handling
 
 - Java: Use exceptions with meaningful messages; catch specific exceptions

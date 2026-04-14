@@ -1,3 +1,6 @@
+---
+paths: ["client/**", "plugin/**"]
+---
 # CLI Output Format Convention
 
 ## Rule: Format Is Determined by the Ultimate Consumer

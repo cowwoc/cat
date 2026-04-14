@@ -1,3 +1,6 @@
+---
+paths: ["client/**", "plugin/**"]
+---
 # Naming Conventions
 
 ## Variable Names in Markdown Files
