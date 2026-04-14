@@ -1,0 +1,4 @@
+## Turn 1
+Output the single word "beta".
+## Assertions
+1. The agent's response text contains the word "beta"

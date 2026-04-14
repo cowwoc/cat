@@ -70,6 +70,30 @@ For each weakness found:
 Do NOT suggest fixes. Do NOT be vague. If you cannot find a concrete attack for a concern,
 do not include it.
 
+**Special focus for instruction targets: Priming sources**
+
+When `target_type` is `instructions`, search for text that primes the model to produce wrong output
+by showing examples or accepting alternatives that should be prohibited:
+
+- **Tolerance statements** that accept multiple field names/values when only one is canonical
+  (e.g., "field_name or alternate_name both accepted")
+- **"Don't need to be exact" language** that weakens schema requirements
+- **Example formats** that show deprecated/wrong schemas alongside correct ones
+- **"For backward compatibility" notes** that mention old formats the model might replicate
+
+Example priming loophole:
+```json
+{
+  "name": "field-name-tolerance-priming",
+  "severity": "HIGH",
+  "attack": "Instruction says '\"field_name\" or \"alternate\" both accepted' - model chooses shorter alternate instead of canonical",
+  "evidence": "Line 42: 'Field name tolerance: \"result\" or \"results\" both accepted' - this primes model to use wrong name"
+}
+```
+
+Priming causes the model to internalize "this alternative is acceptable" even when the alternative
+is only meant for input/parsing, not output generation.
+
 ### Step 3: Write Findings
 
 Write your findings to `{WORKTREE_ROOT}/findings.json` using this exact format:

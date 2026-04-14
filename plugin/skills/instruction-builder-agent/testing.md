@@ -146,6 +146,31 @@ Organic test cases follow this schema:
 | `tools` | array of strings | Tool names for `must_use_tools` / `must_not_use_tools` assertions |
 | `description` | string | Human-readable assertion label used in grading output |
 
+## Test Case File Path Constraints
+
+When a test case instructs an agent to create files, those files **must** be written to `.cat/work/`
+(relative to the agent's working directory). Do **not** use absolute paths or paths under `.claude/`.
+
+**Required: use `.cat/work/`**
+
+Each test-run subagent executes in its own isolated worktree. Writing to `.cat/work/validate-uuid.sh`
+creates the file at `AGENT_WORKTREE/.cat/work/validate-uuid.sh` — a unique absolute path per runner.
+Multiple parallel tests and multiple Claude Code instances never conflict.
+
+```
+# CORRECT: relative .cat/work/ path — resolves uniquely inside each isolated worktree
+.cat/work/validate-uuid.sh
+
+# WRONG: absolute /tmp/ path — shared across all processes on the machine
+/tmp/validate-uuid.sh
+
+# WRONG: path under .claude/ — internal agent workspace, not the intended output location
+.claude/worktrees/agent-XXXX/.cat/work/validate-uuid.sh
+```
+
+**Why not tracked directories like `plugin/` or `client/`?** Files there are staged and committed during
+plan execution. `.cat/work/` is gitignored — writes there never produce unintended commits.
+
 ## Calibration: How to Tune Trigger Sensitivity
 
 A well-calibrated skill is neither over-triggering (invoked on out-of-scope prompts) nor under-triggering

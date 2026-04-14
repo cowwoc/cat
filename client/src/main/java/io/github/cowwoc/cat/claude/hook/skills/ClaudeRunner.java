@@ -29,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +37,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.StringJoiner;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
@@ -56,20 +56,10 @@ import tools.jackson.databind.node.ObjectNode;
 public final class ClaudeRunner implements AutoCloseable
 {
   /**
-   * Allowed model name values for the {@code --model} flag.
-   * <p>
-   * Both short aliases ({@code haiku}, {@code sonnet}, {@code opus}) and their corresponding
-   * fully-qualified model identifiers (as returned by {@code extract-model}) are accepted.
-   */
-  static final Set<String> ALLOWED_MODELS = Set.of(
-    "haiku", "claude-haiku-4-5-20251001",
-    "sonnet", "claude-sonnet-4-6",
-    "opus", "claude-opus-4-6");
-  /**
    * Default timeout for the claude CLI process.
    */
-  private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(180);
-private final ClaudePluginScope scope;
+  private static final Duration DEFAULT_TIMEOUT = Duration.ofMinutes(3);
+  private final ClaudePluginScope scope;
   private final ObjectWriter compactWriter;
   private Path isolatedConfigDir;
   private Path isolatedPluginRoot;
@@ -151,21 +141,26 @@ private final ClaudePluginScope scope;
   /**
    * Builds the claude CLI command with appropriate flags.
    *
-   * @param model        the model name (haiku, sonnet, or opus)
-   * @param systemPrompt the system prompt to append via CLI flag, or empty string for none
+   * @param model              the model name (haiku, sonnet, or opus)
+   * @param appendSystemPrompt the text to append to the system prompt via
+   *                           {@code --append-system-prompt}, or empty string for none
+   * @param agent              the agent type name to pass via {@code --agent}, or empty string for
+   *                           none
    * @return the command as a list of strings
-   * @throws NullPointerException     if {@code model} or {@code systemPrompt} are null
+   * @throws NullPointerException     if {@code model}, {@code appendSystemPrompt}, or {@code agent}
+   *                                  are null
    * @throws IllegalArgumentException if {@code model} is not in the allowed set
    */
-  public List<String> buildCommand(String model, String systemPrompt)
+  public List<String> buildCommand(String model, String appendSystemPrompt, String agent)
   {
     requireThat(model, "model").isNotBlank();
-    if (!ALLOWED_MODELS.contains(model))
+    if (!ModelIdResolver.knownModels().contains(model))
     {
       throw new IllegalArgumentException("Invalid model '" + model +
-        "'. Valid values: " + ALLOWED_MODELS);
+        "'. Valid values: " + ModelIdResolver.knownModels());
     }
-    requireThat(systemPrompt, "systemPrompt").isNotNull();
+    requireThat(appendSystemPrompt, "appendSystemPrompt").isNotNull();
+    requireThat(agent, "agent").isNotNull();
     List<String> command = new ArrayList<>();
     command.add("claude");
     command.add("-p");
@@ -177,10 +172,15 @@ private final ClaudePluginScope scope;
     command.add("stream-json");
     command.add("--verbose");
     command.add("--dangerously-skip-permissions");
-    if (!systemPrompt.isEmpty())
+    if (!appendSystemPrompt.isEmpty())
     {
       command.add("--append-system-prompt");
-      command.add(systemPrompt);
+      command.add(appendSystemPrompt);
+    }
+    if (!agent.isBlank())
+    {
+      command.add("--agent");
+      command.add(agent);
     }
     return command;
   }
@@ -256,6 +256,15 @@ private final ClaudePluginScope scope;
     ProcessBuilder pb = new ProcessBuilder(command);
     Map<String, String> env = pb.environment();
     env.remove("CLAUDECODE");
+    // Override CLAUDE_PROJECT_DIR so the claude process and its subagents resolve relative file
+    // paths against the runner worktree, not the main workspace.
+    env.put("CLAUDE_PROJECT_DIR", cwd.toAbsolutePath().toString());
+
+    // Inherit ANTHROPIC_BASE_URL if set in parent environment
+    String anthropicBaseUrl = System.getenv("ANTHROPIC_BASE_URL");
+    if (anthropicBaseUrl != null)
+      env.put("ANTHROPIC_BASE_URL", anthropicBaseUrl);
+
     if (isolatedConfigDir != null)
     {
       env.put("CLAUDE_CONFIG_DIR", isolatedConfigDir.toString());
@@ -757,20 +766,31 @@ private final ClaudePluginScope scope;
     requireThat(args, "args").isNotNull();
     requireThat(out, "out").isNotNull();
 
+    if (args.length >= 1 && args[0].equals("resolve-model"))
+    {
+      String[] rest = Arrays.copyOfRange(args, 1, args.length);
+      out.println(resolveModel(rest));
+      return 0;
+    }
+
     if (args.length == 0 || args[0].equals("--help") || args[0].equals("-h"))
     {
       out.println("""
-        Usage: claude-runner --prompt <text> [OPTIONS]
+        Usage: claude-runner --prompt-file <path> [OPTIONS]
 
         Options:
-          --prompt <text>          The prompt to send (required)
-          --model <name>           Model: haiku|sonnet|opus (default: haiku)
-          --cwd <path>             Working directory (default: current directory)
-          --plugin-source <path>   Plugin source directory to copy into cache
-          --jlink-bin <path>       jlink binary directory to copy into cache
-          --plugin-version <ver>   Plugin version string (default: 2.1)
-          --system-prompt <text>   System prompt to append
-          --output <path>          Write JSON results to file""");
+          --prompt-file <path>            Path to a file containing the prompt to send (required)
+          --model <name>                  Model: haiku|sonnet|opus (default: haiku)
+          --cwd <path>                    Working directory (default: current directory)
+          --plugin-source <path>          Plugin source directory to copy into cache
+          --jlink-bin <path>              jlink binary directory to copy into cache
+          --plugin-version <ver>          Plugin version string (default: 2.1)
+          --agent <name>                  Run claude --agent <name>
+          --append-system-prompt <text>   Append text to the system prompt
+          --output <path>                 Write JSON results to file
+
+        Subcommands:
+          resolve-model <short_name>      Resolve a short model name to a fully-qualified model ID""");
       return 0;
     }
 
@@ -780,7 +800,8 @@ private final ClaudePluginScope scope;
     Path pluginSource = null;
     Path jlinkBin = null;
     String pluginVersion = "2.1";
-    String systemPrompt = "";
+    String agent = "";
+    String appendSystemPrompt = "";
     Path outputPath = null;
 
     for (int i = 0; i < args.length; ++i)
@@ -789,7 +810,7 @@ private final ClaudePluginScope scope;
         continue;
       switch (args[i])
       {
-        case "--prompt" ->
+        case "--prompt-file" ->
         {
           prompt = args[i + 1];
           ++i;
@@ -819,9 +840,14 @@ private final ClaudePluginScope scope;
           pluginVersion = args[i + 1];
           ++i;
         }
-        case "--system-prompt" ->
+        case "--agent" ->
         {
-          systemPrompt = args[i + 1];
+          agent = args[i + 1];
+          ++i;
+        }
+        case "--append-system-prompt" ->
+        {
+          appendSystemPrompt = args[i + 1];
           ++i;
         }
         case "--output" ->
@@ -830,13 +856,22 @@ private final ClaudePluginScope scope;
           ++i;
         }
         default -> throw new IllegalArgumentException(
-          "Unknown argument: " + args[i] + ". Valid arguments: --prompt, --model, --cwd, " +
-            "--plugin-source, --jlink-bin, --plugin-version, --system-prompt, --output");
+          "Unknown argument: " + args[i] + ". Valid arguments: --prompt-file <path>, --model, --cwd, " +
+            "--plugin-source, --jlink-bin, --plugin-version, --agent, --append-system-prompt, --output");
       }
     }
 
     if (prompt == null)
-      throw new IllegalArgumentException("--prompt argument is required");
+      throw new IllegalArgumentException("--prompt-file argument is required");
+    String promptText;
+    try
+    {
+      promptText = Files.readString(Path.of(prompt));
+    }
+    catch (IOException e)
+    {
+      throw new IOException("--prompt-file file not found: " + prompt, e);
+    }
 
     try (ClaudeRunner runner = new ClaudeRunner(scope))
     {
@@ -846,23 +881,64 @@ private final ClaudePluginScope scope;
           pluginVersion);
       }
 
-      List<String> command = runner.buildCommand(model, systemPrompt);
-      String input = runner.buildInput(List.of(), List.of(prompt), List.of());
+      // When --agent is specified, pass --agent <type> to the nested claude process.
+      // The nested process has CLAUDE_CONFIG_DIR pointing to the isolated config directory
+      // (when --plugin-source is provided), so --agent resolves from the candidate plugin's
+      // agents/ directory, honoring all frontmatter settings (tools:, model:, etc.).
+      List<String> command = runner.buildCommand(model, appendSystemPrompt, agent);
+      String input = runner.buildInput(List.of(), List.of(promptText), List.of());
 
       try (Process process = runner.buildProcessBuilder(command, cwd).start())
       {
+        // Container to hold parsed output from async reader thread
+        ParsedOutput[] resultHolder = new ParsedOutput[1];
+        IOException[] readerError = new IOException[1];
+
+        // Start reading stdout async (drains buffer to prevent deadlock during stdin write)
+        Thread stdoutReader = Thread.ofVirtual().start(() ->
+        {
+          try (BufferedReader reader = new BufferedReader(
+            new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
+          {
+            resultHolder[0] = runner.parseOutput(reader);
+          }
+          catch (IOException e)
+          {
+            readerError[0] = e;
+          }
+        });
+
+        // Write stdin sync (async reader prevents subprocess stdout buffer from blocking us)
         try (OutputStreamWriter writer = new OutputStreamWriter(
           process.getOutputStream(), StandardCharsets.UTF_8))
         {
           writer.write(input);
         }
+        // Stdin closed here - subprocess knows input is complete
 
-        ParsedOutput parsed;
-        try (BufferedReader reader = new BufferedReader(
-          new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
+        // Wait for async reader to finish collecting all output. Use a timeout because
+        // the subprocess may spawn nested processes that keep stdout open past the deadline.
+        try
         {
-          parsed = runner.parseOutput(reader);
+          stdoutReader.join(DEFAULT_TIMEOUT.toMillis());
         }
+        catch (InterruptedException e)
+        {
+          Thread.currentThread().interrupt();
+          throw new IOException("Interrupted while waiting for stdout read", e);
+        }
+        if (stdoutReader.isAlive())
+        {
+          process.destroyForcibly();
+          out.println("ERROR: timeout after " + DEFAULT_TIMEOUT.toSeconds() + "s");
+          return 1;
+        }
+
+        // Check if reader encountered an error
+        if (readerError[0] != null)
+          throw readerError[0];
+
+        ParsedOutput parsed = resultHolder[0];
 
         boolean completed = process.waitFor(DEFAULT_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
         if (!completed)
@@ -871,6 +947,8 @@ private final ClaudePluginScope scope;
           out.println("ERROR: timeout after " + DEFAULT_TIMEOUT.toSeconds() + "s");
           return 1;
         }
+
+        int exitCode = process.exitValue();
 
         String fullText = String.join("\n", parsed.texts());
         out.println(fullText);
@@ -884,7 +962,7 @@ private final ClaudePluginScope scope;
           out.println("Results written to: " + outputPath);
         }
 
-        return 0;
+        return exitCode;
       }
       catch (InterruptedException e)
       {
@@ -892,5 +970,27 @@ private final ClaudePluginScope scope;
         return 1;
       }
     }
+  }
+
+  /**
+   * Implements the {@code resolve-model} subcommand.
+   * <p>
+   * Resolves a short model name (e.g., {@code "sonnet"}, {@code "opus"}, {@code "haiku"}) to its
+   * fully-qualified model identifier (e.g., {@code "claude-sonnet-4-6"}).
+   *
+   * @param args {@code [short_name]}
+   * @return the fully-qualified model identifier
+   * @throws IllegalArgumentException if the argument count is wrong or the short name is unknown
+   * @throws IOException              if the claude version cannot be determined
+   */
+  private static String resolveModel(String[] args) throws IOException
+  {
+    if (args.length != 1)
+      throw new IllegalArgumentException(
+        "claude-runner resolve-model: expected 1 argument <short_name>, got " + args.length +
+        ".\nUsage: claude-runner resolve-model <short_name>");
+    String shortName = args[0];
+    String claudeCodeVersion = ModelIdResolver.detectClaudeCodeVersion();
+    return ModelIdResolver.resolve(claudeCodeVersion, shortName);
   }
 }

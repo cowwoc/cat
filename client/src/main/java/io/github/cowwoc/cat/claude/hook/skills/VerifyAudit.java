@@ -324,7 +324,8 @@ public final class VerifyAudit
     Matcher matcher = LIST_ITEM_PATTERN.matcher(line);
     if (matcher.find())
     {
-      String item = matcher.group(1);
+      // Strip markdown code-span backticks (e.g., "`path/to/file.md`" → "path/to/file.md")
+      String item = matcher.group(1).replace("`", "");
       if (item.contains("/") || item.contains("."))
         targetSet.add(item);
     }

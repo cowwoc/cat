@@ -59,6 +59,10 @@ This reduces extraction variance during validation and improves execution equiva
 - **Verbose explanations**: Long-winded descriptions that can be condensed
 - **Meta-commentary**: Explanatory comments about the document (NOT structural metadata)
 - **Non-essential examples**: Examples that don't add new information
+- **CLI-written output format descriptions**: If the skill invokes a CLI tool to write its output
+  (e.g., a `write-test-results` subcommand), remove any inline description of what the output will look
+  like. The CLI implementation defines the format; a description in the skill is redundant and will
+  drift out of sync with the actual output.
 - **Elaboration**: Extended justifications or background that don't affect decisions
   - **Exception — Prohibition WHY reasoning:** A WHY paragraph that is the primary justification for a
     prohibition or requirement rule must be preserved even when it reads as elaboration. Indicators that a
@@ -136,6 +140,21 @@ prohibitions when the positive form is equally clear.
 | "Never commit without review" | (kept as-is) | "Get review before committing" |
 
 **Key insight:** Compression should reduce TOKENS, not CONSTRAINTS.
+
+---
+
+## Test Case Consolidation
+
+When the compression target directory contains test case scenario files (`plugin/tests/` subdirectories):
+
+**If multiple test case files have identical `## Turn 1` content:** consolidate them into a single file.
+- Keep the shared Turn 1 content unchanged
+- Merge all assertions from all source files into one `## Assertions` section
+- Delete the now-superseded individual files
+- Choose a descriptive filename that captures all tested behaviors
+
+**Why:** Separate files with identical turns waste tokens at test-time and obscure which behaviors are
+tested per turn. A single file with combined assertions is more readable and easier to maintain.
 
 ---
 

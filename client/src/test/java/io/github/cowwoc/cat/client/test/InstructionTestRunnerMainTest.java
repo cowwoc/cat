@@ -26,10 +26,11 @@ public class InstructionTestRunnerMainTest
    * Verifies that invoking run() with no arguments throws IllegalArgumentException.
    *
    * @throws IOException if an I/O error occurs
+   * @throws InterruptedException if interrupted
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = "(?s).*no command specified.*")
-  public void noArgsThrowsException() throws IOException
+  public void noArgsThrowsException() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("instruction-test-runner-main-test-");
     try (ClaudePluginScope scope = new TestClaudeTool(tempDir, tempDir))
@@ -48,10 +49,11 @@ public class InstructionTestRunnerMainTest
    * Verifies that run() throws NullPointerException for null args.
    *
    * @throws IOException if an I/O error occurs
+   * @throws InterruptedException if interrupted
    */
   @Test(expectedExceptions = NullPointerException.class,
     expectedExceptionsMessageRegExp = ".*args.*")
-  public void nullArgsThrowsException() throws IOException
+  public void nullArgsThrowsException() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("instruction-test-runner-main-test-");
     try (ClaudePluginScope scope = new TestClaudeTool(tempDir, tempDir))
@@ -69,10 +71,11 @@ public class InstructionTestRunnerMainTest
    * Verifies that run() throws NullPointerException for null output stream.
    *
    * @throws IOException if an I/O error occurs
+   * @throws InterruptedException if interrupted
    */
   @Test(expectedExceptions = NullPointerException.class,
     expectedExceptionsMessageRegExp = ".*out.*")
-  public void nullOutThrowsException() throws IOException
+  public void nullOutThrowsException() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("instruction-test-runner-main-test-");
     try (ClaudePluginScope scope = new TestClaudeTool(tempDir, tempDir))

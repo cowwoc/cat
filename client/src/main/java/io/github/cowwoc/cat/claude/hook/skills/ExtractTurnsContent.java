@@ -78,11 +78,10 @@ public final class ExtractTurnsContent
   }
 
   /**
-   * Reads Turn sections from the input file, writes each turn to a separate output file,
-   * and prints the output file paths to stdout (one per line).
+   * Reads Turn sections from the input file and writes each turn to a separate output file.
    * <p>
    * Output files are named by inserting {@code _turnN} before the extension of the output path.
-   * For example, if {@code outputBase} is {@code /tmp/TC1.md}, the files created are
+   * For example, if {@code outputBase} is {@code /tmp/TC1.md}, the turn files created are
    * {@code /tmp/TC1_turn1.md}, {@code /tmp/TC1_turn2.md}, etc.
    *
    * @param inputFile  the path to the markdown file containing Turn sections

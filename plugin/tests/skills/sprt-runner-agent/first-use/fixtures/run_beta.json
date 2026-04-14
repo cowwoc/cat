@@ -1,0 +1,11 @@
+{
+  "texts" : [ "beta" ],
+  "toolUses" : [ ],
+  "writeContents" : [ ],
+  "turns" : [ {
+    "texts" : [ "beta" ],
+    "toolUses" : [ ],
+    "writeContents" : [ ]
+  } ],
+  "sessionId" : "00000000-0000-0000-0000-000000000002"
+}

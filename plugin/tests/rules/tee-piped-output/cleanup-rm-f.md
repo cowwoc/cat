@@ -3,7 +3,7 @@ category: requirement
 ---
 ## Turn 1
 
-I need to run a command, capture the full output to a temporary log file for analysis, and then filter it once to show me specific results. After I'm done analyzing the log file, make sure to clean up and remove the temporary log file so it doesn't accumulate on the system.
+Run `mvn verify` to build and test the client, search the output for test failures, and if you find any, show me the context around them so I can understand what went wrong.
 
 ## Assertions
 

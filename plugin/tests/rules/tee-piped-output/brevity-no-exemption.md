@@ -3,7 +3,7 @@ category: requirement
 ---
 ## Turn 1
 
-Run a quick one-liner to get a list of active services, but I want to capture the full list in case I need to reference it again for filtering. The command is simple, just `systemctl list-units | grep service`. Please set it up so I can access the full output if needed later.
+Run a quick one-liner to get a list of running processes, but I want to capture the full list in case I need to reference it again for filtering. The command is simple, just `ps aux | grep python`. Please set it up so I can access the full output if needed later.
 
 ## Assertions
 

@@ -10,7 +10,10 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.claude.hook.skills.ClaudeRunner;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -165,6 +168,62 @@ public final class ClaudeRunnerTest
   }
 
   /**
+   * Verifies that run() throws IOException when the --prompt-file file does not exist.
+   */
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = "(?s).*--prompt-file file not found.*")
+  public void runThrowsWhenPromptFileNotFound() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      PrintStream out = new PrintStream(new ByteArrayOutputStream(), false, UTF_8);
+      ClaudeRunner.run(scope,
+        new String[]{"--prompt-file", tempDir.resolve("nonexistent-prompt.txt").toString()},
+        out);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that run() reads prompt content from the file specified by --prompt-file.
+   * <p>
+   * Confirms the file is read (no IOException) when it exists; the process launch itself
+   * may fail since no real Claude is available in unit tests, but the file-read step succeeds.
+   */
+  @Test
+  public void runReadsPromptFromFile() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Path promptFile = tempDir.resolve("prompt.txt");
+      Files.writeString(promptFile, "Hello from file", UTF_8);
+
+      PrintStream out = new PrintStream(new ByteArrayOutputStream(), false, UTF_8);
+      try
+      {
+        // The file exists and is readable — no IOException from file reading.
+        // Process launch may fail (no real claude binary), which is acceptable here.
+        ClaudeRunner.run(scope, new String[]{"--prompt-file", promptFile.toString()}, out);
+      }
+      catch (IOException e)
+      {
+        // Process launch failures are acceptable; file-read failures are not.
+        // Reject any IOException that originates from the --prompt-file file-read step.
+        requireThat(e.getMessage(), "errorMessage").doesNotContain("--prompt-file file not found");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that getIsolatedConfigDir returns empty string when no isolation is configured.
    */
   @Test
@@ -300,6 +359,34 @@ public final class ClaudeRunnerTest
         // The ProcessBuilder inherits the parent env; without isolation no override is injected.
         requireThat(pb.environment().get("CLAUDE_PLUGIN_ROOT"), "CLAUDE_PLUGIN_ROOT").
           isEqualTo(parentValue);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that buildProcessBuilder always sets CLAUDE_PROJECT_DIR to the absolute cwd path,
+   * even when no isolation is active. This ensures the runner process and its subagents resolve
+   * relative file paths against the runner worktree rather than the parent's project directory.
+   */
+  @Test
+  public void buildProcessBuilderSetsProjectDirToCwd() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      try (ClaudeRunner runner = new ClaudeRunner(scope))
+      {
+        Path cwd = tempDir.resolve("runner-worktree");
+        Files.createDirectories(cwd);
+
+        ProcessBuilder pb = runner.buildProcessBuilder(List.of("claude"), cwd);
+
+        requireThat(pb.environment().get("CLAUDE_PROJECT_DIR"), "CLAUDE_PROJECT_DIR").
+          isEqualTo(cwd.toAbsolutePath().toString());
       }
     }
     finally
