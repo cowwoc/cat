@@ -15,13 +15,17 @@ import java.util.regex.Pattern;
 public final class SkillFrontmatter
 {
   /**
+   * The maximum number of characters allowed in a skill description.
+   * Matches the Claude Code skill listing cap introduced in Claude Code 2.1.105.
+   */
+  public static final int MAX_DESCRIPTION_LENGTH = 1536;
+
+  /**
    * Pattern to extract the description field from YAML frontmatter.
    * Handles both single-line and block scalar (>) formats.
    */
   private static final Pattern DESCRIPTION_PATTERN =
     Pattern.compile("^description:\\s*>?\\s*(.+?)(?=^\\w|^---)", Pattern.MULTILINE | Pattern.DOTALL);
-
-  private static final int MAX_DESCRIPTION_LENGTH = 250;
 
   private SkillFrontmatter()
   {
@@ -34,7 +38,8 @@ public final class SkillFrontmatter
    * @param skillPath the file path (for error messages)
    * @return the extracted description text, with leading/trailing whitespace removed
    * @throws IllegalArgumentException if no description field is found, or if the description
-   *                                  exceeds 250 characters after whitespace normalization
+   *                                  exceeds {@value #MAX_DESCRIPTION_LENGTH} characters after
+   *                                  whitespace normalization
    */
   public static String extractDescription(String content, String skillPath)
   {
@@ -64,8 +69,8 @@ public final class SkillFrontmatter
     String description = rawDescription.replaceAll("\\s+", " ").strip();
     if (description.length() > MAX_DESCRIPTION_LENGTH)
       throw new IllegalArgumentException(
-        "Description exceeds 250-character limit: " + description.length() + " characters in '" +
-        skillPath + "'. Shorten the description before using this tool.");
+        "Description exceeds " + MAX_DESCRIPTION_LENGTH + "-character limit: " + description.length() +
+        " characters in '" + skillPath + "'. Shorten the description before using this tool.");
     return description;
   }
 }
