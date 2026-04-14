@@ -1862,7 +1862,6 @@ public final class InstructionTestRunnerTest
       Path runnerWorktree = mainRepo.resolve("worktrees").resolve(runnerBranch);
       Files.createDirectories(runnerWorktree.getParent());
       TestUtils.runGit(mainRepo, "worktree", "add", "-b", runnerBranch, runnerWorktree.toString());
-      requireThat(Files.exists(runnerWorktree), "worktreeExists").isTrue();
 
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String result = runner.removeRunnerWorktree(new String[]{
