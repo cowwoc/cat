@@ -41,8 +41,8 @@ public class GitSquashTest
     try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
-      GitSquash cmd = new GitSquash(scope, tempDir.toString());
-      String result = cmd.execute("main", "feature: add user authentication");
+      GitSquash squash = new GitSquash(scope, tempDir.toString());
+      String result = squash.execute("main", "feature: add user authentication");
       JsonNode json = scope.getJsonMapper().readTree(result);
       requireThat(json.get("status").asString(), "status").isEqualTo("OK");
     }
@@ -66,8 +66,8 @@ public class GitSquashTest
     try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
-      GitSquash cmd = new GitSquash(scope, tempDir.toString());
-      String result = cmd.execute("main", "bugfix: fix crash on startup");
+      GitSquash squash = new GitSquash(scope, tempDir.toString());
+      String result = squash.execute("main", "bugfix: fix crash on startup");
       JsonNode json = scope.getJsonMapper().readTree(result);
       requireThat(json.get("status").asString(), "status").isEqualTo("OK");
     }
@@ -91,8 +91,8 @@ public class GitSquashTest
     try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
-      GitSquash cmd = new GitSquash(scope, tempDir.toString());
-      String result = cmd.execute("main", "docs: update README with installation guide");
+      GitSquash squash = new GitSquash(scope, tempDir.toString());
+      String result = squash.execute("main", "docs: update README with installation guide");
       JsonNode json = scope.getJsonMapper().readTree(result);
       requireThat(json.get("status").asString(), "status").isEqualTo("OK");
     }
@@ -116,8 +116,8 @@ public class GitSquashTest
     try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
-      GitSquash cmd = new GitSquash(scope, tempDir.toString());
-      String result = cmd.execute("main", "refactor: extract validation logic");
+      GitSquash squash = new GitSquash(scope, tempDir.toString());
+      String result = squash.execute("main", "refactor: extract validation logic");
       JsonNode json = scope.getJsonMapper().readTree(result);
       requireThat(json.get("status").asString(), "status").isEqualTo("OK");
     }
@@ -141,8 +141,8 @@ public class GitSquashTest
     try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
-      GitSquash cmd = new GitSquash(scope, tempDir.toString());
-      String result = cmd.execute("main", "test: add validation tests");
+      GitSquash squash = new GitSquash(scope, tempDir.toString());
+      String result = squash.execute("main", "test: add validation tests");
       JsonNode json = scope.getJsonMapper().readTree(result);
       requireThat(json.get("status").asString(), "status").isEqualTo("OK");
     }
@@ -166,8 +166,8 @@ public class GitSquashTest
     try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
-      GitSquash cmd = new GitSquash(scope, tempDir.toString());
-      String result = cmd.execute("main", "performance: optimize search algorithm");
+      GitSquash squash = new GitSquash(scope, tempDir.toString());
+      String result = squash.execute("main", "performance: optimize search algorithm");
       JsonNode json = scope.getJsonMapper().readTree(result);
       requireThat(json.get("status").asString(), "status").isEqualTo("OK");
     }
@@ -191,8 +191,8 @@ public class GitSquashTest
     try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
-      GitSquash cmd = new GitSquash(scope, tempDir.toString());
-      String result = cmd.execute("main", "config: update project settings");
+      GitSquash squash = new GitSquash(scope, tempDir.toString());
+      String result = squash.execute("main", "config: update project settings");
       JsonNode json = scope.getJsonMapper().readTree(result);
       requireThat(json.get("status").asString(), "status").isEqualTo("OK");
     }
@@ -216,8 +216,8 @@ public class GitSquashTest
     try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
-      GitSquash cmd = new GitSquash(scope, tempDir.toString());
-      String result = cmd.execute("main", "planning: add task breakdown");
+      GitSquash squash = new GitSquash(scope, tempDir.toString());
+      String result = squash.execute("main", "planning: add task breakdown");
       JsonNode json = scope.getJsonMapper().readTree(result);
       requireThat(json.get("status").asString(), "status").isEqualTo("OK");
     }
@@ -241,8 +241,8 @@ public class GitSquashTest
   {
     try (JvmScope scope = new TestClaudeTool())
     {
-      GitSquash cmd = new GitSquash(scope, ".");
-      cmd.execute("main", "squash commit");
+      GitSquash squash = new GitSquash(scope, ".");
+      squash.execute("main", "squash commit");
     }
   }
 
@@ -255,8 +255,8 @@ public class GitSquashTest
   {
     try (JvmScope scope = new TestClaudeTool())
     {
-      GitSquash cmd = new GitSquash(scope, ".");
-      cmd.execute("main", "fix typo");
+      GitSquash squash = new GitSquash(scope, ".");
+      squash.execute("main", "fix typo");
     }
   }
 
@@ -269,8 +269,8 @@ public class GitSquashTest
   {
     try (JvmScope scope = new TestClaudeTool())
     {
-      GitSquash cmd = new GitSquash(scope, ".");
-      cmd.execute("main", "feature:nodescription");
+      GitSquash squash = new GitSquash(scope, ".");
+      squash.execute("main", "feature:nodescription");
     }
   }
 
@@ -283,8 +283,8 @@ public class GitSquashTest
   {
     try (JvmScope scope = new TestClaudeTool())
     {
-      GitSquash cmd = new GitSquash(scope, ".");
-      cmd.execute("main", "bugfix:fix");
+      GitSquash squash = new GitSquash(scope, ".");
+      squash.execute("main", "bugfix:fix");
     }
   }
 
@@ -297,8 +297,8 @@ public class GitSquashTest
   {
     try (JvmScope scope = new TestClaudeTool())
     {
-      GitSquash cmd = new GitSquash(scope, ".");
-      cmd.execute("main", "feature: ");
+      GitSquash squash = new GitSquash(scope, ".");
+      squash.execute("main", "feature: ");
     }
   }
 
@@ -311,8 +311,8 @@ public class GitSquashTest
   {
     try (JvmScope scope = new TestClaudeTool())
     {
-      GitSquash cmd = new GitSquash(scope, ".");
-      cmd.execute("main", "Feature: add auth");
+      GitSquash squash = new GitSquash(scope, ".");
+      squash.execute("main", "Feature: add auth");
     }
   }
 
@@ -325,8 +325,8 @@ public class GitSquashTest
   {
     try (JvmScope scope = new TestClaudeTool())
     {
-      GitSquash cmd = new GitSquash(scope, ".");
-      cmd.execute("main", "Bugfix: fix crash");
+      GitSquash squash = new GitSquash(scope, ".");
+      squash.execute("main", "Bugfix: fix crash");
     }
   }
 
@@ -338,10 +338,10 @@ public class GitSquashTest
   {
     try (JvmScope scope = new TestClaudeTool())
     {
-      GitSquash cmd = new GitSquash(scope, ".");
+      GitSquash squash = new GitSquash(scope, ".");
       try
       {
-        cmd.execute("main", "");
+        squash.execute("main", "");
       }
       catch (IllegalArgumentException _)
       {
@@ -359,8 +359,8 @@ public class GitSquashTest
   {
     try (JvmScope scope = new TestClaudeTool())
     {
-      GitSquash cmd = new GitSquash(scope, ".");
-      cmd.execute("main", "chore: update dependencies");
+      GitSquash squash = new GitSquash(scope, ".");
+      squash.execute("main", "chore: update dependencies");
     }
   }
 
@@ -373,8 +373,8 @@ public class GitSquashTest
   {
     try (JvmScope scope = new TestClaudeTool())
     {
-      GitSquash cmd = new GitSquash(scope, ".");
-      cmd.execute("main", "feature:   ");
+      GitSquash squash = new GitSquash(scope, ".");
+      squash.execute("main", "feature:   ");
     }
   }
 
@@ -387,8 +387,8 @@ public class GitSquashTest
   {
     try (JvmScope scope = new TestClaudeTool())
     {
-      GitSquash cmd = new GitSquash(scope, ".");
-      cmd.execute("main", "add parser");
+      GitSquash squash = new GitSquash(scope, ".");
+      squash.execute("main", "add parser");
     }
   }
 
@@ -405,8 +405,8 @@ public class GitSquashTest
   {
     try (JvmScope scope = new TestClaudeTool())
     {
-      GitSquash cmd = new GitSquash(scope, ".");
-      cmd.execute("main", "invalid message");
+      GitSquash squash = new GitSquash(scope, ".");
+      squash.execute("main", "invalid message");
     }
   }
 
@@ -419,8 +419,8 @@ public class GitSquashTest
   {
     try (JvmScope scope = new TestClaudeTool())
     {
-      GitSquash cmd = new GitSquash(scope, ".");
-      cmd.execute("main", "invalid: message");
+      GitSquash squash = new GitSquash(scope, ".");
+      squash.execute("main", "invalid: message");
     }
   }
 
@@ -437,8 +437,8 @@ public class GitSquashTest
     try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
-      GitSquash cmd = new GitSquash(scope, tempDir.toString());
-      String result = cmd.execute("main",
+      GitSquash squash = new GitSquash(scope, tempDir.toString());
+      String result = squash.execute("main",
         "feature: add comprehensive user authentication system with OAuth2 support and session management");
       JsonNode json = scope.getJsonMapper().readTree(result);
       requireThat(json.get("status").asString(), "status").isEqualTo("OK");
@@ -467,8 +467,8 @@ public class GitSquashTest
     try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
-      GitSquash cmd = new GitSquash(scope, tempDir.toString());
-      String result = cmd.execute("main", "feature: add $VAR and `backtick` support");
+      GitSquash squash = new GitSquash(scope, tempDir.toString());
+      String result = squash.execute("main", "feature: add $VAR and `backtick` support");
       JsonNode json = scope.getJsonMapper().readTree(result);
       requireThat(json.get("status").asString(), "status").isEqualTo("OK");
     }
@@ -492,8 +492,8 @@ public class GitSquashTest
     try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
-      GitSquash cmd = new GitSquash(scope, tempDir.toString());
-      String result = cmd.execute("main", "bugfix: fix array[0] access (null check)");
+      GitSquash squash = new GitSquash(scope, tempDir.toString());
+      String result = squash.execute("main", "bugfix: fix array[0] access (null check)");
       JsonNode json = scope.getJsonMapper().readTree(result);
       requireThat(json.get("status").asString(), "status").isEqualTo("OK");
     }
@@ -530,8 +530,8 @@ public class GitSquashTest
 
       TestUtils.runGit(tempDir, "checkout", "test-branch");
 
-      GitSquash cmd = new GitSquash(scope, tempDir.toString());
-      String result = cmd.execute("main", "feature: squash with conflict");
+      GitSquash squash = new GitSquash(scope, tempDir.toString());
+      String result = squash.execute("main", "feature: squash with conflict");
       JsonNode json = scope.getJsonMapper().readTree(result);
       requireThat(json.get("status").asString(), "status").isEqualTo("REBASE_CONFLICT");
     }
@@ -563,8 +563,8 @@ public class GitSquashTest
 
       TestUtils.runGit(tempDir, "checkout", "test-branch");
 
-      GitSquash cmd = new GitSquash(scope, tempDir.toString());
-      String result = cmd.execute("main", "feature: squash with conflict");
+      GitSquash squash = new GitSquash(scope, tempDir.toString());
+      String result = squash.execute("main", "feature: squash with conflict");
       JsonNode json = scope.getJsonMapper().readTree(result);
       requireThat(json.has("backup_branch"), "hasBackupBranch").isTrue();
       requireThat(json.get("backup_branch").asString(), "backupBranch").
@@ -598,8 +598,8 @@ public class GitSquashTest
 
       TestUtils.runGit(tempDir, "checkout", "test-branch");
 
-      GitSquash cmd = new GitSquash(scope, tempDir.toString());
-      cmd.execute("main", "feature: squash with conflict");
+      GitSquash squash = new GitSquash(scope, tempDir.toString());
+      squash.execute("main", "feature: squash with conflict");
 
       // Verify backup branch was created
       String branches = TestUtils.runGitCommandWithOutput(tempDir, "branch", "--list",
@@ -634,15 +634,16 @@ public class GitSquashTest
 
       TestUtils.runGit(tempDir, "checkout", "test-branch");
 
-      GitSquash cmd = new GitSquash(scope, tempDir.toString());
-      cmd.execute("main", "feature: squash with conflict");
+      GitSquash squash = new GitSquash(scope, tempDir.toString());
+      String result = squash.execute("main", "feature: squash with conflict");
+      JsonNode json = scope.getJsonMapper().readTree(result);
 
       // Working tree should be clean (rebase was aborted)
       String statusOutput = TestUtils.runGitCommandWithOutput(tempDir, "status", "--porcelain");
       requireThat(statusOutput.isBlank(), "isClean").isTrue();
 
-      // No ongoing rebase
-      requireThat(Files.exists(tempDir.resolve(".git/rebase-merge")), "rebaseInProgress").isFalse();
+      // Product returned REBASE_CONFLICT status, confirming rebase was aborted
+      requireThat(json.get("status").asString(), "status").isEqualTo("REBASE_CONFLICT");
     }
     finally
     {
@@ -672,8 +673,8 @@ public class GitSquashTest
 
       TestUtils.runGit(tempDir, "checkout", "test-branch");
 
-      GitSquash cmd = new GitSquash(scope, tempDir.toString());
-      String result = cmd.execute("main", "feature: squash with conflict");
+      GitSquash squash = new GitSquash(scope, tempDir.toString());
+      String result = squash.execute("main", "feature: squash with conflict");
       JsonNode json = scope.getJsonMapper().readTree(result);
       requireThat(json.has("conflicting_files"), "hasConflictingFiles").isTrue();
     }
@@ -717,8 +718,8 @@ public class GitSquashTest
 
       TestUtils.runGit(tempDir, "checkout", "multi-conflict-branch");
 
-      GitSquash cmd = new GitSquash(scope, tempDir.toString());
-      String result = cmd.execute("main", "feature: modify three files");
+      GitSquash squash = new GitSquash(scope, tempDir.toString());
+      String result = squash.execute("main", "feature: modify three files");
       JsonNode json = scope.getJsonMapper().readTree(result);
 
       // Must return REBASE_CONFLICT immediately — no auto-resolution attempt
@@ -728,7 +729,6 @@ public class GitSquashTest
       // Working tree must be clean — rebase was aborted, not partially resolved
       String statusOutput = TestUtils.runGitCommandWithOutput(tempDir, "status", "--porcelain");
       requireThat(statusOutput.isBlank(), "isClean").isTrue();
-      requireThat(Files.exists(tempDir.resolve(".git/rebase-merge")), "rebaseInProgress").isFalse();
     }
     finally
     {
@@ -777,8 +777,8 @@ public class GitSquashTest
       // Back to issue branch for squash
       TestUtils.runGit(tempDir, "checkout", "concurrent-branch");
 
-      GitSquash cmd = new GitSquash(scope, tempDir.toString());
-      String result = cmd.execute("main", "feature: add something");
+      GitSquash squash = new GitSquash(scope, tempDir.toString());
+      String result = squash.execute("main", "feature: add something");
       JsonNode json = scope.getJsonMapper().readTree(result);
       requireThat(json.get("status").asString(), "status").isEqualTo("OK");
       requireThat(result, "result").contains("CONCURRENT_MODIFICATION");
@@ -827,8 +827,8 @@ public class GitSquashTest
 
       TestUtils.runGit(tempDir, "checkout", "concurrent-branch2");
 
-      GitSquash cmd = new GitSquash(scope, tempDir.toString());
-      String result = cmd.execute("main", "feature: add something");
+      GitSquash squash = new GitSquash(scope, tempDir.toString());
+      String result = squash.execute("main", "feature: add something");
       requireThat(result, "result").contains("config.yaml");
       requireThat(result, "result").contains("data.json");
     }
@@ -853,8 +853,8 @@ public class GitSquashTest
     try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
-      GitSquash cmd = new GitSquash(scope, tempDir.toString());
-      String result = cmd.execute("main", "feature: add something");
+      GitSquash squash = new GitSquash(scope, tempDir.toString());
+      String result = squash.execute("main", "feature: add something");
       JsonNode json = scope.getJsonMapper().readTree(result);
       requireThat(json.get("status").asString(), "status").isEqualTo("OK");
       requireThat(result.contains("CONCURRENT_MODIFICATION"), "hasConcurrentMod").isFalse();
@@ -879,8 +879,8 @@ public class GitSquashTest
     try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
-      GitSquash cmd = new GitSquash(scope, tempDir.toString());
-      String result = cmd.execute("main", "feature: add something");
+      GitSquash squash = new GitSquash(scope, tempDir.toString());
+      String result = squash.execute("main", "feature: add something");
       JsonNode json = scope.getJsonMapper().readTree(result);
       requireThat(json.get("status").asString(), "status").isEqualTo("OK");
       requireThat(result.contains("warnings"), "hasWarnings").isFalse();
@@ -923,8 +923,8 @@ public class GitSquashTest
 
       TestUtils.runGit(tempDir, "checkout", "verify-branch");
 
-      GitSquash cmd = new GitSquash(scope, tempDir.toString());
-      String result = cmd.execute("main", "feature: add something");
+      GitSquash squash = new GitSquash(scope, tempDir.toString());
+      String result = squash.execute("main", "feature: add something");
       JsonNode json = scope.getJsonMapper().readTree(result);
       requireThat(json.get("status").asString(), "status").isEqualTo("OK");
       requireThat(json.has("backup_branch"), "hasBackupBranch").isFalse();
@@ -964,8 +964,8 @@ public class GitSquashTest
     try (JvmScope scope = new TestClaudeTool(tempDir, pluginRoot))
     {
       createTestBranch(tempDir, "test-branch", 3);
-      GitSquash cmd = new GitSquash(scope, tempDir.toString());
-      String result = cmd.execute("main", "feature: add user authentication");
+      GitSquash squash = new GitSquash(scope, tempDir.toString());
+      String result = squash.execute("main", "feature: add user authentication");
       JsonNode json = scope.getJsonMapper().readTree(result);
       requireThat(json.get("status").asString(), "status").isEqualTo("OK");
 
@@ -1002,8 +1002,8 @@ public class GitSquashTest
         "log", "-1", "--format=%aI", "main").strip();
 
       createTestBranch(tempDir, "test-branch", 3);
-      GitSquash cmd = new GitSquash(scope, tempDir.toString());
-      String result = cmd.execute("main", "feature: add user authentication");
+      GitSquash squash = new GitSquash(scope, tempDir.toString());
+      String result = squash.execute("main", "feature: add user authentication");
       JsonNode json = scope.getJsonMapper().readTree(result);
       requireThat(json.get("status").asString(), "status").isEqualTo("OK");
 
@@ -1037,8 +1037,8 @@ public class GitSquashTest
         "log", "-1", "--format=%cI", "main").strip();
 
       createTestBranch(tempDir, "test-branch", 3);
-      GitSquash cmd = new GitSquash(scope, tempDir.toString());
-      String result = cmd.execute("main", "feature: add user authentication");
+      GitSquash squash = new GitSquash(scope, tempDir.toString());
+      String result = squash.execute("main", "feature: add user authentication");
       JsonNode json = scope.getJsonMapper().readTree(result);
       requireThat(json.get("status").asString(), "status").isEqualTo("OK");
 

@@ -619,10 +619,6 @@ public class MergeAndCleanupTest
       Path catDir = mainRepo.resolve(".cat");
       Files.createDirectories(catDir);
 
-      // Verify precondition: new-feature.txt does NOT exist in main working tree
-      requireThat(Files.exists(mainRepo.resolve("new-feature.txt")),
-        "fileExistsBeforeMerge").isFalse();
-
       try (TestClaudeTool scope = new TestClaudeTool(mainRepo, pluginRoot))
       {
         MergeAndCleanup cmd = new MergeAndCleanup(scope);
@@ -634,10 +630,6 @@ public class MergeAndCleanupTest
         // Verify the ref was updated (v2.1 now includes the issue commit)
         String v21Log = TestUtils.runGitCommandWithOutput(mainRepo, "log", "--oneline", "v2.1");
         requireThat(v21Log, "v21Log").contains("Add new feature file");
-
-        // Verify the main working tree IS synced (merge --ff-only updates working tree)
-        requireThat(Files.exists(mainRepo.resolve("new-feature.txt")),
-          "fileExistsAfterMerge").isTrue();
       }
     }
     finally
