@@ -7,6 +7,9 @@
 package io.github.cowwoc.cat.client.test;
 import io.github.cowwoc.cat.claude.hook.util.SkillDiscovery;
 import org.testng.annotations.Test;
+import tools.jackson.dataformat.yaml.YAMLMapper;
+
+import java.util.List;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -119,5 +122,58 @@ public final class SkillDiscoveryTest
     String frontmatter = "allowed-tools:\n  - Read\n";
     String result = SkillDiscovery.extractDescription(frontmatter);
     requireThat(result, "result").isNull();
+  }
+
+  /**
+   * Verifies extractPaths returns the list from inline bracket format.
+   */
+  @Test
+  public void extractPathsHandlesInlineList()
+  {
+    YAMLMapper yamlMapper = YAMLMapper.builder().build();
+    String frontmatter = "description: Java skill\npaths: [\"*.java\", \"*.ts\"]\n";
+    List<String> result = SkillDiscovery.extractPaths(frontmatter, yamlMapper);
+    requireThat(result, "result").containsExactly(List.of("*.java", "*.ts"));
+  }
+
+  /**
+   * Verifies extractPaths returns an empty list when paths field is absent.
+   */
+  @Test
+  public void extractPathsReturnsEmptyWhenAbsent()
+  {
+    YAMLMapper yamlMapper = YAMLMapper.builder().build();
+    String frontmatter = "description: Some skill\n";
+    List<String> result = SkillDiscovery.extractPaths(frontmatter, yamlMapper);
+    requireThat(result, "result").isEmpty();
+  }
+
+  /**
+   * Verifies extractPaths handles multi-line YAML list format with dash items.
+   * <p>
+   * The multi-line format places each glob on its own indented line starting with {@code - }.
+   */
+  @Test
+  public void extractPathsHandlesMultiLineList()
+  {
+    YAMLMapper yamlMapper = YAMLMapper.builder().build();
+    String frontmatter = "description: Java skill\npaths:\n  - \"*.java\"\n  - \"*.ts\"\nother: value\n";
+    List<String> result = SkillDiscovery.extractPaths(frontmatter, yamlMapper);
+    requireThat(result, "result").containsExactly(List.of("*.java", "*.ts"));
+  }
+
+  /**
+   * Verifies extractPaths handles multi-line YAML list with unquoted simple paths.
+   * <p>
+   * Glob patterns containing {@code *} must be quoted in YAML (e.g., {@code "*.java"}).
+   * Unquoted items work for simple paths that contain no YAML special characters.
+   */
+  @Test
+  public void extractPathsHandlesUnquotedMultiLineItems()
+  {
+    YAMLMapper yamlMapper = YAMLMapper.builder().build();
+    String frontmatter = "description: Java skill\npaths:\n  - client/src\n  - plugin/src\n";
+    List<String> result = SkillDiscovery.extractPaths(frontmatter, yamlMapper);
+    requireThat(result, "result").containsExactly(List.of("client/src", "plugin/src"));
   }
 }

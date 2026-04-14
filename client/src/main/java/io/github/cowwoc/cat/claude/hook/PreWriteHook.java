@@ -10,6 +10,8 @@ import static io.github.cowwoc.cat.claude.hook.Strings.equalsIgnoreCase;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.claude.hook.edit.EnforceWorkflowCompletion;
+import io.github.cowwoc.cat.claude.hook.session.InjectPathRestrictedRuleListing;
+import io.github.cowwoc.cat.claude.hook.session.InjectPathRestrictedSkillListing;
 import io.github.cowwoc.cat.claude.hook.write.BlockGitconfigFileWrite;
 import io.github.cowwoc.cat.claude.hook.write.EnforcePluginFileIsolation;
 import io.github.cowwoc.cat.claude.hook.write.EnforceWorktreePathIsolation;
@@ -50,7 +52,8 @@ public final class PreWriteHook implements HookHandler
    * Handlers are checked in order. EnforceWorkflowCompletion warns first, then WarnBaseBranchEdit
    * warns (non-blocking), followed by blocking handlers (StateSchemaValidator,
    * BlockGitconfigFileWrite, ValidateSkillTestFormat, EnforcePluginFileIsolation,
-   * EnforceWorktreePathIsolation).
+   * EnforceWorktreePathIsolation, InjectPathRestrictedSkillListing,
+   * InjectPathRestrictedRuleListing).
    *
    * @param scope the JVM scope providing project directory and shared services
    * @throws NullPointerException if {@code scope} is null
@@ -65,7 +68,9 @@ public final class PreWriteHook implements HookHandler
       new BlockGitconfigFileWrite(),
       new ValidateSkillTestFormat(),
       new EnforcePluginFileIsolation(),
-      new EnforceWorktreePathIsolation(scope));
+      new EnforceWorktreePathIsolation(scope),
+      new InjectPathRestrictedSkillListing(scope),
+      new InjectPathRestrictedRuleListing(scope));
   }
 
   /**
@@ -157,6 +162,9 @@ public final class PreWriteHook implements HookHandler
       }
       catch (RuntimeException e)
       {
+        // Write operations fail closed: a handler error blocks the write rather than warning.
+        // This is stricter than PreReadHook (which warns and continues) because allowing an
+        // unvalidated write is riskier than blocking an unvalidated read.
         String jsonOutput = scope.block("Hook handler failed: " + handler.getClass().getSimpleName() +
           ": " + e.getMessage());
         return HookResult.withoutWarnings(jsonOutput);

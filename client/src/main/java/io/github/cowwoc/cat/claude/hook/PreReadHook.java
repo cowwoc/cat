@@ -8,6 +8,8 @@ package io.github.cowwoc.cat.claude.hook;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.claude.hook.session.InjectPathRestrictedRuleListing;
+import io.github.cowwoc.cat.claude.hook.session.InjectPathRestrictedSkillListing;
 import io.github.cowwoc.cat.claude.hook.write.EnforceWorktreePathIsolation;
 import tools.jackson.databind.JsonNode;
 
@@ -47,7 +49,9 @@ public final class PreReadHook implements HookHandler
     requireThat(scope, "scope").isNotNull();
     this.handlers = List.of(
       scope.getPredictBatchOpportunity(),
-      new EnforceWorktreePathIsolation(scope));
+      new EnforceWorktreePathIsolation(scope),
+      new InjectPathRestrictedSkillListing(scope),
+      new InjectPathRestrictedRuleListing(scope));
   }
 
   /**
@@ -101,6 +105,7 @@ public final class PreReadHook implements HookHandler
     requireThat(catAgentId, "catAgentId").isNotBlank();
     List<String> warnings = new ArrayList<>();
     List<String> errorWarnings = new ArrayList<>();
+    StringBuilder additionalContextAccumulator = new StringBuilder();
 
     // Run all read pretool handlers
     for (ReadHandler handler : handlers)
@@ -119,9 +124,18 @@ public final class PreReadHook implements HookHandler
         }
         if (!result.reason().isEmpty())
           warnings.add(result.reason());
+        if (!result.additionalContext().isEmpty())
+        {
+          if (!additionalContextAccumulator.isEmpty())
+            additionalContextAccumulator.append('\n');
+          additionalContextAccumulator.append(result.additionalContext());
+        }
       }
       catch (RuntimeException e)
       {
+        // Read operations fail open: a handler error adds a warning and continues rather than
+        // blocking the read. This is intentionally more permissive than PreWriteHook because
+        // blocking a read (e.g., a file inspection) disrupts the agent more than a missed hint.
         errorWarnings.add("get-read-pretool-output: handler error: " + e.getMessage());
       }
     }
@@ -132,6 +146,11 @@ public final class PreReadHook implements HookHandler
     allWarnings.addAll(errorWarnings);
 
     // Allow the operation
-    return new HookResult(scope.empty(), allWarnings);
+    String jsonOutput;
+    if (!additionalContextAccumulator.isEmpty())
+      jsonOutput = scope.additionalContext("PreToolUse", additionalContextAccumulator.toString());
+    else
+      jsonOutput = scope.empty();
+    return new HookResult(jsonOutput, allWarnings);
   }
 }

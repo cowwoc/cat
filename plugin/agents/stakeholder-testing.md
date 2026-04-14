@@ -153,6 +153,10 @@ Evaluate implementation against these testing criteria:
   another, verify tests exercise the full initialization-to-update flow. Tests that only invoke the initializing
   method without the updating method will observe a stale or default value and may pass vacuously. Flag missing tests
   that verify the value after the updating method runs.
+- **Incomplete Postconditions for Removal Operations**: When a plan describes a move, rename, migration,
+  deletion, or any operation that displaces existing content, verify that postconditions cover both outcomes:
+  (1) the new location/form exists, and (2) the old location/form is absent. A postcondition list that only
+  asserts the positive outcome is incomplete.
 
 ### Medium Priority
 - **Test Isolation Issues**: Tests with shared state, order dependencies

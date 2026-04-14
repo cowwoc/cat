@@ -47,7 +47,7 @@ public final class InjectMainAgentRules implements SessionStartHandler
   {
     Path pluginRulesDir = scope.getPluginRoot().resolve("rules");
     Path projectRulesDir = scope.getCatDir().resolve("rules");
-    // Rules with paths: restrictions are injected dynamically by InjectPathRules (PreToolUse hook)
+    // Rules with paths: restrictions are injected dynamically by InjectPathRestrictedRuleListing
     // when matching files are accessed. Only non-paths rules are injected here at session start.
     String content = RulesDiscovery.getCatRulesForAudience(List.of(pluginRulesDir, projectRulesDir),
       scope.getYamlMapper(), RulesDiscovery::filterForMainAgent, List.of());

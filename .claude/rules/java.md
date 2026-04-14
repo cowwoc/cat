@@ -1210,7 +1210,7 @@ public String getConfig(String key)
 - `isNotBlank()` - Most string parameters (names, keys, paths, identifiers)
 - `isNotNull()` - Only when empty strings are valid input (user content, messages)
 
-See `plugin/concepts/requirements-api.md` for full API conventions.
+See `.claude/rules/requirements-api.md` for full API conventions.
 
 ## Class Design
 
@@ -1264,6 +1264,10 @@ public interface JvmScope extends AutoCloseable
 Only document classes that **are** thread-safe. Classes without thread-safety documentation are assumed to be
 thread-unsafe (the default for most classes).
 
+The Thread Safety notice must state only the observable guarantee — not the mechanism that achieves it. Do not mention
+synchronization primitives, lock strategies, internal data structures, or race-condition details. The guarantee is
+the contract; the mechanism is the implementation.
+
 ```java
 // Good - document when thread-safe (unusual case)
 /**
@@ -1292,6 +1296,19 @@ public final class SkillLoader
  * <b>Thread Safety:</b> This class is NOT thread-safe.
  */
 public final class SkillLoader
+{
+  // ...
+}
+
+// Avoid - reveals implementation details
+/**
+ * Glob matching utility.
+ * <p>
+ * <b>Thread Safety:</b> This class is thread-safe. Individual cache operations ({@code get},
+ * {@code put}) are individually synchronized. Under concurrent access two threads may occasionally
+ * compile the same pattern, but both produce equivalent immutable instances.
+ */
+public final class GlobMatcher
 {
   // ...
 }

@@ -10,12 +10,12 @@ import io.github.cowwoc.cat.claude.hook.ClaudeHook;
 import io.github.cowwoc.cat.claude.hook.util.SkillDiscovery;
 
 /**
- * Injects the full skill listing with descriptions into Claude's context after compaction.
+ * Injects the full skill listing with descriptions into Claude's context at session start and after
+ * a {@code /clear}.
  * <p>
- * Claude Code provides skill listings at initial startup, but does NOT re-send them after
- * conversation compaction. This handler checks the SessionStart event source and only injects
- * the skill listing when the source is {@code "compact"}, ensuring descriptions remain available
- * after context is compressed.
+ * Injects on {@code source="startup"} (new session) and {@code source="clear"} (conversation cleared).
+ * Returns empty for {@code source="compact"} and {@code source="resume"} — agents must explicitly
+ * re-invoke needed skills after context is compressed or when resuming a session.
  */
 public final class InjectSkillListing implements SessionStartHandler
 {
@@ -29,15 +29,14 @@ public final class InjectSkillListing implements SessionStartHandler
   /**
    * Returns the full skill listing with descriptions as additional context.
    *
-   * @return a result containing the skill listing
+   * @return a result containing the skill listing for {@code source="startup"} or {@code source="clear"},
+   *   or empty otherwise
    */
   @Override
   public Result handle(ClaudeHook scope)
   {
-    // Only inject skill listing after compaction. Claude Code provides listings at initial startup,
-    // but does not re-send them after conversation compaction.
     String source = scope.getString("source");
-    if (!source.equals("compact"))
+    if (!source.equals("startup") && !source.equals("clear"))
       return Result.empty();
     String listing = SkillDiscovery.getMainAgentSkillListing(scope);
     if (listing.isEmpty())

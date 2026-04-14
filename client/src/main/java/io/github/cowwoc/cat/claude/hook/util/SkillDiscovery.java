@@ -6,11 +6,13 @@
  */
 package io.github.cowwoc.cat.claude.hook.util;
 import io.github.cowwoc.cat.claude.hook.ClaudeHook;
+import io.github.cowwoc.cat.claude.hook.ClaudePluginScope;
 import io.github.cowwoc.cat.claude.tool.ClaudeTool;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -22,6 +24,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Stream;
 
 /**
@@ -33,60 +37,67 @@ import java.util.stream.Stream;
  *   <li>Project commands in {@code ${projectPath}/.claude/commands/}</li>
  *   <li>User skills in {@code ${claudeConfigPath}/skills/}</li>
  * </ul>
- * Each discovered skill is represented as a {@link SkillEntry} containing the qualified name and
- * description. Callers can format the entries as needed.
+ * Each discovered skill is represented as a {@link SkillEntry} containing the qualified name,
+ * description, and optional path patterns. Callers can format the entries as needed.
  */
 public final class SkillDiscovery
 {
   /**
-   * A discovered skill entry with a qualified name and description.
+   * A discovered skill entry with a qualified name, description, and optional path patterns.
    *
    * @param name the qualified skill name (e.g. {@code cat:git-commit})
    * @param description the human-readable description from frontmatter
+   * @param paths the glob patterns from the {@code paths:} frontmatter field; empty if the skill
+   *   has no path restriction
    */
-  public record SkillEntry(String name, String description)
+  public record SkillEntry(String name, String description, List<String> paths)
   {
     /**
      * Creates a new SkillEntry.
      *
      * @param name the qualified skill name (e.g. {@code cat:git-commit})
      * @param description the human-readable description from frontmatter
-     * @throws NullPointerException if {@code name} or {@code description} are null
+     * @param paths the glob patterns from the {@code paths:} frontmatter field
+     * @throws NullPointerException if {@code name}, {@code description}, or {@code paths} are null
      * @throws IllegalArgumentException if {@code name} is blank
      */
     public SkillEntry
     {
       requireThat(name, "name").isNotBlank();
       requireThat(description, "description").isNotNull();
+      requireThat(paths, "paths").isNotNull();
+      paths = List.copyOf(paths);
     }
   }
+
+  /**
+   * Cache of discovered skill entries keyed by {@code claudeConfigPath|projectPath}.
+   * <p>
+   * Skill discovery is expensive (directory traversal + file reads). Since skills do not change
+   * during a JVM lifetime (plugin installs require a restart), results are cached indefinitely
+   * within the process. The cache is shared across sessions that use the same config and project.
+   * <p>
+   * <b>Thread Safety:</b> This class is thread-safe.
+   */
+  private static final ConcurrentMap<String, List<SkillEntry>> ENTRY_CACHE =
+    new ConcurrentHashMap<>();
 
   private final Path claudeConfigPath;
   private final Path projectPath;
   private final JsonMapper jsonMapper;
+  private final YAMLMapper yamlMapper;
 
   /**
    * Creates a new SkillDiscovery instance.
    *
-   * @param scope the hook scope providing config path, project path, and JSON mapper
+   * @param scope the plugin scope providing config path, project path, and JSON mapper
    */
-  private SkillDiscovery(ClaudeHook scope)
+  private SkillDiscovery(ClaudePluginScope scope)
   {
     this.claudeConfigPath = scope.getClaudeConfigPath();
     this.projectPath = scope.getProjectPath();
     this.jsonMapper = scope.getJsonMapper();
-  }
-
-  /**
-   * Creates a new SkillDiscovery instance.
-   *
-   * @param scope the tool scope providing config path, project path, and JSON mapper
-   */
-  private SkillDiscovery(ClaudeTool scope)
-  {
-    this.claudeConfigPath = scope.getClaudeConfigPath();
-    this.projectPath = scope.getProjectPath();
-    this.jsonMapper = scope.getJsonMapper();
+    this.yamlMapper = scope.getYamlMapper();
   }
 
   /**
@@ -101,9 +112,9 @@ public final class SkillDiscovery
     try
     {
       List<SkillEntry> entries = new ArrayList<>();
-      entries.addAll(discoverPluginSkills(claudeConfigPath, jsonMapper));
-      entries.addAll(discoverProjectCommands(projectPath));
-      entries.addAll(discoverUserSkills(claudeConfigPath));
+      entries.addAll(discoverPluginSkills(claudeConfigPath, jsonMapper, yamlMapper));
+      entries.addAll(discoverProjectCommands(projectPath, yamlMapper));
+      entries.addAll(discoverUserSkills(claudeConfigPath, yamlMapper));
       return entries;
     }
     catch (IOException e)
@@ -113,48 +124,66 @@ public final class SkillDiscovery
   }
 
   /**
-   * Formats the skill listing for injection into the main agent context.
+   * Formats the session-start skills listing for injection into the main agent context.
    * <p>
-   * Discovers all model-invocable skills and returns them as a formatted listing string. Each entry
-   * uses the format {@code "- name: description"}, matching Claude Code's native skill listing.
-   * The header references {@code get-skill} as an alternative to the Skill tool for loading skills.
+   * Returns all skills without {@code paths:} frontmatter for injection at session start.
+   * Skills with {@code paths:} are excluded here and injected on-demand by
+   * {@link io.github.cowwoc.cat.claude.hook.session.InjectPathRestrictedSkillListing}
+   * when a matching file is accessed.
+   * Each entry uses the format {@code "- name: description"}, matching Claude Code's native skill listing.
+   * The header references {@code get-skill} for loading individual skill instructions.
    *
    * @param scope the hook scope providing config path, project path, and JSON mapper
-   * @return the formatted skill listing, or an empty string if no skills are found
+   * @return the formatted session-start skills listing, or an empty string if no qualifying skills are found
    */
   public static String getMainAgentSkillListing(ClaudeHook scope)
   {
-    List<SkillEntry> entries = new SkillDiscovery(scope).discoverAll();
-    if (entries.isEmpty())
-      return "";
-    StringBuilder sb = new StringBuilder(512);
-    sb.append("The following skills are available. To load a skill's instructions, run via Bash:\n").
-      append("  \"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill\" " +
-        "\"<skill-name>\" \"<cat-agent-id>\"\n\n");
-    appendSkillEntries(sb, entries);
-    return sb.toString();
+    return buildMainAgentSkillListing(scope);
   }
 
   /**
-   * Formats the skill listing for injection into the main agent context.
+   * Formats the session-start skills listing for injection into the main agent context.
    * <p>
-   * Discovers all model-invocable skills and returns them as a formatted listing string. Each entry
-   * uses the format {@code "- name: description"}, matching Claude Code's native skill listing.
-   * The header references {@code get-skill} as an alternative to the Skill tool for loading skills.
+   * Returns all skills without {@code paths:} frontmatter for injection at session start.
+   * Skills with {@code paths:} are excluded here and injected on-demand by
+   * {@link io.github.cowwoc.cat.claude.hook.session.InjectPathRestrictedSkillListing}
+   * when a matching file is accessed.
+   * Each entry uses the format {@code "- name: description"}, matching Claude Code's native skill listing.
+   * The header references {@code get-skill} for loading individual skill instructions.
    *
    * @param scope the tool scope providing config path, project path, and JSON mapper
-   * @return the formatted skill listing, or an empty string if no skills are found
+   * @return the formatted session-start skills listing, or an empty string if no qualifying skills are found
    */
   public static String getMainAgentSkillListing(ClaudeTool scope)
   {
-    List<SkillEntry> entries = new SkillDiscovery(scope).discoverAll();
-    if (entries.isEmpty())
+    return buildMainAgentSkillListing(scope);
+  }
+
+  /**
+   * Builds the main agent skill listing from a plugin scope.
+   * <p>
+   * Shared implementation for both {@link #getMainAgentSkillListing(ClaudeHook)} and
+   * {@link #getMainAgentSkillListing(ClaudeTool)}.
+   *
+   * @param scope the plugin scope providing config path, project path, and JSON mapper
+   * @return the formatted session-start skills listing, or an empty string if no qualifying skills are found
+   */
+  private static String buildMainAgentSkillListing(ClaudePluginScope scope)
+  {
+    List<SkillEntry> allEntries = new SkillDiscovery(scope).discoverAll();
+    List<SkillEntry> sessionEntries = new ArrayList<>();
+    for (SkillEntry entry : allEntries)
+    {
+      if (entry.paths().isEmpty())
+        sessionEntries.add(entry);
+    }
+    if (sessionEntries.isEmpty())
       return "";
     StringBuilder sb = new StringBuilder(512);
     sb.append("The following skills are available. To load a skill's instructions, run via Bash:\n").
       append("  \"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill\" " +
         "\"<skill-name>\" \"<cat-agent-id>\"\n\n");
-    appendSkillEntries(sb, entries);
+    appendSkillEntries(sb, sessionEntries);
     return sb.toString();
   }
 
@@ -176,6 +205,23 @@ public final class SkillDiscovery
     sb.append("**Available skills:**\n");
     appendSkillEntries(sb, entries);
     return sb.toString();
+  }
+
+  /**
+   * Discovers all model-invocable skills from all sources.
+   * <p>
+   * Results are cached per (claudeConfigPath, projectPath) pair for the lifetime of the JVM.
+   * Skills do not change without restarting the process (plugin installs require restart), so
+   * this cache is safe to hold indefinitely.
+   *
+   * @param scope the hook scope providing config path, project path, and JSON mapper
+   * @return list of all discovered skill entries
+   * @throws NullPointerException if {@code scope} is null
+   */
+  public static List<SkillEntry> discoverAllEntries(ClaudeHook scope)
+  {
+    String cacheKey = scope.getClaudeConfigPath().toString() + "|" + scope.getProjectPath().toString();
+    return ENTRY_CACHE.computeIfAbsent(cacheKey, _ -> new SkillDiscovery(scope).discoverAll());
   }
 
   /**
@@ -205,10 +251,12 @@ public final class SkillDiscovery
    *
    * @param configPath the Claude config directory containing {@code plugins/installed_plugins.json}
    * @param jsonMapper the JSON mapper used to parse installed_plugins.json
+   * @param yamlMapper the YAML mapper used to parse frontmatter
    * @return list of discovered skill entries
    * @throws IOException if skill discovery fails
    */
-  private static List<SkillEntry> discoverPluginSkills(Path configPath, JsonMapper jsonMapper) throws IOException
+  private static List<SkillEntry> discoverPluginSkills(Path configPath, JsonMapper jsonMapper,
+    YAMLMapper yamlMapper) throws IOException
   {
     List<SkillEntry> entries = new ArrayList<>();
     Path installedPluginsFile = configPath.resolve("plugins/installed_plugins.json");
@@ -249,7 +297,7 @@ public final class SkillDiscovery
 
       Path pluginRoot = Path.of(installPathNode.asString());
       Path skillsDir = pluginRoot.resolve("skills");
-      entries.addAll(discoverSkillsFromDirectory(skillsDir, prefix + ":"));
+      entries.addAll(discoverSkillsFromDirectory(skillsDir, prefix + ":", yamlMapper));
     }
     return entries;
   }
@@ -262,10 +310,11 @@ public final class SkillDiscovery
    * description are excluded.
    *
    * @param projectPath the Claude project directory
+   * @param yamlMapper the YAML mapper used to parse frontmatter
    * @return list of discovered skill entries
    * @throws IOException if discovery fails
    */
-  private static List<SkillEntry> discoverProjectCommands(Path projectPath) throws IOException
+  private static List<SkillEntry> discoverProjectCommands(Path projectPath, YAMLMapper yamlMapper) throws IOException
   {
     List<SkillEntry> entries = new ArrayList<>();
     Path commandsDir = projectPath.resolve(".claude/commands");
@@ -285,7 +334,8 @@ public final class SkillDiscovery
         String description = extractDescription(frontmatter);
         if (description == null || description.isBlank())
           continue;
-        entries.add(new SkillEntry(name, description.strip()));
+        List<String> paths = extractPaths(frontmatter, yamlMapper);
+        entries.add(new SkillEntry(name, description.strip(), paths));
       }
     }
     return entries;
@@ -298,13 +348,14 @@ public final class SkillDiscovery
    * included if they do not have {@code disable-model-invocation: true}.
    *
    * @param configPath the Claude config directory containing the {@code skills/} subdirectory
+   * @param yamlMapper the YAML mapper used to parse frontmatter
    * @return list of discovered skill entries
    * @throws IOException if discovery fails
    */
-  private static List<SkillEntry> discoverUserSkills(Path configPath) throws IOException
+  private static List<SkillEntry> discoverUserSkills(Path configPath, YAMLMapper yamlMapper) throws IOException
   {
     Path skillsDir = configPath.resolve("skills");
-    return discoverSkillsFromDirectory(skillsDir, "");
+    return discoverSkillsFromDirectory(skillsDir, "", yamlMapper);
   }
 
   /**
@@ -316,10 +367,12 @@ public final class SkillDiscovery
    *
    * @param skillsDir the directory containing skill subdirectories
    * @param prefix the prefix to prepend to each skill name (e.g. {@code "cat:"} or {@code ""})
+   * @param yamlMapper the YAML mapper used to parse frontmatter
    * @return list of discovered skill entries, empty if the directory does not exist
    * @throws IOException if directory traversal or file reading fails
    */
-  private static List<SkillEntry> discoverSkillsFromDirectory(Path skillsDir, String prefix) throws IOException
+  private static List<SkillEntry> discoverSkillsFromDirectory(Path skillsDir, String prefix,
+    YAMLMapper yamlMapper) throws IOException
   {
     List<SkillEntry> entries = new ArrayList<>();
     if (!Files.isDirectory(skillsDir))
@@ -345,7 +398,8 @@ public final class SkillDiscovery
         String description = extractDescription(frontmatter);
         if (description == null || description.isBlank())
           continue;
-        entries.add(new SkillEntry(prefix + name, description.strip()));
+        List<String> paths = extractPaths(frontmatter, yamlMapper);
+        entries.add(new SkillEntry(prefix + name, description.strip(), paths));
       }
     }
     return entries;
@@ -359,12 +413,7 @@ public final class SkillDiscovery
    */
   public static String extractFrontmatter(String content)
   {
-    if (!content.startsWith("---"))
-      return null;
-    int end = content.indexOf("\n---", 3);
-    if (end < 0)
-      return null;
-    return content.substring(3, end).strip();
+    return FrontmatterUtils.extractFrontmatter(content);
   }
 
   /**
@@ -432,6 +481,51 @@ public final class SkillDiscovery
         return value;
     }
     return null;
+  }
+
+  /**
+   * Extracts the path glob patterns from the {@code paths:} frontmatter field.
+   * <p>
+   * Parses the YAML {@code paths:} field using the provided mapper. Returns an empty list if the
+   * field is absent or malformed.
+   *
+   * @param frontmatter the YAML frontmatter text
+   * @param yamlMapper the YAML mapper used to parse the frontmatter
+   * @return an unmodifiable list of glob patterns, empty if none are defined
+   */
+  public static List<String> extractPaths(String frontmatter, YAMLMapper yamlMapper)
+  {
+    try
+    {
+      JsonNode root = yamlMapper.readTree(frontmatter);
+      return parseListNode(root.get("paths"), List.of());
+    }
+    catch (Exception _)
+    {
+      return List.of();
+    }
+  }
+
+  /**
+   * Parses a YAML array {@link JsonNode} into an unmodifiable list of strings.
+   *
+   * @param node the JSON node to parse, may be null
+   * @param defaultValue the value to return when the node is absent, null, or not an array
+   * @return an unmodifiable list of strings from the array, or {@code defaultValue} if the node
+   *   is absent, null, missing, or not an array
+   */
+  private static List<String> parseListNode(JsonNode node, List<String> defaultValue)
+  {
+    if (node == null || node.isNull() || node.isMissingNode())
+      return defaultValue;
+    if (!node.isArray())
+      return defaultValue;
+    if (node.isEmpty())
+      return List.of();
+    List<String> result = new ArrayList<>();
+    for (JsonNode item : node)
+      result.add(item.asString());
+    return List.copyOf(result);
   }
 
   /**

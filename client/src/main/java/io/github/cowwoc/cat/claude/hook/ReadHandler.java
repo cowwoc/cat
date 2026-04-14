@@ -81,6 +81,18 @@ public interface ReadHandler
     {
       return new Result(false, warning, "");
     }
+
+    /**
+     * Creates a context-injection result (allows and injects additional context).
+     *
+     * @param additionalContext the additional context to inject
+     * @return a context result
+     * @throws NullPointerException if {@code additionalContext} is null
+     */
+    public static Result context(String additionalContext)
+    {
+      return new Result(false, "", additionalContext);
+    }
   }
 
   /**
