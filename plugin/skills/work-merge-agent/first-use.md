@@ -140,7 +140,7 @@ Task tool:
 - **SUCCESS**: Extract `commits` array. Write squash marker (MANDATORY — gate blocks if absent):
   ```bash
   SQUASH_COMMIT_HASH=$(cd "${WORKTREE_PATH}" && git rev-parse HEAD)
-  "${CLAUDE_PLUGIN_ROOT}/client/bin/write-session-marker" "${CLAUDE_SESSION_ID}" "${ISSUE_ID}" "squashed:${SQUASH_COMMIT_HASH}"
+  "${CLAUDE_PLUGIN_ROOT}/client/bin/write-session-marker" "${WORKTREE_PATH}" "${ISSUE_ID}" "squashed:${SQUASH_COMMIT_HASH}"
   if [[ $? -ne 0 ]]; then
     echo "ERROR: write-session-marker failed. Do NOT proceed to Step 9." >&2
     exit 1
@@ -198,7 +198,7 @@ If `NEW_FORK_POINT == OLD_FORK_POINT`: no new upstream commits — skip impact a
 
 Otherwise:
 ```bash
-SESSION_ANALYSIS_DIR="${CLAUDE_PROJECT_DIR}/.cat/work/sessions/${CLAUDE_SESSION_ID}"
+SESSION_ANALYSIS_DIR="${WORKTREE_PATH}/.cat/work/sessions/${CLAUDE_SESSION_ID}"
 mkdir -p "${SESSION_ANALYSIS_DIR}"
 ```
 ```
@@ -260,7 +260,7 @@ After squash, update marker:
 ```bash
 FINAL_COMMIT=$(cd "${WORKTREE_PATH}" && git rev-parse HEAD)
 FINAL_DIFF_STAT=$(cd "${WORKTREE_PATH}" && git diff --stat ${TARGET_BRANCH}..HEAD)
-"${CLAUDE_PLUGIN_ROOT}/client/bin/write-session-marker" "${CLAUDE_SESSION_ID}" "${ISSUE_ID}" "squashed:${FINAL_COMMIT}"
+"${CLAUDE_PLUGIN_ROOT}/client/bin/write-session-marker" "${WORKTREE_PATH}" "${ISSUE_ID}" "squashed:${FINAL_COMMIT}"
 ```
 
 If squash fails: return FAILED. Do NOT proceed to gate.
@@ -270,7 +270,7 @@ If squash fails: return FAILED. Do NOT proceed to gate.
 **trust == "high":** Read the review result file to determine whether to auto-merge or pause.
 
 ```bash
-REVIEW_DIR="${CLAUDE_PROJECT_DIR}/.cat/work/review/${CLAUDE_SESSION_ID}"
+REVIEW_DIR="${WORKTREE_PATH}/.cat/work/review/${CLAUDE_SESSION_ID}"
 REVIEW_RESULT_FILE="${REVIEW_DIR}/${ISSUE_ID}-result.json"
 
 HIGH_TRUST_PAUSE="false"
@@ -316,7 +316,7 @@ the merge skill for lock files and state). `CAUTION` is already parsed from the 
 this skill.
 
 ```bash
-REVIEW_DIR="${CLAUDE_PROJECT_DIR}/.cat/work/review/${CLAUDE_SESSION_ID}"
+REVIEW_DIR="${WORKTREE_PATH}/.cat/work/review/${CLAUDE_SESSION_ID}"
 REVIEW_RESULT_FILE="${REVIEW_DIR}/${ISSUE_ID}-result.json"
 ```
 
@@ -392,7 +392,7 @@ Conversational signals ("continue", "ok", "yes", "proceed", "go ahead") are NOT 
 **If "Approve and merge" selected:**
 - Verify squash precondition — read marker and confirm it starts with `squashed:`:
   ```bash
-  MARKER_VALUE=$("${CLAUDE_PLUGIN_ROOT}/client/bin/read-session-marker" "${CLAUDE_SESSION_ID}" "${ISSUE_ID}" 2>/dev/null || echo "")
+  MARKER_VALUE=$("${CLAUDE_PLUGIN_ROOT}/client/bin/read-session-marker" "${WORKTREE_PATH}" "${ISSUE_ID}" 2>/dev/null || echo "")
   if [[ ! "$MARKER_VALUE" =~ ^squashed: ]]; then
     echo "ERROR: Cannot approve — squash marker missing or invalid. Current: '${MARKER_VALUE}'. Return to Step 11."
     # Do NOT write 'approved'. Return to Step 11.
@@ -401,7 +401,7 @@ Conversational signals ("continue", "ok", "yes", "proceed", "go ahead") are NOT 
   If check fails: return to Step 11. Do NOT write `approved` or proceed to Step 13.
 - Write approval marker:
   ```bash
-  "${CLAUDE_PLUGIN_ROOT}/client/bin/write-session-marker" "${CLAUDE_SESSION_ID}" "${ISSUE_ID}" "approved"
+  "${CLAUDE_PLUGIN_ROOT}/client/bin/write-session-marker" "${WORKTREE_PATH}" "${ISSUE_ID}" "approved"
   ```
 - Set `APPROVAL_MARKER=true`. Continue to Step 13.
 
@@ -409,7 +409,7 @@ Conversational signals ("continue", "ok", "yes", "proceed", "go ahead") are NOT 
 
 Write invalidation marker FIRST (before spawning fix subagent):
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/write-session-marker" "${CLAUDE_SESSION_ID}" "${ISSUE_ID}" "approved:invalidated"
+"${CLAUDE_PLUGIN_ROOT}/client/bin/write-session-marker" "${WORKTREE_PATH}" "${ISSUE_ID}" "approved:invalidated"
 ```
 
 **Iteration cap:** Track `FIX_ITERATION` (starts at 1, max 3). After 3 iterations with MEDIUM+ concerns still
@@ -468,7 +468,7 @@ If banner fails: STOP with error. Do NOT skip.
 Read the durable marker to verify approval survives context compaction:
 ```
 if TRUST != "high":
-    MARKER_VALUE=$("${CLAUDE_PLUGIN_ROOT}/client/bin/read-session-marker" "${CLAUDE_SESSION_ID}" "${ISSUE_ID}" 2>/dev/null | tail -1)
+    MARKER_VALUE=$("${CLAUDE_PLUGIN_ROOT}/client/bin/read-session-marker" "${WORKTREE_PATH}" "${ISSUE_ID}" 2>/dev/null | tail -1)
     if APPROVAL_MARKER != true and MARKER_VALUE != "approved":
         # Re-present full approval gate context, then re-invoke AskUserQuestion:
         AskUserQuestion: "Ready to merge ${ISSUE_ID} to ${TARGET_BRANCH}?"
@@ -512,7 +512,7 @@ Otherwise, invoke the merge tool:
 
 **On any merge error:** Invalidate approval marker, then return FAILED:
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/write-session-marker" "${CLAUDE_SESSION_ID}" "${ISSUE_ID}" "approved:invalidated"
+"${CLAUDE_PLUGIN_ROOT}/client/bin/write-session-marker" "${WORKTREE_PATH}" "${ISSUE_ID}" "approved:invalidated"
 ```
 
 ### Post-Merge Verification (BLOCKING)

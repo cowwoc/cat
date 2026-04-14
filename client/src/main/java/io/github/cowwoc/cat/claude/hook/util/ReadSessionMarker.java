@@ -25,37 +25,30 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
- * Reads a named marker file from a session directory, printing its content to stdout.
+ * Reads the marker file from a worktree's markers directory, printing its content to stdout.
  * <p>
  * Exits non-zero when the marker file is absent so callers can use the {@code || echo ""} pattern.
  */
 public final class ReadSessionMarker implements SkillOutput
 {
-  private final ClaudeTool scope;
-
   /**
    * Creates a new ReadSessionMarker.
-   *
-   * @param scope the ClaudeTool providing access to the project path
-   * @throws NullPointerException if {@code scope} is null
    */
-  public ReadSessionMarker(ClaudeTool scope)
+  public ReadSessionMarker()
   {
-    requireThat(scope, "scope").isNotNull();
-    this.scope = scope;
   }
 
   /**
    * Reads the marker file and returns its content.
    * <p>
    * The marker file is read from:
-   * {@code {catWorkPath}/sessions/{sessionId}/{markerName}}
+   * {@code {worktreePath}/.cat/work/markers/{issueId}}
    *
-   * @param args exactly 2 arguments: {@code session-id}, {@code marker-name}
+   * @param args exactly 2 arguments: {@code worktree-path}, {@code issue-id}
    * @return the content of the marker file
    * @throws NullPointerException     if {@code args} is null
    * @throws IllegalArgumentException if {@code args} does not contain exactly 2 elements, if
-   *   {@code args[0]} (session-id) is blank, or if {@code args[1]} (marker-name) is blank
+   *   {@code args[0]} (worktree-path) is blank, or if {@code args[1]} (issue-id) is blank
    * @throws NoSuchFileException      if the marker file does not exist
    * @throws IOException              if the marker file cannot be read
    */
@@ -66,27 +59,27 @@ public final class ReadSessionMarker implements SkillOutput
     if (args.length != 2)
     {
       throw new IllegalArgumentException(
-        "Expected exactly 2 arguments (session-id, marker-name), got " + args.length + ". " +
-          "Usage: read-session-marker <session-id> <marker-name>");
+        "Expected exactly 2 arguments (worktree-path, issue-id), got " + args.length + ". " +
+          "Usage: read-session-marker <worktree-path> <issue-id>");
     }
-    String sessionId = args[0];
-    if (sessionId.isBlank())
+    String worktreePathStr = args[0];
+    if (worktreePathStr.isBlank())
     {
       throw new IllegalArgumentException(
-        "session-id is required as the first argument but was blank. " +
-          "Usage: read-session-marker <session-id> <marker-name>");
+        "worktree-path is required as the first argument but was blank. " +
+          "Usage: read-session-marker <worktree-path> <issue-id>");
     }
-    String markerName = args[1];
-    if (markerName.isBlank())
+    String issueId = args[1];
+    if (issueId.isBlank())
     {
       throw new IllegalArgumentException(
-        "marker-name is required as the second argument but was blank. " +
-          "Usage: read-session-marker <session-id> <marker-name>");
+        "issue-id is required as the second argument but was blank. " +
+          "Usage: read-session-marker <worktree-path> <issue-id>");
     }
 
-    Path baseDir = scope.getCatWorkPath().resolve("sessions").toAbsolutePath().normalize();
-    Path sessionDir = PathUtils.normalize(baseDir, sessionId, "session-id");
-    Path markerFile = PathUtils.normalize(sessionDir, markerName, "marker-name");
+    Path worktreePath = Path.of(worktreePathStr).toAbsolutePath().normalize();
+    Path markersDir = worktreePath.resolve(".cat/work/markers").toAbsolutePath().normalize();
+    Path markerFile = PathUtils.normalize(markersDir, issueId, "issue-id");
 
     return Files.readString(markerFile, UTF_8);
   }
@@ -94,11 +87,11 @@ public final class ReadSessionMarker implements SkillOutput
   /**
    * Main entry point for command-line invocation.
    * <p>
-   * Usage: {@code read-session-marker <session-id> <marker-name>}
+   * Usage: {@code read-session-marker <worktree-path> <issue-id>}
    * <p>
    * Exits with code 1 when the marker file is absent, so callers can use the {@code || echo ""} pattern.
    *
-   * @param args command-line arguments: session-id, marker-name
+   * @param args command-line arguments: worktree-path, issue-id
    */
   public static void main(String[] args)
   {
@@ -106,7 +99,7 @@ public final class ReadSessionMarker implements SkillOutput
     {
       try
       {
-        run(scope, args, System.out);
+        run(args, System.out);
       }
       catch (NoSuchFileException e)
       {
@@ -135,17 +128,16 @@ public final class ReadSessionMarker implements SkillOutput
    * <p>
    * Separated from {@link #main(String[])} to allow unit testing without JVM exit.
    *
-   * @param scope the ClaudeTool scope
-   * @param args  the command-line arguments: session-id, marker-name
-   * @param out   the output stream to write to
+   * @param args the command-line arguments: worktree-path, issue-id
+   * @param out  the output stream to write to
    * @throws NullPointerException if {@code args} or {@code out} are null
    * @throws IOException          if the marker file cannot be read
    */
-  public static void run(ClaudeTool scope, String[] args, PrintStream out) throws IOException
+  public static void run(String[] args, PrintStream out) throws IOException
   {
     requireThat(args, "args").isNotNull();
     requireThat(out, "out").isNotNull();
-    String output = new ReadSessionMarker(scope).getOutput(args);
+    String output = new ReadSessionMarker().getOutput(args);
     if (!output.isEmpty())
       out.print(output);
   }
