@@ -8,7 +8,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "/home/node/.config/claude/plugins/marketplaces/cat/plugin/client/bin/statusline-command"
+    "command": "/workspace/plugin/client/bin/statusline-command"
   },
   "hooks": {}
 }
