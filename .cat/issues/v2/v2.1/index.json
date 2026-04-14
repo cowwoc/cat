@@ -1,4 +1,4 @@
 {
   "status" : "open",
-  "issues" : [ "use-cache-fix-for-claude-runner" ]
+  "issues" : [ "use-cache-fix-for-claude-runner", "remove-developer-rules-from-plugin-rules" ]
 }
