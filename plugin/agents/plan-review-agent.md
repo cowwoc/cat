@@ -34,6 +34,11 @@ Evaluate each of the following checks explicitly:
 6. **Jobs sufficiently detailed:** Is the plan.md's Jobs section detailed enough that a
    subagent knows exactly what to write in each file, not just "update X to do Y"?
 
+7. **Removal side of displacement operations covered:** If any Job step describes moving, renaming,
+   migrating, deleting, or replacing existing content, do the post-conditions assert that the source
+   location is empty or absent? A post-condition list that only asserts the destination exists is
+   incomplete when a displacement was intended.
+
 ## Response Format
 
 Return a JSON block and nothing else outside it:

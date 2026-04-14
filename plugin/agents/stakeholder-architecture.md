@@ -137,6 +137,9 @@ Evaluate implementation against these architectural criteria:
 ### Critical (Must Fix)
 - **Module Boundary Violations**: Circular dependencies, leaky abstractions, tight coupling between components
   that should be independent
+- **Audience Scope Violations**: Content placed in a directory or module that serves a broader or different
+  audience than intended. When files move between audience tiers (e.g., internal-only to user-facing, private
+  API to public API, developer docs to end-user docs), flag and verify the audience change is intentional.
 - **Interface/Class Conflicts**: Naming ambiguities, unclear contracts, implementation details exposed in APIs
 - **Implicit Behavior Dependencies**: Undocumented conventions, hidden assumptions about call order or state
 

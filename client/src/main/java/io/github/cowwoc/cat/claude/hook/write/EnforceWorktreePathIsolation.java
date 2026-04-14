@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.claude.hook.write;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.claude.hook.AbstractClaudeHook;
 import io.github.cowwoc.cat.claude.hook.FileWriteHandler;
 import io.github.cowwoc.cat.claude.hook.ClaudeHook;
 import io.github.cowwoc.cat.claude.hook.ReadHandler;
@@ -147,13 +148,7 @@ public final class EnforceWorktreePathIsolation implements FileWriteHandler, Rea
    */
   private String isolationCheckReason(Path absoluteFilePath, String catAgentId)
   {
-    // Extract the session ID from the catAgentId (everything before the first "/" or the whole string)
-    String sessionId;
-    int slashIndex = catAgentId.indexOf('/');
-    if (slashIndex >= 0)
-      sessionId = catAgentId.substring(0, slashIndex);
-    else
-      sessionId = catAgentId;
+    String sessionId = AbstractClaudeHook.extractSessionId(catAgentId);
 
     WorktreeContext sessionContext = WorktreeContext.forSession(
       scope.getCatWorkPath(), projectPath, mapper, sessionId).orElse(null);
@@ -163,7 +158,7 @@ public final class EnforceWorktreePathIsolation implements FileWriteHandler, Rea
         return null;
       // For subagents (catAgentId contains "/"), allow writes to any worktree the path falls within.
       // Subagents (e.g., SPRT test-run subagents) may operate in runner worktrees that have no lock file.
-      if (slashIndex >= 0)
+      if (catAgentId.indexOf('/') >= 0)
       {
         WorktreeContext coveringContext = findCoveringWorktreeOnDisk(absoluteFilePath);
         if (coveringContext != null)

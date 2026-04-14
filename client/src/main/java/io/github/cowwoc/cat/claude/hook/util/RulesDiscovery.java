@@ -74,11 +74,10 @@ public final class RulesDiscovery
   }
 
   /**
-   * Maximum number of characters to scan when searching for the closing {@code ---} of a
-   * frontmatter block. Files where the first {@code \n---} appears beyond this offset are treated
-   * as having no frontmatter, preventing excessive memory usage on malformed files.
+   * Maximum allowed size for rule files before reading them into memory.
+   * Files exceeding this limit cause an {@link IOException} to prevent OOM errors.
    */
-  private static final int FRONTMATTER_SCAN_LIMIT = 4096;
+  private static final long MAX_RULE_FILE_SIZE = 1024 * 1024;
 
   private final Path rulesDir;
   private final YAMLMapper yamlMapper;
@@ -124,6 +123,8 @@ public final class RulesDiscovery
       List<RuleFile> rules = new ArrayList<>();
       for (Path file : files)
       {
+        if (Files.size(file) > MAX_RULE_FILE_SIZE)
+          throw new IOException("Rule file exceeds 1 MB size limit: " + file.getFileName());
         String rawContent = Files.readString(file);
         rules.add(parseRuleFile(file, rawContent));
       }
@@ -144,8 +145,8 @@ public final class RulesDiscovery
    */
   private RuleFile parseRuleFile(Path path, String content)
   {
-    String frontmatter = extractFrontmatter(content);
-    String body = stripFrontmatter(content);
+    String frontmatter = FrontmatterUtils.extractFrontmatter(content);
+    String body = FrontmatterUtils.stripFrontmatter(content);
 
     if (frontmatter == null)
       return new RuleFile(path, true, null, List.of(), body);
@@ -162,7 +163,7 @@ public final class RulesDiscovery
     }
     catch (Exception e)
     {
-      throw new IllegalArgumentException("Malformed YAML frontmatter in " + path + ": " +
+      throw new IllegalArgumentException("Malformed YAML frontmatter in " + path.getFileName() + ": " +
         e.getMessage(), e);
     }
   }
@@ -187,51 +188,6 @@ public final class RulesDiscovery
     for (JsonNode item : node)
       result.add(item.asString());
     return result;
-  }
-
-  /**
-   * Extracts the YAML frontmatter block from file content.
-   * <p>
-   * If the closing {@code ---} line does not appear within the first
-   * {@value #FRONTMATTER_SCAN_LIMIT} characters, the file is treated as having no frontmatter.
-   *
-   * @param content the file content
-   * @return the frontmatter string (between the {@code ---} markers), or null if none
-   */
-  static String extractFrontmatter(String content)
-  {
-    if (!content.startsWith("---"))
-      return null;
-    int scanEnd = Math.min(content.length(), FRONTMATTER_SCAN_LIMIT);
-    int end = content.indexOf("\n---", 3);
-    if (end < 0 || end > scanEnd)
-      return null;
-    return content.substring(3, end).strip();
-  }
-
-  /**
-   * Returns the body content with frontmatter removed.
-   * <p>
-   * If the closing {@code ---} line does not appear within the first
-   * {@value #FRONTMATTER_SCAN_LIMIT} characters, the full content is returned unchanged
-   * (consistent with {@link #extractFrontmatter(String)}).
-   *
-   * @param content the file content
-   * @return content without frontmatter block
-   */
-  static String stripFrontmatter(String content)
-  {
-    if (!content.startsWith("---"))
-      return content;
-    int scanEnd = Math.min(content.length(), FRONTMATTER_SCAN_LIMIT);
-    int end = content.indexOf("\n---", 3);
-    if (end < 0 || end > scanEnd)
-      return content;
-    // Skip past the closing "---\n"
-    int bodyStart = end + 4;
-    if (bodyStart < content.length() && content.charAt(bodyStart) == '\n')
-      ++bodyStart;
-    return content.substring(bodyStart).strip();
   }
 
   /**

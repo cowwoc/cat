@@ -286,6 +286,24 @@ public abstract class AbstractClaudeHook extends AbstractClaudePluginScope imple
     return sessionId + "/" + GetSkill.SUBAGENTS_DIR + "/" + nativeAgentId;
   }
 
+  /**
+   * Extracts the session ID from a CAT agent ID.
+   * <p>
+   * For the main agent the agent ID equals the session ID. For subagents the format is
+   * {@code sessionId/subagents/agentXxx}, and only the session ID prefix is returned.
+   *
+   * @param catAgentId the CAT agent ID
+   * @return the session ID portion of the agent ID
+   * @throws NullPointerException if {@code catAgentId} is null
+   */
+  public static String extractSessionId(String catAgentId)
+  {
+    int subIdx = catAgentId.indexOf('/');
+    if (subIdx < 0)
+      return catAgentId;
+    return catAgentId.substring(0, subIdx);
+  }
+
   @Override
   public String getToolName()
   {
