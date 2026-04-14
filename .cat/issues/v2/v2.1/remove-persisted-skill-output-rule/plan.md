@@ -8,8 +8,21 @@ Remove plugin/rules/persisted-skill-output.md. Empirical testing on v2.1.107 con
 
 (none)
 
+## Jobs
+
+### Job 1
+- Delete plugin/rules/persisted-skill-output.md
+  - Files: plugin/rules/persisted-skill-output.md
+- Verify no other plugin files reference persisted-skill-output.md
+  - Check: grep -r "persisted-skill-output" plugin/ --include="*.md" --include="*.sh" --include="*.json" returns no matches
+- Run tests to confirm no regressions
+  - Files: client/pom.xml (test execution, not modification)
+- Update index.json to mark issue closed
+  - Files: .cat/issues/v2/v2.1/remove-persisted-skill-output-rule/index.json
+
 ## Post-conditions
 
 - [ ] plugin/rules/persisted-skill-output.md is deleted
 - [ ] No other plugin files reference persisted-skill-output.md
-- [ ] Tests pass
+- [ ] All tests pass (mvn -f client/pom.xml verify exit code 0)
+- [ ] index.json status is closed
