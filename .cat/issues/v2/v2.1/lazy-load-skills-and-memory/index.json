@@ -1,5 +1,6 @@
 {
-  "status": "open",
+  "status": "closed",
+  "resolution": "implemented",
   "dependencies": [],
   "blocks": []
 }
