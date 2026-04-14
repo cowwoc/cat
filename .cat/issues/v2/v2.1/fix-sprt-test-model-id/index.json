@@ -1,6 +1,7 @@
 {
-  "status": "open",
-  "target_branch": "v2.1",
-  "dependencies": [],
-  "blocks": []
+  "status" : "closed",
+  "resolution" : "implemented",
+  "target_branch" : "v2.1",
+  "dependencies" : [ ],
+  "blocks" : [ ]
 }
