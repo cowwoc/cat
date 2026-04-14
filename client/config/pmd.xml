@@ -160,6 +160,8 @@
     <exclude name="UseConcurrentHashMap"/>
     <exclude name="DoNotUseThreads"/>
     <exclude name="AvoidUsingVolatile"/>
+    <!-- WORKAROUND: https://github.com/pmd/pmd/issues/6218 -->
+    <exclude name="AvoidSynchronizedStatement"/>
   </rule>
   <rule ref="category/java/performance.xml">
     <exclude name="AvoidInstantiatingObjectsInLoops"/>

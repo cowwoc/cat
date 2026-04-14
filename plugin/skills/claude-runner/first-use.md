@@ -23,7 +23,7 @@ session — the nested instance sees the latest plugin code automatically.
 
 | Position | Name | Required | Description |
 |----------|------|----------|-------------|
-| 1 | `prompt` | yes | The prompt to send to the nested Claude instance |
+| 1 | `prompt` | yes | Path to a file containing the prompt to send to the nested Claude instance |
 | 2 | `model` | no | Model to use: haiku, sonnet, or opus (default: haiku) |
 | 3 | `cwd` | no | Working directory for the nested instance (default: current directory) |
 
@@ -49,9 +49,10 @@ if [[ ! -d "$JLINK_BIN" ]]; then
   JLINK_BIN="${CLAUDE_PROJECT_DIR}/client/target/jlink/bin"
 fi
 
-# Run via the Java CLI tool
+# Write prompt to a file, then run via the Java CLI tool
+echo "Your test prompt here" > /tmp/my-prompt.txt
 "${CLAUDE_PLUGIN_ROOT}/client/bin/claude-runner" \
-  --prompt "Your test prompt here" \
+  --prompt /tmp/my-prompt.txt \
   --model <model> \
   --plugin-source "$PLUGIN_SOURCE" \
   --jlink-bin "$JLINK_BIN" \

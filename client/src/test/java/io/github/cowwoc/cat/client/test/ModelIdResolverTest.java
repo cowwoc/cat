@@ -33,7 +33,7 @@ public final class ModelIdResolverTest
   public void resolvesSonnet()
   {
     String result = ModelIdResolver.resolve("2.1.87", "sonnet");
-    requireThat(result, "result").isEqualTo("claude-sonnet-4-6");
+    requireThat(result, "result").isEqualTo("claude-sonnet-4-5-20250929");
   }
 
   /**
@@ -43,7 +43,7 @@ public final class ModelIdResolverTest
   public void resolvesOpus()
   {
     String result = ModelIdResolver.resolve("2.1.87", "opus");
-    requireThat(result, "result").isEqualTo("claude-opus-4-6");
+    requireThat(result, "result").isEqualTo("claude-opus-4-5-20251101");
   }
 
   /**
@@ -63,7 +63,7 @@ public final class ModelIdResolverTest
   public void resolvesMixedCase()
   {
     String result = ModelIdResolver.resolve("2.1.87", "Sonnet");
-    requireThat(result, "result").isEqualTo("claude-sonnet-4-6");
+    requireThat(result, "result").isEqualTo("claude-sonnet-4-5-20250929");
   }
 
   /**
@@ -73,8 +73,8 @@ public final class ModelIdResolverTest
   @Test
   public void passesThroughFullyQualifiedId()
   {
-    String result = ModelIdResolver.resolve("2.1.87", "claude-sonnet-4-6");
-    requireThat(result, "result").isEqualTo("claude-sonnet-4-6");
+    String result = ModelIdResolver.resolve("2.1.87", "claude-sonnet-4-5-20250929");
+    requireThat(result, "result").isEqualTo("claude-sonnet-4-5-20250929");
   }
 
   /**
@@ -106,7 +106,7 @@ public final class ModelIdResolverTest
   public void futureVersionUsesLatestMapping()
   {
     String result = ModelIdResolver.resolve("99.0.0", "sonnet");
-    requireThat(result, "result").isEqualTo("claude-sonnet-4-6");
+    requireThat(result, "result").isEqualTo("claude-sonnet-4-5-20250929");
   }
 
   /**
@@ -116,6 +116,6 @@ public final class ModelIdResolverTest
   public void minimumVersionResolves()
   {
     String result = ModelIdResolver.resolve("2.1.0", "opus");
-    requireThat(result, "result").isEqualTo("claude-opus-4-6");
+    requireThat(result, "result").isEqualTo("claude-opus-4-5-20251101");
   }
 }

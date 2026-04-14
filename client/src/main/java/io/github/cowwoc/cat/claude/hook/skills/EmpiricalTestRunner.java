@@ -131,10 +131,10 @@ public final class EmpiricalTestRunner
   {
     requireThat(configPath, "configPath").isNotNull();
     requireThat(model, "model").isNotBlank();
-    if (!ClaudeRunner.ALLOWED_MODELS.contains(model))
+    if (!ModelIdResolver.knownModels().contains(model))
     {
       throw new IllegalArgumentException("Invalid model '" + model +
-        "'. Valid values: " + ClaudeRunner.ALLOWED_MODELS);
+        "'. Valid values: " + ModelIdResolver.knownModels());
     }
     requireThat(cwd, "cwd").isNotNull();
     requireThat(trials, "trials").isBetween(1, true, MAX_TRIALS, true);
@@ -441,7 +441,7 @@ public final class EmpiricalTestRunner
     List<String> systemReminders, List<TestMessage> messages, String model,
     String systemPrompt, Path cwd)
   {
-    List<String> command = claudeRunner.buildCommand(model, systemPrompt);
+    List<String> command = claudeRunner.buildCommand(model, systemPrompt, "");
 
     List<String> prompts = new ArrayList<>();
     for (TestMessage msg : messages)

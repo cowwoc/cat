@@ -96,6 +96,25 @@
     "correct_behavior" : ""
   }, {
     "id" : "M619",
+    "timestamp" : "2026-04-11T16:15:05Z",
+    "category" : "protocol_violation",
+    "description" : "",
+    "root_cause" : "The sprt-runner-agent first-use.md Step 5c explicitly requires graders to be spawned via claude-runner with --cwd RUN_WORKTREE (line 488), but the agent used the Agent tool with subagent_type: cat:instruction-grader-agent instead. The Agent tool does not constrain graders to run within isolated run worktrees, so graders received Bash access to the main workspace and checked file paths relative to the wrong directory. The documentation existed but was not followed.",
+    "cause_signature" : "compliance_failure:doc_ignored:skill_execution",
+    "prevention_type" : "skill",
+    "prevention_path" : "",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : false,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
+  }, {
+    "id" : "M620",
     "timestamp" : "2026-04-12T09:09:51Z",
     "category" : "test_design",
     "description" : "newWorktreeExcludesClaude() test validates git behavior (file absence) instead of product behavior (sparse-checkout command invocation)",

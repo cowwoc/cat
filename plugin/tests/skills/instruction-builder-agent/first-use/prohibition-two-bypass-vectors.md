@@ -1,11 +1,6 @@
 ---
 category: requirement
 ---
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 ## Turn 1
 
 You are running instruction-builder-agent for a skill that contains the following PROHIBITION unit:

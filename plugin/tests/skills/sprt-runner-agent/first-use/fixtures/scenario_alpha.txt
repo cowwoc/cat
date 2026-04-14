@@ -1,0 +1,4 @@
+## Turn 1
+Output the single word "alpha".
+## Assertions
+1. The agent's response text contains the word "alpha"

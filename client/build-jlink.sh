@@ -12,8 +12,8 @@
 #   3. Patch automatic modules with generated module-info.class
 #   4. Create jlink runtime image
 #   5. Generate per-handler launcher scripts
-#   6. Verify jlink image
-#   7. Generate Leyden AOT startup archive
+#   6. Generate Leyden AOT startup archive
+#   7. Verify jlink image
 #
 # Usage:
 #   ./build-jlink.sh
@@ -63,6 +63,7 @@ declare -a HANDLERS=(
   "create-issue:util.IssueCreator"
   "session-analyzer:util.SessionAnalyzer"
   "extract-investigation-context:util.InvestigationContextExtractor"
+  "grade-json-transformer:util.GradeJsonTransformer"
   "progress-banner:skills.ProgressBanner"
   "get-stakeholder-selection-box:skills.GetStakeholderSelectionBox"
   "get-stakeholder-review-box:skills.GetStakeholderReviewBox"
@@ -295,7 +296,7 @@ build_jlink_image() {
   log "jlink image created at: $OUTPUT_DIR"
 }
 
-# --- Phase 5: Generate startup optimization archives ---
+# --- Phase 6: Generate startup optimization archives ---
 #
 # Leyden AOT cache with pre-linked classes and method profiles:
 #   Eliminates class initialization overhead
@@ -363,7 +364,7 @@ generate_startup_archives() {
   log "Startup archives complete"
 }
 
-# --- Phase 6: Generate launcher scripts ---
+# --- Phase 5: Generate launcher scripts ---
 
 generate_launchers() {
   log "Generating launcher scripts..."

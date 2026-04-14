@@ -1456,7 +1456,7 @@ public final class EmpiricalTestRunnerTest
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
       ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      List<String> command = launcher.buildCommand("haiku", "You are a cat expert.");
+      List<String> command = launcher.buildCommand("haiku", "You are a cat expert.", "");
 
       requireThat(command, "command").contains("claude").contains("--append-system-prompt");
       // Verify the system prompt value follows the flag
@@ -1481,9 +1481,33 @@ public final class EmpiricalTestRunnerTest
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
       ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      List<String> command = launcher.buildCommand("haiku", "");
+      List<String> command = launcher.buildCommand("haiku", "", "");
 
       requireThat(command, "command").contains("claude");
+      requireThat(command.contains("--append-system-prompt"), "noSystemPromptFlag").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that buildCommand includes --agent when agentType is provided.
+   */
+  @Test
+  public void buildCommandWithAgentType() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+      ClaudeRunner launcher = new ClaudeRunner(scope))
+    {
+      List<String> command = launcher.buildCommand("haiku", "", "sprt-runner-agent");
+
+      requireThat(command, "command").contains("claude").contains("--agent");
+      int flagIndex = command.indexOf("--agent");
+      requireThat(flagIndex, "flagIndex").isGreaterThanOrEqualTo(0);
+      requireThat(command.get(flagIndex + 1), "agentTypeValue").isEqualTo("sprt-runner-agent");
       requireThat(command.contains("--append-system-prompt"), "noSystemPromptFlag").isFalse();
     }
     finally
@@ -3010,7 +3034,7 @@ public final class EmpiricalTestRunnerTest
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
       ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      launcher.buildCommand("not-a-real-model-xyz", "system prompt");
+      launcher.buildCommand("not-a-real-model-xyz", "system prompt", "");
     }
     finally
     {

@@ -20,7 +20,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -35,7 +37,7 @@ public final class InstructionTestRunnerTest
    * Verifies that extract-units returns line-numbered body when file has frontmatter.
    */
   @Test
-  public void extractUnitsWithFrontmatter() throws IOException
+  public void extractUnitsWithFrontmatter() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -73,7 +75,7 @@ public final class InstructionTestRunnerTest
    * Verifies that extract-units returns line-numbered body when file has no frontmatter.
    */
   @Test
-  public void extractUnitsWithoutFrontmatter() throws IOException
+  public void extractUnitsWithoutFrontmatter() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -101,7 +103,7 @@ public final class InstructionTestRunnerTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*file not found.*")
-  public void extractUnitsFileNotFound() throws IOException
+  public void extractUnitsFileNotFound() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -119,7 +121,7 @@ public final class InstructionTestRunnerTest
    * Verifies that extract-model reads the model field from frontmatter.
    */
   @Test
-  public void extractModelFromFrontmatter() throws IOException
+  public void extractModelFromFrontmatter() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -135,7 +137,7 @@ public final class InstructionTestRunnerTest
 
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String model = runner.extractModel(new String[]{skillFile.toString()});
-      requireThat(model, "model").isEqualTo("claude-sonnet-4-6");
+      requireThat(model, "model").isEqualTo("claude-sonnet-4-5-20250929");
     }
     finally
     {
@@ -148,7 +150,7 @@ public final class InstructionTestRunnerTest
    * and the skill is not listed in model-selection.md.
    */
   @Test
-  public void extractModelDefaultsToHaikuWhenFieldMissing() throws IOException
+  public void extractModelDefaultsToHaikuWhenFieldMissing() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -175,7 +177,7 @@ public final class InstructionTestRunnerTest
    * Verifies that map-units correctly partitions test cases based on changed unit IDs.
    */
   @Test
-  public void mapUnitsPartitionsCorrectly() throws IOException
+  public void mapUnitsPartitionsCorrectly() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -249,7 +251,7 @@ public final class InstructionTestRunnerTest
    * Verifies that map-units carries all test cases forward when no units changed.
    */
   @Test
-  public void mapUnitsNoChangedUnitsCarriesForwardAll() throws IOException
+  public void mapUnitsNoChangedUnitsCarriesForwardAll() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -306,17 +308,24 @@ public final class InstructionTestRunnerTest
    * Boundaries: SPRT_ACCEPT = ln((1-beta)/alpha) ≈ 2.944, SPRT_REJECT = ln(beta/(1-alpha)) ≈ -2.944.
    */
   @Test
-  public void initSprtFreshStateNoPrior() throws IOException
+  public void initSprtFreshStateNoPrior() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       String rerunJson = "[\"TC1\",\"TC2\"]";
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
-      String result = runner.initSprt(new String[]{rerunJson, "none", "claude-haiku-4-5-20251001"});
+      Path sprtStatePath = tempDir.resolve(".cat/work/sprt-state.json");
+      String result = runner.initSprt(new String[]{
+        sprtStatePath.toString(), rerunJson, "none", "claude-haiku-4-5-20251001"});
 
       JsonMapper mapper = scope.getJsonMapper();
-      JsonNode root = mapper.readTree(result);
+      JsonNode resultNode = mapper.readTree(result);
+      requireThat(resultNode.path("ok").asBoolean(), "ok").isTrue();
+
+      // State must have been written to the file
+      requireThat(Files.exists(sprtStatePath), "stateFileExists").isTrue();
+      JsonNode root = mapper.readTree(sprtStatePath.toFile());
       JsonNode sprtState = root.path("sprt_state");
 
       JsonNode tc1 = sprtState.path("TC1");
@@ -332,13 +341,38 @@ public final class InstructionTestRunnerTest
   }
 
   /**
+   * Verifies that init-sprt writes model_id to the state file so subsequent calls with the state
+   * as prior results can validate model consistency.
+   */
+  @Test
+  public void initSprtWritesModelId() throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      Path sprtStatePath = tempDir.resolve(".cat/work/sprt-state.json");
+      runner.initSprt(new String[]{
+        sprtStatePath.toString(), "[\"tc1\"]", "none", "claude-haiku-4-5-20251001"});
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode root = mapper.readTree(sprtStatePath.toFile());
+      requireThat(root.path("model_id").asString(), "modelId").isEqualTo("claude-haiku-4-5-20251001");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that init-sprt sets log_ratio to PRIOR_BOOST when --prior-boost is enabled and the
    * prior test case has ACCEPT decision.
    * <p>
    * PRIOR_BOOST = 1.112, equivalent to 10 prior PASS observations (10 × SPRT_LOG_PASS = 10 × 0.1112).
    */
   @Test
-  public void initSprtUsePriorBoostWithAcceptPrior() throws IOException
+  public void initSprtUsePriorBoostWithAcceptPrior() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -353,11 +387,13 @@ public final class InstructionTestRunnerTest
 
       String rerunJson = "[\"TC1\"]";
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
-      String result = runner.initSprt(new String[]{rerunJson, priorPath.toString(),
+      Path sprtStatePath = tempDir.resolve(".cat/work/sprt-state.json");
+      runner.initSprt(new String[]{
+        sprtStatePath.toString(), rerunJson, priorPath.toString(),
         "claude-haiku-4-5-20251001", "--prior-boost"});
 
       JsonMapper mapper = scope.getJsonMapper();
-      JsonNode root = mapper.readTree(result);
+      JsonNode root = mapper.readTree(sprtStatePath.toFile());
       JsonNode tc1 = root.path("sprt_state").path("TC1");
 
       // When --prior-boost is set and prior decision is ACCEPT, initial log_ratio should be PRIOR_BOOST (1.112)
@@ -378,18 +414,19 @@ public final class InstructionTestRunnerTest
    * (no prior instruction-test available).
    */
   @Test
-  public void initSprtWithEmptyPrior() throws IOException
+  public void initSprtWithEmptyPrior() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Pass "none" as prior path to indicate no prior instruction-test
       String rerunJson = "[\"TC1\"]";
+      Path sprtStatePath = tempDir.resolve(".cat/work/sprt-state.json");
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
-      String result = runner.initSprt(new String[]{rerunJson, "none", "claude-haiku-4-5-20251001"});
+      runner.initSprt(new String[]{sprtStatePath.toString(), rerunJson, "none", "claude-haiku-4-5-20251001"});
 
       JsonMapper mapper = scope.getJsonMapper();
-      JsonNode root = mapper.readTree(result);
+      JsonNode root = mapper.readTree(sprtStatePath.toFile());
       JsonNode tc1 = root.path("sprt_state").path("TC1");
 
       // Without a prior, log_ratio defaults to 0.0
@@ -408,7 +445,7 @@ public final class InstructionTestRunnerTest
    * the decision defaults to INCONCLUSIVE and log_ratio to 0.0.
    */
   @Test
-  public void checkBoundaryWithZeroTestCases() throws IOException
+  public void checkBoundaryWithZeroTestCases() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -443,7 +480,7 @@ public final class InstructionTestRunnerTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*no .md test case files found.*")
-  public void persistArtifactsRejectsEmptyArtifactsDir() throws IOException
+  public void persistArtifactsRejectsEmptyArtifactsDir() throws IOException, InterruptedException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
@@ -481,7 +518,7 @@ public final class InstructionTestRunnerTest
    * SPRT_ACCEPT = ln((1-beta)/alpha) = ln(19) ≈ 2.944.
    */
   @Test
-  public void updateSprtPassUpdatesLogRatioAndDecision() throws IOException
+  public void updateSprtPassUpdatesLogRatioAndDecision() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -495,10 +532,10 @@ public final class InstructionTestRunnerTest
         """, StandardCharsets.UTF_8);
 
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
-      String result = runner.updateSprt(new String[]{statePath.toString(), "TC1", "true"});
+      runner.updateSprt(new String[]{statePath.toString(), "TC1", "true"});
 
       JsonMapper mapper = scope.getJsonMapper();
-      JsonNode root = mapper.readTree(result);
+      JsonNode root = mapper.readTree(statePath.toFile());
       JsonNode tc1 = root.path("sprt_state").path("TC1");
 
       requireThat(tc1.path("decision").asString(), "decision").isEqualTo("ACCEPT");
@@ -519,7 +556,7 @@ public final class InstructionTestRunnerTest
    * SPRT_REJECT = ln(beta/(1-alpha)) = ln(0.0526) ≈ -2.944.
    */
   @Test
-  public void updateSprtFailUpdatesLogRatioAndDecision() throws IOException
+  public void updateSprtFailUpdatesLogRatioAndDecision() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -532,10 +569,10 @@ public final class InstructionTestRunnerTest
         """, StandardCharsets.UTF_8);
 
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
-      String result = runner.updateSprt(new String[]{statePath.toString(), "TC1", "false"});
+      runner.updateSprt(new String[]{statePath.toString(), "TC1", "false"});
 
       JsonMapper mapper = scope.getJsonMapper();
-      JsonNode root = mapper.readTree(result);
+      JsonNode root = mapper.readTree(statePath.toFile());
       JsonNode tc1 = root.path("sprt_state").path("TC1");
 
       requireThat(tc1.path("decision").asString(), "decision").isEqualTo("REJECT");
@@ -548,10 +585,42 @@ public final class InstructionTestRunnerTest
   }
 
   /**
+   * Verifies that update-sprt preserves top-level fields (e.g., model_id) when rewriting the state file.
+   * <p>
+   * The model_id field written by init-sprt must survive round-trips through update-sprt so that
+   * downstream commands (check-boundary, write-test-results) can still read the model identity.
+   */
+  @Test
+  public void updateSprtPreservesModelId() throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Path statePath = tempDir.resolve("sprt_state.json");
+      Files.writeString(statePath,
+        "{\"model_id\":\"claude-haiku-4-5-20251001\",\"sprt_state\":{\"TC1\":{\"log_ratio\":0.0," +
+        "\"passes\":0,\"fails\":0,\"runs\":0,\"decision\":\"INCONCLUSIVE\"," +
+        "\"carried_forward\":false,\"smoke_runs_done\":0}}}",
+        StandardCharsets.UTF_8);
+
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      runner.updateSprt(new String[]{statePath.toString(), "TC1", "true"});
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode root = mapper.readTree(statePath.toFile());
+      requireThat(root.path("model_id").asString(), "model_id").isEqualTo("claude-haiku-4-5-20251001");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that check-boundary returns correct values for a known state.
    */
   @Test
-  public void checkBoundaryReturnsCorrectFields() throws IOException
+  public void checkBoundaryReturnsCorrectFields() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -585,7 +654,7 @@ public final class InstructionTestRunnerTest
    * Verifies that smoke-status correctly identifies in_smoke_phase when smoke_runs_done less than SMOKE_RUNS.
    */
   @Test
-  public void smokeStatusInSmokePhase() throws IOException
+  public void smokeStatusInSmokePhase() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -617,7 +686,7 @@ public final class InstructionTestRunnerTest
    * Verifies that smoke-status correctly signals escalation when smoke phase complete but INCONCLUSIVE.
    */
   @Test
-  public void smokeStatusEscalates() throws IOException
+  public void smokeStatusEscalates() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -647,7 +716,7 @@ public final class InstructionTestRunnerTest
    * Verifies that merge-results produces ACCEPT overall_decision when all test cases ACCEPT.
    */
   @Test
-  public void mergeResultsAllAccept() throws IOException
+  public void mergeResultsAllAccept() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -683,7 +752,7 @@ public final class InstructionTestRunnerTest
    * Verifies that merge-results produces REJECT overall_decision when any test case REJECTs.
    */
   @Test
-  public void mergeResultsAnyRejectProducesRejectOverall() throws IOException
+  public void mergeResultsAnyRejectProducesRejectOverall() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -717,7 +786,7 @@ public final class InstructionTestRunnerTest
    * Verifies that run() dispatches to the correct subcommand and produces JSON output.
    */
   @Test
-  public void runDispatchesToSubcommand() throws IOException
+  public void runDispatchesToSubcommand() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -757,11 +826,240 @@ public final class InstructionTestRunnerTest
   }
 
   /**
+   * Verifies that clean test run output passes contamination check.
+   */
+  @Test
+  public void checkRunContaminationCleanOutputPasses() throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Path stdoutFile = tempDir.resolve("stdout.txt");
+      Files.writeString(stdoutFile, "The skill ran and produced correct output.", StandardCharsets.UTF_8);
+
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      String result = runner.checkRunContamination(new String[]{stdoutFile.toString()});
+
+      requireThat(result.strip(), "result").isEqualTo("status=PASS");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that output mentioning "previous run" triggers contamination detection.
+   */
+  @Test
+  public void checkRunContaminationPriorRunPhraseFails() throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Path stdoutFile = tempDir.resolve("stdout.txt");
+      Files.writeString(stdoutFile, "Based on the previous run, I will apply the same approach.",
+        StandardCharsets.UTF_8);
+
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      String result = runner.checkRunContamination(new String[]{stdoutFile.toString()});
+
+      Map<String, String> pairs = new LinkedHashMap<>();
+      for (String line : result.strip().split("\n"))
+      {
+        int eq = line.indexOf('=');
+        if (eq > 0)
+          pairs.put(line.substring(0, eq), line.substring(eq + 1));
+      }
+      requireThat(pairs.get("status"), "status").isEqualTo("FAIL");
+      requireThat(pairs.get("violation"), "violation").contains("previous run");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that write-test-results writes test-results.json and commits.
+   */
+  @Test
+  public void writeTestResultsWritesAndCommits() throws IOException, InterruptedException
+  {
+    Path repoDir = TestUtils.createTempGitRepo("test-branch");
+    try
+    {
+      // Create test dir with a placeholder file so git can track it
+      Path testDir = repoDir.resolve("my-test-dir");
+      Files.createDirectories(testDir);
+      Files.writeString(testDir.resolve(".gitkeep"), "", StandardCharsets.UTF_8);
+      TestUtils.runGit(repoDir, "add", ".");
+      TestUtils.runGit(repoDir, "commit", "-m", "add test dir");
+
+      Path statePath = repoDir.resolve("sprt_state.json");
+      Files.writeString(statePath, """
+        {"sprt_state":{"tc1":{"log_ratio":2.944,"passes":9,"fails":1,"runs":10,
+        "decision":"ACCEPT","carried_forward":false,"smoke_runs_done":3}}}
+        """, StandardCharsets.UTF_8);
+
+      Path tempDir = Files.createTempDirectory("test-scope-");
+      try (var scope = new TestClaudeTool(tempDir, tempDir))
+      {
+        InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+        String result = runner.writeTestResults(
+          new String[]{repoDir.toString(), statePath.toString(), testDir.toString()});
+
+        Map<String, String> pairs = new LinkedHashMap<>();
+        for (String line : result.strip().split("\n"))
+        {
+          int eq = line.indexOf('=');
+          if (eq > 0)
+            pairs.put(line.substring(0, eq), line.substring(eq + 1));
+        }
+        requireThat(pairs.get("status"), "status").isEqualTo("ok");
+
+        Path testResultsFile = testDir.resolve("test-results.json");
+        requireThat(Files.exists(testResultsFile), "testResultsExists").isTrue();
+        JsonMapper mapper = scope.getJsonMapper();
+        JsonNode testResults = mapper.readTree(testResultsFile.toFile());
+        requireThat(testResults.path("sprt").path("overall_decision").asString(),
+          "overall_decision").isEqualTo("ACCEPT");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(repoDir);
+    }
+  }
+
+  /**
+   * Verifies that write-test-results computes REJECT overall_decision when any TC is REJECT.
+   */
+  @Test
+  public void writeTestResultsRejectDecisionWritesRejectOverall() throws IOException, InterruptedException
+  {
+    Path repoDir = TestUtils.createTempGitRepo("test-branch");
+    try
+    {
+      // Create test dir with a placeholder file so git can track it
+      Path testDir = repoDir.resolve("my-test-dir");
+      Files.createDirectories(testDir);
+      Files.writeString(testDir.resolve(".gitkeep"), "", StandardCharsets.UTF_8);
+      TestUtils.runGit(repoDir, "add", ".");
+      TestUtils.runGit(repoDir, "commit", "-m", "add test dir");
+
+      Path statePath = repoDir.resolve("sprt_state.json");
+      Files.writeString(statePath, """
+        {"sprt_state":{
+          "tc1":{"log_ratio":2.944,"passes":9,"fails":1,"runs":10,
+                 "decision":"ACCEPT","carried_forward":false,"smoke_runs_done":3},
+          "tc2":{"log_ratio":-2.944,"passes":1,"fails":9,"runs":10,
+                 "decision":"REJECT","carried_forward":false,"smoke_runs_done":3}
+        }}
+        """, StandardCharsets.UTF_8);
+
+      Path tempDir = Files.createTempDirectory("test-scope-");
+      try (var scope = new TestClaudeTool(tempDir, tempDir))
+      {
+        InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+        String result = runner.writeTestResults(
+          new String[]{repoDir.toString(), statePath.toString(), testDir.toString()});
+
+        Map<String, String> pairs = new LinkedHashMap<>();
+        for (String line : result.strip().split("\n"))
+        {
+          int eq = line.indexOf('=');
+          if (eq > 0)
+            pairs.put(line.substring(0, eq), line.substring(eq + 1));
+        }
+        requireThat(pairs.get("status"), "status").isEqualTo("ok");
+
+        Path testResultsFile = testDir.resolve("test-results.json");
+        JsonMapper mapper = scope.getJsonMapper();
+        JsonNode testResults = mapper.readTree(testResultsFile.toFile());
+        requireThat(testResults.path("sprt").path("overall_decision").asString(),
+          "overall_decision").isEqualTo("REJECT");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(repoDir);
+    }
+  }
+
+  /**
+   * Verifies that create-isolation-branch rejects a dirty worktree.
+   */
+  @Test(expectedExceptions = IOException.class, expectedExceptionsMessageRegExp = ".*uncommitted changes.*")
+  public void createIsolationBranchDirtyWorktreeThrows() throws IOException, InterruptedException
+  {
+    Path repoDir = TestUtils.createTempGitRepo("test-branch");
+    try
+    {
+      // Create an untracked file to make the worktree dirty
+      Files.writeString(repoDir.resolve("dirty.md"), "dirty content", StandardCharsets.UTF_8);
+
+      Path tempDir = Files.createTempDirectory("test-scope-");
+      try (var scope = new TestClaudeTool(tempDir, tempDir))
+      {
+        InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+        runner.createIsolationBranch(
+          new String[]{repoDir.toString(), repoDir.toString(), "my-issue"});
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(repoDir);
+    }
+  }
+
+  /**
+   * Verifies that remove-runner-worktrees returns zero when no runner worktrees exist.
+   */
+  @Test
+  public void removeRunnerWorktreesNoMatchingWorktreesReturnsZero() throws IOException, InterruptedException
+  {
+    Path repoDir = TestUtils.createTempGitRepo("test-branch");
+    try
+    {
+      Path tempDir = Files.createTempDirectory("test-scope-");
+      try (var scope = new TestClaudeTool(tempDir, tempDir))
+      {
+        InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+        String result = runner.removeRunnerWorktrees(
+          new String[]{repoDir.toString(), "nonexistent-issue"});
+
+        requireThat(result.strip(), "result").isEqualTo("removed_count=0");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(repoDir);
+    }
+  }
+
+  /**
    * Verifies that run() throws when no command is provided.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*no command specified.*")
-  public void runThrowsOnNoCommand() throws IOException
+  public void runThrowsOnNoCommand() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -780,7 +1078,7 @@ public final class InstructionTestRunnerTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*unknown command.*")
-  public void runThrowsOnUnknownCommand() throws IOException
+  public void runThrowsOnUnknownCommand() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -799,7 +1097,7 @@ public final class InstructionTestRunnerTest
    * when the SHA-256 of the current skill file matches the provided hash.
    */
   @Test
-  public void detectChangesSha256MatchAllCarriedForward() throws IOException
+  public void detectChangesSha256MatchAllCarriedForward() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -875,7 +1173,7 @@ public final class InstructionTestRunnerTest
    * when the SHA-256 of the current skill file does not match the provided hash.
    */
   @Test
-  public void detectChangesSha256MismatchAllRerun() throws IOException
+  public void detectChangesSha256MismatchAllRerun() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -950,7 +1248,7 @@ public final class InstructionTestRunnerTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*64.*")
-  public void detectChangesInvalidShaShortStringThrowsIllegalArgument() throws IOException
+  public void detectChangesInvalidShaShortStringThrowsIllegalArgument() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -977,7 +1275,7 @@ public final class InstructionTestRunnerTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*64.*")
-  public void detectChangesInvalidShaNotHexThrowsIllegalArgument() throws IOException
+  public void detectChangesInvalidShaNotHexThrowsIllegalArgument() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -1002,7 +1300,7 @@ public final class InstructionTestRunnerTest
    * Verifies that detect-changes with an empty test directory returns empty arrays for all ID fields.
    */
   @Test
-  public void detectChangesEmptyTestDirectoryReturnsEmptyArrays() throws IOException
+  public void detectChangesEmptyTestDirectoryReturnsEmptyArrays() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -1048,7 +1346,7 @@ public final class InstructionTestRunnerTest
    * and SKILL.md has no model: frontmatter field.
    */
   @Test
-  public void extractModelUsesModelSelectionMappingForSonnetSkill() throws IOException
+  public void extractModelUsesModelSelectionMappingForSonnetSkill() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-extract-model-");
     Path pluginRoot = tempDir.resolve("plugin");
@@ -1097,7 +1395,7 @@ public final class InstructionTestRunnerTest
    * and SKILL.md has no model: frontmatter field.
    */
   @Test
-  public void extractModelFallsBackToHaikuWhenNotInModelSelection() throws IOException
+  public void extractModelFallsBackToHaikuWhenNotInModelSelection() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-extract-model-");
     Path pluginRoot = tempDir.resolve("plugin");
@@ -1192,7 +1490,7 @@ public final class InstructionTestRunnerTest
    * Verifies that persist-artifacts writes instruction-test.json with expected JSON fields.
    */
   @Test
-  public void persistArtifactsWritesInstructionTestJson() throws IOException
+  public void persistArtifactsWritesInstructionTestJson() throws IOException, InterruptedException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
@@ -1282,7 +1580,7 @@ public final class InstructionTestRunnerTest
    * Verifies that persist-artifacts copies .md test case files into the instruction-test directory.
    */
   @Test
-  public void persistArtifactsCopiesMdFiles() throws IOException
+  public void persistArtifactsCopiesMdFiles() throws IOException, InterruptedException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
@@ -1345,7 +1643,7 @@ public final class InstructionTestRunnerTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*worktree root not found.*")
-  public void persistArtifactsThrowsWhenWorktreeRootMissing() throws IOException
+  public void persistArtifactsThrowsWhenWorktreeRootMissing() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -1365,7 +1663,7 @@ public final class InstructionTestRunnerTest
    * Verifies that merge-results uses prior instruction-test stats for carryforward IDs instead of current SPRT state.
    */
   @Test
-  public void mergeResultsCarryforwardUsePriorStats() throws IOException
+  public void mergeResultsCarryforwardUsePriorStats() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -1422,6 +1720,610 @@ public final class InstructionTestRunnerTest
     }
     finally
     {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that create-isolation-branch includes {@code tc_ids_json} in its return JSON,
+   * containing an ordered array of opaque TC IDs derived from sorted test case filenames.
+   */
+  @Test
+  public void createIsolationBranchIncludesTcIdsJson() throws IOException, InterruptedException
+  {
+    Path repoDir = TestUtils.createTempGitRepo("my-issue");
+    Path pluginRoot = Files.createTempDirectory("test-plugin-root-");
+    try (var scope = new TestClaudeTool(repoDir, pluginRoot))
+    {
+      // Create stub extract-turns binary that copies input to turn1.md in dest dir
+      Path binDir = pluginRoot.resolve("client/bin");
+      Files.createDirectories(binDir);
+      Path extractTurnsBin = binDir.resolve("extract-turns");
+      Files.writeString(extractTurnsBin, """
+        #!/bin/bash
+        mkdir -p "$2"
+        cp "$1" "$2/turn1.md"
+        """, StandardCharsets.UTF_8);
+      extractTurnsBin.toFile().setExecutable(true);
+
+      // Create two test case files in a test dir inside the repo
+      Path testDir = repoDir.resolve("tests");
+      Files.createDirectories(testDir);
+      Files.writeString(testDir.resolve("alpha-test.md"), """
+        ## Turn 1
+        Do something.
+        ## Assertions
+        1. Check output.
+        """, StandardCharsets.UTF_8);
+      Files.writeString(testDir.resolve("beta-test.md"), """
+        ## Turn 1
+        Do something else.
+        ## Assertions
+        1. Check something.
+        """, StandardCharsets.UTF_8);
+      TestUtils.runGit(repoDir, "add", "-A");
+      TestUtils.runGit(repoDir, "commit", "-m", "add test cases");
+
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      String result = runner.createIsolationBranch(
+        new String[]{repoDir.toString(), testDir.toString(), "my-issue"});
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode root = mapper.readTree(result);
+
+      // tc_ids_json must be a JSON array of opaque IDs in sorted filename order
+      requireThat(root.has("tc_ids_json"), "hasTcIdsJson").isTrue();
+      JsonNode tcIdsJson = root.path("tc_ids_json");
+      requireThat(tcIdsJson.isArray(), "isArray").isTrue();
+      requireThat(tcIdsJson.size(), "size").isEqualTo(2);
+      // alpha-test.md sorts first → tc1, beta-test.md → tc2
+      requireThat(tcIdsJson.get(0).asString(), "tcId0").isEqualTo("tc1");
+      requireThat(tcIdsJson.get(1).asString(), "tcId1").isEqualTo("tc2");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(repoDir);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that save-failed-run copies the source file to the failed-runs directory
+   * and returns the destination path in JSON.
+   */
+  @Test
+  public void saveFailedRunCopiesFileToFailedRunsDir() throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      // Create source file
+      Path sourceDir = tempDir.resolve(".cat/work/test-runs/session-id");
+      Files.createDirectories(sourceDir);
+      Path sourceFile = sourceDir.resolve("tc1_run2.json");
+      Files.writeString(sourceFile, "{\"result\":\"failed\"}", StandardCharsets.UTF_8);
+
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      String result = runner.saveFailedRun(new String[]{tempDir.toString(), sourceFile.toString()});
+
+      // Verify the file was copied to the failed-runs directory
+      Path expectedDest = tempDir.resolve(".cat/work/failed-runs/tc1_run2.json");
+      requireThat(Files.exists(expectedDest), "destExists").isTrue();
+      String content = Files.readString(expectedDest, StandardCharsets.UTF_8);
+      requireThat(content.trim(), "content").isEqualTo("{\"result\":\"failed\"}");
+
+      // Verify return includes dest_path key=value
+      Map<String, String> pairs = new LinkedHashMap<>();
+      for (String line : result.strip().split("\n"))
+      {
+        int eq = line.indexOf('=');
+        if (eq > 0)
+          pairs.put(line.substring(0, eq), line.substring(eq + 1));
+      }
+      requireThat(pairs.get("dest_path"), "destPath").isEqualTo(expectedDest.toString());
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that save-failed-run throws when the source file does not exist.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*file not found.*")
+  public void saveFailedRunThrowsWhenSourceMissing() throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      runner.saveFailedRun(new String[]{tempDir.toString(), "/nonexistent/tc1_run1.json"});
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that remove-runner-worktree removes the worktree directory and deletes the branch.
+   */
+  @Test
+  public void removeRunnerWorktreeRemovesWorktreeAndBranch() throws IOException, InterruptedException
+  {
+    Path mainRepo = TestUtils.createTempGitRepo("my-issue");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      // Create a runner worktree inside the main repo directory
+      String runnerBranch = "my-issue-tc1-r1";
+      Path runnerWorktree = mainRepo.resolve("worktrees").resolve(runnerBranch);
+      Files.createDirectories(runnerWorktree.getParent());
+      TestUtils.runGit(mainRepo, "worktree", "add", "-b", runnerBranch, runnerWorktree.toString());
+      requireThat(Files.exists(runnerWorktree), "worktreeExists").isTrue();
+
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      String result = runner.removeRunnerWorktree(new String[]{
+        mainRepo.toString(), runnerWorktree.toString(), runnerBranch});
+
+      // Worktree directory must be gone
+      requireThat(Files.exists(runnerWorktree), "worktreeStillExists").isFalse();
+
+      // Return must indicate success
+      requireThat(result.strip(), "result").isEqualTo("removed=true");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that prepare-run resolves a relative test_dir to an absolute path and derives
+   * issue_name, test_dir_rel, and sprt_state_path from worktree_path.
+   */
+  @Test
+  public void prepareRunResolvesAbsoluteTestDir() throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      // Create a subdirectory to use as test_dir (with a .md file to pass validation)
+      Path testDirAbs = tempDir.resolve("plugin/tests/myskill");
+      Files.createDirectories(testDirAbs);
+      Files.writeString(testDirAbs.resolve("test-case.md"), "# Test", StandardCharsets.UTF_8);
+
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      // Pass relative test_dir
+      String result = runner.prepareRun(new String[]{tempDir.toString(), "plugin/tests/myskill"});
+
+      Map<String, String> pairs = new LinkedHashMap<>();
+      for (String line : result.strip().split("\n"))
+      {
+        int eq = line.indexOf('=');
+        if (eq > 0)
+          pairs.put(line.substring(0, eq), line.substring(eq + 1));
+      }
+      requireThat(pairs.get("test_dir_abs"), "test_dir_abs").isEqualTo(testDirAbs.toString());
+      requireThat(pairs.get("test_dir_rel"), "test_dir_rel").isEqualTo("plugin/tests/myskill");
+      requireThat(pairs.get("issue_name"), "issue_name").isEqualTo(tempDir.getFileName().toString());
+      requireThat(pairs.get("sprt_state_path"), "sprt_state_path").
+        isEqualTo(tempDir.resolve(".cat/work/sprt-state.json").toString());
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that get-json-field extracts a top-level string field from a JSON object.
+   */
+  @Test
+  public void getJsonFieldExtractsStringValue() throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      String result = runner.getJsonField(
+        new String[]{"{\"decision\":\"ACCEPT\",\"runs\":5}", "decision"});
+      requireThat(result, "decision").isEqualTo("ACCEPT");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that create-runner-worktrees creates the output directory and returns output_dir
+   * when there are no INCONCLUSIVE test cases.
+   */
+  @Test
+  public void createRunnerWorktreesCreatesOutputDir() throws IOException, InterruptedException
+  {
+    Path mainRepo = TestUtils.createTempGitRepo("my-issue");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      // Write a sprt_state.json with one ACCEPT TC — no INCONCLUSIVE → no worktrees created
+      Path sprtStatePath = mainRepo.resolve(".cat/work/sprt-state.json");
+      Files.createDirectories(sprtStatePath.getParent());
+      Files.writeString(sprtStatePath,
+        "{\"sprt_state\":{\"tc1\":{\"decision\":\"ACCEPT\",\"runs\":3}}}",
+        StandardCharsets.UTF_8);
+
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      String result = runner.createRunnerWorktrees(new String[]{
+        mainRepo.toString(), sprtStatePath.toString(),
+        "my-issue", mainRepo.toString(), "test-session-id"});
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode root = mapper.readTree(result);
+
+      // output_dir must be present and the directory must have been created
+      String outputDir = root.path("output_dir").asString();
+      requireThat(outputDir, "output_dir").isNotBlank();
+      requireThat(Files.isDirectory(Path.of(outputDir)), "outputDirExists").isTrue();
+      requireThat(outputDir, "output_dir").contains("test-session-id");
+
+      // No INCONCLUSIVE TCs → empty worktrees array
+      requireThat(root.path("worktrees").isArray(), "isArray").isTrue();
+      requireThat(root.path("worktrees").size(), "worktreesSize").isEqualTo(0);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that prepare-run rejects a test_dir containing no .md files.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = "(?s).*no .md.*")
+  public void prepareRunFailsOnEmptyTestDir() throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Path testDirAbs = tempDir.resolve("plugin/tests/myskill");
+      Files.createDirectories(testDirAbs);
+
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      runner.prepareRun(new String[]{tempDir.toString(), "plugin/tests/myskill"});
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that prepare-trial writes a prompt file containing the turn content from the
+   * isolation branch and returns key=value output with prompt_file, jlink_bin, and output_json.
+   */
+  @Test
+  public void prepareTrialReadsTurnContent() throws IOException, InterruptedException
+  {
+    Path repoDir = TestUtils.createTempGitRepo("my-issue");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    Path outputDir = Files.createTempDirectory("test-output-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Files.createDirectories(repoDir.resolve("plugin/tests/myskill"));
+      Files.writeString(repoDir.resolve("plugin/tests/myskill/tc1_turn1"),
+        "test turn content", StandardCharsets.UTF_8);
+      TestUtils.runGit(repoDir, "add", ".");
+      TestUtils.runGit(repoDir, "commit", "-m", "add turn files");
+      TestUtils.runGit(repoDir, "checkout", "-b", "my-issue-sanitized");
+
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      String result = runner.prepareTrial(new String[]{
+        repoDir.toString(), "my-issue-sanitized", "plugin/tests/myskill",
+        "tc1", "/fake/runner", outputDir.toString(), "1", "/fake/project"});
+
+      Map<String, String> pairs = new LinkedHashMap<>();
+      for (String line : result.strip().split("\n"))
+      {
+        int eq = line.indexOf('=');
+        if (eq > 0)
+          pairs.put(line.substring(0, eq), line.substring(eq + 1));
+      }
+      requireThat(pairs.get("prompt_file"), "prompt_file").isNotBlank();
+      String promptContent = Files.readString(Path.of(pairs.get("prompt_file")),
+        StandardCharsets.UTF_8);
+      requireThat(promptContent, "promptContent").contains("test turn content");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(repoDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(outputDir);
+    }
+  }
+
+  /**
+   * Verifies that prepare-trial falls back to the project jlink bin when runner worktree
+   * does not have a jlink directory.
+   */
+  @Test
+  public void prepareTrialFallsBackToProjectJlinkBin() throws IOException, InterruptedException
+  {
+    Path repoDir = TestUtils.createTempGitRepo("my-issue");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    Path runnerWorktree = Files.createTempDirectory("runner-");
+    Path claudeProjectDir = Files.createTempDirectory("project-");
+    Path outputDir = Files.createTempDirectory("test-output-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Files.createDirectories(repoDir.resolve("plugin/tests/myskill"));
+      Files.writeString(repoDir.resolve("plugin/tests/myskill/tc1_turn1"),
+        "content", StandardCharsets.UTF_8);
+      TestUtils.runGit(repoDir, "add", ".");
+      TestUtils.runGit(repoDir, "commit", "-m", "add turn files");
+      TestUtils.runGit(repoDir, "checkout", "-b", "my-issue-sanitized");
+
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      String result = runner.prepareTrial(new String[]{
+        repoDir.toString(), "my-issue-sanitized", "plugin/tests/myskill",
+        "tc1", runnerWorktree.toString(), outputDir.toString(), "1", claudeProjectDir.toString()});
+
+      Map<String, String> pairs = new LinkedHashMap<>();
+      for (String line : result.strip().split("\n"))
+      {
+        int eq = line.indexOf('=');
+        if (eq > 0)
+          pairs.put(line.substring(0, eq), line.substring(eq + 1));
+      }
+      requireThat(pairs.get("jlink_bin"), "jlink_bin").
+        startsWith(claudeProjectDir.toString()).
+        endsWith("/client/target/jlink/bin");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(repoDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(runnerWorktree);
+      TestUtils.deleteDirectoryRecursively(claudeProjectDir);
+      TestUtils.deleteDirectoryRecursively(outputDir);
+    }
+  }
+
+  /**
+   * Verifies that prepare-trial uses the runner worktree jlink bin when it exists.
+   */
+  @Test
+  public void prepareTrialUsesRunnerJlinkBin() throws IOException, InterruptedException
+  {
+    Path repoDir = TestUtils.createTempGitRepo("my-issue");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    Path runnerWorktree = Files.createTempDirectory("runner-");
+    Path claudeProjectDir = Files.createTempDirectory("project-");
+    Path outputDir = Files.createTempDirectory("test-output-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Files.createDirectories(repoDir.resolve("plugin/tests/myskill"));
+      Files.writeString(repoDir.resolve("plugin/tests/myskill/tc1_turn1"),
+        "content", StandardCharsets.UTF_8);
+      TestUtils.runGit(repoDir, "add", ".");
+      TestUtils.runGit(repoDir, "commit", "-m", "add turn files");
+      TestUtils.runGit(repoDir, "checkout", "-b", "my-issue-sanitized");
+
+      // Create jlink/bin dir in runner worktree
+      Files.createDirectories(runnerWorktree.resolve("client/target/jlink/bin"));
+
+      // prepareTrial writes a VERSION file to the jlink dir using the plugin version from plugin.json
+      Files.createDirectories(tempDir.resolve(".claude-plugin"));
+      Files.writeString(tempDir.resolve(".claude-plugin/plugin.json"),
+        "{\"version\":\"2.1.87\"}", StandardCharsets.UTF_8);
+
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      String result = runner.prepareTrial(new String[]{
+        repoDir.toString(), "my-issue-sanitized", "plugin/tests/myskill",
+        "tc1", runnerWorktree.toString(), outputDir.toString(), "1", claudeProjectDir.toString()});
+
+      Map<String, String> pairs = new LinkedHashMap<>();
+      for (String line : result.strip().split("\n"))
+      {
+        int eq = line.indexOf('=');
+        if (eq > 0)
+          pairs.put(line.substring(0, eq), line.substring(eq + 1));
+      }
+      requireThat(pairs.get("jlink_bin"), "jlink_bin").startsWith(runnerWorktree.toString());
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(repoDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(runnerWorktree);
+      TestUtils.deleteDirectoryRecursively(claudeProjectDir);
+      TestUtils.deleteDirectoryRecursively(outputDir);
+    }
+  }
+
+  /**
+   * Verifies that prepare-trial writes a prompt file whose content contains the preamble with
+   * the CWD tag, the positive path mandate, a concrete example, and the mandatory execution
+   * instruction.
+   */
+  @Test
+  public void prepareTrialConstructsPreamble() throws IOException, InterruptedException
+  {
+    Path repoDir = TestUtils.createTempGitRepo("my-issue");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    Path outputDir = Files.createTempDirectory("test-output-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Files.createDirectories(repoDir.resolve("plugin/tests/myskill"));
+      Files.writeString(repoDir.resolve("plugin/tests/myskill/tc1_turn1"),
+        "content", StandardCharsets.UTF_8);
+      TestUtils.runGit(repoDir, "add", ".");
+      TestUtils.runGit(repoDir, "commit", "-m", "add turn files");
+      TestUtils.runGit(repoDir, "checkout", "-b", "my-issue-sanitized");
+
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      String result = runner.prepareTrial(new String[]{
+        repoDir.toString(), "my-issue-sanitized", "plugin/tests/myskill",
+        "tc1", "/fake/my-runner", outputDir.toString(), "1", "/fake/project"});
+
+      Map<String, String> pairs = new LinkedHashMap<>();
+      for (String line : result.strip().split("\n"))
+      {
+        int eq = line.indexOf('=');
+        if (eq > 0)
+          pairs.put(line.substring(0, eq), line.substring(eq + 1));
+      }
+      String promptContent = Files.readString(Path.of(pairs.get("prompt_file")),
+        StandardCharsets.UTF_8);
+      // CWD tag must be present (not RUNNER_WORKTREE — that tag was removed as attentional noise)
+      requireThat(promptContent, "promptContent").contains("[CWD: /fake/my-runner]");
+      // Positive mandate: every path MUST begin with the CWD value
+      requireThat(promptContent, "promptContent").contains(
+        "Every path argument passed to Write, Edit, or Bash MUST begin with the exact CWD value above");
+      // Concrete example anchors the correct construction pattern
+      requireThat(promptContent, "promptContent").contains("/fake/my-runner/");
+      // Mandatory execution instruction must still be present
+      requireThat(promptContent, "promptContent").contains("Execute the task below immediately");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(repoDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(outputDir);
+    }
+  }
+
+  /**
+   * Verifies that prepare-trial constructs the output_json path from output_dir, tc_id, and
+   * trial_num and returns it via key=value output.
+   */
+  @Test
+  public void prepareTrialConstructsOutputJson() throws IOException, InterruptedException
+  {
+    Path repoDir = TestUtils.createTempGitRepo("my-issue");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    Path outputDir = Files.createTempDirectory("test-output-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Files.createDirectories(repoDir.resolve("plugin/tests/myskill"));
+      Files.writeString(repoDir.resolve("plugin/tests/myskill/tc1_turn1"),
+        "content", StandardCharsets.UTF_8);
+      TestUtils.runGit(repoDir, "add", ".");
+      TestUtils.runGit(repoDir, "commit", "-m", "add turn files");
+      TestUtils.runGit(repoDir, "checkout", "-b", "my-issue-sanitized");
+
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      String result = runner.prepareTrial(new String[]{
+        repoDir.toString(), "my-issue-sanitized", "plugin/tests/myskill",
+        "tc1", "/fake/runner", outputDir.toString(), "3", "/fake/project"});
+
+      Map<String, String> pairs = new LinkedHashMap<>();
+      for (String line : result.strip().split("\n"))
+      {
+        int eq = line.indexOf('=');
+        if (eq > 0)
+          pairs.put(line.substring(0, eq), line.substring(eq + 1));
+      }
+      requireThat(pairs.get("output_json"), "output_json").
+        isEqualTo(outputDir + "/tc1_run3.json");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(repoDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(outputDir);
+    }
+  }
+
+  /**
+   * Verifies that prepare-trial returns plugin_source pointing to the runner worktree's plugin
+   * directory so that claude-runner uses the committed plugin version from the isolation branch
+   * instead of the globally installed plugin cache.
+   */
+  @Test
+  public void prepareTrialReturnsPluginSource() throws IOException, InterruptedException
+  {
+    Path repoDir = TestUtils.createTempGitRepo("my-issue");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    Path runnerWorktree = Files.createTempDirectory("runner-");
+    Path outputDir = Files.createTempDirectory("test-output-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Files.createDirectories(repoDir.resolve("plugin/tests/myskill"));
+      Files.writeString(repoDir.resolve("plugin/tests/myskill/tc1_turn1"),
+        "content", StandardCharsets.UTF_8);
+      TestUtils.runGit(repoDir, "add", ".");
+      TestUtils.runGit(repoDir, "commit", "-m", "add turn files");
+      TestUtils.runGit(repoDir, "checkout", "-b", "my-issue-sanitized");
+
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      String result = runner.prepareTrial(new String[]{
+        repoDir.toString(), "my-issue-sanitized", "plugin/tests/myskill",
+        "tc1", runnerWorktree.toString(), outputDir.toString(), "1", "/fake/project"});
+
+      Map<String, String> pairs = new LinkedHashMap<>();
+      for (String line : result.strip().split("\n"))
+      {
+        int eq = line.indexOf('=');
+        if (eq > 0)
+          pairs.put(line.substring(0, eq), line.substring(eq + 1));
+      }
+      requireThat(pairs.get("plugin_source"), "plugin_source").
+        isEqualTo(runnerWorktree + "/plugin/");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(repoDir);
+      TestUtils.deleteDirectoryRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(runnerWorktree);
+      TestUtils.deleteDirectoryRecursively(outputDir);
+    }
+  }
+
+  /**
+   * Verifies that write-test-results returns overall_decision and test_sha after a successful commit.
+   */
+  @Test
+  public void writeTestResultsReturnsOverallDecisionAndSha() throws IOException, InterruptedException
+  {
+    Path mainRepo = TestUtils.createTempGitRepo("my-issue");
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Path sprtStatePath = mainRepo.resolve(".cat/work/sprt-state.json");
+      Files.createDirectories(sprtStatePath.getParent());
+      Files.writeString(sprtStatePath,
+        "{\"sprt_state\":{\"tc1\":{\"decision\":\"ACCEPT\",\"runs\":3,\"log_ratio\":2.944," +
+        "\"passes\":3,\"fails\":0}}}",
+        StandardCharsets.UTF_8);
+
+      Path testDirPath = mainRepo.resolve("plugin/tests/myskill");
+      Files.createDirectories(testDirPath);
+
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      String result = runner.writeTestResults(new String[]{
+        mainRepo.toString(), sprtStatePath.toString(), testDirPath.toString()});
+
+      Map<String, String> pairs = new LinkedHashMap<>();
+      for (String line : result.strip().split("\n"))
+      {
+        int eq = line.indexOf('=');
+        if (eq > 0)
+          pairs.put(line.substring(0, eq), line.substring(eq + 1));
+      }
+      requireThat(pairs.get("status"), "status").isEqualTo("ok");
+      requireThat(pairs.get("overall_decision"), "overall_decision").isEqualTo("ACCEPT");
+      requireThat(pairs.get("test_sha"), "test_sha").isNotBlank();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(mainRepo);
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }

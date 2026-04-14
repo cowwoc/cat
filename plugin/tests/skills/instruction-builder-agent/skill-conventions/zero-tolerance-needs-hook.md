@@ -1,11 +1,6 @@
 ---
 category: requirement
 ---
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 ## Turn 1
 
 You are designing a skill rule that must be followed with zero exceptions: agents must never

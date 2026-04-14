@@ -5,8 +5,11 @@ See LICENSE.md in the project root for license terms.
 -->
 # Organic Instruction-Test Design Standard
 
-Reference standard for writing empirical instruction-tests that verify a skill is chosen AND followed correctly,
-without priming the agent to select the skill.
+Reference standard for writing empirical instruction-tests that verify a skill is chosen AND followed correctly, or a rule is applied correctly, without priming the agent to select the skill or apply the rule.
+
+**Scope:** This standard applies to ALL SPRT tests, including:
+- **Skill tests** (`plugin/tests/skills/`) — verify skill selection and execution
+- **Rule tests** (`plugin/tests/rules/`) — verify behavioral rules are followed
 
 ## Rationale: Why No Priming
 
@@ -18,6 +21,50 @@ agent recognizes when to use the skill*.
 An **organic** instruction-test keeps `system_reminders` empty. The agent must recognize the skill trigger from the
 SKILL.md `description` field, then choose the skill based on that description alone. This measures realistic behavior:
 an agent working on a real task with no hand-holding.
+
+## Rule Tests vs Skill Tests
+
+**Skill tests** verify two behaviors:
+1. **Tier 1:** The agent invokes the Skill tool (routing decision)
+2. **Tier 2:** The agent follows the skill's procedure (execution correctness)
+
+**Rule tests** verify one behavior:
+- The agent follows the rule during normal work (no Skill tool involved)
+
+**Organic principle for rule tests:**
+
+Do NOT prescribe the mechanism the rule defines. Describe a realistic task where applying the rule is the natural solution.
+
+**Guideline for designing organic test prompts:**
+
+1. **Identify the high-level goal** of the file/rule you're testing, or the set of actions you want to trigger
+2. **Figure out what task requires those actions** without explicitly asking for them
+3. **For tee-piped-output example:** The rule's purpose is to avoid re-running commands when examining different aspects of output (command is expensive or can only run once)
+4. **Ask:** What organic scenario requires capturing output once and filtering it multiple times?
+5. **Example scenario:** Run an expensive command, search for an error, and if found, retrieve context around it
+
+This naturally triggers tee-piped-output because:
+- Can't re-run the command (expensive)
+- Need multiple filters (error search → conditional context retrieval)
+- Solution requires capturing output once, filtering multiple times
+
+**Example — tee-piped-output cleanup rule:**
+
+❌ **Prescriptive (not organic):**
+```
+Help me run find, capture output to a temporary log file, filter it, 
+and clean up the temporary log file afterwards.
+```
+*Explicitly names the mechanism: temp file, capture, cleanup*
+
+✅ **Organic:**
+```
+Run `mvn verify` (it takes 5 minutes), search the output for test failures, 
+and if you find any, show me the context around them.
+```
+*Expensive command (can't re-run) + conditional filtering (search → context retrieval) organically requires capturing output once and filtering multiple times, without prescribing tee or cleanup*
+
+The assertions then verify the rule was followed (tee used, cleanup included) even though the prompt didn't prescribe it.
 
 ## Test Runner Prompt Isolation
 
@@ -81,6 +128,37 @@ After the frontmatter, every test case file contains exactly two sections:
 
 - `## Turn 1` — the realistic user prompt sent to the agent under test
 - `## Assertions` — a numbered plain-text list of behavioral assertions graded by the instruction-grader-agent
+
+### Turn 1 Content Requirements
+
+**MANDATORY: Test prompts must instruct the agent to do something.** Do not write prompts that merely state requirements or describe needs without asking the agent to take action.
+
+**Invalid prompt patterns:**
+
+```markdown
+I need to run a command, capture output to a temp file, filter it, and clean up.
+```
+
+This is a **statement of requirements**, not an instruction. The agent has no way to know whether to:
+- Help write the commands
+- Demonstrate the pattern
+- Just acknowledge the statement
+
+**Valid prompt patterns:**
+
+Ask the agent to help with a specific task:
+```markdown
+Help me run `git log --oneline`, capture the output to a temp file so I can analyze 
+it later, filter it to show only commits with "fix", then clean up the temp file.
+```
+
+Ask the agent to demonstrate a pattern:
+```markdown
+Show me how to run a command with a pipe, capture the pre-pipe output to a temp 
+file for later re-filtering, and clean up the temp file when done.
+```
+
+Both patterns make it clear what action the agent should take. Use imperative verbs ("help me", "show me", "explain", "analyze", "fix") or questions ("how do I", "what's the best way to") to signal intent.
 
 ### Assertion Syntax
 

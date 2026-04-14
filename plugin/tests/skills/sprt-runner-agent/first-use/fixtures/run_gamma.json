@@ -1,0 +1,11 @@
+{
+  "texts" : [ "gamma" ],
+  "toolUses" : [ ],
+  "writeContents" : [ ],
+  "turns" : [ {
+    "texts" : [ "gamma" ],
+    "toolUses" : [ ],
+    "writeContents" : [ ]
+  } ],
+  "sessionId" : "00000000-0000-0000-0000-000000000003"
+}

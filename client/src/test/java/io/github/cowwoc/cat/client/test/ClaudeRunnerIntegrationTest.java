@@ -75,7 +75,7 @@ public final class ClaudeRunnerIntegrationTest
         runner.createIsolatedConfig(sourceConfig, pluginSource, jlinkBin, "2.1");
 
         // Ask the nested instance to list files in its plugin cache
-        List<String> command = runner.buildCommand("haiku", "");
+        List<String> command = runner.buildCommand("haiku", "", "");
         String input = runner.buildInput(List.of(),
           List.of("Use the Bash tool to run: find $CLAUDE_PLUGIN_ROOT/skills -name 'SKILL.md' " +
             "| head -5. Then read the contents of any SKILL.md file you find that contains " +
@@ -114,7 +114,7 @@ public final class ClaudeRunnerIntegrationTest
     {
       try (ClaudeRunner runner = new ClaudeRunner(scope))
       {
-        List<String> command = runner.buildCommand("haiku", "");
+        List<String> command = runner.buildCommand("haiku", "", "");
         String input = runner.buildInput(List.of(),
           List.of("Use the Agent tool to spawn a subagent with this prompt: " +
             "'Reply with exactly the text: SUBAGENT_SPAWNED_OK_c4e8f1a3'. " +

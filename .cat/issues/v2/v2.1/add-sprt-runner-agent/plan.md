@@ -21,6 +21,7 @@ None
 - `plugin/skills/sprt-runner-agent/SKILL.md` — new skill entry point
 - `plugin/skills/sprt-runner-agent/first-use.md` — full SPRT orchestration instructions
 - `plugin/skills/instruction-builder-agent/first-use.md` — replace Steps 6–8 inline loop with call to `cat:sprt-runner-agent`
+- `client/src/main/java/io/github/cowwoc/cat/claude/hook/skills/InstructionTestRunner.java` — add `run-sprt-batch` subcommand
 
 ## Pre-conditions
 
@@ -52,6 +53,41 @@ None
 - Preserve all existing behavior: model selection, boundary thresholds, grader invocation, result reporting
   - Files: `plugin/skills/instruction-builder-agent/first-use.md`
 
+### Job 3: Add haiku-plan-execution test files
+
+- Cherry-pick the `plugin/tests/skills/work-execute/haiku-plan-execution/` directory from branch
+  `2.1-test-haiku-mechanical-plan-execution` into the current branch using:
+  ```
+  git checkout 2.1-test-haiku-mechanical-plan-execution -- plugin/tests/skills/work-execute/haiku-plan-execution/
+  ```
+- Commit the 6 test `.md` files under `plugin/tests/skills/work-execute/haiku-plan-execution/`:
+  - `creates-file-at-correct-path.md`
+  - `sonnet-creates-file-at-correct-path.md`
+  - `sonnet-updates-index-json-closed.md`
+  - `sonnet-uses-exact-content-from-plan.md`
+  - `updates-index-json-closed.md`
+  - `uses-exact-content-from-plan.md`
+- Files: `plugin/tests/skills/work-execute/haiku-plan-execution/*.md`
+
+### Job 4: Replace bash batch runner with Java CLI
+
+- Add `run-sprt-batch` subcommand to `InstructionTestRunner.java` implementing the batch orchestration:
+  - Accept arguments: `<worktree_path> <sprt_state_json> <issue_name> <project_dir> <session_id> <model_id>`
+  - Invoke `create-runner-worktrees` to create git worktrees for undecided TCs
+  - For each TC: invoke `prepare-trial` with the runner worktree path from `create-runner-worktrees` output
+  - Launch `claude-runner` instances (parallel for TC1-TC8, sequential for TC9)
+  - For each TC: invoke `check-run-contamination` on the output JSON
+  - For each TC: invoke test-case-specific grader logic (inline or via grader subagent)
+  - For each TC: invoke `update-sprt` with the verdict
+  - For each TC: invoke `check-boundary` to determine ACCEPT/REJECT/INCONCLUSIVE
+  - Invoke `remove-runner-worktrees` to clean up
+  - Return JSON summary: `{"decided_count": N, "inconclusive_tcs": [...]}`
+- Key improvements over bash version:
+  - Structured data binding (runner worktree path tied to TC record, no re-derivation from batch number)
+  - Type-safe trial number handling (no BATCH_NUM vs trial_num mismatch)
+  - Grader paths use the actual runner worktree from `create-runner-worktrees`, not reconstructed from suffix
+- Files: `client/src/main/java/io/github/cowwoc/cat/claude/hook/skills/InstructionTestRunner.java`
+
 ## Post-conditions
 
 - [ ] `cat:sprt-runner-agent` accepts a test directory and runs SPRT to ACCEPT/REJECT for each `.md` file
@@ -59,3 +95,5 @@ None
 - [ ] Works on `plugin/tests/skills/*/first-use/` test files (organic skill-selection)
 - [ ] `instruction-builder-agent` SPRT suite passes after delegation refactor (no regression)
 - [ ] E2E: running `cat:sprt-runner-agent` on `haiku-plan-execution/` produces ACCEPT for all 6 test cases
+- [ ] Java CLI `run-sprt-batch` subcommand replaces bash batch runner script
+- [ ] SPRT batch runs use correct per-TC trial numbers and runner worktree paths (no BATCH_NUM mismatch)

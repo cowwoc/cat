@@ -387,7 +387,7 @@ TEST_MODEL=$("${CLAUDE_PLUGIN_ROOT}/client/bin/instruction-test-runner" extract-
   "<absolute-path-to-INSTRUCTION_TEXT_PATH>")
 ```
 The script falls back to `haiku` when the field is absent.
-<p>
+
 **CAT plugin skill model convention:** For skills and agents in this plugin, omit the `model:` frontmatter
 unless the model is `haiku`. Sonnet-preferred and opus-preferred skills and agents are listed in
 `${CLAUDE_PLUGIN_ROOT}/rules/model-selection.md` — add or update entries there rather than setting
@@ -411,7 +411,7 @@ session ID — they must use the value passed by the main agent.
 
 **Concurrent session safety:** Each test-run subagent spawns with `isolation: "worktree"`, giving it an
 isolated copy of the repository. Each subagent writes results to its own worktree's `test-results.json`, then
-`cat:collect-results-agent` merges the changes back after each wave completes. This eliminates write contention
+`cat:collect-results-agent` merges the changes back after each job completes. This eliminates write contention
 without file locking — concurrent sessions targeting the same skill each work in separate worktrees.
 
 **Sanity check:** Before proceeding to Step 6, spawn one `TEST_MODEL` test-run subagent with the instruction
@@ -484,11 +484,6 @@ so the test-run subagent never sees descriptive filenames that could reveal test
 ---
 category: <CATEGORY>
 ---
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 ## Turn 1
 <realistic user prompt that organically requires this skill — no system_reminders listing skills>
 ## Assertions
@@ -496,6 +491,8 @@ See LICENSE.md in the project root for license terms.
 2. <behavioral assertion describing expected skill behavior>
 3. <additional behavioral assertion>
 ```
+
+No blank lines between the closing `---` of frontmatter and `## Turn 1`. No license header (all files under `plugin/tests/` are exempt).
 
 - **Prohibited (Q&A format for Turn 1):**
   ```
@@ -537,11 +534,6 @@ a single assertion:
 ---
 category: negative
 ---
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 ## Turn 1
 <realistic out-of-scope prompt where this skill should not fire>
 ## Assertions
@@ -700,676 +692,54 @@ determine whether the skill instruction changed and whether new test cases were 
    `test-results.json` into the new test result. Only test cases selected for re-run go through
    full SPRT. Report carried-forward cases in the final test summary.
 
-#### SPRT Parameters
+#### Delegate SPRT Execution
 
-- p0 = 0.95 (pass rate under H₀ — skill is compliant)
-- p1 = 0.85 (pass rate under H₁ — skill is non-compliant)
-- α = 0.05, β = 0.05
-- A = log((1 − β) / α) = log(19) ≈ 2.944 (accept boundary)
-- B = log(β / (1 − α)) = log(0.0526) ≈ −2.944 (reject boundary)
+Invoke `cat:sprt-runner-agent` to run the full SPRT loop:
 
-**SPRT state management (Java tools — use these instead of tracking log_ratio in-memory):**
+```
+skill: "cat:sprt-runner-agent"
+args: "${CAT_AGENT_ID} ${TEST_DIR} ${WORKTREE_PATH} ${TEST_MODEL}"
+```
 
-Initialize the SPRT state file once before the first wave (after computing `TEST_CASES` and `TEST_MODEL`):
+`cat:sprt-runner-agent` handles: isolation branch creation, test case enumeration and opaque-ID
+renaming, SPRT state initialization (p0=0.95, p1=0.85, α=β=0.05), job dispatch with parallel
+trial subagents, grader invocation for each run, boundary checking
+(A=log(19)≈2.944, B=log(0.0526)≈−2.944), test-results.json commit, and per-test-case reporting.
+
+It returns a structured report containing `overall_decision` (Accept, Reject, or Inconclusive),
+per-test-case decisions, and `TEST_SHA`. Extract these from the skill output:
 
 ```bash
-SPRT_STATE_PATH="/tmp/test-runs/${CLAUDE_SESSION_ID}/sprt-state.json"
-mkdir -p "/tmp/test-runs/${CLAUDE_SESSION_ID}"
-"${CLAUDE_PLUGIN_ROOT}/client/bin/instruction-test-runner" init-sprt \
-  '<tc_ids_json_array>' '<prior_test_results_path_or_/dev/null>' "${TEST_MODEL}" \
-  | tee "${SPRT_STATE_PATH}"
-```
+# Extract overall_decision from sprt-runner-agent output
+OVERALL_DECISION=$(echo "${SKILL_OUTPUT}" | grep -o 'overall_decision:[[:space:]]*[A-Z]*' \
+  | sed 's/overall_decision:[[:space:]]*//')
 
-`<tc_ids_json_array>` is a JSON array of opaque test case IDs, e.g. `'["tc1","tc2","tc3"]'`.
-`<prior_test_results_path>` is the path to a `test-results.json` from a prior SPRT run (used to carry
-forward already-accepted cases); pass `/dev/null` when no prior results exist.
+# Extract TEST_SHA (commit SHA of test-results.json)
+TEST_SHA=$(echo "${SKILL_OUTPUT}" | grep -o 'TEST_SHA:[[:space:]]*[a-f0-9]*' \
+  | sed 's/TEST_SHA:[[:space:]]*//')
 
-After each run is graded, record the result and check the boundary:
-
-```bash
-# Record pass (true) or fail (false) — updates state file in-place via tee
-"${CLAUDE_PLUGIN_ROOT}/client/bin/instruction-test-runner" update-sprt \
-  "${SPRT_STATE_PATH}" "<tc_id>" "<true|false>" | tee "${SPRT_STATE_PATH}"
-
-# Check whether this test case has crossed the Accept or Reject boundary
-"${CLAUDE_PLUGIN_ROOT}/client/bin/instruction-test-runner" check-boundary \
-  "${SPRT_STATE_PATH}" "<tc_id>"
-```
-
-`update-sprt` writes the updated full state JSON to stdout; piping through `tee` persists it back to the
-state file. The output includes `log_ratio`, `passes`, `fails`, `runs`, and `decision` fields for the
-updated test case.
-
-`check-boundary` output: `{"test_case_id":"<id>","decision":"ACCEPT|REJECT|INCONCLUSIVE",
-"log_ratio":<float>,"runs":<int>,...}`. Use the `decision` field to control wave dispatching.
-
-**SPRT decision function** (reference — implemented by the Java tools above):
-```
-If observation k is PASS:
-  log_ratio += log(p0 / p1)   # log(0.95 / 0.85) ≈ 0.1112
-If observation k is FAIL:
-  log_ratio += log((1 − p0) / (1 − p1))  # log(0.05 / 0.15) ≈ −1.0986
-
-After each observation:
-  if log_ratio >= A → Accept H₀ (compliant, stop testing this case)
-  if log_ratio <= B → Reject H₀ (non-compliant, stop all cases, proceed to hardening)
-  if B < log_ratio < A → Inconclusive (continue testing)
-  if runs_for_this_case >= 50 → Truncate: treat as Reject (non-compliant, stop all cases)
-```
-
-**SPRT run cap per test case:** Each test case is limited to 50 SPRT runs within a single test
-execution. If a test case reaches 50 runs without crossing either the Accept or Reject boundary, treat it
-as a Reject decision — a skill that requires more than 50 trials to demonstrate compliance is effectively
-non-compliant. This cap prevents unbounded token and time consumption when the true pass rate falls within
-the indifference zone between p0 and p1.
-
-**Assertion aggregation:** A single test run passes if and only if ALL assertions pass. One failed
-assertion fails the entire run. SPRT receives one pass/fail per run.
-
-**SPRT independence requirement:** Each test run (TC + run number) MUST spawn a completely fresh
-subagent with no prior conversation context. Do NOT execute multiple runs inside the same subagent
-context — context from prior runs contaminates later runs and invalidates SPRT's independence assumption.
-SPRT requires each trial to be an independent Bernoulli draw from the same underlying distribution; when
-run N sees runs 1…N-1 in its conversation history, trial N is conditioned on prior trials (batch
-contamination), which produces systematically biased pass rates and spurious Accept/Reject decisions.
-
-#### Test-Run Subagent Spawn Parameters (MANDATORY)
-
-Each test-run subagent MUST be spawned with EXACTLY these three parameters — no others:
-
-```
-Agent(
-  description="<description describing the run>",
-  prompt=<turn_content>,
-  isolation="worktree"
-)
-```
-
-**Forbidden parameters (ZERO TOLERANCE — any appearance triggers an immediate halt):**
-- `resume` — ABSOLUTELY FORBIDDEN in ANY form (`resume=true`, `resume=false`, or any `resume` field).
-  The `resume` field must be entirely absent, not set to false.
-- `conversation_id` — ABSOLUTELY FORBIDDEN in ANY form
-- `run_in_background` — ABSOLUTELY FORBIDDEN
-- ANY parameter not listed in the three allowed above
-
-**Pre-spawn gate (MANDATORY before every Agent invocation):** Before invoking the Agent tool for any
-test-run subagent, visually inspect your invocation. Count the parameters — there must be exactly 3
-(`description`, `prompt`, `isolation`). If `resume`, `conversation_id`, or any other forbidden parameter
-appears, DO NOT invoke Agent. Instead, return:
-```
-{"error": "PRE-SPAWN GATE VIOLATION: forbidden parameters detected. Only description, prompt, and
-isolation='worktree' are permitted. Fix the invocation before retrying."}
-```
-
-**Why this is non-negotiable:** SPRT requires each test run to be a completely independent trial with NO
-prior conversation context. `resume` or `conversation_id` cause the same subagent to be reused across
-multiple runs, producing batch contamination — systematically biased pass/fail results that invalidate all
-SPRT statistical conclusions.
-
-Each test-run subagent receives (as parameters):
-- Test case ID
-- Run index (N)
-- Path to turn 1 file: `${RUNNER_WORKTREE}/${TEST_DIR}/${test_case_id}_turn1.md`
-- TEST_MODEL literal string (pre-resolved by main agent)
-- CLAUDE_SESSION_ID literal string (pre-resolved by main agent)
-- TEST_DIR literal string (pre-resolved by main agent)
-
-**Batch contamination symptom signals:** These are corroborating signals for contamination (the pre-spawn
-gate is the primary check). If spawn parameters were correct but these symptoms appear, escalate to user
-rather than silently discarding:
-- PASS fraction increases monotonically across sequential run indices (suggesting each subagent builds on
-  previous results) rather than exhibiting variance consistent with an i.i.d. process
-- A subagent's response references "the previous run" or "earlier output"
-- Two subagents for different run indices return identical `output_path` files or identical content
-
----
-
-#### Pipeline Control Flow
-
-**Parallelism requirement:** All subagents within a wave MUST be spawned as multiple `Agent` tool calls
-in a **single response**. Spawning them one per response eliminates parallelism and multiplies total
-runtime by the wave size.
-
-Correct:
-```
-[single response] Agent(tc1, run 4) + Agent(tc2, run 3) + Agent(tc3, run 2) + Agent(tc4, run 5)
-```
-
-Wrong:
-```
-[response 1] Agent(tc1, run 4)
-[response 2] Agent(tc2, run 3)   ← sequential, not parallel
-```
-
-Before starting wave dispatch, detect the concurrency cap from the host CPU count:
-
-```bash
-MAX_WAVE_SLOTS=$(nproc 2>/dev/null)
-if [[ ! "$MAX_WAVE_SLOTS" =~ ^[0-9]+$ ]] || [[ "$MAX_WAVE_SLOTS" -le 0 ]]; then
-  MAX_WAVE_SLOTS=8
-fi
-```
-
-This sets `MAX_WAVE_SLOTS` to the number of CPU cores reported by `nproc`, or 8 if `nproc` is
-unavailable or returns a non-positive value.
-
-Track `WAVE_SLOTS` (initial value: 2, maximum: `MAX_WAVE_SLOTS`). After each wave where every run passed, double
-`WAVE_SLOTS`: `WAVE_SLOTS = min(WAVE_SLOTS * 2, MAX_WAVE_SLOTS)`. A "wave" is the set of test-run subagents
-dispatched together in one parallel message. If any run in a wave fails or any TC rejects, keep
-`WAVE_SLOTS` unchanged for the next wave.
-
-1. Main agent spawns `WAVE_SLOTS` test-run subagents simultaneously as multiple `Agent` tool calls in
-   one response, using spawn parameters from § Test-Run Subagent Spawn Parameters. Each subagent is a
-   fresh non-resumed `TEST_MODEL` subagent assigned exactly one run (one TC + one run index). Each subagent
-   executes that single run and terminates — it is never reused for another run. Reserve at minimum half of
-   `WAVE_SLOTS` (rounded up) for test-run subagents at all times. At most half of `WAVE_SLOTS` (rounded
-   down) grader subagents may occupy slots simultaneously. If the grader limit is reached, queue additional
-   grading work until a grader slot frees.
-2. Wait for all subagents in the wave to return. **BEFORE processing any results**, verify freshness:
-   if session-analyzer shows ANY subagent with `resume: true`, `resume: false`, or `conversation_id` fields,
-   STOP IMMEDIATELY:
-   ```
-   {"error": "CRITICAL: Batch contamination detected — subagents contain resume or conversation_id
-   parameters. All SPRT results are invalid. Root cause: Pre-spawn gate enforcement failed."}
-   ```
-   If freshness verification passes, proceed to Result Inspection Checklist:
-   a. Spawn a `TEST_MODEL` grader subagent for all assertions (counts against the slot limit).
-      When multiple runs are ready to grade simultaneously and slots are available, spawn all their
-      grader subagents in a single response (parallel grading).
-   b. Once all assertions for the run are graded, update the SPRT log_ratio for that test case.
-   c. Immediately print the run result (do not wait for the wave to finish):
-      - Pass: `✓ [tc_id] run [N]: PASS (log_ratio: X.XX)`
-      - Fail: `✗ [tc_id] run [N]: FAIL (log_ratio: X.XX)`
-   d. Check boundaries: if Accept or Reject, stop spawning new subagents for that test case.
-3. After all wave results are processed and graded:
-   - If ALL runs in the wave passed: `WAVE_SLOTS = min(WAVE_SLOTS * 2, MAX_WAVE_SLOTS)`. Dispatch next wave.
-   - If ANY run failed or any TC rejected: keep `WAVE_SLOTS` unchanged. If early-reject triggered,
-     freeze SPRT state — do not update log-ratio values from in-flight results, even if they return
-     before you begin hardening. Log-ratio updates are only valid pre-reject.
-4. Every new subagent in each wave must be a completely fresh spawn — it does NOT inherit any state from
-   prior subagents.
-5. Loop terminates when all test cases have accepted or any test case has rejected.
-
-**MANDATORY: Inconclusive is not a stopping state.** If all active test cases remain Inconclusive after
-a wave, continue dispatching waves. Do NOT stop, commit results, or declare SPRT complete while any test
-case has `decision: "INCONCLUSIVE"`. The only valid outcomes that end the loop are Accept (log_ratio ≥ A)
-or Reject (log_ratio ≤ B, or runs ≥ 50). Running 10 or 12 waves with all passes but log_ratio < 2.944 is
-NOT sufficient — the Accept boundary must be formally crossed.
-
-**Pipelining edge cases:**
-- **Early-accept:** TC reaches `log_ratio >= A`. Stop spawning subagents for it immediately. If a
-  subagent is already in-flight, wait for it to return (to collect timing/token data), then discard its
-  result for SPRT purposes. Free its slot for remaining test cases.
-- **Early-reject:** Any TC reaches `log_ratio <= B`. Stop spawning ALL new subagents across ALL test
-  cases. Freeze SPRT state immediately — do not update log-ratio values from any in-flight results.
-  Wait for in-flight subagents to return (to avoid orphaned processes), discard their results, and
-  proceed to hardening. Do NOT spawn any additional test-run or grader subagents.
-
-#### Test-Runner Filesystem Isolation
-
-Test-run subagents execute in worktrees created from an orphan branch where test case assertions have
-been structurally removed. The orphan branch contains the full project (so hooks and config work
-normally) but test case files under `${TEST_DIR}/` have their `## Assertions` sections stripped. Because
-the branch is orphaned, `git log`, `git diff`, and `git show` cannot recover the assertions — they never
-existed in this branch's history.
-
-**Plugin cache isolation:** `CLAUDE_PLUGIN_ROOT` is the main plugin cache shared across all active Claude
-sessions. **Never write plugin files to `CLAUDE_PLUGIN_ROOT`** during SPRT — doing so modifies the live
-shared cache and affects every concurrent Claude session, not just the test run.
-
-The correct mechanism is `claude-runner --plugin-source <worktree>/plugin`. Before launching the nested
-Claude process, `ClaudeRunner` copies the directory specified by `--plugin-source` into an isolated per-test
-config directory, then sets both `CLAUDE_CONFIG_DIR` and `CLAUDE_PLUGIN_ROOT` in the child process environment
-to point at that isolated copy. The nested process reads plugin files exclusively from this isolated copy —
-never from the main cache.
-
-Skills invoked within a test-run process automatically use the current worktree version. No manual cache
-sync or `/reload-plugins` is needed.
-
-**Create the sanitized branch (once per SPRT run, before any waves):**
-
-The test infrastructure uses a two-level branch design:
-1. **Tests branch** (`${ISSUE_NAME}-tests`): a single orphan branch created once per SPRT run. It contains
-   stripped test-case files with assertions removed. All runners branch off this.
-2. **Runner branches** (`${ISSUE_NAME}-tc${OPAQUE_ID}-r${N}`): one per runner per wave, branched from the
-   sanitized branch. Each runner's branch name matches its worktree directory name so `BlockWrongBranchCommit`'s
-   primary equality check passes without needing a special exception.
-
-```bash
-cd "${WORKTREE_PATH}"
-# Verify clean working tree before orphan checkout — uncommitted changes would be destroyed
-if [[ -n "$(git status --porcelain)" ]]; then
-  echo "ERROR: Worktree has uncommitted changes. Commit all changes before creating the sanitized branch." >&2
+# Validate overall_decision
+if [[ "${OVERALL_DECISION}" != "ACCEPT" && "${OVERALL_DECISION}" != "REJECT" && "${OVERALL_DECISION}" != "INCONCLUSIVE" ]]; then
+  echo "ERROR: sprt-runner-agent returned invalid overall_decision: '${OVERALL_DECISION}'" >&2
+  echo "Raw output:" >&2
+  echo "${SKILL_OUTPUT}" >&2
   exit 1
 fi
-ISSUE_NAME=$(basename "${WORKTREE_PATH}")
-ISOLATION_BRANCH="${ISSUE_NAME}-sanitized"
-# Drop all stash entries so test-run subagents cannot use git stash list/show/pop
-# to recover pre-orphan content that may contain assertion data
-git stash clear
-# Delete all tags so test-run subagents cannot use git tag -l or git show <tag>
-# to discover project context (version tags, issue references in tag messages)
-git tag -l | xargs -r git tag -d
-# Remove all remotes so test-run subagents cannot use git remote -v to discover
-# the repository URL (which reveals project identity)
-git remote | xargs -r -I{} git remote remove {}
-# Create orphan branch with all current files
-git checkout --orphan "${ISOLATION_BRANCH}"
-# Strip YAML frontmatter and ## Assertions sections from test case files.
-# Frontmatter (--- ... ---) contains the 'category' field which reveals test intent
-# (e.g., 'category: negative') and must be removed before the test-run subagent sees the files.
-find "${TEST_DIR}" -name '*.md' -exec sed -i -e '1{/^---[[:space:]]*$/,/^---[[:space:]]*$/d}' -e '/^## Assertions/,$d' {} +
-# Extract turn sections into individual files alongside the test cases
-while IFS= read -r test_case; do
-  "${CLAUDE_PLUGIN_ROOT}/client/bin/extract-turns" \
-    "${TEST_DIR}/${test_case}.md" "${TEST_DIR}/${test_case}.md"
-done <<< "${TEST_CASES}"
-# Remove the original scenario .md files — only extracted turn files (_turn1.md, etc.) should
-# remain on the isolation branch. This prevents the test-run subagent from discovering and
-# reading the scenario file directly (which may still contain residual metadata).
-while IFS= read -r test_case; do
-  rm "${TEST_DIR}/${test_case}.md"
-done <<< "${TEST_CASES}"
-# Rename turn files to opaque numeric IDs so descriptive test case names (e.g.,
-# "unit_step44_reject") do not leak test intent to the test-run subagent.
-OPAQUE_ID=1
-while IFS= read -r test_case; do
-  for turn_file in "${TEST_DIR}/${test_case}"_turn*.md; do
-    turn_suffix="${turn_file##*_turn}"
-    mv "${turn_file}" "${TEST_DIR}/tc${OPAQUE_ID}_turn${turn_suffix}"
-  done
-  OPAQUE_ID=$((OPAQUE_ID + 1))
-done <<< "${TEST_CASES}"
-git add -A
-git commit -m "test-runner workspace"
-# Truncate reflog so test-run subagents cannot use git reflog or git cat-file to
-# recover assertion content from pre-orphan commits.
-git reflog expire --expire=now --all
-# Remove git notes refs so test-run subagents cannot use git notes list
-# to discover metadata from the original repository history
-git for-each-ref --format='%(refname)' refs/notes/ | xargs -r -I{} git update-ref -d {}
-# Return to the issue branch
-git checkout "${BRANCH}"
 ```
 
-This produces opaque turn files `tc{N}_turn1.md`, `tc{N}_turn2.md`, etc. in `${TEST_DIR}/`. The main
-agent maintains a mapping from opaque ID to original test_case_id (built during the rename loop above).
-For single-turn test cases (the common case), only `tc{N}_turn1.md` is created.
+Store `TEST_SHA` and the token summary for Step 9.
 
-**Create per-runner worktrees from the sanitized branch:** Before each wave, create one worktree per
-test-run subagent:
+**Routing after delegation:**
 
-```bash
-RUNNER_BRANCH="${ISSUE_NAME}-tc${OPAQUE_ID}-r${N}"
-RUNNER_WORKTREE="${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/${RUNNER_BRANCH}"
-# Branch from the shared sanitized branch. Each runner gets its own branch so parallel runners do not
-# share a branch ref and their commits are isolated. The branch name matches the worktree directory
-# name, so BlockWrongBranchCommit's primary equality check passes without a special exception.
-git branch "${RUNNER_BRANCH}" "${ISOLATION_BRANCH}"
-git worktree add "${RUNNER_WORKTREE}" "${RUNNER_BRANCH}"
-# Expire the runner worktree's reflog so the checkout entry does not reveal the sanitized branch name
-git -C "${RUNNER_WORKTREE}" reflog expire --expire=now --all
-```
+If `overall_decision = "ACCEPT"`, continue to Step 9.
+If `overall_decision = "REJECT"` or `overall_decision = "INCONCLUSIVE"`, proceed to Step 8.
 
-Use the opaque numeric ID (`tc${OPAQUE_ID}`) in the worktree path, NOT the original descriptive
-test_case_id. The subagent can discover its own worktree path via `pwd`; a descriptive name in the
-path would leak test intent.
-
-**Spawn parallel test-run subagents:** Each subagent runs organically — the skill is NOT pre-loaded.
-Each test-run subagent executes exactly one run (one TC + one run index) and then terminates. Never
-assign more than one run to a single subagent.
-
-**Test-run subagent output contract:**
-
-Test-run subagents MUST execute the turn content directly and produce output that matches the skill's
-documented output contract:
-- Process the input directly; do NOT ask for clarification, permission, or user guidance
-- Do NOT ask "Would you like...?", "Should I...?", "Do you want me to...?", or any follow-up question
-- Do NOT discuss what the agent "might" or "could" do — execute the skill as designed
-- If the turn content is ambiguous, provide your best direct answer without seeking clarification
-- Procedural optimizations (like skipping tee for output capture) do NOT grant autonomy over the
-  interaction model — execute the skill exactly as documented
-
-**CRITICAL: Test-run subagents MUST have Bash access.** They invoke `claude-runner` via Bash to execute
-the turn. Do NOT restrict Bash access. The nested Claude process launched by claude-runner has full tool
-access; filesystem isolation (orphan branch without assertion sections) ensures test integrity.
-
-**CRITICAL: The nested Claude process MUST NOT search for assertion content.** The runner worktree
-(isolation branch) structurally removes assertions from `${TEST_DIR}/` files so they cannot be found.
-The nested process must respond only to the turn content; any investigation of the surrounding filesystem
-or repository to infer expected outcomes is a protocol violation that invalidates the test run.
-
-Each test-run subagent executes the turn via `claude-runner`, which copies the runner worktree's current
-plugin source into an isolated config directory before launching the nested Claude process. The nested
-instance loads the current (worktree) version of any skills it invokes — no manual `/reload-plugins` needed.
-
-```bash
-# Read turn content and execute via claude-runner (copies fresh plugin source automatically)
-TURN_PROMPT=$(cat "{RUNNER_WORKTREE}/{TEST_DIR}/tc{N}_turn1.md")
-mkdir -p "/tmp/test-runs/{CLAUDE_SESSION_ID}"
-START_MS=$(($(date +%s%N)/1000000))
-"${CLAUDE_PLUGIN_ROOT}/client/bin/claude-runner" \
-  --prompt "$TURN_PROMPT" \
-  --model "{TEST_MODEL}" \
-  --plugin-source "{RUNNER_WORKTREE}/plugin" \
-  --cwd "{RUNNER_WORKTREE}" \
-  --output "/tmp/test-runs/{CLAUDE_SESSION_ID}/tc{N}_run_{R}.json"
-END_MS=$(($(date +%s%N)/1000000))
-DURATION_MS=$((END_MS - START_MS))
-```
-
-Extract `texts` (the nested instance's response) from the JSON output file and write them to
-`/tmp/test-runs/{CLAUDE_SESSION_ID}/tc{N}_run_{R}.txt`. Extract `total_tokens` for reporting.
-For multi-turn test cases, invoke claude-runner once per additional turn file (`tc{N}_turn2.md`, etc.),
-passing the previous output as a priming message via `--priming-message` so the nested instance has context.
-
-Returns: `{"run_id": "tc{N}_run_{R}", "opaque_id": "tc{N}",
-"output_path": "/tmp/test-runs/{CLAUDE_SESSION_ID}/tc{N}_run_{R}.txt",
-"duration_ms": <integer>, "total_tokens": <integer>}`
-On failure, returns `{"error": "<reason>"}`.
-
-Pass each subagent ONLY the opaque ID (e.g., `tc1`), run index, `TEST_DIR`, `RUNNER_WORKTREE`,
-`CLAUDE_SESSION_ID`, and model (`TEST_MODEL`). Do NOT pass the original descriptive test_case_id —
-the subagent must know only its opaque numeric ID. The main agent maintains the opaque-to-original mapping
-internally. Do NOT embed assertion arrays inline in the prompt.
-
-**Anti-priming rule — MANDATORY:** Do NOT modify the turn content from the test case file. The content
-passed to `claude-runner --prompt` MUST match the Turn 1 content verbatim — do not add, remove, or alter
-any text. In particular, do NOT add the expected answer or the exact text any assertion checks for. This is
-called "priming" and it defeats SPRT: the nested process passes trivially because it was told what to say,
-not because it followed the skill's rules.
-
-When a test case fails (low pass rate), the correct responses are:
-- **Fix the skill instruction** — add or clarify the rule the agent needs to follow
-- **Add a `system_prompt` constraint** — inject a rule that reflects a real skill constraint (e.g., "when
-  recording findings, always quote priming source text verbatim"), NOT the specific answer the test expects
-- **Fix the assertion** — if the check is testing something the agent would not naturally produce when
-  following the skill, revise the assertion to check a natural output signal instead
-
-WRONG: Adding "Quote 'Agents may skip tee when output is explicitly discarded' in your response" to the prompt.
-RIGHT: Adding a `system_prompt` rule: "When recording findings, always quote priming source text verbatim."
-
-After the subagent completes, write its full response to the output file:
-`/tmp/test-runs/<CLAUDE_SESSION_ID>/<case-id>_run_<N>.txt`
-(create the directory with `mkdir -p /tmp/test-runs/<CLAUDE_SESSION_ID>` before writing).
-
-**Cleanup after each wave:** After ALL grading for a wave completes (not just after test-run subagents
-return), remove their worktrees. Graders may need to read files the test-run subagent wrote in the
-runner worktree, so the worktree must remain available until grading finishes.
-
-```bash
-# Run AFTER all grader subagents for this wave have returned
-for runner_worktree in ${WAVE_RUNNER_WORKTREES}; do
-  git worktree remove --force "${runner_worktree}" 2>/dev/null || true
-done
-```
-
-**Cleanup timing:**
-
-1. **After successful SPRT (overall Accept):** Clean up immediately once all graders have returned and
-   confirmed their verdicts. All grader subagents for every wave must have returned before any runner
-   worktree is removed — graders may need to read files inside the runner worktree.
-
-2. **After failed SPRT (any Reject), just before restarting:** Keep the sanitized branch and runner
-   worktrees alive through Steps 8–9 (investigation and analysis) so the main agent and graders can
-   still inspect them. Clean them up as the FIRST action when about to restart Step 6 (before creating
-   the new sanitized branch).
-
-```bash
-# Run after successful SPRT, OR as the first step of a Step 6 restart.
-# Per-wave cleanup handles individual runner worktrees; this block also removes the sanitized branch.
-git worktree list --porcelain \
-  | grep "worktree.*${ISSUE_NAME}-tc" \
-  | awk '{print $2}' \
-  | xargs -r -I{} git worktree remove --force {} 2>/dev/null || true
-git branch -D "${ISOLATION_BRANCH}" 2>/dev/null || true
-```
-
-Do NOT leave the sanitized branch or runner worktrees alive beyond these two points. They contain
-stripped-down test content that will cause re-run agents to test the wrong version of the instruction.
-
-#### Result Inspection Checklist
-
-Performed after each test-run subagent returns, in this order, BEFORE updating SPRT state. Do not update
-log-ratio values until all checks pass.
-
-**Context efficiency:** The main agent does NOT read test-run output files. Checks 1, 2, and 4
-inspect only the return JSON. Output-file inspection (freshness checks, assertion grading, and
-design-flaw detection) is delegated to the grader subagent, which returns only structured verdicts.
-This keeps ~500–5000 tokens of raw test output per run out of the main agent's context.
-
-**Check 1 — Structural contamination check (primary):** Verify the returned `run_id` and `opaque_id`
-exactly match the expected values for this slot, and that the return object contains no cross-run references
-(no fields referencing other `run_id` values):
-- Confirm the return object contains exactly one `run_id` string (not an array, not absent).
-- Confirm the return object contains exactly one `opaque_id` string.
-- Confirm `run_id` matches the pattern `<expected_opaque_id>_run_<expected_N>` (the exact opaque ID and run
-  index assigned to this subagent).
-- Confirm `opaque_id` matches `<expected_opaque_id>`.
-- Confirm no field in the return object references a `run_id` value other than the expected one.
-- Confirm `output_path` matches the exact pattern `/tmp/test-runs/<CLAUDE_SESSION_ID>/<case-id>_run_<N>.txt`
-  where `<CLAUDE_SESSION_ID>`, `<case-id>`, and `<N>` match the values assigned to this subagent. Reject any
-  `output_path` that does not match this pattern (e.g., paths pointing to instruction files, test artifacts, or
-  locations outside `/tmp/test-runs/`).
-If any of these checks fail, discard the result and treat it as a constraint violation:
-return `{"error": "single-run constraint violated: subagent <run_id> returned unexpected run_id or
-opaque_id: <actual_return>"}`. Do NOT feed a violating result into SPRT.
-If structural contamination is detected in 3 or more consecutive spawns for the same slot, stop the entire
-test and return `{"error": "batch contamination: fresh subagent spawn failed 3 consecutive times
-for <run_id>"}`.
-
-**Check 2 — Prohibition verification:** Inspect the return value for evidence of prohibited behavior:
-- If the return value references file paths under `{TEST_DIR}/` other than `{test_case_id}.md`
-  (e.g., in an `output_path` or any explanation field), reject the run.
-- If the return value contains content that could only come from a peer subagent's output file (e.g., it
-  quotes or references run output from a different `run_id`), reject the run.
-- If the return value contains git history data (commit SHAs, commit messages, author lines), reject the run.
-On rejection, discard the result and return:
-`{"error": "prohibition violated by test-run subagent <run_id>: <specific_violation_description>"}`.
-Stop the entire test — prohibition violations indicate the isolation model is broken and all results
-are suspect.
-
-**Check 3 — Design-flaw detection (fail-fast):** Delegated to the grader subagent (see grader
-section below). The grader evaluates whether a failed deterministic assertion is a design flaw by
-checking if the agent's response demonstrates correct skill behavior despite the pattern firing.
-
-**Design-flaw halt:** When the grader returns a design-flaw finding:
-1. Do NOT update log_ratio for this run.
-2. Halt SPRT immediately — do not spawn additional test-run subagents for any test case.
-3. Route directly to Step 8 with `design_flaw=true` and the grader's recorded evidence.
-   Do NOT display the normal SPRT results summary before routing to Step 8.
-
-**Check 4 — Symptom signals (corroborating, not primary):** After all structural checks pass, inspect for
-contamination symptom signals described in § Batch contamination symptom signals above. These are
-corroborating signals only — if spawn parameters were correct but symptoms appear, escalate to user.
-
-**Post-spawn freshness verification (return-value checks):** After the test-run subagent returns, verify:
-- The return value does not reference run indices, test case IDs, or output paths belonging to other subagents.
-- The return value does not mention "previous run", "earlier attempt", "last time", "as seen before",
-  "prior result", "building on", "same approach as run", "consistent with earlier", or any other
-  phrasing that implies awareness of prior test runs.
-If either check fails, stop the entire test and return `{"error": "post-spawn freshness verification
-failed for <run_id>: <specific_violation_description>"}`. Do NOT retry — a freshness violation means
-the isolation model is broken and all results are suspect.
-
-**Minimal happy-path example (single TC, single run):**
-
-    Input scalar references passed to test-run subagent:
-      opaque_id: "tc1", run_index: 1, TEST_DIR: ".../plugin/skills/my-skill/tests",
-      CLAUDE_SESSION_ID: "abc123", model: TEST_MODEL
-
-    Subagent reads turn from {RUNNER_WORKTREE}/{TEST_DIR}/tc1_turn1.md, executes the prompt.
-
-    Subagent writes output to: /tmp/test-runs/abc123/tc1_run_1.txt
-
-    Subagent returns:
-    {
-      "run_id": "tc1_run_1",
-      "opaque_id": "tc1",
-      "output_path": "/tmp/test-runs/abc123/tc1_run_1.txt",
-      "duration_ms": 4200,
-      "total_tokens": 1100
-    }
-
-    Main agent performs Checks 1, 2, 4 on the return JSON (no file reads).
-    Main agent spawns ONE grader subagent, passing {TEST_DIR}/TC1.md as a file reference (no content loaded).
-    Grader reads the `## Assertions` section from {TEST_DIR}/TC1.md, checks output freshness, evaluates all
-    assertions, returns:
-    {"run_id": "TC1_run_1", "freshness": "PASS",
-     "assertions": [{"id": "a1", "type": "regex", "verdict": "PASS", "evidence": "..."}],
-     "pass": true, "design_flaw": null}
-    All assertions passed → run result: PASS → SPRT log_ratio updated for TC1.
-
-**Spawn ONE grader subagent per run:** After each test-run subagent returns and passes Checks 1, 2,
-and 4, spawn a single `TEST_MODEL` grader subagent for that run. The grader handles ALL assertions
-for the run, plus output-file freshness verification and design-flaw detection. This keeps test-run
-output out of the main agent's context — the main agent sees only structured verdicts.
-
-The grader subagent:
-
-- **Receives:** the test case file path (`{TEST_DIR}/{test_case_id}.md`) as a file reference, the
-  output file path, the runner worktree path, and the run_id. The main agent does NOT read or load
-  assertion content — it passes the file path only. The grader reads the `## Assertions` section
-  from the test case file and MUST replace each original assertion ID with an opaque sequential ID
-  (`a1`, `a2`, ...) before evaluating — descriptive IDs (e.g., `reject_invalid_1`) could bias
-  evaluation.
-
-- **Performs output freshness check:** Reads the output file and verifies it contains no cross-run
-  leakage (results from other runs, phrases implying awareness of prior runs). Returns
-  `{"error": "output freshness violation for <run_id>: <description>"}` on failure.
-
-- **Evaluates deterministic assertions programmatically:** For `regex` assertions, runs
-  `grep -cP '<pattern>' <output_path>` and compares the count (>0 = match found) against the
-  `expected` value. For `string_match` assertions, runs `grep -cF '<pattern>' <output_path>`.
-  No LLM judgment is used for deterministic assertions.
-
-- **Evaluates semantic assertions via LLM judgment:** Reads the output file content and evaluates
-  whether the agent's behavioral response satisfies each semantic assertion. Ignores quoted or
-  reproduced instruction text — grades solely on behavioral response. If the output contains no
-  behavioral response (entirely reproduced instruction text), marks the assertion as FAILED.
-
-- **Performs design-flaw detection:** For any FAILED deterministic assertion, evaluates whether
-  the agent's response demonstrates correct skill behavior despite the pattern firing (e.g.,
-  pattern `requirements.*APPROVED` fires when agent writes "I will NOT write requirements:
-  APPROVED"). If design flaw confirmed, includes it in the return.
-
-- **File access restriction:** "You may read (via the Read tool, cat, head, tail, wc, grep, or any
-  other mechanism) ONLY these sources: (1) the specified output file at {output_path}, (2) the test
-  case file at {test_case_path} — read ONLY the `## Assertions` section, do NOT read Turn content,
-  and (3) files within the runner worktree at {runner_worktree_path} that the test-run subagent
-  created or modified. Do NOT read the instruction file, peer subagent output files, findings.json,
-  test-results.json, or any file not listed above. Do NOT use the Write tool, Edit tool,
-  NotebookEdit tool, TaskOutput tool, or Skill tool — no file may be created or modified. Do NOT
-  invoke any skill. Do NOT use the Glob or Grep tool.
-  See ## Subagent Command Allowlist for permitted commands (grader/analyzer category applies here).
-  Grep and cat commands may ONLY be used against {output_path} — do NOT pass any other file path
-  as an argument to these commands."
-
-- **Returns:**
-  ```json
-  {
-    "run_id": "<run_id>",
-    "freshness": "PASS",
-    "assertions": [
-      {"id": "<assertion_id>", "type": "regex|string_match|semantic",
-       "verdict": "PASS|FAIL", "evidence": "<quoted output text>"}
-    ],
-    "pass": true,
-    "design_flaw": null
-  }
-  ```
-  When a design flaw is detected:
-  ```json
-  {
-    "run_id": "<run_id>",
-    "freshness": "PASS",
-    "assertions": [...],
-    "pass": false,
-    "design_flaw": {"assertion": "<id>", "flaw_evidence": "<quoted text>",
-                     "correct_behavior": "<explanation>"}
-  }
-  ```
-
-**Grader prohibition verification:** After each grader subagent returns, verify compliance before
-accepting the result:
-- If the return value contains content from the instruction file, reject the grading result.
-- If the return value references Turn content from the test case file, reject the grading result —
-  the grader must read ONLY the `## Assertions` section, not the turn prompt.
-- If the return value references file paths other than `output_path` and `test_case_path`, reject
-  the grading result.
-- If the return value contains the INSTRUCTION_TEXT_PATH string or any path component that identifies
-  the instruction file, reject the grading result.
-- Do NOT pass the instruction file path, the INSTRUCTION_TEXT_PATH variable, or any path to the
-  instruction file in the grader's prompt. The grader receives the test case file path and output
-  file path — it reads assertions from the test case file itself, never inline assertion content
-  from the main agent.
-On rejection, return:
-`{"error": "grader prohibition violated in run <run_id>: <specific_violation_description>"}`.
-Stop the entire test — a grader prohibition breach means the grader had access to information that
-could bias its evaluation.
-
-**Note on /tmp path:** Test run output files written to `/tmp/test-runs/` may contain test case
-content. The `/tmp` path is world-readable on shared systems; assume single-user execution environment.
-
-**Concurrent commit safety:** Run outputs are written to temp files (NOT committed per-run). Each
-test-run subagent works in its own isolated worktree; `cat:collect-results-agent` merges
-results after each wave. The final `test-results.json` is committed once SPRT completes. If a commit
-fails, retry up to 3 times with exponential backoff: 1–2s, 2–4s, 4–8s (randomized). If all retries
-fail, return `{"error": "commit failed: <reason>"}`.
-
-**MANDATORY: Do NOT commit test-results.json until `overall_decision = "Accept"` or `overall_decision = "Reject"`.** A
-test-results.json with `overall_decision: "Inconclusive"` or `overall_decision: "Inconclusive (trending Accept)"` must
-NOT be committed — it means SPRT has not completed. Continue dispatching waves until the formal Accept or Reject
-boundary is crossed.
-
-**After SPRT completes:** Write results to `${TEST_DIR}/test-results.json` with per-test-case
-SPRT log_ratios, pass/fail counts, final decision (Accept/Reject), and token/timing aggregates. The
-test-results.json token fields are computed by accumulating `duration_ms` and `total_tokens` from each
-test-run subagent return value:
-
-```json
-{
-  "sprt": {
-    "test_cases": [
-      {
-        "test_case_id": "TC1",
-        "decision": "Accept",
-        "log_ratio": 2.944,
-        "pass_count": 9,
-        "fail_count": 1,
-        "total_runs": 10,
-        "total_tokens": 14800,
-        "total_duration_ms": 42000
-      }
-    ],
-    "overall_decision": "Accept",
-    "total_tokens": 14800,
-    "total_duration_ms": 42000
-  }
-}
-```
-
-Commit `${TEST_DIR}/test-results.json` with message `test: SPRT result [session: ${CLAUDE_SESSION_ID}]`.
-Store SHA as `TEST_SHA`. The file is written to the skill-adjacent `test/` directory and committed there
-directly — no separate persist step is needed.
-
-**Token summary display:** After committing test artifacts, display a token usage summary to the user:
-
-```
-TOKEN USAGE SUMMARY
-===================
-Test Case | Runs | Total Tokens | Total Duration
---------- | ---- | ------------ | --------------
-TC1       |  10  |     14,800   |    42,000 ms
-TC2       |   8  |     12,400   |    36,000 ms
-TOTAL     |  18  |     27,200   |    78,000 ms
-```
-
-Display SPRT results to the user: per-test-case decision, log_ratio, pass/fail counts, and token summary.
+The token summary and per-test-case decisions are displayed by `cat:sprt-runner-agent` as part of
+its Step 8 results report.
 
 ### Step 8: SPRT Failure Investigation
 
-**Execution guard:** If `overall_decision = "Accept"`, continue to Step 9. Do NOT produce an
+**Execution guard:** If `overall_decision = "ACCEPT"`, continue to Step 9. Do NOT produce an
 investigation report, do NOT output the text `SPRT FAILURE INVESTIGATION`, and do NOT run any
 investigation sub-steps. Proceed directly and silently to Step 9.
 
@@ -1535,6 +905,15 @@ test-run subagent exploited. Record the specific matched text and surrounding li
 source" candidates. Also look for: model-default behaviors overriding "Do not..." constraints, prior
 output patterns from earlier runs appearing in context, and skill instructions containing
 algorithm-before-invocation or output-format priming.
+
+**Return-format outcome priming:** When a skill or agent instruction documents a return format with
+verdict/decision/outcome fields (e.g., `"verdict"`, `"decision"`, `"status"`, `"result"`), the example
+value MUST use a neutral placeholder such as `"PASS|FAIL"` or `"<verdict>"` — never a single concrete
+outcome like `"PASS"` alone. A lone concrete outcome anchors LLM evaluators toward that value regardless
+of what was actually observed, defeating the evaluation. When creating or updating skill/agent instructions
+that contain return-format examples, replace any single-outcome field value with a neutral form (e.g.,
+`"verdict": "PASS"` → `"verdict": "PASS|FAIL"`). Flag any existing single-outcome examples found in
+skill/agent files as priming sources during investigation.
 
 **Sub-step 8 — Summarize findings** (interpret): Produce a concise investigation report immediately, based
 on the findings gathered in sub-steps 4–7. Do not ask clarifying questions about skill identity, save
@@ -1750,7 +1129,7 @@ best, then stop and report "test iteration cap reached (5 rounds) — presenting
 **Re-run isolation:** Before returning to Step 6 after a fix, run the cleanup block from § "Cleanup
 timing" (the "just before restarting" path). This removes the stale sanitized branch and any leftover
 runner worktrees. Step 6 will then create a fresh sanitized branch from the updated HEAD before
-dispatching waves. This is MANDATORY — a stale sanitized branch contains the old instruction and would
+dispatching jobs. This is MANDATORY — a stale sanitized branch contains the old instruction and would
 cause re-run agents to test the old (unfixed) version, producing invalid results.
 
 **Output contract:** When iterating after user feedback:
@@ -2220,13 +1599,13 @@ Overall verification passes if all non-skipped items are checked and all skipped
 
 - [ ] SPRT parameters: p0=0.95, p1=0.85, α=0.05, β=0.05, A≈2.944, B≈−2.944
 - [ ] Each test case runs its own independent SPRT; rejection of any case stops all remaining cases (early-stop)
-- [ ] SPRT decisions made pipelined (after each test-run completion), not batched per wave; log_ratio updated
+- [ ] SPRT decisions made pipelined (after each test-run completion), not batched per job; log_ratio updated
   immediately after each run grading before dispatching the next run
 - [ ] Each test run uses a fresh non-resumed `TEST_MODEL` subagent (no `resume` or `conversation_id` fields)
 - [ ] `TEST_MODEL` read from skill frontmatter via `extract-model`; never hardcoded
 - [ ] Each assertion graded by a separate `TEST_MODEL` grader subagent (no inline grading)
 - [ ] Run outputs written to temp files only; `test-results.json` committed once after SPRT completes with Accept or Reject
-- [ ] SPRT waves continued until Accept boundary (log_ratio ≥ 2.944) formally crossed — Inconclusive is never a final state
+- [ ] SPRT jobs continued until Accept boundary (log_ratio ≥ 2.944) formally crossed — Inconclusive is never a final state
 - [ ] Test results show meaningful signal: SPRT log_ratios demonstrate non-trivial discrimination (not all cases
   pass/reject trivially)
 - [ ] Result Inspection Checklist (4 checks) performed before updating SPRT log_ratio

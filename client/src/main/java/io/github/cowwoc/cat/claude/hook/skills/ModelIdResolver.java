@@ -8,9 +8,12 @@ package io.github.cowwoc.cat.claude.hook.skills;
 
 import io.github.cowwoc.cat.claude.hook.util.ProcessRunner;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,8 +52,8 @@ public final class ModelIdResolver
     Version version2dot1dot0 = new Version(2, 1, 0);
     VERSION_MAPPINGS.put(version2dot1dot0, Map.of(
       "haiku", "claude-haiku-4-5-20251001",
-      "sonnet", "claude-sonnet-4-6",
-      "opus", "claude-opus-4-6"));
+      "sonnet", "claude-sonnet-4-5-20250929",
+      "opus", "claude-opus-4-5-20251101"));
     MINIMUM_VERSION = version2dot1dot0;
   }
 
@@ -59,6 +62,25 @@ public final class ModelIdResolver
    */
   private ModelIdResolver()
   {
+  }
+
+  /**
+   * Returns all known model values: short names and their fully-qualified IDs, across all
+   * supported Claude Code versions.
+   * <p>
+   * Useful for input validation when version-specific resolution is not required.
+   *
+   * @return an unmodifiable set of all known short names and fully-qualified model IDs
+   */
+  public static Set<String> knownModels()
+  {
+    Set<String> result = new HashSet<>();
+    for (Map<String, String> mapping : VERSION_MAPPINGS.values())
+    {
+      result.addAll(mapping.keySet());
+      result.addAll(mapping.values());
+    }
+    return Collections.unmodifiableSet(result);
   }
 
   /**
