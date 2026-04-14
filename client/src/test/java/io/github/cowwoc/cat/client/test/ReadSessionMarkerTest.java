@@ -7,7 +7,6 @@
 package io.github.cowwoc.cat.client.test;
 
 import io.github.cowwoc.cat.claude.hook.util.ReadSessionMarker;
-import io.github.cowwoc.cat.claude.tool.ClaudeTool;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -33,14 +32,13 @@ public class ReadSessionMarkerTest
   public void readsMarkerFileContent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("read-session-marker-test");
-    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try
     {
-      Path markerFile = tempDir.resolve(".cat/work/sessions/session-abc123/squash-complete-2.1-fix-foo");
+      Path markerFile = tempDir.resolve(".cat/work/markers/2.1-fix-foo");
       Files.createDirectories(markerFile.getParent());
       Files.writeString(markerFile, "squashed:abc123def");
 
-      String result = new ReadSessionMarker(scope).getOutput(
-        new String[]{"session-abc123", "squash-complete-2.1-fix-foo"});
+      String result = new ReadSessionMarker().getOutput(new String[]{tempDir.toString(), "2.1-fix-foo"});
       requireThat(result, "result").isEqualTo("squashed:abc123def");
     }
     finally
@@ -58,10 +56,9 @@ public class ReadSessionMarkerTest
   public void throwsWhenFileAbsent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("read-session-marker-test");
-    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try
     {
-      new ReadSessionMarker(scope).getOutput(
-        new String[]{"session-abc123", "squash-complete-missing-issue"});
+      new ReadSessionMarker().getOutput(new String[]{tempDir.toString(), "missing-issue"});
     }
     finally
     {
@@ -79,100 +76,60 @@ public class ReadSessionMarkerTest
     expectedExceptionsMessageRegExp = ".*2 arguments.*")
   public void rejectsWhenArgCountIsNotTwo() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("read-session-marker-test");
-    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
-    {
-      new ReadSessionMarker(scope).getOutput(new String[]{"session-id", "marker-name", "extra"});
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
+    new ReadSessionMarker().getOutput(new String[]{"worktree-path", "issue-id", "extra"});
   }
 
   /**
-   * Verifies that a blank session-id throws an {@link IllegalArgumentException} mentioning both
-   * "session-id" and "blank".
+   * Verifies that a blank worktree-path throws an {@link IllegalArgumentException} mentioning both
+   * "worktree-path" and "blank".
    *
    * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*(?=.*session-id)(?=.*blank).*")
-  public void rejectsBlankSessionId() throws IOException
+    expectedExceptionsMessageRegExp = ".*(?=.*worktree-path)(?=.*blank).*")
+  public void rejectsBlankWorktreePath() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("read-session-marker-test");
-    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
-    {
-      new ReadSessionMarker(scope).getOutput(new String[]{"", "squash-complete-issue"});
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
+    new ReadSessionMarker().getOutput(new String[]{"", "issue-id"});
   }
 
   /**
-   * Verifies that a blank marker-name throws an {@link IllegalArgumentException} mentioning both
-   * "marker-name" and "blank".
+   * Verifies that a blank issue-id throws an {@link IllegalArgumentException} mentioning both
+   * "issue-id" and "blank".
    *
    * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*(?=.*marker-name)(?=.*blank).*")
-  public void rejectsBlankMarkerName() throws IOException
+    expectedExceptionsMessageRegExp = ".*(?=.*issue-id)(?=.*blank).*")
+  public void rejectsBlankIssueId() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("read-session-marker-test");
-    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
-    {
-      new ReadSessionMarker(scope).getOutput(new String[]{"session-id", ""});
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
+    new ReadSessionMarker().getOutput(new String[]{"worktree-path", ""});
   }
 
   /**
-   * Verifies that a whitespace-only session-id throws an {@link IllegalArgumentException} mentioning
-   * both "session-id" and "blank", confirming that {@code isBlank()} semantics are enforced rather
+   * Verifies that a whitespace-only worktree-path throws an {@link IllegalArgumentException} mentioning
+   * both "worktree-path" and "blank", confirming that {@code isBlank()} semantics are enforced rather
    * than {@code isEmpty()}.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*(?=.*session-id)(?=.*blank).*")
-  public void rejectsWhitespaceOnlySessionId() throws IOException
+    expectedExceptionsMessageRegExp = ".*(?=.*worktree-path)(?=.*blank).*")
+  public void rejectsWhitespaceOnlyWorktreePath() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("read-session-marker-test");
-    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
-    {
-      new ReadSessionMarker(scope).getOutput(new String[]{"   ", "squash-complete-issue"});
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
+    new ReadSessionMarker().getOutput(new String[]{"   ", "issue-id"});
   }
 
   /**
-   * Verifies that a whitespace-only marker-name throws an {@link IllegalArgumentException} mentioning
-   * both "marker-name" and "blank", confirming that {@code isBlank()} semantics are enforced rather
+   * Verifies that a whitespace-only issue-id throws an {@link IllegalArgumentException} mentioning
+   * both "issue-id" and "blank", confirming that {@code isBlank()} semantics are enforced rather
    * than {@code isEmpty()}.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*(?=.*marker-name)(?=.*blank).*")
-  public void rejectsWhitespaceOnlyMarkerName() throws IOException
+    expectedExceptionsMessageRegExp = ".*(?=.*issue-id)(?=.*blank).*")
+  public void rejectsWhitespaceOnlyIssueId() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("read-session-marker-test");
-    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
-    {
-      new ReadSessionMarker(scope).getOutput(new String[]{"session-id", "   "});
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
+    new ReadSessionMarker().getOutput(new String[]{"worktree-path", "   "});
   }
 }

@@ -6,20 +6,17 @@
  */
 package io.github.cowwoc.cat.client.test;
 
-import io.github.cowwoc.cat.claude.tool.ClaudeTool;
 import io.github.cowwoc.cat.claude.hook.util.WriteSessionMarker;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
- * Tests for {@link WriteSessionMarker#run(JvmScope, String[], PrintStream)} CLI error path handling.
+ * Tests for {@link WriteSessionMarker#run(String[], PrintStream)} CLI error path handling.
  */
 public class WriteSessionMarkerMainTest
 {
@@ -32,17 +29,9 @@ public class WriteSessionMarkerMainTest
     expectedExceptionsMessageRegExp = "(?s).*Expected exactly 3 arguments.*")
   public void noArgsThrowsException() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("write-session-marker-main-test-");
-    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
-    {
-      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
-      WriteSessionMarker.run(scope, new String[]{}, out);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
+    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    PrintStream out = new PrintStream(buffer, true, UTF_8);
+    WriteSessionMarker.run(new String[]{}, out);
   }
 
   /**
@@ -54,16 +43,7 @@ public class WriteSessionMarkerMainTest
     expectedExceptionsMessageRegExp = ".*args.*")
   public void nullArgsThrowsException() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("write-session-marker-main-test-");
-    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
-    {
-      WriteSessionMarker.run(scope, null,
-        new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8));
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
+    WriteSessionMarker.run(null, new PrintStream(new ByteArrayOutputStream(), true, UTF_8));
   }
 
   /**
@@ -75,14 +55,6 @@ public class WriteSessionMarkerMainTest
     expectedExceptionsMessageRegExp = ".*out.*")
   public void nullOutThrowsException() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("write-session-marker-main-test-");
-    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
-    {
-      WriteSessionMarker.run(scope, new String[]{}, null);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
+    WriteSessionMarker.run(new String[]{}, null);
   }
 }

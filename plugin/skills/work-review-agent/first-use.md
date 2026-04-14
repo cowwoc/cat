@@ -1201,7 +1201,7 @@ completion signal. The JSON below is the completion signal.
 Write the review result to a session file so the merge phase can access it for trust=high routing:
 
 ```bash
-REVIEW_DIR="${CLAUDE_PROJECT_DIR}/.cat/work/review/${CLAUDE_SESSION_ID}"
+REVIEW_DIR="${WORKTREE_PATH}/.cat/work/review/${CLAUDE_SESSION_ID}"
 mkdir -p "${REVIEW_DIR}"
 REVIEW_RESULT_FILE="${REVIEW_DIR}/${ISSUE_ID}-result.json"
 ```

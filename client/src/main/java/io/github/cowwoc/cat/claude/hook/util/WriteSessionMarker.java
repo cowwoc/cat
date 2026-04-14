@@ -24,39 +24,32 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
- * Atomically creates the session directory and writes a marker file for a given session, issue, and content.
+ * Atomically creates the markers directory and writes a marker file for a given worktree and issue.
  * <p>
  * Replaces the 3-step bash pattern ({@code mkdir}, {@code git rev-parse}, bash redirect) with a single
  * CLI invocation, reducing round-trips and providing consistent error handling.
  */
 public final class WriteSessionMarker implements SkillOutput
 {
-  private final ClaudeTool scope;
-
   /**
    * Creates a new WriteSessionMarker.
-   *
-   * @param scope the ClaudeTool providing access to the project path
-   * @throws NullPointerException if {@code scope} is null
    */
-  public WriteSessionMarker(ClaudeTool scope)
+  public WriteSessionMarker()
   {
-    requireThat(scope, "scope").isNotNull();
-    this.scope = scope;
   }
 
   /**
-   * Creates the session directory and writes the marker file.
+   * Creates the markers directory and writes the marker file.
    * <p>
    * The marker file is written at:
-   * {@code {catWorkPath}/sessions/{sessionId}/squash-complete-{issueId}}
+   * {@code {worktreePath}/.cat/work/markers/{issueId}}
    *
-   * @param args exactly 3 arguments: {@code session-id}, {@code issue-id}, {@code marker-content}
+   * @param args exactly 3 arguments: {@code worktree-path}, {@code issue-id}, {@code marker-content}
    * @return empty string (the marker file is the side effect)
    * @throws NullPointerException     if {@code args} is null
    * @throws IllegalArgumentException if {@code args} does not contain exactly 3 elements, if
-   *   {@code args[0]} (session-id) is blank, if {@code args[1]} (issue-id) is blank, or if the
-   *   issue-id would escape the session directory
+   *   {@code args[0]} (worktree-path) is blank, if {@code args[1]} (issue-id) is blank, or if the
+   *   issue-id would escape the markers directory
    * @throws IOException              if the directory or file cannot be created
    */
   @Override
@@ -66,32 +59,31 @@ public final class WriteSessionMarker implements SkillOutput
     if (args.length != 3)
     {
       throw new IllegalArgumentException(
-        "Expected exactly 3 arguments (session-id, issue-id, marker-content), got " + args.length + ". " +
-          "Usage: write-session-marker <session-id> <issue-id> <marker-content>");
+        "Expected exactly 3 arguments (worktree-path, issue-id, marker-content), got " + args.length + ". " +
+          "Usage: write-session-marker <worktree-path> <issue-id> <marker-content>");
     }
-    String sessionId = args[0];
-    if (sessionId.isBlank())
+    String worktreePathStr = args[0];
+    if (worktreePathStr.isBlank())
     {
       throw new IllegalArgumentException(
-        "session-id is required as the first argument but was blank. " +
-          "Usage: write-session-marker <session-id> <issue-id> <marker-content>");
+        "worktree-path is required as the first argument but was blank. " +
+          "Usage: write-session-marker <worktree-path> <issue-id> <marker-content>");
     }
     String issueId = args[1];
     if (issueId.isBlank())
     {
       throw new IllegalArgumentException(
         "issue-id is required as the second argument but was blank. " +
-          "Usage: write-session-marker <session-id> <issue-id> <marker-content>");
+          "Usage: write-session-marker <worktree-path> <issue-id> <marker-content>");
     }
     String markerContent = args[2];
     requireThat(markerContent, "markerContent").isNotNull();
 
-    Path baseDir = scope.getCatWorkPath().resolve("sessions").toAbsolutePath().normalize();
-    Path sessionDir = PathUtils.normalize(baseDir, sessionId, "session-id");
-    Path markerFile = PathUtils.normalize(sessionDir, "squash-complete-" + issueId,
-      "issue-id");
+    Path worktreePath = Path.of(worktreePathStr).toAbsolutePath().normalize();
+    Path markersDir = worktreePath.resolve(".cat/work/markers").toAbsolutePath().normalize();
+    Path markerFile = PathUtils.normalize(markersDir, issueId, "issue-id");
 
-    Files.createDirectories(sessionDir);
+    Files.createDirectories(markersDir);
     Files.writeString(markerFile, markerContent, UTF_8);
     return "";
   }
@@ -99,9 +91,9 @@ public final class WriteSessionMarker implements SkillOutput
   /**
    * Main entry point for command-line invocation.
    * <p>
-   * Usage: {@code write-session-marker <session-id> <issue-id> <marker-content>}
+   * Usage: {@code write-session-marker <worktree-path> <issue-id> <marker-content>}
    *
-   * @param args command-line arguments: session-id, issue-id, marker-content
+   * @param args command-line arguments: worktree-path, issue-id, marker-content
    */
   public static void main(String[] args)
   {
@@ -109,7 +101,7 @@ public final class WriteSessionMarker implements SkillOutput
     {
       try
       {
-        run(scope, args, System.out);
+        run(args, System.out);
       }
       catch (IllegalArgumentException | IOException e)
       {
@@ -131,17 +123,16 @@ public final class WriteSessionMarker implements SkillOutput
    * <p>
    * Separated from {@link #main(String[])} to allow unit testing without JVM exit.
    *
-   * @param scope the JVM scope
-   * @param args  the command-line arguments: session-id, issue-id, marker-content
-   * @param out   the output stream to write to
+   * @param args the command-line arguments: worktree-path, issue-id, marker-content
+   * @param out  the output stream to write to
    * @throws NullPointerException if {@code args} or {@code out} are null
    * @throws IOException          if the marker file cannot be written
    */
-  public static void run(ClaudeTool scope, String[] args, PrintStream out) throws IOException
+  public static void run(String[] args, PrintStream out) throws IOException
   {
     requireThat(args, "args").isNotNull();
     requireThat(out, "out").isNotNull();
-    String output = new WriteSessionMarker(scope).getOutput(args);
+    String output = new WriteSessionMarker().getOutput(args);
     if (!output.isEmpty())
       out.print(output);
   }

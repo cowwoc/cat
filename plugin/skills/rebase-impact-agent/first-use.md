@@ -46,7 +46,7 @@ Determine the output path:
 ```bash
 if [[ -z "${SESSION_ANALYSIS_DIR:-}" ]]; then
   # Derive session directory from environment when caller does not provide it
-  SESSION_ANALYSIS_DIR="${CLAUDE_PROJECT_DIR}/.cat/work/sessions/${CLAUDE_SESSION_ID}"
+  SESSION_ANALYSIS_DIR="${WORKTREE_PATH}/.cat/work/sessions/${CLAUDE_SESSION_ID}"
 fi
 mkdir -p "${SESSION_ANALYSIS_DIR}"
 ANALYSIS_PATH="${SESSION_ANALYSIS_DIR}/rebase-impact-analysis.md"
@@ -170,7 +170,7 @@ analysis. The file is ephemeral session output — do NOT commit it to git:
 
 ```bash
 if [[ -z "${SESSION_ANALYSIS_DIR:-}" ]]; then
-  SESSION_ANALYSIS_DIR="${CLAUDE_PROJECT_DIR}/.cat/work/sessions/${CLAUDE_SESSION_ID}"
+  SESSION_ANALYSIS_DIR="${WORKTREE_PATH}/.cat/work/sessions/${CLAUDE_SESSION_ID}"
 fi
 mkdir -p "${SESSION_ANALYSIS_DIR}"
 ANALYSIS_PATH="${SESSION_ANALYSIS_DIR}/rebase-impact-analysis.md"
