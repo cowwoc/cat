@@ -94,6 +94,7 @@ The following files do not require license headers:
 - `*.xml` files (configuration files, no semantic code)
 - All `SKILL.md` files in plugin skills (`first-use.md` companions are NOT exempt and require headers)
 - All `*.md` files in `plugin/agents/` (injected into subagent context as prompts; same rationale as SKILL.md)
+- All `*.md` files in `plugin/concepts/` (injected into agent context as reference material; license headers waste context tokens)
 - All `*.md` files in `plugin/rules/` (injected verbatim into agent context on every session; license headers waste context tokens)
 - All `*.md` files in `plugin/tests/` (skill test scenario files; injected at test runtime, license headers waste context tokens)
 - Files in `.cat/` (planning artifacts, config, runtime data)
