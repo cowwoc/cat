@@ -2174,7 +2174,7 @@ anything the agent only needs after the skill is already loaded.
 - **instruction-analyzer-agent**: Detects delegation opportunities and content relay anti-patterns in skill
   procedures — `plugin/agents/instruction-analyzer-agent.md`
 - **Cross-file reorganization**: The four-phase classify-extract-reconstruct-verify pipeline used in Step 13
-  — `plugin/concepts/cross-file-reorganization.md`
+  — see **Step 13: Cross-File Reorganization** above
 - **Behavioral test cases**: SPRT calibration test cases for this skill are stored in
   `plugin/tests/skills/instruction-builder-agent/first-use/` (one `.md` file per test case). Test results
   are stored in `plugin/tests/skills/instruction-builder-agent/first-use/test-results.json`
