@@ -6,6 +6,9 @@
  */
 package io.github.cowwoc.cat.claude.internal;
 
+import io.github.cowwoc.cat.claude.hook.PostToolHandler;
+import io.github.cowwoc.cat.claude.hook.PostToolUseFailureHook;
+import io.github.cowwoc.cat.claude.hook.PostToolUseHook;
 import io.github.cowwoc.cat.claude.hook.skills.EmpiricalTestRunner;
 import io.github.cowwoc.cat.claude.hook.skills.InstructionTestRunner;
 import io.github.cowwoc.cat.claude.hook.util.IssueDiscovery;
