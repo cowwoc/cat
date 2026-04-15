@@ -288,6 +288,11 @@ public final class GitRebase
    * since the branch has already handled those renames. This prevents false positives when the feature
    * branch's purpose is to perform the same rename as the target.
    * <p>
+   * <b>Content-reference false positive handling:</b> When the old path is still tracked in the current
+   * branch, content references to that path remain valid (the file exists during rebase). Such references
+   * are not flagged as conflicts — only files modified by the issue are checked for content references,
+   * and only when the old path is no longer tracked.
+   * <p>
    * If any inconsistency is found, returns an ERROR JSON string. Otherwise returns {@code null}.
    *
    * @param targetBranch the target branch to rebase onto
@@ -351,12 +356,26 @@ public final class GitRebase
       // Check if any tracked file in the current branch contains the old prefix as text.
       // Planning artifacts (.cat/) are historical records; stale path references there are
       // acceptable and will be resolved automatically during rebase.
+      // Additionally, if the old path is still tracked in the current branch, any references
+      // to it (in documentation or comments) are still valid — the file exists during rebase.
+      //
+      // Filesystem-agnostic: This fix relies exclusively on git commands (git grep, git ls-files)
+      // that abstract over filesystem differences (case sensitivity, path separators, symlinks).
+      // Git's internal path handling ensures consistent behavior across case-insensitive
+      // filesystems (macOS HFS+, Windows NTFS) and case-sensitive filesystems (Linux ext4).
       ProcessRunner.Result grepResult = runGit("grep", "-l", "--", oldPrefix);
       // git grep exits 1 when no matches (not an error); only exit code > 1 is a real error
       if (grepResult.exitCode() > 1)
         throw new IOException("git grep failed: " + grepResult.stdout().strip());
       if (grepResult.exitCode() == 0 && !grepResult.stdout().isBlank())
       {
+        // If the old path is still tracked, skip validation: any references to it are still valid.
+        // This handles cases like documentation that references the old path location.
+        ProcessRunner.Result lsOldPathResult = runGit("ls-files", "--", oldPath);
+        boolean oldPathStillTracked = lsOldPathResult.exitCode() == 0 && !lsOldPathResult.stdout().isBlank();
+        if (oldPathStillTracked)
+          continue;  // Old path still exists; references to it are still valid, not a conflict
+
         for (String file : grepResult.stdout().split("\n"))
         {
           String fileTrimmed = file.strip();
