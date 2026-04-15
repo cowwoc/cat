@@ -13,12 +13,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import io.github.cowwoc.cat.claude.tool.ClaudeTool;
 import io.github.cowwoc.cat.claude.hook.JvmScope;
 import io.github.cowwoc.cat.claude.tool.MainClaudeTool;
-<<<<<<< HEAD
-import io.github.cowwoc.cat.claude.internal.SharedSecrets;
-=======
-import io.github.cowwoc.cat.claude.util.PathUtils;
-import io.github.cowwoc.cat.claude.hook.SharedSecrets;
->>>>>>> 24c744cac (feature: add read-session-marker CLI tool, PathUtils.normalize() path validation utility)
 import io.github.cowwoc.cat.claude.hook.ShellParser;
 import java.io.IOException;
 import java.io.PrintStream;
