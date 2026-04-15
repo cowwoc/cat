@@ -80,4 +80,35 @@ public final class FileUtils
         Files.delete(path);
     }
   }
+
+  /**
+   * Recursively copies a directory and all its contents to a destination.
+   * <p>
+   * Directories are created before their contents (shallowest paths first). If the destination
+   * already exists, its contents are preserved and only new files are added (no overwrite).
+   *
+   * @param source      the source directory to copy from
+   * @param destination the destination directory to copy to
+   * @throws NullPointerException if {@code source} or {@code destination} are null
+   * @throws IOException          if walking the tree or copying any path fails
+   */
+  public static void copyDirectoryRecursively(Path source, Path destination) throws IOException
+  {
+    try (Stream<Path> walk = Files.walk(source))
+    {
+      List<Path> paths = walk.toList();
+      for (Path sourcePath : paths)
+      {
+        Path relativePath = source.relativize(sourcePath);
+        Path destPath = destination.resolve(relativePath);
+        if (Files.isDirectory(sourcePath))
+        {
+          if (!Files.exists(destPath))
+            Files.createDirectory(destPath);
+        }
+        else
+          Files.copy(sourcePath, destPath);
+      }
+    }
+  }
 }

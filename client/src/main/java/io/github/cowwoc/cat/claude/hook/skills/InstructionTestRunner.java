@@ -176,7 +176,7 @@ public final class InstructionTestRunner
         "merge-results, create-isolation-branch, create-runner-worktrees, check-run-contamination, " +
         "remove-runner-worktrees, write-test-results, save-failed-run, remove-runner-worktree, " +
         "remove-sanitized-branch, prepare-run, prepare-trial, get-json-field, get-tc-name, " +
-        "get-worktree-field, run-sprt-batch, run-full-sprt");
+        "get-worktree-field, run-sprt-batch, run-full-sprt, run-single-test");
 
     String command = args[0];
     String[] rest = Arrays.copyOfRange(args, 1, args.length);
@@ -201,12 +201,14 @@ public final class InstructionTestRunner
       case "get-json-field" -> out.println(getJsonField(rest));
       case "run-sprt-batch" -> out.println(runSprtBatch(rest));
       case "run-full-sprt" -> runFullSprt(rest, out);
+      case "run-single-test" -> runSingleTest(rest, out);
       default -> throw new IllegalArgumentException(
         "InstructionTestRunner: unknown command: " + command + "\n" +
         "Valid commands: extract-units, extract-model, extract-test-dir, detect-changes, " +
         "map-units, persist-artifacts, init-sprt, update-sprt, check-boundary, smoke-status, " +
         "merge-results, create-runner-worktrees, check-run-contamination, remove-runner-worktrees, " +
-        "remove-runner-worktree, prepare-trial, get-json-field, run-sprt-batch, run-full-sprt");
+        "remove-runner-worktree, prepare-trial, get-json-field, run-sprt-batch, run-full-sprt, " +
+        "run-single-test");
     }
   }
 
@@ -1383,8 +1385,7 @@ public final class InstructionTestRunner
         int runs = tcNode.path("runs").asInt(0);
         int trialNum = runs + 1;
         String runnerBranch = issueName + "-" + tcId + "-r" + trialNum;
-        String homeDir = System.getProperty("user.home");
-        String runnerWorktree = homeDir + "/.cat/worktrees/" + runnerBranch;
+        String runnerWorktree = projectDir + "/.cat/work/worktrees/" + runnerBranch;
 
         ProcessRunner.Result worktreeResult = ProcessRunner.run(worktreePath,
           "git", "-C", worktreePath.toString(), "worktree", "add", "-b", runnerBranch,
@@ -2220,95 +2221,193 @@ public final class InstructionTestRunner
     Path jlinkBin, String gradeOutputPath, String isolationResult)
     throws IOException
   {
-    // Get original test case filename stem
     String[] getTcNameArgs = {isolationResult, tcId};
     String originalStem = getTcName(getTcNameArgs);
 
-    // Build grader prompt
     Path graderPromptFile = Files.createTempFile("grader-prompt-", ".txt");
     try
     {
-      String graderPrompt = String.format("""
-        Grade the following test run:
-
-        1. **Transcript**: %s (claude-runner JSON output file)
-        2. **Scenario file path**: %s
-        3. **Run ID**: %s_run_%d
-        4. **Output path**: %s
-        5. **Runner worktree**: %s
-        """,
-        outputJson,
-        Path.of(testDir, originalStem + ".md"),
-        tcId,
-        trialNum,
-        gradeOutputPath,
-        runnerWorktree);
-
+      String graderPrompt = buildGraderPrompt(outputJson, testDir, originalStem, tcId,
+        trialNum, gradeOutputPath, runnerWorktree);
       Files.writeString(graderPromptFile, graderPrompt, UTF_8);
 
-      // Invoke grader via ClaudeRunner.run()
-      try (ClaudeTool graderScope = new MainClaudeTool())
-      {
-        String[] graderArgs = buildGraderArgs(graderPromptFile, modelId, runnerWorktree, jlinkBin);
+      Path actualGradePath = invokeGrader(tcId, graderPromptFile, modelId, runnerWorktree,
+        jlinkBin, gradeOutputPath, trialNum);
 
-        Path graderStdout = Files.createTempFile("grader-stdout-", ".txt");
-        try (PrintStream graderOut = new PrintStream(graderStdout.toFile(), UTF_8))
-        {
-          int exitCode = ClaudeRunner.run(graderScope, graderArgs, graderOut);
-
-          if (exitCode != 0)
-          {
-            String graderOutput = Files.readString(graderStdout, UTF_8);
-            throw new IOException("Grader for " + tcId + " exited with code " + exitCode +
-              "\nGrader output:\n" + graderOutput);
-          }
-
-          // Read grade.json written by grader. Check inside the try block so graderStdout
-          // is still available before finally deletes it — the stdout content helps diagnose
-          // cases where the grader exits 0 without writing the file (e.g., API errors that
-          // still return exit code 0, or a grader that silently skips writing output).
-          if (!Files.exists(Path.of(gradeOutputPath)))
-          {
-            String graderOutput = Files.readString(graderStdout, UTF_8);
-            throw new IOException("Grader for " + tcId + " exited 0 but did not write grade file: " +
-              gradeOutputPath + "\nGrader output:\n" + graderOutput);
-          }
-        }
-        finally
-        {
-          Files.deleteIfExists(graderStdout);
-        }
-      }
-
-      JsonMapper mapper = scope.getJsonMapper();
-      JsonNode gradeNode = mapper.readTree(Files.readString(Path.of(gradeOutputPath), UTF_8));
-
-      // Extract overall verdict from assertion_results array per documented schema
-      // Tolerant reader: accept both "assertion_results" (correct) and "assertions" (grader error)
-      JsonNode assertionResults = gradeNode.path("assertion_results");
-      if (assertionResults.isMissingNode())
-        assertionResults = gradeNode.path("assertions");
-      if (assertionResults.isMissingNode() || !assertionResults.isArray())
-        throw new IOException("Grade file missing assertion_results or assertions field: " + gradeOutputPath);
-
-      ArrayNode results = (ArrayNode) assertionResults;
-      if (results.isEmpty())
-        throw new IOException("Grade file has no assertion_results: " + gradeOutputPath);
-
-      // Overall verdict is PASS only if all assertion results pass
-      for (JsonNode result : results)
-      {
-        String verdict = result.path("verdict").asString();
-        if (!verdict.equals("PASS"))
-          return "FAIL";
-      }
-
-      return "PASS";
+      return extractVerdict(actualGradePath);
     }
     finally
     {
       Files.deleteIfExists(graderPromptFile);
     }
+  }
+
+  /**
+   * Builds the grader prompt for a test case run.
+   *
+   * @param outputJson the claude-runner JSON output file path
+   * @param testDir the test directory containing scenario files
+   * @param originalStem the original test case filename stem
+   * @param tcId the test case ID
+   * @param trialNum the trial number
+   * @param gradeOutputPath the expected output path for the grade file
+   * @param runnerWorktree the runner worktree path
+   * @return the grader prompt text
+   */
+  private String buildGraderPrompt(String outputJson, String testDir, String originalStem,
+    String tcId, int trialNum, String gradeOutputPath, String runnerWorktree)
+  {
+    return String.format("""
+      Grade the following test run:
+
+      1. **Transcript**: %s (claude-runner JSON output file)
+      2. **Scenario file path**: %s
+      3. **Run ID**: %s_run_%d
+      4. **Output path**: %s
+      5. **Runner worktree**: %s
+      """,
+      outputJson,
+      Path.of(testDir, originalStem + ".md"),
+      tcId,
+      trialNum,
+      gradeOutputPath,
+      runnerWorktree);
+  }
+
+  /**
+   * Invokes the grader and returns the actual grade file path.
+   * <p>
+   * The grader may write the grade file to either the expected location or an alternative
+   * location in the runner worktree. This method checks both locations.
+   *
+   * @param tcId the test case ID
+   * @param graderPromptFile the grader prompt file
+   * @param modelId the model ID to use for grading
+   * @param runnerWorktree the runner worktree path
+   * @param jlinkBin the jlink binary path
+   * @param gradeOutputPath the expected output path for the grade file
+   * @param trialNum the trial number
+   * @return the actual path where the grade file was written
+   * @throws IOException if the grader fails or the grade file is not found
+   */
+  private Path invokeGrader(String tcId, Path graderPromptFile, String modelId,
+    String runnerWorktree, Path jlinkBin, String gradeOutputPath, int trialNum)
+    throws IOException
+  {
+    try (ClaudeTool graderScope = new MainClaudeTool())
+    {
+      String[] graderArgs = {
+        "--prompt-file", graderPromptFile.toString(),
+        "--model", modelId,
+        "--agent", "instruction-grader-agent",
+        "--plugin-source", Path.of(runnerWorktree, "plugin").toString(),
+        "--jlink-bin", jlinkBin.toString(),
+        "--cwd", runnerWorktree
+      };
+
+      Path graderStdout = Files.createTempFile("grader-stdout-", ".txt");
+      try (PrintStream graderOut = new PrintStream(graderStdout.toFile(), UTF_8))
+      {
+        int exitCode = ClaudeRunner.run(graderScope, graderArgs, graderOut);
+
+        if (exitCode != 0)
+        {
+          String graderOutput = Files.readString(graderStdout, UTF_8);
+          throw new IOException("Grader for " + tcId + " exited with code " + exitCode +
+            "\nGrader output:\n" + graderOutput);
+        }
+
+        return findGradeFile(tcId, gradeOutputPath, runnerWorktree, trialNum, graderStdout);
+      }
+      finally
+      {
+        Files.deleteIfExists(graderStdout);
+      }
+    }
+  }
+
+  /**
+   * Finds the actual grade file path.
+   * <p>
+   * The grader may write to either the expected location or an alternative location in the
+   * runner worktree. This method checks both locations.
+   *
+   * @param tcId the test case ID
+   * @param gradeOutputPath the expected output path
+   * @param runnerWorktree the runner worktree path
+   * @param trialNum the trial number
+   * @param graderStdout the grader stdout file (for diagnostics if not found)
+   * @return the actual path where the grade file was written
+   * @throws IOException if the grade file is not found at either location
+   */
+  private Path findGradeFile(String tcId, String gradeOutputPath, String runnerWorktree,
+    int trialNum, Path graderStdout)
+    throws IOException
+  {
+    Path gradePath = Path.of(gradeOutputPath);
+    if (Files.exists(gradePath))
+      return gradePath;
+
+    // Extract session ID from gradeOutputPath
+    // Format: /path/.cat/work/test-runs/{sessionId}/{tcId}_run{trialNum}_grade.json
+    Path gradeParent = gradePath.getParent();
+    if (gradeParent != null)
+    {
+      Path sessionDir = gradeParent.getParent();
+      if (sessionDir != null)
+      {
+        String sessionId = sessionDir.getFileName().toString();
+        // Construct alternative path in runner worktree
+        Path runnerGradePath = Path.of(runnerWorktree, ".cat", "work", "test-runs",
+          sessionId, tcId + "_run" + trialNum + "_grade.json");
+        if (Files.exists(runnerGradePath))
+          return runnerGradePath;
+      }
+    }
+
+    // If still not found at either location, throw error
+    String graderOutput = Files.readString(graderStdout, UTF_8);
+    throw new IOException("Grader for " + tcId + " exited 0 but did not write grade file.\n" +
+      "Checked locations:\n  1. " + gradeOutputPath + "\n  2. " +
+      Path.of(runnerWorktree, ".cat/work/test-runs/...") + "\n" +
+      "Grader output:\n" + graderOutput);
+  }
+
+  /**
+   * Extracts the overall verdict from a grade file.
+   * <p>
+   * The overall verdict is PASS only if all assertion results pass.
+   *
+   * @param gradePath the grade file path
+   * @return "PASS" if all assertions passed, "FAIL" otherwise
+   * @throws IOException if the grade file is malformed or cannot be read
+   */
+  private String extractVerdict(Path gradePath) throws IOException
+  {
+    JsonMapper mapper = scope.getJsonMapper();
+    JsonNode gradeNode = mapper.readTree(Files.readString(gradePath, UTF_8));
+
+    // Extract overall verdict from assertion_results array per documented schema
+    // Tolerant reader: accept both "assertion_results" (correct) and "assertions" (grader error)
+    JsonNode assertionResults = gradeNode.path("assertion_results");
+    if (assertionResults.isMissingNode())
+      assertionResults = gradeNode.path("assertions");
+    if (assertionResults.isMissingNode() || !assertionResults.isArray())
+      throw new IOException("Grade file missing assertion_results or assertions field: " + gradePath);
+
+    ArrayNode results = (ArrayNode) assertionResults;
+    if (results.isEmpty())
+      throw new IOException("Grade file has no assertion_results: " + gradePath);
+
+    // Overall verdict is PASS only if all assertion results pass
+    for (JsonNode result : results)
+    {
+      String verdict = result.path("verdict").asString();
+      if (!verdict.equals("PASS"))
+        return "FAIL";
+    }
+
+    return "PASS";
   }
 
   /**
@@ -2528,6 +2627,427 @@ public final class InstructionTestRunner
 
     out.println();
     out.println("COMPLETE: overall_decision=" + overallDecision);
+  }
+
+  /**
+   * Context data for running a single SPRT test or filtered subset of tests.
+   *
+   * @param issueName the issue name derived from the worktree path
+   * @param sprtStatePath the path to the SPRT state JSON file
+   * @param isolationResult the JSON output from the isolation branch creation
+   * @param isolationBranch the name of the isolation branch
+   * @param filteredTcIds the list of test case IDs matching the filter pattern
+   * @param decisions the map of test case IDs to their current SPRT decisions
+   */
+  private record SingleTestContext(
+    String issueName,
+    String sprtStatePath,
+    String isolationResult,
+    String isolationBranch,
+    List<String> filteredTcIds,
+    Map<String, String> decisions)
+  {
+  }
+
+  /**
+   * Implements the {@code run-single-test} command.
+   * <p>
+   * Runs a subset of SPRT tests matching the specified name pattern. This is a simplified interface
+   * compared to {@code run-full-sprt} that allows running individual tests or a filtered set of tests.
+   *
+   * @param args {@code [worktree_path, test_dir, test_pattern, test_model, project_dir, session_id]}
+   *             where {@code test_pattern} is a test name or glob pattern (e.g., "cache_fix_warning_conveyed"
+   *             or "*warning*")
+   * @param out  the output stream
+   * @throws IOException          if an I/O error occurs
+   * @throws InterruptedException if waiting for a runner process is interrupted
+   */
+  private void runSingleTest(String[] args, PrintStream out) throws IOException, InterruptedException
+  {
+    validateRunSingleTestArgs(args);
+
+    String worktreePath = args[0];
+    String testDir = args[1];
+    String testPattern = args[2];
+    String testModel = args[3];
+    String projectDir = args[4];
+    String sessionId = args[5];
+
+    JsonMapper mapper = scope.getJsonMapper();
+    SingleTestContext context = prepareSingleTestRun(worktreePath, testDir, testPattern, testModel,
+      mapper, out);
+
+    Map<String, Integer> runCounts = runSprtLoop(worktreePath, projectDir, sessionId, testModel,
+      context, mapper, out);
+
+    finalizeSingleTestRun(worktreePath, testDir, context, runCounts, out);
+  }
+
+  /**
+   * Validates arguments for run-single-test command.
+   *
+   * @param args the command arguments
+   * @throws IllegalArgumentException if arguments are invalid
+   */
+  private void validateRunSingleTestArgs(String[] args)
+  {
+    requireThat(args, "args").isNotNull();
+    if (args.length != 6)
+      throw new IllegalArgumentException(
+        "InstructionTestRunner run-single-test: expected 6 arguments " +
+        "<worktree_path> <test_dir> <test_pattern> <test_model> <project_dir> <session_id>, got " +
+        args.length + ".\n" +
+        "Usage: instruction-test-runner run-single-test <worktree_path> <test_dir> <test_pattern> " +
+        "<test_model> <project_dir> <session_id>");
+  }
+
+  /**
+   * Prepares a single test run by cleaning up prior runs, creating an isolation branch,
+   * filtering test cases by pattern, and initializing SPRT state.
+   *
+   * @param worktreePath the worktree path
+   * @param testDir the test directory
+   * @param testPattern the test pattern (exact name or glob)
+   * @param testModel the test model
+   * @param mapper the JSON mapper
+   * @param out the output stream
+   * @return context containing issue name, SPRT state path, isolation result, and filtered test case IDs
+   * @throws IOException if an I/O error occurs
+   */
+  private SingleTestContext prepareSingleTestRun(String worktreePath, String testDir,
+    String testPattern, String testModel, JsonMapper mapper, PrintStream out)
+    throws IOException
+  {
+    // Step 1: prepare-run
+    out.println("Step 1: Running prepare-run...");
+    String prepareOutput = prepareRun(new String[]{worktreePath, testDir});
+    Map<String, String> prepareVars = parseKeyValue(prepareOutput);
+    String testDirAbs = prepareVars.get("test_dir_abs");
+    String issueName = prepareVars.get("issue_name");
+    String sprtStatePath = prepareVars.get("sprt_state_path");
+    out.println("  TEST_DIR_ABS: " + testDirAbs);
+    out.println("  ISSUE_NAME: " + issueName);
+    out.println("  SPRT_STATE_PATH: " + sprtStatePath);
+    out.println("  TEST_PATTERN: " + testPattern);
+    out.println();
+
+    // Step 2: Cleanup previous run
+    out.println("Step 2: Cleaning up previous run...");
+    removeSanitizedBranch(new String[]{worktreePath, issueName + "-sanitized"});
+    removeRunnerWorktrees(new String[]{worktreePath, issueName});
+    out.println();
+
+    // Step 3: Create isolation branch
+    out.println("Step 3: Creating sanitized isolation branch...");
+    String isolationResult = createIsolationBranch(new String[]{worktreePath, testDirAbs, issueName});
+    JsonNode isolationNode = mapper.readTree(isolationResult);
+    String isolationBranch = isolationNode.path("isolation_branch").asString();
+    ArrayNode tcIdsArray = (ArrayNode) isolationNode.path("tc_ids_json");
+
+    // Step 3b: Filter tests by pattern
+    List<String> allTcIds = new ArrayList<>();
+    for (JsonNode tcIdNode : tcIdsArray)
+      allTcIds.add(tcIdNode.asString());
+
+    List<String> filteredTcIds = new ArrayList<>();
+    for (String tcId : allTcIds)
+    {
+      String originalStem = getTcName(new String[]{isolationResult, tcId});
+      if (matchesPattern(originalStem, testPattern))
+        filteredTcIds.add(tcId);
+    }
+
+    if (filteredTcIds.isEmpty())
+    {
+      out.println("ERROR: No tests match pattern '" + testPattern + "'");
+      out.println("Available tests:");
+      for (String tcId : allTcIds)
+      {
+        String stem = getTcName(new String[]{isolationResult, tcId});
+        out.println("  - " + stem);
+      }
+      throw new IllegalArgumentException("No tests match pattern: " + testPattern);
+    }
+
+    out.println("  Isolation branch: " + isolationBranch);
+    out.println("  Total test cases: " + allTcIds.size());
+    out.println("  Filtered test cases: " + filteredTcIds.size());
+    for (String tcId : filteredTcIds)
+    {
+      String stem = getTcName(new String[]{isolationResult, tcId});
+      out.println("    " + tcId + ": " + stem);
+    }
+    out.println();
+
+    // Step 4: Initialize SPRT with filtered test cases
+    out.println("Step 4: Initializing SPRT state...");
+    ArrayNode filteredTcIdsArray = mapper.createArrayNode();
+    for (String tcId : filteredTcIds)
+      filteredTcIdsArray.add(tcId);
+    initSprt(new String[]{sprtStatePath, mapper.writeValueAsString(filteredTcIdsArray), "/dev/null",
+      testModel});
+    out.println("  SPRT state initialized at: " + sprtStatePath);
+    out.println();
+
+    Map<String, String> decisions = new HashMap<>();
+    return new SingleTestContext(issueName, sprtStatePath, isolationResult, isolationBranch,
+      filteredTcIds, decisions);
+  }
+
+  /**
+   * Runs the SPRT loop until all test cases reach a decision or the 50-run truncation limit.
+   *
+   * @param worktreePath the worktree path
+   * @param projectDir the project directory
+   * @param sessionId the Claude session ID
+   * @param testModel the test model
+   * @param context the test context
+   * @param mapper the JSON mapper
+   * @param out the output stream
+   * @return a map of test case IDs to run counts
+   * @throws IOException if an I/O error occurs
+   * @throws InterruptedException if waiting is interrupted
+   */
+  private Map<String, Integer> runSprtLoop(String worktreePath, String projectDir,
+    String sessionId, String testModel, SingleTestContext context, JsonMapper mapper,
+    PrintStream out)
+    throws IOException, InterruptedException
+  {
+    out.println("=== Starting SPRT Loop ===");
+    out.println("Test cases: " + context.filteredTcIds().size());
+    out.println();
+
+    int batchNum = 0;
+    List<String> undecided = new ArrayList<>(context.filteredTcIds());
+    Map<String, Integer> runCounts = new HashMap<>();
+    for (String tcId : context.filteredTcIds())
+      runCounts.put(tcId, 0);
+
+    while (!undecided.isEmpty())
+    {
+      ++batchNum;
+      out.println("=== Batch " + batchNum + ": " + undecided.size() + " test case(s) remaining ===");
+
+      runSprtBatch(new String[]{
+        worktreePath, context.sprtStatePath(), context.issueName(), context.issueName(),
+        projectDir, sessionId, testModel, String.valueOf(batchNum), context.isolationResult()
+      });
+
+      boolean anyReject = processBatchResults(undecided, runCounts, context, mapper, out);
+
+      printBatchSummary(batchNum, context, runCounts, mapper, out);
+
+      if (anyReject)
+      {
+        handleEarlyAbort(undecided, runCounts, context, out);
+        break;
+      }
+    }
+
+    out.println("=== SPRT Loop Complete ===");
+    out.println();
+    return runCounts;
+  }
+
+  /**
+   * Processes batch results and updates decisions.
+   *
+   * @param undecided the list of undecided test cases (mutated)
+   * @param runCounts the run counts map
+   * @param context the test context
+   * @param mapper the JSON mapper
+   * @param out the output stream
+   * @return {@code true} if any test case was rejected
+   * @throws IOException if an I/O error occurs
+   */
+  private boolean processBatchResults(List<String> undecided, Map<String, Integer> runCounts,
+    SingleTestContext context, JsonMapper mapper, PrintStream out)
+    throws IOException
+  {
+    boolean anyReject = false;
+    List<String> stillUndecided = new ArrayList<>();
+
+    for (String tcId : undecided)
+    {
+      String boundaryResult = checkBoundary(new String[]{context.sprtStatePath(), tcId});
+      JsonNode boundaryNode = mapper.readTree(boundaryResult);
+      String decision = boundaryNode.path("decision").asString();
+      int runs = runCounts.get(tcId) + 1;
+      runCounts.put(tcId, runs);
+
+      if (decision.equals("ACCEPT") || decision.equals("REJECT"))
+      {
+        context.decisions().put(tcId, decision);
+        out.println("  ✓ " + tcId + ": " + decision + " (" + runs + " runs)");
+        if (decision.equals("REJECT"))
+          anyReject = true;
+      }
+      else if (runs >= 50)
+      {
+        context.decisions().put(tcId, "REJECT");
+        out.println("  ✗ " + tcId + ": REJECT (truncated at 50 runs)");
+        anyReject = true;
+      }
+      else
+      {
+        stillUndecided.add(tcId);
+      }
+    }
+
+    undecided.clear();
+    undecided.addAll(stillUndecided);
+    out.println();
+    return anyReject;
+  }
+
+  /**
+   * Prints a batch summary showing SPRT state for all test cases.
+   *
+   * @param batchNum the batch number
+   * @param context the test context
+   * @param runCounts the run counts map
+   * @param mapper the JSON mapper
+   * @param out the output stream
+   * @throws IOException if an I/O error occurs
+   */
+  private void printBatchSummary(int batchNum, SingleTestContext context,
+    Map<String, Integer> runCounts, JsonMapper mapper, PrintStream out)
+    throws IOException
+  {
+    out.println("=== Batch " + batchNum + " Summary ===");
+    out.println();
+
+    String sprtStateJson = Files.readString(Path.of(context.sprtStatePath()));
+    JsonNode sprtState = mapper.readTree(sprtStateJson);
+    JsonNode sprtNode = sprtState.path("sprt_state");
+
+    out.printf("%-10s %-7s %-7s %-12s %-6s %-20s%n",
+      "TC", "Passes", "Fails", "Decision", "Runs", "Runs to Convergence");
+    out.println("-".repeat(72));
+
+    for (String tcId : context.filteredTcIds())
+    {
+      JsonNode tcNode = sprtNode.path(tcId);
+      int passes = tcNode.path("passes").asInt(0);
+      int fails = tcNode.path("fails").asInt(0);
+      double logRatio = tcNode.path("log_ratio").asDouble(0.0);
+      String decision = context.decisions().getOrDefault(tcId, "INCONCLUSIVE");
+      int runs = runCounts.get(tcId);
+
+      String convergence;
+      if (decision.equals("INCONCLUSIVE"))
+      {
+        double toAccept = 2.944 - logRatio;
+        int runsToAccept = (int) Math.ceil(toAccept / 0.1112);
+        convergence = "~" + runsToAccept + " more";
+      }
+      else
+      {
+        convergence = "-";
+      }
+
+      out.printf("%-10s %-7d %-7d %-12s %-6d %-20s%n",
+        tcId, passes, fails, decision, runs, convergence);
+    }
+    out.println();
+  }
+
+  /**
+   * Handles early SPRT abort when a test case is rejected.
+   *
+   * @param undecided the list of undecided test cases
+   * @param runCounts the run counts map
+   * @param context the test context
+   * @param out the output stream
+   */
+  private void handleEarlyAbort(List<String> undecided, Map<String, Integer> runCounts,
+    SingleTestContext context, PrintStream out)
+  {
+    out.println("=== SPRT Aborted: At least one test case REJECT detected ===");
+    out.println("Remaining test cases (" + undecided.size() + ") will be marked INCONCLUSIVE.");
+    for (String tcId : undecided)
+    {
+      context.decisions().put(tcId, "INCONCLUSIVE");
+      out.println("  " + tcId + ": INCONCLUSIVE (aborted after " + runCounts.get(tcId) + " runs)");
+    }
+    out.println();
+  }
+
+  /**
+   * Finalizes a single test run by writing results, cleaning up, and reporting.
+   *
+   * @param worktreePath the worktree path
+   * @param testDir the test directory
+   * @param context the test context
+   * @param runCounts the run counts map
+   * @param out the output stream
+   * @throws IOException if an I/O error occurs
+   */
+  private void finalizeSingleTestRun(String worktreePath, String testDir,
+    SingleTestContext context, Map<String, Integer> runCounts, PrintStream out)
+    throws IOException
+  {
+    // Step 6: Write test results
+    out.println("Step 6: Writing test results...");
+    Map<String, String> prepareVars = parseKeyValue(
+      prepareRun(new String[]{worktreePath, testDir}));
+    String testDirAbs = prepareVars.get("test_dir_abs");
+    String writeOutput = writeTestResults(new String[]{worktreePath, context.sprtStatePath(),
+      testDirAbs});
+    Map<String, String> writeVars = parseKeyValue(writeOutput);
+    String overallDecision = writeVars.get("overall_decision");
+    String testSha = writeVars.get("test_sha");
+    out.println("  Overall decision: " + overallDecision);
+    out.println("  Test SHA: " + testSha);
+    out.println();
+
+    // Step 7: Cleanup
+    out.println("Step 7: Cleanup...");
+    removeSanitizedBranch(new String[]{worktreePath, context.isolationBranch()});
+    removeRunnerWorktrees(new String[]{worktreePath, context.issueName()});
+    out.println();
+
+    // Step 8: Report results
+    out.println("=== SPRT Results ===");
+    out.println();
+    out.println("Overall Decision: " + overallDecision);
+    out.println("Test SHA: " + testSha);
+    out.println();
+
+    for (String tcId : context.filteredTcIds())
+    {
+      String originalStem = getTcName(new String[]{context.isolationResult(), tcId});
+      out.println(tcId + ": " + context.decisions().get(tcId) + " (" + runCounts.get(tcId) +
+        " runs) - " + originalStem + ".md");
+    }
+
+    out.println();
+    out.println("COMPLETE: overall_decision=" + overallDecision);
+  }
+
+  /**
+   * Checks if a test name matches the given pattern.
+   * <p>
+   * Supports simple glob patterns with {@code *} wildcard.
+   *
+   * @param testName the test name to check
+   * @param pattern  the pattern (exact name or glob with *)
+   * @return {@code true} if the test name matches the pattern
+   */
+  private static boolean matchesPattern(String testName, String pattern)
+  {
+    requireThat(testName, "testName").isNotNull();
+    requireThat(pattern, "pattern").isNotNull();
+
+    if (pattern.equals(testName))
+      return true;
+
+    if (!pattern.contains("*"))
+      return false;
+
+    // Convert glob pattern to regex
+    String regex = pattern.replace(".", "\\.").replace("*", ".*");
+    return testName.matches(regex);
   }
 
   /**
@@ -2859,6 +3379,31 @@ public final class InstructionTestRunner
   }
 
   /**
+   * Builds the grader argument array for ClaudeRunner invocation.
+   * <p>
+   * Exposed for testing to validate the --agent argument is correctly constructed.
+   *
+   * @param graderPromptFile the grader prompt file path
+   * @param modelId the model ID to use
+   * @param runnerWorktree the runner worktree path
+   * @param jlinkBin the jlink binary path
+   * @return the grader arguments array
+   * @throws NullPointerException if any parameter is null
+   */
+  private static String[] buildGraderArgs(Path graderPromptFile, String modelId, String runnerWorktree,
+    Path jlinkBin)
+  {
+    return new String[]{
+      "--prompt-file", graderPromptFile.toString(),
+      "--model", modelId,
+      "--agent", "instruction-grader-agent",
+      "--plugin-source", Path.of(runnerWorktree, "plugin").toString(),
+      "--jlink-bin", jlinkBin.toString(),
+      "--cwd", runnerWorktree
+    };
+  }
+
+  /**
    * Computes the SHA-256 hex digest of the contents of a file.
    *
    * @param filePath path to the file
@@ -2957,31 +3502,6 @@ public final class InstructionTestRunner
     if (dotIndex > 0)
       return name.substring(0, dotIndex);
     return name;
-  }
-
-  /**
-   * Builds the argument array for invoking claude-runner with the instruction-grader-agent.
-   * <p>
-   * This method is called by {@code gradeTc()} when grading a test case. It constructs the
-   * CLI arguments that {@link ClaudeRunner#run} expects for launching the grading subagent.
-   *
-   * @param graderPromptFile the path to the grader prompt file
-   * @param modelId          the Claude model ID (e.g., {@code "claude-sonnet-4-5-20250929"})
-   * @param runnerWorktree   the runner worktree path
-   * @param jlinkBin         the jlink binary directory path
-   * @return the grader arguments array
-   */
-  private static String[] buildGraderArgs(Path graderPromptFile, String modelId, String runnerWorktree,
-    Path jlinkBin)
-  {
-    return new String[]{
-      "--prompt-file", graderPromptFile.toString(),
-      "--model", modelId,
-      "--agent", "instruction-grader-agent",
-      "--plugin-source", Path.of(runnerWorktree, "plugin").toString(),
-      "--jlink-bin", jlinkBin.toString(),
-      "--cwd", runnerWorktree
-    };
   }
 
   /**

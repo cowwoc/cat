@@ -213,4 +213,11 @@ public final class TestClaudeTool extends AbstractClaudeTool
     ensureOpen();
     return "UTC";
   }
+
+  @Override
+  public String getAnthropicBaseUrl()
+  {
+    ensureOpen();
+    return "";
+  }
 }

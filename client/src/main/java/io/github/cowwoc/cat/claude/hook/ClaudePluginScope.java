@@ -73,4 +73,14 @@ public interface ClaudePluginScope extends JvmScope
    * @throws IllegalStateException if this scope is closed
    */
   DisplayUtils getDisplayUtils();
+
+  /**
+   * Returns the Anthropic API base URL from the {@code ANTHROPIC_BASE_URL} environment variable.
+   * <p>
+   * Returns empty string if the variable is not set.
+   *
+   * @return the base URL, or empty string if not set
+   * @throws IllegalStateException if this scope is closed
+   */
+  String getAnthropicBaseUrl();
 }

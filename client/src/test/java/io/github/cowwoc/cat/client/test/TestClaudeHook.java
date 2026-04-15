@@ -276,4 +276,11 @@ public final class TestClaudeHook extends AbstractClaudeHook
     ensureOpen();
     return "UTC";
   }
+
+  @Override
+  public String getAnthropicBaseUrl()
+  {
+    ensureOpen();
+    return "";
+  }
 }

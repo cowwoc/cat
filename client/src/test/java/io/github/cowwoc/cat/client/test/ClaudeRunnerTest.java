@@ -192,7 +192,8 @@ public final class ClaudeRunnerTest
    * Verifies that run() reads prompt content from the file specified by --prompt-file.
    * <p>
    * Confirms the file is read (no IOException) when it exists; the process launch itself
-   * may fail since no real Claude is available in unit tests, but the file-read step succeeds.
+   * may fail since Node.js + cli.js may not be available in unit tests, but the file-read
+   * step succeeds.
    */
   @Test
   public void runReadsPromptFromFile() throws IOException
@@ -207,7 +208,7 @@ public final class ClaudeRunnerTest
       try
       {
         // The file exists and is readable — no IOException from file reading.
-        // Process launch may fail (no real claude binary), which is acceptable here.
+        // Process launch may fail (Node.js + cli.js may not be available in tests), which is acceptable here.
         ClaudeRunner.run(scope, new String[]{"--prompt-file", promptFile.toString()}, out);
       }
       catch (IOException e)
@@ -393,5 +394,66 @@ public final class ClaudeRunnerTest
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+  }
+
+  /**
+   * Verifies that isCacheFixDetected returns false when NODE_OPTIONS is null.
+   */
+  @Test
+  public void isCacheFixDetectedReturnsFalseWhenNodeOptionsIsNull()
+  {
+    requireThat(ClaudeRunner.isCacheFixDetected(null), "detected").isFalse();
+  }
+
+  /**
+   * Verifies that isCacheFixDetected returns false when NODE_OPTIONS is empty.
+   */
+  @Test
+  public void isCacheFixDetectedReturnsFalseWhenNodeOptionsIsEmpty()
+  {
+    requireThat(ClaudeRunner.isCacheFixDetected(""), "detected").isFalse();
+  }
+
+  /**
+   * Verifies that isCacheFixDetected returns false when NODE_OPTIONS does not contain the
+   * cache-fix import.
+   */
+  @Test
+  public void isCacheFixDetectedReturnsFalseWhenImportAbsent()
+  {
+    String nodeOptions = "--experimental-modules --no-warnings";
+    requireThat(ClaudeRunner.isCacheFixDetected(nodeOptions), "detected").isFalse();
+  }
+
+  /**
+   * Verifies that isCacheFixDetected returns true when NODE_OPTIONS contains the cache-fix import.
+   */
+  @Test
+  public void isCacheFixDetectedReturnsTrueWhenImportPresent()
+  {
+    String nodeOptions = "--import claude-code-cache-fix";
+    requireThat(ClaudeRunner.isCacheFixDetected(nodeOptions), "detected").isTrue();
+  }
+
+  /**
+   * Verifies that isCacheFixDetected returns true when NODE_OPTIONS contains the cache-fix import
+   * along with other options.
+   */
+  @Test
+  public void isCacheFixDetectedReturnsTrueWhenImportPresentWithOtherOptions()
+  {
+    String nodeOptions = "--experimental-modules --import claude-code-cache-fix --no-warnings";
+    requireThat(ClaudeRunner.isCacheFixDetected(nodeOptions), "detected").isTrue();
+  }
+
+  /**
+   * Verifies that isCacheFixDetected returns true when NODE_OPTIONS uses the full path form
+   * of the import.
+   */
+  @Test
+  public void isCacheFixDetectedReturnsTrueWhenImportUsesFullPath()
+  {
+    String nodeOptions = "--import /usr/local/lib/node_modules/claude-code-cache-fix/preload.mjs";
+    requireThat(ClaudeRunner.isCacheFixDetected(nodeOptions), "detected").isTrue();
   }
 }

@@ -409,6 +409,12 @@ public final class TestClaudeToolTest
     }
 
     @Override
+    public String getAnthropicBaseUrl()
+    {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
     public boolean isClosed()
     {
       return false;

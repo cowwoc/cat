@@ -1,0 +1,17 @@
+{
+  "sprt" : {
+    "test_cases" : [ {
+      "test_case_id" : "tc6",
+      "decision" : "REJECT",
+      "log_ratio" : -3.1846000000000005,
+      "pass_count" : 1,
+      "fail_count" : 3,
+      "total_runs" : 4,
+      "total_tokens" : 0,
+      "total_duration_ms" : 0
+    } ],
+    "overall_decision" : "REJECT",
+    "total_tokens" : 0,
+    "total_duration_ms" : 0
+  }
+}
