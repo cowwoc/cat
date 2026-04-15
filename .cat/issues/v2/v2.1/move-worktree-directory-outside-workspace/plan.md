@@ -51,6 +51,13 @@ None
 - Note: Migration must be idempotent (check if old worktrees exist before removal)
   - Files: `plugin/migrations/2.1.sh`
 
+### Job 5: Remove sparse-checkout configurations
+- Remove sparse-checkout logic from WorkPrepare.java (lines 1497-1499: comment + git sparse-checkout command)
+- Remove sparse-checkout logic from EmpiricalTestRunner.java (lines 1235-1254: comment + ProcessBuilder block)
+  - Files: `client/src/main/java/io/github/cowwoc/cat/claude/hook/util/WorkPrepare.java`
+  - Files: `client/src/main/java/io/github/cowwoc/cat/claude/hook/skills/EmpiricalTestRunner.java`
+- **Rationale:** sparse-checkout configurations excluded `.claude/` from worktrees to prevent duplicate rule loading. Since worktrees now live outside `/workspace/` (where Claude Code cannot read `.claude/`), this configuration is obsolete and should be removed.
+
 ## Post-conditions
 - [ ] Worktrees created in `~/.cat/worktrees/` instead of `/workspace/.cat/work/worktrees/`
 - [ ] No `.claude/` directories loaded from worktrees (verified by testing)

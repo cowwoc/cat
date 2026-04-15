@@ -173,7 +173,7 @@ subagents:
 git checkout 1.2-implement-parser
 git merge 1.2-implement-parser-sub-a1b2c3d4 -m "Merge subagent a1b2c3d4"
 git branch -d 1.2-implement-parser-sub-a1b2c3d4
-git worktree remove ${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/1.2-implement-parser-sub-a1b2c3d4
+git worktree remove ${HOME}/.cat/worktrees/1.2-implement-parser-sub-a1b2c3d4
 
 # Result: Clean linear history with merge commit
 ```
@@ -192,7 +192,7 @@ git add src/Parser.java
 # Complete
 git commit -m "Merge subagent a1b2c3d4, resolved Parser.java conflict"
 git branch -d 1.2-implement-parser-sub-a1b2c3d4
-git worktree remove ${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/1.2-implement-parser-sub-a1b2c3d4
+git worktree remove ${HOME}/.cat/worktrees/1.2-implement-parser-sub-a1b2c3d4
 ```
 
 ### Merge Multiple Subagents

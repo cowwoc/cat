@@ -20,4 +20,4 @@ if [[ -z "${CLAUDE_PROJECT_DIR:-}" ]]; then
 fi
 
 LOCKS_DIR="${CLAUDE_PROJECT_DIR}/.cat/work/locks"
-WORKTREES_DIR="${CLAUDE_PROJECT_DIR}/.cat/work/worktrees"
+WORKTREES_DIR="${HOME}/.cat/worktrees"

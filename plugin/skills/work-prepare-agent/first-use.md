@@ -41,7 +41,7 @@ Return JSON on success:
   "minor": "1",
   "issue_name": "issue-name",
   "issue_path": "${WORKTREE_PATH}/.cat/issues/v2/v2.1/issue-name",
-  "worktree_path": "${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name",
+  "worktree_path": "${HOME}/.cat/worktrees/2.1-issue-name",
   "issue_branch": "2.1-issue-name",
   "target_branch": "v2.1",
   "estimated_tokens": 45000,
@@ -547,7 +547,7 @@ Then proceed to Step 5.
 ```bash
 ISSUE_BRANCH="${MAJOR}.${MINOR}-${ISSUE_NAME}"
 TARGET_BRANCH=$(git branch --show-current)
-WORKTREE_PATH="${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/${ISSUE_BRANCH}"
+WORKTREE_PATH="${HOME}/.cat/worktrees/${ISSUE_BRANCH}"
 
 git worktree add -b "${ISSUE_BRANCH}" "${WORKTREE_PATH}" HEAD
 ```

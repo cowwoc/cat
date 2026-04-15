@@ -333,7 +333,7 @@ to finish:
 2. Wait for the monitor to stop
 3. Identify the run worktree:
    ```bash
-   RUN_WORKTREE="${WORKTREE_PATH}/.cat/work/worktrees/$(basename ${WORKTREE_PATH})-tc{N}-r{M}"
+   RUN_WORKTREE="${HOME}/.cat/worktrees/$(basename ${WORKTREE_PATH})-tc{N}-r{M}"
    ls "${RUN_WORKTREE}/.cat/work/" 2>/dev/null || echo "Run worktree missing"
    ```
 4. Find the failing component's session. Both the test runner and grader run with `--cwd "${RUN_WORKTREE}"`,

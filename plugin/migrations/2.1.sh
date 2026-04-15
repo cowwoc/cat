@@ -47,6 +47,8 @@ set -euo pipefail
 # 23. Rename .cat/ROADMAP.md → .cat/roadmap.md
 # 24. Rename .cat/PROJECT.md → .cat/project.md
 # 25. Rename .cat/rules/INDEX.md → .cat/rules/index.md
+# 26. Rename ## Sub-Agent Waves → ## Jobs and ### Wave N → ### Job N in plan.md files
+# 27. Move worktrees from .cat/work/worktrees/ to ~/.cat/worktrees/ and remove .cat/work/
 
 trap 'echo "ERROR in 2.1.sh at line $LINENO: $BASH_COMMAND" >&2; exit 1' ERR
 
@@ -1732,6 +1734,52 @@ else
     done <<< "$all_plan_files_26"
 
     log_migration "Phase 26 complete: $phase26_migrated files migrated, $phase26_skipped already up to date"
+fi
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Phase 27: Move worktrees from .cat/work/worktrees/ to ~/.cat/worktrees/ and remove .cat/work/
+# ──────────────────────────────────────────────────────────────────────────────
+# Idempotent: only removes worktrees and directory if they still exist in the old location
+
+log_migration "Phase 27: Move worktrees from .cat/work/worktrees/ to ~/.cat/worktrees/"
+
+if [[ -d ".cat/work/worktrees" ]]; then
+    # List all worktrees and remove those under .cat/work/worktrees/
+    # git worktree list returns lines like: "/path/to/worktree commitish [branchname]"
+    worktree_list=$(git worktree list --porcelain 2>/dev/null || true)
+
+    # Count worktrees removed
+    phase27_removed=0
+
+    # Parse worktree list output (worktree path starts with "worktree " in porcelain format)
+    while IFS= read -r line; do
+        if [[ "$line" =~ ^worktree\ (.+)$ ]]; then
+            worktree_path="${BASH_REMATCH[1]}"
+            # Check if worktree is under .cat/work/worktrees/
+            if [[ "$worktree_path" == *"/.cat/work/worktrees/"* ]]; then
+                log_migration "  Removing old worktree: $worktree_path"
+                git worktree remove --force "$worktree_path" 2>/dev/null || true
+                ((phase27_removed++)) || true
+            fi
+        fi
+    done <<< "$worktree_list"
+
+    log_migration "  Removed $phase27_removed worktree(s) from old location"
+
+    # Remove the now-empty .cat/work/ directory structure if it exists
+    if [[ -d ".cat/work" ]]; then
+        # Only remove if empty or contains only empty subdirectories
+        if [[ -z "$(find .cat/work -type f 2>/dev/null)" ]]; then
+            rm -rf .cat/work
+            log_migration "  Removed empty .cat/work/ directory"
+        else
+            log_migration "  .cat/work/ directory not empty - skipping removal"
+        fi
+    fi
+
+    log_migration "Phase 27 complete"
+else
+    log_migration "Phase 27: .cat/work/worktrees/ not found - skipping"
 fi
 
 log_success "Migration to 2.1 completed"

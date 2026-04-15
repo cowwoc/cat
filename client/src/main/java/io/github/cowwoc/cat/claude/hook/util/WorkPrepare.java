@@ -1493,10 +1493,6 @@ public final class WorkPrepare
     // Create worktree
     GitCommands.runGit(projectPath, "worktree", "add", "-b", issueBranch, worktreePath.toString(),
       "HEAD");
-
-    // Exclude .claude/ directory from worktree to prevent duplicate rule loading when Claude Code
-    // walks up the directory tree
-    GitCommands.runGit(worktreePath, "sparse-checkout", "set", "--no-cone", "/*", "!/.claude");
   }
 
   /**

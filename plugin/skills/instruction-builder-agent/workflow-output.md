@@ -108,7 +108,7 @@ With pre-computation or subagent batching, only show:
 
 ```
 ◆ Preparing task execution...
-✓ Ready: worktree at ${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.0-issue-name, estimate 45K tokens
+✓ Ready: worktree at ${HOME}/.cat/worktrees/2.0-issue-name, estimate 45K tokens
 
 ◆ Exploring codebase...
 ✓ Found: 3 files to modify, no duplicates

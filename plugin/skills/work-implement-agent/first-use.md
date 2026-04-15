@@ -21,7 +21,7 @@ and orchestrates subagent execution of the implementation plan.
 | 1 | cat_agent_id | agent ID passed through from parent |
 | 2 | issue_id | `2.1-issue-name` |
 | 3 | issue_path | `${WORKTREE_PATH}/.cat/issues/v2/v2.1/issue-name` |
-| 4 | worktree_path | `${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name` |
+| 4 | worktree_path | `${HOME}/.cat/worktrees/2.1-issue-name` |
 | 5 | issue_branch | `2.1-issue-name` |
 | 6 | target_branch | `v2.1` |
 | 7 | estimated_tokens | `45000` |

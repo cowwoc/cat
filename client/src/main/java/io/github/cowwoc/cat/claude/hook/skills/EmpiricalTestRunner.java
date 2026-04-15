@@ -1232,27 +1232,6 @@ public final class EmpiricalTestRunner
       }
     }
 
-    // Exclude .claude/ directory from worktree to prevent duplicate rule loading when Claude Code
-    // walks up the directory tree
-    ProcessBuilder sparseCheckout = new ProcessBuilder("git", "-C", worktreePath.toString(),
-      "sparse-checkout", "set", "--no-cone", "/*", "!/.claude");
-    sparseCheckout.redirectErrorStream(true);
-    try (Process process = sparseCheckout.start())
-    {
-      String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-      try
-      {
-        int exitCode = process.waitFor();
-        if (exitCode != 0)
-          throw new IOException("git sparse-checkout failed (exit " + exitCode + "): " + output.strip());
-      }
-      catch (InterruptedException e)
-      {
-        Thread.currentThread().interrupt();
-        throw new IOException("Interrupted while configuring sparse-checkout at: " + worktreePath, e);
-      }
-    }
-
     return worktreePath;
   }
 
