@@ -116,7 +116,21 @@ public final class InstructionTestRunner
 
   static
   {
-    SharedSecrets.setInstructionTestRunnerAccess(InstructionTestRunner::sha256Bytes);
+    SharedSecrets.setInstructionTestRunnerAccess(new SharedSecrets.InstructionTestRunnerAccess()
+    {
+      @Override
+      public String sha256Bytes(byte[] bytes)
+      {
+        return InstructionTestRunner.sha256Bytes(bytes);
+      }
+
+      @Override
+      public String[] buildGraderArgs(Path graderPromptFile, String modelId, String runnerWorktree,
+        Path jlinkBin)
+      {
+        return InstructionTestRunner.buildGraderArgs(graderPromptFile, modelId, runnerWorktree, jlinkBin);
+      }
+    });
   }
 
   private final Logger log = LoggerFactory.getLogger(InstructionTestRunner.class);
@@ -2235,14 +2249,7 @@ public final class InstructionTestRunner
       // Invoke grader via ClaudeRunner.run()
       try (ClaudeTool graderScope = new MainClaudeTool())
       {
-        String[] graderArgs = {
-          "--prompt-file", graderPromptFile.toString(),
-          "--model", modelId,
-          "--subagent-type", "instruction-grader-agent",
-          "--plugin-source", Path.of(runnerWorktree, "plugin").toString(),
-          "--jlink-bin", jlinkBin.toString(),
-          "--cwd", runnerWorktree
-        };
+        String[] graderArgs = buildGraderArgs(graderPromptFile, modelId, runnerWorktree, jlinkBin);
 
         Path graderStdout = Files.createTempFile("grader-stdout-", ".txt");
         try (PrintStream graderOut = new PrintStream(graderStdout.toFile(), UTF_8))
@@ -2950,6 +2957,31 @@ public final class InstructionTestRunner
     if (dotIndex > 0)
       return name.substring(0, dotIndex);
     return name;
+  }
+
+  /**
+   * Builds the argument array for invoking claude-runner with the instruction-grader-agent.
+   * <p>
+   * This method is called by {@code gradeTc()} when grading a test case. It constructs the
+   * CLI arguments that {@link ClaudeRunner#run} expects for launching the grading subagent.
+   *
+   * @param graderPromptFile the path to the grader prompt file
+   * @param modelId          the Claude model ID (e.g., {@code "claude-sonnet-4-5-20250929"})
+   * @param runnerWorktree   the runner worktree path
+   * @param jlinkBin         the jlink binary directory path
+   * @return the grader arguments array
+   */
+  private static String[] buildGraderArgs(Path graderPromptFile, String modelId, String runnerWorktree,
+    Path jlinkBin)
+  {
+    return new String[]{
+      "--prompt-file", graderPromptFile.toString(),
+      "--model", modelId,
+      "--agent", "instruction-grader-agent",
+      "--plugin-source", Path.of(runnerWorktree, "plugin").toString(),
+      "--jlink-bin", jlinkBin.toString(),
+      "--cwd", runnerWorktree
+    };
   }
 
   /**

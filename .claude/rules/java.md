@@ -2213,6 +2213,11 @@ violates encapsulation. Use the SharedSecrets pattern instead:
 4. Register via a static initializer in the class: `static { SharedSecrets.setXAccess(TheClass::theMethod); }`
 5. Tests call `SharedSecrets.theMethod(...)` directly; no instance or `@VisibleForTesting` needed
 
+**SharedSecrets must point to existing production methods.** `SharedSecrets` entries must delegate to methods that
+exist in and are called by production code. Do not create new methods solely to satisfy a `SharedSecrets` hook —
+instead, extract the logic into a real production method first, then expose it via `SharedSecrets`. This ensures
+tests verify actual production behavior, not test-only code paths.
+
 ## Project Structure
 
 ```
