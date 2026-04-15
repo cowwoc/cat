@@ -2326,4 +2326,60 @@ public final class InstructionTestRunnerTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that buildGraderArgs constructs the correct argument array with --agent flag.
+   * <p>
+   * This test validates the fix for the SPRT test infrastructure bug where --subagent-type
+   * was incorrectly used instead of --agent when invoking claude-runner for the grading phase.
+   */
+  @Test
+  public void buildGraderArgsUsesAgentFlag() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-grader-args-");
+    try
+    {
+      Path graderPromptFile = tempDir.resolve("grader-prompt.txt");
+      Files.writeString(graderPromptFile, "test prompt", StandardCharsets.UTF_8);
+      String modelId = "claude-sonnet-4-5-20250929";
+      String runnerWorktree = tempDir.toString();
+      Path jlinkBin = tempDir.resolve("bin");
+      Files.createDirectories(jlinkBin);
+
+      String[] args = SharedSecrets.buildGraderArgs(graderPromptFile, modelId, runnerWorktree, jlinkBin);
+
+      // Validate argument array structure and values
+      requireThat(args, "args").length().isEqualTo(12);
+      requireThat(args[0], "args[0]").isEqualTo("--prompt-file");
+      requireThat(args[1], "args[1]").isEqualTo(graderPromptFile.toString());
+      requireThat(args[2], "args[2]").isEqualTo("--model");
+      requireThat(args[3], "args[3]").isEqualTo(modelId);
+
+      // CRITICAL: Verify --agent flag is used (not --subagent-type)
+      requireThat(args[4], "args[4]").isEqualTo("--agent");
+      requireThat(args[5], "args[5]").isEqualTo("instruction-grader-agent");
+
+      requireThat(args[6], "args[6]").isEqualTo("--plugin-source");
+      requireThat(args[7], "args[7]").isEqualTo(Path.of(runnerWorktree, "plugin").toString());
+      requireThat(args[8], "args[8]").isEqualTo("--jlink-bin");
+      requireThat(args[9], "args[9]").isEqualTo(jlinkBin.toString());
+      requireThat(args[10], "args[10]").isEqualTo("--cwd");
+      requireThat(args[11], "args[11]").isEqualTo(runnerWorktree);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that buildGraderArgs rejects null parameters.
+   */
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*graderPromptFile.*")
+  public void buildGraderArgsRejectsNullPromptFile()
+  {
+    Path jlinkBin = Path.of("/tmp/bin");
+    SharedSecrets.buildGraderArgs(null, "model", "/tmp/worktree", jlinkBin);
+  }
 }

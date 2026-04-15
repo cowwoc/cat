@@ -203,6 +203,30 @@ public final class SharedSecrets
   }
 
   /**
+   * Builds the grader argument array for ClaudeRunner invocation.
+   * <p>
+   * Exposed for testing to validate the --agent argument is correctly constructed.
+   *
+   * @param graderPromptFile the grader prompt file path
+   * @param modelId the model ID to use
+   * @param runnerWorktree the runner worktree path
+   * @param jlinkBin the jlink binary path
+   * @return the grader arguments array
+   * @throws NullPointerException if any parameter is null
+   */
+  public static String[] buildGraderArgs(Path graderPromptFile, String modelId, String runnerWorktree,
+    Path jlinkBin)
+  {
+    requireThat(graderPromptFile, "graderPromptFile").isNotNull();
+    requireThat(modelId, "modelId").isNotNull();
+    requireThat(runnerWorktree, "runnerWorktree").isNotNull();
+    requireThat(jlinkBin, "jlinkBin").isNotNull();
+    if (instructionTestRunnerAccess == null)
+      initialize(InstructionTestRunner.class);
+    return instructionTestRunnerAccess.buildGraderArgs(graderPromptFile, modelId, runnerWorktree, jlinkBin);
+  }
+
+  /**
    * Registers the access object for {@link StatuslineCommand}.
    *
    * @param access the access object
@@ -297,9 +321,8 @@ public final class SharedSecrets
   }
 
   /**
-   * Provides access to {@link InstructionTestRunner} cryptographic helpers.
+   * Provides access to {@link InstructionTestRunner} internal methods.
    */
-  @FunctionalInterface
   public interface InstructionTestRunnerAccess
   {
     /**
@@ -309,6 +332,19 @@ public final class SharedSecrets
      * @return lowercase hex SHA-256 digest
      */
     String sha256Bytes(byte[] bytes);
+
+    /**
+     * Builds the grader argument array for ClaudeRunner invocation.
+     * <p>
+     * Exposed for testing to validate the --agent argument is correctly constructed.
+     *
+     * @param graderPromptFile the grader prompt file path
+     * @param modelId the model ID to use
+     * @param runnerWorktree the runner worktree path
+     * @param jlinkBin the jlink binary path
+     * @return the grader arguments array
+     */
+    String[] buildGraderArgs(Path graderPromptFile, String modelId, String runnerWorktree, Path jlinkBin);
   }
 
   /**
