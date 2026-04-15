@@ -8,6 +8,8 @@ package io.github.cowwoc.cat.claude.hook.util;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import io.github.cowwoc.cat.claude.internal.SharedSecrets;
+import io.github.cowwoc.cat.claude.util.PathUtils;
 
 
 import io.github.cowwoc.cat.claude.tool.ClaudeTool;
