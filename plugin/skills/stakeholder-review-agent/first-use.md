@@ -41,7 +41,7 @@ Positional space-separated arguments:
 |----------|------|---------|
 | 0 | cat_agent_id | `0554aad8-90d4-44f7-bb3e-8706a82c90ce` |
 | 1 | issue_id | `2.1-issue-name` |
-| 2 | worktree_path | `${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name` |
+| 2 | worktree_path | `${HOME}/.cat/worktrees/2.1-issue-name` |
 | 3 | caution_level | `quick` or `changed` or `all` |
 | 4 | commits_compact | `hash:type,hash:type` (e.g., `abc123:bugfix,def456:test`) |
 

@@ -1369,7 +1369,8 @@ public final class InstructionTestRunner
         int runs = tcNode.path("runs").asInt(0);
         int trialNum = runs + 1;
         String runnerBranch = issueName + "-" + tcId + "-r" + trialNum;
-        String runnerWorktree = projectDir + "/.cat/work/worktrees/" + runnerBranch;
+        String homeDir = System.getProperty("user.home");
+        String runnerWorktree = homeDir + "/.cat/worktrees/" + runnerBranch;
 
         ProcessRunner.Result worktreeResult = ProcessRunner.run(worktreePath,
           "git", "-C", worktreePath.toString(), "worktree", "add", "-b", runnerBranch,

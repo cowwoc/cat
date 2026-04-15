@@ -18,7 +18,7 @@ Review phase for `/cat:work-agent`. Runs stakeholder review (Step 5) and deferre
 | 1 | cat_agent_id | agent ID passed through from parent |
 | 2 | issue_id | `2.1-issue-name` |
 | 3 | issue_path | `${WORKTREE_PATH}/.cat/issues/v2/v2.1/issue-name` |
-| 4 | worktree_path | `${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name` |
+| 4 | worktree_path | `${HOME}/.cat/worktrees/2.1-issue-name` |
 | 5 | issue_branch | `2.1-issue-name` |
 | 6 | target_branch | `v2.1` |
 | 7 | all_commits_compact | compact format `hash:type,hash:type` |
@@ -670,7 +670,7 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
     ```bash
     # For each concern N (1-indexed):
     CONCERN_BRANCH="fix-concern-${AUTOFIX_ITERATION}-${N}-${BRANCH}"
-    CONCERN_WORKTREE="${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/${CONCERN_BRANCH}"
+    CONCERN_WORKTREE="${HOME}/.cat/worktrees/${CONCERN_BRANCH}"
     cd "${WORKTREE_PATH}" && \
       git worktree add -b "${CONCERN_BRANCH}" "${CONCERN_WORKTREE}" HEAD
     ```
@@ -820,7 +820,7 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
     cd "${WORKTREE_PATH}"
     # For each concern N in this iteration:
     CONCERN_BRANCH="fix-concern-${AUTOFIX_ITERATION}-${N}-${BRANCH}"
-    CONCERN_WORKTREE="${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/${CONCERN_BRANCH}"
+    CONCERN_WORKTREE="${HOME}/.cat/worktrees/${CONCERN_BRANCH}"
     git worktree remove --force "${CONCERN_WORKTREE}" 2>/dev/null || true
     git branch -D "${CONCERN_BRANCH}" 2>/dev/null || true
     ```

@@ -223,7 +223,7 @@ echo '{
       {"issue_id": "2.1-issue-name", "session": "eb68bb02", "age_seconds": 326}
     ],
     "worktrees_to_remove": [
-      {"path": "${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/2.1-issue-name",
+      {"path": "${HOME}/.cat/worktrees/2.1-issue-name",
        "branch": "2.1-issue-name", "age_seconds": 326}
     ],
     "branches_to_remove": ["2.1-issue-name"],

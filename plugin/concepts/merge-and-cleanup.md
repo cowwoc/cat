@@ -152,13 +152,13 @@ where all subsequent commands fail silently.
 cd "${CLAUDE_PROJECT_DIR}"
 
 # Then remove the worktree
-git worktree remove ${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/{issue-name}
+git worktree remove ${HOME}/.cat/worktrees/{issue-name}
 ```
 
 If worktree removal fails:
 ```bash
 cd "${CLAUDE_PROJECT_DIR}"
-git worktree remove --force ${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/{issue-name}
+git worktree remove --force ${HOME}/.cat/worktrees/{issue-name}
 ```
 
 ### 9. Branch Cleanup
@@ -234,7 +234,7 @@ pwd
 git branch --show-current
 ```
 
-**Expected:** Issue worktree (`${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/<issue>`) on issue branch
+**Expected:** Issue worktree (`${HOME}/.cat/worktrees/<issue>`) on issue branch
 **WRONG:** Main worktree (`/workspace`) on main branch
 
 **Common mistake:** After conflict resolution attempts (abort, reset), agent ends up in main
@@ -246,7 +246,7 @@ worktree and makes edits there. This corrupts main and other parallel issues.
 pwd
 
 # If in wrong location, cd to the correct directory
-cd ${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/<issue-name>
+cd ${HOME}/.cat/worktrees/<issue-name>
 git status
 ```
 

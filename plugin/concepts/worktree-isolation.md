@@ -186,7 +186,7 @@ When a worktree is created, the following context is established:
 
 | Variable | Source | Example | Usage |
 |----------|--------|---------|-------|
-| `WORKTREE_PATH` | work preparation output | `/workspace/.cat/work/worktrees/2.1-issue` | Directory to `cd` into |
+| `WORKTREE_PATH` | work preparation output | `${HOME}/.cat/worktrees/2.1-issue` | Directory to `cd` into |
 | `ISSUE_ID` | work preparation output | `2.1-issue-name` | Identifying the issue |
 | `TARGET_BRANCH` | work preparation output | `v2.1` | Merge target |
 | `TRUST` | `config.json` field `"trust"` | `medium` | Approval gate behavior |

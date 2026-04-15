@@ -68,7 +68,7 @@ being removed. With the single-call `cd` pattern this is generally safe, but ver
 
 ```bash
 # Safe pattern when removing a worktree:
-git worktree remove "${CLAUDE_PROJECT_DIR}/.cat/work/worktrees/issue"
+git worktree remove "${HOME}/.cat/worktrees/issue"
 ```
 
 See `/cat:safe-rm-agent` for detailed guidance on safe directory removal.
