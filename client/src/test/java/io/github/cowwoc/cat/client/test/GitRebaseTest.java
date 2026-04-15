@@ -1095,4 +1095,240 @@ public class GitRebaseTest
       }
     }
   }
+
+  /**
+   * Verifies that content references to old paths are not flagged as conflicts when the old path
+   * is still tracked in the feature branch.
+   * <p>
+   * <b>Edge case being fixed:</b> {@code git grep} performs a literal string search for the old path
+   * prefix (e.g., "old-tools/") in all tracked files. This can produce false positives when documentation
+   * or comments reference the old path as text. The fix skips content-reference validation when the old
+   * path is still tracked in the current branch — if the file exists, references to it remain valid.
+   * <p>
+   * Scenario: the merge base has {@code old-tools/helper.sh}. The target branch renames it to
+   * {@code new-tools/helper.sh}. The feature branch modifies {@code README.md} to add documentation
+   * referencing the OLD path (e.g., "See old-tools/helper.sh for implementation") but does NOT
+   * delete {@code old-tools/helper.sh} — the old path remains tracked in the feature branch.
+   * <p>
+   * Before the fix, {@code git grep} would find README.md containing "old-tools" and incorrectly
+   * flag it as a content-reference conflict. With the fix, when the old path is still tracked,
+   * references to it remain valid (the file exists), so no content-reference conflict is reported.
+   * The tracked-path conflict for {@code old-tools/helper.sh} is still correctly reported.
+   */
+  @Test
+  public void executeDoesNotFlagContentReferenceWhenOldPathStillTracked() throws IOException
+  {
+    Path repoDir = TestUtils.createTempGitRepo("main");
+    try (TestClaudeTool scope = new TestClaudeTool(repoDir, repoDir))
+    {
+      try
+      {
+        // Merge-base state: old-tools/helper.sh and README.md
+        Files.createDirectories(repoDir.resolve("old-tools"));
+        Files.writeString(repoDir.resolve("old-tools").resolve("helper.sh"), "#!/bin/sh\nhelp");
+        Files.writeString(repoDir.resolve("README.md"), "# Project\n\nInitial documentation.");
+        TestUtils.runGit(repoDir, "add", "old-tools/", "README.md");
+        TestUtils.runGit(repoDir, "commit", "-m", "add old-tools and README");
+
+        // Feature branch: modifies README.md to add a comment referencing the OLD path,
+        // but does NOT delete old-tools/helper.sh (it's still tracked by the feature)
+        TestUtils.runGit(repoDir, "checkout", "-b", "feature");
+        Files.writeString(repoDir.resolve("README.md"),
+          "# Project\n\nSee old-tools/helper.sh for the implementation details.");
+        TestUtils.runGit(repoDir, "add", "README.md");
+        TestUtils.runGit(repoDir, "commit", "-m", "document old-tools location");
+
+        // Target branch (main): renames old-tools/helper.sh to new-tools/helper.sh
+        TestUtils.runGit(repoDir, "checkout", "main");
+        Files.createDirectories(repoDir.resolve("new-tools"));
+        TestUtils.runGit(repoDir, "mv", "old-tools/helper.sh", "new-tools/helper.sh");
+        TestUtils.runGit(repoDir, "commit", "-m", "rename old-tools/helper.sh to new-tools/helper.sh");
+
+        // Switch to feature branch and attempt rebase
+        TestUtils.runGit(repoDir, "checkout", "feature");
+
+        GitRebase cmd = new GitRebase(scope, repoDir);
+        String result = cmd.execute("main");
+
+        // After the fix, the content-reference check does NOT flag README.md (false positive removed
+        // because old-tools/helper.sh is still tracked in the feature branch, so the reference is valid).
+        // However, the tracked-path check still flags old-tools/helper.sh as a conflict (true positive).
+        requireThat(result, "result").contains("Tracked files at renamed");
+        requireThat(result, "result").contains("old-tools/helper.sh");
+        // README.md should NOT appear in the content-reference section (false positive removed)
+        requireThat(result, "result").doesNotContain("Files with content references");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(repoDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that content references ARE flagged when the old path is NOT tracked and the file
+   * was modified by the feature.
+   * <p>
+   * Scenario: the merge base has {@code old-tools/helper.sh}. The target branch renames it to
+   * {@code new-tools/helper.sh}. The feature branch deletes {@code old-tools/helper.sh} AND
+   * modifies {@code README.md} to reference the old path. Since the old path is no longer tracked,
+   * the content reference in the modified file IS a conflict.
+   */
+  @Test
+  public void executeDoesFlagContentReferenceWhenOldPathNotTracked() throws IOException
+  {
+    Path repoDir = TestUtils.createTempGitRepo("main");
+    try (TestClaudeTool scope = new TestClaudeTool(repoDir, repoDir))
+    {
+      try
+      {
+        // Merge-base state: old-tools/helper.sh and README.md
+        Files.createDirectories(repoDir.resolve("old-tools"));
+        Files.writeString(repoDir.resolve("old-tools").resolve("helper.sh"), "#!/bin/sh\nhelp");
+        Files.writeString(repoDir.resolve("README.md"), "# Project\n\nInitial documentation.");
+        TestUtils.runGit(repoDir, "add", "old-tools/", "README.md");
+        TestUtils.runGit(repoDir, "commit", "-m", "add old-tools and README");
+
+        // Feature branch: deletes old-tools/ AND adds reference to it in README.md
+        TestUtils.runGit(repoDir, "checkout", "-b", "feature");
+        TestUtils.runGit(repoDir, "rm", "-r", "old-tools/");
+        Files.writeString(repoDir.resolve("README.md"),
+          "# Project\n\nSee old-tools/helper.sh for implementation (now removed).");
+        TestUtils.runGit(repoDir, "add", "README.md");
+        TestUtils.runGit(repoDir, "commit", "-m", "remove old-tools and document it");
+
+        // Target branch (main): renames old-tools/helper.sh to new-tools/helper.sh
+        TestUtils.runGit(repoDir, "checkout", "main");
+        Files.createDirectories(repoDir.resolve("new-tools"));
+        TestUtils.runGit(repoDir, "mv", "old-tools/helper.sh", "new-tools/helper.sh");
+        TestUtils.runGit(repoDir, "commit", "-m", "rename old-tools/helper.sh to new-tools/helper.sh");
+
+        // Switch to feature branch and attempt rebase
+        TestUtils.runGit(repoDir, "checkout", "feature");
+
+        GitRebase cmd = new GitRebase(scope, repoDir);
+        String result = cmd.execute("main");
+
+        // Old path is NOT tracked, so content reference in README.md (which was modified) IS flagged
+        requireThat(result, "result").contains("Files with content references");
+        requireThat(result, "result").contains("README.md");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(repoDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that files NOT modified by the feature are not flagged for content references,
+   * even if they contain references to the old path.
+   * <p>
+   * Scenario: the merge base has {@code old-tools/helper.sh} and {@code NOTES.md} (which already
+   * references "old-tools/"). The target branch renames the helper script. The feature branch makes
+   * unrelated changes (adds a new file) but does NOT modify NOTES.md. Since NOTES.md was not
+   * modified by the feature, it should not be flagged for content references.
+   */
+  @Test
+  public void executeDoesNotFlagUnmodifiedFilesWithContentReferences() throws IOException
+  {
+    Path repoDir = TestUtils.createTempGitRepo("main");
+    try (TestClaudeTool scope = new TestClaudeTool(repoDir, repoDir))
+    {
+      try
+      {
+        // Merge-base state: old-tools/helper.sh and NOTES.md (which references old-tools/)
+        Files.createDirectories(repoDir.resolve("old-tools"));
+        Files.writeString(repoDir.resolve("old-tools").resolve("helper.sh"), "#!/bin/sh\nhelp");
+        Files.writeString(repoDir.resolve("NOTES.md"),
+          "# Notes\n\nThe old-tools/helper.sh script was moved.");
+        TestUtils.runGit(repoDir, "add", "old-tools/", "NOTES.md");
+        TestUtils.runGit(repoDir, "commit", "-m", "add old-tools and notes");
+
+        // Feature branch: adds a new file, does NOT modify NOTES.md
+        TestUtils.runGit(repoDir, "checkout", "-b", "feature");
+        Files.writeString(repoDir.resolve("NEW_FEATURE.md"), "# New Feature");
+        TestUtils.runGit(repoDir, "add", "NEW_FEATURE.md");
+        TestUtils.runGit(repoDir, "commit", "-m", "add new feature");
+
+        // Target branch (main): renames old-tools/helper.sh to new-tools/helper.sh
+        TestUtils.runGit(repoDir, "checkout", "main");
+        Files.createDirectories(repoDir.resolve("new-tools"));
+        TestUtils.runGit(repoDir, "mv", "old-tools/helper.sh", "new-tools/helper.sh");
+        TestUtils.runGit(repoDir, "commit", "-m", "rename old-tools/helper.sh to new-tools/helper.sh");
+
+        // Switch to feature branch and attempt rebase
+        TestUtils.runGit(repoDir, "checkout", "feature");
+
+        GitRebase cmd = new GitRebase(scope, repoDir);
+        String result = cmd.execute("main");
+
+        // NOTES.md was NOT modified by the feature, so it should not be flagged
+        // Only the tracked-path conflict for old-tools/helper.sh should be reported
+        requireThat(result, "result").contains("Tracked files at renamed");
+        requireThat(result, "result").contains("old-tools/helper.sh");
+        requireThat(result, "result").doesNotContain("NOTES.md");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(repoDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that .cat/ files are skipped from tracked-path checks, even if they reference old paths.
+   * <p>
+   * Scenario: the merge base has {@code old-tools/helper.sh} and {@code .cat/issues/notes.md} which
+   * references the old path. The target branch renames the helper script. The feature branch is
+   * unrelated. The .cat/ file should not trigger a conflict since .cat/ files are planning artifacts
+   * and stale path references there are acceptable.
+   */
+  @Test
+  public void executeSkipsCatDirectoryFromPathChecks() throws IOException
+  {
+    Path repoDir = TestUtils.createTempGitRepo("main");
+    try (TestClaudeTool scope = new TestClaudeTool(repoDir, repoDir))
+    {
+      try
+      {
+        // Merge-base state: old-tools/helper.sh and .cat/issues/notes.md
+        Files.createDirectories(repoDir.resolve("old-tools"));
+        Files.writeString(repoDir.resolve("old-tools").resolve("helper.sh"), "#!/bin/sh\nhelp");
+        Files.createDirectories(repoDir.resolve(".cat").resolve("issues"));
+        Files.writeString(repoDir.resolve(".cat").resolve("issues").resolve("notes.md"),
+          "# Issue Notes\n\nSee old-tools/helper.sh for details.");
+        TestUtils.runGit(repoDir, "add", "old-tools/", ".cat/");
+        TestUtils.runGit(repoDir, "commit", "-m", "add old-tools and planning notes");
+
+        // Feature branch: makes unrelated changes
+        TestUtils.runGit(repoDir, "checkout", "-b", "feature");
+        Files.writeString(repoDir.resolve("README.md"), "# Project");
+        TestUtils.runGit(repoDir, "add", "README.md");
+        TestUtils.runGit(repoDir, "commit", "-m", "add readme");
+
+        // Target branch (main): renames old-tools/helper.sh to new-tools/helper.sh
+        TestUtils.runGit(repoDir, "checkout", "main");
+        Files.createDirectories(repoDir.resolve("new-tools"));
+        TestUtils.runGit(repoDir, "mv", "old-tools/helper.sh", "new-tools/helper.sh");
+        TestUtils.runGit(repoDir, "commit", "-m", "rename old-tools/helper.sh to new-tools/helper.sh");
+
+        // Switch to feature branch and attempt rebase
+        TestUtils.runGit(repoDir, "checkout", "feature");
+
+        GitRebase cmd = new GitRebase(scope, repoDir);
+        String result = cmd.execute("main");
+
+        // .cat/issues/notes.md should NOT be flagged (planning artifacts are exempt)
+        // Only the tracked-path conflict for old-tools/helper.sh should be reported
+        requireThat(result, "result").contains("Tracked files at renamed");
+        requireThat(result, "result").contains("old-tools/helper.sh");
+        requireThat(result, "result").doesNotContain(".cat/issues/notes.md");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(repoDir);
+      }
+    }
+  }
 }
