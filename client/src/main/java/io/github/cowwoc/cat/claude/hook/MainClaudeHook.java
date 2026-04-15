@@ -34,6 +34,14 @@ public final class MainClaudeHook extends AbstractClaudeHook
       return "UTC";
     return tzValue;
   });
+  private final ConcurrentLazyReference<String> anthropicBaseUrl =
+    ConcurrentLazyReference.create(() ->
+    {
+      String value = System.getenv("ANTHROPIC_BASE_URL");
+      if (value == null || value.isBlank())
+        return "";
+      return value;
+    });
 
   /**
    * Creates a new production hook scope.
@@ -120,5 +128,12 @@ public final class MainClaudeHook extends AbstractClaudeHook
   {
     ensureOpen();
     return tz.getValue();
+  }
+
+  @Override
+  public String getAnthropicBaseUrl()
+  {
+    ensureOpen();
+    return anthropicBaseUrl.getValue();
   }
 }

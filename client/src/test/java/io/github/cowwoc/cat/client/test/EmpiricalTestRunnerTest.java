@@ -1458,7 +1458,11 @@ public final class EmpiricalTestRunnerTest
     {
       List<String> command = launcher.buildCommand("haiku", "You are a cat expert.", "");
 
-      requireThat(command, "command").contains("claude").contains("--append-system-prompt");
+      // First element should be the node executable path
+      requireThat(command.getFirst(), "nodeExecutable").endsWith("node");
+      // Second element should be the cli.js path
+      requireThat(command.get(1), "cliJsPath").endsWith("cli.js");
+      requireThat(command, "command").contains("--append-system-prompt");
       // Verify the system prompt value follows the flag
       int flagIndex = command.indexOf("--append-system-prompt");
       requireThat(flagIndex, "flagIndex").isGreaterThanOrEqualTo(0);
@@ -1483,7 +1487,8 @@ public final class EmpiricalTestRunnerTest
     {
       List<String> command = launcher.buildCommand("haiku", "", "");
 
-      requireThat(command, "command").contains("claude");
+      requireThat(command.getFirst(), "nodeExecutable").endsWith("node");
+      requireThat(command.get(1), "cliJsPath").endsWith("cli.js");
       requireThat(command.contains("--append-system-prompt"), "noSystemPromptFlag").isFalse();
     }
     finally
@@ -1504,7 +1509,9 @@ public final class EmpiricalTestRunnerTest
     {
       List<String> command = launcher.buildCommand("haiku", "", "sprt-runner-agent");
 
-      requireThat(command, "command").contains("claude").contains("--agent");
+      requireThat(command.getFirst(), "nodeExecutable").endsWith("node");
+      requireThat(command.get(1), "cliJsPath").endsWith("cli.js");
+      requireThat(command, "command").contains("--agent");
       int flagIndex = command.indexOf("--agent");
       requireThat(flagIndex, "flagIndex").isGreaterThanOrEqualTo(0);
       requireThat(command.get(flagIndex + 1), "agentTypeValue").isEqualTo("sprt-runner-agent");

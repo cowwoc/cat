@@ -13,6 +13,7 @@ import static io.github.cowwoc.cat.claude.hook.Strings.block;
 import io.github.cowwoc.cat.claude.tool.ClaudeTool;
 import io.github.cowwoc.cat.claude.hook.ClaudePluginScope;
 import io.github.cowwoc.cat.claude.tool.MainClaudeTool;
+import io.github.cowwoc.cat.claude.hook.util.FileUtils;
 
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 
@@ -28,7 +29,6 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Objects;
 import org.slf4j.Logger;
@@ -47,16 +47,16 @@ import tools.jackson.databind.ObjectWriter;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
- * Launches Claude CLI processes with optional config directory isolation.
+ * Launches Claude Code CLI processes with optional config directory isolation.
  * <p>
- * Handles building stream-json input, spawning the {@code claude} CLI process, parsing
- * stream-json output, and optionally creating an isolated config directory with updated
- * plugin cache.
+ * Handles building stream-json input, spawning the Node.js process running cli.js,
+ * parsing stream-json output, and optionally creating an isolated config directory
+ * with updated plugin cache.
  */
 public final class ClaudeRunner implements AutoCloseable
 {
   /**
-   * Default timeout for the claude CLI process.
+   * Default timeout for the Node.js process running cli.js.
    */
   private static final Duration DEFAULT_TIMEOUT = Duration.ofMinutes(3);
   private final ClaudePluginScope scope;
@@ -105,7 +105,7 @@ public final class ClaudeRunner implements AutoCloseable
     isolatedConfigDir = Files.createTempDirectory("claude-isolated-config-");
 
     // Copy entire config directory
-    copyDirectoryRecursively(sourceConfigDir, isolatedConfigDir);
+    FileUtils.copyDirectoryRecursively(sourceConfigDir, isolatedConfigDir);
 
     // Update plugin cache with current plugin source files
     isolatedPluginRoot = isolatedConfigDir.resolve("plugins").resolve("cache").
@@ -115,14 +115,14 @@ public final class ClaudeRunner implements AutoCloseable
       deleteDirectoryContents(isolatedPluginRoot);
     else
       Files.createDirectories(isolatedPluginRoot);
-    copyDirectoryRecursively(pluginSourceDir, isolatedPluginRoot);
+    FileUtils.copyDirectoryRecursively(pluginSourceDir, isolatedPluginRoot);
 
     // Update jlink binaries in the cache
     Path cacheBinDir = isolatedPluginRoot.resolve("client").resolve("bin");
     if (Files.isDirectory(jlinkBinDir))
     {
       Files.createDirectories(cacheBinDir);
-      copyDirectoryRecursively(jlinkBinDir, cacheBinDir);
+      FileUtils.copyDirectoryRecursively(jlinkBinDir, cacheBinDir);
     }
   }
 
@@ -139,7 +139,61 @@ public final class ClaudeRunner implements AutoCloseable
   }
 
   /**
+   * Checks whether the cache-fix module is detected in the given {@code NODE_OPTIONS} string.
+   * <p>
+   * Returns {@code true} when {@code nodeOptions} contains {@code "claude-code-cache-fix"},
+   * which indicates that the
+   * <a href="https://github.com/cnighswonger/claude-code-cache-fix">claude-code-cache-fix</a> module
+   * is loaded. Matches both the short form ({@code --import claude-code-cache-fix}) and the full
+   * path form ({@code --import /path/to/claude-code-cache-fix/preload.mjs}).
+   *
+   * @param nodeOptions the {@code NODE_OPTIONS} environment variable value, or {@code null} if not
+   *                    set
+   * @return {@code true} if the cache-fix module is detected, {@code false} otherwise
+   */
+  public static boolean isCacheFixDetected(String nodeOptions)
+  {
+    return nodeOptions != null && nodeOptions.contains("claude-code-cache-fix");
+  }
+
+  /**
+   * Resolves the Node.js executable path for launching nested Claude instances.
+   * <p>
+   * Checks whether the {@code NODE_OPTIONS} environment variable contains the cache-fix module.
+   * If not detected, emits a warning to {@code stderr} suggesting how to enable it.
+   * <p>
+   * Returns the path to the Node.js executable from {@code CLAUDE_CODE_EXECPATH}, which is used
+   * to run {@code cli.js} directly.
+   *
+   * @param stderr the stream to write the warning to when the cache-fix module is not detected
+   * @return the path to the Node.js executable
+   * @throws NullPointerException if {@code stderr} is null
+   * @throws AssertionError       if {@code CLAUDE_CODE_EXECPATH} is not set
+   */
+  public static String resolveClaudeBinary(PrintStream stderr)
+  {
+    requireThat(stderr, "stderr").isNotNull();
+    String nodeOptions = System.getenv("NODE_OPTIONS");
+    if (!isCacheFixDetected(nodeOptions))
+    {
+      stderr.println("WARNING: claude-code-cache-fix not detected in NODE_OPTIONS. " +
+        "Falling back to unpatched claude. " +
+        "To enable cache fix, either: " +
+        "(1) export NODE_OPTIONS=\"${NODE_OPTIONS} --import claude-code-cache-fix\", or " +
+        "(2) use the wrapper script from https://github.com/cnighswonger/claude-code-cache-fix" +
+        "#option-a-wrapper-script-recommended");
+    }
+    String nodeExec = System.getenv("CLAUDE_CODE_EXECPATH");
+    if (nodeExec == null || nodeExec.isEmpty())
+      throw new AssertionError("CLAUDE_CODE_EXECPATH environment variable is not set");
+    return nodeExec;
+  }
+
+  /**
    * Builds the claude CLI command with appropriate flags.
+   * <p>
+   * Constructs a command that runs {@code node cli.js} directly with the cache-fix module loaded
+   * via {@code NODE_OPTIONS}. Emits a warning to stderr when the cache-fix module is not detected.
    *
    * @param model              the model name (haiku, sonnet, or opus)
    * @param appendSystemPrompt the text to append to the system prompt via
@@ -150,6 +204,7 @@ public final class ClaudeRunner implements AutoCloseable
    * @throws NullPointerException     if {@code model}, {@code appendSystemPrompt}, or {@code agent}
    *                                  are null
    * @throws IllegalArgumentException if {@code model} is not in the allowed set
+   * @throws AssertionError           if {@code NPM_CONFIG_PREFIX} is not set
    */
   public List<String> buildCommand(String model, String appendSystemPrompt, String agent)
   {
@@ -162,7 +217,11 @@ public final class ClaudeRunner implements AutoCloseable
     requireThat(appendSystemPrompt, "appendSystemPrompt").isNotNull();
     requireThat(agent, "agent").isNotNull();
     List<String> command = new ArrayList<>();
-    command.add("claude");
+    command.add(resolveClaudeBinary(System.err));
+    String npmPrefix = System.getenv("NPM_CONFIG_PREFIX");
+    if (npmPrefix == null || npmPrefix.isEmpty())
+      throw new AssertionError("NPM_CONFIG_PREFIX environment variable is not set");
+    command.add(npmPrefix + "/lib/node_modules/@anthropic-ai/claude-code/cli.js");
     command.add("-p");
     command.add("--model");
     command.add(model);
@@ -240,11 +299,14 @@ public final class ClaudeRunner implements AutoCloseable
 
   /**
    * Builds a {@link ProcessBuilder} configured with the correct environment for launching the
-   * claude CLI.
+   * Claude Code CLI.
    * <p>
    * Removes the {@code CLAUDECODE} env var so the spawned process does not inherit the
    * hook-suppression flag. Sets {@code CLAUDE_CONFIG_DIR} and {@code CLAUDE_PLUGIN_ROOT} when
    * isolation is active so that all consumers read from the isolated plugin copy.
+   * <p>
+   * When {@code claude-code-cache-fix} is detected, sets cache-fix-specific environment variables:
+   * {@code CACHE_FIX_STRIP_GIT_STATUS=1} and {@code CACHE_FIX_TTL_SUBAGENT=5m}.
    *
    * @param command the command to execute
    * @param cwd     the working directory
@@ -256,14 +318,26 @@ public final class ClaudeRunner implements AutoCloseable
     ProcessBuilder pb = new ProcessBuilder(command);
     Map<String, String> env = pb.environment();
     env.remove("CLAUDECODE");
-    // Override CLAUDE_PROJECT_DIR so the claude process and its subagents resolve relative file
-    // paths against the runner worktree, not the main workspace.
+    // Remove env vars that can be used to inject malicious code into the spawned process.
+    env.remove("LD_PRELOAD");
+    env.remove("LD_LIBRARY_PATH");
+    env.remove("JAVA_TOOL_OPTIONS");
+    // Override CLAUDE_PROJECT_DIR so the Claude Code process and its subagents resolve relative
+    // file paths against the runner worktree, not the main workspace.
     env.put("CLAUDE_PROJECT_DIR", cwd.toAbsolutePath().toString());
 
     // Inherit ANTHROPIC_BASE_URL if set in parent environment
-    String anthropicBaseUrl = System.getenv("ANTHROPIC_BASE_URL");
-    if (anthropicBaseUrl != null)
+    String anthropicBaseUrl = scope.getAnthropicBaseUrl();
+    if (!anthropicBaseUrl.isEmpty())
       env.put("ANTHROPIC_BASE_URL", anthropicBaseUrl);
+
+    // When using claude-code-cache-fix, set cache-fix-specific environment variables
+    String nodeOptions = System.getenv("NODE_OPTIONS");
+    if (isCacheFixDetected(nodeOptions))
+    {
+      env.put("CACHE_FIX_STRIP_GIT_STATUS", "1");
+      env.put("CACHE_FIX_TTL_SUBAGENT", "5m");
+    }
 
     if (isolatedConfigDir != null)
     {
@@ -276,8 +350,8 @@ public final class ClaudeRunner implements AutoCloseable
   }
 
   /**
-   * Executes the claude CLI process with the given input, streaming output line-by-line
-   * to avoid buffering the full response in memory.
+   * Executes the Node.js process running cli.js with the given input, streaming output
+   * line-by-line to avoid buffering the full response in memory.
    * <p>
    * If an isolated config directory has been created via {@link #createIsolatedConfig},
    * the process will use it via the {@code CLAUDE_CONFIG_DIR} environment variable.
@@ -334,7 +408,7 @@ public final class ClaudeRunner implements AutoCloseable
   /**
    * Parses stream-json output to extract assistant text blocks and tool uses.
    *
-   * @param output the raw output from claude CLI
+   * @param output the raw output from Claude Code CLI
    * @return the parsed output
    * @throws NullPointerException if {@code output} is null
    */
@@ -473,7 +547,7 @@ public final class ClaudeRunner implements AutoCloseable
   {
     if (isolatedConfigDir != null)
     {
-      deleteDirectoryRecursively(isolatedConfigDir);
+      FileUtils.deleteDirectoryRecursively(isolatedConfigDir);
       isolatedConfigDir = null;
     }
   }
@@ -549,37 +623,6 @@ public final class ClaudeRunner implements AutoCloseable
   }
 
   /**
-   * Copies a directory tree recursively.
-   *
-   * @param source the source directory
-   * @param target the target directory
-   * @throws IOException if the copy fails
-   */
-  private static void copyDirectoryRecursively(Path source, Path target) throws IOException
-  {
-    Files.walkFileTree(source, new SimpleFileVisitor<>()
-    {
-      @Override
-      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
-        throws IOException
-      {
-        Path targetDir = target.resolve(source.relativize(dir));
-        Files.createDirectories(targetDir);
-        return FileVisitResult.CONTINUE;
-      }
-
-      @Override
-      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
-        throws IOException
-      {
-        Files.copy(file, target.resolve(source.relativize(file)),
-          StandardCopyOption.REPLACE_EXISTING);
-        return FileVisitResult.CONTINUE;
-      }
-    });
-  }
-
-  /**
    * Deletes all contents of a directory without deleting the directory itself.
    *
    * @param dir the directory to clear
@@ -609,35 +652,7 @@ public final class ClaudeRunner implements AutoCloseable
   }
 
   /**
-   * Deletes a directory and all its contents recursively.
-   *
-   * @param dir the directory to delete
-   * @throws IOException if the deletion fails
-   */
-  private static void deleteDirectoryRecursively(Path dir) throws IOException
-  {
-    Files.walkFileTree(dir, new SimpleFileVisitor<>()
-    {
-      @Override
-      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException
-      {
-        Files.delete(file);
-        return FileVisitResult.CONTINUE;
-      }
-
-      @Override
-      public FileVisitResult postVisitDirectory(Path directory, IOException exception) throws IOException
-      {
-        if (exception != null)
-          throw exception;
-        Files.delete(directory);
-        return FileVisitResult.CONTINUE;
-      }
-    });
-  }
-
-  /**
-   * Result of executing the claude CLI process.
+   * Result of executing the Node.js process running cli.js.
    *
    * @param parsed  the parsed output
    * @param elapsed the elapsed time in seconds
@@ -881,7 +896,7 @@ public final class ClaudeRunner implements AutoCloseable
           pluginVersion);
       }
 
-      // When --agent is specified, pass --agent <type> to the nested claude process.
+      // When --agent is specified, pass --agent <type> to the nested Claude Code process.
       // The nested process has CLAUDE_CONFIG_DIR pointing to the isolated config directory
       // (when --plugin-source is provided), so --agent resolves from the candidate plugin's
       // agents/ directory, honoring all frontmatter settings (tools:, model:, etc.).

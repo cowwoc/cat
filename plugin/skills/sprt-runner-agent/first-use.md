@@ -127,14 +127,15 @@ consider increasing the trial budget or revising the test scenario for clearer s
 
 ## API Boundary
 
-The `instruction-test-runner` binary exposes two related subcommands for running SPRT:
+The `instruction-test-runner` binary exposes three related subcommands for running SPRT:
 
 | Command | Scope | Use case |
 |---------|-------|----------|
 | `run-full-sprt` | Complete SPRT workflow (public entry point) | Invoked by `sprt-runner-agent` to run a full test suite. Orchestrates all 8 steps: prepare run, create isolation branch, initialize SPRT state, run batches via `run-sprt-batch`, write results, and cleanup. |
+| `run-single-test` | Filtered SPRT workflow (development/debugging) | Runs SPRT on a subset of test cases matching a pattern. Useful for iterating on specific tests without running the full suite. See `run-single-test.md` for detailed usage. |
 | `run-sprt-batch` | Single SPRT batch (internal workhorse) | Called internally by `run-full-sprt` to process one batch of trials. Creates runner worktrees, launches parallel trials, grades outputs, and updates SPRT state. |
 
-**Error contract for `run-full-sprt`:**
+**Error contract for `run-full-sprt` and `run-single-test`:**
 - On success: exits with code 0 and writes the structured results report to stdout.
 - On error: exits with code 1. The error message is written to stderr, never to stdout. Stdout contains only the valid results report or nothing.
 - Progress messages during execution are written to stderr so they do not pollute the stdout report.
@@ -333,7 +334,7 @@ to finish:
 2. Wait for the monitor to stop
 3. Identify the run worktree:
    ```bash
-   RUN_WORKTREE="${HOME}/.cat/worktrees/$(basename ${WORKTREE_PATH})-tc{N}-r{M}"
+   RUN_WORKTREE="${WORKTREE_PATH}/.cat/work/worktrees/$(basename ${WORKTREE_PATH})-tc{N}-r{M}"
    ls "${RUN_WORKTREE}/.cat/work/" 2>/dev/null || echo "Run worktree missing"
    ```
 4. Find the failing component's session. Both the test runner and grader run with `--cwd "${RUN_WORKTREE}"`,

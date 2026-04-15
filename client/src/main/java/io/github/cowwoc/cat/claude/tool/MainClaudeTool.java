@@ -31,6 +31,14 @@ public final class MainClaudeTool extends AbstractClaudeTool
       return "UTC";
     return tzValue;
   });
+  private final ConcurrentLazyReference<String> anthropicBaseUrlRef =
+    ConcurrentLazyReference.create(() ->
+    {
+      String value = System.getenv("ANTHROPIC_BASE_URL");
+      if (value == null || value.isBlank())
+        return "";
+      return value;
+    });
 
   /**
    * Creates a new production Claude tool scope.
@@ -95,5 +103,12 @@ public final class MainClaudeTool extends AbstractClaudeTool
   {
     ensureOpen();
     return tzRef.getValue();
+  }
+
+  @Override
+  public String getAnthropicBaseUrl()
+  {
+    ensureOpen();
+    return anthropicBaseUrlRef.getValue();
   }
 }
