@@ -20,11 +20,11 @@ public enum CautionLevel
    */
   LOW,
   /**
-   * Compile and unit tests (default).
+   * Compile, unit tests, and issue-specific E2E tests (default).
    */
   MEDIUM,
   /**
-   * Compile, unit tests, and E2E tests (maximum confidence).
+   * Compile, unit tests, and all E2E tests (maximum confidence).
    */
   HIGH;
 
@@ -53,13 +53,14 @@ public enum CautionLevel
   }
 
   /**
-   * Returns whether end-to-end tests should run at this caution level.
+   * Returns whether end-to-end tests should run at this caution level. MEDIUM runs issue-specific E2E tests;
+   * HIGH runs all E2E tests.
    *
-   * @return {@code true} if E2E tests are enabled (HIGH only), {@code false} otherwise
+   * @return {@code true} if E2E tests are enabled (MEDIUM or HIGH), {@code false} otherwise
    */
   public boolean isE2eEnabled()
   {
-    return this == HIGH;
+    return this != LOW;
   }
 
   @Override

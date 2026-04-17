@@ -162,12 +162,12 @@ public final class CautionLevelTest
   }
 
   /**
-   * Verifies that MEDIUM disables E2E tests.
+   * Verifies that MEDIUM enables E2E tests.
    */
   @Test
-  public void mediumIsE2eDisabled()
+  public void mediumIsE2eEnabled()
   {
-    requireThat(CautionLevel.MEDIUM.isE2eEnabled(), "isE2eEnabled").isFalse();
+    requireThat(CautionLevel.MEDIUM.isE2eEnabled(), "isE2eEnabled").isTrue();
   }
 
   /**

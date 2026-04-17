@@ -246,9 +246,9 @@ AskUserQuestion:
      - label: "Low"
        description: "Compile only (fastest feedback){' (current)' if caution=='low'}"
      - label: "Medium"
-       description: "Compile and unit tests (default){' (current)' if caution=='medium'}"
+       description: "Compile, unit tests, and issue-specific E2E tests (default){' (current)' if caution=='medium'}"
      - label: "High"
-       description: "Compile, unit tests, and E2E tests (maximum confidence){' (current)' if caution=='high'}"
+       description: "Compile, unit tests, and all E2E tests (maximum confidence){' (current)' if caution=='high'}"
   3. question: "Curiosity — How broadly should CAT run stakeholder review?"
      header: "Curiosity"
      options:
@@ -626,8 +626,8 @@ INVOKE: Skill("cat:get-output-agent", args="config.no-changes")
 
 ### Caution Values
 - `low` — Compile only (fastest feedback).
-- `medium` — Compile and unit tests (default).
-- `high` — Compile, unit tests, and E2E tests (maximum confidence).
+- `medium` — Compile, unit tests, and issue-specific E2E tests (default).
+- `high` — Compile, unit tests, and all E2E tests (maximum confidence).
 
 ### Curiosity Values
 - `low` — Skip automatic stakeholder review; review only runs if explicitly invoked.
