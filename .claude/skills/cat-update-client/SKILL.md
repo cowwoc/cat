@@ -27,7 +27,28 @@ If the build fails, stop and report the error.
 
 ### 2. Reinstall Plugin and Install jlink Runtime
 
-Perform the plugin reinstall, jlink installation, and VERSION write in a **single Bash call** to avoid hook
+First, ensure `CLAUDE_PLUGIN_ROOT` is set. If not set, derive it from plugin metadata files:
+
+```bash
+# Derive CLAUDE_PLUGIN_ROOT if not set
+if [[ -z "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
+  # Read publisher from marketplace.json (top-level "name" field)
+  PUBLISHER=$(grep -o '"name"[[:space:]]*:[[:space:]]*"[^"]*"' /workspace/.claude-plugin/marketplace.json | head -1 | sed 's/.*"\([^"]*\)"$/\1/')
+  
+  # Read plugin name and version from plugin.json
+  PLUGIN_NAME=$(grep -o '"name"[[:space:]]*:[[:space:]]*"[^"]*"' /workspace/plugin/.claude-plugin/plugin.json | sed 's/.*"\([^"]*\)"$/\1/')
+  PLUGIN_VERSION=$(grep -o '"version"[[:space:]]*:[[:space:]]*"[^"]*"' /workspace/plugin/.claude-plugin/plugin.json | sed 's/.*"\([^"]*\)"$/\1/')
+  
+  # Construct plugin install path: ${CLAUDE_CONFIG_DIR}/plugins/cache/<publisher>/<name>/<version>
+  export CLAUDE_PLUGIN_ROOT="${CLAUDE_CONFIG_DIR}/plugins/cache/${PUBLISHER}/${PLUGIN_NAME}/${PLUGIN_VERSION}"
+  
+  echo "Derived CLAUDE_PLUGIN_ROOT=${CLAUDE_PLUGIN_ROOT}"
+fi
+```
+
+If any read fails, stop and report the error.
+
+Then perform the plugin reinstall, jlink installation, and VERSION write in a **single Bash call** to avoid hook
 errors. Splitting these into separate calls risks hooks firing while the client directory is absent or incomplete.
 
 ```bash
