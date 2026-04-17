@@ -12,10 +12,12 @@ import io.github.cowwoc.cat.claude.hook.prompt.UserIssues;
 import io.github.cowwoc.cat.claude.hook.read.post.DetectSequentialTools;
 import io.github.cowwoc.cat.claude.hook.read.pre.PredictBatchOpportunity;
 import io.github.cowwoc.pouch10.core.ConcurrentLazyReference;
+import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.dataformat.yaml.YAMLMapper;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -53,6 +55,35 @@ public abstract class AbstractJvmScope implements JvmScope
   private final ConcurrentLazyReference<UserIssues> userIssues =
     ConcurrentLazyReference.create(() -> new UserIssues(this));
   private final Path projectPath;
+  @SuppressWarnings("this-escape")
+  private final ConcurrentLazyReference<Path> catDir = ConcurrentLazyReference.create(() ->
+    getProjectPath().resolve(Config.CAT_DIR_NAME));
+  @SuppressWarnings("this-escape")
+  private final ConcurrentLazyReference<Path> catWorkPath = ConcurrentLazyReference.create(() ->
+  {
+    try
+    {
+      Path project = getProjectPath();
+      Config config = Config.load(getJsonMapper(), project);
+      String workPathStr = config.getString("workPath", "${CLAUDE_PROJECT_DIR}/.cat/work");
+
+      // Expand ${CLAUDE_PROJECT_DIR} variable
+      String expandedPath = workPathStr.replace("${CLAUDE_PROJECT_DIR}", project.toString());
+
+      // Expand ~ to user home directory
+      if (expandedPath.startsWith("~"))
+      {
+        String home = System.getProperty("user.home");
+        expandedPath = home + expandedPath.substring(1);
+      }
+
+      return Path.of(expandedPath);
+    }
+    catch (IOException e)
+    {
+      throw WrappedCheckedException.wrap(e);
+    }
+  });
 
   /**
    * Creates a new abstract JVM scope with the given base path.
@@ -77,7 +108,7 @@ public abstract class AbstractJvmScope implements JvmScope
   public Path getCatDir()
   {
     ensureOpen();
-    return projectPath.resolve(Config.CAT_DIR_NAME);
+    return catDir.getValue();
   }
 
   /**
@@ -101,7 +132,7 @@ public abstract class AbstractJvmScope implements JvmScope
   public Path getCatWorkPath()
   {
     ensureOpen();
-    return projectPath.resolve(".cat").resolve("work");
+    return catWorkPath.getValue();
   }
 
   @Override

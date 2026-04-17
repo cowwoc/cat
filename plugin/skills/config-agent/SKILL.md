@@ -10,6 +10,7 @@ allowed-tools:
   - Bash
   - Read
   - Write
+  - Edit
   - AskUserQuestion
 user-invocable: false
 argument-hint: "<cat_agent_id>"
