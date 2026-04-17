@@ -67,7 +67,25 @@ echo "2.1" > "${CLAUDE_PLUGIN_ROOT}/client/VERSION"
 
 If any command fails, stop and report the error.
 
-### 2a. Overlay Worktree Plugin Files (worktree only)
+### 2a. Install to Development Location
+
+The startup hook may have `CLAUDE_PLUGIN_ROOT=/workspace/plugin` pointing to the source plugin directory.
+Install the runtime there so development sessions can start without needing a GitHub release.
+
+Detect development mode by checking for the source structure (not environment variables, which may not be
+set when hooks fail):
+
+```bash
+# Install to development location if source structure exists
+if [[ -f /workspace/plugin/.claude-plugin/plugin.json && -d /workspace/client/target/jlink ]]; then
+  rm -rf /workspace/plugin/client
+  cp -r /workspace/client/target/jlink /workspace/plugin/client
+  echo "2.1" > /workspace/plugin/client/VERSION
+  echo "Installed runtime to development location: /workspace/plugin/client/"
+fi
+```
+
+### 2b. Overlay Worktree Plugin Files (worktree only)
 
 If running in a worktree, copy the worktree's `plugin/` files over the install path so in-progress changes
 take effect. This overwrites files installed from the marketplace with the worktree version; new files are
