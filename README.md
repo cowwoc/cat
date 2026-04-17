@@ -259,6 +259,26 @@ Your CAT settings live in `.cat/config.json`:
 }
 ```
 
+### Work Directory Location
+
+Default: `.cat/work/` inside your project
+
+**Recommended:** Move to `~/.cat/`
+- Avoids [duplicate configuration loading](https://github.com/anthropics/claude-code/issues/46222)
+- Reduces ~26K tokens per conversation
+- Works seamlessly with sandbox mode
+
+**Setup:**
+Run `/cat:config` and select "Home directory (~/.cat)"
+
+**What happens:**
+- Updates `.cat/config.json` with `"workPath": "~/.cat"`
+- Updates `.claude/settings.json`:
+  - Adds `~/.cat` to `additionalDirectories` (Claude's Read/Edit tools)
+  - Adds `~/.cat` to `sandbox.filesystem.allowWrite` (Bash commands)
+- Restart Claude Code to apply
+- Automatically migrates and cleans up old `.cat/work/`
+
 ### Options Reference
 
 | Option | Type | Default | Description |
@@ -269,6 +289,7 @@ Your CAT settings live in `.cat/config.json`:
 | `perfection` | string | `medium` | How much CAT pursues perfection in the current task |
 | `fileWidth` | number | `120` | Width in characters for content written to files |
 | `displayWidth` | number | `120` | Width in characters for content displayed in the terminal |
+| `workPath` | string | `${CLAUDE_PROJECT_DIR}/.cat/work` | Location for CAT working directory (worktrees, locks, sessions) |
 
 **trust** — How much trust you place in CAT to make decisions:
 - `low` — CAT presents options frequently; you guide most decisions

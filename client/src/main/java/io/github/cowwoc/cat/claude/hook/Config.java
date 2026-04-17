@@ -60,6 +60,7 @@ public final class Config
     defaults.put("completionWorkflow", "merge");
     defaults.put("minSeverity", "low");
     defaults.put("license", "");
+    defaults.put("workPath", "${CLAUDE_PROJECT_DIR}/.cat/work");
     DEFAULTS = Map.copyOf(defaults);
   }
 

@@ -15,7 +15,11 @@ import io.github.cowwoc.cat.claude.hook.util.VersionUtils;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.databind.JsonNode;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,6 +28,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.StringJoiner;
 
 /**
  * Checks for CAT version upgrades on session start.
@@ -57,6 +62,17 @@ public final class CheckDataMigration implements SessionStartHandler
   @Override
   public Result handle(ClaudeHook scope)
   {
+    try
+    {
+      Result workDirResult = handleWorkDirectoryMigration();
+      if (!workDirResult.additionalContext().isEmpty())
+        return workDirResult;
+    }
+    catch (IOException e)
+    {
+      throw WrappedCheckedException.wrap(e);
+    }
+
     Path configFile = scope.getCatDir().resolve("config.json");
     if (!Files.isRegularFile(configFile))
       return Result.empty();
@@ -82,6 +98,231 @@ public final class CheckDataMigration implements SessionStartHandler
     {
       throw WrappedCheckedException.wrap(e);
     }
+  }
+
+  /**
+   * Handles work directory migration if a migration marker is present.
+   *
+   * @return a result with migration status, or empty if no migration needed
+   * @throws IOException if reading the migration marker or performing migration fails
+   */
+  private Result handleWorkDirectoryMigration() throws IOException
+  {
+    Path migrationMarker = scope.getProjectPath().resolve(".cat/migration-pending.json");
+    if (!Files.isRegularFile(migrationMarker))
+      return Result.empty();
+
+    JsonNode root = scope.getJsonMapper().readTree(Files.readString(migrationMarker));
+    JsonNode oldPathNode = root.get("oldPath");
+    JsonNode newPathNode = root.get("newPath");
+
+    if (oldPathNode == null || newPathNode == null)
+    {
+      Files.deleteIfExists(migrationMarker);
+      return Result.empty();
+    }
+
+    String oldPath = oldPathNode.asString();
+    String newPath = newPathNode.asString();
+
+    String projectDir = scope.getProjectPath().toString();
+    oldPath = oldPath.replace("${CLAUDE_PROJECT_DIR}", projectDir);
+
+    String home = System.getProperty("user.home");
+    if (newPath.startsWith("~"))
+      newPath = home + newPath.substring(1);
+
+    Path oldDir = Path.of(oldPath);
+    if (Files.isDirectory(oldDir))
+    {
+      List<String> worktrees = getWorktreesInDirectory(oldDir);
+      List<Path> lockFiles = getLockFilesInDirectory(oldDir);
+
+      if (!worktrees.isEmpty() || !lockFiles.isEmpty())
+      {
+        StringBuilder errorMessage = new StringBuilder(512);
+        errorMessage.append("❌ Cannot migrate CAT work directory: active state detected\n\n").
+          append("Old directory: ").append(oldPath).append("\n\n");
+
+        if (!worktrees.isEmpty())
+        {
+          errorMessage.append("Active worktrees:\n");
+          for (String worktree : worktrees)
+            errorMessage.append("  - ").append(worktree).append('\n');
+          errorMessage.append('\n');
+        }
+
+        if (!lockFiles.isEmpty())
+        {
+          errorMessage.append("Active lock files:\n");
+          for (Path lockFile : lockFiles)
+            errorMessage.append("  - ").append(lockFile).append('\n');
+          errorMessage.append('\n');
+        }
+
+        errorMessage.append("Migration cannot proceed while work is in progress.\n").
+          append("Complete or abandon work in these locations before retrying.");
+        return Result.stderr(errorMessage.toString());
+      }
+    }
+
+    StringBuilder message = new StringBuilder(256);
+    message.append("🔄 Migrating CAT work directory...\n").
+      append("   From: ").append(oldPath).append('\n').
+      append("   To: ").append(newPath);
+
+    if (Files.isDirectory(oldDir))
+    {
+      deleteDirectoryRecursively(oldDir);
+      message.append("\n   Removed old directory");
+    }
+
+    removeFromGitignore(oldPath, projectDir);
+
+    Files.deleteIfExists(migrationMarker);
+
+    message.append("\n✓ Migration complete!");
+
+    return Result.stderr(message.toString());
+  }
+
+  /**
+   * Removes a path from the appropriate .gitignore file.
+   *
+   * @param absolutePath the absolute path to remove
+   * @param projectDir the project directory path
+   * @throws IOException if reading or writing the .gitignore file fails
+   */
+  private void removeFromGitignore(String absolutePath, String projectDir) throws IOException
+  {
+    String relativePath;
+    Path gitignoreFile;
+
+    if (absolutePath.startsWith(projectDir + "/.cat/"))
+    {
+      gitignoreFile = Path.of(projectDir, ".cat", ".gitignore");
+      relativePath = absolutePath.substring((projectDir + "/.cat/").length());
+    }
+    else if (absolutePath.startsWith(projectDir + "/"))
+    {
+      gitignoreFile = Path.of(projectDir, ".gitignore");
+      relativePath = absolutePath.substring((projectDir + "/").length());
+    }
+    else
+    {
+      return;
+    }
+
+    if (!Files.isRegularFile(gitignoreFile))
+      return;
+
+    List<String> lines = Files.readAllLines(gitignoreFile);
+    List<String> filtered = new ArrayList<>();
+    for (String line : lines)
+    {
+      if (!line.equals(relativePath))
+        filtered.add(line);
+    }
+
+    if (filtered.size() != lines.size())
+      Files.write(gitignoreFile, filtered);
+  }
+
+  /**
+   * Gets the list of git worktrees that are located within the specified directory.
+   *
+   * @param directory the directory to check for worktrees
+   * @return list of worktree paths that are under the specified directory
+   * @throws IOException if running git worktree list fails
+   */
+  private List<String> getWorktreesInDirectory(Path directory) throws IOException
+  {
+    ProcessBuilder pb = new ProcessBuilder("git", "worktree", "list", "--porcelain");
+    pb.directory(scope.getProjectPath().toFile());
+    Process process = pb.start();
+
+    StringJoiner output = new StringJoiner("\n");
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(),
+      UTF_8)))
+    {
+      for (String line = reader.readLine(); line != null; line = reader.readLine())
+        output.add(line);
+    }
+
+    try
+    {
+      process.waitFor();
+    }
+    catch (InterruptedException e)
+    {
+      Thread.currentThread().interrupt();
+      throw new IOException("Interrupted while waiting for git worktree list", e);
+    }
+
+    if (process.exitValue() != 0)
+      return List.of();
+
+    List<String> worktrees = new ArrayList<>();
+    String absoluteDir = directory.toAbsolutePath().toString();
+
+    for (String line : output.toString().split("\n"))
+    {
+      if (line.startsWith("worktree "))
+      {
+        String worktreePath = line.substring("worktree ".length());
+        if (worktreePath.startsWith(absoluteDir))
+          worktrees.add(worktreePath);
+      }
+    }
+    return worktrees;
+  }
+
+  /**
+   * Gets the list of lock files within the specified directory.
+   * <p>
+   * Lock files indicate active Claude instances working on issues.
+   *
+   * @param directory the directory to check for lock files
+   * @return list of lock file paths found in the directory
+   * @throws IOException if reading the directory fails
+   */
+  private List<Path> getLockFilesInDirectory(Path directory) throws IOException
+  {
+    List<Path> lockFiles = new ArrayList<>();
+    Path locksDir = directory.resolve("locks");
+
+    if (!Files.isDirectory(locksDir))
+      return lockFiles;
+
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(locksDir, "*.lock"))
+    {
+      for (Path lockFile : stream)
+        lockFiles.add(lockFile);
+    }
+
+    return lockFiles;
+  }
+
+  /**
+   * Recursively deletes a directory and all its contents.
+   *
+   * @param directory the directory to delete
+   * @throws IOException if deletion fails
+   */
+  private void deleteDirectoryRecursively(Path directory) throws IOException
+  {
+    if (!Files.exists(directory))
+      return;
+
+    if (Files.isDirectory(directory))
+    {
+      try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory))
+      {
+        for (Path entry : stream)
+          deleteDirectoryRecursively(entry);
+      }
+    }
+    Files.delete(directory);
   }
 
   /**

@@ -18,6 +18,9 @@ import java.nio.file.Path;
 /**
  * JVM-wide scope providing lazy-loaded singletons and environment configuration.
  * <p>
+ * All methods that return objects (paths, singletons, handlers) must always return the same value
+ * for the lifetime of the scope. Multiple invocations of the same method must return equal values.
+ * <p>
  * <b>Thread Safety:</b> Implementations are thread-safe.
  */
 public interface JvmScope extends AutoCloseable
