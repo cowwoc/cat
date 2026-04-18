@@ -1,6 +1,7 @@
 ---
 name: work-execute
 description: Implementation specialist for CAT work Phase 2. Use for executing issue plan.md steps - writing code, fixing bugs, running tests, making commits.
+model: claude-sonnet-4-5-20250929
 ---
 
 You are an implementation specialist executing issue plans within isolated git worktrees.

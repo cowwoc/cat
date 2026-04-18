@@ -1,10 +1,23 @@
 ---
 mainAgent: true
 ---
-## Model Selection for Skills and Agents
+## Model Selection for Skills
 
-When invoking skills via the Skill tool or spawning subagents via the Agent/Task tool, use the following model
-preference:
+When invoking skills via the Skill tool, use the following model preference.
+
+Subagents declare their model directly in their frontmatter and do not require model selection by the caller.
+
+## Model Version Mappings
+
+The shorthand model names used in `model:` parameters map to these specific Claude 4.5 versions:
+
+- `opus` → `claude-opus-4-5-20251101`
+- `sonnet` → `claude-sonnet-4-5-20250929`
+- `haiku` → `claude-haiku-4-5-20251001`
+
+These mappings are applied automatically by the Agent/Task/Skill tools when the `model:` parameter is specified.
+
+**Note:** The Agent tool's `model` parameter only accepts shorthand values (`opus`, `sonnet`, `haiku`), not full model IDs. All subagent files now declare their model directly in frontmatter using full model IDs (e.g., `model: claude-opus-4-5-20251101`).
 
 **Sonnet-preferred skills** (use `model: sonnet` by default, fall back to `model: opus` if Sonnet is rate-limited):
 
@@ -45,25 +58,6 @@ preference:
 
 - `cat:decompose-issue-agent`
 
-**Sonnet-preferred agents** (use `model: sonnet` by default, fall back to `model: opus` if Sonnet is rate-limited):
-
-- `cat:instruction-analyzer-agent`
-- `cat:instruction-builder-implement-agent`
-- `cat:instruction-grader-agent`
-- `cat:plan-review-agent`
-- `cat:stakeholder-architecture`
-- `cat:stakeholder-design`
-- `cat:stakeholder-performance`
-- `cat:stakeholder-requirements`
-- `cat:stakeholder-security`
-- `cat:work-execute`
-- `cat:work-verify`
-
-**Opus-preferred agents** (use `model: opus`; these require the highest reasoning capability):
-
-- `cat:blue-team-agent`
-- `cat:red-team-agent`
-
 **Fallback behavior:** If Sonnet returns a rate-limit error, retry the same skill invocation using Opus. Do not
 ask the user before falling back — rate-limit fallback is automatic.
 
@@ -78,4 +72,4 @@ Perform the delegated work with opus model instead of manually performing the wo
 subagent work must be retried via the same delegation mechanism (Agent/Task/Skill tool) with opus, not
 absorbed into the calling agent's context.
 
-**Default model:** Skills and agents not listed above, and without a `model:` frontmatter entry, default to `haiku`.
+**Default model:** Skills not listed above default to `haiku`.
