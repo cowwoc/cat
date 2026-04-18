@@ -4,6 +4,7 @@ description: >
   Internal subagent — reads an instruction-test JSON produced by InstructionTestAggregator and surfaces
   actionable patterns: non-discriminating assertions, high-variance evals, and time/token tradeoffs. Returns
   a structured analysis report for the instruction-builder review step.
+model: claude-sonnet-4-5-20250929
 ---
 
 # Skill Analyzer

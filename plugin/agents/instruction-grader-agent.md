@@ -4,6 +4,7 @@ description: >
   Internal subagent — grades a list of assertions against a single test-case output, assigning
   pass/fail verdicts with evidence quotes. Writes grading JSON to the provided output path and
   returns the path. Never commits files.
+model: claude-sonnet-4-5-20250929
 ---
 # Instruction Grader
 
