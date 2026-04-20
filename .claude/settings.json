@@ -2,6 +2,14 @@
   "env": {
     "DISABLE_AUTOUPDATER": "1"
   },
+  "permissions": {
+    "additionalDirectories": ["~/.cat"]
+  },
+  "sandbox": {
+    "filesystem": {
+      "allowWrite": ["~/.cat"]
+    }
+  },
   "attribution": {
     "commit": "",
     "pr": ""
