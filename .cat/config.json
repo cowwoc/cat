@@ -6,5 +6,5 @@
   "curiosity": "high",
   "perfection": "high",
   "minSeverity": "low",
-  "workPath": "${CLAUDE_PROJECT_DIR}/.cat/work"
+  "workPath": "~/.cat"
 }
