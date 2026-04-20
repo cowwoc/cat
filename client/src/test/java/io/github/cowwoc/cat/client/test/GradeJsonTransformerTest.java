@@ -8,32 +8,19 @@ package io.github.cowwoc.cat.client.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.claude.hook.skills.GradeJsonTransformer;
 import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * Tests for the grade-json-transformer CLI binary.
+ * Tests for {@link GradeJsonTransformer}.
  */
 public final class GradeJsonTransformerTest
 {
-  /**
-   * Verifies that the grade-json-transformer binary exists and is executable.
-   */
-  @Test
-  public void binaryExists() throws IOException
-  {
-    Path binary = Path.of(System.getProperty("user.home")).
-      resolve(".config/claude/plugins/cache/cat/cat/2.1/client/bin/grade-json-transformer");
-    requireThat(Files.exists(binary), "binaryExists").isTrue();
-    requireThat(Files.isExecutable(binary), "binaryIsExecutable").isTrue();
-  }
-
   /**
    * Verifies that valid grader JSON with correct schema is accepted and transformed correctly.
    */
@@ -60,35 +47,21 @@ public final class GradeJsonTransformerTest
 
       Files.writeString(inputFile, inputJson);
 
-      Path binary = Path.of(System.getProperty("user.home")).
-        resolve(".config/claude/plugins/cache/cat/cat/2.1/client/bin/grade-json-transformer");
-
-      ProcessBuilder pb = new ProcessBuilder(
-        binary.toString(),
-        inputFile.toString(),
-        "tc1_run1",
-        outputFile.toString());
-      try (Process process = pb.start())
+      try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
       {
-        int exitCode = process.waitFor();
+        new GradeJsonTransformer().transform(inputFile, "tc1_run1", outputFile, scope);
 
-        requireThat(exitCode, "exitCode").isEqualTo(0);
         requireThat(Files.exists(outputFile), "outputFileExists").isTrue();
 
         String outputJson = Files.readString(outputFile);
-        JsonMapper mapper = JsonMapper.builder().build();
-        JsonNode output = mapper.readTree(outputJson);
+        JsonNode output = scope.getJsonMapper().readTree(outputJson);
 
         requireThat(output.has("test_case_id"), "hasTestCaseId").isTrue();
         requireThat(output.path("test_case_id").asString(), "testCaseId").isEqualTo("tc1_run1");
         requireThat(output.has("assertion_results"), "hasAssertionResults").isTrue();
         requireThat(output.path("assertion_results").isArray(), "assertionResultsIsArray").isTrue();
+        requireThat(output.has("stats"), "hasStats").isTrue();
       }
-    }
-    catch (InterruptedException e)
-    {
-      Thread.currentThread().interrupt();
-      throw new IOException("Process interrupted", e);
     }
     finally
     {
@@ -100,7 +73,7 @@ public final class GradeJsonTransformerTest
    * Verifies that grader JSON with wrong field name "status" instead of "verdict" is rejected.
    */
   @Test(expectedExceptions = IOException.class,
-    expectedExceptionsMessageRegExp = ".*verdict.*status.*")
+    expectedExceptionsMessageRegExp = ".*status.*verdict.*")
   public void wrongFieldNameStatusIsRejected() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
@@ -123,29 +96,10 @@ public final class GradeJsonTransformerTest
 
       Files.writeString(inputFile, inputJson);
 
-      Path binary = Path.of(System.getProperty("user.home")).
-        resolve(".config/claude/plugins/cache/cat/cat/2.1/client/bin/grade-json-transformer");
-
-      ProcessBuilder pb = new ProcessBuilder(
-        binary.toString(),
-        inputFile.toString(),
-        "tc1_run1",
-        outputFile.toString());
-      try (Process process = pb.start())
+      try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
       {
-        int exitCode = process.waitFor();
-
-        if (exitCode != 0)
-        {
-          String stderr = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
-          throw new IOException("Transformer rejected input: " + stderr);
-        }
+        new GradeJsonTransformer().transform(inputFile, "tc1_run1", outputFile, scope);
       }
-    }
-    catch (InterruptedException e)
-    {
-      Thread.currentThread().interrupt();
-      throw new IOException("Process interrupted", e);
     }
     finally
     {
@@ -179,29 +133,10 @@ public final class GradeJsonTransformerTest
 
       Files.writeString(inputFile, inputJson);
 
-      Path binary = Path.of(System.getProperty("user.home")).
-        resolve(".config/claude/plugins/cache/cat/cat/2.1/client/bin/grade-json-transformer");
-
-      ProcessBuilder pb = new ProcessBuilder(
-        binary.toString(),
-        inputFile.toString(),
-        "tc1_run1",
-        outputFile.toString());
-      try (Process process = pb.start())
+      try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
       {
-        int exitCode = process.waitFor();
-
-        if (exitCode != 0)
-        {
-          String stderr = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
-          throw new IOException("Transformer rejected input: " + stderr);
-        }
+        new GradeJsonTransformer().transform(inputFile, "tc1_run1", outputFile, scope);
       }
-    }
-    catch (InterruptedException e)
-    {
-      Thread.currentThread().interrupt();
-      throw new IOException("Process interrupted", e);
     }
     finally
     {
