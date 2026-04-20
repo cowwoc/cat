@@ -1,0 +1,12 @@
+{
+  "id": "migrate-model-selection-to-frontmatter",
+  "version": "2.1",
+  "title": "Migrate model selection to frontmatter",
+  "description": "Replace centralized model selection in plugin/rules/model-selection.md with model frontmatter in individual skill and agent files",
+  "status": "open",
+  "created_at": "2026-04-19T00:00:00Z",
+  "updated_at": "2026-04-19T00:00:00Z",
+  "dependencies": [],
+  "blocks": [],
+  "labels": ["refactor", "plugin"]
+}
