@@ -7,6 +7,7 @@
 package io.github.cowwoc.cat.claude.hook.util;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
@@ -265,6 +266,22 @@ public final class GivingUpDetector
   private static final Set<String> CODE_REMOVAL_ACTIONS = Set.of("remove", "disable", "skip");
 
   /**
+   * Specific phrases indicating resource exhaustion (context window, token limits, time pressure).
+   * <p>
+   * When a pure-text segment contains both an intro+action pattern AND one of these phrases, the
+   * code-removal detection fires. Without a resource-exhaustion phrase, the pattern is too broad
+   * and would fire on legitimate operations like "let me remove the stale lock file".
+   * <p>
+   * Entries must be specific multi-word phrases. Single words like "context" or "token" are excluded
+   * because they appear in unrelated technical contexts (e.g., "context manager", "token class")
+   * and would cause false positives.
+   */
+  private static final Set<String> RESOURCE_EXHAUSTION_PHRASES = Set.of(
+    "context window", "context limit", "save context",
+    "token limit", "running out", "taking too long",
+    "time limit", "conversation is getting");
+
+  /**
    * Creates a new giving-up detector.
    */
   public GivingUpDetector()
@@ -317,6 +334,75 @@ public final class GivingUpDetector
   }
 
   /**
+   * Checks a turn segment for giving-up patterns and returns the appropriate reminder.
+   * <p>
+   * Uses segment context (adjacent file paths) to reduce false positives on legitimate tool-call
+   * narration. Runs prompt-style patterns first, then token-rationalization patterns.
+   *
+   * @param segment the turn segment to check
+   * @return the raw reminder string if a pattern is detected, or empty string if none detected
+   * @throws NullPointerException if {@code segment} is null
+   */
+  public String check(TurnSegment segment)
+  {
+    Optional<ViolationType> type = detectType(segment);
+    if (type.isEmpty())
+      return "";
+    return switch (type.get())
+    {
+      case CONSTRAINT_RATIONALIZATION -> CONSTRAINT_RATIONALIZATION_REMINDER;
+      case CODE_REMOVAL -> CODE_REMOVAL_REMINDER;
+      case COMPILATION_ABANDONMENT -> COMPILATION_ABANDONMENT_REMINDER;
+      case TOKEN_RATIONALIZATION -> TOKEN_RATIONALIZATION_REMINDER;
+    };
+  }
+
+  /**
+   * Checks a list of turn segments for giving-up patterns and returns the first reminder found.
+   *
+   * @param segments the turn segments to check
+   * @return the raw reminder string if a pattern is detected in any segment, or empty string if none
+   * @throws NullPointerException if {@code segments} is null
+   */
+  public String check(List<TurnSegment> segments)
+  {
+    for (TurnSegment segment : segments)
+    {
+      String reminder = check(segment);
+      if (!reminder.isEmpty())
+        return reminder;
+    }
+    return "";
+  }
+
+  /**
+   * Detects the type of giving-up violation in the given turn segment.
+   *
+   * @param segment the turn segment to analyze
+   * @return the violation type if a pattern is detected, or empty if none detected
+   * @throws NullPointerException if {@code segment} is null
+   */
+  public Optional<ViolationType> detectType(TurnSegment segment)
+  {
+    String textLower = segment.text().toLowerCase(Locale.ROOT);
+
+    if (detectConstraintRationalization(textLower))
+    {
+      if (containsCompilationIndicator(textLower))
+        return Optional.of(ViolationType.COMPILATION_ABANDONMENT);
+      return Optional.of(ViolationType.CONSTRAINT_RATIONALIZATION);
+    }
+
+    if (detectCodeDisabling(segment, textLower))
+      return Optional.of(ViolationType.CODE_REMOVAL);
+
+    if (detectGivingUpPattern(textLower))
+      return Optional.of(ViolationType.TOKEN_RATIONALIZATION);
+
+    return Optional.empty();
+  }
+
+  /**
    * Detects the type of prompt-style violation in the given text.
    * <p>
    * Detection priority (most specific first):
@@ -340,7 +426,7 @@ public final class GivingUpDetector
       return Optional.of(ViolationType.CONSTRAINT_RATIONALIZATION);
     }
 
-    if (detectCodeDisabling(textLower))
+    if (detectCodeDisablingPhrases(textLower))
       return Optional.of(ViolationType.CODE_REMOVAL);
 
     return Optional.empty();
@@ -426,20 +512,64 @@ public final class GivingUpDetector
   }
 
   /**
-   * Returns {@code true} if the text matches a code-disabling pattern.
+   * Returns {@code true} if the given segment matches a code-disabling pattern, applying
+   * segment-context rules to reduce false positives.
+   * <p>
+   * Decision logic:
+   * <ul>
+   *   <li>Compound segment with an adjacent code file → apply existing intro+action check</li>
+   *   <li>Compound segment with no adjacent code file → suppress (return {@code false})</li>
+   *   <li>Pure-text segment (both paths null) → require BOTH intro+action AND a resource-exhaustion
+   *       phrase in the same sentence</li>
+   * </ul>
+   *
+   * @param segment   the turn segment to check
+   * @param textLower the pre-lowercased text from {@code segment}
+   * @return {@code true} if a code-disabling pattern matches under the segment's context rules
+   */
+  private boolean detectCodeDisabling(TurnSegment segment, String textLower)
+  {
+    boolean hasAboveCode = ConversationLogUtils.hasCodeExtension(segment.aboveFilePath());
+    boolean hasBelowCode = ConversationLogUtils.hasCodeExtension(segment.belowFilePath());
+    boolean isCompound = segment.aboveFilePath() != null || segment.belowFilePath() != null;
+
+    if (isCompound)
+    {
+      // Compound segment: only trigger if an adjacent file has a code extension
+      if (hasAboveCode || hasBelowCode)
+        return detectCodeDisablingPhrases(textLower);
+      // Adjacent file is not code (e.g., .lock, .json) → suppress
+      return false;
+    }
+
+    // Pure-text segment: require intro+action AND resource-exhaustion phrase in same sentence
+    for (String sentence : splitSentences(textLower))
+    {
+      if (!sentenceMatchesCodeDisablingIntroAction(sentence))
+        continue;
+      // Also require a resource-exhaustion phrase in the same sentence
+      for (String phrase : RESOURCE_EXHAUSTION_PHRASES)
+      {
+        if (sentence.contains(phrase))
+          return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Returns {@code true} if any sentence in {@code textLower} matches the code-disabling intro+action
+   * patterns (or any of the literal disabling phrases), without any resource-exhaustion requirement.
    *
    * @param textLower the lowercase text to check
    * @return {@code true} if a pattern matches
    */
-  private boolean detectCodeDisabling(String textLower)
+  private boolean detectCodeDisablingPhrases(String textLower)
   {
     for (String sentence : splitSentences(textLower))
     {
-      // "i'll/i will/let me/i'm going to remove/disable/skip" (intro immediately precedes action)
-      for (String intro : CODE_REMOVAL_INTROS)
-        for (String action : CODE_REMOVAL_ACTIONS)
-          if (sentence.contains(intro + " " + action))
-            return true;
+      if (sentenceMatchesCodeDisablingIntroAction(sentence))
+        return true;
       // Literal disabling phrases
       if (sentence.contains("temporarily disable"))
         return true;
@@ -468,6 +598,22 @@ public final class GivingUpDetector
       if (sentence.contains("removing the try-catch"))
         return true;
     }
+    return false;
+  }
+
+  /**
+   * Returns {@code true} if the given sentence contains an intro+action code-removal phrase
+   * (e.g., "i'll remove", "let me disable", "i'm going to skip").
+   *
+   * @param sentence the lowercase sentence to check
+   * @return {@code true} if an intro+action pattern matches
+   */
+  private static boolean sentenceMatchesCodeDisablingIntroAction(String sentence)
+  {
+    for (String intro : CODE_REMOVAL_INTROS)
+      for (String action : CODE_REMOVAL_ACTIONS)
+        if (sentence.contains(intro + " " + action))
+          return true;
     return false;
   }
 
