@@ -139,54 +139,9 @@ public final class ClaudeRunner implements AutoCloseable
   }
 
   /**
-   * Checks whether the cache-fix module is detected in the given {@code NODE_OPTIONS} string.
-   * <p>
-   * Returns {@code true} when {@code nodeOptions} contains {@code "claude-code-cache-fix"},
-   * which indicates that the
-   * <a href="https://github.com/cnighswonger/claude-code-cache-fix">claude-code-cache-fix</a> module
-   * is loaded. Matches both the short form ({@code --import claude-code-cache-fix}) and the full
-   * path form ({@code --import /path/to/claude-code-cache-fix/preload.mjs}).
-   *
-   * @param nodeOptions the {@code NODE_OPTIONS} environment variable value, or {@code null} if not
-   *                    set
-   * @return {@code true} if the cache-fix module is detected, {@code false} otherwise
-   */
-  public static boolean isCacheFixDetected(String nodeOptions)
-  {
-    return nodeOptions != null && nodeOptions.contains("claude-code-cache-fix");
-  }
-
-  /**
-   * Returns the Claude CLI binary name for launching nested Claude instances.
-   * <p>
-   * Checks whether the {@code NODE_OPTIONS} environment variable contains the cache-fix module.
-   * If not detected, emits a warning to {@code stderr} suggesting how to enable it.
-   *
-   * @param stderr the stream to write the warning to when the cache-fix module is not detected
-   * @return the Claude CLI binary name, resolved from {@code PATH} at process launch time
-   * @throws NullPointerException if {@code stderr} is null
-   */
-  public static String resolveClaudeBinary(PrintStream stderr)
-  {
-    requireThat(stderr, "stderr").isNotNull();
-    String nodeOptions = System.getenv("NODE_OPTIONS");
-    if (!isCacheFixDetected(nodeOptions))
-    {
-      stderr.println("WARNING: claude-code-cache-fix not detected in NODE_OPTIONS. " +
-        "Falling back to unpatched claude. " +
-        "To enable cache fix, either: " +
-        "(1) export NODE_OPTIONS=\"${NODE_OPTIONS} --import claude-code-cache-fix\", or " +
-        "(2) use the wrapper script from https://github.com/cnighswonger/claude-code-cache-fix" +
-        "#option-a-wrapper-script-recommended");
-    }
-    return "claude";
-  }
-
-  /**
    * Builds the claude CLI command with appropriate flags.
    * <p>
-   * Constructs a command that invokes the native Claude CLI binary directly. Emits a warning to
-   * stderr when the cache-fix module is not detected.
+   * Constructs a command that invokes the native Claude CLI binary directly.
    *
    * @param model              the model name (haiku, sonnet, or opus)
    * @param appendSystemPrompt the text to append to the system prompt via
@@ -209,7 +164,7 @@ public final class ClaudeRunner implements AutoCloseable
     requireThat(appendSystemPrompt, "appendSystemPrompt").isNotNull();
     requireThat(agent, "agent").isNotNull();
     List<String> command = new ArrayList<>();
-    command.add(resolveClaudeBinary(System.err));
+    command.add("claude");
     command.add("-p");
     command.add("--model");
     command.add(model);
@@ -292,9 +247,6 @@ public final class ClaudeRunner implements AutoCloseable
    * Removes the {@code CLAUDECODE} env var so the spawned process does not inherit the
    * hook-suppression flag. Sets {@code CLAUDE_CONFIG_DIR} and {@code CLAUDE_PLUGIN_ROOT} when
    * isolation is active so that all consumers read from the isolated plugin copy.
-   * <p>
-   * When {@code claude-code-cache-fix} is detected, sets cache-fix-specific environment variables:
-   * {@code CACHE_FIX_STRIP_GIT_STATUS=1} and {@code CACHE_FIX_TTL_SUBAGENT=5m}.
    *
    * @param command the command to execute
    * @param cwd     the working directory
@@ -318,14 +270,6 @@ public final class ClaudeRunner implements AutoCloseable
     String anthropicBaseUrl = scope.getAnthropicBaseUrl();
     if (!anthropicBaseUrl.isEmpty())
       env.put("ANTHROPIC_BASE_URL", anthropicBaseUrl);
-
-    // When using claude-code-cache-fix, set cache-fix-specific environment variables
-    String nodeOptions = System.getenv("NODE_OPTIONS");
-    if (isCacheFixDetected(nodeOptions))
-    {
-      env.put("CACHE_FIX_STRIP_GIT_STATUS", "1");
-      env.put("CACHE_FIX_TTL_SUBAGENT", "5m");
-    }
 
     if (isolatedConfigDir != null)
     {
