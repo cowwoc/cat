@@ -49,14 +49,14 @@ import tools.jackson.databind.node.ObjectNode;
 /**
  * Launches Claude Code CLI processes with optional config directory isolation.
  * <p>
- * Handles building stream-json input, spawning the Node.js process running cli.js,
+ * Handles building stream-json input, spawning the Claude CLI binary process,
  * parsing stream-json output, and optionally creating an isolated config directory
  * with updated plugin cache.
  */
 public final class ClaudeRunner implements AutoCloseable
 {
   /**
-   * Default timeout for the Node.js process running cli.js.
+   * Default timeout for the Claude CLI process.
    */
   private static final Duration DEFAULT_TIMEOUT = Duration.ofMinutes(3);
   private final ClaudePluginScope scope;
@@ -157,18 +157,14 @@ public final class ClaudeRunner implements AutoCloseable
   }
 
   /**
-   * Resolves the Node.js executable path for launching nested Claude instances.
+   * Returns the Claude CLI binary name for launching nested Claude instances.
    * <p>
    * Checks whether the {@code NODE_OPTIONS} environment variable contains the cache-fix module.
    * If not detected, emits a warning to {@code stderr} suggesting how to enable it.
-   * <p>
-   * Returns the path to the Node.js executable from {@code CLAUDE_CODE_EXECPATH}, which is used
-   * to run {@code cli.js} directly.
    *
    * @param stderr the stream to write the warning to when the cache-fix module is not detected
-   * @return the path to the Node.js executable
+   * @return the Claude CLI binary name, resolved from {@code PATH} at process launch time
    * @throws NullPointerException if {@code stderr} is null
-   * @throws AssertionError       if {@code CLAUDE_CODE_EXECPATH} is not set
    */
   public static String resolveClaudeBinary(PrintStream stderr)
   {
@@ -183,17 +179,14 @@ public final class ClaudeRunner implements AutoCloseable
         "(2) use the wrapper script from https://github.com/cnighswonger/claude-code-cache-fix" +
         "#option-a-wrapper-script-recommended");
     }
-    String nodeExec = System.getenv("CLAUDE_CODE_EXECPATH");
-    if (nodeExec == null || nodeExec.isEmpty())
-      throw new AssertionError("CLAUDE_CODE_EXECPATH environment variable is not set");
-    return nodeExec;
+    return "claude";
   }
 
   /**
    * Builds the claude CLI command with appropriate flags.
    * <p>
-   * Constructs a command that runs {@code node cli.js} directly with the cache-fix module loaded
-   * via {@code NODE_OPTIONS}. Emits a warning to stderr when the cache-fix module is not detected.
+   * Constructs a command that invokes the native Claude CLI binary directly. Emits a warning to
+   * stderr when the cache-fix module is not detected.
    *
    * @param model              the model name (haiku, sonnet, or opus)
    * @param appendSystemPrompt the text to append to the system prompt via
@@ -204,7 +197,6 @@ public final class ClaudeRunner implements AutoCloseable
    * @throws NullPointerException     if {@code model}, {@code appendSystemPrompt}, or {@code agent}
    *                                  are null
    * @throws IllegalArgumentException if {@code model} is not in the allowed set
-   * @throws AssertionError           if {@code NPM_CONFIG_PREFIX} is not set
    */
   public List<String> buildCommand(String model, String appendSystemPrompt, String agent)
   {
@@ -218,10 +210,6 @@ public final class ClaudeRunner implements AutoCloseable
     requireThat(agent, "agent").isNotNull();
     List<String> command = new ArrayList<>();
     command.add(resolveClaudeBinary(System.err));
-    String npmPrefix = System.getenv("NPM_CONFIG_PREFIX");
-    if (npmPrefix == null || npmPrefix.isEmpty())
-      throw new AssertionError("NPM_CONFIG_PREFIX environment variable is not set");
-    command.add(npmPrefix + "/lib/node_modules/@anthropic-ai/claude-code/cli.js");
     command.add("-p");
     command.add("--model");
     command.add(model);
@@ -350,7 +338,7 @@ public final class ClaudeRunner implements AutoCloseable
   }
 
   /**
-   * Executes the Node.js process running cli.js with the given input, streaming output
+   * Executes the Claude CLI process with the given input, streaming output
    * line-by-line to avoid buffering the full response in memory.
    * <p>
    * If an isolated config directory has been created via {@link #createIsolatedConfig},
@@ -652,7 +640,7 @@ public final class ClaudeRunner implements AutoCloseable
   }
 
   /**
-   * Result of executing the Node.js process running cli.js.
+   * Result of executing the Claude CLI process.
    *
    * @param parsed  the parsed output
    * @param elapsed the elapsed time in seconds

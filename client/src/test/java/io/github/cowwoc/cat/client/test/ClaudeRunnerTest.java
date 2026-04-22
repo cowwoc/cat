@@ -192,8 +192,8 @@ public final class ClaudeRunnerTest
    * Verifies that run() reads prompt content from the file specified by --prompt-file.
    * <p>
    * Confirms the file is read (no IOException) when it exists; the process launch itself
-   * may fail since Node.js + cli.js may not be available in unit tests, but the file-read
-   * step succeeds.
+   * may fail if the Claude CLI binary is not available in the test environment,
+   * but the file-read step succeeds.
    */
   @Test
   public void runReadsPromptFromFile() throws IOException
@@ -208,7 +208,7 @@ public final class ClaudeRunnerTest
       try
       {
         // The file exists and is readable — no IOException from file reading.
-        // Process launch may fail (Node.js + cli.js may not be available in tests), which is acceptable here.
+        // Process launch may fail if the Claude CLI binary is unavailable in the test environment.
         ClaudeRunner.run(scope, new String[]{"--prompt-file", promptFile.toString()}, out);
       }
       catch (IOException e)

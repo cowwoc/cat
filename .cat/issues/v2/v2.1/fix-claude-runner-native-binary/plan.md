@@ -81,9 +81,17 @@ installation.
   - Update the comment from "First element should be the node executable path" to reflect native binary
   - Files: `client/src/test/java/io/github/cowwoc/cat/client/test/EmpiricalTestRunnerTest.java`
 
+### Job 3: Remove CLAUDE_CODE_EXECPATH from production code and Javadoc
+
+- In `ClaudeRunner.resolveClaudeBinary`, replace the `System.getenv("CLAUDE_CODE_EXECPATH")` lookup
+  and its AssertionError with a simple return of `"claude"`, relying on PATH resolution at process
+  launch time. Remove the `@throws AssertionError` Javadoc tag since the method no longer throws.
+- Remove the `@throws AssertionError` Javadoc tag from `buildCommand` for the same reason.
+- Files: `client/src/main/java/io/github/cowwoc/cat/claude/hook/skills/ClaudeRunner.java`
+
 ## Post-conditions
 
 - [ ] `mvn -f client/pom.xml verify -e` exits 0 with no test failures
-- [ ] `buildCommand` returns a list whose first element is the `CLAUDE_CODE_EXECPATH` value and second
-  element is `-p`
+- [ ] `buildCommand` returns a list whose first element is `"claude"` and second element is `-p`
 - [ ] No `cli.js` path appears anywhere in the command list
+- [ ] No `CLAUDE_CODE_EXECPATH` references appear anywhere in `ClaudeRunner.java`
