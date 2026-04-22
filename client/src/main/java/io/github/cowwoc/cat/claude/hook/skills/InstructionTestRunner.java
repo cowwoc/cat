@@ -1925,7 +1925,7 @@ public final class InstructionTestRunner
    * compared to {@code run-full-sprt} that allows running individual tests or a filtered set of tests.
    *
    * @param args {@code [worktree_path, test_dir, test_pattern, test_model, project_dir, session_id]}
-   *             where {@code test_pattern} is a test name or glob pattern (e.g., "cache_fix_warning_conveyed"
+   *             where {@code test_pattern} is a test name or glob pattern (e.g., "invoke_with_prompt_file"
    *             or "*warning*")
    * @param out  the output stream
    * @throws IOException          if an I/O error occurs

@@ -151,7 +151,7 @@ if [[ $RUNNER_EXIT -ne 0 ]]; then
 fi
 ```
 
-**stderr interpretation:** If the runner prints a warning about `claude-code-cache-fix` to stderr, it means the preferred binary is not installed. The run still completes using the standard `claude` binary. However, do NOT ignore all stderr output — other errors may appear on stderr. Always check the exit code to determine success or failure.
+**stderr interpretation:** Do NOT ignore stderr output — errors may appear on stderr. Always check the exit code to determine success or failure.
 
 **MANDATORY cleanup:** After the runner completes (success or failure), delete the temporary prompt file and output file (if created):
 

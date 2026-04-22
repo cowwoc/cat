@@ -1,5 +1,7 @@
 {
-  "status": "open",
-  "dependencies": [ "fix-claude-runner-native-binary" ],
-  "blocks": []
+  "status" : "closed",
+  "resolution" : "implemented",
+  "dependencies" : [ "fix-claude-runner-native-binary" ],
+  "blocks" : [ ],
+  "target_branch" : "v2.1"
 }
