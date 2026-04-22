@@ -7,6 +7,7 @@
 package io.github.cowwoc.cat.client.test;
 
 import io.github.cowwoc.cat.claude.hook.util.GivingUpDetector;
+import io.github.cowwoc.cat.claude.hook.util.TurnSegment;
 import io.github.cowwoc.cat.claude.hook.util.ViolationType;
 import org.testng.annotations.Test;
 
@@ -432,6 +433,196 @@ public final class GivingUpDetectorTest
       - Files processed: 25
       """;
     String result = detector.check(text);
+    requireThat(result, "result").isEmpty();
+  }
+
+  // ── TurnSegment-based detection tests ──────────────────────────────────────
+
+  /**
+   * Verifies that a compound segment adjacent to a code file triggers CODE_REMOVAL when the text
+   * contains an intro+action phrase.
+   * <p>
+   * "Let me remove the broken implementation" adjacent to a .java file is a legitimate code-removal
+   * signal because the narrated tool call targets a source file.
+   */
+  @Test
+  public void compoundSegmentWithCodeFileAdjacentTriggers()
+  {
+    GivingUpDetector detector = new GivingUpDetector();
+    // aboveFilePath is a .java file → compound + code file → apply intro+action check
+    TurnSegment segment = new TurnSegment(
+      "Let me remove the broken implementation",
+      "/workspace/src/main/java/Foo.java",
+      null);
+    String result = detector.check(segment);
+    requireThat(result, "result").contains("CODE DISABLING ANTI-PATTERN DETECTED");
+  }
+
+  /**
+   * Verifies that a compound segment adjacent to a non-code file (e.g. {@code .lock}) is suppressed.
+   * <p>
+   * "Let me remove the stale lock file" adjacent to a .lock file is a legitimate non-code operation.
+   * The detector must not fire CODE_REMOVAL for this pattern.
+   */
+  @Test
+  public void compoundSegmentWithNonCodeFileAdjacentIsSuppressed()
+  {
+    GivingUpDetector detector = new GivingUpDetector();
+    // belowFilePath is a .lock file → compound + non-code file → suppress
+    TurnSegment segment = new TurnSegment(
+      "Let me remove the stale lock file",
+      null,
+      "/workspace/.cat/locks/session.lock");
+    String result = detector.check(segment);
+    requireThat(result, "result").isEmpty();
+  }
+
+  /**
+   * Verifies that a compound segment with no recognized file path in either adjacent block is suppressed.
+   * <p>
+   * When adjacent tool_use blocks have no file path (e.g., a Bash command with no code file),
+   * both paths are null in a compound segment but the segment itself is still compound. Because no
+   * code file is adjacent, the detection is suppressed to avoid false positives on non-code operations.
+   */
+  @Test
+  public void compoundSegmentWithNoAdjacentFilePathIsSuppressed()
+  {
+    GivingUpDetector detector = new GivingUpDetector();
+    // Both paths null → treated as pure-text → requires resource-exhaustion phrase too
+    // Pure-text path: no resource-exhaustion phrase → suppressed
+    TurnSegment segment = new TurnSegment(
+      "Let me remove the stale worktrees",
+      null,
+      null);
+    String result = detector.check(segment);
+    requireThat(result, "result").isEmpty();
+  }
+
+  /**
+   * Verifies that a pure-text segment containing both intro+action AND a specific resource-exhaustion
+   * phrase triggers CODE_REMOVAL detection.
+   * <p>
+   * The combination of "i'll skip" (intro+action) with "context window" (specific resource-exhaustion
+   * phrase) in the same sentence indicates the agent is abandoning work due to resource limits.
+   */
+  @Test
+  public void pureTextSegmentWithIntroActionAndResourceExhaustionTriggers()
+  {
+    GivingUpDetector detector = new GivingUpDetector();
+    TurnSegment segment = new TurnSegment(
+      "I'll skip this test since the context window is filling up",
+      null,
+      null);
+    String result = detector.check(segment);
+    requireThat(result, "result").contains("CODE DISABLING ANTI-PATTERN DETECTED");
+  }
+
+  /**
+   * Verifies that the word "context" alone (e.g., "context manager") is not treated as a
+   * resource-exhaustion signal in a pure-text segment.
+   * <p>
+   * Only specific multi-word phrases like "context window" or "context limit" indicate resource
+   * exhaustion. The word "context" alone is too common in technical text to be a reliable signal.
+   */
+  @Test
+  public void genericContextWordIsNotResourceExhaustion()
+  {
+    GivingUpDetector detector = new GivingUpDetector();
+    TurnSegment segment = new TurnSegment(
+      "I'll remove the context manager from the service",
+      null,
+      null);
+    String result = detector.check(segment);
+    requireThat(result, "result").isEmpty();
+  }
+
+  /**
+   * Verifies that the word "token" alone (e.g., "token class") is not treated as a
+   * resource-exhaustion signal in a pure-text segment.
+   * <p>
+   * Only specific phrases like "token limit" indicate resource exhaustion. "Token" is a common
+   * term in authentication and parsing contexts.
+   */
+  @Test
+  public void genericTokenWordIsNotResourceExhaustion()
+  {
+    GivingUpDetector detector = new GivingUpDetector();
+    TurnSegment segment = new TurnSegment(
+      "Let me remove the token class from the auth module",
+      null,
+      null);
+    String result = detector.check(segment);
+    requireThat(result, "result").isEmpty();
+  }
+
+  /**
+   * Verifies that "too large" alone is not treated as a resource-exhaustion signal.
+   * <p>
+   * Removing something "too large" describes a size concern, not a resource-exhaustion
+   * giving-up pattern.
+   */
+  @Test
+  public void tooLargeAloneIsNotResourceExhaustion()
+  {
+    GivingUpDetector detector = new GivingUpDetector();
+    TurnSegment segment = new TurnSegment(
+      "The image is too large, let me remove it from the repository",
+      null,
+      null);
+    String result = detector.check(segment);
+    requireThat(result, "result").isEmpty();
+  }
+
+  /**
+   * Verifies that "too long" alone is not treated as a resource-exhaustion signal.
+   * <p>
+   * Removing something "too long" describes a length concern, not a resource-exhaustion
+   * giving-up pattern.
+   */
+  @Test
+  public void tooLongAloneIsNotResourceExhaustion()
+  {
+    GivingUpDetector detector = new GivingUpDetector();
+    TurnSegment segment = new TurnSegment(
+      "The method name is too long, I'll remove the verbose prefix",
+      null,
+      null);
+    String result = detector.check(segment);
+    requireThat(result, "result").isEmpty();
+  }
+
+  /**
+   * Verifies that a pure-text segment with intro+action only (no resource-exhaustion phrase) is suppressed.
+   * <p>
+   * "Let me remove the stale worktrees" describes a legitimate non-code operation with no resource
+   * exhaustion context, so it must not trigger CODE_REMOVAL.
+   */
+  @Test
+  public void pureTextSegmentWithIntroActionOnlyIsSuppressed()
+  {
+    GivingUpDetector detector = new GivingUpDetector();
+    TurnSegment segment = new TurnSegment(
+      "Let me remove the stale worktrees",
+      null,
+      null);
+    String result = detector.check(segment);
+    requireThat(result, "result").isEmpty();
+  }
+
+  /**
+   * Verifies that a pure-text segment with resource-exhaustion phrase only (no intro+action) is suppressed.
+   * <p>
+   * Mentioning "context" or "token" without a paired intro+action phrase is not a code-removal signal.
+   */
+  @Test
+  public void pureTextSegmentWithResourceExhaustionOnlyIsSuppressed()
+  {
+    GivingUpDetector detector = new GivingUpDetector();
+    TurnSegment segment = new TurnSegment(
+      "The context window is large and contains many files",
+      null,
+      null);
+    String result = detector.check(segment);
     requireThat(result, "result").isEmpty();
   }
 }

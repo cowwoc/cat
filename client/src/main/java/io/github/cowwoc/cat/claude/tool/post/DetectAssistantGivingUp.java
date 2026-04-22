@@ -12,6 +12,7 @@ import io.github.cowwoc.cat.claude.hook.ClaudeHook;
 import io.github.cowwoc.cat.claude.hook.PostToolHandler;
 import io.github.cowwoc.cat.claude.hook.util.ConversationLogUtils;
 import io.github.cowwoc.cat.claude.hook.util.GivingUpDetector;
+import io.github.cowwoc.cat.claude.hook.util.TurnSegment;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -20,7 +21,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.List;
 
@@ -63,16 +64,14 @@ public final class DetectAssistantGivingUp implements PostToolHandler
     if (!Files.exists(conversationLog))
       return Result.allow();
 
-    List<String> recentTexts = getRecentAssistantTextContent(conversationLog);
-    if (recentTexts.isEmpty())
+    List<TurnSegment> recentSegments = getRecentAssistantSegments(conversationLog);
+    if (recentSegments.isEmpty())
       return Result.allow();
 
-    for (String messageText : recentTexts)
-    {
-      String reminder = new GivingUpDetector().check(messageText);
-      if (!reminder.isEmpty())
-        return Result.context("<system-reminder>\n" + reminder + "\n</system-reminder>");
-    }
+    GivingUpDetector detector = new GivingUpDetector();
+    String reminder = detector.check(recentSegments);
+    if (!reminder.isEmpty())
+      return Result.context("<system-reminder>\n" + reminder + "\n</system-reminder>");
 
     return Result.allow();
   }
@@ -89,21 +88,22 @@ public final class DetectAssistantGivingUp implements PostToolHandler
   }
 
   /**
-   * Gets the text content of recent assistant messages from the conversation log.
+   * Gets the turn segments of recent assistant messages from the conversation log.
    * <p>
-   * Extracts only text-type content blocks, ignoring tool_use and other block types.
-   * Each entry in the returned list corresponds to one assistant message turn.
+   * Returns a flat list of all {@link TurnSegment}s from the last {@link #MESSAGE_LIMIT} assistant
+   * message turns. Each segment carries the file paths of its adjacent tool_use blocks for
+   * context-aware giving-up detection.
    *
    * @param conversationLog the path to the conversation log
-   * @return list of text content strings, one per assistant message (up to MESSAGE_LIMIT)
+   * @return flat list of segments from up to MESSAGE_LIMIT recent assistant messages
    */
-  private List<String> getRecentAssistantTextContent(Path conversationLog)
+  private List<TurnSegment> getRecentAssistantSegments(Path conversationLog)
   {
     try
     {
-      // Use a bounded deque to keep only the last MESSAGE_LIMIT assistant messages,
-      // avoiding loading the entire (potentially multi-MB) session file into memory.
-      Deque<String> buffer = new ArrayDeque<>(MESSAGE_LIMIT + 1);
+      // Use a bounded deque of per-message segment lists to cap at MESSAGE_LIMIT messages,
+      // then flatten at the end. Avoids loading the entire (potentially multi-MB) session file.
+      Deque<List<TurnSegment>> buffer = new ArrayDeque<>(MESSAGE_LIMIT + 1);
       try (BufferedReader reader = Files.newBufferedReader(conversationLog))
       {
         String line = reader.readLine();
@@ -111,10 +111,10 @@ public final class DetectAssistantGivingUp implements PostToolHandler
         {
           if (line.contains("\"role\":\"assistant\""))
           {
-            String text = ConversationLogUtils.extractTextContent(line, mapper);
-            if (!text.isEmpty())
+            List<TurnSegment> segments = ConversationLogUtils.extractSegments(line, mapper);
+            if (!segments.isEmpty())
             {
-              buffer.addLast(text);
+              buffer.addLast(segments);
               if (buffer.size() > MESSAGE_LIMIT)
                 buffer.removeFirst();
             }
@@ -122,7 +122,7 @@ public final class DetectAssistantGivingUp implements PostToolHandler
           line = reader.readLine();
         }
       }
-      return new ArrayList<>(buffer);
+      return buffer.stream().flatMap(Collection::stream).toList();
     }
     catch (IOException _)
     {
