@@ -1,7 +1,7 @@
 ---
 name: instruction-design-agent
 description: Design or redesign instruction files using backward chaining methodology. Spawned by instruction-builder for the design phase.
-model: claude-opus-4-5-20251101
+model: claude-opus-4-5
 ---
 <!--
 Copyright (c) 2026 Gili Tzabari. All rights reserved.

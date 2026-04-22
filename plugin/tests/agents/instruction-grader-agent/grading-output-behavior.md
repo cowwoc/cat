@@ -1,5 +1,5 @@
 ---
-category: REQUIREMENT
+category: requirement
 ---
 ## Turn 1
 

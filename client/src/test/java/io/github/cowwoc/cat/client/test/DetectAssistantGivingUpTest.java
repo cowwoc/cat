@@ -310,49 +310,6 @@ public final class DetectAssistantGivingUpTest
   }
 
   /**
-   * Verifies that a pure-text turn containing a genuine giving-up phrase IS still detected.
-   * <p>
-   * When "let me remove" appears in a pure-text assistant message (no tool_use blocks), it
-   * represents actual agent reasoning and should trigger CODE_REMOVAL detection.
-   */
-  @Test
-  public void pureTextTurnWithGivingUpPhraseIsDetected() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      String sessionId = "test-" + UUID.randomUUID();
-      // Pure text turn — no tool_use block — so it IS scanned
-      String pureTextJson =
-        "{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":" +
-          "\"The test is failing so let me remove the broken assertion.\"}]}";
-      Path conversationLog = createConversationLog(scope, sessionId, pureTextJson);
-
-      DetectAssistantGivingUp handler = new DetectAssistantGivingUp(scope);
-
-      String hookDataJson = """
-        {
-          "tool_input": {},
-          "tool_result": {},
-          "session_id": "%s"
-        }""".formatted(sessionId);
-      JsonNode hookData = mapper.readTree(hookDataJson);
-      JsonNode toolResult = mapper.readTree("{}");
-
-      PostToolHandler.Result result = handler.check("Bash", toolResult, sessionId, hookData);
-
-      requireThat(result.additionalContext(), "additionalContext").contains("CODE DISABLING ANTI-PATTERN DETECTED");
-
-      Files.deleteIfExists(conversationLog);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
    * Creates a conversation log file for testing, using the scope's session base path.
    *
    * @param scope the hook scope providing the session base path

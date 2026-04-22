@@ -45,7 +45,7 @@ The `test_pattern` parameter supports:
 WORKTREE_PATH=$(git rev-parse --show-toplevel)
 TEST_DIR="plugin/tests/skills/claude-runner/first-use"
 
-"${CLAUDE_PLUGIN_ROOT}/client/bin/instruction-test-runner" run-single-test \
+"${WORKTREE_PATH}/client/target/jlink/bin/instruction-test-runner" run-single-test \
   "$WORKTREE_PATH" \
   "$TEST_DIR" \
   "cache_fix_warning_conveyed" \
@@ -57,7 +57,7 @@ TEST_DIR="plugin/tests/skills/claude-runner/first-use"
 ### Run all tests matching a pattern
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/instruction-test-runner" run-single-test \
+"${WORKTREE_PATH}/client/target/jlink/bin/instruction-test-runner" run-single-test \
   "$WORKTREE_PATH" \
   "$TEST_DIR" \
   "*warning*" \

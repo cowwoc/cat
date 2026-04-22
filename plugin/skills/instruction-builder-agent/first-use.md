@@ -909,10 +909,10 @@ algorithm-before-invocation or output-format priming.
 **Return-format outcome priming:** When a skill or agent instruction documents a return format with
 verdict/decision/outcome fields (e.g., `"verdict"`, `"decision"`, `"status"`, `"result"`), the example
 value MUST use a neutral placeholder such as `"PASS|FAIL"` or `"<verdict>"` — never a single concrete
-outcome like `"PASS"` alone. A lone concrete outcome anchors LLM evaluators toward that value regardless
+outcome like `"pass"` alone. A lone concrete outcome anchors LLM evaluators toward that value regardless
 of what was actually observed, defeating the evaluation. When creating or updating skill/agent instructions
 that contain return-format examples, replace any single-outcome field value with a neutral form (e.g.,
-`"verdict": "PASS"` → `"verdict": "PASS|FAIL"`). Flag any existing single-outcome examples found in
+`"verdict": "pass"` → `"verdict": "PASS|FAIL"`). Flag any existing single-outcome examples found in
 skill/agent files as priming sources during investigation.
 
 **Sub-step 8 — Summarize findings** (interpret): Produce a concise investigation report immediately, based

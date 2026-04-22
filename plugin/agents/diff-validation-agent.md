@@ -104,8 +104,8 @@ Then write a machine-readable JSON summary to `{WORKTREE_ROOT}/diff-validation-{
   "red_team_commit": "{RED_TEAM_COMMIT_HASH}",
   "blue_team_commit": "{BLUE_TEAM_COMMIT_HASH}",
   "findings": [
-    {"name": "bash-file-write-bypass", "severity": "CRITICAL", "outcome": "PASS"},
-    {"name": "unlisted-tool-bypass", "severity": "HIGH", "outcome": "FAIL"},
+    {"name": "bash-file-write-bypass", "severity": "CRITICAL", "outcome": "pass"},
+    {"name": "unlisted-tool-bypass", "severity": "HIGH", "outcome": "fail"},
     {"name": "false-premise-finding", "severity": "MEDIUM", "outcome": "SKIPPED"}
   ],
   "summary": {"passed": 1, "failed": 1, "skipped": 1}

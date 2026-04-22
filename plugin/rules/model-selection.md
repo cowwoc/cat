@@ -11,13 +11,13 @@ Subagents declare their model directly in their frontmatter and do not require m
 
 The shorthand model names used in `model:` parameters map to these specific Claude 4.5 versions:
 
-- `opus` → `claude-opus-4-5-20251101`
-- `sonnet` → `claude-sonnet-4-5-20250929`
-- `haiku` → `claude-haiku-4-5-20251001`
+- `opus` → `claude-opus-4-5`
+- `sonnet` → `claude-sonnet-4-5`
+- `haiku` → `claude-haiku-4-5`
 
 These mappings are applied automatically by the Agent/Task/Skill tools when the `model:` parameter is specified.
 
-**Note:** The Agent tool's `model` parameter only accepts shorthand values (`opus`, `sonnet`, `haiku`), not full model IDs. All subagent files now declare their model directly in frontmatter using full model IDs (e.g., `model: claude-opus-4-5-20251101`).
+**Note:** The Agent tool's `model` parameter only accepts shorthand values (`opus`, `sonnet`, `haiku`), not full model IDs. All subagent files now declare their model directly in frontmatter using full model IDs (e.g., `model: claude-opus-4-5`).
 
 **Sonnet-preferred skills** (use `model: sonnet` by default, fall back to `model: opus` if Sonnet is rate-limited):
 

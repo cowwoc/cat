@@ -147,7 +147,15 @@ public final class ValidateSkillTestFormat implements FileWriteHandler
     if (frontmatterResult.blocked())
       return frontmatterResult;
 
-    return validateSections(content, filePath);
+    FileWriteHandler.Result categoryResult = validateCategoryCase(frontmatterBody, filePath);
+    if (categoryResult.blocked())
+      return categoryResult;
+
+    FileWriteHandler.Result sectionsResult = validateSections(content, filePath);
+    if (sectionsResult.blocked())
+      return sectionsResult;
+
+    return validateSectionSpacing(content, filePath);
   }
 
   /**
@@ -269,6 +277,131 @@ found turns %s, expected %s.
     }
 
     return FileWriteHandler.Result.allow();
+  }
+
+  /**
+   * Validates that the {@code category} frontmatter field value is all-lowercase.
+   *
+   * @param frontmatterBody the raw YAML frontmatter body
+   * @param filePath        the file path for error messages
+   * @return validation result
+   */
+  private FileWriteHandler.Result validateCategoryCase(String frontmatterBody, String filePath)
+  {
+    Matcher matcher = FRONTMATTER_FIELD_PATTERNS.get("category").matcher(frontmatterBody);
+    if (!matcher.find())
+      return FileWriteHandler.Result.allow();
+
+    String value = matcher.group(1).trim();
+    if (value.chars().anyMatch(Character::isUpperCase))
+    {
+      return FileWriteHandler.Result.block("""
+        Skill test format violation in %s: category value '%s' must be lowercase.
+
+        See plugin/concepts/skill-test.md for the complete format specification.""".
+        formatted(filePath, value));
+    }
+    return FileWriteHandler.Result.allow();
+  }
+
+  /**
+   * Validates section-header spacing rules:
+   * <ul>
+   *   <li>Exactly one blank line before every section header.</li>
+   *   <li>Exactly one blank line after every section header.</li>
+   * </ul>
+   *
+   * @param content  the full markdown content
+   * @param filePath the file path for error messages
+   * @return validation result
+   */
+  private FileWriteHandler.Result validateSectionSpacing(String content, String filePath)
+  {
+    String stripped = stripFencedCodeBlockContent(content);
+    String[] lines = stripped.split("\n", -1);
+
+    int frontmatterEnd = -1;
+    boolean seenOpening = false;
+    for (int i = 0; i < lines.length; i += 1)
+    {
+      if ("---".equals(lines[i]))
+      {
+        if (!seenOpening)
+          seenOpening = true;
+        else
+        {
+          frontmatterEnd = i;
+          break;
+        }
+      }
+    }
+    if (frontmatterEnd < 0)
+      return FileWriteHandler.Result.allow();
+
+    for (int i = frontmatterEnd + 1; i < lines.length; i += 1)
+    {
+      if (!isSectionHeader(lines[i]))
+        continue;
+
+      String header = lines[i];
+
+      if (i >= 2 && lines[i - 1].isEmpty() && lines[i - 2].isEmpty())
+      {
+        return FileWriteHandler.Result.block("""
+          Skill test format violation in %s: multiple blank lines before section header '%s'.
+
+          Each section header must be preceded by exactly one blank line.
+
+          See plugin/concepts/skill-test.md for the complete format specification.""".
+          formatted(filePath, header));
+      }
+      if (!lines[i - 1].isEmpty())
+      {
+        return FileWriteHandler.Result.block("""
+          Skill test format violation in %s: missing blank line before section header '%s'.
+
+          Each section header must be preceded by exactly one blank line.
+
+          See plugin/concepts/skill-test.md for the complete format specification.""".
+          formatted(filePath, header));
+      }
+
+      if (i + 1 >= lines.length || !lines[i + 1].isEmpty())
+      {
+        return FileWriteHandler.Result.block("""
+          Skill test format violation in %s: missing blank line after section header '%s'.
+
+          Each section header must be followed by exactly one blank line.
+
+          See plugin/concepts/skill-test.md for the complete format specification.""".
+          formatted(filePath, header));
+      }
+      if (i + 2 < lines.length && lines[i + 2].isEmpty())
+      {
+        return FileWriteHandler.Result.block("""
+          Skill test format violation in %s: multiple blank lines after section header '%s'.
+
+          Each section header must be followed by exactly one blank line.
+
+          See plugin/concepts/skill-test.md for the complete format specification.""".
+          formatted(filePath, header));
+      }
+    }
+    return FileWriteHandler.Result.allow();
+  }
+
+  /**
+   * Returns true if the line is a recognized section header ({@code ## Turn N},
+   * {@code ## Assertions}, or {@code ## System Prompt}).
+   *
+   * @param line the line to test
+   * @return {@code true} if the line is a section header
+   */
+  private boolean isSectionHeader(String line)
+  {
+    return TURN_SECTION_PATTERN.matcher(line).matches() ||
+      "## Assertions".equals(line) ||
+      "## System Prompt".equals(line);
   }
 
   /**

@@ -137,7 +137,7 @@ public final class InstructionTestRunnerTest
 
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String model = runner.extractModel(new String[]{skillFile.toString()});
-      requireThat(model, "model").isEqualTo("claude-sonnet-4-5-20250929");
+      requireThat(model, "model").isEqualTo("claude-sonnet-4-5");
     }
     finally
     {
@@ -146,11 +146,11 @@ public final class InstructionTestRunnerTest
   }
 
   /**
-   * Verifies that extract-model defaults to haiku when no model field is present in frontmatter
-   * and the skill is not listed in model-selection.md.
+   * Verifies that extract-model falls back to model-selection.md (and then to "haiku") when no model field is
+   * present in frontmatter.
    */
   @Test
-  public void extractModelDefaultsToHaikuWhenFieldMissing() throws IOException, InterruptedException
+  public void extractModelRejectsSkillWithoutModelField() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -164,8 +164,8 @@ public final class InstructionTestRunnerTest
         """, StandardCharsets.UTF_8);
 
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
-      String result = runner.extractModel(new String[]{skillFile.toString()});
-      requireThat(result, "result").contains("haiku");
+      String model = runner.extractModel(new String[]{skillFile.toString()});
+      requireThat(model, "model").isEqualTo("claude-haiku-4-5");
     }
     finally
     {
@@ -317,7 +317,7 @@ public final class InstructionTestRunnerTest
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       Path sprtStatePath = tempDir.resolve(".cat/work/sprt-state.json");
       String result = runner.initSprt(new String[]{
-        sprtStatePath.toString(), rerunJson, "none", "claude-haiku-4-5-20251001"});
+        sprtStatePath.toString(), rerunJson, "none", "claude-haiku-4-5", "test-session-id"});
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode resultNode = mapper.readTree(result);
@@ -353,11 +353,11 @@ public final class InstructionTestRunnerTest
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       Path sprtStatePath = tempDir.resolve(".cat/work/sprt-state.json");
       runner.initSprt(new String[]{
-        sprtStatePath.toString(), "[\"tc1\"]", "none", "claude-haiku-4-5-20251001"});
+        sprtStatePath.toString(), "[\"tc1\"]", "none", "claude-haiku-4-5", "test-session-id"});
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(sprtStatePath.toFile());
-      requireThat(root.path("model_id").asString(), "modelId").isEqualTo("claude-haiku-4-5-20251001");
+      requireThat(root.path("model_id").asString(), "modelId").isEqualTo("claude-haiku-4-5");
     }
     finally
     {
@@ -380,8 +380,8 @@ public final class InstructionTestRunnerTest
       // Prior instruction-test has TC1 as ACCEPT
       Path priorPath = tempDir.resolve("prior.json");
       Files.writeString(priorPath, """
-        {"model_id":"claude-haiku-4-5-20251001","test_cases":[
-          {"test_case_id":"TC1","log_ratio":3.0,"passes":10,"fails":0,"runs":10,"decision":"ACCEPT"}
+        {"model_id":"claude-haiku-4-5","test_cases":[
+          {"test_case_id":"TC1","log_ratio":3.0,"passes":10,"fails":0,"runs":10,"decision": "ACCEPT"}
         ]}
         """, StandardCharsets.UTF_8);
 
@@ -390,7 +390,7 @@ public final class InstructionTestRunnerTest
       Path sprtStatePath = tempDir.resolve(".cat/work/sprt-state.json");
       runner.initSprt(new String[]{
         sprtStatePath.toString(), rerunJson, priorPath.toString(),
-        "claude-haiku-4-5-20251001", "--prior-boost"});
+        "claude-haiku-4-5", "test-session-id", "--prior-boost"});
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(sprtStatePath.toFile());
@@ -423,7 +423,8 @@ public final class InstructionTestRunnerTest
       String rerunJson = "[\"TC1\"]";
       Path sprtStatePath = tempDir.resolve(".cat/work/sprt-state.json");
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
-      runner.initSprt(new String[]{sprtStatePath.toString(), rerunJson, "none", "claude-haiku-4-5-20251001"});
+      runner.initSprt(new String[]{sprtStatePath.toString(), rerunJson, "none", "claude-haiku-4-5",
+        "test-session-id"});
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(sprtStatePath.toFile());
@@ -528,7 +529,7 @@ public final class InstructionTestRunnerTest
       // log_ratio 2.9 is just below ACCEPT (2.944); one PASS (0.1112) should push it over
       Files.writeString(statePath, """
         {"sprt_state":{"TC1":{"log_ratio":2.9,"passes":10,"fails":0,"runs":10,
-        "decision":"INCONCLUSIVE","carried_forward":false,"smoke_runs_done":3}}}
+        "decision": "INCONCLUSIVE","carried_forward":false,"smoke_runs_done":3}}}
         """, StandardCharsets.UTF_8);
 
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
@@ -565,7 +566,7 @@ public final class InstructionTestRunnerTest
       // log_ratio -2.9 is just above REJECT (-2.944); one FAIL (-1.0986) should push it below
       Files.writeString(statePath, """
         {"sprt_state":{"TC1":{"log_ratio":-2.9,"passes":0,"fails":10,"runs":10,
-        "decision":"INCONCLUSIVE","carried_forward":false,"smoke_runs_done":3}}}
+        "decision": "INCONCLUSIVE","carried_forward":false,"smoke_runs_done":3}}}
         """, StandardCharsets.UTF_8);
 
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
@@ -598,7 +599,7 @@ public final class InstructionTestRunnerTest
     {
       Path statePath = tempDir.resolve("sprt_state.json");
       Files.writeString(statePath,
-        "{\"model_id\":\"claude-haiku-4-5-20251001\",\"sprt_state\":{\"TC1\":{\"log_ratio\":0.0," +
+        "{\"model_id\":\"claude-haiku-4-5\",\"sprt_state\":{\"TC1\":{\"log_ratio\":0.0," +
         "\"passes\":0,\"fails\":0,\"runs\":0,\"decision\":\"INCONCLUSIVE\"," +
         "\"carried_forward\":false,\"smoke_runs_done\":0}}}",
         StandardCharsets.UTF_8);
@@ -608,7 +609,7 @@ public final class InstructionTestRunnerTest
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(statePath.toFile());
-      requireThat(root.path("model_id").asString(), "model_id").isEqualTo("claude-haiku-4-5-20251001");
+      requireThat(root.path("model_id").asString(), "model_id").isEqualTo("claude-haiku-4-5");
     }
     finally
     {
@@ -628,7 +629,7 @@ public final class InstructionTestRunnerTest
       Path statePath = tempDir.resolve("sprt_state.json");
       Files.writeString(statePath, """
         {"sprt_state":{"TC1":{"log_ratio":1.5,"passes":5,"fails":2,"runs":7,
-        "decision":"INCONCLUSIVE","carried_forward":true,"smoke_runs_done":3}}}
+        "decision": "INCONCLUSIVE","carried_forward":true,"smoke_runs_done":3}}}
         """, StandardCharsets.UTF_8);
 
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
@@ -662,7 +663,7 @@ public final class InstructionTestRunnerTest
       Path statePath = tempDir.resolve("sprt_state.json");
       Files.writeString(statePath, """
         {"sprt_state":{"TC1":{"log_ratio":0.0,"passes":1,"fails":0,"runs":1,
-        "decision":"INCONCLUSIVE","carried_forward":false,"smoke_runs_done":1}}}
+        "decision": "INCONCLUSIVE","carried_forward":false,"smoke_runs_done":1}}}
         """, StandardCharsets.UTF_8);
 
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
@@ -694,7 +695,7 @@ public final class InstructionTestRunnerTest
       Path statePath = tempDir.resolve("sprt_state.json");
       Files.writeString(statePath, """
         {"sprt_state":{"TC1":{"log_ratio":0.0,"passes":1,"fails":2,"runs":3,
-        "decision":"INCONCLUSIVE","carried_forward":false,"smoke_runs_done":3}}}
+        "decision": "INCONCLUSIVE","carried_forward":false,"smoke_runs_done":3}}}
         """, StandardCharsets.UTF_8);
 
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
@@ -713,7 +714,7 @@ public final class InstructionTestRunnerTest
   }
 
   /**
-   * Verifies that merge-results produces ACCEPT overall_decision when all test cases ACCEPT.
+   * Verifies that merge-results produces ACCEPT overall_decision": "accept.
    */
   @Test
   public void mergeResultsAllAccept() throws IOException, InterruptedException
@@ -725,15 +726,15 @@ public final class InstructionTestRunnerTest
       Files.writeString(statePath, """
         {"sprt_state":{
           "TC1":{"log_ratio":3.0,"passes":10,"fails":0,"runs":10,
-                 "decision":"ACCEPT","carried_forward":false,"smoke_runs_done":3},
+                 "decision": "ACCEPT","carried_forward":false,"smoke_runs_done":3},
           "TC2":{"log_ratio":3.0,"passes":10,"fails":0,"runs":10,
-                 "decision":"ACCEPT","carried_forward":true,"smoke_runs_done":3}
+                 "decision": "ACCEPT","carried_forward":true,"smoke_runs_done":3}
         }}
         """, StandardCharsets.UTF_8);
 
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String result = runner.mergeResults(
-        new String[]{statePath.toString(), "none", "[]", "claude-haiku-4-5-20251001"});
+        new String[]{statePath.toString(), "none", "[]", "claude-haiku-4-5"});
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(result);
@@ -749,7 +750,7 @@ public final class InstructionTestRunnerTest
   }
 
   /**
-   * Verifies that merge-results produces REJECT overall_decision when any test case REJECTs.
+   * Verifies that merge-results produces reject overall_decision.
    */
   @Test
   public void mergeResultsAnyRejectProducesRejectOverall() throws IOException, InterruptedException
@@ -761,15 +762,15 @@ public final class InstructionTestRunnerTest
       Files.writeString(statePath, """
         {"sprt_state":{
           "TC1":{"log_ratio":3.0,"passes":10,"fails":0,"runs":10,
-                 "decision":"ACCEPT","carried_forward":false,"smoke_runs_done":3},
+                 "decision": "ACCEPT","carried_forward":false,"smoke_runs_done":3},
           "TC2":{"log_ratio":-3.0,"passes":0,"fails":10,"runs":10,
-                 "decision":"REJECT","carried_forward":false,"smoke_runs_done":3}
+                 "decision": "REJECT","carried_forward":false,"smoke_runs_done":3}
         }}
         """, StandardCharsets.UTF_8);
 
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String result = runner.mergeResults(
-        new String[]{statePath.toString(), "none", "[]", "claude-haiku-4-5-20251001"});
+        new String[]{statePath.toString(), "none", "[]", "claude-haiku-4-5"});
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(result);
@@ -898,8 +899,9 @@ public final class InstructionTestRunnerTest
 
       Path statePath = repoDir.resolve("sprt_state.json");
       Files.writeString(statePath, """
-        {"sprt_state":{"tc1":{"log_ratio":2.944,"passes":9,"fails":1,"runs":10,
-        "decision":"ACCEPT","carried_forward":false,"smoke_runs_done":3}}}
+        {"model_id":"claude-haiku-4-5","failed_test_ids":[],
+        "sprt_state":{"tc1":{"log_ratio":2.944,"passes":9,"fails":1,"runs":10,
+        "decision": "ACCEPT","carried_forward":false,"smoke_runs_done":3}}}
         """, StandardCharsets.UTF_8);
 
       Path tempDir = Files.createTempDirectory("test-scope-");
@@ -937,7 +939,7 @@ public final class InstructionTestRunnerTest
   }
 
   /**
-   * Verifies that write-test-results computes REJECT overall_decision when any TC is REJECT.
+   * Verifies that write-test-results computes reject overall_decision.
    */
   @Test
   public void writeTestResultsRejectDecisionWritesRejectOverall() throws IOException, InterruptedException
@@ -954,11 +956,12 @@ public final class InstructionTestRunnerTest
 
       Path statePath = repoDir.resolve("sprt_state.json");
       Files.writeString(statePath, """
-        {"sprt_state":{
+        {"model_id":"claude-haiku-4-5","failed_test_ids":["tc2"],
+        "sprt_state":{
           "tc1":{"log_ratio":2.944,"passes":9,"fails":1,"runs":10,
-                 "decision":"ACCEPT","carried_forward":false,"smoke_runs_done":3},
+                 "decision": "ACCEPT","carried_forward":false,"smoke_runs_done":3},
           "tc2":{"log_ratio":-2.944,"passes":1,"fails":9,"runs":10,
-                 "decision":"REJECT","carried_forward":false,"smoke_runs_done":3}
+                 "decision": "REJECT","carried_forward":false,"smoke_runs_done":3}
         }}
         """, StandardCharsets.UTF_8);
 
@@ -1342,29 +1345,18 @@ public final class InstructionTestRunnerTest
   }
 
   /**
-   * Verifies that extract-model returns the sonnet model ID when the skill is listed in model-selection.md
-   * and SKILL.md has no model: frontmatter field.
+   * Verifies that extract-model falls back to model-selection.md (and then to "haiku") when SKILL.md is missing
+   * the model frontmatter field.
    */
   @Test
-  public void extractModelUsesModelSelectionMappingForSonnetSkill() throws IOException, InterruptedException
+  public void extractModelRejectsMissingModelFrontmatter() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-extract-model-");
     Path pluginRoot = tempDir.resolve("plugin");
     try
     {
-      // Create plugin root with model-selection.md listing the test skill
-      Path rulesDir = pluginRoot.resolve("rules");
-      Files.createDirectories(rulesDir);
-      Files.writeString(rulesDir.resolve("model-selection.md"), """
-        ## Model Selection for Skills
-
-        **Sonnet-preferred skills**:
-
-        - `cat:my-sonnet-skill`
-        """, StandardCharsets.UTF_8);
-
       // Create skill dir with SKILL.md that has no model: field
-      Path skillDir = pluginRoot.resolve("skills").resolve("my-sonnet-skill");
+      Path skillDir = pluginRoot.resolve("skills").resolve("my-skill");
       Files.createDirectories(skillDir);
       Path skillFile = skillDir.resolve("SKILL.md");
       Files.writeString(skillFile, """
@@ -1378,59 +1370,8 @@ public final class InstructionTestRunnerTest
       try (var scope = new TestClaudeTool(projectDir, pluginRoot))
       {
         InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
-        String result = runner.extractModel(new String[]{skillFile.toString()});
-
-        // Result is a fully-qualified model ID; verify it contains "sonnet"
-        requireThat(result, "result").contains("sonnet");
-      }
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that extract-model falls back to haiku when the skill is not listed in model-selection.md
-   * and SKILL.md has no model: frontmatter field.
-   */
-  @Test
-  public void extractModelFallsBackToHaikuWhenNotInModelSelection() throws IOException, InterruptedException
-  {
-    Path tempDir = Files.createTempDirectory("test-extract-model-");
-    Path pluginRoot = tempDir.resolve("plugin");
-    try
-    {
-      // Create plugin root with model-selection.md that does NOT list the test skill
-      Path rulesDir = pluginRoot.resolve("rules");
-      Files.createDirectories(rulesDir);
-      Files.writeString(rulesDir.resolve("model-selection.md"), """
-        ## Model Selection for Skills
-
-        **Sonnet-preferred skills**:
-
-        - `cat:some-other-skill`
-        """, StandardCharsets.UTF_8);
-
-      // Create skill dir with SKILL.md that has no model: field
-      Path skillDir = pluginRoot.resolve("skills").resolve("my-haiku-skill");
-      Files.createDirectories(skillDir);
-      Path skillFile = skillDir.resolve("SKILL.md");
-      Files.writeString(skillFile, """
-        ---
-        description: My skill
-        ---
-        """, StandardCharsets.UTF_8);
-
-      Path projectDir = tempDir.resolve("project");
-      Files.createDirectories(projectDir);
-      try (var scope = new TestClaudeTool(projectDir, pluginRoot))
-      {
-        InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
-        String result = runner.extractModel(new String[]{skillFile.toString()});
-
-        // Result is a fully-qualified model ID; verify it contains "haiku"
-        requireThat(result, "result").contains("haiku");
+        String model = runner.extractModel(new String[]{skillFile.toString()});
+        requireThat(model, "model").isEqualTo("claude-haiku-4-5");
       }
     }
     finally
@@ -1553,7 +1494,7 @@ public final class InstructionTestRunnerTest
 
       requireThat(root.path("session_id").asString(), "session_id").isEqualTo(sessionId);
       requireThat(root.path("model_id").asString(), "model_id").
-        isEqualTo("claude-haiku-4-5-20251001");
+        isEqualTo("claude-haiku-4-5");
       requireThat(root.path("phase").asString(), "phase").isEqualTo(phase);
       requireThat(root.path("skill").path("path").asString(), "skill.path").
         isEqualTo("plugin/skills/test-skill/skill.md");
@@ -1673,9 +1614,9 @@ public final class InstructionTestRunnerTest
       Files.writeString(statePath, """
         {"sprt_state":{
           "TC1":{"log_ratio":3.0,"passes":10,"fails":0,"runs":10,
-                 "decision":"ACCEPT","carried_forward":false,"smoke_runs_done":3},
+                 "decision": "ACCEPT","carried_forward":false,"smoke_runs_done":3},
           "TC2":{"log_ratio":0.5,"passes":3,"fails":2,"runs":5,
-                 "decision":"INCONCLUSIVE","carried_forward":false,"smoke_runs_done":3}
+                 "decision": "INCONCLUSIVE","carried_forward":false,"smoke_runs_done":3}
         }}
         """, StandardCharsets.UTF_8);
 
@@ -1683,8 +1624,8 @@ public final class InstructionTestRunnerTest
       Path priorInstructionTestPath = tempDir.resolve("prior_instruction_test.json");
       Files.writeString(priorInstructionTestPath, """
         {"test_cases":[
-          {"test_case_id":"TC1","log_ratio":2.8,"passes":9,"fails":0,"runs":9,"decision":"ACCEPT"},
-          {"test_case_id":"TC2","log_ratio":3.5,"passes":12,"fails":1,"runs":13,"decision":"ACCEPT"}
+          {"test_case_id":"TC1","log_ratio":2.8,"passes":9,"fails":0,"runs":9,"decision": "ACCEPT"},
+          {"test_case_id":"TC2","log_ratio":3.5,"passes":12,"fails":1,"runs":13,"decision": "ACCEPT"}
         ]}
         """, StandardCharsets.UTF_8);
 
@@ -1692,12 +1633,12 @@ public final class InstructionTestRunnerTest
       // TC2 is in the carryforward set: its stats should come from prior instruction-test, not SPRT state
       String result = runner.mergeResults(
         new String[]{statePath.toString(), priorInstructionTestPath.toString(), "[\"TC2\"]",
-          "claude-haiku-4-5-20251001"});
+          "claude-haiku-4-5"});
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(result);
 
-      // Overall decision must be ACCEPT (both TC1 and TC2 are ACCEPT in the output)
+      // Overall decision must be accept (both TC1 and TC2 are accept in the output)
       requireThat(root.path("overall_decision").asString(), "overall_decision").isEqualTo("ACCEPT");
 
       // Find TC2 in the output test_cases array and verify it uses prior stats
@@ -1741,8 +1682,8 @@ public final class InstructionTestRunnerTest
       Path extractTurnsBin = binDir.resolve("extract-turns");
       Files.writeString(extractTurnsBin, """
         #!/bin/bash
-        mkdir -p "$2"
-        cp "$1" "$2/turn1.md"
+        base="${2%.md}"
+        cp "$1" "${base}_turn1.md"
         """, StandardCharsets.UTF_8);
       extractTurnsBin.toFile().setExecutable(true);
 
@@ -1959,7 +1900,7 @@ public final class InstructionTestRunnerTest
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String result = runner.createRunnerWorktrees(new String[]{
         mainRepo.toString(), sprtStatePath.toString(),
-        "my-issue", mainRepo.toString(), "test-session-id"});
+        "my-issue", "test-session-id"});
 
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(result);
@@ -2012,20 +1953,25 @@ public final class InstructionTestRunnerTest
   {
     Path repoDir = TestUtils.createTempGitRepo("my-issue");
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    Path runnerWorktree = Files.createTempDirectory("runner-");
     Path outputDir = Files.createTempDirectory("test-output-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
+      Files.createDirectories(runnerWorktree.resolve("client/target/jlink/bin"));
+      Files.createDirectories(tempDir.resolve(".claude-plugin"));
+      Files.writeString(tempDir.resolve(".claude-plugin/plugin.json"),
+        "{\"version\":\"2.1.87\"}", StandardCharsets.UTF_8);
       Files.createDirectories(repoDir.resolve("plugin/tests/myskill"));
-      Files.writeString(repoDir.resolve("plugin/tests/myskill/tc1_turn1"),
+      Files.writeString(repoDir.resolve("plugin/tests/myskill/tc1_turn1.md"),
         "test turn content", StandardCharsets.UTF_8);
       TestUtils.runGit(repoDir, "add", ".");
       TestUtils.runGit(repoDir, "commit", "-m", "add turn files");
-      TestUtils.runGit(repoDir, "checkout", "-b", "my-issue-sanitized");
+      TestUtils.runGit(repoDir, "checkout", "-b", "my-issue-isolation");
 
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String result = runner.prepareTrial(new String[]{
-        repoDir.toString(), "my-issue-sanitized", "plugin/tests/myskill",
-        "tc1", "/fake/runner", outputDir.toString(), "1", "/fake/project"});
+        repoDir.toString(), "my-issue-isolation", "plugin/tests/myskill",
+        "tc1", runnerWorktree.toString(), outputDir.toString(), "1"});
 
       Map<String, String> pairs = new LinkedHashMap<>();
       for (String line : result.strip().split("\n"))
@@ -2043,53 +1989,41 @@ public final class InstructionTestRunnerTest
     {
       TestUtils.deleteDirectoryRecursively(repoDir);
       TestUtils.deleteDirectoryRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(runnerWorktree);
       TestUtils.deleteDirectoryRecursively(outputDir);
     }
   }
 
   /**
-   * Verifies that prepare-trial falls back to the project jlink bin when runner worktree
-   * does not have a jlink directory.
+   * Verifies that prepare-trial fails fast when the runner worktree does not have a jlink directory.
    */
-  @Test
-  public void prepareTrialFallsBackToProjectJlinkBin() throws IOException, InterruptedException
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = ".*jlink directory not found in runner worktree.*")
+  public void prepareTrialFailsWhenJlinkMissing() throws IOException, InterruptedException
   {
     Path repoDir = TestUtils.createTempGitRepo("my-issue");
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     Path runnerWorktree = Files.createTempDirectory("runner-");
-    Path claudeProjectDir = Files.createTempDirectory("project-");
     Path outputDir = Files.createTempDirectory("test-output-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Files.createDirectories(repoDir.resolve("plugin/tests/myskill"));
-      Files.writeString(repoDir.resolve("plugin/tests/myskill/tc1_turn1"),
+      Files.writeString(repoDir.resolve("plugin/tests/myskill/tc1_turn1.md"),
         "content", StandardCharsets.UTF_8);
       TestUtils.runGit(repoDir, "add", ".");
       TestUtils.runGit(repoDir, "commit", "-m", "add turn files");
-      TestUtils.runGit(repoDir, "checkout", "-b", "my-issue-sanitized");
+      TestUtils.runGit(repoDir, "checkout", "-b", "my-issue-isolation");
 
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
-      String result = runner.prepareTrial(new String[]{
-        repoDir.toString(), "my-issue-sanitized", "plugin/tests/myskill",
-        "tc1", runnerWorktree.toString(), outputDir.toString(), "1", claudeProjectDir.toString()});
-
-      Map<String, String> pairs = new LinkedHashMap<>();
-      for (String line : result.strip().split("\n"))
-      {
-        int eq = line.indexOf('=');
-        if (eq > 0)
-          pairs.put(line.substring(0, eq), line.substring(eq + 1));
-      }
-      requireThat(pairs.get("jlink_bin"), "jlink_bin").
-        startsWith(claudeProjectDir.toString()).
-        endsWith("/client/target/jlink/bin");
+      runner.prepareTrial(new String[]{
+        repoDir.toString(), "my-issue-isolation", "plugin/tests/myskill",
+        "tc1", runnerWorktree.toString(), outputDir.toString(), "1"});
     }
     finally
     {
       TestUtils.deleteDirectoryRecursively(repoDir);
       TestUtils.deleteDirectoryRecursively(tempDir);
       TestUtils.deleteDirectoryRecursively(runnerWorktree);
-      TestUtils.deleteDirectoryRecursively(claudeProjectDir);
       TestUtils.deleteDirectoryRecursively(outputDir);
     }
   }
@@ -2108,11 +2042,11 @@ public final class InstructionTestRunnerTest
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Files.createDirectories(repoDir.resolve("plugin/tests/myskill"));
-      Files.writeString(repoDir.resolve("plugin/tests/myskill/tc1_turn1"),
+      Files.writeString(repoDir.resolve("plugin/tests/myskill/tc1_turn1.md"),
         "content", StandardCharsets.UTF_8);
       TestUtils.runGit(repoDir, "add", ".");
       TestUtils.runGit(repoDir, "commit", "-m", "add turn files");
-      TestUtils.runGit(repoDir, "checkout", "-b", "my-issue-sanitized");
+      TestUtils.runGit(repoDir, "checkout", "-b", "my-issue-isolation");
 
       // Create jlink/bin dir in runner worktree
       Files.createDirectories(runnerWorktree.resolve("client/target/jlink/bin"));
@@ -2124,8 +2058,8 @@ public final class InstructionTestRunnerTest
 
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String result = runner.prepareTrial(new String[]{
-        repoDir.toString(), "my-issue-sanitized", "plugin/tests/myskill",
-        "tc1", runnerWorktree.toString(), outputDir.toString(), "1", claudeProjectDir.toString()});
+        repoDir.toString(), "my-issue-isolation", "plugin/tests/myskill",
+        "tc1", runnerWorktree.toString(), outputDir.toString(), "1"});
 
       Map<String, String> pairs = new LinkedHashMap<>();
       for (String line : result.strip().split("\n"))
@@ -2156,20 +2090,25 @@ public final class InstructionTestRunnerTest
   {
     Path repoDir = TestUtils.createTempGitRepo("my-issue");
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    Path runnerWorktree = Files.createTempDirectory("runner-");
     Path outputDir = Files.createTempDirectory("test-output-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
+      Files.createDirectories(runnerWorktree.resolve("client/target/jlink/bin"));
+      Files.createDirectories(tempDir.resolve(".claude-plugin"));
+      Files.writeString(tempDir.resolve(".claude-plugin/plugin.json"),
+        "{\"version\":\"2.1.87\"}", StandardCharsets.UTF_8);
       Files.createDirectories(repoDir.resolve("plugin/tests/myskill"));
-      Files.writeString(repoDir.resolve("plugin/tests/myskill/tc1_turn1"),
+      Files.writeString(repoDir.resolve("plugin/tests/myskill/tc1_turn1.md"),
         "content", StandardCharsets.UTF_8);
       TestUtils.runGit(repoDir, "add", ".");
       TestUtils.runGit(repoDir, "commit", "-m", "add turn files");
-      TestUtils.runGit(repoDir, "checkout", "-b", "my-issue-sanitized");
+      TestUtils.runGit(repoDir, "checkout", "-b", "my-issue-isolation");
 
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String result = runner.prepareTrial(new String[]{
-        repoDir.toString(), "my-issue-sanitized", "plugin/tests/myskill",
-        "tc1", "/fake/my-runner", outputDir.toString(), "1", "/fake/project"});
+        repoDir.toString(), "my-issue-isolation", "plugin/tests/myskill",
+        "tc1", runnerWorktree.toString(), outputDir.toString(), "1"});
 
       Map<String, String> pairs = new LinkedHashMap<>();
       for (String line : result.strip().split("\n"))
@@ -2180,13 +2119,12 @@ public final class InstructionTestRunnerTest
       }
       String promptContent = Files.readString(Path.of(pairs.get("prompt_file")),
         StandardCharsets.UTF_8);
-      // CWD tag must be present (not RUNNER_WORKTREE — that tag was removed as attentional noise)
-      requireThat(promptContent, "promptContent").contains("[CWD: /fake/my-runner]");
+      requireThat(promptContent, "promptContent").contains("[CWD: " + runnerWorktree + "]");
       // Positive mandate: every path MUST begin with the CWD value
       requireThat(promptContent, "promptContent").contains(
         "Every path argument passed to Write, Edit, or Bash MUST begin with the exact CWD value above");
       // Concrete example anchors the correct construction pattern
-      requireThat(promptContent, "promptContent").contains("/fake/my-runner/");
+      requireThat(promptContent, "promptContent").contains(runnerWorktree + "/");
       // Mandatory execution instruction must still be present
       requireThat(promptContent, "promptContent").contains("Execute the task below immediately");
     }
@@ -2194,6 +2132,7 @@ public final class InstructionTestRunnerTest
     {
       TestUtils.deleteDirectoryRecursively(repoDir);
       TestUtils.deleteDirectoryRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(runnerWorktree);
       TestUtils.deleteDirectoryRecursively(outputDir);
     }
   }
@@ -2207,20 +2146,25 @@ public final class InstructionTestRunnerTest
   {
     Path repoDir = TestUtils.createTempGitRepo("my-issue");
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    Path runnerWorktree = Files.createTempDirectory("runner-");
     Path outputDir = Files.createTempDirectory("test-output-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
+      Files.createDirectories(runnerWorktree.resolve("client/target/jlink/bin"));
+      Files.createDirectories(tempDir.resolve(".claude-plugin"));
+      Files.writeString(tempDir.resolve(".claude-plugin/plugin.json"),
+        "{\"version\":\"2.1.87\"}", StandardCharsets.UTF_8);
       Files.createDirectories(repoDir.resolve("plugin/tests/myskill"));
-      Files.writeString(repoDir.resolve("plugin/tests/myskill/tc1_turn1"),
+      Files.writeString(repoDir.resolve("plugin/tests/myskill/tc1_turn1.md"),
         "content", StandardCharsets.UTF_8);
       TestUtils.runGit(repoDir, "add", ".");
       TestUtils.runGit(repoDir, "commit", "-m", "add turn files");
-      TestUtils.runGit(repoDir, "checkout", "-b", "my-issue-sanitized");
+      TestUtils.runGit(repoDir, "checkout", "-b", "my-issue-isolation");
 
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String result = runner.prepareTrial(new String[]{
-        repoDir.toString(), "my-issue-sanitized", "plugin/tests/myskill",
-        "tc1", "/fake/runner", outputDir.toString(), "3", "/fake/project"});
+        repoDir.toString(), "my-issue-isolation", "plugin/tests/myskill",
+        "tc1", runnerWorktree.toString(), outputDir.toString(), "3"});
 
       Map<String, String> pairs = new LinkedHashMap<>();
       for (String line : result.strip().split("\n"))
@@ -2236,6 +2180,7 @@ public final class InstructionTestRunnerTest
     {
       TestUtils.deleteDirectoryRecursively(repoDir);
       TestUtils.deleteDirectoryRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(runnerWorktree);
       TestUtils.deleteDirectoryRecursively(outputDir);
     }
   }
@@ -2254,17 +2199,21 @@ public final class InstructionTestRunnerTest
     Path outputDir = Files.createTempDirectory("test-output-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
+      Files.createDirectories(runnerWorktree.resolve("client/target/jlink/bin"));
+      Files.createDirectories(tempDir.resolve(".claude-plugin"));
+      Files.writeString(tempDir.resolve(".claude-plugin/plugin.json"),
+        "{\"version\":\"2.1.87\"}", StandardCharsets.UTF_8);
       Files.createDirectories(repoDir.resolve("plugin/tests/myskill"));
-      Files.writeString(repoDir.resolve("plugin/tests/myskill/tc1_turn1"),
+      Files.writeString(repoDir.resolve("plugin/tests/myskill/tc1_turn1.md"),
         "content", StandardCharsets.UTF_8);
       TestUtils.runGit(repoDir, "add", ".");
       TestUtils.runGit(repoDir, "commit", "-m", "add turn files");
-      TestUtils.runGit(repoDir, "checkout", "-b", "my-issue-sanitized");
+      TestUtils.runGit(repoDir, "checkout", "-b", "my-issue-isolation");
 
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String result = runner.prepareTrial(new String[]{
-        repoDir.toString(), "my-issue-sanitized", "plugin/tests/myskill",
-        "tc1", runnerWorktree.toString(), outputDir.toString(), "1", "/fake/project"});
+        repoDir.toString(), "my-issue-isolation", "plugin/tests/myskill",
+        "tc1", runnerWorktree.toString(), outputDir.toString(), "1"});
 
       Map<String, String> pairs = new LinkedHashMap<>();
       for (String line : result.strip().split("\n"))
@@ -2298,7 +2247,8 @@ public final class InstructionTestRunnerTest
       Path sprtStatePath = mainRepo.resolve(".cat/work/sprt-state.json");
       Files.createDirectories(sprtStatePath.getParent());
       Files.writeString(sprtStatePath,
-        "{\"sprt_state\":{\"tc1\":{\"decision\":\"ACCEPT\",\"runs\":3,\"log_ratio\":2.944," +
+        "{\"model_id\":\"claude-haiku-4-5\",\"failed_test_ids\":[]," +
+        "\"sprt_state\":{\"tc1\":{\"decision\":\"ACCEPT\",\"runs\":3,\"log_ratio\":2.944," +
         "\"passes\":3,\"fails\":0}}}",
         StandardCharsets.UTF_8);
 
@@ -2328,10 +2278,8 @@ public final class InstructionTestRunnerTest
   }
 
   /**
-   * Verifies that buildGraderArgs constructs the correct argument array with --agent flag.
-   * <p>
-   * This test validates the fix for the SPRT test infrastructure bug where --subagent-type
-   * was incorrectly used instead of --agent when invoking claude-runner for the grading phase.
+   * Verifies that buildGraderArgs constructs the correct argument array with --agent flag,
+   * --prompt-file, --model, --plugin-source, --jlink-bin, and --cwd.
    */
   @Test
   public void buildGraderArgsUsesAgentFlag() throws IOException
@@ -2341,24 +2289,19 @@ public final class InstructionTestRunnerTest
     {
       Path graderPromptFile = tempDir.resolve("grader-prompt.txt");
       Files.writeString(graderPromptFile, "test prompt", StandardCharsets.UTF_8);
-      String modelId = "claude-sonnet-4-5-20250929";
       String runnerWorktree = tempDir.toString();
-      Path jlinkBin = tempDir.resolve("bin");
-      Files.createDirectories(jlinkBin);
+      String modelId = "claude-sonnet-4-5";
+      Path jlinkBin = tempDir.resolve("client/target/jlink/bin");
 
       String[] args = SharedSecrets.buildGraderArgs(graderPromptFile, modelId, runnerWorktree, jlinkBin);
 
-      // Validate argument array structure and values
       requireThat(args, "args").length().isEqualTo(12);
       requireThat(args[0], "args[0]").isEqualTo("--prompt-file");
       requireThat(args[1], "args[1]").isEqualTo(graderPromptFile.toString());
       requireThat(args[2], "args[2]").isEqualTo("--model");
       requireThat(args[3], "args[3]").isEqualTo(modelId);
-
-      // CRITICAL: Verify --agent flag is used (not --subagent-type)
       requireThat(args[4], "args[4]").isEqualTo("--agent");
       requireThat(args[5], "args[5]").isEqualTo("instruction-grader-agent");
-
       requireThat(args[6], "args[6]").isEqualTo("--plugin-source");
       requireThat(args[7], "args[7]").isEqualTo(Path.of(runnerWorktree, "plugin").toString());
       requireThat(args[8], "args[8]").isEqualTo("--jlink-bin");
@@ -2379,7 +2322,6 @@ public final class InstructionTestRunnerTest
     expectedExceptionsMessageRegExp = ".*graderPromptFile.*")
   public void buildGraderArgsRejectsNullPromptFile()
   {
-    Path jlinkBin = Path.of("/tmp/bin");
-    SharedSecrets.buildGraderArgs(null, "model", "/tmp/worktree", jlinkBin);
+    SharedSecrets.buildGraderArgs(null, "model", "/tmp/worktree", Path.of("/tmp/jlink/bin"));
   }
 }

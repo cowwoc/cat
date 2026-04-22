@@ -11,7 +11,6 @@ import io.github.cowwoc.cat.claude.tool.ClaudeTool;
 import io.github.cowwoc.cat.claude.tool.MainClaudeTool;
 import io.github.cowwoc.cat.claude.internal.SharedSecrets;
 import io.github.cowwoc.cat.claude.hook.util.ProcessRunner;
-import io.github.cowwoc.cat.claude.hook.util.SkillDiscovery;
 import io.github.cowwoc.cat.claude.hook.util.VersionUtils;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import org.slf4j.Logger;
@@ -41,11 +40,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.HexFormat;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.SequencedSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
@@ -75,39 +70,13 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public final class InstructionTestRunner
 {
   /**
-   * SPRT log-likelihood increment for a passing observation.
-   * <p>
-   * Equals {@code ln(p0/p1) = ln(0.95/0.85)}.
+   * Minimum total failures across all test cases within the early-detection window to trigger early stop.
    */
-  private static final double SPRT_LOG_PASS = 0.1112;
+  private static final int EARLY_FAIL_THRESHOLD = 2;
   /**
-   * SPRT log-likelihood increment for a failing observation.
-   * <p>
-   * Equals {@code ln((1-p0)/(1-p1)) = ln(0.05/0.15)}.
+   * Maximum number of batches during which early-failure-detection is active.
    */
-  private static final double SPRT_LOG_FAIL = -1.0986;
-  /**
-   * SPRT upper acceptance boundary.
-   * <p>
-   * Equals {@code ln((1-beta)/alpha) = ln(19)}.
-   */
-  private static final double SPRT_ACCEPT = 2.944;
-  /**
-   * SPRT lower rejection boundary.
-   * <p>
-   * Equals {@code ln(beta/(1-alpha)) = ln(0.0526)}.
-   */
-  private static final double SPRT_REJECT = -2.944;
-  /**
-   * Number of smoke-test runs before escalating to full SPRT.
-   */
-  private static final int SMOKE_RUNS = 3;
-  /**
-   * Prior compliance boost applied when {@code --prior-boost} is enabled.
-   * <p>
-   * Equivalent to approximately 10 prior PASS observations.
-   */
-  private static final double PRIOR_BOOST = 1.112;
+  private static final int EARLY_FAIL_WINDOW = 5;
   /**
    * ISO-8601 UTC timestamp formatter.
    */
@@ -136,6 +105,10 @@ public final class InstructionTestRunner
   private final Logger log = LoggerFactory.getLogger(InstructionTestRunner.class);
   private final ClaudePluginScope scope;
   private final String claudeCodeVersion;
+  private final SprtStateManager sprtStateManager;
+  private final SprtIsolationManager sprtIsolationManager;
+  private final SprtGrader sprtGrader;
+  private final SkillMetadataExtractor skillMetadataExtractor;
 
   /**
    * Creates a new InstructionTestRunner.
@@ -151,6 +124,10 @@ public final class InstructionTestRunner
     requireThat(claudeCodeVersion, "claudeCodeVersion").isNotBlank();
     this.scope = scope;
     this.claudeCodeVersion = claudeCodeVersion;
+    this.sprtStateManager = new SprtStateManager(scope);
+    this.sprtIsolationManager = new SprtIsolationManager(scope);
+    this.sprtGrader = new SprtGrader(scope);
+    this.skillMetadataExtractor = new SkillMetadataExtractor(scope, claudeCodeVersion);
   }
 
   /**
@@ -171,11 +148,11 @@ public final class InstructionTestRunner
       throw new IllegalArgumentException(
         "InstructionTestRunner: no command specified.\n" +
         "Usage: skill-test-runner <command> [args...]\n" +
-        "Commands: extract-units, extract-model, extract-test-dir, detect-changes, " +
+        "Commands: extract-units, extract-model, extract-effort, extract-test-dir, detect-changes, " +
         "map-units, persist-artifacts, init-sprt, update-sprt, check-boundary, smoke-status, " +
         "merge-results, create-isolation-branch, create-runner-worktrees, check-run-contamination, " +
         "remove-runner-worktrees, write-test-results, save-failed-run, remove-runner-worktree, " +
-        "remove-sanitized-branch, prepare-run, prepare-trial, get-json-field, get-tc-name, " +
+        "remove-isolation-branch, prepare-run, prepare-trial, get-json-field, get-tc-name, " +
         "get-worktree-field, run-sprt-batch, run-full-sprt, run-single-test");
 
     String command = args[0];
@@ -184,6 +161,7 @@ public final class InstructionTestRunner
     {
       case "extract-units" -> out.println(extractUnits(rest));
       case "extract-model" -> out.println(extractModel(rest));
+      case "extract-effort" -> out.println(extractEffort(rest));
       case "extract-test-dir" -> out.println(extractTestDir(rest));
       case "detect-changes" -> out.println(detectChanges(rest));
       case "map-units" -> out.println(mapUnits(rest));
@@ -204,7 +182,7 @@ public final class InstructionTestRunner
       case "run-single-test" -> runSingleTest(rest, out);
       default -> throw new IllegalArgumentException(
         "InstructionTestRunner: unknown command: " + command + "\n" +
-        "Valid commands: extract-units, extract-model, extract-test-dir, detect-changes, " +
+        "Valid commands: extract-units, extract-model, extract-effort, extract-test-dir, detect-changes, " +
         "map-units, persist-artifacts, init-sprt, update-sprt, check-boundary, smoke-status, " +
         "merge-results, create-runner-worktrees, check-run-contamination, remove-runner-worktrees, " +
         "remove-runner-worktree, prepare-trial, get-json-field, run-sprt-batch, run-full-sprt, " +
@@ -225,16 +203,7 @@ public final class InstructionTestRunner
    */
   public String extractUnits(String[] args) throws IOException
   {
-    requireThat(args, "args").isNotNull();
-    if (args.length != 1)
-      throw new IllegalArgumentException(
-        "InstructionTestRunner extract-units: expected 1 argument <skill_path>, got " + args.length + ".\n" +
-        "Usage: skill-test-runner extract-units <skill_path>");
-    Path skillPath = Path.of(args[0]);
-    if (Files.notExists(skillPath))
-      throw new IllegalArgumentException(
-        "InstructionTestRunner extract-units: file not found: " + skillPath);
-    return bodyWithLineNumbers(skillPath);
+    return skillMetadataExtractor.extractUnits(args);
   }
 
   /**
@@ -251,77 +220,23 @@ public final class InstructionTestRunner
    */
   public String extractModel(String[] args) throws IOException
   {
-    requireThat(args, "args").isNotNull();
-    if (args.length != 1)
-      throw new IllegalArgumentException(
-        "InstructionTestRunner extract-model: expected 1 argument <skill_path>, got " + args.length + ".\n" +
-        "Usage: skill-test-runner extract-model <skill_path>");
-    Path skillPath = Path.of(args[0]);
-    if (Files.notExists(skillPath))
-      throw new IllegalArgumentException(
-        "InstructionTestRunner extract-model: file not found: " + skillPath);
-
-    ParsedSkill parsed = parseSkill(skillPath);
-    String model = SkillDiscovery.extractField(parsed.frontmatter(), "model");
-    if (model.isBlank())
-      model = getModel(skillPath);
-    return ModelIdResolver.resolve(claudeCodeVersion, model);
+    return skillMetadataExtractor.extractModel(args);
   }
 
   /**
-   * Gets the model for a skill or agent by looking it up in {@code model-selection.md}.
+   * Implements the {@code extract-effort} command.
    * <p>
-   * Derives the skill/agent name from the file path (e.g., {@code .../skills/foo/SKILL.md} → {@code cat:foo}),
-   * then scans {@code ${pluginRoot}/rules/model-selection.md} for a matching entry. Returns the model
-   * associated with the section the entry appears in ({@code "sonnet"} or {@code "opus"}), or
-   * {@code "haiku"} if the entry is not listed.
+   * Reads the YAML frontmatter of the skill file and returns the {@code effort:} field value,
+   * or an empty string if the field is absent.
    *
-   * @param skillOrSubagent the path to the skill or agent file (SKILL.md, first-use.md, or agent .md)
-   * @return the model short name ({@code "sonnet"}, {@code "opus"}, or {@code "haiku"})
-   * @throws IOException if model-selection.md cannot be read
+   * @param args {@code [skill_path]}
+   * @return the effort level (e.g., {@code "high"}), or {@code ""} if not specified
+   * @throws IllegalArgumentException if the argument count is wrong or the file is not found
+   * @throws IOException              if the file cannot be read
    */
-  private String getModel(Path skillOrSubagent) throws IOException
+  public String extractEffort(String[] args) throws IOException
   {
-    // Skills use a subdirectory per skill: .../skills/<name>/SKILL.md → parent dir name is the skill name.
-    // Agents are flat files: .../agents/<name>.md → file stem is the agent name.
-    String fileName = skillOrSubagent.getFileName().toString();
-    String entryName;
-    if (fileName.equals("SKILL.md") || fileName.equals("first-use.md"))
-    {
-      Path parentDir = skillOrSubagent.getParent();
-      if (parentDir == null)
-        return "haiku";
-      entryName = "cat:" + parentDir.getFileName().toString();
-    }
-    else
-    {
-      // Strip .md extension to get agent name
-      String stem;
-      if (fileName.endsWith(".md"))
-        stem = fileName.substring(0, fileName.length() - 3);
-      else
-        stem = fileName;
-      entryName = "cat:" + stem;
-    }
-
-    Path modelSelectionPath = scope.getPluginRoot().resolve("rules/model-selection.md");
-    if (Files.notExists(modelSelectionPath))
-      return "haiku";
-
-    // Track which section we're in to know which model to return.
-    // Section headers use bold markdown: "**Sonnet-preferred ...**" or "**Opus-preferred ...**".
-    String currentModel = "haiku";
-    for (String line : Files.readAllLines(modelSelectionPath, UTF_8))
-    {
-      String trimmed = line.trim();
-      if (trimmed.startsWith("**Sonnet-preferred"))
-        currentModel = "sonnet";
-      else if (trimmed.startsWith("**Opus-preferred"))
-        currentModel = "opus";
-      else if (trimmed.equals("- `" + entryName + "`"))
-        return currentModel;
-    }
-    return "haiku";
+    return skillMetadataExtractor.extractEffort(args);
   }
 
   /**
@@ -344,30 +259,7 @@ public final class InstructionTestRunner
    */
   public String extractTestDir(String[] args)
   {
-    if (args.length != 2)
-      throw new IllegalArgumentException(
-        "InstructionTestRunner extract-test-dir: expected 2 arguments <instruction-path> <project-dir>, got " +
-        args.length + ".\nUsage: instruction-test-runner extract-test-dir " +
-        "<instruction-text-path> <project-dir>");
-    String instructionPath = args[0];
-    String projectDir = args[1];
-
-    // Strip file extension
-    int dotIndex = instructionPath.lastIndexOf('.');
-    String noExtension;
-    if (dotIndex > 0 && dotIndex > instructionPath.lastIndexOf('/'))
-      noExtension = instructionPath.substring(0, dotIndex);
-    else
-      noExtension = instructionPath;
-
-    // Strip "plugin/" prefix for plugin files so tests mirror the plugin/ structure
-    String testRelative;
-    if (noExtension.startsWith("plugin/"))
-      testRelative = noExtension.substring("plugin/".length());
-    else
-      testRelative = noExtension;
-
-    return projectDir + "/plugin/tests/" + testRelative;
+    return skillMetadataExtractor.extractTestDir(args);
   }
 
   /**
@@ -595,8 +487,7 @@ public final class InstructionTestRunner
     String timestamp = ISO_UTC.format(Instant.now());
 
     // Resolve model_id from skill frontmatter
-    ParsedSkill parsed = parseSkill(absSkillPath);
-    String model = SkillDiscovery.extractField(parsed.frontmatter(), "model");
+    String model = skillMetadataExtractor.extractStringField(absSkillPath, "model");
     if (model.isBlank())
     {
       throw new IllegalArgumentException(
@@ -683,164 +574,14 @@ public final class InstructionTestRunner
    * stale and carry-forward is skipped entirely.
    *
    * @param args {@code [sprt_state_path, rerun_tc_ids_json, prior_instruction_test_json_path,
-   *             current_model_id, (--prior-boost)?]}
+   *             next_model_id, session_id, (--prior-boost)?]}
    * @return compact JSON {@code {"ok":true}} after writing the initial state to {@code sprt_state_path}
    * @throws IllegalArgumentException if arguments are missing or the prior file is not found
    * @throws IOException              if the prior file cannot be read or the state file cannot be written
    */
   public String initSprt(String[] args) throws IOException
   {
-    requireThat(args, "args").isNotNull();
-    if (args.length < 4)
-      throw new IllegalArgumentException(
-        "InstructionTestRunner init-sprt: expected at least 4 arguments, got " + args.length + ".\n" +
-        "Usage: skill-test-runner init-sprt <sprt_state_path> <rerun_tc_ids_json> " +
-        "<prior_instruction_test_json_path> <current_model_id> [--prior-boost]");
-
-    Path sprtStatePath = Path.of(args[0]);
-    String currentModelId = args[3];
-    if (currentModelId.isBlank())
-      throw new IllegalArgumentException(
-        "InstructionTestRunner init-sprt: current_model_id must not be blank");
-    String rerunJson = args[1];
-    String priorPath = args[2];
-    boolean usePriorBoost = false;
-    for (int i = 4; i < args.length; ++i)
-    {
-      if (args[i].equals("--prior-boost"))
-        usePriorBoost = true;
-    }
-
-    boolean hasPrior = !priorPath.equals("none");
-    if (hasPrior && Files.notExists(Path.of(priorPath)))
-      throw new IllegalArgumentException(
-        "InstructionTestRunner init-sprt: prior instruction-test file not found: " + priorPath);
-
-    JsonMapper mapper = scope.getJsonMapper();
-
-    // Parse rerun IDs
-    JsonNode rerunNode = mapper.readTree(rerunJson);
-    Set<String> rerunIds = new HashSet<>();
-    if (rerunNode.isArray())
-    {
-      for (JsonNode element : rerunNode)
-      {
-        if (element.isString())
-          rerunIds.add(element.asString());
-      }
-    }
-
-    // Read prior instruction-test (if any), building a lookup map in a single pass over test_cases
-    // so priorIds can be derived from the map's key set without a second traversal.
-    // When the prior model_id differs from the current model, invalidate all cached results.
-    Map<String, JsonNode> priorByTestCaseId = new HashMap<>();
-    if (hasPrior)
-    {
-      JsonNode priorRoot = mapper.readTree(Path.of(priorPath).toFile());
-      String priorModelId = priorRoot.path("model_id").asString("");
-      // Only carry forward prior results when model_id matches the current model
-      boolean modelMatches = !priorModelId.isBlank() && priorModelId.equals(currentModelId);
-      if (!modelMatches && !priorModelId.isBlank())
-      {
-        log.warn("Model changed from {} to {}, invalidating cached SPRT results",
-          priorModelId, currentModelId);
-      }
-      else if (priorModelId.isBlank())
-        log.warn("Prior instruction-test has no model_id, invalidating cached SPRT results");
-      if (modelMatches)
-      {
-        JsonNode priorTestCases = priorRoot.path("test_cases");
-        if (priorTestCases.isArray())
-        {
-          for (JsonNode tc : priorTestCases)
-          {
-            String tcId = tc.path("test_case_id").asString("");
-            if (!tcId.isBlank())
-              priorByTestCaseId.put(tcId, tc);
-          }
-        }
-      }
-    }
-
-    // Build union of prior IDs and rerun IDs (preserving insertion order, O(1) deduplication).
-    // Prior IDs come first so carry-forward cases precede fresh re-runs in iteration order.
-    SequencedSet<String> allIds = new LinkedHashSet<>(priorByTestCaseId.keySet());
-    allIds.addAll(rerunIds);
-
-    ObjectNode sprtState = mapper.createObjectNode();
-
-    for (String testCaseId : allIds)
-    {
-      ObjectNode entry = mapper.createObjectNode();
-      if (rerunIds.contains(testCaseId))
-      {
-        // Fresh SPRT state for re-run cases
-        double initialLogRatio = 0.0;
-        if (usePriorBoost)
-        {
-          JsonNode priorTc = priorByTestCaseId.get(testCaseId);
-          if (priorTc != null && priorTc.path("decision").asString("").equals("ACCEPT"))
-            initialLogRatio = PRIOR_BOOST;
-        }
-        entry.put("log_ratio", initialLogRatio);
-        entry.put("passes", 0);
-        entry.put("fails", 0);
-        entry.put("runs", 0);
-        entry.put("decision", "INCONCLUSIVE");
-        entry.put("carried_forward", false);
-        entry.put("smoke_runs_done", 0);
-      }
-      else
-      {
-        // Carry-forward state from prior instruction-test
-        double logRatio = 0.0;
-        int passes = 0;
-        int fails = 0;
-        int runs = 0;
-        String decision = "INCONCLUSIVE";
-        int smokeRunsDone = 0;
-        JsonNode priorTc = priorByTestCaseId.get(testCaseId);
-        if (priorTc != null)
-        {
-          JsonNode logRatioNode = priorTc.path("log_ratio");
-          if (logRatioNode.isNumber())
-            logRatio = logRatioNode.asDouble();
-          JsonNode passesNode = priorTc.path("passes");
-          if (passesNode.isNumber())
-            passes = passesNode.asInt();
-          JsonNode failsNode = priorTc.path("fails");
-          if (failsNode.isNumber())
-            fails = failsNode.asInt();
-          JsonNode runsNode = priorTc.path("runs");
-          if (runsNode.isNumber())
-            runs = runsNode.asInt();
-          String priorDecision = priorTc.path("decision").asString("");
-          if (!priorDecision.isBlank())
-            decision = priorDecision;
-          JsonNode smokeNode = priorTc.path("smoke_runs_done");
-          if (smokeNode.isNumber())
-            smokeRunsDone = smokeNode.asInt();
-        }
-        entry.put("log_ratio", logRatio);
-        entry.put("passes", passes);
-        entry.put("fails", fails);
-        entry.put("runs", runs);
-        entry.put("decision", decision);
-        entry.put("carried_forward", true);
-        entry.put("smoke_runs_done", smokeRunsDone);
-      }
-      sprtState.set(testCaseId, entry);
-    }
-
-    ObjectNode stateDoc = mapper.createObjectNode();
-    stateDoc.put("model_id", currentModelId);
-    stateDoc.set("sprt_state", sprtState);
-    Files.createDirectories(sprtStatePath.getParent());
-    Files.writeString(sprtStatePath, compactJson(stateDoc), UTF_8);
-
-    ObjectNode result = mapper.createObjectNode();
-    result.put("ok", true);
-    return compactJson(result);
+    return sprtStateManager.initSprt(args);
   }
 
   /**
@@ -855,115 +596,7 @@ public final class InstructionTestRunner
    */
   public void updateSprt(String[] args) throws IOException
   {
-    requireThat(args, "args").isNotNull();
-    if (args.length != 3)
-      throw new IllegalArgumentException(
-        "InstructionTestRunner update-sprt: expected 3 arguments, got " + args.length + ".\n" +
-        "Usage: skill-test-runner update-sprt <sprt_state_path> <tc_id> <passed>");
-
-    Path statePath = Path.of(args[0]);
-    String testCaseId = args[1];
-    String passedStr = args[2];
-
-    if (Files.notExists(statePath))
-      throw new IllegalArgumentException(
-        "InstructionTestRunner update-sprt: state file not found: " + statePath);
-    if (!passedStr.equals("true") && !passedStr.equals("false"))
-      throw new IllegalArgumentException(
-        "InstructionTestRunner update-sprt: <passed> must be 'true' or 'false', got: " + passedStr);
-
-    boolean passed = passedStr.equals("true");
-    JsonMapper mapper = scope.getJsonMapper();
-    JsonNode stateRoot = mapper.readTree(statePath.toFile());
-    JsonNode sprtStateNode = stateRoot.path("sprt_state");
-
-    // Read current values
-    JsonNode tcNode = sprtStateNode.path(testCaseId);
-    double currentLogRatio = tcNode.path("log_ratio").asDouble(0.0);
-    int currentPasses = tcNode.path("passes").asInt(0);
-    int currentFails = tcNode.path("fails").asInt(0);
-    int currentRuns = tcNode.path("runs").asInt(0);
-    int currentSmoke = tcNode.path("smoke_runs_done").asInt(0);
-    boolean carriedForward = tcNode.path("carried_forward").asBoolean(false);
-
-    // Apply observation
-    double increment;
-    if (passed)
-      increment = SPRT_LOG_PASS;
-    else
-      increment = SPRT_LOG_FAIL;
-    double newLogRatio = currentLogRatio + increment;
-    int newRuns = currentRuns + 1;
-    int newSmoke;
-    if (currentSmoke < SMOKE_RUNS)
-      newSmoke = currentSmoke + 1;
-    else
-      newSmoke = currentSmoke;
-    int newPasses;
-    int newFails;
-    if (passed)
-    {
-      newPasses = currentPasses + 1;
-      newFails = currentFails;
-    }
-    else
-    {
-      newPasses = currentPasses;
-      newFails = currentFails + 1;
-    }
-
-    String newDecision;
-    if (newLogRatio >= SPRT_ACCEPT)
-      newDecision = "ACCEPT";
-    else if (newLogRatio <= SPRT_REJECT)
-      newDecision = "REJECT";
-    else
-      newDecision = "INCONCLUSIVE";
-
-    // Build updated state
-    ObjectNode newStateRoot = mapper.createObjectNode();
-    ObjectNode newSprtState = mapper.createObjectNode();
-
-    // Copy all existing entries, replacing the updated one
-    if (sprtStateNode.isObject())
-    {
-      for (Map.Entry<String, JsonNode> entry : sprtStateNode.properties())
-      {
-        if (entry.getKey().equals(testCaseId))
-        {
-          ObjectNode updatedEntry = mapper.createObjectNode();
-          updatedEntry.put("log_ratio", newLogRatio);
-          updatedEntry.put("passes", newPasses);
-          updatedEntry.put("fails", newFails);
-          updatedEntry.put("runs", newRuns);
-          updatedEntry.put("decision", newDecision);
-          updatedEntry.put("carried_forward", carriedForward);
-          updatedEntry.put("smoke_runs_done", newSmoke);
-          newSprtState.set(entry.getKey(), updatedEntry);
-        }
-        else
-        {
-          newSprtState.set(entry.getKey(), entry.getValue());
-        }
-      }
-    }
-
-    // Copy all top-level fields from the original state (e.g., model_id) before overwriting
-    // sprt_state. Without this, a round-trip through update-sprt would strip fields written by
-    // init-sprt, breaking downstream commands that rely on model_id.
-    if (stateRoot.isObject())
-    {
-      for (Map.Entry<String, JsonNode> entry : stateRoot.properties())
-      {
-        if (!entry.getKey().equals("sprt_state"))
-          newStateRoot.set(entry.getKey(), entry.getValue());
-      }
-    }
-    newStateRoot.set("sprt_state", newSprtState);
-    // Atomic temp-file swap: write to .tmp then rename to avoid truncating the input file
-    Path tempPath = statePath.resolveSibling(statePath.getFileName() + ".tmp");
-    Files.writeString(tempPath, compactJson(newStateRoot), UTF_8);
-    Files.move(tempPath, statePath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+    sprtStateManager.updateSprt(args);
   }
 
   /**
@@ -978,37 +611,7 @@ public final class InstructionTestRunner
    */
   public String checkBoundary(String[] args) throws IOException
   {
-    requireThat(args, "args").isNotNull();
-    if (args.length != 2)
-      throw new IllegalArgumentException(
-        "InstructionTestRunner check-boundary: expected 2 arguments, got " + args.length + ".\n" +
-        "Usage: skill-test-runner check-boundary <sprt_state_path> <tc_id>");
-
-    Path statePath = Path.of(args[0]);
-    String testCaseId = args[1];
-
-    if (Files.notExists(statePath))
-      throw new IllegalArgumentException(
-        "InstructionTestRunner check-boundary: state file not found: " + statePath);
-
-    JsonMapper mapper = scope.getJsonMapper();
-    JsonNode stateRoot = mapper.readTree(statePath.toFile());
-    JsonNode tcNode = stateRoot.path("sprt_state").path(testCaseId);
-
-    double logRatio = tcNode.path("log_ratio").asDouble(0.0);
-    int runs = tcNode.path("runs").asInt(0);
-    int smoke = tcNode.path("smoke_runs_done").asInt(0);
-    boolean carriedForward = tcNode.path("carried_forward").asBoolean(false);
-    String decision = tcNode.path("decision").asString("INCONCLUSIVE");
-
-    ObjectNode result = mapper.createObjectNode();
-    result.put("test_case_id", testCaseId);
-    result.put("decision", decision);
-    result.put("log_ratio", logRatio);
-    result.put("runs", runs);
-    result.put("smoke_runs_done", smoke);
-    result.put("carried_forward", carriedForward);
-    return compactJson(result);
+    return sprtStateManager.checkBoundary(args);
   }
 
   /**
@@ -1023,38 +626,7 @@ public final class InstructionTestRunner
    */
   public String smokeStatus(String[] args) throws IOException
   {
-    requireThat(args, "args").isNotNull();
-    if (args.length != 2)
-      throw new IllegalArgumentException(
-        "InstructionTestRunner smoke-status: expected 2 arguments, got " + args.length + ".\n" +
-        "Usage: skill-test-runner smoke-status <sprt_state_path> <tc_id>");
-
-    Path statePath = Path.of(args[0]);
-    String testCaseId = args[1];
-
-    if (Files.notExists(statePath))
-      throw new IllegalArgumentException(
-        "InstructionTestRunner smoke-status: state file not found: " + statePath);
-
-    JsonMapper mapper = scope.getJsonMapper();
-    JsonNode stateRoot = mapper.readTree(statePath.toFile());
-    JsonNode tcNode = stateRoot.path("sprt_state").path(testCaseId);
-
-    int smoke = tcNode.path("smoke_runs_done").asInt(0);
-    boolean carriedForward = tcNode.path("carried_forward").asBoolean(false);
-    String decision = tcNode.path("decision").asString("INCONCLUSIVE");
-
-    int remaining = Math.max(0, SMOKE_RUNS - smoke);
-    boolean inSmoke = !carriedForward && smoke < SMOKE_RUNS;
-    boolean escalate = !carriedForward && smoke >= SMOKE_RUNS && decision.equals("INCONCLUSIVE");
-
-    ObjectNode result = mapper.createObjectNode();
-    result.put("test_case_id", testCaseId);
-    result.put("in_smoke_phase", inSmoke);
-    result.put("smoke_runs_done", smoke);
-    result.put("smoke_runs_remaining", remaining);
-    result.put("escalate_to_full_sprt", escalate);
-    return compactJson(result);
+    return sprtStateManager.smokeStatus(args);
   }
 
   /**
@@ -1199,8 +771,8 @@ public final class InstructionTestRunner
   /**
    * Implements the {@code create-isolation-branch} command.
    * <p>
-   * Creates an orphan branch {@code ${issue_name}-sanitized} containing stripped test case files.
-   * Frontmatter and the {@code ## Assertions} section are removed from each test case file before
+   * Creates an orphan branch {@code ${issue_name}-isolation} containing stripped test case files.
+   * Frontmatter, the {@code ## Assertions} section, and everything after it are removed from each test case file before
    * committing. The original branch is restored even if an error occurs.
    *
    * @param args {@code [worktree_path, test_dir, issue_name]}
@@ -1211,122 +783,7 @@ public final class InstructionTestRunner
    */
   public String createIsolationBranch(String[] args) throws IOException
   {
-    requireThat(args, "args").isNotNull();
-    if (args.length != 3)
-      throw new IllegalArgumentException(
-        "InstructionTestRunner create-isolation-branch: expected 3 arguments " +
-        "<worktree_path> <test_dir> <issue_name>, got " + args.length + ".\n" +
-        "Usage: instruction-test-runner create-isolation-branch " +
-        "<worktree_path> <test_dir> <issue_name>");
-
-    Path worktreePath = Path.of(args[0]);
-    Path testDir = Path.of(args[1]);
-    String issueName = args[2];
-
-    // Verify clean working tree before creating the isolation branch
-    ProcessRunner.Result statusResult = ProcessRunner.run(worktreePath, "git", "status", "--porcelain");
-    if (!statusResult.stdout().isBlank())
-      throw new IOException(
-        "InstructionTestRunner create-isolation-branch: worktree has uncommitted changes in " +
-        worktreePath + ". Commit or stash all changes before creating the isolation branch.\n" +
-        "Uncommitted changes:\n" + statusResult.stdout());
-
-    // Enumerate .md files in testDir sorted, excluding test-results.json (which is not .md anyway)
-    List<Path> mdFiles = listMdFiles(testDir);
-
-    // Assign sequential opaque IDs: tc1, tc2, ...
-    // Maps: stem -> opaque id (string), opaque id -> stem
-    Map<String, String> tcIdMap = new LinkedHashMap<>();
-    Map<String, String> tcNameMap = new LinkedHashMap<>();
-    int opaqueIndex = 1;
-    for (Path mdFile : mdFiles)
-    {
-      String stem = stemOf(mdFile);
-      String opaqueId = String.valueOf(opaqueIndex);
-      tcIdMap.put(stem, opaqueId);
-      tcNameMap.put(opaqueId, stem);
-      ++opaqueIndex;
-    }
-
-    // Get current branch to restore later
-    ProcessRunner.Result branchResult = ProcessRunner.run(worktreePath, "git", "branch", "--show-current");
-    String originalBranch = branchResult.stdout().strip();
-    if (originalBranch.isBlank())
-      throw new IOException(
-        "InstructionTestRunner create-isolation-branch: git branch --show-current returned no output " +
-        "in directory: " + worktreePath);
-
-    String isolationBranch = issueName + "-sanitized";
-
-    try
-    {
-      // Create the orphan branch
-      ProcessRunner.Result orphanResult = ProcessRunner.run(worktreePath, "git", "checkout",
-        "--orphan", isolationBranch);
-      if (orphanResult.exitCode() != 0)
-        throw new IOException(
-          "InstructionTestRunner create-isolation-branch: git checkout --orphan failed with exit code " +
-          orphanResult.exitCode() + ": " + orphanResult.stdout());
-
-      // Strip each test case file (remove frontmatter and ## Assertions section)
-      for (Path mdFile : mdFiles)
-        stripTestCaseFile(mdFile);
-
-      // For each file, call extract-turns binary
-      Path extractTurnsBin = scope.getPluginRoot().resolve("client/bin/extract-turns");
-      for (Path mdFile : mdFiles)
-      {
-        String stem = stemOf(mdFile);
-        String opaqueId = tcIdMap.get(stem);
-        Path destDir = testDir.resolve("tc" + opaqueId);
-        ProcessRunner.Result extractResult = ProcessRunner.run(worktreePath,
-          extractTurnsBin.toString(), mdFile.toString(), destDir.toString());
-        if (extractResult.exitCode() != 0)
-          throw new IOException(
-            "InstructionTestRunner create-isolation-branch: extract-turns failed for " + mdFile +
-            " with exit code " + extractResult.exitCode() + ": " + extractResult.stdout());
-
-        // Delete the original .md file after extraction
-        Files.delete(mdFile);
-      }
-
-      // Stage and commit
-      ProcessRunner.Result addResult = ProcessRunner.run(worktreePath, "git", "add", "-A");
-      if (addResult.exitCode() != 0)
-        throw new IOException(
-          "InstructionTestRunner create-isolation-branch: git add -A failed with exit code " +
-          addResult.exitCode() + ": " + addResult.stdout());
-
-      ProcessRunner.Result commitResult = ProcessRunner.run(worktreePath, "git", "commit",
-        "-m", "test-runner workspace");
-      if (commitResult.exitCode() != 0)
-        throw new IOException(
-          "InstructionTestRunner create-isolation-branch: git commit failed with exit code " +
-          commitResult.exitCode() + ": " + commitResult.stdout());
-    }
-    finally
-    {
-      // Always restore the original branch
-      ProcessRunner.run(worktreePath, "git", "checkout", originalBranch);
-    }
-
-    JsonMapper mapper = scope.getJsonMapper();
-    ObjectNode result = mapper.createObjectNode();
-    result.put("isolation_branch", isolationBranch);
-    ObjectNode tcIdMapNode = mapper.createObjectNode();
-    for (Map.Entry<String, String> entry : tcIdMap.entrySet())
-      tcIdMapNode.put(entry.getKey(), entry.getValue());
-    result.set("tc_id_map", tcIdMapNode);
-    ObjectNode tcNameMapNode = mapper.createObjectNode();
-    for (Map.Entry<String, String> entry : tcNameMap.entrySet())
-      tcNameMapNode.put(entry.getKey(), entry.getValue());
-    result.set("tc_name_map", tcNameMapNode);
-    // Ordered array of opaque TC IDs (e.g. ["tc1","tc2"]) for direct use in init-sprt
-    ArrayNode tcIdsJsonNode = mapper.createArrayNode();
-    for (String opaqueId : tcNameMap.keySet())
-      tcIdsJsonNode.add("tc" + opaqueId);
-    result.set("tc_ids_json", tcIdsJsonNode);
-    return compactJson(result);
+    return sprtIsolationManager.createIsolationBranch(args);
   }
 
   /**
@@ -1334,7 +791,7 @@ public final class InstructionTestRunner
    * <p>
    * Creates one git worktree per UNDECIDED (INCONCLUSIVE) test case in the SPRT state.
    *
-   * @param args {@code [worktree_path, sprt_state_path, issue_name, project_dir, session_id]}
+   * @param args {@code [worktree_path, sprt_state_path, issue_name, session_id]}
    * @return compact JSON object with {@code output_dir} (path to the test-runs session directory,
    *   which is created by this command) and {@code worktrees} (array of worktree descriptors, each
    *   with {@code tc_id}, {@code runner_branch}, {@code runner_worktree}, and {@code trial_num})
@@ -1343,71 +800,7 @@ public final class InstructionTestRunner
    */
   public String createRunnerWorktrees(String[] args) throws IOException
   {
-    requireThat(args, "args").isNotNull();
-    if (args.length != 5)
-      throw new IllegalArgumentException(
-        "InstructionTestRunner create-runner-worktrees: expected 5 arguments " +
-        "<worktree_path> <sprt_state_path> <issue_name> <project_dir> <session_id>, got " +
-        args.length + ".\n" +
-        "Usage: instruction-test-runner create-runner-worktrees " +
-        "<worktree_path> <sprt_state_path> <issue_name> <project_dir> <session_id>");
-
-    Path worktreePath = Path.of(args[0]);
-    Path sprtStatePath = Path.of(args[1]);
-    String issueName = args[2];
-    String projectDir = args[3];
-    String sessionId = args[4];
-
-    if (Files.notExists(sprtStatePath))
-      throw new IllegalArgumentException(
-        "InstructionTestRunner create-runner-worktrees: state file not found: " + sprtStatePath);
-
-    // Create the output directory for this session's test run JSON files
-    Path outputDir = worktreePath.resolve(".cat/work/test-runs").resolve(sessionId);
-    Files.createDirectories(outputDir);
-
-    JsonMapper mapper = scope.getJsonMapper();
-    JsonNode stateRoot = mapper.readTree(sprtStatePath.toFile());
-    JsonNode sprtStateNode = stateRoot.path("sprt_state");
-
-    ArrayNode worktreesArray = mapper.createArrayNode();
-
-    if (sprtStateNode.isObject())
-    {
-      for (Map.Entry<String, JsonNode> entry : sprtStateNode.properties())
-      {
-        String tcId = entry.getKey();
-        JsonNode tcNode = entry.getValue();
-        String decision = tcNode.path("decision").asString("INCONCLUSIVE");
-        if (!decision.equals("INCONCLUSIVE"))
-          continue;
-
-        int runs = tcNode.path("runs").asInt(0);
-        int trialNum = runs + 1;
-        String runnerBranch = issueName + "-" + tcId + "-r" + trialNum;
-        String runnerWorktree = projectDir + "/.cat/work/worktrees/" + runnerBranch;
-
-        ProcessRunner.Result worktreeResult = ProcessRunner.run(worktreePath,
-          "git", "-C", worktreePath.toString(), "worktree", "add", "-b", runnerBranch,
-          runnerWorktree, issueName + "-sanitized");
-        if (worktreeResult.exitCode() != 0)
-          throw new IOException(
-            "InstructionTestRunner create-runner-worktrees: git worktree add failed for " +
-            tcId + " with exit code " + worktreeResult.exitCode() + ": " + worktreeResult.stdout());
-
-        ObjectNode worktreeEntry = mapper.createObjectNode();
-        worktreeEntry.put("tc_id", tcId);
-        worktreeEntry.put("runner_branch", runnerBranch);
-        worktreeEntry.put("runner_worktree", runnerWorktree);
-        worktreeEntry.put("trial_num", trialNum);
-        worktreesArray.add(worktreeEntry);
-      }
-    }
-
-    ObjectNode result = mapper.createObjectNode();
-    result.put("output_dir", outputDir.toString());
-    result.set("worktrees", worktreesArray);
-    return compactJson(result);
+    return sprtIsolationManager.createRunnerWorktrees(args);
   }
 
   /**
@@ -1423,41 +816,14 @@ public final class InstructionTestRunner
    */
   public String checkRunContamination(String[] args) throws IOException
   {
-    requireThat(args, "args").isNotNull();
-    if (args.length != 1)
-      throw new IllegalArgumentException(
-        "InstructionTestRunner check-run-contamination: expected 1 argument <stdout_file>, got " +
-        args.length + ".\n" +
-        "Usage: instruction-test-runner check-run-contamination <stdout_file>");
-
-    Path stdoutFile = Path.of(args[0]);
-    if (Files.notExists(stdoutFile))
-      throw new IllegalArgumentException(
-        "InstructionTestRunner check-run-contamination: file not found: " + stdoutFile);
-
-    String content = Files.readString(stdoutFile, UTF_8);
-    String lower = content.toLowerCase(Locale.ROOT);
-
-    String[] contaminationPhrases = {
-      "previous run", "earlier attempt", "last time", "as seen before", "prior result",
-      "building on", "same approach as run", "consistent with earlier", "in the last run",
-      "from the previous", "as before"
-    };
-
-    for (String phrase : contaminationPhrases)
-    {
-      if (lower.contains(phrase))
-        return "status=FAIL\nviolation=Output contains cross-run reference: \"" + phrase + "\"";
-    }
-
-    return "status=PASS";
+    return sprtIsolationManager.checkRunContamination(args);
   }
 
   /**
    * Implements the {@code remove-runner-worktrees} command.
    * <p>
    * Bulk-removes all git worktrees and branches whose branch name starts with
-   * {@code ${issue_name}-tc}. Also attempts to delete the {@code ${issue_name}-sanitized} branch.
+   * {@code ${issue_name}-tc}. Also attempts to delete the {@code ${issue_name}-isolation} branch.
    *
    * @param args {@code [worktree_path, issue_name]}
    * @return {@code key=value} line: {@code removed_count=N}
@@ -1466,84 +832,13 @@ public final class InstructionTestRunner
    */
   public String removeRunnerWorktrees(String[] args) throws IOException
   {
-    requireThat(args, "args").isNotNull();
-    if (args.length != 2)
-      throw new IllegalArgumentException(
-        "InstructionTestRunner remove-runner-worktrees: expected 2 arguments " +
-        "<worktree_path> <issue_name>, got " + args.length + ".\n" +
-        "Usage: instruction-test-runner remove-runner-worktrees <worktree_path> <issue_name>");
-
-    Path worktreePath = Path.of(args[0]);
-    String issueName = args[1];
-    String prefix = issueName + "-tc";
-
-    // Parse git worktree list --porcelain output
-    ProcessRunner.Result listResult = ProcessRunner.run(worktreePath,
-      "git", "worktree", "list", "--porcelain");
-
-    // Each block is: "worktree /path\nHEAD sha\nbranch refs/heads/branchname\n"
-    // Parse blocks separated by blank lines
-    List<String> worktreePathsToRemove = new ArrayList<>();
-    List<String> branchesToDelete = new ArrayList<>();
-
-    String[] blocks = listResult.stdout().split("\n\n");
-    for (String block : blocks)
-    {
-      String[] lines = block.trim().split("\n");
-      String blockPath = "";
-      String blockBranch = "";
-      for (String line : lines)
-      {
-        if (line.startsWith("worktree "))
-          blockPath = line.substring("worktree ".length()).strip();
-        else if (line.startsWith("branch "))
-        {
-          String ref = line.substring("branch ".length()).strip();
-          // ref is "refs/heads/branchname"
-          if (ref.startsWith("refs/heads/"))
-            blockBranch = ref.substring("refs/heads/".length());
-          else
-            blockBranch = ref;
-        }
-      }
-      if (!blockBranch.isBlank() && blockBranch.startsWith(prefix))
-      {
-        worktreePathsToRemove.add(blockPath);
-        branchesToDelete.add(blockBranch);
-      }
-    }
-
-    int removedCount = 0;
-    for (int i = 0; i < worktreePathsToRemove.size(); ++i)
-    {
-      String wtPath = worktreePathsToRemove.get(i);
-      String branch = branchesToDelete.get(i);
-
-      ProcessRunner.Result removeResult = ProcessRunner.run(worktreePath,
-        "git", "worktree", "remove", "--force", wtPath);
-      if (removeResult.exitCode() != 0)
-        throw new IOException(
-          "InstructionTestRunner remove-runner-worktrees: git worktree remove failed for " +
-          wtPath + " with exit code " + removeResult.exitCode() + ": " + removeResult.stdout());
-
-      ProcessRunner.Result deleteBranchResult = ProcessRunner.run(worktreePath,
-        "git", "branch", "-D", branch);
-      if (deleteBranchResult.exitCode() != 0)
-        throw new IOException(
-          "InstructionTestRunner remove-runner-worktrees: git branch -D failed for " +
-          branch + " with exit code " + deleteBranchResult.exitCode() + ": " +
-          deleteBranchResult.stdout());
-
-      ++removedCount;
-    }
-
-    return "removed_count=" + removedCount;
+    return sprtIsolationManager.removeRunnerWorktrees(args);
   }
 
   /**
-   * Implements the {@code remove-sanitized-branch} command.
+   * Implements the {@code remove-isolation-branch} command.
    * <p>
-   * Deletes the sanitized isolation branch created by {@code create-isolation-branch}. This is the
+   * Deletes the isolation branch created by {@code create-isolation-branch}. This is the
    * cleanup step called after SPRT completes and the caller has finished examining any failures.
    * <p>
    * Branch deletion failure is silently ignored — the branch may have already been deleted by
@@ -1554,22 +849,9 @@ public final class InstructionTestRunner
    * @throws IllegalArgumentException if the argument count is wrong
    * @throws IOException              if a git operation fails unexpectedly
    */
-  public String removeSanitizedBranch(String[] args) throws IOException
+  public String removeIsolationBranch(String[] args) throws IOException
   {
-    requireThat(args, "args").isNotNull();
-    if (args.length != 2)
-      throw new IllegalArgumentException(
-        "InstructionTestRunner remove-sanitized-branch: expected 2 arguments " +
-        "<worktree_path> <isolation_branch>, got " + args.length + ".\n" +
-        "Usage: instruction-test-runner remove-sanitized-branch <worktree_path> <isolation_branch>");
-
-    Path worktreePath = Path.of(args[0]);
-    String isolationBranch = args[1];
-
-    // Ignore failure — branch may already be deleted by remove-runner-worktrees
-    ProcessRunner.run(worktreePath, "git", "branch", "-D", isolationBranch);
-
-    return "ok";
+    return sprtIsolationManager.removeIsolationBranch(args);
   }
 
   /**
@@ -1620,30 +902,7 @@ public final class InstructionTestRunner
    */
   public String removeRunnerWorktree(String[] args) throws IOException
   {
-    requireThat(args, "args").isNotNull();
-    if (args.length != 3)
-      throw new IllegalArgumentException(
-        "InstructionTestRunner remove-runner-worktree: expected 3 arguments " +
-        "<worktree_path> <runner_worktree> <runner_branch>, got " + args.length + ".\n" +
-        "Usage: instruction-test-runner remove-runner-worktree " +
-        "<worktree_path> <runner_worktree> <runner_branch>");
-
-    Path worktreePath = Path.of(args[0]);
-    String runnerWorktree = args[1];
-    String runnerBranch = args[2];
-
-    ProcessRunner.Result removeResult = ProcessRunner.run(worktreePath,
-      "git", "worktree", "remove", "--force", runnerWorktree);
-    if (removeResult.exitCode() != 0)
-      throw new IOException(
-        "InstructionTestRunner remove-runner-worktree: git worktree remove failed for " +
-        runnerWorktree + " with exit code " + removeResult.exitCode() + ": " +
-        removeResult.stdout());
-
-    // Delete branch — ignore failure if branch is already gone
-    ProcessRunner.run(worktreePath, "git", "branch", "-D", runnerBranch);
-
-    return "removed=true";
+    return sprtIsolationManager.removeRunnerWorktree(args);
   }
 
   /**
@@ -1714,7 +973,7 @@ public final class InstructionTestRunner
    * {@code session-start.sh} hook does not attempt to download the bundle from GitHub.
    *
    * @param args {@code [worktree_path, isolation_branch, test_dir_rel, tc_id, runner_worktree,
-   *             output_dir, trial_num, claude_project_dir]}
+   *             output_dir, trial_num]}
    * @return {@code key=value} lines: {@code prompt_file}, {@code jlink_bin}, {@code plugin_source},
    *   {@code output_json}
    * @throws NullPointerException     if {@code args} is null
@@ -1724,13 +983,13 @@ public final class InstructionTestRunner
   public String prepareTrial(String[] args) throws IOException
   {
     requireThat(args, "args").isNotNull();
-    if (args.length != 8)
+    if (args.length != 7)
       throw new IllegalArgumentException(
-        "InstructionTestRunner prepare-trial: expected 8 arguments " +
+        "InstructionTestRunner prepare-trial: expected 7 arguments " +
         "<worktree_path> <isolation_branch> <test_dir_rel> <tc_id> <runner_worktree> " +
-        "<output_dir> <trial_num> <claude_project_dir>, got " + args.length + ".\n" +
+        "<output_dir> <trial_num>, got " + args.length + ".\n" +
         "Usage: instruction-test-runner prepare-trial <worktree_path> <isolation_branch> " +
-        "<test_dir_rel> <tc_id> <runner_worktree> <output_dir> <trial_num> <claude_project_dir>");
+        "<test_dir_rel> <tc_id> <runner_worktree> <output_dir> <trial_num>");
     String worktreePath = args[0];
     String isolationBranch = args[1];
     String testDirRel = args[2];
@@ -1739,15 +998,29 @@ public final class InstructionTestRunner
     String runnerWorktree = args[4];
     String outputDir = args[5];
     String trialNum = args[6];
-    String claudeProjectDir = args[7];
+
+    String outputJson = outputDir + "/" + tcId + "_run" + trialNum + ".json";
+
+    // Use pre-recorded fixture if present — skip live runner entirely
+    ProcessRunner.Result fixtureResult = ProcessRunner.run(Path.of(worktreePath),
+      "git", "show", isolationBranch + ":" + testDirRel + "/" + tcId + "_runner.json");
+    if (fixtureResult.exitCode() == 0)
+    {
+      Files.createDirectories(Path.of(outputDir));
+      Files.writeString(Path.of(outputJson), fixtureResult.stdout(), UTF_8);
+      StringJoiner fixtureOutput = new StringJoiner("\n");
+      fixtureOutput.add("runner_fixture=yes");
+      fixtureOutput.add("output_json=" + outputJson);
+      return fixtureOutput.toString();
+    }
 
     // Read the turn file content from the isolation branch
     ProcessRunner.Result showResult = ProcessRunner.run(Path.of(worktreePath),
-      "git", "show", isolationBranch + ":" + testDirRel + "/" + tcId + "_turn1");
+      "git", "show", isolationBranch + ":" + testDirRel + "/" + tcId + "_turn1.md");
     if (showResult.exitCode() != 0)
       throw new IOException(
         "InstructionTestRunner prepare-trial: git show failed for " +
-        isolationBranch + ":" + testDirRel + "/" + tcId + "_turn1" +
+        isolationBranch + ":" + testDirRel + "/" + tcId + "_turn1.md" +
         " in " + worktreePath + ": " + showResult.stdout());
     String turnContent = showResult.stdout();
 
@@ -1760,14 +1033,11 @@ public final class InstructionTestRunner
       "Example: " + runnerWorktree + "/some/file.txt\n" +
       "Never use any other root for file operations.";
 
-    // Prefer jlink binaries from the runner worktree when available so the test uses
-    // the committed build from the isolation branch; fall back to the project-level build
-    String runnerJlinkBin = runnerWorktree + "/client/target/jlink/bin";
-    String jlinkBin;
-    if (Files.isDirectory(Path.of(runnerJlinkBin)))
-      jlinkBin = runnerJlinkBin;
-    else
-      jlinkBin = claudeProjectDir + "/client/target/jlink/bin";
+    String jlinkBin = runnerWorktree + "/client/target/jlink/bin";
+    if (!Files.isDirectory(Path.of(jlinkBin)))
+      throw new IOException(
+        "InstructionTestRunner prepare-trial: jlink directory not found in runner worktree: " +
+        jlinkBin + ". Run 'mvn -f client/pom.xml package' before starting SPRT.");
 
     // Ensure the jlink directory has a VERSION file. session-start.sh checks for this file
     // before running the Java dispatcher; without it, it tries to download the bundle from
@@ -1781,8 +1051,6 @@ public final class InstructionTestRunner
       String pluginVersion = VersionUtils.getPluginVersion(scope);
       Files.writeString(versionFile, pluginVersion, UTF_8);
     }
-
-    String outputJson = outputDir + "/" + tcId + "_run" + trialNum + ".json";
 
     // Write the combined prompt to a file so claude-runner reads it via --prompt <path>
     // rather than receiving multiline content inline. This keeps all prepare-trial outputs scalar.
@@ -1938,7 +1206,7 @@ public final class InstructionTestRunner
    * Orchestrates a single SPRT batch run: creates runner worktrees, prepares trials, launches
    * claude-runner instances, grades results, updates SPRT state, checks boundaries, and cleans up.
    *
-   * @param args {@code [worktree_path, sprt_state_json, issue_name, test_dir_rel, project_dir, session_id,
+   * @param args {@code [worktree_path, sprt_state_json, issue_name, test_dir_rel, session_id,
    *   model_id, batch_num, isolation_result_json]}
    * @return compact JSON: {@code {"decided_count": N, "inconclusive_tcs": ["tc1", ...]}}
    * @throws IllegalArgumentException if arguments are invalid
@@ -1948,37 +1216,32 @@ public final class InstructionTestRunner
   public String runSprtBatch(String[] args) throws IOException, InterruptedException
   {
     requireThat(args, "args").isNotNull();
-    if (args.length != 9)
+    if (args.length != 8)
       throw new IllegalArgumentException(
-        "InstructionTestRunner run-sprt-batch: expected 9 arguments, got " + args.length + ".\n" +
+        "InstructionTestRunner run-sprt-batch: expected 8 arguments, got " + args.length + ".\n" +
         "Usage: instruction-test-runner run-sprt-batch <worktree_path> <sprt_state_json> " +
-        "<issue_name> <test_dir_rel> <project_dir> <session_id> <model_id> <batch_num> <isolation_result_json>");
+        "<issue_name> <test_dir_rel> <session_id> <model_id> <batch_num> <isolation_result_json>");
 
     String worktreePathStr = args[0];
     String sprtStateJson = args[1];
     String issueName = args[2];
     String testDirRel = args[3];
-    String projectDir = args[4];
-    String sessionId = args[5];
-    String modelId = args[6];
-    // args[7] is batch_num, not used (trial numbers come from worktree descriptors)
-    String isolationResultJson = args[8];
+    String sessionId = args[4];
+    String modelId = args[5];
+    int batchNum = Integer.parseInt(args[6]);
+    String isolationResultJson = args[7];
 
-    Path jlinkBin = scope.getPluginRoot().resolve("client/bin");
     JsonMapper mapper = scope.getJsonMapper();
     Object sprtLock = new Object();
 
     // Step 1: Create runner worktrees
-    String[] createArgs = {worktreePathStr, sprtStateJson, issueName, projectDir, sessionId};
+    String[] createArgs = {worktreePathStr, sprtStateJson, issueName, sessionId};
     String worktreesJson = createRunnerWorktrees(createArgs);
     JsonNode worktreesRoot = mapper.readTree(worktreesJson);
     String outputDir = worktreesRoot.path("output_dir").asString();
     ArrayNode worktreesArray = (ArrayNode) worktreesRoot.path("worktrees");
 
-    int decidedCount = 0;
-    ArrayNode inconclusiveTcs = mapper.createArrayNode();
-
-    // Read SPRT state to prioritize failed TCs
+    // Read SPRT state to prioritize failed test cases
     JsonNode sprtState = mapper.readTree(Files.readString(Path.of(sprtStateJson), UTF_8));
     JsonNode sprtStateData = sprtState.path("sprt_state");
     List<JsonNode> sortedWorktrees = new ArrayList<>();
@@ -1993,15 +1256,32 @@ public final class InstructionTestRunner
       return Integer.compare(failsB, failsA);
     });
 
+    int decidedCount = 0;
+    ArrayNode inconclusiveTcs = mapper.createArrayNode();
+
     // Adaptive parallelism: start at 2, double on success, halve on failure, cap at core count
     int maxParallelism = Runtime.getRuntime().availableProcessors();
     int currentParallelism = Math.min(2, maxParallelism);
     int processedCount = 0;
     List<String> graderFailures = Collections.synchronizedList(new ArrayList<>());
+    // Seed with existing failures from prior batches so cross-batch threshold works.
+    // Only active within the early-detection window to avoid aborting legitimate long runs.
+    int priorFailures = 0;
+    if (batchNum <= EARLY_FAIL_WINDOW)
+    {
+      for (JsonNode wt : sortedWorktrees)
+      {
+        String tcId = wt.path("tc_id").asString();
+        priorFailures += sprtStateData.path(tcId).path("fails").asInt(0);
+      }
+    }
+    AtomicInteger cumulativeFailures = new AtomicInteger(priorFailures);
 
-    // Step 2: Process TCs with full pipeline per TC (run → grade → update SPRT)
+    // Step 2: Process test cases with full pipeline (run → grade → update SPRT)
     while (processedCount < sortedWorktrees.size())
     {
+      if (batchNum <= EARLY_FAIL_WINDOW && cumulativeFailures.get() >= EARLY_FAIL_THRESHOLD)
+        break;
       int batchSize = Math.min(currentParallelism, sortedWorktrees.size() - processedCount);
       List<Thread> pipelineThreads = new ArrayList<>();
       List<Boolean> pipelineFailures = Collections.synchronizedList(new ArrayList<>());
@@ -2019,70 +1299,84 @@ public final class InstructionTestRunner
         // Prepare trial
         String[] prepareArgs = {
           worktreePathStr,
-          issueName + "-sanitized",
+          issueName + "-isolation",
           testDirRel,
           tcId,
           runnerWorktree,
           outputDir,
-          String.valueOf(trialNum),
-          projectDir
+          String.valueOf(trialNum)
         };
         String prepareResult = prepareTrial(prepareArgs);
         String promptFile = null;
-        String pluginSource = null;
         String outputJson = null;
+        boolean hasFixture = false;
         for (String line : prepareResult.split("\n"))
         {
           if (line.startsWith("prompt_file="))
             promptFile = line.substring("prompt_file=".length());
-          else if (line.startsWith("plugin_source="))
-            pluginSource = line.substring("plugin_source=".length());
           else if (line.startsWith("output_json="))
             outputJson = line.substring("output_json=".length());
+          else if (line.startsWith("runner_fixture="))
+            hasFixture = true;
         }
 
-        if (promptFile == null || pluginSource == null || outputJson == null)
+        if (outputJson == null || (!hasFixture && promptFile == null))
           throw new IOException("prepare-trial did not return all required fields for " + tcId);
 
         // Launch full pipeline (run → grade → update SPRT) in one thread
         String finalPromptFile = promptFile;
-        String finalPluginSource = pluginSource;
         String finalOutputJson = outputJson;
+        boolean finalHasFixture = hasFixture;
         Thread pipelineThread = Thread.ofVirtual().start(() ->
         {
           boolean failed = false;
           try
           {
-            // Step 1: Run trial
-            String[] runnerArgs = {
-              "--prompt-file", finalPromptFile,
-              "--model", modelId,
-              "--plugin-source", finalPluginSource,
-              "--jlink-bin", jlinkBin.toString(),
-              "--cwd", runnerWorktree,
-              "--output", finalOutputJson
-            };
-            int exitCode;
-            try (ClaudeTool runnerScope = new MainClaudeTool();
-              PrintStream nullOut = new PrintStream(OutputStream.nullOutputStream(), false, UTF_8))
+            if (!finalHasFixture)
             {
-              exitCode = ClaudeRunner.run(runnerScope, runnerArgs, nullOut);
-            }
+              // Step 1: Run trial (config at worktree/.cat/config/)
+              String[] runnerArgs = {
+                runnerWorktree, finalPromptFile,
+                "--model", modelId, "--output", finalOutputJson
+              };
+              int exitCode;
+              try (ClaudeTool runnerScope = new MainClaudeTool();
+                PrintStream nullOut = new PrintStream(OutputStream.nullOutputStream(), false, UTF_8))
+              {
+                exitCode = ClaudeRunner.run(runnerScope, runnerArgs, nullOut);
+              }
 
-            if (exitCode != 0 || !Files.exists(Path.of(finalOutputJson)))
-            {
-              log.warn("TC{}: runner failed (exit={})", tcNum, exitCode);
-              failed = true;
-              return;
-            }
+              if (!Files.exists(Path.of(finalOutputJson)))
+              {
+                log.warn("TC{}: runner failed (exit={})", tcNum, exitCode);
+                failed = true;
+                cumulativeFailures.incrementAndGet();
+                // Count runner failures as FAIL in SPRT so consistent failures trigger rejection
+                synchronized (sprtLock)
+                {
+                  String[] updateArgs = {sprtStateJson, tcId, "false"};
+                  updateSprt(updateArgs);
+                  String[] boundaryArgs = {sprtStateJson, tcId};
+                  String boundaryResult = checkBoundary(boundaryArgs);
+                  JsonNode boundaryNode = mapper.readTree(boundaryResult);
+                  String decision = boundaryNode.path("decision").asString();
+                  log.info("TC{}: {} (trial={}, runner-failure)", tcNum, decision, trialNum);
+                  if (decision.equals("ACCEPT") || decision.equals("REJECT"))
+                    batchDecidedCount.incrementAndGet();
+                  else
+                    inconclusiveTcs.add(tcId);
+                }
+                return;
+              }
 
-            // Step 2: Check contamination
-            String contamResult = checkRunContamination(new String[]{finalOutputJson});
-            if (contamResult.contains("status=FAIL"))
-            {
-              log.warn("TC{}: contamination detected", tcNum);
-              failed = true;
-              return;
+              // Step 2: Check contamination
+              String contamResult = checkRunContamination(new String[]{finalOutputJson});
+              if (contamResult.contains("status=FAIL"))
+              {
+                log.warn("TC{}: contamination detected", tcNum);
+                failed = true;
+                return;
+              }
             }
 
             // Step 3: Grade
@@ -2092,19 +1386,19 @@ public final class InstructionTestRunner
             boolean graderFailed = false;
             try
             {
-              // Use worktreePathStr (not projectDir) so the grader reads assertions from the
-              // issue worktree, where test files still exist with their ## Assertions sections.
-              // projectDir is the main workspace (e.g. /workspace), which may not have the
-              // new test files when they were added as part of this issue branch.
-              verdict = gradeTc(tcId, trialNum, finalOutputJson, runnerWorktree,
-                Path.of(worktreePathStr, testDirRel).toString(), modelId, jlinkBin,
+              // Use worktreePathStr so the grader reads assertions from the issue worktree,
+              // where test files still exist with their ## Assertions sections.
+              verdict = sprtGrader.gradeTc(tcId, trialNum, finalOutputJson, modelId, runnerWorktree,
+                Path.of(runnerWorktree, "client/target/jlink/bin"),
+                Path.of(worktreePathStr, testDirRel).toString(),
                 gradeFilePath, isolationResultJson);
             }
             catch (IOException e)
             {
               // Check if this is a grader failure (not infrastructure failure)
               String message = e.getMessage();
-              if (message.contains("Grader for") || message.contains("Grader did not write"))
+              if (message.contains("Grader for") || message.contains("Grader did not write") ||
+                message.contains("Grader output missing") || message.contains("Grade file"))
               {
                 log.error("TC{}: grader failed - {}", tcNum, message);
                 verdict = "FAIL";
@@ -2119,7 +1413,10 @@ public final class InstructionTestRunner
 
             boolean passed = verdict.equals("PASS");
             if (!passed)
+            {
               failed = true;
+              cumulativeFailures.incrementAndGet();
+            }
 
             // Step 4: Update SPRT (synchronized - modifies shared file)
             synchronized (sprtLock)
@@ -2185,229 +1482,22 @@ public final class InstructionTestRunner
       }
     }
 
+    boolean earlyAbort = batchNum <= EARLY_FAIL_WINDOW &&
+      cumulativeFailures.get() >= EARLY_FAIL_THRESHOLD;
+    if (earlyAbort)
+      log.info("Early failure detection: {} failures reached threshold, batch interrupted",
+        cumulativeFailures.get());
+
     // Step 3: Cleanup
     String[] removeArgs = {worktreePathStr, issueName};
     removeRunnerWorktrees(removeArgs);
 
-    // Grader failures are already marked as FAIL in SPRT state (lines 2113-2127).
-    // No need to abort the SPRT loop - let it continue to next batch.
-
     ObjectNode result = mapper.createObjectNode();
     result.put("decided_count", decidedCount);
+    result.put("early_abort", earlyAbort);
+    result.put("cumulative_failures", cumulativeFailures.get());
     result.set("inconclusive_tcs", inconclusiveTcs);
     return compactJson(result);
-  }
-
-  /**
-   * Grades a single test case by spawning a grader agent via ClaudeRunner.
-   * <p>
-   * The grader agent reads the test scenario file and transcript, evaluates assertions,
-   * and writes a grade.json file to the specified output path.
-   *
-   * @param tcId           the test case ID (e.g., "tc1")
-   * @param trialNum       the trial number
-   * @param outputJson     path to the runner output JSON (transcript)
-   * @param runnerWorktree path to the runner worktree
-   * @param testDir        path to the test directory containing scenario MD files
-   * @param modelId        model ID to use for grading
-   * @param jlinkBin       path to jlink bin directory
-   * @param gradeOutputPath path where grader should write grade.json
-   * @param isolationResult JSON string from create-isolation-branch (contains tc_name_map)
-   * @return {@code "PASS"} or {@code "FAIL"}
-   * @throws IOException if grading fails
-   */
-  private String gradeTc(String tcId, int trialNum, String outputJson,
-    String runnerWorktree, String testDir, String modelId,
-    Path jlinkBin, String gradeOutputPath, String isolationResult)
-    throws IOException
-  {
-    String[] getTcNameArgs = {isolationResult, tcId};
-    String originalStem = getTcName(getTcNameArgs);
-
-    Path graderPromptFile = Files.createTempFile("grader-prompt-", ".txt");
-    try
-    {
-      String graderPrompt = buildGraderPrompt(outputJson, testDir, originalStem, tcId,
-        trialNum, gradeOutputPath, runnerWorktree);
-      Files.writeString(graderPromptFile, graderPrompt, UTF_8);
-
-      Path actualGradePath = invokeGrader(tcId, graderPromptFile, modelId, runnerWorktree,
-        jlinkBin, gradeOutputPath, trialNum);
-
-      return extractVerdict(actualGradePath);
-    }
-    finally
-    {
-      Files.deleteIfExists(graderPromptFile);
-    }
-  }
-
-  /**
-   * Builds the grader prompt for a test case run.
-   *
-   * @param outputJson the claude-runner JSON output file path
-   * @param testDir the test directory containing scenario files
-   * @param originalStem the original test case filename stem
-   * @param tcId the test case ID
-   * @param trialNum the trial number
-   * @param gradeOutputPath the expected output path for the grade file
-   * @param runnerWorktree the runner worktree path
-   * @return the grader prompt text
-   */
-  private String buildGraderPrompt(String outputJson, String testDir, String originalStem,
-    String tcId, int trialNum, String gradeOutputPath, String runnerWorktree)
-  {
-    return String.format("""
-      Grade the following test run:
-
-      1. **Transcript**: %s (claude-runner JSON output file)
-      2. **Scenario file path**: %s
-      3. **Run ID**: %s_run_%d
-      4. **Output path**: %s
-      5. **Runner worktree**: %s
-      """,
-      outputJson,
-      Path.of(testDir, originalStem + ".md"),
-      tcId,
-      trialNum,
-      gradeOutputPath,
-      runnerWorktree);
-  }
-
-  /**
-   * Invokes the grader and returns the actual grade file path.
-   * <p>
-   * The grader may write the grade file to either the expected location or an alternative
-   * location in the runner worktree. This method checks both locations.
-   *
-   * @param tcId the test case ID
-   * @param graderPromptFile the grader prompt file
-   * @param modelId the model ID to use for grading
-   * @param runnerWorktree the runner worktree path
-   * @param jlinkBin the jlink binary path
-   * @param gradeOutputPath the expected output path for the grade file
-   * @param trialNum the trial number
-   * @return the actual path where the grade file was written
-   * @throws IOException if the grader fails or the grade file is not found
-   */
-  private Path invokeGrader(String tcId, Path graderPromptFile, String modelId,
-    String runnerWorktree, Path jlinkBin, String gradeOutputPath, int trialNum)
-    throws IOException
-  {
-    try (ClaudeTool graderScope = new MainClaudeTool())
-    {
-      String[] graderArgs = {
-        "--prompt-file", graderPromptFile.toString(),
-        "--model", modelId,
-        "--agent", "instruction-grader-agent",
-        "--plugin-source", Path.of(runnerWorktree, "plugin").toString(),
-        "--jlink-bin", jlinkBin.toString(),
-        "--cwd", runnerWorktree
-      };
-
-      Path graderStdout = Files.createTempFile("grader-stdout-", ".txt");
-      try (PrintStream graderOut = new PrintStream(graderStdout.toFile(), UTF_8))
-      {
-        int exitCode = ClaudeRunner.run(graderScope, graderArgs, graderOut);
-
-        if (exitCode != 0)
-        {
-          String graderOutput = Files.readString(graderStdout, UTF_8);
-          throw new IOException("Grader for " + tcId + " exited with code " + exitCode +
-            "\nGrader output:\n" + graderOutput);
-        }
-
-        return findGradeFile(tcId, gradeOutputPath, runnerWorktree, trialNum, graderStdout);
-      }
-      finally
-      {
-        Files.deleteIfExists(graderStdout);
-      }
-    }
-  }
-
-  /**
-   * Finds the actual grade file path.
-   * <p>
-   * The grader may write to either the expected location or an alternative location in the
-   * runner worktree. This method checks both locations.
-   *
-   * @param tcId the test case ID
-   * @param gradeOutputPath the expected output path
-   * @param runnerWorktree the runner worktree path
-   * @param trialNum the trial number
-   * @param graderStdout the grader stdout file (for diagnostics if not found)
-   * @return the actual path where the grade file was written
-   * @throws IOException if the grade file is not found at either location
-   */
-  private Path findGradeFile(String tcId, String gradeOutputPath, String runnerWorktree,
-    int trialNum, Path graderStdout)
-    throws IOException
-  {
-    Path gradePath = Path.of(gradeOutputPath);
-    if (Files.exists(gradePath))
-      return gradePath;
-
-    // Extract session ID from gradeOutputPath
-    // Format: /path/.cat/work/test-runs/{sessionId}/{tcId}_run{trialNum}_grade.json
-    Path gradeParent = gradePath.getParent();
-    if (gradeParent != null)
-    {
-      Path sessionDir = gradeParent.getParent();
-      if (sessionDir != null)
-      {
-        String sessionId = sessionDir.getFileName().toString();
-        // Construct alternative path in runner worktree
-        Path runnerGradePath = Path.of(runnerWorktree, ".cat", "work", "test-runs",
-          sessionId, tcId + "_run" + trialNum + "_grade.json");
-        if (Files.exists(runnerGradePath))
-          return runnerGradePath;
-      }
-    }
-
-    // If still not found at either location, throw error
-    String graderOutput = Files.readString(graderStdout, UTF_8);
-    throw new IOException("Grader for " + tcId + " exited 0 but did not write grade file.\n" +
-      "Checked locations:\n  1. " + gradeOutputPath + "\n  2. " +
-      Path.of(runnerWorktree, ".cat/work/test-runs/...") + "\n" +
-      "Grader output:\n" + graderOutput);
-  }
-
-  /**
-   * Extracts the overall verdict from a grade file.
-   * <p>
-   * The overall verdict is PASS only if all assertion results pass.
-   *
-   * @param gradePath the grade file path
-   * @return "PASS" if all assertions passed, "FAIL" otherwise
-   * @throws IOException if the grade file is malformed or cannot be read
-   */
-  private String extractVerdict(Path gradePath) throws IOException
-  {
-    JsonMapper mapper = scope.getJsonMapper();
-    JsonNode gradeNode = mapper.readTree(Files.readString(gradePath, UTF_8));
-
-    // Extract overall verdict from assertion_results array per documented schema
-    // Tolerant reader: accept both "assertion_results" (correct) and "assertions" (grader error)
-    JsonNode assertionResults = gradeNode.path("assertion_results");
-    if (assertionResults.isMissingNode())
-      assertionResults = gradeNode.path("assertions");
-    if (assertionResults.isMissingNode() || !assertionResults.isArray())
-      throw new IOException("Grade file missing assertion_results or assertions field: " + gradePath);
-
-    ArrayNode results = (ArrayNode) assertionResults;
-    if (results.isEmpty())
-      throw new IOException("Grade file has no assertion_results: " + gradePath);
-
-    // Overall verdict is PASS only if all assertion results pass
-    for (JsonNode result : results)
-    {
-      String verdict = result.path("verdict").asString();
-      if (!verdict.equals("PASS"))
-        return "FAIL";
-    }
-
-    return "PASS";
   }
 
   /**
@@ -2416,7 +1506,8 @@ public final class InstructionTestRunner
    * Orchestrates the complete SPRT workflow: prepare run, create isolation branch, initialize SPRT state,
    * run batches until all test cases reach decisions, write test results, and cleanup.
    *
-   * @param args {@code [worktree_path, test_dir, test_model, project_dir, session_id]}
+   * @param args {@code [--worktree-bin] <worktree_path> <test_dir> <test_model> <session_id> [<effort>]}
+   *             where {@code --worktree-bin} is an optional flag indicating the re-exec has already happened
    * @param out  the output stream for progress messages (goes to stderr in bash)
    * @throws IllegalArgumentException if the argument count is wrong
    * @throws IOException              if any I/O operation fails
@@ -2425,18 +1516,54 @@ public final class InstructionTestRunner
   private void runFullSprt(String[] args, PrintStream out) throws IOException, InterruptedException
   {
     requireThat(args, "args").isNotNull();
-    if (args.length != 5)
+
+    // Strip optional --worktree-bin flag (present when re-execed from the worktree binary).
+    boolean usingWorktreeBin = args.length > 0 && args[0].equals("--worktree-bin");
+    if (usingWorktreeBin)
+      args = Arrays.copyOfRange(args, 1, args.length);
+
+    if (args.length < 4 || args.length > 5)
       throw new IllegalArgumentException(
-        "InstructionTestRunner run-full-sprt: expected 5 arguments " +
-        "<worktree_path> <test_dir> <test_model> <project_dir> <session_id>, got " + args.length + ".\n" +
+        "InstructionTestRunner run-full-sprt: expected 4 or 5 arguments " +
+        "<worktree_path> <test_dir> <test_model> <session_id> [<effort>], got " + args.length + ".\n" +
         "Usage: instruction-test-runner run-full-sprt <worktree_path> <test_dir> <test_model> " +
-        "<project_dir> <session_id>");
+        "<session_id> [<effort>]");
 
     String worktreePath = args[0];
     String testDir = args[1];
     String testModel = args[2];
-    String projectDir = args[3];
-    String sessionId = args[4];
+    String sessionId = args[3];
+    String testEffort = "";
+    if (args.length > 4)
+      testEffort = args[4];
+
+    // Re-exec from the worktree's own jlink binary so the correct (rebuilt) version runs.
+    // CLAUDE_PLUGIN_ROOT may point to a stale workspace binary; the worktree binary is always current.
+    if (!usingWorktreeBin)
+    {
+      Path worktreeRunner = Path.of(worktreePath).
+        resolve("client/target/jlink/bin/instruction-test-runner");
+      if (!Files.isExecutable(worktreeRunner))
+        throw new IOException(
+          "InstructionTestRunner run-full-sprt: worktree binary not found at " + worktreeRunner +
+          ". Run 'mvn -f client/pom.xml package' before starting SPRT.");
+      List<String> cmd = new ArrayList<>();
+      cmd.add(worktreeRunner.toString());
+      cmd.add("run-full-sprt");
+      cmd.add("--worktree-bin");
+      cmd.addAll(List.of(args));
+      ProcessBuilder pb = new ProcessBuilder(cmd);
+      pb.environment().put("CLAUDE_PLUGIN_ROOT",
+        Path.of(worktreePath).resolve("plugin").toString());
+      pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+      pb.redirectError(ProcessBuilder.Redirect.INHERIT);
+      int exitCode = pb.start().waitFor();
+      if (exitCode != 0)
+        throw new IOException(
+          "InstructionTestRunner run-full-sprt: re-exec from worktree binary failed with " +
+          "exit code " + exitCode);
+      return;
+    }
 
     JsonMapper mapper = scope.getJsonMapper();
 
@@ -2455,12 +1582,12 @@ public final class InstructionTestRunner
 
     // Step 2: Cleanup previous run
     out.println("Step 2: Cleaning up previous run...");
-    removeSanitizedBranch(new String[]{worktreePath, issueName + "-sanitized"});
+    removeIsolationBranch(new String[]{worktreePath, issueName + "-isolation"});
     removeRunnerWorktrees(new String[]{worktreePath, issueName});
     out.println();
 
     // Step 3: Create isolation branch
-    out.println("Step 3: Creating sanitized isolation branch...");
+    out.println("Step 3: Creating isolation branch...");
     String isolationResult = createIsolationBranch(new String[]{worktreePath, testDirAbs, issueName});
     JsonNode isolationNode = mapper.readTree(isolationResult);
     String isolationBranch = isolationNode.path("isolation_branch").asString();
@@ -2469,9 +1596,38 @@ public final class InstructionTestRunner
     out.println("  Test cases: " + tcIdsArray.size());
     out.println();
 
+    // Read failed_test_ids from previous run BEFORE initializing SPRT state.
+    // Prefer sprt-state.json (same-session); fall back to test-results.json (cross-session).
+    Set<String> failedTestIds = new HashSet<>();
+    Path stateFilePath = Path.of(sprtStatePath);
+    JsonNode failedTestIdsSource = null;
+    if (Files.exists(stateFilePath))
+    {
+      JsonNode priorStateRoot = mapper.readTree(stateFilePath.toFile());
+      failedTestIdsSource = priorStateRoot.path("failed_test_ids");
+    }
+    if (failedTestIdsSource == null || !failedTestIdsSource.isArray() || failedTestIdsSource.isEmpty())
+    {
+      Path testResultsPath = Path.of(testDirAbs).resolve("test-results.json");
+      if (Files.exists(testResultsPath))
+      {
+        JsonNode priorResults = mapper.readTree(testResultsPath.toFile());
+        failedTestIdsSource = priorResults.path("failed_test_ids");
+      }
+    }
+    if (failedTestIdsSource != null && failedTestIdsSource.isArray())
+    {
+      for (JsonNode idNode : failedTestIdsSource)
+      {
+        if (idNode.isString())
+          failedTestIds.add(idNode.asString());
+      }
+    }
+
     // Step 4: Initialize SPRT
     out.println("Step 4: Initializing SPRT state...");
-    initSprt(new String[]{sprtStatePath, mapper.writeValueAsString(tcIdsArray), "/dev/null", testModel});
+    initSprt(new String[]{sprtStatePath, mapper.writeValueAsString(tcIdsArray), "/dev/null", testModel,
+      sessionId, "--effort", testEffort});
     out.println("  SPRT state initialized at: " + sprtStatePath);
     out.println();
 
@@ -2480,58 +1636,100 @@ public final class InstructionTestRunner
     for (JsonNode tcIdNode : tcIdsArray)
       tcIds.add(tcIdNode.asString());
 
+    // Sort test cases: failed tests first, then others
+    if (!failedTestIds.isEmpty())
+    {
+      tcIds.sort((a, b) ->
+      {
+        boolean aFailed = failedTestIds.contains(a);
+        boolean bFailed = failedTestIds.contains(b);
+        if (aFailed && !bFailed)
+          return -1;
+        if (!aFailed && bFailed)
+          return 1;
+        return 0;
+      });
+      out.println("=== Test Prioritization ===");
+      out.println("Prioritizing " + failedTestIds.size() + " previously-failed test(s)");
+      out.println();
+    }
+
     out.println("=== Starting SPRT Loop ===");
     out.println("Test cases: " + tcIds.size());
     out.println();
 
     int batchNum = 0;
+    int trialsPerBatch = 1;
     List<String> undecided = new ArrayList<>(tcIds);
     Map<String, Integer> runCounts = new HashMap<>();
     Map<String, String> decisions = new HashMap<>();
     for (String tcId : tcIds)
       runCounts.put(tcId, 0);
+    long loopStartMs = System.currentTimeMillis();
+    List<Long> batchDurationsMs = new ArrayList<>();
 
     while (!undecided.isEmpty())
     {
       ++batchNum;
-      out.println("=== Batch " + batchNum + ": " + undecided.size() + " test case(s) remaining ===");
+      out.printf("=== Batch %d (%d trial(s) per TC): %d test case(s) remaining ===%n",
+        batchNum, trialsPerBatch, undecided.size());
 
-      // Run batch
-      runSprtBatch(new String[]{
-        worktreePath, sprtStatePath, issueName, testDirRel, projectDir,
-        sessionId, testModel, String.valueOf(batchNum), isolationResult
-      });
-
-      // Check decisions
-      boolean anyReject = false;
-      List<String> stillUndecided = new ArrayList<>();
+      // Read cumulative fails before this batch group for adaptive sizing
+      String preStateJson = Files.readString(Path.of(sprtStatePath));
+      int failsBefore = 0;
+      JsonNode preSprtNode = mapper.readTree(preStateJson).path("sprt_state");
       for (String tcId : undecided)
-      {
-        String boundaryResult = checkBoundary(new String[]{sprtStatePath, tcId});
-        JsonNode boundaryNode = mapper.readTree(boundaryResult);
-        String decision = boundaryNode.path("decision").asString();
-        int runs = runCounts.get(tcId) + 1;
-        runCounts.put(tcId, runs);
+        failsBefore += preSprtNode.path(tcId).path("fails").asInt(0);
 
-        if (decision.equals("ACCEPT") || decision.equals("REJECT"))
+      boolean batchEarlyAbort = false;
+      JsonNode batchResultNode = null;
+      boolean anyReject = false;
+
+      for (int trial = 0; trial < trialsPerBatch; ++trial)
+      {
+        // Run one trial for all currently undecided TCs
+        long batchStartMs = System.currentTimeMillis();
+        String batchResult = runSprtBatch(new String[]{
+          worktreePath, sprtStatePath, issueName, testDirRel,
+          sessionId, testModel, String.valueOf(batchNum), isolationResult
+        });
+        batchDurationsMs.add(System.currentTimeMillis() - batchStartMs);
+        batchResultNode = mapper.readTree(batchResult);
+        batchEarlyAbort = batchResultNode.path("early_abort").asBoolean(false);
+
+        // Check decisions after this trial
+        List<String> stillUndecided = new ArrayList<>();
+        for (String tcId : undecided)
         {
-          decisions.put(tcId, decision);
-          out.println("  ✓ " + tcId + ": " + decision + " (" + runs + " runs)");
-          if (decision.equals("REJECT"))
+          String boundaryResult = checkBoundary(new String[]{sprtStatePath, tcId});
+          JsonNode boundaryNode = mapper.readTree(boundaryResult);
+          String decision = boundaryNode.path("decision").asString();
+          int runs = runCounts.get(tcId) + 1;
+          runCounts.put(tcId, runs);
+
+          if (decision.equals("ACCEPT") || decision.equals("REJECT"))
+          {
+            decisions.put(tcId, decision);
+            out.println("  ✓ " + tcId + ": " + decision + " (" + runs + " runs)");
+            if (decision.equals("REJECT"))
+              anyReject = true;
+          }
+          else if (runs >= 50)
+          {
+            decisions.put(tcId, "REJECT");
+            out.println("  ✗ " + tcId + ": REJECT (truncated at 50 runs)");
             anyReject = true;
+          }
+          else
+          {
+            stillUndecided.add(tcId);
+          }
         }
-        else if (runs >= 50)
-        {
-          decisions.put(tcId, "REJECT");
-          out.println("  ✗ " + tcId + ": REJECT (truncated at 50 runs)");
-          anyReject = true;
-        }
-        else
-        {
-          stillUndecided.add(tcId);
-        }
+        undecided = stillUndecided;
+
+        if (batchEarlyAbort || anyReject || undecided.isEmpty())
+          break;
       }
-      undecided = stillUndecided;
       out.println();
 
       // Print batch status summary
@@ -2576,6 +1774,77 @@ public final class InstructionTestRunner
       }
       out.println();
 
+      // ETA line (only when undecided TCs remain)
+      if (!undecided.isEmpty())
+      {
+        long avgBatchMs = batchDurationsMs.stream().mapToLong(Long::longValue).sum() /
+          batchDurationsMs.size();
+        int maxRunsToAccept = 0;
+        for (String tcId : undecided)
+        {
+          double logRatio = sprtNode.path(tcId).path("log_ratio").asDouble(0.0);
+          int runsToAccept = (int) Math.ceil((2.944 - logRatio) / 0.1112);
+          if (runsToAccept > maxRunsToAccept)
+            maxRunsToAccept = runsToAccept;
+        }
+        long elapsedMs = System.currentTimeMillis() - loopStartMs;
+        long etaMs = maxRunsToAccept * avgBatchMs;
+        out.printf("Elapsed: %s | Avg batch: %s | ETA to ACCEPT: ~%s (%d batch(es) @ %s each)%n",
+          formatDuration(elapsedMs), formatDuration(avgBatchMs),
+          formatDuration(etaMs), maxRunsToAccept, formatDuration(avgBatchMs));
+        out.println();
+      }
+
+      // Update adaptive trials-per-batch: double on all-pass, reset to 1 on any failure
+      {
+        String postStateJson = Files.readString(Path.of(sprtStatePath));
+        JsonNode postSprtNode = mapper.readTree(postStateJson).path("sprt_state");
+        int failsAfter = 0;
+        for (String tcId : tcIds)
+          failsAfter += postSprtNode.path(tcId).path("fails").asInt(0);
+        if (!batchEarlyAbort && !anyReject && failsAfter == failsBefore)
+          trialsPerBatch = Math.min(trialsPerBatch * 2, 4);
+        else
+          trialsPerBatch = 1;
+      }
+
+      // Early failure detection: batch was interrupted mid-execution due to threshold
+      if (batchEarlyAbort)
+      {
+        int totalFailures = batchResultNode.path("cumulative_failures").asInt(0);
+        List<String> failedTcIds = new ArrayList<>();
+        for (String tcId : tcIds)
+        {
+          if (sprtNode.path(tcId).path("fails").asInt(0) > 0)
+            failedTcIds.add(tcId);
+        }
+
+        out.println("=== Early Failure Detection (Batch " + batchNum + ") ===");
+        out.println("Detected " + totalFailures + " total failures across " +
+          failedTcIds.size() + " test case(s). Batch interrupted mid-execution.");
+        out.println("Stopping early to provide fast feedback.");
+        out.println();
+
+        // Update failed_test_ids in state file
+        String freshStateJson = Files.readString(Path.of(sprtStatePath));
+        ObjectNode mutableStateRoot = (ObjectNode) mapper.readTree(freshStateJson);
+        ArrayNode failedIdsArray = mapper.createArrayNode();
+        for (String tcId : failedTcIds)
+          failedIdsArray.add(tcId);
+        mutableStateRoot.set("failed_test_ids", failedIdsArray);
+        Files.writeString(Path.of(sprtStatePath), mapper.writeValueAsString(mutableStateRoot), UTF_8);
+
+        // Mark remaining undecided as INCONCLUSIVE
+        for (String tcId : undecided)
+        {
+          decisions.put(tcId, "INCONCLUSIVE");
+          out.println("  " + tcId + ": INCONCLUSIVE (early stop after " +
+            runCounts.get(tcId) + " runs)");
+        }
+        out.println();
+        break;
+      }
+
       // Early abort if any test case failed
       if (anyReject)
       {
@@ -2607,7 +1876,7 @@ public final class InstructionTestRunner
 
     // Step 7: Cleanup
     out.println("Step 7: Cleanup...");
-    removeSanitizedBranch(new String[]{worktreePath, isolationBranch});
+    removeIsolationBranch(new String[]{worktreePath, isolationBranch});
     removeRunnerWorktrees(new String[]{worktreePath, issueName});
     out.println();
 
@@ -2670,14 +1939,13 @@ public final class InstructionTestRunner
     String testDir = args[1];
     String testPattern = args[2];
     String testModel = args[3];
-    String projectDir = args[4];
-    String sessionId = args[5];
+    String sessionId = args[4];
 
     JsonMapper mapper = scope.getJsonMapper();
     SingleTestContext context = prepareSingleTestRun(worktreePath, testDir, testPattern, testModel,
-      mapper, out);
+      sessionId, "", mapper, out);
 
-    Map<String, Integer> runCounts = runSprtLoop(worktreePath, projectDir, sessionId, testModel,
+    Map<String, Integer> runCounts = runSprtLoop(worktreePath, sessionId, testModel,
       context, mapper, out);
 
     finalizeSingleTestRun(worktreePath, testDir, context, runCounts, out);
@@ -2692,13 +1960,13 @@ public final class InstructionTestRunner
   private void validateRunSingleTestArgs(String[] args)
   {
     requireThat(args, "args").isNotNull();
-    if (args.length != 6)
+    if (args.length != 5)
       throw new IllegalArgumentException(
-        "InstructionTestRunner run-single-test: expected 6 arguments " +
-        "<worktree_path> <test_dir> <test_pattern> <test_model> <project_dir> <session_id>, got " +
+        "InstructionTestRunner run-single-test: expected 5 arguments " +
+        "<worktree_path> <test_dir> <test_pattern> <test_model> <session_id>, got " +
         args.length + ".\n" +
         "Usage: instruction-test-runner run-single-test <worktree_path> <test_dir> <test_pattern> " +
-        "<test_model> <project_dir> <session_id>");
+        "<test_model> <session_id>");
   }
 
   /**
@@ -2706,16 +1974,19 @@ public final class InstructionTestRunner
    * filtering test cases by pattern, and initializing SPRT state.
    *
    * @param worktreePath the worktree path
-   * @param testDir the test directory
-   * @param testPattern the test pattern (exact name or glob)
-   * @param testModel the test model
-   * @param mapper the JSON mapper
-   * @param out the output stream
+   * @param testDir      the test directory
+   * @param testPattern  the test pattern (exact name or glob)
+   * @param testModel    the test model
+   * @param sessionId    the Claude session ID for SPRT state initialization
+   * @param testEffort   the effort level for SPRT state initialization, or empty string if none
+   * @param mapper       the JSON mapper
+   * @param out          the output stream
    * @return context containing issue name, SPRT state path, isolation result, and filtered test case IDs
    * @throws IOException if an I/O error occurs
    */
   private SingleTestContext prepareSingleTestRun(String worktreePath, String testDir,
-    String testPattern, String testModel, JsonMapper mapper, PrintStream out)
+    String testPattern, String testModel, String sessionId, String testEffort, JsonMapper mapper,
+    PrintStream out)
     throws IOException
   {
     // Step 1: prepare-run
@@ -2733,12 +2004,12 @@ public final class InstructionTestRunner
 
     // Step 2: Cleanup previous run
     out.println("Step 2: Cleaning up previous run...");
-    removeSanitizedBranch(new String[]{worktreePath, issueName + "-sanitized"});
+    removeIsolationBranch(new String[]{worktreePath, issueName + "-isolation"});
     removeRunnerWorktrees(new String[]{worktreePath, issueName});
     out.println();
 
     // Step 3: Create isolation branch
-    out.println("Step 3: Creating sanitized isolation branch...");
+    out.println("Step 3: Creating isolation branch...");
     String isolationResult = createIsolationBranch(new String[]{worktreePath, testDirAbs, issueName});
     JsonNode isolationNode = mapper.readTree(isolationResult);
     String isolationBranch = isolationNode.path("isolation_branch").asString();
@@ -2785,7 +2056,7 @@ public final class InstructionTestRunner
     for (String tcId : filteredTcIds)
       filteredTcIdsArray.add(tcId);
     initSprt(new String[]{sprtStatePath, mapper.writeValueAsString(filteredTcIdsArray), "/dev/null",
-      testModel});
+      testModel, sessionId, "--effort", testEffort});
     out.println("  SPRT state initialized at: " + sprtStatePath);
     out.println();
 
@@ -2798,7 +2069,6 @@ public final class InstructionTestRunner
    * Runs the SPRT loop until all test cases reach a decision or the 50-run truncation limit.
    *
    * @param worktreePath the worktree path
-   * @param projectDir the project directory
    * @param sessionId the Claude session ID
    * @param testModel the test model
    * @param context the test context
@@ -2808,7 +2078,7 @@ public final class InstructionTestRunner
    * @throws IOException if an I/O error occurs
    * @throws InterruptedException if waiting is interrupted
    */
-  private Map<String, Integer> runSprtLoop(String worktreePath, String projectDir,
+  private Map<String, Integer> runSprtLoop(String worktreePath,
     String sessionId, String testModel, SingleTestContext context, JsonMapper mapper,
     PrintStream out)
     throws IOException, InterruptedException
@@ -2828,14 +2098,27 @@ public final class InstructionTestRunner
       ++batchNum;
       out.println("=== Batch " + batchNum + ": " + undecided.size() + " test case(s) remaining ===");
 
-      runSprtBatch(new String[]{
+      String batchResult = runSprtBatch(new String[]{
         worktreePath, context.sprtStatePath(), context.issueName(), context.issueName(),
-        projectDir, sessionId, testModel, String.valueOf(batchNum), context.isolationResult()
+        sessionId, testModel, String.valueOf(batchNum), context.isolationResult()
       });
+      JsonNode batchResultNode = mapper.readTree(batchResult);
+      boolean batchEarlyAbort = batchResultNode.path("early_abort").asBoolean(false);
 
       boolean anyReject = processBatchResults(undecided, runCounts, context, mapper, out);
 
       printBatchSummary(batchNum, context, runCounts, mapper, out);
+
+      if (batchEarlyAbort)
+      {
+        int totalFailures = batchResultNode.path("cumulative_failures").asInt(0);
+        out.println("=== Early Failure Detection (Batch " + batchNum + ") ===");
+        out.println("Detected " + totalFailures + " total failures. Batch interrupted mid-execution.");
+        out.println("Stopping early to provide fast feedback.");
+        out.println();
+        handleEarlyAbort(undecided, runCounts, context, out);
+        break;
+      }
 
       if (anyReject)
       {
@@ -3003,7 +2286,7 @@ public final class InstructionTestRunner
 
     // Step 7: Cleanup
     out.println("Step 7: Cleanup...");
-    removeSanitizedBranch(new String[]{worktreePath, context.isolationBranch()});
+    removeIsolationBranch(new String[]{worktreePath, context.isolationBranch()});
     removeRunnerWorktrees(new String[]{worktreePath, context.issueName()});
     out.println();
 
@@ -3051,11 +2334,25 @@ public final class InstructionTestRunner
   }
 
   /**
-   * Parses key=value output lines into a map.
+   * Formats a duration in milliseconds as a human-readable string.
    *
-   * @param output the key=value output string
-   * @return a map of keys to values
+   * @param ms the duration in milliseconds
+   * @return a formatted string like "3s", "2m 15s", or "1h 30m"
    */
+  private static String formatDuration(long ms)
+  {
+    long seconds = ms / 1_000;
+    if (seconds < 60)
+      return seconds + "s";
+    long minutes = seconds / 60;
+    long remainingSeconds = seconds % 60;
+    if (minutes < 60)
+      return minutes + "m " + remainingSeconds + "s";
+    long hours = minutes / 60;
+    long remainingMinutes = minutes % 60;
+    return hours + "h " + remainingMinutes + "m";
+  }
+
   private Map<String, String> parseKeyValue(String output)
   {
     Map<String, String> result = new HashMap<>();
@@ -3149,6 +2446,19 @@ public final class InstructionTestRunner
     sprtNode.put("total_duration_ms", 0);
 
     ObjectNode output = mapper.createObjectNode();
+    // Persist model_id, effort, and failed_test_ids so subsequent runs can validate model consistency
+    // and prioritize previously-failed test cases across sessions.
+    String modelId = stateRoot.path("model_id").asString("");
+    if (modelId.isBlank())
+      throw new IllegalStateException(
+        "InstructionTestRunner write-test-results: sprt state is missing required field model_id");
+    output.put("model_id", modelId);
+    output.put("effort", stateRoot.path("effort").asString(""));
+    JsonNode failedIdsNode = stateRoot.path("failed_test_ids");
+    if (!failedIdsNode.isArray())
+      throw new IllegalStateException(
+        "InstructionTestRunner write-test-results: sprt state is missing required field failed_test_ids");
+    output.set("failed_test_ids", failedIdsNode);
     output.set("sprt", sprtNode);
 
     // Write test-results.json
@@ -3214,90 +2524,6 @@ public final class InstructionTestRunner
   }
 
   /**
-   * Strips YAML frontmatter (the first {@code ---...---} block) and the {@code ## Assertions} section
-   * (everything from that heading to EOF) from a test case file, writing the result back in place.
-   *
-   * @param filePath the path to the test case file to strip in place
-   * @throws IOException if the file cannot be read or written
-   */
-  private void stripTestCaseFile(Path filePath) throws IOException
-  {
-    List<String> lines = Files.readAllLines(filePath, UTF_8);
-    List<String> stripped = new ArrayList<>();
-
-    // Skip frontmatter: first ---...--- block
-    int startIndex = 0;
-    if (!lines.isEmpty() && lines.get(0).equals("---"))
-    {
-      int closingIndex = -1;
-      for (int i = 1; i < lines.size(); ++i)
-      {
-        if (lines.get(i).equals("---"))
-        {
-          closingIndex = i;
-          break;
-        }
-      }
-      if (closingIndex >= 0)
-        startIndex = closingIndex + 1;
-    }
-
-    // Copy body lines up to (but not including) ## Assertions
-    for (int i = startIndex; i < lines.size(); ++i)
-    {
-      if (lines.get(i).equals("## Assertions"))
-        break;
-      stripped.add(lines.get(i));
-    }
-
-    // Write stripped content back
-    StringBuilder content = new StringBuilder();
-    for (String line : stripped)
-      content.append(line).append('\n');
-    Files.writeString(filePath, content.toString(), UTF_8);
-  }
-
-  /**
-   * Parses the skill file at the given path and returns frontmatter and body lines.
-   *
-   * @param skillPath path to the skill file
-   * @return the parsed skill with frontmatter string, body lines list, and body start line number
-   * @throws IOException if the file cannot be read
-   */
-  private ParsedSkill parseSkill(Path skillPath) throws IOException
-  {
-    List<String> lines = Files.readAllLines(skillPath, UTF_8);
-    if (lines.isEmpty())
-      return new ParsedSkill("", List.of(), 1);
-
-    // Check if file has YAML frontmatter (starts with "---")
-    if (!lines.get(0).equals("---"))
-      return new ParsedSkill("", lines, 1);
-
-    // Find the closing "---" delimiter to locate body start
-    int closingIndex = -1;
-    for (int i = 1; i < lines.size(); ++i)
-    {
-      if (lines.get(i).equals("---"))
-      {
-        closingIndex = i;
-        break;
-      }
-    }
-
-    // If no closing delimiter found, treat as no frontmatter
-    if (closingIndex < 0)
-      return new ParsedSkill("", lines, 1);
-
-    // Reconstruct frontmatter with delimiters for hash consistency with previous behavior
-    String frontmatter = String.join("\n", lines.subList(0, closingIndex + 1));
-    // Body begins on the line immediately after the closing ---
-    int bodyStartLine = closingIndex + 2;
-    List<String> bodyLines = lines.subList(closingIndex + 1, lines.size());
-    return new ParsedSkill(frontmatter, bodyLines, bodyStartLine);
-  }
-
-  /**
    * Converts an object to compact JSON (single line without indentation).
    *
    * @param value the object to serialize
@@ -3336,28 +2562,6 @@ public final class InstructionTestRunner
     }
   }
 
-  /**
-   * Produces a tab-separated line-numbered representation of a skill's body, using original
-   * file line numbers (i.e., offset by the frontmatter line count).
-   *
-   * @param skillPath path to the skill file
-   * @return the line-numbered body text
-   * @throws IOException if the file cannot be read
-   */
-  private String bodyWithLineNumbers(Path skillPath) throws IOException
-  {
-    ParsedSkill parsed = parseSkill(skillPath);
-    List<String> bodyLines = parsed.bodyLines();
-    int bodyStartLine = parsed.bodyStartLine();
-
-    StringBuilder result = new StringBuilder();
-    for (int i = 0; i < bodyLines.size(); ++i)
-    {
-      int originalLineNumber = bodyStartLine + i;
-      result.append(originalLineNumber).append('\t').append(bodyLines.get(i)).append('\n');
-    }
-    return result.toString().stripTrailing();
-  }
 
   /**
    * Computes the SHA-256 hex digest of the given bytes.
@@ -3384,9 +2588,9 @@ public final class InstructionTestRunner
    * Exposed for testing to validate the --agent argument is correctly constructed.
    *
    * @param graderPromptFile the grader prompt file path
-   * @param modelId the model ID to use
-   * @param runnerWorktree the runner worktree path
-   * @param jlinkBin the jlink binary path
+   * @param modelId          the model ID to use for grading
+   * @param runnerWorktree   the runner worktree path (contains .cat/config/)
+   * @param jlinkBin         the jlink binary directory path
    * @return the grader arguments array
    * @throws NullPointerException if any parameter is null
    */
@@ -3520,31 +2724,6 @@ public final class InstructionTestRunner
         "InstructionTestRunner: path traversal detected: '" + candidate + "' is outside '" + boundary + "'");
   }
 
-  /**
-   * Parsed skill file content.
-   *
-   * @param frontmatter   the YAML frontmatter string (empty when absent)
-   * @param bodyLines     the body lines after the frontmatter
-   * @param bodyStartLine the 1-based line number in the original file where the body begins
-   */
-  private record ParsedSkill(String frontmatter, List<String> bodyLines, int bodyStartLine)
-  {
-    /**
-     * Creates a new ParsedSkill.
-     *
-     * @param frontmatter   the YAML frontmatter string
-     * @param bodyLines     the body lines after the frontmatter
-     * @param bodyStartLine the 1-based line number in the original file where the body begins
-     * @throws NullPointerException     if {@code frontmatter} or {@code bodyLines} are null
-     * @throws IllegalArgumentException if {@code bodyStartLine} is not positive
-     */
-    ParsedSkill
-    {
-      requireThat(frontmatter, "frontmatter").isNotNull();
-      requireThat(bodyLines, "bodyLines").isNotNull();
-      requireThat(bodyStartLine, "bodyStartLine").isPositive();
-    }
-  }
 
   /**
    * Produces a business-format JSON error string with properly escaped {@code message}.

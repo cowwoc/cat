@@ -1,7 +1,7 @@
 ---
 name: plan-review-agent
 description: "Plan completeness reviewer. Evaluates whether plan.md is detailed enough for Haiku-level mechanical implementation."
-model: claude-sonnet-4-5-20250929
+model: claude-sonnet-4-5
 ---
 # Plan Review Agent
 
