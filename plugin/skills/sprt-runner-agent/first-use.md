@@ -82,12 +82,12 @@ the command fails with a non-zero exit code and an error message identifying the
 
 ### derive_overall(decisions{}) → ACCEPT|REJECT|INCONCLUSIVE
 
-Compute overall result from per-TC decisions:
+Compute overall result from per-test-case decisions:
 
 ```
-if any TC decision is REJECT   → return REJECT
-if all TC decisions are ACCEPT → return ACCEPT
-otherwise                      → return INCONCLUSIVE
+if any test case decision is REJECT   → return REJECT
+if all test case decisions are ACCEPT → return ACCEPT
+otherwise                             → return INCONCLUSIVE
 ```
 
 ---
@@ -144,24 +144,18 @@ The `instruction-test-runner` binary exposes three related subcommands for runni
 
 ## Early Abort on Failure
 
-**CRITICAL:** SPRT testing aborts immediately when any test case reaches REJECT.
+SPRT testing aborts after the current batch when the total failure count across all test cases reaches 2+ within the first 5 batches. This aggregate threshold provides fast feedback without being overly sensitive to a single early failure in one test case.
 
-**Why:** The overall decision is REJECT if any test case fails (per derive_overall). Continuing to test
-inconclusive cases wastes resources when the outcome is already determined.
+## Test Prioritization on Re-Run
 
-**Abort behavior:**
-- After each batch grading, the runner checks if any test case decision is REJECT
-- If so, testing stops immediately
-- All remaining INCONCLUSIVE test cases are marked as INCONCLUSIVE in the final report
-- The runner proceeds to Step 6 (write test results) and Step 7 (cleanup)
+When SPRT is re-run after fixing failures, previously-failed tests execute first.
 
-**Output on abort:**
-```
-=== SPRT Aborted: At least one test case REJECT detected ===
-Remaining test cases (N) will be marked INCONCLUSIVE.
-  tc1: INCONCLUSIVE (aborted after M runs)
-  tc4: INCONCLUSIVE (aborted after K runs)
-```
+**Why:** Fast feedback on whether fixes resolved the issues. No need to wait for all tests
+to complete before seeing if known failures are fixed.
+
+**Implementation:** The SPRT state file (`sprt-state.json`) tracks which test cases triggered
+early failure detection. On subsequent runs, these test IDs are sorted to the front of the
+execution queue.
 
 ---
 
@@ -212,7 +206,7 @@ The index.json file is at: `plugin/tests/skills/work-execute/.../fixtures/index.
 
 Both test runners and graders are spawned via `claude-runner` with `--plugin-source "${RUN_WORKTREE}/plugin/"`.
 This gives both components an isolated config directory containing exactly the plugin version committed
-to the run worktree (branched from the sanitized isolation branch, which captured the full working tree
+to the run worktree (branched from the isolation branch, which captured the full working tree
 at creation time). Neither test runners nor graders read from `CLAUDE_PLUGIN_ROOT`.
 
 The isolation branch is created from `git add -A`, which commits the full working tree including the
@@ -253,9 +247,9 @@ rm -rf "${WORKTREE_PATH}/.cat/work/test-runs"
 rm -f "${WORKTREE_PATH}/.cat/work/sprt-state.json"
 
 # Remove stale SPRT worktrees and branches
-git worktree list | grep -E "$(basename ${WORKTREE_PATH})-(tc|sanitized)" | awk '{print $1}' | \
+git worktree list | grep -E "$(basename ${WORKTREE_PATH})-(tc|isolation)" | awk '{print $1}' | \
   xargs -I{} git worktree remove {} --force 2>/dev/null || true
-git branch | grep -E "$(basename ${WORKTREE_PATH})-(tc|sanitized)" | \
+git branch | grep -E "$(basename ${WORKTREE_PATH})-(tc|isolation)" | \
   xargs -I{} git branch -D {} 2>/dev/null || true
 ```
 
@@ -266,6 +260,7 @@ CAT_AGENT_ID="$0"
 TEST_DIR="$1"
 WORKTREE_PATH="$2"
 TEST_MODEL="$3"
+TEST_EFFORT="${4:-}"  # Optional: effort level (low/medium/high/xhigh/max), empty if not specified
 
 # Resolve short model name to full model ID
 TEST_MODEL_ID=$("${CLAUDE_PLUGIN_ROOT}/client/bin/claude-runner" resolve-model "${TEST_MODEL}")
@@ -288,7 +283,7 @@ Bash tool:
   command: |
     "${CLAUDE_PLUGIN_ROOT}/client/bin/instruction-test-runner" run-full-sprt \
       "${WORKTREE_PATH}" "${TEST_DIR}" "${TEST_MODEL_ID}" \
-      "${CLAUDE_PROJECT_DIR}" "${CLAUDE_SESSION_ID}" \
+      "${CLAUDE_SESSION_ID}" "${TEST_EFFORT}" \
       > "${OUTPUT_FILE}" 2>&1
 ```
 
@@ -315,17 +310,42 @@ Monitor tool:
   description: "SPRT test progress"
   timeout_ms: 3600000
   persistent: false
-  command: tail -f --pid=<SPRT_PID> <OUTPUT_FILE> 2>/dev/null || true
+  command: tail -f -n +1 --pid=<SPRT_PID> <OUTPUT_FILE> 2>/dev/null || true
 ```
 
 Replace `<OUTPUT_FILE>` with the actual file path from Step 1 and `<SPRT_PID>` with the PID from Step 1b.
 
+The `-n +1` flag shows all output from the beginning of the file (not just the last 10 lines), so you see the complete
+SPRT run including all batch summaries and test results as they're generated.
+
 The `--pid=<SPRT_PID>` flag causes `tail` to exit automatically when the SPRT process (PID) exits, so the monitor
 terminates cleanly without manual intervention.
 
+The runner automatically checks for failures after each of the first 5 batches and will stop early if 2+ total failures are detected across all test cases.
+
+**Monitor notification response format:** Each time a monitor notification arrives, respond with a one-line progress
+summary in this format:
+
+```
+**Batch B** | <description of event> | <N> TCs remaining | ETA ~Xh Ym
+```
+
+Track the following state across notifications to keep the summary accurate:
+- `CURRENT_BATCH`: current batch number (increments when you see `=== Batch N:`)
+- `BATCH_START_TIME`: wall-clock time when the current batch started
+- `AVG_BATCH_MS`: running average of completed batch durations (update after each `=== Batch N Summary ===`)
+- `RUNS_TO_ACCEPT`: max "Runs to Convergence" value from the most recent batch summary
+- `TCS_REMAINING`: count of undecided test cases (from the most recent batch summary)
+
+ETA formula: `RUNS_TO_ACCEPT × AVG_BATCH_MS`. Before the first batch summary arrives, use the elapsed
+time since Step 1 as the single-batch estimate. Express durations as `Xh Ym` or `Ym Xs` as appropriate.
+
+After each `=== Batch N Summary ===` notification, also output the full batch summary table verbatim
+so the user can see per-TC decisions and convergence estimates.
+
 **While monitoring, watch for three failure signals:**
 
-**Signal 1 — Infrastructure failure (`TC{N}: runner failed` or `TC{N}: grader failed`):**
+**Signal 1 — Infrastructure failure (`tc{N}: runner failed` or `tc{N}: grader failed`):**
 
 The run worktree is still alive when this message appears. Act immediately — do NOT wait for the batch
 to finish:
@@ -337,12 +357,13 @@ to finish:
    RUN_WORKTREE="${WORKTREE_PATH}/.cat/work/worktrees/$(basename ${WORKTREE_PATH})-tc{N}-r{M}"
    ls "${RUN_WORKTREE}/.cat/work/" 2>/dev/null || echo "Run worktree missing"
    ```
-4. Find the failing component's session. Both the test runner and grader run with `--cwd "${RUN_WORKTREE}"`,
-   so their session JSONLs live under the encoded project dir for that path:
+4. Find the failing component's session. Both the test runner and grader run with
+   `CLAUDE_CONFIG_DIR="${RUN_WORKTREE}/.cat/config"`, so their session JSONLs live inside
+   the run worktree's isolated config directory, NOT the global `~/.config/claude/` dir:
    ```bash
-   # Encode the run worktree path to the project dir name Claude uses
-   ENCODED=$(echo "${RUN_WORKTREE}" | sed 's|^/||; s|/|--|g; s|\.|_|g' | tr '[:upper:]' '[:lower:]')
-   ls "/home/node/.config/claude/projects/${ENCODED}/" 2>/dev/null || echo "No session found"
+   # Encode the run worktree path — Claude replaces every '/' and '.' with '-'
+   ENCODED=$(echo "${RUN_WORKTREE}" | sed 's|[/.]|-|g')
+   ls "${RUN_WORKTREE}/.cat/config/projects/${ENCODED}/" 2>/dev/null || echo "No session found"
    ```
 5. If a session exists, invoke the `cat:get-history-agent` skill on it:
    - Use `session-analyzer errors <session_id>` to surface tool errors
@@ -353,10 +374,10 @@ to finish:
    Check for OS-level causes: OOM, process timeout, missing binary, or permission error.
 7. Report all findings to the user: what failed, what the session shows (or why it's absent),
    and whether this looks like an infrastructure issue or a skill/test defect.
-8. Ask: **"Should I delete the TC{N} Run {M} worktree and continue with the SPRT workflow?"**
+8. Ask: **"Should I delete the tc{N} Run {M} worktree and continue with the SPRT workflow?"**
 9. Only delete and restart SPRT after the user confirms.
 
-**Signal 2 — Assertion failures (TC shows same failure in 2+ runs):**
+**Signal 2 — Assertion failures (test case shows same failure in 2+ runs):**
 
 After each batch completes (when you see `=== Batch N: ...` followed by test case results), check for
 any test cases with >= 2 runs showing consistent failures. If found, investigate immediately.
@@ -375,10 +396,48 @@ Look for patterns like:
 If 2 runs show identical failures with same root cause, that's definitive evidence of a skill/test defect.
 Abort and investigate immediately to save resources.
 
+**Signal 3 — Infrastructure errors (JSON parsing, schema validation, Java exceptions):**
+
+When the monitor shows errors like:
+- "Pipeline for tc{N} failed"
+- "Grade file missing assertion_results or assertions field"
+- Java stack traces (IOException, IllegalArgumentException, etc.)
+- "{"status":"ERROR","message":"..."}"
+
+**These indicate infrastructure failures that require investigation:**
+
+1. **Do NOT wait for SPRT to complete** — kill it immediately: `kill ${SPRT_PID}`
+2. Wait for the monitor to stop
+3. Read the output: `cat ${OUTPUT_FILE}`
+4. Identify the failing test case and run number from the error message
+5. Check if grade files and run artifacts still exist:
+   ```bash
+   TEST_RUNS_DIR="${WORKTREE_PATH}/.cat/work/test-runs/${CAT_AGENT_ID}"
+   ls -la "${TEST_RUNS_DIR}"/tc*_run*_grade.json
+   ls -la "${TEST_RUNS_DIR}"/tc*_run*.json
+   ```
+6. **CRITICAL:** If SPRT was killed before cleanup, artifacts are preserved. If SPRT completed, artifacts are gone.
+7. Investigate the root cause using available artifacts (grade files, transcripts, prompts)
+8. Report findings and ask user whether to proceed with investigation or fix and re-run
+
 **Step 3:** After the monitor stops (or after investigation if failures occurred), read the final output:
 
 ```bash
 cat "${OUTPUT_FILE}"
+```
+
+**CRITICAL CHECK:** Before doing anything else, check if the output contains infrastructure errors:
+
+```bash
+if grep -q "Pipeline for.*failed\|Grade file missing\|IOException\|ERROR" "${OUTPUT_FILE}"; then
+  echo "⚠️  INFRASTRUCTURE ERROR DETECTED"
+  echo "Artifacts may have been cleaned up already if SPRT completed."
+  echo "Check if test-runs directory still exists:"
+  ls -la "${WORKTREE_PATH}/.cat/work/test-runs/${CAT_AGENT_ID}/" 2>/dev/null || echo "Already cleaned up"
+  echo ""
+  echo "Next: Investigate the error using Investigation Procedure below."
+  echo "Do NOT proceed with normal workflow until investigation is complete."
+fi
 ```
 
 Do NOT remove the output file yet - it's needed for investigation if failures occurred.
@@ -387,12 +446,12 @@ The SPRT command performs the complete SPRT workflow:
 
 1. **Prepare run** — Validates test directory, resolves paths, initializes state file
 2. **Cleanup prior runs** — Removes orphaned SPRT worktrees and branches
-3. **Create isolation branch** — Strips assertions, creates opaque TC files, commits to orphan branch
-4. **Initialize SPRT** — Sets up per-TC state tracking with configured thresholds
-5. **SPRT loop** — Adaptive batching: creates run worktrees, spawns parallel trials via claude-runner, grades outputs, updates SPRT state, repeats until all TCs decided or truncated at 50 runs
+3. **Create isolation branch** — Strips assertions, creates opaque test case files, commits to orphan branch
+4. **Initialize SPRT** — Sets up per-test-case state tracking with configured thresholds
+5. **SPRT loop** — Adaptive batching: creates run worktrees, spawns parallel trials via claude-runner, grades outputs, updates SPRT state, repeats until all test cases decided or truncated at 50 runs
 6. **Write results** — Commits test-results.json to test directory, returns overall decision
 7. **Cleanup** — Removes all run worktrees, branches, and isolation branch
-8. **Report** — Outputs structured results table with per-TC decisions and token usage
+8. **Report** — Outputs structured results table with per-test-case decisions and token usage
 
 The CLI command outputs progress messages to stderr during execution and returns the final structured report to stdout.
 
@@ -402,7 +461,7 @@ The `run-full-sprt` command outputs a structured report to stdout:
 
 1. **Results table** — Markdown table with columns: Test Case, Original File, Decision, Trials, Tokens
 2. **`overall_decision:`** line — one of `ACCEPT` or `REJECT` (never `INCONCLUSIVE` — the SPRT loop
-   forces all INCONCLUSIVE TCs to REJECT at the 50-run limit)
+   forces all INCONCLUSIVE test cases to REJECT at the 50-run limit)
 3. **`TEST_SHA:`** line — the commit SHA of `test-results.json`
 
 Example output:
@@ -546,11 +605,12 @@ rm -f "${OUTPUT_FILE}"
 ## Verification
 
 - [ ] Every `*.md` file in `test_dir` appears in the results table
-- [ ] Every per-TC decision is ACCEPT or REJECT (all INCONCLUSIVE cases forced to REJECT at 50 runs)
+- [ ] Every per-test-case decision is ACCEPT or REJECT (all INCONCLUSIVE cases forced to REJECT at 50 runs)
 - [ ] `overall_decision` derived correctly per `derive_overall`
 - [ ] `overall_decision` is ACCEPT or REJECT (never INCONCLUSIVE in output)
-- [ ] All run worktrees and branches removed after trials
-- [ ] Sanitized branch deleted after SPRT completes and caller has finished examining failures
+- [ ] **If overall_decision is ACCEPT:** All run worktrees and branches removed after trials
+- [ ] **If infrastructure errors occurred:** Run worktrees and grade files preserved until investigation complete
+- [ ] Sanitized branch deleted ONLY after investigation complete (if failures occurred) or after SPRT completes (if ACCEPT)
 - [ ] SPRT state file at `${WORKTREE_PATH}/.cat/work/sprt-state.json` reflects final state
 - [ ] `JLINK_BIN` used from `prepare-trial` output — never manually constructed or overridden
 - [ ] **If overall_decision is REJECT:** Investigation procedure completed and results reported

@@ -1,7 +1,7 @@
 ---
 name: instruction-extraction-agent
 description: Extract semantic units from instruction files using the Nine-Category Extraction Algorithm. Spawned by instruction-builder for iterative requirements extraction.
-model: claude-opus-4-5-20251101
+model: claude-opus-4-5
 ---
 <!--
 Copyright (c) 2026 Gili Tzabari. All rights reserved.

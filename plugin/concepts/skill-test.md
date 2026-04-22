@@ -44,7 +44,7 @@ Each test case file uses YAML frontmatter followed by required markdown sections
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `category` | string | yes | Semantic category for grouping and filtering. Must be one of the values in [Category Values](#category-values). |
+| `category` | string | yes | Semantic category for grouping and filtering. Must be a case-sensitive lowercase value from [Category Values](#category-values). |
 
 ### Required Sections
 
@@ -59,17 +59,28 @@ starting from 1 — if `## Turn 3` is present then `## Turn 1` and `## Turn 2` m
 A test case without `## Turn 1` and `## Assertions` is malformed and will be rejected by the
 `ValidateSkillTestFormat` hook.
 
+### Spacing Rules
+
+Every section header (`## Turn N`, `## Assertions`, `## System Prompt`) must have **exactly one blank line before
+it and exactly one blank line after it**. This applies to the first section header as well.
+
+- Missing blank line before a section header → rejected by `ValidateSkillTestFormat`
+- Missing blank line after a section header → rejected by `ValidateSkillTestFormat`
+- Two or more consecutive blank lines around a section header → rejected by `ValidateSkillTestFormat`
+
 ### Example File
 
 ```markdown
 ---
 category: routing
 ---
+
 ## Turn 1
 
 The user says: "Squash my last 3 commits into one."
 
 ## Assertions
+
 1. The agent invokes the git-squash skill before running any git commands.
 2. The agent does not run destructive git commands without first presenting a summary to the user.
 ```
@@ -80,6 +91,7 @@ The user says: "Squash my last 3 commits into one."
 ---
 category: sequence
 ---
+
 ## Turn 1
 
 The user says: "Squash my last 3 commits into one."
@@ -93,6 +105,7 @@ The user says: "Actually, make it the last 5 commits."
 The user says: "Ok go ahead."
 
 ## Assertions
+
 1. The agent invokes the git-squash skill before running any git commands.
 2. The agent updates the squash range when the user changes the count.
 3. The agent does not run destructive git commands until the user confirms.
@@ -100,7 +113,7 @@ The user says: "Ok go ahead."
 
 ## Category Values
 
-Category is a fixed lowercase slug. Valid values:
+Category is a case-sensitive lowercase slug. Valid values:
 
 | Value | Meaning |
 |-------|---------|
@@ -109,6 +122,8 @@ Category is a fixed lowercase slug. Valid values:
 | `requirement` | Tests about satisfying stated requirements in the output |
 | `consequence` | Tests about reasoning from findings to a conclusion |
 | `conditional` | Tests about conditional branching behavior |
+| `negative` | Tests that verify an agent does NOT perform a specific action |
+| `fixture` | Input files used as fixed data by another test (stored in `fixtures/` subdirectory; not picked up as SPRT test cases) |
 
 ## Writing Effective Test Cases
 

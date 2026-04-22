@@ -51,9 +51,9 @@ public final class ModelIdResolver
     VERSION_MAPPINGS = new TreeMap<>();
     Version version2dot1dot0 = new Version(2, 1, 0);
     VERSION_MAPPINGS.put(version2dot1dot0, Map.of(
-      "haiku", "claude-haiku-4-5-20251001",
-      "sonnet", "claude-sonnet-4-5-20250929",
-      "opus", "claude-opus-4-5-20251101"));
+      "haiku", "claude-haiku-4-5",
+      "sonnet", "claude-sonnet-4-5",
+      "opus", "claude-opus-4-5"));
     MINIMUM_VERSION = version2dot1dot0;
   }
 

@@ -14,19 +14,15 @@ import tools.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Locale;
-
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
  * Transforms grader JSON output to canonical schema with validation.
  * <p>
- * Accepts multiple input formats (tolerant reader):
- * <ul>
- *   <li>"assertions" or "assertion_results" field (normalized to "assertion_results")</li>
- *   <li>"pass"/"PASS"/"Pass" verdict (normalized to "PASS")</li>
- *   <li>"fail"/"FAIL"/"Fail" verdict (normalized to "FAIL")</li>
- * </ul>
+ * Validates and transforms grader JSON output to canonical schema.
+ * <p>
+ * Expects verdicts as uppercase "PASS" or "FAIL" (case-sensitive).
+ * </p>
  */
 public final class GradeJsonTransformer
 {
@@ -98,7 +94,7 @@ public final class GradeJsonTransformer
       if (explanationNode == null || !explanationNode.isString())
         throw new IOException("Missing or invalid 'explanation' field in: " + resultNode);
 
-      String verdict = verdictNode.asString().toUpperCase(Locale.ROOT);
+      String verdict = verdictNode.asString();
       if (!verdict.equals("PASS") && !verdict.equals("FAIL"))
         throw new IOException("Invalid verdict (must be PASS or FAIL): " + verdictNode.asString());
 

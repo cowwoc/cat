@@ -229,7 +229,7 @@ Task tool:
   description: "Plan completeness review"
   subagent_type: "general-purpose"
   prompt: |
-    Use model claude-sonnet-4-5-20250929.
+    Use model claude-sonnet-4-5.
 
     You are a plan review-and-fix agent. Read the draft plan.md from disk, review it for
     completeness, fix any gaps, and re-verify. Iterate until the plan passes review.

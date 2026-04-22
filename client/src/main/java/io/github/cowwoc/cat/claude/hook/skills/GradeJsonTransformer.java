@@ -94,8 +94,8 @@ public final class GradeJsonTransformer
 
     ObjectNode stats = mapper.createObjectNode();
     stats.put("total", results.size());
-    stats.put("pass", passCount);
-    stats.put("fail", failCount);
+    stats.put("PASS", passCount);
+    stats.put("FAIL", failCount);
     output.set("stats", stats);
 
     // Write canonical output

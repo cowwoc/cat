@@ -1,0 +1,32 @@
+{
+  "model_id": "claude-haiku-4-5",
+  "effort": "",
+  "failed_test_ids": [],
+  "sprt": {
+    "test_cases": [
+      {
+        "test_case_id": "tc2",
+        "decision": "ACCEPT",
+        "log_ratio": 3.0024000000000015,
+        "pass_count": 27,
+        "fail_count": 0,
+        "total_runs": 27,
+        "total_tokens": 0,
+        "total_duration_ms": 0
+      },
+      {
+        "test_case_id": "tc1",
+        "decision": "ACCEPT",
+        "log_ratio": 3.0024000000000015,
+        "pass_count": 27,
+        "fail_count": 0,
+        "total_runs": 27,
+        "total_tokens": 0,
+        "total_duration_ms": 0
+      }
+    ],
+    "overall_decision": "ACCEPT",
+    "total_tokens": 0,
+    "total_duration_ms": 0
+  }
+}

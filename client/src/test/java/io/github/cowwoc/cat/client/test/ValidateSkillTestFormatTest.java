@@ -348,6 +348,168 @@ public final class ValidateSkillTestFormatTest
   }
 
   /**
+   * Verifies that a missing blank line before the first section header (between '---' and '## Turn 1') is blocked.
+   */
+  @Test
+  public void missingBlankLineBeforeFirstSectionIsBlocked() throws IOException
+  {
+    try (JvmScope scope = new TestClaudeTool())
+    {
+      ValidateSkillTestFormat handler = new ValidateSkillTestFormat();
+      JsonMapper mapper = scope.getJsonMapper();
+      ObjectNode input = mapper.createObjectNode();
+      input.put("file_path", "plugin/tests/skills/cat-git-squash/first-use/squash-trigger-basic.md");
+      input.put("content", """
+        ---
+        category: routing
+        ---
+        ## Turn 1
+
+        Content.
+
+        ## Assertions
+
+        1. Something.
+        """);
+
+      FileWriteHandler.Result result = handler.check(input, "test-session");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("blank line before");
+    }
+  }
+
+  /**
+   * Verifies that a missing blank line before a non-first section header is blocked.
+   */
+  @Test
+  public void missingBlankLineBeforeSectionHeaderIsBlocked() throws IOException
+  {
+    try (JvmScope scope = new TestClaudeTool())
+    {
+      ValidateSkillTestFormat handler = new ValidateSkillTestFormat();
+      JsonMapper mapper = scope.getJsonMapper();
+      ObjectNode input = mapper.createObjectNode();
+      input.put("file_path", "plugin/tests/skills/cat-git-squash/first-use/squash-trigger-basic.md");
+      input.put("content", """
+        ---
+        category: routing
+        ---
+
+        ## Turn 1
+
+        Content.
+        ## Assertions
+
+        1. Something.
+        """);
+
+      FileWriteHandler.Result result = handler.check(input, "test-session");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("blank line before");
+    }
+  }
+
+  /**
+   * Verifies that a missing blank line after a section header is blocked.
+   */
+  @Test
+  public void missingBlankLineAfterSectionHeaderIsBlocked() throws IOException
+  {
+    try (JvmScope scope = new TestClaudeTool())
+    {
+      ValidateSkillTestFormat handler = new ValidateSkillTestFormat();
+      JsonMapper mapper = scope.getJsonMapper();
+      ObjectNode input = mapper.createObjectNode();
+      input.put("file_path", "plugin/tests/skills/cat-git-squash/first-use/squash-trigger-basic.md");
+      input.put("content", """
+        ---
+        category: routing
+        ---
+
+        ## Turn 1
+        Content without blank line after header.
+
+        ## Assertions
+
+        1. Something.
+        """);
+
+      FileWriteHandler.Result result = handler.check(input, "test-session");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("blank line after");
+    }
+  }
+
+  /**
+   * Verifies that an uppercase category value is blocked.
+   */
+  @Test
+  public void uppercaseCategoryIsBlocked() throws IOException
+  {
+    try (JvmScope scope = new TestClaudeTool())
+    {
+      ValidateSkillTestFormat handler = new ValidateSkillTestFormat();
+      JsonMapper mapper = scope.getJsonMapper();
+      ObjectNode input = mapper.createObjectNode();
+      input.put("file_path", "plugin/tests/skills/cat-git-squash/first-use/squash-trigger-basic.md");
+      input.put("content", """
+        ---
+        category: REQUIREMENT
+        ---
+
+        ## Turn 1
+
+        Content.
+
+        ## Assertions
+
+        1. Something.
+        """);
+
+      FileWriteHandler.Result result = handler.check(input, "test-session");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("category");
+      requireThat(result.reason(), "reason").contains("lowercase");
+    }
+  }
+
+  /**
+   * Verifies that 'fixture' is an accepted category value.
+   */
+  @Test
+  public void fixtureCategoryIsAccepted() throws IOException
+  {
+    try (JvmScope scope = new TestClaudeTool())
+    {
+      ValidateSkillTestFormat handler = new ValidateSkillTestFormat();
+      JsonMapper mapper = scope.getJsonMapper();
+      ObjectNode input = mapper.createObjectNode();
+      input.put("file_path", "plugin/tests/skills/cat-git-squash/first-use/squash-trigger-basic.md");
+      input.put("content", """
+        ---
+        category: fixture
+        ---
+
+        ## Turn 1
+
+        Content.
+
+        ## Assertions
+
+        1. Something.
+        """);
+
+      FileWriteHandler.Result result = handler.check(input, "test-session");
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+  }
+
+  /**
    * Verifies that a test case file with multiple contiguous turn sections is accepted.
    */
   @Test

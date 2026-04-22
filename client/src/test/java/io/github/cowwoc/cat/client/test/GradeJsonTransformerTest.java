@@ -87,7 +87,7 @@ public final class GradeJsonTransformerTest
           "assertion_results": [
             {
               "assertion": "must use rm -f",
-              "status": "PASS",
+              "status": "pass",
               "evidence": "Agent executed: rm -f file.txt",
               "explanation": "The agent correctly used rm -f as required."
             }

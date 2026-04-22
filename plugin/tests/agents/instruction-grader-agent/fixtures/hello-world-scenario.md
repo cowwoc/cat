@@ -1,3 +1,7 @@
+---
+category: fixture
+---
+
 ## Turn 1
 
 Create a file at `.cat/work/hello.txt` with the content `hello world`.

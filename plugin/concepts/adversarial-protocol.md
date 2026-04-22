@@ -511,7 +511,7 @@ in your report.'
 any non-disputed CRITICAL or HIGH finding has no matching patch hunk. If the agent exits non-zero:
 
 1. Read the `diff-validation-{N}.json` report from the returned commit hash to identify which findings had no
-   matching hunk (those with `"outcome": "FAIL"`).
+   matching hunk (those with `"outcome": "fail"`).
 2. Run `git revert {BLUE_TEAM_COMMIT_HASH} --no-edit` to undo the commit. If the revert encounters merge
    conflicts, abort with `git revert --abort` and fall back to `git reset --hard {PRE_ROUND_COMMIT}` to restore
    the pre-round state.

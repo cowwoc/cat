@@ -3,6 +3,30 @@ paths: ["client/**"]
 ---
 ## Testing
 
+### Test Fixture Files
+
+Pre-recorded data files used to make tests deterministic belong in a `fixtures/` subdirectory of the test
+directory, not in the test directory root.
+
+**Correct:**
+```
+plugin/tests/agents/instruction-grader-agent/
+  fixtures/
+    negative_1_runner.json
+    req_grader_schema_runner.json
+  negative_1.md
+  req_grader_schema.md
+```
+
+**Incorrect:**
+```
+plugin/tests/agents/instruction-grader-agent/
+  negative_1_runner.json        ← should be under fixtures/
+  negative_1.md
+```
+
+---
+
 - Java: TestNG for unit tests
 - Bash: Bats (Bash Automated Testing System)
 - Minimum coverage: 80% for business logic

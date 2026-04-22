@@ -15,7 +15,7 @@ plugin/tests/<path>/<name>/results.json
 | Field | Type | Description |
 |-------|------|-------------|
 | `skill_hash` | string | SHA-256 hash of the skill's `first-use.md` at the time of the run |
-| `model_id` | string | Fully-qualified model identifier (e.g., `claude-haiku-4-5-20251001`, `claude-sonnet-4-5-20250929`) |
+| `model_id` | string | Fully-qualified model identifier (e.g., `claude-haiku-4-5`, `claude-sonnet-4-5`) |
 | `session_id` | string | Claude session ID from `CLAUDE_SESSION_ID` at run time |
 | `timestamp` | string | ISO-8601 UTC timestamp when the run completed |
 | `overall_decision` | string | Aggregated decision across all scenarios: `pass`, `fail`, or `inconclusive` |
@@ -65,7 +65,7 @@ Results with no `model_id` field (from older runs) are also treated as stale.
 ```json
 {
   "skill_hash": "a3f8b1c2d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1",
-  "model_id": "claude-sonnet-4-5-20250929",
+  "model_id": "claude-sonnet-4-5",
   "session_id": "abc123de-f456-7890-abcd-ef1234567890",
   "timestamp": "2026-03-24T14:30:00Z",
   "overall_decision": "pass",
@@ -88,7 +88,7 @@ Results with no `model_id` field (from older runs) are also treated as stale.
           "total_runs": 10,
           "total_tokens": 14800,
           "total_duration_ms": 42000,
-          "decision": "inconclusive"
+          "decision": "INCONCLUSIVE"
         }
       ]
     },
