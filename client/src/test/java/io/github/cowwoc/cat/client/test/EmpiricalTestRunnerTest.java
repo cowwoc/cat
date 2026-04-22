@@ -1458,10 +1458,10 @@ public final class EmpiricalTestRunnerTest
     {
       List<String> command = launcher.buildCommand("haiku", "You are a cat expert.", "");
 
-      // First element should be the node executable path
-      requireThat(command.getFirst(), "nodeExecutable").endsWith("node");
-      // Second element should be the cli.js path
-      requireThat(command.get(1), "cliJsPath").endsWith("cli.js");
+      // First element should be the Claude binary path
+      requireThat(command.getFirst(), "claudeBinary").isNotBlank();
+      // Second element should be -p
+      requireThat(command.get(1), "firstArg").isEqualTo("-p");
       requireThat(command, "command").contains("--append-system-prompt");
       // Verify the system prompt value follows the flag
       int flagIndex = command.indexOf("--append-system-prompt");
@@ -1487,8 +1487,8 @@ public final class EmpiricalTestRunnerTest
     {
       List<String> command = launcher.buildCommand("haiku", "", "");
 
-      requireThat(command.getFirst(), "nodeExecutable").endsWith("node");
-      requireThat(command.get(1), "cliJsPath").endsWith("cli.js");
+      requireThat(command.getFirst(), "claudeBinary").isNotBlank();
+      requireThat(command.get(1), "firstArg").isEqualTo("-p");
       requireThat(command.contains("--append-system-prompt"), "noSystemPromptFlag").isFalse();
     }
     finally
@@ -1509,8 +1509,8 @@ public final class EmpiricalTestRunnerTest
     {
       List<String> command = launcher.buildCommand("haiku", "", "sprt-runner-agent");
 
-      requireThat(command.getFirst(), "nodeExecutable").endsWith("node");
-      requireThat(command.get(1), "cliJsPath").endsWith("cli.js");
+      requireThat(command.getFirst(), "claudeBinary").isNotBlank();
+      requireThat(command.get(1), "firstArg").isEqualTo("-p");
       requireThat(command, "command").contains("--agent");
       int flagIndex = command.indexOf("--agent");
       requireThat(flagIndex, "flagIndex").isGreaterThanOrEqualTo(0);
