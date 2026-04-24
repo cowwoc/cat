@@ -10,6 +10,7 @@ import io.github.cowwoc.cat.claude.hook.ShellParser;
 import org.testng.annotations.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -321,5 +322,104 @@ public class ShellParserTest
   public void findUndefinedVarsThrowsNullPointerExceptionWhenTargetIsNull()
   {
     ShellParser.findUndefinedVars(null, name -> null);
+  }
+
+  /**
+   * Verifies that a double-quoted assignment whose value references a variable defined
+   * earlier in the same script is resolved to its fully-expanded concrete value.
+   * <p>
+   * This covers the chained-assignment pattern:
+   * <pre>
+   * WORKTREE_PATH="/tmp/worktrees/my-issue"
+   * OUTPUT_FILE="${WORKTREE_PATH}/.cat/work/output.log"
+   * </pre>
+   * {@code OUTPUT_FILE} must resolve to {@code /tmp/worktrees/my-issue/.cat/work/output.log}.
+   */
+  @Test
+  public void parseScriptAssignmentsResolvesChainedLiteralVariables()
+  {
+    String script = """
+        WORKTREE_PATH="/tmp/worktrees/my-issue"
+        OUTPUT_FILE="${WORKTREE_PATH}/.cat/work/output.log"
+        """;
+    Map<String, String> assignments = ShellParser.parseScriptAssignments(script);
+    requireThat(assignments.get("OUTPUT_FILE"), "OUTPUT_FILE").
+      isEqualTo("/tmp/worktrees/my-issue/.cat/work/output.log");
+  }
+
+  /**
+   * Verifies that when an intermediate variable is undefined, any dependent variable is NOT
+   * added to the assignments map.
+   * <p>
+   * If {@code UNDEFINED_VAR} was never assigned in the script, then
+   * {@code OUTPUT_FILE="${UNDEFINED_VAR}/output.log"} cannot be resolved and must be omitted.
+   */
+  @Test
+  public void parseScriptAssignmentsSkipsUnresolvableIntermediateVariable()
+  {
+    String script = """
+        OUTPUT_FILE="${UNDEFINED_VAR}/output.log"
+        """;
+    Map<String, String> assignments = ShellParser.parseScriptAssignments(script);
+    requireThat(assignments.containsKey("OUTPUT_FILE"), "containsKey(OUTPUT_FILE)").isFalse();
+  }
+
+  /**
+   * Verifies that a three-link chain of variable assignments is fully resolved.
+   * <p>
+   * Given:
+   * <pre>
+   * BASE="/tmp/root"
+   * MIDDLE="${BASE}/middle"
+   * LEAF="${MIDDLE}/leaf"
+   * </pre>
+   * {@code LEAF} must resolve to {@code /tmp/root/middle/leaf}.
+   */
+  @Test
+  public void parseScriptAssignmentsResolvesThreeLinkChain()
+  {
+    String script = """
+        BASE="/tmp/root"
+        MIDDLE="${BASE}/middle"
+        LEAF="${MIDDLE}/leaf"
+        """;
+    Map<String, String> assignments = ShellParser.parseScriptAssignments(script);
+    requireThat(assignments.get("LEAF"), "LEAF").isEqualTo("/tmp/root/middle/leaf");
+  }
+
+  /**
+   * Verifies that a self-referential assignment is skipped when the variable was not
+   * previously defined.
+   * <p>
+   * {@code FOO="${FOO}/extra"} cannot be resolved because {@code FOO} has not been assigned
+   * earlier in the script, so it must not appear in the assignments map.
+   */
+  @Test
+  public void parseScriptAssignmentsSkipsSelfReferentialAssignment()
+  {
+    String script = """
+        FOO="${FOO}/extra"
+        """;
+    Map<String, String> assignments = ShellParser.parseScriptAssignments(script);
+    requireThat(assignments.containsKey("FOO"), "containsKey(FOO)").isFalse();
+  }
+
+  /**
+   * Verifies that a circular chain of variable assignments does not cause infinite loops or
+   * errors, and that neither variable appears in the assignments map.
+   * <p>
+   * Given {@code A="${B}/x"} and {@code B="${A}/y"}, neither variable can be resolved since
+   * each depends on the other, which was undefined at the time of processing.
+   */
+  @Test
+  public void parseScriptAssignmentsHandlesCircularChain()
+  {
+    String script = """
+        A="${B}/x"
+        B="${A}/y"
+        """;
+    Map<String, String> assignments = ShellParser.parseScriptAssignments(script);
+    requireThat(assignments.containsKey("A"), "containsKey(A)").isFalse();
+    requireThat(assignments.containsKey("B"), "containsKey(B)").isFalse();
   }
 }

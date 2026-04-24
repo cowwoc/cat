@@ -33,11 +33,11 @@ public final class ShellParser
     Pattern.compile("\\$\\{([^}]+)}|\\$(\\w+)");
 
   // Matches a literal shell variable assignment at the start of a line:
-  //   VAR="value"  (double-quoted: no $, backtick, or backslash — ensures pure literal)
+  //   VAR="value"  (double-quoted: no backtick or backslash — allows $ for chained references)
   //   VAR='value'  (single-quoted: always literal)
   // Groups: 1=name, 2=double-quoted value, 3=single-quoted value
   private static final Pattern SCRIPT_ASSIGNMENT_PATTERN =
-    Pattern.compile("(?m)^\\s*([A-Za-z_][A-Za-z0-9_]*)=(?:\"([^\"$`\\\\]*)\"|'([^']*)')");
+    Pattern.compile("(?m)^\\s*([A-Za-z_][A-Za-z0-9_]*)=(?:\"([^\"`\\\\]*)\"|'([^']*)')");
 
   // Matches a variable assignment via mktemp command substitution, both $(...) and backtick forms:
   //   VAR=$(mktemp ...)
@@ -247,18 +247,25 @@ public final class ShellParser
   }
 
   /**
-   * Scans {@code script} for simple literal variable assignments and returns them as a map.
+   * Scans {@code script} for literal variable assignments and returns them as a map.
    * <p>
-   * Only assignments whose value is a pure literal — double-quoted strings containing no
-   * {@code $}, backtick, or backslash characters, or single-quoted strings — are captured.
-   * Assignments via command substitution ({@code VAR=$(...)}) and unquoted assignments are
-   * ignored because they cannot be evaluated statically.
+   * Captured assignments:
+   * <ul>
+   *   <li>Single-quoted values — always captured verbatim.</li>
+   *   <li>Double-quoted values with no {@code $} — captured as pure literals.</li>
+   *   <li>Double-quoted values containing {@code $} but not {@code $(} — the references are
+   *       expanded against previously captured assignments in the same script (chained
+   *       resolution). If any referenced variable is unresolvable the assignment is skipped.</li>
+   * </ul>
+   * Double-quoted values containing {@code $(} (command substitution) and unquoted assignments
+   * are ignored because they cannot be evaluated statically.
    * <p>
-   * When the same variable is assigned multiple times, the last assignment wins (matching
+   * Assignments are processed in script order so that later assignments can reference earlier
+   * ones. When the same variable is assigned multiple times, the last assignment wins (matching
    * bash semantics where each assignment shadows the previous).
    *
    * @param script the full bash command or script text to scan
-   * @return a mutable map from variable name to its literal value; empty if no literal
+   * @return a mutable map from variable name to its resolved value; empty if no resolvable
    *         assignments are found
    * @throws NullPointerException if {@code script} is null
    */
@@ -270,12 +277,36 @@ public final class ShellParser
     while (assignmentMatcher.find())
     {
       String varName = assignmentMatcher.group(1);
-      String value;
+      String rawValue;
+      boolean isSingleQuoted;
       if (assignmentMatcher.group(2) != null)
-        value = assignmentMatcher.group(2);
+      {
+        rawValue = assignmentMatcher.group(2);
+        isSingleQuoted = false;
+      }
       else
-        value = assignmentMatcher.group(3);
-      assignments.put(varName, value);
+      {
+        rawValue = assignmentMatcher.group(3);
+        isSingleQuoted = true;
+      }
+      if (isSingleQuoted || !rawValue.contains("$"))
+      {
+        // pure literal
+        assignments.put(varName, rawValue);
+      }
+      else if (rawValue.contains("$("))
+      {
+        // skip — command substitution
+      }
+      else
+      {
+        String expanded = expandEnvVars(rawValue, assignments::get);
+        if (expanded != null)
+        {
+          // resolved chain
+          assignments.put(varName, expanded);
+        }
+      }
     }
     return assignments;
   }

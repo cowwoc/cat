@@ -708,6 +708,30 @@ is not obvious from reading the code.
 If the answer to all three is "no", the comment is noise. If the answer to #2 is "no", rewrite the
 comment to explain the reasoning.
 
+### Classified Branch Bodies
+When a branch body needs a short classification label (a word or phrase naming what kind of case this
+is), put it in a braced block with the comment on the first line and the statement(s) below it. Do
+**not** place the comment as a trailing inline comment on the statement line.
+
+```java
+// Good - classification comment on its own line inside a braced block
+if (isSingleQuoted || !rawValue.contains("$"))
+{
+  // pure literal
+  assignments.put(varName, rawValue);
+}
+else if (rawValue.contains("$("))
+{
+  // skip — command substitution
+}
+
+// Avoid - trailing inline comment makes the label easy to miss and hard to scan
+if (isSingleQuoted || !rawValue.contains("$"))
+  assignments.put(varName, rawValue);   // pure literal
+else if (rawValue.contains("$("))
+  /* skip — command substitution */;
+```
+
 ## Documentation
 
 ### Javadoc Paragraphs
