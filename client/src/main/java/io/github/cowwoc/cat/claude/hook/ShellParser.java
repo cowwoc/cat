@@ -35,9 +35,10 @@ public final class ShellParser
   // Matches a literal shell variable assignment at the start of a line:
   //   VAR="value"  (double-quoted: no backtick or backslash — allows $ for chained references)
   //   VAR='value'  (single-quoted: always literal)
-  // Groups: 1=name, 2=double-quoted value, 3=single-quoted value
-  private static final Pattern SCRIPT_ASSIGNMENT_PATTERN =
-    Pattern.compile("(?m)^\\s*([A-Za-z_][A-Za-z0-9_]*)=(?:\"([^\"`\\\\]*)\"|'([^']*)')");
+  //   VAR=value    (unquoted: no whitespace/metacharacters; negative lookahead skips $(...))
+  // Groups: 1=name, 2=double-quoted value, 3=single-quoted value, 4=unquoted value
+  private static final Pattern SCRIPT_ASSIGNMENT_PATTERN = Pattern.compile(
+    "(?m)^\\s*([A-Za-z_][A-Za-z0-9_]*)=(?:\"([^\"`\\\\]*)\"|'([^']*)'|(?!\\$\\()([^\\s\"'`\\\\|&;()<>\\n]+))");
 
   // Matches a variable assignment via mktemp command substitution, both $(...) and backtick forms:
   //   VAR=$(mktemp ...)
@@ -256,9 +257,12 @@ public final class ShellParser
    *   <li>Double-quoted values containing {@code $} but not {@code $(} — the references are
    *       expanded against previously captured assignments in the same script (chained
    *       resolution). If any referenced variable is unresolvable the assignment is skipped.</li>
+   *   <li>Unquoted values (no whitespace or shell metacharacters) — captured as pure literals
+   *       when they contain no {@code $}, or resolved via chained resolution when they do
+   *       (same rules as double-quoted values).</li>
    * </ul>
-   * Double-quoted values containing {@code $(} (command substitution) and unquoted assignments
-   * are ignored because they cannot be evaluated statically.
+   * Double-quoted or unquoted values containing {@code $(} (command substitution) are ignored
+   * because they cannot be evaluated statically.
    * <p>
    * Assignments are processed in script order so that later assignments can reference earlier
    * ones. When the same variable is assigned multiple times, the last assignment wins (matching
@@ -284,10 +288,21 @@ public final class ShellParser
         rawValue = assignmentMatcher.group(2);
         isSingleQuoted = false;
       }
-      else
+      else if (assignmentMatcher.group(3) != null)
       {
         rawValue = assignmentMatcher.group(3);
         isSingleQuoted = true;
+      }
+      else
+      {
+        // group 4: unquoted value — treat the same as double-quoted but with no surrounding quotes.
+        // If the capture stopped at a mid-value '$(' boundary the value was part of a command
+        // substitution that cannot be evaluated statically; skip it.
+        rawValue = assignmentMatcher.group(4);
+        int matchEnd = assignmentMatcher.end();
+        if (rawValue.endsWith("$") && matchEnd < script.length() && script.charAt(matchEnd) == '(')
+          continue;
+        isSingleQuoted = false;
       }
       if (isSingleQuoted || !rawValue.contains("$"))
       {

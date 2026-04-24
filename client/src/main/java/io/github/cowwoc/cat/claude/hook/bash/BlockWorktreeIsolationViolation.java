@@ -195,7 +195,8 @@ public final class BlockWorktreeIsolationViolation implements BashHandler
 
             %s
             Variables must be defined earlier in the same script as a simple literal assignment, e.g.:
-              VAR="/absolute/path"
+              VAR="/absolute/path"   (double-quoted)
+              VAR=/absolute/path     (unquoted)
               cmd > "${VAR}"
 
             Variables set via command substitution ($(...)) or unset variables cannot be resolved statically.
