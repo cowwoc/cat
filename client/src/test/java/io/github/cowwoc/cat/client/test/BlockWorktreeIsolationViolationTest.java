@@ -1184,4 +1184,75 @@ public final class BlockWorktreeIsolationViolationTest
       TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
+
+  /**
+   * Verifies that {@code tee "${WORKTREE_PATH}/..."} is allowed when {@code WORKTREE_PATH} is
+   * assigned as an unquoted literal in the same script and the path is inside the active worktree.
+   * <p>
+   * The hook must capture unquoted assignments (no quotes around the value) and use them to
+   * resolve variable references in the tee target, without raising a false-positive warning.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void teeViaUnquotedWorktreeVarIsAllowed() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("bwiv-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+    {
+      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
+      // WORKTREE_PATH is set without quotes — must be captured by the parser
+      String command = "WORKTREE_PATH=" + worktreeDir + "\n" +
+                       "cmd 2>&1 | tee \"${WORKTREE_PATH}/.cat/work/output.log\"";
+      Map<String, String> env = Map.of();  // variable not in env — must come from script
+
+      BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope, env);
+      BashHandler.Result result = handler.check(
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that {@code tee "${WORKTREE_PATH}/..."} is blocked when {@code WORKTREE_PATH} is
+   * assigned as an unquoted literal in the same script but the path is OUTSIDE the active worktree.
+   * <p>
+   * Unquoted variable capture must not disable the isolation check — paths outside the worktree
+   * must still be blocked even when the variable is set without quotes.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void teeViaUnquotedWorktreeVarIsBlocked() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("bwiv-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+    {
+      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      TestUtils.createWorktreeDir(scope, ISSUE_ID);
+      // outsidePath is inside the project directory but outside the worktree
+      String outsidePath = projectPath.resolve("outside").toAbsolutePath().toString();
+      // WORKTREE_PATH is set without quotes, pointing outside the worktree
+      String command = "WORKTREE_PATH=" + outsidePath + "\n" +
+                       "cmd 2>&1 | tee \"${WORKTREE_PATH}/.cat/work/output.log\"";
+      Map<String, String> env = Map.of();  // variable not in env — must come from script
+
+      BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope, env);
+      BashHandler.Result result = handler.check(
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("isolation violation");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
 }

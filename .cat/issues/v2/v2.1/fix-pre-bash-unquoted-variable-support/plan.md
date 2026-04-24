@@ -51,61 +51,32 @@ None
 - **Mitigation:** Unit tests in `ShellParserTest` verify the new unquoted capture, and
   integration tests in `BlockWorktreeIsolationViolationTest` verify end-to-end
 
-## Implementation Steps
+## Commit Type
 
-### Step 1: Write failing tests
+`bugfix:`
 
-**`ShellParserTest.parseScriptAssignmentsCapturesUnquotedLiteral`**
-```java
-String script = "WORKTREE_PATH=/tmp/worktrees/my-issue\n";
-Map<String, String> assignments = ShellParser.parseScriptAssignments(script);
-requireThat(assignments.get("WORKTREE_PATH"), "WORKTREE_PATH")
-    .isEqualTo("/tmp/worktrees/my-issue");
-```
+## Jobs
 
-**`ShellParserTest.parseScriptAssignmentsResolvesChainedFromUnquoted`**
-```java
-String script = """
-    WORKTREE_PATH=/tmp/worktrees/my-issue
-    OUTPUT_FILE="${WORKTREE_PATH}/.cat/work/output.log"
-    """;
-Map<String, String> assignments = ShellParser.parseScriptAssignments(script);
-requireThat(assignments.get("OUTPUT_FILE"), "OUTPUT_FILE")
-    .isEqualTo("/tmp/worktrees/my-issue/.cat/work/output.log");
-```
+### Job 1
 
-**`BlockWorktreeIsolationViolationTest.teeViaUnquotedWorktreeVarIsAllowed`**
-```java
-String command = """
-    WORKTREE_PATH=%s
-    cmd 2>&1 | tee "${WORKTREE_PATH}/.cat/work/output.log"
-    """.formatted(worktreeDir.toString());
-// assert: result.blocked() == false
-```
+- In `client/src/test/java/io/github/cowwoc/cat/client/test/ShellParserTest.java` add two new test methods:
+  - `parseScriptAssignmentsCapturesUnquotedLiteral`: parse `"WORKTREE_PATH=/tmp/worktrees/my-issue\n"`, assert `assignments.get("WORKTREE_PATH")` equals `"/tmp/worktrees/my-issue"`
+  - `parseScriptAssignmentsResolvesChainedFromUnquoted`: parse a two-line script with `WORKTREE_PATH=/tmp/worktrees/my-issue` and `OUTPUT_FILE="${WORKTREE_PATH}/.cat/work/output.log"`, assert `assignments.get("OUTPUT_FILE")` equals `"/tmp/worktrees/my-issue/.cat/work/output.log"`
+- In `client/src/test/java/io/github/cowwoc/cat/client/test/BlockWorktreeIsolationViolationTest.java` add one new test method:
+  - `teeViaUnquotedWorktreeVarIsAllowed`: use a command string with `WORKTREE_PATH=<actual-worktree-dir>` (unquoted) and `cmd 2>&1 | tee "${WORKTREE_PATH}/.cat/work/output.log"`, assert `result.blocked() == false`
+- Run `mvn -f client/pom.xml verify -e` — expect the 3 new tests to FAIL (they test code not yet written)
+- In `client/src/main/java/io/github/cowwoc/cat/claude/hook/ShellParser.java` find `SCRIPT_ASSIGNMENT_PATTERN`. Extend the regex to add a third alternative group for unquoted values:
+  - New pattern: `(?m)^\s*([A-Za-z_][A-Za-z0-9_]*)=(?:"([^"`\\]*)"|'([^']*)'|([^\s"'\`\\|&;()<>\n]+))`
+  - Group 4 captures the unquoted value (no whitespace or shell metacharacters)
+  - In `parseScriptAssignments`, after handling groups 2 and 3, add handling for group 4: if the captured value contains `$` and no `$(`, try `expandEnvVars`; otherwise treat as a pure literal — same logic as for quoted groups
+- Run `mvn -f client/pom.xml verify -e` — all tests must pass
+- Commit all changes: `bugfix: support unquoted variable assignments in pre-bash hook`
+- Update index.json: set `status` to `closed` and `progress` to `100`
 
-### Step 2: Fix `ShellParser`
+## Post-conditions
 
-Add a second pattern for unquoted values, or extend `SCRIPT_ASSIGNMENT_PATTERN` with a
-third alternative group that captures `[^\s"'$`\\|&;()<>]` (no whitespace, no shell
-metacharacters):
-
-```
-// New third alternative: unquoted value — no whitespace or shell metacharacters
-(?m)^\s*([A-Za-z_][A-Za-z0-9_]*)=(?:"([^"`\\]*)"|'([^']*)'|([^\s"'`\\|&;()<>\n]+))
-```
-
-Group 4 captures the unquoted value. In `parseScriptAssignments`, treat group 4 the
-same as group 2/3: if it contains `$` and no `$(`, try `expandEnvVars`; otherwise
-treat as a pure literal.
-
-### Step 3: Run full test suite
-
-```bash
-mvn -f client/pom.xml verify -e
-```
-
-All tests must pass before committing.
-
-### Step 4: Commit
-
-Single commit: `bugfix: support unquoted variable assignments in pre-bash hook`
+- `ShellParserTest.parseScriptAssignmentsCapturesUnquotedLiteral` passes
+- `ShellParserTest.parseScriptAssignmentsResolvesChainedFromUnquoted` passes
+- `BlockWorktreeIsolationViolationTest.teeViaUnquotedWorktreeVarIsAllowed` passes
+- All existing tests continue to pass (`mvn -f client/pom.xml verify -e` exits 0)
+- A script with an unquoted `WORKTREE_PATH=...` assignment followed by a `tee "${WORKTREE_PATH}/..."` no longer triggers a worktree isolation warning

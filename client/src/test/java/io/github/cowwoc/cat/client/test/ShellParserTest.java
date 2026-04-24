@@ -422,4 +422,91 @@ public class ShellParserTest
     requireThat(assignments.containsKey("A"), "containsKey(A)").isFalse();
     requireThat(assignments.containsKey("B"), "containsKey(B)").isFalse();
   }
+
+  /**
+   * Verifies that an unquoted assignment is captured as a pure literal.
+   * <p>
+   * {@code WORKTREE_PATH=/tmp/worktrees/my-issue} (no quotes) must be captured as-is.
+   */
+  @Test
+  public void parseScriptAssignmentsCapturesUnquotedLiteral()
+  {
+    String script = "WORKTREE_PATH=/tmp/worktrees/my-issue\n";
+    Map<String, String> assignments = ShellParser.parseScriptAssignments(script);
+    requireThat(assignments.get("WORKTREE_PATH"), "WORKTREE_PATH").
+      isEqualTo("/tmp/worktrees/my-issue");
+  }
+
+  /**
+   * Verifies that a chained assignment referencing an unquoted literal is fully resolved.
+   * <p>
+   * Given:
+   * <pre>
+   * WORKTREE_PATH=/tmp/worktrees/my-issue
+   * OUTPUT_FILE="${WORKTREE_PATH}/.cat/work/output.log"
+   * </pre>
+   * {@code OUTPUT_FILE} must resolve to {@code /tmp/worktrees/my-issue/.cat/work/output.log}.
+   */
+  @Test
+  public void parseScriptAssignmentsResolvesChainedFromUnquoted()
+  {
+    String script = """
+        WORKTREE_PATH=/tmp/worktrees/my-issue
+        OUTPUT_FILE="${WORKTREE_PATH}/.cat/work/output.log"
+        """;
+    Map<String, String> assignments = ShellParser.parseScriptAssignments(script);
+    requireThat(assignments.get("OUTPUT_FILE"), "OUTPUT_FILE").
+      isEqualTo("/tmp/worktrees/my-issue/.cat/work/output.log");
+  }
+
+  /**
+   * Verifies that a bare {@code $VAR} reference (without braces) inside an unquoted assignment
+   * is expanded using a previously captured assignment.
+   * <p>
+   * Given:
+   * <pre>
+   * BASE=/tmp/root
+   * FOO=$BASE/path
+   * </pre>
+   * {@code FOO} must resolve to {@code /tmp/root/path}.
+   */
+  @Test
+  public void parseScriptAssignmentsResolvesUnquotedBareVarReference()
+  {
+    String script = """
+        BASE=/tmp/root
+        FOO=$BASE/path
+        """;
+    Map<String, String> assignments = ShellParser.parseScriptAssignments(script);
+    requireThat(assignments.get("FOO"), "FOO").isEqualTo("/tmp/root/path");
+  }
+
+  /**
+   * Verifies that an unquoted assignment containing a mid-value command substitution is skipped.
+   * <p>
+   * {@code FOO=prefix$(cmd)suffix} cannot be evaluated statically because {@code $(cmd)} is a
+   * runtime command substitution. The assignment must not appear in the result map.
+   */
+  @Test
+  public void parseScriptAssignmentsSkipsMidValueCommandSubstitution()
+  {
+    String script = "FOO=prefix$(cmd)suffix\n";
+    Map<String, String> assignments = ShellParser.parseScriptAssignments(script);
+    requireThat(assignments.containsKey("FOO"), "containsKey(FOO)").isFalse();
+  }
+
+  /**
+   * Verifies that an unquoted assignment preceded by leading whitespace is still captured.
+   * <p>
+   * {@code   WORKTREE_PATH=/tmp/worktrees/my-issue} (two leading spaces, as in an indented
+   * script block) must be captured the same as the unindented form.
+   */
+  @Test
+  public void parseScriptAssignmentsCapturesUnquotedWithLeadingWhitespace()
+  {
+    String script = "  WORKTREE_PATH=/tmp/worktrees/my-issue\n";
+    Map<String, String> assignments = ShellParser.parseScriptAssignments(script);
+    requireThat(assignments.get("WORKTREE_PATH"), "WORKTREE_PATH").
+      isEqualTo("/tmp/worktrees/my-issue");
+  }
 }
