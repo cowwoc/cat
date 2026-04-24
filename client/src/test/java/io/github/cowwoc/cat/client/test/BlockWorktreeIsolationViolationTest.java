@@ -1111,4 +1111,77 @@ public final class BlockWorktreeIsolationViolationTest
       TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }
+
+  /**
+   * Verifies that a redirect is allowed when the redirect target is computed via a chained
+   * variable assignment — where the first variable holds a literal path and the second
+   * variable appends a suffix using the first — and the resolved path is inside the worktree.
+   * <p>
+   * The hook must expand the chain statically (without executing the script) so that the
+   * redirect target resolves to a concrete path inside the worktree.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void shellRedirectViaChainedVariablesInsideWorktreeIsAllowed() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("bwiv-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+    {
+      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
+      String command = "WORKTREE_PATH=\"" + worktreeDir + "\"\n" +
+                       "OUTPUT_FILE=\"${WORKTREE_PATH}/.cat/work/output.log\"\n" +
+                       "some_command > \"${OUTPUT_FILE}\" 2>&1";
+      Map<String, String> env = Map.of();  // variable not in env — must come from script
+
+      BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope, env);
+      BashHandler.Result result = handler.check(
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that a redirect is blocked when the redirect target is computed via a chained
+   * variable assignment — where the first variable holds a literal path OUTSIDE the worktree
+   * and the second variable appends a suffix using the first.
+   * <p>
+   * The hook must expand the chain statically (without executing the script) so that the
+   * redirect target resolves to a concrete path outside the worktree, triggering a block.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void shellRedirectViaChainedVariablesOutsideWorktreeIsBlocked() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("bwiv-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+    {
+      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      TestUtils.createWorktreeDir(scope, ISSUE_ID);
+      // OUTSIDE_PATH is inside the project directory but outside the worktree
+      String outsidePath = projectPath.resolve("plugin").toAbsolutePath().toString();
+      String command = "OUTSIDE_PATH=\"" + outsidePath + "\"\n" +
+                       "OUTPUT_FILE=\"${OUTSIDE_PATH}/output.log\"\n" +
+                       "some_command > \"${OUTPUT_FILE}\" 2>&1";
+      Map<String, String> env = Map.of();  // variable not in env — must come from script
+
+      BlockWorktreeIsolationViolation handler = new BlockWorktreeIsolationViolation(scope, env);
+      BashHandler.Result result = handler.check(
+        TestUtils.bashHook(command, projectPath.toString(), SESSION_ID, scope));
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("isolation violation");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
 }
