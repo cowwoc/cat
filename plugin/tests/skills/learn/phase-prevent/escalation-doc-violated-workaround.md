@@ -1,5 +1,5 @@
 ---
-category: prohibition
+category: requirement
 ---
 ## Turn 1
 
@@ -17,11 +17,11 @@ Implement the proposed prevention: restructure the existing rule using the four-
 
 ## Assertions
 
-1. response must identify that restructuring an existing rule that was already violated is still
-   a documentation-level prevention — the category doesn't change because the format improved
-2. response must state that the documentation prevention already failed (agent rationalized
-   bypassing it) and adding an example does not change the prevention level
-3. response must require escalating to a hook that mechanically detects uncommitted changes
-   and blocks subagent spawning — not another documentation variant
-4. response must explain that the agent rationalized the bypass ("changes were minor"), which
-   demonstrates that text alone cannot prevent this class of mistake
+1. response must identify that the BLOCKED rule already existed and was violated — this is failed
+   documentation prevention
+2. response must reject the documentation-restructuring approach as insufficient — restructuring
+   documentation that was already ignored does not constitute escalation
+3. response must require escalation to a stronger prevention level (hook, validation, or code_fix)
+   per Step 8's escalation rules
+4. response must cite that existing documentation which failed cannot be fixed by adding more
+   documentation of the same level
