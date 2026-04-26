@@ -86,6 +86,27 @@ rationale and decision table.
 
 ---
 
+## Step 5c: Persist Prevention to the Repository (BLOCKING GATE)
+
+<fail_fast_rule>
+BLOCKED: Do not save prevention to `MEMORY.md` (auto-memory) or any file that is not committed to git.
+
+Because `MEMORY.md` is session-local, any prevention stored there is discarded when the session ends —
+the same mistake will recur in the next session.
+
+Do NOT use: `MEMORY.md`, session notes, or any file not tracked in the git repository.
+
+Instead, commit prevention to one of these locations:
+- `plugin/rules/` — for rules that apply to all plugin skills
+- `plugin/skills/<skill-name>/` — for rules specific to one skill
+- `plugin/concepts/` — for conceptual reference material
+- `.claude/rules/` — for project-level rules
+
+Choose the target location based on the audience of the rule (see Fix Location Checklist in Step 9).
+</fail_fast_rule>
+
+---
+
 ## Step 6: Identify Prevention Level
 
 **Reference:** See [prevention-hierarchy.md](prevention-hierarchy.md) for detailed hierarchy and escalation rules.

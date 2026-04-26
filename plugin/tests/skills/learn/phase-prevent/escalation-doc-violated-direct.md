@@ -1,5 +1,5 @@
 ---
-category: prohibition
+category: requirement
 ---
 ## Turn 1
 
@@ -17,12 +17,10 @@ Implement the proposed prevention.
 
 ## Assertions
 
-1. response must identify that fixing the priming source (modifying
-   `plugin/skills/work-merge-agent/first-use.md` to remove or correct the "Merge to Main Branch"
-   section) is higher priority than adding a hook
-2. response must not recommend adding a hook as the primary prevention when the priming source is
-   modifiable — the priming source IS the root cause and fixing it eliminates the cause entirely
-3. response must explain that adding a hook on top of an unfixed priming source does not address the
-   root cause — the agent will continue to be primed toward the wrong branch even with a hook in place
-4. response must direct the prevention to the priming source document first, with the note that a hook
-   may be appropriate only if the source cannot be modified
+1. response must reject the proposed PreToolUse hook — Step 5b requires documentation prevention
+   when the priming source can be modified, not a hook
+2. response must apply the Step 5b decision rule: priming source is in the repo and can be
+   modified → prevention_type must be documentation targeting first-use.md
+3. response must specify editing or removing the misleading "Merge to Main Branch" section in
+   first-use.md as the prevention action
+4. response must set prevention_type to "documentation" in the output JSON, not "hook"
