@@ -4,4 +4,4 @@ disable-model-invocation: true
 effort: high
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" optimize-execution "${CLAUDE_SESSION_ID}"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-skill" optimize-execution "${CLAUDE_SESSION_ID}"`

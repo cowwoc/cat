@@ -1144,13 +1144,13 @@ Skill content (SKILL.md):
 description: Use when user asks about progress, status, what's done, or what's next
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" status`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-output" status`
 ```
 
 **Skill content pattern for handler-dispatched skills:**
 
 The thin wrapper skill content MUST follow this exact pattern:
-1. `!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" TYPE`` — calls the centralized dispatcher via ! preprocessor
+1. `!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-output" TYPE`` — calls the centralized dispatcher via ! preprocessor
 2. The output is automatically wrapped in `<output type="TYPE">` tags by the dispatcher
 
 **Anti-pattern - meta-description that agents echo literally:**

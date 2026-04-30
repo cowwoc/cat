@@ -6,4 +6,4 @@ argument-hint: "<test_directory_path>"
 effort: medium
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" test-runner-isolation-validator "$0"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-skill" test-runner-isolation-validator "$0"`

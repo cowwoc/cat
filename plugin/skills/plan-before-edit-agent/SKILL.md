@@ -9,4 +9,4 @@ allowed-tools: Bash, Grep, Read, Edit
 argument-hint: "<cat_agent_id> <symbol> [symbol] ..."
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" plan-before-edit-agent "$0"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-skill" plan-before-edit-agent "$0"`

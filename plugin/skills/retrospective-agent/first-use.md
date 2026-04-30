@@ -20,7 +20,7 @@ Implements the full workflow defined in `retrospectives.json`.
 
 ## Skill Output Analysis
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" retrospective`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-output" retrospective`
 
 The result is one of three types:
 

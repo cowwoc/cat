@@ -115,7 +115,7 @@ Atomic write: write to a temp file in the same directory, then move to replace `
   **After collecting all answers from both pages, update config.json:**
 
   ```bash
-  "${CLAUDE_PLUGIN_ROOT}/client/bin/update-config" \
+  "${CLAUDE_PLUGIN_DATA}/client/bin/update-config" \
     "trust={trust_value}" "caution={caution_value}" "curiosity={curiosity_value}" \
     "perfection={perfection_value}" "verbosity={verbosity_value}"
   ```
@@ -144,7 +144,7 @@ Atomic write: write to a temp file in the same directory, then move to replace `
   **Update config.json with all 5 derived values:**
 
   ```bash
-  "${CLAUDE_PLUGIN_ROOT}/client/bin/update-config" \
+  "${CLAUDE_PLUGIN_DATA}/client/bin/update-config" \
     "trust={TRUST}" "caution={CAUTION}" "curiosity={CURIOSITY}" \
     "perfection={PERFECTION}" "verbosity={VERBOSITY}"
   ```
@@ -168,7 +168,7 @@ Atomic write: write to a temp file in the same directory, then move to replace `
   **Update config:**
 
   ```bash
-  "${CLAUDE_PLUGIN_ROOT}/client/bin/update-config" "fileWidth={value}"
+  "${CLAUDE_PLUGIN_DATA}/client/bin/update-config" "fileWidth={value}"
   ```
   (or `displayWidth={value}` as appropriate). Replace `{value}` with the integer value selected.
   If the command outputs `{"status":"ERROR",...}`, display the error message.
@@ -189,7 +189,7 @@ Atomic write: write to a temp file in the same directory, then move to replace `
   **Update config:**
 
   ```bash
-  "${CLAUDE_PLUGIN_ROOT}/client/bin/update-config" "completionWorkflow={value}"
+  "${CLAUDE_PLUGIN_DATA}/client/bin/update-config" "completionWorkflow={value}"
   ```
   Replace `{value}` with the mapped value ("merge" or "pr").
   If the command outputs `{"status":"ERROR",...}`, display the error message.
@@ -210,7 +210,7 @@ Atomic write: write to a temp file in the same directory, then move to replace `
   **Update config:**
 
   ```bash
-  "${CLAUDE_PLUGIN_ROOT}/client/bin/update-config" "minSeverity={value}"
+  "${CLAUDE_PLUGIN_DATA}/client/bin/update-config" "minSeverity={value}"
   ```
   Replace `{value}` with the mapped severity ("low", "medium", "high", or "critical").
   If the command outputs `{"status":"ERROR",...}`, display the error message.
@@ -226,7 +226,7 @@ Atomic write: write to a temp file in the same directory, then move to replace `
   Run the update-config binary with the key=value pair:
 
   ```bash
-  "${CLAUDE_PLUGIN_ROOT}/client/bin/update-config" "{key}={value}"
+  "${CLAUDE_PLUGIN_DATA}/client/bin/update-config" "{key}={value}"
   ```
 
   Replace `{key}` and `{value}` with the actual setting name and its new lowercase value.

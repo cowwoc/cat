@@ -257,7 +257,7 @@ public class GetFileTest
       Path targetFile = tempDir.resolve("skill-with-directive.md");
       Files.writeString(targetFile, """
 Some content.
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/some-tool"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/some-tool"`
 More content.
 """);
 
@@ -266,7 +266,7 @@ More content.
       String result = getFile.getOutput(new String[]{agentId, targetFile.toString()});
 
       requireThat(result, "result").
-        contains("!`\"${CLAUDE_PLUGIN_ROOT}/client/bin/some-tool\"`").
+        contains("!`\"${CLAUDE_PLUGIN_DATA}/client/bin/some-tool\"`").
         contains("Some content.").
         contains("More content.");
     }

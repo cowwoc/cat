@@ -156,7 +156,7 @@ listings).
      # Per turn: total_context = input_tokens + cache_read + cache_creation
      ```
    - Reference the session-analyzer tool for structured analysis:
-     `"${CLAUDE_PLUGIN_ROOT}/client/bin/session-analyzer" analyze "$SESSION_ID"`
+     `"${CLAUDE_PLUGIN_DATA}/client/bin/session-analyzer" analyze "$SESSION_ID"`
 
 4. **Add worked example** using empirical data from a real session:
    - Show actual JSONL-extracted numbers (not theoretical estimates)

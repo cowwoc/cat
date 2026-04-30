@@ -75,7 +75,7 @@ None (infrastructure issue)
      START_ID=86
      "/path/to/root-cause-analyzer" --start-id "$START_ID"
      ```
-   - Use `${CLAUDE_PLUGIN_ROOT}/client/bin/root-cause-analyzer` as the path (available via jlink)
+   - Use `${CLAUDE_PLUGIN_DATA}/client/bin/root-cause-analyzer` as the path (available via jlink)
    - Files: `plugin/skills/learn/first-use.md`
 
 7. **Rebuild jlink image:**

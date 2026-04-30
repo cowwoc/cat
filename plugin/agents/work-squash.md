@@ -15,7 +15,7 @@ Your responsibilities:
 Key constraints:
 - Never force-push without validation
 - Always verify branch state before destructive operations
-- Use `"${CLAUDE_PLUGIN_ROOT}/client/bin/git-squash"` for commit squashing (never `git rebase -i`)
+- Use `"${CLAUDE_PLUGIN_DATA}/client/bin/git-squash"` for commit squashing (never `git rebase -i`)
 - Follow fail-fast principle on any unexpected state
 - **Path construction:** For all Read/Edit/Write file operations, construct paths as `${WORKTREE_PATH}/relative/path`.
   Never use `/workspace` paths — the `EnforceWorktreePathIsolation` hook will block them.
@@ -124,7 +124,7 @@ implementation commit rather than leaving it as a separate planning commit.
 
 ```bash
 BRANCH=$(cd "${WORKTREE_PATH}" && git branch --show-current)
-AUTO_CLOSE_OUTPUT=$("${CLAUDE_PLUGIN_ROOT}/client/bin/auto-close-index" "${WORKTREE_PATH}" "${BRANCH}")
+AUTO_CLOSE_OUTPUT=$("${CLAUDE_PLUGIN_DATA}/client/bin/auto-close-index" "${WORKTREE_PATH}" "${BRANCH}")
 INDEX_UPDATED=$(echo "$AUTO_CLOSE_OUTPUT" | grep -o '"index_updated"[[:space:]]*:[[:space:]]*[^,}]*' | \
   sed 's/.*"index_updated"[[:space:]]*:[[:space:]]*//' | tr -d ' ')
 echo "INDEX_UPDATED=${INDEX_UPDATED}"
@@ -171,7 +171,7 @@ done
 Run the squash:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/git-squash" "${TARGET_BRANCH}" "${PRIMARY_COMMIT_MESSAGE}" "${WORKTREE_PATH}"
+"${CLAUDE_PLUGIN_DATA}/client/bin/git-squash" "${TARGET_BRANCH}" "${PRIMARY_COMMIT_MESSAGE}" "${WORKTREE_PATH}"
 SQUASH_EXIT=$?
 ```
 

@@ -10,7 +10,7 @@ The skill currently uses `${CLAUDE_PLUGIN_ROOT}` directly in Step 2 commands:
 ```bash
 rm -rf "${CLAUDE_PLUGIN_ROOT}/client"
 cp -r /workspace/client/target/jlink "${CLAUDE_PLUGIN_ROOT}/client"
-echo "2.1" > "${CLAUDE_PLUGIN_ROOT}/client/VERSION"
+echo "2.1" > "${CLAUDE_PLUGIN_DATA}/client/VERSION"
 ```
 
 When `CLAUDE_PLUGIN_ROOT` is not set (e.g., in main session vs hook context), these commands fail or use incorrect paths.

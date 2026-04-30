@@ -10,4 +10,4 @@ allowed-tools:
 effort: medium
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" work-implement-agent "$ARGUMENTS"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-skill" work-implement-agent "$ARGUMENTS"`

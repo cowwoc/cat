@@ -16,4 +16,4 @@ user-invocable: false
 effort: medium
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" add-agent "$ARGUMENTS"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-skill" add-agent "$ARGUMENTS"`

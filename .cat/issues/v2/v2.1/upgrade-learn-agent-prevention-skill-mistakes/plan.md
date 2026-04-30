@@ -64,7 +64,7 @@ learning entry).
 In Phase 3, before deciding on prevention strategy, query the mistakes log:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/record-learning" query \
+"${CLAUDE_PLUGIN_DATA}/client/bin/record-learning" query \
   --cause-signature "<cause_signature>" \
   --prevention-path "<prevention_path>"
 ```

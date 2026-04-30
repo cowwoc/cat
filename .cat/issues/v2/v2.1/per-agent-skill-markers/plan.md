@@ -46,7 +46,7 @@ and `SubagentStartHook` inject instructions telling the agent its `catAgentId`.
 Each SKILL.md passes `$0` (the catAgentId injected by the hook) to `load-skill`:
 
 ```
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" <skill> "$0" "${CLAUDE_PROJECT_DIR}"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" <skill> "$0" "${CLAUDE_PROJECT_DIR}"`
 ```
 
 ## Risk Assessment

@@ -5,7 +5,7 @@ effort: low
 user-invocable: false
 argument-hint: "<keywords...>"
 ---
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/extract-investigation-context" "$ARGUMENTS" 2>/dev/null || echo '{"error":"pre-extraction unavailable - jlink binary not built"}'`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/extract-investigation-context" "$ARGUMENTS" 2>/dev/null || echo '{"error":"pre-extraction unavailable - jlink binary not built"}'`
 
 Pass all relevant keywords as arguments. The extractor performs a single file scan regardless of how many keywords are
 provided.

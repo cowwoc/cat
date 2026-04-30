@@ -92,7 +92,7 @@ use the **Quick Workflow**. Otherwise use the **Interactive Rebase Workflow**.
 ### Script Invocation
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/git-squash" "<target-branch>" "$MESSAGE" "$WORKTREE_PATH"
+"${CLAUDE_PLUGIN_DATA}/client/bin/git-squash" "<target-branch>" "$MESSAGE" "$WORKTREE_PATH"
 ```
 
 The script implements: rebase onto target, backup, commit-tree squash, verify, cleanup. Outputs JSON on success.

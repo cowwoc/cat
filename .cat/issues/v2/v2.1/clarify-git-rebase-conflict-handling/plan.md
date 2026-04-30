@@ -15,7 +15,7 @@ None
 
 ```
 # Trigger scenario: rebase with intentional conflict
-"${CLAUDE_PLUGIN_ROOT}/client/bin/git-rebase" "$WORKTREE_PATH" "$TARGET_BRANCH"
+"${CLAUDE_PLUGIN_DATA}/client/bin/git-rebase" "$WORKTREE_PATH" "$TARGET_BRANCH"
 # Returns: {"status": "CONFLICT", "backup_branch": "backup-before-rebase-...", "conflicting_files": [...]}
 # → Agent has no numbered steps to follow for resolution or abort
 ```

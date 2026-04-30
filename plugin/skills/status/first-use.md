@@ -5,4 +5,4 @@ See LICENSE.md in the project root for license terms.
 -->
 # Status
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" status`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-output" status`

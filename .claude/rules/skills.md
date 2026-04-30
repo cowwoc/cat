@@ -35,10 +35,10 @@ Bash parameter expansion syntax does not work in directives.
 
 **Correct pattern:**
 ```
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" "$0" get-diff "$1"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-output" "$0" get-diff "$1"`
 ```
 
 **Incorrect pattern:**
 ```
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" "$0" get-diff "${1:?issue path argument is required}"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-output" "$0" get-diff "${1:?issue path argument is required}"`
 ```

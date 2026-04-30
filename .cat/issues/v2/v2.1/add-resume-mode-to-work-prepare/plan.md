@@ -27,7 +27,7 @@ None
   currently stripped and discarded in `parseRawArguments()`. The fix preserves the prefix as a
   boolean field `resume` in `PrepareInput` instead of silently discarding it.
 - `work-prepare` is invoked by the skill via:
-  `"${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare" --arguments "${ARGUMENTS}"`
+  `"${CLAUDE_PLUGIN_DATA}/client/bin/work-prepare" --arguments "${ARGUMENTS}"`
   The `${ARGUMENTS}` string is the raw user input (e.g., `"resume 2.1-my-issue"`). The change
   makes the `resume`/`continue` prefix functional rather than cosmetic.
 
@@ -101,11 +101,11 @@ None
     1. Replace option `"Resume on existing worktree" (retry work-prepare immediately — see below)` with:
        `"Resume on existing worktree" (only offered when user explicitly said resume/continue — see below)`
     2. Replace step 3 body (currently: "IMMEDIATELY retry work-prepare using the same subprocess invocation ...
-       `"${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare" --arguments "${ARGUMENTS}"`") with:
+       `"${CLAUDE_PLUGIN_DATA}/client/bin/work-prepare" --arguments "${ARGUMENTS}"`") with:
        - Extract `issueId` from the `"issueId"` field of the ERROR JSON returned by the first
          work-prepare invocation (the field is now guaranteed to be present in ERROR responses for
          existing worktrees after the WorkPrepare.java change above).
-       - Invoke: `"${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare" --arguments "resume ${issueId}"`
+       - Invoke: `"${CLAUDE_PLUGIN_DATA}/client/bin/work-prepare" --arguments "resume ${issueId}"`
        - Parse the result and resume Phase 1 error handling logic.
     3. Add a constraint block before step 3: **"Resume on existing worktree" must only be presented
        as an option if the user's original invocation explicitly contained a resume/continue keyword

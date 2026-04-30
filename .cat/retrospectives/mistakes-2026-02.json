@@ -649,7 +649,7 @@
         "fragility": "medium",
         "catches_variations": true
       },
-      "correct_behavior": "Always use git merge --ff-only when merging issue branches to base. If fast-forward is not possible, rebase first. Never create merge commits. Use merge-and-cleanup Java tool (${CLAUDE_PLUGIN_ROOT}/client/bin/merge-and-cleanup) which enforces ff-only."
+      "correct_behavior": "Always use git merge --ff-only when merging issue branches to base. If fast-forward is not possible, rebase first. Never create merge commits. Use merge-and-cleanup Java tool (${CLAUDE_PLUGIN_DATA}/client/bin/merge-and-cleanup) which enforces ff-only."
     },
     {
       "id": "M366",
@@ -1275,7 +1275,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "SKILL OUTPUT CONFIG BOXES should be injected via a !`${CLAUDE_PLUGIN_ROOT}/client/bin/get-config-output` preprocessor directive in an <output> section of first-use.md, invoking GetConfigOutput.java (which must implement SkillOutput). A get-config-output launcher must be created in client/bin/."
+      "correct_behavior": "SKILL OUTPUT CONFIG BOXES should be injected via a !`${CLAUDE_PLUGIN_DATA}/client/bin/get-config-output` preprocessor directive in an <output> section of first-use.md, invoking GetConfigOutput.java (which must implement SkillOutput). A get-config-output launcher must be created in client/bin/."
     },
     {
       "id": "M388",

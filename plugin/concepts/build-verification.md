@@ -7,7 +7,7 @@ Project-type aware verification before review.
 **CRITICAL: Check `.cat/config.json` "caution" setting BEFORE proposing merge.**
 
 ```bash
-CONFIG=$("${CLAUDE_PLUGIN_ROOT}/client/bin/get-config-output" effective)
+CONFIG=$("${CLAUDE_PLUGIN_DATA}/client/bin/get-config-output" effective)
 CAUTION_SETTING=$(echo "$CONFIG" | grep -o '"caution"[[:space:]]*:[[:space:]]*"[^"]*"' \
   | sed 's/.*"caution"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 CAUTION_SETTING="${CAUTION_SETTING:-high}"

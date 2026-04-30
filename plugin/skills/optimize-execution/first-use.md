@@ -37,7 +37,7 @@ via `${CLAUDE_SESSION_ID}`.
 Execute the session analyzer to extract all mechanical data:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/session-analyzer" "${CLAUDE_SESSION_ID}"
+"${CLAUDE_PLUGIN_DATA}/client/bin/session-analyzer" "${CLAUDE_SESSION_ID}"
 ```
 
 The skill outputs a JSON object with:
@@ -152,7 +152,7 @@ Before proceeding, key terms used below:
 Use the session-analyzer tool for structured, reliable extraction of delegation metrics:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/session-analyzer" analyze "${CLAUDE_SESSION_ID}"
+"${CLAUDE_PLUGIN_DATA}/client/bin/session-analyzer" analyze "${CLAUDE_SESSION_ID}"
 ```
 
 This produces structured JSON output with per-delegation metrics already computed, avoiding fragile text parsing.

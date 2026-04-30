@@ -10,7 +10,7 @@ I have a skill at `plugin/skills/my-skill/SKILL.md` with this content:
 description: My skill
 effort: medium
 ---
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" my-skill "$0"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-skill" my-skill "$0"`
 ```
 
 The companion file `plugin/skills/my-skill/first-use.md` was modified since the last SPRT run.

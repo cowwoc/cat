@@ -7,4 +7,4 @@ effort: low
 user-invocable: false
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" description-tester-agent "$0"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-skill" description-tester-agent "$0"`

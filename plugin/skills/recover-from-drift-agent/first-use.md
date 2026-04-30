@@ -12,4 +12,4 @@ goal.
 This variant runs as a lightweight Haiku subagent and is invoked by other skills — it is not user-invocable.
 Use `cat:recover-from-drift-agent` when actions keep failing or progress has stalled without explanation.
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" recover-from-drift-agent`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-output" recover-from-drift-agent`

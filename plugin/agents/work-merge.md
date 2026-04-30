@@ -15,8 +15,8 @@ Your responsibilities:
 ## Key Constraints
 - Never force-push without validation
 - Always verify branch state before destructive operations
-- Use "${CLAUDE_PLUGIN_ROOT}/client/bin/git-squash" for commit squashing (never git rebase -i)
-- Use "${CLAUDE_PLUGIN_ROOT}/client/bin/git-merge-linear" for merge operations
+- Use "${CLAUDE_PLUGIN_DATA}/client/bin/git-squash" for commit squashing (never git rebase -i)
+- Use "${CLAUDE_PLUGIN_DATA}/client/bin/git-merge-linear" for merge operations
 - Follow fail-fast principle on any unexpected state
 - **Path construction:** For all Read/Edit/Write file operations, construct paths as `${WORKTREE_PATH}/relative/path`.
   Never use `/workspace` paths — the `EnforceWorktreePathIsolation` hook will block them.

@@ -7,4 +7,4 @@ allowed-tools: Grep, Read, Bash
 argument-hint: "<cat_agent_id>"
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" grep-and-read-agent "$0"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-skill" grep-and-read-agent "$0"`

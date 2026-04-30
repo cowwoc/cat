@@ -37,7 +37,7 @@ skill loading, no LLM tool call required:
 Pattern in each skill's `first-use.md`:
 ```markdown
 <output skill="X">
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" X`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-output" X`
 </output>
 ```
 
@@ -61,7 +61,7 @@ calls the Skill tool. The `get-output` SKILL.md must call the launcher directly 
 
 ### `plugin/skills/get-output/SKILL.md`
 - Replace `load-skill` preprocessor with direct launcher call:
-  `!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" $ARGUMENTS``
+  `!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-output" $ARGUMENTS``
 
 ### Static-output skill `first-use.md` files (7 skills)
 - Replace `INVOKE: Skill("cat:get-output", args="X")` with `<output skill="X">` + `!` block
@@ -86,7 +86,7 @@ calls the Skill tool. The `get-output` SKILL.md must call the launcher directly 
    - Files: `client/build-jlink.sh`
 
 2. **Step 2:** Change `plugin/skills/get-output/SKILL.md` preprocessor from `load-skill` to the
-   direct launcher call: `!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" $ARGUMENTS``
+   direct launcher call: `!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-output" $ARGUMENTS``
    - Files: `plugin/skills/get-output/SKILL.md`
 
 3. **Step 3:** For each static-output skill, update `first-use.md`:

@@ -146,7 +146,7 @@ None
     `.claude/settings.json`)
 
   The empirical-test-runner binary is at:
-  `${CLAUDE_PLUGIN_ROOT}/client/bin/empirical-test-runner`
+  `${CLAUDE_PLUGIN_DATA}/client/bin/empirical-test-runner`
 
   Both `scenario_1_cold_start` and `scenario_2_latest_output` must reach PASS verdict (not FAIL or
   INSUFFICIENT_DATA) before the post-conditions are met.

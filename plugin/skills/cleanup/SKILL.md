@@ -9,4 +9,4 @@ allowed-tools:
 disable-model-invocation: true
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" cleanup "${CLAUDE_SESSION_ID}"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-skill" cleanup "${CLAUDE_SESSION_ID}"`

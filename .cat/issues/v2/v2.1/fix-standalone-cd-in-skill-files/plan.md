@@ -100,7 +100,7 @@ cd "${CLAUDE_PROJECT_DIR}"
 \`\`\`
 ```
 **Fix:** The merge script (`git-merge-linear`) is invoked with absolute paths via
-`"${CLAUDE_PLUGIN_ROOT}/client/bin/git-merge-linear"`. Check whether the merge script needs the cwd to be
+`"${CLAUDE_PLUGIN_DATA}/client/bin/git-merge-linear"`. Check whether the merge script needs the cwd to be
 `${CLAUDE_PROJECT_DIR}`. If the merge script accepts worktree path as an argument, remove the standalone cd block
 entirely and replace with a note that the agent should chain `cd "${CLAUDE_PROJECT_DIR}" &&` with the merge command
 in the same Bash call. If the merge script does need cwd, chain the cd with the merge invocation.
@@ -112,7 +112,7 @@ in the same Bash call. If the merge script does need cwd, chain the cd with the 
 3. **Classify the error as transient or permanent...**
 ```
 **Fix:** The `issue-lock` command on the next actionable line uses an absolute path
-(`"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock"`), so cwd doesn't matter. Remove step 2 entirely and renumber
+(`"${CLAUDE_PLUGIN_DATA}/client/bin/issue-lock"`), so cwd doesn't matter. Remove step 2 entirely and renumber
 subsequent steps. If any later step in the error handling does need the project dir, chain the cd with that
 specific command.
 
@@ -120,7 +120,7 @@ specific command.
 **Current text:**
 ```
 2. Restore working directory: `cd "${CLAUDE_PROJECT_DIR}"`
-3. Attempt lock release: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${ISSUE_ID}" "$CLAUDE_SESSION_ID"`
+3. Attempt lock release: `"${CLAUDE_PLUGIN_DATA}/client/bin/issue-lock" release "${ISSUE_ID}" "$CLAUDE_SESSION_ID"`
 4. Return FAILED status with actual error details
 ```
 **Fix:** The lock release command uses an absolute path, so cwd doesn't matter. Remove step 2 and renumber: current

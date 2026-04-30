@@ -70,7 +70,7 @@ Same as normal issue completion:
 
 ```bash
 # Release issue lock
-"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "$ISSUE_ID" "${CLAUDE_SESSION_ID}"
+"${CLAUDE_PLUGIN_DATA}/client/bin/issue-lock" release "$ISSUE_ID" "${CLAUDE_SESSION_ID}"
 
 # Remove worktree if created
 git worktree remove "$WORKTREE_PATH" --force 2>/dev/null || true

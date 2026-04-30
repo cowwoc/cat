@@ -19,4 +19,4 @@ user-invocable: false
 effort: high
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" plan-builder-agent "$ARGUMENTS"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-skill" plan-builder-agent "$ARGUMENTS"`

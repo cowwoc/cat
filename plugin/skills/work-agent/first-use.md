@@ -68,7 +68,7 @@ Extract these values:
 - `TRUST` — from `"trust"` field (e.g., `"low"`, `"medium"`, `"high"`)
 - `CAUTION` — from `"caution"` field (e.g., `"low"`, `"medium"`, `"high"`)
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" --phase preparing`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/progress-banner" --phase preparing`
 
 ## Phase 1: Prepare
 
@@ -76,7 +76,7 @@ Execute the deterministic preparation script directly (no subagent needed).
 
 **Call the prepare script:**
 
-Run `"${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare" --arguments "${ARGUMENTS}"` and parse the JSON
+Run `"${CLAUDE_PLUGIN_DATA}/client/bin/work-prepare" --arguments "${ARGUMENTS}"` and parse the JSON
 output from stdout.
 
 **Handle result:**
@@ -160,17 +160,17 @@ executed without recovery.
    ```
 
 3. If user selects **"Delete directory"**:
-   - Release lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
+   - Release lock: `"${CLAUDE_PLUGIN_DATA}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
    - Invoke `cat:safe-rm-agent` to remove the corrupt issue directory at `issue_path` from the JSON
    - After removal, retry `work-prepare` immediately
 
 4. If user selects **"Create plan.md (guided)"**:
-   - Release lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
+   - Release lock: `"${CLAUDE_PLUGIN_DATA}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
    - Invoke `cat:add-agent` with the `issue_id` from the CORRUPT JSON as context to guide plan.md creation
    - After plan.md is created, retry `work-prepare` to validate and continue
 
 5. If user selects **"Skip this issue"**:
-   - Release lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
+   - Release lock: `"${CLAUDE_PLUGIN_DATA}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
    - Retry `work-prepare` with the same arguments to find the next available issue
 
 **CORRUPT retry limit:** If work-prepare returns CORRUPT 3 consecutive times (across any combination
@@ -216,7 +216,7 @@ existing session lock (e.g., "already holds a lock", "worktree already exists"):
    - Extract the `issue_id` from the `"issue_id"` field of the ERROR JSON returned by the first
      work-prepare invocation (this field is present in ERROR responses for existing worktrees).
    - **IMMEDIATELY invoke work-prepare** with the resume prefix:
-     `"${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare" --arguments "resume ${issue_id}"`.
+     `"${CLAUDE_PLUGIN_DATA}/client/bin/work-prepare" --arguments "resume ${issue_id}"`.
      Parse the result and resume Phase 1 error handling logic.
    - Do NOT run any filesystem, git, or investigation commands before the retry
    - Do NOT manually construct issue paths or worktree paths — work-prepare returns these in its JSON
@@ -226,7 +226,7 @@ existing session lock (e.g., "already holds a lock", "worktree already exists"):
    - Invoke `cat:cleanup-agent` (no arguments needed)
    - **IMMEDIATELY after cleanup-agent returns, call work-prepare again** using the same subprocess
      invocation from Phase 1:
-     `"${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare" --arguments "${ARGUMENTS}"`. Parse the result
+     `"${CLAUDE_PLUGIN_DATA}/client/bin/work-prepare" --arguments "${ARGUMENTS}"`. Parse the result
      and resume Phase 1 error handling logic.
    - Do NOT invoke any other skill or workflow between cleanup-agent returning and the work-prepare
      retry
@@ -331,7 +331,7 @@ branch with index.json not reflecting completion (e.g., stale merge overwrote st
           - Select "Not complete, continue" to run the full implement→confirm→review→merge workflow
         ```
         Release the lock:
-        `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
+        `"${CLAUDE_PLUGIN_DATA}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
         Clean up worktree by invoking:
         ```
         Skill tool:
@@ -350,14 +350,14 @@ branch with index.json not reflecting completion (e.g., stale merge overwrote st
         Error: <error message>
         ```
         Release the lock:
-        `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
+        `"${CLAUDE_PLUGIN_DATA}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
         Invoke `cat:safe-rm-agent` to clean up worktree, then stop.
 
    2. Update `${WORKTREE_PATH}/<relative_issue_path>/index.json` to set status to `closed`
    3. Commit in worktree: `cd ${WORKTREE_PATH} && git add <relative_issue_path>/index.json && git commit -m "planning: close completed issue ${issue_id}"`
    4. Merge the worktree branch into `${target_branch}` using the normal merge flow (Phase 4 merge
       procedure)
-   5. Release lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
+   5. Release lock: `"${CLAUDE_PLUGIN_DATA}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
    6. Clean up worktree using `/cat:safe-rm-agent`
    7. Select next issue by invoking `cat:work-agent` with the same version scope
 
@@ -396,11 +396,11 @@ IS_DECOMPOSED=$(grep -q "^## Decomposed Into" "$ISSUE_STATE" && echo "true" || e
    - Commit in worktree: `cd ${WORKTREE_PATH} && git add <relative_issue_path>/index.json && git commit -m "planning: close parent issue ${issue_id}"`
    - Merge the worktree branch into `${target_branch}` using the normal merge flow (Phase 4 merge
      procedure)
-   - Release lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
+   - Release lock: `"${CLAUDE_PLUGIN_DATA}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
    - Clean up worktree using `/cat:safe-rm-agent`
 
 5. If user selects **"Keep open"**:
-   - Release lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
+   - Release lock: `"${CLAUDE_PLUGIN_DATA}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
    - Clean up worktree using `/cat:safe-rm-agent`
    - Stop.
 
@@ -498,7 +498,7 @@ to continue to the next issue. No delay needed — the work skill handles its ow
 If any phase subagent fails unexpectedly:
 
 1. Capture error message
-2. Run `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"` to release the lock.
+2. Run `"${CLAUDE_PLUGIN_DATA}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"` to release the lock.
 3. Display error to user
 4. Offer: Retry, Abort, or Manual cleanup
 

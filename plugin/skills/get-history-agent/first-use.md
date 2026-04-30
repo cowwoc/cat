@@ -17,7 +17,7 @@ Use the Java `session-analyzer` tool for structured queries. It handles mega-lin
 the JSON structure rather than treating lines as text.
 
 ```bash
-SESSION_ANALYZER="${CLAUDE_PLUGIN_ROOT}/client/bin/session-analyzer"
+SESSION_ANALYZER="${CLAUDE_PLUGIN_DATA}/client/bin/session-analyzer"
 
 # Search for keyword with 2 lines of surrounding context
 "$SESSION_ANALYZER" search "${CLAUDE_SESSION_ID}" "keyword" --context 2

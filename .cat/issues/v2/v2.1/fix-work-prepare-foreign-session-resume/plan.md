@@ -122,8 +122,8 @@ To:
 
       **If user selects Resume:**
       ```bash
-      "${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" force-release "${ISSUE_ID}"
-      "${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" acquire "${ISSUE_ID}" "${CLAUDE_SESSION_ID}"
+      "${CLAUDE_PLUGIN_DATA}/client/bin/issue-lock" force-release "${ISSUE_ID}"
+      "${CLAUDE_PLUGIN_DATA}/client/bin/issue-lock" acquire "${ISSUE_ID}" "${CLAUDE_SESSION_ID}"
       ```
       Then return READY using the existing worktree path (same as Orphaned Worktree Recovery step 4,
       with `has_existing_work: true`).

@@ -9,7 +9,7 @@ that use skill-loader — throwing `FileNotFoundException` if neither the skill'
 ## Background
 When `cat:add-agent` is invoked via the Skill tool, only "Base directory for this skill: ..." is shown —
 no AskUserQuestion, no instructions, nothing. Investigation shows:
-- `add-agent/SKILL.md` contains `!backtick"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" add-agent "$ARGUMENTS"backtick`
+- `add-agent/SKILL.md` contains `!backtick"${CLAUDE_PLUGIN_DATA}/client/bin/skill-loader" add-agent "$ARGUMENTS"backtick`
 - skill-loader correctly writes `add` to `skills-loaded` (normalizing `add-agent` → `add`)
 - But content loading looks for `add-agent/first-use.md` (which doesn't exist) and returns empty string
 - The parent skill `add/first-use.md` exists and contains the full AskUserQuestion workflow

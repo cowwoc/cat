@@ -96,7 +96,7 @@ arguments:
   - completed_issue
   - target_branch
 ---
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-next-issue-box" $completed_issue $target_branch`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-next-issue-box" $completed_issue $target_branch`
 ```
 
 When `/cat:work-complete-agent 2.1-fix-bug v2.1` is invoked:

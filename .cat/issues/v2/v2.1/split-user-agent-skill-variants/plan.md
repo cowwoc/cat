@@ -69,7 +69,7 @@ description: >
 disable-model-invocation: true
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" <name> "${CLAUDE_PROJECT_DIR}" "${CLAUDE_SESSION_ID}"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" <name> "${CLAUDE_PROJECT_DIR}" "${CLAUDE_SESSION_ID}"`
 ```
 
 For skills with `$ARGUMENTS` (get-output only):
@@ -80,7 +80,7 @@ description: >
 disable-model-invocation: true
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" <name> "${CLAUDE_PROJECT_DIR}" "${CLAUDE_SESSION_ID}" $ARGUMENTS`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" <name> "${CLAUDE_PROJECT_DIR}" "${CLAUDE_SESSION_ID}" $ARGUMENTS`
 ```
 
 ### Model-facing variant (new `<name>-agent/SKILL.md`)
@@ -93,7 +93,7 @@ description: >
 user-invocable: false
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" <name> "${CLAUDE_PROJECT_DIR}" "$0"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" <name> "${CLAUDE_PROJECT_DIR}" "$0"`
 ```
 
 For skills with `$ARGUMENTS` (get-output only):
@@ -104,7 +104,7 @@ description: >
 user-invocable: false
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" get-output "${CLAUDE_PROJECT_DIR}" "$0" $ARGUMENTS`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/load-skill" "${CLAUDE_PLUGIN_ROOT}" get-output "${CLAUDE_PROJECT_DIR}" "$0" $ARGUMENTS`
 ```
 
 **Key:** Both variants pass the same `<base-name>` (without `-agent`) to `load-skill`. SkillLoader resolves

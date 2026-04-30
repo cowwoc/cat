@@ -571,7 +571,7 @@ Done
       Files.createDirectories(companionDir);
       Files.writeString(companionDir.resolve("first-use.md"), """
 Root: ${CLAUDE_PLUGIN_ROOT}
-Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
+Directive: !`"${CLAUDE_PLUGIN_DATA}/client/bin/test-launcher"`
 """);
 
       GetSkill loader = new GetSkill(scope,
@@ -610,7 +610,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
       Files.writeString(companionDir.resolve("first-use.md"), """
-        Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output"`
+        Output: !`"${CLAUDE_PLUGIN_DATA}/client/bin/test-output"`
         Done
         """);
 
@@ -651,7 +651,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
       Files.writeString(companionDir.resolve("first-use.md"), """
-        Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output"`
+        Output: !`"${CLAUDE_PLUGIN_DATA}/client/bin/test-output"`
         Done
         """);
 
@@ -686,7 +686,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
       Files.writeString(companionDir.resolve("first-use.md"), """
-        Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output"`
+        Output: !`"${CLAUDE_PLUGIN_DATA}/client/bin/test-output"`
         Done
         """);
 
@@ -727,7 +727,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
       Files.writeString(companionDir.resolve("first-use.md"), """
-        Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output"`
+        Output: !`"${CLAUDE_PLUGIN_DATA}/client/bin/test-output"`
         Done
         """);
 
@@ -768,7 +768,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
       Files.writeString(companionDir.resolve("first-use.md"), """
-        Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output"`
+        Output: !`"${CLAUDE_PLUGIN_DATA}/client/bin/test-output"`
         Done
         """);
 
@@ -860,7 +860,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
       Files.writeString(companionDir.resolve("first-use.md"), """
-        Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output" arg1 arg2`
+        Output: !`"${CLAUDE_PLUGIN_DATA}/client/bin/test-output" arg1 arg2`
         Done
         """);
 
@@ -969,7 +969,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
       Files.writeString(companionDir.resolve("first-use.md"), """
-        Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output" arg1 arg2`
+        Output: !`"${CLAUDE_PLUGIN_DATA}/client/bin/test-output" arg1 arg2`
         Done
         """);
 
@@ -1012,7 +1012,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
       Files.writeString(companionDir.resolve("first-use.md"), """
         Skill instructions here.
 
-        !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output"`
+        !`"${CLAUDE_PLUGIN_DATA}/client/bin/test-output"`
         """);
 
       GetSkill loader = new GetSkill(scope, List.of(UUID.randomUUID().toString()));
@@ -1060,8 +1060,8 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
       Files.writeString(companionDir.resolve("first-use.md"), """
         Skill with two directives.
 
-        !`"${CLAUDE_PLUGIN_ROOT}/client/bin/dir-a"`
-        !`"${CLAUDE_PLUGIN_ROOT}/client/bin/dir-a"`
+        !`"${CLAUDE_PLUGIN_DATA}/client/bin/dir-a"`
+        !`"${CLAUDE_PLUGIN_DATA}/client/bin/dir-a"`
         """);
 
       GetSkill loader = new GetSkill(scope, List.of(UUID.randomUUID().toString()));
@@ -1187,8 +1187,8 @@ More content here.
       Files.writeString(companionDir.resolve("first-use.md"), """
         Skill with two directives.
 
-        !`"${CLAUDE_PLUGIN_ROOT}/client/bin/dir-a"`
-        !`"${CLAUDE_PLUGIN_ROOT}/client/bin/dir-a"`
+        !`"${CLAUDE_PLUGIN_DATA}/client/bin/dir-a"`
+        !`"${CLAUDE_PLUGIN_DATA}/client/bin/dir-a"`
         """);
 
       GetSkill loader = new GetSkill(scope, List.of(UUID.randomUUID().toString()));
@@ -1512,7 +1512,7 @@ More content here.
       Files.createDirectories(companionDir);
       // ${PATH} inside the directive args — must be expanded via System.getenv()
       Files.writeString(companionDir.resolve("first-use.md"), """
-        Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output" "${PATH}"`
+        Output: !`"${CLAUDE_PLUGIN_DATA}/client/bin/test-output" "${PATH}"`
         """);
 
       // GetSkill uses System.getenv() directly for variable expansion
@@ -2016,7 +2016,7 @@ More content here.
       Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
       Files.writeString(companionDir.resolve("first-use.md"), """
-        Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output"`
+        Output: !`"${CLAUDE_PLUGIN_DATA}/client/bin/test-output"`
         Done
         """);
 

@@ -118,7 +118,7 @@ Deferring full plan generation ensures the implementation plan reflects the curr
 
   1. Read EFFORT from config:
      ```bash
-     CONFIG=$("${CLAUDE_PLUGIN_ROOT}/client/bin/get-config-output" effective)
+     CONFIG=$("${CLAUDE_PLUGIN_DATA}/client/bin/get-config-output" effective)
      EFFORT=$(echo "$CONFIG" | grep -o '"effort"[[:space:]]*:[[:space:]]*"[^"]*"' \
        | sed 's/.*"effort"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
      ```

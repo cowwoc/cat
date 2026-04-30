@@ -377,7 +377,7 @@ done < <(grep -oE '"explanation"[[:space:]]*:[[:space:]]*"[^"]*"' "$GRADER_JSON"
 **MANDATORY — never skip this step. The transformer is the ONLY permitted method to create output_path:**
 
 ```bash
-if ! "${CLAUDE_PLUGIN_ROOT}/client/bin/grade-json-transformer" \
+if ! "${CLAUDE_PLUGIN_DATA}/client/bin/grade-json-transformer" \
   "$GRADER_JSON" \
   "<run_id from Input 3>" \
   "<output_path from Input 4>"; then
