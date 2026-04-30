@@ -18,8 +18,8 @@ import java.nio.file.Path;
  * Production implementation of {@link ClaudeHook} for hook handler processes.
  * <p>
  * Reads infrastructure path variables ({@code CLAUDE_PROJECT_DIR}, {@code CLAUDE_PLUGIN_ROOT},
- * {@code CLAUDE_CONFIG_DIR}, {@code TZ}) from {@code System.getenv()} and reads hook JSON from
- * stdin at construction time.
+ * {@code CLAUDE_PLUGIN_DATA}, {@code CLAUDE_CONFIG_DIR}, {@code TZ}) from {@code System.getenv()}
+ * and reads hook JSON from stdin at construction time.
  * <p>
  * <b>Thread Safety:</b> This class is thread-safe.
  */
@@ -56,7 +56,7 @@ public final class MainClaudeHook extends AbstractClaudeHook
   public MainClaudeHook()
   {
     super(readStdin(), readEnvPath("CLAUDE_PROJECT_DIR"), readEnvPath("CLAUDE_PLUGIN_ROOT"),
-      readConfigPath());
+      readPluginDataPath(), readConfigPath());
   }
 
   /**
@@ -93,6 +93,17 @@ public final class MainClaudeHook extends AbstractClaudeHook
     if (value == null || value.isBlank())
       throw new AssertionError(name + " is not set");
     return Path.of(value);
+  }
+
+  /**
+   * Reads the plugin data directory from {@code CLAUDE_PLUGIN_DATA}.
+   *
+   * @return the plugin data directory path
+   * @throws AssertionError if {@code CLAUDE_PLUGIN_DATA} is not set
+   */
+  private static Path readPluginDataPath()
+  {
+    return readEnvPath("CLAUDE_PLUGIN_DATA");
   }
 
   /**

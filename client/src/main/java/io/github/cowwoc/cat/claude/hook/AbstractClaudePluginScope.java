@@ -31,6 +31,7 @@ public abstract class AbstractClaudePluginScope extends AbstractJvmScope impleme
    */
   private static final String PLUGIN_PREFIX = "cat";
   private final Path pluginRoot;
+  private final Path pluginData;
   private final Path claudeConfigPath;
   @SuppressWarnings("this-escape")
   private final ConcurrentLazyReference<DisplayUtils> displayUtils = ConcurrentLazyReference.create(() ->
@@ -50,15 +51,19 @@ public abstract class AbstractClaudePluginScope extends AbstractJvmScope impleme
    *
    * @param projectPath the project's root directory
    * @param pluginRoot the Claude plugin root directory
+   * @param pluginData the Claude plugin data directory
    * @param claudeConfigPath the Claude config directory
    * @throws NullPointerException if any parameter is null
    */
-  protected AbstractClaudePluginScope(Path projectPath, Path pluginRoot, Path claudeConfigPath)
+  protected AbstractClaudePluginScope(Path projectPath, Path pluginRoot, Path pluginData,
+    Path claudeConfigPath)
   {
     super(projectPath);
     requireThat(pluginRoot, "pluginRoot").isNotNull();
+    requireThat(pluginData, "pluginData").isNotNull();
     requireThat(claudeConfigPath, "claudeConfigPath").isNotNull();
     this.pluginRoot = pluginRoot;
+    this.pluginData = pluginData;
     this.claudeConfigPath = claudeConfigPath;
   }
 
@@ -67,6 +72,13 @@ public abstract class AbstractClaudePluginScope extends AbstractJvmScope impleme
   {
     ensureOpen();
     return pluginRoot;
+  }
+
+  @Override
+  public Path getPluginData()
+  {
+    ensureOpen();
+    return pluginData;
   }
 
   @Override

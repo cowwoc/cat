@@ -32,15 +32,16 @@ public abstract class AbstractClaudeTool extends AbstractClaudePluginScope imple
    * @param sessionId the Claude session ID
    * @param projectPath the project's root directory path
    * @param pluginRoot the Claude plugin root directory path
+   * @param pluginData the Claude plugin data directory path
    * @param claudeConfigPath the Claude config directory path
    * @throws IllegalArgumentException if {@code sessionId} is blank
-   * @throws NullPointerException if {@code projectPath}, {@code pluginRoot}, or
+   * @throws NullPointerException if {@code projectPath}, {@code pluginRoot}, {@code pluginData}, or
    *   {@code claudeConfigPath} are null
    */
   protected AbstractClaudeTool(String sessionId, Path projectPath, Path pluginRoot,
-    Path claudeConfigPath)
+    Path pluginData, Path claudeConfigPath)
   {
-    super(projectPath, pluginRoot, claudeConfigPath);
+    super(projectPath, pluginRoot, pluginData, claudeConfigPath);
     requireThat(sessionId, "sessionId").isNotBlank();
     this.sessionId = sessionId;
   }

@@ -29,6 +29,15 @@ public interface ClaudePluginScope extends JvmScope
   Path getPluginRoot();
 
   /**
+   * Returns the Claude plugin data directory.
+   *
+   * @return the plugin data directory path
+   * @throws AssertionError if {@code CLAUDE_PLUGIN_DATA} is not set in the environment
+   * @throws IllegalStateException if this scope is closed
+   */
+  Path getPluginData();
+
+  /**
    * Returns the plugin marketplace prefix ({@code "cat"}).
    *
    * @return the plugin prefix, never blank

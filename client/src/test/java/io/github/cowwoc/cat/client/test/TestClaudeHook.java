@@ -170,7 +170,7 @@ public final class TestClaudeHook extends AbstractClaudeHook
   public TestClaudeHook(JsonNode hookPayload, Path projectPath, Path pluginRoot, Path claudeConfigPath,
     TerminalType terminalType)
   {
-    super(hookPayload, projectPath, pluginRoot, claudeConfigPath);
+    super(hookPayload, projectPath, pluginRoot, pluginRoot, claudeConfigPath);
     requireThat(projectPath, "projectPath").isNotNull();
     requireThat(terminalType, "terminalType").isNotNull();
     this.terminalType = terminalType;

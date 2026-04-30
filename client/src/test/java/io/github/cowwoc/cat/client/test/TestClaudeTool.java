@@ -49,7 +49,8 @@ public final class TestClaudeTool extends AbstractClaudeTool
    */
   private TestClaudeTool(TempDirBundle bundle)
   {
-    super(SESSION_ID, bundle.projectPath(), bundle.pluginRoot(), bundle.claudeConfigPath());
+    super(SESSION_ID, bundle.projectPath(), bundle.pluginRoot(), bundle.pluginRoot(),
+      bundle.claudeConfigPath());
     this.terminalType = TerminalType.WINDOWS_TERMINAL;
     this.workDir = bundle.projectPath();
     try
@@ -85,7 +86,7 @@ public final class TestClaudeTool extends AbstractClaudeTool
    */
   protected TestClaudeTool(Path claudeProjectPath, Path claudePluginRoot, Path workDir)
   {
-    super(SESSION_ID, claudeProjectPath, claudePluginRoot, claudeProjectPath);
+    super(SESSION_ID, claudeProjectPath, claudePluginRoot, claudePluginRoot, claudeProjectPath);
     requireThat(workDir, "workDir").isNotNull().isAbsolute();
     this.workDir = workDir;
     this.terminalType = TerminalType.WINDOWS_TERMINAL;
@@ -126,7 +127,7 @@ public final class TestClaudeTool extends AbstractClaudeTool
   protected TestClaudeTool(Path claudeProjectPath, Path claudePluginRoot, TerminalType terminalType,
     Path workDir)
   {
-    super(SESSION_ID, claudeProjectPath, claudePluginRoot, claudeProjectPath);
+    super(SESSION_ID, claudeProjectPath, claudePluginRoot, claudePluginRoot, claudeProjectPath);
     requireThat(terminalType, "terminalType").isNotNull();
     requireThat(workDir, "workDir").isNotNull().isAbsolute();
     this.terminalType = terminalType;
