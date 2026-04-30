@@ -80,12 +80,13 @@ fi
 CLAUDECODE= claude plugin install cat@cat || { echo "ERROR: Plugin install failed"; exit 1; }
 
 # Determine install plugin data path.
-# If CLAUDE_PLUGIN_DATA was unset at startup, use Claude's standard plugin data path.
+# If CLAUDE_PLUGIN_DATA was unset at startup, use Claude's standard plugin data path format:
+# ${HOME}/.claude/plugins/data/{marketplace-name}-{plugin-name}
 if [[ -n "${STARTUP_PLUGIN_DATA:-}" ]]; then
   INSTALL_PLUGIN_DATA="${STARTUP_PLUGIN_DATA}"
   SHOULD_RESTART_CLAUDE=0
 else
-  INSTALL_PLUGIN_DATA="${HOME}/.claude/plugins/data"
+  INSTALL_PLUGIN_DATA="${HOME}/.claude/plugins/data/cat-cat"
   SHOULD_RESTART_CLAUDE=1
 fi
 
