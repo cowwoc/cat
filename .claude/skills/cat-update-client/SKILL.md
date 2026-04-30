@@ -8,7 +8,7 @@ Build the Java client first, then reinstall the CAT plugin and install the updat
 
 **IMPORTANT:** All `claude` CLI commands below require unsetting `CLAUDECODE` to avoid the nested-session guard.
 
-Before any `rm -rf`, check whether CAT is already installed. If it is, load `cat:safe-rm-agent` **before running any workflow commands that include `rm -rf`** and follow its checklist. If it is not, use a normal `rm -rf`.
+Before any `rm -rf`, check whether CAT is already installed. If it is, **the assistant must invoke `/cat:safe-rm-agent` on behalf of the user** before running any workflow commands that include `rm -rf`, and then follow its checklist. If CAT is not installed, use a normal `rm -rf`.
 
 Apply this only to the update workflow's `rm -rf` steps; do not load `cat:safe-rm-agent` for unrelated cleanup.
 
@@ -16,8 +16,8 @@ Quick preflight check:
 
 ```bash
 if CLAUDECODE= claude plugin list | grep -q 'cat@cat'; then
-  # CAT is installed -> load /cat:safe-rm-agent before continuing this workflow.
-  echo "CAT installed: load /cat:safe-rm-agent, then continue."
+  # CAT is installed -> assistant must invoke /cat:safe-rm-agent, then continue.
+  echo "CAT installed: assistant should invoke /cat:safe-rm-agent, then continue."
 else
   echo "CAT not installed: safe-rm skill not required for this workflow."
 fi
@@ -46,8 +46,7 @@ cleanup_temp_plugin_data() {
   if [[ "$(pwd)" == "${TEMP_PLUGIN_DATA}"* ]]; then
     cd /workspace
   fi
-  find "${TEMP_PLUGIN_DATA}" -mindepth 1 -delete 2>/dev/null || true
-  rmdir "${TEMP_PLUGIN_DATA}" 2>/dev/null || true
+  rm -rf "${TEMP_PLUGIN_DATA}"
 }
 
 trap cleanup_temp_plugin_data EXIT
@@ -90,7 +89,8 @@ else
   SHOULD_RESTART_CLAUDE=1
 fi
 
-# Always replace the runtime directory in install plugin data with the newly built jlink image.
+# Ensure plugin data path exists, then replace runtime directory with the newly built jlink image.
+mkdir -p "${INSTALL_PLUGIN_DATA}"
 rm -rf "${INSTALL_PLUGIN_DATA}/client"
 cp -r /workspace/client/target/jlink "${INSTALL_PLUGIN_DATA}/client"
 
@@ -113,7 +113,8 @@ When running from source, hooks read runtime assets from `CLAUDE_PLUGIN_DATA`.
 Install the runtime there so development sessions can start without needing a GitHub release.
 
 ```bash
-# Replace the development runtime bundle in CLAUDE_PLUGIN_DATA.
+# Ensure development plugin data path exists, then replace runtime bundle.
+mkdir -p "${CLAUDE_PLUGIN_DATA}"
 rm -rf "${CLAUDE_PLUGIN_DATA}/client"
 cp -r /workspace/client/target/jlink "${CLAUDE_PLUGIN_DATA}/client"
 echo "2.1" > "${CLAUDE_PLUGIN_DATA}/client/VERSION"
