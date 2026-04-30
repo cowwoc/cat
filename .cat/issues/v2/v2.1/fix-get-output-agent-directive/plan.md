@@ -17,7 +17,7 @@ None
 Skill("cat:get-output-agent", args="<catAgentId> add")
 
 # first-use.md expands the directive:
-#   !\`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" get-output-agent\`
+#   !\`"${CLAUDE_PLUGIN_DATA}/client/bin/get-output" get-output-agent\`
 # GetOutput.getOutput(["get-output-agent"]) -> throws "Unknown skill: 'get-output-agent'"
 ```
 
@@ -32,7 +32,7 @@ Skill("cat:get-output-agent", args="<catAgentId> add")
 
 The preprocessor directive in `get-output-agent/first-use.md` is:
 ```
-!\`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" get-output-agent\`
+!\`"${CLAUDE_PLUGIN_DATA}/client/bin/get-output" get-output-agent\`
 ```
 
 It should use `$ARGUMENTS` or positional `$1` (etc.) to forward the caller's skill type and any
@@ -68,7 +68,7 @@ switch statement (`GetOutput.java` lines 104-123).
 - Fix the preprocessor directive in `plugin/skills/get-output-agent/first-use.md` to forward the
   caller's arguments. Replace:
   ```
-  !\`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" get-output-agent\`
+  !\`"${CLAUDE_PLUGIN_DATA}/client/bin/get-output" get-output-agent\`
   ```
   With a directive that passes `$ARGUMENTS` (minus the catAgentId prefix) to GetOutput. The correct
   form should pass all positional args starting from `$1` so that `GetOutput.getOutput()` receives

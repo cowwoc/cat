@@ -6,4 +6,4 @@ user-invocable: false
 argument-hint: "<cat_agent_id> <completed_issue> <target_branch>"
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" work-complete-agent "$ARGUMENTS"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-skill" work-complete-agent "$ARGUMENTS"`

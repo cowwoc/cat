@@ -29,7 +29,7 @@ Configure the user's Claude Code statusline to use CAT's custom statusline scrip
 
 Invoke the centralized output skill to check the current statusline status. Parse the JSON result and determine the next step:
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" statusline`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-output" statusline`
 
 Result:
 
@@ -74,7 +74,7 @@ If user selects "Yes, overwrite", continue to step: install
 Run the install command:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/statusline-install" "${CLAUDE_PROJECT_DIR}" "${CLAUDE_PLUGIN_ROOT}"
+"${CLAUDE_PLUGIN_DATA}/client/bin/statusline-install" "${CLAUDE_PROJECT_DIR}" "${CLAUDE_PLUGIN_DATA}"
 ```
 
 Parse the JSON output and determine the result:

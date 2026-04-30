@@ -55,7 +55,7 @@ tracked paths and file contents. The validation catches this before any history 
 For deterministic execution with automatic backup and conflict detection:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/git-rebase" "$WORKTREE_PATH" "$TARGET_BRANCH"
+"${CLAUDE_PLUGIN_DATA}/client/bin/git-rebase" "$WORKTREE_PATH" "$TARGET_BRANCH"
 ```
 
 TARGET_BRANCH is required. The tool outputs JSON.

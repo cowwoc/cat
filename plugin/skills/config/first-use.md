@@ -18,7 +18,7 @@ workflow, min severity, and version pre/post-conditions.
 ### Step 1: Read current configuration
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/get-config-output" effective
+"${CLAUDE_PLUGIN_DATA}/client/bin/get-config-output" effective
 ```
 
 If the command fails, inform the user to run `/cat:init` first.
@@ -199,7 +199,7 @@ You can update any of these later with /cat:config.
 **Update config.json with all 5 derived values:**
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/update-config" \
+"${CLAUDE_PLUGIN_DATA}/client/bin/update-config" \
   "trust={TRUST}" "caution={CAUTION}" "curiosity={CURIOSITY}" \
   "perfection={PERFECTION}" "verbosity={VERBOSITY}"
 ```
@@ -291,7 +291,7 @@ Map answer: Low → "low", Medium → "medium", High → "high" for verbosity.
 **After collecting all answers from both pages, update config.json:**
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/update-config" \
+"${CLAUDE_PLUGIN_DATA}/client/bin/update-config" \
   "trust={trust_value}" "caution={caution_value}" "curiosity={curiosity_value}" \
   "perfection={perfection_value}" "verbosity={verbosity_value}"
 ```
@@ -370,7 +370,7 @@ Validate input is a number between 40-200. If invalid, show error and re-prompt.
 **Update config:**
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/update-config" "fileWidth={value}"
+"${CLAUDE_PLUGIN_DATA}/client/bin/update-config" "fileWidth={value}"
 ```
 (or `displayWidth={value}` as appropriate). Replace `{value}` with the integer value selected.
 If the command outputs `{"status":"ERROR",...}`, display the error message.
@@ -397,7 +397,7 @@ Map: Merge → `completionWorkflow: "merge"`, Pull Request → `completionWorkfl
 **Update config:**
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/update-config" "completionWorkflow={value}"
+"${CLAUDE_PLUGIN_DATA}/client/bin/update-config" "completionWorkflow={value}"
 ```
 Replace `{value}` with the mapped value ("merge" or "pr").
 If the command outputs `{"status":"ERROR",...}`, display the error message.
@@ -435,7 +435,7 @@ Map selections:
 **Update config:**
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/update-config" "minSeverity={value}"
+"${CLAUDE_PLUGIN_DATA}/client/bin/update-config" "minSeverity={value}"
 ```
 Replace `{value}` with the mapped severity ("low", "medium", "high", or "critical").
 If the command outputs `{"status":"ERROR",...}`, display the error message.

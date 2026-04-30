@@ -78,7 +78,7 @@ test_sha=abc123
 **Skill instruction tells the LLM:**
 ```bash
 # Outputs key=value lines; declare as STATUS, OVERALL_DECISION, TEST_SHA
-"${CLAUDE_PLUGIN_ROOT}/client/bin/instruction-test-runner" \
+"${CLAUDE_PLUGIN_DATA}/client/bin/instruction-test-runner" \
   write-test-results "${WORKTREE_PATH}" "${SPRT_STATE_PATH}" "${TEST_DIR}"
 ```
 
@@ -100,7 +100,7 @@ Use compact JSON when the output contains arrays, nested objects, or multi-line 
 
 For complex outputs, the LLM extracts individual fields with `get-json-field`:
 ```bash
-OUTPUT_DIR=$("${CLAUDE_PLUGIN_ROOT}/client/bin/instruction-test-runner" \
+OUTPUT_DIR=$("${CLAUDE_PLUGIN_DATA}/client/bin/instruction-test-runner" \
   get-json-field "${CREATE_RESULT}" "output_dir")
 ```
 

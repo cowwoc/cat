@@ -360,7 +360,7 @@ if [[ -f "${CLAUDE_PLUGIN_ROOT}/lang/${PRIMARY_LANG}.md" ]]; then
 fi
 
 # Read curiosity via effective config tool (applies defaults for missing fields)
-EFFECTIVE_CONFIG=$("${CLAUDE_PLUGIN_ROOT}/client/bin/get-config-output" effective) || {
+EFFECTIVE_CONFIG=$("${CLAUDE_PLUGIN_DATA}/client/bin/get-config-output" effective) || {
     echo "ERROR: Failed to read effective config" >&2
     exit 1
 }

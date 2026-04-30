@@ -21,7 +21,7 @@ about intervention or result collection.
 
 ## Progress Output (MANDATORY)
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" get-subagent-status`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-output" get-subagent-status`
 
 The skill returns monitoring data wrapped in `<output type="get-subagent-status">`. Do NOT invoke Bash or construct monitoring output manually.
 
@@ -79,7 +79,7 @@ For accurate token metrics on completed subagents, use `/cat:token-report-agent`
 
 ```bash
 # ❌ Invoking shell script directly (exposes tool calls to user)
-"${CLAUDE_PLUGIN_ROOT}/client/bin/get-subagent-status"
+"${CLAUDE_PLUGIN_DATA}/client/bin/get-subagent-status"
 
 # ✅ Use get-output skill
 # INVOKE: Skill("cat:get-output-agent", args="get-subagent-status")

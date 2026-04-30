@@ -185,7 +185,7 @@ HOOK_NAME="log-bash-commands"
 TRIGGER="PreToolUse"
 MATCHER="Bash"
 
-"${CLAUDE_PLUGIN_ROOT}/client/bin/register-hook" \
+"${CLAUDE_PLUGIN_DATA}/client/bin/register-hook" \
   --name "$HOOK_NAME" \
   --trigger "$TRIGGER" \
   --matcher "$MATCHER" \
@@ -210,7 +210,7 @@ HOOK_NAME="block-dangerous-git"
 TRIGGER="PreToolUse"
 MATCHER="Bash"
 
-"${CLAUDE_PLUGIN_ROOT}/client/bin/register-hook" \
+"${CLAUDE_PLUGIN_DATA}/client/bin/register-hook" \
   --name "$HOOK_NAME" \
   --trigger "$TRIGGER" \
   --matcher "$MATCHER" \
@@ -240,7 +240,7 @@ SCRIPT
 HOOK_NAME="inject-session-context"
 TRIGGER="SessionStart"
 
-"${CLAUDE_PLUGIN_ROOT}/client/bin/register-hook" \
+"${CLAUDE_PLUGIN_DATA}/client/bin/register-hook" \
   --name "$HOOK_NAME" \
   --trigger "$TRIGGER" \
   --script-content "$(cat <<'SCRIPT'

@@ -36,7 +36,7 @@ plan_temp_file=$(mktemp --suffix=.md)
 # ...
 
 # Step 3: Call create-issue
-# "${CLAUDE_PLUGIN_ROOT}/client/bin/create-issue" --json '{... "plan_file": "'"${plan_temp_file}"'" ...}'
+# "${CLAUDE_PLUGIN_DATA}/client/bin/create-issue" --json '{... "plan_file": "'"${plan_temp_file}"'" ...}'
 
 # Step 4: Cleanup on error (line 1020)
 rm -f "${plan_temp_file}"

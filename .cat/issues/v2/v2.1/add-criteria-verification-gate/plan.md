@@ -165,7 +165,7 @@ skips the entire confirm phase.
        - Fix the missing implementation and re-run /cat:work
        - Select "Not complete, continue" to run the full implement→confirm→review→merge workflow
      ```
-     Release the lock: `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
+     Release the lock: `"${CLAUDE_PLUGIN_DATA}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`
      Clean up worktree by invoking:
      ```
      Skill tool:
@@ -180,7 +180,7 @@ skips the entire confirm phase.
      Cannot close issue without verified post-conditions.
      Error: <error message>
      ```
-     Release lock via `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`,
+     Release lock via `"${CLAUDE_PLUGIN_DATA}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`,
      then invoke `/cat:safe-rm-agent` with args `"${CAT_AGENT_ID} ${WORKTREE_PATH}"` to clean up
      worktree, then stop.
   - Files: `plugin/skills/work/first-use.md`

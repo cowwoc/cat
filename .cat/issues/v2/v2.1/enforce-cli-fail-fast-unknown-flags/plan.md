@@ -16,7 +16,7 @@ None
 ```bash
 # work-prepare silently ignores the unknown --include-pattern flag and proceeds,
 # selecting whatever issue it finds rather than failing with an error.
-"${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare" --include-pattern "v2.1-*"
+"${CLAUDE_PLUGIN_DATA}/client/bin/work-prepare" --include-pattern "v2.1-*"
 # Expected: ERROR: Unknown flag '--include-pattern'. Valid flags: --session-id, ...
 # Actual: {"status":"READY","issueId":"2.1-some-unintended-issue",...}
 ```
@@ -177,5 +177,5 @@ The error message must include:
   verifying unknown flag rejection
 - [ ] No regressions: `mvn -f client/pom.xml test` exits 0
 - [ ] E2E verification: calling
-  `"${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare" --include-pattern "v2.1-*"` produces a JSON response containing
+  `"${CLAUDE_PLUGIN_DATA}/client/bin/work-prepare" --include-pattern "v2.1-*"` produces a JSON response containing
   `"status": "ERROR"` with a message that names `--include-pattern` and lists valid flags

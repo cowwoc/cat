@@ -219,7 +219,7 @@ Replace it with:
 
 ```bash
 SQUASH_COMMIT_HASH=$(cd "${WORKTREE_PATH}" && git rev-parse HEAD)
-"${CLAUDE_PLUGIN_ROOT}/client/bin/write-session-marker" "${CLAUDE_SESSION_ID}" "${ISSUE_ID}" "squashed:${SQUASH_COMMIT_HASH}"
+"${CLAUDE_PLUGIN_DATA}/client/bin/write-session-marker" "${CLAUDE_SESSION_ID}" "${ISSUE_ID}" "squashed:${SQUASH_COMMIT_HASH}"
 ```
 
 ### Step 5: Run Tests

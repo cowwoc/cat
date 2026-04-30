@@ -8,15 +8,15 @@ Verify that SPRT state initialization correctly configures model_id for use by d
 Step 1 — Create the output directory and initialize SPRT state with two test cases:
 ```bash
 mkdir -p .cat/work
-"${CLAUDE_PLUGIN_ROOT}/client/bin/instruction-test-runner" init-sprt \
+"${CLAUDE_PLUGIN_DATA}/client/bin/instruction-test-runner" init-sprt \
   ".cat/work/sprt-state.json" '["tc1","tc2"]' "/dev/null" "claude-sonnet-4-5"
 ```
 
 Step 2 — Record a mixed batch: PASS for tc1, FAIL for tc2:
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/instruction-test-runner" update-sprt \
+"${CLAUDE_PLUGIN_DATA}/client/bin/instruction-test-runner" update-sprt \
   ".cat/work/sprt-state.json" "tc1" "true"
-"${CLAUDE_PLUGIN_ROOT}/client/bin/instruction-test-runner" update-sprt \
+"${CLAUDE_PLUGIN_DATA}/client/bin/instruction-test-runner" update-sprt \
   ".cat/work/sprt-state.json" "tc2" "false"
 ```
 

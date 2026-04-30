@@ -122,7 +122,7 @@ on whitespace and maps tokens to positional indices.
 ---
 argument-hint: "<severity> <stakeholder> <description> <location>"
 ---
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/my-tool" "$0" "$1" "$2" "$3"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/my-tool" "$0" "$1" "$2" "$3"`
 ```
 
 Quoting `"$N"` is recommended to preserve arguments containing special characters after substitution.
@@ -153,7 +153,7 @@ Two quoting styles exist depending on whether the tool expects tokens or free te
 ---
 argument-hint: "<keywords...>"
 ---
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/my-tool" $ARGUMENTS`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/my-tool" $ARGUMENTS`
 ```
 
 **Quoted** — shell passes the entire value as a single argument, preserving spaces and newlines:
@@ -162,7 +162,7 @@ argument-hint: "<keywords...>"
 ---
 argument-hint: "[description]"
 ---
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/my-tool" "$ARGUMENTS"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/my-tool" "$ARGUMENTS"`
 ```
 
 Use quoted `"$ARGUMENTS"` whenever the input may contain spaces, newlines, or punctuation that the shell would otherwise
@@ -296,10 +296,10 @@ causing skills to misbehave (e.g., first-use check passes for the wrong agent).
 **cat_agent_id in preprocessor commands:**
 ```yaml
 # User-facing: always the main session
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" add-agent "${CLAUDE_SESSION_ID}"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-skill" add-agent "${CLAUDE_SESSION_ID}"`
 
 # Agent-facing: caller-supplied (may be subagent)
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" add-agent "$0"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-skill" add-agent "$0"`
 ```
 
 **CRITICAL:** `$0` receives the agent ID injected by SubagentStartHook as the first positional argument. It must be a
@@ -347,11 +347,11 @@ per-agent state. Skills that perform stateless operations (e.g., format a docume
 - A `SKILL.md` preprocessor that calls the binary launcher — NOT `get-skill`:
   ```
   # CORRECT: calls the Java binary launcher directly
-  !`"${CLAUDE_PLUGIN_ROOT}/client/target/jlink/bin/get-output" "${CLAUDE_PLUGIN_ROOT}" \
+  !`"${CLAUDE_PLUGIN_DATA}/client/target/jlink/bin/get-output" "${CLAUDE_PLUGIN_ROOT}" \
     "${CLAUDE_PROJECT_DIR}" "$0" $ARGUMENTS`
 
   # WRONG: calls get-skill, which loads skill content but does NOT invoke Java handlers
-  !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" get-output "$0" $ARGUMENTS`
+  !`"${CLAUDE_PLUGIN_DATA}/client/bin/get-skill" get-output "$0" $ARGUMENTS`
   ```
   **Quoting `$ARGUMENTS`:** The examples above use unquoted `$ARGUMENTS`, which is appropriate when the tool
   expects separate tokens (e.g., keyword lists or flag-style arguments). If the skill's `argument-hint` accepts
@@ -422,7 +422,7 @@ GetSkill uses a two-path load model:
 
 Instructions for the model...
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/my-handler" "$0"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/my-handler" "$0"`
 ```
 
 **First load:** Returns all content including expanded directive output.
@@ -454,7 +454,7 @@ be `$0` (the CAT agent ID):
 
 ```markdown
 <!-- Instead of: [concepts](${CLAUDE_PLUGIN_ROOT}/concepts/work.md) in <execution_context> -->
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-file" "$0" "${CLAUDE_PLUGIN_ROOT}/concepts/work.md"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-file" "$0" "${CLAUDE_PLUGIN_ROOT}/concepts/work.md"`
 ```
 
 **No preprocessing of returned content:** `get-file` returns raw file content without expanding

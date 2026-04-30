@@ -26,13 +26,13 @@ The `cat:get-diff-agent` skill's `SKILL.md` has `argument-hint: "<catAgentId> <i
 processes arguments via:
 
 ```
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" get-diff-agent "$0" "$1"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-skill" get-diff-agent "$0" "$1"`
 ```
 
 This loads `plugin/skills/get-diff-agent/first-use.md`, which contains a preprocessor directive:
 
 ```
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" get-diff`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-output" get-diff`
 ```
 
 `get-output get-diff` requires exactly 1 argument: the issue path. This directive currently passes no
@@ -86,11 +86,11 @@ Both must be fixed.
 
 4. Open `plugin/skills/get-diff-agent/first-use.md`. It currently contains:
    ```
-   !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" get-diff`
+   !`"${CLAUDE_PLUGIN_DATA}/client/bin/get-output" get-diff`
    ```
    Change it to forward the `$1` argument (the issue path passed by the caller):
    ```
-   !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" get-diff "$1"`
+   !`"${CLAUDE_PLUGIN_DATA}/client/bin/get-output" get-diff "$1"`
    ```
 
 5. Verify `plugin/skills/get-diff-agent/SKILL.md` still has

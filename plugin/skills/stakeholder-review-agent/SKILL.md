@@ -5,4 +5,4 @@ argument-hint: "<cat_agent_id> <issue_id> <worktree_path> <caution_level> <commi
 effort: high
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" stakeholder-review-agent "$ARGUMENTS"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-skill" stakeholder-review-agent "$ARGUMENTS"`

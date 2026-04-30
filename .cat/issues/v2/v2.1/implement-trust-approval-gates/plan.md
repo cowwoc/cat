@@ -180,7 +180,7 @@ When `caution=low`, `work-review-agent` is skipped entirely (work-with-issue-age
     - **"Approve and start"**: proceed to Step 5.
     - **"Request changes"**: release lock:
       ```bash
-      "${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${ISSUE_ID}" "${CLAUDE_SESSION_ID}"
+      "${CLAUDE_PLUGIN_DATA}/client/bin/issue-lock" release "${ISSUE_ID}" "${CLAUDE_SESSION_ID}"
       ```
       Return:
       ```json

@@ -373,7 +373,7 @@ the description.
 ## Running Instruction-Tests
 
 ```bash
-RUNNER="${CLAUDE_PLUGIN_ROOT}/client/bin/empirical-test-runner"
+RUNNER="${CLAUDE_PLUGIN_DATA}/client/bin/empirical-test-runner"
 "$RUNNER" \
   --test-dir plugin/tests/skills/<skill-name>/ \
   --trials 3 \

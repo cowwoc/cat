@@ -307,10 +307,10 @@ Specify which issues to skip by name or keyword."`.
 #   "other than compression" → "compress*"
 
 # When filter maps to an exclusion pattern:
-RESULT=$("${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare" --session-id "${SESSION_ID}" --exclude-pattern "compress*")
+RESULT=$("${CLAUDE_PLUGIN_DATA}/client/bin/work-prepare" --session-id "${SESSION_ID}" --exclude-pattern "compress*")
 
 # When no filter or inclusion filter:
-RESULT=$("${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare" --session-id "${SESSION_ID}")
+RESULT=$("${CLAUDE_PLUGIN_DATA}/client/bin/work-prepare" --session-id "${SESSION_ID}")
 ```
 
 Parse the result and handle statuses:
@@ -334,7 +334,7 @@ Parse the result and handle statuses:
 
     **If user selects Resume:**
     ```bash
-    TRANSFER_RESULT=$("${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" transfer "${ISSUE_ID}" "${locked_by}" "${CLAUDE_SESSION_ID}" "${worktree_path}")
+    TRANSFER_RESULT=$("${CLAUDE_PLUGIN_DATA}/client/bin/issue-lock" transfer "${ISSUE_ID}" "${locked_by}" "${CLAUDE_SESSION_ID}" "${worktree_path}")
     TRANSFER_STATUS=$(echo "${TRANSFER_RESULT}" | grep -o '"status"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"status"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
     if [[ "${TRANSFER_STATUS}" != "acquired" ]]; then
       TRANSFER_MESSAGE=$(echo "${TRANSFER_RESULT}" | grep -o '"message"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"message"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
@@ -361,7 +361,7 @@ a lock is already held, you must satisfy ALL of the following conditions before 
    worktree for this issue.
 
 If either condition fails, do NOT return READY. Release the orphaned lock with
-`"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"` and
+`"${CLAUDE_PLUGIN_DATA}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"` and
 continue with normal issue discovery as if no lock were present.
 Only if BOTH conditions are satisfied should you return READY using the existing worktree path,
 skipping the rest of this protocol.
@@ -394,7 +394,7 @@ When a worktree exists for the target issue but no lock file is present:
 
 4. **If NOT merged** (`UNMERGED` has commits): Prior work exists but was not merged. Resume work in the existing
    worktree:
-   - Acquire the lock: run `"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" acquire "${issue_id}" "${CLAUDE_SESSION_ID}"`
+   - Acquire the lock: run `"${CLAUDE_PLUGIN_DATA}/client/bin/issue-lock" acquire "${issue_id}" "${CLAUDE_SESSION_ID}"`
    - Use the existing worktree path as `worktree_path` in the output
    - Return status `READY` with `has_existing_work: true`
 
@@ -476,7 +476,7 @@ Read plan.md and estimate context requirements:
 Compare against hard limit (160K tokens = 80% of 200K).
 
 If exceeds hard limit: **First release any lock acquired in Step 2** by running
-`"${CLAUDE_PLUGIN_ROOT}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`.
+`"${CLAUDE_PLUGIN_DATA}/client/bin/issue-lock" release "${issue_id}" "${CLAUDE_SESSION_ID}"`.
 If the lock release fails, retry the release once after a 1-second pause. If the retry also fails,
 include a `"lock_release_warning"` field (NOT an `"error"` field) in the returned JSON with the lock
 release error and a `"suggestion"` field telling the user to run `/cat:cleanup` to remove the dangling
@@ -578,7 +578,7 @@ This check is deterministic (no LLM decision-making required) so it's implemente
 with full test coverage.
 
 ```bash
-EXISTING_WORK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/client/bin/check-existing-work" \
+EXISTING_WORK_RESULT=$("${CLAUDE_PLUGIN_DATA}/client/bin/check-existing-work" \
   --worktree "${WORKTREE_PATH}" \
   --target-branch "${TARGET_BRANCH}")
 ```

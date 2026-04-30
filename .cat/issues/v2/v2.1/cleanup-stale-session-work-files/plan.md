@@ -63,7 +63,7 @@ The `SessionEnd` hook is registered in `plugin/hooks/hooks.json`:
     "hooks": [
       {
         "type": "command",
-        "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/session-end"
+        "command": "${CLAUDE_PLUGIN_DATA}/client/bin/session-end"
       }
     ]
   }

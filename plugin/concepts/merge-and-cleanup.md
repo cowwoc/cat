@@ -110,7 +110,7 @@ After approval and index.json update, use the `merge-and-cleanup` Java tool whic
 fast-forward-only merge:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/merge-and-cleanup" \
+"${CLAUDE_PLUGIN_DATA}/client/bin/merge-and-cleanup" \
   "${CLAUDE_PROJECT_DIR}" "${ISSUE_ID}" "${SESSION_ID}" --worktree "${WORKTREE_PATH}"
 ```
 

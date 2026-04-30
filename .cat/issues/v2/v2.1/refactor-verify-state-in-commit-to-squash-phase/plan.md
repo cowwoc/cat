@@ -127,7 +127,7 @@ document correctly.
   `GitCommands.runGit()`, and outputs `{"index_updated": true/false, "index_path": "..."}`.
 - Add `"auto-close-index:util.AutoCloseIndexJson"` to the HANDLERS array in `client/build-jlink.sh`.
 - Update `plugin/agents/work-squash.md` Step 3 to invoke
-  `"${CLAUDE_PLUGIN_ROOT}/client/bin/auto-close-index" "${WORKTREE_PATH}" "${BRANCH}"` and parse
+  `"${CLAUDE_PLUGIN_DATA}/client/bin/auto-close-index" "${WORKTREE_PATH}" "${BRANCH}"` and parse
   the JSON output to determine whether to proceed with the amend step.
 - Add `client/src/test/java/io/github/cowwoc/cat/client/test/AutoCloseIndexJsonTest.java`
   covering: non-CAT branch (skipped), absent index.json (skipped), already closed (skipped),

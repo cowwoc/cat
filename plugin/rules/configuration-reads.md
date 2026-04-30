@@ -24,7 +24,7 @@ assumed, hardcoded, or stale values.
 **Pattern (CORRECT):**
 ```bash
 # 1. Read behavioral config using the effective config tool (returns JSON with defaults applied)
-CONFIG=$("${CLAUDE_PLUGIN_ROOT}/client/bin/get-config-output" effective)
+CONFIG=$("${CLAUDE_PLUGIN_DATA}/client/bin/get-config-output" effective)
 if [[ $? -ne 0 ]]; then
   echo "ERROR: Failed to read effective config" >&2
   exit 1

@@ -27,7 +27,7 @@ None
 4. Restart Claude Code — session-start.sh attempts to download the jlink runtime
 5. If the GitHub release asset returns 404 (e.g., unreleased version), the download fails
 6. No `client/` directory is created at either path
-7. The statusline command fails because `${CLAUDE_PLUGIN_ROOT}/client/bin/statusline-command` does not exist
+7. The statusline command fails because `${CLAUDE_PLUGIN_DATA}/client/bin/statusline-command` does not exist
 
 ## Expected vs Actual
 
@@ -67,7 +67,7 @@ The symlink bridge logic (lines 388–398) runs only after a successful `try_acq
 - [ ] When `installPath/client` has a working runtime, symlink is created and no download is attempted
 - [ ] When neither path has a runtime, download targets `installPath/client` and symlink resolves correctly
 - [ ] When download fails, symlink still points to `installPath/client` (dangling but correct direction)
-- [ ] `${CLAUDE_PLUGIN_ROOT}/client/bin/statusline-command` resolves through symlink to working binary
+- [ ] `${CLAUDE_PLUGIN_DATA}/client/bin/statusline-command` resolves through symlink to working binary
 
 ## Pre-conditions
 
@@ -97,6 +97,6 @@ The symlink bridge logic (lines 388–398) runs only after a successful `try_acq
 - [ ] Bug fixed: symlink `plugin_root/client` → `installPath/client` is created before any download attempt
 - [ ] Existing runtime at `installPath/client` is reused without re-downloading
 - [ ] Download targets `installPath/client` (cache), not `plugin_root/client` (marketplaces)
-- [ ] `${CLAUDE_PLUGIN_ROOT}/client/bin/statusline-command` resolves through symlink to the working jlink binary
+- [ ] `${CLAUDE_PLUGIN_DATA}/client/bin/statusline-command` resolves through symlink to the working jlink binary
 - [ ] All existing session-start.bats tests pass
 - [ ] New tests cover symlink-first behavior

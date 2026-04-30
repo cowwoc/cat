@@ -102,13 +102,13 @@ Update both CLI invocations to pass the test directory instead of the JSON file 
 
 ```bash
 # detect-changes: third arg is now the test directory
-"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-test-runner" detect-changes \
+"${CLAUDE_PLUGIN_DATA}/client/bin/skill-test-runner" detect-changes \
   <SKILL_DRAFT_SHA> <SKILL_TEXT_PATH> "${TEST_DIR}"
 ```
 
 ```bash
 # map-units: first arg is now the test directory
-"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-test-runner" map-units \
+"${CLAUDE_PLUGIN_DATA}/client/bin/skill-test-runner" map-units \
   "${TEST_DIR}" '["unit_step44_guard", "unit_step44_reject"]'
 ```
 

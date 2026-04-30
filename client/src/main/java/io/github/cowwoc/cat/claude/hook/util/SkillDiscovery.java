@@ -181,7 +181,7 @@ public final class SkillDiscovery
       return "";
     StringBuilder sb = new StringBuilder(512);
     sb.append("The following skills are available. To load a skill's instructions, run via Bash:\n").
-      append("  \"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill\" " +
+      append("  \"${CLAUDE_PLUGIN_DATA}/client/bin/get-skill\" " +
         "\"<skill-name>\" \"<cat-agent-id>\"\n\n");
     appendSkillEntries(sb, sessionEntries);
     return sb.toString();

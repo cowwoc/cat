@@ -4,4 +4,4 @@ disable-model-invocation: true
 effort: medium
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" learn "${CLAUDE_SESSION_ID}"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-skill" learn "${CLAUDE_SESSION_ID}"`

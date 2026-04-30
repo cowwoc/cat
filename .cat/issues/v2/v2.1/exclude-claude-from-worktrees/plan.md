@@ -67,7 +67,7 @@ This causes duplicate loading of the same rules files.
   4. Create `client/pom.xml` file in the temp repo with content `<project/>`
   5. Run `git add .claude/rules/test.md .cat/config.json client/pom.xml` in the temp repo
   6. Run `git commit -m "Initial commit"` in the temp repo
-  7. Invoke WorkPrepare CLI tool: `${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare <session_id> <issue_id>` (use synthetic UUIDs for test) to create worktree in `.cat/work/worktrees/<issue_id>/` subdirectory of temp repo
+  7. Invoke WorkPrepare CLI tool: `${CLAUDE_PLUGIN_DATA}/client/bin/work-prepare <session_id> <issue_id>` (use synthetic UUIDs for test) to create worktree in `.cat/work/worktrees/<issue_id>/` subdirectory of temp repo
   8. Store worktree path in test instance variable
 - Test case 1: `newWorktreeExcludesClaude()`
   - Assertion: `Files.exists(worktreePath.resolve(".claude"))` returns `false`

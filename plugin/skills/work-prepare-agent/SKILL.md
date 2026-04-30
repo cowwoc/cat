@@ -5,4 +5,4 @@ argument-hint: "<cat_agent_id>"
 effort: medium
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" work-prepare-agent "$0"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-skill" work-prepare-agent "$0"`

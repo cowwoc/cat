@@ -14,4 +14,4 @@ allowed-tools:
 effort: high
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" work-with-issue-agent "$ARGUMENTS"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-skill" work-with-issue-agent "$ARGUMENTS"`

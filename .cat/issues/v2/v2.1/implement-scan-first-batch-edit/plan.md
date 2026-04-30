@@ -61,7 +61,7 @@ user-invocable: false
 argument-hint: "<cat_agent_id> <symbol1> [symbol2 ...]"
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" scan-and-edit "$0"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-skill" scan-and-edit "$0"`
 ```
 
 **File: `plugin/skills/scan-and-edit/first-use.md`** (create; license header required)

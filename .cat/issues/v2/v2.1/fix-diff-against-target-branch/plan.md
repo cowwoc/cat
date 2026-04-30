@@ -23,7 +23,7 @@ The `SKILL.md` preprocessor directive for `get-diff-agent` only passes `$0` (ses
 (worktree path) or `$2` (target branch):
 
 ```
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" get-diff-agent "$0"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/skill-loader" get-diff-agent "$0"`
 ```
 
 `GetDiffOutput.getOutput(String[] args)` consequently receives no `--project-dir` and no `--target-branch`.
@@ -62,11 +62,11 @@ It falls back to `scope.getClaudeProjectDir()` (`/workspace`) as the project roo
 
 - In `plugin/skills/get-diff-agent/SKILL.md`, update the `!` preprocessor directive from:
   ```
-  !`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" get-diff-agent "$0"`
+  !`"${CLAUDE_PLUGIN_DATA}/client/bin/skill-loader" get-diff-agent "$0"`
   ```
   to:
   ```
-  !`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" get-diff-agent "$0" --project-dir "$1" --target-branch "$2"`
+  !`"${CLAUDE_PLUGIN_DATA}/client/bin/skill-loader" get-diff-agent "$0" --project-dir "$1" --target-branch "$2"`
   ```
   - Files: `plugin/skills/get-diff-agent/SKILL.md`
 

@@ -164,7 +164,7 @@ them as constants in `AddSkillData`.
   ```markdown
 
   <output>
-  !`"${CLAUDE_PLUGIN_ROOT}/client/bin/add-skill-data"`
+  !`"${CLAUDE_PLUGIN_DATA}/client/bin/add-skill-data"`
   </output>
   ```
   The `<output>` tag must be at the end of the file so `parseContent()` can find it as the last

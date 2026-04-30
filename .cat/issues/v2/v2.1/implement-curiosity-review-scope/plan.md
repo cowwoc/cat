@@ -114,7 +114,7 @@ Research (`cat:research-agent`) also runs with broader context:
     add a new block to read and check CURIOSITY from effective config:
     ```bash
     # Read CURIOSITY from effective config to determine review triggering
-    EFFECTIVE_CONFIG_FOR_CURIOSITY=$("${CLAUDE_PLUGIN_ROOT}/client/bin/get-config-output" effective) || {
+    EFFECTIVE_CONFIG_FOR_CURIOSITY=$("${CLAUDE_PLUGIN_DATA}/client/bin/get-config-output" effective) || {
         echo "ERROR: Failed to read effective config" >&2
         exit 1
     }

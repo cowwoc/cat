@@ -62,7 +62,7 @@ before writing. Writing disallowed fields causes StateSchemaValidator to block t
 [LLM Round 1] Change and execute
   → Write content to temp file
   → Write commit message to temp file
-  → Bash: "${CLAUDE_PLUGIN_ROOT}/client/bin/write-and-commit" file.sh /tmp/content /tmp/msg --executable
+  → Bash: "${CLAUDE_PLUGIN_DATA}/client/bin/write-and-commit" file.sh /tmp/content /tmp/msg --executable
 
 [LLM Round 2] Report success
   → Parse JSON result
@@ -91,7 +91,7 @@ Description of what this file does.
 EOF
 
 # Step 2: Execute atomic creation
-"${CLAUDE_PLUGIN_ROOT}/client/bin/write-and-commit" \
+"${CLAUDE_PLUGIN_DATA}/client/bin/write-and-commit" \
   "path/to/file.txt" \
   "/tmp/content-$$.txt" \
   "/tmp/commit-msg-$$.txt"
@@ -101,7 +101,7 @@ EOF
 
 ```bash
 # For scripts that need executable permissions
-"${CLAUDE_PLUGIN_ROOT}/client/bin/write-and-commit" \
+"${CLAUDE_PLUGIN_DATA}/client/bin/write-and-commit" \
   ".claude/scripts/my-script.sh" \
   "/tmp/content-$$.txt" \
   "/tmp/commit-msg-$$.txt" \
@@ -148,7 +148,7 @@ Removes .tmp files older than 7 days from /tmp directory.
 MSG
 
 # Execute atomic creation
-"${CLAUDE_PLUGIN_ROOT}/client/bin/write-and-commit" \
+"${CLAUDE_PLUGIN_DATA}/client/bin/write-and-commit" \
   ".claude/scripts/cleanup-temp.sh" \
   "/tmp/cleanup-script-$$.sh" \
   "/tmp/commit-msg-$$.txt" \
@@ -214,7 +214,7 @@ cat > /tmp/content.txt <<'EOF'
 build/
 EOF
 
-"${CLAUDE_PLUGIN_ROOT}/client/bin/write-and-commit" ".gitignore" /tmp/content.txt /tmp/msg.txt
+"${CLAUDE_PLUGIN_DATA}/client/bin/write-and-commit" ".gitignore" /tmp/content.txt /tmp/msg.txt
 ```
 
 ### 2. Create Documentation
@@ -226,7 +226,7 @@ cat > /tmp/content.txt <<'EOF'
 ...
 EOF
 
-"${CLAUDE_PLUGIN_ROOT}/client/bin/write-and-commit" "docs/component/README.md" /tmp/content.txt /tmp/msg.txt
+"${CLAUDE_PLUGIN_DATA}/client/bin/write-and-commit" "docs/component/README.md" /tmp/content.txt /tmp/msg.txt
 ```
 
 ### 3. Create Test File
@@ -242,7 +242,7 @@ public class MyTest {
 }
 EOF
 
-"${CLAUDE_PLUGIN_ROOT}/client/bin/write-and-commit" "src/test/java/MyTest.java" /tmp/content.txt /tmp/msg.txt
+"${CLAUDE_PLUGIN_DATA}/client/bin/write-and-commit" "src/test/java/MyTest.java" /tmp/content.txt /tmp/msg.txt
 ```
 
 ### 4. Create Executable Script
@@ -254,7 +254,7 @@ cat > /tmp/content.txt <<'EOF'
 # Hook implementation
 EOF
 
-"${CLAUDE_PLUGIN_ROOT}/client/bin/write-and-commit" ".claude/hooks/my-hook.sh" /tmp/content.txt /tmp/msg.txt --executable
+"${CLAUDE_PLUGIN_DATA}/client/bin/write-and-commit" ".claude/hooks/my-hook.sh" /tmp/content.txt /tmp/msg.txt --executable
 ```
 
 ## When NOT to Use
@@ -263,9 +263,9 @@ EOF
 
 **❌ Wrong**: Create files one-by-one with write-and-commit
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/write-and-commit" file1.txt /tmp/content1 /tmp/msg1
-"${CLAUDE_PLUGIN_ROOT}/client/bin/write-and-commit" file2.txt /tmp/content2 /tmp/msg2
-"${CLAUDE_PLUGIN_ROOT}/client/bin/write-and-commit" file3.txt /tmp/content3 /tmp/msg3
+"${CLAUDE_PLUGIN_DATA}/client/bin/write-and-commit" file1.txt /tmp/content1 /tmp/msg1
+"${CLAUDE_PLUGIN_DATA}/client/bin/write-and-commit" file2.txt /tmp/content2 /tmp/msg2
+"${CLAUDE_PLUGIN_DATA}/client/bin/write-and-commit" file3.txt /tmp/content3 /tmp/msg3
 # Result: 3 separate commits
 ```
 

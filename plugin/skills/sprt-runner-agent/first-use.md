@@ -60,8 +60,8 @@ If `overall_decision` is REJECT, the Investigation Procedure section provides st
 - `worktree_path` points to a clean git worktree on the issue branch
 - `test_dir` is a path (absolute or relative to `worktree_path`) containing one or more `*.md` test case files
 - `test_model` is the model identifier to use for all trial runs (must match the skill under test)
-- `${CLAUDE_PLUGIN_ROOT}/client/bin/instruction-test-runner` binary is available
-- `${CLAUDE_PLUGIN_ROOT}/client/bin/extract-turns` binary is available (splits multi-turn scenarios into individual turn files)
+- `${CLAUDE_PLUGIN_DATA}/client/bin/instruction-test-runner` binary is available
+- `${CLAUDE_PLUGIN_DATA}/client/bin/extract-turns` binary is available (splits multi-turn scenarios into individual turn files)
 
 ### Valid Model Names
 
@@ -263,7 +263,7 @@ TEST_MODEL="$3"
 TEST_EFFORT="${4:-}"  # Optional: effort level (low/medium/high/xhigh/max), empty if not specified
 
 # Resolve short model name to full model ID
-TEST_MODEL_ID=$("${CLAUDE_PLUGIN_ROOT}/client/bin/claude-runner" resolve-model "${TEST_MODEL}")
+TEST_MODEL_ID=$("${CLAUDE_PLUGIN_DATA}/client/bin/claude-runner" resolve-model "${TEST_MODEL}")
 if [[ -z "${TEST_MODEL_ID}" ]]; then
   echo "ERROR: Failed to resolve model '${TEST_MODEL}'" >&2
   exit 1
@@ -281,7 +281,7 @@ Bash tool:
   description: "Start SPRT runner"
   run_in_background: true
   command: |
-    "${CLAUDE_PLUGIN_ROOT}/client/bin/instruction-test-runner" run-full-sprt \
+    "${CLAUDE_PLUGIN_DATA}/client/bin/instruction-test-runner" run-full-sprt \
       "${WORKTREE_PATH}" "${TEST_DIR}" "${TEST_MODEL_ID}" \
       "${CLAUDE_SESSION_ID}" "${TEST_EFFORT}" \
       > "${OUTPUT_FILE}" 2>&1
@@ -496,7 +496,7 @@ cd "${WORKTREE_PATH}/.cat/work/test-runs/${CAT_AGENT_ID}"
 for TC_DIR in tc*/ ; do
   TC_ID="${TC_DIR%/}"
   # Read the test case decision from sprt-state.json
-  DECISION=$("${CLAUDE_PLUGIN_ROOT}/client/bin/instruction-test-runner" get-json-field \
+  DECISION=$("${CLAUDE_PLUGIN_DATA}/client/bin/instruction-test-runner" get-json-field \
     "$(cat ${WORKTREE_PATH}/.cat/work/sprt-state.json)" \
     "sprt_state.${TC_ID}.decision")
   

@@ -32,9 +32,9 @@ None - infrastructure/tech debt (completes parent issue `port-utility-scripts`)
 
 | File | Line(s) | Old Reference | New Reference |
 |------|---------|---------------|---------------|
-| `plugin/skills/work/first-use.md` | 59 | `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/work-prepare.py"` | `"${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare"` |
+| `plugin/skills/work/first-use.md` | 59 | `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/work-prepare.py"` | `"${CLAUDE_PLUGIN_DATA}/client/bin/work-prepare"` |
 | `plugin/skills/work-prepare/first-use.md` | 8, 14 | `plugin/scripts/work-prepare.py` | Java class / launcher reference |
-| `plugin/skills/register-hook/first-use.md` | 188, 213, 243 | `~/.claude/scripts/register-hook.sh` | `"${CLAUDE_PLUGIN_ROOT}/client/bin/register-hook"` |
+| `plugin/skills/register-hook/first-use.md` | 188, 213, 243 | `~/.claude/scripts/register-hook.sh` | `"${CLAUDE_PLUGIN_DATA}/client/bin/register-hook"` |
 | `plugin/skills/monitor-subagents/first-use.md` | 92 | `${CLAUDE_PLUGIN_ROOT}/scripts/monitor-subagents.sh` | Launcher reference |
 | `plugin/skills/batch-read/first-use.md` | 63 | `batch-read.sh` | Launcher reference |
 | `plugin/emoji-widths.json` | 3 | `Run scripts/measure-emoji-widths.sh` | Note script is dev-only contribution tool |

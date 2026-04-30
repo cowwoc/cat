@@ -35,7 +35,7 @@ None - infrastructure/tech debt (completes port-display-scripts parent issue)
 3. **Register jlink launcher:** Add `"get-add-output:skills.GetAddOutput"` to the HANDLERS array in
    `client/build-jlink.sh`.
 4. **Update add/first-use.md:** Replace the two `render-add-complete.sh` invocations (lines 723 and
-   1437) with equivalent calls to `"${CLAUDE_PLUGIN_ROOT}/client/bin/get-add-output"`.
+   1437) with equivalent calls to `"${CLAUDE_PLUGIN_DATA}/client/bin/get-add-output"`.
 5. **Delete render-add-complete.sh:** Remove `plugin/scripts/render-add-complete.sh`.
 6. **Run tests:** Execute `mvn -f client/pom.xml test` to verify no regressions.
 

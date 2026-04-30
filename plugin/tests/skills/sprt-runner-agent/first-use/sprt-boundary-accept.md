@@ -8,14 +8,14 @@ Test the SPRT accept boundary by recording enough PASS observations to trigger t
 Step 1 — Create the output directory and initialize SPRT state for tc1:
 ```bash
 mkdir -p .cat/work
-"${CLAUDE_PLUGIN_ROOT}/client/bin/instruction-test-runner" init-sprt \
+"${CLAUDE_PLUGIN_DATA}/client/bin/instruction-test-runner" init-sprt \
   ".cat/work/sprt-state.json" '["tc1"]' "/dev/null" "claude-haiku-4-5"
 ```
 
 Step 2 — Record 27 PASS results for tc1 (log_ratio accumulates ~0.1112 per PASS; 27 * 0.1112 ≈ 3.002, crossing the ACCEPT boundary of 2.944):
 ```bash
 for i in $(seq 1 27); do
-  "${CLAUDE_PLUGIN_ROOT}/client/bin/instruction-test-runner" update-sprt \
+  "${CLAUDE_PLUGIN_DATA}/client/bin/instruction-test-runner" update-sprt \
     ".cat/work/sprt-state.json" "tc1" "true"
 done
 ```

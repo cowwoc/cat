@@ -134,7 +134,7 @@ This step performs all analysis needed to render a comprehensive proposal withou
 Read the `curiosity` value from effective config:
 
 ```bash
-CONFIG=$("${CLAUDE_PLUGIN_ROOT}/client/bin/get-config-output" effective)
+CONFIG=$("${CLAUDE_PLUGIN_DATA}/client/bin/get-config-output" effective)
 if [[ $? -ne 0 ]]; then
     echo "ERROR: Failed to read effective config" >&2
     exit 1
@@ -241,7 +241,7 @@ PROPOSAL_JSON=$(cat <<'PROPOSAL_EOF'
 PROPOSAL_EOF
 )
 
-${CLAUDE_PLUGIN_ROOT}/client/bin/get-output-agent proposal-issue "$PROPOSAL_JSON"
+${CLAUDE_PLUGIN_DATA}/client/bin/get-output-agent proposal-issue "$PROPOSAL_JSON"
 ```
 
 The output agent renders a comprehensive display box showing:
@@ -591,7 +591,7 @@ valid JSON string values. Escape any double quotes as `\"` and backslashes as `\
 argument. Index content is written to a temp file and does not need JSON escaping.
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/create-issue" --json '{
+"${CLAUDE_PLUGIN_DATA}/client/bin/create-issue" --json '{
   "major": "${BEST_FIT_VERSION%.*}",
   "minor": "${BEST_FIT_VERSION#*.}",
   "issue_name": "${PRIMARY_NAME}",
@@ -1490,4 +1490,4 @@ CLIENT_BIN="${CLAUDE_PROJECT_DIR}/client/target/jlink/bin"
 
 </success_criteria>
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-output" add`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-output" add`

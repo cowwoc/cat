@@ -30,7 +30,7 @@ GetConfigOutput.java exists with all box-building methods but:
 - `client/src/main/java/module-info.java` — Verify GetConfigOutput is exported (likely already is via package export)
 - `client/pom.xml` — Add `<launcher>` entry for `get-config-output` pointing to GetConfigOutput class
 - `plugin/skills/config/first-use.md` — Add `<output>` section with
-  `!${CLAUDE_PLUGIN_ROOT}/client/bin/get-config-output` preprocessor directive
+  `!${CLAUDE_PLUGIN_DATA}/client/bin/get-config-output` preprocessor directive
 - `client/src/test/java/io/github/cowwoc/cat/hooks/test/GetConfigOutputTest.java` — Add test for
   `getOutput(new String[0])` returning non-null output containing "CURRENT SETTINGS"
 
@@ -76,7 +76,7 @@ GetConfigOutput.java exists with all box-building methods but:
 
 3. **Add output preprocessor directive to first-use.md:**
    - Read `plugin/skills/config/first-use.md`
-   - Add `<output>` section with `!${CLAUDE_PLUGIN_ROOT}/client/bin/get-config-output` directive,
+   - Add `<output>` section with `!${CLAUDE_PLUGIN_DATA}/client/bin/get-config-output` directive,
      following the pattern used by other skills (e.g., status skill)
    - Place it before the `<process>` section
 

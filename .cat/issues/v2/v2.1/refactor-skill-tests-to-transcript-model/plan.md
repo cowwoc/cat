@@ -201,7 +201,7 @@ model: haiku
 user-invocable: false
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" skill-grader-agent "$0"`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-skill" skill-grader-agent "$0"`
 ```
 
 **`plugin/skills/skill-grader-agent/first-use.md`:**
@@ -251,7 +251,7 @@ Independent of all other jobs. Modify concept docs and create/remove skill files
   - Replace `test_cases` array entries table with `scenarios` object schema matching the new JSON structure
     (showing tier_1 and tier_2 keys with their sub-fields)
 - Create `plugin/skills/skill-grader-agent/SKILL.md` with frontmatter as shown in Research Findings and
-  `!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" skill-grader-agent "$0"`` directive
+  `!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-skill" skill-grader-agent "$0"`` directive
 - Create `plugin/skills/skill-grader-agent/first-use.md` by copying the body from
   `plugin/agents/skill-grader-agent.md` and adding the license header comment block
 - Remove `plugin/agents/skill-grader-agent.md` (content moved to skill)

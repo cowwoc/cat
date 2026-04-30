@@ -11,7 +11,7 @@ command separators by the shell, causing errors like `(eval):5: parse error near
 The `add` and `add-agent` SKILL.md files use unquoted `$ARGUMENTS` in their `!` backtick preprocessor directives:
 
 ```
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" add "${CLAUDE_SESSION_ID}" $ARGUMENTS`
+!`"${CLAUDE_PLUGIN_DATA}/client/bin/skill-loader" add "${CLAUDE_SESSION_ID}" $ARGUMENTS`
 ```
 
 When the shell evaluates this, unquoted `$ARGUMENTS` undergoes word-splitting AND newline interpretation. Multiline
@@ -33,12 +33,12 @@ None - usability improvement
 
 1. Quote `$ARGUMENTS` in `plugin/skills/add/SKILL.md`:
    ```
-   !`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" add "${CLAUDE_SESSION_ID}" "$ARGUMENTS"`
+   !`"${CLAUDE_PLUGIN_DATA}/client/bin/skill-loader" add "${CLAUDE_SESSION_ID}" "$ARGUMENTS"`
    ```
 
 2. Quote `$ARGUMENTS` in `plugin/skills/add-agent/SKILL.md`:
    ```
-   !`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" add-agent "$ARGUMENTS"`
+   !`"${CLAUDE_PLUGIN_DATA}/client/bin/skill-loader" add-agent "$ARGUMENTS"`
    ```
 
 3. Update `plugin/concepts/skill-loading.md` to document that skills accepting free-text descriptions should use

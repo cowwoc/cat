@@ -66,7 +66,7 @@ None
   disable-model-invocation: true
   ---
 
-  !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-skill" github-trigger-workflow-agent "${CLAUDE_SESSION_ID}" "$ARGUMENTS"`
+  !`"${CLAUDE_PLUGIN_DATA}/client/bin/get-skill" github-trigger-workflow-agent "${CLAUDE_SESSION_ID}" "$ARGUMENTS"`
   ```
 
   No license header (SKILL.md files are exempt).

@@ -55,7 +55,7 @@ Always search GitHub for existing issues before creating a new one. Use the `fee
 from the confirmed title:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/feedback" search "<keywords from title>"
+"${CLAUDE_PLUGIN_DATA}/client/bin/feedback" search "<keywords from title>"
 ```
 
 The script returns JSON with an `issues` array. Each element has `number`, `title`, `url`, and `state`.
@@ -99,7 +99,7 @@ Build the issue body with diagnostic context:
 Open the GitHub issue creation page in the user's browser using the `feedback` tool:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/feedback" open \
+"${CLAUDE_PLUGIN_DATA}/client/bin/feedback" open \
   "Title here" \
   "Body here" \
   "bug"

@@ -35,7 +35,7 @@ Before reading or relying on any behavioral configuration value (trust level, ca
 read the effective configuration using the `get-config-output` tool:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/get-config-output" effective
+"${CLAUDE_PLUGIN_DATA}/client/bin/get-config-output" effective
 ```
 
 This returns JSON with all defaults applied (missing entries filled in automatically):
@@ -146,7 +146,7 @@ when an active worktree exists. If a hook blocks your operation, switch to the `
 CURRENT_BRANCH=$(cd "${WORKTREE_PATH}" && git branch --show-current) || exit 1
 
 # Step 2: Read behavioral config values using the effective config tool
-CONFIG=$("${CLAUDE_PLUGIN_ROOT}/client/bin/get-config-output" effective)
+CONFIG=$("${CLAUDE_PLUGIN_DATA}/client/bin/get-config-output" effective)
 if [[ $? -ne 0 ]]; then
   echo "ERROR: Failed to read effective config: $CONFIG" >&2
   exit 1

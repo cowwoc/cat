@@ -460,7 +460,7 @@ PHASE3_TMP=$(mktemp -p .cat/work/tmp --suffix=.json)
 printf '%s' "$PHASE3_JSON" > "$PHASE3_TMP"
 
 # Run the record-learning tool — reads Phase 3 JSON from stdin, outputs recording result JSON to stdout
-RECORD_RESULT=$("${CLAUDE_PLUGIN_ROOT}/client/bin/record-learning" < "$PHASE3_TMP")
+RECORD_RESULT=$("${CLAUDE_PLUGIN_DATA}/client/bin/record-learning" < "$PHASE3_TMP")
 RECORD_EXIT=$?
 rm -f "$PHASE3_TMP"
 
