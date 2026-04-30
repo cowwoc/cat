@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/subagent-start"
+            "command": "${CLAUDE_PLUGIN_DATA}/client/bin/subagent-start"
           }
         ]
       }
@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh"
+            "command": "${CLAUDE_PLUGIN_DATA}/hooks/session-start.sh"
           }
         ]
       }
@@ -25,7 +25,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/user-prompt-submit"
+            "command": "${CLAUDE_PLUGIN_DATA}/client/bin/user-prompt-submit"
           }
         ]
       }
@@ -36,7 +36,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/pre-ask"
+            "command": "${CLAUDE_PLUGIN_DATA}/client/bin/pre-ask"
           }
         ]
       },
@@ -45,7 +45,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/pre-bash"
+            "command": "${CLAUDE_PLUGIN_DATA}/client/bin/pre-bash"
           }
         ]
       },
@@ -54,7 +54,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/pre-read"
+            "command": "${CLAUDE_PLUGIN_DATA}/client/bin/pre-read"
           }
         ]
       },
@@ -63,7 +63,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/pre-write"
+            "command": "${CLAUDE_PLUGIN_DATA}/client/bin/pre-write"
           }
         ]
       },
@@ -72,7 +72,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/pre-issue"
+            "command": "${CLAUDE_PLUGIN_DATA}/client/bin/pre-issue"
           }
         ]
       }
@@ -82,7 +82,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/post-tool-use"
+            "command": "${CLAUDE_PLUGIN_DATA}/client/bin/post-tool-use"
           }
         ]
       },
@@ -91,7 +91,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/post-bash"
+            "command": "${CLAUDE_PLUGIN_DATA}/client/bin/post-bash"
           }
         ]
       },
@@ -100,7 +100,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/post-read"
+            "command": "${CLAUDE_PLUGIN_DATA}/client/bin/post-read"
           }
         ]
       }
@@ -110,7 +110,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/post-tool-use-failure"
+            "command": "${CLAUDE_PLUGIN_DATA}/client/bin/post-tool-use-failure"
           }
         ]
       }
@@ -120,7 +120,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/enforce-status"
+            "command": "${CLAUDE_PLUGIN_DATA}/client/bin/enforce-status"
           }
         ]
       }
@@ -130,7 +130,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/session-end"
+            "command": "${CLAUDE_PLUGIN_DATA}/client/bin/session-end"
           }
         ]
       }
