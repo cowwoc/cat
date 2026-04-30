@@ -162,6 +162,7 @@ public class SessionStartHookTest
         requireThat(content, "content").contains("CLAUDE_SESSION_ID=\"" + resumedId + "\"");
         requireThat(content, "content").contains("CLAUDE_PROJECT_DIR=");
         requireThat(content, "content").contains("CLAUDE_PLUGIN_ROOT=");
+        requireThat(content, "content").contains("CLAUDE_PLUGIN_DATA=");
         // Startup dir must NOT have been written on resume
         requireThat(Files.exists(envFile), "startupEnvFileExists").isFalse();
       }

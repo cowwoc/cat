@@ -62,13 +62,15 @@ public abstract class AbstractClaudeHook extends AbstractClaudePluginScope imple
    * @param data the parsed hook JSON payload
    * @param projectPath the project's root directory
    * @param pluginRoot the Claude plugin root directory
+   * @param pluginData the Claude plugin data directory
    * @param claudeConfigPath the Claude config directory
    * @throws NullPointerException if any parameter is null
    * @throws IllegalArgumentException if the {@code session_id} field is missing, blank, or invalid
    */
-  protected AbstractClaudeHook(JsonNode data, Path projectPath, Path pluginRoot, Path claudeConfigPath)
+  protected AbstractClaudeHook(JsonNode data, Path projectPath, Path pluginRoot, Path pluginData,
+    Path claudeConfigPath)
   {
-    super(projectPath, pluginRoot, claudeConfigPath);
+    super(projectPath, pluginRoot, pluginData, claudeConfigPath);
     requireThat(data, "data").isNotNull();
     this.data = data;
     this.sessionId = validateSessionId(data);

@@ -215,7 +215,7 @@ public final class TestClaudeToolTest
   public void constructorRejectsNullSessionId()
   {
     Path validPath = Path.of("/tmp");
-    new MinimalClaudeTool(null, validPath, validPath, validPath);
+    new MinimalClaudeTool(null, validPath, validPath, validPath, validPath);
   }
 
   /**
@@ -226,7 +226,7 @@ public final class TestClaudeToolTest
   public void constructorRejectsBlankSessionId()
   {
     Path validPath = Path.of("/tmp");
-    new MinimalClaudeTool("   ", validPath, validPath, validPath);
+    new MinimalClaudeTool("   ", validPath, validPath, validPath, validPath);
   }
 
   /**
@@ -366,8 +366,8 @@ public final class TestClaudeToolTest
    * Minimal concrete subclass of AbstractClaudeTool for testing constructor parameter validation.
    * <p>
    * The sole purpose of this class is to expose the protected {@link AbstractClaudeTool} constructor
-   * so that validation of {@code sessionId}, {@code projectPath}, and {@code pluginRoot} can be
-   * verified directly.
+   * so that validation of {@code sessionId}, {@code projectPath}, {@code pluginRoot}, and
+   * {@code pluginData} can be verified directly.
    */
   private static final class MinimalClaudeTool extends AbstractClaudeTool
   {
@@ -377,11 +377,13 @@ public final class TestClaudeToolTest
      * @param sessionId       the session ID (validated by AbstractClaudeTool)
      * @param projectPath     the project path (validated by AbstractClaudeTool)
      * @param pluginRoot      the plugin root (validated by AbstractClaudeTool)
+     * @param pluginData      the plugin data path (validated by AbstractClaudeTool)
      * @param claudeConfigPath the Claude config directory path
      */
-    MinimalClaudeTool(String sessionId, Path projectPath, Path pluginRoot, Path claudeConfigPath)
+    MinimalClaudeTool(String sessionId, Path projectPath, Path pluginRoot, Path pluginData,
+      Path claudeConfigPath)
     {
-      super(sessionId, projectPath, pluginRoot, claudeConfigPath);
+      super(sessionId, projectPath, pluginRoot, pluginData, claudeConfigPath);
     }
 
     @Override

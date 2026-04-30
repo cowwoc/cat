@@ -20,9 +20,9 @@ import java.nio.file.StandardOpenOption;
 /**
  * Persists Claude environment variables into CLAUDE_ENV_FILE for Bash tool invocations.
  * <p>
- * Appends {@code CLAUDE_PROJECT_DIR}, {@code CLAUDE_PLUGIN_ROOT}, and
- * {@code CLAUDE_SESSION_ID} to the env file so they are available in all subsequent
- * Bash tool calls.
+ * Appends {@code CLAUDE_PROJECT_DIR}, {@code CLAUDE_PLUGIN_ROOT},
+ * {@code CLAUDE_PLUGIN_DATA}, and {@code CLAUDE_SESSION_ID} to the env file so they are
+ * available in all subsequent Bash tool calls.
  * <p>
  * Writes for new sessions (source="startup"), cleared sessions (source="clear"), and resumed sessions
  * (source="resume"). On compacted (source="compact") sessions, the env file already has the correct content.
@@ -115,10 +115,12 @@ public final class InjectEnv implements SessionStartHandler
   {
     String projectPath = scope.getProjectPath().toString();
     String pluginRoot = scope.getPluginRoot().toString();
+    String pluginData = scope.getPluginData().toString();
     validateEnvValue(projectPath, "CLAUDE_PROJECT_DIR");
     validateEnvValue(pluginRoot, "CLAUDE_PLUGIN_ROOT");
+    validateEnvValue(pluginData, "CLAUDE_PLUGIN_DATA");
     validateEnvValue(sessionId, "CLAUDE_SESSION_ID");
-    String content = buildEnvContent(projectPath, pluginRoot, sessionId);
+    String content = buildEnvContent(projectPath, pluginRoot, pluginData, sessionId);
     try
     {
       Path sessionEnvBase = envPath.getParent().getParent();
@@ -152,10 +154,12 @@ public final class InjectEnv implements SessionStartHandler
   {
     String projectPath = scope.getProjectPath().toString();
     String pluginRoot = scope.getPluginRoot().toString();
+    String pluginData = scope.getPluginData().toString();
     validateEnvValue(projectPath, "CLAUDE_PROJECT_DIR");
     validateEnvValue(pluginRoot, "CLAUDE_PLUGIN_ROOT");
+    validateEnvValue(pluginData, "CLAUDE_PLUGIN_DATA");
     validateEnvValue(sessionId, "CLAUDE_SESSION_ID");
-    String content = buildEnvContent(projectPath, pluginRoot, sessionId);
+    String content = buildEnvContent(projectPath, pluginRoot, pluginData, sessionId);
     try
     {
       Files.createDirectories(envPath.getParent());
@@ -173,13 +177,16 @@ public final class InjectEnv implements SessionStartHandler
    *
    * @param projectPath the value for CLAUDE_PROJECT_DIR
    * @param pluginRoot  the value for CLAUDE_PLUGIN_ROOT
+   * @param pluginData  the value for CLAUDE_PLUGIN_DATA
    * @param sessionId   the value for CLAUDE_SESSION_ID
    * @return the export statements to write
    */
-  private static String buildEnvContent(String projectPath, String pluginRoot, String sessionId)
+  private static String buildEnvContent(String projectPath, String pluginRoot, String pluginData,
+    String sessionId)
   {
     return "export CLAUDE_PROJECT_DIR=\"" + projectPath + "\"\n" +
       "export CLAUDE_PLUGIN_ROOT=\"" + pluginRoot + "\"\n" +
+      "export CLAUDE_PLUGIN_DATA=\"" + pluginData + "\"\n" +
       "export CLAUDE_SESSION_ID=\"" + sessionId + "\"\n";
   }
 
