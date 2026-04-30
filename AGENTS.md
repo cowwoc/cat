@@ -86,3 +86,4 @@ modifications — the fix may have introduced regressions or the test expectatio
 **must** read `.claude/rules/license-header.md` — it contains the exact header text, the copyright year (2026),
 file-type-specific comment syntax, and the complete list of exemptions. Some file types are exempt; check the
 exemptions before adding a header.
+
