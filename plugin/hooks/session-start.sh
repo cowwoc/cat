@@ -16,9 +16,6 @@
 
 set -euo pipefail
 
-# --- Configuration ---
-
-readonly JDK_SUBDIR="client"
 
 # --- Locking ---
 
@@ -131,17 +128,17 @@ get_platform() {
 # --- Runtime acquisition strategies ---
 
 check_runtime() {
-  local jdk_path="$1"
+  local plugin_data="$1"
 
-  [[ -d "$jdk_path" ]] || { debug "JDK directory does not exist: $jdk_path"; return 1; }
+  [[ -d "$plugin_data" ]] || { debug "JDK directory does not exist: $plugin_data"; return 1; }
 
-  local java_bin="${jdk_path}/bin/java"
+  local java_bin="${plugin_data}/bin/java"
   [[ -x "$java_bin" ]] || { debug "java binary not executable or missing: $java_bin"; return 1; }
 
   local java_err=""
   java_err=$("$java_bin" -version 2>&1) || { debug "java binary exists but failed to run: $java_bin: $java_err"; return 1; }
 
-  debug "JDK runtime verified at: $jdk_path"
+  debug "JDK runtime verified at: $plugin_data"
 }
 
 download_runtime() {
@@ -219,11 +216,11 @@ download_runtime() {
 # Acquire an exclusive lock using mkdir (atomic on POSIX filesystems).
 # Handles stale locks (mtime > 10 minutes) and waits up to 30s for active locks.
 # Sets LOCK_PATH to the lock directory path on success.
-# Usage: acquire_runtime_lock <jdk_path>
+# Usage: acquire_runtime_lock <plugin_data>
 # Returns: 0 if lock acquired, 1 if timeout
 acquire_runtime_lock() {
-  local jdk_path="$1"
-  local lock_path="${jdk_path}.lock"
+  local plugin_data="$1"
+  local lock_path="${plugin_data}.lock"
   local stale_threshold_seconds=600  # 10 minutes
   local timeout_seconds=30
   local elapsed=0
@@ -280,11 +277,11 @@ fi
 # --- Runtime setup with version comparison ---
 
 try_acquire_runtime() {
-  local jdk_path="$1"
+  local plugin_data="$1"
   local plugin_version="$2"
 
   # Fast path: check if the runtime is already valid (no lock needed for read-only check)
-  local version_file="${jdk_path}/VERSION"
+  local version_file="${plugin_data}/VERSION"
   if [[ -f "$version_file" ]]; then
     local local_version
     local_version=$(cat "$version_file")
@@ -293,7 +290,7 @@ try_acquire_runtime() {
     if [[ "$local_version" == "$plugin_version" ]]; then
       # Versions match - verify runtime works and return without locking
       debug "Versions match, checking existing runtime..."
-      if check_runtime "$jdk_path"; then
+      if check_runtime "$plugin_data"; then
         return 0
       fi
       debug "Existing runtime check failed despite version match, re-downloading..."
@@ -307,8 +304,8 @@ try_acquire_runtime() {
   # Slow path: download required. Acquire a lock to prevent concurrent downloads.
   # LOCK_PATH is a global (not local) so release_runtime_lock can access it from the trap.
   LOCK_PATH=""
-  if ! acquire_runtime_lock "$jdk_path"; then
-    fail "Timed out waiting for concurrent download lock: ${jdk_path}.lock"
+  if ! acquire_runtime_lock "$plugin_data"; then
+    fail "Timed out waiting for concurrent download lock: ${plugin_data}.lock"
     return 1
   fi
 
@@ -320,7 +317,7 @@ try_acquire_runtime() {
     local_version=$(cat "$version_file")
     if [[ "$local_version" == "$plugin_version" ]]; then
       debug "Another session completed the download while we waited, checking runtime..."
-      if check_runtime "$jdk_path"; then
+      if check_runtime "$plugin_data"; then
         return 0
       fi
       debug "Runtime check failed after lock re-check, re-downloading..."
@@ -328,8 +325,8 @@ try_acquire_runtime() {
   fi
 
   # Download the bundle matching the plugin version
-  if download_runtime "$jdk_path" "$plugin_version" && check_runtime "$jdk_path"; then
-    echo "${plugin_version}" > "${jdk_path}/VERSION"
+  if download_runtime "$plugin_data" "$plugin_version" && check_runtime "$plugin_data"; then
+    echo "${plugin_version}" > "${plugin_data}/VERSION"
     return 0
   fi
 
@@ -384,11 +381,11 @@ main() {
     debug "$line"
   done < <(env | sort)
 
-  local jdk_path="${plugin_root}/${JDK_SUBDIR}"
+  local plugin_data="${CLAUDE_PLUGIN_DATA}/client"
 
-  debug "JDK path: $jdk_path"
+  debug "JDK path: $plugin_data"
 
-  if try_acquire_runtime "$jdk_path" "$plugin_version"; then
+  if try_acquire_runtime "$plugin_data" "$plugin_version"; then
     debug "JDK runtime ready, invoking Java dispatcher"
 
     # Invoke the SessionStartHook Java dispatcher
@@ -396,7 +393,7 @@ main() {
     # retrospective reminders, session instructions, env injection, skill marker cleanup.
     # Pipe stdin directly to avoid buffering large input in memory.
     local java_exit=0
-    "$jdk_path/bin/java" \
+    "$plugin_data/bin/java" \
       -Xms16m -Xmx64m -XX:+UseSerialGC -XX:TieredStopAtLevel=1 \
       -m io.github.cowwoc.cat.client.claude/io.github.cowwoc.cat.claude.hook.SessionStartHook || java_exit=$?
 
