@@ -1,5 +1,5 @@
 ---
-description: Reinstall CAT plugin, build Java client, and install the jlink runtime image into the plugin cache
+description: Reinstall CAT plugin, build Java client, and install the jlink runtime image into CLAUDE_PLUGIN_DATA
 ---
 
 # Update Client
@@ -27,29 +27,17 @@ If the build fails, stop and report the error.
 
 ### 2. Reinstall Plugin and Install jlink Runtime
 
-First, ensure `CLAUDE_PLUGIN_ROOT` is set. If not set, derive it from plugin metadata files:
+First, ensure `CLAUDE_PLUGIN_DATA` is set:
 
 ```bash
-# Derive CLAUDE_PLUGIN_ROOT if not set
-if [[ -z "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
-  # Read publisher from marketplace.json (top-level "name" field)
-  PUBLISHER=$(grep -o '"name"[[:space:]]*:[[:space:]]*"[^"]*"' /workspace/.claude-plugin/marketplace.json | head -1 | sed 's/.*"\([^"]*\)"$/\1/')
-  
-  # Read plugin name and version from plugin.json
-  PLUGIN_NAME=$(grep -o '"name"[[:space:]]*:[[:space:]]*"[^"]*"' /workspace/plugin/.claude-plugin/plugin.json | sed 's/.*"\([^"]*\)"$/\1/')
-  PLUGIN_VERSION=$(grep -o '"version"[[:space:]]*:[[:space:]]*"[^"]*"' /workspace/plugin/.claude-plugin/plugin.json | sed 's/.*"\([^"]*\)"$/\1/')
-  
-  # Construct plugin install path: ${CLAUDE_CONFIG_DIR}/plugins/cache/<publisher>/<name>/<version>
-  export CLAUDE_PLUGIN_ROOT="${CLAUDE_CONFIG_DIR}/plugins/cache/${PUBLISHER}/${PLUGIN_NAME}/${PLUGIN_VERSION}"
-  
-  echo "Derived CLAUDE_PLUGIN_ROOT=${CLAUDE_PLUGIN_ROOT}"
+if [[ -z "${CLAUDE_PLUGIN_DATA:-}" ]]; then
+  echo "ERROR: CLAUDE_PLUGIN_DATA is not set"
+  exit 1
 fi
 ```
 
-If any read fails, stop and report the error.
-
 Then perform the plugin reinstall, jlink installation, and VERSION write in a **single Bash call** to avoid hook
-errors. Splitting these into separate calls risks hooks firing while the client directory is absent or incomplete.
+errors. Splitting these into separate calls risks hooks firing while the runtime directory is absent or incomplete.
 
 ```bash
 # Reinstall the plugin from the registered marketplace.
@@ -57,32 +45,28 @@ errors. Splitting these into separate calls risks hooks firing while the client 
 CLAUDECODE= claude plugin uninstall cat@cat 2>/dev/null ; true
 CLAUDECODE= claude plugin install cat@cat || { echo "ERROR: Plugin install failed"; exit 1; }
 
-# Replace the client directory with the newly built jlink image.
-rm -rf "${CLAUDE_PLUGIN_ROOT}/client"
-cp -r /workspace/client/target/jlink "${CLAUDE_PLUGIN_ROOT}/client"
+# Always replace the runtime directory in CLAUDE_PLUGIN_DATA with the newly built jlink image.
+# If a previous bundle exists, delete it first.
+rm -rf "${CLAUDE_PLUGIN_DATA}/client"
+cp -r /workspace/client/target/jlink "${CLAUDE_PLUGIN_DATA}/client"
 
 # Stamp the installed runtime with the plugin version.
-echo "2.1" > "${CLAUDE_PLUGIN_ROOT}/client/VERSION"
+echo "2.1" > "${CLAUDE_PLUGIN_DATA}/client/VERSION"
 ```
 
 If any command fails, stop and report the error.
 
-### 2a. Install to Development Location
+### 2a. Install to Development Data Path
 
-The startup hook may have `CLAUDE_PLUGIN_ROOT=/workspace/plugin` pointing to the source plugin directory.
+When running from source, hooks read runtime assets from `CLAUDE_PLUGIN_DATA`.
 Install the runtime there so development sessions can start without needing a GitHub release.
 
-Detect development mode by checking for the source structure (not environment variables, which may not be
-set when hooks fail):
-
 ```bash
-# Install to development location if source structure exists
-if [[ -f /workspace/plugin/.claude-plugin/plugin.json && -d /workspace/client/target/jlink ]]; then
-  rm -rf /workspace/plugin/client
-  cp -r /workspace/client/target/jlink /workspace/plugin/client
-  echo "2.1" > /workspace/plugin/client/VERSION
-  echo "Installed runtime to development location: /workspace/plugin/client/"
-fi
+# Replace the development runtime bundle in CLAUDE_PLUGIN_DATA.
+rm -rf "${CLAUDE_PLUGIN_DATA}/client"
+cp -r /workspace/client/target/jlink "${CLAUDE_PLUGIN_DATA}/client"
+echo "2.1" > "${CLAUDE_PLUGIN_DATA}/client/VERSION"
+echo "Installed runtime to development data path: ${CLAUDE_PLUGIN_DATA}/client/"
 ```
 
 ### 2b. Overlay Worktree Plugin Files (worktree only)
@@ -101,5 +85,5 @@ echo "Overlaid worktree plugin files from ${CLAUDE_PROJECT_DIR}/plugin/"
 Confirm the jlink runtime works:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/java" -version
+"${CLAUDE_PLUGIN_DATA}/client/bin/java" -version
 ```

@@ -378,6 +378,12 @@ main() {
 
   debug "Plugin version: $plugin_version"
 
+  # Output startup diagnostics: non-env variables first, then env variables
+  debug ""
+  while IFS= read -r line; do
+    debug "$line"
+  done < <(env | sort)
+
   local jdk_path="${plugin_root}/${JDK_SUBDIR}"
 
   debug "JDK path: $jdk_path"
