@@ -1,4 +1,4 @@
 {
   "status" : "open",
-  "issues" : [ "use-cache-fix-for-claude-runner", "remove-developer-rules-from-plugin-rules", "fix-sprt-test-model-id", "fix-claude-runner-native-binary", "remove-cache-fix-integration", "fix-giving-up-false-positives" ]
+  "issues" : [ "use-cache-fix-for-claude-runner", "remove-developer-rules-from-plugin-rules", "fix-sprt-test-model-id", "fix-claude-runner-native-binary", "remove-cache-fix-integration", "fix-giving-up-false-positives", "split-runtime-rules-directories" ]
 }
