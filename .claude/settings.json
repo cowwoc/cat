@@ -3,11 +3,11 @@
     "DISABLE_AUTOUPDATER": "1"
   },
   "permissions": {
-    "additionalDirectories": ["~/.cat"]
+    "additionalDirectories": [ "~/.cat" ]
   },
   "sandbox": {
     "filesystem": {
-      "allowWrite": ["~/.cat"]
+      "allowWrite": [ "~/.cat" ]
     }
   },
   "attribution": {
@@ -16,7 +16,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "/workspace/plugin/client/bin/statusline-command"
+    "command": "/home/node/.claude/plugins/data/cat-cat/client/bin/statusline-command"
   },
   "hooks": {}
 }
