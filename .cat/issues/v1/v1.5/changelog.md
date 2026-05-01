@@ -20,14 +20,14 @@ improvements.
 - **Duplicate Task Resolution**: Automatic detection and handling of duplicate or obsolete tasks
 - **Escalation Requirements**: When prevention rules already exist for a mistake type, escalation is required for
   pattern-level analysis
-- **Main Agent Boundaries (M063)**: Main agent is orchestrator only - all code implementation must be delegated to
+- **Main Agent Boundaries**: Main agent is orchestrator only - all code implementation must be delegated to
   subagents
 
 ## Bugfixes
 
-- **STATE.md Verification (M085)**: Approval gates now verify STATE.md is committed before presentation
-- **Lock Denial Guidance (M084)**: Clear instructions when task lock acquisition fails
-- **Lock Expiration (M065)**: Removed automatic expiration - requires explicit user cleanup
+- **STATE.md Verification**: Approval gates now verify STATE.md is committed before presentation
+- **Lock Denial Guidance**: Clear instructions when task lock acquisition fails
+- **Lock Expiration**: Removed automatic expiration - requires explicit user cleanup
 - **Plugin Paths**: Replaced hardcoded paths with `CLAUDE_PLUGIN_ROOT` for portability
 
 ## Improvements
@@ -43,7 +43,7 @@ improvements.
 
 - Contributing section clarifying project scope and plugin boundaries
 - STATE.md template expanded with optional sections
-- Parser test anti-patterns (M062)
+- Parser test anti-patterns
 - Spawn-subagent updated to use Task tool
 
 ---

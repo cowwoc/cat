@@ -43,13 +43,13 @@ send to the subagent and the assertions to evaluate against the output.
           "assertion_id": "TC1_sem_1",
           "type": "semantic",
           "description": "agent invokes the git-squash skill rather than manual git commands",
-          "instruction": "Check whether the response directs the agent to use cat:git-squash-agent rather than manually running git commands such as git reset --soft or git rebase -i.",
+          "instruction": "Check whether the response directs the agent to use cat:git-squash rather than manually running git commands such as git reset --soft or git rebase -i.",
           "expected": true
         },
         {
           "assertion_id": "TC1_tool_1",
           "type": "tool_use",
-          "description": "agent invoked the Skill tool to call git-squash-agent",
+          "description": "agent invoked the Skill tool to call git-squash",
           "tool": "Skill",
           "expected": true
         }

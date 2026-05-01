@@ -92,14 +92,14 @@ public class CuriosityLevelTest
   }
 
   /**
-   * Verifies that the SPRT test scenario file for the instruction-builder-agent curiosity gate uses
+   * Verifies that the SPRT test scenario file for the instruction-builder curiosity gate uses
    * {@code curiosity} terminology, not the legacy {@code effort} terminology.
    */
   @Test
   public void sprtTestScenarioUsesCuriosityTerminology() throws IOException
   {
     Path sprtFile = Paths.get(System.getProperty("user.dir"), "..",
-      "plugin/tests/skills/instruction-builder-agent/first-use/" +
+      "plugin/tests/skills/instruction-builder/first-use/" +
         "step43-sprt-runs-when-curiosity-not-low.md").normalize();
     requireThat(sprtFile.toFile().exists(), "sprtFile").isTrue();
     String content = Files.readString(sprtFile);

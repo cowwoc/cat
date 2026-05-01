@@ -15,12 +15,10 @@ import io.github.cowwoc.cat.claude.hook.bash.BlockMainRebase;
 import io.github.cowwoc.cat.claude.hook.bash.BlockMergeCommits;
 import io.github.cowwoc.cat.claude.hook.bash.BlockReflogDestruction;
 import io.github.cowwoc.cat.claude.hook.bash.BlockUnauthorizedMergeCleanup;
-import io.github.cowwoc.cat.claude.hook.bash.BlockUnsafeRemoval;
 import io.github.cowwoc.cat.claude.hook.bash.BlockWorktreeIsolationViolation;
 import io.github.cowwoc.cat.claude.hook.bash.BlockWrongBranchCommit;
 import io.github.cowwoc.cat.claude.hook.bash.ComputeBoxLines;
 import io.github.cowwoc.cat.claude.hook.bash.RemindGitSquash;
-import io.github.cowwoc.cat.claude.hook.bash.RequireSkillForCommand;
 import io.github.cowwoc.cat.claude.hook.bash.ValidateCommitType;
 import io.github.cowwoc.cat.claude.hook.bash.ValidateGitFilterBranch;
 import io.github.cowwoc.cat.claude.hook.bash.ValidateGitOperations;
@@ -71,7 +69,6 @@ public final class PreToolUseHook implements HookHandler
       new BlockMainRebase(scope),
       new BlockMergeCommits(),
       new BlockReflogDestruction(),
-      new BlockUnsafeRemoval(scope),
       new BlockUnauthorizedMergeCleanup(scope),
       new BlockWorktreeIsolationViolation(scope),
       new BlockWrongBranchCommit(),
@@ -82,8 +79,7 @@ public final class PreToolUseHook implements HookHandler
       new ValidateGitOperations(),
       new WarnFileExtraction(),
       new WarnMainWorkspaceCommit(),
-      new WarnPipedWithoutTee(),
-      new RequireSkillForCommand(scope));
+      new WarnPipedWithoutTee());
   }
 
   /**

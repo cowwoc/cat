@@ -4,7 +4,7 @@
 
 `plugin/skills/git-rewrite-history-agent/first-use.md` documents BFG Repo-Cleaner (`bfg.jar`) as
 the history rewriting tool. BFG's `--delete-files` flag matches by **filename only** (not by path),
-causing accidental deletion of all files with matching names across all directories (M562). For
+causing accidental deletion of all files with matching names across all directories. For
 example, `--delete-files PLAN.md` removes every `PLAN.md` in the repository, not just the root-level
 one.
 
@@ -98,8 +98,7 @@ Match the existing jlink bundle platforms:
     detection and on-demand binary download."
   - **Why git filter-repo section**: Replace "Why BFG Repo-Cleaner" section:
     - Path-based filtering: `--path X --invert-paths` targets specific files/directories precisely
-    - No filename collision risk: BFG's `--delete-files` removed ALL files with matching names
-      (M562); git filter-repo is path-exact
+    - No filename collision risk: BFG's `--delete-files` removed ALL files with matching names; git filter-repo is path-exact
     - Actively maintained and recommended by git itself
     - Python-free fallback: standalone binary downloaded on first use if Python is not installed
   - **Installation / first-use pattern**:

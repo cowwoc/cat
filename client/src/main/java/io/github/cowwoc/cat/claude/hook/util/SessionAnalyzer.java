@@ -56,7 +56,7 @@ public final class SessionAnalyzer
   private static final int MIN_SCRIPT_EXTRACTION_OCCURRENCES = 2;
   private static final int MIN_SCRIPT_EXTRACTION_LENGTH = 2;
   private static final Set<String> CAT_PHASE_SKILLS = Set.of(
-    "work-prepare-agent", "work-implement-agent", "work-review-agent", "work-merge-agent");
+    "work-prepare", "work-implement", "work-review", "work-merge");
   private static final Pattern AGENT_ID_PATTERN = Pattern.compile("\"agentId\"\\s*:\\s*\"([^\"]+)\"");
   private static final Pattern SAFE_AGENT_ID_PATTERN = Pattern.compile("^[A-Za-z0-9_-]+$");
   private static final Pattern ERROR_PATTERN = Pattern.compile(
@@ -1027,7 +1027,7 @@ public final class SessionAnalyzer
    * Returns a short phase name (e.g., {@code "work-prepare"}) for recognized CAT workflow skills,
    * or {@code null} if the skill is not a phase marker.
    *
-   * @param skill the skill identifier (e.g., {@code "cat:work-prepare-agent"})
+   * @param skill the skill identifier (e.g., {@code "cat:work-prepare"})
    * @return the phase name, or {@code null} if not a phase marker
    */
   private static String extractPhaseName(String skill)

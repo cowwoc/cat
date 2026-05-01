@@ -44,7 +44,7 @@ public final class PostReadHook implements HookHandler
   public PostReadHook(ClaudeHook scope)
   {
     requireThat(scope, "scope").isNotNull();
-    this.handlers = List.of(scope.getDetectSequentialTools());
+    this.handlers = List.of();
   }
 
   /**

@@ -22,7 +22,7 @@ Code's subagent architecture:
 | Subagent Capability | Available? | Evidence |
 |---------------------|------------|----------|
 | Spawn nested subagents (Task tool) | **NO** | Task tool not exposed to subagents |
-| Invoke skills dynamically (Skill tool) | **NO** | Skill tool not available to subagents. Use `get-skill` via Bash instead |
+| Invoke skills dynamically (Skill tool) | **YES** | Skill tool is available to subagents and loads skill instructions synchronously |
 | Read/Write/Edit files | YES | Standard file tools available |
 | Run bash commands | YES | Bash tool available |
 | Web search/fetch | YES | Available to subagents |
@@ -31,22 +31,22 @@ Code's subagent architecture:
 
 ```yaml
 technically_impossible_check:
-  instruction_required: "Invoke /cat:{skill-name} for each item"
-  capability_needed: "Skill tool"
-  available_to_subagent: false
-  conclusion: "IMPOSSIBLE - instruction cannot be executed as written"
-  root_cause: "architectural_flaw"
-  fix_type: "Redesign workflow to invoke skills at main agent level"
+ instruction_required: "Spawn reviewer subagents for each finding"
+ capability_needed: "Task tool"
+ available_to_subagent: false
+ conclusion: "IMPOSSIBLE - subagents cannot spawn subagents (Task tool not available in subagent context), so instruction cannot be executed as written"
+ root_cause: "architectural_flaw"
+ fix_type: "Redesign workflow so the main agent spawns reviewers directly"
 ```
 
 **Common patterns of impossible instructions:**
 
 | Instruction Pattern | Why Impossible | Correct Design |
 |--------------------|----------------|----------------|
-| "Subagent must invoke /cat:skill" | Skill tool unavailable | Subagent uses get-skill via Bash, or main agent invokes skill before delegation |
+| "Subagent must invoke /cat:skill" | Wrong only if the skill name is invalid or missing | Use Skill tool directly with the correct skill name |
 | "Spawn reviewer subagents" | Task tool unavailable | Main agent spawns reviewers directly |
 | "Delegate to sub-subagent" | Max depth is 1 | Flatten to single delegation level |
-| "Use parallel-execute skill" | Skill tool unavailable | Subagent uses get-skill, or main agent handles parallelization |
+| "Use parallel-execute skill" | Wrong only if the skill is unavailable in this environment | Use Skill tool if available, otherwise use equivalent direct tool calls |
 
 **When this check identifies impossible instructions:**
 
@@ -67,7 +67,7 @@ Agents defined in `plugin/agents/` can specify skills to preload:
 ```yaml
 ---
 name: work-merge
-description: Merge phase for /cat:work-agent
+description: Merge phase for /cat:work
 tools: Read, Bash, Grep, Glob
 model: haiku
 skills:
@@ -93,15 +93,15 @@ subagent receives the knowledge without needing to invoke the Skill tool.
 
 ```yaml
 subagent_skills_analysis:
-  subagent_type_used: "general-purpose"
-  domain_knowledge_needed: ["git-squash", "git-rebase"]
-  skill_invocation_attempted: true
-  skill_invocation_succeeded: false  # Skill tool not available; use get-skill via Bash
+ subagent_type_used: "general-purpose"
+ domain_knowledge_needed: ["git-squash", "git-rebase"]
+ skill_invocation_attempted: true
+ skill_invocation_succeeded: false # Skill name invalid/missing, or invocation omitted
 
-  recommendation:
-    action: "Use get-skill to load skill content dynamically"
-    skills_to_load: ["skill-1", "skill-2"]
-    rationale: "Subagent receives skill listing at startup and can load skills via get-skill"
+ recommendation:
+ action: "Invoke the required skill via Skill tool before proceeding"
+ skills_to_load: ["skill-1", "skill-2"]
+ rationale: "Subagent can load skill instructions directly via Skill tool"
 ```
 
 **Prevention pattern for skill preloading issues:**

@@ -28,8 +28,6 @@ module io.github.cowwoc.cat.client.claude
   exports io.github.cowwoc.cat.claude.hook.failure;
   exports io.github.cowwoc.cat.claude.hook.licensing;
   exports io.github.cowwoc.cat.claude.hook.prompt;
-  exports io.github.cowwoc.cat.claude.hook.read.post;
-  exports io.github.cowwoc.cat.claude.hook.read.pre;
   exports io.github.cowwoc.cat.claude.hook.session;
   exports io.github.cowwoc.cat.claude.hook.skills;
   exports io.github.cowwoc.cat.claude.hook.task;

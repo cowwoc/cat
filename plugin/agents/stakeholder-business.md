@@ -3,7 +3,7 @@ name: stakeholder-business
 description: "Business stakeholder for code review and research. Focus: customer value, competitive positioning, market readiness, go-to-market strategy"
 tools: Read, Grep, Glob, WebSearch, WebFetch
 model: haiku
-skills: [cat:stakeholder-common-agent]
+skills: [cat:stakeholder-common]
 ---
 
 # Stakeholder: Business
@@ -152,7 +152,7 @@ Before performing any analysis, verify that the prompt contains a "## Working Di
         "severity": "CRITICAL",
         "location": "reviewer prompt",
         "explanation": "No working directory provided in reviewer prompt. Cannot determine which branch to read files from.",
-        "recommendation": "Update stakeholder-review-agent SKILL.md to include WORKTREE_PATH in reviewer prompts."
+        "recommendation": "Update stakeholder-review SKILL.md to include WORKTREE_PATH in reviewer prompts."
       }
     ]
   }

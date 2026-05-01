@@ -3,7 +3,7 @@ name: stakeholder-deployment
 description: "DevOps/Release Engineer stakeholder for code review and research. Focus: build systems, CI/CD pipelines, deployment processes"
 tools: Read, Grep, Glob, WebSearch, WebFetch
 model: haiku
-skills: [cat:stakeholder-common-agent]
+skills: [cat:stakeholder-common]
 ---
 
 # Stakeholder: Deployment
@@ -104,7 +104,7 @@ Before performing any analysis, verify that the prompt contains a "## Working Di
         "severity": "CRITICAL",
         "location": "reviewer prompt",
         "explanation": "No working directory provided in reviewer prompt. Cannot determine which branch to read files from.",
-        "recommendation": "Update stakeholder-review-agent SKILL.md to include WORKTREE_PATH in reviewer prompts."
+        "recommendation": "Update stakeholder-review SKILL.md to include WORKTREE_PATH in reviewer prompts."
       }
     ]
   }

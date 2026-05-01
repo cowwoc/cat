@@ -38,4 +38,4 @@ priming_check:
 | Status examples like "SUCCESS" | Agent reports success without verification | Use `{status}` |
 | Concrete token counts | Agent fabricates similar counts | Use `{count}` |
 
-**Reference:** See `/cat:instruction-builder-agent` § "Priming Prevention Checklist" for complete patterns.
+**Reference:** See `/cat:instruction-builder` § "Priming Prevention Checklist" for complete patterns.

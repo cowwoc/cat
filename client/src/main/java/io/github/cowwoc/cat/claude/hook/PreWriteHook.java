@@ -17,7 +17,6 @@ import io.github.cowwoc.cat.claude.hook.write.EnforcePluginFileIsolation;
 import io.github.cowwoc.cat.claude.hook.write.EnforceWorktreePathIsolation;
 import io.github.cowwoc.cat.claude.hook.write.StateSchemaValidator;
 import io.github.cowwoc.cat.claude.hook.write.ValidateSkillTestFormat;
-import io.github.cowwoc.cat.claude.hook.write.WarnBaseBranchEdit;
 import tools.jackson.databind.JsonNode;
 
 import org.slf4j.LoggerFactory;
@@ -49,7 +48,7 @@ public final class PreWriteHook implements HookHandler
   /**
    * Creates a new PreWriteHook instance with default handlers.
    * <p>
-   * Handlers are checked in order. EnforceWorkflowCompletion warns first, then WarnBaseBranchEdit
+   * Handlers are checked in order.
    * warns (non-blocking), followed by blocking handlers (StateSchemaValidator,
    * BlockGitconfigFileWrite, ValidateSkillTestFormat, EnforcePluginFileIsolation,
    * EnforceWorktreePathIsolation, InjectPathRestrictedSkillListing,
@@ -63,7 +62,6 @@ public final class PreWriteHook implements HookHandler
     requireThat(scope, "scope").isNotNull();
     this.handlers = List.of(
       new EnforceWorkflowCompletion(),
-      new WarnBaseBranchEdit(scope),
       new StateSchemaValidator(scope),
       new BlockGitconfigFileWrite(),
       new ValidateSkillTestFormat(),
@@ -132,16 +130,14 @@ public final class PreWriteHook implements HookHandler
 
     JsonNode toolInput = scope.getToolInput();
     String sessionId = scope.getSessionId();
-    String catAgentId = scope.getCatAgentId(sessionId);
-    requireThat(catAgentId, "catAgentId").isNotBlank();
-    List<String> warnings = new ArrayList<>();
+        List<String> warnings = new ArrayList<>();
 
     StringBuilder additionalContextAccumulator = new StringBuilder();
     for (FileWriteHandler handler : this.handlers)
     {
       try
       {
-        FileWriteHandler.Result result = handler.check(toolInput, catAgentId);
+        FileWriteHandler.Result result = handler.check(toolInput, sessionId);
         if (result.blocked())
         {
           String jsonOutput;

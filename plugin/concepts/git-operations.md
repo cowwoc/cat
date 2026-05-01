@@ -6,10 +6,10 @@ CAT provides git skills that handle edge cases correctly. Prefer these over raw 
 
 | Operation | Use Skill | Instead of |
 |-----------|-----------|------------|
-| Merge issue to base | `/cat:git-merge-linear-agent` | `git checkout && git merge` |
-| Amend commits | `/cat:git-amend-agent` | `git commit --amend` |
-| Squash commits | `/cat:git-squash-agent` | `git rebase -i` |
-| Rebase | `/cat:git-rebase-agent` | `git rebase` |
+| Merge issue to base | `/cat:git-merge-linear` | `git checkout && git merge` |
+| Amend commits | `/cat:git-amend` | `git commit --amend` |
+| Squash commits | `/cat:git-squash` | `git rebase -i` |
+| Rebase | `/cat:git-rebase` | `git rebase` |
 
 **Why skills are preferred:**
 - Handle pre-flight checks (divergence, dirty state)
@@ -71,7 +71,7 @@ being removed. With the single-call `cd` pattern this is generally safe, but ver
 git worktree remove "${HOME}/.cat/worktrees/issue"
 ```
 
-See `/cat:safe-rm-agent` for detailed guidance on safe directory removal.
+See `/cat:rm` for detailed guidance on safe directory removal.
 
 ## User Rebase Requests
 
@@ -93,4 +93,4 @@ git push . HEAD:{target-branch}
 # 3. Cleanup worktree and branch
 ```
 
-Or use `/cat:git-merge-linear-agent` which does all of this correctly.
+Or use `/cat:git-merge-linear` which does all of this correctly.

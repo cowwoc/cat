@@ -41,31 +41,31 @@ public final class RemindGitSquash implements BashHandler
       return Result.block("""
         **BLOCKED: Manual git reset --soft is prohibited.**
 
-        Use /cat:git-squash-agent instead. Manual reset --soft:
+        Use /cat:git-squash instead. Manual reset --soft:
         - Captures working directory state (can include stale files)
         - Bypasses commit message validation
         - Bypasses commit-tree safety mechanism
 
-        The git-squash-agent skill:
+        The git-squash skill:
         - Uses commit-tree to avoid working directory state capture
         - Validates commit message format
         - Creates automatic backups before squashing
 
-        To squash commits, use: /cat:git-squash-agent""");
+        To squash commits, use: /cat:git-squash""");
     }
 
     // Check for git rebase -i (interactive)
     if (INTERACTIVE_REBASE_PATTERN.matcher(command).find())
     {
       return Result.warn("""
-        SUGGESTION: Use /cat:git-squash-agent instead of git rebase -i
+        SUGGESTION: Use /cat:git-squash instead of git rebase -i
 
-        The /cat:git-squash-agent skill provides:
+        The /cat:git-squash skill provides:
         - Automatic backup before squashing
         - Conflict recovery guidance
         - Proper commit message formatting
 
-        To squash commits: /cat:git-squash-agent""");
+        To squash commits: /cat:git-squash""");
     }
 
     return Result.allow();

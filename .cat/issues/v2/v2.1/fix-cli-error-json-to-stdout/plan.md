@@ -8,7 +8,7 @@ violations across the codebase.
 ## Background
 CLI tools like `work-prepare`, `git-squash`, `git-rebase`, etc. are invoked as subprocesses by skills. The calling skill
 parses JSON from stdout. When error JSON is written to stderr instead, the skill receives empty stdout and treats it as
-"no result" — losing the structured error message and potentially triggering incorrect recovery behavior (M542).
+"no result" — losing the structured error message and potentially triggering incorrect recovery behavior.
 
 Additionally, exit code semantics matter for Claude Code hook integration:
 - **Exit code 0** tells Claude Code to parse stdout as JSON.

@@ -1,6 +1,6 @@
 # Adversarial Protocol for Instruction Hardening
 
-This document defines the unified adversarial TDD loop used by instruction-builder-agent and tdd-implementation-agent
+This document defines the unified adversarial TDD loop used by instruction-builder and tdd-implementation
 to harden instructions and test suites through alternating red-team and blue-team review cycles.
 
 ## Overview

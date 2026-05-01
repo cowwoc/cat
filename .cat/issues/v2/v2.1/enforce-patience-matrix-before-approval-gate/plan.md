@@ -10,7 +10,7 @@ skipping deferred concerns. Two priming sources:
 2. **Framing bias:** The option is labeled "Skip all (no action needed)", framing inaction as the safe
    and easy choice
 
-Root cause (M498): The AskUserQuestion option ordering and labeling in Step 6 Part B primes agents
+Root cause: The AskUserQuestion option ordering and labeling in Step 6 Part B primes agents
 toward recommending "Skip all" instead of presenting options neutrally.
 
 ## Parent Requirements

@@ -7,8 +7,6 @@
 package io.github.cowwoc.cat.claude.hook;
 
 import io.github.cowwoc.cat.claude.hook.prompt.UserIssues;
-import io.github.cowwoc.cat.claude.hook.read.post.DetectSequentialTools;
-import io.github.cowwoc.cat.claude.hook.read.pre.PredictBatchOpportunity;
 import io.github.cowwoc.cat.claude.hook.skills.TerminalType;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.dataformat.yaml.YAMLMapper;
@@ -66,22 +64,6 @@ public interface JvmScope extends AutoCloseable
    * @throws IllegalStateException if this scope is closed
    */
   String getTimezone();
-
-  /**
-   * Returns the sequential tool detection handler.
-   *
-   * @return the handler
-   * @throws IllegalStateException if this scope is closed
-   */
-  DetectSequentialTools getDetectSequentialTools();
-
-  /**
-   * Returns the batch opportunity prediction handler.
-   *
-   * @return the handler
-   * @throws IllegalStateException if this scope is closed
-   */
-  PredictBatchOpportunity getPredictBatchOpportunity();
 
   /**
    * Returns the user issues prompt handler.

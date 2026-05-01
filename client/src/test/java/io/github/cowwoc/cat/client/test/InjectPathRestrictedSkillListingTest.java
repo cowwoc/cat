@@ -261,7 +261,7 @@ public final class InjectPathRestrictedSkillListingTest
       Path pluginsDir = tempDir.resolve("plugins");
       Files.createDirectories(pluginsDir);
       Path catPluginDir = tempDir.resolve("cat-plugin");
-      Path skillDir = catPluginDir.resolve("skills/help-agent");
+      Path skillDir = catPluginDir.resolve("skills/help");
       Files.createDirectories(skillDir);
       Files.writeString(skillDir.resolve("SKILL.md"), """
         ---

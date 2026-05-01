@@ -1,7 +1,7 @@
 # Plan: move-directory-before-write-convention-to-plugin
 
 ## Goal
-Move the "directory before file write" convention (M470) from `.claude/rules/common.md` (project-only)
+Move the "directory before file write" convention from `.claude/rules/common.md` (project-only)
 to `InjectSessionInstructions.java` (end-user plugin) so it applies to all CAT users.
 
 ## Satisfies

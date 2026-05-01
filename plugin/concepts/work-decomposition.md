@@ -106,7 +106,7 @@ alone**. Use job splitting to manage context; use decomposition only when:
 - Work spans **genuinely disjoint subsystems** where no shared file or interface connects them
 
 After decomposition, the sub-issues are organized into jobs following the same dependency analysis rules
-described above. See `plugin/skills/decompose-issue-agent/first-use.md` for the full decomposition workflow.
+described above. See `plugin/skills/decompose-issue/first-use.md` for the full decomposition workflow.
 
 ## Worktree Sharing and Push Coordination
 

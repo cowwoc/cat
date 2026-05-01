@@ -24,7 +24,7 @@ Implement a two-phase hook enforcement mechanism that detects when the main agen
 
 **Stop-hook-only enforcement:** Only fires when agent tries to terminate the turn. Does not prevent the agent from spawning wrong subagents or skipping to wrong phases via Skill. Retained only as a safety net alongside PreIssueHook blocking.
 
-**Context-injection warning only (PostToolUse):** Documentation-level enforcement already failed (M506). A warning that the agent can ignore is not sufficient. Hard block required.
+**Context-injection warning only (PostToolUse):** Documentation-level enforcement already failed. A warning that the agent can ignore is not sufficient. Hard block required.
 
 **Per-subagent-type detection in PostToolUse:** Checking `subagent_type` in the Agent tool output to limit flag to work-execute is fragile (subagent type not reliably available in tool result). Using presence of active worktree lock is sufficient and accurate.
 

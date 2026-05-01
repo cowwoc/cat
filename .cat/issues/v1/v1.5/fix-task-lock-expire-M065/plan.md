@@ -1,7 +1,7 @@
 # Plan: fix-task-lock-expire-M065
 
 ## Objective
-prevent waiting for task lock to expire (M065)
+prevent waiting for task lock to expire
 
 ## Details
 When lock is held by different session, the old guidance suggested:

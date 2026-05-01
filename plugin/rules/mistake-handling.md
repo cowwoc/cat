@@ -7,10 +7,10 @@ subAgents: []
 
 **Mistakes include**: Protocol violations, rework, build failures, tool misuse, logical errors
 
-**Invocation**: `/cat:learn-agent` with description of the mistake
+**Invocation**: `/cat:learn` with description of the mistake
 
 **Ordering requirement** (ABSOLUTE — no exceptions):
-1. INVOKE `/cat:learn-agent` FIRST — before any fix attempt
+1. INVOKE `/cat:learn` FIRST — before any fix attempt
 2. Complete the full RCA workflow
 3. THEN address the immediate issue
 

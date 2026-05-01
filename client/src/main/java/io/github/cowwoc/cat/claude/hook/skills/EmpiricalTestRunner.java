@@ -394,7 +394,7 @@ public final class EmpiricalTestRunner
    * sessionsPath/
    *   {sessionId}.jsonl              — main agent session
    *   {sessionId}/subagents/
-   *     agent-{agentId}.jsonl        — subagent sessions
+   *     agent-<id>.jsonl        — subagent sessions
    * </pre>
    *
    * @param sessionsPath the path to the sessions directory

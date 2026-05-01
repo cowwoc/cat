@@ -131,7 +131,7 @@ public final class SkillDiscovery
    * {@link io.github.cowwoc.cat.claude.hook.session.InjectPathRestrictedSkillListing}
    * when a matching file is accessed.
    * Each entry uses the format {@code "- name: description"}, matching Claude Code's native skill listing.
-   * The header references {@code get-skill} for loading individual skill instructions.
+   * The header lists model-invocable skills available to the agent.
    *
    * @param scope the hook scope providing config path, project path, and JSON mapper
    * @return the formatted session-start skills listing, or an empty string if no qualifying skills are found
@@ -149,7 +149,7 @@ public final class SkillDiscovery
    * {@link io.github.cowwoc.cat.claude.hook.session.InjectPathRestrictedSkillListing}
    * when a matching file is accessed.
    * Each entry uses the format {@code "- name: description"}, matching Claude Code's native skill listing.
-   * The header references {@code get-skill} for loading individual skill instructions.
+   * The header lists model-invocable skills available to the agent.
    *
    * @param scope the tool scope providing config path, project path, and JSON mapper
    * @return the formatted session-start skills listing, or an empty string if no qualifying skills are found
@@ -180,9 +180,7 @@ public final class SkillDiscovery
     if (sessionEntries.isEmpty())
       return "";
     StringBuilder sb = new StringBuilder(512);
-    sb.append("The following skills are available. To load a skill's instructions, run via Bash:\n").
-      append("  \"${CLAUDE_PLUGIN_DATA}/client/bin/get-skill\" " +
-        "\"<skill-name>\" \"<cat-agent-id>\"\n\n");
+    sb.append("The following skills are available.\n\n");
     appendSkillEntries(sb, sessionEntries);
     return sb.toString();
   }

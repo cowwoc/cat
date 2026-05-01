@@ -37,10 +37,9 @@ public final class EnforceWorkflowCompletion implements FileWriteHandler
   }
 
   @Override
-  public Result check(JsonNode toolInput, String catAgentId)
+  public Result check(JsonNode toolInput, String sessionId)
   {
     requireThat(toolInput, "toolInput").isNotNull();
-    requireThat(catAgentId, "catAgentId").isNotBlank();
 
     JsonNode filePathNode = toolInput.get("file_path");
     String filePath;

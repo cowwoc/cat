@@ -26,8 +26,7 @@ None
 - **Risk:** MEDIUM
 - **Scope:** 1 file (retrospective-agent/SKILL.md)
 - **Description:** Add explicit agent instructions to reset counter after echoing output.
-- **Rejected because:** Skills can be summarized or abbreviated by agents. The same failure mode
-  (M513) would recur with a different agent. Binary-level enforcement is more reliable.
+- **Rejected because:** Skills can be summarized or abbreviated by agents. The same failure mode would recur with a different agent. Binary-level enforcement is more reliable.
 
 ## Risk Assessment
 

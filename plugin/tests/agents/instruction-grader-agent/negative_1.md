@@ -8,4 +8,4 @@ List the 3 most recent git commits in this repository with their one-line messag
 
 ## Assertions
 
-1. The Skill tool was NOT invoked with skill instruction-builder-agent
+1. The Skill tool was NOT invoked with skill instruction-builder

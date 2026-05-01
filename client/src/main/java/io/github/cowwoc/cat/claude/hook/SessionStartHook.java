@@ -11,9 +11,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import io.github.cowwoc.cat.claude.hook.session.CheckRetrospectiveDue;
 import io.github.cowwoc.cat.claude.hook.session.CheckUpdateAvailable;
 import io.github.cowwoc.cat.claude.hook.session.CheckDataMigration;
-import io.github.cowwoc.cat.claude.hook.session.ClearAgentMarkers;
 import io.github.cowwoc.cat.claude.hook.session.EchoSessionId;
-import io.github.cowwoc.cat.claude.hook.session.InjectCatAgentId;
 import io.github.cowwoc.cat.claude.hook.session.InjectMainAgentRules;
 import io.github.cowwoc.cat.claude.hook.session.InjectCriticalThinking;
 import io.github.cowwoc.cat.claude.hook.session.InjectEnv;
@@ -37,7 +35,6 @@ import java.util.List;
  */
 public final class SessionStartHook implements HookHandler
 {
-  private final ClaudeHook scope;
   private final List<SessionStartHandler> handlers;
 
   /**
@@ -72,7 +69,6 @@ public final class SessionStartHook implements HookHandler
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(handlers, "handlers").isNotNull();
-    this.scope = scope;
     this.handlers = handlers;
   }
 
@@ -132,13 +128,6 @@ public final class SessionStartHook implements HookHandler
       throw new IllegalArgumentException(
         "session_id is blank. SessionStart hook requires a valid session ID.");
     }
-
-    String clearWarning = new ClearAgentMarkers(this.scope).clearMainAgentMarker(sessionId);
-    if (!clearWarning.isEmpty())
-      warnings.add(clearWarning);
-
-    String catAgentIdContext = InjectCatAgentId.getMainAgentContext(sessionId);
-    combinedContext.append(catAgentIdContext);
 
     for (SessionStartHandler handler : handlers)
     {

@@ -1,8 +1,3 @@
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # Learn From Mistakes: Orchestrator
 
 **Architecture:** Main agent spawns a subagent that executes phases 1-3 (Investigate, Analyze, Prevent). The
@@ -25,22 +20,20 @@ Investigate the root cause of a mistake and implement prevention so the mistake 
 ## Step 1: Extract Investigation Context
 
 Derive keywords from the mistake description (e.g., command names, file names, skill names mentioned in the mistake).
-Then invoke the extraction skill with those keywords:
+Then invoke the extractor directly with those keywords:
 
-```
-Skill tool:
-  skill: "cat:extract-investigation-context-agent"
-  args: "keyword1 keyword2 keyword3"
+```bash
+"${CLAUDE_PLUGIN_DATA}/client/bin/extract-investigation-context" "keyword1 keyword2 keyword3" 2>/dev/null || \
+  echo '{"error":"pre-extraction unavailable - jlink binary not built"}'
 ```
 
-The skill runs the extractor invisibly via preprocessing and returns the pre-extracted JSON. Capture this output as
-`PRE_EXTRACTED_CONTEXT`.
+Capture the returned JSON as `PRE_EXTRACTED_CONTEXT`.
 
 ## Step 2: Decide Foreground vs Background
 
 Determine execution mode before spawning the subagent:
 
-- **BACKGROUND:** Learn was triggered mid-operation (while working on an issue via `/cat:work-agent`) AND the learn results
+- **BACKGROUND:** Learn was triggered mid-operation (while working on an issue via `/cat:work`) AND the learn results
   (recording to mistakes JSON, updating counter, committing prevention) do not affect the current issue's remaining git
   operations. Note: `record-learning` commits to the active worktree branch (not the main workspace), so the counter
   increment and prevention commit are isolated to the worktree until merge. Background is safe mid-operation as long as
@@ -157,8 +150,8 @@ display this recovery message and stop waiting:
 ```
 The background learn task appears to be stalled (no notification received after 150 seconds).
 Options:
-1. Check task logs: Invoke /cat:get-subagent-status-agent to inspect background task status
-2. Manual recovery: Invoke /cat:learn-agent in foreground mode to re-run the analysis
+1. Check task logs and background task output for status
+2. Manual recovery: Invoke /cat:learn in foreground mode to re-run the analysis
 ```
 Timeout enforcement example (MANDATORY in code):
 ```bash
@@ -581,13 +574,13 @@ protected. A follow-up issue must be created so the prevention is not lost.
 2. Display to user: "Prevention requires code changes that cannot be committed on protected branch. Creating
    follow-up issue."
 
-3. Invoke `/cat:add-agent {suggested_title}` where `{suggested_title}` is the one-line summary from
-   `issue_creation_info.suggested_title`. When cat:add-agent prompts for more detail, provide
+3. Invoke `/cat:add {suggested_title}` where `{suggested_title}` is the one-line summary from
+   `issue_creation_info.suggested_title`. When cat:add prompts for more detail, provide
    `suggested_description` as the description and `suggested_acceptance_criteria` as the acceptance criteria.
 
-   If `cat:add-agent` fails or returns an error, display:
+   If `cat:add` fails or returns an error, display:
    ```
-   Error: Failed to create follow-up issue via cat:add-agent.
+   Error: Failed to create follow-up issue via cat:add.
    Ask Claude to add the issue manually with the following values:
    Title: {suggested_title}
    Description: {suggested_description}
@@ -620,7 +613,7 @@ If `retrospective_trigger` is true, use AskUserQuestion to offer user choice:
 question: "Retrospective threshold exceeded. Run retrospective now?"
 options:
   - label: "Run now"
-    action: "Invoke /cat:retrospective-agent immediately"
+    action: "Invoke /cat:retrospective immediately"
   - label: "Later"
     action: "Inform user to ask Claude to run a retrospective when ready"
   - label: "Skip this cycle"
@@ -659,10 +652,9 @@ Key anti-patterns to avoid:
 ## Related Skills
 
 - `cat:retrospective` - Aggregate analysis triggered by this skill
-- `cat:token-report-agent` - Provides data for context analysis
-- `cat:decompose-issue-agent` - Implements earlier decomposition
-- `cat:get-subagent-status` - Catches context issues early
-- `cat:collect-results-agent` - Preserves progress before intervention
+- `cat:token-report` - Provides data for context analysis
+- `cat:decompose-issue` - Implements earlier decomposition
+- `cat:collect-results` - Preserves progress before intervention
 
 ## Error Handling
 

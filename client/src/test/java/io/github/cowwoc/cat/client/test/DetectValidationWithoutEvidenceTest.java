@@ -309,10 +309,10 @@ public final class DetectValidationWithoutEvidenceTest
   }
 
   /**
-   * Verifies that a cat:verify-implementation-agent skill invocation counts as evidence.
+   * Verifies that a cat:verify-implementation skill invocation counts as evidence.
    * <p>
    * This is the primary regression test for the false-positive bug: the main agent invokes
-   * cat:verify-implementation-agent (with -agent suffix) and then summarizes results. The hook
+   * cat:verify-implementation (with -agent suffix) and then summarizes results. The hook
    * must recognize the -agent suffix variant as valid evidence.
    */
   @Test
@@ -325,7 +325,7 @@ public final class DetectValidationWithoutEvidenceTest
       String sessionId = "test-" + UUID.randomUUID();
       String skillInvocationLine =
         "{\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"name\":\"Skill\"," +
-          "\"input\":{\"skill\":\"cat:verify-implementation-agent\",\"args\":\"\"}}]}";
+          "\"input\":{\"skill\":\"cat:verify-implementation\",\"args\":\"\"}}]}";
       String claimLine =
         "{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":" +
           "\"Verification complete: all acceptance criteria met.\"}]}";
@@ -358,7 +358,7 @@ public final class DetectValidationWithoutEvidenceTest
   }
 
   /**
-   * Verifies that a cat:compare-docs-agent skill invocation counts as evidence.
+   * Verifies that a cat:compare-docs skill invocation counts as evidence.
    */
   @Test
   public void compareDocsAgentSkillCountsAsEvidence() throws IOException
@@ -370,7 +370,7 @@ public final class DetectValidationWithoutEvidenceTest
       String sessionId = "test-" + UUID.randomUUID();
       String skillInvocationLine =
         "{\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"name\":\"Skill\"," +
-          "\"input\":{\"skill\":\"cat:compare-docs-agent\",\"args\":\"doc1.md doc2.md\"}}]}";
+          "\"input\":{\"skill\":\"cat:compare-docs\",\"args\":\"doc1.md doc2.md\"}}]}";
       String claimLine =
         "{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":" +
           "\"The documents are semantically equivalent.\"}]}";

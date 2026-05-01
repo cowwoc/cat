@@ -87,4 +87,4 @@ and when to use main agent vs subagent execution.
 - Confirm delegation references are valid paths
 
 ### Step 5: Commit changes
-- Single commit: "config: add main-agent-only restrictions to spawning skills (M429)"
+- Single commit: "config: add main-agent-only restrictions to spawning skills"

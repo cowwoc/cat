@@ -1507,14 +1507,14 @@ public final class EmpiricalTestRunnerTest
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
       ClaudeRunner launcher = new ClaudeRunner(scope))
     {
-      List<String> command = launcher.buildCommand("haiku", "", "sprt-runner-agent");
+      List<String> command = launcher.buildCommand("haiku", "", "sprt-runner");
 
       requireThat(command.getFirst(), "claudeBinary").isNotBlank();
       requireThat(command.get(1), "firstArg").isEqualTo("-p");
       requireThat(command, "command").contains("--agent");
       int flagIndex = command.indexOf("--agent");
       requireThat(flagIndex, "flagIndex").isGreaterThanOrEqualTo(0);
-      requireThat(command.get(flagIndex + 1), "agentTypeValue").isEqualTo("sprt-runner-agent");
+      requireThat(command.get(flagIndex + 1), "agentTypeValue").isEqualTo("sprt-runner");
       requireThat(command.contains("--append-system-prompt"), "noSystemPromptFlag").isFalse();
     }
     finally

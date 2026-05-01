@@ -137,14 +137,14 @@ public final class DetectFailures implements BashHandler
         Failure detected (exit code: %d)
         ----------------------------------------
 
-        MANDATORY: Invoke cat:learn-agent to record this mistake and implement prevention.
+        MANDATORY: Invoke cat:learn to record this mistake and implement prevention.
         Do NOT continue to the next step without invoking learn first.
 
         Steps:
         1. Fix the immediate issue
-        2. Invoke cat:learn-agent to record the mistake and prevent recurrence
+        2. Invoke cat:learn to record the mistake and prevent recurrence
 
-        See: /cat:learn-agent""", exitCode));
+        See: /cat:learn""", exitCode));
     }
 
     return Result.allow();

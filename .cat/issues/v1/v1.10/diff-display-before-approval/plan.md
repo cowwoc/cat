@@ -1,7 +1,7 @@
 # Plan: diff-display-before-approval
 
 ## Objective
-show diff before approval gate (M160)
+show diff before approval gate
 
 ## Details
 Updated work.md approval_gate step to require showing full diff content

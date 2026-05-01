@@ -1,7 +1,7 @@
 ---
 name: instruction-builder-implement-agent
 description: >
-  Implementation specialist for instruction-builder-agent. Receives instruction content and a target
+  Implementation specialist for instruction-builder. Receives instruction content and a target
   file path, writes the content to disk, stages, and commits. Keeps file-write I/O out of the main
   agent's context window.
 model: claude-sonnet-4-5

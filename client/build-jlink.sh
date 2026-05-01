@@ -29,6 +29,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$SCRIPT_DIR"
+# Force Maven Wrapper to resolve .mvn from client/ even when invoked by external launchers.
+export MAVEN_PROJECTBASEDIR="$PROJECT_DIR"
 TARGET_DIR="${PROJECT_DIR}/target"
 STAGING_DIR="${TARGET_DIR}/jlink-staging"
 PATCH_DIR="${TARGET_DIR}/module-patches"
@@ -85,8 +87,6 @@ declare -a HANDLERS=(
   "register-hook:util.HookRegistrar"
   "root-cause-analyzer:util.RootCauseAnalyzer"
   "validate-status-alignment:util.StatusAlignmentValidator"
-  "get-skill:util.GetSkill"
-  "get-file:util.GetFile"
   "feedback:util.Feedback"
   "get-add-output:skills.GetAddOutput"
   "statusline-command:util.StatuslineCommand"
@@ -98,7 +98,6 @@ declare -a HANDLERS=(
   "instruction-test-runner:skills.InstructionTestRunner"
   "verify-defer-plan-generation:util.VerifyDeferPlanGeneration"
   "write-and-commit:util.WriteAndCommit"
-  "get-subagent-status:skills.GetSubagentStatusOutput"
   "extract-turns:skills.ExtractTurnsContent"
   "update-skill-description:skills.UpdateSkillDescription"
 )

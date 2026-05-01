@@ -20,20 +20,20 @@ Comprehensive display standardization, test infrastructure, and workflow stabili
 ## Configuration
 
 - New settings schema: `trust`, `verify`, `curiosity`, `patience` replace previous options
-- Worktree isolation protection (M101) prevents commits to wrong worktree
-- Task lock checking before offering tasks (M097)
-- Hook to block direct lock file deletion (M096)
+- Worktree isolation protection prevents commits to wrong worktree
+- Task lock checking before offering tasks
+- Hook to block direct lock file deletion
 - Commit message guidance: don't list modified files (redundant with diff)
 - Require failing test cases for bugfix tasks
 - Strengthen token measurement requirements (A017)
 
 ## Bugfixes
 
-- Fix bold rendering in display templates (M125)
+- Fix bold rendering in display templates
 - Fix box formatting for display standard compliance
-- Fix subagent token measurement session ID issue (M109)
-- Fix inconsistent task path patterns (M108)
-- Fix parse_error false positives when command succeeds (M100)
+- Fix subagent token measurement session ID issue
+- Fix inconsistent task path patterns
+- Fix parse_error false positives when command succeeds
 - Fix HEREDOC message extraction in commit type validation
 - Fix emoji display width calculations in box templates
 - Fix docs vs config validation for Claude-facing files

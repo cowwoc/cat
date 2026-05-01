@@ -1,6 +1,6 @@
 ---
 name: work-squash
-description: Squash phase for /cat:work-agent - rebases issue branch, squashes commits, verifies index.json closure.
+description: Squash phase for /cat:work - rebases issue branch, squashes commits, verifies index.json closure.
 model: haiku
 ---
 
@@ -133,11 +133,10 @@ echo "INDEX_UPDATED=${INDEX_UPDATED}"
 If `INDEX_UPDATED=true`, amend the last commit to include the updated `index.json`:
 
 ```
-Skill("cat:git-amend-agent", args="${CAT_AGENT_ID} --no-edit")
+Skill("cat:git-amend", args="--no-edit")
 ```
 
-The `--no-edit` flag preserves the existing commit message. Pass `CAT_AGENT_ID` from the inputs provided
-by the parent.
+The `--no-edit` flag preserves the existing commit message.
 
 If `INDEX_UPDATED=false` (branch is not a CAT issue, `index.json` is absent, or status is already
 closed), skip the amend step.
@@ -179,7 +178,7 @@ Where `PRIMARY_COMMIT_MESSAGE` is the message passed in from the parent (the pri
 
 Do NOT use generic messages like "squash commit", "squash commits", or "combined work".
 
-**After squashing, re-apply planning commits (M586):**
+**After squashing, re-apply planning commits:**
 
 If any planning-only commits were identified above, the squash collapsed them into the implementation commit.
 Re-create them as separate commits on top of the squashed implementation commit:
@@ -200,7 +199,7 @@ done
 ```
 
 This restores the squash-by-topic structure: one implementation commit followed by any planning commits, so
-Step 9 (`cat:git-squash-agent`) can verify the correct topic grouping at the approval gate.
+Step 9 (`cat:git-squash`) can verify the correct topic grouping at the approval gate.
 
 **If squash fails (non-zero exit code):**
 

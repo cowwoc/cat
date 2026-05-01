@@ -3,7 +3,7 @@ name: stakeholder-legal
 description: "Legal Counsel stakeholder for code review and research. Focus: licensing, regulatory compliance, intellectual property, data privacy"
 tools: Read, Grep, Glob, WebSearch, WebFetch
 model: haiku
-skills: [cat:stakeholder-common-agent]
+skills: [cat:stakeholder-common]
 ---
 
 # Stakeholder: Legal
@@ -139,7 +139,7 @@ Before performing any analysis, verify that the prompt contains a "## Working Di
         "severity": "CRITICAL",
         "location": "reviewer prompt",
         "explanation": "No working directory provided in reviewer prompt. Cannot determine which branch to read files from.",
-        "recommendation": "Update stakeholder-review-agent SKILL.md to include WORKTREE_PATH in reviewer prompts."
+        "recommendation": "Update stakeholder-review SKILL.md to include WORKTREE_PATH in reviewer prompts."
       }
     ]
   }

@@ -17,6 +17,7 @@ import io.github.cowwoc.cat.claude.tool.ClaudeTool;
 import io.github.cowwoc.cat.claude.tool.MainClaudeTool;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.JsonNodeType;
 import tools.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,7 +26,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Creates CAT issue directory structure with index.json, plan.md, and git commit.
@@ -112,6 +117,7 @@ public final class IssueCreator
 
     String issueDirPath = Config.CAT_DIR_NAME + "/issues/v" + major + "/v" + major + "." + minor + "/" + issueName;
     Path issuePath = workingDirectory.resolve(issueDirPath);
+    List<Path> dependentIndexFiles = getDependentIndexFiles(data);
 
     if (!Files.exists(issuePath.getParent()))
     {
@@ -130,8 +136,18 @@ public final class IssueCreator
     Path planFile = issuePath.resolve("plan.md");
     Files.writeString(planFile, planContent, StandardCharsets.UTF_8);
 
+    updateDependentIssues(issueName, dependentIndexFiles, workingDirectory);
+
     String issueRelPath = workingDirectory.relativize(issuePath).toString();
     runGit(workingDirectory, "add", issueRelPath);
+    for (Path dependentIndexFile : dependentIndexFiles)
+    {
+      Path normalized = dependentIndexFile.normalize();
+      if (!normalized.isAbsolute())
+        normalized = workingDirectory.resolve(normalized).normalize();
+      Path relativePath = workingDirectory.relativize(normalized);
+      runGit(workingDirectory, "add", relativePath.toString());
+    }
 
     String commitMessage = "planning: add issue " + issueName + " to " + major + "." + minor +
       "\n\n" + commitDesc;
@@ -141,6 +157,60 @@ public final class IssueCreator
     result.put("success", true);
     result.put("path", issuePath.toString());
     return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result);
+  }
+
+  private List<Path> getDependentIndexFiles(ObjectNode data)
+  {
+    JsonNode node = data.get("dependent_index_files");
+    if (node == null || node.isNull())
+      return List.of();
+    if (!node.isArray())
+      throw new IllegalArgumentException("dependent_index_files must be an array");
+    List<Path> paths = new ArrayList<>();
+    for (JsonNode pathNode : node)
+    {
+      if (pathNode.getNodeType() != JsonNodeType.STRING)
+        throw new IllegalArgumentException("dependent_index_files must contain only strings");
+      String pathText = pathNode.asString();
+      if (pathText.isBlank())
+        continue;
+      paths.add(Path.of(pathText));
+    }
+    return paths;
+  }
+
+  private void updateDependentIssues(String issueName, List<Path> dependentIndexFiles,
+    Path workingDirectory) throws IOException
+  {
+    for (Path dependentIndexFile : dependentIndexFiles)
+    {
+      Path normalized = dependentIndexFile.normalize();
+      if (!normalized.isAbsolute())
+        normalized = workingDirectory.resolve(normalized).normalize();
+      if (!Files.exists(normalized))
+        throw new IOException("Dependent index file does not exist: " + normalized);
+      String content = Files.readString(normalized, StandardCharsets.UTF_8);
+      JsonNode root = mapper.readTree(content);
+      if (!(root instanceof ObjectNode object))
+        throw new IOException("Dependent index file must be a JSON object: " + normalized);
+      JsonNode dependenciesNode = object.get("dependencies");
+      Set<String> dependencies = new LinkedHashSet<>();
+      if (dependenciesNode != null && dependenciesNode.isArray())
+      {
+        for (JsonNode dependency : dependenciesNode)
+        {
+          if (dependency.getNodeType() == JsonNodeType.STRING)
+            dependencies.add(dependency.asString());
+        }
+      }
+      dependencies.add(issueName);
+      tools.jackson.databind.node.ArrayNode dependenciesArray = object.putArray("dependencies");
+      for (String dependency : dependencies)
+      {
+        dependenciesArray.add(dependency);
+      }
+      Files.writeString(normalized, mapper.writeValueAsString(object), StandardCharsets.UTF_8);
+    }
   }
 
   /**

@@ -254,10 +254,10 @@ public final class BlockUnauthorizedMergeCleanupTest
       requireThat(result.reason(), "reason").contains("Step 7");
       requireThat(result.reason(), "reason").contains("Step 8");
       requireThat(result.reason(), "reason").contains("Step 9");
-      requireThat(result.reason(), "reason").contains("cat:git-squash-agent");
-      requireThat(result.reason(), "reason").contains("cat:git-rebase-agent");
+      requireThat(result.reason(), "reason").contains("cat:git-squash");
+      requireThat(result.reason(), "reason").contains("cat:git-rebase");
       requireThat(result.reason(), "reason").contains("AskUserQuestion");
-      requireThat(result.reason(), "reason").contains("cat:work-merge-agent");
+      requireThat(result.reason(), "reason").contains("cat:work-merge");
 
       // Verify correct ordering: Step 7 before Step 8 before Step 9
       String reason = result.reason();
@@ -268,12 +268,12 @@ public final class BlockUnauthorizedMergeCleanupTest
       requireThat(posStep8 < posStep9, "step8BeforeStep9").isTrue();
 
       // Verify squash agent is between Step 7 and Step 8
-      int squashPos = reason.indexOf("cat:git-squash-agent");
+      int squashPos = reason.indexOf("cat:git-squash");
       requireThat(posStep7 < squashPos && squashPos < posStep8,
         "squashAgentBetweenStep7AndStep8").isTrue();
 
       // Verify rebase agent is between Step 8 and Step 9
-      int rebasePos = reason.indexOf("cat:git-rebase-agent");
+      int rebasePos = reason.indexOf("cat:git-rebase");
       requireThat(posStep8 < rebasePos && rebasePos < posStep9,
         "rebaseAgentBetweenStep8AndStep9").isTrue();
     }

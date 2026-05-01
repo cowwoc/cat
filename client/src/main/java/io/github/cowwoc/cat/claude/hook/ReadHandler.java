@@ -101,10 +101,10 @@ public interface ReadHandler
    * @param toolName the tool name (Read, Glob, Grep, WebFetch, WebSearch)
    * @param toolInput the tool input JSON
    * @param toolResult the tool result JSON (null for PreToolUse)
-   * @param catAgentId the CAT agent ID (sessionId for main agent, sessionId/subagents/agentXxx for subagents)
+   * @param sessionId the session ID
    * @return the check result
-   * @throws NullPointerException if {@code toolName}, {@code toolInput}, or {@code catAgentId} are null
-   * @throws IllegalArgumentException if {@code catAgentId} is blank
+   * @throws NullPointerException if {@code toolName}, {@code toolInput}, or {@code sessionId} are null
+   * @throws IllegalArgumentException if {@code sessionId} is blank
    */
-  Result check(String toolName, JsonNode toolInput, JsonNode toolResult, String catAgentId);
+  Result check(String toolName, JsonNode toolInput, JsonNode toolResult, String sessionId);
 }

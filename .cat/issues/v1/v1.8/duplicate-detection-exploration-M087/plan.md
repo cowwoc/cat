@@ -1,7 +1,7 @@
 # Plan: duplicate-detection-exploration-M087
 
 ## Objective
-add duplicate detection to exploration step (M087)
+add duplicate detection to exploration step
 
 ## Details
 Exploration subagent now checks for pre-existing functionality FIRST:

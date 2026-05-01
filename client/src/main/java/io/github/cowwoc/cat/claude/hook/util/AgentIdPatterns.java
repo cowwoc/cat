@@ -9,7 +9,7 @@ package io.github.cowwoc.cat.claude.hook.util;
 import java.util.regex.Pattern;
 
 /**
- * Shared patterns for matching CAT agent IDs.
+ * Shared patterns for matching agent IDs.
  * <p>
  * Main agents are identified by a standard UUID. Subagents are identified by a path of the form
  * {@code {uuid}/subagents/{identifier}}. These patterns are used to detect and skip agent ID prefixes

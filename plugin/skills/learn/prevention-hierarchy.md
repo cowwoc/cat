@@ -71,7 +71,7 @@ wrong behavior and rely on the hook catching it. Fix the source.
 | Similar documentation already exists | Documentation already failed | Escalate to hook or code_fix |
 | Mistake category is `protocol_violation` | Protocol was documented but violated | Escalate to hook enforcement |
 | This is a recurrence (`recurrence_of` is set) | Previous prevention failed | Escalate to stronger level |
-| prevention_type would be `documentation` (level 7) | Weakest level, often ineffective | Consider hook (level 2) or validation (level 3) (exception: when `priming_found: true` and source is modifiable — see learn-agent Step 5b) |
+| prevention_type would be `documentation` (level 7) | Weakest level, often ineffective | Consider hook (level 2) or validation (level 3) (exception: when `priming_found: true` and source is modifiable — see learn Step 5b) |
 
 ## Prevention Quality Checklist
 

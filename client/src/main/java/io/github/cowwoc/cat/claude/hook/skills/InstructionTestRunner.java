@@ -52,7 +52,7 @@ import java.util.stream.Stream;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Incremental instruction-test driver for instruction-builder-agent.
+ * Incremental instruction-test driver for instruction-builder.
  * <p>
  * Dispatches subcommands: extract-units, extract-model, extract-test-dir, detect-changes,
  * map-units, persist-artifacts, init-sprt, update-sprt, check-boundary, smoke-status, merge-results,
@@ -455,7 +455,7 @@ public final class InstructionTestRunner
 
     // Compute skill directory for test case copy destination
     Path skillDir = absSkillPath.getParent();
-    // Extract skill name from path (e.g., "grep-and-read-agent")
+    // Extract skill name from path (e.g., "grep-and-read")
     String skillName = skillDir.getFileName().toString();
 
     // Copy each .md test case file into the skill's test directory (first-use/)

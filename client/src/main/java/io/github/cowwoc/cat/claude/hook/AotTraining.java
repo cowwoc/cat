@@ -14,7 +14,6 @@ import io.github.cowwoc.cat.claude.hook.skills.GetNextIssueOutput;
 import io.github.cowwoc.cat.claude.hook.skills.GetDiffOutput;
 import io.github.cowwoc.cat.claude.hook.skills.GetOutput;
 import io.github.cowwoc.cat.claude.hook.skills.GetStatusOutput;
-import io.github.cowwoc.cat.claude.hook.skills.GetSubagentStatusOutput;
 import io.github.cowwoc.cat.claude.hook.skills.ProgressBanner;
 import io.github.cowwoc.cat.claude.hook.skills.VerifyAudit;
 import io.github.cowwoc.cat.claude.hook.util.BatchReader;
@@ -22,8 +21,6 @@ import io.github.cowwoc.cat.claude.hook.util.Feedback;
 import io.github.cowwoc.cat.claude.hook.util.HookRegistrar;
 import io.github.cowwoc.cat.claude.hook.util.MarkdownWrapper;
 import io.github.cowwoc.cat.claude.hook.util.SessionAnalyzer;
-import io.github.cowwoc.cat.claude.hook.util.GetFile;
-import io.github.cowwoc.cat.claude.hook.util.GetSkill;
 import io.github.cowwoc.cat.claude.hook.util.StatusAlignmentValidator;
 import io.github.cowwoc.cat.claude.hook.util.WorkPrepare;
 
@@ -133,11 +130,8 @@ public final class AotTraining
     referenceClass(WorkPrepare.class);
     referenceClass(MarkdownWrapper.class);
     referenceClass(BatchReader.class);
-    referenceClass(GetSubagentStatusOutput.class);
     referenceClass(HookRegistrar.class);
     referenceClass(StatusAlignmentValidator.class);
-    referenceClass(GetSkill.class);
-    referenceClass(GetFile.class);
     referenceClass(Feedback.class);
     return 0;
   }

@@ -515,7 +515,7 @@ public final class BlockWrongBranchCommitTest
    * Verifies that committing on the shared sanitized branch ({issue-branch-name}-sanitized) is allowed
    * even when inside a CAT issue worktree.
    * <p>
-   * The instruction-builder-agent Step 6 pipeline creates an orphan branch named
+   * The instruction-builder Step 6 pipeline creates an orphan branch named
    * {@code {issue-branch-name}-sanitized} (e.g. {@code 2.1-my-issue-sanitized}) and commits stripped
    * test-case files to it. Per-runner branches ({@code {issue-branch-name}-tcN-rM}) are then
    * branched from this sanitized branch. This branch name differs from the worktree's expected issue

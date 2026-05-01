@@ -17,7 +17,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 /**
  * Prepares a skill comparison prompt by reading two skill files and formatting a rubric-based
- * comparison request for the skill-comparison-agent subagent.
+ * comparison request.
  * <p>
  * Accepts two or three arguments:
  * <ol>
@@ -43,8 +43,8 @@ public final class SkillComparison implements SkillOutput
   /**
    * Generates a formatted skill comparison prompt.
    * <p>
-   * Reads both skill files and produces a structured comparison request for the
-   * skill-comparison-agent to score against the default rubric.
+   * Reads both skill files and produces a structured comparison request to score
+   * against the default rubric.
    *
    * @param args two or three arguments: [skill-a-path, skill-b-path] or
    *             [skill-a-path, skill-b-path, goal]

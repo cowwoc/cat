@@ -399,7 +399,7 @@ action: "STOP. Escalate to hook, validation, or code_fix instead."
 If the mistake involves a **skill file**, use instruction-builder's Priming Prevention Checklist to analyze it:
 
 ```
-/cat:instruction-builder-agent analyze {path-to-skill}
+/cat:instruction-builder analyze {path-to-skill}
 ```
 
 The checklist covers:
@@ -417,21 +417,21 @@ The checklist covers:
 | Are there "for reference only" sections? | Move to preprocessing |
 | Could agent do the task after reading this doc? | Too much exposed |
 
-**Reference:** See `/cat:instruction-builder-agent` § "Priming Prevention Checklist" for detailed patterns.
+**Reference:** See `/cat:instruction-builder` § "Priming Prevention Checklist" for detailed patterns.
 
 ## Step 9: Implement Prevention
 
 ### Instruction-Builder Gate
 
-**MANDATORY: Invoke `/cat:instruction-builder-agent` before editing any skill or command file.**
+**MANDATORY: Invoke `/cat:instruction-builder` before editing any skill or command file.**
 
 If `prevention_type` is `skill` and the fix involves editing a skill or command file:
 
-1. Invoke `/cat:instruction-builder-agent` with the target file path before making any edits
+1. Invoke `/cat:instruction-builder` with the target file path before making any edits
 2. Follow instruction-builder's backward reasoning to decompose the change into forward steps
 3. Only proceed to edit the file after instruction-builder has been invoked
 
-**BLOCKING CONDITION:** Do NOT edit a skill or command file without first invoking `/cat:instruction-builder-agent`. Skipping
+**BLOCKING CONDITION:** Do NOT edit a skill or command file without first invoking `/cat:instruction-builder`. Skipping
 instruction-builder bypasses the backward-reasoning decomposition that ensures the change is correct and complete.
 
 ### Issue Worktree Gate
@@ -662,7 +662,7 @@ the rule using all four components:
 > Do NOT use: Edit tool on plugin/**, Write tool on plugin/**,
 > Bash commands that write to plugin/** (cat >, echo >>, tee, sed -i, etc.)
 >
-> Instead: Create an issue via /cat:add-agent and work in an isolated worktree via /cat:work-agent.
+> Instead: Create an issue via /cat:add and work in an isolated worktree via /cat:work.
 
 **Escalation from Documentation Prevention:** If a similar documentation rule for this violation
 already exists AND the agent violated it anyway, do NOT add another documentation rule. Escalate to a
@@ -842,10 +842,10 @@ Skip only when: fix is unique to one file (typo) or no similar files exist (veri
 Documentation changes for compliance failures require empirical verification — committing a skill edit without running
 skipping empirical verification provides no feedback loop and allows the same failure to recur immediately.
 
-**Invoke `/cat:empirical-test-agent` before recording the prevention as complete:**
+**Invoke `/cat:empirical-test` before recording the prevention as complete:**
 
 ```
-/cat:empirical-test-agent "[describe the compliance failure that was fixed]"
+/cat:empirical-test "[describe the compliance failure that was fixed]"
 ```
 
 The empirical test must confirm the fixed skill content achieves ≥95% compliance before the prevention is considered
@@ -901,7 +901,7 @@ orchestrate the next phase. Copy and fill in the values:
   ],
   "issue_creation_info": {
     "suggested_title": "Short title for prevention issue",
-    "suggested_description": "Detailed description for /cat:add-agent",
+    "suggested_description": "Detailed description for /cat:add",
     "suggested_acceptance_criteria": ["criterion 1", "criterion 2"]
   }
 }

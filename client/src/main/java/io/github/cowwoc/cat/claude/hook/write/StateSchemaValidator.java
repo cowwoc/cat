@@ -74,16 +74,14 @@ public final class StateSchemaValidator implements FileWriteHandler
    * Check if the write should be blocked due to index.json schema violations.
    *
    * @param toolInput the tool input JSON
-   * @param catAgentId the CAT agent ID (sessionId for main agent, sessionId/subagents/agentXxx for subagents)
+   * @param sessionId the session ID
    * @return the check result
-   * @throws NullPointerException if {@code toolInput} or {@code catAgentId} are null
-   * @throws IllegalArgumentException if {@code catAgentId} is blank
+   * @throws NullPointerException if {@code toolInput} or {@code sessionId} are null
    */
   @Override
-  public FileWriteHandler.Result check(JsonNode toolInput, String catAgentId)
+  public FileWriteHandler.Result check(JsonNode toolInput, String sessionId)
   {
     requireThat(toolInput, "toolInput").isNotNull();
-    requireThat(catAgentId, "catAgentId").isNotBlank();
 
     String filePath = getStringOrDefault(toolInput, "file_path", "");
 

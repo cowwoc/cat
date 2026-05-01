@@ -1,8 +1,3 @@
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # Initialize CAT
 
 Initialize CAT planning structure for new or existing projects.
@@ -325,7 +320,7 @@ For each minor version plan.md, add:
 
 After applying defaults:
 
-INVOKE: Skill("cat:get-output-agent", args="init.default-gates-configured {N}")
+INVOKE: Skill("cat:get-output", args="init.default-gates-configured {N}")
 
 Replace `{N}` with the version count.
 
@@ -385,7 +380,7 @@ Use AskUserQuestion:
 **If "Yes, research all pending":**
 
 For each pending version in PENDING_VERSIONS:
-- Invoke `/cat:research-agent {version}`
+- Invoke `/cat:research {version}`
 - This spawns 8 stakeholder agents in parallel
 - Results are stored in the version's plan.md Research section
 
@@ -405,7 +400,7 @@ Note in project.md:
 - Research not run during init. Ask Claude to research pending versions (e.g., "research v1.0").
 ```
 
-INVOKE: Skill("cat:get-output-agent", args="init.research-skipped {PENDING_VERSION}")
+INVOKE: Skill("cat:get-output", args="init.research-skipped {PENDING_VERSION}")
 
 Replace `{PENDING_VERSION}` with an example pending version for the help text.
 
@@ -934,7 +929,7 @@ git commit -m "docs: initialize CAT planning structure"
 
 <step name="done">
 
-INVOKE: Skill("cat:get-output-agent", args="init.cat-initialized {trust} {caution} {curiosity} {perfection} {verbosity}")
+INVOKE: Skill("cat:get-output", args="init.cat-initialized {trust} {caution} {curiosity} {perfection} {verbosity}")
 
 Replace `{trust}`, `{caution}`, `{curiosity}`, `{perfection}`, `{verbosity}` with actual preference values.
 
@@ -947,7 +942,7 @@ Next: /clear -> ask Claude to add a major version
 **Existing codebases:**
 ```
 Initialized with [N] major versions, [N] minor versions, [N] issues
-Next: /clear -> /cat:work-agent {issue} OR ask Claude to add an issue
+Next: /clear -> /cat:work {issue} OR ask Claude to add an issue
 ```
 
 </step>
@@ -966,7 +961,7 @@ options=[
 
 **If "Yes, guide me":**
 
-INVOKE: Skill("cat:get-output-agent", args="init.first-issue-walkthrough")
+INVOKE: Skill("cat:get-output", args="init.first-issue-walkthrough")
 
 1. AskUserQuestion: header="First Goal", question="What's the first thing you want to accomplish?", options=[
    "[Let user describe in their own words]" - FREEFORM
@@ -1014,25 +1009,25 @@ git add ".cat/"
 git commit -m "docs: add first issue - ${ISSUE_NAME}"
 ```
 
-7. INVOKE: Skill("cat:get-output-agent", args="init.first-issue-created {ISSUE_NAME}")
+7. INVOKE: Skill("cat:get-output", args="init.first-issue-created {ISSUE_NAME}")
 
    Replace `{ISSUE_NAME}` with the actual sanitized issue name.
 
 AskUserQuestion: header="Start Work", question="Ready to start working on this issue?", options=[
-  "Yes, let's go! (Recommended)" - Run /cat:work-agent immediately,
-  "No, I'll start later" - Exit with /cat:work-agent pointer
+  "Yes, let's go! (Recommended)" - Run /cat:work immediately,
+  "No, I'll start later" - Exit with /cat:work pointer
 ]
 
 **If "Yes, let's go!":**
-- Invoke `/cat:work-agent` skill to begin issue execution
+- Invoke `/cat:work` skill to begin issue execution
 
 **If "No, I'll start later":**
 
-INVOKE: Skill("cat:get-output-agent", args="init.all-set")
+INVOKE: Skill("cat:get-output", args="init.all-set")
 
 **If "No, I'll explore" (from initial question):**
 
-INVOKE: Skill("cat:get-output-agent", args="init.explore-at-your-own-pace")
+INVOKE: Skill("cat:get-output", args="init.explore-at-your-own-pace")
 
 </step>
 

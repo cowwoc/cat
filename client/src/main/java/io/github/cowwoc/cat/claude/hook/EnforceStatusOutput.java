@@ -123,7 +123,7 @@ public final class EnforceStatusOutput
    * Checks the transcript and returns the hook decision, with pending-agent-result enforcement.
    * <p>
    * Before checking the transcript for the status box, this method checks whether a pending-agent-result
-   * flag file exists for the session. If it does, the session cannot end until {@code collect-results-agent}
+   * flag file exists for the session. If it does, the session cannot end until {@code collect-results}
    * is invoked.
    * <p>
    * When {@code stopHookActive} is {@code true} (second attempt after a prior block), the hook
@@ -160,14 +160,14 @@ public final class EnforceStatusOutput
         String reason = """
           BLOCKED: Agent tool result has not been processed.
 
-          The previous Agent tool invocation completed but collect-results-agent was not called.
+          The previous Agent tool invocation completed but collect-results was not called.
           You cannot end your turn until you have collected the subagent result.
 
-          Required next step: Invoke collect-results-agent:
-            Skill tool: skill="cat:collect-results-agent"
-            Arguments: "<catAgentId> <issuePath> <subagentCommitsJson>"
+          Required next step: Invoke collect-results:
+            Skill tool: skill="cat:collect-results"
+            Arguments: "<agent-identifier> <issuePath> <subagentCommitsJson>"
 
-          See plugin/skills/collect-results-agent/SKILL.md for argument details.""";
+          See plugin/skills/collect-results/SKILL.md for argument details.""";
         return block(scope, reason);
       }
     }

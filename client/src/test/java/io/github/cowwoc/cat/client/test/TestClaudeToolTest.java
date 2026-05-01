@@ -117,52 +117,6 @@ public final class TestClaudeToolTest
   }
 
   /**
-   * Verifies that getDetectSequentialTools() throws IllegalStateException after scope is closed.
-   *
-   * @throws IOException if temporary directory creation fails
-   */
-  @SuppressWarnings("try")
-  @Test(expectedExceptions = IllegalStateException.class,
-    expectedExceptionsMessageRegExp = ".*closed.*")
-  public void getDetectSequentialToolsThrowsAfterClose() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-scope-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
-    {
-      scope.close();
-
-      scope.getDetectSequentialTools();
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that getPredictBatchOpportunity() throws IllegalStateException after scope is closed.
-   *
-   * @throws IOException if temporary directory creation fails
-   */
-  @SuppressWarnings("try")
-  @Test(expectedExceptions = IllegalStateException.class,
-    expectedExceptionsMessageRegExp = ".*closed.*")
-  public void getPredictBatchOpportunityThrowsAfterClose() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("test-scope-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
-    {
-      scope.close();
-
-      scope.getPredictBatchOpportunity();
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
    * Verifies that getUserIssues() throws IllegalStateException after scope is closed.
    *
    * @throws IOException if temporary directory creation fails

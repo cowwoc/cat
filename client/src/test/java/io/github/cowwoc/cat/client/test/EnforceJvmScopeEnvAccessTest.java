@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 /**
- * Enforces that only MainClaudeTool.java, MainClaudeHook.java, GetSkill.java,
+ * Enforces that only MainClaudeTool.java and MainClaudeHook.java,
  * TerminalType.java, SessionStartHook.java, MainClaudeStatusline.java, and ShellParser.java
  * call System.getenv() directly.
  * <p>
@@ -29,7 +29,6 @@ import java.util.stream.Stream;
  * {@code MainClaudeHook} is allowed because it is the production hook scope implementation that reads
  * infrastructure path variables ({@code CLAUDE_PROJECT_DIR}, {@code CLAUDE_PLUGIN_ROOT},
  * {@code CLAUDE_CONFIG_DIR}, {@code TZ}) from the environment at startup.
- * GetSkill.java is allowed because it expands environment variable references in skill directive
  * templates for the skill preprocessor. TerminalType.detect() is allowed because it wraps
  * System.getenv() for terminal detection. SessionStartHook.java is allowed because its
  * {@code main()} method reads {@code CLAUDE_ENV_FILE} from the environment and passes it to
@@ -72,8 +71,6 @@ public final class EnforceJvmScopeEnvAccessTest
         filter(path -> !sourceRoot.relativize(path).toString().equals(
           "io/github/cowwoc/cat/claude/hook/MainClaudeHook.java")).
         filter(path -> !sourceRoot.relativize(path).toString().equals(
-          "io/github/cowwoc/cat/claude/hook/util/GetSkill.java")).
-        filter(path -> !sourceRoot.relativize(path).toString().equals(
           "io/github/cowwoc/cat/claude/hook/skills/TerminalType.java")).
         filter(path -> !sourceRoot.relativize(path).toString().equals(
           "io/github/cowwoc/cat/claude/hook/SessionStartHook.java")).
@@ -96,7 +93,7 @@ public final class EnforceJvmScopeEnvAccessTest
     {
       String message = """
         System.getenv() found in files other than MainClaudeTool.java, \
-        MainClaudeHook.java, GetSkill.java, TerminalType.java, \
+        MainClaudeHook.java, TerminalType.java, \
         SessionStartHook.java, MainClaudeStatusline.java, and ShellParser.java.
 
         REQUIREMENT: Hooks must read session-specific values from HookInput JSON (not environment variables).
@@ -133,7 +130,6 @@ public final class EnforceJvmScopeEnvAccessTest
     String[] whitelistedFiles = {
       "io/github/cowwoc/cat/claude/tool/MainClaudeTool.java",
       "io/github/cowwoc/cat/claude/hook/MainClaudeHook.java",
-      "io/github/cowwoc/cat/claude/hook/util/GetSkill.java",
       "io/github/cowwoc/cat/claude/hook/skills/TerminalType.java",
       "io/github/cowwoc/cat/claude/hook/SessionStartHook.java",
       "io/github/cowwoc/cat/claude/hook/MainClaudeStatusline.java",

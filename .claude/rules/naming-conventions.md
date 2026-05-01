@@ -8,25 +8,25 @@ paths: ["client/**", "plugin/**"]
 Variable and parameter names referenced in Markdown (MD) files use **snake_case**.
 
 This applies to:
-- Skill parameter names in argument-hint frontmatter and argument tables (e.g., `cat_agent_id`, `issue_id`,
-  `worktree_path`, `target_branch`)
+- Skill parameter names in argument-hint frontmatter and argument tables (e.g., `agent_id`, `issue_id`,
+ `worktree_path`, `target_branch`)
 - Agent variable references embedded in Bash commands within skill instructions (e.g., `${issue_id}`,
   `${worktree_path}`)
 - Named identifiers used in skill invocation `args:` strings
 
 **Correct (snake_case):**
 ```
-<cat_agent_id> <issue_id> <worktree_path> <target_branch>
+<issue_id> <worktree_path> <target_branch>
 ```
 
 **Incorrect (camelCase):**
 ```
-<catAgentId> <issueId> <worktreePath> <targetBranch>
+<agentId> <issueId> <worktreePath> <targetBranch>
 ```
 
 ## Variable Names in Java Source Files
 
-Variable names in Java source files use **camelCase** per Java language convention (e.g., `catAgentId`,
+Variable names in Java source files use **camelCase** per Java language convention (e.g., `agentId`,
 `issueId`, `worktreePath`, `targetBranch`).
 
 ## JSON Field Names

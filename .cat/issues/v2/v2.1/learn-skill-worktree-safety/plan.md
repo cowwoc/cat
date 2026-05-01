@@ -16,7 +16,7 @@ None - infrastructure/retrospective action item
 ## Files to Modify
 - `plugin/skills/learn/phase-record.md` - The only file that needs changes
 
-## Root Cause (M464)
+## Root Cause
 Learn Phase 4 subagent used bare `git add` and `git commit` commands from whatever cwd it had. When cwd was a worktree
 (e.g., `/workspace`), concurrent git operations on the same repo caused shell state corruption (all bash commands
 returning exit code 1).

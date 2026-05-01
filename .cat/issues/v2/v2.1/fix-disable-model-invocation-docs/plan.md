@@ -78,7 +78,7 @@ Incomplete documentation: flags and arguments are described by their mechanism b
     SubagentStartHook.
     ```
   - Update STATE.md: status closed, progress 100%
-  - Commit: `docs: fix skill-loading.md missing invocation constraints (M495)`
+  - Commit: `docs: fix skill-loading.md missing invocation constraints`
 
 ## Post-conditions
 

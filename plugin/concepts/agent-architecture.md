@@ -300,7 +300,7 @@ Result: Quality crash before reaching hard limit. This is why soft target is 40%
 1. Collect actual token usage from `.completion.json`
 2. Compare actual against hard limit
 3. Flag violations with EXCEEDED status
-4. Trigger `/cat:learn-agent` for each violation
+4. Trigger `/cat:learn` for each violation
 
 ### Enforcement Flow
 
@@ -363,7 +363,7 @@ For multi-subagent issues, generate aggregate token report:
 When a subagent exceeds the hard limit:
 
 1. **Flag:** Mark subagent status as EXCEEDED in aggregate report
-2. **Record:** Invoke `/cat:learn-agent` with:
+2. **Record:** Invoke `/cat:learn` with:
    - Mistake reference: A018
    - Subagent ID
    - Actual tokens used
@@ -411,8 +411,8 @@ path resolution failures.
 
 **Context details:**
 
-1. **Skill preprocessing (`!` subprocess)**: The `!` line in SKILL.md runs get-skill, which processes handler.sh
-   output AND skill content through substitute_vars. Only CLAUDE_PLUGIN_ROOT and CLAUDE_SESSION_ID are
+1. **Skill preprocessing (`!` subprocess)**: The `!` line in SKILL.md runs the command inside the directive and then applies the
+   variable-substitution pass used by the skill-loading flow. Only CLAUDE_PLUGIN_ROOT and CLAUDE_SESSION_ID are
    string-substituted. CLAUDE_PROJECT_DIR is neither substituted nor available as an env var. When skill content
    contains
    `${CLAUDE_PROJECT_DIR}` in code blocks, it passes through as literal text — it resolves later because Claude copies
@@ -470,8 +470,7 @@ Plugin hooks are registered in the plugin's own `hooks.json`:
 plugin/
 ├── hooks/
 │   ├── hooks.json          ← Plugin hook registration
-│   ├── enforce-status-output.py
-│   ├── get-skill-output.py
+│   ├── session-start.sh
 │   └── ...
 ```
 

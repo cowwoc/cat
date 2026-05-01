@@ -14,7 +14,6 @@ import io.github.cowwoc.cat.claude.tool.post.DetectAssistantGivingUp;
 import io.github.cowwoc.cat.claude.tool.post.DetectTokenThreshold;
 import io.github.cowwoc.cat.claude.tool.post.DetectValidationWithoutEvidence;
 import io.github.cowwoc.cat.claude.tool.post.RemindRestartAfterSkillModification;
-import io.github.cowwoc.cat.claude.tool.post.SetPendingAgentResult;
 import tools.jackson.databind.JsonNode;
 
 import org.slf4j.LoggerFactory;
@@ -105,7 +104,6 @@ public final class PostToolUseHook implements HookHandler
     // Create handlers using sessionId from the hook scope
     Path sessionDirectory = jvmScope.getCatSessionPath(sessionId);
     List<PostToolHandler> handlers = List.of(
-      new SetPendingAgentResult(jvmScope),
       new ResetFailureCounter(sessionDirectory),
       new AutoLearnMistakes(jvmScope),
       new DetectAssistantGivingUp(jvmScope),

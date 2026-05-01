@@ -44,7 +44,7 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Output generator for /cat:retrospective-agent skill.
+ * Output generator for /cat:retrospective skill.
  * <p>
  * Analyzes accumulated mistakes and determines whether a retrospective should be triggered.
  * Supports three trigger conditions:

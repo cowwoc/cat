@@ -1,8 +1,3 @@
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # Configure CAT Statusline
 
 Install and configure Claude Code's statusline to display CAT context information including git worktree, model name,

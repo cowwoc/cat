@@ -314,7 +314,7 @@ public final class ValidateSkillTestFormatTest
       ValidateSkillTestFormat handler = new ValidateSkillTestFormat();
       JsonMapper mapper = scope.getJsonMapper();
       ObjectNode input = mapper.createObjectNode();
-      input.put("file_path", "plugin/tests/skills/instruction-builder-agent/first-use/test.md");
+      input.put("file_path", "plugin/tests/skills/instruction-builder/first-use/test.md");
       input.put("content", """
         ---
         category: consequence

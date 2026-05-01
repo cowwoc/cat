@@ -11,8 +11,8 @@ implement retrospective action items A006, A013, A014
 
 ## Solution Implemented
 - A013: Added Mandatory Subagent Prompt Checklist to spawn-subagent/SKILL.md
-  - STATE.md requirements with Resolution field (M092)
-  - Parser test style guidance (M079)
+  - STATE.md requirements with Resolution field
+  - Parser test style guidance
   - Verification table with mistake references
 - A014: Enhanced main_agent_boundaries in execute-task.md
   - Orchestration enforcement table for all phases

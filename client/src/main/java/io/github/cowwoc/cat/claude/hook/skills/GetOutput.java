@@ -27,7 +27,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * Centralized dispatcher for all verbatim output skills.
  * <p>
  * Routes output type arguments to the appropriate {@code SkillOutput} handler implementation.
- * This class enables composition: higher-level skills invoke {@code /cat:get-output-agent} with a
+ * This class enables composition: higher-level skills invoke {@code /cat:get-output} with a
  * dot-notation type (e.g., {@code config.settings}) and receive the output wrapped in an
  * {@code <output type="...">} tag.
  * <p>
@@ -58,7 +58,7 @@ public final class GetOutput implements SkillOutput
   /**
    * Generates output by dispatching to the appropriate skill handler.
    * <p>
-   * When invoked via {@code get-output-agent/first-use.md} with {@code $ARGUMENTS}, the first
+   * When invoked via {@code get-output/first-use.md} with {@code $ARGUMENTS}, the first
    * argument is the agent ID ({@code $0}) and is skipped. The second argument is then the output
    * type in dot-notation: {@code skill[.page]}.
    * <p>
@@ -131,13 +131,12 @@ public final class GetOutput implements SkillOutput
       case "init" -> new GetInitOutput(scope).getOutput(handlerArgs);
       case "work-complete" -> new GetIssueCompleteOutput(scope).getOutput(handlerArgs);
       case "statusline" -> new GetStatuslineOutput(scope).getOutput(handlerArgs);
-      case "get-subagent-status" -> new GetSubagentStatusOutput(scope).getOutput(handlerArgs);
       case "instruction-test-aggregator" -> new InstructionTestAggregator(scope).getOutput(handlerArgs);
       case "description-optimizer" -> new DescriptionOptimizer(scope).getOutput(handlerArgs);
       case "add" -> new GetAddOutput(scope).getOutput(handlerArgs);
       default -> throw new IllegalArgumentException("Unknown skill: '" + skill +
         "'. Valid skills: status, token-report, get-diff, cleanup, retrospective, " +
-        "config, init, work-complete, statusline, get-subagent-status, " +
+        "config, init, work-complete, statusline, " +
         "instruction-test-aggregator, description-optimizer, add");
     };
 
@@ -204,7 +203,7 @@ public final class GetOutput implements SkillOutput
   /**
    * Skips the first argument if it matches the agent ID format (UUID or subagent ID).
    * <p>
-   * When invoked via {@code get-output-agent/first-use.md} with {@code $ARGUMENTS}, the first
+   * When invoked via {@code get-output/first-use.md} with {@code $ARGUMENTS}, the first
    * argument is the agent ID ({@code $0}). This method strips it so the remaining arguments
    * start with the output type.
    *

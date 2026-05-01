@@ -8,6 +8,11 @@ same message group. The Edit tool requires the file to have been read in the **c
 turn** — reads from earlier turns do not satisfy this requirement.
 
 **Reference context instead of re-reading**: When file content was already read earlier in the
+current conversation, reuse that context instead of repeating Read calls unless the file changed.
+
+**Batch known-ahead operations**: If you know in advance that multiple independent reads/searches are needed,
+issue them together in one response rather than sequentially.
+
 conversation and is still in context, reference it directly instead of issuing another `Read` with
 identical parameters. Re-reading wastes a tool call round-trip.
 
@@ -15,9 +20,9 @@ identical parameters. Re-reading wastes a tool call round-trip.
 create the parent directory first with `mkdir -p`. The heredoc write fails if the directory doesn't
 exist.
 
-**cat:grep-and-read-agent instead of Grep+Read**: Before using Grep to find files, ask yourself:
+**cat:grep-and-read instead of Grep+Read**: Before using Grep to find files, ask yourself:
 "Will I also need to read those files?" If the answer is YES, STOP — do NOT use Grep. Instead,
-invoke `cat:grep-and-read-agent` via the Skill tool. This is a BLOCKING REQUIREMENT: the skill
+invoke `cat:grep-and-read` via the Skill tool. This is a BLOCKING REQUIREMENT: the skill
 performs the Grep AND the Reads in one parallel operation. Do NOT split this into a manual
 Grep → Read chain. The only exceptions are: (1) you already have the file paths from a non-search source (use Read
 directly), (2) you only need to locate files or see matching lines without reading full content

@@ -1,7 +1,7 @@
 # Plan: strip-m-codes-from-agent-docs
 
 ## Goal
-Strip M-code references (e.g., `(M088)`, `(M252)`) from agent-facing documentation (skills, concepts) to reduce
+Strip M-code references (e.g., ``, ``) from agent-facing documentation (skills, concepts) to reduce
 context token usage. Add a convention to plugin documentation policy prohibiting M-codes in agent-facing files.
 
 ## Type
@@ -44,7 +44,7 @@ None (infrastructure cleanup / token optimization)
    Same pattern as Step 1.
    - Files: 8 files in `plugin/concepts/**/*.md`
 3. **Step 3:** Add convention to `.claude/rules/common.md` under Documentation Style section.
-   New subsection "### M-Code References" stating: M-code labels (e.g., `(M088)`) must not appear
+   New subsection "### M-Code References" stating: M-code labels (e.g., ``) must not appear
    in agent-facing documentation (plugin/skills/, plugin/concepts/, plugin/agents/). These labels
    consume context tokens without providing value to agents. Keep M-codes only in MEMORY.md,
    CLAUDE.md, .claude/rules/, and retrospective files.

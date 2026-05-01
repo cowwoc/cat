@@ -8,7 +8,6 @@ package io.github.cowwoc.cat.claude.hook.session;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.claude.hook.AbstractClaudeHook;
 import io.github.cowwoc.cat.claude.hook.ClaudeHook;
 import io.github.cowwoc.cat.claude.hook.FileWriteHandler;
 import io.github.cowwoc.cat.claude.hook.ReadHandler;
@@ -54,7 +53,7 @@ public final class InjectPathRestrictedRuleListing implements ReadHandler, FileW
 
   @Override
   public ReadHandler.Result check(String toolName, JsonNode toolInput, JsonNode toolResult,
-    String catAgentId)
+    String sessionId)
   {
     // Only fire for Read; Glob uses a pattern rather than a specific file path
     if (!toolName.equals("Read"))
@@ -62,19 +61,19 @@ public final class InjectPathRestrictedRuleListing implements ReadHandler, FileW
     JsonNode filePathNode = toolInput.get("file_path");
     if (filePathNode == null || !filePathNode.isString())
       return ReadHandler.Result.allow();
-    String context = getRelatedRules(filePathNode.asString(), catAgentId);
+    String context = getRelatedRules(filePathNode.asString(), sessionId);
     if (context.isEmpty())
       return ReadHandler.Result.allow();
     return ReadHandler.Result.context(context);
   }
 
   @Override
-  public FileWriteHandler.Result check(JsonNode toolInput, String catAgentId)
+  public FileWriteHandler.Result check(JsonNode toolInput, String sessionId)
   {
     JsonNode filePathNode = toolInput.get("file_path");
     if (filePathNode == null || !filePathNode.isString())
       return FileWriteHandler.Result.allow();
-    String context = getRelatedRules(filePathNode.asString(), catAgentId);
+    String context = getRelatedRules(filePathNode.asString(), sessionId);
     if (context.isEmpty())
       return FileWriteHandler.Result.allow();
     return FileWriteHandler.Result.context(context);
@@ -92,10 +91,10 @@ public final class InjectPathRestrictedRuleListing implements ReadHandler, FileW
    * replaces any character outside {@code [a-zA-Z0-9-]} with a hyphen.
    *
    * @param filePath the file path being accessed (absolute paths are skipped)
-   * @param catAgentId the CAT agent ID (sessionId for main agent, sessionId/subagents/agentXxx for subagents)
+   * @param sessionId the session ID
    * @return the additional context string, or an empty string if nothing should be injected
    */
-  private String getRelatedRules(String filePath, String catAgentId)
+  private String getRelatedRules(String filePath, String sessionId)
   {
     // Absolute paths are not matched against rule globs. They cannot be relative to any project
     // root, so matching would always be wrong. Rejecting them also prevents path traversal.
@@ -104,7 +103,7 @@ public final class InjectPathRestrictedRuleListing implements ReadHandler, FileW
       log.debug("Skipping absolute path for rule injection: {}", filePath);
       return "";
     }
-    String sessionId = AbstractClaudeHook.extractSessionId(catAgentId);
+
     Path pluginRulesDir = scope.getPluginRoot().resolve("rules");
     Path projectRulesDir = scope.getCatDir().resolve("rules");
     List<RuleFile> allRules = new ArrayList<>(new RulesDiscovery(pluginRulesDir, scope.getYamlMapper()).discoverAll());

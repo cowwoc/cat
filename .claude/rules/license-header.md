@@ -79,8 +79,7 @@ See LICENSE.md in the project root for license terms.
 # Document Title
 ```
 
-**Skill files:** `SKILL.md` files are exempt from license headers; SkillLoader processes these files and license headers
-would waste tokens. `first-use.md` companion files are NOT exempt and require headers.
+**Skill files:** `SKILL.md` and `first-use.md` files are exempt from license headers; these files are read directly by agents and license headers would waste context tokens.
 
 ### JSON Files (*.json)
 
@@ -92,7 +91,7 @@ The following files do not require license headers:
 
 - `*.json` files (no comment syntax)
 - `*.xml` files (configuration files, no semantic code)
-- All `SKILL.md` files in plugin skills (`first-use.md` companions are NOT exempt and require headers)
+- All `SKILL.md` and `first-use.md` files in plugin skills (read directly by agents; license headers waste context tokens)
 - All `*.md` files in `plugin/agents/` (injected into subagent context as prompts; same rationale as SKILL.md)
 - All `*.md` files in `plugin/concepts/` (injected into agent context as reference material; license headers waste context tokens)
 - All `*.md` files in `plugin/rules/` (injected verbatim into agent context on every session; license headers waste context tokens)

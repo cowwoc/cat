@@ -26,7 +26,7 @@ Skills using `skill-loader` conventionally pass catAgentId as the first argument
 1. Uses `skill-loader` in its preprocessor directive
 2. Does NOT have `<catAgentId>` as the first token in `argument-hint`
 
-**Check B — positional completeness (M503):** Detect when a skill:
+**Check B — positional completeness:** Detect when a skill:
 1. References `$0`...`$N` in its preprocessor directive
 2. Does NOT have `argument-hint` documenting ALL positional args (including `$0`)
 

@@ -1,0 +1,88 @@
+# Get History Skill
+
+**Purpose**: Access raw conversation history for debugging and analysis.
+
+**Location**: `${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/*.jsonl`
+
+**Session ID**: Available as `${CLAUDE_SESSION_ID}`.
+
+## Structured Query Tool (Preferred)
+
+Use the Java `session-analyzer` tool for structured queries. It handles mega-line JSONL correctly by parsing
+the JSON structure rather than treating lines as text.
+
+```bash
+SESSION_ANALYZER="${CLAUDE_PLUGIN_DATA}/client/bin/session-analyzer"
+
+# Search for keyword with 2 lines of surrounding context
+"$SESSION_ANALYZER" search "${CLAUDE_SESSION_ID}" "keyword" --context 2
+
+# List all tool errors (non-zero exit codes and error patterns)
+"$SESSION_ANALYZER" errors "${CLAUDE_SESSION_ID}"
+
+# Trace all reads/writes/edits to a file path
+"$SESSION_ANALYZER" file-history "${CLAUDE_SESSION_ID}" "config.json"
+
+# Full session analysis (tool frequency, cache/batch/parallel candidates)
+"$SESSION_ANALYZER" analyze "${CLAUDE_SESSION_ID}"
+```
+
+Output is structured JSON, suitable for further processing or direct inspection.
+
+## Subcommand Reference
+
+| Subcommand | Arguments | Description |
+|------------|-----------|-------------|
+| `analyze` | `<session-id>` | Full session analysis (default when no subcommand given) |
+| `search` | `<session-id> <keyword> [--context N]` | Find entries containing keyword with N context lines |
+| `errors` | `<session-id>` | List tool_result entries with error indicators |
+| `file-history` | `<session-id> <path-pattern>` | Chronological list of Read/Write/Edit/Bash ops on a file |
+
+## Entry Types
+
+- `type: "summary"` - Conversation summary
+- `type: "message"` - User/assistant messages
+- `type: "tool_use"` - Tool invocations
+- `type: "tool_result"` - Tool outputs
+
+## Subagent Session Navigation
+
+Subagent sessions are stored in a subdirectory of the parent session, NOT at the root level.
+
+**Storage path:**
+```
+subagent session under {parent-session-id} (resolved internally from agent_id)
+```
+
+**Finding agent_id from parent session:**
+```bash
+# Search for agent_id references in parent session
+"$SESSION_ANALYZER" search "${CLAUDE_SESSION_ID}" "agentId"
+```
+
+**Verifying what tools a subagent actually used:**
+```bash
+AGENT_ID="ad630cb"  # Example agent_id
+
+# Full analysis of subagent session (session-analyzer resolves subagent context internally)
+"$SESSION_ANALYZER" analyze "${CLAUDE_SESSION_ID}" --agent-id "$AGENT_ID"
+
+# Search for specific skill invocation
+"$SESSION_ANALYZER" search "${CLAUDE_SESSION_ID}" "instruction-builder" --agent-id "$AGENT_ID"
+```
+
+**Note:** The agentId is included in the Task tool result output. Look for patterns like:
+- `"agentId":"ad630cb"` (in JSON)
+- `agentId: ad630cb` (in text output)
+
+## Hook additionalContext Limitation
+
+The `additionalContext` field in hook events (e.g., `SubagentStart`) is injected at the API level directly into
+the subagent's context window. This content is **not** stored in JSONL session logs. As a result,
+`session-analyzer search` cannot find text that was provided via `additionalContext` — it only scans JSONL log
+entries. If a search returns zero results, the content may have been injected via `additionalContext` rather than
+logged.
+
+## Error Handling
+
+If session ID not in context, report error - do NOT guess.

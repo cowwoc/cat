@@ -14,7 +14,7 @@ Extract ALL semantic units from instruction files using the Nine-Category Extrac
 
 ## Extraction Methodology
 
-Read and follow: ${CLAUDE_PLUGIN_ROOT}/skills/instruction-builder-agent/validation-protocol.md (Section 1: Nine-Category Extraction Algorithm)
+Read and follow: ${CLAUDE_PLUGIN_ROOT}/skills/instruction-builder/validation-protocol.md (Section 1: Nine-Category Extraction Algorithm)
 
 ## Your Task
 

@@ -110,4 +110,4 @@ Document any files that need updating.
 - Confirm basic functionality preserved
 
 ### Step 6: Commit changes
-- "config: remove --skill capability from delegate (M429)"
+- "config: remove --skill capability from delegate"

@@ -9,7 +9,7 @@ invocations from users.
 
 The run-retrospective skill performs pattern analysis on accumulated mistakes, evaluates action item effectiveness, and
 derives new action items. The skill currently contains multiple bash snippets for gathering and analyzing data. Per
-skill-builder methodology (M215), a handler should precompute all formatted outputs.
+skill-builder methodology, a handler should precompute all formatted outputs.
 
 ## Approach
 

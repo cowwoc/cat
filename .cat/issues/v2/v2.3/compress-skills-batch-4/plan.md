@@ -35,7 +35,7 @@ None - sub-issue of parent
 ## Sub-Agent Waves
 
 ### Wave 1
-1. Use /cat:delegate to process all files in parallel: `/cat:delegate --skill optimize-doc file1.md file2.md ...` (M369)
+1. Use /cat:delegate to process all files in parallel: `/cat:delegate --skill optimize-doc file1.md file2.md ...`
 2. Commit changes with message: "config: compress skills batch 4 (research through tdd-implementation)"
 
-**Note (M427):** Use delegate for batch operations - parallel execution is faster than sequential.
+**Note:** Use delegate for batch operations - parallel execution is faster than sequential.

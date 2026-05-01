@@ -31,7 +31,7 @@ Skill tool:
 work-with-issue-agent passes issue_path directly to work-implement-agent without validating
 that the path refers to a real `.claude` directory. A single-character typo in path
 construction goes undetected until deep in the implementation phase where it manifests as
-cryptic session/lock errors (M523).
+cryptic session/lock errors.
 
 ## Approaches
 

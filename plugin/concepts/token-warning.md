@@ -115,7 +115,7 @@ fi
 ```
 
 **If actual >= estimate × 1.25:**
-Invoke `/cat:learn-agent` with:
+Invoke `/cat:learn` with:
 - Description: "Token estimate underestimated actual usage by {variance}%"
 - Estimated vs actual tokens
 - Issue details

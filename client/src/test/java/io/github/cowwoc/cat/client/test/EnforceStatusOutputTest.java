@@ -291,7 +291,7 @@ public final class EnforceStatusOutputTest
       // Hook must block due to pending-agent-result flag
       JsonNode resultNode = mapper.readTree(result);
       requireThat(resultNode.get("decision").asString(), "decision").isEqualTo("block");
-      requireThat(result, "result").contains("collect-results-agent");
+      requireThat(result, "result").contains("collect-results");
     }
     finally
     {

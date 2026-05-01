@@ -6,13 +6,13 @@ Two skills address documentation quality, with different goals:
 
 | Concern | Skill | Goal |
 |---------|-------|------|
-| File is too large | `cat:instruction-builder-agent` | Reduce token count while preserving meaning |
-| Content is scattered or redundant | `cat:instruction-organizer-agent` | Reorganize into coherent, non-redundant form |
+| File is too large | `cat:instruction-builder` | Reduce token count while preserving meaning |
+| Content is scattered or redundant | `cat:instruction-builder` | Reorganize into coherent, non-redundant form |
 
-**Use instruction-builder-agent** when the document says what it needs to say but takes too many tokens to say it. Size is the
+**Use instruction-builder** when the document says what it needs to say but takes too many tokens to say it. Size is the
 problem; organization is not.
 
-**Use instruction-organizer-agent** when the same information appears in multiple sections, or when workflow steps are
+**Use instruction-builder** when the same information appears in multiple sections, or when workflow steps are
 scattered across subsections, notes, and reminders rather than organized sequentially. Organization is the problem;
 size may or may not also be an issue.
 
@@ -76,7 +76,7 @@ include orchestrator + subagent pairs, caller + implementation pairs, and public
 
 **Consolidation strategy**: Do NOT consolidate. These files exist as separate documents because the separation is a
 design invariant, not a documentation defect. Consolidating them exposes internals to the caller, violating
-encapsulation. In the `instruction-builder-agent` skill, the compression algorithm is intentionally hidden from the orchestrator
+encapsulation. In the `instruction-builder` skill, the compression algorithm is intentionally hidden from the orchestrator
 to prevent manual bypass — consolidating would defeat this design.
 
 ---
@@ -143,7 +143,7 @@ clustering.
 
 ## Binary Execution-Equivalence Gate
 
-All consolidation attempts must pass a binary equivalence check using the validation protocol (see `instruction-builder-agent/validation-protocol.md`) before changes are applied.
+All consolidation attempts must pass a binary equivalence check using the validation protocol (see `instruction-builder/validation-protocol.md`) before changes are applied.
 
 **EQUIVALENT**: All semantic units preserved. Apply the consolidated version.
 
@@ -161,8 +161,8 @@ File B does not compensate for NOT_EQUIVALENT on File A.
 
 ## See Also
 
-- `cat:instruction-builder-agent` — reduce token count while preserving meaning
-- `instruction-builder-agent/validation-protocol.md` — validate semantic equivalence; provides the binary verdict used
+- `cat:instruction-builder` — reduce token count while preserving meaning
+- `instruction-builder/validation-protocol.md` — validate semantic equivalence; provides the binary verdict used
   as the consolidation gate
-- `plugin/skills/instruction-organizer-agent/first-use.md` — full methodology, phase-by-phase instructions, and
+- `plugin/skills/instruction-builder/first-use.md` — full methodology, phase-by-phase instructions, and
   validation evidence from Waves 1–3

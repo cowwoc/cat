@@ -123,48 +123,35 @@ startup), and Leyden AOT cache for pre-linked classes.
 
 ## Skill Directory Structure
 
-Skills are loaded by `GetSkill` from the plugin's `skills/` directory. Each skill is a subdirectory containing:
+Skills are organized under `plugin/skills/` as one directory per skill:
 
 ```
-plugin-root/
-  skills/
-    reference.md              — Reload text returned on 2nd+ invocations of any skill
-    {skill-name}/
-      SKILL.md                — Main skill entry point (preprocessor directive calls LoadSkill)
-    {skill-name}-first-use/
-      SKILL.md                — Skill content with optional <skill> and <output> tags
+plugin/skills/
+ {skill-name}/
+  SKILL.md     — Frontmatter + preprocessor directive entrypoint
+  first-use.md — Full skill instructions returned on first load
 ```
 
 ### Loading Behavior
 
-**First invocation** of a skill within a session:
-1. Load skill content from `-first-use/SKILL.md` (with frontmatter and license header stripped)
-2. Process preprocessor directives (with variable expansion inside directives)
+Skill loading is policy-driven and documented in `plugin/concepts/skill-loading.md`.
+At a high level:
 
-**Subsequent invocations** of the same skill within the same session:
-1. Load `reference.md` instead of content/includes
+1. SKILL.md runs a preprocessor directive that calls the shared loader contract.
+2. On first use for a given agent, full instructions are returned from `first-use.md`.
+3. On subsequent uses, a short reuse/reference message is returned.
 
-Session tracking uses a temp file (`/tmp/cat-skills-loaded-{session-id}`) to record which skills have been loaded.
+The tracking scope is per-agent within a session (main agent and each subagent track independently).
 
 ### Built-in Variables
 
-Inside `!` directive strings, the following variable forms are expanded:
-- `${name}` — resolved via environment variable (`System.getenv(name)`). Includes `CLAUDE_PLUGIN_ROOT`,
-  `CLAUDE_SESSION_ID`, `CLAUDE_PROJECT_DIR` (injected by `InjectEnv.java`), and any other env var.
-- `${CLAUDE_SKILL_DIR}` — resolved by GetSkill to the skill's directory
-  (`${CLAUDE_PLUGIN_ROOT}/skills/{skill-name}/`)
-- `$0`, `$1`, ..., `$N` — resolved to skill positional arguments
-- `$ARGUMENTS` — all skill arguments joined with a space
-- `$ARGUMENTS[N]` — the Nth skill argument (0-based)
+Inside `!` directive strings, use only supported variable forms:
+- `$0`, `$1`, ... for positional arguments
+- `${CLAUDE_PLUGIN_ROOT}`, `${CLAUDE_SESSION_ID}`, `${CLAUDE_PROJECT_DIR}` for built-in variables
+- `$ARGUMENTS` for the raw argument string
 
-Outside directive strings (content body), all variable references are passed through unchanged.
-Claude Code natively expands `${CLAUDE_SESSION_ID}` and `${CLAUDE_SKILL_DIR}` in SKILL.md content.
-Other variables like `${CLAUDE_PLUGIN_ROOT}` are not expanded by Claude Code but are available as
-environment variables — Claude resolves them at runtime when reading files.
-
-**File path resolution:** Claude resolves relative paths in skill content relative to the skill's
-SKILL.md directory. For files outside the skill directory, use `${CLAUDE_PLUGIN_ROOT}`-prefixed
-absolute paths. See `plugin/concepts/skill-loading.md` § "Referencing Files From Skills".
+For exact substitution and quoting rules, follow `.claude/rules/skills.md` and
+`plugin/concepts/skill-loading.md`.
 
 ### Handler Classes
 

@@ -5,7 +5,7 @@
 `plugin/skills/skill-builder-agent/first-use.md` Step 5 ("In-Place Hardening Mode") describes the complete
 red-team/blue-team adversarial TDD loop algorithm as numbered procedural steps. When an agent reads this content,
 it treats the steps as execution instructions — applying the algorithm manually (e.g., via cat:work-execute
-delegation) instead of delegating to the Task tool subagents defined in Step 4. (M531)
+delegation) instead of delegating to the Task tool subagents defined in Step 4.
 
 ## Parent Requirements
 

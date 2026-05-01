@@ -1,8 +1,3 @@
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # CAT Configuration
 
 Interactive configuration wizard to customize CAT settings.
@@ -33,7 +28,7 @@ Extract the following values from the JSON output for use in subsequent steps:
 
 BLOCKING REQUIREMENT: You MUST output a visual display box BEFORE calling AskUserQuestion.
 
-INVOKE: Skill("cat:get-output-agent", args="config.settings")
+INVOKE: Skill("cat:get-output", args="config.settings")
 
 ### Step 3: Present main menu
 
@@ -299,7 +294,7 @@ Map answer: Low → "low", Medium → "medium", High → "high" for verbosity.
 Where `{trust_value}`, `{caution_value}`, etc. are the lowercase values selected above (e.g., "low", "medium", "high").
 If the command outputs `{"status":"ERROR",...}`, display the error message and do not proceed.
 
-INVOKE: Skill("cat:get-output-agent", args="config.setting-updated personality {old_summary} {new_summary}")
+INVOKE: Skill("cat:get-output", args="config.setting-updated personality {old_summary} {new_summary}")
 
 Where `{old_summary}` is the previous values joined as "trust:X caution:X curiosity:X perfection:X verbosity:X"
 and `{new_summary}` is the new values in the same format.
@@ -446,7 +441,7 @@ Return to Step 3 (main menu) after updating.
 
 **📊 Version Conditions configuration:**
 
-INVOKE: Skill("cat:get-output-agent", args="config.versions")
+INVOKE: Skill("cat:get-output", args="config.versions")
 
 **Step 9.1: Select version to configure**
 
@@ -486,7 +481,7 @@ cat .cat/issues/v{major}/plan.md 2>/dev/null
 
 Extract the `## Pre-conditions` and `## Post-conditions` sections.
 
-INVOKE: Skill("cat:get-output-agent", args="config.conditions-for-version {version} {preconditions} {postconditions}")
+INVOKE: Skill("cat:get-output", args="config.conditions-for-version {version} {preconditions} {postconditions}")
 
 Replace `{version}`, `{preconditions}`, and `{postconditions}` with actual values extracted from plan.md.
 Empty conditions should be represented as "(none)".
@@ -559,7 +554,7 @@ Write the updated plan.md using the Write tool.
 
 **Step 9.6: Confirm and loop**
 
-INVOKE: Skill("cat:get-output-agent", args="config.conditions-updated {version} {new_preconditions} {new_postconditions}")
+INVOKE: Skill("cat:get-output", args="config.conditions-updated {version} {new_preconditions} {new_postconditions}")
 
 Replace `{version}`, `{new_preconditions}`, `{new_postconditions}` with actual values.
 
@@ -569,7 +564,7 @@ Return to Step 9.3 (Choose action) to allow further edits or navigation.
 
 **Confirm change and return to parent menu:**
 
-INVOKE: Skill("cat:get-output-agent", args="config.setting-updated {setting_name} {old_value} {new_value}")
+INVOKE: Skill("cat:get-output", args="config.setting-updated {setting_name} {old_value} {new_value}")
 
 Replace `{setting_name}`, `{old_value}`, `{new_value}` with actual values.
 
@@ -581,11 +576,11 @@ Replace `{setting_name}`, `{old_value}`, `{new_value}` with actual values.
 
 If changes were made:
 
-INVOKE: Skill("cat:get-output-agent", args="config.saved")
+INVOKE: Skill("cat:get-output", args="config.saved")
 
 If no changes:
 
-INVOKE: Skill("cat:get-output-agent", args="config.no-changes")
+INVOKE: Skill("cat:get-output", args="config.no-changes")
 
 ## Verification
 

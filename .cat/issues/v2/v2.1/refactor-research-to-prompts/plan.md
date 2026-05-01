@@ -157,4 +157,4 @@ Task tool:
 - Confirm research results returned correctly
 
 ### Step 6: Commit changes
-- "config: convert research skill to prompt template library (M429)"
+- "config: convert research skill to prompt template library"

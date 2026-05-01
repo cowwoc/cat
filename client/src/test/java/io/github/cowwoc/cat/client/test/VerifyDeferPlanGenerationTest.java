@@ -27,7 +27,7 @@ import java.util.List;
 public final class VerifyDeferPlanGenerationTest
 {
   /**
-   * Creates the add-agent skill file with the given content.
+   * Creates the add skill file with the given content.
    *
    * @param projectRoot the project root directory
    * @param content     the file content
@@ -35,13 +35,13 @@ public final class VerifyDeferPlanGenerationTest
    */
   private static void writeAddSkill(Path projectRoot, String content) throws IOException
   {
-    Path file = projectRoot.resolve("plugin/skills/add-agent/first-use.md");
+    Path file = projectRoot.resolve("plugin/skills/add/first-use.md");
     Files.createDirectories(file.getParent());
     Files.writeString(file, content);
   }
 
   /**
-   * Creates the work-implement-agent skill file with the given content.
+   * Creates the work-implement skill file with the given content.
    *
    * @param projectRoot the project root directory
    * @param content     the file content
@@ -49,7 +49,7 @@ public final class VerifyDeferPlanGenerationTest
    */
   private static void writeWorkImplementSkill(Path projectRoot, String content) throws IOException
   {
-    Path file = projectRoot.resolve("plugin/skills/work-implement-agent/first-use.md");
+    Path file = projectRoot.resolve("plugin/skills/work-implement/first-use.md");
     Files.createDirectories(file.getParent());
     Files.writeString(file, content);
   }
@@ -77,7 +77,7 @@ public final class VerifyDeferPlanGenerationTest
     try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       writeAddSkill(tempDir, "Some content with planTempFile=$(mktemp but no plan builder ref");
-      writeWorkImplementSkill(tempDir, "Content with hasSteps and cat:plan-builder-agent invocation");
+      writeWorkImplementSkill(tempDir, "Content with hasSteps and cat:plan-builder invocation");
 
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, false, UTF_8);
@@ -100,7 +100,7 @@ public final class VerifyDeferPlanGenerationTest
   }
 
   /**
-   * Verifies that check 1 fails when add-agent/first-use.md contains cat:plan-builder-agent.
+   * Verifies that check 1 fails when add/first-use.md contains cat:plan-builder.
    */
   @Test
   public void check1FailsWhenPlanBuilderPresent() throws IOException
@@ -109,8 +109,8 @@ public final class VerifyDeferPlanGenerationTest
     try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       writeAddSkill(tempDir,
-        "Content with planTempFile=$(mktemp and cat:plan-builder-agent present");
-      writeWorkImplementSkill(tempDir, "Content with hasSteps and cat:plan-builder-agent invocation");
+        "Content with planTempFile=$(mktemp and cat:plan-builder present");
+      writeWorkImplementSkill(tempDir, "Content with hasSteps and cat:plan-builder invocation");
 
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, false, UTF_8);
@@ -133,7 +133,7 @@ public final class VerifyDeferPlanGenerationTest
   }
 
   /**
-   * Verifies that check 2 fails when add-agent/first-use.md omits planTempFile=$(mktemp.
+   * Verifies that check 2 fails when add/first-use.md omits planTempFile=$(mktemp.
    */
   @Test
   public void check2FailsWhenLightweightPlanMissing() throws IOException
@@ -142,7 +142,7 @@ public final class VerifyDeferPlanGenerationTest
     try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       writeAddSkill(tempDir, "Content without the lightweight plan block");
-      writeWorkImplementSkill(tempDir, "Content with hasSteps and cat:plan-builder-agent invocation");
+      writeWorkImplementSkill(tempDir, "Content with hasSteps and cat:plan-builder invocation");
 
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, false, UTF_8);
@@ -165,7 +165,7 @@ public final class VerifyDeferPlanGenerationTest
   }
 
   /**
-   * Verifies that check 3 fails when work-implement-agent/first-use.md omits hasSteps.
+   * Verifies that check 3 fails when work-implement/first-use.md omits hasSteps.
    */
   @Test
   public void check3FailsWhenHasStepsMissing() throws IOException
@@ -174,7 +174,7 @@ public final class VerifyDeferPlanGenerationTest
     try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       writeAddSkill(tempDir, "Content with planTempFile=$(mktemp but no plan builder ref");
-      writeWorkImplementSkill(tempDir, "Content with cat:plan-builder-agent but no steps check");
+      writeWorkImplementSkill(tempDir, "Content with cat:plan-builder but no steps check");
 
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, false, UTF_8);
@@ -197,7 +197,7 @@ public final class VerifyDeferPlanGenerationTest
   }
 
   /**
-   * Verifies that check 4 fails when work-implement-agent/first-use.md omits cat:plan-builder-agent.
+   * Verifies that check 4 fails when work-implement/first-use.md omits cat:plan-builder.
    */
   @Test
   public void check4FailsWhenPlanBuilderMissing() throws IOException
@@ -229,7 +229,7 @@ public final class VerifyDeferPlanGenerationTest
   }
 
   /**
-   * Verifies that checks 1 and 2 fail with "File not found" when add-agent/first-use.md is missing.
+   * Verifies that checks 1 and 2 fail with "File not found" when add/first-use.md is missing.
    */
   @Test
   public void missingAddSkillFile() throws IOException
@@ -237,7 +237,7 @@ public final class VerifyDeferPlanGenerationTest
     Path tempDir = Files.createTempDirectory("verify-defer-");
     try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
-      writeWorkImplementSkill(tempDir, "Content with hasSteps and cat:plan-builder-agent invocation");
+      writeWorkImplementSkill(tempDir, "Content with hasSteps and cat:plan-builder invocation");
 
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, false, UTF_8);
@@ -261,7 +261,7 @@ public final class VerifyDeferPlanGenerationTest
   }
 
   /**
-   * Verifies that checks 3 and 4 fail with "File not found" when work-implement-agent/first-use.md is
+   * Verifies that checks 3 and 4 fail with "File not found" when work-implement/first-use.md is
    * missing.
    */
   @Test
@@ -333,7 +333,7 @@ public final class VerifyDeferPlanGenerationTest
     try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       writeAddSkill(tempDir, "Some content with planTempFile=$(mktemp but no plan builder ref");
-      writeWorkImplementSkill(tempDir, "Content with hasSteps and cat:plan-builder-agent invocation");
+      writeWorkImplementSkill(tempDir, "Content with hasSteps and cat:plan-builder invocation");
 
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, false, UTF_8);

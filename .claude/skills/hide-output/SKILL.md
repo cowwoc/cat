@@ -52,7 +52,7 @@ final formatted output.
 "Proceed with next step..."
 ```
 
-**CAUTION (M440):** The preprocessor regex matches `[BANG]`...`` everywhere in any invocable
+**CAUTION:** The preprocessor regex matches `[BANG]`...`` everywhere in any invocable
 skill file - code fences, comments, and inline code do NOT prevent expansion. When documenting
 the syntax, always use `[BANG]` placeholder instead of the literal character.
 

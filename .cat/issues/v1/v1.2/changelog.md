@@ -22,15 +22,15 @@ Major enhancement enabling proactive task decomposition and parallel subagent ex
 
 - Task-level locking prevents concurrent execution of same task
 - Lightweight completion markers (`.completion.json`) for efficient monitoring
-- Mandatory SESSION_ID verification before worktree creation (M057)
+- Mandatory SESSION_ID verification before worktree creation
 - Hook inheritance documentation for subagent prompts (A008)
 
 ## Bugfixes
 
-- Fix subagent cleanup to happen BEFORE approval gate presentation (M053)
-- Fix approval gate to require re-presentation after feedback (M052)
-- Fix bugfix tests to be in same commit as fix (M051)
-- Fix checkbox rendering in cat:status output (M056)
+- Fix subagent cleanup to happen BEFORE approval gate presentation
+- Fix approval gate to require re-presentation after feedback
+- Fix bugfix tests to be in same commit as fix
+- Fix checkbox rendering in cat:status output
 
 ## Git Safety Hooks
 

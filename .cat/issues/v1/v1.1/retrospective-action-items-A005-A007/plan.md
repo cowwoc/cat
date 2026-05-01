@@ -6,7 +6,7 @@ implement retrospective action items A005, A007
 ## Details
 ## A005: Checkpoint Enforcement
 - commands/execute-task.md: Add plan_change_checkpoint and user_review_checkpoint
-- skills/learn-from-mistakes/SKILL.md: Add Step 0 get-history verification (M037)
+- skills/learn-from-mistakes/SKILL.md: Add Step 0 get-history verification
 - skills/learn-from-mistakes/SKILL.md: Add path validation guidance (M040, M041)
 
 ## A007: Destructive Git Commands

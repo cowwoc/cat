@@ -109,10 +109,10 @@ public final class SubagentStartHookTest
   // --- SubagentStartHook tests ---
 
   /**
-   * Verifies that SubagentStartHook injects agent ID context even when no skills are discoverable.
+   * Verifies that SubagentStartHook returns empty output when no skills are discoverable.
    * <p>
    * In a test environment with empty temp dirs, SkillDiscovery finds no installed plugins,
-   * no project commands, and no user skills. The agent ID context is always injected.
+   * no project commands, and no user skills.
    */
   @Test
   public void subagentStartHookReturnsEmptyWhenNoSkills() throws IOException
@@ -125,9 +125,7 @@ public final class SubagentStartHookTest
     {
       HookResult result = new SubagentStartHook(scope).run(scope);
 
-      requireThat(result.output(), "output").contains("Your CAT agent ID is:");
-      requireThat(result.output(), "output").contains("test-session/subagents/agent-1");
-      requireThat(result.output(), "output").doesNotContain("Available skills");
+      requireThat(result.output(), "output").isEqualTo("{}");
       requireThat(result.warnings(), "warnings").isEmpty();
     }
     finally
@@ -172,29 +170,6 @@ public final class SubagentStartHookTest
       TestUtils.deleteDirectoryRecursively(configDir);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
-  }
-
-  /**
-   * Verifies that plugin/rules/skill-invocation-args.md contains cat_agent_id argument guidance so
-   * agents know to pass the injected cat_agent_id as the first argument when invoking skills.
-   * <p>
-   * This prevents agents from passing branch names, skill names, or other wrong values as the
-   * first argument to skills that require a cat_agent_id.
-   */
-  @Test
-  public void skillInvocationArgsRuleContainsCatAgentIdGuidance() throws IOException
-  {
-    // Maven Surefire runs tests with user.dir set to ${project.basedir} (the client/ directory).
-    // The workspace root is the parent of client/.
-    Path workspaceRoot = Path.of(System.getProperty("user.dir")).toAbsolutePath().normalize().getParent();
-
-    Path rulesFile = workspaceRoot.resolve("plugin/rules/skill-invocation-args.md");
-    requireThat(Files.exists(rulesFile), "rulesFileExists").isTrue();
-
-    String content = Files.readString(rulesFile);
-    requireThat(content, "content").contains("args");
-    requireThat(content, "content").contains("cat_agent_id");
-    requireThat(content, "content").contains("first argument");
   }
 
   /**
@@ -262,15 +237,14 @@ public final class SubagentStartHookTest
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
     try
     {
-      setupFakePlugin(configDir, "cat", "help-agent", "Display help for CAT commands", true);
+      setupFakePlugin(configDir, "cat", "help", "Display help for CAT commands", true);
       try (TestClaudeHook scope = new TestClaudeHook(configDir, pluginRoot, configDir))
       {
         String listing = SkillDiscovery.getMainAgentSkillListing(scope);
         requireThat(listing, "listing").contains("The following skills are available.");
-        requireThat(listing, "listing").contains("get-skill");
-        requireThat(listing, "listing").contains("cat:help-agent");
+        requireThat(listing, "listing").contains("cat:help");
         requireThat(listing, "listing").contains("Display help for CAT commands");
-        requireThat(listing, "listing").contains("cat:help-agent: Display help for CAT commands");
+        requireThat(listing, "listing").contains("cat:help: Display help for CAT commands");
       }
     }
     finally
@@ -295,7 +269,7 @@ public final class SubagentStartHookTest
       Files.createDirectories(pluginsDir);
 
       Path fakePluginRoot = configDir.resolve("fake-plugin-cat");
-      Path coreSkillDir = fakePluginRoot.resolve("skills/help-agent");
+      Path coreSkillDir = fakePluginRoot.resolve("skills/help");
       Path excludedDir = fakePluginRoot.resolve("skills/excluded-skill");
       Files.createDirectories(coreSkillDir);
       Files.createDirectories(excludedDir);
@@ -325,7 +299,7 @@ public final class SubagentStartHookTest
       try (TestClaudeHook scope = new TestClaudeHook(configDir, pluginRoot, configDir))
       {
         String listing = SkillDiscovery.getMainAgentSkillListing(scope);
-        requireThat(listing, "listing").contains("cat:help-agent");
+        requireThat(listing, "listing").contains("cat:help");
         requireThat(listing, "listing").doesNotContain("cat:excluded-skill");
         requireThat(listing, "listing").doesNotContain("This skill should not appear.");
       }
@@ -523,9 +497,7 @@ public final class SubagentStartHookTest
     {
       HookResult result = new SubagentStartHook(scope).run(scope);
 
-      requireThat(result.output(), "output").contains("Your CAT agent ID is:");
-      requireThat(result.output(), "output").contains("test-session-abc/subagents/subagent-xyz");
-      requireThat(result.output(), "output").contains("You MUST pass this as the first argument");
+      requireThat(result.output(), "output").isEqualTo("{}");
     }
     finally
     {
@@ -539,8 +511,7 @@ public final class SubagentStartHookTest
    *
    * @throws IOException if file operations fail
    */
-  @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*agent_id.*")
+  @Test
   public void getAgentIdContextAbsentWhenAgentIdBlank() throws IOException
   {
     Path projectPath = Files.createTempDirectory("cat-test-agent-id-blank-");
@@ -549,7 +520,8 @@ public final class SubagentStartHookTest
       "{\"session_id\": \"test-session-abc\", \"agent_id\": \"\"}",
       projectPath, pluginRoot, projectPath))
     {
-      new SubagentStartHook(scope).run(scope);
+      HookResult result = new SubagentStartHook(scope).run(scope);
+      requireThat(result.output(), "output").isEqualTo("{}");
     }
     finally
     {

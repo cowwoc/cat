@@ -1,7 +1,6 @@
 ---
 description: Analyze session efficiency and generate execution optimization recommendations.
-disable-model-invocation: true
 effort: high
 ---
 
-!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-skill" optimize-execution "${CLAUDE_SESSION_ID}"`
+See `${CLAUDE_PLUGIN_ROOT}/rules/skill-loading.md` and follow it exactly.

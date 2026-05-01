@@ -1,8 +1,3 @@
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # Command Optimizer Skill
 
 **Purpose**: Analyze session tool_use history to identify optimization opportunities and categorize
@@ -69,9 +64,8 @@ The skill outputs a JSON object with:
   - This field is absent (not null) when JSONL entries lack timestamps or the file is unreadable
 
 **Subagent Discovery**: The script automatically discovers subagent JSONL files by parsing Task tool_result
-entries for `agentId` fields, then resolves paths as `{session_dir}/{session_name}/subagents/agent-{agentId}.jsonl`,
-where `session_name` is the basename of the session JSONL file (the Claude Code session ID).
-Only existing files are included.
+entries for `agentId` fields, then resolves subagent session context internally from the current session.
+Only existing subagent sessions are included.
 
 ### Step 2: Categorize UX Relevance
 
@@ -337,7 +331,7 @@ Compile analysis into actionable recommendations based on the skill output:
 
 #### Script Extraction Opportunities
 
-**Principle**: Skills must not contain inline bash for deterministic operations — all such bash belongs in external scripts. Skills contain only: when to use, script invocation, result handling, and judgment-dependent guidance. This principle is enforced by `/cat:instruction-builder-agent`.
+**Principle**: Skills must not contain inline bash for deterministic operations — all such bash belongs in external scripts. Skills contain only: when to use, script invocation, result handling, and judgment-dependent guidance. This principle is enforced by `/cat:instruction-builder`.
 
 **Detection**: Any skill file containing bash code blocks with deterministic operations (no judgment branching, no user interaction) is a candidate for script extraction.
 
@@ -591,7 +585,7 @@ Delegating would have saved ~59.1% tokens. Recommend delegating this phase.
 | 2 | Combine 6 sequential Grep calls into 1-2 with regex alternation | 4-5 tool calls |
 | 3 | Cache CLAUDE.md content after first read; reference from context | 3 Read calls |
 | 4 | Extract 5 deterministic validation bash commands to standalone script | 5 tool calls |
-| 5 | Remove repeated boilerplate in work-agent/first-use.md steps 3-5 | ~150 tokens/invocation |
+| 5 | Remove repeated boilerplate in work/first-use.md steps 3-5 | ~150 tokens/invocation |
 ```
 
 See [delegation-analysis.md](plugin/skills/optimize-execution/delegation-analysis.md) for a worked example with full token calculations.
@@ -611,6 +605,6 @@ See [delegation-analysis.md](plugin/skills/optimize-execution/delegation-analysi
 
 ## Related Concepts
 
-- **get-history**: Session storage format and how to access raw session data — `plugin/skills/get-history-agent/first-use.md`
-- **token-report**: Token budgeting and context health metrics — `plugin/skills/token-report-agent/first-use.md`
+- **get-history**: Session storage format and how to access raw session data — `plugin/skills/get-history/first-use.md`
+- **token-report**: Token budgeting and context health metrics — `plugin/skills/token-report/first-use.md`
 - **subagent-context-minimization**: When and how to pass file paths instead of file content to subagents — `plugin/concepts/subagent-context-minimization.md`

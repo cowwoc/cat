@@ -29,7 +29,7 @@ Main Agent (work-with-issue skill)
 
 **Benefits:**
 - Main agent can invoke skills directly (Skill tool available)
-- Skills requiring spawning (instruction-builder-agent, stakeholder-review) work correctly
+- Skills requiring spawning (instruction-builder, stakeholder-review) work correctly
 - Each subagent has fresh context for quality work
 - User sees clean phase transitions, not internal tool calls
 - Eliminates nested subagent spawning (architecturally impossible)

@@ -26,11 +26,11 @@ import java.util.Objects;
  * <p>
  * Asserts that:
  * <ol>
- *   <li>{@code plugin/skills/add-agent/first-use.md} does NOT contain a {@code cat:plan-builder-agent} invocation</li>
- *   <li>{@code plugin/skills/add-agent/first-use.md} contains the lightweight plan generation block
+ *   <li>{@code plugin/skills/add/first-use.md} does NOT contain a {@code cat:plan-builder} invocation</li>
+ *   <li>{@code plugin/skills/add/first-use.md} contains the lightweight plan generation block
  *       ({@code planTempFile=$(mktemp})</li>
- *   <li>{@code plugin/skills/work-implement-agent/first-use.md} contains the {@code hasSteps} check</li>
- *   <li>{@code plugin/skills/work-implement-agent/first-use.md} invokes {@code cat:plan-builder-agent}</li>
+ *   <li>{@code plugin/skills/work-implement/first-use.md} contains the {@code hasSteps} check</li>
+ *   <li>{@code plugin/skills/work-implement/first-use.md} invokes {@code cat:plan-builder}</li>
  * </ol>
  * <p>
  * Usage: {@code verify-defer-plan-generation [PROJECT_ROOT]}
@@ -103,8 +103,8 @@ public final class VerifyDeferPlanGeneration
     else
       projectRoot = scope.getProjectPath();
 
-    Path addSkill = projectRoot.resolve("plugin/skills/add-agent/first-use.md");
-    Path workImplementSkill = projectRoot.resolve("plugin/skills/work-implement-agent/first-use.md");
+    Path addSkill = projectRoot.resolve("plugin/skills/add/first-use.md");
+    Path workImplementSkill = projectRoot.resolve("plugin/skills/work-implement/first-use.md");
 
     out.println("=== E2E Verification: defer-plan-generation-to-work-phase ===");
 
@@ -126,22 +126,22 @@ public final class VerifyDeferPlanGeneration
       else
         workContent = Files.readString(workImplementSkill);
 
-      // Check 1: add/first-use.md must NOT contain cat:plan-builder-agent invocation
+      // Check 1: add/first-use.md must NOT contain cat:plan-builder invocation
       if (addContent == null)
       {
-        out.println("FAIL: add/first-use.md has no cat:plan-builder-agent invocation");
+        out.println("FAIL: add/first-use.md has no cat:plan-builder invocation");
         out.println("      File not found: " + addSkill);
         ++failed;
       }
-      else if (addContent.contains("cat:plan-builder-agent"))
+      else if (addContent.contains("cat:plan-builder"))
       {
-        out.println("FAIL: add/first-use.md has no cat:plan-builder-agent invocation");
-        out.println("      Found 'cat:plan-builder-agent' in " + addSkill);
+        out.println("FAIL: add/first-use.md has no cat:plan-builder invocation");
+        out.println("      Found 'cat:plan-builder' in " + addSkill);
         ++failed;
       }
       else
       {
-        out.println("PASS: add/first-use.md has no cat:plan-builder-agent invocation");
+        out.println("PASS: add/first-use.md has no cat:plan-builder invocation");
         ++passed;
       }
 
@@ -164,41 +164,41 @@ public final class VerifyDeferPlanGeneration
         ++failed;
       }
 
-      // Check 3: work-implement-agent/first-use.md must contain hasSteps check
+      // Check 3: work-implement/first-use.md must contain hasSteps check
       if (workContent == null)
       {
-        out.println("FAIL: work-implement-agent/first-use.md contains hasSteps check");
+        out.println("FAIL: work-implement/first-use.md contains hasSteps check");
         out.println("      File not found: " + workImplementSkill);
         ++failed;
       }
       else if (workContent.contains("hasSteps"))
       {
-        out.println("PASS: work-implement-agent/first-use.md contains hasSteps check");
+        out.println("PASS: work-implement/first-use.md contains hasSteps check");
         ++passed;
       }
       else
       {
-        out.println("FAIL: work-implement-agent/first-use.md contains hasSteps check");
+        out.println("FAIL: work-implement/first-use.md contains hasSteps check");
         out.println("      Pattern 'hasSteps' not found in " + workImplementSkill);
         ++failed;
       }
 
-      // Check 4: work-implement-agent/first-use.md must invoke cat:plan-builder-agent
+      // Check 4: work-implement/first-use.md must invoke cat:plan-builder
       if (workContent == null)
       {
-        out.println("FAIL: work-implement-agent/first-use.md invokes cat:plan-builder-agent");
+        out.println("FAIL: work-implement/first-use.md invokes cat:plan-builder");
         out.println("      File not found: " + workImplementSkill);
         ++failed;
       }
-      else if (workContent.contains("cat:plan-builder-agent"))
+      else if (workContent.contains("cat:plan-builder"))
       {
-        out.println("PASS: work-implement-agent/first-use.md invokes cat:plan-builder-agent");
+        out.println("PASS: work-implement/first-use.md invokes cat:plan-builder");
         ++passed;
       }
       else
       {
-        out.println("FAIL: work-implement-agent/first-use.md invokes cat:plan-builder-agent");
-        out.println("      Pattern 'cat:plan-builder-agent' not found in " + workImplementSkill);
+        out.println("FAIL: work-implement/first-use.md invokes cat:plan-builder");
+        out.println("      Pattern 'cat:plan-builder' not found in " + workImplementSkill);
         ++failed;
       }
 

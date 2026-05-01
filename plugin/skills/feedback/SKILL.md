@@ -7,7 +7,6 @@ allowed-tools:
   - Bash
   - Read
   - AskUserQuestion
-disable-model-invocation: true
 ---
 
-!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-skill" feedback "${CLAUDE_SESSION_ID}" "$ARGUMENTS"`
+See `${CLAUDE_PLUGIN_ROOT}/rules/skill-loading.md` and follow it exactly.

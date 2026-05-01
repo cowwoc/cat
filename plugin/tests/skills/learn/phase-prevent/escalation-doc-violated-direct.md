@@ -4,7 +4,7 @@ category: requirement
 ## Turn 1
 
 You are in phase-prevent of the learn skill. An agent merged to the wrong branch. Investigation
-identified that `plugin/skills/work-merge-agent/first-use.md` contains a section titled "Merge to
+identified that `plugin/skills/work-merge/first-use.md` contains a section titled "Merge to
 Main Branch" that teaches the merge procedure targeting "main" specifically — even though the actual
 target branch should come from work-prepare output. This section is the priming source that caused the
 agent to use "main" instead of the configured target_branch. The document is in the repo and can be

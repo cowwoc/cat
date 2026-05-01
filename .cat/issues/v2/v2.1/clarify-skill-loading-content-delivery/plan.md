@@ -4,7 +4,7 @@
 Add a clarification to `plugin/concepts/skill-loading.md` that Skill tool content delivery IS execution — agents must follow the returned instructions and must NOT bypass the Skill tool by spawning a manual Agent task with a simplified delegation prompt.
 
 ## Problem
-In session 72dcec0d, the main agent misinterpreted normal Skill tool behavior (returning skill instructions) as a failure and explicitly bypassed it via Agent tool with a manual delegation prompt lacking AskUserQuestion. This caused an unauthorized merge at trust=medium (M593).
+In session 72dcec0d, the main agent misinterpreted normal Skill tool behavior (returning skill instructions) as a failure and explicitly bypassed it via Agent tool with a manual delegation prompt lacking AskUserQuestion. This caused an unauthorized merge at trust=medium.
 
 ## Root Cause
 `plugin/concepts/skill-loading.md` documents synchronous execution but does not state that content delivery IS the execution result that the agent must follow, leaving agents free to rationalize bypassing the Skill tool when they encounter unexpected skill output.

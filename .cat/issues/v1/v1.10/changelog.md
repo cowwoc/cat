@@ -35,8 +35,8 @@ for v1.1 commercialization.
 - Fix multi-file diff parsing dropping first files
 - Fix box_header() alignment using pad() for emoji-aware width
 - Fix status.sh arithmetic bug and empty array key guard
-- Fix token estimate vs measurement confusion (M146)
-- Fix commit type validation for retrospectives (M139)
+- Fix token estimate vs measurement confusion
+- Fix commit type validation for retrospectives
 
 ## Planning
 

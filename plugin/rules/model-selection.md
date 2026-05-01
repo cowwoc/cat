@@ -21,42 +21,40 @@ These mappings are applied automatically by the Agent/Task/Skill tools when the 
 
 **Sonnet-preferred skills** (use `model: sonnet` by default, fall back to `model: opus` if Sonnet is rate-limited):
 
-- `cat:add-agent`
+- `cat:add`
 - `cat:claude-runner`
-- `cat:empirical-test-agent`
-- `cat:git-merge-linear-agent`
-- `cat:git-rebase-agent`
-- `cat:git-rewrite-history-agent`
-- `cat:git-squash-agent`
-- `cat:github-trigger-workflow-agent`
+- `cat:empirical-test`
+- `cat:git-merge-linear`
+- `cat:git-rebase`
+- `cat:git-rewrite-history`
+- `cat:git-squash`
+- `cat:github-trigger-workflow`
 - `cat:init`
-- `cat:instruction-builder-agent`
+- `cat:instruction-builder`
 - `cat:learn`
-- `cat:learn-agent`
+- `cat:learn`
 - `cat:optimize-execution`
-- `cat:optimize-execution-agent`
-- `cat:plan-builder-agent`
-- `cat:rebase-impact-agent`
-- `cat:recover-from-drift-agent`
-- `cat:research-agent`
-- `cat:retrospective-agent`
-- `cat:safe-remove-code-agent`
-- `cat:skill-comparison-agent`
-- `cat:stakeholder-review-agent`
-- `cat:tdd-implementation-agent`
-- `cat:test-runner-isolation-validator`
-- `cat:verify-implementation-agent`
-- `cat:work-agent`
-- `cat:work-confirm-agent`
-- `cat:work-implement-agent`
-- `cat:work-merge-agent`
-- `cat:work-prepare-agent`
-- `cat:work-review-agent`
-- `cat:work-with-issue-agent`
+- `cat:optimize-execution`
+- `cat:plan-builder`
+- `cat:git-rebase`
+- `cat:recover-from-drift`
+- `cat:research`
+- `cat:retrospective`
+- `cat:remove-code`
+- `cat:stakeholder-review`
+- `cat:tdd-implementation`
+- `cat:verify-implementation`
+- `cat:work`
+- `cat:work-confirm`
+- `cat:work-implement`
+- `cat:work-merge`
+- `cat:work-prepare`
+- `cat:work-review`
+- `cat:work-with-issue`
 
 **Opus-preferred skills** (use `model: opus`; these require the highest reasoning capability):
 
-- `cat:decompose-issue-agent`
+- `cat:decompose-issue`
 
 **Fallback behavior:** If Sonnet returns a rate-limit error, retry the same skill invocation using Opus. Do not
 ask the user before falling back — rate-limit fallback is automatic.

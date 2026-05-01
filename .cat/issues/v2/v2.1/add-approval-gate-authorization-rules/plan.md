@@ -11,7 +11,7 @@ bugfix
 
 ## Goal
 
-Implement prevention rules and enforcement mechanisms to prevent approval gate authorization bypass (M561). Ensure that only explicit AskUserQuestion option selection counts as valid approval for destructive operations (merge, force-push, branch deletion). Conversational signals ("continue", "ok", "yes", "proceed") must NOT be treated as authorization.
+Implement prevention rules and enforcement mechanisms to prevent approval gate authorization bypass. Ensure that only explicit AskUserQuestion option selection counts as valid approval for destructive operations (merge, force-push, branch deletion). Conversational signals ("continue", "ok", "yes", "proceed") must NOT be treated as authorization.
 
 ## Problem
 

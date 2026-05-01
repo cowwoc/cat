@@ -6,7 +6,6 @@ context: fork
 allowed-tools:
   - Bash
   - Read
-disable-model-invocation: true
 ---
 
-!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-skill" cleanup "${CLAUDE_SESSION_ID}"`
+See `${CLAUDE_PLUGIN_ROOT}/rules/skill-loading.md` and follow it exactly.

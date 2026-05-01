@@ -11,6 +11,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.claude.hook.prompt.DestructiveOps;
 import io.github.cowwoc.cat.claude.hook.prompt.DetectGivingUp;
+import io.github.cowwoc.cat.claude.hook.prompt.RemindSkillUsage;
 
 import org.slf4j.LoggerFactory;
 import java.io.InputStream;
@@ -42,6 +43,7 @@ public final class UserPromptSubmitHook implements HookHandler
     this.handlers = List.of(
       new DestructiveOps(),
       new DetectGivingUp(),
+      new RemindSkillUsage(),
       scope.getUserIssues());
   }
 

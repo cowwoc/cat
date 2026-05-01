@@ -1,8 +1,3 @@
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # Feedback: File a Bug Report
 
 File a bug report for a CAT plugin issue on GitHub. Checks for duplicates before creating a new issue.

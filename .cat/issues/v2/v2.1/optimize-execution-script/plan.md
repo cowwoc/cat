@@ -2,7 +2,7 @@
 
 ## Current State
 The optimize-execution skill contains inline jq queries across 5 analysis steps. These queries
-fail when executed via the Bash tool due to shell escaping of `!=` and `//` operators (M431).
+fail when executed via the Bash tool due to shell escaping of `!=` and `//` operators.
 The agent must manually write a script file first, wasting turns and tokens.
 
 ## Target State

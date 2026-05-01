@@ -14,15 +14,15 @@ Introduces automated version migration system and workflow stability improvement
 
 - **Version Migration System**: Automated migrations for CAT upgrades with backup/restore
 - **Version Entry/Exit Gates**: Pre/post-upgrade validation for safe version transitions
-- **Duplicate Detection**: Exploration step now detects duplicate tasks (M087)
+- **Duplicate Detection**: Exploration step now detects duplicate tasks
 
 ## Documentation
 
 - README: Added version and autoRemoveWorktrees config options
 - README: Updated problem section with visual diagram
 - Token tracking guidance for compaction scenarios
-- Pre-edit self-check for main agent (M088)
-- Commit separation guidance for `.claude/rules/` (M089)
+- Pre-edit self-check for main agent
+- Commit separation guidance for `.claude/rules/`
 - Mandatory user preference respect in `choose-approach` skill
 
 ## Bugfixes

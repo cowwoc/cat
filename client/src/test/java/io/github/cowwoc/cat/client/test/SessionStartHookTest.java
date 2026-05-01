@@ -12,8 +12,6 @@ import io.github.cowwoc.cat.claude.hook.SessionStartHook;
 import io.github.cowwoc.cat.claude.hook.session.CheckRetrospectiveDue;
 import io.github.cowwoc.cat.claude.hook.session.CheckUpdateAvailable;
 import io.github.cowwoc.cat.claude.hook.session.CheckDataMigration;
-import io.github.cowwoc.cat.claude.hook.session.ClearAgentMarkers;
-import io.github.cowwoc.cat.claude.hook.util.GetSkill;
 import io.github.cowwoc.cat.claude.hook.session.EchoSessionId;
 import io.github.cowwoc.cat.claude.hook.session.InjectEnv;
 import io.github.cowwoc.cat.claude.hook.session.SessionStartHandler;
@@ -61,64 +59,6 @@ public class SessionStartHookTest
   {
     new TestClaudeHook("{}");
   }
-
-  // --- ClearAgentMarkers tests ---
-
-  /**
-   * Verifies that ClearAgentMarkers deletes the main agent's loaded directory.
-   */
-  @Test
-  public void clearAgentMarkersDeletesMainAgentMarker() throws IOException
-  {
-    Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
-    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
-    {
-      String sessionId = "test-session-" + System.nanoTime();
-      Path sessionDir = scope.getCatWorkPath().resolve("sessions").resolve(sessionId);
-      Path loadedDir = sessionDir.resolve(GetSkill.LOADED_DIR);
-      Files.createDirectories(loadedDir);
-      Files.writeString(loadedDir.resolve("cat%3Awork"), "");
-
-      String warning = new ClearAgentMarkers(scope).clearMainAgentMarker(sessionId);
-      requireThat(warning, "warning").isEmpty();
-      requireThat(Files.exists(loadedDir), "loadedDirExists").isFalse();
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(projectPath);
-      TestUtils.deleteDirectoryRecursively(pluginRoot);
-    }
-  }
-
-  /**
-   * Verifies that ClearAgentMarkers deletes a specific subagent's loaded directory.
-   */
-  @Test
-  public void clearAgentMarkersDeletesSubagentMarker() throws IOException
-  {
-    Path projectPath = Files.createTempDirectory("cat-test-clear-marker-");
-    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
-    try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
-    {
-      String sessionId = "test-session-" + System.nanoTime();
-      Path markerDir = scope.getCatWorkPath().resolve("sessions").resolve(sessionId).
-        resolve(GetSkill.SUBAGENTS_DIR).resolve("agent-1");
-      Path loadedDir = markerDir.resolve(GetSkill.LOADED_DIR);
-      Files.createDirectories(loadedDir);
-      Files.writeString(loadedDir.resolve("cat%3Awork"), "");
-
-      String warning = new ClearAgentMarkers(scope).clearSubagentMarker(sessionId, "agent-1");
-      requireThat(warning, "warning").isEmpty();
-      requireThat(Files.exists(loadedDir), "loadedDirExists").isFalse();
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(projectPath);
-      TestUtils.deleteDirectoryRecursively(pluginRoot);
-    }
-  }
-
   // --- InjectEnv tests ---
 
   /**
@@ -1090,7 +1030,7 @@ public class SessionStartHookTest
   // --- SessionStartHook dispatcher tests (normal mode) ---
 
   /**
-   * Verifies that SessionStartHook injects the agent ID context even when all handlers return empty.
+   * Verifies that SessionStartHook returns empty output when all handlers return empty.
    */
   @Test
   public void dispatcherReturnsEmptyWhenAllHandlersReturnEmpty() throws IOException
@@ -1105,8 +1045,7 @@ public class SessionStartHookTest
 
       io.github.cowwoc.cat.claude.hook.HookResult result = dispatcher.run(scope);
 
-      requireThat(result.output(), "output").contains("Your CAT agent ID is:");
-      requireThat(result.output(), "output").contains("test-session");
+      requireThat(result.output(), "output").isEqualTo("{}");
     }
   }
 
@@ -1135,7 +1074,7 @@ public class SessionStartHookTest
   }
 
   /**
-   * Verifies that SessionStartHook returns warnings from handlers and always includes agent ID context.
+   * Verifies that SessionStartHook returns warnings from handlers.
    */
   @Test
   public void dispatcherReturnsWarningsFromHandlers() throws IOException
@@ -1152,9 +1091,7 @@ public class SessionStartHookTest
 
       requireThat(result.warnings(), "warnings").contains("stderr message");
 
-      // Agent ID context is always injected even when handlers produce no additional context
-      requireThat(result.output(), "output").contains("Your CAT agent ID is:");
-      requireThat(result.output(), "output").contains("test-session");
+      requireThat(result.output(), "output").isEqualTo("{}");
     }
   }
 

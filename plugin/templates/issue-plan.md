@@ -49,7 +49,7 @@ Select the appropriate template based on issue type.
 ## Main Agent Jobs
 <!-- OPTIONAL: Skills that require main-agent-level execution (spawn their own subagents) -->
 <!-- Remove this section if the issue has no pre-delegation skills -->
-<!-- Each bullet is a skill invocation: - /cat:instruction-builder-agent path/to/file.md -->
+<!-- Each bullet is a skill invocation: - /cat:instruction-builder path/to/file.md -->
 
 ## Jobs
 

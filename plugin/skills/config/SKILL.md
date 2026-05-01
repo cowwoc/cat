@@ -8,7 +8,6 @@ allowed-tools:
   - Read
   - Write
   - AskUserQuestion
-disable-model-invocation: true
 ---
 
-!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-skill" config "${CLAUDE_SESSION_ID}"`
+See `${CLAUDE_PLUGIN_ROOT}/rules/skill-loading.md` and follow it exactly.

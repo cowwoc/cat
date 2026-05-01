@@ -1,8 +1,3 @@
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # CAT Cleanup
 
 ## Purpose
@@ -473,4 +468,3 @@ The resulting box will be output verbatim.
 1. List branches (Step 1)
 2. Confirm they have no unique unmerged commits
 3. Delete branches
-

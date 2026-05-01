@@ -110,7 +110,7 @@ minor version's plan.md. Issues may satisfy zero or more requirements.
 
 ## Bugfix Template
 
-**MANDATORY (M122):** Bugfix plans MUST include reproduction code. Issues must be self-contained
+**MANDATORY:** Bugfix plans MUST include reproduction code. Issues must be self-contained
 and executable without external dependencies (e.g., external codebases, third-party repos).
 
 ```markdown

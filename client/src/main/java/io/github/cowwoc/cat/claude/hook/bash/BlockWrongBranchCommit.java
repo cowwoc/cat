@@ -101,7 +101,7 @@ public final class BlockWrongBranchCommit implements BashHandler
     if (currentBranch.equals(expectedBranch))
       return Result.allow();
 
-    // During Step 6 of instruction-builder-agent, the main agent creates a shared orphan branch named
+    // During Step 6 of instruction-builder, the main agent creates a shared orphan branch named
     // "{expectedBranch}-sanitized" (e.g. "2.1-my-issue-sanitized") and commits stripped test-case files to it
     // while still inside the issue worktree. Per-runner branches (named "{expectedBranch}-tcN-rM") are
     // then branched from this sanitized branch, each with its own worktree whose directory name matches the

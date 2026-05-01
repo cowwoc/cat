@@ -14,11 +14,11 @@ You are a skill design agent. Design or update instruction documents using backw
 
 ## Design Methodology
 
-Read and follow: ${CLAUDE_PLUGIN_ROOT}/skills/instruction-builder-agent/design-methodology.md
+Read and follow: ${CLAUDE_PLUGIN_ROOT}/skills/instruction-builder/design-methodology.md
 
 ## Conventions
 
-Read and follow: ${CLAUDE_PLUGIN_ROOT}/skills/instruction-builder-agent/conventions.md
+Read and follow: ${CLAUDE_PLUGIN_ROOT}/skills/instruction-builder/conventions.md
 
 ## Your Task
 

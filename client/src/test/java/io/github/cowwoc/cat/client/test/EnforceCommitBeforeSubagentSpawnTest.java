@@ -43,7 +43,7 @@ public final class EnforceCommitBeforeSubagentSpawnTest
   }
 
   /**
-   * Creates a tool input JSON node for spawning a non-execute subagent (e.g., cat:work-merge-agent).
+   * Creates a tool input JSON node for spawning a non-execute subagent (e.g., cat:work-merge).
    *
    * @param mapper the JSON mapper
    * @return the tool input JSON node
@@ -52,7 +52,7 @@ public final class EnforceCommitBeforeSubagentSpawnTest
   private static JsonNode createOtherToolInput(JsonMapper mapper) throws IOException
   {
     return mapper.readTree("""
-      {"subagent_type": "cat:work-merge-agent"}""");
+      {"subagent_type": "cat:work-merge"}""");
   }
 
   /**

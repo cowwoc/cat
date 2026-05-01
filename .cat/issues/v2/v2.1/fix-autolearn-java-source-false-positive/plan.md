@@ -27,7 +27,7 @@ sed -n '65,90p' client/src/main/java/io/github/cowwoc/cat/hooks/tool/post/Detect
 # Trigger 2: Run git diff that includes deleted file content containing pattern keywords
 git diff v2.1..HEAD
 # → stdout includes deleted PLAN.md content containing "violation types"
-# → AutoLearnMistakes Pattern 3 fires: false positive protocol_violation (M563)
+# → AutoLearnMistakes Pattern 3 fires: false positive protocol_violation
 ```
 
 ## Expected vs Actual

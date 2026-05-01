@@ -221,10 +221,10 @@ configuration (set at the instruction-test level, not in individual `.md` test c
 
 ```
 You have access to the following skill:
-- cat:grep-and-read-agent: PREFER when searching pattern AND reading matches - single operation (50-70% faster
+- cat:grep-and-read: PREFER when searching pattern AND reading matches - single operation (50-70% faster
   than sequential)
 
-Invoke skills using the Skill tool: Skill(skill="cat:grep-and-read-agent", args="<cat_agent_id>")
+Invoke skills using the Skill tool: Skill(skill="cat:grep-and-read")
 ```
 
 This is NOT priming — it replicates how the skill description appears in the agent's context at runtime. The test
@@ -249,7 +249,7 @@ procedure. Read `first-use.md` before writing Tier 2 criteria.
 
 **Pattern: skill replaces multiple sequential tool calls**
 
-For skills that consolidate multiple tool calls (e.g., `grep-and-read-agent`), Tier 1 alone is sufficient when
+For skills that consolidate multiple tool calls (e.g., `grep-and-read`), Tier 1 alone is sufficient when
 verifying Tier 2 would require tracking tools invoked inside the skill. The Skill tool invocation IS the batch
 operation — the internal Grep and Read calls run inside the skill, not as separate outer-agent calls.
 
@@ -316,7 +316,7 @@ List all Java files that reference HookHandler — just the paths, not their con
 
 ## Example Test Case Files
 
-Complete examples for `grep-and-read-agent` stored in `plugin/tests/skills/grep-and-read-agent/`:
+Complete examples for `grep-and-read` stored in `plugin/tests/skills/grep-and-read/`:
 
 **`unit_grep_files_with_matches.md`** (positive case):
 

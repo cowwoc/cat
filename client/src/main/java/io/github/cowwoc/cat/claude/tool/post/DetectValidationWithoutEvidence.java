@@ -29,8 +29,8 @@ import java.util.regex.Pattern;
  * evidence in the conversation transcript.
  * <p>
  * Monitors the most recent assistant text message for validation claim patterns. When a claim is found,
- * checks the last 20 messages for evidence of a {@code cat:compare-docs}, {@code cat:compare-docs-agent},
- * {@code cat:verify-implementation}, or {@code cat:verify-implementation-agent} skill invocation. If no
+ * checks the last 20 messages for evidence of a {@code cat:compare-docs}, {@code cat:compare-docs},
+ * {@code cat:verify-implementation}, or {@code cat:verify-implementation} skill invocation. If no
  * evidence is found, injects a warning into the context.
  */
 public final class DetectValidationWithoutEvidence implements PostToolHandler
@@ -128,12 +128,12 @@ public final class DetectValidationWithoutEvidence implements PostToolHandler
       An agent claimed verification or validation results without evidence of a corresponding skill invocation.
 
       **Claim detected in assistant output**: contains validation/verification claim keywords
-      **Expected evidence**: cat:compare-docs-agent or cat:verify-implementation-agent skill invocation in \
+      **Expected evidence**: cat:compare-docs or cat:verify-implementation skill invocation in \
       recent transcript
 
       **MANDATORY**: Do NOT fabricate validation results. Only report verification outcomes after invoking \
-      the appropriate skill (cat:compare-docs-agent for semantic equivalence, \
-      cat:verify-implementation-agent for post-condition checks).
+      the appropriate skill (cat:compare-docs for semantic equivalence, \
+      cat:verify-implementation for post-condition checks).
 
       **If you need to validate**: Invoke the skill first, then report the result.""");
   }
@@ -204,7 +204,7 @@ public final class DetectValidationWithoutEvidence implements PostToolHandler
    * Checks whether the given skill name is a recognized validation or verification skill.
    * <p>
    * Accepts both bare names (e.g., {@code cat:compare-docs}) and their {@code -agent} suffix variants
-   * (e.g., {@code cat:compare-docs-agent}), since either form may appear in the conversation log depending
+   * (e.g., {@code cat:compare-docs}), since either form may appear in the conversation log depending
    * on how the skill was invoked.
    *
    * @param skillName the skill name from a Skill tool_use block
@@ -213,9 +213,9 @@ public final class DetectValidationWithoutEvidence implements PostToolHandler
   private static boolean isValidationSkill(String skillName)
   {
     return skillName.equals("cat:compare-docs") ||
-      skillName.equals("cat:compare-docs-agent") ||
+      skillName.equals("cat:compare-docs") ||
       skillName.equals("cat:verify-implementation") ||
-      skillName.equals("cat:verify-implementation-agent");
+      skillName.equals("cat:verify-implementation");
   }
 
   /**

@@ -12,12 +12,12 @@ summarizing created issues, when referencing issues in any context.
 
 **Never use** bare issue names (e.g., `create-config-property-enums`) in agent-to-user text.
 
-**Skills** — Format: `{prefix}:{bare-name}` (e.g., `cat:git-rebase-agent`)
+**Skills** — Format: `{prefix}:{bare-name}` (e.g., `cat:git-rebase`)
 
 **Applies to**: All free-text responses, planning files, SKILL.md content, and agent instructions
 when referring to skills by name.
 
-**Never use** bare skill names (e.g., `git-rebase-agent`) in responses, planning files, SKILL.md content, or agent instructions.
+**Never use** bare skill names (e.g., `git-rebase`) in responses, planning files, SKILL.md content, or agent instructions.
 
 **Files** — Use full paths relative to the project root (e.g., `plugin/rules/qualified-issue-names.md`)
 

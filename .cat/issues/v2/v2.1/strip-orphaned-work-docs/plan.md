@@ -15,9 +15,9 @@ None (infrastructure cleanup)
 - **Mitigation:** Grep verification before removal
 
 ## Files to Modify
-- `plugin/skills/work/anti-patterns.md` - Remove: Background Task Behavior (M293) [in MEMORY.md], Config settings table (lines 66-70) [in work-with-issue/work-prepare], Configuration-Driven Behavior Summary table [in work-with-issue/work-prepare], M### Series index [retrospectives are source of truth], A### Series index [retrospectives are source of truth]. Keep: Main Agent Boundaries section, Pre-Edit Checkpoint section.
+- `plugin/skills/work/anti-patterns.md` - Remove: Background Task Behavior [in MEMORY.md], Config settings table (lines 66-70) [in work-with-issue/work-prepare], Configuration-Driven Behavior Summary table [in work-with-issue/work-prepare], M### Series index [retrospectives are source of truth], A### Series index [retrospectives are source of truth]. Keep: Main Agent Boundaries section, Pre-Edit Checkpoint section.
 - `plugin/skills/work/commit-rules.md` - Remove: Per-Step Commits section [in CLAUDE.md commit types], Commit type prefixes [in plugin/concepts/commit-types.md]. Keep: Enhanced Commit Message Format template (Problem Solved / Solution Implemented / Decisions Made / Deviations from Plan).
-- `plugin/skills/work/deviation-rules.md` - Remove: Duplicate Task Handling section [in plugin/concepts/duplicate-issue.md and plugin/concepts/issue-resolution.md], User Review Checkpoint [in work-with-issue Steps 5-7]. Keep: Deviation Rules (auto-fix bugs, auto-add critical, ask about architectural, log enhancements), Plan Change Checkpoint (M034).
+- `plugin/skills/work/deviation-rules.md` - Remove: Duplicate Task Handling section [in plugin/concepts/duplicate-issue.md and plugin/concepts/issue-resolution.md], User Review Checkpoint [in work-with-issue Steps 5-7]. Keep: Deviation Rules (auto-fix bugs, auto-add critical, ask about architectural, log enhancements), Plan Change Checkpoint.
 
 ## Post-conditions
 - [ ] Operational behavior of /cat:work skill and related commands unchanged

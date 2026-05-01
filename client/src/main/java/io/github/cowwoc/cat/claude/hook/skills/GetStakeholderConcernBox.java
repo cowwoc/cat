@@ -23,7 +23,7 @@ import java.util.List;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Generates a concern box for /cat:stakeholder-review-agent skill.
+ * Generates a concern box for /cat:stakeholder-review skill.
  * <p>
  * Displays a concern raised by a stakeholder during review, at a configurable severity level.
  */

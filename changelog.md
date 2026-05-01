@@ -72,8 +72,8 @@ structure for v1.1 commercialization.
 - Fix multi-file diff parsing dropping first files
 - Fix box_header() alignment using pad() for emoji-aware width
 - Fix status.sh arithmetic bug and empty array key guard
-- Fix token estimate vs measurement confusion (M146)
-- Fix commit type validation for retrospectives (M139)
+- Fix token estimate vs measurement confusion
+- Fix commit type validation for retrospectives
 
 **Planning:**
 - v1.1 Commercialization: 12 tasks for licensing, legal, and enterprise features
@@ -99,19 +99,19 @@ Comprehensive display standardization, test infrastructure, and workflow stabili
 
 **Configuration:**
 - New settings schema: `trust`, `verify`, `curiosity`, `patience` replace previous options
-- Worktree isolation protection (M101) prevents commits to wrong worktree
-- Task lock checking before offering tasks (M097)
-- Hook to block direct lock file deletion (M096)
+- Worktree isolation protection prevents commits to wrong worktree
+- Task lock checking before offering tasks
+- Hook to block direct lock file deletion
 - Commit message guidance: don't list modified files (redundant with diff)
 - Require failing test cases for bugfix tasks
 - Strengthen token measurement requirements (A017)
 
 **Bugfixes:**
-- Fix bold rendering in display templates (M125)
+- Fix bold rendering in display templates
 - Fix box formatting for display standard compliance
-- Fix subagent token measurement session ID issue (M109)
-- Fix inconsistent task path patterns (M108)
-- Fix parse_error false positives when command succeeds (M100)
+- Fix subagent token measurement session ID issue
+- Fix inconsistent task path patterns
+- Fix parse_error false positives when command succeeds
 - Fix HEREDOC message extraction in commit type validation
 - Fix emoji display width calculations in box templates
 - Fix docs vs config validation for Claude-facing files
@@ -130,14 +130,14 @@ Introduces automated version migration system and workflow stability improvement
 **New Features:**
 - **Version Migration System**: Automated migrations for CAT upgrades with backup/restore
 - **Version Entry/Exit Gates**: Pre/post-upgrade validation for safe version transitions
-- **Duplicate Detection**: Exploration step now detects duplicate tasks (M087)
+- **Duplicate Detection**: Exploration step now detects duplicate tasks
 
 **Documentation:**
 - README: Added version and autoRemoveWorktrees config options
 - README: Updated problem section with visual diagram
 - Token tracking guidance for compaction scenarios
-- Pre-edit self-check for main agent (M088)
-- Commit separation guidance for `.claude/rules/` (M089)
+- Pre-edit self-check for main agent
+- Commit separation guidance for `.claude/rules/`
 - Mandatory user preference respect in `choose-approach` skill
 
 **Bugfixes:**
@@ -194,14 +194,14 @@ workflow stability improvements.
   verification steps, and batch processing
 - **Duplicate Task Resolution**: Automatic detection and handling of duplicate or obsolete tasks
 - **Escalation Requirements**: When prevention rules already exist for a mistake type, escalation is
-  required for pattern-level analysis
-- **Main Agent Boundaries (M063)**: Main agent is orchestrator only - all code implementation must be
-  delegated to subagents
+ required for pattern-level analysis
+- **Main Agent Boundaries**: Main agent is orchestrator only - all code implementation must be
+ delegated to subagents
 
 **Bugfixes:**
-- **STATE.md Verification (M085)**: Approval gates now verify STATE.md is committed before presentation
-- **Lock Denial Guidance (M084)**: Clear instructions when task lock acquisition fails
-- **Lock Expiration (M065)**: Removed automatic expiration - requires explicit user cleanup
+- **STATE.md Verification**: Approval gates now verify STATE.md is committed before presentation
+- **Lock Denial Guidance**: Clear instructions when task lock acquisition fails
+- **Lock Expiration**: Removed automatic expiration - requires explicit user cleanup
 - **Plugin Paths**: Replaced hardcoded paths with `CLAUDE_PLUGIN_ROOT` for portability
 
 **Workflow Improvements:**
@@ -215,7 +215,7 @@ workflow stability improvements.
 **Documentation:**
 - Contributing section clarifying project scope and plugin boundaries
 - STATE.md template expanded with optional sections
-- Parser test anti-patterns (M062)
+- Parser test anti-patterns
 - Spawn-subagent updated to use Task tool
 
 ### 2026-01-13: v1.3
@@ -224,9 +224,9 @@ workflow stability improvements.
 
 - Renamed VERSION.md to CHANGELOG.md for clarity
 - Merged v1.2 features into main branch
-- **Bugfix**: Fixed SESSION_ID usage in skills (M058) - skills now correctly instruct agents to read
-  SESSION_ID from conversation context (SessionStart system-reminder) instead of expecting a shell
-  environment variable
+- **Bugfix**: Fixed SESSION_ID usage in skills - skills now correctly instruct agents to read
+ SESSION_ID from conversation context (SessionStart system-reminder) instead of expecting a shell
+ environment variable
 
 ### 2026-01-13: v1.2
 
@@ -244,14 +244,14 @@ Major enhancement enabling proactive task decomposition and parallel subagent ex
 **Subagent Improvements:**
 - Task-level locking prevents concurrent execution of same task
 - Lightweight completion markers (`.completion.json`) for efficient monitoring
-- Mandatory SESSION_ID verification before worktree creation (M057)
+- Mandatory SESSION_ID verification before worktree creation
 - Hook inheritance documentation for subagent prompts (A008)
 
 **Workflow Fixes:**
-- Subagent cleanup now happens BEFORE approval gate presentation (M053)
-- Approval gate requires re-presentation after feedback (M052)
-- Bugfix tests must be in same commit as fix (M051)
-- Checkbox rendering fixed in cat:status output (M056)
+- Subagent cleanup now happens BEFORE approval gate presentation
+- Approval gate requires re-presentation after feedback
+- Bugfix tests must be in same commit as fix
+- Checkbox rendering fixed in cat:status output
 
 **Git Safety Hooks:**
 - Block `git merge --no-ff` (enforce linear history)

@@ -48,9 +48,9 @@ None - infrastructure/performance optimization
    - Step 4: On `found`: reads PLAN.md, estimates tokens heuristically (files_to_create*5000 + files_to_modify*3000 +
      test_files*4000 + steps*2000)
    - Step 5: Creates worktree via `git worktree add`
-   - Step 6: Verifies worktree branch matches expected (M351)
+   - Step 6: Verifies worktree branch matches expected
    - Step 7: Calls `check-existing-work.sh` for existing commits (M362/M394)
-   - Step 8: Checks base branch for suspicious commits mentioning issue name (M394)
+   - Step 8: Checks base branch for suspicious commits mentioning issue name
    - Step 9: Updates STATE.md in worktree to in-progress
    - Step 10: Returns READY JSON with all fields matching existing output contract
    - Error handling: releases lock on any failure

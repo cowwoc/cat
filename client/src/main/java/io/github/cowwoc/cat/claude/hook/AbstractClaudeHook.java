@@ -9,7 +9,6 @@ package io.github.cowwoc.cat.claude.hook;
 import static io.github.cowwoc.requirements13.jackson.DefaultJacksonValidators.requireThat;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.claude.hook.util.GetSkill;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -285,25 +284,25 @@ public abstract class AbstractClaudeHook extends AbstractClaudePluginScope imple
     String nativeAgentId = getAgentId();
     if (nativeAgentId.isEmpty())
       return sessionId;
-    return sessionId + "/" + GetSkill.SUBAGENTS_DIR + "/" + nativeAgentId;
+    return sessionId + "/subagents/" + nativeAgentId;
   }
 
   /**
-   * Extracts the session ID from a CAT agent ID.
+   * Extracts the session ID from a agent identifier.
    * <p>
    * For the main agent the agent ID equals the session ID. For subagents the format is
    * {@code sessionId/subagents/agentXxx}, and only the session ID prefix is returned.
    *
-   * @param catAgentId the CAT agent ID
+   * @param agentId the agent identifier
    * @return the session ID portion of the agent ID
-   * @throws NullPointerException if {@code catAgentId} is null
+   * @throws NullPointerException if {@code agentId} is null
    */
-  public static String extractSessionId(String catAgentId)
+  public static String extractSessionId(String agentId)
   {
-    int subIdx = catAgentId.indexOf('/');
+    int subIdx = agentId.indexOf('/');
     if (subIdx < 0)
-      return catAgentId;
-    return catAgentId.substring(0, subIdx);
+      return agentId;
+    return agentId.substring(0, subIdx);
   }
 
   @Override

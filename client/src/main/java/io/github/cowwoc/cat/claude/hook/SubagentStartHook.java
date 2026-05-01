@@ -8,8 +8,6 @@ package io.github.cowwoc.cat.claude.hook;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.claude.hook.session.ClearAgentMarkers;
-import io.github.cowwoc.cat.claude.hook.session.InjectCatAgentId;
 import io.github.cowwoc.cat.claude.hook.session.InjectSubAgentRules;
 import io.github.cowwoc.cat.claude.hook.session.SubagentStartHandler;
 import io.github.cowwoc.cat.claude.hook.util.SkillDiscovery;
@@ -53,11 +51,6 @@ public final class SubagentStartHook implements HookHandler
   public SubagentStartHook(ClaudeHook scope)
   {
     this(scope, List.of(
-      s -> SubagentStartHandler.Result.context(
-        InjectCatAgentId.getSubagentContext(s.getSessionId(), s.getAgentId())),
-      s -> SubagentStartHandler.Result.ofStderr(
-        new ClearAgentMarkers(scope).clearSubagentMarker(
-          s.getSessionId(), s.getAgentId())),
       s -> SubagentStartHandler.Result.ofContext(
         SkillDiscovery.getSubagentSkillListing(scope)),
       new InjectSubAgentRules()));
@@ -125,13 +118,6 @@ public final class SubagentStartHook implements HookHandler
       throw new IllegalArgumentException(
         "session_id is blank. SubagentStart hook requires a valid session ID.");
     }
-    String agentId = scope.getAgentId();
-    if (agentId.isBlank())
-    {
-      throw new IllegalArgumentException(
-        "agent_id is blank. SubagentStart hook requires a valid agent ID.");
-    }
-
     StringJoiner combinedContext = new StringJoiner("\n\n");
     List<String> warnings = new ArrayList<>();
 

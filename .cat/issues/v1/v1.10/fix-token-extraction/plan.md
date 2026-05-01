@@ -2,7 +2,7 @@
 
 ## Problem
 
-The /cat:work workflow (M146) tells the main agent to manually parse the Task tool output summary
+The /cat:work workflow tells the main agent to manually parse the Task tool output summary
 line to extract token usage. In practice, agents ignore this and report pre-execution estimates
 instead. The workflow should invoke existing skills (`/cat:collect-results`, `/cat:token-report`)
 rather than requiring manual parsing.

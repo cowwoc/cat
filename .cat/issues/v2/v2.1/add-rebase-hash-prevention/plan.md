@@ -12,7 +12,7 @@ During issue 2.1-fix-add-agent-skill-loading, an interactive rebase failed becau
 but git rebase -i uses 7-character abbreviated hashes by default. The pattern never matched, causing a
 fixup commit to be silently replayed as a normal pick and squashed into the wrong commit.
 
-Root cause (M471): The agent manually constructed a sed pattern with a full/long hash instead of using
+Root cause: The agent manually constructed a sed pattern with a full/long hash instead of using
 `git log --format='%h'` to obtain the abbreviated hash that git rebase -i actually uses.
 
 ## Satisfies

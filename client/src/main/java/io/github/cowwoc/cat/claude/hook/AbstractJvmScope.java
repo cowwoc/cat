@@ -9,8 +9,6 @@ package io.github.cowwoc.cat.claude.hook;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.claude.hook.prompt.UserIssues;
-import io.github.cowwoc.cat.claude.hook.read.post.DetectSequentialTools;
-import io.github.cowwoc.cat.claude.hook.read.pre.PredictBatchOpportunity;
 import io.github.cowwoc.pouch10.core.ConcurrentLazyReference;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.databind.SerializationFeature;
@@ -45,12 +43,6 @@ public abstract class AbstractJvmScope implements JvmScope
       build());
   private final ConcurrentLazyReference<YAMLMapper> yamlMapper = ConcurrentLazyReference.create(() ->
     YAMLMapper.builder().build());
-  @SuppressWarnings("this-escape")
-  private final ConcurrentLazyReference<DetectSequentialTools> detectSequentialTools =
-    ConcurrentLazyReference.create(() -> new DetectSequentialTools(this));
-  @SuppressWarnings("this-escape")
-  private final ConcurrentLazyReference<PredictBatchOpportunity> predictBatchOpportunity =
-    ConcurrentLazyReference.create(() -> new PredictBatchOpportunity(this));
   @SuppressWarnings("this-escape")
   private final ConcurrentLazyReference<UserIssues> userIssues =
     ConcurrentLazyReference.create(() -> new UserIssues(this));
@@ -162,20 +154,6 @@ public abstract class AbstractJvmScope implements JvmScope
   {
     ensureOpen();
     return yamlMapper.getValue();
-  }
-
-  @Override
-  public DetectSequentialTools getDetectSequentialTools()
-  {
-    ensureOpen();
-    return detectSequentialTools.getValue();
-  }
-
-  @Override
-  public PredictBatchOpportunity getPredictBatchOpportunity()
-  {
-    ensureOpen();
-    return predictBatchOpportunity.getValue();
   }
 
   @Override

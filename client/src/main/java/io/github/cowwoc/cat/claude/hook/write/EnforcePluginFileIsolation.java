@@ -21,7 +21,7 @@ import java.nio.file.Paths;
  * <p>
  * Blocks Edit/Write operations on plugin/ and client/ files when not in an issue worktree.
  * A CAT issue worktree is identified by its git directory ending with {@code worktrees/<branch-name>},
- * matching the structure created by {@code /cat:work-agent}. All source development must happen in issue
+ * matching the structure created by {@code /cat:work}. All source development must happen in issue
  * worktrees.
  */
 public final class EnforcePluginFileIsolation implements FileWriteHandler
@@ -37,16 +37,14 @@ public final class EnforcePluginFileIsolation implements FileWriteHandler
    * Check if the edit should be blocked due to plugin file isolation violation.
    *
    * @param toolInput the tool input JSON
-   * @param catAgentId the CAT agent ID (sessionId for main agent, sessionId/subagents/agentXxx for subagents)
+   * @param sessionId the session ID
    * @return the check result
-   * @throws NullPointerException if {@code toolInput} or {@code catAgentId} is null
-   * @throws IllegalArgumentException if {@code catAgentId} is blank
+   * @throws NullPointerException if {@code toolInput} or {@code sessionId} are null
    */
   @Override
-  public FileWriteHandler.Result check(JsonNode toolInput, String catAgentId)
+  public FileWriteHandler.Result check(JsonNode toolInput, String sessionId)
   {
     requireThat(toolInput, "toolInput").isNotNull();
-    requireThat(catAgentId, "catAgentId").isNotBlank();
 
     JsonNode filePathNode = toolInput.get("file_path");
     String filePath;
@@ -73,7 +71,7 @@ public final class EnforcePluginFileIsolation implements FileWriteHandler
         "File: " + filePath + "\n" +
         "\n" +
         "**Solution:**\n" +
-        "1. Create task: `/cat:add-agent <task-description>`\n" +
+        "1. Create task: `/cat:add <task-description>`\n" +
         "2. Work in isolated worktree: `Work on <issue-name>`\n" +
         "3. Make edits in the issue worktree\n" +
         "\n" +
@@ -93,7 +91,7 @@ public final class EnforcePluginFileIsolation implements FileWriteHandler
   }
 
   /**
-   * Check if the given directory is an issue worktree created by {@code /cat:work-agent}.
+   * Check if the given directory is an issue worktree created by {@code /cat:work}.
    * <p>
    * A CAT issue worktree has a git directory ending with {@code worktrees/<branch-name>}
    * (the path returned by {@code git rev-parse --git-dir}).

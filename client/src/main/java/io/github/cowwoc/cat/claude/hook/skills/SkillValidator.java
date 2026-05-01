@@ -21,7 +21,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 /**
  * Prepares a skill validation prompt by reading the skill's description frontmatter and
- * formatting the test prompts for evaluation by the skill-validator-agent subagent.
+ * formatting the test prompts for evaluation.
  * <p>
  * Accepts two arguments:
  * <ol>

@@ -17,7 +17,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 /**
  * Prepares a description calibration prompt by reading the skill's description frontmatter and
- * formatting a calibration request for the description-tester-agent subagent.
+ * formatting a calibration request.
  * <p>
  * Accepts one argument: the path to the skill's SKILL.md file.
  * <p>
@@ -41,7 +41,7 @@ public final class DescriptionTester implements SkillOutput
    * Generates a formatted description calibration prompt.
    * <p>
    * Reads the skill description from the provided SKILL.md path and produces a prompt
-   * requesting the description-tester-agent to generate and evaluate calibration queries.
+   * requesting calibration query generation and evaluation.
    *
    * @param args one argument: [skill-path]
    * @return a formatted calibration prompt

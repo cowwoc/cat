@@ -1,8 +1,3 @@
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # Claude Runner
 
 Launch a nested Claude CLI instance with an isolated config directory and updated plugin cache.
@@ -160,9 +155,9 @@ rm -f "$PROMPT_FILE"
 [[ -n "$OUTPUT_FILE" ]] && rm -f "$OUTPUT_FILE"
 ```
 
-## Relationship to cat:empirical-test-agent
+## Relationship to cat:empirical-test
 
-`cat:empirical-test-agent` uses the same runner internally for process spawning and stream-json I/O.
+`cat:empirical-test` uses the same runner internally for process spawning and stream-json I/O.
 Use this skill directly when you need an ad-hoc isolated run without the trial/evaluation framework.
 
 ## Verification

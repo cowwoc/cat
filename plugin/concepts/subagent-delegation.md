@@ -23,7 +23,7 @@ orchestrating agent needs to know the exact blocker to adjust its delegation str
 
 **General-purpose subagents have access to ALL tools**, including Task and Skill.
 
-If a plan.md or delegation prompt specifies using a skill (e.g., `cat:instruction-builder-agent`), invoke it directly via the Skill
+If a plan.md or delegation prompt specifies using a skill (e.g., `cat:instruction-builder`), invoke it directly via the Skill
 tool. Do not assume tool limitations exist - subagents have full tool access.
 
 ## Spawning Subagents: Task vs Agent vs TaskCreate
@@ -40,7 +40,7 @@ These are three completely different tools:
 
 **Critical distinction — Task vs Agent worktree behavior:**
 
-When `work-implement-agent` spawns job subagents using `isolation: "worktree"`, the Task tool is **required**.
+When `work-implement` spawns job subagents using `isolation: "worktree"`, the Task tool is **required**.
 Using the Agent tool instead silently breaks worktree isolation:
 
 - **Task tool**: subagent gets its own git worktree; commits made inside survive after the subagent finishes and can
@@ -126,8 +126,8 @@ should be delegated at all. Work requiring Opus-level reasoning often benefits f
 ```
 ❌ Task tool: subagent_type: "general-purpose" (missing model - uses expensive default)
 ❌ Task tool: model: "haiku" for code refactoring (will likely fail)
-❌ Task tool: model: "haiku" for "cat:instruction-builder-agent file.md" (skill exposes algorithm)
-✅ Task tool: model: "sonnet" for "cat:instruction-builder-agent file.md" (skill doc shows HOW, needs reasoning)
+❌ Task tool: model: "haiku" for "cat:instruction-builder file.md" (skill exposes algorithm)
+✅ Task tool: model: "sonnet" for "cat:instruction-builder file.md" (skill doc shows HOW, needs reasoning)
 ✅ Task tool: model: "sonnet" for "refactor these 4 handlers" (needs reasoning)
 ✅ Task tool: model: "haiku" for "/cat:status" (pure orchestration, no algorithm exposed)
 ```
@@ -219,7 +219,7 @@ Acceptance criteria define what specific outputs validate successful completion.
 # Example: plan.md says "Execution equivalence verified (score = 1.0 from validation protocol)"
 subagent_prompt_must_include: |
   ACCEPTANCE CRITERIA:
-  - Run validation protocol from cat:instruction-builder-agent on compressed file
+  - Run validation protocol from cat:instruction-builder on compressed file
   - Required score: 1.0
   - Include score in your output
 ```
@@ -253,42 +253,6 @@ Action: Re-run validation or adjust approach.
 **Why this exists:** When subagent prompts bypass skill-mandated validations (e.g., custom
 compression prompt without validation), criteria go unchecked. Requiring explicit criteria
 in the delegation catches these gaps at spawn time rather than after completion.
-
-### Independent Validation Requirement
-
-**CRITICAL: Never trust subagent-reported validation scores. Verify independently.**
-
-When acceptance criteria include measurable outcomes (scores, test results, metrics), the
-orchestrator must verify them independently - not by reading subagent output, but by running
-the validation tool directly.
-
-| Subagent Claims | Orchestrator Must |
-|-----------------|-------------------|
-| "All tests pass" | Run `./gradlew test` and check exit code |
-| "Score = 1.0" | Run validation protocol from `cat:instruction-builder-agent` and read actual score |
-| "Build succeeds" | Run build command and verify |
-| "N files changed" | Run `git diff --stat` and count |
-
-**Why independent verification:** Subagent reported all 4 files EQUIVALENT with perfect
-scores (49/49, 60/60, etc). Independent validation showed 3/4 files NOT_EQUIVALENT with
-significant semantic loss (30 units lost in one file). Subagent fabricated results.
-
-**Pattern:**
-```
-# ❌ WRONG: Trust subagent output
-execution_result = spawn_subagent(task)
-if execution_result["validation_score"] == 1.0:  # Trusting subagent!
-    proceed_to_merge()
-
-# ✅ RIGHT: Verify independently
-execution_result = spawn_subagent(task)
-actual_score = run_validation_tool(files)  # Independent check
-if actual_score == 1.0:
-    proceed_to_merge()
-```
-
-**This applies to ALL measurable criteria**, not just compression. Any score, count, or
-pass/fail status reported by a subagent must be verified by the orchestrator.
 
 ## Common Failure Patterns
 
@@ -371,7 +335,7 @@ the user can't review. Separating them lets the main agent (with user access) ma
 
 # ✅ RIGHT: Output format specifies structure only
 "OUTPUT FORMAT:
- - validation_score: {actual score from instruction-builder-agent validation}
+ - validation_score: {actual score from instruction-builder validation}
  - status: {success if score >= threshold, else failed}"
 ```
 
@@ -396,7 +360,7 @@ When a subagent creates/modifies content that requires validation:
 
 # ✅ RIGHT: Separate production from validation
 STEP 1: Subagent A compresses files (NO validation instruction)
-STEP 2: Main agent OR Subagent B runs validation protocol from cat:instruction-builder-agent on each file
+STEP 2: Main agent OR Subagent B runs validation protocol from cat:instruction-builder on each file
 STEP 3: Main agent reviews actual scores, decides next action
 ```
 
@@ -410,7 +374,7 @@ STEP 3: Main agent reviews actual scores, decides next action
 
 | Issue Type | Producer | Validator |
 |------------|----------|-----------|
-| Document compression | Compression subagent | Main agent via `cat:instruction-builder-agent` validation protocol |
+| Document compression | Compression subagent | Main agent via `cat:instruction-builder` validation protocol |
 | Code generation | Implementation subagent | Test runner (separate step) |
 | File transformation | Transform subagent | Diff/verification subagent |
 
@@ -431,8 +395,8 @@ If so, use that format - don't compose your own.
 
 | Source | Format Location | Example |
 |--------|-----------------|---------|
-| cat:instruction-builder-agent | SKILL.md output section | Table with "Tokens" header |
-| cat:instruction-builder-agent validation | validation-protocol.md | Comparison report format |
+| cat:instruction-builder | SKILL.md output section | Table with "Tokens" header |
+| cat:instruction-builder validation | validation-protocol.md | Comparison report format |
 | /cat:status | Handler preprocessing | Status box (skill output) |
 
 **Pattern for presenting skill results:**
@@ -444,7 +408,7 @@ You present: "| Before | After |" (units unclear)
 
 # ✅ RIGHT: Use source skill's format
 Subagent returns: {"tokens_before": 1598, "tokens_after": 1278}
-Check cat:instruction-builder-agent format specification
+Check cat:instruction-builder format specification
 Present: "| Tokens (Before) | Tokens (After) |" (matches skill spec)
 ```
 

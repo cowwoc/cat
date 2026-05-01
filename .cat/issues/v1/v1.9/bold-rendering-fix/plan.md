@@ -1,7 +1,7 @@
 # Plan: bold-rendering-fix
 
 ## Objective
-fix bold rendering in all display templates (M125)
+fix bold rendering in all display templates
 
 ## Details
 Markdown **bold** renders correctly when output directly but shows as

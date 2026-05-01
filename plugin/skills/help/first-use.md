@@ -1,8 +1,3 @@
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # Help
 
 Output the following content verbatim. Do not summarize, interpret, or add commentary.
@@ -146,4 +141,3 @@ Issue changelog content is embedded in commit messages.
 | Issue (2-level) | `{major}.{minor}-{issue-name}` | `1.0-parse-tokens` |
 | Issue (3-level) | `{major}.{minor}.{patch}-{issue-name}` | `1.0.1-fix-edge-case` |
 | Subagent | `{issue-branch}-sub-{uuid}` | `1.0-parse-tokens-sub-a1b2c3` |
-

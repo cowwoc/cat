@@ -102,10 +102,9 @@ public interface FileWriteHandler
    * Check a write/edit operation.
    *
    * @param toolInput the tool input JSON
-   * @param catAgentId the CAT agent ID (sessionId for main agent, sessionId/subagents/agentXxx for subagents)
+   * @param sessionId the session ID
    * @return the check result
-   * @throws NullPointerException if {@code toolInput} or {@code catAgentId} are null
-   * @throws IllegalArgumentException if {@code catAgentId} is blank
+   * @throws NullPointerException if {@code toolInput} or {@code sessionId} are null
    */
-  Result check(JsonNode toolInput, String catAgentId);
+  Result check(JsonNode toolInput, String sessionId);
 }

@@ -8,16 +8,16 @@ Build the Java client first, then reinstall the CAT plugin and install the updat
 
 **IMPORTANT:** All `claude` CLI commands below require unsetting `CLAUDECODE` to avoid the nested-session guard.
 
-Before any `rm -rf`, check whether CAT is already installed. If it is, **the assistant must invoke `/cat:safe-rm-agent` on behalf of the user** before running any workflow commands that include `rm -rf`, and then follow its checklist. If CAT is not installed, use a normal `rm -rf`.
+Before any `rm -rf`, check whether CAT is already installed. If it is, **the assistant must invoke `/cat:rm` on behalf of the user** before running any workflow commands that include `rm -rf`, and then follow its checklist. If CAT is not installed, use a normal `rm -rf`.
 
-Apply this only to the update workflow's `rm -rf` steps; do not load `cat:safe-rm-agent` for unrelated cleanup.
+Apply this only to the update workflow's `rm -rf` steps; do not load `cat:rm` for unrelated cleanup.
 
 Quick preflight check:
 
 ```bash
 if CLAUDECODE= claude plugin list | grep -q 'cat@cat'; then
-  # CAT is installed -> assistant must invoke /cat:safe-rm-agent, then continue.
-  echo "CAT installed: assistant should invoke /cat:safe-rm-agent, then continue."
+  # CAT is installed -> assistant must invoke /cat:rm, then continue.
+  echo "CAT installed: assistant should invoke /cat:rm, then continue."
 else
   echo "CAT not installed: safe-rm skill not required for this workflow."
 fi

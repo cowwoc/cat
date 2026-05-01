@@ -1,7 +1,7 @@
 ---
 paths: ["plugin/hooks/**", ".claude/settings.json", "client/**"]
 ---
-# Hook Registration Locations (M406)
+# Hook Registration Locations
 
 CAT uses two distinct hook registration systems. See `.cat/rules/hooks.md` for full documentation
 (injected via CAT hooks for the main agent).
@@ -199,8 +199,8 @@ BLOCKED: Cannot edit source files outside of an issue worktree.
 File: plugin/skills/foo.md
 
 Solution:
-1. Create task: /cat:add-agent <task-description>
-2. Work in isolated worktree: /cat:work-agent
+1. Create task: /cat:add <task-description>
+2. Work in isolated worktree: /cat:work
 3. Make edits in the issue worktree
 
 Why this matters:
@@ -210,7 +210,7 @@ Why this matters:
 
 If this is truly maintenance work on the base branch:
 1. Create an issue for it
-2. Use /cat:work-agent to create proper worktree
+2. Use /cat:work to create proper worktree
 3. Make changes in isolated environment
 ```
 

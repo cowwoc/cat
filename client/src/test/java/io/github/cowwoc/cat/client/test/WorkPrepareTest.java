@@ -2448,13 +2448,13 @@ public class WorkPrepareTest
 
   /**
    * Verifies that "resume &lt;issue-id&gt;" strips the "resume" keyword and resolves the issue ID.
-   * rawArguments includes the catAgentId prefix as the first token.
+   * rawArguments includes the agentId prefix as the first token.
    */
   @Test
   public void parseRawArgumentsStripsResumePrefix()
   {
     WorkPrepare.ParsedArguments result =
-      WorkPrepare.parseRawArguments("a1b2c3d4-e5f6-7890-abcd-ef1234567890 resume 2.1-fix-bug", "", "");
+      WorkPrepare.parseRawArguments("resume 2.1-fix-bug", "", "");
     requireThat(result.issueId(), "issueId").isEqualTo("2.1-fix-bug");
     requireThat(result.excludePattern(), "excludePattern").isEmpty();
     requireThat(result.resume(), "resume").isTrue();
@@ -2462,13 +2462,13 @@ public class WorkPrepareTest
 
   /**
    * Verifies that "continue &lt;issue-id&gt;" strips the "continue" keyword and resolves the issue ID.
-   * rawArguments includes the catAgentId prefix as the first token.
+   * rawArguments includes the agentId prefix as the first token.
    */
   @Test
   public void parseRawArgumentsStripesContinuePrefix()
   {
     WorkPrepare.ParsedArguments result =
-      WorkPrepare.parseRawArguments("a1b2c3d4-e5f6-7890-abcd-ef1234567890 continue 2.1-fix-bug", "", "");
+      WorkPrepare.parseRawArguments("continue 2.1-fix-bug", "", "");
     requireThat(result.issueId(), "issueId").isEqualTo("2.1-fix-bug");
     requireThat(result.excludePattern(), "excludePattern").isEmpty();
     requireThat(result.resume(), "resume").isTrue();
@@ -2479,7 +2479,7 @@ public class WorkPrepareTest
    * <p>
    * "resume  2.1-fix-bug" (two spaces) still matches {@code startsWith("resume ")} because there is at
    * least one space. After removing the keyword prefix, {@link String#strip()} collapses the extra space,
-   * so the resolved issue ID is "2.1-fix-bug". rawArguments includes the catAgentId prefix as the first
+   * so the resolved issue ID is "2.1-fix-bug". rawArguments includes the agentId prefix as the first
    * token.
    */
   @Test
@@ -2489,7 +2489,7 @@ public class WorkPrepareTest
     // startsWith("resume ") matches (the check only requires one space to be present).
     // After substring("resume".length()).strip(), the result is "2.1-fix-bug".
     WorkPrepare.ParsedArguments result =
-      WorkPrepare.parseRawArguments("a1b2c3d4-e5f6-7890-abcd-ef1234567890 resume  2.1-fix-bug", "", "");
+      WorkPrepare.parseRawArguments("resume  2.1-fix-bug", "", "");
     requireThat(result.issueId(), "issueId").isEqualTo("2.1-fix-bug");
     requireThat(result.excludePattern(), "excludePattern").isEmpty();
     requireThat(result.resume(), "resume").isTrue();
@@ -2497,14 +2497,14 @@ public class WorkPrepareTest
 
   /**
    * Verifies that keyword stripping is case-sensitive ("Resume" is not stripped).
-   * rawArguments includes the catAgentId prefix as the first token.
+   * rawArguments includes the agentId prefix as the first token.
    */
   @Test
   public void parseRawArgumentsKeywordStrippingIsCaseSensitive()
   {
     // "Resume 2.1-fix-bug" — capital R, not matched
     WorkPrepare.ParsedArguments result =
-      WorkPrepare.parseRawArguments("a1b2c3d4-e5f6-7890-abcd-ef1234567890 Resume 2.1-fix-bug", "", "");
+      WorkPrepare.parseRawArguments("Resume 2.1-fix-bug", "", "");
     requireThat(result.issueId(), "issueId").isEmpty();
     requireThat(result.excludePattern(), "excludePattern").isEmpty();
     requireThat(result.resume(), "resume").isFalse();
@@ -2512,13 +2512,13 @@ public class WorkPrepareTest
 
   /**
    * Verifies that a bare issue ID (no keyword prefix) is resolved correctly.
-   * rawArguments includes the catAgentId prefix as the first token.
+   * rawArguments includes the agentId prefix as the first token.
    */
   @Test
   public void parseRawArgumentsResolvesBarePrefixedIssueId()
   {
     WorkPrepare.ParsedArguments result =
-      WorkPrepare.parseRawArguments("a1b2c3d4-e5f6-7890-abcd-ef1234567890 2.1-fix-bug", "", "");
+      WorkPrepare.parseRawArguments("2.1-fix-bug", "", "");
     requireThat(result.issueId(), "issueId").isEqualTo("2.1-fix-bug");
     requireThat(result.excludePattern(), "excludePattern").isEmpty();
     requireThat(result.resume(), "resume").isFalse();
@@ -2526,13 +2526,13 @@ public class WorkPrepareTest
 
   /**
    * Verifies that a bare short-name issue ID (no version prefix) is resolved correctly.
-   * rawArguments includes the catAgentId prefix as the first token.
+   * rawArguments includes the agentId prefix as the first token.
    */
   @Test
   public void parseRawArgumentsResolvesShortNameIssueId()
   {
     WorkPrepare.ParsedArguments result =
-      WorkPrepare.parseRawArguments("a1b2c3d4-e5f6-7890-abcd-ef1234567890 fix-bug", "", "");
+      WorkPrepare.parseRawArguments("fix-bug", "", "");
     requireThat(result.issueId(), "issueId").isEqualTo("fix-bug");
     requireThat(result.excludePattern(), "excludePattern").isEmpty();
   }
@@ -2542,14 +2542,14 @@ public class WorkPrepareTest
    * <p>
    * "resume" does not start with "resume " (no trailing space), so keyword stripping is not applied.
    * The word "resume" matches the short-name issue ID pattern {@code ^[a-zA-Z][a-zA-Z0-9_-]*$},
-   * so it is resolved as the issue ID. rawArguments includes the catAgentId prefix as the first token.
+   * so it is resolved as the issue ID. rawArguments includes the agentId prefix as the first token.
    */
   @Test
   public void parseRawArgumentsResumeAloneResolvesAsIssueId()
   {
     // "resume" without a trailing space: no keyword stripping; matches short-name regex.
     WorkPrepare.ParsedArguments result =
-      WorkPrepare.parseRawArguments("a1b2c3d4-e5f6-7890-abcd-ef1234567890 resume", "", "");
+      WorkPrepare.parseRawArguments("resume", "", "");
     requireThat(result.issueId(), "issueId").isEqualTo("resume");
     requireThat(result.excludePattern(), "excludePattern").isEmpty();
   }
@@ -2591,32 +2591,33 @@ public class WorkPrepareTest
 
   /**
    * Verifies that "skip &lt;word&gt;" produces an exclude-pattern glob.
-   * rawArguments includes the catAgentId prefix as the first token.
+   * rawArguments includes the agentId prefix as the first token.
    */
   @Test
   public void parseRawArgumentsSkipProducesExcludePattern()
   {
     WorkPrepare.ParsedArguments result =
-      WorkPrepare.parseRawArguments("a1b2c3d4-e5f6-7890-abcd-ef1234567890 skip compress", "", "");
+      WorkPrepare.parseRawArguments("skip compress", "", "");
     requireThat(result.issueId(), "issueId").isEmpty();
     requireThat(result.excludePattern(), "excludePattern").isEqualTo("*compress*");
   }
 
   /**
-   * Verifies that non-blank rawArguments not starting with a catAgentId throws
-   * {@link IllegalArgumentException}.
+   * Verifies that non-blank rawArguments without a agent ID prefix are parsed directly.
    */
-  @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*catAgentId.*")
-  public void parseRawArgumentsThrowsWhenCatAgentIdAbsent()
+  @Test
+  public void parseRawArgumentsParsesWhenCatAgentIdAbsent()
   {
-    WorkPrepare.parseRawArguments("2.1-fix-bug", "", "");
+    WorkPrepare.ParsedArguments result = WorkPrepare.parseRawArguments("2.1-fix-bug", "", "");
+    requireThat(result.issueId(), "issueId").isEqualTo("2.1-fix-bug");
+    requireThat(result.excludePattern(), "excludePattern").isEmpty();
+    requireThat(result.resume(), "resume").isFalse();
   }
 
   /**
    * Verifies that "resume" followed by a "skip" argument does not strip the resume prefix
    * (since "skip" does not match the issue-id regex after stripping).
-   * rawArguments includes the catAgentId prefix as the first token.
+   * rawArguments includes the agentId prefix as the first token.
    */
   @Test
   public void parseRawArgumentsResumeWithSkipArgumentStripsKeywordThenProducesEmpty()
@@ -2624,43 +2625,44 @@ public class WorkPrepareTest
     // "resume skip compress" — after stripping "resume ", raw = "skip compress"
     // "skip compress" is not an issue-id match, but starts with "skip " so excludePattern is set
     WorkPrepare.ParsedArguments result =
-      WorkPrepare.parseRawArguments("a1b2c3d4-e5f6-7890-abcd-ef1234567890 resume skip compress", "", "");
+      WorkPrepare.parseRawArguments("resume skip compress", "", "");
     requireThat(result.issueId(), "issueId").isEmpty();
     requireThat(result.excludePattern(), "excludePattern").isEqualTo("*compress*");
     requireThat(result.resume(), "resume").isTrue();
   }
 
   // -------------------------------------------------------------------------
-  // parseRawArguments — CAT agent ID prefix stripping
+  // parseRawArguments — UUID inputs are treated as literal user arguments
   // -------------------------------------------------------------------------
 
   /**
-   * Verifies that a plain UUID prefix (CAT agent ID) is stripped and the issue ID is resolved.
+   * Verifies that a UUID-prefixed argument is not stripped.
    */
   @Test
-  public void parseRawArgumentsStripsUuidPrefix()
+  public void parseRawArgumentsDoesNotStripUuidPrefix()
   {
     WorkPrepare.ParsedArguments result =
       WorkPrepare.parseRawArguments("92289cdd-76a1-4d7e-8cf3-be5618ec270a 2.1-fix-bug", "", "");
-    requireThat(result.issueId(), "issueId").isEqualTo("2.1-fix-bug");
+    requireThat(result.issueId(), "issueId").isEmpty();
     requireThat(result.excludePattern(), "excludePattern").isEmpty();
+    requireThat(result.resume(), "resume").isFalse();
   }
 
   /**
-   * Verifies that a subagent ID prefix ({@code uuid/subagents/name}) is stripped and the issue ID
-   * is resolved.
+   * Verifies that a subagent-form UUID input is not stripped.
    */
   @Test
-  public void parseRawArgumentsStripsSubagentIdPrefix()
+  public void parseRawArgumentsDoesNotStripSubagentIdPrefix()
   {
     WorkPrepare.ParsedArguments result = WorkPrepare.parseRawArguments(
       "92289cdd-76a1-4d7e-8cf3-be5618ec270a/subagents/abc123 2.1-fix-bug", "", "");
-    requireThat(result.issueId(), "issueId").isEqualTo("2.1-fix-bug");
+    requireThat(result.issueId(), "issueId").isEmpty();
     requireThat(result.excludePattern(), "excludePattern").isEmpty();
+    requireThat(result.resume(), "resume").isFalse();
   }
 
   /**
-   * Verifies that a UUID-only argument (no trailing issue ID) returns empty fields.
+   * Verifies that UUID-only input remains unparsed (no stripping and no issue-id match).
    */
   @Test
   public void parseRawArgumentsUuidOnlyReturnsEmpty()
@@ -2669,36 +2671,37 @@ public class WorkPrepareTest
       WorkPrepare.parseRawArguments("92289cdd-76a1-4d7e-8cf3-be5618ec270a", "", "");
     requireThat(result.issueId(), "issueId").isEmpty();
     requireThat(result.excludePattern(), "excludePattern").isEmpty();
+    requireThat(result.resume(), "resume").isFalse();
   }
 
   /**
-   * Verifies that a UUID prefix followed by a modifier keyword and issue ID is handled correctly:
-   * UUID is stripped, then "resume" is stripped, leaving the issue ID.
+   * Verifies that a UUID prefix before resume is not stripped.
    */
   @Test
-  public void parseRawArgumentsStripsUuidThenResumeKeyword()
+  public void parseRawArgumentsDoesNotStripUuidBeforeResumeKeyword()
   {
     WorkPrepare.ParsedArguments result = WorkPrepare.parseRawArguments(
       "92289cdd-76a1-4d7e-8cf3-be5618ec270a resume 2.1-fix-bug", "", "");
-    requireThat(result.issueId(), "issueId").isEqualTo("2.1-fix-bug");
+    requireThat(result.issueId(), "issueId").isEmpty();
     requireThat(result.excludePattern(), "excludePattern").isEmpty();
-    requireThat(result.resume(), "resume").isTrue();
+    requireThat(result.resume(), "resume").isFalse();
   }
 
   /**
-   * Verifies that a UUID prefix followed by a "skip" argument produces the exclude pattern.
+   * Verifies that a UUID prefix before skip does not produce an exclude pattern.
    */
   @Test
-  public void parseRawArgumentsStripsUuidThenParsesSkip()
+  public void parseRawArgumentsDoesNotStripUuidBeforeSkip()
   {
     WorkPrepare.ParsedArguments result = WorkPrepare.parseRawArguments(
       "92289cdd-76a1-4d7e-8cf3-be5618ec270a skip compress", "", "");
     requireThat(result.issueId(), "issueId").isEmpty();
-    requireThat(result.excludePattern(), "excludePattern").isEqualTo("*compress*");
+    requireThat(result.excludePattern(), "excludePattern").isEmpty();
+    requireThat(result.resume(), "resume").isFalse();
   }
 
   /**
-   * Verifies that when {@code --arguments} contains only a CAT agent ID UUID (no trailing issue name),
+   * Verifies that when {@code --arguments} contains only a agent ID UUID (no trailing issue name),
    * {@code run()} strips the UUID and returns READY for the next available issue (not NO_ISSUES).
    * <p>
    * This is the end-to-end regression test for the bug where UUIDs were matched as bare issue names.
@@ -2720,7 +2723,7 @@ public class WorkPrepareTest
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
 
       String sessionId = UUID.randomUUID().toString();
-      // Pass UUID as the sole --arguments token — simulates /cat:work-agent invocation with no explicit issue
+      // Pass UUID as the sole --arguments token — simulates /cat:work invocation with no explicit issue
       String uuid = "92289cdd-76a1-4d7e-8cf3-be5618ec270a";
       WorkPrepare.run(scope, new String[]{"--session-id", sessionId, "--arguments", uuid}, out);
 
@@ -2743,7 +2746,7 @@ public class WorkPrepareTest
   }
 
   /**
-   * Verifies that when {@code --arguments} contains a CAT agent ID UUID followed by an issue name,
+   * Verifies that when {@code --arguments} contains a agent ID UUID followed by an issue name,
    * {@code run()} strips the UUID and selects the named issue, returning READY with the correct
    * {@code issue_id}.
    * <p>
@@ -2767,7 +2770,7 @@ public class WorkPrepareTest
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
 
       String sessionId = UUID.randomUUID().toString();
-      // Pass UUID + issue name as --arguments — simulates /cat:work-agent invocation with an explicit issue
+      // Pass UUID + issue name as --arguments — simulates /cat:work invocation with an explicit issue
       String arguments = "92289cdd-76a1-4d7e-8cf3-be5618ec270a my-feature";
       WorkPrepare.run(scope, new String[]{"--session-id", sessionId, "--arguments", arguments}, out);
 
@@ -3116,13 +3119,13 @@ public class WorkPrepareTest
       GitCommands.runGit(projectPath, "add", ".");
       GitCommands.runGit(projectPath, "commit", "-m", "planning: add issue glob-feature");
 
-      // Commit that touches plugin/agents/stakeholder-concern-box-agent.md
+      // Commit that touches plugin/agents/stakeholder-concern-box.md
       Path agentsDir = projectPath.resolve("plugin").resolve("agents");
       Files.createDirectories(agentsDir);
-      Files.writeString(agentsDir.resolve("stakeholder-concern-box-agent.md"), "# Content");
+      Files.writeString(agentsDir.resolve("stakeholder-concern-box.md"), "# Content");
       GitCommands.runGit(projectPath, "add", ".");
       GitCommands.runGit(projectPath, "commit", "-m",
-        "feature: touch stakeholder-concern-box-agent.md");
+        "feature: touch stakeholder-concern-box.md");
 
       WorkPrepare prepare = new WorkPrepare(scope);
       String sessionId = UUID.randomUUID().toString();
@@ -3359,9 +3362,8 @@ public class WorkPrepareTest
     throws ExecutionException, InterruptedException
   {
     int threadCount = 20;
-    String agentId = "92289cdd-76a1-4d7e-8cf3-be5618ec270a";
     String issueId = "2.1-fix-bug";
-    String rawArguments = agentId + " resume " + issueId;
+    String rawArguments = "resume " + issueId;
 
     try (ExecutorService executor = Executors.newFixedThreadPool(threadCount))
     {

@@ -38,7 +38,7 @@ public final class InjectSkillListingTest
       Path pluginsDir = tempDir.resolve("plugins");
       Files.createDirectories(pluginsDir);
       Path catPluginDir = tempDir.resolve("cat-plugin");
-      Path helpSkillDir = catPluginDir.resolve("skills/help-agent");
+      Path helpSkillDir = catPluginDir.resolve("skills/help");
       Files.createDirectories(helpSkillDir);
       Files.writeString(helpSkillDir.resolve("SKILL.md"), """
         ---
@@ -62,7 +62,7 @@ public final class InjectSkillListingTest
 
       SessionStartHandler.Result result = handler.handle(scope);
 
-      requireThat(result.additionalContext(), "additionalContext").contains("cat:help-agent");
+      requireThat(result.additionalContext(), "additionalContext").contains("cat:help");
       requireThat(result.additionalContext(), "additionalContext").contains("Display help for CAT commands");
       requireThat(result.stderr(), "stderr").isEmpty();
     }
@@ -88,7 +88,7 @@ public final class InjectSkillListingTest
       Path pluginsDir = tempDir.resolve("plugins");
       Files.createDirectories(pluginsDir);
       Path catPluginDir = tempDir.resolve("cat-plugin");
-      Path helpSkillDir = catPluginDir.resolve("skills/help-agent");
+      Path helpSkillDir = catPluginDir.resolve("skills/help");
       Files.createDirectories(helpSkillDir);
       Files.writeString(helpSkillDir.resolve("SKILL.md"), """
         ---
@@ -112,7 +112,7 @@ public final class InjectSkillListingTest
 
       SessionStartHandler.Result result = handler.handle(scope);
 
-      requireThat(result.additionalContext(), "additionalContext").contains("cat:help-agent");
+      requireThat(result.additionalContext(), "additionalContext").contains("cat:help");
       requireThat(result.additionalContext(), "additionalContext").contains("Display help for CAT commands");
       requireThat(result.stderr(), "stderr").isEmpty();
     }
@@ -139,7 +139,7 @@ public final class InjectSkillListingTest
       Path pluginsDir = tempDir.resolve("plugins");
       Files.createDirectories(pluginsDir);
       Path catPluginDir = tempDir.resolve("cat-plugin");
-      Path helpSkillDir = catPluginDir.resolve("skills/help-agent");
+      Path helpSkillDir = catPluginDir.resolve("skills/help");
       Files.createDirectories(helpSkillDir);
       Files.writeString(helpSkillDir.resolve("SKILL.md"), """
         ---
@@ -189,7 +189,7 @@ public final class InjectSkillListingTest
       Path pluginsDir = tempDir.resolve("plugins");
       Files.createDirectories(pluginsDir);
       Path catPluginDir = tempDir.resolve("cat-plugin");
-      Path helpSkillDir = catPluginDir.resolve("skills/help-agent");
+      Path helpSkillDir = catPluginDir.resolve("skills/help");
       Files.createDirectories(helpSkillDir);
       Files.writeString(helpSkillDir.resolve("SKILL.md"), """
         ---
@@ -293,7 +293,7 @@ public final class InjectSkillListingTest
       Files.createDirectories(pluginsDir);
       Path catPluginDir = tempDir.resolve("cat-plugin-nodesc");
       // Use a core skill name but omit the description field
-      Path skillDir = catPluginDir.resolve("skills/help-agent");
+      Path skillDir = catPluginDir.resolve("skills/help");
       Files.createDirectories(skillDir);
       Files.writeString(skillDir.resolve("SKILL.md"), """
         ---
@@ -318,7 +318,7 @@ public final class InjectSkillListingTest
       SessionStartHandler.Result result = handler.handle(scope);
 
       // Skill has no description, so it is excluded
-      requireThat(result.additionalContext(), "additionalContext").doesNotContain("cat:help-agent");
+      requireThat(result.additionalContext(), "additionalContext").doesNotContain("cat:help");
       requireThat(result.stderr(), "stderr").isEmpty();
     }
     finally
@@ -343,8 +343,8 @@ public final class InjectSkillListingTest
       Path pluginsDir = tempDir.resolve("plugins");
       Files.createDirectories(pluginsDir);
       Path catPluginDir = tempDir.resolve("cat-plugin-invocable");
-      // Use a core skill name (help-agent) with disable-model-invocation: false
-      Path skillDir = catPluginDir.resolve("skills/help-agent");
+      // Use a core skill name (help) with disable-model-invocation: false
+      Path skillDir = catPluginDir.resolve("skills/help");
       Files.createDirectories(skillDir);
       Files.writeString(skillDir.resolve("SKILL.md"), """
         ---
@@ -370,7 +370,7 @@ public final class InjectSkillListingTest
       SessionStartHandler.Result result = handler.handle(scope);
 
       // disable-model-invocation: false means the skill IS model-invocable and must appear
-      requireThat(result.additionalContext(), "additionalContext").contains("cat:help-agent");
+      requireThat(result.additionalContext(), "additionalContext").contains("cat:help");
       requireThat(result.additionalContext(), "additionalContext").contains("Display help for CAT commands");
       requireThat(result.stderr(), "stderr").isEmpty();
     }
@@ -396,7 +396,7 @@ public final class InjectSkillListingTest
       Path pluginsDir = tempDir.resolve("plugins");
       Files.createDirectories(pluginsDir);
       Path catPluginDir = tempDir.resolve("cat-plugin-noat");
-      Path skillDir = catPluginDir.resolve("skills/help-agent");
+      Path skillDir = catPluginDir.resolve("skills/help");
       Files.createDirectories(skillDir);
       Files.writeString(skillDir.resolve("SKILL.md"), """
         ---
@@ -421,8 +421,8 @@ public final class InjectSkillListingTest
 
       SessionStartHandler.Result result = handler.handle(scope);
 
-      // Key "cat" (no '@') → prefix "cat:" → skill name "cat:help-agent"
-      requireThat(result.additionalContext(), "additionalContext").contains("cat:help-agent");
+      // Key "cat" (no '@') → prefix "cat:" → skill name "cat:help"
+      requireThat(result.additionalContext(), "additionalContext").contains("cat:help");
       requireThat(result.stderr(), "stderr").isEmpty();
     }
     finally

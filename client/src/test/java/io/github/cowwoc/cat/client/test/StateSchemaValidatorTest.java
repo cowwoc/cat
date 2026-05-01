@@ -46,7 +46,7 @@ public final class StateSchemaValidatorTest
       toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+      FileWriteHandler.Result result = validator.check(toolInput, "test-session");
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -81,7 +81,7 @@ public final class StateSchemaValidatorTest
       toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+      FileWriteHandler.Result result = validator.check(toolInput, "test-session");
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -116,7 +116,7 @@ public final class StateSchemaValidatorTest
       toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+      FileWriteHandler.Result result = validator.check(toolInput, "test-session");
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -150,7 +150,7 @@ public final class StateSchemaValidatorTest
       toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+      FileWriteHandler.Result result = validator.check(toolInput, "test-session");
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -184,7 +184,7 @@ public final class StateSchemaValidatorTest
       toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+      FileWriteHandler.Result result = validator.check(toolInput, "test-session");
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -218,7 +218,7 @@ public final class StateSchemaValidatorTest
       toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+      FileWriteHandler.Result result = validator.check(toolInput, "test-session");
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -252,7 +252,7 @@ public final class StateSchemaValidatorTest
       toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+      FileWriteHandler.Result result = validator.check(toolInput, "test-session");
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -291,7 +291,7 @@ public final class StateSchemaValidatorTest
       toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+      FileWriteHandler.Result result = validator.check(toolInput, "test-session");
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -325,7 +325,7 @@ public final class StateSchemaValidatorTest
       toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+      FileWriteHandler.Result result = validator.check(toolInput, "test-session");
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Missing mandatory field 'status'");
@@ -359,7 +359,7 @@ public final class StateSchemaValidatorTest
       toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+      FileWriteHandler.Result result = validator.check(toolInput, "test-session");
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Non-standard field 'custom_field'");
@@ -392,7 +392,7 @@ public final class StateSchemaValidatorTest
       toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+      FileWriteHandler.Result result = validator.check(toolInput, "test-session");
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Invalid status value 'pending'");
@@ -425,7 +425,7 @@ public final class StateSchemaValidatorTest
       toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+      FileWriteHandler.Result result = validator.check(toolInput, "test-session");
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("resolution is required when status is 'closed'");
@@ -459,7 +459,7 @@ public final class StateSchemaValidatorTest
       toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+      FileWriteHandler.Result result = validator.check(toolInput, "test-session");
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Invalid resolution value");
@@ -493,7 +493,7 @@ public final class StateSchemaValidatorTest
       toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+      FileWriteHandler.Result result = validator.check(toolInput, "test-session");
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Invalid parent format");
@@ -522,7 +522,7 @@ public final class StateSchemaValidatorTest
       toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/plan.md");
       toolInput.put("content", content);
 
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+      FileWriteHandler.Result result = validator.check(toolInput, "test-session");
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -552,7 +552,7 @@ public final class StateSchemaValidatorTest
       toolInput.put("file_path", ".cat/issues/v2/v2.1/index.json");
       toolInput.put("content", content);
 
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+      FileWriteHandler.Result result = validator.check(toolInput, "test-session");
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -579,7 +579,7 @@ public final class StateSchemaValidatorTest
       toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", "");
 
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+      FileWriteHandler.Result result = validator.check(toolInput, "test-session");
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -613,7 +613,7 @@ public final class StateSchemaValidatorTest
       toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+      FileWriteHandler.Result result = validator.check(toolInput, "test-session");
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -647,7 +647,7 @@ public final class StateSchemaValidatorTest
       toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+      FileWriteHandler.Result result = validator.check(toolInput, "test-session");
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -681,7 +681,7 @@ public final class StateSchemaValidatorTest
       toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+      FileWriteHandler.Result result = validator.check(toolInput, "test-session");
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -710,7 +710,7 @@ public final class StateSchemaValidatorTest
       toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+      FileWriteHandler.Result result = validator.check(toolInput, "test-session");
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("invalid JSON");
@@ -739,7 +739,7 @@ public final class StateSchemaValidatorTest
       toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+      FileWriteHandler.Result result = validator.check(toolInput, "test-session");
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("root element must be a JSON object");
@@ -773,7 +773,7 @@ public final class StateSchemaValidatorTest
       toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+      FileWriteHandler.Result result = validator.check(toolInput, "test-session");
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Missing mandatory field 'status'");
@@ -807,7 +807,7 @@ public final class StateSchemaValidatorTest
       toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+      FileWriteHandler.Result result = validator.check(toolInput, "test-session");
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -841,7 +841,7 @@ public final class StateSchemaValidatorTest
       toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+      FileWriteHandler.Result result = validator.check(toolInput, "test-session");
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Non-standard field 'progress'");
@@ -875,7 +875,7 @@ public final class StateSchemaValidatorTest
       toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+      FileWriteHandler.Result result = validator.check(toolInput, "test-session");
 
       requireThat(result.blocked(), "blocked").isFalse();
       requireThat(result.reason(), "reason").isEmpty();
@@ -909,7 +909,7 @@ public final class StateSchemaValidatorTest
       toolInput.put("file_path", ".cat/issues/v2/v2.1/test-issue/index.json");
       toolInput.put("content", content);
 
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+      FileWriteHandler.Result result = validator.check(toolInput, "test-session");
 
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("Non-standard field 'last_updated'");
@@ -946,7 +946,7 @@ public final class StateSchemaValidatorTest
       toolInput.put("old_string", "\"open\"");
       toolInput.put("new_string", "\"closed\"");
 
-      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+      FileWriteHandler.Result result = validator.check(toolInput, "test-session");
 
       // "closed" without "resolution" should be blocked
       requireThat(result.blocked(), "blocked").isTrue();

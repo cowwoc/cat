@@ -127,6 +127,80 @@ public class EnforceWorktreePathIsolationTest
   }
 
   /**
+   * Verifies that a session may access a secondary worktree path only when that path is explicitly
+   * owned by the same session in lock metadata.
+   */
+  @Test
+  public void fileInsideSessionOwnedSecondaryWorktreeIsAllowed() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("ewpi-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+    {
+      Path lockDir = scope.getCatWorkPath().resolve("locks");
+      Files.createDirectories(lockDir);
+      Path secondaryWorktree = scope.getCatWorkPath().resolve("worktrees").resolve("runner-test");
+      Files.createDirectories(secondaryWorktree);
+      String lockContent = """
+        {"session_id":"%s","worktrees":{"%s":"%s"},"created_at":1000000,"created_iso":"2026-01-01T00:00:00Z"}
+        """.formatted(SESSION_ID, secondaryWorktree.toAbsolutePath().normalize(), SESSION_ID);
+      Files.writeString(lockDir.resolve(ISSUE_ID + ".lock"), lockContent);
+
+      EnforceWorktreePathIsolation handler = new EnforceWorktreePathIsolation(scope);
+      ObjectNode input = scope.getJsonMapper().createObjectNode();
+      input.put("file_path", secondaryWorktree.resolve("plugin/test.py").toString());
+
+      FileWriteHandler.Result result = handler.check(input, SESSION_ID);
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that a session is blocked from accessing another session's worktree even if the
+   * worktree path exists on disk.
+   */
+  @Test
+  public void fileInsideOtherSessionWorktreeIsBlocked() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("ewpi-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+    {
+      String otherSessionId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      Path lockDir = scope.getCatWorkPath().resolve("locks");
+      Files.createDirectories(lockDir);
+      Path sessionWorktree = scope.getCatWorkPath().resolve("worktrees").resolve(ISSUE_ID);
+      Path otherWorktree = scope.getCatWorkPath().resolve("worktrees").resolve("other-session");
+      Files.createDirectories(sessionWorktree);
+      Files.createDirectories(otherWorktree);
+      String lockContent = """
+        {"session_id":"%s","worktrees":{"%s":"%s"},"created_at":1000000,"created_iso":"2026-01-01T00:00:00Z"}
+        """.formatted(SESSION_ID, sessionWorktree.toAbsolutePath().normalize(), SESSION_ID);
+      Files.writeString(lockDir.resolve(ISSUE_ID + ".lock"), lockContent);
+      String otherLockContent = """
+        {"session_id":"%s","worktrees":{"%s":"%s"},"created_at":1000000,"created_iso":"2026-01-01T00:00:00Z"}
+        """.formatted(otherSessionId, otherWorktree.toAbsolutePath().normalize(), otherSessionId);
+      Files.writeString(lockDir.resolve("2.1-other.lock"), otherLockContent);
+
+      EnforceWorktreePathIsolation handler = new EnforceWorktreePathIsolation(scope);
+      ObjectNode input = scope.getJsonMapper().createObjectNode();
+      input.put("file_path", otherWorktree.resolve("plugin/test.py").toString());
+
+      FileWriteHandler.Result result = handler.check(input, SESSION_ID);
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Worktree isolation violation");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
    * Verifies that editing a file outside the worktree is blocked when a lock and worktree exist.
    * <p>
    * The file targets the project root instead of the worktree directory. The error message must

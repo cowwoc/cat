@@ -8,7 +8,7 @@ invocations from users.
 ## Background
 
 The monitor-subagents skill currently invokes a shell script (`monitor-subagents.sh`) to gather subagent status. Per
-skill-builder methodology (M215), skills should NEVER invoke scripts via Bash - the user shouldn't see tool calls.
+skill-builder methodology, skills should NEVER invoke scripts via Bash - the user shouldn't see tool calls.
 Instead, a handler should precompute all outputs before the skill runs.
 
 ## Approach

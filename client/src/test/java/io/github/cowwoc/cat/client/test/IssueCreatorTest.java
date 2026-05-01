@@ -340,7 +340,8 @@ public class IssueCreatorTest
           "issue_name": "test-issue",
           "index_file": "%s",
           "plan_content": "# Plan\\nSteps here",
-          "commit_description": "Test issue creation"
+          "commit_description": "Test issue creation",
+          "dependent_index_files": []
         }""".formatted(indexTempFile.toString().replace("\\", "\\\\"));
 
       String result = creator.execute(json, tempDir);
@@ -546,6 +547,180 @@ public class IssueCreatorTest
     {
       if (madeReadOnly)
         versionDir.toFile().setWritable(true);
+      Files.deleteIfExists(indexTempFile);
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that execute appends the new issue ID to a dependent index.json dependencies array.
+   *
+   * @throws IOException if an I/O error occurs
+   * @throws InterruptedException if git process is interrupted
+   */
+  @Test
+  public void executeAddsDependencyToDependentIssue() throws IOException, InterruptedException
+  {
+    Path tempDir = setupGitRepo();
+    Path indexTempFile = Files.createTempFile("index-", ".json");
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Files.writeString(indexTempFile, "{\"status\": \"open\"}");
+      Path dependent = tempDir.resolve(".cat/issues/v2/v2.1/dependent/index.json");
+      Files.createDirectories(dependent.getParent());
+      Files.writeString(dependent, "{\"status\":\"open\",\"dependencies\":[]}");
+
+      IssueCreator creator = new IssueCreator(scope);
+      String json = """
+        {
+          "major": 2,
+          "minor": 1,
+          "issue_name": "new-issue",
+          "index_file": "%s",
+          "plan_content": "# Plan",
+          "dependent_index_files": ["%s"]
+        }""".formatted(indexTempFile.toString().replace("\\", "\\\\"),
+        dependent.toString().replace("\\", "\\\\"));
+
+      String result = creator.execute(json, tempDir);
+      ObjectNode resultNode = (ObjectNode) scope.getJsonMapper().readTree(result);
+      requireThat(resultNode.get("success").asBoolean(), "success").isTrue();
+
+      JsonMapper mapper = scope.getJsonMapper();
+      ObjectNode dependentNode = (ObjectNode) mapper.readTree(Files.readString(dependent));
+      requireThat(dependentNode.withArray("dependencies").size(), "dependencyCount").isEqualTo(1);
+      requireThat(dependentNode.withArray("dependencies").get(0).asString(), "dependency").
+        isEqualTo("new-issue");
+    }
+    finally
+    {
+      Files.deleteIfExists(indexTempFile);
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that execute does not duplicate an existing dependency entry.
+   *
+   * @throws IOException if an I/O error occurs
+   * @throws InterruptedException if git process is interrupted
+   */
+  @Test
+  public void executeKeepsDependenciesUnique() throws IOException, InterruptedException
+  {
+    Path tempDir = setupGitRepo();
+    Path indexTempFile = Files.createTempFile("index-", ".json");
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Files.writeString(indexTempFile, "{\"status\": \"open\"}");
+      Path dependent = tempDir.resolve(".cat/issues/v2/v2.1/dependent/index.json");
+      Files.createDirectories(dependent.getParent());
+      Files.writeString(dependent, "{\"status\":\"open\",\"dependencies\":[\"new-issue\"]}");
+
+      IssueCreator creator = new IssueCreator(scope);
+      String json = """
+        {
+          "major": 2,
+          "minor": 1,
+          "issue_name": "new-issue",
+          "index_file": "%s",
+          "plan_content": "# Plan",
+          "dependent_index_files": ["%s"]
+        }""".formatted(indexTempFile.toString().replace("\\", "\\\\"),
+        dependent.toString().replace("\\", "\\\\"));
+
+      creator.execute(json, tempDir);
+
+      ObjectNode dependentNode = (ObjectNode) scope.getJsonMapper().readTree(Files.readString(dependent));
+      requireThat(dependentNode.withArray("dependencies").size(), "dependencyCount").isEqualTo(1);
+      requireThat(dependentNode.withArray("dependencies").get(0).asString(), "dependency").
+        isEqualTo("new-issue");
+    }
+    finally
+    {
+      Files.deleteIfExists(indexTempFile);
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that execute resolves relative dependent index paths against the working directory.
+   *
+   * @throws IOException if an I/O error occurs
+   * @throws InterruptedException if git process is interrupted
+   */
+  @Test
+  public void executeResolvesRelativeDependentPath() throws IOException, InterruptedException
+  {
+    Path tempDir = setupGitRepo();
+    Path indexTempFile = Files.createTempFile("index-", ".json");
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Files.writeString(indexTempFile, "{\"status\": \"open\"}");
+      Path dependent = tempDir.resolve(".cat/issues/v2/v2.1/dependent/index.json");
+      Files.createDirectories(dependent.getParent());
+      Files.writeString(dependent, "{\"status\":\"open\",\"dependencies\":[]}");
+      Path relativeDependent = tempDir.relativize(dependent);
+
+      IssueCreator creator = new IssueCreator(scope);
+      String json = """
+        {
+          "major": 2,
+          "minor": 1,
+          "issue_name": "new-issue",
+          "index_file": "%s",
+          "plan_content": "# Plan",
+          "dependent_index_files": ["%s"]
+        }""".formatted(indexTempFile.toString().replace("\\", "\\\\"),
+        relativeDependent.toString().replace("\\", "\\\\"));
+
+      creator.execute(json, tempDir);
+
+      ObjectNode dependentNode = (ObjectNode) scope.getJsonMapper().readTree(Files.readString(dependent));
+      requireThat(dependentNode.withArray("dependencies").size(), "dependencyCount").isEqualTo(1);
+      requireThat(dependentNode.withArray("dependencies").get(0).asString(), "dependency").
+        isEqualTo("new-issue");
+    }
+    finally
+    {
+      Files.deleteIfExists(indexTempFile);
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that execute fails when a dependent index path does not exist.
+   *
+   * @throws IOException if an I/O error occurs
+   * @throws InterruptedException if git process is interrupted
+   */
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = ".*Dependent index file does not exist.*")
+  public void executeRejectsMissingDependentIndexFile() throws IOException, InterruptedException
+  {
+    Path tempDir = setupGitRepo();
+    Path indexTempFile = Files.createTempFile("index-", ".json");
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Files.writeString(indexTempFile, "{\"status\": \"open\"}");
+      Path missing = tempDir.resolve(".cat/issues/v2/v2.1/missing/index.json");
+
+      IssueCreator creator = new IssueCreator(scope);
+      String json = """
+        {
+          "major": 2,
+          "minor": 1,
+          "issue_name": "new-issue",
+          "index_file": "%s",
+          "plan_content": "# Plan",
+          "dependent_index_files": ["%s"]
+        }""".formatted(indexTempFile.toString().replace("\\", "\\\\"),
+        missing.toString().replace("\\", "\\\\"));
+
+      creator.execute(json, tempDir);
+    }
+    finally
+    {
       Files.deleteIfExists(indexTempFile);
       TestUtils.deleteDirectoryRecursively(tempDir);
     }

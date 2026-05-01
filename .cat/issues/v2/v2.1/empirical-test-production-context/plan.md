@@ -8,7 +8,7 @@ context (CLAUDE.md, hook-injected system-reminders) that affects agent behavior.
 - None (infrastructure improvement discovered during M361 investigation)
 
 ## Motivation
-The `/cat:status` verbatim echo failure (M361) could not be reproduced by the empirical test runner because the runner
+The `/cat:status` verbatim echo failure could not be reproduced by the empirical test runner because the runner
 sends zero system context. Real sessions include CLAUDE.md project instructions and hook-injected `<system-reminder>`
 tags — both of which affect agent behavior. Without these, compliance tests give false 100% pass rates.
 

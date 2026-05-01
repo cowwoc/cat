@@ -187,7 +187,7 @@ implementation per CLAUDE.md conventions):
 ```bash
 cd "${WORKTREE_PATH}"
 git add plugin/skills/work-merge-agent/first-use.md .cat/retrospectives/mistakes-2026-03.json
-git commit -m "bugfix: block approval gate when post-conditions are Missing or Partial (M587)"
+git commit -m "bugfix: block approval gate when post-conditions are Missing or Partial"
 ```
 
 ### Step 6: E2E Simulation (manual trace)

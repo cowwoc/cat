@@ -1989,7 +1989,7 @@ public final class SessionAnalyzerTest
    *
    * @param msgId     the message ID
    * @param toolId    the tool use ID
-   * @param skillName the skill name (e.g., "cat:work-prepare-agent")
+   * @param skillName the skill name (e.g., "cat:work-prepare")
    * @param timestamp the ISO 8601 timestamp string
    * @return a JSONL line
    */
@@ -2163,13 +2163,13 @@ public final class SessionAnalyzerTest
       // work-prepare phase: starts at T=0, one Read at T=10
       // work-implement phase: starts at T=30, one Write at T=40
       String jsonl =
-        skillInvocation("msg0", "s0", "cat:work-prepare-agent",
+        skillInvocation("msg0", "s0", "cat:work-prepare",
           "2026-03-01T10:00:00.000Z") + "\n" +
         toolResult("s0", "prepare done") + "\n" +
         assistantMessageWithTimestamp("msg1", "t1", "Read", "\"file_path\":\"/a.txt\"",
           "2026-03-01T10:00:10.000Z") + "\n" +
         toolResult("t1", "contents") + "\n" +
-        skillInvocation("msg2", "s1", "cat:work-implement-agent",
+        skillInvocation("msg2", "s1", "cat:work-implement",
           "2026-03-01T10:00:30.000Z") + "\n" +
         toolResult("s1", "implement done") + "\n" +
         assistantMessageWithTimestamp("msg3", "t2", "Write", "\"file_path\":\"/b.txt\"",
@@ -2192,11 +2192,11 @@ public final class SessionAnalyzerTest
 
       JsonNode preparePhase = phases.get(0);
       requireThat(preparePhase.path("name").asString(),
-        "phase_0_name").isEqualTo("work-prepare-agent");
+        "phase_0_name").isEqualTo("work-prepare");
 
       JsonNode implementPhase = phases.get(1);
       requireThat(implementPhase.path("name").asString(),
-        "phase_1_name").isEqualTo("work-implement-agent");
+        "phase_1_name").isEqualTo("work-implement");
 
       JsonNode implementTools = implementPhase.path("tools");
       requireThat(implementTools.isArray(), "implement_tools_is_array").isTrue();
@@ -2367,14 +2367,14 @@ public final class SessionAnalyzerTest
     Path tempFile = Files.createTempFile("session-", ".jsonl");
     try
     {
-      // "cat:batch-read-agent" and "cat:git-commit-agent" do not contain any phase substrings
+      // "cat:batch-read" and "cat:git-commit" do not contain any phase substrings
       // and must not be treated as phase markers
       String jsonl =
-        skillInvocation("msg0", "s0", "cat:work-prepare-agent",
+        skillInvocation("msg0", "s0", "cat:work-prepare",
           "2026-03-01T10:00:00.000Z") + "\n" +
         assistantMessageWithTimestamp("msg1", "t1", "Read", "\"file_path\":\"/a.txt\"",
           "2026-03-01T10:00:10.000Z") + "\n" +
-        skillInvocation("msg2", "s2", "cat:git-commit-agent",
+        skillInvocation("msg2", "s2", "cat:git-commit",
           "2026-03-01T10:00:20.000Z") + "\n" +
         assistantMessageWithTimestamp("msg3", "t3", "Write", "\"file_path\":\"/b.txt\"",
           "2026-03-01T10:00:30.000Z") + "\n";
@@ -2386,11 +2386,11 @@ public final class SessionAnalyzerTest
       JsonNode timing = result.path("timing");
       requireThat(timing.isMissingNode(), "timing_present").isFalse();
       JsonNode phases = timing.path("phases");
-      // Only "work-prepare-agent" from "cat:work-prepare-agent" is a valid phase marker;
-      // "cat:git-commit-agent" must not register as a phase
+      // Only "work-prepare" from "cat:work-prepare" is a valid phase marker;
+      // "cat:git-commit" must not register as a phase
       requireThat(phases.isArray(), "phases_is_array").isTrue();
       requireThat(phases.size(), "phase_count").isEqualTo(1);
-      requireThat(phases.get(0).path("name").asString(), "phase_name").isEqualTo("work-prepare-agent");
+      requireThat(phases.get(0).path("name").asString(), "phase_name").isEqualTo("work-prepare");
     }
     finally
     {
@@ -2439,13 +2439,13 @@ public final class SessionAnalyzerTest
     try
     {
       String jsonl =
-        skillInvocation("m0", "s0", "cat:work-prepare-agent",
+        skillInvocation("m0", "s0", "cat:work-prepare",
           "2026-03-01T10:00:00.000Z") + "\n" +
-        skillInvocation("m1", "s1", "cat:work-implement-agent",
+        skillInvocation("m1", "s1", "cat:work-implement",
           "2026-03-01T10:00:10.000Z") + "\n" +
-        skillInvocation("m2", "s2", "cat:work-review-agent",
+        skillInvocation("m2", "s2", "cat:work-review",
           "2026-03-01T10:00:20.000Z") + "\n" +
-        skillInvocation("m3", "s3", "cat:work-merge-agent",
+        skillInvocation("m3", "s3", "cat:work-merge",
           "2026-03-01T10:00:30.000Z") + "\n" +
         assistantMessageWithTimestamp("m4", "t4", "Read", "\"file_path\":\"/a.txt\"",
           "2026-03-01T10:00:40.000Z") + "\n";
@@ -2458,10 +2458,10 @@ public final class SessionAnalyzerTest
       requireThat(phases.isArray(), "phases_is_array").isTrue();
       requireThat(phases.size(), "phase_count").isEqualTo(4);
 
-      requireThat(phases.get(0).path("name").asString(), "phase_0").isEqualTo("work-prepare-agent");
-      requireThat(phases.get(1).path("name").asString(), "phase_1").isEqualTo("work-implement-agent");
-      requireThat(phases.get(2).path("name").asString(), "phase_2").isEqualTo("work-review-agent");
-      requireThat(phases.get(3).path("name").asString(), "phase_3").isEqualTo("work-merge-agent");
+      requireThat(phases.get(0).path("name").asString(), "phase_0").isEqualTo("work-prepare");
+      requireThat(phases.get(1).path("name").asString(), "phase_1").isEqualTo("work-implement");
+      requireThat(phases.get(2).path("name").asString(), "phase_2").isEqualTo("work-review");
+      requireThat(phases.get(3).path("name").asString(), "phase_3").isEqualTo("work-merge");
     }
     finally
     {
@@ -2486,7 +2486,7 @@ public final class SessionAnalyzerTest
           "2026-03-01T10:00:00.000Z") + "\n" +
         assistantMessageWithTimestamp("msg1", "t1", "Write", "\"file_path\":\"/pre2.txt\"",
           "2026-03-01T10:00:05.000Z") + "\n" +
-        skillInvocation("msg2", "s0", "cat:work-prepare-agent",
+        skillInvocation("msg2", "s0", "cat:work-prepare",
           "2026-03-01T10:00:10.000Z") + "\n" +
         assistantMessageWithTimestamp("msg3", "t3", "Bash", "\"command\":\"ls\"",
           "2026-03-01T10:00:20.000Z") + "\n";

@@ -66,11 +66,7 @@ not a workaround commit.
 ## Symbol Refactoring
 
 When plan steps involve renaming, removing, or moving a symbol across multiple files (e.g., a class name, method name,
-field name, or any identifier), invoke `cat:plan-before-edit-agent` via the Skill tool BEFORE making any file edits:
+field name, or any identifier), follow `plugin/rules/plan-before-edit.md` BEFORE making file edits.
 
-```
-skill: "cat:plan-before-edit-agent", args: "<cat_agent_id> <Symbol1> [Symbol2 ...]"
-```
-
-Pass the symbol names as positional arguments after the cat_agent_id. The skill will scan all usages, build
-a change map, apply all edits, and compile once at the end.
+Apply the scan-first workflow from that rule: scan all symbols, map all occurrences, edit all rows, re-scan,
+then compile once at the end.

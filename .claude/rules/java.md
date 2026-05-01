@@ -1308,7 +1308,7 @@ public final class Config
 /**
  * Processes skill content with variable substitution.
  */
-public final class SkillLoader
+public final class LoaderUtility
 {
   // ...
 }
@@ -1319,7 +1319,7 @@ public final class SkillLoader
  * <p>
  * <b>Thread Safety:</b> This class is NOT thread-safe.
  */
-public final class SkillLoader
+public final class LoaderUtility
 {
   // ...
 }
@@ -1477,7 +1477,8 @@ accessors through call chains.
 - `MainClaudeTool` — production use for session CLI tools (in `main()` methods that require `CLAUDE_SESSION_ID`
   and `CLAUDE_ENV_FILE`), reads all session environment configuration
 - `MainJvmScope` — production use for infrastructure CLI tools (in `main()` methods that do NOT require session
-  vars, e.g., `GetSkill`), reads only infrastructure vars
+  vars), reads only infrastructure vars. Example tools include `IssueLock`, `HookRegistrar`, and
+  `StatusAlignmentValidator`.
 - `TestClaudeTool` — test use, accepts injectable paths: `new TestClaudeTool(tempDir, tempDir)`
 
 **Why pouch over DI frameworks:**
@@ -1680,8 +1681,8 @@ depending on the execution context. Never call `System.getenv()` directly outsid
 **Why:** Hook handlers receive session-specific values from the `HookInput` JSON payload, not from environment
 variables. Reading environment variables in hook handlers bypasses this contract. Session CLI commands use
 `MainClaudeTool` (a `ClaudeTool` implementation) which reads all env vars at startup. Infrastructure CLI commands
-(e.g., `GetSkill`) use `MainJvmScope` which reads only infrastructure path vars and does not require
-`CLAUDE_SESSION_ID` or `CLAUDE_ENV_FILE`.
+(such as `IssueLock`, `HookRegistrar`, and `StatusAlignmentValidator`) use `MainJvmScope`, which reads only
+infrastructure path vars and does not require `CLAUDE_SESSION_ID` or `CLAUDE_ENV_FILE`.
 
 ```java
 // Good - session CLI main() method reads session ID via scope
@@ -1728,19 +1729,18 @@ public Result handle(HookInput input)
 
 `EnforceJvmScopeEnvAccessTest` enforces this convention by scanning all Java source files and failing the build if
 `System.getenv(` appears outside of `MainClaudeTool.java`, `MainJvmScope.java`, `MainClaudeHook.java`,
-`GetSkill.java`, and `TerminalType.java`.
+CLI tools that use `MainJvmScope` and run without session context, and `TerminalType.java`.
 
 The five whitelisted files each have a specific reason for direct env var access:
 - `MainClaudeTool.java` — reads all Claude env vars (`CLAUDE_PROJECT_DIR`, `CLAUDE_PLUGIN_ROOT`,
   `CLAUDE_SESSION_ID`, `CLAUDE_ENV_FILE`, `TZ`) at startup and stores them as fields; for CLI tools that run
   as part of a Claude session
 - `MainJvmScope.java` — reads only infrastructure path vars (`CLAUDE_PROJECT_DIR`, `CLAUDE_PLUGIN_ROOT`,
-  `CLAUDE_CONFIG_DIR`, `TZ`); for CLI tools that run without a Claude session (e.g., `GetSkill` which is
-  invoked by the skill preprocessor before a session is established)
+  `CLAUDE_CONFIG_DIR`, `TZ`); for CLI tools that run without a Claude session (i.e., tools using `MainJvmScope`)
 - `MainClaudeHook.java` — reads infrastructure path vars (`CLAUDE_PROJECT_DIR`, `CLAUDE_PLUGIN_ROOT`,
   `CLAUDE_CONFIG_DIR`, `CLAUDE_ENV_FILE`, `TZ`) from the environment; the production hook scope implementation
   used in hook handler `main()` methods
-- `GetSkill.java` — expands env var references in skill directive templates; requires direct access to
+- `SubstituteSkillVariables.java` — expands env var references in skill directive templates; requires direct access to
   substitute variable values
 - `TerminalType.java` — detects terminal type from standard terminal env vars (`TERM`, `TERM_PROGRAM`)
 
@@ -1748,7 +1748,8 @@ The five whitelisted files each have a specific reason for direct env var access
 - `MainClaudeTool` — production use for session CLI tools (in `main()` methods that require `CLAUDE_SESSION_ID`
   and `CLAUDE_ENV_FILE`), reads all session environment configuration
 - `MainJvmScope` — production use for infrastructure CLI tools (in `main()` methods that do NOT require session
-  vars, e.g., `GetSkill`), reads only infrastructure vars
+  vars), reads only infrastructure vars. Example tools include `IssueLock`, `HookRegistrar`, and
+  `StatusAlignmentValidator`.
 - `MainClaudeHook` — production use for hook handler `main()` methods, reads infrastructure path vars and hook
   JSON from stdin
 - `TestClaudeTool` — test use, accepts injectable paths: `new TestClaudeTool(tempDir, tempDir)`

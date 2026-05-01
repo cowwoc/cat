@@ -48,7 +48,6 @@ public final class PreReadHook implements HookHandler
   {
     requireThat(scope, "scope").isNotNull();
     this.handlers = List.of(
-      scope.getPredictBatchOpportunity(),
       new EnforceWorktreePathIsolation(scope),
       new InjectPathRestrictedSkillListing(scope),
       new InjectPathRestrictedRuleListing(scope));
@@ -101,9 +100,7 @@ public final class PreReadHook implements HookHandler
 
     JsonNode toolInput = scope.getToolInput();
     String sessionId = scope.getSessionId();
-    String catAgentId = scope.getCatAgentId(sessionId);
-    requireThat(catAgentId, "catAgentId").isNotBlank();
-    List<String> warnings = new ArrayList<>();
+        List<String> warnings = new ArrayList<>();
     List<String> errorWarnings = new ArrayList<>();
     StringBuilder additionalContextAccumulator = new StringBuilder();
 
@@ -112,7 +109,7 @@ public final class PreReadHook implements HookHandler
     {
       try
       {
-        ReadHandler.Result result = handler.check(toolName, toolInput, null, catAgentId);
+        ReadHandler.Result result = handler.check(toolName, toolInput, null, sessionId);
         if (result.blocked())
         {
           String jsonOutput;

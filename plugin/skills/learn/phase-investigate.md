@@ -66,7 +66,7 @@ needed.
 Verify actual event sequence using get-history:
 
 ```bash
-/cat:get-history-agent
+/cat:get-history
 # Look for: When stated? Action order? User corrections? Actual trigger?
 ```
 
@@ -131,11 +131,11 @@ subagent's full conversation. Use `analyze` to discover subagent IDs, then searc
 # Discover subagent IDs (listed in analyze output under "subagents")
 "$SESSION_ANALYZER" analyze "$SESSION_ID"
 
-# Search a specific subagent's conversation
-"$SESSION_ANALYZER" search "$SESSION_ID/subagents/agent-AGENT_ID" "keyword" --context 5
+# Search a specific subagent's conversation (raw subagent id)
+"$SESSION_ANALYZER" search "$SESSION_ID" "keyword" --agent-id "AGENT_ID" --context 5
 
 # Search for multiple keywords in a subagent's conversation in one scan
-"$SESSION_ANALYZER" search "$SESSION_ID/subagents/agent-AGENT_ID" "keyword1|keyword2" --regex --context 5
+"$SESSION_ANALYZER" search "$SESSION_ID" "keyword1|keyword2" --agent-id "AGENT_ID" --regex --context 5
 ```
 
 **What to verify in JSONL before looking at source files:**
@@ -182,7 +182,7 @@ Read the skill file and apply instruction-builder's Priming Prevention Checklist
 - No Embedded Box Drawings (does skill show visual examples that prime manual construction?)
 ```
 
-**Reference:** See `/cat:instruction-builder-agent` § "Priming Prevention Checklist" for the complete checklist.
+**Reference:** See `/cat:instruction-builder` § "Priming Prevention Checklist" for the complete checklist.
 If skill has structural issues, fix the SKILL as part of prevention, not just add behavioral guidance.
 
 **MANDATORY CHECK:** After checking documents read, ALSO ask:
