@@ -29,11 +29,11 @@ public final class StatuslineInstallTest
   public void installWithNoSettingsCreatesSettingsFile() throws IOException
   {
     Path tempDir = Files.createTempDirectory("statusline-install-test-");
-    Path pluginRoot = Files.createTempDirectory("statusline-plugin-root-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
+    Path pluginData = Files.createTempDirectory("statusline-plugin-root-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginData))
     {
       StatuslineInstall installer = new StatuslineInstall(scope);
-      String result = installer.install(tempDir, pluginRoot);
+      String result = installer.install(tempDir, pluginData);
 
       requireThat(result, "result").contains("\"status\": \"OK\"");
       Path settingsFile = tempDir.resolve(".claude/settings.json");
@@ -45,7 +45,7 @@ public final class StatuslineInstallTest
     finally
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
-      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(pluginData);
     }
   }
 
@@ -59,8 +59,8 @@ public final class StatuslineInstallTest
   public void installWithExistingSettingsMergesStatusLine() throws IOException
   {
     Path tempDir = Files.createTempDirectory("statusline-install-test-");
-    Path pluginRoot = Files.createTempDirectory("statusline-plugin-root-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
+    Path pluginData = Files.createTempDirectory("statusline-plugin-root-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginData))
     {
       Path claudeDir = tempDir.resolve(".claude");
       Files.createDirectories(claudeDir);
@@ -74,7 +74,7 @@ public final class StatuslineInstallTest
         """);
 
       StatuslineInstall installer = new StatuslineInstall(scope);
-      String result = installer.install(tempDir, pluginRoot);
+      String result = installer.install(tempDir, pluginData);
 
       requireThat(result, "result").contains("\"status\": \"OK\"");
       String content = Files.readString(settingsFile);
@@ -85,7 +85,7 @@ public final class StatuslineInstallTest
     finally
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
-      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(pluginData);
     }
   }
 
@@ -95,23 +95,23 @@ public final class StatuslineInstallTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void installStatusLineCommandUsesClaudePluginDataPath() throws IOException
+  public void installStatusLineCommandUsesAbsolutePluginPath() throws IOException
   {
     Path tempDir = Files.createTempDirectory("statusline-install-test-");
-    Path pluginRoot = Files.createTempDirectory("statusline-plugin-root-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
+    Path pluginData = Files.createTempDirectory("statusline-plugin-root-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginData))
     {
       StatuslineInstall installer = new StatuslineInstall(scope);
-      installer.install(tempDir, pluginRoot);
+      installer.install(tempDir, pluginData);
 
       Path settingsFile = tempDir.resolve(".claude/settings.json");
       String content = Files.readString(settingsFile);
-      requireThat(content, "content").contains("${CLAUDE_PLUGIN_DATA}/client/bin/statusline-command");
+      requireThat(content, "content").contains(pluginData.resolve("client/bin/statusline-command").toString());
     }
     finally
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
-      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(pluginData);
     }
   }
 
@@ -124,11 +124,11 @@ public final class StatuslineInstallTest
   public void installResultContainsSettingsPath() throws IOException
   {
     Path tempDir = Files.createTempDirectory("statusline-install-test-");
-    Path pluginRoot = Files.createTempDirectory("statusline-plugin-root-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
+    Path pluginData = Files.createTempDirectory("statusline-plugin-root-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginData))
     {
       StatuslineInstall installer = new StatuslineInstall(scope);
-      String result = installer.install(tempDir, pluginRoot);
+      String result = installer.install(tempDir, pluginData);
 
       requireThat(result, "result").contains("settings_path");
       requireThat(result, "result").contains("script_path");
@@ -136,7 +136,7 @@ public final class StatuslineInstallTest
     finally
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
-      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(pluginData);
     }
   }
 
@@ -149,8 +149,8 @@ public final class StatuslineInstallTest
   public void invalidJsonInExistingSettingsReturnsError() throws IOException
   {
     Path tempDir = Files.createTempDirectory("statusline-install-test-");
-    Path pluginRoot = Files.createTempDirectory("statusline-plugin-root-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
+    Path pluginData = Files.createTempDirectory("statusline-plugin-root-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginData))
     {
       Path claudeDir = tempDir.resolve(".claude");
       Files.createDirectories(claudeDir);
@@ -158,14 +158,14 @@ public final class StatuslineInstallTest
       Files.writeString(settingsFile, "{ this is not valid json }");
 
       StatuslineInstall installer = new StatuslineInstall(scope);
-      String result = installer.install(tempDir, pluginRoot);
+      String result = installer.install(tempDir, pluginData);
 
       requireThat(result, "result").contains("\"status\": \"ERROR\"");
     }
     finally
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
-      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(pluginData);
     }
   }
 
@@ -179,8 +179,8 @@ public final class StatuslineInstallTest
   public void arrayJsonInExistingSettingsReturnsError() throws IOException
   {
     Path tempDir = Files.createTempDirectory("statusline-install-test-");
-    Path pluginRoot = Files.createTempDirectory("statusline-plugin-root-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
+    Path pluginData = Files.createTempDirectory("statusline-plugin-root-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginData))
     {
       Path claudeDir = tempDir.resolve(".claude");
       Files.createDirectories(claudeDir);
@@ -188,14 +188,14 @@ public final class StatuslineInstallTest
       Files.writeString(settingsFile, "[\"not\", \"an\", \"object\"]");
 
       StatuslineInstall installer = new StatuslineInstall(scope);
-      String result = installer.install(tempDir, pluginRoot);
+      String result = installer.install(tempDir, pluginData);
 
       requireThat(result, "result").contains("\"status\": \"ERROR\"");
     }
     finally
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
-      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(pluginData);
     }
   }
 
@@ -208,8 +208,8 @@ public final class StatuslineInstallTest
   public void installOverwritesExistingStatusLineConfig() throws IOException
   {
     Path tempDir = Files.createTempDirectory("statusline-install-test-");
-    Path pluginRoot = Files.createTempDirectory("statusline-plugin-root-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginRoot))
+    Path pluginData = Files.createTempDirectory("statusline-plugin-root-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, pluginData))
     {
       Path claudeDir = tempDir.resolve(".claude");
       Files.createDirectories(claudeDir);
@@ -224,17 +224,17 @@ public final class StatuslineInstallTest
         """);
 
       StatuslineInstall installer = new StatuslineInstall(scope);
-      String result = installer.install(tempDir, pluginRoot);
+      String result = installer.install(tempDir, pluginData);
 
       requireThat(result, "result").contains("\"status\": \"OK\"");
       String content = Files.readString(settingsFile);
-      requireThat(content, "content").contains("${CLAUDE_PLUGIN_DATA}/client/bin/statusline-command");
+      requireThat(content, "content").contains(pluginData.resolve("client/bin/statusline-command").toString());
       requireThat(content, "content").doesNotContain("/old/path/to/statusline");
     }
     finally
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
-      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(pluginData);
     }
   }
 }
