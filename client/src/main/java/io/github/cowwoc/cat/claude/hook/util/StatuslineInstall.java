@@ -78,8 +78,6 @@ public final class StatuslineInstall
       return buildError("StatuslineInstall: Failed to create directory: " + claudeDir + ": " + e.getMessage());
     }
 
-    // The statusline-command binary in the jlink bundle
-    Path statuslineCommandPath = pluginRoot.resolve("client/bin/statusline-command");
     Path settingsFile = claudeDir.resolve("settings.json");
 
     ObjectNode root;
@@ -118,7 +116,7 @@ public final class StatuslineInstall
     // Set statusLine configuration
     ObjectNode statusLine = mapper.createObjectNode();
     statusLine.put("type", "command");
-    statusLine.put("command", statuslineCommandPath.toString());
+    statusLine.put("command", "${CLAUDE_PLUGIN_DATA}/client/bin/statusline-command");
     root.set("statusLine", statusLine);
 
     // Write updated settings.json with pretty printing (no spaces around colons)
@@ -154,7 +152,7 @@ public final class StatuslineInstall
         "script_path": "%s",
         "settings_path": "%s"
       }""".formatted(
-      Strings.escapeJson(statuslineCommandPath.toString()),
+      Strings.escapeJson("${CLAUDE_PLUGIN_DATA}/client/bin/statusline-command"),
       Strings.escapeJson(settingsFile.toString()));
   }
 
