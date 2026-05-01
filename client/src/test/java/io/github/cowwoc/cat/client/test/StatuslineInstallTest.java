@@ -90,12 +90,12 @@ public final class StatuslineInstallTest
   }
 
   /**
-   * Verifies that the installed statusLine command path uses the absolute plugin root path.
+   * Verifies that the installed statusLine command path uses CLAUDE_PLUGIN_DATA.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void installStatusLineCommandUsesAbsolutePluginRootPath() throws IOException
+  public void installStatusLineCommandUsesClaudePluginDataPath() throws IOException
   {
     Path tempDir = Files.createTempDirectory("statusline-install-test-");
     Path pluginRoot = Files.createTempDirectory("statusline-plugin-root-");
@@ -106,7 +106,7 @@ public final class StatuslineInstallTest
 
       Path settingsFile = tempDir.resolve(".claude/settings.json");
       String content = Files.readString(settingsFile);
-      requireThat(content, "content").contains(pluginRoot.resolve("client/bin/statusline-command").toString());
+      requireThat(content, "content").contains("${CLAUDE_PLUGIN_DATA}/client/bin/statusline-command");
     }
     finally
     {
@@ -228,7 +228,7 @@ public final class StatuslineInstallTest
 
       requireThat(result, "result").contains("\"status\": \"OK\"");
       String content = Files.readString(settingsFile);
-      requireThat(content, "content").contains(pluginRoot.resolve("client/bin/statusline-command").toString());
+      requireThat(content, "content").contains("${CLAUDE_PLUGIN_DATA}/client/bin/statusline-command");
       requireThat(content, "content").doesNotContain("/old/path/to/statusline");
     }
     finally
