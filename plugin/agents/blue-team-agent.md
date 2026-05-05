@@ -5,6 +5,7 @@ description: >
   instructions, test code, or source code) with minimal, targeted patches. Commits the hardened
   target file each round for use by instruction-builder's adversarial TDD loop.
 model: claude-opus-4-5
+effort: high
 ---
 
 # Blue Team Agent

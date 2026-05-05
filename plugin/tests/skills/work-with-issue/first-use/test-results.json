@@ -1,0 +1,20 @@
+{
+  "model_id" : "haiku",
+  "effort" : "",
+  "failed_test_ids" : [ ],
+  "sprt" : {
+    "test_cases" : [ {
+      "test_case_id" : "tc1",
+      "decision" : "REJECT",
+      "log_ratio" : -3.1845999999999997,
+      "pass_count" : 1,
+      "fail_count" : 3,
+      "total_runs" : 4,
+      "total_tokens" : 0,
+      "total_duration_ms" : 0
+    } ],
+    "overall_decision" : "REJECT",
+    "total_tokens" : 0,
+    "total_duration_ms" : 0
+  }
+}

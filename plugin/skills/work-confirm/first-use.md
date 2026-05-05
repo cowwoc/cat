@@ -120,6 +120,13 @@ Task tool:
          in this exhaustive list must be treated as requiring runtime E2E tests.
        - E2E isolation: use worktree artifacts (${WORKTREE_PATH}/client/target/jlink/bin/ and
          ${WORKTREE_PATH}/plugin/scripts/), never the cached plugin installation
+       - Runtime invocation must use an absolute binary path:
+         `${WORKTREE_PATH}/client/target/jlink/bin/instruction-test-runner ...`
+         Do NOT invoke `instruction-test-runner` via PATH lookup.
+       - Clean-worktree preflight is mandatory before runtime E2E invocation:
+         `cd "${WORKTREE_PATH}" && git status --porcelain`
+         If any output is present, STOP with a clear failure message that runtime E2E cannot run until
+         all changes are committed or stashed.
        - Runtime invocation required — do NOT substitute file inspection for running the artifact
     3. Create the verify output directory and write detailed analysis files:
        ```bash

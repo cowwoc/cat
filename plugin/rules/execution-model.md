@@ -21,9 +21,14 @@ Use the correct execution model for each tool so background results are retrieve
 ### 1) Skill tool behavior (synchronous)
 
 - Treat Skill output as instructions for the **current** agent.
-- Start executing those instructions in the next action.
+- If the skill output contains `Launching skill: <name>`, treat that line as a handoff signal, not completion.
+- Immediately execute the launched skill's instructions inline (`SKILL.md` loading contract + `first-use.md`) in the same flow.
+- Continue execution until a terminal phase state is reached: explicit approval gate, explicit blocker/failure, or explicit success/merge completion.
+- Do not stop at wrapper invocation or report success based only on `Launching skill` output.
 - Do not say “waiting for skill completion” or equivalent.
 - Execute all skill steps in order; if a step does not apply, state why and continue.
+- For gate-based flows, non-option conversational replies do not count as approval; re-present the full gate and wait for explicit option selection.
+- Status updates must include concrete phase evidence (for example: parsed prepare JSON, lock state, gate prompt, or failure payload), not only wrapper-launch acknowledgments.
 
 ### 2) Agent tool behavior (asynchronous)
 
@@ -41,6 +46,7 @@ Use the correct execution model for each tool so background results are retrieve
 
 - Calling `TaskOutput(task_id="<agentId>")` after Agent completion.
 - Claiming a Skill is “running” after Skill output has already returned.
+- Re-invoking wrapper skills in a loop (for example `/cat:work`) without consuming and executing the launched phase instructions.
 - Skipping mandatory steps from returned Skill instructions.
 
 ## Test Coverage Guidance

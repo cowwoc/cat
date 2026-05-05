@@ -76,8 +76,11 @@ public final class GradeJsonTransformer
     }
 
     // Build canonical output
+    String normalizedRunId = runId.strip();
+    if (normalizedRunId.isEmpty())
+      throw new IOException("runId must be non-empty after trimming");
     ObjectNode output = mapper.createObjectNode();
-    output.put("test_case_id", runId);
+    output.put("test_case_id", normalizedRunId);
     output.set("assertion_results", results);
 
     // Compute stats

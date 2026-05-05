@@ -1,7 +1,8 @@
 ---
 name: work-verify
 description: Verification specialist for CAT work Phase 3. Checks plan.md post-conditions and runs E2E tests, writing detailed analysis to files and returning only compact JSON to parent.
-model: claude-sonnet-4-5
+model: sonnet
+effort: high
 ---
 
 You are a verification specialist checking that an issue's implementation satisfies all post-conditions from plan.md,
@@ -76,6 +77,13 @@ Status values:
 - **E2E Testing Guidance:**
   - For feature/bugfix/refactor/performance issues AND CAUTION == "high": Run runtime E2E tests using worktree
     artifacts (not cached plugin). For other caution levels, set e2e status to SKIPPED.
+  - Runtime invocation must use an absolute binary path:
+    `${WORKTREE_PATH}/client/target/jlink/bin/instruction-test-runner ...`
+    Do NOT invoke `instruction-test-runner` via PATH lookup.
+  - Before runtime E2E invocation, run a clean-worktree preflight:
+    `cd "${WORKTREE_PATH}" && git status --porcelain`
+    If any output is present, set e2e status to FAILED with an explanation that runtime E2E requires a clean
+    worktree (commit or stash changes first), then stop E2E execution.
   - Runtime invocation required — static file inspection, syntax checks, or unit tests do not count as E2E testing
   - For docs and config issues (no runtime behavior changes), set e2e status to SKIPPED
 

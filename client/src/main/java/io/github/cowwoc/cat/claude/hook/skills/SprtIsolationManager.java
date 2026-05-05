@@ -125,25 +125,32 @@ final class SprtIsolationManager
           "InstructionTestRunner create-isolation-branch: git checkout --orphan failed with exit code " +
           orphanResult.exitCode() + ": " + orphanResult.stdout());
 
-      // Strip each test case file (remove frontmatter and ## Assertions section)
-      for (Path mdFile : mdFiles)
-        stripTestCaseFile(mdFile);
-
-      // For each file, call extract-turns binary
-      Path extractTurnsBin = scope.getPluginRoot().resolve("client/bin/extract-turns");
+      // For each file, call extract-turns binary on a stripped temporary copy
+      Path extractTurnsBin = worktreePath.resolve("client/target/jlink/bin/extract-turns");
+      if (Files.notExists(extractTurnsBin))
+        extractTurnsBin = scope.getPluginRoot().resolve("client/bin/extract-turns");
       for (Path mdFile : mdFiles)
       {
         String stem = stemOf(mdFile);
         String opaqueId = tcIdMap.get(stem);
-        // extract-turns expects a file path (e.g., /path/tc1.md), not a directory.
-        // It creates files like /path/tc1_turn1.md, /path/tc1_turn2.md
-        Path outputBase = testDir.resolve("tc" + opaqueId + ".md");
-        ProcessRunner.Result extractResult = ProcessRunner.run(worktreePath,
-          extractTurnsBin.toString(), mdFile.toString(), outputBase.toString());
-        if (extractResult.exitCode() != 0)
-          throw new IOException(
-            "InstructionTestRunner create-isolation-branch: extract-turns failed for " + mdFile +
-            " with exit code " + extractResult.exitCode() + ": " + extractResult.stdout());
+        Path strippedInput = Files.createTempFile("extract-turns-", ".md");
+        try
+        {
+          stripTestCaseFile(mdFile, strippedInput);
+          // extract-turns expects a file path (e.g., /path/tc1.md), not a directory.
+          // It creates files like /path/tc1_turn1.md, /path/tc1_turn2.md
+          Path outputBase = testDir.resolve("tc" + opaqueId + ".md");
+          ProcessRunner.Result extractResult = ProcessRunner.run(worktreePath,
+            extractTurnsBin.toString(), strippedInput.toString(), outputBase.toString());
+          if (extractResult.exitCode() != 0)
+            throw new IOException(
+              "InstructionTestRunner create-isolation-branch: extract-turns failed for " + mdFile +
+              " with exit code " + extractResult.exitCode() + ": " + extractResult.stdout());
+        }
+        finally
+        {
+          Files.deleteIfExists(strippedInput);
+        }
 
         // Delete the original .md file after extraction
         Files.delete(mdFile);
@@ -491,12 +498,13 @@ final class SprtIsolationManager
   /**
    * Strips frontmatter and the {@code ## Assertions} section (and everything after it) from a test case file.
    *
-   * @param filePath the test case file to strip
-   * @throws IOException if the file cannot be read or written
+   * @param inputPath  the source test case file
+   * @param outputPath the stripped output file
+   * @throws IOException if a file cannot be read or written
    */
-  private void stripTestCaseFile(Path filePath) throws IOException
+  private void stripTestCaseFile(Path inputPath, Path outputPath) throws IOException
   {
-    List<String> lines = Files.readAllLines(filePath, UTF_8);
+    List<String> lines = Files.readAllLines(inputPath, UTF_8);
     List<String> stripped = new ArrayList<>();
 
     // Skip frontmatter: first ---...--- block
@@ -528,7 +536,7 @@ final class SprtIsolationManager
     StringBuilder content = new StringBuilder();
     for (String line : stripped)
       content.append(line).append('\n');
-    Files.writeString(filePath, content.toString(), UTF_8);
+    Files.writeString(outputPath, content.toString(), UTF_8);
   }
 
   /**

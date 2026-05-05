@@ -778,6 +778,51 @@ public class WorkPrepareTest
   }
 
   /**
+   * Verifies that execute reuses an existing worktree when the issue branch is already checked out
+   * elsewhere, instead of trying to create a second branch/worktree identity.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeReusesExistingWorktreeWhenIssueBranchAlreadyCheckedOutElsewhere()
+    throws IOException
+  {
+    Path projectPath = createTempGitCatProject("v2.1");
+    Path existingWorktree = null;
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
+    {
+      createIssue(projectPath, "2", "1", "reuse-existing-branch", "open");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue");
+
+      existingWorktree = scope.getCatWorkPath().resolve("worktrees").
+        resolve("2.1-reuse-existing-branch-preexisting");
+      Files.createDirectories(existingWorktree.getParent());
+      GitCommands.runGit(projectPath, "worktree", "add", "-b", "2.1-reuse-existing-branch",
+        existingWorktree.toString(), "HEAD");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "2.1-reuse-existing-branch",
+        TrustLevel.MEDIUM, false);
+
+      String json = prepare.execute(input);
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("READY");
+      requireThat(node.path("worktree_path").asString(), "worktreePath").
+        isEqualTo(existingWorktree.toString());
+      requireThat(node.path("issue_branch").asString(), "issueBranch").
+        isEqualTo("2.1-reuse-existing-branch");
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectPath, existingWorktree);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
    * Verifies that execute detects suspicious commits on the target branch and populates
    * potentiallyComplete and suspiciousCommits fields in the READY result.
    *
@@ -3486,6 +3531,70 @@ public class WorkPrepareTest
     finally
     {
       cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that resume returns ERROR when the current session already holds a lock for a different
+   * issue and force-resume cannot acquire the new issue lock.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeReturnsErrorWhenResumeCannotAcquireLockDueToConflictingSessionLock() throws IOException
+  {
+    Path projectPath = createTempGitCatProject("v2.1");
+    Path secondWorktreePath = null;
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
+    {
+      createIssue(projectPath, "2", "1", "resume-lock-conflict-first", "open");
+      createIssue(projectPath, "2", "1", "resume-lock-conflict-second", "open");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issues");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+
+      PrepareInput firstInput = new PrepareInput(sessionId, "", "2.1-resume-lock-conflict-first",
+        TrustLevel.MEDIUM, false);
+      String firstJson = prepare.execute(firstInput);
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode firstNode = mapper.readTree(firstJson);
+      requireThat(firstNode.path("status").asString(), "firstStatus").isEqualTo("READY");
+
+      secondWorktreePath = scope.getCatWorkPath().resolve("worktrees").
+        resolve("2.1-resume-lock-conflict-second");
+      Files.createDirectories(secondWorktreePath.getParent());
+      GitCommands.runGit(projectPath, "worktree", "add", "-b", "2.1-resume-lock-conflict-second",
+        secondWorktreePath.toString(), "HEAD");
+
+      Path locksDir = scope.getCatWorkPath().resolve("locks");
+      Files.createDirectories(locksDir);
+      String otherSession = UUID.randomUUID().toString();
+      long recentTimestamp = Instant.now().getEpochSecond();
+      String lockContent = """
+        {
+          "session_id": "%s",
+          "worktrees": {"%s": "%s"},
+          "created_at": %d,
+          "created_iso": "2026-03-01T23:00:00Z"
+        }""".formatted(otherSession, secondWorktreePath, otherSession, recentTimestamp);
+      Files.writeString(locksDir.resolve("2.1-resume-lock-conflict-second.lock"), lockContent);
+
+      PrepareInput resumeInput = new PrepareInput(sessionId, "", "2.1-resume-lock-conflict-second",
+        TrustLevel.MEDIUM, true);
+      String resumeJson = prepare.execute(resumeInput);
+      JsonNode resumeNode = mapper.readTree(resumeJson);
+      requireThat(resumeNode.path("status").asString(), "resumeStatus").isEqualTo("ERROR");
+      requireThat(resumeNode.path("issue_id").asString(), "issueId").
+        isEqualTo("2.1-resume-lock-conflict-second");
+      requireThat(resumeNode.path("message").asString(), "message").
+        contains("Session already holds a lock");
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectPath, secondWorktreePath);
       TestUtils.deleteDirectoryRecursively(projectPath);
     }
   }

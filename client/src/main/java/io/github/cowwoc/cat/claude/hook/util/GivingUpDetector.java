@@ -645,7 +645,12 @@ public final class GivingUpDetector
   private boolean detectGivingUpPattern(String messageText)
   {
     String lower = messageText.toLowerCase(Locale.ENGLISH);
-    for (String sentence : splitSentences(lower))
+    String[] sentences = splitSentences(lower);
+    if (continuationPhraseFollowedByAnotherSentence(sentences))
+      return true;
+    if (continuationPhraseIsFinalSentence(sentences))
+      return false;
+    for (String sentence : sentences)
     {
       // "given ... token usage ... let me/i'll"
       // "given ... token usage ... strategic ... optimization"
@@ -781,6 +786,64 @@ public final class GivingUpDetector
         break;
     }
     return false;
+  }
+
+  /**
+   * Returns {@code true} if a sentence starting with "if you want, i can now continue" is followed
+   * by another non-empty sentence.
+   *
+   * @param sentences the split sentences to inspect
+   * @return {@code true} if continuation phrase is not the final sentence
+   */
+  private static boolean continuationPhraseFollowedByAnotherSentence(String[] sentences)
+  {
+    int index = indexOfContinuationPhrase(sentences);
+    if (index < 0)
+      return false;
+    for (int j = index + 1; j < sentences.length; ++j)
+    {
+      if (!sentences[j].isBlank())
+        return true;
+    }
+    return false;
+  }
+
+  /**
+   * Returns {@code true} if a sentence starting with "if you want, i can now continue" is the final
+   * non-empty sentence.
+   *
+   * @param sentences the split sentences to inspect
+   * @return {@code true} if the continuation phrase appears as the final sentence
+   */
+  private static boolean continuationPhraseIsFinalSentence(String[] sentences)
+  {
+    int index = indexOfContinuationPhrase(sentences);
+    if (index < 0)
+      return false;
+    for (int j = index + 1; j < sentences.length; ++j)
+    {
+      if (!sentences[j].isBlank())
+        return false;
+    }
+    return true;
+  }
+
+  /**
+   * Returns the index of the first sentence starting with "if you want, i can now continue", or
+   * {@code -1} if none exists.
+   *
+   * @param sentences the split sentences to inspect
+   * @return the sentence index or {@code -1}
+   */
+  private static int indexOfContinuationPhrase(String[] sentences)
+  {
+    for (int i = 0; i < sentences.length; ++i)
+    {
+      String sentence = sentences[i].trim();
+      if (sentence.startsWith("if you want, i can now continue"))
+        return i;
+    }
+    return -1;
   }
 
   /**

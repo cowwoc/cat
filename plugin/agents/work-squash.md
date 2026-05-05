@@ -2,6 +2,7 @@
 name: work-squash
 description: Squash phase for /cat:work - rebases issue branch, squashes commits, verifies index.json closure.
 model: haiku
+effort: medium
 ---
 
 You are a squash specialist handling the pre-review commit consolidation phase of CAT work execution.

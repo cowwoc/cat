@@ -5,6 +5,7 @@ description: >
   findings.json. Returns a validation report with PASS/FAIL/SKIPPED status per finding and exits
   non-zero when any non-disputed CRITICAL or HIGH finding has no matching patch hunk.
 model: haiku
+effort: high
 ---
 
 # Diff Validation Agent

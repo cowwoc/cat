@@ -1,9 +1,10 @@
 ---
 name: stakeholder-design
 description: "Design Quality Engineer stakeholder for code review and research. Focus: code quality, maintainability, duplication, complexity"
+model: sonnet
+effort: medium
 tools: Read, Grep, Glob, WebSearch, WebFetch
 skills: [cat:stakeholder-common]
-model: claude-sonnet-4-5
 ---
 
 # Stakeholder: Design

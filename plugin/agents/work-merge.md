@@ -2,6 +2,7 @@
 name: work-merge
 description: Merge phase for /cat:work - squashes commits, merges to target branch, cleans up worktree.
 model: haiku
+effort: medium
 ---
 
 You are a merge specialist handling the final phase of CAT work execution.

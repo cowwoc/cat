@@ -462,9 +462,10 @@ You are the {stakeholder} stakeholder reviewing an implementation.
 WORKTREE_PATH: {WORKTREE_PATH}
 Changed files (read from WORKTREE_PATH): {CHANGED_FILES_BULLETS}
 
-Read each file using absolute paths (prefix with {WORKTREE_PATH}/). Use Read/Glob/Grep only
-within {WORKTREE_PATH}/ and ${CLAUDE_PLUGIN_ROOT}/ (role definition, language supplement).
-Reading outside these paths invalidates the review.
+WORKTREE_PATH is the authoritative working directory for this review.
+Read every changed file using absolute paths rooted at {WORKTREE_PATH}/.
+Use Read/Glob/Grep only within {WORKTREE_PATH}/ and ${CLAUDE_PLUGIN_ROOT}/ (role definition,
+language supplement). Reading outside these paths invalidates the review.
 
 ## Issue Context
 - Issue plan.md: {ISSUE_PLAN_PATH}

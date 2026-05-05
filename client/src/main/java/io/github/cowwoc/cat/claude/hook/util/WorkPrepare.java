@@ -484,10 +484,10 @@ public final class WorkPrepare
   {
     // Step 3: Acquire lock with the pre-computed worktree path so the lock file is correct
     // the moment it is written, eliminating the two-step acquire-then-update pattern.
-    Path worktreePath = scope.getCatWorkPath().resolve("worktrees").resolve(issueBranch);
+    Path defaultWorktreePath = scope.getCatWorkPath().resolve("worktrees").resolve(issueBranch);
     IssueLock issueLock = new IssueLock(scope);
     IssueLock.LockResult lockResult = issueLock.acquire(issueId, input.sessionId(),
-      worktreePath.toString());
+      defaultWorktreePath.toString());
     if (lockResult instanceof IssueLock.LockResult.Locked locked)
     {
       return mapper.writeValueAsString(Map.of(
@@ -496,11 +496,31 @@ public final class WorkPrepare
         "issue_id", issueId,
         "locked_by", locked.owner()));
     }
+    if (lockResult instanceof IssueLock.LockResult.Error error)
+    {
+      return mapper.writeValueAsString(Map.of(
+        "status", "ERROR",
+        "message", error.message(),
+        "issue_id", issueId));
+    }
 
-    // Step 5: Create worktree
+    // Step 5: Create worktree or reuse existing one if branch is already checked out elsewhere
+    Path worktreePath;
     try
     {
-      createWorktree(projectPath, issueBranch, worktreePath);
+      worktreePath = createOrReuseWorktree(projectPath, issueBranch, defaultWorktreePath);
+      if (!worktreePath.equals(defaultWorktreePath))
+      {
+        releaseLock(issueId, input.sessionId());
+        IssueLock.LockResult reacquireResult = issueLock.acquire(issueId, input.sessionId(),
+          worktreePath.toString());
+        if (!(reacquireResult instanceof IssueLock.LockResult.Acquired))
+        {
+          return mapper.writeValueAsString(Map.of(
+            "status", "ERROR",
+            "message", "Failed to reacquire issue lock for reused worktree: " + issueId));
+        }
+      }
     }
     catch (IOException e)
     {
@@ -744,6 +764,14 @@ public final class WorkPrepare
       lockedResult.put("issue_id", existingWorktree.issueId());
       lockedResult.put("locked_by", locked.owner());
       return mapper.writeValueAsString(lockedResult);
+    }
+    if (acquireResult instanceof IssueLock.LockResult.Error error)
+    {
+      Map<String, Object> errorResult = new LinkedHashMap<>();
+      errorResult.put("status", "ERROR");
+      errorResult.put("message", error.message());
+      errorResult.put("issue_id", existingWorktree.issueId());
+      return mapper.writeValueAsString(errorResult);
     }
     return resumeWithExistingWorktree(existingWorktree, projectPath, mapper);
   }
@@ -1459,17 +1487,22 @@ public final class WorkPrepare
   }
 
   /**
-   * Creates a git worktree for the issue branch.
-   * <p>
-   * If the branch already exists (stale from a previous session), it is deleted first.
+   * Creates a git worktree for the issue branch, or reuses an existing worktree that already has
+   * this branch checked out.
    *
-   * @param projectPath  the project root directory
-   * @param issueBranch  the branch name for the issue
-   * @param worktreePath the path where the worktree will be created
-   * @throws IOException if worktree creation fails
+   * @param projectPath the project root directory
+   * @param issueBranch the branch name for the issue
+   * @param defaultWorktreePath the canonical worktree path for this issue branch
+   * @return the created or reused worktree path
+   * @throws IOException if worktree creation/reuse fails
    */
-  private void createWorktree(Path projectPath, String issueBranch, Path worktreePath) throws IOException
+  private Path createOrReuseWorktree(Path projectPath, String issueBranch, Path defaultWorktreePath)
+    throws IOException
   {
+    Path existingWorktreePath = findWorktreeForBranch(projectPath, issueBranch);
+    if (existingWorktreePath != null)
+      return existingWorktreePath;
+
     // Check if branch already exists (stale from previous session)
     try
     {
@@ -1483,8 +1516,28 @@ public final class WorkPrepare
     }
 
     // Create worktree
-    GitCommands.runGit(projectPath, "worktree", "add", "-b", issueBranch, worktreePath.toString(),
-      "HEAD");
+    GitCommands.runGit(projectPath, "worktree", "add", "-b", issueBranch,
+      defaultWorktreePath.toString(), "HEAD");
+    return defaultWorktreePath;
+  }
+
+  private Path findWorktreeForBranch(Path projectPath, String issueBranch) throws IOException
+  {
+    String output = GitCommands.runGit(projectPath, "worktree", "list", "--porcelain");
+    String[] lines = output.split("\n");
+    String currentWorktree = "";
+    for (String line : lines)
+    {
+      if (line.startsWith("worktree "))
+        currentWorktree = line.substring("worktree ".length());
+      else if (line.equals("branch refs/heads/" + issueBranch))
+      {
+        if (currentWorktree.isBlank())
+          return null;
+        return Path.of(currentWorktree);
+      }
+    }
+    return null;
   }
 
   /**

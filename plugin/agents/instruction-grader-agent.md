@@ -5,6 +5,7 @@ description: >
   pass/fail verdicts with evidence quotes. Writes grading JSON to the provided output path and
   returns the path. Never commits files.
 model: claude-haiku-4-5
+effort: low
 ---
 # Instruction Grader
 

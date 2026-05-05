@@ -383,14 +383,10 @@ TEST_MODEL=$("${CLAUDE_PLUGIN_DATA}/client/bin/instruction-test-runner" extract-
 ```
 The script falls back to `haiku` when the field is absent.
 
-**CAT plugin skill model convention:** For skills and agents in this plugin, omit the `model:` frontmatter
-unless the model is `haiku`. Sonnet-preferred and opus-preferred skills and agents are listed in
-`${CLAUDE_PLUGIN_ROOT}/rules/model-selection.md` — add or update entries there rather than setting
-`model:` in `SKILL.md` or agent files. The `extract-model` binary reads `SKILL.md` frontmatter first; if
-`model:` is absent, it falls back to scanning `model-selection.md` for the skill name (returning `sonnet`
-if listed, `haiku` otherwise). Agent model selection uses `model-selection.md` at runtime by the calling
-agent. This means SPRT trials for sonnet-preferred skills run with the `haiku` fallback unless the test
-explicitly overrides TEST_MODEL — which is acceptable for unit-level skill tests.
+**CAT plugin skill model convention:** Skills and agents in this plugin declare their runtime model
+explicitly in frontmatter via `model:`. The `extract-model` binary reads this field directly and returns
+its fully-qualified model ID. Missing `model:` defaults to `haiku` (resolved by the binary), but repository
+skills should declare `model:` explicitly.
 Store the result as `TEST_MODEL` and pass it as a resolved literal string to all test-run and grader
 subagents. **CRITICAL: Do NOT hardcode `haiku` or any other model name** — always use the value from
 `extract-model`. Hardcoding a model bypasses per-skill model configuration and may test against the
@@ -1471,7 +1467,7 @@ After applying any reorganization:
 **Final instruction output includes:**
 
 1. **Instruction file** — The complete designed, tested, hardened, and compressed instruction document
-2. **Frontmatter** — YAML with name, description (trigger-oriented), and optional argument-hint
+2. **Frontmatter** — YAML with required name, description, model, effort, and optional argument-hint (in required order)
 3. **Purpose section** — The goal statement from the backward chaining methodology
 4. **Procedure section** — Forward-execution steps calling extracted functions
 5. **Verification section** — How to confirm the skill works correctly
@@ -1499,12 +1495,19 @@ the start of the step heading or as a bold prefix, e.g., `**Step 1:**` or `### S
 - `<process>` section with named steps and routing logic
 - Conditional `<step>` blocks that branch based on conditions
 
-**Frontmatter guidelines:**
+**Frontmatter requirements (MANDATORY):**
+
+- Required keys: `name`, `description`, `model`, `effort`
+- `effort` is mandatory for instruction files; do not omit it
+- Required order: `name` → `description` → `model` → `effort`
+- Optional keys (for example `user-invocable`, `argument-hint`) must appear after `effort`
 
 ```yaml
 ---
 name: skill-name
 description: "[WHEN to use] - [what it does briefly]"
+model: sonnet|opus|haiku
+effort: low|medium|high
 user-invocable: true/false (only if non-default)
 argument-hint: "<args>" (if skill references $ARGUMENTS or $N)
 ---

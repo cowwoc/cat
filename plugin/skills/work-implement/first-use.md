@@ -28,7 +28,7 @@ Return JSON when complete:
 
 ```json
 {
-  "status": "SUCCESS|PARTIAL|FAILED|BLOCKED",
+  "status": "SUCCESS|PARTIAL|ALREADY_IMPLEMENTED|FAILED|BLOCKED",
   "jobs_count": 1,
   "commits": [
     {"hash": "abc123", "message": "feature: description", "type": "feature"}
@@ -923,6 +923,9 @@ from the most recently completed job's result before starting the next job. See
 Parse the subagent result(s):
 
 - **SUCCESS/PARTIAL** (all groups): Merge commits, aggregate metrics, proceed to verification
+- **ALREADY_IMPLEMENTED** (all groups, or mix of SUCCESS/PARTIAL/ALREADY_IMPLEMENTED with no FAILED/BLOCKED):
+  treat as success-path execution with explicit status `ALREADY_IMPLEMENTED`, aggregate metrics, and continue.
+  Use this when implementation is already present and no new work is required.
 - **FAILED** (any group): Return FAILED status with error details from that group
 - **BLOCKED** (any group): Return FAILED with blocker info from that group
 

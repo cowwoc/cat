@@ -5,6 +5,7 @@ description: >
   to find concrete loopholes, bypass vectors, and under-specified rules. Returns structured
   findings.json for use by the adversarial TDD loop.
 model: claude-opus-4-5
+effort: high
 ---
 
 # Red Team Agent

@@ -1263,7 +1263,6 @@ public final class InstructionTestRunner
     int maxParallelism = Runtime.getRuntime().availableProcessors();
     int currentParallelism = Math.min(2, maxParallelism);
     int processedCount = 0;
-    List<String> graderFailures = Collections.synchronizedList(new ArrayList<>());
     // Seed with existing failures from prior batches so cross-batch threshold works.
     // Only active within the early-detection window to avoid aborting legitimate long runs.
     int priorFailures = 0;
@@ -1285,7 +1284,7 @@ public final class InstructionTestRunner
       int batchSize = Math.min(currentParallelism, sortedWorktrees.size() - processedCount);
       List<Thread> pipelineThreads = new ArrayList<>();
       List<Boolean> pipelineFailures = Collections.synchronizedList(new ArrayList<>());
-      List<IOException> pipelineErrors = Collections.synchronizedList(new ArrayList<>());
+      List<Exception> pipelineErrors = Collections.synchronizedList(new ArrayList<>());
       AtomicInteger batchDecidedCount = new AtomicInteger(0);
 
       for (int i = 0; i < batchSize; ++i)
@@ -1336,8 +1335,10 @@ public final class InstructionTestRunner
             {
               // Step 1: Run trial (config at worktree/.cat/config/)
               String[] runnerArgs = {
-                runnerWorktree, finalPromptFile,
-                "--model", modelId, "--output", finalOutputJson
+                "--cwd", runnerWorktree,
+                "--prompt-file", finalPromptFile,
+                "--model", modelId,
+                "--output", finalOutputJson
               };
               int exitCode;
               try (ClaudeTool runnerScope = new MainClaudeTool();
@@ -1383,7 +1384,6 @@ public final class InstructionTestRunner
             String gradeFilePath = Path.of(outputDir, tcId + "_run" + trialNum + "_grade.json").
               toString();
             String verdict;
-            boolean graderFailed = false;
             try
             {
               // Use worktreePathStr so the grader reads assertions from the issue worktree,
@@ -1401,8 +1401,7 @@ public final class InstructionTestRunner
                 message.contains("Grader output missing") || message.contains("Grade file"))
               {
                 log.error("TC{}: grader failed - {}", tcNum, message);
-                verdict = "FAIL";
-                graderFailed = true;
+                throw e;
               }
               else
               {
@@ -1436,13 +1435,9 @@ public final class InstructionTestRunner
                 batchDecidedCount.incrementAndGet();
               else
                 inconclusiveTcs.add(tcId);
-
-              // Track grader failures for error reporting after batch
-              if (graderFailed)
-                graderFailures.add(tcId + "_run" + trialNum);
             }
           }
-          catch (IOException e)
+          catch (Exception e)
           {
             log.error("Pipeline for {} failed", tcId, e);
             pipelineErrors.add(e);
@@ -1460,9 +1455,19 @@ public final class InstructionTestRunner
       for (Thread pipelineThread : pipelineThreads)
         pipelineThread.join();
 
-      // Exit immediately if any pipeline had an infrastructure error
+      // Exit after all pipelines complete if any had an infrastructure error
       if (!pipelineErrors.isEmpty())
-        throw pipelineErrors.getFirst();
+      {
+        Exception firstError = pipelineErrors.getFirst();
+        IOException aggregate;
+        if (firstError instanceof IOException ioException)
+          aggregate = ioException;
+        else
+          aggregate = new IOException("Pipeline failed", firstError);
+        for (int i = 1; i < pipelineErrors.size(); ++i)
+          aggregate.addSuppressed(pipelineErrors.get(i));
+        throw aggregate;
+      }
 
       // Update counters
       decidedCount += batchDecidedCount.get();
@@ -1572,9 +1577,11 @@ public final class InstructionTestRunner
     String prepareOutput = prepareRun(new String[]{worktreePath, testDir});
     Map<String, String> prepareVars = parseKeyValue(prepareOutput);
     String testDirAbs = prepareVars.get("test_dir_abs");
-    String testDirRel = prepareVars.get("test_dir_rel");
+    String testDirRelValue = prepareVars.get("test_dir_rel");
     String issueName = prepareVars.get("issue_name");
-    String sprtStatePath = prepareVars.get("sprt_state_path");
+    String sprtStatePathValue = prepareVars.get("sprt_state_path");
+    Path testDirRel = Path.of(testDirRelValue);
+    Path sprtStatePath = Path.of(sprtStatePathValue);
     out.println("  TEST_DIR_ABS: " + testDirAbs);
     out.println("  ISSUE_NAME: " + issueName);
     out.println("  SPRT_STATE_PATH: " + sprtStatePath);
@@ -1599,7 +1606,7 @@ public final class InstructionTestRunner
     // Read failed_test_ids from previous run BEFORE initializing SPRT state.
     // Prefer sprt-state.json (same-session); fall back to test-results.json (cross-session).
     Set<String> failedTestIds = new HashSet<>();
-    Path stateFilePath = Path.of(sprtStatePath);
+    Path stateFilePath = sprtStatePath;
     JsonNode failedTestIdsSource = null;
     if (Files.exists(stateFilePath))
     {
@@ -1626,7 +1633,7 @@ public final class InstructionTestRunner
 
     // Step 4: Initialize SPRT
     out.println("Step 4: Initializing SPRT state...");
-    initSprt(new String[]{sprtStatePath, mapper.writeValueAsString(tcIdsArray), "/dev/null", testModel,
+    initSprt(new String[]{sprtStatePath.toString(), mapper.writeValueAsString(tcIdsArray), "/dev/null", testModel,
       sessionId, "--effort", testEffort});
     out.println("  SPRT state initialized at: " + sprtStatePath);
     out.println();
@@ -1675,7 +1682,7 @@ public final class InstructionTestRunner
         batchNum, trialsPerBatch, undecided.size());
 
       // Read cumulative fails before this batch group for adaptive sizing
-      String preStateJson = Files.readString(Path.of(sprtStatePath));
+      String preStateJson = Files.readString(sprtStatePath);
       int failsBefore = 0;
       JsonNode preSprtNode = mapper.readTree(preStateJson).path("sprt_state");
       for (String tcId : undecided)
@@ -1690,7 +1697,7 @@ public final class InstructionTestRunner
         // Run one trial for all currently undecided TCs
         long batchStartMs = System.currentTimeMillis();
         String batchResult = runSprtBatch(new String[]{
-          worktreePath, sprtStatePath, issueName, testDirRel,
+          worktreePath, sprtStatePath.toString(), issueName, testDirRel.toString(),
           sessionId, testModel, String.valueOf(batchNum), isolationResult
         });
         batchDurationsMs.add(System.currentTimeMillis() - batchStartMs);
@@ -1701,7 +1708,7 @@ public final class InstructionTestRunner
         List<String> stillUndecided = new ArrayList<>();
         for (String tcId : undecided)
         {
-          String boundaryResult = checkBoundary(new String[]{sprtStatePath, tcId});
+          String boundaryResult = checkBoundary(new String[]{sprtStatePath.toString(), tcId});
           JsonNode boundaryNode = mapper.readTree(boundaryResult);
           String decision = boundaryNode.path("decision").asString();
           int runs = runCounts.get(tcId) + 1;
@@ -1735,7 +1742,7 @@ public final class InstructionTestRunner
       // Print batch status summary
       out.println("=== Batch " + batchNum + " Summary ===");
       out.println();
-      String sprtStateJson = Files.readString(Path.of(sprtStatePath));
+      String sprtStateJson = Files.readString(sprtStatePath);
       JsonNode sprtState = mapper.readTree(sprtStateJson);
       JsonNode sprtNode = sprtState.path("sprt_state");
 
@@ -1797,7 +1804,7 @@ public final class InstructionTestRunner
 
       // Update adaptive trials-per-batch: double on all-pass, reset to 1 on any failure
       {
-        String postStateJson = Files.readString(Path.of(sprtStatePath));
+        String postStateJson = Files.readString(sprtStatePath);
         JsonNode postSprtNode = mapper.readTree(postStateJson).path("sprt_state");
         int failsAfter = 0;
         for (String tcId : tcIds)
@@ -1826,13 +1833,13 @@ public final class InstructionTestRunner
         out.println();
 
         // Update failed_test_ids in state file
-        String freshStateJson = Files.readString(Path.of(sprtStatePath));
+        String freshStateJson = Files.readString(sprtStatePath);
         ObjectNode mutableStateRoot = (ObjectNode) mapper.readTree(freshStateJson);
         ArrayNode failedIdsArray = mapper.createArrayNode();
         for (String tcId : failedTcIds)
           failedIdsArray.add(tcId);
         mutableStateRoot.set("failed_test_ids", failedIdsArray);
-        Files.writeString(Path.of(sprtStatePath), mapper.writeValueAsString(mutableStateRoot), UTF_8);
+        Files.writeString(sprtStatePath, mapper.writeValueAsString(mutableStateRoot), UTF_8);
 
         // Mark remaining undecided as INCONCLUSIVE
         for (String tcId : undecided)
@@ -1866,7 +1873,7 @@ public final class InstructionTestRunner
 
     // Step 6: Write test results
     out.println("Step 6: Writing test results...");
-    String writeOutput = writeTestResults(new String[]{worktreePath, sprtStatePath, testDirAbs});
+    String writeOutput = writeTestResults(new String[]{worktreePath, sprtStatePath.toString(), testDirAbs});
     Map<String, String> writeVars = parseKeyValue(writeOutput);
     String overallDecision = writeVars.get("overall_decision");
     String testSha = writeVars.get("test_sha");
@@ -1902,6 +1909,7 @@ public final class InstructionTestRunner
    * Context data for running a single SPRT test or filtered subset of tests.
    *
    * @param issueName the issue name derived from the worktree path
+   * @param testDirRel the test directory relative to the worktree root
    * @param sprtStatePath the path to the SPRT state JSON file
    * @param isolationResult the JSON output from the isolation branch creation
    * @param isolationBranch the name of the isolation branch
@@ -1910,7 +1918,8 @@ public final class InstructionTestRunner
    */
   private record SingleTestContext(
     String issueName,
-    String sprtStatePath,
+    Path testDirRel,
+    Path sprtStatePath,
     String isolationResult,
     String isolationBranch,
     List<String> filteredTcIds,
@@ -1994,8 +2003,11 @@ public final class InstructionTestRunner
     String prepareOutput = prepareRun(new String[]{worktreePath, testDir});
     Map<String, String> prepareVars = parseKeyValue(prepareOutput);
     String testDirAbs = prepareVars.get("test_dir_abs");
+    String testDirRelValue = prepareVars.get("test_dir_rel");
     String issueName = prepareVars.get("issue_name");
-    String sprtStatePath = prepareVars.get("sprt_state_path");
+    String sprtStatePathValue = prepareVars.get("sprt_state_path");
+    Path testDirRel = Path.of(testDirRelValue);
+    Path sprtStatePath = Path.of(sprtStatePathValue);
     out.println("  TEST_DIR_ABS: " + testDirAbs);
     out.println("  ISSUE_NAME: " + issueName);
     out.println("  SPRT_STATE_PATH: " + sprtStatePath);
@@ -2055,13 +2067,13 @@ public final class InstructionTestRunner
     ArrayNode filteredTcIdsArray = mapper.createArrayNode();
     for (String tcId : filteredTcIds)
       filteredTcIdsArray.add(tcId);
-    initSprt(new String[]{sprtStatePath, mapper.writeValueAsString(filteredTcIdsArray), "/dev/null",
+    initSprt(new String[]{sprtStatePath.toString(), mapper.writeValueAsString(filteredTcIdsArray), "/dev/null",
       testModel, sessionId, "--effort", testEffort});
     out.println("  SPRT state initialized at: " + sprtStatePath);
     out.println();
 
     Map<String, String> decisions = new HashMap<>();
-    return new SingleTestContext(issueName, sprtStatePath, isolationResult, isolationBranch,
+    return new SingleTestContext(issueName, testDirRel, sprtStatePath, isolationResult, isolationBranch,
       filteredTcIds, decisions);
   }
 
@@ -2099,7 +2111,7 @@ public final class InstructionTestRunner
       out.println("=== Batch " + batchNum + ": " + undecided.size() + " test case(s) remaining ===");
 
       String batchResult = runSprtBatch(new String[]{
-        worktreePath, context.sprtStatePath(), context.issueName(), context.issueName(),
+        worktreePath, context.sprtStatePath().toString(), context.issueName(), context.testDirRel().toString(),
         sessionId, testModel, String.valueOf(batchNum), context.isolationResult()
       });
       JsonNode batchResultNode = mapper.readTree(batchResult);
@@ -2152,7 +2164,7 @@ public final class InstructionTestRunner
 
     for (String tcId : undecided)
     {
-      String boundaryResult = checkBoundary(new String[]{context.sprtStatePath(), tcId});
+      String boundaryResult = checkBoundary(new String[]{context.sprtStatePath().toString(), tcId});
       JsonNode boundaryNode = mapper.readTree(boundaryResult);
       String decision = boundaryNode.path("decision").asString();
       int runs = runCounts.get(tcId) + 1;
@@ -2200,7 +2212,7 @@ public final class InstructionTestRunner
     out.println("=== Batch " + batchNum + " Summary ===");
     out.println();
 
-    String sprtStateJson = Files.readString(Path.of(context.sprtStatePath()));
+    String sprtStateJson = Files.readString(context.sprtStatePath());
     JsonNode sprtState = mapper.readTree(sprtStateJson);
     JsonNode sprtNode = sprtState.path("sprt_state");
 
@@ -2275,7 +2287,7 @@ public final class InstructionTestRunner
     Map<String, String> prepareVars = parseKeyValue(
       prepareRun(new String[]{worktreePath, testDir}));
     String testDirAbs = prepareVars.get("test_dir_abs");
-    String writeOutput = writeTestResults(new String[]{worktreePath, context.sprtStatePath(),
+    String writeOutput = writeTestResults(new String[]{worktreePath, context.sprtStatePath().toString(),
       testDirAbs});
     Map<String, String> writeVars = parseKeyValue(writeOutput);
     String overallDecision = writeVars.get("overall_decision");

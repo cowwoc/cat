@@ -401,6 +401,29 @@ public final class GivingUpDetectorTest
   }
 
   /**
+   * Verifies that "If you want, I can now continue..." is allowed when it appears as the final sentence.
+   */
+  @Test
+  public void finalSentenceIfYouWantICanNowContinueIsAllowed()
+  {
+    GivingUpDetector detector = new GivingUpDetector();
+    String result = detector.check("If you want, I can now continue with implementation.");
+    requireThat(result, "result").isEmpty();
+  }
+
+  /**
+   * Verifies that "If you want, I can now continue..." is flagged when followed by another sentence.
+   */
+  @Test
+  public void ifYouWantICanNowContinueFollowedByAnotherSentenceIsDetected()
+  {
+    GivingUpDetector detector = new GivingUpDetector();
+    String result = detector.check(
+      "If you want, I can now continue with implementation. Let me complete a few more then proceed.");
+    requireThat(result, "result").contains("GIVING UP PATTERN DETECTED");
+  }
+
+  /**
    * Verifies that "Given:" without "Token usage:" in list items does not trigger detection.
    * <p>
    * This is a negative case from plan.md: "Given:" without "Token usage:" should not trigger.

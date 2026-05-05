@@ -1,6 +1,7 @@
 ---
 category: requirement
 model: sonnet
+effort: low
 ---
 ## Turn 1
 

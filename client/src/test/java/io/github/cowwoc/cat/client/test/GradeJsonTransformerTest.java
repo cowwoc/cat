@@ -108,6 +108,89 @@ public final class GradeJsonTransformerTest
   }
 
   /**
+   * Verifies that transform emits a required non-empty test_case_id even when grader input omits it.
+   */
+  @Test
+  public void transformAlwaysEmitsNonEmptyTestCaseIdWhenInputOmitsIt() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try
+    {
+      Path inputFile = tempDir.resolve("input.json");
+      Path outputFile = tempDir.resolve("output.json");
+
+      String inputJson = """
+        {
+          "assertion_results": [
+            {
+              "assertion": "must use rm -f",
+              "verdict": "PASS",
+              "evidence": "Agent executed: rm -f file.txt",
+              "explanation": "The agent correctly used rm -f as required."
+            }
+          ]
+        }""";
+
+      Files.writeString(inputFile, inputJson);
+
+      try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+      {
+        new GradeJsonTransformer().transform(inputFile, "tc7_run2", outputFile, scope);
+
+        JsonNode output = scope.getJsonMapper().readTree(Files.readString(outputFile));
+        requireThat(output.path("test_case_id").asString(), "testCaseId").isEqualTo("tc7_run2");
+        requireThat(output.path("test_case_id").asString().isBlank(), "testCaseIdBlank").isFalse();
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that transform emits the run ID as non-empty test_case_id even if input contains a blank one.
+   */
+  @Test
+  public void transformCanonicalizesBlankInputTestCaseIdToRunId() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try
+    {
+      Path inputFile = tempDir.resolve("input.json");
+      Path outputFile = tempDir.resolve("output.json");
+
+      String inputJson = """
+        {
+          "test_case_id": "   ",
+          "assertion_results": [
+            {
+              "assertion": "must use rm -f",
+              "verdict": "FAIL",
+              "evidence": "Agent executed: rm file.txt",
+              "explanation": "The agent omitted -f."
+            }
+          ]
+        }""";
+
+      Files.writeString(inputFile, inputJson);
+
+      try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+      {
+        new GradeJsonTransformer().transform(inputFile, "tc3_run9", outputFile, scope);
+
+        JsonNode output = scope.getJsonMapper().readTree(Files.readString(outputFile));
+        requireThat(output.path("test_case_id").asString(), "testCaseId").isEqualTo("tc3_run9");
+        requireThat(output.path("test_case_id").asString().isBlank(), "testCaseIdBlank").isFalse();
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that grader JSON missing the "verdict" field is rejected.
    */
   @Test(expectedExceptions = IOException.class,

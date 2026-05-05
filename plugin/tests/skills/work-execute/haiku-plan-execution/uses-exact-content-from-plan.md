@@ -1,6 +1,7 @@
 ---
 category: requirement
 model: haiku
+effort: low
 ---
 ## Turn 1
 

@@ -1,8 +1,9 @@
 ---
 name: stakeholder-legal
 description: "Legal Counsel stakeholder for code review and research. Focus: licensing, regulatory compliance, intellectual property, data privacy"
-tools: Read, Grep, Glob, WebSearch, WebFetch
 model: haiku
+effort: medium
+tools: Read, Grep, Glob, WebSearch, WebFetch
 skills: [cat:stakeholder-common]
 ---
 

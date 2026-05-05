@@ -7,13 +7,13 @@
 package io.github.cowwoc.cat.claude.hook.skills;
 
 import io.github.cowwoc.cat.claude.hook.ClaudePluginScope;
+import io.github.cowwoc.cat.claude.hook.util.GradeSchemaValidator;
 import io.github.cowwoc.cat.claude.tool.ClaudeTool;
 import io.github.cowwoc.cat.claude.tool.MainClaudeTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
@@ -21,8 +21,6 @@ import java.io.PrintStream;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
-import java.util.StringJoiner;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -85,6 +83,8 @@ final class SprtGrader
       Path actualGradePath = invokeGrader(tcId, graderPromptFile, modelId, runnerWorktree,
         jlinkBin, gradeOutputPath, trialNum);
 
+      String runId = tcId + "_run" + trialNum;
+      ensureTestCaseId(actualGradePath, runId);
       return extractVerdict(actualGradePath);
     }
     finally
@@ -263,39 +263,34 @@ final class SprtGrader
   String extractVerdict(Path gradePath) throws IOException
   {
     JsonMapper mapper = scope.getJsonMapper();
-    JsonNode gradeNode = mapper.readTree(Files.readString(gradePath, UTF_8));
+    String gradeContent = Files.readString(gradePath, UTF_8).replace("\\`", "`");
+    JsonNode gradeNode = mapper.readTree(gradeContent);
+    return GradeSchemaValidator.validateAndExtractVerdict(gradeNode, gradePath);
+  }
 
-    JsonNode assertionResults = gradeNode.path("assertion_results");
-    if (assertionResults.isMissingNode() || !assertionResults.isArray())
-      throw new IOException(
-        "Grade file missing required 'assertion_results' array: " + gradePath);
-
-    ArrayNode results = (ArrayNode) assertionResults;
-    if (results.isEmpty())
-      throw new IOException("Grade file has empty assertion_results: " + gradePath);
-
-    for (JsonNode result : results)
-    {
-      String verdict = result.path("verdict").asString();
-      if (verdict.isEmpty())
-      {
-        StringJoiner foundFields = new StringJoiner(", ");
-        for (Map.Entry<String, JsonNode> entry : ((ObjectNode) result).properties())
-          foundFields.add(entry.getKey());
-        throw new IOException("Grader output missing required 'verdict' field. " +
-          "Found fields: [" + foundFields + "]. " +
-          "Expected exactly {\"verdict\": \"PASS\"} or {\"verdict\": \"FAIL\"}. " +
-          "Grade file: " + gradePath);
-      }
-      if (!verdict.equals("PASS") && !verdict.equals("FAIL"))
-        throw new IOException("Invalid verdict value: '" + verdict + "'. " +
-          "Must be exactly 'PASS' or 'FAIL'. Grade file: " + gradePath);
-
-      if (!verdict.equals("PASS"))
-        return "FAIL";
-    }
-
-    return "PASS";
+  /**
+   * Ensures that the generated grade JSON includes a non-empty test_case_id.
+   * <p>
+   * If the grader output is missing test_case_id, this method patches the file with the expected run
+   * identifier so downstream schema validation always sees canonical output.
+   *
+   * @param gradePath path to the grade JSON file
+   * @param runId expected run identifier (for example, tc1_run2)
+   * @throws IOException if I/O fails while reading or updating the file
+   */
+  void ensureTestCaseId(Path gradePath, String runId) throws IOException
+  {
+    JsonMapper mapper = scope.getJsonMapper();
+    String gradeContent = Files.readString(gradePath, UTF_8).replace("\\`", "`");
+    JsonNode rootNode = mapper.readTree(gradeContent);
+    if (!rootNode.isObject())
+      return;
+    ObjectNode gradeObject = (ObjectNode) rootNode;
+    JsonNode testCaseIdNode = gradeObject.path("test_case_id");
+    if (testCaseIdNode.isString() && !testCaseIdNode.asString().isBlank())
+      return;
+    gradeObject.put("test_case_id", runId);
+    Files.writeString(gradePath, mapper.writeValueAsString(gradeObject), UTF_8);
   }
 
   /**

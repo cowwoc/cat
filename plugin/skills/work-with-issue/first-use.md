@@ -106,6 +106,8 @@ TOKENS_USED = tokens_used integer from implement result (only implement tracks t
 ```
 
 If the implement phase returns FAILED or BLOCKED, return that status immediately.
+If the implement phase returns ALREADY_IMPLEMENTED, continue to confirm/review/merge with that execution
+result (do not treat as failure).
 
 ## Phase 2: Confirm
 
