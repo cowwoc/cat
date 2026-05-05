@@ -96,24 +96,26 @@ This indicates Phase 1 (prepare) has completed and work phases are starting.
 **Before any execution, verify the lock for this issue belongs to the current session.**
 
 ```bash
-source "${CLAUDE_PLUGIN_ROOT}/scripts/cat-env.sh"
-LOCK_FILE="${LOCKS_DIR}/${ISSUE_ID}.lock"
-
 if [[ -z "${CLAUDE_SESSION_ID:-}" ]]; then
   echo "ERROR: CLAUDE_SESSION_ID environment variable is not set"
   exit 1
 fi
 
-if [[ ! -f "$LOCK_FILE" ]]; then
-  echo "ERROR: No lock file found for ${ISSUE_ID}. Issue was not properly prepared."
+LOCK_CHECK=$("${CLAUDE_PLUGIN_DATA}/client/bin/issue-lock" check "${ISSUE_ID}")
+if [[ $? -ne 0 ]]; then
+  echo "ERROR: Failed to check lock for ${ISSUE_ID}"
   exit 1
 fi
 
-# Extract session_id value from the lock JSON using grep/sed (no jq available)
-LOCK_SESSION=$(grep -o '"session_id"[[:space:]]*:[[:space:]]*"[^"]*"' "$LOCK_FILE" | \
-  head -1 | sed 's/"session_id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+LOCKED=$(echo "${LOCK_CHECK}" | grep -o '"locked"[[:space:]]*:[[:space:]]*[^,}]*' | sed 's/.*:[[:space:]]*//')
+LOCK_SESSION=$(echo "${LOCK_CHECK}" | grep -o '"session_id"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"session_id"[[:space:]]*:[[:space:]]*"\([^"]*\)"/\1/')
 
-if [[ "$LOCK_SESSION" == "$CLAUDE_SESSION_ID" ]]; then
+if [[ "${LOCKED}" != "true" ]]; then
+  echo "ERROR: No active lock found for ${ISSUE_ID}. Issue was not properly prepared."
+  exit 1
+fi
+
+if [[ "${LOCK_SESSION}" == "${CLAUDE_SESSION_ID}" ]]; then
   echo "OK: Lock verified for current session"
 else
   echo "ERROR: Lock for ${ISSUE_ID} belongs to session ${LOCK_SESSION}, not ${CLAUDE_SESSION_ID}"
@@ -314,7 +316,7 @@ only permitted source.**
 Read plan.md directly to count `### Job N` subsections using the canonical command:
 
 ```bash
-JOBS_COUNT=$(grep -c '^### Job ' "$PLAN_MD") && echo "JOBS_COUNT=${JOBS_COUNT}"
+JOBS_COUNT=$(grep -c '^### Job ' "$PLAN_MD" || true) && echo "JOBS_COUNT=${JOBS_COUNT}"
 ```
 
 Use this exact command — do NOT substitute alternative counting logic or Bash constructs. Any other method is

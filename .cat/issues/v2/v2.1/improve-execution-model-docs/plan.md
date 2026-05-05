@@ -18,7 +18,7 @@ None - documentation improvement
 - [ ] All dependent issues are closed
 
 ## Main Agent Jobs
-- /cat:instruction-builder-agent plugin/rules/execution-model.md
+- /cat:instruction-builder plugin/rules/execution-model.md
 
 ## Post-conditions
 - [ ] instruction-builder has successfully processed plugin/rules/execution-model.md
