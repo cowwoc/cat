@@ -21,17 +21,21 @@ import java.nio.file.Path;
 public final class ReleaseDocumentationTest
 {
   /**
-   * Verifies that Codex release installation docs describe the artifact-repository bootstrap path.
+   * Verifies that release installation docs describe the release-asset install path.
    *
    * @throws IOException if reading documentation fails
    */
   @Test
-  public void codexReleaseInstallDocsUseArtifactMarketplaceBootstrap() throws IOException
+  public void releaseInstallDocsUseCatReleaseAssets() throws IOException
   {
     Path sourceRoot = findSourceRoot();
     Path clientRoot = sourceRoot.resolve("client");
 
     String readme = Files.readString(sourceRoot.resolve("README.md"), StandardCharsets.UTF_8);
+    String claudeMarketplace = Files.readString(sourceRoot.resolve(".claude-plugin/marketplace.json"),
+      StandardCharsets.UTF_8);
+    requireThat(claudeMarketplace, "claudeMarketplace").contains("\"source\": \"./client/plugin\"");
+
     requireThat(readme, "readme").contains(
       "https://raw.githubusercontent.com/cowwoc/cat/main/docs/prompts/codex-install.md");
     requireThat(readme, "readme").contains(
@@ -41,9 +45,9 @@ public final class ReleaseDocumentationTest
       "Run the prompt at https://raw.githubusercontent.com/cowwoc/cat/main/docs/prompts/codex-install.md to " +
         "install or update the CAT plugin to version 1.2.0.");
     requireThat(readme, "readme").contains("[Codex parity notes](docs/development/codex-parity.md)");
-    requireThat(readme, "readme").contains("run `/cat:uninstall` before removing the installer plugin");
+    requireThat(readme, "readme").contains("run `/cat:uninstall` before uninstalling CAT from Codex");
     requireThat(readme, "readme").doesNotContain("The prompt resolves to this bootstrap path");
-    requireThat(readme, "readme").doesNotContain("codex plugin marketplace add cowwoc/cat-artifacts");
+    requireThat(readme, "readme").doesNotContain("cowwoc/cat-artifacts");
     requireThat(readme, "readme").doesNotContain("Determine the latest release tag");
     requireThat(readme, "readme").doesNotContain("codex plugin marketplace add cowwoc/cat\n");
 
@@ -51,9 +55,9 @@ public final class ReleaseDocumentationTest
       StandardCharsets.UTF_8);
     requireThat(codexInstallPrompt, "codexInstallPrompt").contains("Determine the requested CAT version");
     requireThat(codexInstallPrompt, "codexInstallPrompt").contains("https://github.com/cowwoc/cat/releases");
-    requireThat(codexInstallPrompt, "codexInstallPrompt").contains(
-      "codex plugin marketplace add cowwoc/cat-artifacts --ref <release-tag> --sparse codex-installer");
-    requireThat(codexInstallPrompt, "codexInstallPrompt").contains("Do not use CAT skills before `/cat:install`");
+    requireThat(codexInstallPrompt, "codexInstallPrompt").contains("codex plugin marketplace add cowwoc/cat");
+    requireThat(codexInstallPrompt, "codexInstallPrompt").contains("Run `/cat:install <release-tag>`");
+    requireThat(codexInstallPrompt, "codexInstallPrompt").doesNotContain("cowwoc/cat-artifacts");
     requireThat(codexInstallPrompt, "codexInstallPrompt").contains(
       "If the project root already contains `.cat/`, do not run `/cat:init`");
     requireThat(codexInstallPrompt, "codexInstallPrompt").contains(
@@ -62,27 +66,34 @@ public final class ReleaseDocumentationTest
     String distribution = Files.readString(sourceRoot.resolve("docs/development/plugin-distribution.md"),
       StandardCharsets.UTF_8);
     requireThat(distribution, "distribution").contains("The main `cowwoc/cat` repository is the release catalog");
-    requireThat(distribution, "distribution").contains(
-      "codex plugin marketplace add cowwoc/cat-artifacts --ref <version> --sparse codex-installer");
+    requireThat(distribution, "distribution").contains("GitHub Release assets on `cowwoc/cat`");
+    requireThat(distribution, "distribution").doesNotContain("cowwoc/cat-artifacts");
     requireThat(distribution, "distribution").contains("git-filter-repo");
 
-    String codexInstallSkill = Files.readString(clientRoot.resolve("plugin/skills/codex/install/SKILL.md"),
+    String installSkill = Files.readString(clientRoot.resolve("plugin/skills/common/install/SKILL.md"),
       StandardCharsets.UTF_8);
-    requireThat(codexInstallSkill, "codexInstallSkill").contains(
-      "Codex release users invoke the release's installer plugin first");
-    requireThat(codexInstallSkill, "codexInstallSkill").contains("name: install");
+    requireThat(installSkill, "installSkill").contains("name: install");
+    requireThat(installSkill, "installSkill").contains("cat-claude-<release-tag>.tar.gz");
+    requireThat(installSkill, "installSkill").contains("cat-codex-<release-tag>.tar.gz");
+    requireThat(installSkill, "installSkill").contains("https://github.com/cowwoc/cat/releases/download");
+    requireThat(installSkill, "installSkill").doesNotContain("python");
+    requireThat(Files.exists(clientRoot.resolve("plugin/skills/codex/install/SKILL.md")),
+      "codexInstallSkill").isFalse();
     requireThat(Files.exists(clientRoot.resolve("plugin/skills/claude/install/SKILL.md")),
       "claudeInstallSkill").isFalse();
+    requireThat(Files.exists(clientRoot.resolve("plugin/skills/claude/uninstall/SKILL.md")),
+      "claudeUninstallSkill").isFalse();
 
     String codexUninstallSkill = Files.readString(clientRoot.resolve("plugin/skills/codex/uninstall/first-use.md"),
       StandardCharsets.UTF_8);
     requireThat(codexUninstallSkill, "codexUninstallSkill").contains(
-      "Run this before removing the Codex installer plugin");
+      "Run this before uninstalling CAT from Codex");
 
     String gitFilterRepoDownloader = Files.readString(clientRoot.resolve("plugin/scripts/download-git-filter-repo.sh"),
       StandardCharsets.UTF_8);
     requireThat(gitFilterRepoDownloader, "gitFilterRepoDownloader").
-      contains("REPO_NAME=\"cat-artifacts\"");
+      contains("REPO_NAME=\"cat\"");
+    requireThat(gitFilterRepoDownloader, "gitFilterRepoDownloader").doesNotContain("python");
   }
 
   /**

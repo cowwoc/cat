@@ -71,6 +71,9 @@ trackable progress, and code that passes review the first time.
 # Install CAT
 /plugin install cat@cowwoc-claude-code-cat
 
+# Install or update the release artifact
+/cat:install
+
 # Verify you're ready
 /cat:help
 ```
@@ -89,12 +92,11 @@ Specific release:
 Run the prompt at https://raw.githubusercontent.com/cowwoc/cat/main/docs/prompts/codex-install.md to install or update the CAT plugin to version 1.2.0.
 ```
 
-To remove CAT from Codex, run `/cat:uninstall` before removing the installer plugin from Codex's plugin browser.
+To remove CAT from Codex, run `/cat:uninstall` before uninstalling CAT from Codex.
 
-For local development builds from a source checkout, run `/cat:install` from Codex after building so Codex installs
-`client/distribution/target/runtime/codex/`. Codex support is preview parity: the artifact is first-class, but some
-Claude Code extension points are not available in Codex yet; see the
-[Codex parity notes](docs/development/codex-parity.md).
+For local development builds from a source checkout, run `/cat:install` after publishing or staging the matching
+release artifact. Codex support is preview parity: the artifact is first-class, but some Claude Code extension points
+are not available in Codex yet; see the [Codex parity notes](docs/development/codex-parity.md).
 
 ### Step 2: Initialize Your Project
 

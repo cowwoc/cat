@@ -4,7 +4,7 @@
   "plugins": [
     {
       "name": "cat",
-      "source": "./plugin",
+      "source": "./client/plugin",
       "description": "AI Agents that land on their feet"
     }
   ]

@@ -8,10 +8,8 @@ set -euo pipefail
 # Locates or downloads git-filter-repo and outputs its invocation path.
 #
 # Resolution order:
-#   1. If python3 is installed and the git_filter_repo module is importable, outputs
-#      "python3 -m git_filter_repo" (uses the module directly).
-#   2. If the git-filter-repo script is on PATH, outputs its path.
-#   3. Downloads the pre-built platform binary from the CAT artifact repository, caches it
+#   1. If the git-filter-repo executable is on PATH, outputs its path.
+#   2. Downloads the pre-built platform binary from the CAT release assets, caches it
 #      under ${CLAUDE_PLUGIN_ROOT}/lib/, verifies SHA256, and outputs its path.
 #
 # Requires:
@@ -25,15 +23,7 @@ if [[ ! -f "${CONF}" ]]; then
   exit 1
 fi
 
-# --- Check 1: python3 with git_filter_repo module ---
-if command -v python3 &>/dev/null; then
-  if python3 -c "import git_filter_repo" 2>/dev/null; then
-    echo "python3 -m git_filter_repo"
-    exit 0
-  fi
-fi
-
-# --- Check 2: git-filter-repo on PATH ---
+# --- Check 1: git-filter-repo on PATH ---
 if command -v git-filter-repo &>/dev/null; then
   echo "$(command -v git-filter-repo)"
   exit 0
@@ -72,7 +62,7 @@ if [[ -n "${VALIDATION_ERRORS}" ]]; then
   exit 1
 fi
 
-# --- Check 3: Download pre-built binary ---
+# --- Check 2: Download pre-built binary ---
 
 # shellcheck source=plugin/scripts/sha256sum-portable.sh
 source "${CLAUDE_PLUGIN_ROOT}/scripts/sha256sum-portable.sh"
@@ -172,7 +162,7 @@ fi
 
 # Construct GitHub release download URL
 REPO_OWNER="cowwoc"
-REPO_NAME="cat-artifacts"
+REPO_NAME="cat"
 BINARY_URL="https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${RELEASE_TAG}/${BINARY_NAME}"
 
 if ! mkdir -p "${CACHE_DIR}"; then

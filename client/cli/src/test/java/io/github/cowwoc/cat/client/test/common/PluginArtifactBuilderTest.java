@@ -58,6 +58,10 @@ public final class PluginArtifactBuilderTest
         "codexVersion").isEqualTo("1.2.3\n");
       requireThat(Files.isRegularFile(claudeRoot.resolve("skills/common-skill/SKILL.md")),
         "claudeCommonSkill").isTrue();
+      requireThat(Files.isRegularFile(claudeRoot.resolve("skills/install/SKILL.md")),
+        "claudeInstallSkill").isTrue();
+      requireThat(Files.exists(claudeRoot.resolve("skills/uninstall/SKILL.md")),
+        "claudeDoesNotShipUninstallSkill").isFalse();
       requireThat(Files.readString(claudeRoot.resolve("skills/common-skill/first-use.md"),
         StandardCharsets.UTF_8), "claudeFirstUse").contains("Read helper.md");
       requireThat(Files.readString(claudeRoot.resolve("skills/common-skill/first-use.md"),
@@ -72,6 +76,10 @@ public final class PluginArtifactBuilderTest
         "claudeDoesNotSeeCodexSkill").isFalse();
       requireThat(Files.isRegularFile(codexRoot.resolve("skills/common-skill/SKILL.md")),
         "codexCommonSkill").isTrue();
+      requireThat(Files.isRegularFile(codexRoot.resolve("skills/install/SKILL.md")),
+        "codexInstallSkill").isTrue();
+      requireThat(Files.isRegularFile(codexRoot.resolve("skills/uninstall/SKILL.md")),
+        "codexUninstallSkill").isTrue();
       requireThat(Files.readString(codexRoot.resolve("skills/common-skill/first-use.md"),
         StandardCharsets.UTF_8), "codexFirstUse").contains("Read helper.md");
       requireThat(Files.readString(codexRoot.resolve("skills/common-skill/first-use.md"),
@@ -372,8 +380,8 @@ public final class PluginArtifactBuilderTest
       ".git-filter-repo-config", "concepts", "config", "lang", "migrations", "scripts",
       "templates", ".claude-plugin", ".codex-plugin", "rules/common", "rules/claude",
       "rules/codex", "hooks/common", "hooks/claude", "hooks/codex",
-      "skills/common/common-skill", "skills/claude/claude-skill",
-      "skills/codex/codex-skill", "agents/common", "agents/claude", "agents/codex"})
+      "skills/common/common-skill", "skills/common/install", "skills/claude/claude-skill",
+      "skills/codex/codex-skill", "skills/codex/uninstall", "agents/common", "agents/claude", "agents/codex"})
     {
       Files.createDirectories(pluginDir.resolve(directory));
     }
@@ -421,6 +429,8 @@ public final class PluginArtifactBuilderTest
       MARKDOWN_LICENSE + "Read helper.md\n", StandardCharsets.UTF_8);
     Files.writeString(pluginDir.resolve("skills/common/common-skill/helper.md"),
       MARKDOWN_LICENSE + "helper body\n", StandardCharsets.UTF_8);
+    Files.writeString(pluginDir.resolve("skills/common/install/SKILL.md"),
+      MARKDOWN_LICENSE + "install release artifact\n", StandardCharsets.UTF_8);
     Files.writeString(pluginDir.resolve("skills/common/common-skill/testing.md"),
       MARKDOWN_LICENSE + "authoring-only test guidance\n", StandardCharsets.UTF_8);
     Files.createDirectories(pluginDir.resolve("skills/common/common-skill/tests"));
@@ -434,6 +444,8 @@ public final class PluginArtifactBuilderTest
       StandardCharsets.UTF_8);
     Files.writeString(pluginDir.resolve("skills/codex/codex-skill/SKILL.md"),
       MARKDOWN_LICENSE + "codex body\n", StandardCharsets.UTF_8);
+    Files.writeString(pluginDir.resolve("skills/codex/uninstall/SKILL.md"),
+      MARKDOWN_LICENSE + "codex uninstall body\n", StandardCharsets.UTF_8);
     Files.writeString(pluginDir.resolve("agents/common/agent.md"), MARKDOWN_LICENSE +
       "common agent\n", StandardCharsets.UTF_8);
     Files.writeString(pluginDir.resolve("agents/claude/agent.md"), MARKDOWN_LICENSE +

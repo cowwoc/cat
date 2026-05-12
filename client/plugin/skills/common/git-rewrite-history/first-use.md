@@ -7,8 +7,8 @@ See LICENSE.md in the project root for license terms.
 
 ## Purpose
 
-Safely rewrite git history using git filter-repo, with automatic tool resolution (Python module or
-standalone binary). Always use this skill instead of `git filter-branch`.
+Safely rewrite git history using git filter-repo, with automatic tool resolution from an executable on `PATH` or a
+downloaded standalone binary. Always use this skill instead of `git filter-branch`.
 
 **Why git filter-repo over alternatives:**
 
@@ -25,7 +25,7 @@ standalone binary). Always use this skill instead of `git filter-branch`.
   Filename-only tools accidentally remove ALL files with a matching name across all directories — making
   them unsafe for files like `plan.md` that exist in many directories.
 - **Actively maintained and recommended by git itself** as the preferred history rewriting tool.
-- **No Python requirement**: a standalone binary is downloaded on first use if Python is not installed.
+- **No Python requirement**: a standalone binary is downloaded on first use when `git-filter-repo` is not on `PATH`.
 
 ---
 
@@ -39,16 +39,11 @@ Before any operation, resolve the tool invocation string:
 FILTER_REPO=$("${CAT_PLUGIN_ROOT}/scripts/download-git-filter-repo.sh")
 ```
 
-This returns either `python3 -m git_filter_repo` or the path to a cached standalone binary. Always invoke
-it via `eval` to handle multi-word invocations correctly:
+This returns either the `git-filter-repo` executable on `PATH` or the path to a cached standalone binary.
 
 ```bash
-eval "$FILTER_REPO" [options]
+"$FILTER_REPO" [options]
 ```
-
-> **Note:** `CAT_PLUGIN_ROOT` must not contain spaces. When `FILTER_REPO` resolves to a bare binary path
-> (e.g., `/path/to/git-filter-repo`), `eval` splits on spaces — a path with spaces would be split
-> incorrectly. The `python3 -m git_filter_repo` case is unaffected.
 
 To force re-download and re-verification (e.g., after suspected corruption):
 
@@ -67,25 +62,25 @@ git branch backup-before-rewrite-$(date +%Y%m%d-%H%M%S)-$$-$RANDOM
 
 ### Step 3: Run git filter-repo
 
-Use `eval "$FILTER_REPO"` in place of `git filter-repo` for all operations. The `--force` flag is required
+Use `"$FILTER_REPO"` in place of `git filter-repo` for all operations. The `--force` flag is required
 because the working directory is not a fresh clone.
 
 **Remove a file from all history:**
 
 ```bash
-eval "$FILTER_REPO" --path secrets.txt --invert-paths --force
+"$FILTER_REPO" --path secrets.txt --invert-paths --force
 ```
 
 **Remove a directory from all history:**
 
 ```bash
-eval "$FILTER_REPO" --path vendor/ --invert-paths --force
+"$FILTER_REPO" --path vendor/ --invert-paths --force
 ```
 
 **Remove large files:**
 
 ```bash
-eval "$FILTER_REPO" --strip-blobs-bigger-than 10M --force
+"$FILTER_REPO" --strip-blobs-bigger-than 10M --force
 ```
 
 **Replace text patterns (remove secrets by substitution):**

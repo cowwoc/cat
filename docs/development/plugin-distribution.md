@@ -58,22 +58,19 @@ The artifact builder verifies generated runtime roots before completing. Verific
 release files still contain source license text, if source-only skill fixtures such as `tests/`, `instruction-test/`,
 or `*.bats` are present, if `agents/common/` leaks into a runtime artifact, or if an include marker remains unresolved.
 
-## Immutable Release Commits
+## Release Assets
 
 The main `cowwoc/cat` repository is the release catalog. Its GitHub Releases list user-visible versions, release notes,
-source tags, and links to installable artifact refs. Generated release artifacts are published to `cowwoc/cat-artifacts`
-so cloning the source repository does not download generated plugin/runtime bundles.
+source tags, and installable GitHub Release assets on `cowwoc/cat`. Generated release artifacts are attached to
+GitHub Releases so cloning the source repository does not download generated plugin/runtime bundles.
 
-Publish each release artifact at an isolated Git commit or immutable tag in `cowwoc/cat-artifacts`. Marketplace entries
-should point to that artifact commit using an exact `sha` when possible.
+Publish each generated artifact as a release asset, not as files committed to a normal source-tree path. Required
+assets per release:
 
-Acceptable shapes:
-
-1. **Preferred:** publish all generated artifacts to `cowwoc/cat-artifacts`, including Claude Code plugin artifacts,
-   Codex installer/full-plugin artifacts, jlink runtime artifacts, and the self-contained `git-filter-repo` bundle used
-   by CAT's git-rebase flow.
-2. **Fallback/debug only:** publish orphan artifact branches in this repository when validating a release pipeline
-   change before pushing to `cowwoc/cat-artifacts`.
+- `cat-claude-<release-tag>.tar.gz`
+- `cat-codex-<release-tag>.tar.gz`
+- self-contained `git-filter-repo` bundles used by CAT's git-rebase flow
+- `SHA256SUMS.txt`
 
 Do not commit generated release artifacts under normal source-tree paths in `cowwoc/cat`.
 
@@ -85,43 +82,29 @@ formal-runner extension points.
 
 | Runtime | Install source | Local update path | Support tier |
 |---------|----------------|-------------------|--------------|
-| Claude Code | Claude Code's built-in plugin mechanism | Built-in plugin upgrade/uninstall | Full CAT runtime support |
-| Codex | Installer artifact, then `/cat:install` | `/cat:install` reinstalls the Codex artifact | First-class artifact with documented parity gaps |
+| Claude Code | Source plugin, then `/cat:install` release download | `/cat:install` reinstalls the Claude artifact | Full CAT runtime support |
+| Codex | Source plugin, then `/cat:install` release download | `/cat:install` reinstalls the Codex artifact | First-class artifact with documented parity gaps |
 
 Release notes and customer-facing summaries must use the same positioning: Codex installs and updates through a native
 Codex artifact, but unsupported Codex extension points remain visible instead of being described as full Claude Code
 parity.
 
-Claude Code can install and uninstall CAT through Claude Code's built-in plugin mechanism. Codex cannot bootstrap the
-full CAT plugin by invoking a CAT skill that is not installed yet, so each release publishes a small Codex installer
-artifact. Users install that installer through Codex's plugin browser, run `/cat:install` to install the full CAT Codex
-artifact, and run `/cat:uninstall` before removing the installer plugin.
+Users first install the lightweight source plugin from `cowwoc/cat` at the selected release tag, then run
+`/cat:install` to download and install the runtime-specific release asset. Claude Code uninstall uses Claude Code's
+built-in plugin mechanism. Codex users must run `/cat:uninstall` before removing CAT so CAT-owned project agent copies
+are removed.
 
 Claude Code can install from Git-backed plugin sources and npm package sources. Codex can install from Git-backed and
 local marketplace sources; Codex does not currently document npm package plugin sources.
 
-Use Git-backed artifacts for parity:
-
-```json
-{
-  "name": "cat",
-  "source": {
-    "source": "git-subdir",
-    "url": "cowwoc/cat-artifacts",
-    "path": "codex-installer",
-    "ref": "v2.1.0",
-    "sha": "<immutable-commit-sha>"
-  }
-}
-```
-
-Equivalent Codex CLI bootstrap:
+Codex CLI bootstrap:
 
 ```bash
-codex plugin marketplace add cowwoc/cat-artifacts --ref <version> --sparse codex-installer
+codex plugin marketplace add cowwoc/cat --ref <version> --sparse client/plugin
 ```
 
-If an artifact commit root is already the plugin root, omit `path`.
+The installed source plugin provides `/cat:install`, which downloads the release asset from
+`https://github.com/cowwoc/cat/releases/download/<version>/`.
 
 ## Local Builds
 
