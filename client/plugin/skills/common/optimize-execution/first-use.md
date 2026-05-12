@@ -1,0 +1,619 @@
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
+# Command Optimizer Skill
+
+**Purpose**: Analyze session tool_use history to identify optimization opportunities and categorize
+tool outputs by user relevance. Provides actionable recommendations for batching, caching, output
+summarization, and output-token efficiency. **Correctness always takes priority over compactness** —
+this includes both semantic correctness (meaning/parsing) and visual correctness (user-facing output
+alignment and readability). Report efficiency opportunities only when fixing them does not degrade either.
+
+## When to Use
+
+- After completing a complex issue, to identify efficiency improvements
+- When investigating slow sessions or high token usage
+- To generate configuration rules for output hiding/summarization
+- When preparing recommendations for agent UX improvements
+- After sessions with many redundant operations
+
+## Prerequisites
+
+This skill builds on the `get-history` skill for session data access. The runtime and session ID must be available
+via `${CAT_RUNTIME}` and `${CAT_SESSION_ID}`.
+
+## Usage
+
+```bash
+/cat:command-optimizer
+```
+
+## Analysis Steps
+
+### Step 1: Run Session Analysis
+
+Execute the session analyzer to extract all mechanical data:
+
+```bash
+"${CAT_PLUGIN_DATA}/client/bin/session-analyzer" --runtime "${CAT_RUNTIME}" "${CAT_SESSION_ID}"
+```
+
+The skill outputs a JSON object with:
+- `main`: Main agent analysis containing:
+  - `tool_frequency`: Count of each tool type used
+  - `token_usage`: Token consumption per tool type
+  - `output_sizes`: Sizes of tool outputs from tool_result entries
+  - `cache_candidates`: Repeated identical operations
+  - `batch_candidates`: Consecutive similar operations
+  - `parallel_candidates`: Independent operations in same message
+  - `pipeline_candidates`: Dependent operations where next phase can start with partial output from current phase
+  - `script_extraction_candidates`: Deterministic multi-step operations that could be extracted into standalone scripts
+  - `summary`: Overall session statistics
+- `subagents`: Dictionary of agentId to per-subagent analysis (same structure as main)
+- `combined`: Aggregated metrics across main agent and all subagents
+- `timing`: Phase-level and per-tool time breakdown derived from JSONL `timestamp` fields, containing:
+  - `session_elapsed_seconds`: Overall session elapsed time
+  - `tools_elapsed`: Array of per-tool summaries across the entire session, each with:
+    - `tool`: Tool name
+    - `call_count`: Number of calls to this tool
+    - `elapsed_seconds`: Total time spent in this tool across the session
+  - `phases`: Array of phase objects (present only when CAT phase markers are detected), each with:
+    - `name`: Phase name (e.g., `work-prepare`, `work-implement`, `work-review`, `work-merge`)
+    - `elapsed_seconds`: Total elapsed time for the phase
+    - `tools`: Array of per-tool summaries within the phase, each with:
+      - `tool`: Tool name
+      - `call_count`: Number of calls to this tool in the phase
+      - `elapsed_seconds`: Total time spent in this tool within the phase
+  - This field is absent (not null) when JSONL entries lack timestamps or the file is unreadable
+
+**Subagent Discovery**: The script automatically discovers subagent JSONL files by parsing Task tool_result
+entries for `agentId` fields, then resolves subagent session context internally from the current session.
+Only existing subagent sessions are included.
+
+### Step 2: Categorize UX Relevance
+
+Classify tool outputs by user interest level based on the analysis data:
+
+```yaml
+ux_relevance_categories:
+  HIGH:
+    description: "User-requested operations, errors, final results"
+    indicators:
+      - Tool result contains error or exception
+      - Final output of multi-step operation
+      - Direct response to user query
+      - File modifications user explicitly requested
+    examples:
+      - Error messages from Bash commands
+      - Final test results
+      - Completed file writes
+      - Build/compile outputs
+
+  MEDIUM:
+    description: "Progress indicators, intermediate results"
+    indicators:
+      - Intermediate step in multi-operation sequence
+      - Status checks during long operation
+      - Partial results being accumulated
+    examples:
+      - File existence checks
+      - Directory listings for navigation
+      - Intermediate grep results
+      - Git status during multi-commit operation
+
+  LOW:
+    description: "Internal bookkeeping, redundant checks, verbose diagnostics"
+    indicators:
+      - Repeated identical queries
+      - Verbose output from diagnostic tools
+      - Internal state verification
+      - Redundant safety checks
+    examples:
+      - Repeated pwd commands
+      - Multiple identical file reads
+      - Verbose ls output not directly requested
+      - Repeated git branch checks
+```
+
+Using the skill output, categorize each tool usage pattern by UX relevance. Consider:
+- Tools in `cache_candidates` (repeated operations) are often LOW relevance
+- Tools with errors are HIGH relevance
+- File modifications (Write, Edit) are HIGH relevance
+- Navigation commands (pwd, ls, cd) are LOW relevance
+- Search operations (Grep, Glob) are MEDIUM relevance
+
+### Step 3: Extract Subagent Delegation Token Data from JSONL
+
+When the session used subagent delegation (Task tool calls), extract empirical token measurements from the JSONL
+transcript before generating recommendations. Do NOT use theoretical estimates — measure from the actual JSONL.
+
+**If no Task tool calls are present in the session, skip directly to Step 5.**
+
+Start with Terminology if unfamiliar with delegation metrics; otherwise go straight to Primary Method.
+
+#### Terminology
+
+Before proceeding, key terms used below:
+
+- **`C_main`**: Total context size of a main agent assistant turn =
+  `input_tokens + cache_read_input_tokens + cache_creation_input_tokens`
+- **`N_sub_turns`**: Number of subagent assistant turns for a given delegation
+- **`total_context`**: Same formula as `C_main`, applied to any assistant turn (main or subagent)
+- **Raw tokens**: Unweighted cumulative token counts; measures volume but not cost
+- **Cost-weighted tokens**: Tokens adjusted by cache pricing multipliers to reflect actual billing cost:
+  `(input_tokens * 1.0) + (cache_read * 0.1) + (cache_write_5m * 1.25) + (cache_write_1h * 2.0)`.
+  Cache reads at 0.1x pricing make delegation dramatically cheaper than raw token counts suggest.
+
+#### Primary Method: session-analyzer (recommended)
+
+Use the session-analyzer tool for structured, reliable extraction of delegation metrics:
+
+```bash
+SESSION_ANALYZER="${CAT_PLUGIN_DATA}/client/bin/session-analyzer"
+"$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" analyze "${CAT_SESSION_ID}"
+```
+
+This produces structured JSON output with per-delegation metrics already computed, avoiding fragile text parsing.
+Use this output to populate the per-delegation analysis in the output format below.
+
+Runtime support analyzes the selected session's messages, tool calls, tool outputs, token-count events, file
+history, and supported subagent logs.
+
+**Error conditions:**
+- If the JSONL file is missing or unreadable, report: "Session JSONL not found — skipping delegation analysis"
+- If no subagent turns are found, report: "No delegations detected — skipping delegation analysis"
+- If output is incomplete (e.g., truncated JSONL), note which delegations could not be fully measured
+
+If session-analyzer is unavailable, see `skills/optimize-execution/delegation-analysis.md` in the installed CAT plugin for manual JSONL extraction steps.
+
+#### Measurements to collect
+
+For each Task tool_use (delegation point) identified in the main agent JSONL:
+
+1. **Identify the delegation point and main context:**
+   - Find the Task tool_use entry; record the main agent assistant turn immediately preceding it
+   - `C_main = input_tokens + cache_read_input_tokens + cache_creation_input_tokens` (from that turn)
+
+2. **Measure main agent cost of delegation:**
+   - Count main agent turns involved in delegation (typically 2: the Task call turn + result processing turn)
+   - `main_delegation_cost = sum(total_context for each of those turns)`
+
+3. **Measure subagent cost:**
+   - Identify subagent turns by `parentToolUseID` matching the Task tool_use ID
+   - `subagent_cost = sum(total_context for each subagent assistant turn)`
+   - Record: `N_sub_turns`, `C_sub_first` (first turn total context), `C_sub_last` (last turn total context)
+   - Record first turn breakdown: `cache_read`, `cache_create`, `new_tokens`
+
+4. **Estimate inline alternative:**
+   - If the same work had been done inline on the main agent, each turn would have used C_main as its baseline context
+   - `inline_cost = N_sub_turns * C_main` (conservative lower bound; actual inline cost would be higher because main
+     context grows with each turn's output)
+
+5. **Compute cost-weighted totals using cache pricing multipliers:**
+   - `cost_weighted = (input_tokens * 1.0) + (cache_read * 0.1) + (cache_write_5m * 1.25) + (cache_write_1h * 2.0)`
+   - Compute for both the inline estimate and the actual delegation
+
+For each delegation, produce the following analysis output:
+
+```
+Phase: [phase name, e.g., "squash"]
+Main context at delegation: [C_main] tokens
+Subagent turns: [N_sub_turns]
+Subagent first turn context: [C_sub_first] (cache_read: X, cache_create: Y, new: Z)
+Subagent last turn context: [C_sub_last]
+
+Raw token comparison:
+  Inline estimate:    [inline_cost] cumulative tokens
+  Actual delegation:  [main_delegation_cost + subagent_cost] cumulative tokens
+  Delta:              [difference] tokens ([percentage]%)
+
+Cost-weighted comparison (cache pricing applied):
+  Inline estimate:    [inline_cost_weighted] cost-equivalent tokens
+  Actual delegation:  [delegation_cost_weighted] cost-equivalent tokens
+  Delta:              [difference] cost-equivalent tokens ([percentage]%)
+
+Cache efficiency: [cache_read / total_context]% of subagent tokens were cache hits
+```
+
+### Step 4: Pre-Delegation Estimation
+
+Use this section to decide whether to delegate a phase BEFORE implementing the delegation. Unlike the post-hoc analysis
+in Step 3, this uses known constants and estimates to predict outcomes at planning time.
+
+**Known constants (empirically derived, stable across sessions):**
+
+| Constant | Value | Source | Variability |
+|----------|-------|--------|-------------|
+| Subagent baseline context | ~17-20k tokens | First-turn `total_context` across multiple sessions | <15% |
+| Subagent cache hit rate (first turn) | ~54% | `cache_read / total_context` on first subagent turn | Depends on cache TTL |
+| Main agent spawn overhead | 2 turns | Task tool call + result processing | Fixed |
+| Subagent per-turn growth | ~500-2000 tokens | Delta between consecutive subagent turns | Varies with tool output size |
+
+**Estimation formula:**
+
+```
+Inputs:
+  C_main          = current main agent context (read from last usage in JSONL or /context)
+  N_estimated     = estimated turns the work will take
+  C_sub_base      = 18,500 (empirical median subagent first-turn context)
+  C_sub_growth    = 1,200 (empirical median per-turn context growth in subagent)
+
+Inline cost estimate:
+  inline_cost = N_estimated × C_main
+
+Delegation cost estimate:
+  main_cost   = 2 × C_main
+  sub_cost    = sum(C_sub_base + i × C_sub_growth for i in 0..N_estimated-1)
+              = N_estimated × C_sub_base + N_estimated × (N_estimated - 1) / 2 × C_sub_growth
+  delegate_cost = main_cost + sub_cost
+
+Decision:
+  savings = inline_cost - delegate_cost
+  savings_pct = savings / inline_cost × 100
+```
+
+**Decision rule (simplified):**
+
+Delegation saves tokens when the main agent's context significantly exceeds the subagent's baseline. The breakeven
+point is approximately:
+
+```
+C_main > C_sub_base + (2 × C_main / N_estimated)
+```
+
+Delegation is almost always beneficial when `C_main > 2 × C_sub_base` (~37k tokens), typically reached after 3-5 main
+agent turns. For very short tasks (1-2 turns), spawn overhead dominates and inline is cheaper.
+
+**Quick decision table (using empirical constants):**
+
+| Main Context | Estimated Turns | Delegate? | Estimated Savings |
+|-------------|----------------|-----------|-------------------|
+| <20k | Any | No | Subagent baseline ≈ main context; no benefit |
+| 20-40k | 1-2 | No | Spawn overhead exceeds savings |
+| 20-40k | 3+ | Maybe | Marginal; depends on task |
+| 40-80k | 2+ | Yes | ~20-40% raw token savings |
+| 80k+ | 2+ | Yes | ~50-70% raw token savings |
+| 120k+ | Any | Yes | Always; even 1-turn delegation saves context |
+
+**Cost-weighted adjustment:** Raw token savings understate actual cost savings because subagent tokens have a higher
+cache-read ratio (0.1x pricing) than main agent tokens at the same context size. Multiply raw savings by ~1.5-2x for
+a cost-weighted estimate.
+
+When optimize-execution detects a phase that was NOT delegated but meets the "Delegate?" criteria above, emit a
+`delegation_opportunity` in the analysis data for presentation in Step 6.
+
+### Step 5: Extract Time Usage
+
+Read the `timing` field from the session-analyzer output obtained in Step 1:
+
+- If `timing` is absent from the output, skip this step and omit the Time Usage section from the report.
+- If `timing` is present, extract:
+  - `timing.session_elapsed_seconds`: overall session wall-clock time
+  - `timing.tools_elapsed`: per-tool breakdown across the entire session, each with `tool`, `call_count`, and
+    `elapsed_seconds`
+  - `timing.phases` (optional): array of phase-level summaries, each with `name`, `elapsed_seconds`, and `tools`;
+    absent when no CAT phase markers were detected; for each phase, `tools` contains per-tool `tool`, `call_count`,
+    and `elapsed_seconds`
+
+Store this data for use in the Time Usage report section (Step 7).
+
+### Step 6: Generate Recommendations
+
+Compile analysis into actionable recommendations based on the skill output:
+
+1. **Batching opportunities**: Use `batch_candidates` to identify consecutive operations that could be combined
+2. **Caching opportunities**: Use `cache_candidates` to identify repeated operations
+3. **Parallel opportunities**: Use `parallel_candidates` to identify independent operations that could run in parallel
+4. **Pipelining opportunities**: Use `pipeline_candidates` to identify dependent operations where phase N+1 can start
+   with partial output from phase N
+5. **Script extraction opportunities**: Use `script_extraction_candidates` to identify deterministic multi-step
+   operations embedded in skill markdown that could be extracted into standalone scripts
+6. **Delegation trade-off analysis**: For each subagent delegation detected, produce the per-delegation analysis from
+   Step 3 above, quantifying whether delegation saved or cost tokens vs. inline execution
+7. **Missed delegation opportunities**: Apply the Step 4 decision table to phases that ran inline — if C_main and
+   estimated turns meet the "Delegate?" threshold, emit a `delegation_opportunity` entry
+8. **Token optimization**: Use `token_usage` to identify high-cost operations
+9. **Output management**: Use `output_sizes` and UX categorization to suggest hiding/summarizing patterns
+10. **Content relay detection**: Identify main agent Read/Grep/Bash calls whose output is only used to populate
+   a subagent prompt. Recommend letting the subagent load its own content instead. Exception: content the main
+   agent already had in context for its own decision-making may be passed to avoid a redundant subagent read.
+11. **Token efficiency analysis**: Scan skill files referenced in the session for output-token waste patterns.
+   Correctness (semantic and visual) always takes priority over compactness — flag only patterns where removing
+   or condensing content does not change meaning, parsing, or user-facing visual alignment.
+   Waste patterns to detect:
+   - Verbose section headings that repeat context already present in scope
+   - Example blocks with identical leading spaces where a tab would suffice (and where the whitespace is not
+     semantic — i.e., not inside YAML frontmatter, Makefile targets, or fenced code blocks)
+   - Repeated boilerplate across steps that could be a single referenced rule
+   - Output sections that produce content never referenced downstream (e.g., always-empty tables,
+     documentation sections nobody reads)
+   - Receiver-irrelevant output: content sent to the downstream receiver (user, subagent, or calling skill) that
+     the receiver cannot act on or does not need — internal reasoning steps that informed a decision but weren't
+     requested, full file contents when only a summary is needed, verbose status updates that duplicate
+     information the receiver already knows
+   For each flagged pattern, estimate output-token savings (e.g., "removes ~200 tokens per invocation").
+   Report these as a "Token Efficiency" category in the Issues Found section, ordered by estimated savings.
+
+### Optimization Pattern Details
+
+#### Script Extraction Opportunities
+
+**Principle**: Skills must not contain inline bash for deterministic operations — all such bash belongs in external scripts. Skills contain only: when to use, script invocation, result handling, and judgment-dependent guidance. This principle is enforced by `/cat:instruction-builder`.
+
+**Detection**: Any skill file containing bash code blocks with deterministic operations (no judgment branching, no user interaction) is a candidate for script extraction.
+
+#### Token Efficiency Patterns
+
+| Pattern | Detection | Estimated Savings |
+|---------|-----------|-------------------|
+| Verbose section headings repeating scope | Heading text restates prior heading or context | ~10-30 tokens/invocation |
+| Redundant leading spaces in examples | Multiple example lines share identical indent that could be one tab | ~5-20 tokens/example block |
+| Boilerplate repeated across steps | Identical or near-identical guidance block appears 2+ times | ~50-200 tokens/invocation |
+| Unused output sections | Section always produces empty table, list, or block | ~20-100 tokens/invocation |
+| Receiver-irrelevant output | Content sent to caller that caller cannot use | ~100-500 tokens/invocation |
+
+#### Subagent Content Relay Anti-Pattern
+
+**Definition**: The main agent reads files or runs commands it does not need for its own work, solely
+to pass the output to a subagent prompt. This bloats the main agent's context without benefit — the
+subagent could read the files directly at lower token cost.
+
+**Detection Criteria**: A Read, Grep, or Bash call on the main agent whose output is:
+1. Not referenced in any main agent reasoning or decision
+2. Included verbatim (or near-verbatim) in the next Agent/Task tool call's prompt
+3. Content that the subagent could obtain independently (files on disk, git commands)
+
+**Correct pattern — let subagents load their own content:**
+- Main agent provides the subagent with *file paths*, *search terms*, or *task descriptions*
+- Subagent reads files and runs commands in its own context (cheaper tokens, isolated context)
+- Main agent context stays lean for orchestration decisions
+
+**Correct pattern — pass content already in context:**
+- If the main agent already read a file for its own decision-making (e.g., reviewing plan.md to
+  choose which phase to run), it MAY include that content in the subagent prompt to save a
+  redundant read
+- The key distinction: the main agent read it for *its own purpose first*, not as a relay
+
+**Anti-pattern examples:**
+- Reading 5 source files before spawning an implementation subagent, just to paste them into the
+  prompt
+- Running `git diff` before spawning a review subagent, when the subagent can run `git diff` itself
+- Reading test output to relay to a fix subagent, when the fix subagent can re-run tests
+
+**Impact**: Each relayed file adds its full content to the main agent's context window permanently,
+compounding with every subsequent main agent turn. For a 500-line file (~2k tokens), relaying
+instead of letting the subagent read it costs `2k * remaining_main_turns` additional tokens.
+
+### Step 7: Present Results
+
+Present results as a human-readable markdown report. Do NOT output raw JSON. Use JSON data internally to populate the sections below.
+
+#### Report Structure
+
+```markdown
+## Session Optimization Report
+
+### Session Overview
+- **Issue:** {issue_id}
+- **Total tool calls:** {combined.summary.total_tool_calls} ({main count} main + {subagent count} subagent)
+- **Unique tools used:** {combined.summary.unique_tools joined with ", "}
+- **Delegations:** {number of Task tool calls}
+
+### What Went Well
+{List 2-4 things the session did efficiently, e.g.:}
+- Correctly parallelized N independent Grep operations in a single message
+- Delegated {phase} to subagent, saving ~{savings}% cost-weighted tokens
+- Cached file content from earlier reads instead of re-reading
+
+### Issues Found
+
+#### {Issue Title} ({impact: high/medium/low})
+- **Problem:** {description of the inefficiency}
+- **Root cause:** {why it happened}
+- **Fix:** {specific actionable recommendation}
+- **Estimated savings:** {e.g., "3 fewer tool calls, ~8s wall time"}
+
+{Repeat for each issue found, ordered by impact (high first)}
+
+#### Token Efficiency
+{Include this subsection only if Step 6 item 11 detected output-token waste patterns in session skill files}
+
+| Skill | Pattern | Location | Est. Savings/Invocation |
+|-------|---------|----------|------------------------|
+| {skill name} | {pattern type} | {section name} | ~{N} tokens |
+
+{For each flagged pattern:}
+
+**{pattern type} in {skill/section}:**
+- **Sample:** `{abbreviated sample text}`
+- **Fix:** {specific change — e.g., "replace repeated boilerplate with a reference to rule X"}
+- **Estimated savings:** ~{N} tokens per invocation
+
+{Note: Correctness takes priority — patterns are only flagged where the fix does not change meaning,
+parsing, or user-facing visual alignment.}
+
+### Delegation Analysis
+{Include this section only if subagent delegations were detected}
+
+| Phase | Turns | Raw Δ | Cost-weighted Δ | Cache Hit Rate |
+|-------|-------|-------|------------------|----------------|
+| {phase} | {N_sub_turns} | {delta_percent}% | {cost_weighted_delta_percent}% | {cache_hit_rate}% |
+
+{For each delegation, include a brief paragraph:}
+
+**{Phase}:** Main context was {C_main} tokens. Subagent ran {N_sub_turns} turns with {cache_hit_rate}%
+cache hit rate. Cost-weighted savings: {cost_weighted_delta} tokens ({cost_weighted_delta_percent}%).
+{Verdict: "Delegation was beneficial" or "Delegation had marginal benefit" or "Inline would have been cheaper"}
+
+{For missed delegation opportunities:}
+
+**Missed opportunity — {phase}:** Main context was {C_main} tokens with ~{estimated_turns} turns of work.
+Delegating would have saved ~{estimated_savings_percent}% tokens. Recommend delegating this phase.
+
+### Time Usage
+{Include this section only if the `timing` field is present in the session-analyzer output}
+
+**Total session time:** {timing.session_elapsed_seconds}s
+
+{If timing.phases is present and non-empty, render the phase table and per-phase tool breakdowns:}
+
+| Phase | Elapsed |
+|-------|---------|
+| {phase.name} | {phase.elapsed_seconds}s |
+
+{For each phase, include a per-tool breakdown:}
+
+**{phase.name}** — {phase.elapsed_seconds}s total
+
+| Tool | Calls | Total Time |
+|------|-------|------------|
+| {tool.tool} | {tool.call_count} | {tool.elapsed_seconds}s |
+
+{If timing.phases is absent or empty, render the session-level tool breakdown from timing.tools_elapsed:}
+
+| Tool | Calls | Total Time |
+|------|-------|------------|
+| {tool.tool} | {tool.call_count} | {tool.elapsed_seconds}s |
+
+### Recommendations
+
+| Priority | Recommendation | Estimated Savings |
+|----------|---------------|-------------------|
+| {1} | {actionable recommendation} | {savings estimate} |
+| {2} | {actionable recommendation} | {savings estimate} |
+| ... | ... | ... |
+```
+
+#### Presentation Rules
+
+1. **No JSON in output.** All JSON structures from Steps 1-5 are internal working data only.
+2. **Actionable language.** Each recommendation must specify what to change and where (skill name, step number, or
+   file path).
+3. **Quantify savings.** Use token counts, percentages, or tool call counts — not vague terms like "significant."
+4. **Order by impact.** Issues and recommendations sorted by estimated savings (highest first).
+5. **Skip empty sections.** If no delegation was detected, omit "Delegation Analysis." If nothing went well
+   (unlikely), omit "What Went Well." If `timing` is absent from session-analyzer output, omit "Time Usage."
+
+## Example Output
+
+For a session with 45 tool calls building a feature:
+
+```markdown
+## Session Optimization Report
+
+### Session Overview
+- **Issue:** 2.1-add-config-validation
+- **Total tool calls:** 68 (45 main + 23 subagent)
+- **Unique tools used:** Read, Grep, Edit, Bash, Glob, Task
+- **Delegations:** 2
+
+### What Went Well
+- Correctly parallelized 3 independent Grep searches in a single message
+- Delegated explore phase to Haiku subagent with 84% cache hit rate, saving 64% cost-weighted tokens
+- Parallelized 4 related config file reads in a single message instead of sequential reads
+
+### Issues Found
+
+#### Repeated project instructions reads (medium)
+- **Problem:** project instructions read 4 times with identical content across the session
+- **Root cause:** Each phase re-reads project instructions instead of referencing earlier context
+- **Fix:** Read project instructions once at session start; reference from conversation context in later phases
+- **Estimated savings:** 3 fewer Read calls, ~6s wall time
+
+#### Sequential Grep operations (high)
+- **Problem:** 6 consecutive Grep operations searching the same directory for related patterns
+- **Root cause:** Patterns searched one at a time instead of combined
+- **Fix:** Combine into 1-2 Grep calls using regex alternation: `pattern1|pattern2|pattern3`
+- **Estimated savings:** 4-5 fewer tool calls, ~12s wall time
+
+#### Missed delegation for implement phase (high)
+- **Problem:** Implementation ran inline at 45,200 token main context for ~8 turns
+- **Root cause:** No delegation decision made; work executed on main agent by default
+- **Fix:** Delegate implement phase to subagent when main context exceeds 37k tokens
+- **Estimated savings:** ~59% token reduction (~214,040 tokens)
+
+### Delegation Analysis
+
+| Phase | Turns | Raw Δ | Cost-weighted Δ | Cache Hit Rate |
+|-------|-------|-------|------------------|----------------|
+| explore | 15 | -3.5% | -64.4% | 84% |
+
+**Explore:** Main context was 40,396 tokens. Subagent ran 15 turns with 84% cache hit rate.
+Cost-weighted savings: 253,673 tokens (64.4%). Delegation was highly beneficial.
+
+**Missed opportunity — implement:** Main context was 45,200 tokens with ~8 turns of work.
+Delegating would have saved ~59.1% tokens. Recommend delegating this phase.
+
+### Time Usage
+
+**Total session time:** 847s
+
+| Phase | Elapsed |
+|-------|---------|
+| work-prepare | 38s |
+| work-implement | 612s |
+| work-review | 142s |
+| work-merge | 55s |
+
+**work-prepare** — 38s total
+
+| Tool | Calls | Total Time |
+|------|-------|------------|
+| Bash | 4 | 22s |
+| Read | 3 | 16s |
+
+**work-implement** — 612s total
+
+| Tool | Calls | Total Time |
+|------|-------|------------|
+| Bash | 18 | 284s |
+| Edit | 9 | 63s |
+| Read | 12 | 48s |
+| Grep | 6 | 217s |
+
+**work-review** — 142s total
+
+| Tool | Calls | Total Time |
+|------|-------|------------|
+| Bash | 5 | 98s |
+| Read | 4 | 44s |
+
+**work-merge** — 55s total
+
+| Tool | Calls | Total Time |
+|------|-------|------------|
+| Bash | 6 | 55s |
+
+### Recommendations
+
+| Priority | Recommendation | Estimated Savings |
+|----------|---------------|-------------------|
+| 1 | Delegate implement phase when main context > 37k tokens | ~214k tokens (59%) |
+| 2 | Combine 6 sequential Grep calls into 1-2 with regex alternation | 4-5 tool calls |
+| 3 | Cache project instructions content after first read; reference from context | 3 Read calls |
+| 4 | Extract 5 deterministic validation bash commands to standalone script | 5 tool calls |
+| 5 | Remove repeated boilerplate in work/first-use.md steps 3-5 | ~150 tokens/invocation |
+```
+
+See `skills/optimize-execution/delegation-analysis.md` in the installed CAT plugin for a worked example with full token calculations.
+
+## Integration with Other Skills
+
+- **get-history**: Provides raw session data for analysis
+- **token-report**: Complements with token-focused metrics
+- **learn**: Optimization findings may reveal error patterns
+
+## Limitations
+
+- Analysis is post-hoc; cannot optimize in real-time
+- Cache detection is heuristic (same input = same output assumption)
+- Parallel opportunity detection may miss complex dependencies
+- UX relevance categorization uses general heuristics, may need tuning
+
+## Related Concepts
+
+- **get-history**: Session storage format and how to access raw session data — invoke `cat:get-history`
+- **token-report**: Token budgeting and context health metrics — `skills/token-report/first-use.md`
+- **subagent-context-minimization**: When and how to pass file paths instead of file content to subagents — `plugin/concepts/subagent-context-minimization.md`

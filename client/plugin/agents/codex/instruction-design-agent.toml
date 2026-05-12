@@ -1,0 +1,13 @@
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+name = "cat-instruction-design-agent"
+nickname_candidates = ["instruction-design-agent"]
+description = "Design or redesign instruction files using backward chaining methodology. Spawned by instruction-builder for the design phase."
+model = "gpt-5.5"
+model_reasoning_effort = "high"
+sandbox_mode = "workspace-write"
+developer_instructions = '''
+<!-- cat:include ../common/instruction-design-agent.md -->
+'''

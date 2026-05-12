@@ -1,0 +1,13 @@
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+name = "cat-instruction-extraction-agent"
+nickname_candidates = ["instruction-extraction-agent"]
+description = "Extract semantic units from instruction files using the Nine-Category Extraction Algorithm. Spawned by instruction-builder for iterative requirements extraction."
+model = "gpt-5.5"
+model_reasoning_effort = "high"
+sandbox_mode = "workspace-write"
+developer_instructions = '''
+<!-- cat:include ../common/instruction-extraction-agent.md -->
+'''

@@ -1,11 +1,6 @@
 ---
 paths: ["plugin/**"]
 ---
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # Plugin File References Convention
 
 Files deployed to end-user machines (under `plugin/`) must only reference other deployed paths. They must never
@@ -19,7 +14,6 @@ plugin distribution. End users have access to them at runtime.
 **Source-only path** — Any path outside `plugin/` that exists only in the developer's repository. Common examples:
 
 - `.claude/rules/` — Developer-facing conventions and rules (not shipped to end users)
-- `.cat/rules/` — CAT system rules (not shipped to end users)
 - `.cat/issues/` — Issue tracking artifacts (not shipped to end users)
 - `client/src/` — Java source files (compiled to binaries; source not shipped)
 - `docs/` — Project documentation (not shipped to end users)
@@ -43,7 +37,7 @@ plugin distribution. End users have access to them at runtime.
 
 ```markdown
 # my-skill/first-use.md
-For enforcement rules, see `plugin/rules/my-rules.md`.
+For enforcement rules, see `plugin/rules/common/my-rules.md`.
 ```
 
 **A plugin hook referencing a plugin concept:**
@@ -61,19 +55,20 @@ See `plugin/concepts/worktree-isolation.md` for context.
 For enforcement rules, see `.claude/rules/common.md`.   ← WRONG: .claude/rules/ is not shipped
 ```
 
-**A plugin agent referencing a CAT system rule:**
+**A plugin agent referencing a project-local CAT rule path:**
 
 ```markdown
-For hook registration details, see `.cat/rules/hooks.md`.   ← WRONG: .cat/rules/ is not shipped
+For hook registration details, see `.cat/rules/common/hooks.md`.   ← WRONG: .cat/rules/ is not shipped
 ```
 
 ## Where Rules Belong
 
 | Rule audience | Correct location |
 |---------------|------------------|
-| End users (shipped to their machines) | `plugin/rules/` |
+| End users (shipped to their machines) | `plugin/rules/common/` |
 | Plugin developers only (not shipped) | `.claude/rules/` |
-| CAT system internals (not shipped) | `.cat/rules/` |
+| Runtime-specific shipped rules | `plugin/rules/claude/` or `plugin/rules/codex/` |
 
-When a plugin file needs to document a convention that end users must follow, add the rule to `plugin/rules/` and
-reference it from there. Do not point plugin files at `.claude/rules/` or `.cat/rules/`.
+When a plugin file needs to document a convention that end users must follow across runtimes, add the rule to
+`plugin/rules/common/` and reference it from there. Do not point plugin files at project-local `.claude/rules/`,
+`.cat/rules/{common,claude,codex}/*` paths.

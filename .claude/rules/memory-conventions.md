@@ -8,4 +8,4 @@ convention file (see CLAUDE.md § "Convention File Locations"), not MEMORY.md.
 |---|---|
 | Short-term workarounds, discoveries | `MEMORY.md` |
 | Project development conventions | `.claude/rules/` |
-| End-user behavioral rules | `plugin/rules/`, `plugin/` files |
+| End-user behavioral rules | `plugin/rules/common/`, `plugin/` files |

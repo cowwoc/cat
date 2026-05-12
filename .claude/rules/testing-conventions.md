@@ -123,3 +123,13 @@ public void worktreesDoNotLoadDuplicateRules() {
 **When filesystem checks are NOT acceptable:**
 - After invoking external tools (git, curl, npm, etc.) — test the invocation, not the side effects
 - Testing tool configuration state (sparse-checkout list, gitignore rules) — verify your code sets it correctly
+
+### Do Not Test Design Constraints By Scanning Source
+
+Do not add build-time tests whose only purpose is to enforce design constraints by scanning source files, package names,
+or textual references. Examples include tests that fail because a runtime-specific package mentions another runtime by
+name, or tests that assert a directory contains no imports from a broad category of packages.
+
+These constraints belong in code review, architecture notes, or convention files, not in the test suite. Build-time tests
+should cover executable behavior with meaningful inputs and outputs. Design-boundary concerns should be reviewed
+manually unless they can be expressed as direct product behavior.

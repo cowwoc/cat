@@ -1,0 +1,31 @@
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
+# Plan: v{{MAJOR}} - [Version Name]
+
+## Vision
+[1-2 sentences: overarching goal for this major version]
+
+## Scope
+[What this major version includes and excludes]
+
+## Requirements (Optional)
+
+| ID | Requirement | Priority | Acceptance Criteria |
+|----|-------------|----------|---------------------|
+| REQ-001 | [requirement description] | must-have | [how to verify] |
+
+## Minor Versions
+[Brief overview of planned minor versions within this major]
+
+- **v{{MAJOR}}.0** - [initial milestone focus]
+- **v{{MAJOR}}.1** - [second milestone focus]
+
+## Pre-conditions
+- Previous version complete (or no prerequisites)
+
+## Post-conditions
+- All minor versions complete
+- Vision requirements satisfied

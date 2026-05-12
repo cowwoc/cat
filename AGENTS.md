@@ -1,5 +1,11 @@
 # Project Instructions
 
+## Shared Rules For Non-Claude Agents
+
+Non-Claude agents must load portable rules from `.cat/rules/common/*.md` plus their runtime-specific
+subdirectory (for example `.cat/rules/codex/*.md`) before beginning work. Claude Code uses `.claude/rules/` and
+CAT-managed Claude rules; other runtimes must not load another runtime's `.cat/rules/<runtime>/` rules.
+
 ## Commit Types
 
 | Path | Commit Type | Reason |
@@ -21,7 +27,7 @@
 - **index.json belongs with implementation:** When closing an issue, index.json updates belong in the SAME commit as the implementation work, using the implementation's commit type (feature:/bugfix:/docs:/etc), NOT in a separate planning: commit
 - If a commit would touch both docs and non-docs files, split it into separate commits
 - **Do not update closed issue files:** Never modify plan.md or index.json of closed issues unless the user explicitly
-  instructs you to. Closed issues are historical records. **Exception:** Automated migration scripts under
+  instructs you to. Closed issue files are archival records. **Exception:** Automated migration scripts under
   `plugin/migrations/` must process all issues including closed ones to ensure consistent file formats across the
   entire issue tree.
 
@@ -86,4 +92,3 @@ modifications — the fix may have introduced regressions or the test expectatio
 **must** read `.claude/rules/license-header.md` — it contains the exact header text, the copyright year (2026),
 file-type-specific comment syntax, and the complete list of exemptions. Some file types are exempt; check the
 exemptions before adding a header.
-

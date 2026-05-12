@@ -2,6 +2,16 @@
 
 All source files in the CAT project must include a license header referencing the CAT Commercial License.
 
+## Source vs Release Files
+
+- **Source tree:** All source files must carry a license header unless they are explicitly listed under Exemptions.
+  This includes plugin instruction sources that are later read by agents.
+- **Flattened release artifacts:** Agent-facing generated files must not carry license headers. The release processor
+  strips source headers from files under `client/distribution/target/runtime/**/{agents,concepts,rules,skills}/` before
+  users install the plugin.
+- **Do not solve release token waste by omitting source headers.** Add the source header, then strip it during release
+  processing when the file is agent-facing.
+
 ## Header Text
 
 The standard header text is:
@@ -79,7 +89,21 @@ See LICENSE.md in the project root for license terms.
 # Document Title
 ```
 
-**Skill files:** `SKILL.md` and `first-use.md` files are exempt from license headers; these files are read directly by agents and license headers would waste context tokens.
+### TOML Files (*.toml)
+
+Hash comments at the top of the file.
+
+```toml
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+name = "cat-example"
+```
+
+**Agent-facing source files:** Plugin instruction sources carry license headers in the source tree. The flattened
+release processor strips these headers from agent-facing release files before installation so runtime context does not
+waste tokens on license boilerplate.
 
 ### JSON Files (*.json)
 
@@ -91,12 +115,11 @@ The following files do not require license headers:
 
 - `*.json` files (no comment syntax)
 - `*.xml` files (configuration files, no semantic code)
-- All `SKILL.md` and `first-use.md` files in plugin skills (read directly by agents; license headers waste context tokens)
-- All `*.md` files in `plugin/agents/` (injected into subagent context as prompts; same rationale as SKILL.md)
-- All `*.md` files in `plugin/concepts/` (injected into agent context as reference material; license headers waste context tokens)
-- All `*.md` files in `plugin/rules/` (injected verbatim into agent context on every session; license headers waste context tokens)
-- All `*.md` files in `plugin/tests/` (skill test scenario files; injected at test runtime, license headers waste context tokens)
-- Files in `.cat/` (planning artifacts, config, runtime data)
+- `AGENTS.md` and `CLAUDE.md` (loaded directly by agents as project instructions)
+- All `*.md` files in `.claude/rules/` (Claude-facing development conventions)
+- Agent-facing files in flattened release artifacts under `client/distribution/target/runtime/**` (generated files; the
+  release processor strips source license headers before installation)
+- Files in `.cat/` except `.cat/rules/**` (planning artifacts, config, runtime data)
 - `LICENSE.md` itself
 - Build artifacts (`target/`, `node_modules/`, etc.)
 - Project root documentation (`README.md`, `changelog.md`)

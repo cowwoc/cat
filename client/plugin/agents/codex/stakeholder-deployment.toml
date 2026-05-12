@@ -1,0 +1,13 @@
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+name = "cat-stakeholder-deployment"
+nickname_candidates = ["stakeholder-deployment"]
+description = "DevOps/Release Engineer stakeholder for code review and research. Focus: build systems, CI/CD pipelines, deployment processes"
+model = "gpt-5.4-mini"
+model_reasoning_effort = "medium"
+sandbox_mode = "read-only"
+developer_instructions = '''
+<!-- cat:include ../common/stakeholder-deployment.md -->
+'''

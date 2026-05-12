@@ -12,7 +12,7 @@ setup() {
     setup_test_dir
     export CLAUDE_PLUGIN_ROOT="$PLUGIN_ROOT"
     # Source the utils so we can call functions directly
-    # shellcheck source=../../plugin/migrations/lib/utils.sh
+    # shellcheck source=../../client/plugin/migrations/lib/utils.sh
     source "$CLAUDE_PLUGIN_ROOT/migrations/lib/utils.sh"
 }
 

@@ -1,0 +1,13 @@
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+name = "cat-work-execute"
+nickname_candidates = ["work-execute"]
+description = "Implementation specialist for CAT work Phase 2. Use for executing issue plan.md steps - writing code, fixing bugs, running tests, making commits."
+model = "gpt-5.3-codex"
+model_reasoning_effort = "high"
+sandbox_mode = "workspace-write"
+developer_instructions = '''
+<!-- cat:include ../common/work-execute.md -->
+'''

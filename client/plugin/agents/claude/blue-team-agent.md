@@ -1,0 +1,16 @@
+---
+name: blue-team-agent
+description: >
+  Internal subagent — closes loopholes identified by the red-team by revising the target (skill
+  instructions, test code, or source code) with minimal, targeted patches. Commits the hardened
+  target file each round for use by instruction-builder's adversarial TDD loop.
+model: claude-opus-4-5
+effort: high
+---
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
+
+<!-- cat:include ../common/blue-team-agent.md -->

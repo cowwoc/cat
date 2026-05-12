@@ -1,0 +1,83 @@
+/*
+ * Copyright (c) 2026 Gili Tzabari. All rights reserved.
+ *
+ * Licensed under the CAT Commercial License.
+ * See LICENSE.md in the project root for license terms.
+ */
+package io.github.cowwoc.cat.claude.hook.bash;
+
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+
+import io.github.cowwoc.cat.claude.hook.BashHandler;
+import io.github.cowwoc.cat.claude.hook.ClaudeHook;
+
+import java.util.regex.Pattern;
+
+/**
+ * Block direct manipulation of CAT lock files.
+ */
+public final class BlockLockManipulation implements BashHandler
+{
+  private static final Pattern LOCK_FILE_PATTERN =
+    Pattern.compile("rm\\s+(-[frivI]+\\s+)*.*\\.cat/work/locks");
+  private static final Pattern LOCKS_DIR_PATTERN =
+    Pattern.compile("rm\\s+(-[frivI]+\\s+)*.*\\.cat/work/locks/?(\\s|$|\")");
+
+  private final ClaudeHook scope;
+
+  /**
+   * Creates a new handler for blocking lock file manipulation.
+   *
+   * @param scope the JVM scope providing access to shared resources
+   * @throws NullPointerException if {@code scope} is null
+   */
+  public BlockLockManipulation(ClaudeHook scope)
+  {
+    requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
+  }
+
+  @Override
+  public Result check()
+  {
+    String command = scope.getCommand();
+
+    // Check for rm commands targeting lock files
+    if (LOCK_FILE_PATTERN.matcher(command).find())
+    {
+      return Result.block("""
+        BLOCKED: Direct deletion of lock files is not allowed.
+
+        Lock files exist to prevent concurrent task execution. Deleting them directly
+        bypasses safety checks and could cause:
+        - Concurrent execution of the same task
+        - Merge conflicts
+        - Duplicate work
+        - Data corruption
+
+        CORRECT ACTIONS when encountering a lock:
+        1. Execute a DIFFERENT task instead (use /cat:status to find available tasks)
+        2. If you believe the lock is from a crashed session, ask the USER to run /cat:cleanup
+        3. If you are executing inside a cleanup skill, use the authorized command:
+           issue-lock force-release <issue-id>
+
+        NEVER delete lock files directly.""");
+    }
+
+    // Also block force removal of the entire locks directory
+    if (LOCKS_DIR_PATTERN.matcher(command).find())
+    {
+      return Result.block("""
+        BLOCKED: Cannot remove the locks directory.
+
+        CORRECT ACTIONS:
+        1. Ask the USER to run /cat:cleanup to safely remove stale locks.
+        2. If you are executing inside a cleanup skill, use the authorized command:
+           issue-lock force-release <issue-id>
+
+        NEVER remove the locks directory directly.""");
+    }
+
+    return Result.allow();
+  }
+}

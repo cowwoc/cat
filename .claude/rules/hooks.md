@@ -1,15 +1,17 @@
 ---
-paths: ["plugin/hooks/**", ".claude/settings.json", "client/**"]
+paths: ["plugin/hooks/common/**", "plugin/hooks/claude/**", "plugin/hooks/codex/**", ".claude/settings.json", "client/**"]
 ---
 # Hook Registration Locations
 
-CAT uses two distinct hook registration systems. See `.cat/rules/hooks.md` for full documentation
-(injected via CAT hooks for the main agent).
+CAT uses two distinct hook registration systems. See `plugin/rules/common/issue-lock-checking.md` and
+related portable rules for shipped behavior.
 
 | Hook Type | Registration Location |
 |-----------|----------------------|
+| **Portable plugin hook files** | `plugin/hooks/common/` |
 | **Project hooks** | `.claude/settings.json` |
-| **Plugin hooks** | `plugin/hooks/hooks.json` |
+| **Claude plugin hooks** | `plugin/hooks/claude/hooks.json` |
+| **Codex plugin hooks** | `plugin/hooks/codex/hooks.json` |
 
 ## Two Categories of CLI Tool Output
 
@@ -162,10 +164,10 @@ Identifies the specific file, states the correct path the agent should use, and 
 ERROR: Worktree isolation violation
 
 You are working in worktree: /workspace/.cat/worktrees/my-issue
-But attempting to access outside it: /workspace/plugin/skills/foo.md
+But attempting to access outside it: /workspace/plugin/skills/common/foo/SKILL.md
 
 Use the corrected worktree path instead:
-  /workspace/.cat/worktrees/my-issue/plugin/skills/foo.md
+  /workspace/.cat/worktrees/my-issue/plugin/skills/common/foo/SKILL.md
 
 Do NOT bypass this hook using Bash (cat, echo, tee, etc.) to access the file directly.
 The worktree exists to isolate changes from the main workspace until merge.
@@ -180,7 +182,7 @@ BLOCKED: Worktree has uncommitted changes. Commit all changes before spawning a 
 
 Worktree: /workspace/.cat/worktrees/my-issue
 Uncommitted changes detected (git status --porcelain):
- M plugin/skills/foo.md
+ M plugin/skills/common/foo/SKILL.md
 
 Rationale: Each subagent is spawned with isolation: "worktree", creating a new git worktree
 branched from the current HEAD. Uncommitted changes are NOT visible in the subagent's
@@ -196,7 +198,7 @@ States the file, provides numbered steps, explains why isolation matters, and co
 ```
 BLOCKED: Cannot edit source files outside of an issue worktree.
 
-File: plugin/skills/foo.md
+File: plugin/skills/common/foo/SKILL.md
 
 Solution:
 1. Create task: /cat:add <task-description>

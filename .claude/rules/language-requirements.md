@@ -59,16 +59,19 @@ Existing Python scripts are tracked for migration under `migrate-python-to-java`
 ```
 project/
 ├── plugin/                 # CAT plugin source
-│   ├── hooks/              # Hook handlers (Java/Bash)
-│   ├── skills/             # Skill definitions (Markdown)
-│   ├── commands/           # Command definitions (Markdown)
-│   └── scripts/            # Utility scripts
+│   ├── hooks/              # Hook config/helpers: common/, claude/, codex/
+│   ├── skills/             # Skill definitions: common/, claude/, codex/
+│   ├── agents/             # Agent definitions: common/, claude/, codex/
+│   ├── rules/              # Shipped CAT rules: common/, claude/, codex/
+│   ├── concepts/           # Shared reference documentation
+│   └── config/             # Plugin configuration data
 ├── tests/                  # Test suites
 └── docs/                   # Documentation
 ```
 
-Files under `plugin/` are deployed to end-user machines. They must not reference source-only paths (`.claude/rules/`,
-`.cat/rules/`, etc.) that are not shipped. See `.claude/rules/plugin-file-references.md` for the full convention.
+Files under `plugin/` are deployed to end-user machines. They must not reference source-only paths such as
+project-local `.claude/rules/`, `.cat/rules/codex/*`, or `.cat/rules/common/*` locations.
+See `.claude/rules/plugin-file-references.md` for the full convention.
 
 ## Enforcement
 

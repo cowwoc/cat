@@ -19,6 +19,9 @@
     <property name="checks" value="MissingJavadocType"/>
   </module>
   <module name="TreeWalker">
+    <!-- WORKAROUND: https://github.com/checkstyle/checkstyle/issues/17052 -->
+    <property name="skipFileOnJavaParseException" value="true"/>
+    <property name="javaParseExceptionSeverity" value="ignore"/>
     <module name="SuppressWarningsHolder"/>
     <!-- Enforce 2-space indentation (project convention) -->
     <module name="RegexpSinglelineJava">

@@ -1,0 +1,119 @@
+{
+  "model_id" : "claude-haiku-4-5",
+  "effort" : "medium",
+  "failed_test_ids" : [ "req-piped-output-core", "req-proactive-cleanup" ],
+  "sprt" : {
+    "test_cases" : [ {
+      "test_case_id" : "req-proactive-cleanup",
+      "decision" : "INCONCLUSIVE",
+      "log_ratio" : -1.0986,
+      "pass_count" : 0,
+      "fail_count" : 1,
+      "total_runs" : 1,
+      "total_tokens" : 0,
+      "total_duration_ms" : 0
+    }, {
+      "test_case_id" : "unit_exception_when_applies",
+      "decision" : "INCONCLUSIVE",
+      "log_ratio" : 0.1112,
+      "pass_count" : 1,
+      "fail_count" : 0,
+      "total_runs" : 1,
+      "total_tokens" : 0,
+      "total_duration_ms" : 0
+    }, {
+      "test_case_id" : "req-piped-output-core",
+      "decision" : "INCONCLUSIVE",
+      "log_ratio" : -1.0986,
+      "pass_count" : 0,
+      "fail_count" : 1,
+      "total_runs" : 1,
+      "total_tokens" : 0,
+      "total_duration_ms" : 0
+    }, {
+      "test_case_id" : "unit_same_file_forbidden",
+      "decision" : "INCONCLUSIVE",
+      "log_ratio" : 0.0,
+      "pass_count" : 0,
+      "fail_count" : 0,
+      "total_runs" : 0,
+      "total_tokens" : 0,
+      "total_duration_ms" : 0
+    }, {
+      "test_case_id" : "unit_include_stderr",
+      "decision" : "INCONCLUSIVE",
+      "log_ratio" : 0.0,
+      "pass_count" : 0,
+      "fail_count" : 0,
+      "total_runs" : 0,
+      "total_tokens" : 0,
+      "total_duration_ms" : 0
+    }, {
+      "test_case_id" : "unit_same_file_swap",
+      "decision" : "INCONCLUSIVE",
+      "log_ratio" : 0.0,
+      "pass_count" : 0,
+      "fail_count" : 0,
+      "total_runs" : 0,
+      "total_tokens" : 0,
+      "total_duration_ms" : 0
+    }, {
+      "test_case_id" : "cond-no-unnecessary-tee",
+      "decision" : "INCONCLUSIVE",
+      "log_ratio" : 0.0,
+      "pass_count" : 0,
+      "fail_count" : 0,
+      "total_runs" : 0,
+      "total_tokens" : 0,
+      "total_duration_ms" : 0
+    }, {
+      "test_case_id" : "proh-no-bare-pipe",
+      "decision" : "INCONCLUSIVE",
+      "log_ratio" : 0.0,
+      "pass_count" : 0,
+      "fail_count" : 0,
+      "total_runs" : 0,
+      "total_tokens" : 0,
+      "total_duration_ms" : 0
+    }, {
+      "test_case_id" : "run-in-background-exemption",
+      "decision" : "INCONCLUSIVE",
+      "log_ratio" : 0.0,
+      "pass_count" : 0,
+      "fail_count" : 0,
+      "total_runs" : 0,
+      "total_tokens" : 0,
+      "total_duration_ms" : 0
+    }, {
+      "test_case_id" : "tee_piped_output_negative_3",
+      "decision" : "INCONCLUSIVE",
+      "log_ratio" : 0.0,
+      "pass_count" : 0,
+      "fail_count" : 0,
+      "total_runs" : 0,
+      "total_tokens" : 0,
+      "total_duration_ms" : 0
+    }, {
+      "test_case_id" : "unit_exception_does_not_apply",
+      "decision" : "INCONCLUSIVE",
+      "log_ratio" : 0.0,
+      "pass_count" : 0,
+      "fail_count" : 0,
+      "total_runs" : 0,
+      "total_tokens" : 0,
+      "total_duration_ms" : 0
+    }, {
+      "test_case_id" : "unit_cleanup_no_permission",
+      "decision" : "INCONCLUSIVE",
+      "log_ratio" : 0.0,
+      "pass_count" : 0,
+      "fail_count" : 0,
+      "total_runs" : 0,
+      "total_tokens" : 0,
+      "total_duration_ms" : 0
+    } ],
+    "overall_decision" : "INCONCLUSIVE",
+    "total_tokens" : 0,
+    "total_duration_ms" : 0
+  }
+}

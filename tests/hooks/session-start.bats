@@ -7,7 +7,7 @@
 setup() {
   TEST_DIR=$(mktemp -d)
   # Source the script under test, guarding against main() execution
-  BATS_TEST_SOURCED=true source "${BATS_TEST_DIRNAME}/../../plugin/hooks/session-start.sh" || true
+  BATS_TEST_SOURCED=true source "${BATS_TEST_DIRNAME}/../../client/plugin/hooks/claude/session-start.sh" || true
 }
 
 teardown() {

@@ -815,7 +815,7 @@ EOF
     [ "$status" -eq 0 ]
 
     # Verify get-config-output can read the migrated config
-    run "$CLAUDE_PLUGIN_ROOT/../client/target/jlink/bin/get-config-output" effective
+    run "$CLAUDE_PLUGIN_ROOT/../cli/target/jlink/bin/get-config-output" effective
     [ "$status" -eq 0 ]
 
     # Verify output contains expected trust value
@@ -1111,4 +1111,77 @@ EOF
     [ "$status" -ne 0 ]
     run grep "^## Goal" ".cat/issues/v2/v2.1/test-issue/plan.md"
     [ "$status" -eq 0 ]
+}
+
+# ─── Phase 25: Move uppercase rule index into .cat/rules/common/ ────────────
+
+@test "2.1.sh phase 25: renames root uppercase rule index into .cat/rules/common" {
+    mkdir -p "$TEST_TEMP_DIR/.cat/rules"
+    echo "# Rule Index" > "$TEST_TEMP_DIR/.cat/rules/INDEX.md"
+    setup_config_fixture
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    [ "$(cat .cat/rules/common/index.md)" = "# Rule Index" ]
+    [ ! -f ".cat/rules/INDEX.md" ]
+}
+
+# ─── Phase 28: Move interim project rules into .cat/rules/common/ ───────────
+
+@test "2.1.sh phase 28: moves portable project rules from .agents/rules to .cat/rules/common" {
+    mkdir -p "$TEST_TEMP_DIR/.agents/rules"
+    cat > "$TEST_TEMP_DIR/.agents/rules/java.md" <<'EOF'
+# Java Rules
+
+Use imports instead of inline fully-qualified names.
+EOF
+    setup_config_fixture
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    [ -f ".cat/rules/common/java.md" ]
+    run grep "Use imports instead of inline fully-qualified names." ".cat/rules/common/java.md"
+    [ "$status" -eq 0 ]
+    [ ! -f ".agents/rules/java.md" ]
+    [ ! -d ".agents/rules" ]
+}
+
+@test "2.1.sh phase 28: skips existing destination rule without overwrite" {
+    mkdir -p "$TEST_TEMP_DIR/.cat/rules/common"
+    mkdir -p "$TEST_TEMP_DIR/.agents/rules"
+    echo "old rule" > "$TEST_TEMP_DIR/.agents/rules/java.md"
+    echo "existing rule" > "$TEST_TEMP_DIR/.cat/rules/common/java.md"
+    setup_config_fixture
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    [ "$(cat .cat/rules/common/java.md)" = "existing rule" ]
+    [ "$(cat .agents/rules/java.md)" = "old rule" ]
+}
+
+@test "2.1.sh phase 28: moves existing root portable project rules to .cat/rules/common" {
+    mkdir -p "$TEST_TEMP_DIR/.cat/rules"
+    echo "portable rule" > "$TEST_TEMP_DIR/.cat/rules/java.md"
+    setup_config_fixture
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    [ "$(cat .cat/rules/common/java.md)" = "portable rule" ]
+    [ ! -f ".cat/rules/java.md" ]
+}
+
+@test "2.1.sh phase 28: moves Codex-specific project rules to .cat/rules/codex" {
+    mkdir -p "$TEST_TEMP_DIR/.codex/rules"
+    echo "codex rule" > "$TEST_TEMP_DIR/.codex/rules/runtime.md"
+    setup_config_fixture
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    [ "$(cat .cat/rules/codex/runtime.md)" = "codex rule" ]
+    [ ! -f ".codex/rules/runtime.md" ]
 }

@@ -1,0 +1,602 @@
+/*
+ * Copyright (c) 2026 Gili Tzabari. All rights reserved.
+ *
+ * Licensed under the CAT Commercial License.
+ * See LICENSE.md in the project root for license terms.
+ */
+package io.github.cowwoc.cat.agent;
+
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayDeque;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
+
+/**
+ * Builds flattened runtime-specific plugin artifacts.
+ * <p>
+ * The source tree keeps runtime-neutral and runtime-specific instruction files separate. Release artifacts
+ * expose only the content relevant to one runtime, inline always-loaded shared instruction fragments, and
+ * strip source license headers from files that are injected into agent context.
+ */
+public final class PluginArtifactBuilder
+{
+  private static final Pattern FILE_REFERENCE = Pattern.compile(
+    "(?<![A-Za-z0-9_./-])([A-Za-z0-9][A-Za-z0-9_.-]*\\.[A-Za-z0-9][A-Za-z0-9_.-]*)(?![A-Za-z0-9_./-])");
+  private static final Pattern MARKDOWN_LICENSE_HEADER = Pattern.compile(
+    "\\A(?<frontmatter>---\\R.*?\\R---\\R)?" +
+      "<!--\\R" +
+      "Copyright \\(c\\) 2026 Gili Tzabari\\. All rights reserved\\.\\R" +
+      "Licensed under the CAT Commercial License\\.\\R" +
+      "See LICENSE\\.md in the project root for license terms\\.\\R" +
+      "-->\\R",
+    Pattern.DOTALL);
+  private static final Pattern HASH_LICENSE_HEADER = Pattern.compile(
+    "\\A" +
+      "# Copyright \\(c\\) 2026 Gili Tzabari\\. All rights reserved\\.\\R" +
+      "#\\R" +
+      "# Licensed under the CAT Commercial License\\.\\R" +
+      "# See LICENSE\\.md in the project root for license terms\\.\\R");
+  private final JsonMapper jsonMapper = JsonMapper.builder().build();
+  private final Path pluginDir;
+  private final Path clientDir;
+  private final Path cliJlinkDir;
+  private final Path targetDir;
+
+  /**
+   * Creates a new builder.
+   *
+   * @param pluginDir the plugin source directory
+   * @param clientDir the Maven parent client directory
+   * @param targetDir the output directory for flattened runtime artifacts
+   * @throws NullPointerException if any argument is null
+   */
+  public PluginArtifactBuilder(Path pluginDir, Path clientDir, Path targetDir)
+  {
+    this.pluginDir = pluginDir.toAbsolutePath().normalize();
+    this.clientDir = clientDir.toAbsolutePath().normalize();
+    this.cliJlinkDir = this.clientDir.resolve("cli/target/jlink");
+    this.targetDir = targetDir.toAbsolutePath().normalize();
+  }
+
+  /**
+   * Builds all runtime artifacts.
+   *
+   * @throws IOException if file operations fail
+   */
+  public void build() throws IOException
+  {
+    if (Files.isDirectory(targetDir, LinkOption.NOFOLLOW_LINKS))
+      deleteDirectory(targetDir);
+    buildRuntime(Runtime.CLAUDE);
+    buildRuntime(Runtime.CODEX);
+    System.out.println("Built runtime plugin artifacts:");
+    System.out.println("  " + targetDir.resolve(Runtime.CLAUDE.directoryName));
+    System.out.println("  " + targetDir.resolve(Runtime.CODEX.directoryName));
+  }
+
+  private void buildRuntime(Runtime runtime) throws IOException
+  {
+    Path target = targetDir.resolve(runtime.directoryName);
+    Files.createDirectories(target);
+
+    copyCommonPluginFiles(target);
+    copyTree(pluginDir.resolve(runtime.manifestDirectory), target.resolve(runtime.manifestDirectory));
+
+    Files.createDirectories(target.resolve("rules"));
+    copyTree(pluginDir.resolve("rules/common"), target.resolve("rules/common"));
+    copyTree(pluginDir.resolve("rules").resolve(runtime.directoryName),
+      target.resolve("rules").resolve(runtime.directoryName));
+
+    Files.createDirectories(target.resolve("hooks"));
+    copyTree(pluginDir.resolve("hooks/common"), target.resolve("hooks/common"));
+    copyTree(pluginDir.resolve("hooks").resolve(runtime.directoryName),
+      target.resolve("hooks").resolve(runtime.directoryName));
+    copyFile(pluginDir.resolve("hooks").resolve(runtime.directoryName).resolve("hooks.json"),
+      target.resolve("hooks/hooks.json"));
+
+    Files.createDirectories(target.resolve("skills"));
+    copySkillSet(pluginDir.resolve("skills/common"), target.resolve("skills"), runtime);
+    copySkillSet(pluginDir.resolve("skills").resolve(runtime.directoryName), target.resolve("skills"), runtime);
+
+    Files.createDirectories(target.resolve("agents"));
+    if (runtime == Runtime.CLAUDE)
+      copyInstructionTree(pluginDir.resolve("agents/claude"), target.resolve("agents"), runtime);
+    else
+      copyInstructionTree(pluginDir.resolve("agents/codex"), target.resolve("agents"), runtime);
+    deleteNamedFiles(target.resolve("agents"), "README.md");
+
+    stripAgentFacingLicenseHeaders(target);
+    writeRuntimeVersion(target, runtime.manifestDirectory);
+    makeShellScriptsExecutable(target);
+    verifyRuntimeArtifact(target);
+  }
+
+  private void copyCommonPluginFiles(Path target) throws IOException
+  {
+    copyTree(pluginDir.resolve(".git-filter-repo-config"), target.resolve(".git-filter-repo-config"));
+    copyTree(pluginDir.resolve("concepts"), target.resolve("concepts"));
+    copyTree(pluginDir.resolve("config"), target.resolve("config"));
+    copyTree(pluginDir.resolve("lang"), target.resolve("lang"));
+    copyTree(pluginDir.resolve("migrations"), target.resolve("migrations"));
+    copyTree(pluginDir.resolve("scripts"), target.resolve("scripts"));
+    copyTree(pluginDir.resolve("templates"), target.resolve("templates"));
+
+    copyFile(pluginDir.resolve("emoji-widths.json"), target.resolve("emoji-widths.json"));
+    copyFile(pluginDir.resolve("package.json"), target.resolve("package.json"));
+    copyFile(pluginDir.resolve("package-lock.json"), target.resolve("package-lock.json"));
+    copyFile(clientDir.getParent().resolve("LICENSE.md"), target.resolve("LICENSE.md"));
+
+    if (Files.isDirectory(cliJlinkDir, LinkOption.NOFOLLOW_LINKS))
+      copyTree(cliJlinkDir, target.resolve("client"));
+  }
+
+  private void copySkillSet(Path source, Path target, Runtime runtime) throws IOException
+  {
+    if (!Files.isDirectory(source, LinkOption.NOFOLLOW_LINKS))
+      return;
+    try (Stream<Path> stream = Files.list(source))
+    {
+      List<Path> skillDirectories = stream.
+        filter(path -> Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)).
+        filter(path -> Files.isRegularFile(path.resolve("SKILL.md"), LinkOption.NOFOLLOW_LINKS)).
+        sorted(Comparator.comparing(path -> path.getFileName().toString())).
+        toList();
+      for (Path skillDirectory : skillDirectories)
+      {
+        Path targetSkill = target.resolve(skillDirectory.getFileName());
+        if (Files.exists(targetSkill, LinkOption.NOFOLLOW_LINKS))
+          deleteDirectory(targetSkill);
+        copyRuntimeSkillTree(skillDirectory, targetSkill, runtime);
+      }
+    }
+  }
+
+  private boolean isAllowedIncludeTarget(Path path, Runtime runtime)
+  {
+    if (!path.startsWith(pluginDir) || isSourceOnlyPath(pluginDir.relativize(path)))
+      return false;
+    List<Path> allowedRoots = List.of(
+      pluginDir.resolve("agents/common"),
+      pluginDir.resolve("skills/common"),
+      pluginDir.resolve("rules/common"),
+      pluginDir.resolve("hooks/common"),
+      pluginDir.resolve("concepts"),
+      pluginDir.resolve("agents").resolve(runtime.directoryName),
+      pluginDir.resolve("skills").resolve(runtime.directoryName),
+      pluginDir.resolve("rules").resolve(runtime.directoryName),
+      pluginDir.resolve("hooks").resolve(runtime.directoryName));
+    for (Path allowedRoot : allowedRoots)
+    {
+      if (path.startsWith(allowedRoot.toAbsolutePath().normalize()))
+        return true;
+    }
+    return false;
+  }
+
+  private void stripAgentFacingLicenseHeaders(Path target) throws IOException
+  {
+    for (Path directory : List.of(target.resolve("agents"), target.resolve("concepts"), target.resolve("rules"),
+      target.resolve("skills")))
+    {
+      if (!Files.isDirectory(directory, LinkOption.NOFOLLOW_LINKS))
+        continue;
+      Files.walkFileTree(directory, new SimpleFileVisitor<>()
+      {
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException
+        {
+          if (isMarkdownOrToml(file))
+          {
+            String text = Files.readString(file, StandardCharsets.UTF_8);
+            if (file.getFileName().toString().endsWith(".md"))
+              text = stripMarkdownLicenseHeader(text);
+            else
+              text = HASH_LICENSE_HEADER.matcher(text).replaceFirst("");
+            writeStringIfChanged(file, text);
+          }
+          return FileVisitResult.CONTINUE;
+        }
+      });
+    }
+  }
+
+  private String stripMarkdownLicenseHeader(String text)
+  {
+    Matcher matcher = MARKDOWN_LICENSE_HEADER.matcher(text);
+    if (!matcher.find())
+      return text;
+    String frontmatter = matcher.group("frontmatter");
+    if (frontmatter == null)
+      return matcher.replaceFirst("");
+    return frontmatter + text.substring(matcher.end());
+  }
+
+  private String stripSourceLicenseHeader(String text)
+  {
+    return HASH_LICENSE_HEADER.matcher(stripMarkdownLicenseHeader(text)).replaceFirst("");
+  }
+
+  private void writeRuntimeVersion(Path target, String manifestDirectory) throws IOException
+  {
+    Path manifest = target.resolve(manifestDirectory).resolve("plugin.json");
+    Path versionFile = target.resolve("client/VERSION");
+    if (!Files.isRegularFile(manifest, LinkOption.NOFOLLOW_LINKS) ||
+      !Files.isDirectory(versionFile.getParent(), LinkOption.NOFOLLOW_LINKS))
+    {
+      return;
+    }
+    JsonNode json = jsonMapper.readTree(Files.readString(manifest, StandardCharsets.UTF_8));
+    JsonNode version = json.get("version");
+    if (version == null || !version.isString())
+      throw new IllegalStateException("Missing string version in " + manifest);
+    Files.writeString(versionFile, version.stringValue() + "\n", StandardCharsets.UTF_8);
+  }
+
+  private void deleteNamedFiles(Path root, String fileName) throws IOException
+  {
+    if (!Files.isDirectory(root, LinkOption.NOFOLLOW_LINKS))
+      return;
+    try (Stream<Path> stream = Files.walk(root))
+    {
+      List<Path> files = stream.
+        filter(path -> path.getFileName().toString().equals(fileName)).
+        sorted(Comparator.reverseOrder()).
+        toList();
+      for (Path file : files)
+        Files.deleteIfExists(file);
+    }
+  }
+
+  private void makeShellScriptsExecutable(Path root) throws IOException
+  {
+    Files.walkFileTree(root, new SimpleFileVisitor<>()
+    {
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException
+      {
+        if (file.getFileName().toString().endsWith(".sh"))
+          ExecutableFiles.makeExecutable(file);
+        return FileVisitResult.CONTINUE;
+      }
+    });
+  }
+
+  private void verifyRuntimeArtifact(Path target) throws IOException
+  {
+    Path commonAgents = target.resolve("agents/common");
+    if (Files.exists(commonAgents, LinkOption.NOFOLLOW_LINKS))
+      throw new IllegalStateException("Runtime artifact must not contain common agent sources: " + commonAgents);
+    verifyNoSourceOnlySkillFiles(target.resolve("skills"));
+    verifyNoAgentFacingSourceText(target);
+  }
+
+  private void verifyNoSourceOnlySkillFiles(Path skillsRoot) throws IOException
+  {
+    if (!Files.isDirectory(skillsRoot, LinkOption.NOFOLLOW_LINKS))
+      return;
+    try (Stream<Path> stream = Files.walk(skillsRoot))
+    {
+      List<Path> invalidFiles = stream.
+        filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)).
+        filter(path -> isSourceOnlyPath(skillsRoot.relativize(path))).
+        sorted().
+        toList();
+      if (!invalidFiles.isEmpty())
+        throw new IllegalStateException("Runtime artifact contains source-only skill files: " + invalidFiles);
+    }
+  }
+
+  private void verifyNoAgentFacingSourceText(Path target) throws IOException
+  {
+    for (Path directory : List.of(target.resolve("agents"), target.resolve("concepts"), target.resolve("rules"),
+      target.resolve("skills")))
+    {
+      if (!Files.isDirectory(directory, LinkOption.NOFOLLOW_LINKS))
+        continue;
+      Files.walkFileTree(directory, new SimpleFileVisitor<>()
+      {
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException
+        {
+          if (!isMarkdownOrToml(file))
+            return FileVisitResult.CONTINUE;
+          String text = Files.readString(file, StandardCharsets.UTF_8);
+          if (containsSourceLicenseText(text))
+            throw new IllegalStateException("Runtime artifact contains source license text: " + file);
+          if (text.contains("cat:include"))
+            throw new IllegalStateException("Runtime artifact contains unresolved cat:include marker: " + file);
+          return FileVisitResult.CONTINUE;
+        }
+      });
+    }
+  }
+
+  private boolean containsSourceLicenseText(String text)
+  {
+    return text.contains("Copyright (c) 2026 Gili Tzabari. All rights reserved.") ||
+      text.contains("Licensed under the CAT Commercial License.") ||
+      text.contains("See LICENSE.md in the project root for license terms.");
+  }
+
+  private void copyTree(Path source, Path target) throws IOException
+  {
+    if (!Files.isDirectory(source, LinkOption.NOFOLLOW_LINKS))
+      return;
+    Files.walkFileTree(source, new SimpleFileVisitor<>()
+    {
+      @Override
+      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException
+      {
+        Path relative = source.relativize(dir);
+        Files.createDirectories(target.resolve(relative));
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException
+      {
+        Path relative = source.relativize(file);
+        copyFileSystemEntry(file, target.resolve(relative));
+        return FileVisitResult.CONTINUE;
+      }
+    });
+  }
+
+  private void copyInstructionTree(Path source, Path target, Runtime runtime) throws IOException
+  {
+    if (!Files.isDirectory(source, LinkOption.NOFOLLOW_LINKS))
+      return;
+    Files.walkFileTree(source, new SimpleFileVisitor<>()
+    {
+      @Override
+      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException
+      {
+        Path relative = source.relativize(dir);
+        Files.createDirectories(target.resolve(relative));
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException
+      {
+        Path relative = source.relativize(file);
+        Path targetFile = target.resolve(relative);
+        if (isMarkdownOrToml(file))
+          copyInstructionFile(file, targetFile, runtime);
+        else
+          copyFileSystemEntry(file, targetFile);
+        return FileVisitResult.CONTINUE;
+      }
+    });
+  }
+
+  private void copyRuntimeSkillTree(Path source, Path target, Runtime runtime) throws IOException
+  {
+    Set<Path> runtimeFiles = getRuntimeSkillFiles(source);
+    Files.walkFileTree(source, new SimpleFileVisitor<>()
+    {
+      @Override
+      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException
+      {
+        Path relative = source.relativize(dir);
+        if (isSourceOnlyPath(relative))
+          return FileVisitResult.SKIP_SUBTREE;
+        Files.createDirectories(target.resolve(relative));
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException
+      {
+        Path relative = source.relativize(file);
+        if (runtimeFiles.contains(relative))
+        {
+          Path targetFile = target.resolve(relative);
+          if (isMarkdownOrToml(file))
+            copyInstructionFile(file, targetFile, runtime);
+          else
+            copyFileSystemEntry(file, targetFile);
+        }
+        return FileVisitResult.CONTINUE;
+      }
+    });
+  }
+
+  private void copyInstructionFile(Path source, Path target, Runtime runtime) throws IOException
+  {
+    Files.createDirectories(target.getParent());
+    String text = stripSourceLicenseHeader(Files.readString(source, StandardCharsets.UTF_8));
+    text = SourceIncludeProcessor.expand(source, text, path -> isAllowedIncludeTarget(path, runtime),
+      this::stripSourceLicenseHeader);
+    writeStringIfChanged(target, text);
+  }
+
+  private Set<Path> getRuntimeSkillFiles(Path source) throws IOException
+  {
+    Map<String, Path> candidateByFileName = new HashMap<>();
+    Set<Path> included = new LinkedHashSet<>();
+    try (Stream<Path> stream = Files.walk(source))
+    {
+      List<Path> candidates = stream.
+        filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)).
+        map(source::relativize).
+        filter(relative -> !isSourceOnlyPath(relative)).
+        sorted().
+        toList();
+      for (Path candidate : candidates)
+      {
+        addCandidate(candidateByFileName, candidate);
+        String fileName = candidate.getFileName().toString();
+        if (fileName.equals("SKILL.md") || fileName.equals("first-use.md"))
+          included.add(candidate);
+      }
+    }
+
+    Queue<Path> pending = new ArrayDeque<>(included);
+    while (!pending.isEmpty())
+    {
+      Path current = pending.remove();
+      if (!isMarkdownOrToml(current))
+        continue;
+      String text = Files.readString(source.resolve(current), StandardCharsets.UTF_8);
+      Matcher matcher = FILE_REFERENCE.matcher(text);
+      while (matcher.find())
+      {
+        Path referenced = candidateByFileName.get(matcher.group(1));
+        if (referenced != null && included.add(referenced))
+        {
+          pending.add(referenced);
+        }
+      }
+    }
+    return included;
+  }
+
+  private void addCandidate(Map<String, Path> candidateByFileName, Path candidate)
+  {
+    String fileName = candidate.getFileName().toString();
+    Path previous = candidateByFileName.putIfAbsent(fileName, candidate);
+    if (previous != null)
+    {
+      throw new IllegalStateException("Duplicate runtime skill companion filename '" + fileName +
+        "' in " + previous + " and " + candidate);
+    }
+  }
+
+  private boolean isSourceOnlyPath(Path relative)
+  {
+    for (Path part : relative)
+    {
+      String name = part.toString();
+      if (name.equals("tests") || name.equals("instruction-test"))
+        return true;
+    }
+    Path fileNamePath = relative.getFileName();
+    if (fileNamePath == null)
+      return false;
+    String fileName = fileNamePath.toString();
+    return fileName.endsWith(".bats");
+  }
+
+  private void copyFile(Path source, Path target) throws IOException
+  {
+    if (!Files.isRegularFile(source, LinkOption.NOFOLLOW_LINKS))
+      return;
+    Files.createDirectories(target.getParent());
+    copyFileSystemEntry(source, target);
+  }
+
+  private void copyFileSystemEntry(Path source, Path target) throws IOException
+  {
+    if (Files.isSymbolicLink(source))
+    {
+      copyJlinkSymlinkTarget(source, target);
+      return;
+    }
+    Files.createDirectories(target.getParent());
+    if (Files.exists(target, LinkOption.NOFOLLOW_LINKS))
+      Files.delete(target);
+    Files.copy(source, target);
+  }
+
+  private void copyJlinkSymlinkTarget(Path source, Path target) throws IOException
+  {
+    if (!source.startsWith(cliJlinkDir))
+      throw new IOException("Refusing to copy symbolic link into plugin artifact: " + source);
+
+    Path linkTarget = Files.readSymbolicLink(source);
+    Path resolvedTarget;
+    if (linkTarget.isAbsolute())
+      resolvedTarget = linkTarget.normalize();
+    else
+      resolvedTarget = source.getParent().resolve(linkTarget).normalize();
+    if (!resolvedTarget.startsWith(cliJlinkDir) ||
+      !Files.isRegularFile(resolvedTarget, LinkOption.NOFOLLOW_LINKS))
+    {
+      throw new IOException("Refusing to copy unsafe jlink symbolic link into plugin artifact: " +
+        source + " -> " + linkTarget);
+    }
+
+    Files.createDirectories(target.getParent());
+    if (Files.exists(target, LinkOption.NOFOLLOW_LINKS))
+      Files.delete(target);
+    Files.copy(resolvedTarget, target);
+  }
+
+  private void writeStringIfChanged(Path path, String content) throws IOException
+  {
+    if (Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS) &&
+      Files.readString(path, StandardCharsets.UTF_8).equals(content))
+    {
+      return;
+    }
+    Files.writeString(path, content, StandardCharsets.UTF_8);
+  }
+
+  private void deleteDirectory(Path directory) throws IOException
+  {
+    try (Stream<Path> walk = Files.walk(directory))
+    {
+      List<Path> paths = walk.sorted(Comparator.reverseOrder()).toList();
+      for (Path path : paths)
+      {
+        path.toFile().setWritable(true, false);
+        Files.deleteIfExists(path);
+      }
+    }
+  }
+
+  private boolean isMarkdownOrToml(Path path)
+  {
+    String fileName = path.getFileName().toString().toLowerCase(Locale.ROOT);
+    return fileName.endsWith(".md") || fileName.endsWith(".toml");
+  }
+
+  /**
+   * Entry point.
+   *
+   * @param args {@code <plugin-dir> <client-dir> <target-dir>}
+   * @throws IOException if file operations fail
+   */
+  public static void main(String[] args) throws IOException
+  {
+    if (args.length != 3)
+      throw new IllegalArgumentException(
+        "Usage: build-runtime-artifacts <plugin-dir> <client-dir> <target-dir>");
+    new PluginArtifactBuilder(Path.of(args[0]), Path.of(args[1]), Path.of(args[2])).build();
+  }
+
+  private enum Runtime
+  {
+    CLAUDE("claude", ".claude-plugin"),
+    CODEX("codex", ".codex-plugin");
+
+    private final String directoryName;
+    private final String manifestDirectory;
+
+    Runtime(String directoryName, String manifestDirectory)
+    {
+      this.directoryName = directoryName;
+      this.manifestDirectory = manifestDirectory;
+    }
+  }
+}

@@ -1,6 +1,11 @@
 ---
 description: Reinstall CAT plugin, build Java client, and install the jlink runtime image into CLAUDE_PLUGIN_DATA
 ---
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 
 # Update Client
 
@@ -23,11 +28,22 @@ else
 fi
 ```
 
+## Install Targets (authoritative)
+
+This workflow updates exactly two targets:
+
+1. **Plugin sources** → `${CLAUDE_PLUGIN_ROOT}`
+   - Copy `plugin/` files from the issue worktree into `${CLAUDE_PLUGIN_ROOT}` so skill/rule/agent/hook source changes take effect.
+2. **Runtime binaries** → `${CLAUDE_PLUGIN_DATA}`
+   - Install the jlink runtime (`client/`) into `${CLAUDE_PLUGIN_DATA}`.
+
+No third destination is required. Any mention of "overlay" refers to copying issue-worktree `plugin/` files into `${CLAUDE_PLUGIN_ROOT}`.
+
 ## Worktree vs Main Workspace
 
-If `CLAUDE_PROJECT_DIR` contains `/.cat/work/worktrees/`, you are running in a worktree. After the normal
-install (which installs the marketplace/main-workspace version), the worktree's `plugin/` files are copied
-over the install path so your in-progress changes take effect immediately.
+If `CLAUDE_PROJECT_DIR` contains `${workPath}/worktrees`, you are running in a worktree. After the normal
+install (which installs the marketplace/main-workspace version), copy the worktree's `plugin/` files into
+`${CLAUDE_PLUGIN_ROOT}` so in-progress source changes take effect immediately.
 
 ## Steps
 
@@ -121,11 +137,11 @@ echo "2.1" > "${CLAUDE_PLUGIN_DATA}/client/VERSION"
 echo "Installed runtime to development data path: ${CLAUDE_PLUGIN_DATA}/client/"
 ```
 
-### 2b. Overlay Worktree Plugin Files (worktree only)
+### 2b. Copy Worktree Plugin Sources to `${CLAUDE_PLUGIN_ROOT}` (worktree only)
 
-If running in a worktree, copy the worktree's `plugin/` files over the install path so in-progress changes
-take effect. This overwrites files installed from the marketplace with the worktree version; new files are
-added. Run only when `CLAUDE_PROJECT_DIR` contains `/.cat/work/worktrees/`:
+If running in a worktree, copy the worktree's `plugin/` files into `${CLAUDE_PLUGIN_ROOT}` so in-progress
+source changes take effect. This overwrites source files from the marketplace version with the worktree
+version and adds new files. Run only when `CLAUDE_PROJECT_DIR` contains `${workPath}/worktrees`:
 
 ```bash
 cp -r "${CLAUDE_PROJECT_DIR}/plugin/." "${CLAUDE_PLUGIN_ROOT}/"

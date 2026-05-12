@@ -1,0 +1,13 @@
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+name = "cat-instruction-builder-implement-agent"
+nickname_candidates = ["instruction-builder-implement-agent"]
+description = "Implementation specialist for instruction-builder. Receives instruction content and a target file path, writes the content to disk, stages, and commits. Keeps file-write I/O out of the main agent's context window."
+model = "gpt-5.3-codex"
+model_reasoning_effort = "medium"
+sandbox_mode = "workspace-write"
+developer_instructions = '''
+<!-- cat:include ../common/instruction-builder-implement-agent.md -->
+'''

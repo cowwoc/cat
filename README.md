@@ -60,7 +60,18 @@ trackable progress, and code that passes review the first time.
 
 ## Quick Start
 
+### Runtime Support
+
+| Runtime | Install/update path | Support level |
+|---------|---------------------|---------------|
+| Claude Code | Marketplace install plus `cat:install` local updates | Full CAT runtime support |
+| Codex | Codex marketplace/local artifact install plus `cat:install` local updates | Preview parity: first-class artifact with documented runtime gaps |
+
+See [Codex parity notes](docs/development/codex-parity.md) for current Codex limitations.
+
 ### Step 1: Install CAT
+
+**Claude Code**
 
 ```bash
 # Add the plugin marketplace
@@ -72,6 +83,21 @@ trackable progress, and code that passes review the first time.
 # Verify you're ready
 /cat:help
 ```
+
+**Codex**
+
+1. Add a marketplace that points at the flattened Codex artifact:
+
+   ```bash
+   codex plugin marketplace add cowwoc/cat
+   ```
+
+2. Open Codex's plugin browser and install CAT from that marketplace.
+3. Verify CAT skills are available, then run `cat:init`.
+
+For local development builds, run `cat:install` from Codex after building so Codex installs
+`client/distribution/target/runtime/codex/`. Codex support is preview parity: the artifact is first-class, but some
+Claude Code extension points are not available in Codex yet.
 
 ### Step 2: Initialize Your Project
 
@@ -206,7 +232,7 @@ end users but appear in index.json files for decomposed issues.
 |-------------------|--------------|
 | `/cat:init` | Initialize project structure |
 | `/cat:status` | View project status and progress |
-| Tell Claude to work on tasks | Execute tasks (see scope options below) |
+| Tell the active agent to work on tasks | Execute tasks (see scope options below) |
 | `/cat:help` | Quick reference for all commands |
 
 **Work scope options** — when telling Claude to work on tasks, you can specify a scope:
@@ -312,6 +338,11 @@ Run `/cat:config` and select "Home directory (~/.cat)"
 - `high` — Fix every issue encountered, even if tangential to the primary goal
 
 See [perfection details](docs/perfection.md) for the full cost/benefit framework and decision matrix.
+
+### Rule Includes
+
+Project rules may reuse always-loaded fragments with `<!-- cat:include ... -->`. See
+[rule includes](docs/includes.md) for syntax, allowed locations, and relative path resolution.
 
 **fileWidth** — Width in characters for content written to files:
 - `120` — Desktop/Laptop (Recommended). Optimized for wide monitors

@@ -1728,13 +1728,15 @@ public Result handle(HookInput input)
 ```
 
 `EnforceJvmScopeEnvAccessTest` enforces this convention by scanning all Java source files and failing the build if
-`System.getenv(` appears outside of `MainClaudeTool.java`, `MainJvmScope.java`, `MainClaudeHook.java`,
-CLI tools that use `MainJvmScope` and run without session context, and `TerminalType.java`.
+`System.getenv(` appears outside of `MainClaudeTool.java`, `MainCodexTool.java`, `MainJvmScope.java`,
+`MainClaudeHook.java`, CLI tools that use `MainJvmScope` and run without session context, and `TerminalType.java`.
 
 The five whitelisted files each have a specific reason for direct env var access:
 - `MainClaudeTool.java` — reads all Claude env vars (`CLAUDE_PROJECT_DIR`, `CLAUDE_PLUGIN_ROOT`,
   `CLAUDE_SESSION_ID`, `CLAUDE_ENV_FILE`, `TZ`) at startup and stores them as fields; for CLI tools that run
   as part of a Claude session
+- `MainCodexTool.java` — reads Codex CLI infrastructure env vars (`CODEX_HOME`, `TZ`) at startup and stores
+  them as fields; for CLI tools that run as part of a Codex session
 - `MainJvmScope.java` — reads only infrastructure path vars (`CLAUDE_PROJECT_DIR`, `CLAUDE_PLUGIN_ROOT`,
   `CLAUDE_CONFIG_DIR`, `TZ`); for CLI tools that run without a Claude session (i.e., tools using `MainJvmScope`)
 - `MainClaudeHook.java` — reads infrastructure path vars (`CLAUDE_PROJECT_DIR`, `CLAUDE_PLUGIN_ROOT`,
@@ -1747,6 +1749,7 @@ The five whitelisted files each have a specific reason for direct env var access
 **Scope implementations:**
 - `MainClaudeTool` — production use for session CLI tools (in `main()` methods that require `CLAUDE_SESSION_ID`
   and `CLAUDE_ENV_FILE`), reads all session environment configuration
+- `MainCodexTool` — production use for Codex CLI tools, reads Codex infrastructure environment configuration
 - `MainJvmScope` — production use for infrastructure CLI tools (in `main()` methods that do NOT require session
   vars), reads only infrastructure vars. Example tools include `IssueLock`, `HookRegistrar`, and
   `StatusAlignmentValidator`.

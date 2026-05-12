@@ -4,7 +4,7 @@
 # Licensed under the CAT Commercial License.
 # See LICENSE.md in the project root for license terms.
 #
-# Tests for client/build-jlink.sh AOT error reporting behavior.
+# Tests for client/cli/build-jlink.sh AOT error reporting behavior.
 # These tests use a purpose-built AOT test harness script to exercise the
 # generate_startup_archives logic in isolation.
 
@@ -13,14 +13,14 @@
 # keeps tests fast and eliminates the need for a real jlink build.
 
 HARNESS="$BATS_TEST_DIRNAME/aot-harness.sh"
-BUILD_JLINK="$BATS_TEST_DIRNAME/../client/build-jlink.sh"
+BUILD_JLINK="$BATS_TEST_DIRNAME/../client/cli/build-jlink.sh"
 
 setup() {
     FAKE_BIN_DIR="$(mktemp -d)"
     # Setup for launcher generation tests
     OUTPUT_DIR="$(mktemp -d)"
     mkdir -p "$OUTPUT_DIR/bin"
-    MODULE_NAME="io.github.cowwoc.cat.client.claude"
+    MODULE_NAME="io.github.cowwoc.cat.client"
     HANDLERS=("test-launcher:PreToolUseHook")
     ENABLE_ASSERTIONS=false
 }

@@ -1,0 +1,82 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./hooks/codex/run-hook.sh codex-session-start"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./hooks/codex/run-hook.sh user-prompt-submit"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|functions.exec_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./hooks/codex/run-hook.sh pre-bash"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|apply_patch|functions.apply_patch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./hooks/codex/run-hook.sh pre-write"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./hooks/codex/run-hook.sh post-tool-use"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./hooks/codex/run-hook.sh post-tool-use-failure"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|functions.exec_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./hooks/codex/run-hook.sh post-bash"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./hooks/codex/run-hook.sh enforce-status"
+          }
+        ]
+      }
+    ]
+  }
+}

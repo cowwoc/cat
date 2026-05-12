@@ -9,7 +9,7 @@
 # Get the directory containing the test file
 TEST_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$TEST_DIR/.." && pwd)"
-PLUGIN_ROOT="$PROJECT_ROOT/plugin"
+PLUGIN_ROOT="$PROJECT_ROOT/client/plugin"
 
 # Export paths for scripts under test
 export SCRIPTS_DIR="$PLUGIN_ROOT/scripts"
@@ -99,4 +99,3 @@ run_with_timeout() {
     shift
     timeout "$timeout_seconds" "$@"
 }
-

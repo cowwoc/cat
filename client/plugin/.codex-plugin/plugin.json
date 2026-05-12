@@ -1,0 +1,36 @@
+{
+  "name": "cat",
+  "version": "2.1",
+  "description": "AI Agents that land on their feet",
+  "author": {
+    "name": "cowwoc",
+    "url": "https://github.com/cowwoc"
+  },
+  "repository": "https://github.com/cowwoc/cat",
+  "license": "CAT Commercial License",
+  "keywords": [
+    "agents",
+    "planning",
+    "worktrees"
+  ],
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
+  "interface": {
+    "displayName": "CAT",
+    "shortDescription": "AI agents that land on their feet",
+    "longDescription": "Coordinate AI agent planning and implementation workflows with issue tracking, worktree isolation, and verification guidance.",
+    "developerName": "cowwoc",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/cowwoc/cat",
+    "defaultPrompt": [
+      "Plan and execute the next CAT issue.",
+      "Review current CAT project status.",
+      "Prepare an isolated implementation worktree."
+    ],
+    "brandColor": "#1F6FEB"
+  }
+}

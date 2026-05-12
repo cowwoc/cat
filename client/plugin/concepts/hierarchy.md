@@ -1,0 +1,132 @@
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
+# CAT Hierarchy: MAJOR > MINOR > ISSUE
+
+> **See also:** [version-paths.md](version-paths.md) for path construction functions and patterns.
+> **See also:** `plugin/concepts/work-decomposition.md` for the full execution hierarchy including jobs and subagents.
+
+## Structure
+
+```
+.cat/
+├── project.md
+├── roadmap.md
+├── config.json
+└── v<n>/
+    ├── index.json
+    ├── plan.md
+    ├── changelog.md          # Aggregates closed issues
+    └── v<n>.<m>/
+        ├── index.json
+        ├── plan.md
+        ├── changelog.md      # Aggregates closed issues
+        └── <issue-name>/
+            ├── index.json
+            └── plan.md
+```
+
+> **See also:** [state-schema.md](state-schema.md) for the current index.json field schema.
+
+> **NOTE**: Issue-level changelog.md is not created. Issue changelog content is embedded
+> in commit messages (see commit message format in work command).
+
+## Version Semantics
+
+| Level | Purpose | Numbering |
+|-------|---------|-----------|
+| MAJOR | New features or capabilities | 0-based (users typically start at 1) |
+| MINOR | Bugfixes and smaller additions | 0-based |
+| ISSUE | Atomic unit of work | Named (lowercase-hyphens) |
+
+## Versioning Schemes
+
+CAT supports multiple versioning schemes (MAJOR, MAJOR.MINOR, MAJOR.MINOR.PATCH).
+
+See [version-scheme.md](version-scheme.md) for:
+- Supported schemes and their structure
+- Scheme detection logic
+- Version boundary detection rules
+
+## Requirements Flow
+
+Requirements are defined at the **minor version level** and traced to issues:
+
+```
+Minor plan.md                    Issue plan.md
+┌─────────────────────┐         ┌──────────────────────────┐
+│ ## Requirements     │         │ ## Parent Requirements   │
+│ | REQ-001 | ...     │ ◄────── │ - REQ-001               │
+│ | REQ-002 | ...     │         │ - REQ-003               │
+│ | REQ-003 | ...     │         └──────────────────────────┘
+└─────────────────────┘
+```
+
+**Key rules:**
+- Requirements live in minor version plan.md (not issue level)
+- Issues reference requirements via `## Parent Requirements` field (zero or more)
+- A minor version cannot complete until all must-have requirements are satisfied (implicit check)
+- The Requirements stakeholder verifies issues satisfy their claimed requirements
+- Exit gates are for additional user-defined conditions, not requirements
+
+## Version Decisions
+
+Creating MAJOR vs MINOR is a user decision:
+- **MAJOR**: Significant new capabilities
+- **MINOR**: Incremental improvements, fixes
+
+## Minor Version Dependencies
+
+Minor versions have implicit sequential dependencies:
+
+| Scenario | Dependency |
+|----------|------------|
+| First minor of first major (e.g., v0.0) | None |
+| Subsequent minor versions in same major (e.g., v0.1, v0.2) | Previous minor version (v0.0, v0.1) |
+| First minor of new major (e.g., v1.0) | Last minor of previous major |
+
+**Examples:**
+- `v0.0` → No dependencies (first version)
+- `v0.1` → Depends on `v0.0`
+- `v0.5` → Depends on `v0.4`
+- `v1.0` → Depends on `v0.9` (last minor of v0)
+- `v1.1` → Depends on `v1.0`
+
+**A minor version is executable when:**
+1. Its dependency minor version is closed (all issues in that minor are closed)
+2. OR it has no dependency (first version)
+
+**Issue-level dependencies:**
+- Issues within a minor depend on their explicit dependency list in index.json
+- Cross-minor issue dependencies are not supported (use minor version ordering instead)
+
+## Issue Execution Order
+
+**Non-Linear Progression:** Issues execute based on dependency resolution, not sequence order.
+
+When dependencies are met, issues become eligible for execution regardless of their position in the
+issue list. Multiple independent issues can execute concurrently.
+
+| Issue State | Execution Eligibility |
+|------------|----------------------|
+| Dependencies empty | Immediately eligible |
+| All dependencies closed | Eligible |
+| Any dependency pending | Blocked until resolved |
+
+This enables parallel execution of independent issues while maintaining correct ordering for
+dependent issues.
+
+## Example Path
+
+```
+.cat/issues/v1/v1.0/parse-switch-statements/index.json
+```
+
+Components (using MAJOR.MINOR scheme):
+- Major version: 1
+- Minor version: 0
+- Issue name: parse-switch-statements
+
+> **Note:** Path structure adapts to versioning scheme. See [version-scheme.md](version-scheme.md).

@@ -1,0 +1,13 @@
+{
+  "name": "cat",
+  "description": "AI Agents that land on their feet",
+  "version": "2.1",
+  "author": {
+    "name": "cowwoc"
+  },
+  "repository": "https://github.com/cowwoc/cat",
+  "license": "https://github.com/cowwoc/cat/blob/main/LICENSE.md",
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
+  "agents": "./agents/"
+}

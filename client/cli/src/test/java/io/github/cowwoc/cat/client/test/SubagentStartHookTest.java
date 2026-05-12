@@ -1,0 +1,591 @@
+/*
+ * Copyright (c) 2026 Gili Tzabari. All rights reserved.
+ *
+ * Licensed under the CAT Commercial License.
+ * See LICENSE.md in the project root for license terms.
+ */
+package io.github.cowwoc.cat.client.test;
+
+import io.github.cowwoc.cat.claude.hook.HookResult;
+import io.github.cowwoc.cat.claude.hook.SubagentStartHook;
+import io.github.cowwoc.cat.claude.hook.session.SubagentStartHandler;
+import io.github.cowwoc.cat.claude.hook.util.SkillDiscovery;
+import org.testng.annotations.Test;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+
+/**
+ * Tests for SubagentStartHook.
+ */
+public final class SubagentStartHookTest
+{
+  /**
+   * Sets up a fake plugin in the given configDir with one skill entry.
+   * <p>
+   * Creates {@code configDir/plugins/installed_plugins.json} pointing to a fake plugin root
+   * that contains one skill with the given name and description.
+   *
+   * @param configDir   the Claude config directory (used as claudeConfigPath in TestClaudeHook)
+   * @param prefix      the plugin prefix (e.g. "fake" → skill name "fake:skill-name")
+   * @param skillName   the skill directory name
+   * @param description the skill description in SKILL.md frontmatter
+   * @param modelInvocable whether the model may invoke this skill (false adds disable-model-invocation: true)
+   * @return the fake plugin root path
+   * @throws IOException if directory creation fails
+   */
+  private static Path setupFakePlugin(Path configDir, String prefix, String skillName,
+    String description, boolean modelInvocable) throws IOException
+  {
+    Path pluginsDir = configDir.resolve("plugins");
+    Files.createDirectories(pluginsDir);
+
+    Path fakePluginRoot = configDir.resolve("fake-plugin-" + prefix);
+    Path skillDir = fakePluginRoot.resolve("skills/common").resolve(skillName);
+    Files.createDirectories(skillDir);
+
+    String frontmatter;
+    if (modelInvocable)
+    {
+      frontmatter = """
+        ---
+        description: %s
+        ---
+        # %s
+        """.formatted(description, skillName);
+    }
+    else
+    {
+      frontmatter = """
+        ---
+        description: %s
+        disable-model-invocation: true
+        ---
+        # %s
+        """.formatted(description, skillName);
+    }
+    Files.writeString(skillDir.resolve("SKILL.md"), frontmatter);
+
+    Path installedPluginsFile = pluginsDir.resolve("installed_plugins.json");
+    String existingContent;
+    if (Files.exists(installedPluginsFile))
+      existingContent = Files.readString(installedPluginsFile);
+    else
+      existingContent = null;
+
+    String newEntry = """
+        "%s@%s": [
+          {"installPath": "%s"}
+        ]
+      """.formatted(prefix, prefix, fakePluginRoot.toString());
+
+    if (existingContent == null)
+    {
+      Files.writeString(installedPluginsFile, """
+        {
+          "plugins": {
+            %s
+          }
+        }
+        """.formatted(newEntry));
+    }
+    else
+    {
+      // Append to existing plugins object
+      String updated = existingContent.replace("\"plugins\": {",
+        "\"plugins\": {\n    " + newEntry + ",");
+      Files.writeString(installedPluginsFile, updated);
+    }
+
+    return fakePluginRoot;
+  }
+
+  // --- SubagentStartHook tests ---
+
+  /**
+   * Verifies that SubagentStartHook returns empty output when no skills are discoverable.
+   * <p>
+   * In a test environment with empty temp dirs, SkillDiscovery finds no installed plugins,
+   * no project commands, and no user skills.
+   */
+  @Test
+  public void subagentStartHookReturnsEmptyWhenNoSkills() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-subagent-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"agent_type\": \"task\"}",
+      projectPath, pluginRoot, projectPath))
+    {
+      HookResult result = new SubagentStartHook(scope).run();
+
+      requireThat(result.output(), "output").isEqualTo("{}");
+      requireThat(result.warnings(), "warnings").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that SubagentStartHook returns hookSpecificOutput with SubagentStart event name
+   * when skills are present.
+   * <p>
+   * Creates a minimal plugin with a skill directory containing a valid SKILL.md that has a
+   * description in its frontmatter, then verifies the hook injects the skill listing.
+   */
+  @Test
+  public void subagentStartHookInjectsSkillListingWhenSkillsPresent() throws IOException
+  {
+    // claudeConfigPath == claudeProjectPath in TestClaudeHook(projectPath, pluginRoot, projectPath)
+    Path configDir = Files.createTempDirectory("cat-test-subagent-config-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try
+    {
+      setupFakePlugin(configDir, "fake", "my-test-skill", "A test skill for unit testing.", true);
+      try (TestClaudeHook scope = new TestClaudeHook(
+        "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"agent_type\": \"task\"}",
+        configDir, pluginRoot, configDir))
+      {
+        HookResult result = new SubagentStartHook(scope).run();
+
+        requireThat(result.output(), "output").contains("hookSpecificOutput");
+        requireThat(result.output(), "output").contains("SubagentStart");
+        requireThat(result.output(), "output").contains("Available skills");
+        requireThat(result.output(), "output").contains("my-test-skill");
+        requireThat(result.output(), "output").contains("A test skill for unit testing.");
+        requireThat(result.warnings(), "warnings").isEmpty();
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(configDir);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that SubagentStartHook output is valid JSON with hookSpecificOutput structure.
+   */
+  @Test
+  public void subagentStartHookProducesValidJsonStructure() throws IOException
+  {
+    Path configDir = Files.createTempDirectory("cat-test-subagent-config-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try
+    {
+      setupFakePlugin(configDir, "sample", "sample-skill", "Sample skill description.", true);
+      try (TestClaudeHook scope = new TestClaudeHook(
+        "{\"session_id\": \"test-session\", \"agent_id\": \"sample-agent\"}",
+        configDir, pluginRoot, configDir))
+      {
+        JsonMapper mapper = scope.getJsonMapper();
+        HookResult result = new SubagentStartHook(scope).run();
+
+        JsonNode json = mapper.readTree(result.output());
+        requireThat(json.has("hookSpecificOutput"), "hasHookSpecificOutput").isTrue();
+
+        JsonNode hookOutput = json.get("hookSpecificOutput");
+        String hookEventName = hookOutput.get("hookEventName").asString();
+        requireThat(hookEventName, "hookEventName").isEqualTo("SubagentStart");
+        String additionalContext = hookOutput.get("additionalContext").asString();
+        requireThat(additionalContext, "additionalContext").contains("Available skills");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(configDir);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that SkillDiscovery.getMainAgentSkillListing returns empty string when no skills are discoverable.
+   */
+  @Test
+  public void getMainAgentSkillListingReturnsEmptyStringWhenNoSkills() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-subagent-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath))
+    {
+      String listing = SkillDiscovery.getMainAgentSkillListing(scope);
+      requireThat(listing, "listing").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that SkillDiscovery.getMainAgentSkillListing includes the correct header and only core skill entries.
+   */
+  @Test
+  public void getMainAgentSkillListingIncludesHeaderAndEntries() throws IOException
+  {
+    Path configDir = Files.createTempDirectory("cat-test-subagent-config-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try
+    {
+      setupFakePlugin(configDir, "cat", "help", "Display help for CAT commands", true);
+      try (TestClaudeHook scope = new TestClaudeHook(configDir, pluginRoot, configDir))
+      {
+        String listing = SkillDiscovery.getMainAgentSkillListing(scope);
+        requireThat(listing, "listing").contains("The following skills are available.");
+        requireThat(listing, "listing").contains("cat:help");
+        requireThat(listing, "listing").contains("Display help for CAT commands");
+        requireThat(listing, "listing").contains("cat:help: Display help for CAT commands");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(configDir);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that SkillDiscovery.getMainAgentSkillListing excludes both non-core skills and
+   * skills with disable-model-invocation: true.
+   */
+  @Test
+  public void getMainAgentSkillListingExcludesNonModelInvocableSkills() throws IOException
+  {
+    Path configDir = Files.createTempDirectory("cat-test-subagent-config-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try
+    {
+      Path pluginsDir = configDir.resolve("plugins");
+      Files.createDirectories(pluginsDir);
+
+      Path fakePluginRoot = configDir.resolve("fake-plugin-cat");
+      Path coreSkillDir = fakePluginRoot.resolve("skills/common/help");
+      Path excludedDir = fakePluginRoot.resolve("skills/common/excluded-skill");
+      Files.createDirectories(coreSkillDir);
+      Files.createDirectories(excludedDir);
+      Files.writeString(coreSkillDir.resolve("SKILL.md"), """
+        ---
+        description: Display help for CAT commands
+        ---
+        # Help Agent
+        """);
+      Files.writeString(excludedDir.resolve("SKILL.md"), """
+        ---
+        description: This skill should not appear.
+        disable-model-invocation: true
+        ---
+        # Excluded Skill
+        """);
+      Files.writeString(pluginsDir.resolve("installed_plugins.json"), """
+        {
+          "plugins": {
+            "cat@cat": [
+              {"installPath": "%s"}
+            ]
+          }
+        }
+        """.formatted(fakePluginRoot.toString()));
+
+      try (TestClaudeHook scope = new TestClaudeHook(configDir, pluginRoot, configDir))
+      {
+        String listing = SkillDiscovery.getMainAgentSkillListing(scope);
+        requireThat(listing, "listing").contains("cat:help");
+        requireThat(listing, "listing").doesNotContain("cat:excluded-skill");
+        requireThat(listing, "listing").doesNotContain("This skill should not appear.");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(configDir);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that SkillDiscovery.getSubagentSkillListing returns only the skill list without
+   * behavioral preamble text. Behavioral instructions are in plugin/rules/common/subagent-skill-instructions.md.
+   */
+  @Test
+  public void getSubagentSkillListingReturnsOnlySkillListNoBehavioralPreamble() throws IOException
+  {
+    Path configDir = Files.createTempDirectory("cat-test-subagent-config-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try
+    {
+      setupFakePlugin(configDir, "sub", "sub-test-skill", "A subagent test skill.", true);
+      try (TestClaudeHook scope = new TestClaudeHook(configDir, pluginRoot, configDir))
+      {
+        String listing = SkillDiscovery.getSubagentSkillListing(scope);
+        requireThat(listing, "listing").contains("**Available skills:**");
+        requireThat(listing, "listing").contains("sub:sub-test-skill");
+        requireThat(listing, "listing").contains("A subagent test skill.");
+        requireThat(listing, "listing").doesNotContain("BLOCKING REQUIREMENT");
+        requireThat(listing, "listing").doesNotContain("NEVER mention a skill");
+        requireThat(listing, "listing").doesNotContain("How to invoke");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(configDir);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that plugin/rules/common/subagent-skill-instructions.md exists and contains the behavioral
+   * instructions for subagents about when and how to invoke skills.
+   */
+  @Test
+  public void subagentSkillInstructionsRuleContainsBehavioralGuidance() throws IOException
+  {
+    // Maven Surefire runs tests with user.dir set to ${project.basedir} (the client/ directory).
+    // The workspace root is the parent of client/.
+    Path workspaceRoot = Path.of(System.getProperty("user.dir")).toAbsolutePath().normalize().getParent();
+
+    Path rulesFile = workspaceRoot.resolve("plugin/rules/common/subagent-skill-instructions.md");
+    requireThat(Files.exists(rulesFile), "rulesFileExists").isTrue();
+
+    String content = Files.readString(rulesFile);
+    requireThat(content, "content").contains("BLOCKING REQUIREMENT");
+    requireThat(content, "content").contains("NEVER mention a skill");
+    requireThat(content, "content").contains("Skill tool");
+  }
+
+  // ---- getCatRules behavior: blank vs populated subagent_type ----
+
+  /**
+   * Verifies that getCatRules (via run()) includes a rule with no subAgents restriction when
+   * subagent_type is blank. Rules with null subAgents should reach all subagents regardless of type.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void getCatRulesBlankSubagentTypeMatchesAllRule() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-getrules-blank-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\"}",
+      projectPath, pluginRoot, projectPath))
+    {
+      Path rulesDir = scope.getProjectPath().resolve(".cat/rules/common");
+      Files.createDirectories(rulesDir);
+      // No subAgents frontmatter → null → matches all subagents
+      Files.writeString(rulesDir.resolve("universal.md"), """
+        ---
+        mainAgent: false
+        ---
+        # Universal subagent content
+        Applies to any subagent.
+        """);
+
+      HookResult result = new SubagentStartHook(scope).run();
+
+      requireThat(result.output(), "output").contains("Universal subagent content");
+      requireThat(result.output(), "output").contains("Applies to any subagent.");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that getCatRules (via run()) includes a specific-type rule when
+   * subagent_type matches the rule's subAgents value.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void getCatRulesPopulatedSubagentTypeMatchesSpecificRule() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-getrules-specific-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"subagent_type\": \"cat:work-execute\"}",
+      projectPath, pluginRoot, projectPath))
+    {
+      Path rulesDir = scope.getProjectPath().resolve(".cat/rules/common");
+      Files.createDirectories(rulesDir);
+      Files.writeString(rulesDir.resolve("typed-rule.md"), """
+        ---
+        mainAgent: false
+        subAgents: ["cat:work-execute"]
+        ---
+        # Work execute specific content
+        Only for cat:work-execute.
+        """);
+
+      HookResult result = new SubagentStartHook(scope).run();
+
+      requireThat(result.output(), "output").contains("Work execute specific content");
+      requireThat(result.output(), "output").contains("Only for cat:work-execute.");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that getCatRules (via run()) excludes a specific-type rule when
+   * subagent_type does not match the rule's subAgents value.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void getCatRulesPopulatedSubagentTypeExcludesNonMatchingRule() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-getrules-nomatch-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"subagent_type\": \"Explore\"}",
+      projectPath, pluginRoot, projectPath))
+    {
+      Path rulesDir = scope.getProjectPath().resolve(".cat/rules/common");
+      Files.createDirectories(rulesDir);
+      Files.writeString(rulesDir.resolve("typed-rule.md"), """
+        ---
+        mainAgent: false
+        subAgents: ["cat:work-execute"]
+        ---
+        # Work execute only content
+        Should not appear for Explore.
+        """);
+
+      // Different subagent type — rule should not match
+      HookResult result = new SubagentStartHook(scope).run();
+
+      requireThat(result.output(), "output").doesNotContain("Work execute only content");
+      requireThat(result.output(), "output").doesNotContain("Should not appear for Explore.");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  // ---- getAgentIdContext behavior ----
+
+  /**
+   * Verifies that the agent ID context appears in run() output when both agent_id and session_id
+   * are present and non-blank.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void getAgentIdContextIncludedWhenAgentIdAndSessionIdPresent() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-agent-id-present-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session-abc\", \"agent_id\": \"subagent-xyz\"}",
+      projectPath, pluginRoot, projectPath))
+    {
+      HookResult result = new SubagentStartHook(scope).run();
+
+      requireThat(result.output(), "output").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that run() throws IllegalArgumentException when agent_id is blank.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void getAgentIdContextAbsentWhenAgentIdBlank() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-agent-id-blank-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session-abc\", \"agent_id\": \"\"}",
+      projectPath, pluginRoot, projectPath))
+    {
+      HookResult result = new SubagentStartHook(scope).run();
+      requireThat(result.output(), "output").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that constructing a TestClaudeHook with a blank session_id throws IllegalArgumentException.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*sessionId is empty.*")
+  public void getAgentIdContextAbsentWhenSessionIdBlank() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-session-id-blank-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try
+    {
+      new TestClaudeHook("{\"session_id\": \"\", \"agent_id\": \"subagent-xyz\"}", projectPath, pluginRoot,
+        projectPath);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that SubagentStartHook returns an empty JSON object ({}) when all handlers produce
+   * empty context and empty stderr.
+   * <p>
+   * This exercises the {@code combinedContext.length() == 0} branch in {@link SubagentStartHook#run},
+   * which calls {@code scope.empty()} rather than building a hookSpecificOutput response.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void allHandlersReturnEmptyProducesEmptyOutput() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-all-empty-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"agent_type\": \"task\"}",
+      projectPath, pluginRoot, projectPath))
+    {
+      // All handlers return empty results — no context, no stderr
+      List<SubagentStartHandler> emptyHandlers = List.of(
+        SubagentStartHandler.Result::empty,
+        SubagentStartHandler.Result::empty);
+
+      HookResult result = new SubagentStartHook(scope, emptyHandlers).run();
+
+      // combinedContext.length() == 0 → scope.empty() → "{}"
+      requireThat(result.output(), "output").isEqualTo("{}");
+      requireThat(result.warnings(), "warnings").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+}
