@@ -60,15 +60,6 @@ trackable progress, and code that passes review the first time.
 
 ## Quick Start
 
-### Runtime Support
-
-| Runtime | Install/update path | Support level |
-|---------|---------------------|---------------|
-| Claude Code | Marketplace install plus `cat:install` local updates | Full CAT runtime support |
-| Codex | Codex marketplace/local artifact install plus `cat:install` local updates | Preview parity: first-class artifact with documented runtime gaps |
-
-See [Codex parity notes](docs/development/codex-parity.md) for current Codex limitations.
-
 ### Step 1: Install CAT
 
 **Claude Code**
@@ -86,20 +77,28 @@ See [Codex parity notes](docs/development/codex-parity.md) for current Codex lim
 
 **Codex**
 
-1. Add a marketplace that points at the flattened Codex artifact:
+Latest release:
 
-   ```bash
-   codex plugin marketplace add cowwoc/cat
-   ```
+```text
+Run the prompt at https://raw.githubusercontent.com/cowwoc/cat/main/docs/prompts/codex-install.md to install or update the CAT plugin to the latest version.
+```
 
-2. Open Codex's plugin browser and install CAT from that marketplace.
-3. Verify CAT skills are available, then run `cat:init`.
+Specific release:
 
-For local development builds, run `cat:install` from Codex after building so Codex installs
+```text
+Run the prompt at https://raw.githubusercontent.com/cowwoc/cat/main/docs/prompts/codex-install.md to install or update the CAT plugin to version 1.2.0.
+```
+
+To remove CAT from Codex, run `/cat:uninstall` before removing the installer plugin from Codex's plugin browser.
+
+For local development builds from a source checkout, run `/cat:install` from Codex after building so Codex installs
 `client/distribution/target/runtime/codex/`. Codex support is preview parity: the artifact is first-class, but some
-Claude Code extension points are not available in Codex yet.
+Claude Code extension points are not available in Codex yet; see the
+[Codex parity notes](docs/development/codex-parity.md).
 
 ### Step 2: Initialize Your Project
+
+Skip this step when the project root already contains `.cat/`.
 
 ```bash
 /cat:init
@@ -432,7 +431,7 @@ mid-task, just tell Claude to continue working to pick up where you left off.
 
 | Branch | Purpose |
 |--------|---------|
-| `main` | Stable release — install from here |
+| `main` | Stable source release — see GitHub Releases for install artifacts |
 | `v2.1` | Next version in development |
 
 The development branch reference is updated automatically when a new version is released.

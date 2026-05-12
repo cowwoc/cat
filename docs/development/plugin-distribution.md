@@ -60,22 +60,22 @@ or `*.bats` are present, if `agents/common/` leaks into a runtime artifact, or i
 
 ## Immutable Release Commits
 
-Publish each release artifact at an isolated Git commit or immutable tag. Marketplace entries should point to that
-artifact commit using an exact `sha` when possible.
+The main `cowwoc/cat` repository is the release catalog. Its GitHub Releases list user-visible versions, release notes,
+source tags, and links to installable artifact refs. Generated release artifacts are published to `cowwoc/cat-artifacts`
+so cloning the source repository does not download generated plugin/runtime bundles.
+
+Publish each release artifact at an isolated Git commit or immutable tag in `cowwoc/cat-artifacts`. Marketplace entries
+should point to that artifact commit using an exact `sha` when possible.
 
 Acceptable shapes:
 
-1. **Separate artifact repository:** publish `claude/vX.Y.Z` and `codex/vX.Y.Z` commits or tags that contain flattened
-   plugin roots. This gives users the cleanest install source.
-2. **Orphan artifact branches in this repository:** publish one flattened root per runtime on branches such as
-   `artifact/claude/vX.Y.Z` and `artifact/codex/vX.Y.Z`. This avoids a second repository while keeping artifacts
-   isolated from development sources.
-3. **Committed `dist/{runtime}` directories:** tag the source repository and point marketplace entries at
-   `dist/claude` or `dist/codex` via `git-subdir`. This is simplest, but it keeps generated artifacts in the main
-   source tree and is less clean for review.
+1. **Preferred:** publish all generated artifacts to `cowwoc/cat-artifacts`, including Claude Code plugin artifacts,
+   Codex installer/full-plugin artifacts, jlink runtime artifacts, and the self-contained `git-filter-repo` bundle used
+   by CAT's git-rebase flow.
+2. **Fallback/debug only:** publish orphan artifact branches in this repository when validating a release pipeline
+   change before pushing to `cowwoc/cat-artifacts`.
 
-Preferred: separate artifact repository or orphan artifact branches. Both keep the source repository clean and let
-runtime marketplaces install only the flattened files.
+Do not commit generated release artifacts under normal source-tree paths in `cowwoc/cat`.
 
 ## Runtime Support
 
@@ -85,12 +85,17 @@ formal-runner extension points.
 
 | Runtime | Install source | Local update path | Support tier |
 |---------|----------------|-------------------|--------------|
-| Claude Code | Claude release artifact or npm package source | `cat:install` builds `client/distribution/target/runtime/claude/` and reinstalls that artifact | Full CAT runtime support |
-| Codex | Codex release artifact or local Codex marketplace source | `cat:install` builds `client/distribution/target/runtime/codex/` and reinstalls that artifact through the active Codex marketplace/cache flow | First-class artifact with documented parity gaps |
+| Claude Code | Claude Code's built-in plugin mechanism | Built-in plugin upgrade/uninstall | Full CAT runtime support |
+| Codex | Installer artifact, then `/cat:install` | `/cat:install` reinstalls the Codex artifact | First-class artifact with documented parity gaps |
 
 Release notes and customer-facing summaries must use the same positioning: Codex installs and updates through a native
 Codex artifact, but unsupported Codex extension points remain visible instead of being described as full Claude Code
 parity.
+
+Claude Code can install and uninstall CAT through Claude Code's built-in plugin mechanism. Codex cannot bootstrap the
+full CAT plugin by invoking a CAT skill that is not installed yet, so each release publishes a small Codex installer
+artifact. Users install that installer through Codex's plugin browser, run `/cat:install` to install the full CAT Codex
+artifact, and run `/cat:uninstall` before removing the installer plugin.
 
 Claude Code can install from Git-backed plugin sources and npm package sources. Codex can install from Git-backed and
 local marketplace sources; Codex does not currently document npm package plugin sources.
@@ -103,14 +108,20 @@ Use Git-backed artifacts for parity:
   "source": {
     "source": "git-subdir",
     "url": "cowwoc/cat-artifacts",
-    "path": "codex",
+    "path": "codex-installer",
     "ref": "v2.1.0",
     "sha": "<immutable-commit-sha>"
   }
 }
 ```
 
-If the artifact commit root is already the plugin root, omit `path`.
+Equivalent Codex CLI bootstrap:
+
+```bash
+codex plugin marketplace add cowwoc/cat-artifacts --ref <version> --sparse codex-installer
+```
+
+If an artifact commit root is already the plugin root, omit `path`.
 
 ## Local Builds
 

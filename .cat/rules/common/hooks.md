@@ -67,8 +67,8 @@ Do NOT ask conversational questions first.
 Runtime approval mechanisms:
 - Claude Code: `AskUserQuestion`; chat approval is never valid.
 - Codex Plan mode: `request_user_input`.
-- Codex Default mode: verbal approval using the exact same option labels, because `request_user_input` is not
-  available.
+- Codex Default mode: verbal approval using a case-insensitive exact match for the same option labels, because
+  `request_user_input` is not available.
 
 If Claude Code does not expose `AskUserQuestion`, fail closed: do not merge and do not accept inline chat approval.
 
@@ -87,5 +87,5 @@ Agent: *proceeds to merge* ✅
 ```
 
 **Key principle:** Only explicit selection of the "Approve and merge" option in the runtime approval mechanism
-constitutes approval. For Codex Default mode, the verbal response must exactly match a presented option.
-Conversational responses like "yes", "ok", "proceed", or "go ahead" are NOT approval.
+constitutes approval. For Codex Default mode, the verbal response must be a case-insensitive exact match for a
+presented option; casual responses like "yes", "ok", or "proceed" are not approval.

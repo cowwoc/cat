@@ -14,7 +14,8 @@ AskUserQuestion option selection. Conversational signals do NOT constitute autho
 ### Valid Approval Sources
 
 - Explicit option selection from AskUserQuestion (user clicks "Approve and merge" or equivalent button)
-- The `toolUseResult.answers` array contains a value that exactly matches one of the presented options
+- The `toolUseResult.answers` array contains a value that is a case-insensitive exact match for one of the presented
+  options
 
 ### Invalid Approval Sources
 
@@ -24,7 +25,8 @@ The following NEVER count as approval for destructive operations:
 - Resume signals: "continue with the workflow", "keep going", "that's fine"
 - Implicit consent: assuming permission from prior decisions or prior approval of a different gate
 - Silence or timeout
-- Any message that is not a direct selection of a presented AskUserQuestion option
+- Any message that is not a direct selection of, or (for Codex Default mode) a case-insensitive exact match for, a
+  presented option
 
 ### Interruption Handling
 
@@ -41,16 +43,17 @@ resume signal, not an approval.
 
 ### Detection Logic
 
-After AskUserQuestion invocation:
+After approval gate invocation:
 
 - `toolUseResult.answers` is empty or null → **GATE REJECTED**
-- `toolUseResult.answers` does not match any presented option exactly → **GATE REJECTED**
-- `toolUseResult.answers` matches a presented option exactly → **GATE ACCEPTED**
+- `toolUseResult.answers` does not match any presented option after case-insensitive comparison → **GATE REJECTED**
+- `toolUseResult.answers` is a case-insensitive exact match for a presented option → **GATE ACCEPTED**
 
 ### Examples
 
 **Gate accepted (CORRECT):**
 - User clicks "Approve and merge" button → `answers: ["Approve and merge"]` → proceed
+- User selects "approve and merge" for a presented "Approve and merge" option → proceed
 
 **Gate rejected (requires re-presentation):**
 - User sends: "Why is this rebasing onto v2.1?" → no option selected → re-present gate

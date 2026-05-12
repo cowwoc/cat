@@ -45,7 +45,7 @@ public final class VersionUtils
     if (!Files.isRegularFile(pluginJsonFile))
     {
       throw new AssertionError("Plugin version not found: " + pluginJsonFile + "\n" +
-        "Run /cat-install to build and install the jlink runtime.");
+        "Run /cat:install to build and install the jlink runtime.");
     }
     JsonNode root = scope.getJsonMapper().readTree(Files.readString(pluginJsonFile));
     JsonNode versionNode = root.get("version");

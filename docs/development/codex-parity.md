@@ -43,11 +43,12 @@ The merge approval gate is runtime-specific:
 - Claude Code uses `AskUserQuestion`.
 - Codex uses `request_user_input` when that tool is available in the current context. Codex agents cannot switch
   collaboration modes themselves; `request_user_input` is available only in Plan mode.
-- Codex Default mode falls back to verbal approval with the exact same option labels.
+- Codex Default mode falls back to verbal approval with the same option labels, matched case-insensitively.
 
 Claude Code remains structured-only: if trust is not `high` and `AskUserQuestion` is unavailable, CAT fails closed and
-must not merge. Codex Default mode may ask verbally, but only an exact response matching a presented option such as
-`Approve and merge` writes the approval marker; casual responses like `yes`, `ok`, or `proceed` are rejected.
+must not merge. Codex Default mode may ask verbally, but only a case-insensitive exact response matching a presented
+option such as `Approve and merge` writes the approval marker; casual responses like `yes`, `ok`, or `proceed` are
+rejected.
 
 ## Codex `apply_patch` Limitations
 

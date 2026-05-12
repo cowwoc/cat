@@ -1,6 +1,6 @@
 ---
-name: cat-install
-description: Build CAT's Java client and install the generated jlink runtime into the active CAT plugin data directory. Use after changing client Java code, launcher generation, or plugin source files that should be reflected in an installed local CAT plugin.
+name: install
+description: Install or update the Codex CAT release artifact and bundled runtime. Use from the Codex installer plugin for release installation, or after changing client Java code, launcher generation, or plugin source files that should be reflected in an installed local CAT plugin.
 model: gpt-5.4-mini
 effort: medium
 ---
@@ -13,6 +13,9 @@ See LICENSE.md in the project root for license terms.
 # Install CAT
 
 Use this skill to update a local Codex-installed CAT plugin from a source checkout or issue worktree.
+
+Codex release users invoke the release's installer plugin first. That installer plugin provides `/cat:install` before
+the full CAT plugin is available, then installs the full Codex release artifact from `cowwoc/cat-artifacts`.
 
 The workflow builds one generated artifact and updates the active local installation from it:
 

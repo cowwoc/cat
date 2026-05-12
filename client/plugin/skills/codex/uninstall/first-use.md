@@ -8,6 +8,9 @@ See LICENSE.md in the project root for license terms.
 Remove CAT-owned Codex agent files from the current project before delegating to Codex's built-in
 plugin uninstaller.
 
+Run this before removing the Codex installer plugin. The installer plugin supplies `/cat:uninstall` for release users
+because the full CAT plugin may already be partially removed by the time Codex's plugin browser unregisters it.
+
 ```bash
 set -euo pipefail
 

@@ -11,7 +11,7 @@ set -euo pipefail
 #   1. If python3 is installed and the git_filter_repo module is importable, outputs
 #      "python3 -m git_filter_repo" (uses the module directly).
 #   2. If the git-filter-repo script is on PATH, outputs its path.
-#   3. Downloads the pre-built platform binary from a CAT GitHub release, caches it
+#   3. Downloads the pre-built platform binary from the CAT artifact repository, caches it
 #      under ${CLAUDE_PLUGIN_ROOT}/lib/, verifies SHA256, and outputs its path.
 #
 # Requires:
@@ -172,7 +172,7 @@ fi
 
 # Construct GitHub release download URL
 REPO_OWNER="cowwoc"
-REPO_NAME="cat"
+REPO_NAME="cat-artifacts"
 BINARY_URL="https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${RELEASE_TAG}/${BINARY_NAME}"
 
 if ! mkdir -p "${CACHE_DIR}"; then
