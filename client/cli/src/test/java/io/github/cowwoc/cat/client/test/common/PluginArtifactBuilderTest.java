@@ -32,7 +32,7 @@ public final class PluginArtifactBuilderTest
     """;
 
   /**
-   * Verifies that flattened artifacts contain only runtime-specific files and copied license terms.
+   * Verifies that release artifacts contain only runtime-specific files and copied license terms.
    */
   @Test
   public void buildFlattensRuntimeSpecificArtifacts() throws IOException
@@ -135,7 +135,7 @@ public final class PluginArtifactBuilderTest
   }
 
   /**
-   * Verifies that symlinks are rejected instead of preserved in flattened artifacts.
+   * Verifies that symlinks are rejected instead of preserved in release artifacts.
    */
   @Test
   public void buildRejectsSourceSymlinks() throws IOException

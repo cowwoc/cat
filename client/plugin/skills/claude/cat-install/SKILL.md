@@ -1,6 +1,6 @@
 ---
 name: cat-install
-description: Build CAT's flattened Claude plugin artifact and reinstall/update the active local Claude plugin from it. Use after changing Java client code, launcher generation, or plugin source files that should be reflected in an installed local CAT plugin.
+description: Build CAT's Claude release artifact and reinstall/update the active local Claude plugin from it. Use after changing Java client code, launcher generation, or plugin source files that should be reflected in an installed local CAT plugin.
 model: sonnet
 effort: medium
 ---
@@ -14,8 +14,8 @@ See LICENSE.md in the project root for license terms.
 
 Use this skill to update a local Claude-installed CAT plugin from a source checkout or issue worktree.
 
-The workflow builds the flattened Claude release artifact, overlays the installed plugin root from that artifact, and
-installs the bundled jlink runtime from the same flattened artifact into the active Claude plugin data directory.
+The workflow builds the Claude release artifact, overlays the installed plugin root from that artifact, and installs
+the bundled jlink runtime from the same release artifact into the active Claude plugin data directory.
 
 ## Required Inputs
 
@@ -50,9 +50,9 @@ echo "CAT_PLUGIN_DATA=${CAT_PLUGIN_DATA}"
 
 Stop if `SOURCE_ROOT/client/pom.xml` or `SOURCE_ROOT/client/plugin/.claude-plugin/plugin.json` does not exist.
 
-### 2. Build the Flattened Artifact
+### 2. Build the Release Artifact
 
-Build the client runtime and flattened runtime-specific plugin artifacts from the source checkout:
+Build the client runtime and release artifacts from the source checkout:
 
 ```bash
 PATH="${JAVA_HOME:+${JAVA_HOME}/bin:}${PATH}" \
@@ -64,7 +64,7 @@ not a JRE.
 
 ### 3. Reinstall Plugin Files
 
-Install from the flattened Claude artifact, not from raw source directories:
+Install from the Claude release artifact, not from raw source directories:
 
 ```bash
 FLATTENED_PLUGIN="${SOURCE_ROOT}/client/distribution/target/runtime/claude"
@@ -77,14 +77,14 @@ if [[ "${resolved_plugin_root}" != "${resolved_flattened}" ]]; then
   cp -R "${FLATTENED_PLUGIN}/." "${CAT_PLUGIN_ROOT}/"
   echo "Reinstalled CAT Claude plugin files at ${CAT_PLUGIN_ROOT}"
 else
-  echo "Plugin root already points at the flattened local artifact; reinstall skipped."
+  echo "Plugin root already points at the local release artifact; reinstall skipped."
 fi
 ```
 
 ### 4. Install Runtime Data
 
 Claude hook registrations execute launchers from `${CLAUDE_PLUGIN_DATA}/client/bin`, so copy the bundled jlink image
-from the flattened artifact into plugin data:
+from the release artifact into plugin data:
 
 ```bash
 mkdir -p "${CAT_PLUGIN_DATA}"

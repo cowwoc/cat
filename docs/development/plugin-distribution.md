@@ -6,7 +6,7 @@ See LICENSE.md in the project root for license terms.
 # Plugin Distribution
 
 CAT keeps development sources split by audience, then builds runtime-specific install artifacts. End users should install
-a flattened artifact for their runtime, not the development source tree.
+a release artifact for their runtime, not the development source tree.
 
 ## Source Layout
 
@@ -32,7 +32,7 @@ conditionally loaded concepts, tests, examples, or reference files.
 
 ## Install Artifacts
 
-Release builds materialize one flattened plugin root per runtime and version:
+Release builds materialize one release artifact per runtime and version:
 
 | Runtime | Artifact contents |
 |---------|-------------------|
@@ -43,12 +43,12 @@ Codex artifacts are first-class install artifacts, but Codex behavior is not ful
 customer-facing summaries must keep current gaps visible, including unsupported read/search hooks, task/skill hook
 differences, statusline differences, and remaining formal-runner differences.
 
-The flattened artifact must not contain files for the other runtime. This avoids wasting context on irrelevant
+The release artifact must not contain files for the other runtime. This avoids wasting context on irrelevant
 instructions and avoids exposing runtime-specific implementation details to the wrong product.
 
-Each flattened artifact also includes the jlink client image under `client/` with a `client/VERSION` file matching the
+Each release artifact also includes the jlink client image under `client/` with a `client/VERSION` file matching the
 runtime manifest version. SessionStart hooks must not download client binaries from GitHub; they may only verify the
-installed runtime or acquire it from the bundled flattened artifact.
+installed runtime or acquire it from the bundled release artifact.
 
 Source files may carry project license headers. During flattening, release processing strips those headers from
 agent-facing Markdown and TOML files under `agents/`, `concepts/`, `rules/`, and `skills/` so installed runtime context
@@ -60,7 +60,7 @@ or `*.bats` are present, if `agents/common/` leaks into a runtime artifact, or i
 
 ## Immutable Release Commits
 
-Publish each flattened artifact at an isolated Git commit or immutable tag. Marketplace entries should point to that
+Publish each release artifact at an isolated Git commit or immutable tag. Marketplace entries should point to that
 artifact commit using an exact `sha` when possible.
 
 Acceptable shapes:
@@ -79,14 +79,14 @@ runtime marketplaces install only the flattened files.
 
 ## Runtime Support
 
-CAT publishes flattened artifacts for both Claude Code and Codex. Claude Code is the full-parity runtime. Codex is a
+CAT publishes release artifacts for both Claude Code and Codex. Claude Code is the full-parity runtime. Codex is a
 first-class install artifact with documented partial parity until Codex exposes equivalent hook, statusline, and
 formal-runner extension points.
 
 | Runtime | Install source | Local update path | Support tier |
 |---------|----------------|-------------------|--------------|
-| Claude Code | Flattened Claude Git artifact or npm package source | `cat:install` builds `client/distribution/target/runtime/claude/` and reinstalls that artifact | Full CAT runtime support |
-| Codex | Flattened Codex Git artifact or local Codex marketplace source | `cat:install` builds `client/distribution/target/runtime/codex/` and reinstalls that artifact through the active Codex marketplace/cache flow | First-class artifact with documented parity gaps |
+| Claude Code | Claude release artifact or npm package source | `cat:install` builds `client/distribution/target/runtime/claude/` and reinstalls that artifact | Full CAT runtime support |
+| Codex | Codex release artifact or local Codex marketplace source | `cat:install` builds `client/distribution/target/runtime/codex/` and reinstalls that artifact through the active Codex marketplace/cache flow | First-class artifact with documented parity gaps |
 
 Release notes and customer-facing summaries must use the same positioning: Codex installs and updates through a native
 Codex artifact, but unsupported Codex extension points remain visible instead of being described as full Claude Code

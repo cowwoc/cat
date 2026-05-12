@@ -21,8 +21,8 @@ The workflow builds one generated artifact and updates the active local installa
 - **Runtime binaries**: the installed CAT plugin data directory, under `client/`, copied from the build output.
 
 Use Codex's plugin installation/marketplace layer. Codex does not expose the same writable installed-plugin root
-workflow as Claude Code, so local updates bootstrap a generated marketplace entry that points at a copied flattened
-artifact. This is a Codex platform constraint; the shared product flow is still: build the flattened artifact, then
+workflow as Claude Code, so local updates bootstrap a generated marketplace entry that points at a copied release
+artifact. This is a Codex platform constraint; the shared product flow is still: build the release artifact, then
 install that artifact through the runtime's plugin mechanism.
 
 ## Required Inputs
@@ -37,7 +37,7 @@ Infer these paths when possible, otherwise ask for the missing value:
 - `LOCAL_MARKETPLACE_ROOT`: generated local Codex marketplace root. Default to
   `${SOURCE_ROOT}/client/plugin/target/local-marketplace/codex`.
 
-The generated local marketplace uses a real directory copy of the flattened artifact, not symlinks. Rerun this skill
+The generated local marketplace uses a real directory copy of the release artifact, not symlinks. Rerun this skill
 after changing source files so Codex can reinstall from the updated local marketplace copy.
 
 ## Steps
@@ -83,9 +83,9 @@ echo "CAT_PLUGIN_DATA=${CAT_PLUGIN_DATA}"
 
 Stop if `SOURCE_ROOT/client/pom.xml` or `SOURCE_ROOT/client/plugin/.codex-plugin/plugin.json` does not exist.
 
-### 2. Build the Flattened Artifact
+### 2. Build the Release Artifact
 
-Build the client runtime and flattened runtime-specific plugin artifacts from the source checkout:
+Build the client runtime and release artifacts from the source checkout:
 
 ```bash
 PATH="${JAVA_HOME:+${JAVA_HOME}/bin:}${PATH}" \
@@ -98,7 +98,7 @@ not a JRE.
 ### 3. Reinstall Plugin Files
 
 Prefer reinstalling through Codex's local marketplace mechanism. This registers a generated local marketplace whose
-`cat` plugin contains a copy of the flattened Codex artifact:
+`cat` plugin contains a copy of the Codex release artifact:
 
 ```bash
 FLATTENED_PLUGIN="${SOURCE_ROOT}/client/distribution/target/runtime/codex"
@@ -140,7 +140,7 @@ codex plugin marketplace remove cat-local 2>/dev/null || true
 codex plugin marketplace add "${LOCAL_MARKETPLACE_ROOT}"
 ```
 
-If the active plugin root is a separate writable directory, overlay it from the same flattened artifact.
+If the active plugin root is a separate writable directory, overlay it from the same release artifact.
 Skip this step when `CAT_PLUGIN_ROOT` resolves to `${LOCAL_MARKETPLACE_ROOT}/plugins/cat`.
 
 ```bash
