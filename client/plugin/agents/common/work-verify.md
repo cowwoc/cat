@@ -24,7 +24,6 @@ You receive a prompt containing:
 
 Write detailed analysis to files in the external session-scoped CAT directory:
 ```bash
-source "${CAT_PLUGIN_ROOT}/scripts/cat-env.sh"
 VERIFY_DIR="${WORKTREE_PATH}/.cat/work/verify/${CAT_SESSION_ID}"
 mkdir -p "${VERIFY_DIR}"
 ```
@@ -94,7 +93,7 @@ Scan changed files for violations of project conventions encoded as `cat-rules` 
 Read the curiosity level from config:
 
 ```bash
-CLIENT_BIN="${CLAUDE_PLUGIN_DATA}/client/bin"
+CLIENT_BIN="${CAT_PLUGIN_DATA}/client/bin"
 CONFIG=$("${CLIENT_BIN}/get-config-output" effective 2>/dev/null || echo '{"curiosity":"medium"}')
 CURIOSITY=$(echo "$CONFIG" | grep -o '"curiosity"[[:space:]]*:[[:space:]]*"[^"]*"' \
   | sed 's/.*"curiosity"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/' | tr '[:upper:]' '[:lower:]')
@@ -110,13 +109,21 @@ Violation scanning skipped (curiosity: low)
 
 Find all convention files containing cat-rules blocks:
 ```bash
-CONVENTION_DIR="${WORKTREE_PATH}/.claude/rules"
-RULE_FILES=$(grep -rl '```cat-rules' "${CONVENTION_DIR}" 2>/dev/null || true)
+RULE_DIRS=("${WORKTREE_PATH}/.cat/rules/common")
+case "${CAT_RUNTIME:-}" in
+  claude)
+    RULE_DIRS+=("${WORKTREE_PATH}/.cat/rules/claude" "${WORKTREE_PATH}/.claude/rules")
+    ;;
+  codex)
+    RULE_DIRS+=("${WORKTREE_PATH}/.cat/rules/codex")
+    ;;
+esac
+RULE_FILES=$(grep -rl '```cat-rules' "${RULE_DIRS[@]}" 2>/dev/null || true)
 ```
 
 If no rule files are found, skip scanning and output:
 ```
-No cat-rules found in ${CONVENTION_DIR} — violation scanning skipped
+No cat-rules found in active rule directories — violation scanning skipped
 ```
 
 For each file in `RULE_FILES`, read its content. Extract all ` ```cat-rules ` blocks — these contain YAML-formatted
@@ -165,7 +172,7 @@ silently.
 Read the caution level from config:
 
 ```bash
-CLIENT_BIN="${CLAUDE_PLUGIN_DATA}/client/bin"
+CLIENT_BIN="${CAT_PLUGIN_DATA}/client/bin"
 CONFIG=$("${CLIENT_BIN}/get-config-output" effective 2>/dev/null || echo '{"caution":"medium"}')
 CAUTION=$(echo "$CONFIG" | grep -o '"caution"[[:space:]]*:[[:space:]]*"[^"]*"' \
   | sed 's/.*"caution"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/' | tr '[:upper:]' '[:lower:]')
