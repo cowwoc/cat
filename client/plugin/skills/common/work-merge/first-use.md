@@ -520,19 +520,23 @@ git worktree list --porcelain | grep -qxF "worktree ${WORKTREE_PATH}" && WORKTRE
 git show-ref --verify --quiet "refs/heads/${BRANCH}" && BRANCH_EXISTS=true || BRANCH_EXISTS=false
 ```
 
-**Idempotency cases** (use word-boundary matching for ISSUE_ID; search last 5 commits on TARGET_BRANCH):
+**Idempotency cases** (verify merged issue state without relying on commit messages):
 
-- `WORKTREE_EXISTS=false` and `BRANCH_EXISTS=false`: check last 5 commits on TARGET_BRANCH for ISSUE_ID exact match.
-  If confirmed: synthesize success. If not: return FAILED.
-- `WORKTREE_EXISTS=false` and `BRANCH_EXISTS=true`: check last 5 commits for confirmed merge. If confirmed: delete
-  orphaned branch and synthesize success. If not: return FAILED — do NOT delete branch.
-- `WORKTREE_EXISTS=true` and `BRANCH_EXISTS=false`: check last 5 commits for confirmed merge. If confirmed: remove
-  orphaned worktree and synthesize success. If not: return FAILED — do NOT remove worktree.
+- `WORKTREE_EXISTS=false` and `BRANCH_EXISTS=false`: check `TARGET_BRANCH` for the issue's `index.json` with
+  `"status": "closed"` and `"resolution": "implemented"`. If confirmed: return synthesized SUCCESS and skip the
+  post-merge verification block because the merge already completed in an earlier attempt. If not: return FAILED.
+- `WORKTREE_EXISTS=false` and `BRANCH_EXISTS=true`: check `TARGET_BRANCH` for closed implemented issue state. If
+  confirmed: delete orphaned branch, return synthesized SUCCESS, and skip the post-merge verification block. If not:
+  return FAILED — do NOT delete branch.
+- `WORKTREE_EXISTS=true` and `BRANCH_EXISTS=false`: check `TARGET_BRANCH` for closed implemented issue state. If
+  confirmed: remove orphaned worktree, return synthesized SUCCESS, and skip the post-merge verification block. If not:
+  return FAILED — do NOT remove worktree.
 
-Otherwise, invoke the merge tool:
+Otherwise, invoke the merge tool and capture its JSON output:
 ```bash
-"${CAT_PLUGIN_DATA}/client/bin/merge-and-cleanup" \
+MERGE_RESULT=$("${CAT_PLUGIN_DATA}/client/bin/merge-and-cleanup" \
   "${CAT_PROJECT_DIR}" "${ISSUE_ID}" "${CAT_SESSION_ID}" "${TARGET_BRANCH}" --worktree "${WORKTREE_PATH}"
+)
 ```
 
 | Output | Action |
@@ -548,15 +552,24 @@ Otherwise, invoke the merge tool:
 
 ### Post-Merge Verification (BLOCKING)
 
+Run this block only after invoking `merge-and-cleanup` in the current Step 13 attempt. Idempotency cases that return
+synthesized SUCCESS already verified the target branch's closed issue state and must not run this block without
+current-session `MERGE_RESULT` JSON.
+
 ```bash
 POST_MERGE_TIP=$(git -C "${CAT_PROJECT_DIR}" rev-parse "${TARGET_BRANCH}" 2>/dev/null)
 if [[ -z "${POST_MERGE_TIP}" ]]; then echo "ERROR: Cannot resolve ${TARGET_BRANCH}" >&2; exit 1; fi
 if [[ "${POST_MERGE_TIP}" == "${PRE_MERGE_TIP}" ]]; then
   echo "ERROR: ${TARGET_BRANCH} tip unchanged — merge did not occur. Re-run Step 13." >&2; exit 1
 fi
-MERGE_MSG=$(git -C "${CAT_PROJECT_DIR}" log -1 --format=%s "${TARGET_BRANCH}" 2>/dev/null)
-if ! echo "${MERGE_MSG}" | grep -iqwF "${ISSUE_ID}"; then
-  echo "ERROR: New tip does not reference ${ISSUE_ID}. Re-run Step 13." >&2; exit 1
+MERGED_COMMIT=$(echo "${MERGE_RESULT}" | grep -o '"merged_commit"[[:space:]]*:[[:space:]]*"[^"]*"' \
+  | head -1 | sed 's/.*"merged_commit"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+if [[ -z "${MERGED_COMMIT}" ]]; then
+  echo "ERROR: merge-and-cleanup did not report merged_commit. Re-run Step 13." >&2; exit 1
+fi
+if [[ "${POST_MERGE_TIP}" != "${MERGED_COMMIT}"* ]]; then
+  echo "ERROR: ${TARGET_BRANCH} tip ${POST_MERGE_TIP} does not match merged commit ${MERGED_COMMIT}. Re-run Step 13." >&2
+  exit 1
 fi
 ```
 
