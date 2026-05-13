@@ -14,7 +14,7 @@ adds it to Codex, and installs the bundled CAT client runtime.
 
 Codex plugins currently install CAT skills, hooks, marketplace metadata, and client runtime files. Codex does not
 currently support plugin-provided custom slash commands, and CAT does not install Codex command wrappers. For Codex,
-invoke CAT by asking to use the corresponding `cat:*` skill, such as `cat:init`, `cat:status`, or `cat:work`.
+invoke CAT with the corresponding dollar-prefixed skill mention, such as `$cat:init`, `$cat:status`, or `$cat:work`.
 
 Run:
 
@@ -181,5 +181,5 @@ awk '
 echo "Restart Codex to complete the installation."
 ```
 
-After the command succeeds, say only: `Restart Codex to complete the installation.` After restart, ask Codex to use the
-`cat:init` skill only when the user wants to create a new CAT project or wrap an existing project.
+After the command succeeds, say only: `Restart Codex to complete the installation.` After restart, use `$cat:init` only
+when the user wants to create a new CAT project or wrap an existing project.
