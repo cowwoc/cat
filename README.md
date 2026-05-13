@@ -71,9 +71,6 @@ trackable progress, and code that passes review the first time.
 # Install CAT
 /plugin install cat@cowwoc-claude-code-cat
 
-# Install or update the release artifact
-/cat:install
-
 # Verify you're ready
 /cat:help
 ```

@@ -41,8 +41,8 @@ WORKTREE_PATH=$(git rev-parse --show-toplevel)
 ```
 
 If the nested run must see updated CAT plugin code, ensure the Codex plugin installation points at the current
-worktree's `client/plugin/` directory or publish/stage the matching release artifact and run `cat:install` before
-invoking this runner. Codex local plugin source is resolved through the Codex plugin installation/marketplace layer.
+worktree's `client/plugin/` directory or publish/stage the matching release artifact before invoking this runner.
+Codex local plugin source is resolved through the Codex plugin installation/marketplace layer.
 
 ### Step 2: Write the prompt
 

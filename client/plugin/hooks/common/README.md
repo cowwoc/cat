@@ -137,9 +137,8 @@ runtime package; shared logic should live under the neutral `agent` package or a
 
 ## Development
 
-Use `/cat:install` during release validation after publishing or staging the matching runtime artifact. It downloads
-the runtime artifact from `cowwoc/cat` GitHub Releases, reinstalls the active runtime from that artifact, and installs
-the bundled jlink runtime into the plugin cache used by the active runtime.
+During release validation, reinstall from the published or staged release artifact. The release artifact comes from
+`cowwoc/cat` GitHub Releases and includes the bundled jlink runtime used by the active runtime.
 
 Troubleshooting:
 

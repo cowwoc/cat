@@ -99,6 +99,38 @@ JSON
 codex plugin marketplace remove cat 2>/dev/null || true
 codex plugin marketplace add "${LOCAL_MARKETPLACE_ROOT}"
 
+CODEX_CONFIG="${CODEX_CONFIG:-${CODEX_HOME}/config.toml}"
+mkdir -p "$(dirname "${CODEX_CONFIG}")"
+touch "${CODEX_CONFIG}"
+CONFIG_TMP="$(mktemp)"
+awk '
+  /^\[.*\]$/ {
+    if (in_cat_plugin && ! wrote_enabled)
+      print "enabled = true"
+    in_cat_plugin = ($0 == "[plugins.\"cat@cat\"]")
+    wrote_enabled = 0
+    found_cat_plugin = found_cat_plugin || in_cat_plugin
+    print
+    next
+  }
+  in_cat_plugin && /^[[:space:]]*enabled[[:space:]]*=/ {
+    print "enabled = true"
+    wrote_enabled = 1
+    next
+  }
+  { print }
+  END {
+    if (in_cat_plugin && ! wrote_enabled)
+      print "enabled = true"
+    if (! found_cat_plugin) {
+      print ""
+      print "[plugins.\"cat@cat\"]"
+      print "enabled = true"
+    }
+  }
+' "${CODEX_CONFIG}" > "${CONFIG_TMP}"
+mv "${CONFIG_TMP}" "${CODEX_CONFIG}"
+
 mkdir -p "${CAT_PLUGIN_DATA}"
 chmod -R u+w "${CAT_PLUGIN_DATA}/client" 2>/dev/null || true
 rm -rf "${CAT_PLUGIN_DATA}/client"
@@ -107,10 +139,15 @@ cp -R "${FLATTENED_PLUGIN}/client" "${CAT_PLUGIN_DATA}/client"
 "${CAT_PLUGIN_DATA}/client/bin/java" -version
 test -x "${CAT_PLUGIN_DATA}/client/bin/pre-bash"
 test -f "${CAT_PLUGIN_DATA}/client/VERSION"
+grep -F '[plugins."cat@cat"]' "${CODEX_CONFIG}" >/dev/null
+awk '
+  /^\[.*\]$/ { in_cat_plugin = ($0 == "[plugins.\"cat@cat\"]"); next }
+  in_cat_plugin && /^[[:space:]]*enabled[[:space:]]*=[[:space:]]*true[[:space:]]*$/ { found_enabled = 1 }
+  END { exit(found_enabled ? 0 : 1) }
+' "${CODEX_CONFIG}"
 
-echo "Installed CAT ${RELEASE_TAG} for Codex. Restart Codex so the updated plugin is loaded."
+echo "Restart Codex to complete the installation."
 ```
 
-After the command succeeds, tell the user to restart Codex. Do not run `/cat:install` after this prompt; the prompt
-already installs the bundled client runtime. If the project root already contains `.cat/`, do not run `/cat:init`.
-Run `/cat:init` only when the user wants to create a new CAT project or wrap an existing project.
+After the command succeeds, say only: `Restart Codex to complete the installation.` Run `/cat:init` only when the
+user wants to create a new CAT project or wrap an existing project.

@@ -31,27 +31,9 @@ public final class ReleaseDocumentationTest
     Path sourceRoot = findSourceRoot();
     Path clientRoot = sourceRoot.resolve("client");
 
-    String readme = Files.readString(sourceRoot.resolve("README.md"), StandardCharsets.UTF_8);
     String claudeMarketplace = Files.readString(sourceRoot.resolve(".claude-plugin/marketplace.json"),
       StandardCharsets.UTF_8);
     requireThat(claudeMarketplace, "claudeMarketplace").contains("\"source\": \"./client/plugin\"");
-
-    requireThat(readme, "readme").contains(
-      "https://raw.githubusercontent.com/cowwoc/cat/v2.1/docs/prompts/codex-install.md");
-    requireThat(readme, "readme").contains(
-      """
-        Run the prompt at
-        https://raw.githubusercontent.com/cowwoc/cat/v2.1/docs/prompts/codex-install.md
-        to install or update the CAT plugin.""");
-    requireThat(readme, "readme").contains("This installs or updates CAT `v2.1`.");
-    requireThat(readme, "readme").contains(
-      "The prompt installs the Codex plugin files and bundled client runtime; do not run `/cat:install` after it");
-    requireThat(readme, "readme").contains("[Codex parity notes](docs/development/codex-parity.md)");
-    requireThat(readme, "readme").contains("run `/cat:uninstall` before uninstalling CAT from Codex");
-    requireThat(readme, "readme").doesNotContain("The prompt resolves to this bootstrap path");
-    requireThat(readme, "readme").doesNotContain("cowwoc/cat-artifacts");
-    requireThat(readme, "readme").doesNotContain("Determine the latest release tag");
-    requireThat(readme, "readme").doesNotContain("codex plugin marketplace add cowwoc/cat\n");
 
     String codexInstallPrompt = Files.readString(sourceRoot.resolve("docs/prompts/codex-install.md"),
       StandardCharsets.UTF_8);
@@ -61,6 +43,8 @@ public final class ReleaseDocumentationTest
     requireThat(codexInstallPrompt, "codexInstallPrompt").contains("https://github.com/cowwoc/cat/releases");
     requireThat(codexInstallPrompt, "codexInstallPrompt").contains("do not rely on any `/cat:*` command");
     requireThat(codexInstallPrompt, "codexInstallPrompt").contains("\"name\": \"cat\"");
+    requireThat(codexInstallPrompt, "codexInstallPrompt").contains("[plugins.\"cat@cat\"]");
+    requireThat(codexInstallPrompt, "codexInstallPrompt").contains("enabled = true");
     requireThat(codexInstallPrompt, "codexInstallPrompt").contains("plugins/data/cat-cat");
     requireThat(codexInstallPrompt, "codexInstallPrompt").contains(
       "codex plugin marketplace add \"${LOCAL_MARKETPLACE_ROOT}\"");
@@ -68,18 +52,13 @@ public final class ReleaseDocumentationTest
     requireThat(codexInstallPrompt, "codexInstallPrompt").contains(
       "ASSET_NAME=\"cat-${CAT_RUNTIME}-${RELEASE_TAG}.tar.gz\"");
     requireThat(codexInstallPrompt, "codexInstallPrompt").doesNotContain("codex plugin marketplace add cowwoc/cat");
-    requireThat(codexInstallPrompt, "codexInstallPrompt").doesNotContain("Run `/cat:install <release-tag>`");
-    requireThat(codexInstallPrompt, "codexInstallPrompt").doesNotContain("plugins/data/local-cat");
-    requireThat(codexInstallPrompt, "codexInstallPrompt").doesNotContain("cat-local");
     requireThat(codexInstallPrompt, "codexInstallPrompt").doesNotContain("cowwoc/cat-artifacts");
     requireThat(codexInstallPrompt, "codexInstallPrompt").contains(
-      "If the project root already contains `.cat/`, do not run");
+      "Run `/cat:init` only when the");
     requireThat(codexInstallPrompt, "codexInstallPrompt").contains(
-      "Run `/cat:init` only when the user wants to create a new CAT project or wrap an existing project");
+      "user wants to create a new CAT project or wrap an existing project");
     requireThat(codexInstallPrompt, "codexInstallPrompt").contains(
-      "Do not run `/cat:install` after this prompt");
-    requireThat(codexInstallPrompt, "codexInstallPrompt").contains(
-      "already installs the bundled client runtime");
+      "Restart Codex to complete the installation.");
 
     String distribution = Files.readString(sourceRoot.resolve("docs/development/plugin-distribution.md"),
       StandardCharsets.UTF_8);
@@ -88,23 +67,6 @@ public final class ReleaseDocumentationTest
     requireThat(distribution, "distribution").doesNotContain("cowwoc/cat-artifacts");
     requireThat(distribution, "distribution").contains("git-filter-repo");
 
-    String installSkill = Files.readString(clientRoot.resolve("plugin/skills/common/install/SKILL.md"),
-      StandardCharsets.UTF_8);
-    requireThat(installSkill, "installSkill").contains("name: install");
-    requireThat(installSkill, "installSkill").contains("cat-claude-<release-tag>.tar.gz");
-    requireThat(installSkill, "installSkill").contains("cat-codex-<release-tag>.tar.gz");
-    requireThat(installSkill, "installSkill").contains("https://github.com/cowwoc/cat/releases/download");
-    requireThat(installSkill, "installSkill").contains("\"name\": \"cat\"");
-    requireThat(installSkill, "installSkill").contains("plugins/data/cat-cat");
-    requireThat(installSkill, "installSkill").doesNotContain("plugins/data/local-cat");
-    requireThat(installSkill, "installSkill").contains(
-      "do not run this skill after the release bootstrap prompt");
-    requireThat(installSkill, "installSkill").doesNotContain("cat-local");
-    requireThat(installSkill, "installSkill").doesNotContain("python");
-    requireThat(Files.exists(clientRoot.resolve("plugin/skills/codex/install/SKILL.md")),
-      "codexInstallSkill").isFalse();
-    requireThat(Files.exists(clientRoot.resolve("plugin/skills/claude/install/SKILL.md")),
-      "claudeInstallSkill").isFalse();
     requireThat(Files.exists(clientRoot.resolve("plugin/skills/claude/uninstall/SKILL.md")),
       "claudeUninstallSkill").isFalse();
 
@@ -149,8 +111,8 @@ public final class ReleaseDocumentationTest
     Path current = Path.of("").toAbsolutePath().normalize();
     while (current != null)
     {
-      if (Files.isRegularFile(current.resolve("README.md")) &&
-        Files.isDirectory(current.resolve("client/plugin")))
+      if (Files.isDirectory(current.resolve("client/plugin")) &&
+        Files.isRegularFile(current.resolve("client/pom.xml")))
       {
         return current;
       }

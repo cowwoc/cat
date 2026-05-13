@@ -82,29 +82,27 @@ formal-runner extension points.
 
 | Runtime | Install source | Local update path | Support tier |
 |---------|----------------|-------------------|--------------|
-| Claude Code | Source plugin, then `/cat:install` release download | `/cat:install` reinstalls the Claude artifact | Full CAT runtime support |
-| Codex | Source plugin, then `/cat:install` release download | `/cat:install` reinstalls the Codex artifact | First-class artifact with documented parity gaps |
+| Claude Code | Claude Code plugin marketplace | Release artifact reinstall | Full CAT runtime support |
+| Codex | Codex install prompt | Codex install prompt | First-class artifact with documented parity gaps |
 
 Release notes and customer-facing summaries must use the same positioning: Codex installs and updates through a native
 Codex artifact, but unsupported Codex extension points remain visible instead of being described as full Claude Code
 parity.
 
-Users first install the lightweight source plugin from `cowwoc/cat` at the selected release tag, then run
-`/cat:install` to download and install the runtime-specific release asset. Claude Code uninstall uses Claude Code's
-built-in plugin mechanism. Codex users must run `/cat:uninstall` before removing CAT so CAT-owned project agent copies
-are removed.
+Users install the release asset through the runtime's normal plugin path. Claude Code uninstall uses Claude Code's
+built-in plugin mechanism. Codex users must run `/cat:uninstall` before removing CAT so CAT-owned project agent
+copies are removed.
 
 Claude Code can install from Git-backed plugin sources and npm package sources. Codex can install from Git-backed and
 local marketplace sources; Codex does not currently document npm package plugin sources.
 
-Codex CLI bootstrap:
+Codex CLI bootstrap uses the release prompt:
 
-```bash
-codex plugin marketplace add cowwoc/cat --ref <version> --sparse client/plugin
+```text
+Run the prompt at
+https://raw.githubusercontent.com/cowwoc/cat/v2.1/docs/prompts/codex-install.md
+to install or update the CAT plugin.
 ```
-
-The installed source plugin provides `/cat:install`, which downloads the release asset from
-`https://github.com/cowwoc/cat/releases/download/<version>/`.
 
 ## Local Builds
 
