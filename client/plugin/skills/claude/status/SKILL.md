@@ -11,4 +11,12 @@ See LICENSE.md in the project root for license terms.
 
 <!-- cat:include ../../include/status.md -->
 
-!`: "${CAT_PLUGIN_DATA:?CAT_PLUGIN_DATA is required}"; "${CAT_PLUGIN_DATA}/client/bin/get-output" status`
+Run the deterministic implementation through Bash:
+
+```bash
+if [ -z "${CAT_PLUGIN_DATA:-}" ]; then
+  echo "CAT_PLUGIN_DATA is required" >&2
+  exit 1
+fi
+"${CAT_PLUGIN_DATA}/client/bin/get-status-output"
+```

@@ -75,7 +75,6 @@ public final class MainClaudeHook extends AbstractClaudeHook
    */
   private static JsonNode readStdin()
   {
-    JsonMapper mapper = createStdinMapper();
     try
     {
       if (System.console() != null && System.in.available() == 0)
@@ -85,6 +84,7 @@ public final class MainClaudeHook extends AbstractClaudeHook
     {
       throw new IllegalStateException("Failed to check stdin availability.", e);
     }
+    JsonMapper mapper = getStdinMapper();
     return readFrom(mapper, System.in);
   }
 

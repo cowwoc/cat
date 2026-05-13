@@ -7,6 +7,7 @@
 package io.github.cowwoc.cat.claude.hook;
 
 import static io.github.cowwoc.cat.claude.hook.Strings.block;
+import static io.github.cowwoc.cat.claude.hook.skills.GetStatusOutput.isPlainSetupStatusOutput;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import tools.jackson.databind.JsonNode;
@@ -29,7 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * enforce-status-output - Stop hook to enforce verbatim status box output.
+ * enforce-status-output - Stop hook to enforce verbatim status output.
  * <p>
  * HOOK: Stop
  * <p>
@@ -41,10 +42,10 @@ import org.slf4j.LoggerFactory;
  * Detects when:
  * <ol>
  *   <li>User invoked /cat:status in the current turn</li>
- *   <li>Agent's response did NOT contain the status box (╭── characters)</li>
+ *   <li>Agent's response did NOT contain valid status output</li>
  * </ol>
  * <p>
- * Returns decision=block to force Claude to output the status box verbatim.
+ * Returns decision=block to force Claude to output the status display verbatim.
  */
 public final class EnforceStatusOutput
 {
@@ -127,8 +128,8 @@ public final class EnforceStatusOutput
    * is invoked.
    * <p>
    * When {@code stopHookActive} is {@code true} (second attempt after a prior block), the hook
-   * re-checks the transcript: if the status box is now present it allows the response through;
-   * if the box is still missing it blocks with a fail-fast error telling the user to retry
+   * re-checks the transcript: if status output is now present it allows the response through;
+   * if status output is still missing it blocks with a fail-fast error telling the user to retry
    * {@code /cat:status} manually.
    * <p>
    * When {@code stopHookActive} is {@code false} (first attempt), the hook applies the standard
@@ -207,7 +208,7 @@ public final class EnforceStatusOutput
 
     CheckResult result = checkTranscriptForStatusSkill(mapper, resolvedTranscriptPath);
 
-    if (result.statusInvoked && !result.hasBoxOutput)
+    if (result.statusInvoked && !result.hasStatusOutput)
     {
       String reason;
       if (stopHookActive)
@@ -232,11 +233,11 @@ public final class EnforceStatusOutput
   }
 
   /**
-   * Check the transcript to see if /cat:status was invoked and if output was correct.
+   * Check the transcript to see if /cat:status was invoked and if status output was present.
    *
    * @param mapper the JSON mapper to use for parsing
    * @param transcriptPath path to the transcript file (must exist)
-   * @return result indicating whether status was invoked and whether response had box output
+   * @return result indicating whether status was invoked and whether response had status output
    * @throws IOException if the transcript file cannot be read
    */
   private static CheckResult checkTranscriptForStatusSkill(JsonMapper mapper, Path transcriptPath) throws IOException
@@ -259,7 +260,7 @@ public final class EnforceStatusOutput
     List<String> recentLines = new ArrayList<>(buffer);
 
     boolean statusInvoked = false;
-    boolean hasBoxOutput = false;
+    boolean hasStatusOutput = false;
 
     for (String line : recentLines)
     {
@@ -285,11 +286,11 @@ public final class EnforceStatusOutput
       if (type.equals("user") && checkUserMessageForStatus(entry))
         statusInvoked = true;
 
-      if (type.equals("assistant") && checkAssistantMessageForBox(entry))
-        hasBoxOutput = true;
+      if (type.equals("assistant") && checkAssistantMessageForStatusOutput(entry))
+        hasStatusOutput = true;
     }
 
-    return new CheckResult(statusInvoked, hasBoxOutput);
+    return new CheckResult(statusInvoked, hasStatusOutput);
   }
 
   /**
@@ -335,12 +336,12 @@ public final class EnforceStatusOutput
   }
 
   /**
-   * Check if assistant message contains box output.
+   * Check if assistant message contains valid status output.
    *
    * @param entry the assistant message entry
-   * @return true if box characters detected
+   * @return true if valid status output is detected
    */
-  private static boolean checkAssistantMessageForBox(JsonNode entry)
+  private static boolean checkAssistantMessageForStatusOutput(JsonNode entry)
   {
     JsonNode messageNode = entry.get("message");
     if (messageNode == null)
@@ -364,7 +365,7 @@ public final class EnforceStatusOutput
         continue;
 
       String text = textNode.asString();
-      if (text.contains("╭─") && text.contains("│") && text.contains("╰─"))
+      if (isStatusOutput(text))
         return true;
     }
 
@@ -372,12 +373,24 @@ public final class EnforceStatusOutput
   }
 
   /**
+   * Returns whether text is valid status output.
+   *
+   * @param text the assistant text
+   * @return true if the text is valid status output
+   */
+  private static boolean isStatusOutput(String text)
+  {
+    return text.contains("╭─") && text.contains("│") && text.contains("╰─") ||
+      isPlainSetupStatusOutput(text);
+  }
+
+  /**
    * Result of checking transcript for status skill invocation.
    *
    * @param statusInvoked whether status skill was invoked
-   * @param hasBoxOutput whether response contained box output
+   * @param hasStatusOutput whether response contained status output
    */
-  private record CheckResult(boolean statusInvoked, boolean hasBoxOutput)
+  private record CheckResult(boolean statusInvoked, boolean hasStatusOutput)
   {
   }
 }

@@ -9,14 +9,20 @@ package io.github.cowwoc.cat.client.test;
 import io.github.cowwoc.cat.claude.hook.IssueStatus;
 import io.github.cowwoc.cat.claude.hook.skills.DisplayUtils;
 import io.github.cowwoc.cat.claude.hook.skills.GetStatusOutput;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import static io.github.cowwoc.cat.claude.hook.skills.GetStatusOutput.NO_CAT_PROJECT_MESSAGE;
+import static io.github.cowwoc.cat.claude.hook.skills.GetStatusOutput.NO_PLANNING_STRUCTURE_MESSAGE;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
@@ -83,7 +89,31 @@ public class GetStatusOutputTest
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
 
-      requireThat(result, "result").isEqualTo("No CAT project found. Initialize one first.");
+      requireThat(result, "result").isEqualTo(NO_CAT_PROJECT_MESSAGE);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that the launcher-facing Java entrypoint writes status output verbatim.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void runWritesNoCatProjectMessage() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-no-cat-run");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
+         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+         PrintStream out = new PrintStream(bytes, true, StandardCharsets.UTF_8))
+    {
+      GetStatusOutput.run(scope, new String[0], out);
+
+      requireThat(bytes.toString(StandardCharsets.UTF_8), "output").isEqualTo(
+        NO_CAT_PROJECT_MESSAGE + System.lineSeparator());
     }
     finally
     {
@@ -108,12 +138,91 @@ public class GetStatusOutputTest
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
 
-      requireThat(result, "result").isEqualTo("No planning structure found. Initialize the project first.");
+      requireThat(result, "result").isEqualTo(NO_PLANNING_STRUCTURE_MESSAGE);
     }
     finally
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+  }
+
+  /**
+   * Verifies that plain setup status output detection rejects null text.
+   */
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*text.*")
+  public void isPlainSetupStatusOutputRejectsNull()
+  {
+    GetStatusOutput.isPlainSetupStatusOutput(null);
+  }
+
+  /**
+   * Returns exact plain status setup messages.
+   *
+   * @return the exact messages
+   */
+  @DataProvider
+  public Object[][] plainSetupStatusOutputs()
+  {
+    return new Object[][]
+      {
+        {NO_CAT_PROJECT_MESSAGE},
+        {NO_PLANNING_STRUCTURE_MESSAGE}
+      };
+  }
+
+  /**
+   * Verifies that exact plain setup status messages are detected.
+   *
+   * @param text the text to check
+   */
+  @Test(dataProvider = "plainSetupStatusOutputs")
+  public void isPlainSetupStatusOutputAcceptsExactMessages(String text)
+  {
+    requireThat(GetStatusOutput.isPlainSetupStatusOutput(text), "plainSetupStatusOutput").isTrue();
+  }
+
+  /**
+   * Verifies that leading and trailing whitespace does not prevent plain setup status detection.
+   *
+   * @param text the text to check
+   */
+  @Test(dataProvider = "plainSetupStatusOutputs")
+  public void isPlainSetupStatusOutputAcceptsWhitespaceWrappedMessages(String text)
+  {
+    requireThat(GetStatusOutput.isPlainSetupStatusOutput(" \n" + text + "\t"),
+      "plainSetupStatusOutput").isTrue();
+  }
+
+  /**
+   * Returns strings that are similar to, but do not exactly match, plain status setup messages.
+   *
+   * @return non-matching strings
+   */
+  @DataProvider
+  public Object[][] nonPlainSetupStatusOutputs()
+  {
+    return new Object[][]
+      {
+        {""},
+        {" "},
+        {"\n\t"},
+        {NO_CAT_PROJECT_MESSAGE.substring(0, NO_CAT_PROJECT_MESSAGE.length() - 1)},
+        {NO_CAT_PROJECT_MESSAGE + " I can help you run cat:init."},
+        {NO_PLANNING_STRUCTURE_MESSAGE.substring(0, NO_PLANNING_STRUCTURE_MESSAGE.length() - 1)},
+        {NO_PLANNING_STRUCTURE_MESSAGE + " Run cat:init."}
+      };
+  }
+
+  /**
+   * Verifies that near-miss plain setup status messages are rejected.
+   *
+   * @param text the text to check
+   */
+  @Test(dataProvider = "nonPlainSetupStatusOutputs")
+  public void isPlainSetupStatusOutputRejectsNearMisses(String text)
+  {
+    requireThat(GetStatusOutput.isPlainSetupStatusOutput(text), "plainSetupStatusOutput").isFalse();
   }
 
   /**

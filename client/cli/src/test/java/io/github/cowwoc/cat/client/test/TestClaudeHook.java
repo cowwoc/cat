@@ -74,7 +74,7 @@ public final class TestClaudeHook extends AbstractClaudeHook
   @SuppressWarnings("PMD.UnnecessaryFullyQualifiedName")
   private TestClaudeHook(String payloadJson, TempDirBundle bundle)
   {
-    this(parseJson(payloadJson, AbstractClaudeHook.createStdinMapper()), bundle.projectPath(), bundle.pluginRoot(),
+    this(parseJson(payloadJson, AbstractClaudeHook.getStdinMapper()), bundle.projectPath(), bundle.pluginRoot(),
       bundle.claudeConfigPath());
   }
 
@@ -86,7 +86,7 @@ public final class TestClaudeHook extends AbstractClaudeHook
   @SuppressWarnings("PMD.UnnecessaryFullyQualifiedName")
   private TestClaudeHook(TempDirBundle bundle)
   {
-    this(defaultPayload(AbstractClaudeHook.createStdinMapper()), bundle.projectPath(), bundle.pluginRoot(),
+    this(defaultPayload(AbstractClaudeHook.getStdinMapper()), bundle.projectPath(), bundle.pluginRoot(),
       bundle.claudeConfigPath());
   }
 
@@ -101,7 +101,7 @@ public final class TestClaudeHook extends AbstractClaudeHook
   @SuppressWarnings("PMD.UnnecessaryFullyQualifiedName")
   public TestClaudeHook(Path projectPath, Path pluginRoot, Path claudeConfigPath)
   {
-    this(defaultPayload(AbstractClaudeHook.createStdinMapper()), projectPath, pluginRoot, claudeConfigPath,
+    this(defaultPayload(AbstractClaudeHook.getStdinMapper()), projectPath, pluginRoot, claudeConfigPath,
       TerminalType.WINDOWS_TERMINAL);
   }
 
@@ -119,7 +119,7 @@ public final class TestClaudeHook extends AbstractClaudeHook
   @SuppressWarnings("PMD.UnnecessaryFullyQualifiedName")
   public TestClaudeHook(String payloadJson, Path projectPath, Path pluginRoot, Path claudeConfigPath)
   {
-    this(parseJson(payloadJson, AbstractClaudeHook.createStdinMapper()), projectPath, pluginRoot, claudeConfigPath,
+    this(parseJson(payloadJson, AbstractClaudeHook.getStdinMapper()), projectPath, pluginRoot, claudeConfigPath,
       TerminalType.WINDOWS_TERMINAL);
   }
 
@@ -153,7 +153,7 @@ public final class TestClaudeHook extends AbstractClaudeHook
   public TestClaudeHook(String payloadJson, Path projectPath, Path pluginRoot, Path claudeConfigPath,
     TerminalType terminalType)
   {
-    this(parseJson(payloadJson, AbstractClaudeHook.createStdinMapper()), projectPath, pluginRoot, claudeConfigPath,
+    this(parseJson(payloadJson, AbstractClaudeHook.getStdinMapper()), projectPath, pluginRoot, claudeConfigPath,
       terminalType);
   }
 

@@ -56,6 +56,9 @@ import java.util.Objects;
  */
 public final class GetStatusOutput implements SkillOutput
 {
+  public static final String NO_CAT_PROJECT_MESSAGE = "No CAT project found. Initialize one first.";
+  public static final String NO_PLANNING_STRUCTURE_MESSAGE =
+    "No planning structure found. Initialize the project first.";
   private static final int MAX_VISIBLE_COMPLETED = 5;
 
   private final Logger log = LoggerFactory.getLogger(GetStatusOutput.class);
@@ -94,7 +97,7 @@ public final class GetStatusOutput implements SkillOutput
 
     Path catDir = scope.getCatDir();
     if (!Files.isDirectory(catDir))
-      return "No CAT project found. Initialize one first.";
+      return NO_CAT_PROJECT_MESSAGE;
 
     LicenseValidator validator = new LicenseValidator(scope);
     LicenseResult licenseResult = validator.validate(projectPath);
@@ -128,7 +131,7 @@ public final class GetStatusOutput implements SkillOutput
     if (!Files.isDirectory(issuesDir))
     {
       StatusData data = new StatusData();
-      data.error = "No planning structure found. Initialize the project first.";
+      data.error = NO_PLANNING_STRUCTURE_MESSAGE;
       return data;
     }
 
@@ -1296,5 +1299,22 @@ public final class GetStatusOutput implements SkillOutput
     GetStatusOutput generator = new GetStatusOutput((ClaudeTool) scope);
     String output = generator.getOutput(args);
     out.println(output);
+  }
+
+  /**
+   * Returns whether text exactly matches a plain status setup message.
+   *
+   * @param text the text to check
+   * @return true if the text matches a plain setup message
+   * @throws NullPointerException if {@code text} is null
+   */
+  public static boolean isPlainSetupStatusOutput(String text)
+  {
+    requireThat(text, "text").isNotNull();
+    return switch (text.strip())
+    {
+      case NO_CAT_PROJECT_MESSAGE, NO_PLANNING_STRUCTURE_MESSAGE -> true;
+      default -> false;
+    };
   }
 }

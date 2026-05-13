@@ -64,6 +64,7 @@ declare -a HANDLERS=(
   "get-config-output:io.github.cowwoc.cat.claude.hook.skills.GetConfigOutput"
   "update-config:io.github.cowwoc.cat.claude.hook.util.UpdateConfig"
   "get-output:io.github.cowwoc.cat.claude.hook.skills.GetOutput"
+  "get-status-output:io.github.cowwoc.cat.claude.hook.skills.GetStatusOutput"
   "get-cleanup-output:io.github.cowwoc.cat.claude.hook.skills.GetCleanupOutput"
   "create-issue:io.github.cowwoc.cat.claude.hook.util.IssueCreator"
   "session-analyzer:io.github.cowwoc.cat.claude.hook.util.SessionAnalyzer"
@@ -440,6 +441,27 @@ verify_image() {
   else
     log "  Warning: pre-bash launcher test failed"
   fi
+
+  log "  Testing get-status-output launcher..."
+  local status_project_dir="${TARGET_DIR}/status-verify-project"
+  local status_plugin_data="${TARGET_DIR}/status-verify-plugin-data"
+  local status_config_dir="${TARGET_DIR}/status-verify-config-home"
+  rm -rf "$status_project_dir" "$status_plugin_data" "$status_config_dir"
+  mkdir -p "$status_project_dir" "$status_plugin_data" "$status_config_dir"
+  local status_output
+  if ! status_output=$(CLAUDE_PROJECT_DIR="$status_project_dir" \
+    CLAUDE_PLUGIN_ROOT="${REACTOR_DIR}/plugin" \
+    CLAUDE_PLUGIN_DATA="$status_plugin_data" \
+    CLAUDE_CONFIG_DIR="$status_config_dir" \
+    CLAUDE_SESSION_ID="jlink-status-verify-session" \
+    TZ="${TZ:-UTC}" \
+    "${OUTPUT_DIR}/bin/get-status-output"); then
+    error "get-status-output launcher failed"
+  fi
+  if [[ "$status_output" != "No CAT project found. Initialize one first." ]]; then
+    error "get-status-output launcher returned unexpected output: $status_output"
+  fi
+  log "  get-status-output launcher works"
 
   log "Verification complete"
 }

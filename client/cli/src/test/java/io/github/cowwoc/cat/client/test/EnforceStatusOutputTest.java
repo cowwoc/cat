@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.client.test;
 
 import io.github.cowwoc.cat.claude.hook.EnforceStatusOutput;
 import io.github.cowwoc.cat.claude.hook.JvmScope;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -16,6 +17,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static io.github.cowwoc.cat.claude.hook.skills.GetStatusOutput.NO_CAT_PROJECT_MESSAGE;
+import static io.github.cowwoc.cat.claude.hook.skills.GetStatusOutput.NO_PLANNING_STRUCTURE_MESSAGE;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
@@ -52,6 +55,25 @@ public final class EnforceStatusOutputTest
       "\"<command-name>cat:status</command-name>\"}]}}";
     String assistantLine = "{\"type\":\"assistant\",\"message\":{\"content\":[{\"type\":\"text\"," +
       "\"text\":\"The project is in progress with several open issues.\"}]}}";
+    Files.writeString(transcriptFile, userLine + "\n" + assistantLine + "\n");
+  }
+
+  /**
+   * Writes a mock transcript JSONL with a user message containing /cat:status and an assistant text
+   * response.
+   *
+   * @param transcriptFile the path to write the transcript to
+   * @param assistantText the assistant text to write
+   * @throws IOException if writing fails
+   */
+  private static void writeTranscriptWithAssistantText(Path transcriptFile, String assistantText)
+    throws IOException
+  {
+    String userLine = "{\"type\":\"user\",\"message\":{\"content\":[{\"type\":\"text\",\"text\":" +
+      "\"<command-name>cat:status</command-name>\"}]}}";
+    JsonMapper mapper = new JsonMapper();
+    String assistantLine = "{\"type\":\"assistant\",\"message\":{\"content\":[{\"type\":\"text\"," +
+      "\"text\":" + mapper.writeValueAsString(assistantText) + "}]}}";
     Files.writeString(transcriptFile, userLine + "\n" + assistantLine + "\n");
   }
 
@@ -110,6 +132,48 @@ public final class EnforceStatusOutputTest
   }
 
   /**
+   * Returns exact plain status setup messages.
+   *
+   * @return the exact messages
+   */
+  @DataProvider
+  public Object[][] plainSetupStatusOutputs()
+  {
+    return new Object[][]
+      {
+        {NO_CAT_PROJECT_MESSAGE},
+        {NO_PLANNING_STRUCTURE_MESSAGE}
+      };
+  }
+
+  /**
+   * Verifies that when {@code stop_hook_active=true} and a plain setup status message is present in
+   * the transcript, the hook returns empty (allows the response through).
+   *
+   * @param text the plain setup status message to write
+   * @throws IOException if test setup fails
+   */
+  @Test(dataProvider = "plainSetupStatusOutputs")
+  public void stopHookActiveWithPlainStatusErrorPresent(String text) throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path transcriptFile = tempDir.resolve("transcript.jsonl");
+      writeTranscriptWithAssistantText(transcriptFile, text);
+
+      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), true, scope, "", null);
+
+      requireThat(result.trim(), "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that when {@code stop_hook_active=false} and the status box IS present, the hook returns
    * empty (existing pass-through behavior).
    *
@@ -128,6 +192,84 @@ public final class EnforceStatusOutputTest
       String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), false, scope, "", null);
 
       requireThat(result.trim(), "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a plain status setup error is accepted as valid status output.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void firstAttemptWithPlainStatusErrorPresent() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path transcriptFile = tempDir.resolve("transcript.jsonl");
+      writeTranscriptWithAssistantText(transcriptFile, NO_CAT_PROJECT_MESSAGE);
+
+      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), false, scope, "", null);
+
+      requireThat(result.trim(), "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that both plain status setup errors are accepted as valid status output.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void firstAttemptWithMissingPlanningStatusErrorPresent() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path transcriptFile = tempDir.resolve("transcript.jsonl");
+      writeTranscriptWithAssistantText(transcriptFile, NO_PLANNING_STRUCTURE_MESSAGE);
+
+      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), false, scope, "", null);
+
+      requireThat(result.trim(), "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that setup errors must be output verbatim without appended commentary.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void firstAttemptWithAugmentedPlainStatusErrorBlocks() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
+    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path transcriptFile = tempDir.resolve("transcript.jsonl");
+      writeTranscriptWithAssistantText(transcriptFile, NO_CAT_PROJECT_MESSAGE +
+        " I can help you run cat:init.");
+
+      String result = EnforceStatusOutput.check(mapper, transcriptFile.toString(), false, scope, "", null);
+
+      JsonNode resultNode = mapper.readTree(result);
+      requireThat(resultNode.get("decision").asString(), "decision").isEqualTo("block");
+      requireThat(result, "result").contains("M402");
     }
     finally
     {

@@ -14,6 +14,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static io.github.cowwoc.cat.claude.hook.skills.GetStatusOutput.NO_CAT_PROJECT_MESSAGE;
+import static io.github.cowwoc.cat.claude.hook.skills.GetStatusOutput.NO_PLANNING_STRUCTURE_MESSAGE;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
@@ -90,5 +92,104 @@ public final class RuntimeAgentLayoutTest
     requireThat(content, "content").contains("CLAUDE_PLUGIN_ROOT=\"${REACTOR_DIR}/plugin\"");
     requireThat(content, "content").contains("CLAUDE_PLUGIN_DATA=\"$aot_plugin_data\"");
     requireThat(content, "content").contains("CLAUDE_CONFIG_DIR=\"$aot_config_dir\"");
+  }
+
+  /**
+   * Verifies that {@code cat:status} uses static instructions instead of a preprocessor directive.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void statusSkillsDoNotUsePreprocessorDirective() throws IOException
+  {
+    Path repoRoot = Path.of("").toAbsolutePath().normalize().getParent();
+    requireThat(repoRoot, "repoRoot").isNotNull();
+
+    for (String runtime : List.of("claude", "codex"))
+    {
+      Path statusSkill = repoRoot.resolve("plugin/skills/" + runtime + "/status/SKILL.md");
+      String content = Files.readString(statusSkill);
+
+      requireThat(content, runtime + "StatusContent").contains("client/bin/get-status-output");
+      requireThat(content, runtime + "StatusContent").doesNotContain("!`");
+      requireThat(content, runtime + "StatusContent").doesNotContain("client/bin/get-output\" status");
+    }
+  }
+
+  /**
+   * Verifies that {@code cat:status} assumes startup-loaded CAT environment guidance.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void statusSkillsAssumeStartupLoadedEnvironmentGuidance() throws IOException
+  {
+    Path repoRoot = Path.of("").toAbsolutePath().normalize().getParent();
+    requireThat(repoRoot, "repoRoot").isNotNull();
+
+    for (String runtime : List.of("claude", "codex"))
+    {
+      Path statusSkill = repoRoot.resolve("plugin/skills/" + runtime + "/status/SKILL.md");
+      String content = Files.readString(statusSkill);
+
+      requireThat(content, runtime + "StatusContent").contains("CAT_PLUGIN_DATA");
+      requireThat(content, runtime + "StatusContent").doesNotContain("CODEX_HOME=\"");
+      requireThat(content, runtime + "StatusContent").doesNotContain("CAT_PLUGIN_DATA=\"");
+      requireThat(content, runtime + "StatusContent").doesNotContain("CAT Environment Variables");
+      requireThat(content, runtime + "StatusContent").doesNotContain("rules/codex/cat-environment.md");
+    }
+  }
+
+  /**
+   * Verifies that the jlink image exposes a direct launcher for status output.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void jlinkRegistersStatusOutputLauncher() throws IOException
+  {
+    Path repoRoot = Path.of("").toAbsolutePath().normalize().getParent();
+    requireThat(repoRoot, "repoRoot").isNotNull();
+    Path buildScript = repoRoot.resolve("cli/build-jlink.sh");
+    String content = Files.readString(buildScript);
+
+    requireThat(content, "content").contains(
+      "\"get-status-output:io.github.cowwoc.cat.claude.hook.skills.GetStatusOutput\"");
+  }
+
+  /**
+   * Verifies that jlink verification executes the generated status output launcher.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void jlinkVerificationRunsStatusOutputLauncher() throws IOException
+  {
+    Path repoRoot = Path.of("").toAbsolutePath().normalize().getParent();
+    requireThat(repoRoot, "repoRoot").isNotNull();
+    Path buildScript = repoRoot.resolve("cli/build-jlink.sh");
+    String content = Files.readString(buildScript);
+
+    requireThat(content, "content").contains("Testing get-status-output launcher");
+    requireThat(content, "content").contains("\"${OUTPUT_DIR}/bin/get-status-output\"");
+    requireThat(content, "content").contains("CLAUDE_PROJECT_DIR=\"$status_project_dir\"");
+  }
+
+  /**
+   * Verifies that status enforcement delegates plain setup message recognition to status output code.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void statusEnforcementDelegatesPlainSetupMessageRecognition() throws IOException
+  {
+    Path repoRoot = Path.of("").toAbsolutePath().normalize().getParent();
+    requireThat(repoRoot, "repoRoot").isNotNull();
+    String enforceStatusOutput = Files.readString(repoRoot.resolve(
+      "cli/src/main/java/io/github/cowwoc/cat/claude/hook/EnforceStatusOutput.java"));
+
+    requireThat(enforceStatusOutput, "enforceStatusOutput").contains("isPlainSetupStatusOutput(text)");
+    requireThat(enforceStatusOutput, "enforceStatusOutput").doesNotContain(NO_CAT_PROJECT_MESSAGE);
+    requireThat(enforceStatusOutput, "enforceStatusOutput").doesNotContain(NO_PLANNING_STRUCTURE_MESSAGE);
   }
 }

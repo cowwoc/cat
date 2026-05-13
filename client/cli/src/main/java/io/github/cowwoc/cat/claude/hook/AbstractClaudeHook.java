@@ -77,7 +77,7 @@ public abstract class AbstractClaudeHook extends AbstractClaudePluginScope imple
   }
 
   /**
-   * Creates a minimal {@link JsonMapper} for bootstrap use, before a scope instance is available.
+   * Returns a minimal {@link JsonMapper} for bootstrap use, before a scope instance is available.
    * <p>
    * This is one of two permitted call sites for {@code JsonMapper.builder()} — the other is
    * {@link AbstractJvmScope}. All other code must obtain a mapper via
@@ -85,7 +85,7 @@ public abstract class AbstractClaudeHook extends AbstractClaudePluginScope imple
    *
    * @return a plain {@link JsonMapper} instance
    */
-  protected static JsonMapper createStdinMapper()
+  protected static JsonMapper getStdinMapper()
   {
     return JsonMapper.builder().build();
   }
@@ -277,7 +277,7 @@ public abstract class AbstractClaudeHook extends AbstractClaudePluginScope imple
   }
 
   /**
-   * Extracts the session ID from a agent identifier.
+   * Returns the session ID from an agent identifier.
    * <p>
    * For the main agent the agent ID equals the session ID. For subagents the format is
    * {@code sessionId/subagents/agentXxx}, and only the session ID prefix is returned.
@@ -286,7 +286,7 @@ public abstract class AbstractClaudeHook extends AbstractClaudePluginScope imple
    * @return the session ID portion of the agent ID
    * @throws NullPointerException if {@code agentId} is null
    */
-  public static String extractSessionId(String agentId)
+  public static String getSessionId(String agentId)
   {
     int subIdx = agentId.indexOf('/');
     if (subIdx < 0)
