@@ -80,17 +80,13 @@ trackable progress, and code that passes review the first time.
 
 **Codex**
 
-Latest release:
-
 ```text
-Run the prompt at https://raw.githubusercontent.com/cowwoc/cat/main/docs/prompts/codex-install.md to install or update the CAT plugin to the latest version.
+Run the prompt at
+https://raw.githubusercontent.com/cowwoc/cat/v2.1/docs/prompts/codex-install.md
+to install or update the CAT plugin.
 ```
 
-Specific release:
-
-```text
-Run the prompt at https://raw.githubusercontent.com/cowwoc/cat/main/docs/prompts/codex-install.md to install or update the CAT plugin to version 1.2.0.
-```
+This installs or updates CAT `v2.1`.
 
 To remove CAT from Codex, run `/cat:uninstall` before uninstalling CAT from Codex.
 

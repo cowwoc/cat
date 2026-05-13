@@ -116,7 +116,8 @@ curl -fsSL --max-time 300 -o "${INSTALL_TMP}/${ASSET_NAME}" "${ASSET_URL}"
 curl -fsSL --max-time 60 -o "${INSTALL_TMP}/SHA256SUMS.txt" \
   "https://github.com/cowwoc/cat/releases/download/${RELEASE_TAG}/SHA256SUMS.txt" || true
 
-if [[ -s "${INSTALL_TMP}/SHA256SUMS.txt" ]] && grep -F "  ${ASSET_NAME}" "${INSTALL_TMP}/SHA256SUMS.txt" >/dev/null; then
+if [[ -s "${INSTALL_TMP}/SHA256SUMS.txt" ]] &&
+  grep -F "  ${ASSET_NAME}" "${INSTALL_TMP}/SHA256SUMS.txt" >/dev/null; then
   (cd "${INSTALL_TMP}" && grep -F "  ${ASSET_NAME}" SHA256SUMS.txt | sha256sum -c -)
 fi
 
@@ -152,16 +153,16 @@ For Codex, install through a generated local marketplace and overlay the active 
 
 ```bash
 if [[ "${CAT_RUNTIME}" == "codex" ]]; then
-  LOCAL_MARKETPLACE_ROOT="${LOCAL_MARKETPLACE_ROOT:-${CODEX_HOME}/plugins/cat-local-marketplace}"
+  LOCAL_MARKETPLACE_ROOT="${LOCAL_MARKETPLACE_ROOT:-${CODEX_HOME}/plugins/cat-marketplace}"
   rm -rf "${LOCAL_MARKETPLACE_ROOT}"
   mkdir -p "${LOCAL_MARKETPLACE_ROOT}/plugins/cat"
   cp -R "${FLATTENED_PLUGIN}/." "${LOCAL_MARKETPLACE_ROOT}/plugins/cat/"
   mkdir -p "${LOCAL_MARKETPLACE_ROOT}/.agents/plugins"
   cat > "${LOCAL_MARKETPLACE_ROOT}/.agents/plugins/marketplace.json" <<'JSON'
 {
-  "name": "cat-local",
+  "name": "cat",
   "interface": {
-    "displayName": "CAT Local"
+    "displayName": "CAT"
   },
   "plugins": [
     {
@@ -180,7 +181,7 @@ if [[ "${CAT_RUNTIME}" == "codex" ]]; then
 }
 JSON
 
-  codex plugin marketplace remove cat-local 2>/dev/null || true
+  codex plugin marketplace remove cat 2>/dev/null || true
   codex plugin marketplace add "${LOCAL_MARKETPLACE_ROOT}"
   CAT_PLUGIN_ROOT="${CAT_PLUGIN_ROOT:-${LOCAL_MARKETPLACE_ROOT}/plugins/cat}"
 

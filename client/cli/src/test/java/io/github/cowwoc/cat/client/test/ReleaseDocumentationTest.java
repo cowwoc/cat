@@ -37,13 +37,13 @@ public final class ReleaseDocumentationTest
     requireThat(claudeMarketplace, "claudeMarketplace").contains("\"source\": \"./client/plugin\"");
 
     requireThat(readme, "readme").contains(
-      "https://raw.githubusercontent.com/cowwoc/cat/main/docs/prompts/codex-install.md");
+      "https://raw.githubusercontent.com/cowwoc/cat/v2.1/docs/prompts/codex-install.md");
     requireThat(readme, "readme").contains(
-      "Run the prompt at https://raw.githubusercontent.com/cowwoc/cat/main/docs/prompts/codex-install.md to " +
-        "install or update the CAT plugin to the latest version.");
-    requireThat(readme, "readme").contains(
-      "Run the prompt at https://raw.githubusercontent.com/cowwoc/cat/main/docs/prompts/codex-install.md to " +
-        "install or update the CAT plugin to version 1.2.0.");
+      """
+        Run the prompt at
+        https://raw.githubusercontent.com/cowwoc/cat/v2.1/docs/prompts/codex-install.md
+        to install or update the CAT plugin.""");
+    requireThat(readme, "readme").contains("This installs or updates CAT `v2.1`.");
     requireThat(readme, "readme").contains("[Codex parity notes](docs/development/codex-parity.md)");
     requireThat(readme, "readme").contains("run `/cat:uninstall` before uninstalling CAT from Codex");
     requireThat(readme, "readme").doesNotContain("The prompt resolves to this bootstrap path");
@@ -53,13 +53,25 @@ public final class ReleaseDocumentationTest
 
     String codexInstallPrompt = Files.readString(sourceRoot.resolve("docs/prompts/codex-install.md"),
       StandardCharsets.UTF_8);
-    requireThat(codexInstallPrompt, "codexInstallPrompt").contains("Determine the requested CAT version");
+    requireThat(codexInstallPrompt, "codexInstallPrompt").contains("This copy of the prompt installs CAT `v2.1`");
+    requireThat(codexInstallPrompt, "codexInstallPrompt").contains("REQUESTED_VERSION=\"v2.1\"");
+    requireThat(codexInstallPrompt, "codexInstallPrompt").doesNotContain("use `main` in the prompt URL");
     requireThat(codexInstallPrompt, "codexInstallPrompt").contains("https://github.com/cowwoc/cat/releases");
-    requireThat(codexInstallPrompt, "codexInstallPrompt").contains("codex plugin marketplace add cowwoc/cat");
-    requireThat(codexInstallPrompt, "codexInstallPrompt").contains("Run `/cat:install <release-tag>`");
+    requireThat(codexInstallPrompt, "codexInstallPrompt").contains("do not rely on any `/cat:*` command");
+    requireThat(codexInstallPrompt, "codexInstallPrompt").contains("\"name\": \"cat\"");
+    requireThat(codexInstallPrompt, "codexInstallPrompt").contains(
+      "codex plugin marketplace add \"${LOCAL_MARKETPLACE_ROOT}\"");
+    requireThat(codexInstallPrompt, "codexInstallPrompt").contains("CAT_RUNTIME=\"codex\"");
+    requireThat(codexInstallPrompt, "codexInstallPrompt").contains(
+      "ASSET_NAME=\"cat-${CAT_RUNTIME}-${RELEASE_TAG}.tar.gz\"");
+    requireThat(codexInstallPrompt, "codexInstallPrompt").doesNotContain("codex plugin marketplace add cowwoc/cat");
+    requireThat(codexInstallPrompt, "codexInstallPrompt").doesNotContain("Run `/cat:install <release-tag>`");
+    requireThat(codexInstallPrompt, "codexInstallPrompt").doesNotContain("cat-local");
     requireThat(codexInstallPrompt, "codexInstallPrompt").doesNotContain("cowwoc/cat-artifacts");
     requireThat(codexInstallPrompt, "codexInstallPrompt").contains(
-      "If the project root already contains `.cat/`, do not run `/cat:init`");
+      "If the project root already contains `.cat/`, do not run");
+    requireThat(codexInstallPrompt, "codexInstallPrompt").contains(
+      "`/cat:init`. Run `/cat:init` only when the user wants to create a new CAT project");
     requireThat(codexInstallPrompt, "codexInstallPrompt").contains(
       "Run `/cat:init` only when the user wants to create a new CAT project or wrap an existing project");
 
@@ -76,6 +88,8 @@ public final class ReleaseDocumentationTest
     requireThat(installSkill, "installSkill").contains("cat-claude-<release-tag>.tar.gz");
     requireThat(installSkill, "installSkill").contains("cat-codex-<release-tag>.tar.gz");
     requireThat(installSkill, "installSkill").contains("https://github.com/cowwoc/cat/releases/download");
+    requireThat(installSkill, "installSkill").contains("\"name\": \"cat\"");
+    requireThat(installSkill, "installSkill").doesNotContain("cat-local");
     requireThat(installSkill, "installSkill").doesNotContain("python");
     requireThat(Files.exists(clientRoot.resolve("plugin/skills/codex/install/SKILL.md")),
       "codexInstallSkill").isFalse();

@@ -5,27 +5,111 @@ See LICENSE.md in the project root for license terms.
 -->
 # Codex CAT Install Prompt
 
-You are installing CAT for Codex. CAT may not be installed yet.
+You are installing CAT for Codex. CAT may not be installed yet, so do not rely on any `/cat:*` command.
 
-Determine the requested CAT version from the user's message that pointed to this prompt:
+This copy of the prompt installs CAT `v2.1`.
 
-- If the user requested the latest version, determine the latest release tag from
-  `https://github.com/cowwoc/cat/releases`.
-- If the user requested a specific version, use that version as the release tag. If the user provided a bare version
-  like `2.1.0`, normalize it to `v2.1.0`.
+Install CAT directly from the Codex release artifact. This creates a local Codex marketplace from the release artifact,
+adds it to Codex, and installs the bundled CAT client runtime.
 
-Install the CAT marketplace from the source repository at the selected release tag:
+Run:
 
 ```bash
-codex plugin marketplace add cowwoc/cat --ref <release-tag> --sparse client/plugin
+set -euo pipefail
+
+REQUESTED_VERSION="v2.1"
+case "${REQUESTED_VERSION}" in
+  ""|"latest") RELEASE_TAG="latest" ;;
+  v*) RELEASE_TAG="${REQUESTED_VERSION}" ;;
+  *) RELEASE_TAG="v${REQUESTED_VERSION}" ;;
+esac
+
+CAT_RUNTIME="codex"
+CODEX_HOME="${CODEX_HOME:-${HOME}/.codex}"
+CAT_PLUGIN_DATA="${CAT_PLUGIN_DATA:-${CODEX_HOME}/plugins/data/local-cat}"
+
+if [[ "${RELEASE_TAG}" == "latest" ]]; then
+  RELEASE_TAG="$(curl -fsSL https://api.github.com/repos/cowwoc/cat/releases/latest |
+    sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)"
+  if [[ -z "${RELEASE_TAG}" ]]; then
+    echo "ERROR: Could not determine latest CAT release tag." >&2
+    exit 1
+  fi
+fi
+
+ASSET_NAME="cat-${CAT_RUNTIME}-${RELEASE_TAG}.tar.gz"
+ASSET_URL="https://github.com/cowwoc/cat/releases/download/${RELEASE_TAG}/${ASSET_NAME}"
+
+echo "CAT_RUNTIME=${CAT_RUNTIME}"
+echo "RELEASE_TAG=${RELEASE_TAG}"
+echo "ASSET_URL=${ASSET_URL}"
+echo "CAT_PLUGIN_DATA=${CAT_PLUGIN_DATA}"
+
+INSTALL_TMP="$(mktemp -d)"
+trap 'rm -rf "${INSTALL_TMP}"' EXIT
+
+curl -fsSL --max-time 300 -o "${INSTALL_TMP}/${ASSET_NAME}" "${ASSET_URL}"
+curl -fsSL --max-time 60 -o "${INSTALL_TMP}/SHA256SUMS.txt" \
+  "https://github.com/cowwoc/cat/releases/download/${RELEASE_TAG}/SHA256SUMS.txt" || true
+
+if [[ -s "${INSTALL_TMP}/SHA256SUMS.txt" ]] &&
+  grep -F "  ${ASSET_NAME}" "${INSTALL_TMP}/SHA256SUMS.txt" >/dev/null; then
+  (cd "${INSTALL_TMP}" && grep -F "  ${ASSET_NAME}" SHA256SUMS.txt | sha256sum -c -)
+fi
+
+mkdir -p "${INSTALL_TMP}/artifact"
+tar -xzf "${INSTALL_TMP}/${ASSET_NAME}" -C "${INSTALL_TMP}/artifact"
+FLATTENED_PLUGIN="${INSTALL_TMP}/artifact"
+if [[ ! -f "${FLATTENED_PLUGIN}/client/VERSION" ]]; then
+  nested="$(find "${INSTALL_TMP}/artifact" -mindepth 1 -maxdepth 2 -type f -path '*/client/VERSION' -print -quit)"
+  if [[ -n "${nested}" ]]; then
+    FLATTENED_PLUGIN="$(dirname "$(dirname "${nested}")")"
+  fi
+fi
+test -f "${FLATTENED_PLUGIN}/client/VERSION"
+
+LOCAL_MARKETPLACE_ROOT="${LOCAL_MARKETPLACE_ROOT:-${CODEX_HOME}/plugins/cat-marketplace}"
+rm -rf "${LOCAL_MARKETPLACE_ROOT}"
+mkdir -p "${LOCAL_MARKETPLACE_ROOT}/plugins/cat"
+cp -R "${FLATTENED_PLUGIN}/." "${LOCAL_MARKETPLACE_ROOT}/plugins/cat/"
+mkdir -p "${LOCAL_MARKETPLACE_ROOT}/.agents/plugins"
+cat > "${LOCAL_MARKETPLACE_ROOT}/.agents/plugins/marketplace.json" <<'JSON'
+{
+  "name": "cat",
+  "interface": {
+    "displayName": "CAT"
+  },
+  "plugins": [
+    {
+      "name": "cat",
+      "source": {
+        "source": "local",
+        "path": "./plugins/cat"
+      },
+      "policy": {
+        "installation": "INSTALLED_BY_DEFAULT",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
+JSON
+
+codex plugin marketplace remove cat 2>/dev/null || true
+codex plugin marketplace add "${LOCAL_MARKETPLACE_ROOT}"
+
+mkdir -p "${CAT_PLUGIN_DATA}"
+chmod -R u+w "${CAT_PLUGIN_DATA}/client" 2>/dev/null || true
+rm -rf "${CAT_PLUGIN_DATA}/client"
+cp -R "${FLATTENED_PLUGIN}/client" "${CAT_PLUGIN_DATA}/client"
+
+"${CAT_PLUGIN_DATA}/client/bin/java" -version
+test -x "${CAT_PLUGIN_DATA}/client/bin/pre-bash"
+test -f "${CAT_PLUGIN_DATA}/client/VERSION"
+
+echo "Installed CAT ${RELEASE_TAG} for Codex. Restart Codex so the updated plugin is loaded."
 ```
 
-Then guide the user through these steps:
-
-1. Open Codex's plugin browser.
-2. Install CAT from the `cowwoc/cat` marketplace entry.
-3. Run `/cat:install <release-tag>` to download and install the full CAT Codex release artifact.
-4. Restart Codex.
-5. If the project root already contains `.cat/`, do not run `/cat:init`.
-
-Run `/cat:init` only when the user wants to create a new CAT project or wrap an existing project.
+After the command succeeds, tell the user to restart Codex. If the project root already contains `.cat/`, do not run
+`/cat:init`. Run `/cat:init` only when the user wants to create a new CAT project or wrap an existing project.
