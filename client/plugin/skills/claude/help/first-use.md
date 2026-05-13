@@ -15,7 +15,7 @@ Output the following content verbatim. Do not summarize, interpret, or add comme
 
 ## Common Operations
 
-Everything below uses natural language. Slash commands work where shown.
+Everything below also works with natural language. Use slash commands to select a CAT workflow explicitly.
 
 **Initialize a project**
 ```
@@ -104,7 +104,7 @@ Ask the agent to work at different scopes:
 - Creates worktree and issue branch per issue
 - Runs approval gate when trust < high
 
-### /cat:init Details
+### Init Details
 
 - Creates project.md, roadmap.md, config.json
 - Asks for trust level (how much autonomy your partner has)
@@ -123,7 +123,7 @@ Ask the agent to work at different scopes:
 
 ### Project Structure
 
-CAT supports 2-level (MAJOR → MINOR → ISSUE) and 3-level (MAJOR → MINOR → PATCH → ISSUE) schemes.
+CAT supports 2-level (MAJOR -> MINOR -> ISSUE) and 3-level (MAJOR -> MINOR -> PATCH -> ISSUE) schemes.
 
 ```
 .cat/

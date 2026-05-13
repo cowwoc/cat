@@ -151,6 +151,16 @@ requireThat(result, "result").isEqualTo(expected);
 assertEquals(result, expected);
 ```
 
+Use typed validators directly instead of wrapping boolean `Files` checks:
+
+```java
+// Good - clear path-specific failure message
+requireThat(path, "path").isRegularFile();
+
+// Avoid - collapses path context into a boolean
+requireThat(Files.isRegularFile(path), "path").isTrue();
+```
+
 ## Error Collection (Web Services)
 
 For collecting multiple failures without throwing:

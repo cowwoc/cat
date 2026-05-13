@@ -113,9 +113,6 @@ public final class PluginArtifactBuilder
     copyFile(pluginDir.resolve("hooks").resolve(runtime.directoryName).resolve("hooks.json"),
       target.resolve("hooks/hooks.json"));
 
-    if (runtime == Runtime.CODEX)
-      copyInstructionTree(pluginDir.resolve("commands/codex"), target.resolve("commands"), runtime);
-
     Files.createDirectories(target.resolve("skills"));
     copySkillSet(pluginDir.resolve("skills/common"), target.resolve("skills"), runtime);
     copySkillSet(pluginDir.resolve("skills").resolve(runtime.directoryName), target.resolve("skills"), runtime);
@@ -183,7 +180,6 @@ public final class PluginArtifactBuilder
       pluginDir.resolve("rules/common"),
       pluginDir.resolve("hooks/common"),
       pluginDir.resolve("concepts"),
-      pluginDir.resolve("commands").resolve(runtime.directoryName),
       pluginDir.resolve("agents").resolve(runtime.directoryName),
       pluginDir.resolve("skills").resolve(runtime.directoryName),
       pluginDir.resolve("rules").resolve(runtime.directoryName),

@@ -1,6 +1,6 @@
 ---
-description: Quick reference for all CAT commands and skills.
-model: haiku
+description: Quick reference for CAT skill mentions and workflows in Codex.
+model: gpt-5.4-mini
 effort: low
 allowed-tools:
   - Skill

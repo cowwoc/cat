@@ -14,7 +14,6 @@
     "worktrees"
   ],
   "skills": "./skills/",
-  "commands": "./commands/",
   "hooks": "./hooks/hooks.json",
   "interface": {
     "displayName": "CAT",

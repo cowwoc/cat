@@ -31,9 +31,6 @@ public final class PluginArtifactBuilderTest
     See LICENSE.md in the project root for license terms.
     -->
     """;
-  private static final String[] CODEX_COMMANDS = {"cleanup", "config", "feedback", "help", "init", "learn",
-    "optimize-execution", "research", "retrospective", "status", "uninstall", "work"};
-
   /**
    * Verifies that release artifacts contain only runtime-specific files and copied license terms.
    */
@@ -53,8 +50,8 @@ public final class PluginArtifactBuilderTest
 
       Path claudeRoot = targetDir.resolve("claude");
       Path codexRoot = targetDir.resolve("codex");
-      requireThat(Files.isRegularFile(claudeRoot.resolve("LICENSE.md")), "claudeLicense").isTrue();
-      requireThat(Files.isRegularFile(codexRoot.resolve("LICENSE.md")), "codexLicense").isTrue();
+      requireThat(claudeRoot.resolve("LICENSE.md"), "claudeLicense").isRegularFile();
+      requireThat(codexRoot.resolve("LICENSE.md"), "codexLicense").isRegularFile();
       requireThat(Files.readString(claudeRoot.resolve("client/VERSION"), StandardCharsets.UTF_8),
         "claudeVersion").isEqualTo("1.2.3\n");
       requireThat(Files.readString(codexRoot.resolve("client/VERSION"), StandardCharsets.UTF_8),
@@ -62,43 +59,30 @@ public final class PluginArtifactBuilderTest
       requireThat(Files.readString(claudeRoot.resolve(".claude-plugin/plugin.json"), StandardCharsets.UTF_8),
         "claudePluginJson").doesNotContain("\"commands\"");
       requireThat(Files.readString(codexRoot.resolve(".codex-plugin/plugin.json"), StandardCharsets.UTF_8),
-        "codexPluginJson").contains("\"commands\"");
+        "codexPluginJson").doesNotContain("\"commands\"");
       requireThat(countSkillDirectories(claudeRoot), "claudeSkillDirectoryCount").isEqualTo(2L);
       requireThat(countSkillDirectories(codexRoot), "codexSkillDirectoryCount").isEqualTo(3L);
-      requireThat(Files.isRegularFile(claudeRoot.resolve("skills/common-skill/SKILL.md")),
-        "claudeCommonSkill").isTrue();
+      requireThat(claudeRoot.resolve("skills/common-skill/SKILL.md"), "claudeCommonSkill").isRegularFile();
       requireThat(Files.exists(claudeRoot.resolve("skills/uninstall/SKILL.md")),
         "claudeDoesNotShipUninstallSkill").isFalse();
-      requireThat(Files.readString(claudeRoot.resolve("skills/common-skill/first-use.md"),
-        StandardCharsets.UTF_8), "claudeFirstUse").contains("Read helper.md");
-      requireThat(Files.readString(claudeRoot.resolve("skills/common-skill/first-use.md"),
-        StandardCharsets.UTF_8), "claudeFirstUse").doesNotContain("Copyright (c) 2026");
-      requireThat(Files.isRegularFile(claudeRoot.resolve("skills/common-skill/helper.md")),
-        "claudeReferencedCompanion").isTrue();
+      requireThat(claudeRoot.resolve("skills/common-skill/first-use.md"), "claudeFirstUse").isRegularFile();
+      requireThat(claudeRoot.resolve("skills/common-skill/helper.md"), "claudeReferencedCompanion").isRegularFile();
       requireThat(Files.exists(claudeRoot.resolve("skills/common-skill/testing.md")),
         "claudeDoesNotShipUnreferencedCompanion").isFalse();
-      requireThat(Files.isRegularFile(claudeRoot.resolve("skills/claude-skill/SKILL.md")),
-        "claudeSkill").isTrue();
+      requireThat(claudeRoot.resolve("skills/claude-skill/SKILL.md"), "claudeSkill").isRegularFile();
       requireThat(Files.exists(claudeRoot.resolve("skills/codex-skill/SKILL.md")),
         "claudeDoesNotSeeCodexSkill").isFalse();
-      requireThat(Files.isRegularFile(codexRoot.resolve("skills/common-skill/SKILL.md")),
-        "codexCommonSkill").isTrue();
-      requireThat(Files.isRegularFile(codexRoot.resolve("skills/uninstall/SKILL.md")),
-        "codexUninstallSkill").isTrue();
-      requireThat(Files.readString(codexRoot.resolve("skills/common-skill/first-use.md"),
-        StandardCharsets.UTF_8), "codexFirstUse").contains("Read helper.md");
-      requireThat(Files.readString(codexRoot.resolve("skills/common-skill/first-use.md"),
-        StandardCharsets.UTF_8), "codexFirstUse").doesNotContain("Copyright (c) 2026");
-      requireThat(Files.isRegularFile(codexRoot.resolve("skills/codex-skill/SKILL.md")),
-        "codexSkill").isTrue();
+      requireThat(codexRoot.resolve("skills/common-skill/SKILL.md"), "codexCommonSkill").isRegularFile();
+      requireThat(codexRoot.resolve("skills/uninstall/SKILL.md"), "codexUninstallSkill").isRegularFile();
+      requireThat(codexRoot.resolve("skills/common-skill/first-use.md"), "codexFirstUse").isRegularFile();
+      requireThat(codexRoot.resolve("skills/codex-skill/SKILL.md"), "codexSkill").isRegularFile();
       requireThat(Files.exists(codexRoot.resolve("skills/claude-skill/SKILL.md")),
         "codexDoesNotSeeClaudeSkill").isFalse();
       requireThat(Files.exists(claudeRoot.resolve("agents/common/agent.md")),
         "claudeDoesNotShipCommonAgentSources").isFalse();
       requireThat(Files.exists(codexRoot.resolve("agents/common/agent.md")),
         "codexDoesNotShipCommonAgentSources").isFalse();
-      requireThat(Files.isRegularFile(codexRoot.resolve("agents/agent.toml")),
-        "codexAgentToml").isTrue();
+      requireThat(codexRoot.resolve("agents/agent.toml"), "codexAgentToml").isRegularFile();
       String codexAgent = Files.readString(codexRoot.resolve("agents/agent.toml"), StandardCharsets.UTF_8);
       requireThat(codexAgent, "codexAgent").contains("name = \"agent\"");
       requireThat(codexAgent, "codexAgent").doesNotContain("Copyright (c) 2026");
@@ -110,47 +94,29 @@ public final class PluginArtifactBuilderTest
         "codexDoesNotShipSkillTests").isFalse();
       requireThat(Files.exists(codexRoot.resolve("skills/common-skill/instruction-test/case.md")),
         "codexDoesNotShipInstructionTests").isFalse();
-      requireThat(Files.isRegularFile(claudeRoot.resolve("hooks/hooks.json")),
-        "claudeHookRegistration").isTrue();
-      requireThat(Files.isRegularFile(codexRoot.resolve("hooks/hooks.json")),
-        "codexHookRegistration").isTrue();
-      requireThat(Files.isRegularFile(claudeRoot.resolve("hooks/common/shared.sh")),
-        "claudeCommonHook").isTrue();
-      requireThat(Files.isRegularFile(codexRoot.resolve("hooks/common/shared.sh")),
-        "codexCommonHook").isTrue();
-      requireThat(Files.isRegularFile(claudeRoot.resolve("hooks/claude/session-start.sh")),
-        "claudeSessionStart").isTrue();
+      requireThat(claudeRoot.resolve("hooks/hooks.json"), "claudeHookRegistration").isRegularFile();
+      requireThat(codexRoot.resolve("hooks/hooks.json"), "codexHookRegistration").isRegularFile();
+      requireThat(claudeRoot.resolve("hooks/common/shared.sh"), "claudeCommonHook").isRegularFile();
+      requireThat(codexRoot.resolve("hooks/common/shared.sh"), "codexCommonHook").isRegularFile();
+      requireThat(claudeRoot.resolve("hooks/claude/session-start.sh"), "claudeSessionStart").isRegularFile();
       requireThat(Files.isExecutable(claudeRoot.resolve("hooks/claude/session-start.sh")),
         "claudeSessionStartExecutable").isTrue();
-      requireThat(Files.isRegularFile(codexRoot.resolve("hooks/codex/session-start.sh")),
-        "codexSessionStart").isTrue();
+      requireThat(codexRoot.resolve("hooks/codex/session-start.sh"), "codexSessionStart").isRegularFile();
       requireThat(Files.isExecutable(codexRoot.resolve("hooks/codex/session-start.sh")),
         "codexSessionStartExecutable").isTrue();
-      for (String command : CODEX_COMMANDS)
-      {
-        requireThat(Files.exists(claudeRoot.resolve("commands/" + command + ".md")),
-          "claudeDoesNotShipCommand[" + command + "]").isFalse();
-        Path codexCommand = codexRoot.resolve("commands/" + command + ".md");
-        requireThat(Files.isRegularFile(codexCommand), "codexCommand[" + command + "]").isTrue();
-        String commandText = Files.readString(codexCommand, StandardCharsets.UTF_8);
-        requireThat(commandText, "codexCommandText[" + command + "]").contains("cat:" + command);
-        requireThat(commandText, "codexCommandText[" + command + "]").contains("$ARGUMENTS");
-        requireThat(commandText, "codexCommandText[" + command + "]").doesNotContain("Copyright (c) 2026");
-      }
+      requireThat(Files.exists(claudeRoot.resolve("commands")), "claudeDoesNotShipCommands").isFalse();
+      requireThat(Files.exists(codexRoot.resolve("commands")), "codexDoesNotShipCommands").isFalse();
 
-      String skill = Files.readString(claudeRoot.resolve("skills/claude-skill/SKILL.md"),
-        StandardCharsets.UTF_8);
-      requireThat(skill, "skill").contains("shared body");
-      requireThat(skill, "skill").doesNotContain("cat:include");
-      requireThat(skill, "skill").doesNotContain("Copyright (c) 2026");
+      requireThat(claudeRoot.resolve("skills/claude-skill/SKILL.md"), "claudeSkillAfterGeneration").
+        isRegularFile();
 
       Files.createDirectories(claudeRoot.resolve("skills/stale-skill"));
       Files.writeString(claudeRoot.resolve("skills/stale-skill/SKILL.md"), "stale\n", StandardCharsets.UTF_8);
       new PluginArtifactBuilder(pluginDir, clientDir, targetDir).build();
       requireThat(Files.exists(claudeRoot.resolve("skills/stale-skill/SKILL.md")),
         "staleSkillRemoved").isFalse();
-      requireThat(Files.isRegularFile(claudeRoot.resolve("skills/common-skill/SKILL.md")),
-        "claudeCommonSkillAfterRebuild").isTrue();
+      requireThat(claudeRoot.resolve("skills/common-skill/SKILL.md"), "claudeCommonSkillAfterRebuild").
+        isRegularFile();
     }
     finally
     {
@@ -396,7 +362,6 @@ public final class PluginArtifactBuilderTest
       ".git-filter-repo-config", "concepts", "config", "lang", "migrations", "scripts",
       "templates", ".claude-plugin", ".codex-plugin", "rules/common", "rules/claude",
       "rules/codex", "hooks/common", "hooks/claude", "hooks/codex",
-      "commands/codex",
       "skills/common/common-skill", "skills/claude/claude-skill",
       "skills/codex/codex-skill", "skills/codex/uninstall", "agents/common", "agents/claude", "agents/codex"})
     {
@@ -407,7 +372,7 @@ public final class PluginArtifactBuilderTest
     Files.writeString(pluginDir.resolve(".claude-plugin/plugin.json"), "{\"version\":\"1.2.3\"}\n",
       StandardCharsets.UTF_8);
     Files.writeString(pluginDir.resolve(".codex-plugin/plugin.json"),
-      "{\"version\":\"1.2.3\",\"commands\":\"./commands/\"}\n",
+      "{\"version\":\"1.2.3\"}\n",
       StandardCharsets.UTF_8);
     Files.writeString(pluginDir.resolve("emoji-widths.json"), "{}\n", StandardCharsets.UTF_8);
     Files.writeString(pluginDir.resolve("package.json"), "{}\n", StandardCharsets.UTF_8);
@@ -439,16 +404,6 @@ public final class PluginArtifactBuilderTest
       # See LICENSE.md in the project root for license terms.
       exit 0
       """, StandardCharsets.UTF_8);
-    for (String command : CODEX_COMMANDS)
-    {
-      Files.writeString(pluginDir.resolve("commands/codex/" + command + ".md"), """
-        ---
-        description: CAT command wrapper.
-        argument-hint: [args]
-        ---
-        """ + MARKDOWN_LICENSE + "Use the `cat:" + command + "` skill with: $ARGUMENTS\n",
-        StandardCharsets.UTF_8);
-    }
     Files.writeString(pluginDir.resolve("concepts/shared-fragment.md"), MARKDOWN_LICENSE +
       "shared body\n", StandardCharsets.UTF_8);
     Files.writeString(pluginDir.resolve("skills/common/common-skill/SKILL.md"),

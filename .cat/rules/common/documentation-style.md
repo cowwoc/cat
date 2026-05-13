@@ -10,8 +10,10 @@ See LICENSE.md in the project root for license terms.
 
 **Line wrapping:** Markdown files should wrap at 120 characters.
 
-**Automated tests:** Do not validate README files. README files are user-facing entry points, so automated tests must
-target the underlying source files, prompts, generated artifacts, and behavior instead.
+**Automated tests:** Do not assert documentation or skill prose content. README files, documentation files, rules,
+skills, and prompt text are user-facing or agent-facing instructions whose wording should be reviewed directly, not
+locked by brittle content assertions. Automated tests should target underlying source files, generated artifact
+structure, schemas, metadata, and observable behavior instead.
 
 **No retrospective commentary.** Do not add documentation or comments that discuss:
 - What was changed or implemented
