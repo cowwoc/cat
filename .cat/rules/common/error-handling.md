@@ -1,6 +1,11 @@
 ---
 paths: ["client/**", "plugin/**"]
 ---
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # Error Handling
 
 - Java: Use exceptions with meaningful messages; catch specific exceptions
@@ -22,7 +27,7 @@ the message without needing to inspect source code.
 ```
 Error loading skill: Undefined variable ${ARGUMENTS} in skill 'work'.
 Not defined in bindings.json and not a built-in variable.
-Built-in variables: [CLAUDE_PLUGIN_ROOT, CLAUDE_SESSION_ID, CLAUDE_PROJECT_DIR]
+Built-in variables: [CAT_PLUGIN_ROOT, CAT_SESSION_ID, CAT_PROJECT_DIR]
 ```
 Problem: Which file contains `${ARGUMENTS}`? What does bindings.json contain? Not reproducible without investigation.
 
@@ -30,7 +35,7 @@ Problem: Which file contains `${ARGUMENTS}`? What does bindings.json contain? No
 ```
 Error invoking skill 'work': SKILL.md:14 references undefined variable ${ARGUMENTS}.
 Not a built-in variable or binding.
-Built-in variables: [CLAUDE_PLUGIN_ROOT, CLAUDE_SESSION_ID, CLAUDE_PROJECT_DIR]
+Built-in variables: [CAT_PLUGIN_ROOT, CAT_SESSION_ID, CAT_PROJECT_DIR]
 bindings.json: {} (empty)
 ```
 

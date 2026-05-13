@@ -1,7 +1,11 @@
 ---
 paths: ["*.java"]
 ---
-
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # Java Conventions
 
 ## Build System
@@ -74,7 +78,7 @@ try (java.util.stream.Stream<Path> walk = Files.walk(dir))
 
 ```java
 // Good - import nested class directly
-import io.github.cowwoc.cat.claude.hook.util.IssueDiscovery.DiscoveryResult.ExistingWorktree;
+import io.github.cowwoc.cat.runtime.hook.util.IssueDiscovery.DiscoveryResult.ExistingWorktree;
 
 if (discoveryResult instanceof ExistingWorktree existingWorktree)
 {
@@ -670,7 +674,7 @@ if ("Skill".equals(toolName))
 Use `Strings.equalsIgnoreCase()` for null-safe case-insensitive comparison:
 
 ```java
-import static io.github.cowwoc.cat.claude.hook.Strings.equalsIgnoreCase;
+import static io.github.cowwoc.cat.runtime.hook.Strings.equalsIgnoreCase;
 
 // Good - null-safe, reads naturally
 if (equalsIgnoreCase(toolName, "Bash"))
@@ -777,7 +781,7 @@ in executable code. Use the simple class name in the Javadoc tag:
 
 ```java
 // Good - import added, simple name in {@link}
-import io.github.cowwoc.cat.claude.hook.skills.DisplayUtils;
+import io.github.cowwoc.cat.runtime.hook.skills.DisplayUtils;
 
 /**
  * This file is consumed by {@link DisplayUtils}.
@@ -785,7 +789,7 @@ import io.github.cowwoc.cat.claude.hook.skills.DisplayUtils;
 
 // Avoid - fully qualified name in {@link}
 /**
- * This file is consumed by {@link io.github.cowwoc.cat.claude.hook.skills.DisplayUtils}.
+ * This file is consumed by {@link io.github.cowwoc.cat.runtime.hook.skills.DisplayUtils}.
  */
 ```
 
@@ -883,7 +887,7 @@ public class Config
  * Context object passed to skill handlers.
  *
  * @param userPrompt the user's prompt text
- * @param sessionId the Claude session ID
+ * @param sessionId the runtime session ID
  */
 public record SkillContext(String userPrompt, String sessionId)
 {
@@ -1001,11 +1005,11 @@ location. Only use `requireThat(x, "x").isNotNull()` when the parameter is store
 the dereferencing happens much later (making the NPE harder to trace).
 
 ```java
-// Good - no explicit null check needed; scope.getClaudeProjectDir() would NPE on null
+// Good - no explicit null check needed; scope.getRuntimeProjectDir() would NPE on null
 public BlockMainRebase(JvmScope scope)
 {
   this.scope = scope;
-  this.projectDir = scope.getClaudeProjectDir();
+  this.projectDir = scope.getRuntimeProjectDir();
 }
 
 // Good - explicit null check needed; name is stored without dereferencing
@@ -1234,7 +1238,7 @@ public String getConfig(String key)
 - `isNotBlank()` - Most string parameters (names, keys, paths, identifiers)
 - `isNotNull()` - Only when empty strings are valid input (user content, messages)
 
-See `.claude/rules/requirements-api.md` for full API conventions.
+See `.cat/rules/common/requirements-api.md` for full API conventions.
 
 ## Class Design
 
@@ -1246,15 +1250,15 @@ methods); implementation logic — even derived convenience methods — belongs 
 // Good - interface defines contract, abstract class provides derived methods
 public interface JvmScope extends AutoCloseable
 {
-  Path getClaudeConfigDir();
-  Path getClaudeProjectDir();
+  Path getRuntimeConfigDir();
+  Path getRuntimeProjectDir();
 }
 
 public abstract class AbstractJvmScope implements JvmScope
 {
   public Path getProjectCatDir()
   {
-    return getClaudeConfigDir().resolve("projects").resolve(getEncodedProjectDir()).resolve("cat");
+    return getRuntimeConfigDir().resolve("projects").resolve(getEncodedProjectDir()).resolve("cat");
   }
 
   public static String encodeProjectPath(String projectPath)
@@ -1266,11 +1270,11 @@ public abstract class AbstractJvmScope implements JvmScope
 // Avoid - implementation logic in the interface
 public interface JvmScope extends AutoCloseable
 {
-  Path getClaudeConfigDir();
+  Path getRuntimeConfigDir();
 
   default Path getProjectCatDir()  // implementation in interface
   {
-    return getClaudeConfigDir().resolve("...");
+    return getRuntimeConfigDir().resolve("...");
   }
 
   static String encodeProjectPath(String path)  // utility in interface
@@ -1355,7 +1359,7 @@ class in the same package calls it (in which case package-private is sufficient)
 
 ```java
 // Good - final class uses private instead of protected
-public final class MainClaudeTool implements ClaudeTool
+public final class MainRuntimeTool implements RuntimeTool
 {
   private String getEnvVar(String name)
   {
@@ -1364,7 +1368,7 @@ public final class MainClaudeTool implements ClaudeTool
 }
 
 // Avoid - protected in a final class (no subclass can ever override this)
-public final class MainClaudeTool implements ClaudeTool
+public final class MainRuntimeTool implements RuntimeTool
 {
   protected String getEnvVar(String name)
   {
@@ -1408,9 +1412,9 @@ unless your subclass needs to override it with custom behavior.
 **Example - Bad (delegation-only method):**
 ```java
 @Override
-public Path getClaudeConfigPath()
+public Path getRuntimeConfigPath()
 {
-  return super.getClaudeConfigPath();
+  return super.getRuntimeConfigPath();
 }
 ```
 
@@ -1474,12 +1478,12 @@ the scope internally. This keeps constructors stable when new dependencies are a
 accessors through call chains.
 
 **Scope implementations:**
-- `MainClaudeTool` — production use for session CLI tools (in `main()` methods that require `CLAUDE_SESSION_ID`
-  and `CLAUDE_ENV_FILE`), reads all session environment configuration
+- `MainRuntimeTool` — production use for session CLI tools (in `main()` methods that require `CAT_SESSION_ID`
+  and `CAT_ENV_FILE`), reads all session environment configuration
 - `MainJvmScope` — production use for infrastructure CLI tools (in `main()` methods that do NOT require session
   vars), reads only infrastructure vars. Example tools include `IssueLock`, `HookRegistrar`, and
   `StatusAlignmentValidator`.
-- `TestClaudeTool` — test use, accepts injectable paths: `new TestClaudeTool(tempDir, tempDir)`
+- `TestRuntimeTool` — test use, accepts injectable paths: `new TestRuntimeTool(tempDir, tempDir)`
 
 **Why pouch over DI frameworks:**
 - No magic — explicit constructor wiring, fully debuggable code flow
@@ -1503,7 +1507,7 @@ public final class GetDiffOutput
 
   public static void main(String[] args)  // CLI entry point via hook.sh
   {
-    try (JvmScope scope = new MainClaudeTool())
+    try (JvmScope scope = new MainRuntimeTool())
     {
       String output = new GetDiffOutput(scope).getOutput();
       if (output != null)
@@ -1518,7 +1522,7 @@ public final class RenderDiffCommand  // Don't create this
   public static void main(String[] args)
   {
     // Trivial delegation adds no value
-    new GetDiffOutput(new MainClaudeTool()).getOutput();
+    new GetDiffOutput(new MainRuntimeTool()).getOutput();
   }
 }
 ```
@@ -1559,13 +1563,13 @@ ArrayList<String> names = new ArrayList<>();
 HashMap<String, Integer> index = new HashMap<>();
 
 // Good - interface type used for try-with-resources
-try (ClaudeTool scope = new MainClaudeTool())
+try (RuntimeTool scope = new MainRuntimeTool())
 {
   ...
 }
 
 // Avoid - concrete class on left side of try-with-resources
-try (MainClaudeTool scope = new MainClaudeTool())
+try (MainRuntimeTool scope = new MainRuntimeTool())
 {
   ...
 }
@@ -1593,7 +1597,7 @@ additional scope instances in catch blocks:
 // Good - one scope, nested try-catch inside
 public static void main(String[] args)
 {
-  try (ClaudeTool scope = new MainClaudeTool())
+  try (RuntimeTool scope = new MainRuntimeTool())
   {
     try
     {
@@ -1617,13 +1621,13 @@ public static void main(String[] args)
 // Avoid - multiple scope instances
 public static void main(String[] args)
 {
-  try (ClaudeTool scope = new MainClaudeTool())
+  try (RuntimeTool scope = new MainRuntimeTool())
   {
     new MyClass(scope).run(args, System.out);
   }
   catch (RuntimeException | AssertionError e)
   {
-    try (ClaudeTool errorScope = new MainClaudeTool())   // Don't do this
+    try (RuntimeTool errorScope = new MainRuntimeTool())   // Don't do this
     {
       System.out.println(new HookOutput(errorScope).block(...));
     }
@@ -1668,27 +1672,27 @@ private Map<String, Object> loadConfig()
 
 ## Environment Variable Access
 
-Claude environment variables (e.g., `CLAUDE_SESSION_ID`, `CLAUDE_ENV_FILE`) must be read through the correct API
-depending on the execution context. Never call `System.getenv()` directly outside of the four designated files.
+Runtime environment variables (e.g., `CAT_SESSION_ID`, `CAT_PLUGIN_ROOT`) must be read through the correct API
+depending on the execution context. Never call `System.getenv()` directly outside approved runtime boundary classes.
 
 | Context | Correct API |
 |---------|-------------|
-| Session CLI commands (`main()` methods) — have `CLAUDE_SESSION_ID` and `CLAUDE_ENV_FILE` | `scope.getSessionId()` via `ClaudeTool` |
+| Session CLI commands (`main()` methods) — have `CAT_SESSION_ID` | `scope.getSessionId()` via `RuntimeTool` |
 | Infrastructure CLI commands (`main()` methods) — invoked outside a session (e.g., by skill preprocessor) | `scope.getPluginRoot()` etc. via `JvmScope` |
 | Hook handlers | `HookInput.getSessionId()` |
 | Skill directive variable substitution | `System.getenv(name)` (whitelisted; see below) |
 
 **Why:** Hook handlers receive session-specific values from the `HookInput` JSON payload, not from environment
 variables. Reading environment variables in hook handlers bypasses this contract. Session CLI commands use
-`MainClaudeTool` (a `ClaudeTool` implementation) which reads all env vars at startup. Infrastructure CLI commands
+`MainRuntimeTool` (a `RuntimeTool` implementation) which reads session env vars at startup. Infrastructure CLI commands
 (such as `IssueLock`, `HookRegistrar`, and `StatusAlignmentValidator`) use `MainJvmScope`, which reads only
-infrastructure path vars and does not require `CLAUDE_SESSION_ID` or `CLAUDE_ENV_FILE`.
+infrastructure path vars and does not require `CAT_SESSION_ID`.
 
 ```java
 // Good - session CLI main() method reads session ID via scope
 public static void main(String[] args)
 {
-  try (ClaudeTool scope = new MainClaudeTool())
+  try (RuntimeTool scope = new MainRuntimeTool())
   {
     String sessionId = scope.getSessionId();
     // ...
@@ -1708,7 +1712,7 @@ public static void main(String[] args)
 // Bad - CLI main() method reads session ID via System.getenv()
 public static void main(String[] args)
 {
-  String sessionId = System.getenv("CLAUDE_SESSION_ID");  // Don't do this
+  String sessionId = System.getenv("CAT_SESSION_ID");  // Don't do this
   // ...
 }
 
@@ -1722,47 +1726,30 @@ public Result handle(HookInput input)
 // Bad - hook handler bypasses HookInput to read environment directly
 public Result handle(HookInput input)
 {
-  String sessionId = System.getenv("CLAUDE_SESSION_ID");  // Don't do this
+  String sessionId = System.getenv("CAT_SESSION_ID");  // Don't do this
   // ...
 }
 ```
 
 `EnforceJvmScopeEnvAccessTest` enforces this convention by scanning all Java source files and failing the build if
-`System.getenv(` appears outside of `MainClaudeTool.java`, `MainCodexTool.java`, `MainJvmScope.java`,
-`MainClaudeHook.java`, CLI tools that use `MainJvmScope` and run without session context, and `TerminalType.java`.
+`System.getenv(` appears outside approved boundary classes.
 
-The five whitelisted files each have a specific reason for direct env var access:
-- `MainClaudeTool.java` — reads all Claude env vars (`CLAUDE_PROJECT_DIR`, `CLAUDE_PLUGIN_ROOT`,
-  `CLAUDE_SESSION_ID`, `CLAUDE_ENV_FILE`, `TZ`) at startup and stores them as fields; for CLI tools that run
-  as part of a Claude session
-- `MainCodexTool.java` — reads Codex CLI infrastructure env vars (`CODEX_HOME`, `TZ`) at startup and stores
-  them as fields; for CLI tools that run as part of a Codex session
-- `MainJvmScope.java` — reads only infrastructure path vars (`CLAUDE_PROJECT_DIR`, `CLAUDE_PLUGIN_ROOT`,
-  `CLAUDE_CONFIG_DIR`, `TZ`); for CLI tools that run without a Claude session (i.e., tools using `MainJvmScope`)
-- `MainClaudeHook.java` — reads infrastructure path vars (`CLAUDE_PROJECT_DIR`, `CLAUDE_PLUGIN_ROOT`,
-  `CLAUDE_CONFIG_DIR`, `CLAUDE_ENV_FILE`, `TZ`) from the environment; the production hook scope implementation
-  used in hook handler `main()` methods
-- `SubstituteSkillVariables.java` — expands env var references in skill directive templates; requires direct access to
-  substitute variable values
-- `TerminalType.java` — detects terminal type from standard terminal env vars (`TERM`, `TERM_PROGRAM`)
+Approved boundary classes each have a specific reason for direct env var access:
+- Session runtime scope implementations read session env vars at startup and store them as fields.
+- Infrastructure scope implementations read infrastructure path vars for tools that run without session context.
+- Hook scope implementations read infrastructure path vars and hook JSON from stdin.
+- Skill variable substitution expands env var references in skill directive templates.
+- Terminal detection reads standard terminal env vars such as `TERM` and `TERM_PROGRAM`.
 
 **Scope implementations:**
-- `MainClaudeTool` — production use for session CLI tools (in `main()` methods that require `CLAUDE_SESSION_ID`
-  and `CLAUDE_ENV_FILE`), reads all session environment configuration
-- `MainCodexTool` — production use for Codex CLI tools, reads Codex infrastructure environment configuration
+- `MainRuntimeTool` — production use for session CLI tools (in `main()` methods that require `CAT_SESSION_ID`),
+  reads all session environment configuration
 - `MainJvmScope` — production use for infrastructure CLI tools (in `main()` methods that do NOT require session
   vars), reads only infrastructure vars. Example tools include `IssueLock`, `HookRegistrar`, and
   `StatusAlignmentValidator`.
-- `MainClaudeHook` — production use for hook handler `main()` methods, reads infrastructure path vars and hook
+- `MainRuntimeHook` — production use for hook handler `main()` methods, reads infrastructure path vars and hook
   JSON from stdin
-- `TestClaudeTool` — test use, accepts injectable paths: `new TestClaudeTool(tempDir, tempDir)`
-
-```cat-rules
-- pattern: "System\\.getenv\\("
-  files: "*.java"
-  severity: high
-  message: "Use scope.getSessionId() (session CLI commands) or scope.getPluginRoot() via MainJvmScope (infrastructure CLI commands) or HookInput (hook handlers) instead of System.getenv(). Direct access is only permitted in the five whitelisted files. See .claude/rules/java.md § Environment Variable Access."
-```
+- `TestRuntimeTool` — test use, accepts injectable paths: `new TestRuntimeTool(tempDir, tempDir)`
 
 ## Exception Handling
 
@@ -2014,8 +2001,8 @@ these Java-specific constraints:
 4. **No shared mutable state** - each test must be fully self-contained
 5. **No TestBase classes** - each test method must inline its own setup. This boilerplate is intentional and preferred
    over shared helpers or inheritance.
-6. **Use `TestClaudeTool`, not `MainClaudeTool`** - tests must never use `MainClaudeTool` because it reads environment
-   variables that may not be set in test contexts. Use `TestClaudeTool(tempDir, tempDir)` with injectable paths instead.
+6. **Use `TestRuntimeTool`, not `MainRuntimeTool`** - tests must never use `MainRuntimeTool` because it reads environment
+   variables that may not be set in test contexts. Use `TestRuntimeTool(tempDir, tempDir)` with injectable paths instead.
 7. **Never use scope-provided objects after closing the scope** - objects returned by `JvmScope` (e.g., `JsonMapper`,
    `DisplayUtils`) must not be used after the scope is closed. Keep the scope open for the entire duration of the test.
    Do not create helper methods like `getTestMapper()` that open a scope, extract an object, and close the scope.
@@ -2029,12 +2016,12 @@ these Java-specific constraints:
    missing file check), passing `"."` is acceptable since no git command actually runs.
 
 ```java
-// Good - self-contained test with TestClaudeTool
+// Good - self-contained test with TestRuntimeTool
 @Test
 public void testProcess() throws IOException
 {
   Path tempDir = Files.createTempDirectory("test-");
-  try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+  try (JvmScope scope = new TestRuntimeTool(tempDir, tempDir))
   {
     JsonMapper mapper = scope.getJsonMapper();
     var result = process(scope, input);
@@ -2115,7 +2102,7 @@ public void displayWidthCalculatesFromConfiguration() throws IOException
 
   requireThat(display.displayWidth("🐱"), "catWidth").isEqualTo(2);
   requireThat(display.displayWidth("✅"), "checkWidth").isEqualTo(1);
-  requireThat(display.displayWidth("🐱 cat"), "combined").isEqualTo(6);
+  requireThat(display.displayWidth("🐱 cat"), "combinedWidth").isEqualTo(6);
 }
 ```
 
@@ -2193,32 +2180,32 @@ All modules must define `module-info.java`. Tests reside in a separate module fr
 ### Naming Convention
 | Implementation | Test Module | Test Package |
 |----------------|-------------|--------------|
-| `io.github.cowwoc.cat.client.claude` | `io.github.cowwoc.cat.client.claude.test` | `io.github.cowwoc.cat.client.test` |
+| `io.github.cowwoc.cat.client.runtime` | `io.github.cowwoc.cat.client.runtime.test` | `io.github.cowwoc.cat.client.test` |
 | `com.example.foo` | `com.example.foo.test` | `com.example.foo.test` |
 
 ### Module Exports for Testing
 The implementation module must export internal packages to the test module:
 
 ```java
-// module-info.java for io.github.cowwoc.cat.client.claude (module name; packages are io.github.cowwoc.cat.claude.hook/tool)
-module io.github.cowwoc.cat.client.claude
+// module-info.java for io.github.cowwoc.cat.client.runtime (module name; packages are io.github.cowwoc.cat.runtime.hook/tool)
+module io.github.cowwoc.cat.client.runtime
 {
   requires tools.jackson.databind;
 
-  // Public API — packages are under claude.hook and claude.tool
-  exports io.github.cowwoc.cat.claude.hook;
-  exports io.github.cowwoc.cat.claude.tool;
+  // Public API — packages are under runtime.hook and runtime.tool
+  exports io.github.cowwoc.cat.runtime.hook;
+  exports io.github.cowwoc.cat.runtime.tool;
 
   // Internal packages exported only to test module
-  exports io.github.cowwoc.cat.claude.hook.internal to io.github.cowwoc.cat.client.claude.test;
+  exports io.github.cowwoc.cat.runtime.hook.internal to io.github.cowwoc.cat.client.runtime.test;
 }
 ```
 
 ```java
-// module-info.java for io.github.cowwoc.cat.client.claude.test
-module io.github.cowwoc.cat.client.claude.test
+// module-info.java for io.github.cowwoc.cat.client.runtime.test
+module io.github.cowwoc.cat.client.runtime.test
 {
-  requires io.github.cowwoc.cat.client.claude;
+  requires io.github.cowwoc.cat.client.runtime;
   requires org.testng;
   requires io.github.cowwoc.requirements13.java;
 }
@@ -2253,17 +2240,17 @@ client/                      # Maven project root
 ├── pom.xml
 ├── build.sh
 ├── mvnw
-├── src/main/java/           # Implementation module (io.github.cowwoc.cat.client.claude) — packages under io.github.cowwoc.cat.claude.hook/tool
-│   ├── module-info.java     # Module io.github.cowwoc.cat.client.claude
+├── src/main/java/           # Implementation module (io.github.cowwoc.cat.client.runtime) — packages under io.github.cowwoc.cat.runtime.hook/tool
+│   ├── module-info.java     # Module io.github.cowwoc.cat.client.runtime
 │   └── io/github/cowwoc/cat/
-│       └── claude/
+│       └── runtime/
 │           ├── tool/          # Tool-related classes
 │           │   └── post/
 │           └── hook/          # Hook-related classes
 │               ├── ask/
 │               ├── bash/
 │               └── ...
-└── src/test/java/           # Test module (io.github.cowwoc.cat.client.claude.test)
+└── src/test/java/           # Test module (io.github.cowwoc.cat.client.runtime.test)
     └── io/github/cowwoc/cat/client/test/
         └── module-info.java
 ```

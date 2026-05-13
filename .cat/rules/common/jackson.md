@@ -1,6 +1,11 @@
 ---
 paths: ["*.java"]
 ---
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # Jackson Conventions
 
 ## JsonMapper Usage
@@ -9,25 +14,11 @@ paths: ["*.java"]
 - Obtain the shared instance from `JvmScope.getJsonMapper()` — never call `JsonMapper.builder().build()` directly
 - The shared instance is configured with pretty print (`SerializationFeature.INDENT_OUTPUT`)
 - In production code, get the mapper from the `JvmScope` passed to your class
-- In tests, create a `TestClaudeTool` and call `scope.getJsonMapper()`
-- In CLI `main()` methods, create a `MainClaudeTool` and call `scope.getJsonMapper()`
+- In tests, create a test scope and call `scope.getJsonMapper()`
+- In CLI `main()` methods, create the appropriate runtime scope and call `scope.getJsonMapper()`
 
 ## JsonNode API
 
 - `JsonNode.asString()` never returns `null` when `JsonNode.isString()` is `true`. The node is a `TextNode` and
   `asString()` returns the string content directly. Do not add redundant `value != null` checks after an `isString()`
   guard.
-
-## Enforcement
-
-```cat-rules
-- pattern: "new ObjectMapper\\(\\)"
-  files: "*.java"
-  severity: high
-  message: "Use JsonMapper instead of ObjectMapper. Obtain the shared instance from JvmScope.getJsonMapper(). See .claude/rules/jackson.md."
-
-- pattern: "JsonMapper\\.builder\\(\\)"
-  files: "*.java"
-  severity: high
-  message: "Never call JsonMapper.builder().build() directly. Use JvmScope.getJsonMapper(). See .claude/rules/jackson.md."
-```

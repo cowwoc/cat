@@ -1,12 +1,17 @@
 ---
 paths: ["plugin/**", "client/**"]
 ---
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 ## Language Requirements
 
 | Component Type | Language | Rationale |
 |----------------|----------|-----------|
 | Complex business logic | **Java** | Type safety, testability, jlink bundling |
-| CLI tools/hooks | Bash | Claude Code plugin integration, Unix tooling |
+| CLI tools/hooks | Bash | Runtime hook integration, Unix tooling |
 | Configuration | JSON | Standard, machine-readable |
 | Documentation | Markdown | Human-readable, version-controlled |
 
@@ -26,7 +31,7 @@ Java is used for:
 ### CLI/Hooks (Bash)
 
 Bash scripts are appropriate for:
-- Claude Code hook entry points
+- Runtime hook entry points
 - Git operations
 - Simple file manipulation
 - Environment setup
@@ -58,27 +63,16 @@ Existing Python scripts are tracked for migration under `migrate-python-to-java`
 
 ```
 project/
-├── plugin/                 # CAT plugin source
-│   ├── hooks/              # Hook config/helpers: common/, claude/, codex/
-│   ├── skills/             # Skill definitions: common/, claude/, codex/
-│   ├── agents/             # Agent definitions: common/, claude/, codex/
-│   ├── rules/              # Shipped CAT rules: common/, claude/, codex/
+├── client/plugin/          # CAT plugin source
+│   ├── hooks/              # Hook config/helpers: common/ and runtime-specific dirs
+│   ├── skills/             # Skill definitions: common/ and runtime-specific dirs
+│   ├── agents/             # Agent definitions: common/ and runtime-specific dirs
+│   ├── rules/              # Shipped CAT rules: common/ and runtime-specific dirs
 │   ├── concepts/           # Shared reference documentation
 │   └── config/             # Plugin configuration data
 ├── tests/                  # Test suites
 └── docs/                   # Documentation
 ```
 
-Files under `plugin/` are deployed to end-user machines. They must not reference source-only paths such as
-project-local `.claude/rules/`, `.cat/rules/codex/*`, or `.cat/rules/common/*` locations.
-See `.claude/rules/plugin-file-references.md` for the full convention.
-
-## Enforcement
-
-```cat-rules
-- pattern: "\\bjq\\b"
-  files: "*.sh"
-  severity: high
-  message: "jq is not available in the plugin runtime. Use Java (via jlink tools) or Bash pattern\
- matching. See .claude/rules/language-requirements.md § Tool Availability."
-```
+Files under `client/plugin/` are deployed to end-user machines. They must not reference source-only paths such as
+project-local rule directories, issue tracking artifacts, Java source files, or project documentation.

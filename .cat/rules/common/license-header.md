@@ -1,3 +1,8 @@
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # License Headers
 
 All source files in the CAT project must include a license header referencing the CAT Commercial License.
@@ -42,7 +47,7 @@ Block comment before `package` declaration. For `module-info.java`, place at the
  * Licensed under the CAT Commercial License.
  * See LICENSE.md in the project root for license terms.
  */
-package io.github.cowwoc.cat.claude.hook;
+package io.github.cowwoc.cat.agent;
 ```
 
 ### Shell Scripts (*.sh)
@@ -115,8 +120,8 @@ The following files do not require license headers:
 
 - `*.json` files (no comment syntax)
 - `*.xml` files (configuration files, no semantic code)
-- `AGENTS.md` and `CLAUDE.md` (loaded directly by agents as project instructions)
-- All `*.md` files in `.claude/rules/` (Claude-facing development conventions)
+- Runtime-loaded project instruction files
+- All `*.md` files under runtime-specific project rule directories outside `.cat/rules/**`
 - Agent-facing files in flattened release artifacts under `client/distribution/target/runtime/**` (generated files; the
   release processor strips source license headers before installation)
 - Files in `.cat/` except `.cat/rules/**` (planning artifacts, config, runtime data)

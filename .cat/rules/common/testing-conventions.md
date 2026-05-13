@@ -1,6 +1,11 @@
 ---
 paths: ["client/**"]
 ---
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 ## Testing
 
 ### Test Fixture Files
@@ -45,7 +50,7 @@ session.
 
 **When a re-run is NOT required:**
 - Only documentation, comments, or non-source files changed (e.g., `.md`, `.txt`)
-- Only planning artifacts changed (`.cat/issues/`, `CLAUDE.md`)
+- Only planning artifacts or runtime-loaded project instruction files changed
 - The last build passed and nothing has been committed or staged since
 
 ### Test Isolation
@@ -57,9 +62,9 @@ Tests must be **self-contained**, **thread-safe**, and must **never impact the p
    before any external operation, this is acceptable since no command actually runs.
 2. **No production environment side effects** — tests must not modify files, git state, processes, or configuration
    outside their temporary directories.
-3. **Concurrent safety** — multiple test runs, parallel tests, and concurrent Claude instances must not interfere with
-   each other or with the host environment. Avoid JVM-global or process-global mutation (e.g., environment variables,
-   system properties, stdout/stderr redirection, current working directory).
+3. **Concurrent safety** — multiple test runs, parallel tests, and concurrent runtime instances must not interfere
+   with each other or with the host environment. Avoid JVM-global or process-global mutation (e.g., environment
+   variables, system properties, stdout/stderr redirection, current working directory).
 4. **Deterministic** — test results must not depend on host machine configuration, repository state, or timing. Use
    controlled inputs and injectable dependencies (e.g., `Clock` for time, temp dirs for paths).
 
@@ -78,10 +83,10 @@ not to verify the tool produces the expected side effects.
 ```java
 // ❌ WRONG: Testing git's behavior, not your code's behavior
 @Test
-public void newWorktreeExcludesClaude() {
+public void newWorktreeExcludesProjectRules() {
     Path worktreePath = createWorktree();
-    assertFalse(Files.exists(worktreePath.resolve(".claude")),
-        ".claude directory should not exist in worktree");
+    assertFalse(Files.exists(worktreePath.resolve(".project-rules")),
+        "projectRules");
 }
 ```
 
@@ -99,7 +104,7 @@ public void setupSparseCheckoutInvokesGitCorrectly() {
     GitCommandRecorder recorder = new GitCommandRecorder();
     WorkPrepare.setupSparseCheckout(worktreePath, recorder);
     
-    recorder.assertInvoked("sparse-checkout", "set", "--no-cone", "/*", "!/.claude");
+    recorder.assertInvoked("sparse-checkout", "set", "--no-cone", "/*", "!/.project-rules");
 }
 ```
 
@@ -112,7 +117,7 @@ public void worktreesDoNotLoadDuplicateRules() {
     RuleLoader loader = new RuleLoader(worktreePath);
     
     List<Rule> rules = loader.loadRules();
-    assertNoDuplicates(rules, "Worktree should not load duplicate rules from .claude/");
+    assertNoDuplicates(rules, "rules");
 }
 ```
 
@@ -130,6 +135,6 @@ Do not add build-time tests whose only purpose is to enforce design constraints 
 or textual references. Examples include tests that fail because a runtime-specific package mentions another runtime by
 name, or tests that assert a directory contains no imports from a broad category of packages.
 
-These constraints belong in code review, architecture notes, or convention files, not in the test suite. Build-time tests
-should cover executable behavior with meaningful inputs and outputs. Design-boundary concerns should be reviewed
+These constraints belong in code review, architecture notes, or convention files, not in the test suite. Build-time
+tests should cover executable behavior with meaningful inputs and outputs. Design-boundary concerns should be reviewed
 manually unless they can be expressed as direct product behavior.

@@ -1,3 +1,8 @@
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # No Backwards Compatibility
 
 **Policy:** Code in terms of the latest design. Do NOT add backwards-compatibility shims, legacy fallbacks, or
@@ -21,7 +26,7 @@ run. Scripts should check current state before making changes (e.g., skip renami
 adding a field that already exists).
 
 **Closed issue coverage:** Migration scripts must process all issues regardless of status (open or closed). Closed
-issues contain the same file formats as open issues and must be migrated to maintain consistency. The CLAUDE.md rule
+issues contain the same file formats as open issues and must be migrated to maintain consistency. The project rule
 about not modifying closed issues applies only to manual agent edits, not automated migrations.
 
 **Planning file schema changes:** When an issue modifies the schema of planning files (index.json, plan.md headings,
@@ -34,10 +39,3 @@ transform existing files. The migration is part of the same issue — do not def
 - Silently fall back to parsing old formats
 - Support old file paths or directory structures alongside new ones
 - Add compatibility layers that translate between old and new APIs
-
-```cat-rules
-- pattern: "\\b(?:FIXME|TODO:[[:space:]]*fix|fallback|workaround)\\b"
-  files: "*"
-  severity: low
-  message: "Comment flag indicates known issue or workaround. Resolve or track as a separate issue. See .claude/rules/backwards-compatibility.md."
-```

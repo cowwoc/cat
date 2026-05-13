@@ -1,6 +1,11 @@
 ---
 paths: ["client/**", "plugin/**"]
 ---
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # Naming Conventions
 
 ## Variable Names in Markdown Files
@@ -38,5 +43,5 @@ table which already shows `target_branch` and `issue_id` in snake_case.
 ## All-Caps Shell Variables
 
 Shell environment variables use **SCREAMING_SNAKE_CASE** per POSIX convention (e.g., `WORKTREE_PATH`,
-`CLAUDE_SESSION_ID`, `TARGET_BRANCH`). This is a separate convention from the agent variable names described
+`CAT_SESSION_ID`, `TARGET_BRANCH`). This is a separate convention from the agent variable names described
 above.

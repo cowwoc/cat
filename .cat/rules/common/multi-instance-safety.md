@@ -1,9 +1,15 @@
 ---
 paths: ["plugin/**", "client/**"]
 ---
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 ## Multi-Instance Safety
 
-**MANDATORY:** All changes must be safe when multiple Claude instances run concurrently, each in its own isolated worktree.
+**MANDATORY:** All changes must be safe when multiple runtime instances run concurrently, each in its own isolated
+worktree.
 
 Instances must NEVER:
 - Overwrite each other's files
@@ -14,7 +20,7 @@ Instances must NEVER:
 
 **Temporary files/directories (ephemeral state — not needed across session restarts):**
 - ✅ Use `mktemp -d` or `mktemp` for unique per-invocation isolation
-- ✅ Store in `/tmp` or per-session directories (e.g., `${CLAUDE_CONFIG_DIR}/projects/.../${CLAUDE_SESSION_ID}/`)
+- ✅ Store in `/tmp` or per-session directories (e.g., `${CAT_CONFIG_DIR}/projects/.../${CAT_SESSION_ID}/`)
 - ❌ Use hardcoded paths like `../repo-clean.git` or `/tmp/shared-work/`
 - ❌ Use paths like `${WORKTREE_PARENT}/shared-dir/` (multiple instances share the parent)
 
@@ -49,8 +55,11 @@ rm -rf "$WORK_DIR"
 **Locks and markers:**
 - Lock files must include session ID: `${LOCKS_DIR}/${ISSUE_ID}.lock` (not shared)
 - Marker files must be per-session: `${SESSION_DIR}/marker-name` (not in worktree/main workspace)
-- Use `${CLAUDE_SESSION_ID}` as part of any file path that tracks instance state
-- **CRITICAL:** When you encounter a lock file with a session_id different from your own (`${CLAUDE_SESSION_ID}`), it is **NOT necessarily stale** — it belongs to another active Claude instance. Do NOT assume it is old or try to delete it. Multiple instances run concurrently, each with its own session ID. A lock file containing a different session_id is evidence of concurrent work, not abandoned work.
+- Use `${CAT_SESSION_ID}` as part of any file path that tracks instance state
+- **CRITICAL:** When you encounter a lock file with a `session_id` different from your own (`${CAT_SESSION_ID}`), it is
+  **NOT necessarily stale** — it belongs to another active runtime instance. Do NOT assume it is old or try to delete
+  it. Multiple instances run concurrently, each with its own session ID. A lock file containing a different `session_id`
+  is evidence of concurrent work, not abandoned work.
 
 **Build artifacts:**
 - Worktree builds must NOT write to the main workspace `target/` directory
@@ -64,7 +73,8 @@ rm -rf "$WORK_DIR"
 
 ### Why This Matters
 
-Worktrees are isolated for a reason: when implementations can run in parallel (multiple users, multiple sessions), shared mutable state causes:
+Worktrees are isolated for a reason: when implementations can run in parallel (multiple users, multiple sessions),
+shared mutable state causes:
 - Race conditions (two instances overwrite the same file)
 - Lost work (one instance deletes another's temporary data)
 - Mysterious failures (instance A expects a file that instance B deleted)
@@ -75,13 +85,3 @@ The pattern works because:
 2. Lock files include session ID (preventing cross-session conflicts)
 3. Main workspace is read-only from worktrees (no race conditions)
 4. Worktree-local artifacts (build results) don't interfere
-
-## Enforcement
-
-```cat-rules
-- pattern: "/workspace/"
-  files: "*.sh,*.md"
-  severity: medium
-  message: "Hardcoded /workspace/ path violates worktree isolation. Use ${CLAUDE_PROJECT_DIR} or\
- ${WORKTREE_PATH}. See .claude/rules/multi-instance-safety.md § Multi-Instance Safety."
-```
