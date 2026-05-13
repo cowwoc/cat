@@ -32,45 +32,59 @@ import java.nio.file.Path;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Exercises all handler code paths in a single JVM invocation for AOT training.
+ * Exercises Claude handler code paths in a single JVM invocation for AOT training.
  * <p>
- * During the build, this replaces 20 separate JVM launches with one, reducing AOT recording time from ~19s
- * to ~1s.
+ * During the build, this replaces many separate JVM launches with one invocation for the Claude runtime.
  */
 public final class AotTraining
 {
+  /**
+   * Prevents construction.
+   */
   private AotTraining()
   {
-    // Utility class
   }
 
   /**
-   * Runs all handlers with empty input to generate AOT training data.
-   * <p>
-   * SYNC: Keep handler list synchronized with HANDLERS array in hooks/build-jlink.sh.
-   * When adding a new handler, update both locations:
-   * <ul>
-   *   <li>Add launcher entry to HANDLERS array in build-jlink.sh</li>
-   *   <li>Add training invocation to this method</li>
-   * </ul>
+   * Runs Claude AOT training from the command line.
    *
    * @param args command line arguments (unused)
    * @throws Exception if training fails
    */
-  @SuppressWarnings({"ResultOfMethodCallIgnored", "PMD.CloseResource"})
   public static void main(String[] args) throws Exception
+  {
+    System.exit(runFromEnvironment());
+  }
+
+  /**
+   * Creates the production Claude hook scope and runs Claude AOT training.
+   *
+   * @return 0 on success, non-zero on failure
+   * @throws Exception if training fails
+   */
+  @SuppressWarnings({"ResultOfMethodCallIgnored", "PMD.CloseResource"})
+  public static int runFromEnvironment() throws Exception
   {
     // Redirect stdin so MainClaudeHook can parse the hook JSON payload during construction.
     // originalIn is System.in which must not be closed; PMD.CloseResource is suppressed intentionally.
     InputStream originalIn = System.in;
+    int exitCode;
     System.setIn(new ByteArrayInputStream(
       "{\"session_id\": \"aot-training-session\", \"agent_id\": \"aot-training-agent\"}".getBytes(
         StandardCharsets.UTF_8)));
-    try (AbstractClaudeHook scope = new MainClaudeHook())
+    try
+    {
+      try (AbstractClaudeHook scope = new MainClaudeHook())
+      {
+        System.setIn(originalIn);
+        exitCode = run(scope);
+      }
+    }
+    finally
     {
       System.setIn(originalIn);
-      System.exit(run(scope));
     }
+    return exitCode;
   }
 
   /**

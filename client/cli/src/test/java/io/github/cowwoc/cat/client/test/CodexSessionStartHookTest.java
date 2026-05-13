@@ -10,10 +10,12 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.codex.hook.SessionStartHook;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 import org.testng.annotations.Test;
 
@@ -66,9 +68,7 @@ public final class CodexSessionStartHookTest
         Use upper-case keywords.
         """, StandardCharsets.UTF_8);
 
-      SessionStartHook.HookResult result = SessionStartHook.run(new String[]{
-        projectRoot.toString(), pluginData.toString(), codexHome.toString(),
-        "marketplace", "cat", "2.1", "UTC"});
+      SessionStartHook.HookResult result = run(projectRoot, pluginRoot, pluginData);
       requireThat(result.output(), "output").contains("\"hookSpecificOutput\"");
       requireThat(result.warnings(), "warnings").isEmpty();
 
@@ -106,6 +106,368 @@ public final class CodexSessionStartHookTest
   }
 
   /**
+   * Verifies that the registered no-argument Codex launcher shape consumes native Codex input.
+   *
+   * @throws Exception if the hook cannot be invoked
+   */
+  @Test
+  public void sessionStartParsesNativeCodexInputWithoutLauncherArguments() throws Exception
+  {
+    Path tempDir = Files.createTempDirectory("codex-session-start-test-");
+    try
+    {
+      Fixture fixture = createFixture(tempDir);
+      Files.writeString(fixture.projectRoot().resolve(".cat/rules/common/java.md"), """
+        ---
+        paths: ["*.java"]
+        ---
+        # Java Common
+        """, StandardCharsets.UTF_8);
+      String nativeInput = """
+        {
+          "cwd": "%s",
+          "hook_event_name": "SessionStart"
+        }
+        """.formatted(fixture.projectRoot().toString().replace("\\", "\\\\"));
+      Map<String, String> environment = Map.of(
+        "CAT_PLUGIN_ROOT", fixture.pluginRoot().toString(),
+        "CAT_PLUGIN_DATA", fixture.pluginData().toString(),
+        "TZ", "UTC");
+
+      SessionStartHook.HookResult result = SessionStartHook.run(new String[0],
+        new ByteArrayInputStream(nativeInput.getBytes(StandardCharsets.UTF_8)), environment);
+
+      requireThat(result.output(), "output").contains("\"hookSpecificOutput\"");
+      requireThat(result.output(), "output").contains("Java Common");
+      requireThat(fixture.projectRoot().resolve(".cat/rules/codex/java.md"), "projectStub").
+        isRegularFile();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a blank native payload falls back to environment and working-directory hints.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void sessionStartFallsBackWhenNativeInputIsBlank() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("codex-session-start-test-");
+    try
+    {
+      Fixture fixture = createFixture(tempDir);
+      Files.writeString(fixture.projectRoot().resolve(".cat/rules/common/java.md"), """
+        ---
+        paths: ["*.java"]
+        ---
+        # Java Common
+        """, StandardCharsets.UTF_8);
+      Map<String, String> environment = Map.of(
+        "CAT_PROJECT_DIR", fixture.projectRoot().toString(),
+        "CAT_PLUGIN_ROOT", fixture.pluginRoot().toString(),
+        "CAT_PLUGIN_DATA", fixture.pluginData().toString(),
+        "TZ", "UTC");
+
+      SessionStartHook.HookResult result = SessionStartHook.run(new String[0],
+        new ByteArrayInputStream(new byte[0]), environment, tempDir);
+
+      requireThat(result.output(), "output").contains("\"hookSpecificOutput\"");
+      requireThat(result.output(), "output").contains("Java Common");
+      requireThat(fixture.projectRoot().resolve(".cat/rules/codex/java.md"), "projectStub").
+        isRegularFile();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that blank native input can use the process working directory as the project root.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void sessionStartFallsBackToWorkingDirectoryWhenProjectRootIsMissing() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("codex-session-start-test-");
+    try
+    {
+      Fixture fixture = createFixture(tempDir);
+      Files.writeString(fixture.projectRoot().resolve(".cat/rules/common/java.md"), """
+        ---
+        paths: ["*.java"]
+        ---
+        # Java Common
+        """, StandardCharsets.UTF_8);
+      Map<String, String> environment = Map.of(
+        "CAT_PLUGIN_ROOT", fixture.pluginRoot().toString(),
+        "CAT_PLUGIN_DATA", fixture.pluginData().toString(),
+        "TZ", "UTC");
+
+      SessionStartHook.HookResult result = SessionStartHook.run(new String[0],
+        new ByteArrayInputStream(new byte[0]), environment, fixture.projectRoot());
+
+      requireThat(result.output(), "output").contains("\"hookSpecificOutput\"");
+      requireThat(result.output(), "output").contains("Java Common");
+      requireThat(fixture.projectRoot().resolve(".cat/rules/codex/java.md"), "projectStub").
+        isRegularFile();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that native plugin data takes precedence over a conflicting environment value.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void sessionStartNativePluginDataOverridesConflictingEnvironment() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("codex-session-start-test-");
+    try
+    {
+      Fixture fixture = createFixture(tempDir);
+      Files.writeString(fixture.projectRoot().resolve(".cat/rules/common/java.md"), """
+        ---
+        paths: ["*.java"]
+        ---
+        # Java Common
+        """, StandardCharsets.UTF_8);
+      String nativeInput = """
+        {
+          "cwd": "%s",
+          "plugin_root": "%s",
+          "plugin_data": "%s"
+        }
+        """.formatted(fixture.projectRoot().toString().replace("\\", "\\\\"),
+        fixture.pluginRoot().toString().replace("\\", "\\\\"),
+        fixture.pluginData().toString().replace("\\", "\\\\"));
+      Map<String, String> environment = Map.of(
+        "CAT_PLUGIN_DATA", "invalid\u0000environment-plugin-data",
+        "TZ", "UTC");
+
+      SessionStartHook.HookResult result = SessionStartHook.run(new String[0],
+        new ByteArrayInputStream(nativeInput.getBytes(StandardCharsets.UTF_8)), environment, tempDir);
+
+      requireThat(result.output(), "output").contains("\"hookSpecificOutput\"");
+      requireThat(result.output(), "output").contains("Java Common");
+      requireThat(fixture.projectRoot().resolve(".cat/rules/codex/java.md"), "projectStub").
+        isRegularFile();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that the native Codex SessionStart entrypoint rejects unexpected launcher arguments.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Unexpected arguments.*")
+  public void sessionStartRejectsUnexpectedLauncherArguments() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("codex-session-start-test-");
+    try
+    {
+      Fixture fixture = createFixture(tempDir);
+      String nativeInput = """
+        {
+          "cwd": "%s",
+          "hook_event_name": "SessionStart"
+        }
+        """.formatted(fixture.projectRoot().toString().replace("\\", "\\\\"));
+      Map<String, String> environment = Map.of(
+        "CAT_PLUGIN_ROOT", fixture.pluginRoot().toString(),
+        "CAT_PLUGIN_DATA", fixture.pluginData().toString(),
+        "TZ", "UTC");
+
+      SessionStartHook.run(new String[]{"unexpected"},
+        new ByteArrayInputStream(nativeInput.getBytes(StandardCharsets.UTF_8)), environment);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that SessionStart can discover plugin paths when Codex path variables are absent.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void sessionStartDiscoversPathsWhenEnvironmentIsMissing() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("codex-session-start-test-");
+    try
+    {
+      Path repoRoot = tempDir.resolve("repo");
+      Path projectRoot = repoRoot.resolve("project");
+      Path pluginRoot = repoRoot.resolve("plugin");
+      Path codexHome = tempDir.resolve("codex-home");
+      Path pluginData = codexHome.resolve("plugins/data/cat-cat");
+      Files.createDirectories(projectRoot.resolve(".cat/rules/common"));
+      Files.createDirectories(projectRoot.resolve(".cat/rules/codex"));
+      Files.createDirectories(pluginRoot.resolve(".codex-plugin"));
+      Files.createDirectories(pluginRoot.resolve("rules/common"));
+      Files.createDirectories(pluginRoot.resolve("rules/codex"));
+      Files.createDirectories(pluginData);
+      Files.writeString(pluginRoot.resolve(".codex-plugin/plugin.json"), "{\"version\":\"2.1\"}\n",
+        StandardCharsets.UTF_8);
+      Files.writeString(projectRoot.resolve(".cat/rules/common/java.md"), """
+        ---
+        paths: ["*.java"]
+        ---
+        # Java Common
+        """, StandardCharsets.UTF_8);
+      String nativeInput = """
+        {
+          "cwd": "%s",
+          "hook_event_name": "SessionStart"
+        }
+        """.formatted(projectRoot.toString().replace("\\", "\\\\"));
+
+      SessionStartHook.HookResult result = SessionStartHook.run(new String[0],
+        new ByteArrayInputStream(nativeInput.getBytes(StandardCharsets.UTF_8)),
+        Map.of("CODEX_HOME", codexHome.toString(), "TZ", "UTC"), repoRoot);
+
+      requireThat(result.output(), "output").contains("\"hookSpecificOutput\"");
+      requireThat(result.output(), "output").contains("Java Common");
+      requireThat(projectRoot.resolve(".cat/rules/codex/java.md"), "projectStub").isRegularFile();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that native Codex payload paths take precedence over conflicting environment paths.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void sessionStartNativePayloadPathsOverrideConflictingEnvironment() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("codex-session-start-test-");
+    try
+    {
+      Fixture fixture = createFixture(tempDir);
+      Path environmentProjectRoot = tempDir.resolve("environment-project");
+      Path environmentPluginRoot = tempDir.resolve("environment-plugin");
+      Path environmentPluginData = tempDir.resolve("environment-plugin-data");
+      Files.createDirectories(environmentProjectRoot.resolve(".cat/rules/common"));
+      Files.createDirectories(environmentProjectRoot.resolve(".cat/rules/codex"));
+      Files.createDirectories(environmentPluginRoot.resolve(".codex-plugin"));
+      Files.createDirectories(environmentPluginRoot.resolve("rules/common"));
+      Files.createDirectories(environmentPluginRoot.resolve("rules/codex"));
+      Files.createDirectories(environmentPluginData);
+      Files.writeString(environmentPluginRoot.resolve(".codex-plugin/plugin.json"), "{\"version\":\"2.1\"}\n",
+        StandardCharsets.UTF_8);
+      Files.writeString(fixture.projectRoot().resolve(".cat/rules/common/native-project.md"), """
+        ---
+        paths: ["*.native-project"]
+        ---
+        # Native Project Rule
+        """, StandardCharsets.UTF_8);
+      Files.writeString(environmentProjectRoot.resolve(".cat/rules/common/environment-project.md"), """
+        ---
+        paths: ["*.environment-project"]
+        ---
+        # Environment Project Rule
+        """, StandardCharsets.UTF_8);
+      Files.writeString(fixture.pluginRoot().resolve("rules/common/native-plugin.md"), """
+        ---
+        paths: ["*.native-plugin"]
+        ---
+        # Native Plugin Rule
+        """, StandardCharsets.UTF_8);
+      Files.writeString(environmentPluginRoot.resolve("rules/common/environment-plugin.md"), """
+        ---
+        paths: ["*.environment-plugin"]
+        ---
+        # Environment Plugin Rule
+        """, StandardCharsets.UTF_8);
+      String nativeInput = """
+        {
+          "cwd": "%s",
+          "plugin_root": "%s"
+        }
+        """.formatted(fixture.projectRoot().toString().replace("\\", "\\\\"),
+        fixture.pluginRoot().toString().replace("\\", "\\\\"));
+      Map<String, String> environment = Map.of(
+        "CAT_PROJECT_DIR", environmentProjectRoot.toString(),
+        "CAT_PLUGIN_ROOT", environmentPluginRoot.toString(),
+        "CAT_PLUGIN_DATA", environmentPluginData.toString(),
+        "TZ", "UTC");
+
+      SessionStartHook.HookResult result = SessionStartHook.run(new String[0],
+        new ByteArrayInputStream(nativeInput.getBytes(StandardCharsets.UTF_8)), environment, tempDir);
+
+      requireThat(result.output(), "output").contains("Native Project Rule");
+      requireThat(result.output(), "output").contains("Native Plugin Rule");
+      requireThat(result.output(), "output").doesNotContain("Environment Project Rule");
+      requireThat(result.output(), "output").doesNotContain("Environment Plugin Rule");
+      requireThat(fixture.projectRoot().resolve(".cat/rules/codex/native-project.md"),
+        "nativeProjectStub").isRegularFile();
+      requireThat(fixture.pluginRoot().resolve("rules/codex/native-plugin.md"),
+        "nativePluginStub").isRegularFile();
+      requireThat(Files.exists(environmentProjectRoot.resolve(".cat/rules/codex/environment-project.md")),
+        "environmentProjectStub").isFalse();
+      requireThat(Files.exists(environmentPluginRoot.resolve("rules/codex/environment-plugin.md")),
+        "environmentPluginStub").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that SessionStart fails when no plugin root hint is present and discovery fails.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*CAT_PLUGIN_ROOT is required.*")
+  public void sessionStartFailsWhenPluginRootCannotBeResolved() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("codex-session-start-test-");
+    try
+    {
+      Path projectRoot = tempDir.resolve("project");
+      Path pluginData = tempDir.resolve("plugin-data");
+      Files.createDirectories(projectRoot.resolve(".cat/rules/common"));
+      Files.createDirectories(projectRoot.resolve(".cat/rules/codex"));
+      Files.createDirectories(pluginData);
+      String nativeInput = """
+        {
+          "cwd": "%s"
+        }
+        """.formatted(projectRoot.toString().replace("\\", "\\\\"));
+
+      SessionStartHook.run(new String[0],
+        new ByteArrayInputStream(nativeInput.getBytes(StandardCharsets.UTF_8)),
+        Map.of("CAT_PLUGIN_DATA", pluginData.toString(), "TZ", "UTC"), projectRoot);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that SessionStart removes managed stubs whose source common rule no longer exists.
    *
    * @throws IOException if file operations fail
@@ -123,7 +485,7 @@ public final class CodexSessionStartHookTest
       Files.writeString(fixture.projectRoot().resolve(".cat/rules/codex").resolve(GENERATED_STUB_MANIFEST),
         "stale.md\n", StandardCharsets.UTF_8);
 
-      SessionStartHook.run(fixture.args());
+      run(fixture);
 
       requireThat(Files.exists(staleStub), "staleStub.exists").isFalse();
       requireThat(Files.exists(fixture.projectRoot().resolve(".cat/rules/codex").resolve(
@@ -150,7 +512,7 @@ public final class CodexSessionStartHookTest
     try
     {
       Fixture fixture = createFixture(tempDir);
-      Path pluginRoot = fixture.codexHome().resolve("plugins/cache/marketplace/cat/2.1");
+      Path pluginRoot = fixture.pluginRoot();
       Path commonRule = pluginRoot.resolve("rules/common/java.md");
       Files.writeString(commonRule, """
         ---
@@ -159,7 +521,7 @@ public final class CodexSessionStartHookTest
         # Java Common
         """, StandardCharsets.UTF_8);
 
-      SessionStartHook.run(fixture.args());
+      run(fixture);
       Path stub = pluginRoot.resolve("rules/codex/java.md");
       Path manifest = pluginRoot.resolve("rules/codex").resolve(GENERATED_STUB_MANIFEST);
       requireThat(stub, "stub").isRegularFile();
@@ -169,7 +531,7 @@ public final class CodexSessionStartHookTest
       Files.delete(commonRule);
       Thread.sleep(2_100);
 
-      SessionStartHook.run(fixture.args());
+      run(fixture);
 
       requireThat(Files.exists(stub), "stub.exists").isFalse();
       requireThat(Files.exists(manifest), "manifest.exists").isFalse();
@@ -199,7 +561,7 @@ public final class CodexSessionStartHookTest
       Files.writeString(codexRules.resolve(GENERATED_STUB_MANIFEST), "../outside.md\n",
         StandardCharsets.UTF_8);
 
-      SessionStartHook.run(fixture.args());
+      run(fixture);
 
       requireThat(Files.exists(staleStub), "staleStub.exists").isFalse();
       requireThat(Files.exists(codexRules.resolve(GENERATED_STUB_MANIFEST)), "manifest.exists").
@@ -231,7 +593,7 @@ public final class CodexSessionStartHookTest
       Files.writeString(codexRules.resolve(GENERATED_STUB_MANIFEST), "stale.md\n",
         StandardCharsets.UTF_8);
 
-      SessionStartHook.run(fixture.args());
+      run(fixture);
 
       requireThat(Files.exists(staleStub), "staleStub.exists").isFalse();
       requireThat(Files.exists(codexRules.resolve(GENERATED_STUB_MANIFEST)), "manifest.exists").
@@ -271,7 +633,7 @@ public final class CodexSessionStartHookTest
         # Escaped Paths
         """, StandardCharsets.UTF_8);
 
-      SessionStartHook.run(fixture.args());
+      run(fixture);
 
       String stub = Files.readString(fixture.projectRoot().resolve(".cat/rules/codex/escaped.md"),
         StandardCharsets.UTF_8);
@@ -310,7 +672,7 @@ public final class CodexSessionStartHookTest
       String authoredContent = "# Authored Codex Rule\n\nKeep this file.\n";
       Files.writeString(authoredRule, authoredContent, StandardCharsets.UTF_8);
 
-      SessionStartHook.run(fixture.args());
+      run(fixture);
 
       requireThat(Files.readString(authoredRule, StandardCharsets.UTF_8), "authoredRule").
         isEqualTo(authoredContent);
@@ -348,7 +710,7 @@ public final class CodexSessionStartHookTest
       Files.createDirectories(rulesRoot);
       Files.createSymbolicLink(rulesRoot.resolve("codex"), outside);
 
-      SessionStartHook.HookResult result = SessionStartHook.run(fixture.args());
+      SessionStartHook.HookResult result = run(fixture);
 
       requireThat(String.join("\n", result.warnings()), "warnings").contains("symbolic link");
       requireThat(result.output(), "output").contains("SessionStart Handler Errors");
@@ -383,7 +745,7 @@ public final class CodexSessionStartHookTest
       Files.writeString(outside, "outside\n", StandardCharsets.UTF_8);
       Files.createSymbolicLink(fixture.projectRoot().resolve(".cat/rules/codex/java.md"), outside);
 
-      SessionStartHook.HookResult result = SessionStartHook.run(fixture.args());
+      SessionStartHook.HookResult result = run(fixture);
 
       requireThat(String.join("\n", result.warnings()), "warnings").contains("symbolic link");
       requireThat(Files.readString(outside, StandardCharsets.UTF_8), "outside").isEqualTo("outside\n");
@@ -429,20 +791,37 @@ public final class CodexSessionStartHookTest
     Files.createDirectories(pluginData);
     Files.writeString(pluginRoot.resolve(".codex-plugin/plugin.json"), "{\"version\":\"2.1\"}\n",
       StandardCharsets.UTF_8);
-    return new Fixture(projectRoot, pluginData, codexHome);
+    return new Fixture(projectRoot, pluginRoot, pluginData);
   }
 
-  private record Fixture(Path projectRoot, Path pluginData, Path codexHome)
+  /**
+   * Runs the Codex SessionStart hook using a test-specific scope.
+   *
+   * @param fixture the SessionStart fixture
+   * @return the hook result
+   */
+  private static SessionStartHook.HookResult run(Fixture fixture)
   {
-    /**
-     * Returns SessionStart command-line arguments for this fixture.
-     *
-     * @return SessionStart arguments
-     */
-    private String[] args()
+    return run(fixture.projectRoot(), fixture.pluginRoot(), fixture.pluginData());
+  }
+
+  /**
+   * Runs the Codex SessionStart hook using a test-specific scope.
+   *
+   * @param projectRoot the project root directory
+   * @param pluginRoot the plugin root directory
+   * @param pluginData the plugin data directory
+   * @return the hook result
+   */
+  private static SessionStartHook.HookResult run(Path projectRoot, Path pluginRoot, Path pluginData)
+  {
+    try (TestCodexHook scope = new TestCodexHook(projectRoot, pluginRoot, pluginData))
     {
-      return new String[]{projectRoot.toString(), pluginData.toString(), codexHome.toString(),
-        "marketplace", "cat", "2.1", "UTC"};
+      return SessionStartHook.run(scope);
     }
+  }
+
+  private record Fixture(Path projectRoot, Path pluginRoot, Path pluginData)
+  {
   }
 }

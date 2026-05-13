@@ -57,6 +57,24 @@ public final class BlockGitUserConfigChangeTest
   }
 
   /**
+   * Verifies that mixed-case git identity writes are blocked.
+   */
+  @Test
+  public void mixedCaseSetUserEmailIsBlocked() throws IOException
+  {
+    String command = "GIT CONFIG User.Email \"alice@example.com\"";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, Path.of("/workspace"), "session1"))
+    {
+      BlockGitUserConfigChange handler = new BlockGitUserConfigChange(scope);
+
+      BashHandler.Result result = handler.check();
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("user.email");
+    }
+  }
+
+  /**
    * Verifies that the block message instructs the user to request the change explicitly.
    */
   @Test
@@ -542,6 +560,57 @@ public final class BlockGitUserConfigChangeTest
   public void catWriteToHomeDotGitconfigIsBlocked() throws IOException
   {
     String command = "cat > ~/.gitconfig";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, Path.of("/workspace"), "session1"))
+    {
+      BlockGitUserConfigChange handler = new BlockGitUserConfigChange(scope);
+
+      BashHandler.Result result = handler.check();
+
+      requireThat(result.blocked(), "blocked").isTrue();
+    }
+  }
+
+  /**
+   * Verifies that Python writing to ~/.gitconfig is blocked.
+   */
+  @Test
+  public void pythonWriteToHomeDotGitconfigIsBlocked() throws IOException
+  {
+    String command = "python -c \"open('~/.gitconfig','w').write('[user]')\"";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, Path.of("/workspace"), "session1"))
+    {
+      BlockGitUserConfigChange handler = new BlockGitUserConfigChange(scope);
+
+      BashHandler.Result result = handler.check();
+
+      requireThat(result.blocked(), "blocked").isTrue();
+    }
+  }
+
+  /**
+   * Verifies that dd writing to the XDG git config is blocked.
+   */
+  @Test
+  public void ddWriteToXdgGitConfigIsBlocked() throws IOException
+  {
+    String command = "dd if=/tmp/identity of=$HOME/.config/git/config";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, Path.of("/workspace"), "session1"))
+    {
+      BlockGitUserConfigChange handler = new BlockGitUserConfigChange(scope);
+
+      BashHandler.Result result = handler.check();
+
+      requireThat(result.blocked(), "blocked").isTrue();
+    }
+  }
+
+  /**
+   * Verifies that editor commands targeting ~/.gitconfig are blocked.
+   */
+  @Test
+  public void editorTargetingHomeDotGitconfigIsBlocked() throws IOException
+  {
+    String command = "vim ~/.gitconfig";
     try (TestClaudeHook scope = TestUtils.bashHook(command, Path.of("/workspace"), "session1"))
     {
       BlockGitUserConfigChange handler = new BlockGitUserConfigChange(scope);

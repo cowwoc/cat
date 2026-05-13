@@ -55,9 +55,9 @@ The runner is invoked as a Java binary with named arguments (not positional):
 ```bash
 WORKTREE_PATH=$(git rev-parse --show-toplevel)
 PLUGIN_SOURCE="${WORKTREE_PATH}/plugin"
-JLINK_BIN="${WORKTREE_PATH}/client/cli/target/jlink/bin"
+JLINK_BIN="${WORKTREE_PATH}/client/cli/target/jlink/claude/bin"
 if [[ ! -d "$JLINK_BIN" ]]; then
-  JLINK_BIN="${CLAUDE_PROJECT_DIR}/client/cli/target/jlink/bin"
+  JLINK_BIN="${CLAUDE_PROJECT_DIR}/client/cli/target/jlink/claude/bin"
 fi
 ```
 

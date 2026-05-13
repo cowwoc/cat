@@ -75,7 +75,7 @@ Status values:
   - For feature/bugfix/refactor/performance issues AND CAUTION == "high": Run runtime E2E tests using worktree
     artifacts (not cached plugin). For other caution levels, set e2e status to SKIPPED.
   - Runtime invocation must use an absolute binary path:
-    `${WORKTREE_PATH}/client/cli/target/jlink/bin/instruction-test-runner ...`
+    `${WORKTREE_PATH}/client/cli/target/jlink/${CAT_RUNTIME:-claude}/bin/instruction-test-runner ...`
     Do NOT invoke `instruction-test-runner` via PATH lookup.
   - Before runtime E2E invocation, run a clean-worktree preflight:
     `cd "${WORKTREE_PATH}" && git status --porcelain`

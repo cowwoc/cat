@@ -20,8 +20,8 @@ import java.util.stream.Stream;
 
 /**
  * Enforces that only MainClaudeTool.java and MainClaudeHook.java,
- * TerminalType.java, SessionStartHook.java, MainClaudeStatusline.java, MainCodexTool.java, and
- * ShellParser.java
+ * TerminalType.java, SessionStartHook.java, MainClaudeStatusline.java, MainCodexTool.java,
+ * and ShellParser.java
  * call System.getenv() directly.
  * <p>
  * Hook handlers must access session-specific values (session ID) from HookInput JSON,
@@ -37,6 +37,8 @@ import java.util.stream.Stream;
  * the production statusline scope implementation that reads {@code CLAUDE_PROJECT_DIR}, {@code TZ}
  * from the environment at startup. ShellParser.java is allowed because it expands {@code $VAR} and
  * {@code ${VAR}} references in Bash redirect paths for the worktree isolation check.
+ * The Codex SessionStartHook.java main method is allowed because it reads CAT's Codex hook
+ * infrastructure path variables from the environment at startup.
  */
 public final class EnforceJvmScopeEnvAccessTest
 {
@@ -76,6 +78,8 @@ public final class EnforceJvmScopeEnvAccessTest
         filter(path -> !sourceRoot.relativize(path).toString().equals(
           "io/github/cowwoc/cat/claude/hook/SessionStartHook.java")).
         filter(path -> !sourceRoot.relativize(path).toString().equals(
+          "io/github/cowwoc/cat/codex/hook/SessionStartHook.java")).
+        filter(path -> !sourceRoot.relativize(path).toString().equals(
           "io/github/cowwoc/cat/claude/hook/MainClaudeStatusline.java")).
         filter(path -> !sourceRoot.relativize(path).toString().equals(
           "io/github/cowwoc/cat/codex/tool/MainCodexTool.java")).
@@ -97,11 +101,12 @@ public final class EnforceJvmScopeEnvAccessTest
       String message = """
         System.getenv() found in files other than MainClaudeTool.java, \
         MainClaudeHook.java, TerminalType.java, \
-        SessionStartHook.java, MainClaudeStatusline.java, MainCodexTool.java, and ShellParser.java.
+        SessionStartHook.java, Codex SessionStartHook.java, MainClaudeStatusline.java, MainCodexTool.java, \
+        and ShellParser.java.
 
         REQUIREMENT: Hooks must read session-specific values from HookInput JSON (not environment variables).
         Session CLI commands receive session values from MainClaudeTool which reads them at startup.
-        Hook handlers use MainClaudeHook to read infrastructure path variables at startup.
+        Hook handlers use MainClaudeHook or dedicated hook entrypoints to read infrastructure path variables at startup.
 
         Violations found in:
         """ + String.join("\n", violations.stream().map(v -> "  - " + v).toList()) + """
@@ -110,7 +115,8 @@ public final class EnforceJvmScopeEnvAccessTest
         FIX depends on context:
           Session CLI main() methods: use MainClaudeTool (or TestClaudeTool in tests) to access \
         session values — the constructor reads environment variables and stores them as fields.
-          Hook handler main() methods: use MainClaudeHook to read infrastructure path variables \
+          Hook handler main() methods: use MainClaudeHook or dedicated hook entrypoints to read infrastructure \
+        path variables \
         and hook JSON from stdin.
           In hook handlers / business logic: read session-specific values from HookInput JSON, \
         not environment variables — hooks must not call System.getenv() directly.
@@ -135,6 +141,7 @@ public final class EnforceJvmScopeEnvAccessTest
       "io/github/cowwoc/cat/claude/hook/MainClaudeHook.java",
       "io/github/cowwoc/cat/agent/TerminalType.java",
       "io/github/cowwoc/cat/claude/hook/SessionStartHook.java",
+      "io/github/cowwoc/cat/codex/hook/SessionStartHook.java",
       "io/github/cowwoc/cat/claude/hook/MainClaudeStatusline.java",
       "io/github/cowwoc/cat/codex/tool/MainCodexTool.java",
       "io/github/cowwoc/cat/claude/hook/ShellParser.java"

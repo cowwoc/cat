@@ -283,4 +283,11 @@ public final class TestClaudeHook extends AbstractClaudeHook
     ensureOpen();
     return "";
   }
+
+  @Override
+  public String getUpdatePluginJsonUrl()
+  {
+    ensureOpen();
+    return "";
+  }
 }

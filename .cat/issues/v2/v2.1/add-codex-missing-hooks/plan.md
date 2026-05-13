@@ -2,7 +2,10 @@
 
 ## Goal
 
-Add the missing Codex hook registrations to `client/plugin/hooks/codex/hooks.json` so Codex receives the same CAT protections and context injections that the adapter and client handlers support, including read-related hooks needed for path-scoped rule loading.
+Add the missing supported Codex hook registrations to `client/plugin/hooks/codex/hooks.json` so Codex receives the
+CAT protections and context injections that current Codex hook events can provide. Codex support is intentionally
+limited to Codex-exposed hook events; Claude-only read/search hooks are documented as unsupported until Codex exposes
+compatible events.
 
 ## Pre-conditions
 
@@ -10,8 +13,11 @@ Add the missing Codex hook registrations to `client/plugin/hooks/codex/hooks.jso
 
 ## Post-conditions
 
-- [ ] Codex hook registration includes the missing supported hook events and tool matchers, especially read/search hooks needed for path-scoped rules such as `.cat/rules/codex/java.md`.
-- [ ] `client/plugin/hooks/codex/run-hook.sh` correctly adapts registered Codex tool events to the existing client hook handlers.
+- [ ] Codex hook registration includes the supported hook events and native Codex tool matchers for session start and
+  executable-command pre-tool validation.
+- [ ] Codex hook launchers parse native Codex hook input directly and do not require
+  `client/plugin/hooks/codex/run-hook.sh`.
 - [ ] Unsupported Claude-only hooks are intentionally omitted or documented rather than silently registered.
-- [ ] Regression coverage verifies the Codex hooks JSON contains the expected registrations and that Java path-scoped rule loading can be triggered for Java file access.
+- [ ] Regression coverage verifies the Codex hooks JSON contains the expected supported registrations and that native
+  Codex command payloads reach the Codex pre-bash guard.
 - [ ] `mvn -f client/pom.xml verify -e` passes.

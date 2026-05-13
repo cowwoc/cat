@@ -371,6 +371,12 @@ public final class TestClaudeToolTest
     }
 
     @Override
+    public String getUpdatePluginJsonUrl()
+    {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
     public boolean isClosed()
     {
       return false;

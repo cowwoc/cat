@@ -58,7 +58,7 @@ public final class PluginArtifactBuilder
   private final JsonMapper jsonMapper = JsonMapper.builder().build();
   private final Path pluginDir;
   private final Path clientDir;
-  private final Path cliJlinkDir;
+  private final Path cliJlinkRoot;
   private final Path targetDir;
 
   /**
@@ -73,7 +73,7 @@ public final class PluginArtifactBuilder
   {
     this.pluginDir = pluginDir.toAbsolutePath().normalize();
     this.clientDir = clientDir.toAbsolutePath().normalize();
-    this.cliJlinkDir = this.clientDir.resolve("cli/target/jlink");
+    this.cliJlinkRoot = this.clientDir.resolve("cli/target/jlink");
     this.targetDir = targetDir.toAbsolutePath().normalize();
   }
 
@@ -93,12 +93,18 @@ public final class PluginArtifactBuilder
     System.out.println("  " + targetDir.resolve(Runtime.CODEX.directoryName));
   }
 
+  /**
+   * Builds one runtime-specific plugin artifact.
+   *
+   * @param runtime the runtime to build
+   * @throws IOException if file operations fail
+   */
   private void buildRuntime(Runtime runtime) throws IOException
   {
     Path target = targetDir.resolve(runtime.directoryName);
     Files.createDirectories(target);
 
-    copyCommonPluginFiles(target);
+    copyCommonPluginFiles(runtime, target);
     copyTree(pluginDir.resolve(runtime.manifestDirectory), target.resolve(runtime.manifestDirectory));
 
     Files.createDirectories(target.resolve("rules"));
@@ -114,23 +120,30 @@ public final class PluginArtifactBuilder
       target.resolve("hooks/hooks.json"));
 
     Files.createDirectories(target.resolve("skills"));
-    copySkillSet(pluginDir.resolve("skills/common"), target.resolve("skills"), runtime);
-    copyRuntimeSkillSet(pluginDir.resolve("skills").resolve(runtime.directoryName), target.resolve("skills"), runtime);
+    copySkillSet(runtime, pluginDir.resolve("skills/common"), target.resolve("skills"));
+    copyRuntimeSkillSet(runtime, pluginDir.resolve("skills").resolve(runtime.directoryName), target.resolve("skills"));
 
     Files.createDirectories(target.resolve("agents"));
     if (runtime == Runtime.CLAUDE)
-      copyInstructionTree(pluginDir.resolve("agents/claude"), target.resolve("agents"), runtime);
+      copyInstructionTree(runtime, pluginDir.resolve("agents/claude"), target.resolve("agents"));
     else
-      copyInstructionTree(pluginDir.resolve("agents/codex"), target.resolve("agents"), runtime);
+      copyInstructionTree(runtime, pluginDir.resolve("agents/codex"), target.resolve("agents"));
     deleteNamedFiles(target.resolve("agents"), "README.md");
 
-    stripAgentFacingLicenseHeaders(target);
+    stripAndVerifyAgentFacingFiles(target);
     writeRuntimeVersion(target, runtime.manifestDirectory);
     makeShellScriptsExecutable(target);
     verifyRuntimeArtifact(target);
   }
 
-  private void copyCommonPluginFiles(Path target) throws IOException
+  /**
+   * Copies plugin files that are shared by all runtime artifacts.
+   *
+   * @param runtime the runtime being built
+   * @param target the root directory of the runtime artifact currently being assembled
+   * @throws IOException if file operations fail
+   */
+  private void copyCommonPluginFiles(Runtime runtime, Path target) throws IOException
   {
     copyTree(pluginDir.resolve(".git-filter-repo-config"), target.resolve(".git-filter-repo-config"));
     copyTree(pluginDir.resolve("concepts"), target.resolve("concepts"));
@@ -145,11 +158,20 @@ public final class PluginArtifactBuilder
     copyFile(pluginDir.resolve("package-lock.json"), target.resolve("package-lock.json"));
     copyFile(clientDir.getParent().resolve("LICENSE.md"), target.resolve("LICENSE.md"));
 
-    if (Files.isDirectory(cliJlinkDir, LinkOption.NOFOLLOW_LINKS))
-      copyTree(cliJlinkDir, target.resolve("client"));
+    Path runtimeJlinkDir = cliJlinkRoot.resolve(runtime.directoryName);
+    if (Files.isDirectory(runtimeJlinkDir, LinkOption.NOFOLLOW_LINKS))
+      copyTree(runtimeJlinkDir, target.resolve("client"));
   }
 
-  private void copySkillSet(Path source, Path target, Runtime runtime) throws IOException
+  /**
+   * Copies all runtime-visible skills from a skill source directory.
+   *
+   * @param runtime the runtime being built
+   * @param source the source skill root
+   * @param target the target skill root
+   * @throws IOException if file operations fail
+   */
+  private void copySkillSet(Runtime runtime, Path source, Path target) throws IOException
   {
     if (!Files.isDirectory(source, LinkOption.NOFOLLOW_LINKS))
       return;
@@ -165,12 +187,20 @@ public final class PluginArtifactBuilder
         Path targetSkill = target.resolve(skillDirectory.getFileName());
         if (Files.exists(targetSkill, LinkOption.NOFOLLOW_LINKS))
           deleteDirectory(targetSkill);
-        copyRuntimeSkillTree(skillDirectory, targetSkill, runtime);
+        copyRuntimeSkillTree(runtime, skillDirectory, targetSkill);
       }
     }
   }
 
-  private void copyRuntimeSkillSet(Path source, Path target, Runtime runtime) throws IOException
+  /**
+   * Copies runtime-specific skill directories and overlays shared skill support files when present.
+   *
+   * @param runtime the runtime being built
+   * @param source the runtime-specific skill root
+   * @param target the target skill root
+   * @throws IOException if file operations fail
+   */
+  private void copyRuntimeSkillSet(Runtime runtime, Path source, Path target) throws IOException
   {
     if (!Files.isDirectory(source, LinkOption.NOFOLLOW_LINKS))
       return;
@@ -188,13 +218,20 @@ public final class PluginArtifactBuilder
           deleteDirectory(targetSkill);
         Path commonSkill = pluginDir.resolve("skills/common").resolve(skillDirectory.getFileName());
         if (Files.isDirectory(commonSkill, LinkOption.NOFOLLOW_LINKS))
-          copyRuntimeSkillTree(commonSkill, targetSkill, runtime);
-        copyRuntimeSkillTree(skillDirectory, targetSkill, runtime);
+          copyRuntimeSkillTree(runtime, commonSkill, targetSkill);
+        copyRuntimeSkillTree(runtime, skillDirectory, targetSkill);
       }
     }
   }
 
-  private boolean isAllowedIncludeTarget(Path path, Runtime runtime)
+  /**
+   * Checks whether an include target may be expanded for the runtime artifact.
+   *
+   * @param runtime the runtime being built
+   * @param path the candidate include target
+   * @return true if the target is in a runtime-visible source tree
+   */
+  private boolean isAllowedIncludeTarget(Runtime runtime, Path path)
   {
     if (!path.startsWith(pluginDir) || isSourceOnlyPath(pluginDir.relativize(path)))
       return false;
@@ -217,7 +254,14 @@ public final class PluginArtifactBuilder
     return false;
   }
 
-  private void stripAgentFacingLicenseHeaders(Path target) throws IOException
+  /**
+   * Removes source license headers from generated agent-facing text files and verifies that source-only
+   * markers are gone.
+   *
+   * @param target the runtime artifact root
+   * @throws IOException if file operations fail
+   */
+  private void stripAndVerifyAgentFacingFiles(Path target) throws IOException
   {
     for (Path directory : List.of(target.resolve("agents"), target.resolve("commands"), target.resolve("concepts"),
       target.resolve("rules"), target.resolve("skills")))
@@ -237,6 +281,10 @@ public final class PluginArtifactBuilder
             else
               text = HASH_LICENSE_HEADER.matcher(text).replaceFirst("");
             FileSystemUtils.writeStringIfChanged(file, text);
+            if (containsSourceLicenseText(text))
+              throw new IllegalStateException("Runtime artifact contains source license text: " + file);
+            if (text.contains("cat:include"))
+              throw new IllegalStateException("Runtime artifact contains unresolved cat:include marker: " + file);
           }
           return FileVisitResult.CONTINUE;
         }
@@ -244,6 +292,12 @@ public final class PluginArtifactBuilder
     }
   }
 
+  /**
+   * Removes the standard source license header from Markdown content.
+   *
+   * @param text the source text
+   * @return the text without the license header
+   */
   private String stripMarkdownLicenseHeader(String text)
   {
     Matcher matcher = MARKDOWN_LICENSE_HEADER.matcher(text);
@@ -255,11 +309,24 @@ public final class PluginArtifactBuilder
     return frontmatter + text.substring(matcher.end());
   }
 
+  /**
+   * Removes source license headers from Markdown or TOML content.
+   *
+   * @param text the source text
+   * @return the text without source license headers
+   */
   private String stripSourceLicenseHeader(String text)
   {
     return HASH_LICENSE_HEADER.matcher(stripMarkdownLicenseHeader(text)).replaceFirst("");
   }
 
+  /**
+   * Writes the runtime artifact version file from its plugin manifest.
+   *
+   * @param target the runtime artifact root
+   * @param manifestDirectory the runtime manifest directory
+   * @throws IOException if file operations fail
+   */
   private void writeRuntimeVersion(Path target, String manifestDirectory) throws IOException
   {
     Path manifest = target.resolve(manifestDirectory).resolve("plugin.json");
@@ -276,6 +343,13 @@ public final class PluginArtifactBuilder
     Files.writeString(versionFile, version.stringValue() + "\n", StandardCharsets.UTF_8);
   }
 
+  /**
+   * Deletes all files with the requested name below a root directory.
+   *
+   * @param root the directory to search
+   * @param fileName the file name to delete
+   * @throws IOException if file operations fail
+   */
   private void deleteNamedFiles(Path root, String fileName) throws IOException
   {
     if (!Files.isDirectory(root, LinkOption.NOFOLLOW_LINKS))
@@ -291,6 +365,12 @@ public final class PluginArtifactBuilder
     }
   }
 
+  /**
+   * Marks shell scripts in the runtime artifact as executable.
+   *
+   * @param root the directory to scan
+   * @throws IOException if file operations fail
+   */
   private void makeShellScriptsExecutable(Path root) throws IOException
   {
     Files.walkFileTree(root, new SimpleFileVisitor<>()
@@ -305,15 +385,26 @@ public final class PluginArtifactBuilder
     });
   }
 
+  /**
+   * Verifies that the runtime artifact does not expose source-only content.
+   *
+   * @param target the runtime artifact root
+   * @throws IOException if file operations fail
+   */
   private void verifyRuntimeArtifact(Path target) throws IOException
   {
     Path commonAgents = target.resolve("agents/common");
     if (Files.exists(commonAgents, LinkOption.NOFOLLOW_LINKS))
       throw new IllegalStateException("Runtime artifact must not contain common agent sources: " + commonAgents);
     verifyNoSourceOnlySkillFiles(target.resolve("skills"));
-    verifyNoAgentFacingSourceText(target);
   }
 
+  /**
+   * Verifies that source-only skill test files were excluded from the runtime artifact.
+   *
+   * @param skillsRoot the runtime skill root
+   * @throws IOException if file operations fail
+   */
   private void verifyNoSourceOnlySkillFiles(Path skillsRoot) throws IOException
   {
     if (!Files.isDirectory(skillsRoot, LinkOption.NOFOLLOW_LINKS))
@@ -330,31 +421,12 @@ public final class PluginArtifactBuilder
     }
   }
 
-  private void verifyNoAgentFacingSourceText(Path target) throws IOException
-  {
-    for (Path directory : List.of(target.resolve("agents"), target.resolve("commands"), target.resolve("concepts"),
-      target.resolve("rules"), target.resolve("skills")))
-    {
-      if (!Files.isDirectory(directory, LinkOption.NOFOLLOW_LINKS))
-        continue;
-      Files.walkFileTree(directory, new SimpleFileVisitor<>()
-      {
-        @Override
-        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException
-        {
-          if (!isMarkdownOrToml(file))
-            return FileVisitResult.CONTINUE;
-          String text = Files.readString(file, StandardCharsets.UTF_8);
-          if (containsSourceLicenseText(text))
-            throw new IllegalStateException("Runtime artifact contains source license text: " + file);
-          if (text.contains("cat:include"))
-            throw new IllegalStateException("Runtime artifact contains unresolved cat:include marker: " + file);
-          return FileVisitResult.CONTINUE;
-        }
-      });
-    }
-  }
-
+  /**
+   * Checks whether text still contains source license header fragments.
+   *
+   * @param text the text to inspect
+   * @return true if source license text remains
+   */
   private boolean containsSourceLicenseText(String text)
   {
     return text.contains("Copyright (c) 2026 Gili Tzabari. All rights reserved.") ||
@@ -362,6 +434,13 @@ public final class PluginArtifactBuilder
       text.contains("See LICENSE.md in the project root for license terms.");
   }
 
+  /**
+   * Copies a directory tree if the source exists.
+   *
+   * @param source the source directory
+   * @param target the target directory
+   * @throws IOException if file operations fail
+   */
   private void copyTree(Path source, Path target) throws IOException
   {
     if (!Files.isDirectory(source, LinkOption.NOFOLLOW_LINKS))
@@ -386,7 +465,15 @@ public final class PluginArtifactBuilder
     });
   }
 
-  private void copyInstructionTree(Path source, Path target, Runtime runtime) throws IOException
+  /**
+   * Copies instruction files while expanding runtime-allowed includes.
+   *
+   * @param runtime the runtime being built
+   * @param source the source directory
+   * @param target the target directory
+   * @throws IOException if file operations fail
+   */
+  private void copyInstructionTree(Runtime runtime, Path source, Path target) throws IOException
   {
     if (!Files.isDirectory(source, LinkOption.NOFOLLOW_LINKS))
       return;
@@ -406,7 +493,7 @@ public final class PluginArtifactBuilder
         Path relative = source.relativize(file);
         Path targetFile = target.resolve(relative);
         if (isMarkdownOrToml(file))
-          copyInstructionFile(file, targetFile, runtime);
+          copyInstructionFile(runtime, file, targetFile);
         else
           copyFileSystemEntry(file, targetFile);
         return FileVisitResult.CONTINUE;
@@ -414,7 +501,15 @@ public final class PluginArtifactBuilder
     });
   }
 
-  private void copyRuntimeSkillTree(Path source, Path target, Runtime runtime) throws IOException
+  /**
+   * Copies runtime-visible skill files and their referenced companion files.
+   *
+   * @param runtime the runtime being built
+   * @param source the source skill directory
+   * @param target the target skill directory
+   * @throws IOException if file operations fail
+   */
+  private void copyRuntimeSkillTree(Runtime runtime, Path source, Path target) throws IOException
   {
     Set<Path> runtimeFiles = getRuntimeSkillFiles(source);
     Files.walkFileTree(source, new SimpleFileVisitor<>()
@@ -437,7 +532,7 @@ public final class PluginArtifactBuilder
         {
           Path targetFile = target.resolve(relative);
           if (isMarkdownOrToml(file))
-            copyInstructionFile(file, targetFile, runtime);
+            copyInstructionFile(runtime, file, targetFile);
           else
             copyFileSystemEntry(file, targetFile);
         }
@@ -446,15 +541,30 @@ public final class PluginArtifactBuilder
     });
   }
 
-  private void copyInstructionFile(Path source, Path target, Runtime runtime) throws IOException
+  /**
+   * Copies an instruction file after removing source headers and expanding includes.
+   *
+   * @param runtime the runtime being built
+   * @param source the source instruction file
+   * @param target the target instruction file
+   * @throws IOException if file operations fail
+   */
+  private void copyInstructionFile(Runtime runtime, Path source, Path target) throws IOException
   {
     Files.createDirectories(target.getParent());
     String text = stripSourceLicenseHeader(Files.readString(source, StandardCharsets.UTF_8));
-    text = SourceIncludeProcessor.expand(source, text, path -> isAllowedIncludeTarget(path, runtime),
+    text = SourceIncludeProcessor.expand(source, text, path -> isAllowedIncludeTarget(runtime, path),
       this::stripSourceLicenseHeader);
     FileSystemUtils.writeStringIfChanged(target, text);
   }
 
+  /**
+   * Finds skill files that should be included in a runtime artifact.
+   *
+   * @param source the source skill directory
+   * @return relative paths to runtime-visible skill files
+   * @throws IOException if file operations fail
+   */
   private Set<Path> getRuntimeSkillFiles(Path source) throws IOException
   {
     Map<String, Path> candidateByFileName = new HashMap<>();
@@ -496,6 +606,12 @@ public final class PluginArtifactBuilder
     return included;
   }
 
+  /**
+   * Adds a runtime skill companion-file candidate by file name.
+   *
+   * @param candidateByFileName candidate paths keyed by file name
+   * @param candidate the candidate path to add
+   */
   private void addCandidate(Map<String, Path> candidateByFileName, Path candidate)
   {
     String fileName = candidate.getFileName().toString();
@@ -507,6 +623,12 @@ public final class PluginArtifactBuilder
     }
   }
 
+  /**
+   * Checks whether a path is authoring-only and should be excluded from runtime artifacts.
+   *
+   * @param relative the path relative to the scanned root
+   * @return true if the path is source-only
+   */
   private boolean isSourceOnlyPath(Path relative)
   {
     for (Path part : relative)
@@ -522,6 +644,13 @@ public final class PluginArtifactBuilder
     return fileName.endsWith(".bats");
   }
 
+  /**
+   * Copies a regular file if the source exists.
+   *
+   * @param source the source file
+   * @param target the target file
+   * @throws IOException if file operations fail
+   */
   private void copyFile(Path source, Path target) throws IOException
   {
     if (!Files.isRegularFile(source, LinkOption.NOFOLLOW_LINKS))
@@ -530,6 +659,13 @@ public final class PluginArtifactBuilder
     copyFileSystemEntry(source, target);
   }
 
+  /**
+   * Copies a file-system entry, resolving jlink symlinks into regular files.
+   *
+   * @param source the source entry
+   * @param target the target entry
+   * @throws IOException if file operations fail
+   */
   private void copyFileSystemEntry(Path source, Path target) throws IOException
   {
     if (Files.isSymbolicLink(source))
@@ -543,9 +679,16 @@ public final class PluginArtifactBuilder
     Files.copy(source, target);
   }
 
+  /**
+   * Copies the safe target of a jlink symlink into the runtime artifact.
+   *
+   * @param source the symlink source
+   * @param target the target file
+   * @throws IOException if the link target is unsafe or file operations fail
+   */
   private void copyJlinkSymlinkTarget(Path source, Path target) throws IOException
   {
-    if (!source.startsWith(cliJlinkDir))
+    if (!source.startsWith(cliJlinkRoot))
       throw new IOException("Refusing to copy symbolic link into plugin artifact: " + source);
 
     Path linkTarget = Files.readSymbolicLink(source);
@@ -554,7 +697,7 @@ public final class PluginArtifactBuilder
       resolvedTarget = linkTarget.normalize();
     else
       resolvedTarget = source.getParent().resolve(linkTarget).normalize();
-    if (!resolvedTarget.startsWith(cliJlinkDir) ||
+    if (!resolvedTarget.startsWith(cliJlinkRoot) ||
       !Files.isRegularFile(resolvedTarget, LinkOption.NOFOLLOW_LINKS))
     {
       throw new IOException("Refusing to copy unsafe jlink symbolic link into plugin artifact: " +
@@ -567,6 +710,12 @@ public final class PluginArtifactBuilder
     Files.copy(resolvedTarget, target);
   }
 
+  /**
+   * Deletes a directory tree.
+   *
+   * @param directory the directory to delete
+   * @throws IOException if file operations fail
+   */
   private void deleteDirectory(Path directory) throws IOException
   {
     try (Stream<Path> walk = Files.walk(directory))
@@ -580,6 +729,12 @@ public final class PluginArtifactBuilder
     }
   }
 
+  /**
+   * Checks whether a path points to a Markdown or TOML file.
+   *
+   * @param path the path to inspect
+   * @return true if the file extension is Markdown or TOML
+   */
   private boolean isMarkdownOrToml(Path path)
   {
     String fileName = path.getFileName().toString().toLowerCase(Locale.ROOT);
@@ -608,6 +763,12 @@ public final class PluginArtifactBuilder
     private final String directoryName;
     private final String manifestDirectory;
 
+    /**
+     * Creates a runtime descriptor.
+     *
+     * @param directoryName the runtime directory name
+     * @param manifestDirectory the plugin manifest directory name
+     */
     Runtime(String directoryName, String manifestDirectory)
     {
       this.directoryName = directoryName;

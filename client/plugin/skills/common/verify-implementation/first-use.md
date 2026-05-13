@@ -53,9 +53,9 @@ Each status includes evidence (file paths, line content, command output).
 Parse JSON arguments and run verify-audit to validate the issue and verify file specs from plan.md.
 
 ```bash
-CLIENT_BIN="${WORKTREE_PATH}/client/cli/target/jlink/bin"
+CLIENT_BIN="${WORKTREE_PATH}/client/cli/target/jlink/${CAT_RUNTIME:-claude}/bin"
 if [ ! -x "$CLIENT_BIN/verify-audit" ]; then
-  CLIENT_BIN="/workspace/client/cli/target/jlink/bin"
+  CLIENT_BIN="/workspace/client/cli/target/jlink/${CAT_RUNTIME:-claude}/bin"
 fi
 
 PREPARED=$(echo "${ARGUMENTS}" | "$CLIENT_BIN/verify-audit" prepare)

@@ -59,6 +59,10 @@ Tests must be **self-contained**, **thread-safe**, and must **never impact the p
    variables, system properties, stdout/stderr redirection, current working directory).
 4. **Deterministic** — test results must not depend on host machine configuration, repository state, or timing. Use
    controlled inputs and injectable dependencies (e.g., `Clock` for time, temp dirs for paths).
+5. **Test-specific scopes only** — test code must interact with `Test*` scope implementations, not `Main*` production
+   scopes. Production scopes read host environment variables, stdin, or runtime-specific filesystem locations and are
+   reserved for production entrypoints. For example, use `TestCodexTool`, `TestCodexHook`, `TestClaudeTool`, or
+   `TestClaudeHook` instead of `MainCodexTool`, `MainCodexHook`, `MainClaudeTool`, or `MainClaudeHook`.
 
 **Why:** A leaky test that runs `git reset --soft HEAD~1 && git commit` against the real repo will silently corrupt the
 working branch on every build. This is catastrophic when builds automatically or in parallel.
@@ -123,9 +127,15 @@ public void worktreesDoNotLoadDuplicateRules() {
 
 ### Do Not Test Design Constraints By Scanning Source
 
+Automated tests should verify runtime behavior with meaningful inputs and outputs. Do not add tests whose only purpose
+is to enforce package-time structure or design constraints, such as asserting that a package contains only certain
+classes, scanning source files for imports, or checking that generated release artifacts have a particular internal
+layout when no runtime behavior is exercised.
+
 Do not add build-time tests whose only purpose is to enforce design constraints by scanning source files, package names,
 or textual references. Examples include tests that fail because a runtime-specific package mentions another runtime by
-name, or tests that assert a directory contains no imports from a broad category of packages.
+name, tests that assert a directory contains no imports from a broad category of packages, or tests that verify a package
+contains only a specific set of classes.
 
 These constraints belong in code review, architecture notes, or convention files, not in the test suite. Build-time
 tests should cover executable behavior with meaningful inputs and outputs. Design-boundary concerns should be reviewed
@@ -140,3 +150,10 @@ targets, section names, or source-layout conventions.
 If a non-code file affects runtime behavior, test the executable behavior that consumes it instead. For example, test
 that an artifact builder produces the expected runtime artifact from synthetic inputs, or that a parser rejects invalid
 synthetic content. Do not test that repository Markdown files contain or omit specific text.
+
+### Do Not Add Retrospective Documentation Tests
+
+Do not add tests that merely document a change after the fact. A test belongs in the suite only when it would catch a
+real behavioral regression that matters to users or callers. Avoid tests whose only value is proving that a recently
+removed implementation detail, retired artifact layout, or historical packaging choice remains absent when no runtime
+behavior is exercised.

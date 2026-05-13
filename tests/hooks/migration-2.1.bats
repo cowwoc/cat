@@ -815,7 +815,7 @@ EOF
     [ "$status" -eq 0 ]
 
     # Verify get-config-output can read the migrated config
-    run "$CLAUDE_PLUGIN_ROOT/../cli/target/jlink/bin/get-config-output" effective
+    run "$CLAUDE_PLUGIN_ROOT/../cli/target/jlink/claude/bin/get-config-output" effective
     [ "$status" -eq 0 ]
 
     # Verify output contains expected trust value

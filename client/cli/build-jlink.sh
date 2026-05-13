@@ -4,22 +4,22 @@
 # Licensed under the CAT Commercial License.
 # See LICENSE.md in the project root for license terms.
 #
-# build-jlink.sh - Create a self-contained jlink image with client application and dependencies
+# build-jlink.sh - Create self-contained runtime-specific jlink images
 #
 # Pipeline:
 #   1. Build the client JAR (if needed)
 #   2. Stage runtime dependency JARs
 #   3. Patch automatic modules with generated module-info.class
-#   4. Create jlink runtime image
+#   4. Create runtime-specific jlink images
 #   5. Generate per-handler launcher scripts
-#   6. Generate Leyden AOT startup archive
-#   7. Verify jlink image
+#   6. Generate runtime-specific Leyden AOT startup archives
+#   7. Verify jlink images
 #
 # Usage:
 #   ./build-jlink.sh
 #
 # Output:
-#   target/jlink/ - Complete jlink runtime image with launchers
+#   target/jlink/{claude,codex}/ - Complete runtime-specific jlink images with launchers
 
 set -euo pipefail
 
@@ -37,27 +37,18 @@ export MAVEN_PROJECTBASEDIR="$REACTOR_DIR"
 TARGET_DIR="${PROJECT_DIR}/target"
 STAGING_DIR="${TARGET_DIR}/jlink-staging"
 PATCH_DIR="${TARGET_DIR}/module-patches"
-OUTPUT_DIR="${TARGET_DIR}/jlink"
+OUTPUT_ROOT="${TARGET_DIR}/jlink"
+OUTPUT_DIR="${OUTPUT_ROOT}/claude"
 CLIENT_JAR="${TARGET_DIR}/cat-cli-2.1.jar"
 MODULE_NAME="io.github.cowwoc.cat.client"
 ENABLE_ASSERTIONS=false
+declare -a PATCH_MODULE_PATH_JARS=()
+declare -a AUTOMATIC_MODULE_JARS=()
 
-# Handler registry: launcher-name:fully.qualified.ClassName
-# Each entry generates a bin/<launcher-name> script in the jlink image.
-declare -a HANDLERS=(
-  "pre-bash:io.github.cowwoc.cat.claude.hook.PreToolUseHook"
-  "post-bash:io.github.cowwoc.cat.claude.hook.PostBashHook"
-  "pre-read:io.github.cowwoc.cat.claude.hook.PreReadHook"
-  "post-read:io.github.cowwoc.cat.claude.hook.PostReadHook"
-  "post-tool-use:io.github.cowwoc.cat.claude.hook.PostToolUseHook"
-  "user-prompt-submit:io.github.cowwoc.cat.claude.hook.UserPromptSubmitHook"
+# Runtime-neutral handler registry: launcher-name:fully.qualified.ClassName
+# Each entry is included in every runtime image.
+declare -a COMMON_HANDLERS=(
   "token-counter:io.github.cowwoc.cat.claude.hook.TokenCounter"
-  "enforce-status:io.github.cowwoc.cat.claude.hook.EnforceStatusOutput"
-  "pre-ask:io.github.cowwoc.cat.claude.hook.PreAskHook"
-  "pre-write:io.github.cowwoc.cat.claude.hook.PreWriteHook"
-  "subagent-start:io.github.cowwoc.cat.claude.hook.SubagentStartHook"
-  "pre-issue:io.github.cowwoc.cat.claude.hook.PreIssueHook"
-  "session-end:io.github.cowwoc.cat.claude.hook.SessionEndHook"
   "get-checkpoint-box:io.github.cowwoc.cat.claude.hook.skills.GetCheckpointOutput"
   "get-issue-complete-box:io.github.cowwoc.cat.claude.hook.skills.GetIssueCompleteOutput"
   "get-next-issue-box:io.github.cowwoc.cat.claude.hook.skills.GetNextIssueOutput"
@@ -76,26 +67,20 @@ declare -a HANDLERS=(
   "get-stakeholder-concern-box:io.github.cowwoc.cat.claude.hook.skills.GetStakeholderConcernBox"
   "verify-audit:io.github.cowwoc.cat.claude.hook.skills.VerifyAudit"
   "empirical-test-runner:io.github.cowwoc.cat.claude.hook.skills.EmpiricalTestRunner"
-  "claude-runner:io.github.cowwoc.cat.claude.hook.skills.ClaudeRunner"
-  "codex-runner:io.github.cowwoc.cat.codex.hook.skills.CodexRunner"
   "merge-and-cleanup:io.github.cowwoc.cat.claude.hook.util.MergeAndCleanup"
   "git-squash:io.github.cowwoc.cat.claude.hook.util.GitSquash"
   "git-merge-linear:io.github.cowwoc.cat.claude.hook.util.GitMergeLinear"
   "git-amend:io.github.cowwoc.cat.claude.hook.util.GitAmend"
   "git-rebase:io.github.cowwoc.cat.claude.hook.util.GitRebase"
-  "post-tool-use-failure:io.github.cowwoc.cat.claude.hook.PostToolUseFailureHook"
   "work-prepare:io.github.cowwoc.cat.claude.hook.util.WorkPrepare"
   "issue-lock:io.github.cowwoc.cat.claude.hook.util.IssueLock"
   "check-existing-work:io.github.cowwoc.cat.claude.hook.util.ExistingWorkChecker"
   "wrap-markdown:io.github.cowwoc.cat.claude.hook.util.MarkdownWrapper"
   "batch-read:io.github.cowwoc.cat.claude.hook.util.BatchReader"
-  "register-hook:io.github.cowwoc.cat.claude.hook.util.HookRegistrar"
   "root-cause-analyzer:io.github.cowwoc.cat.claude.hook.util.RootCauseAnalyzer"
   "validate-status-alignment:io.github.cowwoc.cat.claude.hook.util.StatusAlignmentValidator"
   "feedback:io.github.cowwoc.cat.claude.hook.util.Feedback"
   "get-add-output:io.github.cowwoc.cat.claude.hook.skills.GetAddOutput"
-  "statusline-command:io.github.cowwoc.cat.claude.hook.util.StatuslineCommand"
-  "statusline-install:io.github.cowwoc.cat.claude.hook.util.StatuslineInstall"
   "record-learning:io.github.cowwoc.cat.claude.hook.util.RecordLearning"
   "write-session-marker:io.github.cowwoc.cat.claude.hook.util.WriteSessionMarker"
   "read-session-marker:io.github.cowwoc.cat.claude.hook.util.ReadSessionMarker"
@@ -107,6 +92,37 @@ declare -a HANDLERS=(
   "update-skill-description:io.github.cowwoc.cat.claude.hook.skills.UpdateSkillDescription"
   "build-runtime-artifacts:io.github.cowwoc.cat.agent.PluginArtifactBuilder"
 )
+
+# Claude-only handlers.
+declare -a CLAUDE_HANDLERS=(
+  "claude-runner:io.github.cowwoc.cat.claude.hook.skills.ClaudeRunner"
+  "register-hook:io.github.cowwoc.cat.claude.hook.util.HookRegistrar"
+  "statusline-command:io.github.cowwoc.cat.claude.hook.util.StatuslineCommand"
+  "statusline-install:io.github.cowwoc.cat.claude.hook.util.StatuslineInstall"
+  "pre-bash:io.github.cowwoc.cat.claude.hook.PreToolUseHook"
+  "post-bash:io.github.cowwoc.cat.claude.hook.PostBashHook"
+  "pre-read:io.github.cowwoc.cat.claude.hook.PreReadHook"
+  "post-read:io.github.cowwoc.cat.claude.hook.PostReadHook"
+  "post-tool-use:io.github.cowwoc.cat.claude.hook.PostToolUseHook"
+  "user-prompt-submit:io.github.cowwoc.cat.claude.hook.UserPromptSubmitHook"
+  "enforce-status:io.github.cowwoc.cat.claude.hook.EnforceStatusOutput"
+  "pre-ask:io.github.cowwoc.cat.claude.hook.PreAskHook"
+  "pre-write:io.github.cowwoc.cat.claude.hook.PreWriteHook"
+  "subagent-start:io.github.cowwoc.cat.claude.hook.SubagentStartHook"
+  "pre-issue:io.github.cowwoc.cat.claude.hook.PreIssueHook"
+  "session-end:io.github.cowwoc.cat.claude.hook.SessionEndHook"
+  "post-tool-use-failure:io.github.cowwoc.cat.claude.hook.PostToolUseFailureHook"
+)
+
+# Codex-only handlers.
+declare -a CODEX_HANDLERS=(
+  "codex-runner:io.github.cowwoc.cat.codex.hook.skills.CodexRunner"
+  "session-start:io.github.cowwoc.cat.codex.hook.SessionStartHook"
+  "pre-bash:io.github.cowwoc.cat.codex.hook.PreBashHook"
+)
+
+# Active handler registry used by generate_launchers. Tests source this file and override HANDLERS.
+declare -a HANDLERS=("${COMMON_HANDLERS[@]}" "${CLAUDE_HANDLERS[@]}")
 
 # --- Logging ---
 
@@ -132,6 +148,18 @@ run_all_handlers() {
     log "  ${label}: $class_name"
     echo '{}' | "$java_bin" "$@" -m "$(handler_main "$class_name")" 2>/dev/null || true
   done
+}
+
+# Selects the handler registry for one runtime image.
+# Usage: set_runtime_handlers <claude|codex>
+set_runtime_handlers() {
+  local runtime="$1"
+  HANDLERS=("${COMMON_HANDLERS[@]}")
+  case "$runtime" in
+    claude) HANDLERS+=("${CLAUDE_HANDLERS[@]}") ;;
+    codex) HANDLERS+=("${CODEX_HANDLERS[@]}") ;;
+    *) error "Unknown runtime: $runtime" ;;
+  esac
 }
 
 # --- Phase 1: Build client JAR ---
@@ -166,20 +194,40 @@ stage_dependencies() {
 # For each automatic module: jdeps generates module-info.java, javac compiles it,
 # and jar injects the resulting module-info.class back into the JAR.
 
-is_automatic_module() {
-  local jar="$1"
+stage_module_patch_inputs() {
+  PATCH_MODULE_PATH_JARS=()
+  AUTOMATIC_MODULE_JARS=()
 
-  # If JAR already contains module-info.class, it's a named module (not automatic)
-  # Match module-info.class at any depth (root or META-INF/versions/N/ for multi-release JARs)
-  if jar --list --file="$jar" 2>/dev/null | grep -q "module-info\.class"; then
-    return 1
-  fi
+  for jar in "$STAGING_DIR"/*.jar; do
+    [[ -f "$jar" ]] || continue
 
-  local desc
-  # --release=17 ensures multi-release JARs expose their module descriptor
-  desc=$(jar --describe-module --file="$jar" --release=17 2>&1) || return 0
-  # Real modules don't contain "automatic" in their descriptor
-  echo "$desc" | grep -q "automatic"
+    local desc=""
+    local has_descriptor=false
+    if desc=$(jar --describe-module --file="$jar" --release=17 2>&1); then
+      has_descriptor=true
+      PATCH_MODULE_PATH_JARS+=("$jar")
+    fi
+
+    if jar --list --file="$jar" 2>/dev/null | grep -q "module-info\.class"; then
+      continue
+    fi
+    if [[ "$has_descriptor" == "false" ]] || echo "$desc" | grep -q "automatic"; then
+      AUTOMATIC_MODULE_JARS+=("$jar")
+    fi
+  done
+}
+
+build_patch_module_path() {
+  local current_jar="$1"
+  local module_path=""
+
+  for dep_jar in "${PATCH_MODULE_PATH_JARS[@]}"; do
+    [[ "$dep_jar" != "$current_jar" ]] || continue
+    [[ -n "$module_path" ]] && module_path+=":"
+    module_path+="$dep_jar"
+  done
+
+  echo "$module_path"
 }
 
 patch_automatic_module() {
@@ -195,14 +243,8 @@ patch_automatic_module() {
   trap "rm -rf '$temp_dir'" RETURN
 
   # Build module-path from other staged JARs (for dependency resolution)
-  local module_path=""
-  for dep_jar in "$STAGING_DIR"/*.jar; do
-    [[ -f "$dep_jar" && "$dep_jar" != "$jar" ]] || continue
-    if jar --describe-module --file="$dep_jar" --release=17 &>/dev/null; then
-      [[ -n "$module_path" ]] && module_path+=":"
-      module_path+="$dep_jar"
-    fi
-  done
+  local module_path
+  module_path="$(build_patch_module_path "$jar")"
 
   # Step 1: Generate module-info.java via jdeps
   local jdeps_args=("--generate-module-info" "$temp_dir" "--ignore-missing-deps")
@@ -254,16 +296,14 @@ patch_automatic_modules() {
   log "Identifying and patching automatic modules..."
   rm -rf "$PATCH_DIR"
   mkdir -p "$PATCH_DIR"
+  stage_module_patch_inputs
 
   local patched=0 failed=0
-  for jar in "$STAGING_DIR"/*.jar; do
-    [[ -f "$jar" ]] || continue
-    if is_automatic_module "$jar"; then
-      if patch_automatic_module "$jar"; then
-        ((patched++)) || true
-      else
-        ((failed++)) || true
-      fi
+  for jar in "${AUTOMATIC_MODULE_JARS[@]}"; do
+    if patch_automatic_module "$jar"; then
+      ((patched++)) || true
+    else
+      ((failed++)) || true
     fi
   done
 
@@ -273,11 +313,13 @@ patch_automatic_modules() {
 # --- Phase 4: Build jlink image ---
 
 build_jlink_image() {
-  log "Building jlink image..."
+  local runtime="$1"
+  log "Building ${runtime} jlink image..."
 
   local module_path="${CLIENT_JAR}:${STAGING_DIR}"
 
   rm -rf "$OUTPUT_DIR"
+  mkdir -p "$(dirname "$OUTPUT_DIR")"
 
   jlink \
     --module-path "$module_path" \
@@ -291,7 +333,7 @@ build_jlink_image() {
   # Remove nocoops CDS archive (only needed for heaps >32GB)
   rm -f "${OUTPUT_DIR}/lib/server/classes_nocoops.jsa"
 
-  log "jlink image created at: $OUTPUT_DIR"
+  log "${runtime} jlink image created at: $OUTPUT_DIR"
 }
 
 # --- Phase 6: Generate startup optimization archives ---
@@ -300,9 +342,23 @@ build_jlink_image() {
 #   Eliminates class initialization overhead
 
 generate_startup_archives() {
+  local runtime="$1"
   local java_bin="${OUTPUT_DIR}/bin/java"
   local aot_config="${OUTPUT_DIR}/lib/server/aot-config.aotconf"
   local aot_cache="${OUTPUT_DIR}/lib/server/aot-cache.aot"
+  local training_class
+  local create_class
+  case "$runtime" in
+    claude)
+      training_class="io.github.cowwoc.cat.claude.hook.AotTraining"
+      create_class="io.github.cowwoc.cat.claude.hook.PreToolUseHook"
+      ;;
+    codex)
+      training_class="io.github.cowwoc.cat.codex.hook.CodexAotTraining"
+      create_class="io.github.cowwoc.cat.codex.hook.PreBashHook"
+      ;;
+    *) error "Unknown runtime: $runtime" ;;
+  esac
 
   # JVM AOT messages (warnings, informational) go to stdout. The five lines below are
   # known-harmless: Jackson's SQL extension classes reference java.sql types not included
@@ -314,10 +370,8 @@ generate_startup_archives() {
   suppress_pattern+='|Skipping tools/jackson/databind/ext/sql/JavaSqlDateSerializer'
   suppress_pattern+='|Skipping tools/jackson/databind/ext/beans/JavaBeansAnnotationsImpl'
 
-  # Leyden AOT: record training data, then create pre-linked cache.
-  # Uses a single AotTraining class that exercises all handlers in one JVM invocation,
-  # replacing 20 separate JVM launches (~19s -> ~1s).
-  log "Recording AOT training data..."
+  # Leyden AOT: record runtime-specific training data, then create a pre-linked cache.
+  log "Recording ${runtime} AOT training data..."
   # Set environment variables required by MainJvmScope so handlers can initialize.
   # Capture stdout+stderr: filter known-harmless Jackson SQL warnings on success, show all on failure.
   local aot_output
@@ -328,14 +382,16 @@ generate_startup_archives() {
   # shellcheck disable=SC2064
   trap "rm -f '$aot_output'" RETURN
   if ! CLAUDE_PROJECT_DIR="$WORKSPACE_DIR" CLAUDE_PLUGIN_ROOT="${REACTOR_DIR}/plugin" \
-    CLAUDE_PLUGIN_DATA="$aot_plugin_data" CLAUDE_CONFIG_DIR="$aot_config_dir" TZ="${TZ:-UTC}" \
+    CLAUDE_PLUGIN_DATA="$aot_plugin_data" CLAUDE_CONFIG_DIR="$aot_config_dir" \
+    CAT_PROJECT_DIR="$WORKSPACE_DIR" CAT_PLUGIN_ROOT="${REACTOR_DIR}/plugin" \
+    CAT_PLUGIN_DATA="$aot_plugin_data" CODEX_HOME="$aot_config_dir" TZ="${TZ:-UTC}" \
     "$java_bin" \
       -XX:AOTMode=record \
       -XX:AOTConfiguration="$aot_config" \
-      -m "$(handler_main io.github.cowwoc.cat.claude.hook.AotTraining)" \
+      -m "$(handler_main "$training_class")" \
       >"$aot_output" 2>&1; then
     cat "$aot_output" >&2
-    error "Failed to record AOT training data"
+    error "Failed to record ${runtime} AOT training data"
   fi
   grep -Ev "$suppress_pattern" "$aot_output" >&2 || true
   rm -f "$aot_output"
@@ -347,25 +403,27 @@ generate_startup_archives() {
   create_output=$(mktemp)
   # shellcheck disable=SC2064
   trap "rm -f '$create_output'" RETURN
-  if ! CLAUDE_PROJECT_DIR="$WORKSPACE_DIR" CLAUDE_PLUGIN_ROOT="${REACTOR_DIR}/plugin" \
-    CLAUDE_PLUGIN_DATA="$aot_plugin_data" CLAUDE_CONFIG_DIR="$aot_config_dir" TZ="${TZ:-UTC}" \
+  if ! printf '{}\n' | CLAUDE_PROJECT_DIR="$WORKSPACE_DIR" CLAUDE_PLUGIN_ROOT="${REACTOR_DIR}/plugin" \
+    CLAUDE_PLUGIN_DATA="$aot_plugin_data" CLAUDE_CONFIG_DIR="$aot_config_dir" \
+    CAT_PROJECT_DIR="$WORKSPACE_DIR" CAT_PLUGIN_ROOT="${REACTOR_DIR}/plugin" \
+    CAT_PLUGIN_DATA="$aot_plugin_data" CODEX_HOME="$aot_config_dir" TZ="${TZ:-UTC}" \
     "$java_bin" \
     -XX:AOTMode=create \
     -XX:AOTConfiguration="$aot_config" \
     -XX:AOTCache="$aot_cache" \
     -XX:+AOTClassLinking \
-    -m "$(handler_main io.github.cowwoc.cat.claude.hook.PreToolUseHook)" \
+    -m "$(handler_main "$create_class")" \
     >"$create_output" 2>&1; then
     cat "$create_output" >&2
-    error "Failed to create AOT cache"
+    error "Failed to create ${runtime} AOT cache"
   fi
   grep -Ev "$suppress_pattern" "$create_output" >&2 || true
   rm -f "$create_output"
   trap - RETURN
 
   rm -f "$aot_config"
-  log "  AOT cache: $(du -h "$aot_cache" | cut -f1)"
-  log "Startup archives complete"
+  log "  ${runtime} AOT cache: $(du -h "$aot_cache" | cut -f1)"
+  log "${runtime} startup archives complete"
 }
 
 # --- Phase 5: Generate launcher scripts ---
@@ -380,13 +438,25 @@ generate_launchers() {
     local class="${handler##*:}"
     local launcher="${bin_dir}/${name}"
     local main_class="$(handler_main "$class")"
+    local launcher_dir
+    local java_path
+    local aot_path
+    launcher_dir="$(dirname "$launcher")"
+    mkdir -p "$launcher_dir"
+    if [[ "$name" == */* ]]; then
+      java_path='$DIR/../java'
+      aot_path='$DIR/../../lib/server/aot-cache.aot'
+    else
+      java_path='$DIR/java'
+      aot_path='$DIR/../lib/server/aot-cache.aot'
+    fi
 
     log "  Creating launcher: $name -> $main_class"
 
     cat > "$launcher" <<'EOF'
 #!/bin/sh
 DIR=`dirname $0`
-exec "$DIR/java" \
+exec "JAVA_PATH" \
   ${CAT_JVM_OPTS:-} \
   ASSERTIONS_FLAG \
   -Xms16m -Xmx96m \
@@ -395,16 +465,18 @@ exec "$DIR/java" \
   -Dstderr.encoding=UTF-8 \
   -XX:+UseSerialGC \
   -XX:TieredStopAtLevel=1 \
-  -XX:AOTCache="$DIR/../lib/server/aot-cache.aot" \
+  -XX:AOTCache="AOT_PATH" \
   -m MODULE_CLASS "$@"
 EOF
 
     # Replace MODULE_CLASS and handle ASSERTIONS_FLAG
     if [[ "$ENABLE_ASSERTIONS" == "true" ]]; then
-      sed -e "s|MODULE_CLASS|$main_class|g" -e "s|ASSERTIONS_FLAG|-ea|g" \
+      sed -e "s|MODULE_CLASS|$main_class|g" -e "s|JAVA_PATH|$java_path|g" \
+        -e "s|AOT_PATH|$aot_path|g" -e "s|ASSERTIONS_FLAG|-ea|g" \
         "$launcher" > "${launcher}.tmp"
     else
-      sed -e "s|MODULE_CLASS|$main_class|g" -e "/ASSERTIONS_FLAG/d" \
+      sed -e "s|MODULE_CLASS|$main_class|g" -e "s|JAVA_PATH|$java_path|g" \
+        -e "s|AOT_PATH|$aot_path|g" -e "/ASSERTIONS_FLAG/d" \
         "$launcher" > "${launcher}.tmp"
     fi
     mv "${launcher}.tmp" "$launcher"
@@ -428,26 +500,51 @@ EOF
 
 # --- Phase 7: Verify ---
 
-verify_image() {
-  log "Verifying jlink image..."
-
-  if ! "${OUTPUT_DIR}/bin/java" -version &>/dev/null; then
-    error "java -version failed"
-  fi
-
-  log "  Testing pre-bash launcher..."
-  if echo '{}' | "${OUTPUT_DIR}/bin/pre-bash" &>/dev/null; then
-    log "  pre-bash launcher works"
+verify_pre_bash_launcher() {
+  local runtime="$1"
+  local launcher="${OUTPUT_DIR}/bin/pre-bash"
+  log "  Testing ${runtime} pre-bash launcher..."
+  if echo '{}' | "$launcher" &>/dev/null; then
+    log "  ${runtime} pre-bash launcher works"
   else
-    log "  Warning: pre-bash launcher test failed"
+    log "  Warning: ${runtime} pre-bash launcher test failed"
   fi
+}
 
-  log "  Testing get-status-output launcher..."
+verify_codex_session_start_launcher() {
+  local smoke_dir
+  smoke_dir=$(mktemp -d)
+  # shellcheck disable=SC2064
+  trap "rm -rf '$smoke_dir'" RETURN
+  local smoke_project="${smoke_dir}/project"
+  local smoke_plugin="${smoke_dir}/plugin"
+  local smoke_data="${smoke_dir}/plugin-data"
+  mkdir -p "$smoke_project/.cat/rules/common" "$smoke_project/.cat/rules/codex" \
+    "$smoke_plugin/.codex-plugin" "$smoke_plugin/rules/common" "$smoke_plugin/rules/codex" \
+    "$smoke_data"
+  printf '{"version":"2.1"}\n' > "$smoke_plugin/.codex-plugin/plugin.json"
+
+  log "  Testing codex session-start launcher..."
+  local session_output
+  session_output=$(printf '{"cwd":"%s","plugin_root":"%s"}\n' "$smoke_project" "$smoke_plugin" | \
+    CAT_PLUGIN_DATA="$smoke_data" CODEX_HOME="${smoke_dir}/codex-home" TZ="${TZ:-UTC}" \
+    "${OUTPUT_DIR}/bin/session-start") || error "codex session-start launcher failed"
+  if [[ "$session_output" != *'"hookSpecificOutput"'* ]]; then
+    error "codex session-start launcher did not emit hookSpecificOutput"
+  fi
+  log "  codex session-start launcher works"
+  rm -rf "$smoke_dir"
+  trap - RETURN
+}
+
+verify_status_launcher() {
   local status_project_dir="${TARGET_DIR}/status-verify-project"
   local status_plugin_data="${TARGET_DIR}/status-verify-plugin-data"
   local status_config_dir="${TARGET_DIR}/status-verify-config-home"
   rm -rf "$status_project_dir" "$status_plugin_data" "$status_config_dir"
   mkdir -p "$status_project_dir" "$status_plugin_data" "$status_config_dir"
+
+  log "  Testing get-status-output launcher..."
   local status_output
   if ! status_output=$(CLAUDE_PROJECT_DIR="$status_project_dir" \
     CLAUDE_PLUGIN_ROOT="${REACTOR_DIR}/plugin" \
@@ -462,8 +559,31 @@ verify_image() {
     error "get-status-output launcher returned unexpected output: $status_output"
   fi
   log "  get-status-output launcher works"
+}
 
-  log "Verification complete"
+verify_image() {
+  local runtime="$1"
+  log "Verifying ${runtime} jlink image..."
+
+  if ! "${OUTPUT_DIR}/bin/java" -version &>/dev/null; then
+    error "java -version failed"
+  fi
+
+  case "$runtime" in
+    claude)
+      verify_pre_bash_launcher "$runtime"
+      ;;
+    codex)
+      verify_pre_bash_launcher "$runtime"
+      verify_codex_session_start_launcher
+      ;;
+    *)
+      error "Unknown runtime: $runtime"
+      ;;
+  esac
+  verify_status_launcher
+
+  log "${runtime} verification complete"
 }
 
 # --- Main ---
@@ -482,16 +602,25 @@ main() {
   ensure_client_jar
   stage_dependencies
   patch_automatic_modules
-  build_jlink_image
-  generate_launchers
-  generate_startup_archives
-  verify_image
+  rm -rf "$OUTPUT_ROOT"
+  for runtime in claude codex; do
+    OUTPUT_DIR="${OUTPUT_ROOT}/${runtime}"
+    set_runtime_handlers "$runtime"
+    build_jlink_image "$runtime"
+    generate_launchers
+    generate_startup_archives "$runtime"
+    verify_image "$runtime"
+  done
 
   log "Build complete!"
-  log "Output: $OUTPUT_DIR"
-  log "Launchers:"
-  for handler in "${HANDLERS[@]}"; do
-    log "  - ${OUTPUT_DIR}/bin/${handler%%:*}"
+  log "Output: $OUTPUT_ROOT"
+  for runtime in claude codex; do
+    OUTPUT_DIR="${OUTPUT_ROOT}/${runtime}"
+    set_runtime_handlers "$runtime"
+    log "${runtime} launchers:"
+    for handler in "${HANDLERS[@]}"; do
+      log "  - ${OUTPUT_DIR}/bin/${handler%%:*}"
+    done
   done
 }
 

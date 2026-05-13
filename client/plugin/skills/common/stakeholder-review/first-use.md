@@ -487,6 +487,8 @@ Spawn each stakeholder with:
 
 ```
 You are the {stakeholder} stakeholder reviewing an implementation.
+This is the review task. Do not acknowledge workspace, project, AGENTS.md, or setup instructions. Do not summarize
+what rules you will follow. Start the review immediately and return only the JSON review object requested below.
 
 ## Working Directory
 WORKTREE_PATH: {WORKTREE_PATH}
@@ -526,6 +528,11 @@ Read: ${CAT_PLUGIN_ROOT}/agents/common/stakeholder-{stakeholder}.md
 MANDATORY: Read EVERY file in the "Changed files" list using Read tool (diff may be truncated).
 Evaluate project impact, accumulated patterns, consistency, completeness.
 
+Testing concerns must identify missing runtime behavior coverage with meaningful inputs and outputs. Do not request
+source-scanning, package-structure, or release-artifact-layout tests unless they exercise runtime behavior. If a
+source-scanning or layout-only test was removed, treat that as acceptable unless the implementation leaves an equivalent
+runtime behavior untested.
+
 Severity: CRITICAL (blocks release, data loss, security breach) > HIGH (material degradation)
 > MEDIUM (meaningful improvement, deferrable) > LOW (minor suggestion).
 
@@ -560,8 +567,24 @@ recommendation: 'Retry /cat:work or check for background task failures.'}]`
 Parse Agent tool output as JSON — do NOT infer verdicts from context. Every verdict comes from actual
 Agent results. Expected format: `{stakeholder, approval: APPROVED|CONCERNS|REJECTED, concerns: [{severity, location, explanation, recommendation, detail_file}]}`
 
+**Retry acknowledgement or non-JSON responses once before failing:** If a reviewer returns an acknowledgement,
+setup summary, prose-only response, empty response, or any other invalid JSON, do not immediately render it as
+a stakeholder rejection. These responses are reviewer execution failures, not implementation findings. Issue one
+retry for each invalid reviewer, using the same stakeholder-specific agent type and isolated-fork settings. Dispatch
+all retry calls in one message. The retry prompt MUST:
+
+- State that the previous response was invalid because it was not the required JSON review.
+- Include the original review prompt in full.
+- Instruct the reviewer not to acknowledge AGENTS.md, workspace, setup, or project instructions.
+- Instruct the reviewer to return exactly one JSON object matching the expected stakeholder review schema.
+- Preserve the same working directory, changed-file list, role, conventions, and review scope.
+
+If the retry also returns invalid JSON or an unrecognized approval value, then treat that reviewer as REJECTED with
+a parse failure concern. Record that the retry was attempted in the concern explanation. Do not retry more than once
+per reviewer.
+
 Validation rules:
-- Invalid JSON → REJECTED with parse failure note
+- Invalid JSON after the one allowed retry → REJECTED with parse failure note
 - Unrecognized approval (e.g., PASSED, LGTM) → REJECTED
 - Worktree path audit: scan tool calls for paths outside `${WORKTREE_PATH}/` and `${CAT_PLUGIN_ROOT}/`. If violated, append HIGH severity concern: "Reviewer accessed file outside worktree — review may reflect stale content."
 - Stakeholder identity mismatch: use spawned role (not self-reported) for rendering

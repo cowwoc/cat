@@ -298,7 +298,7 @@ Bash tool:
   description: "Start SPRT runner"
   run_in_background: true
   command: |
-    "${WORKTREE_PATH}/client/cli/target/jlink/bin/instruction-test-runner" run-sprt \
+    "${WORKTREE_PATH}/client/cli/target/jlink/claude/bin/instruction-test-runner" run-sprt \
       "${WORKTREE_PATH}" "${TEST_DIR}" "${TEST_MODEL_ID}" \
       "${CAT_SESSION_ID}" "${TEST_EFFORT}" \
       > "${OUTPUT_FILE}" 2>&1

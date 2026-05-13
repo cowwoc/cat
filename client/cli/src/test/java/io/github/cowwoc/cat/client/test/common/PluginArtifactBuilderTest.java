@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import org.testng.SkipException;
 import org.testng.annotations.Test;
@@ -35,7 +36,7 @@ public final class PluginArtifactBuilderTest
    * Verifies that release artifacts contain only runtime-specific files and copied license terms.
    */
   @Test
-  public void buildFlattensRuntimeSpecificArtifacts() throws IOException
+  public void buildFlattensRuntimeSpecificArtifacts() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try
@@ -96,6 +97,26 @@ public final class PluginArtifactBuilderTest
         "codexDoesNotShipInstructionTests").isFalse();
       requireThat(claudeRoot.resolve("hooks/hooks.json"), "claudeHookRegistration").isRegularFile();
       requireThat(codexRoot.resolve("hooks/hooks.json"), "codexHookRegistration").isRegularFile();
+      requireThat(Files.readString(claudeRoot.resolve("client/bin/pre-read"), StandardCharsets.UTF_8),
+        "claudePreReadLauncher").contains("io.github.cowwoc.cat.claude.hook.PreReadHook");
+      requireThat(Files.exists(codexRoot.resolve("client/bin/pre-read")),
+        "codexDoesNotShipClaudePreReadLauncher").isFalse();
+      requireThat(Files.readString(codexRoot.resolve("client/bin/pre-bash"), StandardCharsets.UTF_8),
+        "codexPreBashLauncher").contains("io.github.cowwoc.cat.codex.hook.PreBashHook");
+      requireThat(Files.exists(codexRoot.resolve("client/bin/pre-write")),
+        "codexDoesNotShipUnsupportedPreWriteLauncher").isFalse();
+      String preBashOutput = runLauncher(codexRoot.resolve("client/bin/pre-bash"));
+      requireThat(preBashOutput, "preBashOutput").contains(
+        codexRoot.resolve("client/bin/../lib/server/aot-cache.aot").toString());
+      requireThat(preBashOutput, "preBashOutput").contains(
+        "io.github.cowwoc.cat.client/io.github.cowwoc.cat.codex.hook.PreBashHook");
+      String sessionStartOutput = runLauncher(codexRoot.resolve("client/bin/session-start"));
+      requireThat(sessionStartOutput, "sessionStartOutput").contains(
+        codexRoot.resolve("client/bin/../lib/server/aot-cache.aot").toString());
+      requireThat(sessionStartOutput, "sessionStartOutput").contains(
+        "io.github.cowwoc.cat.client/io.github.cowwoc.cat.codex.hook.SessionStartHook");
+      requireThat(Files.exists(claudeRoot.resolve("client/bin/claude")), "claudeLauncherVariantsRemoved").isFalse();
+      requireThat(Files.exists(codexRoot.resolve("client/bin/codex")), "codexLauncherVariantsRemoved").isFalse();
       requireThat(claudeRoot.resolve("hooks/common/shared.sh"), "claudeCommonHook").isRegularFile();
       requireThat(codexRoot.resolve("hooks/common/shared.sh"), "codexCommonHook").isRegularFile();
       requireThat(claudeRoot.resolve("hooks/claude/session-start.sh"), "claudeSessionStart").isRegularFile();
@@ -230,12 +251,16 @@ public final class PluginArtifactBuilderTest
       Path pluginDir = clientDir.resolve("plugin");
       Path targetDir = clientDir.resolve("distribution/target/runtime");
       createPluginSource(repoRoot, clientDir, pluginDir);
-      Path libDir = clientDir.resolve("cli/target/jlink/lib");
-      Files.createDirectories(libDir);
-      Files.writeString(libDir.resolve("real.txt"), "safe\n", StandardCharsets.UTF_8);
+      Path claudeLibDir = clientDir.resolve("cli/target/jlink/claude/lib");
+      Path codexLibDir = clientDir.resolve("cli/target/jlink/codex/lib");
+      Files.createDirectories(claudeLibDir);
+      Files.createDirectories(codexLibDir);
+      Files.writeString(claudeLibDir.resolve("real.txt"), "safe\n", StandardCharsets.UTF_8);
+      Files.writeString(codexLibDir.resolve("real.txt"), "safe\n", StandardCharsets.UTF_8);
       try
       {
-        Files.createSymbolicLink(libDir.resolve("alias.txt"), Path.of("real.txt"));
+        Files.createSymbolicLink(claudeLibDir.resolve("alias.txt"), Path.of("real.txt"));
+        Files.createSymbolicLink(codexLibDir.resolve("alias.txt"), Path.of("real.txt"));
       }
       catch (UnsupportedOperationException | IOException e)
       {
@@ -269,12 +294,15 @@ public final class PluginArtifactBuilderTest
       Path pluginDir = clientDir.resolve("plugin");
       Path targetDir = clientDir.resolve("distribution/target/runtime");
       createPluginSource(repoRoot, clientDir, pluginDir);
-      Path libDir = clientDir.resolve("cli/target/jlink/lib");
-      Files.createDirectories(libDir);
+      Path claudeLibDir = clientDir.resolve("cli/target/jlink/claude/lib");
+      Path codexLibDir = clientDir.resolve("cli/target/jlink/codex/lib");
+      Files.createDirectories(claudeLibDir);
+      Files.createDirectories(codexLibDir);
       Files.writeString(tempDir.resolve("outside.txt"), "unsafe\n", StandardCharsets.UTF_8);
       try
       {
-        Files.createSymbolicLink(libDir.resolve("alias.txt"), tempDir.resolve("outside.txt"));
+        Files.createSymbolicLink(claudeLibDir.resolve("alias.txt"), tempDir.resolve("outside.txt"));
+        Files.createSymbolicLink(codexLibDir.resolve("alias.txt"), tempDir.resolve("outside.txt"));
       }
       catch (UnsupportedOperationException | IOException e)
       {
@@ -440,6 +468,14 @@ public final class PluginArtifactBuilderTest
     }
   }
 
+  /**
+   * Creates a minimal plugin source tree for runtime artifact tests.
+   *
+   * @param repoRoot the temporary repository root
+   * @param clientDir the temporary client directory
+   * @param pluginDir the temporary plugin directory
+   * @throws IOException if file operations fail
+   */
   private static void createPluginSource(Path repoRoot, Path clientDir, Path pluginDir)
     throws IOException
   {
@@ -454,7 +490,10 @@ public final class PluginArtifactBuilderTest
     {
       Files.createDirectories(pluginDir.resolve(directory));
     }
-    Files.createDirectories(clientDir.resolve("cli/target/jlink/bin"));
+    Files.createDirectories(clientDir.resolve("cli/target/jlink/claude/bin"));
+    Files.createDirectories(clientDir.resolve("cli/target/jlink/claude/lib/server"));
+    Files.createDirectories(clientDir.resolve("cli/target/jlink/codex/bin"));
+    Files.createDirectories(clientDir.resolve("cli/target/jlink/codex/lib/server"));
 
     Files.writeString(pluginDir.resolve(".claude-plugin/plugin.json"), "{\"version\":\"1.2.3\"}\n",
       StandardCharsets.UTF_8);
@@ -464,7 +503,26 @@ public final class PluginArtifactBuilderTest
     Files.writeString(pluginDir.resolve("emoji-widths.json"), "{}\n", StandardCharsets.UTF_8);
     Files.writeString(pluginDir.resolve("package.json"), "{}\n", StandardCharsets.UTF_8);
     Files.writeString(pluginDir.resolve("package-lock.json"), "{}\n", StandardCharsets.UTF_8);
-    Files.writeString(clientDir.resolve("cli/target/jlink/bin/tool"), "tool\n", StandardCharsets.UTF_8);
+    Path javaLauncher = clientDir.resolve("cli/target/jlink/claude/bin/java");
+    Files.writeString(javaLauncher, """
+      #!/bin/sh
+      printf '%s\\n' "$@"
+      """, StandardCharsets.UTF_8);
+    javaLauncher.toFile().setExecutable(true, false);
+    Path codexJavaLauncher = clientDir.resolve("cli/target/jlink/codex/bin/java");
+    Files.writeString(codexJavaLauncher, """
+      #!/bin/sh
+      printf '%s\\n' "$@"
+      """, StandardCharsets.UTF_8);
+    codexJavaLauncher.toFile().setExecutable(true, false);
+    Files.writeString(clientDir.resolve("cli/target/jlink/claude/bin/tool"), "tool\n", StandardCharsets.UTF_8);
+    Files.writeString(clientDir.resolve("cli/target/jlink/codex/bin/tool"), "tool\n", StandardCharsets.UTF_8);
+    Files.writeString(clientDir.resolve("cli/target/jlink/claude/bin/pre-read"),
+      "io.github.cowwoc.cat.claude.hook.PreReadHook\n", StandardCharsets.UTF_8);
+    writeRuntimeLauncher(clientDir.resolve("cli/target/jlink/codex/bin/pre-bash"),
+      "io.github.cowwoc.cat.codex.hook.PreBashHook");
+    writeRuntimeLauncher(clientDir.resolve("cli/target/jlink/codex/bin/session-start"),
+      "io.github.cowwoc.cat.codex.hook.SessionStartHook");
     Files.writeString(pluginDir.resolve("hooks/claude/hooks.json"), "{}\n", StandardCharsets.UTF_8);
     Files.writeString(pluginDir.resolve("hooks/codex/hooks.json"), "{}\n", StandardCharsets.UTF_8);
     Files.writeString(pluginDir.resolve("hooks/common/shared.sh"), """
@@ -526,11 +584,61 @@ public final class PluginArtifactBuilderTest
         "name = \"agent\"\n", StandardCharsets.UTF_8);
   }
 
+  /**
+   * Counts the skill directories in a runtime artifact.
+   *
+   * @param runtimeRoot the runtime artifact root
+   * @return the number of skill directories
+   * @throws IOException if file operations fail
+   */
   private static long countSkillDirectories(Path runtimeRoot) throws IOException
   {
     try (Stream<Path> skills = Files.list(runtimeRoot.resolve("skills")))
     {
       return skills.filter(Files::isDirectory).count();
+    }
+  }
+
+  /**
+   * Writes a launcher script that mimics a jlink-generated runtime launcher.
+   *
+   * @param launcher the launcher path
+   * @param className the module main class
+   * @throws IOException if the launcher cannot be written
+   */
+  private static void writeRuntimeLauncher(Path launcher, String className) throws IOException
+  {
+    Files.writeString(launcher, """
+      #!/bin/sh
+      DIR=`dirname $0`
+      exec "$DIR/java" \\
+        -XX:AOTCache="$DIR/../lib/server/aot-cache.aot" \\
+        -m io.github.cowwoc.cat.client/%s "$@"
+      """.formatted(className), StandardCharsets.UTF_8);
+    launcher.toFile().setExecutable(true, false);
+  }
+
+  /**
+   * Runs a generated launcher and returns its output.
+   *
+   * @param launcher the launcher to run
+   * @return the launcher output
+   * @throws IOException if the launcher cannot be started or read
+   * @throws InterruptedException if interrupted while waiting for the launcher
+   */
+  private static String runLauncher(Path launcher) throws IOException, InterruptedException
+  {
+    try (Process process = new ProcessBuilder(launcher.toString()).redirectErrorStream(true).start())
+    {
+      boolean completed = process.waitFor(10, TimeUnit.SECONDS);
+      if (!completed)
+      {
+        process.destroyForcibly();
+        throw new AssertionError("Timed out running launcher: " + launcher);
+      }
+      String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+      requireThat(process.exitValue(), "launcherExitCode").isEqualTo(0);
+      return output;
     }
   }
 }

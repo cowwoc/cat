@@ -221,4 +221,11 @@ public final class TestClaudeTool extends AbstractClaudeTool
     ensureOpen();
     return "";
   }
+
+  @Override
+  public String getUpdatePluginJsonUrl()
+  {
+    ensureOpen();
+    return "";
+  }
 }

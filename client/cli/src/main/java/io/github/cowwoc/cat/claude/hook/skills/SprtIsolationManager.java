@@ -126,7 +126,7 @@ final class SprtIsolationManager
           orphanResult.exitCode() + ": " + orphanResult.stdout());
 
       // For each file, call extract-turns binary on a stripped temporary copy
-      Path extractTurnsBin = worktreePath.resolve("client/cli/target/jlink/bin/extract-turns");
+      Path extractTurnsBin = worktreePath.resolve("client/cli/target/jlink/claude/bin/extract-turns");
       if (Files.notExists(extractTurnsBin))
         extractTurnsBin = scope.getPluginRoot().resolve("client/bin/extract-turns");
       for (Path mdFile : mdFiles)

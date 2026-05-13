@@ -91,8 +91,8 @@ public final class ClaudeRunner implements AutoCloseable
    * @param sourceConfigDir the source Claude config directory to copy (e.g., {@code ~/.config/claude})
    * @param pluginSourceDir the directory containing plugin source files to copy into the cache
    *                        (e.g., {@code worktree/plugin/})
-   * @param jlinkBinDir     the directory containing built jlink binaries (e.g.,
-   *                        {@code worktree/client/cli/target/jlink/bin/})
+   * @param jlinkBinDir     the directory containing built Claude jlink binaries (e.g.,
+   *                        {@code worktree/client/cli/target/jlink/claude/bin/})
    * @param pluginVersion   the plugin version string (e.g., "2.1")
    * @throws NullPointerException     if any parameter is null
    * @throws IllegalArgumentException if {@code pluginVersion} is blank

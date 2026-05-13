@@ -106,11 +106,4 @@ public abstract class AbstractClaudePluginScope extends AbstractAgentPluginScope
     ensureOpen();
     return userIssues.getValue();
   }
-
-  @Override
-  public String getUpdatePluginJsonUrl()
-  {
-    ensureOpen();
-    return "";
-  }
 }

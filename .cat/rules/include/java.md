@@ -1250,6 +1250,11 @@ See `.cat/rules/common/requirements-api.md` for full API conventions.
 Prefer an abstract superclass over `default` or `static` methods on an interface. Interfaces define contracts (abstract
 methods); implementation logic — even derived convenience methods — belongs in an abstract class.
 
+Abstract classes must omit methods that cannot be properly implemented at their level. Do not satisfy an interface
+contract by returning fallback values such as `""`, `null`, empty collections, or no-op results merely because a
+subclass is expected to override the method. Leave the method abstract and require each concrete subclass to provide
+the correct implementation for its runtime context.
+
 ```java
 // Good - interface defines contract, abstract class provides derived methods
 public interface JvmScope extends AutoCloseable
@@ -1488,6 +1493,12 @@ accessors through call chains.
   vars), reads only infrastructure vars. Example tools include `IssueLock`, `HookRegistrar`, and
   `StatusAlignmentValidator`.
 - `TestRuntimeTool` — test use, accepts injectable paths: `new TestRuntimeTool(tempDir, tempDir)`
+
+When a runtime has paired production and test scopes, such as `MainCodexHook` and `TestCodexHook`, introduce an
+`Abstract*` scope for their shared behavior. Delegate as much common code as possible into the abstract scope, then keep
+`Main*` and `Test*` subclasses focused on the parts that genuinely differ: production entrypoints read runtime
+environment, stdin, or installed filesystem locations, while test scopes accept injectable values and deterministic
+defaults. Do not duplicate shared scope behavior between the production and test classes.
 
 **Why pouch over DI frameworks:**
 - No magic — explicit constructor wiring, fully debuggable code flow
@@ -2005,8 +2016,10 @@ these Java-specific constraints:
 4. **No shared mutable state** - each test must be fully self-contained
 5. **No TestBase classes** - each test method must inline its own setup. This boilerplate is intentional and preferred
    over shared helpers or inheritance.
-6. **Use `TestRuntimeTool`, not `MainRuntimeTool`** - tests must never use `MainRuntimeTool` because it reads environment
-   variables that may not be set in test contexts. Use `TestRuntimeTool(tempDir, tempDir)` with injectable paths instead.
+6. **Use test-specific scopes, not `Main*` scopes** - tests must never interact with production `Main*` scope
+   implementations because they read environment variables, stdin, or runtime-specific filesystem locations that may
+   not be set in test contexts. Use injectable `Test*` scopes such as `TestRuntimeTool(tempDir, tempDir)`,
+   `TestCodexTool`, `TestCodexHook`, `TestClaudeTool`, or `TestClaudeHook` instead.
 7. **Never use scope-provided objects after closing the scope** - objects returned by `JvmScope` (e.g., `JsonMapper`,
    `DisplayUtils`) must not be used after the scope is closed. Keep the scope open for the entire duration of the test.
    Do not create helper methods like `getTestMapper()` that open a scope, extract an object, and close the scope.

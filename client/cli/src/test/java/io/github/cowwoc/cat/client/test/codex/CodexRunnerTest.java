@@ -9,7 +9,7 @@ package io.github.cowwoc.cat.client.test.codex;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import io.github.cowwoc.cat.client.test.TestClaudeTool;
+import io.github.cowwoc.cat.client.test.TestCodexTool;
 import io.github.cowwoc.cat.client.test.TestUtils;
 import io.github.cowwoc.cat.codex.hook.skills.CodexRunner;
 import io.github.cowwoc.cat.codex.hook.skills.CodexRunner.ParsedOutput;
@@ -35,7 +35,7 @@ public final class CodexRunnerTest
   public void helpDocumentsOptionalArgumentBehavior() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestCodexTool scope = new TestCodexTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, UTF_8);
@@ -61,7 +61,7 @@ public final class CodexRunnerTest
   public void buildCommandUsesCodexExecJson() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestCodexTool scope = new TestCodexTool(tempDir, tempDir))
     {
       CodexRunner runner = new CodexRunner(scope);
       Path outputPath = tempDir.resolve("last-message.txt");
@@ -86,7 +86,7 @@ public final class CodexRunnerTest
   public void buildCommandRejectsMissingModel() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestCodexTool scope = new TestCodexTool(tempDir, tempDir))
     {
       CodexRunner runner = new CodexRunner(scope);
       Path outputPath = tempDir.resolve("last-message.txt");
@@ -107,7 +107,7 @@ public final class CodexRunnerTest
   public void buildCommandRejectsMissingEffort() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestCodexTool scope = new TestCodexTool(tempDir, tempDir))
     {
       CodexRunner runner = new CodexRunner(scope);
       Path outputPath = tempDir.resolve("last-message.txt");
@@ -127,7 +127,7 @@ public final class CodexRunnerTest
   public void buildProcessBuilderUsesWorkingDirectory() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestCodexTool scope = new TestCodexTool(tempDir, tempDir))
     {
       CodexRunner runner = new CodexRunner(scope);
       List<String> command = runner.buildCommand("gpt-5.5", "high", tempDir,
@@ -149,7 +149,7 @@ public final class CodexRunnerTest
   public void executeProcessTimesOutBeforeStdoutCloses() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestCodexTool scope = new TestCodexTool(tempDir, tempDir))
     {
       CodexRunner runner = new CodexRunner(scope, Duration.ofMillis(100));
       Path outputPath = tempDir.resolve("last-message.txt");
@@ -175,7 +175,7 @@ public final class CodexRunnerTest
   public void parseOutputExtractsTextToolUsesAndWriteContent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    try (TestCodexTool scope = new TestCodexTool(tempDir, tempDir))
     {
       CodexRunner runner = new CodexRunner(scope);
       String output = """

@@ -1994,7 +1994,7 @@ public final class InstructionTestRunnerTest
     Path outputDir = Files.createTempDirectory("test-output-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      Files.createDirectories(runnerWorktree.resolve("client/cli/target/jlink/bin"));
+      Files.createDirectories(runnerWorktree.resolve("client/cli/target/jlink/claude/bin"));
       Files.createDirectories(tempDir.resolve(".claude-plugin"));
       Files.writeString(tempDir.resolve(".claude-plugin/plugin.json"),
         "{\"version\":\"2.1.87\"}", StandardCharsets.UTF_8);
@@ -2086,7 +2086,7 @@ public final class InstructionTestRunnerTest
       TestUtils.runGit(repoDir, "checkout", "-b", "my-issue-isolation");
 
       // Create jlink/bin dir in runner worktree
-      Files.createDirectories(runnerWorktree.resolve("client/cli/target/jlink/bin"));
+      Files.createDirectories(runnerWorktree.resolve("client/cli/target/jlink/claude/bin"));
 
       // prepareTrial writes a VERSION file to the jlink dir using the plugin version from plugin.json
       Files.createDirectories(tempDir.resolve(".claude-plugin"));
@@ -2131,7 +2131,7 @@ public final class InstructionTestRunnerTest
     Path outputDir = Files.createTempDirectory("test-output-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      Files.createDirectories(runnerWorktree.resolve("client/cli/target/jlink/bin"));
+      Files.createDirectories(runnerWorktree.resolve("client/cli/target/jlink/claude/bin"));
       Files.createDirectories(tempDir.resolve(".claude-plugin"));
       Files.writeString(tempDir.resolve(".claude-plugin/plugin.json"),
         "{\"version\":\"2.1.87\"}", StandardCharsets.UTF_8);
@@ -2187,7 +2187,7 @@ public final class InstructionTestRunnerTest
     Path outputDir = Files.createTempDirectory("test-output-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      Files.createDirectories(runnerWorktree.resolve("client/cli/target/jlink/bin"));
+      Files.createDirectories(runnerWorktree.resolve("client/cli/target/jlink/claude/bin"));
       Files.createDirectories(tempDir.resolve(".claude-plugin"));
       Files.writeString(tempDir.resolve(".claude-plugin/plugin.json"),
         "{\"version\":\"2.1.87\"}", StandardCharsets.UTF_8);
@@ -2236,7 +2236,7 @@ public final class InstructionTestRunnerTest
     Path outputDir = Files.createTempDirectory("test-output-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
-      Files.createDirectories(runnerWorktree.resolve("client/cli/target/jlink/bin"));
+      Files.createDirectories(runnerWorktree.resolve("client/cli/target/jlink/claude/bin"));
       Files.createDirectories(tempDir.resolve(".claude-plugin"));
       Files.writeString(tempDir.resolve(".claude-plugin/plugin.json"),
         "{\"version\":\"2.1.87\"}", StandardCharsets.UTF_8);
@@ -2328,7 +2328,7 @@ public final class InstructionTestRunnerTest
       Files.writeString(graderPromptFile, "test prompt", StandardCharsets.UTF_8);
       String runnerWorktree = tempDir.toString();
       String modelId = "claude-sonnet-4-5";
-      Path jlinkBin = tempDir.resolve("client/cli/target/jlink/bin");
+      Path jlinkBin = tempDir.resolve("client/cli/target/jlink/claude/bin");
 
       String[] args = SharedSecrets.buildGraderArgs(graderPromptFile, modelId, runnerWorktree, jlinkBin);
 

@@ -123,10 +123,10 @@ Task tool:
          using worktree artifacts.
        - For `docs` and `config` issue types only: set e2e status to SKIPPED. Any issue type not
          in this exhaustive list must be treated as requiring runtime E2E tests.
-       - E2E isolation: use worktree artifacts (${WORKTREE_PATH}/client/cli/target/jlink/bin/ and
+       - E2E isolation: use worktree artifacts (${WORKTREE_PATH}/client/cli/target/jlink/${CAT_RUNTIME:-claude}/bin/ and
          ${WORKTREE_PATH}/client/plugin/scripts/), never the cached plugin installation
        - Runtime invocation must use an absolute binary path:
-         `${WORKTREE_PATH}/client/cli/target/jlink/bin/instruction-test-runner ...`
+         `${WORKTREE_PATH}/client/cli/target/jlink/${CAT_RUNTIME:-claude}/bin/instruction-test-runner ...`
          Do NOT invoke `instruction-test-runner` via PATH lookup.
        - Clean-worktree preflight is mandatory before runtime E2E invocation:
          `cd "${WORKTREE_PATH}" && git status --porcelain`

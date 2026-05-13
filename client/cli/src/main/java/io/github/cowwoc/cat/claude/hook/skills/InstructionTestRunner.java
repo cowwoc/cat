@@ -1034,7 +1034,7 @@ public final class InstructionTestRunner
       "Example: " + runnerWorktree + "/some/file.txt\n" +
       "Never use any other root for file operations.";
 
-    String jlinkBin = runnerWorktree + "/client/cli/target/jlink/bin";
+    String jlinkBin = runnerWorktree + "/client/cli/target/jlink/claude/bin";
     if (!Files.isDirectory(Path.of(jlinkBin)))
       throw new IOException(
         "InstructionTestRunner prepare-trial: jlink directory not found in runner worktree: " +
@@ -1390,7 +1390,7 @@ public final class InstructionTestRunner
               // Use worktreePathStr so the grader reads assertions from the issue worktree,
               // where test files still exist with their ## Assertions sections.
               verdict = sprtGrader.gradeTc(tcId, trialNum, finalOutputJson, modelId, runnerWorktree,
-                Path.of(runnerWorktree, "client/cli/target/jlink/bin"),
+                Path.of(runnerWorktree, "client/cli/target/jlink/claude/bin"),
                 Path.of(worktreePathStr, testDirRel).toString(),
                 gradeFilePath, isolationResultJson);
             }
@@ -1548,7 +1548,7 @@ public final class InstructionTestRunner
     if (!usingWorktreeBin)
     {
       Path worktreeRunner = Path.of(worktreePath).
-        resolve("client/cli/target/jlink/bin/instruction-test-runner");
+        resolve("client/cli/target/jlink/claude/bin/instruction-test-runner");
       if (!Files.isExecutable(worktreeRunner))
         throw new IOException(
           "InstructionTestRunner run-full-sprt: worktree binary not found at " + worktreeRunner +

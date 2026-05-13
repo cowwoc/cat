@@ -144,6 +144,279 @@ EOF
         { echo "Expected -ea in launcher with assertions. Got:"; cat "$launcher"; false; }
 }
 
+@test "automatic module patching describes each peer jar once" {
+    source "$BUILD_JLINK"
+    STAGING_DIR="$(mktemp -d)"
+    PATCH_DIR="$STAGING_DIR/patches"
+    DESCRIBE_LOG="$STAGING_DIR/describes.log"
+    JDEPS_LOG="$STAGING_DIR/jdeps.log"
+    UPDATE_LOG="$STAGING_DIR/updates.log"
+    touch "$STAGING_DIR/alpha-auto.jar" "$STAGING_DIR/beta-auto.jar" "$STAGING_DIR/gamma-named.jar"
+
+    export DESCRIBE_LOG JDEPS_LOG UPDATE_LOG
+    cat > "$FAKE_BIN_DIR/jar" <<'EOF'
+#!/bin/sh
+mode=""
+file=""
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --list|--describe-module|--update) mode="$1" ;;
+        --file=*) file="${1#--file=}" ;;
+        --file) shift; file="$1" ;;
+    esac
+    shift || true
+done
+
+case "$mode" in
+    --list)
+        case "$(basename "$file")" in
+            gamma-named.jar) printf '%s\n' "module-info.class" ;;
+        esac
+        ;;
+    --describe-module)
+        printf '%s\n' "$file" >> "$DESCRIBE_LOG"
+        case "$(basename "$file")" in
+            alpha-auto.jar|beta-auto.jar) printf '%s automatic\n' "${file%.jar}" ;;
+            gamma-named.jar) printf '%s\n' "module gamma.named {}" ;;
+        esac
+        ;;
+    --update)
+        printf '%s\n' "$file" >> "$UPDATE_LOG"
+        ;;
+esac
+EOF
+
+    cat > "$FAKE_BIN_DIR/jdeps" <<'EOF'
+#!/bin/sh
+output_dir=""
+module_path=""
+target_jar=""
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --generate-module-info)
+            shift
+            output_dir="$1"
+            ;;
+        --module-path)
+            shift
+            module_path="$1"
+            ;;
+        *.jar)
+            target_jar="$1"
+            ;;
+    esac
+    shift || true
+done
+printf '%s|%s\n' "$(basename "$target_jar")" "$module_path" >> "$JDEPS_LOG"
+module_dir="$output_dir/generated.module"
+mkdir -p "$module_dir"
+printf '%s\n' "module generated.module {" "}" > "$module_dir/module-info.java"
+EOF
+
+    cat > "$FAKE_BIN_DIR/javac" <<'EOF'
+#!/bin/sh
+classes_dir=""
+while [ "$#" -gt 0 ]; do
+    if [ "$1" = "-d" ]; then
+        shift
+        classes_dir="$1"
+    fi
+    shift || true
+done
+mkdir -p "$classes_dir"
+touch "$classes_dir/module-info.class"
+EOF
+    chmod +x "$FAKE_BIN_DIR/jar" "$FAKE_BIN_DIR/jdeps" "$FAKE_BIN_DIR/javac"
+    PATH="$FAKE_BIN_DIR:$PATH"
+
+    patch_automatic_modules
+
+    [ "$(grep -c 'alpha-auto.jar' "$DESCRIBE_LOG")" -eq 1 ]
+    [ "$(grep -c 'beta-auto.jar' "$DESCRIBE_LOG")" -eq 1 ]
+    [ "$(grep -c 'gamma-named.jar' "$DESCRIBE_LOG")" -eq 1 ]
+
+    grep -q '^alpha-auto.jar|' "$JDEPS_LOG"
+    grep -q '^beta-auto.jar|' "$JDEPS_LOG"
+    ! grep -q '^gamma-named.jar|' "$JDEPS_LOG" || \
+        { echo "Named module should not be patched. Got:"; cat "$JDEPS_LOG"; false; }
+
+    local alpha_path beta_path
+    alpha_path="$(grep '^alpha-auto.jar|' "$JDEPS_LOG" | cut -d '|' -f 2-)"
+    beta_path="$(grep '^beta-auto.jar|' "$JDEPS_LOG" | cut -d '|' -f 2-)"
+    [[ "$alpha_path" == *"beta-auto.jar"* ]]
+    [[ "$alpha_path" == *"gamma-named.jar"* ]]
+    [[ "$alpha_path" != *"alpha-auto.jar"* ]]
+    [[ "$beta_path" == *"alpha-auto.jar"* ]]
+    [[ "$beta_path" == *"gamma-named.jar"* ]]
+    [[ "$beta_path" != *"beta-auto.jar"* ]]
+
+    grep -q 'alpha-auto.jar' "$UPDATE_LOG"
+    grep -q 'beta-auto.jar' "$UPDATE_LOG"
+    ! grep -q 'gamma-named.jar' "$UPDATE_LOG" || \
+        { echo "Named module should not be updated. Got:"; cat "$UPDATE_LOG"; false; }
+}
+
+@test "verify_image reports runtime-specific smoke launchers" {
+    local test_output_dir="$OUTPUT_DIR"
+    source "$BUILD_JLINK"
+    OUTPUT_DIR="$test_output_dir"
+    PRE_BASH_LOG="$OUTPUT_DIR/pre-bash.log"
+    SESSION_START_LOG="$OUTPUT_DIR/session-start.log"
+    STATUS_LOG="$OUTPUT_DIR/status.log"
+    export PRE_BASH_LOG SESSION_START_LOG STATUS_LOG
+
+    cat > "$OUTPUT_DIR/bin/java" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+    cat > "$OUTPUT_DIR/bin/pre-bash" <<'EOF'
+#!/bin/sh
+cat >/dev/null
+printf '%s\n' "pre-bash" >> "$PRE_BASH_LOG"
+exit 0
+EOF
+    cat > "$OUTPUT_DIR/bin/session-start" <<'EOF'
+#!/bin/sh
+cat >/dev/null
+printf '%s\n' "session-start" >> "$SESSION_START_LOG"
+printf '%s\n' '{"hookSpecificOutput":"ok"}'
+EOF
+    cat > "$OUTPUT_DIR/bin/get-status-output" <<'EOF'
+#!/bin/sh
+cat >/dev/null
+printf '%s\n' "status" >> "$STATUS_LOG"
+printf '%s\n' "No CAT project found. Initialize one first."
+EOF
+    chmod +x "$OUTPUT_DIR/bin/java" "$OUTPUT_DIR/bin/pre-bash" "$OUTPUT_DIR/bin/session-start" \
+        "$OUTPUT_DIR/bin/get-status-output"
+
+    run verify_image claude
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Testing claude pre-bash launcher"* ]]
+    [[ "$output" == *"Testing get-status-output launcher"* ]]
+    [ "$(grep -c 'pre-bash' "$PRE_BASH_LOG")" -eq 1 ]
+    [ "$(grep -c 'status' "$STATUS_LOG")" -eq 1 ]
+    [ ! -f "$SESSION_START_LOG" ]
+
+    run verify_image codex
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Testing codex pre-bash launcher"* ]]
+    [[ "$output" == *"Testing codex session-start launcher"* ]]
+    [[ "$output" == *"Testing get-status-output launcher"* ]]
+    [ "$(grep -c 'pre-bash' "$PRE_BASH_LOG")" -eq 2 ]
+    [ "$(grep -c 'session-start' "$SESSION_START_LOG")" -eq 1 ]
+    [ "$(grep -c 'status' "$STATUS_LOG")" -eq 2 ]
+}
+
+@test "generate_startup_archives uses runtime-specific AOT entrypoints and hook environment" {
+    local test_output_dir="$OUTPUT_DIR"
+    source "$BUILD_JLINK"
+    OUTPUT_DIR="$test_output_dir"
+    mkdir -p "$OUTPUT_DIR/bin" "$OUTPUT_DIR/lib/server"
+    AOT_LOG="$OUTPUT_DIR/aot.log"
+    export AOT_LOG
+
+    cat > "$OUTPUT_DIR/bin/java" <<'EOF'
+#!/bin/sh
+mode=""
+configuration=""
+cache=""
+module=""
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        -XX:AOTMode=*) mode="${1#-XX:AOTMode=}" ;;
+        -XX:AOTConfiguration=*) configuration="${1#-XX:AOTConfiguration=}" ;;
+        -XX:AOTCache=*) cache="${1#-XX:AOTCache=}" ;;
+        -m)
+            shift
+            module="$1"
+            ;;
+    esac
+    shift || true
+done
+cat >/dev/null
+printf '%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
+    "$mode" "$module" "$CLAUDE_PROJECT_DIR" "$CLAUDE_PLUGIN_ROOT" "$CLAUDE_PLUGIN_DATA" \
+    "$CLAUDE_CONFIG_DIR" "$CAT_PROJECT_DIR" "$CAT_PLUGIN_ROOT" "$CODEX_HOME" >> "$AOT_LOG"
+case "$mode" in
+    record) touch "$configuration" ;;
+    create) touch "$cache" ;;
+esac
+EOF
+    chmod +x "$OUTPUT_DIR/bin/java"
+
+    generate_startup_archives claude
+    generate_startup_archives codex
+
+    grep -q 'record|io.github.cowwoc.cat.client/io.github.cowwoc.cat.claude.hook.AotTraining|' "$AOT_LOG"
+    grep -q 'create|io.github.cowwoc.cat.client/io.github.cowwoc.cat.claude.hook.PreToolUseHook|' "$AOT_LOG"
+    grep -q 'record|io.github.cowwoc.cat.client/io.github.cowwoc.cat.codex.hook.CodexAotTraining|' "$AOT_LOG"
+    grep -q 'create|io.github.cowwoc.cat.client/io.github.cowwoc.cat.codex.hook.PreBashHook|' "$AOT_LOG"
+
+    while IFS='|' read -r mode module claude_project claude_root claude_data claude_config cat_project cat_root codex_home; do
+        [ -n "$mode" ]
+        [ -n "$module" ]
+        [ "$claude_project" = "$WORKSPACE_DIR" ]
+        [ "$cat_project" = "$WORKSPACE_DIR" ]
+        [[ "$claude_root" == */plugin ]]
+        [[ "$cat_root" == */plugin ]]
+        [[ "$claude_data" == */aot-plugin-data ]]
+        [[ "$claude_config" == */aot-config-home ]]
+        [[ "$codex_home" == */aot-config-home ]]
+    done < "$AOT_LOG"
+}
+
+@test "generate_startup_archives reports runtime-specific AOT cache creation failures" {
+    local test_output_dir="$OUTPUT_DIR"
+    source "$BUILD_JLINK"
+    OUTPUT_DIR="$test_output_dir"
+    mkdir -p "$OUTPUT_DIR/bin" "$OUTPUT_DIR/lib/server"
+
+    cat > "$OUTPUT_DIR/bin/java" <<'EOF'
+#!/bin/sh
+mode=""
+configuration=""
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        -XX:AOTMode=*) mode="${1#-XX:AOTMode=}" ;;
+        -XX:AOTConfiguration=*) configuration="${1#-XX:AOTConfiguration=}" ;;
+    esac
+    shift || true
+done
+cat >/dev/null
+case "$mode" in
+    record)
+        touch "$configuration"
+        exit 0
+        ;;
+    create)
+        printf '%s\n' "cache creation failed" >&2
+        exit 1
+        ;;
+esac
+exit 0
+EOF
+    chmod +x "$OUTPUT_DIR/bin/java"
+
+    run generate_startup_archives claude 2>&1
+
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"cache creation failed"* ]] || \
+        { echo "Expected JVM create error in output. Got: $output"; false; }
+    [[ "$output" == *"Failed to create claude AOT cache"* ]] || \
+        { echo "Expected claude cache creation failure. Got: $output"; false; }
+
+    run generate_startup_archives codex 2>&1
+
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"cache creation failed"* ]] || \
+        { echo "Expected JVM create error in output. Got: $output"; false; }
+    [[ "$output" == *"Failed to create codex AOT cache"* ]] || \
+        { echo "Expected codex cache creation failure. Got: $output"; false; }
+}
+
 @test "build-jlink.sh exits non-zero on unknown argument" {
     run bash "$BUILD_JLINK" --unknown-flag
 

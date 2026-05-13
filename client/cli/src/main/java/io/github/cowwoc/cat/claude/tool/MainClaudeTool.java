@@ -39,6 +39,14 @@ public final class MainClaudeTool extends AbstractClaudeTool
         return "";
       return value;
     });
+  private final ConcurrentLazyReference<String> updatePluginJsonUrlRef =
+    ConcurrentLazyReference.create(() ->
+    {
+      String value = System.getenv("CAT_UPDATE_PLUGIN_JSON_URL");
+      if (value == null || value.isBlank())
+        return "";
+      return value;
+    });
 
   /**
    * Creates a new production Claude tool scope.
@@ -111,5 +119,12 @@ public final class MainClaudeTool extends AbstractClaudeTool
   {
     ensureOpen();
     return anthropicBaseUrlRef.getValue();
+  }
+
+  @Override
+  public String getUpdatePluginJsonUrl()
+  {
+    ensureOpen();
+    return updatePluginJsonUrlRef.getValue();
   }
 }
