@@ -29,6 +29,7 @@ mvn -f "${PROJECT_DIR}/client/pom.xml" verify -Djlink.extra.args=--enable-assert
 RELEASE_ARTIFACT="${PROJECT_DIR}/client/distribution/target/runtime/codex"
 test -f "${RELEASE_ARTIFACT}/client/VERSION"
 test -f "${RELEASE_ARTIFACT}/.codex-plugin/plugin.json"
+test -d "${RELEASE_ARTIFACT}/agents"
 
 PLUGIN_VERSION="$(sed -n 's/^[[:space:]]*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
   "${RELEASE_ARTIFACT}/.codex-plugin/plugin.json" | head -1)"
@@ -87,6 +88,13 @@ if ! try_codex_plugin_browser_install || [[ ! -f "${CODEX_PLUGIN_CACHE}/skills/a
   cp -R "${RELEASE_ARTIFACT}" "${CODEX_PLUGIN_CACHE}"
 fi
 
+PROJECT_CODEX_AGENTS_DIR="${PROJECT_DIR}/.codex/agents"
+mkdir -p "${PROJECT_CODEX_AGENTS_DIR}"
+find "${PROJECT_CODEX_AGENTS_DIR}" -maxdepth 1 -type f -name 'cat-*.toml' -delete
+while IFS= read -r -d '' AGENT_FILE; do
+  cp "${AGENT_FILE}" "${PROJECT_CODEX_AGENTS_DIR}/cat-$(basename "${AGENT_FILE}")"
+done < <(find "${RELEASE_ARTIFACT}/agents" -maxdepth 1 -type f -name '*.toml' -print0)
+
 CODEX_CONFIG="${CODEX_CONFIG:-${CODEX_HOME}/config.toml}"
 mkdir -p "$(dirname "${CODEX_CONFIG}")"
 touch "${CODEX_CONFIG}"
@@ -129,6 +137,9 @@ test -x "${CAT_PLUGIN_DATA}/client/bin/pre-bash"
 test -f "${CAT_PLUGIN_DATA}/client/VERSION"
 test -f "${CODEX_PLUGIN_CACHE}/.codex-plugin/plugin.json"
 test -f "${CODEX_PLUGIN_CACHE}/skills/add/SKILL.md"
+test -f "${PROJECT_CODEX_AGENTS_DIR}/cat-stakeholder-architecture.toml"
+grep -F 'name = "cat-stakeholder-architecture"' \
+  "${PROJECT_CODEX_AGENTS_DIR}/cat-stakeholder-architecture.toml" >/dev/null
 grep -F '[plugins."cat@cat"]' "${CODEX_CONFIG}" >/dev/null
 awk '
   /^\[.*\]$/ { in_cat_plugin = ($0 == "[plugins.\"cat@cat\"]"); next }
@@ -145,4 +156,5 @@ After the command succeeds, tell the user to restart Codex to complete the insta
 - `${CODEX_HOME}/plugins/cat-marketplace/plugins/cat/.codex-plugin/plugin.json` exists.
 - `${CODEX_HOME}/plugins/cache/cat/cat/{version}/skills/add/SKILL.md` exists.
 - `${CAT_PLUGIN_DATA}/client/bin/java -version` runs successfully.
+- `${PROJECT_DIR}/.codex/agents/cat-stakeholder-architecture.toml` exists and declares `cat-stakeholder-architecture`.
 - `${CODEX_HOME}/config.toml` enables `[plugins."cat@cat"]`.
