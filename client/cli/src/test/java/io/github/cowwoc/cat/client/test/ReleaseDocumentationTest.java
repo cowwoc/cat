@@ -48,6 +48,24 @@ public final class ReleaseDocumentationTest
     requireThat(codexInstallPrompt, "codexInstallPrompt").contains("plugins/data/cat-cat");
     requireThat(codexInstallPrompt, "codexInstallPrompt").contains(
       "codex plugin marketplace add \"${LOCAL_MARKETPLACE_ROOT}\"");
+    requireThat(codexInstallPrompt, "codexInstallPrompt").contains(
+      "try_codex_plugin_browser_install()");
+    requireThat(codexInstallPrompt, "codexInstallPrompt").contains(
+      "\"plugin/install\"");
+    requireThat(codexInstallPrompt, "codexInstallPrompt").contains(
+      "codex app-server proxy");
+    requireThat(codexInstallPrompt, "codexInstallPrompt").doesNotContain(
+      "codex app-server generate-json-schema");
+    requireThat(codexInstallPrompt, "codexInstallPrompt").contains(
+      "CODEX_PLUGIN_CACHE=\"${CODEX_PLUGIN_CACHE_ROOT}/${PLUGIN_VERSION}\"");
+    requireThat(codexInstallPrompt, "codexInstallPrompt").contains(
+      "rm -rf \"${CODEX_PLUGIN_CACHE_ROOT}\"");
+    requireThat(codexInstallPrompt, "codexInstallPrompt").contains(
+      "cp -R \"${RELEASE_ARTIFACT}\" \"${CODEX_PLUGIN_CACHE}\"");
+    requireThat(codexInstallPrompt, "codexInstallPrompt").contains(
+      "test -f \"${CODEX_PLUGIN_CACHE}/skills/add/SKILL.md\"");
+    requireThat(codexInstallPrompt, "codexInstallPrompt").contains(
+      "test -f \"${CODEX_PLUGIN_CACHE}/commands/init.md\"");
     requireThat(codexInstallPrompt, "codexInstallPrompt").contains("CAT_RUNTIME=\"codex\"");
     requireThat(codexInstallPrompt, "codexInstallPrompt").contains(
       "ASSET_NAME=\"cat-${CAT_RUNTIME}-${RELEASE_TAG}.tar.gz\"");

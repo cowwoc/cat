@@ -59,19 +59,27 @@ fi
 
 mkdir -p "${INSTALL_TMP}/artifact"
 tar -xzf "${INSTALL_TMP}/${ASSET_NAME}" -C "${INSTALL_TMP}/artifact"
-FLATTENED_PLUGIN="${INSTALL_TMP}/artifact"
-if [[ ! -f "${FLATTENED_PLUGIN}/client/VERSION" ]]; then
+RELEASE_ARTIFACT="${INSTALL_TMP}/artifact"
+if [[ ! -f "${RELEASE_ARTIFACT}/client/VERSION" ]]; then
   nested="$(find "${INSTALL_TMP}/artifact" -mindepth 1 -maxdepth 2 -type f -path '*/client/VERSION' -print -quit)"
   if [[ -n "${nested}" ]]; then
-    FLATTENED_PLUGIN="$(dirname "$(dirname "${nested}")")"
+    RELEASE_ARTIFACT="$(dirname "$(dirname "${nested}")")"
   fi
 fi
-test -f "${FLATTENED_PLUGIN}/client/VERSION"
+test -f "${RELEASE_ARTIFACT}/client/VERSION"
+test -f "${RELEASE_ARTIFACT}/.codex-plugin/plugin.json"
+
+PLUGIN_VERSION="$(sed -n 's/^[[:space:]]*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
+  "${RELEASE_ARTIFACT}/.codex-plugin/plugin.json" | head -1)"
+if [[ -z "${PLUGIN_VERSION}" ]]; then
+  echo "ERROR: Could not determine CAT plugin version." >&2
+  exit 1
+fi
 
 LOCAL_MARKETPLACE_ROOT="${LOCAL_MARKETPLACE_ROOT:-${CODEX_HOME}/plugins/cat-marketplace}"
 rm -rf "${LOCAL_MARKETPLACE_ROOT}"
 mkdir -p "${LOCAL_MARKETPLACE_ROOT}/plugins/cat"
-cp -R "${FLATTENED_PLUGIN}/." "${LOCAL_MARKETPLACE_ROOT}/plugins/cat/"
+cp -R "${RELEASE_ARTIFACT}/." "${LOCAL_MARKETPLACE_ROOT}/plugins/cat/"
 mkdir -p "${LOCAL_MARKETPLACE_ROOT}/.agents/plugins"
 cat > "${LOCAL_MARKETPLACE_ROOT}/.agents/plugins/marketplace.json" <<'JSON'
 {
@@ -98,6 +106,24 @@ JSON
 
 codex plugin marketplace remove cat 2>/dev/null || true
 codex plugin marketplace add "${LOCAL_MARKETPLACE_ROOT}"
+
+CODEX_PLUGIN_CACHE_ROOT="${CODEX_HOME}/plugins/cache/cat/cat"
+CODEX_PLUGIN_CACHE="${CODEX_PLUGIN_CACHE_ROOT}/${PLUGIN_VERSION}"
+rm -rf "${CODEX_PLUGIN_CACHE_ROOT}"
+
+try_codex_plugin_browser_install() {
+  local marketplace_json escaped_marketplace_json
+  marketplace_json="${LOCAL_MARKETPLACE_ROOT}/.agents/plugins/marketplace.json"
+  escaped_marketplace_json="${marketplace_json//\\/\\\\}"
+  escaped_marketplace_json="${escaped_marketplace_json//\"/\\\"}"
+  printf '{"id":1,"method":"plugin/install","params":{"marketplacePath":"%s","pluginName":"cat","remoteMarketplaceName":null}}\n' \
+    "${escaped_marketplace_json}" | codex app-server proxy >/dev/null 2>&1
+}
+
+if ! try_codex_plugin_browser_install || [[ ! -f "${CODEX_PLUGIN_CACHE}/skills/add/SKILL.md" ]]; then
+  mkdir -p "${CODEX_PLUGIN_CACHE_ROOT}"
+  cp -R "${RELEASE_ARTIFACT}" "${CODEX_PLUGIN_CACHE}"
+fi
 
 CODEX_CONFIG="${CODEX_CONFIG:-${CODEX_HOME}/config.toml}"
 mkdir -p "$(dirname "${CODEX_CONFIG}")"
@@ -134,11 +160,14 @@ mv "${CONFIG_TMP}" "${CODEX_CONFIG}"
 mkdir -p "${CAT_PLUGIN_DATA}"
 chmod -R u+w "${CAT_PLUGIN_DATA}/client" 2>/dev/null || true
 rm -rf "${CAT_PLUGIN_DATA}/client"
-cp -R "${FLATTENED_PLUGIN}/client" "${CAT_PLUGIN_DATA}/client"
+cp -R "${RELEASE_ARTIFACT}/client" "${CAT_PLUGIN_DATA}/client"
 
 "${CAT_PLUGIN_DATA}/client/bin/java" -version
 test -x "${CAT_PLUGIN_DATA}/client/bin/pre-bash"
 test -f "${CAT_PLUGIN_DATA}/client/VERSION"
+test -f "${CODEX_PLUGIN_CACHE}/.codex-plugin/plugin.json"
+test -f "${CODEX_PLUGIN_CACHE}/skills/add/SKILL.md"
+test -f "${CODEX_PLUGIN_CACHE}/commands/init.md"
 grep -F '[plugins."cat@cat"]' "${CODEX_CONFIG}" >/dev/null
 awk '
   /^\[.*\]$/ { in_cat_plugin = ($0 == "[plugins.\"cat@cat\"]"); next }
