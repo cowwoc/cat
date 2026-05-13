@@ -77,11 +77,13 @@ trackable progress, and code that passes review the first time.
 
 **Codex**
 
-Run the following prompt to install or update:
-
-```text
+```bash
+# Install CAT
 Run https://raw.githubusercontent.com/cowwoc/cat/v2.1/docs/prompts/codex-install.md
 to install or update the CAT plugin.
+
+# Verify you're ready
+$cat:help
 ```
 
 To remove CAT from Codex, run `/cat:uninstall`.
