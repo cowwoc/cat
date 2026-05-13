@@ -80,17 +80,16 @@ trackable progress, and code that passes review the first time.
 
 **Codex**
 
+Run the following prompt to install or update:
+
 ```text
-Run the prompt at
-https://raw.githubusercontent.com/cowwoc/cat/v2.1/docs/prompts/codex-install.md
+Run https://raw.githubusercontent.com/cowwoc/cat/v2.1/docs/prompts/codex-install.md
 to install or update the CAT plugin.
 ```
 
-This installs or updates CAT `v2.1`.
+To remove CAT from Codex, run `/cat:uninstall`.
 
-To remove CAT from Codex, run `/cat:uninstall` before uninstalling CAT from Codex.
-
-For local development builds from a source checkout, run `/cat:install` after publishing or staging the matching
+For local development builds from a source checkout, run `/cat-update` after publishing or staging the matching
 release artifact. Codex support is preview parity: the artifact is first-class, but some Claude Code extension points
 are not available in Codex yet; see the [Codex parity notes](docs/development/codex-parity.md).
 

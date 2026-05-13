@@ -41,7 +41,7 @@ PY
 
 export CAT_PLUGIN_ROOT="$plugin_root"
 export CAT_PROJECT_DIR="$project_dir"
-export CAT_PLUGIN_DATA="${CODEX_PLUGIN_DATA:-${CAT_PLUGIN_DATA:-${HOME}/.codex/plugins/data/local-cat}}"
+export CAT_PLUGIN_DATA="${CODEX_PLUGIN_DATA:-${CAT_PLUGIN_DATA:-${HOME}/.codex/plugins/data/cat-cat}}"
 export CAT_RUNTIME="codex"
 export CLAUDE_PLUGIN_ROOT="$CAT_PLUGIN_ROOT"
 export CLAUDE_PROJECT_DIR="$CAT_PROJECT_DIR"

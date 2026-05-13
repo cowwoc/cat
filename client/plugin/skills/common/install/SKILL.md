@@ -53,7 +53,7 @@ if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
 elif [[ -n "${CAT_PLUGIN_ROOT:-}" || -n "${CODEX_HOME:-}" || -d "${HOME}/.codex" ]]; then
   CAT_RUNTIME="codex"
   CODEX_HOME="${CODEX_HOME:-${HOME}/.codex}"
-  CAT_PLUGIN_DATA="${CAT_PLUGIN_DATA:-${CODEX_HOME}/plugins/data/local-cat}"
+  CAT_PLUGIN_DATA="${CAT_PLUGIN_DATA:-${CODEX_HOME}/plugins/data/cat-cat}"
 else
   echo "ERROR: Cannot determine runtime. CLAUDE_PLUGIN_ROOT or CODEX_HOME/CAT_PLUGIN_ROOT must be set." >&2
   exit 1
@@ -212,3 +212,6 @@ test -f "${CAT_PLUGIN_DATA}/client/VERSION"
 
 echo "Installed CAT ${RELEASE_TAG} for ${CAT_RUNTIME}. Restart ${CAT_RUNTIME} so the updated plugin is loaded."
 ```
+
+For Codex, do not run this skill after the release bootstrap prompt; the prompt already installs the bundled client
+runtime. Use this skill only from an already-loaded CAT installation when explicitly updating from a release artifact.

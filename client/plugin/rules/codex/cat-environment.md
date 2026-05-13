@@ -18,7 +18,7 @@ Use this block at the top of Bash commands that need `CAT_PLUGIN_ROOT`, `CAT_PLU
 CODEX_HOME="${CODEX_HOME:-${HOME}/.codex}"
 CAT_RUNTIME="${CAT_RUNTIME:-codex}"
 CAT_PROJECT_DIR="${CAT_PROJECT_DIR:-$(pwd)}"
-CAT_PLUGIN_DATA="${CAT_PLUGIN_DATA:-${CODEX_HOME}/plugins/data/local-cat}"
+CAT_PLUGIN_DATA="${CAT_PLUGIN_DATA:-${CODEX_HOME}/plugins/data/cat-cat}"
 CAT_SESSION_ID="${CAT_SESSION_ID:-${CODEX_THREAD_ID:-}}"
 
 if [[ -z "${CAT_PLUGIN_ROOT:-}" ]]; then

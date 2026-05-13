@@ -22,7 +22,7 @@ import java.nio.file.Path;
 public final class CodexPluginCacheTest
 {
   /**
-   * Verifies that Codex plugin cache resolution follows the documented cache layout.
+   * Verifies that Codex plugin cache resolution follows the marketplace and plugin name coordinate layout.
    *
    * @throws IOException if file operations fail
    */
@@ -32,11 +32,11 @@ public final class CodexPluginCacheTest
     Path codexHome = Files.createTempDirectory("cat-codex-home-");
     try
     {
-      Path pluginRoot = codexHome.resolve("plugins/cache/local-cat/cat/2.1");
+      Path pluginRoot = codexHome.resolve("plugins/cache/cat/cat/2.1");
       Files.createDirectories(pluginRoot.resolve(".codex-plugin"));
       Files.writeString(pluginRoot.resolve(".codex-plugin/plugin.json"), "{\"name\":\"cat\"}");
 
-      Path resolved = CodexPluginCache.resolvePluginRoot(codexHome, "local-cat", "cat", "2.1");
+      Path resolved = CodexPluginCache.resolvePluginRoot(codexHome, "cat", "cat", "2.1");
 
       requireThat(resolved, "resolved").isEqualTo(pluginRoot.toAbsolutePath().normalize());
     }
@@ -59,7 +59,7 @@ public final class CodexPluginCacheTest
     {
       try
       {
-        CodexPluginCache.resolvePluginRoot(codexHome, "local-cat/../other", "cat", "2.1");
+        CodexPluginCache.resolvePluginRoot(codexHome, "cat/../other", "cat", "2.1");
         throw new AssertionError("Expected path traversal to be rejected");
       }
       catch (IllegalArgumentException e)

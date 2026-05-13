@@ -26,7 +26,7 @@ esac
 
 CAT_RUNTIME="codex"
 CODEX_HOME="${CODEX_HOME:-${HOME}/.codex}"
-CAT_PLUGIN_DATA="${CAT_PLUGIN_DATA:-${CODEX_HOME}/plugins/data/local-cat}"
+CAT_PLUGIN_DATA="${CAT_PLUGIN_DATA:-${CODEX_HOME}/plugins/data/cat-cat}"
 
 if [[ "${RELEASE_TAG}" == "latest" ]]; then
   RELEASE_TAG="$(curl -fsSL https://api.github.com/repos/cowwoc/cat/releases/latest |
@@ -111,5 +111,6 @@ test -f "${CAT_PLUGIN_DATA}/client/VERSION"
 echo "Installed CAT ${RELEASE_TAG} for Codex. Restart Codex so the updated plugin is loaded."
 ```
 
-After the command succeeds, tell the user to restart Codex. If the project root already contains `.cat/`, do not run
-`/cat:init`. Run `/cat:init` only when the user wants to create a new CAT project or wrap an existing project.
+After the command succeeds, tell the user to restart Codex. Do not run `/cat:install` after this prompt; the prompt
+already installs the bundled client runtime. If the project root already contains `.cat/`, do not run `/cat:init`.
+Run `/cat:init` only when the user wants to create a new CAT project or wrap an existing project.
