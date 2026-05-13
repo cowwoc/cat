@@ -14,11 +14,11 @@ Markdown rendering verification for `$cat:help`.
 
 ## Post-conditions
 
-- [ ] `$cat:help` output renders as Markdown in the active chat client instead of plain unrendered text.
-- [ ] The line `CAT — hierarchical project planning with multi-agent issue execution.` is removed from the help
+- [x] `$cat:help` output renders as Markdown in the active chat client instead of plain unrendered text.
+- [x] The line `CAT — hierarchical project planning with multi-agent issue execution.` is removed from the help
   output.
-- [ ] The decorative horizontal separator immediately after that line is removed from the help output.
-- [ ] The natural-language examples sentence beginning with `language, such as "add an issue to fix login"` is removed
+- [x] The decorative horizontal separator immediately after that line is removed from the help output.
+- [x] The natural-language examples sentence beginning with `language, such as "add an issue to fix login"` is removed
   from the help output.
-- [ ] The decorative horizontal separator immediately after that examples sentence is removed from the help output.
-- [ ] Regression coverage or an equivalent verification documents that `$cat:help` renders Markdown correctly.
+- [x] The decorative horizontal separator immediately after that examples sentence is removed from the help output.
+- [x] Regression coverage or an equivalent verification documents that `$cat:help` renders Markdown correctly.

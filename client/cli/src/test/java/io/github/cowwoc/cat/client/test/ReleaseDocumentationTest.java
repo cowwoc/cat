@@ -55,6 +55,31 @@ public final class ReleaseDocumentationTest
     requireThat(gitFilterRepoDownloader, "gitFilterRepoDownloader").doesNotContain("python");
   }
 
+  /**
+   * Verifies the runtime help skills emit Markdown directly and omit the redundant introductory copy.
+   *
+   * @throws IOException if reading source files fails
+   */
+  @Test
+  public void helpSkillsEmitMarkdownDirectlyWithoutIntroCopy() throws IOException
+  {
+    Path sourceRoot = findSourceRoot();
+    Path clientRoot = sourceRoot.resolve("client");
+
+    assertHelpSkillContract(clientRoot.resolve("plugin/skills/claude/help/first-use.md"), "claudeHelp");
+    assertHelpSkillContract(clientRoot.resolve("plugin/skills/codex/help/first-use.md"), "codexHelp");
+  }
+
+  private static void assertHelpSkillContract(Path firstUse, String name) throws IOException
+  {
+    String content = Files.readString(firstUse, StandardCharsets.UTF_8);
+    requireThat(content, name).contains("Return the Markdown below as your final assistant response.");
+    requireThat(content, name).contains("Do not wrap the response in a code block.");
+    requireThat(content, name).contains("# CAT Command Reference");
+    requireThat(content, name).doesNotContain("hierarchical project planning with multi-agent issue execution");
+    requireThat(content, name).doesNotContain("add an issue to fix login");
+  }
+
   private static Path findSourceRoot()
   {
     Path current = Path.of("").toAbsolutePath().normalize();

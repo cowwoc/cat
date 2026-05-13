@@ -5,20 +5,14 @@ See LICENSE.md in the project root for license terms.
 -->
 # Help
 
-Output the following Markdown content verbatim. Do not summarize, interpret, or add commentary.
+Return the Markdown below as your final assistant response. Do not wrap the response in a code block. Do not
+summarize, interpret, or add commentary.
 
 # CAT Command Reference
 
-**CAT** — hierarchical project planning with multi-agent issue execution.
-
----
-
 ## Start Here
 
-Use slash commands to select a CAT workflow explicitly. You can also describe what you want in natural language, such
-as "add an issue to fix login", "work on 2.1-fix-login", or "remove issue v1.0-parse-tokens".
-
----
+Use slash commands to select a CAT workflow explicitly.
 
 ## User-Facing Commands
 
