@@ -1,11 +1,3 @@
----
-paths: ["*"]
----
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # Batch Write
 
 When 2 or more file writes/edits are independent, issue all corresponding Write/Edit tool calls in a single response.

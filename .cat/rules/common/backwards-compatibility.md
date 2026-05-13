@@ -1,8 +1,3 @@
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # No Backwards Compatibility
 
 **Policy:** Code in terms of the latest design. Do NOT add backwards-compatibility shims, legacy fallbacks, or

@@ -31,27 +31,8 @@ public final class MainAgentRules
    */
   public static String load(AgentPluginScope scope, YAMLMapper yamlMapper)
   {
-    return load(scope, yamlMapper, false);
-  }
-
-  /**
-   * Loads the main-agent rules for the scope's active runtime.
-   *
-   * @param scope the plugin scope
-   * @param yamlMapper the YAML mapper used for rule frontmatter
-   * @param includePathRestricted true if path-restricted rules must be injected at session start
-   * @return the concatenated rule content, or an empty string if no rules apply
-   * @throws NullPointerException if any parameter is null
-   */
-  public static String load(AgentPluginScope scope, YAMLMapper yamlMapper, boolean includePathRestricted)
-  {
     requireThat(scope, "scope").isNotNull();
     requireThat(yamlMapper, "yamlMapper").isNotNull();
-    if (includePathRestricted)
-    {
-      return RulesDiscovery.getCatRulesForAudience(scope.getRuleDirectories(), yamlMapper,
-        RulesDiscovery::filterForMainAgentIgnoringPaths, List.of());
-    }
     return RulesDiscovery.getCatRulesForAudience(scope.getRuleDirectories(), yamlMapper,
       RulesDiscovery::filterForMainAgent, List.of());
   }

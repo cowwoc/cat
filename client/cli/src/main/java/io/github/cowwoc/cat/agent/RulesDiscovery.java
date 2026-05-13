@@ -205,7 +205,20 @@ public final class RulesDiscovery
   {
     List<FileState> fileStates = new ArrayList<>();
     Path normalizedRulesDir = rulesDir.toAbsolutePath().normalize();
-    try (Stream<Path> stream = Files.walk(rulesDir))
+    collectFileStates(fileStates, normalizedRulesDir, normalizedRulesDir);
+    Path rulesRoot = normalizedRulesDir.getParent();
+    if (rulesRoot != null)
+    {
+      Path includeDir = rulesRoot.resolve("include").normalize();
+      if (Files.isDirectory(includeDir))
+        collectFileStates(fileStates, normalizedRulesDir, includeDir);
+    }
+    return List.copyOf(fileStates);
+  }
+
+  private void collectFileStates(List<FileState> fileStates, Path normalizedRulesDir, Path root) throws IOException
+  {
+    try (Stream<Path> stream = Files.walk(root))
     {
       List<Path> files = stream.
         filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)).
@@ -213,16 +226,23 @@ public final class RulesDiscovery
         toList();
       for (Path file : files)
       {
-        fileStates.add(new FileState(normalizedRulesDir.relativize(file.toAbsolutePath().normalize()).toString(),
+        Path normalizedFile = file.toAbsolutePath().normalize();
+        fileStates.add(new FileState(normalizedRulesDir.relativize(normalizedFile).toString(),
           Files.size(file), Files.getLastModifiedTime(file).toMillis()));
       }
     }
-    return List.copyOf(fileStates);
   }
 
   private boolean isAllowedIncludeTarget(Path target)
   {
-    return target.startsWith(rulesDir.toAbsolutePath().normalize());
+    Path normalizedRulesDir = rulesDir.toAbsolutePath().normalize();
+    if (target.startsWith(normalizedRulesDir))
+      return true;
+    Path rulesRoot = normalizedRulesDir.getParent();
+    if (rulesRoot == null)
+      return false;
+    Path sharedIncludeDir = rulesRoot.resolve("include").normalize();
+    return target.startsWith(sharedIncludeDir);
   }
 
   /**
@@ -300,31 +320,6 @@ public final class RulesDiscovery
       if (!matchesPaths(rule.paths(), activeFiles))
         continue;
       result.add(rule);
-    }
-    return result;
-  }
-
-  /**
-   * Filters rules for the main agent while ignoring path restrictions.
-   * <p>
-   * Some runtimes do not expose hooks for path-scoped file access, so they must inject all
-   * main-agent rules at session start.
-   *
-   * @param rules all discovered rules
-   * @param activeFiles ignored
-   * @return rules where {@code mainAgent=true}
-   * @throws NullPointerException if {@code rules} or {@code activeFiles} is null
-   */
-  public static List<RuleFile> filterForMainAgentIgnoringPaths(List<RuleFile> rules, List<String> activeFiles)
-  {
-    requireThat(rules, "rules").isNotNull();
-    requireThat(activeFiles, "activeFiles").isNotNull();
-
-    List<RuleFile> result = new ArrayList<>();
-    for (RuleFile rule : rules)
-    {
-      if (rule.mainAgent())
-        result.add(rule);
     }
     return result;
   }

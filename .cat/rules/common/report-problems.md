@@ -1,11 +1,3 @@
----
-paths: ["*"]
----
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # Report Problems
 
 If you notice broken or stale references (for example: removed symbols still referenced, references to items

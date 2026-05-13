@@ -60,7 +60,7 @@ public final class SessionStartHook
           migrationNotice,
           () ->
           {
-            String content = MainAgentRules.load(scope, scope.getYamlMapper(), true);
+            String content = MainAgentRules.load(scope, scope.getYamlMapper());
             if (content.isBlank())
               return SessionStartHandler.Result.empty();
             return SessionStartHandler.Result.context(content);

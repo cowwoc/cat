@@ -192,43 +192,6 @@ public final class MainAgentRulesTest
     }
   }
 
-  /**
-   * Verifies that runtimes without path-aware hooks can inject path-restricted rules at session start.
-   *
-   * @throws IOException if file operations fail
-   */
-  @Test
-  public void loadCanIncludePathRestrictedRules() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("main-agent-rules-test-");
-    try
-    {
-      Path pluginRoot = tempDir.resolve("plugin");
-      Path projectRoot = tempDir.resolve("project");
-      writeRule(pluginRoot.resolve("rules/common/path-restricted.md"), """
-        ---
-        mainAgent: true
-        paths: ["*.sh"]
-        ---
-        path restricted rule
-        """);
-
-      try (AgentPluginScope scope = new TestAgentPluginScope(projectRoot, pluginRoot,
-        List.of(pluginRoot.resolve("rules/common"))))
-      {
-        String defaultResult = MainAgentRules.load(scope, YAML_MAPPER);
-        String codexResult = MainAgentRules.load(scope, YAML_MAPPER, true);
-
-        requireThat(defaultResult, "defaultResult").doesNotContain("path restricted rule");
-        requireThat(codexResult, "codexResult").contains("path restricted rule");
-      }
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
   private static void writeRule(Path path, String content) throws IOException
   {
     Files.createDirectories(path.getParent());

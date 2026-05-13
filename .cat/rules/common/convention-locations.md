@@ -1,11 +1,6 @@
 ---
 subAgents: []
 ---
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # Convention File Locations
 
 Two audiences exist for conventions. Using the wrong location causes rules to reach the wrong audience

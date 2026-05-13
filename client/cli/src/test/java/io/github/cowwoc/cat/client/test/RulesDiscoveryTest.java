@@ -1265,6 +1265,44 @@ public final class RulesDiscoveryTest
   }
 
   /**
+   * Verifies that runtime-specific rule stubs can include shared bodies from the sibling include
+   * directory.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void getCatRulesForAudienceExpandsRuntimeSiblingIncludes() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("rules-test-runtime-include-");
+    try
+    {
+      Path rulesRoot = tempDir.resolve(".cat/rules");
+      Path rulesDir = rulesRoot.resolve("claude");
+      Path includeDir = rulesRoot.resolve("include");
+      Files.createDirectories(rulesDir);
+      Files.createDirectories(includeDir);
+      Files.writeString(includeDir.resolve("java.md"), """
+        Java rule body.
+        """);
+      Files.writeString(rulesDir.resolve("java.md"), """
+        ---
+        paths: ["*.java"]
+        ---
+        <!-- cat:include ../include/java.md -->
+        """);
+
+      String result = RulesDiscovery.getCatRulesForAudience(rulesDir, YAML_MAPPER,
+        RulesDiscovery::filterForMainAgent, List.of("Example.java"));
+      requireThat(result, "result").contains("Java rule body.");
+      requireThat(result, "result").doesNotContain("cat:include");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that getCatRulesForAudience returns content for a rule with no subAgents restriction
    * when using filterForSubagent with any subagent type.
    *

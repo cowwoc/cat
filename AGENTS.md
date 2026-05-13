@@ -1,11 +1,5 @@
 # Project Instructions
 
-## Shared Rules For Non-Claude Agents
-
-Non-Claude agents must load portable rules from `.cat/rules/common/*.md` plus their runtime-specific
-subdirectory (for example `.cat/rules/codex/*.md`) before beginning work. Claude Code uses `.claude/rules/` and
-CAT-managed Claude rules; other runtimes must not load another runtime's `.cat/rules/<runtime>/` rules.
-
 ## Commit Types
 
 | Path | Commit Type | Reason |

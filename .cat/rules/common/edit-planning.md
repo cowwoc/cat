@@ -1,11 +1,3 @@
----
-paths: ["*"]
----
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # Edit Planning
 
 When 2 or more file edits are independent, plan them as one edit set before modifying files.

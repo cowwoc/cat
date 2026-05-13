@@ -1,8 +1,3 @@
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # Runtime Duplication
 
 Do not duplicate skills, tests, hooks, or docs solely because the runtime name changes. Prefer shared files, shared

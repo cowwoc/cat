@@ -1,8 +1,3 @@
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # License Headers
 
 All source files in the CAT project must include a license header referencing the CAT Commercial License.
@@ -124,7 +119,8 @@ The following files do not require license headers:
 - All `*.md` files under runtime-specific project rule directories outside `.cat/rules/**`
 - Agent-facing files in flattened release artifacts under `client/distribution/target/runtime/**` (generated files; the
   release processor strips source license headers before installation)
-- Files in `.cat/` except `.cat/rules/**` (planning artifacts, config, runtime data)
+- Files under `.cat/rules/**` (project rule files loaded into agent context)
+- Files in `.cat/` (planning artifacts, config, runtime data)
 - `LICENSE.md` itself
 - Build artifacts (`target/`, `node_modules/`, etc.)
 - Project root documentation (`README.md`, `changelog.md`)
