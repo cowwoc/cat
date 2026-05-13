@@ -113,6 +113,9 @@ public final class PluginArtifactBuilder
     copyFile(pluginDir.resolve("hooks").resolve(runtime.directoryName).resolve("hooks.json"),
       target.resolve("hooks/hooks.json"));
 
+    if (runtime == Runtime.CODEX)
+      copyInstructionTree(pluginDir.resolve("commands/codex"), target.resolve("commands"), runtime);
+
     Files.createDirectories(target.resolve("skills"));
     copySkillSet(pluginDir.resolve("skills/common"), target.resolve("skills"), runtime);
     copySkillSet(pluginDir.resolve("skills").resolve(runtime.directoryName), target.resolve("skills"), runtime);
@@ -180,6 +183,7 @@ public final class PluginArtifactBuilder
       pluginDir.resolve("rules/common"),
       pluginDir.resolve("hooks/common"),
       pluginDir.resolve("concepts"),
+      pluginDir.resolve("commands").resolve(runtime.directoryName),
       pluginDir.resolve("agents").resolve(runtime.directoryName),
       pluginDir.resolve("skills").resolve(runtime.directoryName),
       pluginDir.resolve("rules").resolve(runtime.directoryName),
@@ -194,8 +198,8 @@ public final class PluginArtifactBuilder
 
   private void stripAgentFacingLicenseHeaders(Path target) throws IOException
   {
-    for (Path directory : List.of(target.resolve("agents"), target.resolve("concepts"), target.resolve("rules"),
-      target.resolve("skills")))
+    for (Path directory : List.of(target.resolve("agents"), target.resolve("commands"), target.resolve("concepts"),
+      target.resolve("rules"), target.resolve("skills")))
     {
       if (!Files.isDirectory(directory, LinkOption.NOFOLLOW_LINKS))
         continue;
@@ -307,8 +311,8 @@ public final class PluginArtifactBuilder
 
   private void verifyNoAgentFacingSourceText(Path target) throws IOException
   {
-    for (Path directory : List.of(target.resolve("agents"), target.resolve("concepts"), target.resolve("rules"),
-      target.resolve("skills")))
+    for (Path directory : List.of(target.resolve("agents"), target.resolve("commands"), target.resolve("concepts"),
+      target.resolve("rules"), target.resolve("skills")))
     {
       if (!Files.isDirectory(directory, LinkOption.NOFOLLOW_LINKS))
         continue;

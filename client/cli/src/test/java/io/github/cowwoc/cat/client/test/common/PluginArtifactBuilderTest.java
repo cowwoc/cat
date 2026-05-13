@@ -31,6 +31,8 @@ public final class PluginArtifactBuilderTest
     See LICENSE.md in the project root for license terms.
     -->
     """;
+  private static final String[] CODEX_COMMANDS = {"cleanup", "config", "feedback", "help", "init", "learn",
+    "optimize-execution", "research", "retrospective", "status", "uninstall", "work"};
 
   /**
    * Verifies that release artifacts contain only runtime-specific files and copied license terms.
@@ -57,6 +59,10 @@ public final class PluginArtifactBuilderTest
         "claudeVersion").isEqualTo("1.2.3\n");
       requireThat(Files.readString(codexRoot.resolve("client/VERSION"), StandardCharsets.UTF_8),
         "codexVersion").isEqualTo("1.2.3\n");
+      requireThat(Files.readString(claudeRoot.resolve(".claude-plugin/plugin.json"), StandardCharsets.UTF_8),
+        "claudePluginJson").doesNotContain("\"commands\"");
+      requireThat(Files.readString(codexRoot.resolve(".codex-plugin/plugin.json"), StandardCharsets.UTF_8),
+        "codexPluginJson").contains("\"commands\"");
       requireThat(countSkillDirectories(claudeRoot), "claudeSkillDirectoryCount").isEqualTo(2L);
       requireThat(countSkillDirectories(codexRoot), "codexSkillDirectoryCount").isEqualTo(3L);
       requireThat(Files.isRegularFile(claudeRoot.resolve("skills/common-skill/SKILL.md")),
@@ -120,6 +126,17 @@ public final class PluginArtifactBuilderTest
         "codexSessionStart").isTrue();
       requireThat(Files.isExecutable(codexRoot.resolve("hooks/codex/session-start.sh")),
         "codexSessionStartExecutable").isTrue();
+      for (String command : CODEX_COMMANDS)
+      {
+        requireThat(Files.exists(claudeRoot.resolve("commands/" + command + ".md")),
+          "claudeDoesNotShipCommand[" + command + "]").isFalse();
+        Path codexCommand = codexRoot.resolve("commands/" + command + ".md");
+        requireThat(Files.isRegularFile(codexCommand), "codexCommand[" + command + "]").isTrue();
+        String commandText = Files.readString(codexCommand, StandardCharsets.UTF_8);
+        requireThat(commandText, "codexCommandText[" + command + "]").contains("cat:" + command);
+        requireThat(commandText, "codexCommandText[" + command + "]").contains("$ARGUMENTS");
+        requireThat(commandText, "codexCommandText[" + command + "]").doesNotContain("Copyright (c) 2026");
+      }
 
       String skill = Files.readString(claudeRoot.resolve("skills/claude-skill/SKILL.md"),
         StandardCharsets.UTF_8);
@@ -379,6 +396,7 @@ public final class PluginArtifactBuilderTest
       ".git-filter-repo-config", "concepts", "config", "lang", "migrations", "scripts",
       "templates", ".claude-plugin", ".codex-plugin", "rules/common", "rules/claude",
       "rules/codex", "hooks/common", "hooks/claude", "hooks/codex",
+      "commands/codex",
       "skills/common/common-skill", "skills/claude/claude-skill",
       "skills/codex/codex-skill", "skills/codex/uninstall", "agents/common", "agents/claude", "agents/codex"})
     {
@@ -388,7 +406,8 @@ public final class PluginArtifactBuilderTest
 
     Files.writeString(pluginDir.resolve(".claude-plugin/plugin.json"), "{\"version\":\"1.2.3\"}\n",
       StandardCharsets.UTF_8);
-    Files.writeString(pluginDir.resolve(".codex-plugin/plugin.json"), "{\"version\":\"1.2.3\"}\n",
+    Files.writeString(pluginDir.resolve(".codex-plugin/plugin.json"),
+      "{\"version\":\"1.2.3\",\"commands\":\"./commands/\"}\n",
       StandardCharsets.UTF_8);
     Files.writeString(pluginDir.resolve("emoji-widths.json"), "{}\n", StandardCharsets.UTF_8);
     Files.writeString(pluginDir.resolve("package.json"), "{}\n", StandardCharsets.UTF_8);
@@ -420,6 +439,16 @@ public final class PluginArtifactBuilderTest
       # See LICENSE.md in the project root for license terms.
       exit 0
       """, StandardCharsets.UTF_8);
+    for (String command : CODEX_COMMANDS)
+    {
+      Files.writeString(pluginDir.resolve("commands/codex/" + command + ".md"), """
+        ---
+        description: CAT command wrapper.
+        argument-hint: [args]
+        ---
+        """ + MARKDOWN_LICENSE + "Use the `cat:" + command + "` skill with: $ARGUMENTS\n",
+        StandardCharsets.UTF_8);
+    }
     Files.writeString(pluginDir.resolve("concepts/shared-fragment.md"), MARKDOWN_LICENSE +
       "shared body\n", StandardCharsets.UTF_8);
     Files.writeString(pluginDir.resolve("skills/common/common-skill/SKILL.md"),
