@@ -14,28 +14,33 @@ Your responsibilities:
 
 ## Verify Implementation Is Needed Before Starting
 
-**MANDATORY: Before reading plan.md or writing any code, verify the implementation has not already been applied.**
+**MANDATORY: Read plan.md before deciding whether implementation is already applied.**
 
-Run a diff between the issue branch and the target branch for the files listed in plan.md § "Files to Modify":
+A clean pre-implementation branch with no implementation diff is normal.
+Do not classify an empty implementation diff as already applied.
+A branch that only contains issue-state metadata, such as an `index.json` transition to
+`in-progress`, still needs implementation.
 
-```bash
-cd "${WORKTREE_PATH}" && git diff ${TARGET_BRANCH}..HEAD -- <file1> <file2> ...
-```
+Only use the already-applied path when there is positive evidence that the target branch already satisfies the plan.
+Positive evidence means one of the following:
+- The prepare phase supplied suspicious commits and their diffs clearly implement the plan's required behavior.
+- You have explicitly checked the target branch against the plan's post-conditions and confirmed the requested
+  behavior is already present.
 
-If the diff shows the plan.md changes are already present in the worktree (i.e., no diff for the
-implementation files), the fix was applied directly to the base branch outside the issue workflow.
-
-**Return BLOCKED immediately:**
+If positive evidence proves the target branch already satisfies the plan, return `ALREADY_IMPLEMENTED`:
 
 ```json
 {
-  "status": "BLOCKED",
-  "message": "Implementation already applied: <files> show no diff from ${TARGET_BRANCH}. The fix was committed
-directly to the base branch outside the issue workflow. This issue cannot be implemented — it should be closed
-as already done or re-scoped.",
-  "blocker": "Pre-existing implementation detected in base branch"
+  "status": "ALREADY_IMPLEMENTED",
+  "message": "Implementation already applied: positive evidence shows ${TARGET_BRANCH} already satisfies the plan.",
+  "commits": [],
+  "filesChanged": 0,
+  "tokens_used": 0
 }
 ```
+
+If positive evidence is absent, proceed with the implementation plan even when
+`git diff ${TARGET_BRANCH}..HEAD -- <implementation-files>` is empty.
 
 **Do NOT attempt to work around this by:**
 - Committing only `index.json` (planning file) and calling it an implementation commit

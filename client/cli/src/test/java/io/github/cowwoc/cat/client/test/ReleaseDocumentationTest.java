@@ -81,6 +81,44 @@ public final class ReleaseDocumentationTest
     assertHelpSkillPreservesContent(codexHelp, "codexHelp", "$cat:");
   }
 
+  /**
+   * Verifies work-execute instructions do not treat a clean pre-implementation branch as already applied.
+   *
+   * @throws IOException if reading source files fails
+   */
+  @Test
+  public void workExecuteAllowsCleanPreImplementationBranches() throws IOException
+  {
+    Path sourceRoot = findSourceRoot();
+    String workExecute = Files.readString(sourceRoot.resolve("client/plugin/agents/common/work-execute.md"),
+      StandardCharsets.UTF_8);
+
+    requireThat(workExecute, "workExecute").
+      contains("A clean pre-implementation branch with no implementation diff is normal");
+    requireThat(workExecute, "workExecute").
+      contains("Do not classify an empty implementation diff as already applied");
+    requireThat(workExecute, "workExecute").
+      doesNotContain("no diff for the\nimplementation files");
+  }
+
+  /**
+   * Verifies common work verification instructions stay runtime-neutral.
+   *
+   * @throws IOException if reading source files fails
+   */
+  @Test
+  public void commonWorkVerificationUsesRuntimeNeutralTerminology() throws IOException
+  {
+    Path sourceRoot = findSourceRoot();
+    String workVerify = Files.readString(sourceRoot.resolve("client/plugin/agents/common/work-verify.md"),
+      StandardCharsets.UTF_8);
+    String workConfirm = Files.readString(
+      sourceRoot.resolve("client/plugin/skills/common/work-confirm/first-use.md"), StandardCharsets.UTF_8);
+
+    assertRuntimeNeutralWorkVerification(workVerify, "workVerify");
+    assertRuntimeNeutralWorkVerification(workConfirm, "workConfirm");
+  }
+
   private static String assertHelpSkillContract(Path firstUse, String name) throws IOException
   {
     String content = Files.readString(firstUse, StandardCharsets.UTF_8);
@@ -112,6 +150,17 @@ public final class ReleaseDocumentationTest
     requireThat(content, name).contains("{major}.{minor}-{issue-name}");
     requireThat(content, name).contains("{major}.{minor}.{patch}-{issue-name}");
     requireThat(content, name).contains("{issue-branch}-sub-{uuid}");
+  }
+
+  private static void assertRuntimeNeutralWorkVerification(String content, String name)
+  {
+    requireThat(content, name).contains("E2E tests must use the runtime selected by `CAT_RUNTIME`");
+    requireThat(content, name).contains("runtime-native test infrastructure");
+    requireThat(content, name).contains("Do not skip E2E because another runtime's infrastructure is unavailable");
+    requireThat(content, name).doesNotContain("Claude");
+    requireThat(content, name).doesNotContain("Codex");
+    requireThat(content, name).doesNotContain("CAT_RUNTIME:-claude");
+    requireThat(content, name).doesNotContain("ModelIdResolver.detectClaudeCodeVersion");
   }
 
   private static Path findSourceRoot()

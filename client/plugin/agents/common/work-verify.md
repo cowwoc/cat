@@ -52,7 +52,7 @@ Return compact JSON only — no verbose output, no file contents, no build logs:
 ```
 
 Status values:
-- `COMPLETE`: All criteria Done, E2E passed (or skipped for docs/config issues)
+- `COMPLETE`: All criteria Done, E2E passed (or skipped only for docs/config issues or caution levels below high)
 - `PARTIAL`: Some criteria Partial, none Missing, E2E passed or skipped
 - `INCOMPLETE`: Any criteria Missing, or E2E failed
 
@@ -74,9 +74,19 @@ Status values:
 - **E2E Testing Guidance:**
   - For feature/bugfix/refactor/performance issues AND CAUTION == "high": Run runtime E2E tests using worktree
     artifacts (not cached plugin). For other caution levels, set e2e status to SKIPPED.
+  - E2E tests must use the runtime selected by `CAT_RUNTIME`. E2E runs must use the selected runtime's artifacts and
+    runtime-native test infrastructure.
+  - `CAT_RUNTIME` must be set before runtime E2E invocation. If it is unset for a high-caution E2E run, set E2E
+    status to FAILED because the verifier cannot select the correct runtime artifact.
   - Runtime invocation must use an absolute binary path:
-    `${WORKTREE_PATH}/client/cli/target/jlink/${CAT_RUNTIME:-claude}/bin/instruction-test-runner ...`
+    `${WORKTREE_PATH}/client/cli/target/jlink/${CAT_RUNTIME}/bin/instruction-test-runner ...`
     Do NOT invoke `instruction-test-runner` via PATH lookup.
+  - If a high-caution E2E run fails because the selected runtime path depends on another runtime's infrastructure,
+    set E2E status to FAILED. Record the failure evidence in `${VERIFY_DIR}/e2e-test-output.json` and use explanation
+    "E2E failed: selected runtime requires runtime-native E2E infrastructure".
+  - Do not skip E2E because another runtime's infrastructure is unavailable. Missing runtime artifacts, unsupported
+    commands, assertion failures, or dependencies on the wrong runtime infrastructure are E2E failures for runtime
+    behavior issues.
   - Before runtime E2E invocation, run a clean-worktree preflight:
     `cd "${WORKTREE_PATH}" && git status --porcelain`
     If any output is present, set e2e status to FAILED with an explanation that runtime E2E requires a clean
@@ -131,5 +141,8 @@ Update this logic:
 - For `docs` and `config` issue types only: set e2e status to SKIPPED (existing behavior, unchanged)
 - For all other issue types: run E2E **only if CAUTION == "high"**; otherwise set e2e status to SKIPPED
   with explanation "E2E skipped (caution: ${CAUTION})"
+- If a high-caution runtime E2E attempt fails because the selected runtime path still depends on another runtime's
+  infrastructure, set e2e status to FAILED with explanation
+  "E2E failed: selected runtime requires runtime-native E2E infrastructure".
 
 Any `Missing` criterion from compile or unit tests contributes to the overall `INCOMPLETE` status.

@@ -11,10 +11,16 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import io.github.cowwoc.cat.client.test.TestUtils;
 import io.github.cowwoc.cat.agent.PluginArtifactBuilder;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import org.testng.SkipException;
@@ -189,6 +195,106 @@ public final class PluginArtifactBuilderTest
       requireThat(codexSkill.resolve("first-use.md"), "codexFirstUse").isRegularFile();
       requireThat(claudeSkill.resolve("helper.md"), "claudeHelper").isRegularFile();
       requireThat(codexSkill.resolve("helper.md"), "codexHelper").isRegularFile();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies current runtime artifacts expand shared agent contracts for both runtimes.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void buildCurrentRuntimeArtifactsExpandAgentContracts() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try
+    {
+      Path sourceRoot = findSourceRoot();
+      Path tempRepo = tempDir.resolve("repo");
+      Path tempClient = tempRepo.resolve("client");
+      Files.createDirectories(tempRepo);
+      Files.writeString(tempRepo.resolve("LICENSE.md"), "license\n", StandardCharsets.UTF_8);
+      copyDirectory(sourceRoot.resolve("client/plugin"), tempClient.resolve("plugin"));
+
+      Path targetDir = tempClient.resolve("distribution/target/runtime");
+      new PluginArtifactBuilder(tempClient.resolve("plugin"), tempClient, targetDir).build();
+
+      for (String runtime : new String[]{"claude", "codex"})
+      {
+        Path runtimeRoot = targetDir.resolve(runtime);
+        assertRuntimeArtifactDoesNotContain(runtimeRoot, "cat:include", runtime + "UnresolvedInclude");
+        String workExecuteAgent = "agents/work-execute.toml";
+        if (runtime.equals("claude"))
+          workExecuteAgent = "agents/work-execute.md";
+        String workExecute = Files.readString(runtimeRoot.resolve(workExecuteAgent), StandardCharsets.UTF_8);
+        requireThat(workExecute, runtime + "WorkExecute").contains(
+          "Read plan.md before deciding whether implementation is already applied");
+        requireThat(workExecute, runtime + "WorkExecute").contains(
+          "A clean pre-implementation branch with no implementation diff is normal");
+        requireThat(workExecute, runtime + "WorkExecute").contains(
+          "Do not classify an empty implementation diff as already applied");
+        requireThat(workExecute, runtime + "WorkExecute").contains(
+          "Only use the already-applied path when there is positive evidence");
+        requireThat(workExecute, runtime + "WorkExecute").contains(
+          "If positive evidence is absent, proceed with the implementation plan even when");
+        requireThat(workExecute, runtime + "WorkExecute").contains(
+          "`git diff ${TARGET_BRANCH}..HEAD -- <implementation-files>` is empty");
+        requireThat(workExecute, runtime + "WorkExecute").contains("ALREADY_IMPLEMENTED");
+        assertNoEmptyDiffAlreadyImplementedRule(workExecute, runtime + "WorkExecute");
+        requireThat(workExecute, runtime + "WorkExecute").doesNotContain("cat:include");
+
+        String workVerifyAgent = "agents/work-verify.toml";
+        if (runtime.equals("claude"))
+          workVerifyAgent = "agents/work-verify.md";
+        String workVerify = Files.readString(runtimeRoot.resolve(workVerifyAgent), StandardCharsets.UTF_8);
+        assertContainsNormalized(workVerify, runtime + "WorkVerify",
+          "E2E tests must use the runtime selected by `CAT_RUNTIME`");
+        assertContainsNormalized(workVerify, runtime + "WorkVerify",
+          "E2E runs must use the selected runtime's artifacts and runtime-native test infrastructure");
+        assertNoRuntimeSpecificCommonE2ESkip(workVerify, runtime + "WorkVerify");
+        assertNoBlanketCodexE2ESkipRule(workVerify, runtime + "WorkVerify");
+        requireThat(workVerify, runtime + "WorkVerify").doesNotContain("cat:include");
+
+        String workConfirm = Files.readString(runtimeRoot.resolve("skills/work-confirm/first-use.md"),
+          StandardCharsets.UTF_8);
+        assertContainsNormalized(workConfirm, runtime + "WorkConfirm",
+          "E2E tests must use the runtime selected by `CAT_RUNTIME`");
+        assertContainsNormalized(workConfirm, runtime + "WorkConfirm",
+          "E2E runs must use the selected runtime's artifacts and runtime-native test infrastructure");
+        assertNoRuntimeSpecificCommonE2ESkip(workConfirm, runtime + "WorkConfirm");
+        assertNoBlanketCodexE2ESkipRule(workConfirm, runtime + "WorkConfirm");
+        requireThat(workConfirm, runtime + "WorkConfirm").doesNotContain("cat:include");
+
+        String stakeholderReview = Files.readString(runtimeRoot.resolve("skills/stakeholder-review/first-use.md"),
+          StandardCharsets.UTF_8);
+        assertContainsNormalized(stakeholderReview, runtime + "StakeholderReview",
+          "Prepare prompts: for each stakeholder in $SELECTED, collect conventions from CONVENTION_MAP, gather " +
+            "ISSUE_PLAN_PATH and VERSION_PLAN_PATH (use VERSION_ID extraction from Step 1), extract " +
+            "DOMAIN_KNOWLEDGE from plan.md `## Domain Knowledge` section (if present), and convert CHANGED_FILES " +
+            "to bullets.");
+        requireThat(stakeholderReview, runtime + "StakeholderReview").contains("Spawn each stakeholder with:");
+        requireThat(stakeholderReview, runtime + "StakeholderReview").contains("## Working Directory");
+        requireThat(stakeholderReview, runtime + "StakeholderReview").contains("WORKTREE_PATH: {WORKTREE_PATH}");
+        requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
+          "Changed files (read from WORKTREE_PATH): {CHANGED_FILES_BULLETS}");
+        requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
+          "Read every changed file using absolute paths rooted at {WORKTREE_PATH}/.");
+        requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
+          "Each reviewer MUST also use its stakeholder-specific agent type");
+        requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
+          "Do NOT use a generic/default agent type for stakeholder review");
+        requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
+          "agent_type=<stakeholder-agent-type>");
+        requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
+          "subagent_type=<stakeholder-agent-type>");
+        requireThat(stakeholderReview, runtime + "StakeholderReview").contains("spawn_agent(message=prompt");
+        requireThat(stakeholderReview, runtime + "StakeholderReview").contains("Agent(prompt=prompt");
+        requireThat(stakeholderReview, runtime + "StakeholderReview").doesNotContain("cat:include");
+      }
     }
     finally
     {
@@ -585,6 +691,54 @@ public final class PluginArtifactBuilderTest
   }
 
   /**
+   * Finds the repository source root from the Maven test working directory.
+   *
+   * @return the repository root
+   * @throws IOException if the source root cannot be found
+   */
+  private static Path findSourceRoot() throws IOException
+  {
+    Path current = Path.of("").toAbsolutePath().normalize();
+    while (current != null)
+    {
+      if (Files.isDirectory(current.resolve("client/plugin"), LinkOption.NOFOLLOW_LINKS) &&
+        Files.isRegularFile(current.resolve("client/pom.xml"), LinkOption.NOFOLLOW_LINKS))
+      {
+        return current;
+      }
+      current = current.getParent();
+    }
+    throw new FileNotFoundException("Unable to find CAT source root");
+  }
+
+  /**
+   * Copies a directory tree without following symlinks.
+   *
+   * @param source the source directory
+   * @param target the target directory
+   * @throws IOException if copying fails
+   */
+  private static void copyDirectory(Path source, Path target) throws IOException
+  {
+    Files.walkFileTree(source, new SimpleFileVisitor<>()
+    {
+      @Override
+      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException
+      {
+        Files.createDirectories(target.resolve(source.relativize(dir)));
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException
+      {
+        Files.copy(file, target.resolve(source.relativize(file)));
+        return FileVisitResult.CONTINUE;
+      }
+    });
+  }
+
+  /**
    * Counts the skill directories in a runtime artifact.
    *
    * @param runtimeRoot the runtime artifact root
@@ -597,6 +751,103 @@ public final class PluginArtifactBuilderTest
     {
       return skills.filter(Files::isDirectory).count();
     }
+  }
+
+  /**
+   * Verifies that no generated runtime artifact file contains source-only markers.
+   *
+   * @param runtimeRoot the runtime artifact root
+   * @param text        the marker text that must not be shipped
+   * @param name        the assertion name
+   * @throws IOException if file operations fail
+   */
+  private static void assertRuntimeArtifactDoesNotContain(Path runtimeRoot, String text, String name)
+    throws IOException
+  {
+    try (Stream<Path> files = Files.walk(runtimeRoot))
+    {
+      for (Path file : files.filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)).toList())
+      {
+        String content = Files.readString(file, StandardCharsets.UTF_8);
+        if (content.contains(text))
+          throw new AssertionError(name + ": " + runtimeRoot.relativize(file) + " contains " + text);
+      }
+    }
+  }
+
+  /**
+   * Verifies that common E2E verification does not accept another runtime's infrastructure as a skip reason.
+   *
+   * @param content the generated work verification content
+   * @param name    the assertion name
+   */
+  private static void assertNoRuntimeSpecificCommonE2ESkip(String content, String name)
+  {
+    String normalized = normalizeInstructionText(content);
+    requireThat(normalized, name).doesNotContain(
+      "another runtime's infrastructure is unavailable, set e2e status to skipped");
+    requireThat(normalized, name).doesNotContain(
+      "codex sessions without claude code e2e infrastructure");
+    requireThat(normalized, name).doesNotContain(
+      "codex session lacks claude code e2e infrastructure");
+    requireThat(normalized, name).doesNotContain(
+      "codex missing-claude infrastructure skip");
+    requireThat(normalized, name).doesNotContain(
+      "claude code infrastructure is unavailable");
+  }
+
+  /**
+   * Verifies that work-execute does not contain contradictory empty-diff already-applied guidance.
+   *
+   * @param content the generated work-execute content
+   * @param name    the assertion name
+   */
+  private static void assertNoEmptyDiffAlreadyImplementedRule(String content, String name)
+  {
+    requireThat(normalizeInstructionText(content), name).doesNotContain(
+      "return already_implemented when the implementation diff is empty");
+    requireThat(normalizeInstructionText(content), name).doesNotContain(
+      "implementation diff is empty, return already_implemented");
+    requireThat(content, name).doesNotContain("no diff for the\nimplementation files");
+  }
+
+  /**
+   * Verifies that Codex E2E skipping is not broadened beyond missing Claude Code infrastructure.
+   *
+   * @param content the generated work verification content
+   * @param name    the assertion name
+   */
+  private static void assertNoBlanketCodexE2ESkipRule(String content, String name)
+  {
+    requireThat(normalizeInstructionText(content), name).doesNotContain(
+      "treat any codex e2e failure as skipped");
+    requireThat(normalizeInstructionText(content), name).doesNotContain(
+      "all codex e2e failures as skipped");
+    requireThat(normalizeInstructionText(content), name).doesNotContain(
+      "any e2e failure as skipped");
+  }
+
+  /**
+   * Verifies content while ignoring line wrapping.
+   *
+   * @param content  the actual content
+   * @param name     the assertion name
+   * @param expected the expected content
+   */
+  private static void assertContainsNormalized(String content, String name, String expected)
+  {
+    requireThat(normalizeInstructionText(content), name).contains(normalizeInstructionText(expected));
+  }
+
+  /**
+   * Normalizes generated instruction text for phrase assertions.
+   *
+   * @param content the content to normalize
+   * @return normalized content
+   */
+  private static String normalizeInstructionText(String content)
+  {
+    return content.toLowerCase(Locale.ROOT).replace("`", "").replaceAll("\\s+", " ");
   }
 
   /**

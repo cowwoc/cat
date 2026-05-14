@@ -123,11 +123,21 @@ Task tool:
          using worktree artifacts.
        - For `docs` and `config` issue types only: set e2e status to SKIPPED. Any issue type not
          in this exhaustive list must be treated as requiring runtime E2E tests.
-       - E2E isolation: use worktree artifacts (${WORKTREE_PATH}/client/cli/target/jlink/${CAT_RUNTIME:-claude}/bin/ and
+       - E2E isolation: use worktree artifacts (${WORKTREE_PATH}/client/cli/target/jlink/${CAT_RUNTIME}/bin/ and
          ${WORKTREE_PATH}/client/plugin/scripts/), never the cached plugin installation
+       - E2E tests must use the runtime selected by `CAT_RUNTIME`. E2E runs must use the selected runtime's artifacts
+         and runtime-native test infrastructure.
+       - `CAT_RUNTIME` must be set before runtime E2E invocation. If it is unset for a high-caution E2E run, set E2E
+         status to FAILED because the verifier cannot select the correct runtime artifact.
        - Runtime invocation must use an absolute binary path:
-         `${WORKTREE_PATH}/client/cli/target/jlink/${CAT_RUNTIME:-claude}/bin/instruction-test-runner ...`
+         `${WORKTREE_PATH}/client/cli/target/jlink/${CAT_RUNTIME}/bin/instruction-test-runner ...`
          Do NOT invoke `instruction-test-runner` via PATH lookup.
+       - If a high-caution E2E run fails because the selected runtime path depends on another runtime's
+         infrastructure, set E2E status to FAILED. Record the failure evidence in `${VERIFY_DIR}/e2e-test-output.json`
+         and use explanation "E2E failed: selected runtime requires runtime-native E2E infrastructure".
+       - Do not skip E2E because another runtime's infrastructure is unavailable. Missing runtime artifacts,
+         unsupported commands, assertion failures, or dependencies on the wrong runtime infrastructure are E2E
+         failures for runtime behavior issues.
        - Clean-worktree preflight is mandatory before runtime E2E invocation:
          `cd "${WORKTREE_PATH}" && git status --porcelain`
          If any output is present, STOP with a clear failure message that runtime E2E cannot run until
@@ -163,7 +173,7 @@ Task tool:
     }
     ```
     Status values:
-    - COMPLETE: All criteria Done, E2E passed (or skipped for docs/config issues)
+    - COMPLETE: All criteria Done, E2E passed (or skipped only for docs/config issues or caution levels below high)
     - PARTIAL: Some criteria Partial, none Missing, E2E passed or skipped
     - INCOMPLETE: Any criteria Missing, or E2E failed
 ```
