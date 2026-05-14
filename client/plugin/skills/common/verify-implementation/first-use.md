@@ -80,8 +80,8 @@ Display: "◆ Found {N} post-conditions"
 **Spawn verification subagents:**
 
 For each post-condition criterion, spawn a verification subagent using the Task tool with:
-- `subagent_type: "general-purpose"`
-- `model: "haiku"` (verification is straightforward - check files against criteria)
+- Use the runtime-native lightweight verification agent or default subagent configured for the runtime.
+- Do not set an inline model value in the skill prompt.
 - `prompt:` the verification prompt below
 
 Build the prompt for each criterion using this template:

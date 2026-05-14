@@ -124,7 +124,6 @@ Spawn the squash subagent:
 Task tool:
   description: "Squash: rebase, squash commits, verify index.json"
   subagent_type: "cat:work-squash"
-  model: "haiku"
   prompt: |
     Execute the squash phase for issue ${ISSUE_ID}.
     ISSUE_ID: ${ISSUE_ID}

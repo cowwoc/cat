@@ -226,9 +226,9 @@ Spawn the review-and-fix subagent:
 ```
 Task tool:
   description: "Plan completeness review"
-  subagent_type: "general-purpose"
+  subagent_type: "cat:plan-review-agent"
   prompt: |
-    Use the current runtime's medium-strength coding/reasoning model.
+    Use the configured plan-review agent model.
 
     You are a plan review-and-fix agent. Read the draft plan.md from disk, review it for
     completeness, fix any gaps, and re-verify. Iterate until the plan passes review.

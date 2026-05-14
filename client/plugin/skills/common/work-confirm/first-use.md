@@ -238,8 +238,7 @@ the first result is PARTIAL or INCOMPLETE. Do NOT re-initialize inside any branc
    ```
    Task tool:
      description: "Plan fixes for missing post-conditions (iteration ${VERIFY_ITERATION})"
-     subagent_type: "general-purpose"
-     model: "sonnet"
+     subagent_type: "cat:plan-builder-agent"
      prompt: |
        Revise plan.md to add fix steps for the following missing post-conditions.
 

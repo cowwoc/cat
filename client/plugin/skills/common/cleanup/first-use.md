@@ -55,7 +55,15 @@ work was completed on the target branch. Resetting to `pending` causes duplicate
 
 ### Step 1: Survey Current State
 
-!`"${CAT_PLUGIN_DATA}/client/bin/get-output" cleanup`
+Load the cleanup survey:
+
+```bash
+if [ -z "${CAT_PLUGIN_DATA:-}" ]; then
+  echo "CAT_PLUGIN_DATA is required" >&2
+  exit 1
+fi
+"${CAT_PLUGIN_DATA}/client/bin/get-output" cleanup
+```
 
 ---
 

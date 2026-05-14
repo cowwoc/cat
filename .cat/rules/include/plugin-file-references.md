@@ -25,7 +25,7 @@ examples:
 - A directive that reads a source-only file at runtime:
 
   ```
-  !`cat .cat/rules/common/foo.md`
+  [runtime preprocessor directive that reads .cat/rules/common/foo.md]
   ```
 - An agent instruction like "Read `.cat/rules/common/foo.md` for details"
 

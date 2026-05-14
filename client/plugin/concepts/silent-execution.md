@@ -21,7 +21,7 @@ Users see implementation details instead of meaningful results.
 
 ## Solution
 
-Route the command through a skill's preprocessor directive (`!` backtick). The command runs
+Route the command through a Claude skill preprocessor directive. The command runs
 invisibly during skill loading and its output appears inline as skill content.
 
 ## How It Works
@@ -31,7 +31,7 @@ Claude Code processes skill content in this order:
 1. **Argument substitution** — `$ARGUMENTS`, `$name`, `$1`, `$ARGUMENTS[0]` replaced with values
 2. **Variable substitution** — `${CLAUDE_PLUGIN_ROOT}`, `${CLAUDE_SESSION_ID}`,
    `${CLAUDE_PROJECT_DIR}` replaced
-3. **Preprocessor execution** — `!` backtick commands run, output replaces the directive
+3. **Preprocessor execution** — Claude preprocessor commands run, output replaces the directive
 
 Because argument substitution happens first, preprocessor commands can reference skill arguments.
 
@@ -76,7 +76,7 @@ Skill B's preprocessor runs the command invisibly using the passed arguments.
 │ Preprocessing (invisible to user):                   │
 │   $completed_issue → "2.1-fix-bug"                    │
 │   $target_branch → "v2.1"                               │
-│   !`launcher $completed_issue $target_branch` → output   │
+│   Claude preprocessor directive → output                 │
 │                                                      │
 │ Agent receives: command output as skill content      │
 └──────────────────────────────────────────────────────┘
@@ -101,7 +101,7 @@ arguments:
   - completed_issue
   - target_branch
 ---
-!`"${CLAUDE_PLUGIN_DATA}/client/bin/get-next-issue-box" $completed_issue $target_branch`
+[Claude preprocessor directive invoking get-next-issue-box with completed_issue and target_branch]
 ```
 
 When `/cat:work-complete 2.1-fix-bug v2.1` is invoked:

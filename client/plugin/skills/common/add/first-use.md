@@ -1483,4 +1483,12 @@ CLIENT_BIN="${CAT_PROJECT_DIR}/client/cli/target/jlink/bin"
 
 </success_criteria>
 
-!`"${CAT_PLUGIN_DATA}/client/bin/get-output" add`
+Before starting the verify step, load the deterministic add workflow context:
+
+```bash
+if [ -z "${CAT_PLUGIN_DATA:-}" ]; then
+  echo "CAT_PLUGIN_DATA is required" >&2
+  exit 1
+fi
+"${CAT_PLUGIN_DATA}/client/bin/get-output" add
+```

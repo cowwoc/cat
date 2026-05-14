@@ -1,9 +1,6 @@
 ---
 description: Uninstall CAT from Codex by removing CAT-owned project agent files before delegating to Codex's built-in plugin uninstaller.
-model: gpt-5.4-mini
-effort: low
 allowed-tools: [Bash]
-disable-model-invocation: true
 ---
 <!--
 Copyright (c) 2026 Gili Tzabari. All rights reserved.

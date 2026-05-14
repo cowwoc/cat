@@ -1,27 +1,49 @@
-# Remove Unsupported Codex Skill Frontmatter
+# Clean Up Skill Frontmatter and Delegation
 
 ## Objective
 
-Review all Codex-specific skill files and remove frontmatter properties that Codex does not support.
+Clean up CAT skills so Claude-specific frontmatter and Codex-specific frontmatter are separated into runtime wrappers,
+shared instruction body fragments live in `skills/include`, common runtime companion files stay in `skills/common`,
+model/effort-sensitive work uses explicit agents, and
+deterministic skill logic is moved toward Java CLI commands where practical.
 
 ## Pre-conditions
 
-- The work runs in a CAT-managed worktree for `v2.1`.
-- Codex-specific skill files are identified before editing.
-- Supported Codex skill frontmatter properties are determined from local conventions or current Codex behavior.
+- The work runs in the existing CAT-managed worktree for `2.1-remove-unsupported-codex-skill-frontmatter`.
+- The existing issue is expanded and reopened rather than replaced by a new follow-up issue.
+- Tests do not enforce repository conventions by scanning the literal contents of Markdown/non-code source files.
 
 ## Implementation Plan
 
-1. Identify every Codex-specific skill file in the repository.
-2. Inspect their YAML frontmatter keys.
-3. Determine which frontmatter keys are supported for Codex skills.
-4. Remove unsupported properties from the affected frontmatter blocks while preserving supported metadata and skill content.
-5. Run a targeted check that no Codex-specific skill frontmatter still contains unsupported properties.
-6. Run the full project verification command.
+1. Update repository development conventions:
+   - Add testing guidance that tests must not verify literal contents of non-code files such as Markdown skills,
+     rules, plans, or concepts.
+   - Update `llm-to-java.md` so a whole-skill Java CLI wrapper is preferred when deterministic end-to-end behavior is
+     possible; use multiple CLI calls only when agent judgment is needed between deterministic steps.
+2. Update runtime artifact generation:
+   - Support runtime-specific skill wrappers that include shared fragments from `skills/include` with `cat:include`.
+   - Preserve common companion files such as `first-use.md` when a runtime wrapper replaces the common `SKILL.md`.
+3. Split shared skills:
+   - Move shared skill body fragments into no-frontmatter files under `skills/include`.
+   - Add Claude `SKILL.md` wrappers with Claude-specific frontmatter.
+   - Add Codex `SKILL.md` wrappers with only Codex-supported frontmatter.
+4. Revise model/effort-sensitive skills:
+   - Add explicit runtime agents for `plan-builder`, `decompose-issue`, `learn`, and `research`.
+   - Update those skill launchers to delegate reasoning-heavy work to the explicit agents.
+   - Clean up stale generic subagent/model examples in secondary skills when encountered.
+5. Apply Java CLI extraction opportunistically:
+   - Prefer a whole-skill Java CLI wrapper for deterministic skills.
+   - Otherwise extract deterministic subsets such as file/JSON updates, validation, git checks, structured output, and
+     path/subprocess argument construction.
+6. Verify with executable behavior tests and full Maven verification.
 
 ## Post-conditions
 
-- [ ] All Codex-specific skill frontmatter uses only supported properties.
-- [ ] Unsupported properties are removed without changing skill bodies unnecessarily.
-- [ ] A targeted validation confirms no unsupported properties remain in Codex-specific skills.
-- [ ] `mvn -f client/pom.xml verify -e` passes.
+- [x] Shared skill body fragments are frontmatter-free include targets under `skills/include`.
+- [x] Claude skill wrappers retain Claude-only frontmatter such as `model`, `effort`, `context`,
+      `user-invocable`, and `disable-model-invocation`.
+- [x] Codex skill wrappers contain only Codex-supported skill frontmatter.
+- [x] Runtime artifacts include wrapper-expanded skill bodies and required common companion files.
+- [x] Reasoning-heavy skills use explicit agents for model/effort-sensitive work.
+- [x] Tests avoid asserting literal contents of repository Markdown/non-code files.
+- [x] `mvn -f client/pom.xml verify -e` passes.

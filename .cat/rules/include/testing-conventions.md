@@ -130,3 +130,13 @@ name, or tests that assert a directory contains no imports from a broad category
 These constraints belong in code review, architecture notes, or convention files, not in the test suite. Build-time
 tests should cover executable behavior with meaningful inputs and outputs. Design-boundary concerns should be reviewed
 manually unless they can be expressed as direct product behavior.
+
+### Do Not Test Non-Code File Contents
+
+Do not add tests that verify the literal contents of non-code files such as Markdown instructions, documentation,
+plans, rules, skills, or concepts. This includes tests that scan `.md` files for frontmatter keys, phrases, include
+targets, section names, or source-layout conventions.
+
+If a non-code file affects runtime behavior, test the executable behavior that consumes it instead. For example, test
+that an artifact builder produces the expected runtime artifact from synthetic inputs, or that a parser rejects invalid
+synthetic content. Do not test that repository Markdown files contain or omit specific text.

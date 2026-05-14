@@ -32,6 +32,35 @@ The aim is to make processes deterministic wherever possible. Only leave in the 
 
 ## Pattern
 
+When designing or revising a skill, first try to replace the skill with a thin wrapper around a single Java CLI command.
+This is the preferred shape when the workflow can be made deterministic end-to-end.
+
+The ideal Codex-compatible skill body is a short instruction that redirects the agent to one Java CLI command:
+
+````markdown
+Run the deterministic implementation through Bash:
+
+```bash
+if [ -z "${CAT_PLUGIN_DATA:-}" ]; then
+  echo "CAT_PLUGIN_DATA is required" >&2
+  exit 1
+fi
+"${CAT_PLUGIN_DATA}/client/bin/some-command"
+```
+
+Pass any arguments from the user request as regular quoted CLI arguments.
+````
+
+Do not use Claude preprocessor syntax in Codex skill bodies. If a Claude runtime wrapper needs preprocessing, keep that
+syntax in Claude-specific skill content rather than shared Codex-facing instructions.
+
+Use one CLI command per skill when the command can own the full deterministic workflow: argument parsing, validation,
+file reads and writes, git state checks, structured output generation, and subprocess setup.
+
+Only keep multi-step LLM instructions when the skill genuinely needs agent judgment, user interaction, or novel text
+generation between deterministic operations. In that case, extract each deterministic subset into Java and have the
+skill call those Java tools at the decision boundaries.
+
 When designing a skill step that reads a file, transforms data, and writes a result:
 
 1. Implement the read-transform-write logic as a Java CLI tool

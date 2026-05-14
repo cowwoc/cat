@@ -12,4 +12,12 @@ goal.
 This variant runs as a lightweight Haiku subagent and is invoked by other skills — it is not user-invocable.
 Use `cat:recover-from-drift` when actions keep failing or progress has stalled without explanation.
 
-!`"${CAT_PLUGIN_DATA}/client/bin/get-output" recover-from-drift-agent`
+Load the drift recovery guidance:
+
+```bash
+if [ -z "${CAT_PLUGIN_DATA:-}" ]; then
+  echo "CAT_PLUGIN_DATA is required" >&2
+  exit 1
+fi
+"${CAT_PLUGIN_DATA}/client/bin/get-output" recover-from-drift-agent
+```

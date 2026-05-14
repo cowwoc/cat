@@ -500,7 +500,6 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
    Task tool:
      description: "Plan per-concern fixes (iteration ${AUTOFIX_ITERATION})"
      subagent_type: "cat:work-execute"
-     model: "sonnet"
      prompt: |
        Analyze the following stakeholder review concerns for issue ${ISSUE_ID} and produce a
        per-concern fix plan. Each concern MUST have a self-contained section with all information
@@ -609,7 +608,6 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
    Task tool:
      description: "Fix concern 1: ${concern_brief_description} (iteration ${AUTOFIX_ITERATION})"
      subagent_type: "cat:work-execute"
-     model: "sonnet"
      prompt: |
        Fix the following stakeholder review concern for issue ${ISSUE_ID}.
 
@@ -687,7 +685,6 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
     Task tool:
       description: "Fix concern ${N}: ${concern_brief_description} (iteration ${AUTOFIX_ITERATION})"
       subagent_type: "cat:work-execute"
-      model: "sonnet"
       prompt: |
         Fix the following stakeholder review concern for issue ${ISSUE_ID}.
 

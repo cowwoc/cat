@@ -5,15 +5,14 @@ See LICENSE.md in the project root for license terms.
 -->
 # Research
 
-Provide prompt templates for spawning research subagents.
+Provide prompt templates for dedicated research agents.
 
 <objective>
 
-Provide prompt templates for spawning research subagents. Main agent selects appropriate
-template based on research needs and spawns subagent directly using Task tool.
+Provide prompt templates for research work. The main agent delegates to the dedicated research agent. When this file is
+read by the dedicated research agent, the agent executes the selected template directly.
 
-**Observable goal:** Main agent receives template instructions, spawns research subagent
-with proper configuration, and receives structured research results.
+**Observable goal:** Main agent receives structured research results from the dedicated research agent.
 
 </objective>
 
@@ -31,8 +30,8 @@ with proper configuration, and receives structured research results.
 - Topic is well-understood and no research needed
 - Just need to read a few files (use Read/Grep directly)
 
-**Main agent only:** This skill provides templates for spawning research subagents.
-Subagents cannot spawn other subagents, so this skill cannot be invoked from within a subagent.
+**Dedicated-agent mode:** If the current agent is `cat-research-agent` or `research-agent`, execute the selected
+research template directly. Do not spawn another research subagent.
 Reference: concepts/delegation-rules.md
 
 </when_to_use>
@@ -46,9 +45,8 @@ patterns)
 
 **Spawn configuration:**
 ```yaml
-Task tool:
-  subagent_type: "Explore"
-  model: "sonnet"
+Runtime-native agent tool:
+  agent_type: "cat-research-agent"
   description: "Stakeholder research: {topic}"
   prompt: |
     Research {topic} from 8 stakeholder perspectives: architecture, security, design,
@@ -101,9 +99,8 @@ Main agent: [Spawns subagent with template above, substituting {topic}]
 
 **Spawn configuration:**
 ```yaml
-Task tool:
-  subagent_type: "general-purpose"
-  model: "sonnet"
+Runtime-native agent tool:
+  agent_type: "cat-research-agent"
   description: "Implementation research: {topic}"
   prompt: |
     Research how to implement: {topic}
@@ -151,9 +148,8 @@ Main agent: [Spawns subagent with template above]
 
 **Spawn configuration:**
 ```yaml
-Task tool:
-  subagent_type: "Explore"
-  model: "sonnet"
+Runtime-native agent tool:
+  agent_type: "cat-research-agent"
   description: "Codebase exploration: {topic}"
   prompt: |
     Explore the codebase to understand: {topic}
@@ -201,9 +197,8 @@ Main agent: [Spawns subagent with template above]
 
 **Spawn configuration:**
 ```yaml
-Task tool:
-  subagent_type: "general-purpose"
-  model: "sonnet"
+Runtime-native agent tool:
+  agent_type: "cat-research-agent"
   description: "External docs research: {topic}"
   prompt: |
     Research external documentation for: {topic}
@@ -294,23 +289,22 @@ AskUserQuestion({
 
 | Selection | Template | Subagent Type | Model |
 |-----------|----------|---------------|-------|
-| Stakeholder Research | Template 1 | Explore | sonnet |
-| Implementation Research | Template 2 | general-purpose | sonnet |
-| Codebase Exploration | Template 3 | Explore | sonnet |
-| External Documentation | Template 4 | general-purpose | sonnet |
+| Stakeholder Research | Template 1 | cat-research-agent | explicit agent config |
+| Implementation Research | Template 2 | cat-research-agent | explicit agent config |
+| Codebase Exploration | Template 3 | cat-research-agent | explicit agent config |
+| External Documentation | Template 4 | cat-research-agent | explicit agent config |
 
 </step>
 
 <step name="spawn_subagent">
 
-**Spawn research subagent using Task tool with selected template:**
+**Run the selected template in the dedicated research agent. If this file is being read by `cat-research-agent`, execute the selected template directly and do not spawn another subagent:**
 
 Example for stakeholder research:
 
 ```
-Task tool:
-  subagent_type: "Explore"
-  model: "sonnet"
+Runtime-native agent tool:
+  agent_type: "cat-research-agent"
   description: "Stakeholder research: payment-processing"
   prompt: [Template 1 content with {topic} substituted]
 ```

@@ -68,7 +68,15 @@ Extract these values:
 - `TRUST` — from `"trust"` field (e.g., `"low"`, `"medium"`, `"high"`)
 - `CAUTION` — from `"caution"` field (e.g., `"low"`, `"medium"`, `"high"`)
 
-!`"${CAT_PLUGIN_DATA}/client/bin/progress-banner" --phase preparing`
+Render the preparing progress banner:
+
+```bash
+if [ -z "${CAT_PLUGIN_DATA:-}" ]; then
+  echo "CAT_PLUGIN_DATA is required" >&2
+  exit 1
+fi
+"${CAT_PLUGIN_DATA}/client/bin/progress-banner" --phase preparing
+```
 
 ## Phase 1: Prepare
 

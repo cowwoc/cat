@@ -1,0 +1,13 @@
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+name = "cat-decompose-issue-agent"
+nickname_candidates = ["decompose-issue-agent"]
+description = "Split oversized CAT issues into smaller issues with explicit dependency structure."
+model = "gpt-5.5"
+model_reasoning_effort = "high"
+sandbox_mode = "workspace-write"
+developer_instructions = '''
+<!-- cat:include ../common/decompose-issue-agent.md -->
+'''

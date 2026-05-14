@@ -125,6 +125,57 @@ public final class PluginArtifactBuilderTest
   }
 
   /**
+   * Verifies that runtime-specific skill wrappers can share common skill bodies and companion files.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void buildRuntimeSkillWrappersIncludeCommonCompanions() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try
+    {
+      Path repoRoot = tempDir.resolve("repo");
+      Path clientDir = repoRoot.resolve("client");
+      Path pluginDir = clientDir.resolve("plugin");
+      Path targetDir = clientDir.resolve("distribution/target/runtime");
+      createPluginSource(repoRoot, clientDir, pluginDir);
+      Path commonSkill = pluginDir.resolve("skills/common/common-skill");
+      Files.delete(commonSkill.resolve("SKILL.md"));
+      Files.createDirectories(pluginDir.resolve("skills/include"));
+      Files.writeString(pluginDir.resolve("skills/include/common-skill.md"), MARKDOWN_LICENSE + "shared wrapper body\n",
+        StandardCharsets.UTF_8);
+      Files.createDirectories(pluginDir.resolve("skills/claude/common-skill"));
+      Files.writeString(pluginDir.resolve("skills/claude/common-skill/SKILL.md"),
+        MARKDOWN_LICENSE + "---\ndescription: Shared Claude skill\nmodel: haiku\neffort: low\n---\n" +
+          "<!-- cat:include ../../include/common-skill.md -->\n",
+        StandardCharsets.UTF_8);
+      Files.createDirectories(pluginDir.resolve("skills/codex/common-skill"));
+      Files.writeString(pluginDir.resolve("skills/codex/common-skill/SKILL.md"),
+        MARKDOWN_LICENSE + "---\ndescription: Shared Codex skill\n---\n" +
+          "<!-- cat:include ../../include/common-skill.md -->\n",
+        StandardCharsets.UTF_8);
+
+      new PluginArtifactBuilder(pluginDir, clientDir, targetDir).build();
+
+      Path claudeSkill = targetDir.resolve("claude/skills/common-skill");
+      Path codexSkill = targetDir.resolve("codex/skills/common-skill");
+      requireThat(Files.readString(claudeSkill.resolve("SKILL.md"), StandardCharsets.UTF_8),
+        "claudeSharedSkill").contains("shared wrapper body");
+      requireThat(Files.readString(codexSkill.resolve("SKILL.md"), StandardCharsets.UTF_8),
+        "codexSharedSkill").contains("shared wrapper body");
+      requireThat(claudeSkill.resolve("first-use.md"), "claudeFirstUse").isRegularFile();
+      requireThat(codexSkill.resolve("first-use.md"), "codexFirstUse").isRegularFile();
+      requireThat(claudeSkill.resolve("helper.md"), "claudeHelper").isRegularFile();
+      requireThat(codexSkill.resolve("helper.md"), "codexHelper").isRegularFile();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that symlinks are rejected instead of preserved in release artifacts.
    */
   @Test

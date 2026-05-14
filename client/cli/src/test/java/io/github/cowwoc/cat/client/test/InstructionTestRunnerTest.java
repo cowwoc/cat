@@ -23,7 +23,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -170,39 +169,6 @@ public final class InstructionTestRunnerTest
     finally
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that all repository SKILL.md files declare model frontmatter.
-   */
-  @Test
-  public void allRepositorySkillsDeclareModelFrontmatter() throws IOException, InterruptedException
-  {
-    Path repoRoot = Path.of("").toAbsolutePath().normalize().getParent();
-    requireThat(repoRoot, "repoRoot").isNotNull();
-    Path skillsRoot = repoRoot.resolve("plugin/skills");
-    try (Stream<Path> files = Files.walk(skillsRoot))
-    {
-      List<Path> missing = files.filter(path -> path.getFileName().toString().equals("SKILL.md")).filter(path ->
-      {
-        try
-        {
-          String content = Files.readString(path, StandardCharsets.UTF_8);
-          if (!content.startsWith("---\n"))
-            return true;
-          int closing = content.indexOf("\n---\n", 4);
-          if (closing == -1)
-            return true;
-          String frontmatter = content.substring(4, closing);
-          return frontmatter.lines().noneMatch(line -> line.stripLeading().startsWith("model:"));
-        }
-        catch (IOException e)
-        {
-          throw new AssertionError("Unable to read skill file: " + path, e);
-        }
-      }).toList();
-      requireThat(missing, "missingSkillModelFrontmatter").isEmpty();
     }
   }
 
@@ -1398,7 +1364,6 @@ public final class InstructionTestRunnerTest
 
   /**
    * Verifies that extract-model defaults to "haiku" when SKILL.md is missing the model frontmatter field.
-   * Repository skill files are validated separately and must declare model frontmatter.
    */
   @Test
   public void extractModelRejectsMissingModelFrontmatter() throws IOException, InterruptedException

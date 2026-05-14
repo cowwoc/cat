@@ -24,7 +24,7 @@ Do not replace a skill invocation with a manual substitute prompt.
 
 ### The `argument-hint` Field
 
-`argument-hint` documents arguments expected by the SKILL.md preprocessor command (`!` backtick directive).
+`argument-hint` documents arguments expected by the SKILL.md preprocessor command in Claude runtime wrappers.
 It is display-only and does not affect parsing.
 
 | Syntax | Meaning | Example |
@@ -46,7 +46,7 @@ It is display-only and does not affect parsing.
 ---
 argument-hint: "<severity> <stakeholder> <description> <location>"
 ---
-!`"${CAT_PLUGIN_DATA}/client/bin/my-tool" "$0" "$1" "$2" "$3"`
+[Claude preprocessor directive invoking my-tool with "$0" "$1" "$2" "$3"]
 ```
 
 Quoting `"$N"` is recommended to preserve special characters.
@@ -67,14 +67,14 @@ Use unbraced `$ARGUMENTS`.
 ---
 argument-hint: "<keywords...>"
 ---
-!`"${CAT_PLUGIN_DATA}/client/bin/my-tool" $ARGUMENTS`
+[Claude preprocessor directive invoking my-tool with $ARGUMENTS]
 ```
 
 ```yaml
 ---
 argument-hint: "[description]"
 ---
-!`"${CAT_PLUGIN_DATA}/client/bin/my-tool" "$ARGUMENTS"`
+[Claude preprocessor directive invoking my-tool with "$ARGUMENTS"]
 ```
 
 ## Creating a New Plugin Skill

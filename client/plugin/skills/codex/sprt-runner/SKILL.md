@@ -1,9 +1,6 @@
 ---
 name: sprt-runner
 description: Explain that CAT's formal SPRT runner is not yet Codex-backed and direct Codex users to ad-hoc codex-runner checks
-model: gpt-5.4-mini
-effort: low
-user-invocable: false
 ---
 <!--
 Copyright (c) 2026 Gili Tzabari. All rights reserved.

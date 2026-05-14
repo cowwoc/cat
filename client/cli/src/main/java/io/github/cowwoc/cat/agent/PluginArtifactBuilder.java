@@ -115,7 +115,7 @@ public final class PluginArtifactBuilder
 
     Files.createDirectories(target.resolve("skills"));
     copySkillSet(pluginDir.resolve("skills/common"), target.resolve("skills"), runtime);
-    copySkillSet(pluginDir.resolve("skills").resolve(runtime.directoryName), target.resolve("skills"), runtime);
+    copyRuntimeSkillSet(pluginDir.resolve("skills").resolve(runtime.directoryName), target.resolve("skills"), runtime);
 
     Files.createDirectories(target.resolve("agents"));
     if (runtime == Runtime.CLAUDE)
@@ -170,6 +170,30 @@ public final class PluginArtifactBuilder
     }
   }
 
+  private void copyRuntimeSkillSet(Path source, Path target, Runtime runtime) throws IOException
+  {
+    if (!Files.isDirectory(source, LinkOption.NOFOLLOW_LINKS))
+      return;
+    try (Stream<Path> stream = Files.list(source))
+    {
+      List<Path> skillDirectories = stream.
+        filter(path -> Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)).
+        filter(path -> Files.isRegularFile(path.resolve("SKILL.md"), LinkOption.NOFOLLOW_LINKS)).
+        sorted(Comparator.comparing(path -> path.getFileName().toString())).
+        toList();
+      for (Path skillDirectory : skillDirectories)
+      {
+        Path targetSkill = target.resolve(skillDirectory.getFileName());
+        if (Files.exists(targetSkill, LinkOption.NOFOLLOW_LINKS))
+          deleteDirectory(targetSkill);
+        Path commonSkill = pluginDir.resolve("skills/common").resolve(skillDirectory.getFileName());
+        if (Files.isDirectory(commonSkill, LinkOption.NOFOLLOW_LINKS))
+          copyRuntimeSkillTree(commonSkill, targetSkill, runtime);
+        copyRuntimeSkillTree(skillDirectory, targetSkill, runtime);
+      }
+    }
+  }
+
   private boolean isAllowedIncludeTarget(Path path, Runtime runtime)
   {
     if (!path.startsWith(pluginDir) || isSourceOnlyPath(pluginDir.relativize(path)))
@@ -177,6 +201,7 @@ public final class PluginArtifactBuilder
     List<Path> allowedRoots = List.of(
       pluginDir.resolve("agents/common"),
       pluginDir.resolve("skills/common"),
+      pluginDir.resolve("skills/include"),
       pluginDir.resolve("rules/common"),
       pluginDir.resolve("hooks/common"),
       pluginDir.resolve("concepts"),

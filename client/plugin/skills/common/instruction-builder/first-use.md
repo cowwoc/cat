@@ -195,13 +195,13 @@ If creating a new instruction document, set `EXISTING_INSTRUCTION_PATH` to `"N/A
 ### Step 2: Delegate Design Phase to Task Subagent
 
 Invoke the Task tool to delegate the design phase (backward chaining, methodology, conventions) to a
-general-purpose subagent. The subagent will read the design methodology and conventions from separate files
+specialized instruction-design agent. The agent will read the design methodology and conventions from separate files
 and return a complete instruction draft.
 
 ```
 Task tool:
   description: "Design instruction: [instruction name]"
-  subagent_type: "general-purpose"
+  subagent_type: "cat:instruction-design-agent"
   prompt: |
     You are a skill design agent. Design or update an instruction document following the methodology below.
 
@@ -1375,12 +1375,12 @@ path traversal sequences or any non-alphanumeric characters other than hyphen (`
 and period (`.`). The resulting filename must be a simple name with no directory components. Validate
 that the final resolved path starts with `${TEST_DIR}/` before writing.
 
-Invoke a general-purpose subagent to compress the instruction file:
+Invoke the dedicated instruction-builder implementation agent to compress the instruction file:
 
 ```
 Task tool:
   description: "Compress instruction: [instruction name]"
-  subagent_type: "general-purpose"
+  subagent_type: "cat:instruction-builder-implement-agent"
   prompt: |
     Compress the instruction file at {INSTRUCTION_TEXT_PATH} following the compression protocol below.
 

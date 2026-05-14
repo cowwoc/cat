@@ -20,7 +20,15 @@ Implements the full workflow defined in `retrospectives.json`.
 
 ## Skill Output Analysis
 
-!`"${CAT_PLUGIN_DATA}/client/bin/get-output" retrospective`
+Load the retrospective analysis output:
+
+```bash
+if [ -z "${CAT_PLUGIN_DATA:-}" ]; then
+  echo "CAT_PLUGIN_DATA is required" >&2
+  exit 1
+fi
+"${CAT_PLUGIN_DATA}/client/bin/get-output" retrospective
+```
 
 The result is one of three types:
 

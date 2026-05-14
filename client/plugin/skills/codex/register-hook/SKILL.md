@@ -1,9 +1,6 @@
 ---
 name: register-hook
 description: Explain Codex project hook registration status and direct users to CAT plugin hook files when running on Codex
-model: gpt-5.4-mini
-effort: low
-user-invocable: false
 allowed-tools: Read
 ---
 <!--

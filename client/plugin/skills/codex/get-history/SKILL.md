@@ -1,9 +1,6 @@
 ---
 name: get-history
 description: Use when running on Codex and you need to examine past conversation, session logs, or raw chat history
-model: gpt-5.4-mini
-effort: low
-user-invocable: false
 ---
 <!--
 Copyright (c) 2026 Gili Tzabari. All rights reserved.

@@ -10,3 +10,15 @@ instructions can be re-loaded multiple times within the same conversation.
 (never invoked dynamically via the Skill tool) may place content directly in `SKILL.md`. Deduplication logic is
 irrelevant for frontmatter-loaded skills because they are injected once per agent spawn, not on repeated invocations.
 Example: `stakeholder-common`, which is listed in agent frontmatter and never called via the Skill tool at runtime.
+
+## Trivial Include Bodies
+
+Do not create or keep a `cat:include` fragment whose only meaningful content is:
+
+```markdown
+See `${CAT_PLUGIN_ROOT}/rules/common/skill-loading.md` and follow it exactly.
+```
+
+Inline that instruction directly in each runtime `SKILL.md` instead. Keep `cat:include` fragments for shared bodies that
+contain substantive multi-line instructions, runtime-neutral delegation rules, or other content where the include removes
+real duplication.

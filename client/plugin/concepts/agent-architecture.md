@@ -410,13 +410,13 @@ path resolution failures.
 
 | Context | CLAUDE_PLUGIN_ROOT | CLAUDE_SESSION_ID | CLAUDE_PROJECT_DIR |
 |---------|-------------------|-------------------|-------------------|
-| Skill preprocessing (`!` subprocess) | String-substituted | String-substituted | ❌ NOT available |
+| Claude skill preprocessing subprocess | String-substituted | String-substituted | ❌ NOT available |
 | Bash tool calls (agent shell) | ✅ Via CLAUDE_ENV_FILE | ✅ Via CLAUDE_ENV_FILE | ✅ Via CLAUDE_ENV_FILE |
 | Hook scripts | ✅ Env var | ✅ Env var | ✅ Env var |
 
 **Context details:**
 
-1. **Skill preprocessing (`!` subprocess)**: The `!` line in SKILL.md runs the command inside the directive and then applies the
+1. **Claude skill preprocessing subprocess**: The preprocessor line in SKILL.md runs the command inside the directive and then applies the
    variable-substitution pass used by the skill-loading flow. Only CLAUDE_PLUGIN_ROOT and CLAUDE_SESSION_ID are
    string-substituted. CLAUDE_PROJECT_DIR is neither substituted nor available as an env var. When skill content
    contains
@@ -436,8 +436,8 @@ path resolution failures.
 
 **When writing skill content:**
 - Bash command examples CAN use `${CLAUDE_PROJECT_DIR}` — Claude copies them into Bash tool calls where it resolves
-- Handler scripts called from `!` lines do NOT have access to `${CLAUDE_PROJECT_DIR}` as an env var or substitution
-- Skill preprocessing `!` lines must use `"$(pwd)"` instead of `${CLAUDE_PROJECT_DIR}`
+- Handler scripts called from Claude preprocessor lines do NOT have access to `${CLAUDE_PROJECT_DIR}` as an env var or substitution
+- Claude skill preprocessing lines must use `"$(pwd)"` instead of `${CLAUDE_PROJECT_DIR}`
 - For CLAUDE_PLUGIN_ROOT and CLAUDE_SESSION_ID, substitution works in both contexts
 
 ### Path Discovery

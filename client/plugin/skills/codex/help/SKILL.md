@@ -1,7 +1,5 @@
 ---
 description: Quick reference for CAT skill mentions and workflows in Codex.
-model: gpt-5.4-mini
-effort: low
 allowed-tools:
   - Skill
 ---
