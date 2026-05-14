@@ -443,20 +443,44 @@ fi
 > If fewer results arrived than expected, treat each missing reviewer as FAILED with verdict REJECTED
 > and a `parse_error` note: "Reviewer did not return an Agent result."
 
-All selected reviewers MUST be dispatched in a single response — one Agent call per reviewer,
+All selected reviewers MUST be dispatched in a single response — one reviewer subagent per stakeholder,
 all issued at the same time. Do NOT loop or spawn reviewers one at a time. Total wall time becomes
 the MAX of reviewer times rather than the SUM.
 
-**MANDATORY — Foreground Agent calls only:** Issue ALL Agent calls in one message. Use ONLY the Agent tool — do NOT
-use the Task tool. Do NOT set `run_in_background: true`. Reviewer subagents MUST complete as foreground tasks so their
-results are received before Step 4 begins.
+**MANDATORY — Isolated foreground reviewer agents only:** Issue ALL reviewer agent calls in one message.
+Use the runtime's agent-spawning tool directly. Do NOT use the Task tool. Do NOT set
+`run_in_background: true`. Reviewer subagents MUST complete as foreground tasks so their results are
+received before Step 4 begins.
+
+Each reviewer MUST run as a native subagent of the current runtime instance. Do NOT launch a nested runtime
+process such as `codex exec`, `cat:codex-runner`, or any runner skill to perform stakeholder review.
+
+Each reviewer MUST run as an isolated fork with no inherited conversation history:
+- Codex: use the `spawn_agent` tool exposed in the current Codex session. If the tool exposes
+  `fork_context`, set `fork_context: false`. If the tool exposes `fork_turns`, set `fork_turns:
+  "none"`. Per https://github.com/openai/codex/issues/20543#issuecomment-4358442924, Multi-agents v2
+  is not meant to be used right now. It is disabled by default, so do not add a
+  `[features.multi_agent_v2]` section to `config.toml`; to increase pre-v2 subagent concurrency, set
+  `[agents] max_threads = <count>` instead.
+- Runtimes with an equivalent history/fork option: choose the option that gives the reviewer no parent
+  conversation history beyond the prompt supplied in this step.
+
+Each reviewer MUST also use its stakeholder-specific agent type:
+- Codex: set `agent_type` to the runtime-specific CAT stakeholder agent type for that stakeholder
+  (for example, the agent type corresponding to `cat-stakeholder-requirements` for the requirements
+  reviewer) when the runtime exposes CAT stakeholder agent types.
+- Claude: set `subagent_type` to the stakeholder agent type for that stakeholder.
+
+Do NOT use a generic/default agent type for stakeholder review when a stakeholder-specific agent type is
+available. If the runtime does not expose the requested stakeholder agent types, stop and report the
+execution error instead of silently substituting generic reviewers.
 
 Prepare prompts: for each stakeholder in $SELECTED, collect conventions from CONVENTION_MAP, gather
 ISSUE_PLAN_PATH and VERSION_PLAN_PATH (use VERSION_ID extraction from Step 1), extract
 DOMAIN_KNOWLEDGE from plan.md `## Domain Knowledge` section (if present), and convert CHANGED_FILES
 to bullets.
 
-**CRITICAL — Parallel Dispatch:** Issue ALL Agent tool calls in a single message. Do NOT await results
+**CRITICAL — Parallel Dispatch:** Issue ALL reviewer agent calls in a single message. Do NOT await results
 between calls.
 
 Spawn each stakeholder with:
@@ -511,7 +535,16 @@ Return ONLY valid JSON matching your stakeholder definition.
 ```
 
 For each stakeholder, extract `model:` field from agent frontmatter (omit if absent).
-Issue ALL Agent calls in one message: Agent(prompt, model=optional). NEVER use the Task tool or set `run_in_background: true`.
+Issue ALL reviewer calls in one message with isolated forks and stakeholder-specific agent types. Examples:
+
+- Codex v1 tool surface: `spawn_agent(message=prompt, fork_context=false,
+  agent_type=<stakeholder-agent-type>, model=optional)`.
+- Codex v2 tool surface: `spawn_agent(message=prompt, fork_turns="none",
+  agent_type=<stakeholder-agent-type>, task_name=<stakeholder-task-name>, model=optional)`.
+- Claude: `Agent(prompt=prompt, subagent_type=<stakeholder-agent-type>, model=optional)`.
+
+NEVER use the Task tool, a nested runtime runner, a full-history fork, a generic/default agent type, or
+`run_in_background: true`.
 
 ### Step 4: Collect Reviews
 
@@ -612,9 +645,13 @@ Fail if missing. Action: caution_level="none" → skip; "quick"|"changed"|"all" 
 
 ## Verification Checklist
 
-- [ ] All selected stakeholder Agent calls issued before verdict text (fabrication check)
-- [ ] Agent call count equals selected stakeholder count (mismatch = fabrication)
-- [ ] Agent tool only — Task tool and `run_in_background: true` were NOT used for reviewer subagents
+- [ ] All selected stakeholder reviewer calls issued before verdict text (fabrication check)
+- [ ] Reviewer call count equals selected stakeholder count (mismatch = fabrication)
+- [ ] Reviewer subagents used native current-session subagents, not `codex exec`, `cat:codex-runner`, or runner skills
+- [ ] Reviewer subagents used isolated forks with no inherited conversation history; Codex reviewer calls used
+      `fork_context: false` when available, otherwise `fork_turns: "none"`
+- [ ] Reviewer subagents used stakeholder-specific agent types, not generic/default agents
+- [ ] Agent-spawning tool only — Task tool and `run_in_background: true` were NOT used for reviewer subagents
 - [ ] Received Agent result count verified against SELECTED_COUNT before parsing (Step 4 reviewer count check)
 - [ ] Missing reviewers added as synthetic REJECTED results before parsing
 - [ ] `reviewer_count` field included in top-level result JSON (set to actual received count, before synthetic results)
