@@ -22,15 +22,21 @@ See LICENSE.md in the project root for license terms.
 
 **When user input arrives mid-operation**:
 1. **STOP** current tool result processing immediately (not "after workflow completes")
-2. **ADD** the user's request to TaskList so it doesn't get forgotten
+2. **ADD** the user's request to the end of TaskList immediately so it doesn't get forgotten
 3. **ACKNOWLEDGE** the user's message in your NEXT response text
-4. Answer their question or confirm you've noted it
-5. THEN continue with workflow
+4. If the request is related to the current operation, work on it immediately
+5. If the request is unrelated, return to the work you were doing before the request arrived
+6. Work on unrelated TaskList items only when their turn comes up in TaskList order
 
 **TaskList usage (step 2) - MANDATORY when**:
 - User requests a new feature, change, or fix
 - User provides multiple instructions to track
 - Request is complex enough that you might forget details
+
+**Related vs unrelated requests**:
+- **Related**: The request corrects, clarifies, or changes the operation currently in progress
+- **Unrelated**: The request starts a separate issue, feature, convention, cleanup, or investigation that
+  does not affect the current operation's correctness
 
 **Skip TaskList only for**: Simple questions ("what's this file?") or one-word commands ("continue")
 
