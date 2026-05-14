@@ -28,6 +28,11 @@ all fixes have been applied.
 
 ## Code Style
 
+### Javadoc
+
+Private methods must have Javadoc. Private visibility is not an exemption from documenting purpose, parameters,
+return values, and thrown exceptions.
+
 ### Braces
 Use Allman style (opening brace on its own line):
 
@@ -257,6 +262,13 @@ public Handler(Path pluginRoot)
   this.configPath = pluginRoot.resolve("config.json");
 }
 ```
+
+### Inline Trivial Helper Methods
+
+Do not extract a private helper method that only validates an argument and returns one nested method call. Inline
+that call at the use site instead. For example, prefer `hookPayload.toString()` over a `jsonFor(hookPayload)` helper
+whose body only null-checks `hookPayload` and returns `hookPayload.toString()`, because the method call already fails
+fast on null.
 
 ### StringBuilder Empty Check
 Use `!sb.isEmpty()` instead of `sb.length() > 0` to check whether a `StringBuilder` is empty:
