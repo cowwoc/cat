@@ -43,7 +43,20 @@ The error message identifies two categories of problems:
 - **Content references:** File contents reference old path names that no longer exist (e.g., scripts or docs that
   hardcode the old directory name).
 
-The error message lists each affected file and the expected path. Review and correct the listed paths before retrying.
+The error message lists each affected file and the expected path. This is an actionable preflight failure, not a
+terminal rebase result. Before reporting the rebase as blocked, update the current branch so its tracked paths and
+content references use the target branch's renamed paths, then rerun the `git-rebase` tool.
+
+When resolving tracked-path renames:
+1. Inspect the target branch to identify where each listed old path moved.
+2. Move or reapply the current branch's changes onto the corresponding new target-branch path.
+3. Remove the old tracked paths from the current branch.
+4. Check for content references to the old paths and update them to the new paths.
+5. Commit or amend the path-alignment changes as appropriate for the current workflow.
+6. Rerun the deterministic `git-rebase` tool.
+
+Only escalate the preflight block to the user after trying the path-alignment recovery or when the mapping is
+ambiguous enough that choosing a destination would risk losing work.
 
 **Example:** If the target branch renamed `old/cat/` to `.cat/`, the worktree branch must also use `.cat/` in both
 tracked paths and file contents. The validation catches this before any history is rewritten.
