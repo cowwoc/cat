@@ -102,6 +102,47 @@ public final class InjectMainAgentRulesTest
   }
 
   /**
+   * Verifies that injected rule context identifies the source rule path.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void handleWrapsInjectedRuleWithPath() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("inject-rules-path-project-");
+    Path pluginDir = Files.createTempDirectory("inject-rules-path-plugin-");
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginDir, projectPath))
+    {
+      Path pluginRulesDir = scope.getPluginRoot().resolve("rules").resolve("common");
+      Files.createDirectories(pluginRulesDir);
+      Files.writeString(pluginRulesDir.resolve("plugin-rule.md"), """
+        ---
+        mainAgent: true
+        subAgents: []
+        ---
+        # Plugin bundled rule
+        Plugin rule content for main agent.
+        """);
+
+      InjectMainAgentRules handler = new InjectMainAgentRules(scope);
+
+      SessionStartHandler.Result result = handler.handle();
+
+      requireThat(result.additionalContext(), "additionalContext").contains("""
+        <rule path="rules/common/plugin-rule.md">
+        # Plugin bundled rule
+        Plugin rule content for main agent.
+        </rule>""");
+      requireThat(result.stderr(), "stderr").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(pluginDir);
+    }
+  }
+
+  /**
    * Verifies that Claude rule injection loads portable project rules and Claude-specific project
    * rules, while ignoring Codex-specific rules.
    *

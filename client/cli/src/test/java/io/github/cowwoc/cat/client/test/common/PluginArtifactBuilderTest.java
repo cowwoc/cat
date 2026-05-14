@@ -353,6 +353,42 @@ public final class PluginArtifactBuilderTest
     }
   }
 
+  /**
+   * Verifies that Codex artifacts preserve path-scoped common rules without generating session stubs.
+   */
+  @Test
+  public void buildDoesNotGenerateCodexStubsForPathScopedCommonRules() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try
+    {
+      Path repoRoot = tempDir.resolve("repo");
+      Path clientDir = repoRoot.resolve("client");
+      Path pluginDir = clientDir.resolve("plugin");
+      Path targetDir = clientDir.resolve("distribution/target/runtime");
+      createPluginSource(repoRoot, clientDir, pluginDir);
+      Files.writeString(pluginDir.resolve("rules/common/java.md"), """
+        ---
+        paths: ["*.java"]
+        ---
+        # Java Conventions
+
+        Use Allman braces.
+        """, StandardCharsets.UTF_8);
+
+      new PluginArtifactBuilder(pluginDir, clientDir, targetDir).build();
+
+      requireThat(Files.exists(targetDir.resolve("codex/rules/codex/java.md")),
+        "codexStubExists").isFalse();
+      requireThat(Files.readString(targetDir.resolve("codex/rules/common/java.md"), StandardCharsets.UTF_8),
+        "commonRuleContent").contains("paths: [\"*.java\"]");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
   private static void createPluginSource(Path repoRoot, Path clientDir, Path pluginDir)
     throws IOException
   {

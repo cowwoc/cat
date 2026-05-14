@@ -93,7 +93,10 @@ public final class SourceIncludeProcessor
           throw new IllegalStateException("cat:include target does not exist: " + target);
         if (!allowedTarget.test(target))
           throw new IllegalStateException("cat:include target is not allowed: " + target);
-        String targetContent = contentFilter.apply(Files.readString(target, StandardCharsets.UTF_8));
+        String targetContent = Files.readString(target, StandardCharsets.UTF_8);
+        if (FrontmatterUtils.extractFrontmatter(targetContent) != null)
+          throw new IllegalStateException("cat:include target must not contain YAML frontmatter: " + target);
+        targetContent = contentFilter.apply(targetContent);
         output.append(stripTrailingLineSeparator(expand(target, targetContent, allowedTarget,
           contentFilter, nextStack))).append('\n');
       }

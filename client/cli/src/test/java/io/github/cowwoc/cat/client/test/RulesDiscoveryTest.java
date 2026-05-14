@@ -90,6 +90,48 @@ public final class RulesDiscoveryTest
   }
 
   /**
+   * Verifies that included rule fragments fail fast when they contain YAML frontmatter.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void catIncludeRejectsIncludedFrontmatter() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("rules-test-");
+    try
+    {
+      Path rulesDir = tempDir.resolve("rules");
+      Files.createDirectories(rulesDir.resolve("fragments"));
+      Files.writeString(rulesDir.resolve("fragments/shared.md"), """
+        ---
+        paths: ["*.java"]
+        ---
+        Shared fragment.
+        """);
+      Files.writeString(rulesDir.resolve("rule.md"), """
+        # Rule
+        <!-- cat:include fragments/shared.md -->
+        """);
+
+      try
+      {
+        new RulesDiscovery(rulesDir, YAML_MAPPER).discoverAll();
+      }
+      catch (IllegalStateException e)
+      {
+        requireThat(e.getMessage(), "message").contains("cat:include target must not contain YAML frontmatter");
+        requireThat(e.getMessage(), "message").contains("shared.md");
+        return;
+      }
+      throw new AssertionError("Expected cat:include frontmatter rejection");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that mainAgent: false excludes a file from main agent injection.
    *
    * @throws IOException if file operations fail
@@ -819,6 +861,35 @@ public final class RulesDiscoveryTest
   {
     String rendered = RulesDiscovery.renderAll(List.of());
     requireThat(rendered, "rendered").isEmpty();
+  }
+
+  /**
+   * Verifies that rule paths are escaped before being rendered as XML-like attributes.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void renderAllEscapesRulePathAttribute() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("rules-test-render-");
+    try
+    {
+      Path rulesDir = tempDir.resolve("rules");
+      Files.createDirectories(rulesDir);
+      Files.writeString(rulesDir.resolve("quote\"amp&lt<gt>apos'ctrl" + '\u0001' + "rule.md"),
+        "# Quoted rule\n");
+
+      List<RuleFile> rules = new RulesDiscovery(rulesDir, YAML_MAPPER).discoverAll();
+      String rendered = RulesDiscovery.renderAll(rules);
+
+      requireThat(rendered, "rendered").contains(
+        "quote&quot;amp&amp;lt&lt;gt&gt;apos&apos;ctrl&#x1;rule.md");
+      requireThat(rendered, "rendered").doesNotContain("quote\"amp&lt<gt>apos'ctrl");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   // ---- Concern 7: stripFrontmatter with no trailing newline after closing --- ----

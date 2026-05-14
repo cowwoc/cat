@@ -65,6 +65,48 @@ public final class InjectSubAgentRulesTest
   }
 
   /**
+   * Verifies that injected subagent rule context identifies the source rule path.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void getRulesWrapsInjectedRuleWithPath() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("inject-subagent-path-project-");
+    Path pluginDir = Files.createTempDirectory("inject-subagent-path-plugin-");
+    try (TestClaudeHook scope = new TestClaudeHook(
+      "{\"session_id\": \"test-session\", \"agent_id\": \"agent-1\", \"subagent_type\": \"cat:work-execute\"}",
+      projectPath, pluginDir, projectPath))
+    {
+      Path pluginRulesDir = scope.getPluginRoot().resolve("rules").resolve("common");
+      Files.createDirectories(pluginRulesDir);
+      Files.writeString(pluginRulesDir.resolve("plugin-subagent-rule.md"), """
+        ---
+        mainAgent: false
+        ---
+        # Plugin subagent rule
+        Plugin rule content for subagents.
+        """);
+
+      InjectSubAgentRules handler = new InjectSubAgentRules(scope);
+
+      SubagentStartHandler.Result result = handler.handle();
+
+      requireThat(result.additionalContext(), "additionalContext").contains("""
+        <rule path="rules/common/plugin-subagent-rule.md">
+        # Plugin subagent rule
+        Plugin rule content for subagents.
+        </rule>""");
+      requireThat(result.stderr(), "stderr").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(pluginDir);
+    }
+  }
+
+  /**
    * Verifies that when filenames collide, both plugin and project subagent rules are included.
    * Rules are concatenated in order: plugin-bundled first, project-local second.
    *

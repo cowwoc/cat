@@ -211,7 +211,7 @@ public final class PluginArtifactBuilder
               text = stripMarkdownLicenseHeader(text);
             else
               text = HASH_LICENSE_HEADER.matcher(text).replaceFirst("");
-            writeStringIfChanged(file, text);
+            FileSystemUtils.writeStringIfChanged(file, text);
           }
           return FileVisitResult.CONTINUE;
         }
@@ -427,7 +427,7 @@ public final class PluginArtifactBuilder
     String text = stripSourceLicenseHeader(Files.readString(source, StandardCharsets.UTF_8));
     text = SourceIncludeProcessor.expand(source, text, path -> isAllowedIncludeTarget(path, runtime),
       this::stripSourceLicenseHeader);
-    writeStringIfChanged(target, text);
+    FileSystemUtils.writeStringIfChanged(target, text);
   }
 
   private Set<Path> getRuntimeSkillFiles(Path source) throws IOException
@@ -540,16 +540,6 @@ public final class PluginArtifactBuilder
     if (Files.exists(target, LinkOption.NOFOLLOW_LINKS))
       Files.delete(target);
     Files.copy(resolvedTarget, target);
-  }
-
-  private void writeStringIfChanged(Path path, String content) throws IOException
-  {
-    if (Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS) &&
-      Files.readString(path, StandardCharsets.UTF_8).equals(content))
-    {
-      return;
-    }
-    Files.writeString(path, content, StandardCharsets.UTF_8);
   }
 
   private void deleteDirectory(Path directory) throws IOException

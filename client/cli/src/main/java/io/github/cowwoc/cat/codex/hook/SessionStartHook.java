@@ -43,45 +43,10 @@ public final class SessionStartHook
   {
     try
     {
-      if (args.length < 7)
-        throw new IllegalArgumentException(
-          "Expected arguments: <project-root> <plugin-data> <codex-home> <marketplace-name> " +
-            "<plugin-name> <version> <timezone>");
-
-      Path projectRoot = Path.of(args[0]);
-      Path pluginData = Path.of(args[1]);
-      Path codexHome = Path.of(args[2]);
-      Path pluginRoot = CodexPluginCache.resolvePluginRoot(codexHome, args[3], args[4], args[5]);
-      String timezone = args[6];
-      try (CodexHookScope scope = new CodexHookScope(projectRoot, pluginRoot, pluginData, timezone))
-      {
-        MigrationNotice migrationNotice = new MigrationNotice(new CheckDataMigration(scope));
-        SessionStartDispatcher.Result result = SessionStartDispatcher.run(List.of(
-          migrationNotice,
-          () ->
-          {
-            String content = MainAgentRules.load(scope, scope.getYamlMapper());
-            if (content.isBlank())
-              return SessionStartHandler.Result.empty();
-            return SessionStartHandler.Result.context(content);
-          },
-          new InjectCriticalThinking()));
-        for (String warning : result.warnings())
-          System.err.println(warning);
-
-        ObjectNode hookSpecificOutput = scope.getJsonMapper().createObjectNode();
-        hookSpecificOutput.put("hookEventName", "SessionStart");
-        hookSpecificOutput.put("additionalContext", result.additionalContext());
-
-        ObjectNode output = scope.getJsonMapper().createObjectNode();
-        output.set("hookSpecificOutput", hookSpecificOutput);
-        if (migrationNotice.ran())
-        {
-          output.put("systemMessage", "CAT plugin migration updated installed assets. Restart " +
-            "Codex before using CAT custom subagents so the tool registry sees the changes.");
-        }
-        System.out.println(scope.getJsonMapper().writeValueAsString(output));
-      }
+      HookResult result = run(args);
+      for (String warning : result.warnings())
+        System.err.println(warning);
+      System.out.println(result.output());
     }
     catch (RuntimeException | AssertionError e)
     {
@@ -89,6 +54,91 @@ public final class SessionStartHook
       log.error("Codex SessionStart hook failed", e);
       System.err.println("Hook failed: " + e.getMessage());
       System.out.println("{}");
+    }
+  }
+
+  /**
+   * Runs the Codex SessionStart hook without writing to process streams.
+   *
+   * @param args command line arguments
+   * @return the hook output and warnings
+   */
+  public static HookResult run(String[] args)
+  {
+    if (args.length < 7)
+      throw new IllegalArgumentException(
+        "Expected arguments: <project-root> <plugin-data> <codex-home> <marketplace-name> " +
+          "<plugin-name> <version> <timezone>");
+
+    Path projectRoot = Path.of(args[0]);
+    Path pluginData = Path.of(args[1]);
+    Path codexHome = Path.of(args[2]);
+    Path pluginRoot = CodexPluginCache.resolvePluginRoot(codexHome, args[3], args[4], args[5]);
+    String timezone = args[6];
+    try (CodexHookScope scope = new CodexHookScope(projectRoot, pluginRoot, pluginData, timezone))
+    {
+      return run(scope);
+    }
+  }
+
+  /**
+   * Runs the Codex SessionStart handlers for an initialized scope.
+   *
+   * @param scope the Codex hook scope
+   * @return the hook output and warnings
+   */
+  private static HookResult run(CodexHookScope scope)
+  {
+    MigrationNotice migrationNotice = new MigrationNotice(new CheckDataMigration(scope));
+    SessionStartDispatcher.Result result = SessionStartDispatcher.run(List.of(
+      migrationNotice,
+      () ->
+      {
+        CodexRuleStubGenerator.generate(scope);
+        return SessionStartHandler.Result.empty();
+      },
+      () ->
+      {
+        String content = MainAgentRules.load(scope, scope.getYamlMapper());
+        if (content.isBlank())
+          return SessionStartHandler.Result.empty();
+        return SessionStartHandler.Result.context(content);
+      },
+      new InjectCriticalThinking()));
+
+    ObjectNode hookSpecificOutput = scope.getJsonMapper().createObjectNode();
+    hookSpecificOutput.put("hookEventName", "SessionStart");
+    hookSpecificOutput.put("additionalContext", result.additionalContext());
+
+    ObjectNode output = scope.getJsonMapper().createObjectNode();
+    output.set("hookSpecificOutput", hookSpecificOutput);
+    if (migrationNotice.ran())
+    {
+      output.put("systemMessage", "CAT plugin migration updated installed assets. Restart " +
+        "Codex before using CAT custom subagents so the tool registry sees the changes.");
+    }
+    return new HookResult(scope.getJsonMapper().writeValueAsString(output), result.warnings());
+  }
+
+  /**
+   * SessionStart hook output.
+   *
+   * @param output the JSON output to print to stdout
+   * @param warnings warning messages to print to stderr
+   */
+  public record HookResult(String output, List<String> warnings)
+  {
+    /**
+     * Creates a hook result.
+     *
+     * @param output the JSON output to print to stdout
+     * @param warnings warning messages to print to stderr
+     */
+    public HookResult
+    {
+      requireThat(output, "output").isNotNull();
+      requireThat(warnings, "warnings").isNotNull();
+      warnings = List.copyOf(warnings);
     }
   }
 

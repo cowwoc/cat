@@ -46,14 +46,16 @@ public final class RulesDiscovery
    * A discovered rule file with parsed frontmatter and body content.
    *
    * @param path       the path to the rule file
+   * @param contextPath the rule path to show in injected context
    * @param mainAgent  whether to inject into the main agent
    * @param subAgents  the subagent types that receive this rule; {@code null} means all subagents
    *                   (default when omitted from frontmatter), empty means none
    * @param paths      glob patterns restricting injection to matching active files; empty means always inject
-   * @param content    the full file content (including frontmatter stripped)
+   * @param content    the file body with leading YAML frontmatter stripped
    */
   public record RuleFile(
     Path path,
+    String contextPath,
     boolean mainAgent,
     List<String> subAgents,
     List<String> paths,
@@ -63,15 +65,18 @@ public final class RulesDiscovery
      * Creates a new RuleFile record.
      *
      * @param path      the file path
+     * @param contextPath the rule path to show in injected context
      * @param mainAgent inject into main agent
      * @param subAgents subagent types ({@code null} means all subagents)
      * @param paths     glob patterns
      * @param content   file content (body without frontmatter)
-     * @throws NullPointerException if {@code path}, {@code paths}, or {@code content} are null
+     * @throws NullPointerException if {@code path}, {@code contextPath}, {@code paths}, or
+     *   {@code content} are null
      */
     public RuleFile
     {
       requireThat(path, "path").isNotNull();
+      requireThat(contextPath, "contextPath").isNotBlank();
       if (subAgents != null)
         subAgents = List.copyOf(subAgents);
       requireThat(paths, "paths").isNotNull();
@@ -258,7 +263,7 @@ public final class RulesDiscovery
     String body = FrontmatterUtils.stripFrontmatter(content);
 
     if (frontmatter == null)
-      return new RuleFile(path, true, null, List.of(), body);
+      return new RuleFile(path, toContextPath(path), true, null, List.of(), body);
 
     try
     {
@@ -268,13 +273,36 @@ public final class RulesDiscovery
         mainAgent = root.get("mainAgent").asBoolean(true);
       List<String> subAgents = parseListNode(root.get("subAgents"), null);
       List<String> paths = parseListNode(root.get("paths"), List.of());
-      return new RuleFile(path, mainAgent, subAgents, paths, body);
+      return new RuleFile(path, toContextPath(path), mainAgent, subAgents, paths, body);
     }
     catch (Exception e)
     {
       throw new IllegalArgumentException("Malformed YAML frontmatter in " + path.getFileName() + ": " +
         e.getMessage(), e);
     }
+  }
+
+  private String toContextPath(Path file)
+  {
+    Path relative = rulesDir.relativize(file);
+    for (Path suffix : List.of(
+      Path.of(".cat/rules/common"),
+      Path.of(".cat/rules/claude"),
+      Path.of(".cat/rules/codex"),
+      Path.of(".claude/rules"),
+      Path.of("rules/common"),
+      Path.of("rules/claude"),
+      Path.of("rules/codex")))
+    {
+      if (rulesDir.endsWith(suffix))
+        return normalizeContextPath(suffix.resolve(relative));
+    }
+    return normalizeContextPath(file);
+  }
+
+  private String normalizeContextPath(Path path)
+  {
+    return path.toString().replace('\\', '/');
   }
 
   /**
@@ -461,13 +489,51 @@ public final class RulesDiscovery
     requireThat(rules, "rules").isNotNull();
     if (rules.isEmpty())
       return "";
-    StringBuilder sb = new StringBuilder();
+    StringBuilder sb = new StringBuilder(rules.size() * 256);
     for (RuleFile rule : rules)
     {
       if (!sb.isEmpty())
         sb.append("\n\n");
-      sb.append(rule.content());
+      sb.append(render(rule));
     }
     return sb.toString();
+  }
+
+  private static String render(RuleFile rule)
+  {
+    return """
+      <rule path="%s">
+      %s
+      </rule>""".formatted(escapeAttribute(rule.contextPath()), rule.content());
+  }
+
+  /**
+   * Escapes a string for use in a double-quoted XML-like attribute.
+   *
+   * @param value the raw attribute value
+   * @return the escaped attribute value
+   */
+  private static String escapeAttribute(String value)
+  {
+    StringBuilder escaped = new StringBuilder(value.length());
+    value.codePoints().forEach(codePoint ->
+    {
+      switch (codePoint)
+      {
+        case '&' -> escaped.append("&amp;");
+        case '<' -> escaped.append("&lt;");
+        case '>' -> escaped.append("&gt;");
+        case '"' -> escaped.append("&quot;");
+        case '\'' -> escaped.append("&apos;");
+        default ->
+        {
+          if (Character.isISOControl(codePoint))
+            escaped.append("&#x").append(Integer.toHexString(codePoint).toUpperCase()).append(';');
+          else
+            escaped.appendCodePoint(codePoint);
+        }
+      }
+    });
+    return escaped.toString();
   }
 }
