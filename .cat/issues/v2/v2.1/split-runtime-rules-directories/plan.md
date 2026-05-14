@@ -64,18 +64,31 @@ support.
 
 Apply the same separation inside `client/**`: Claude-specific Java code, Codex-specific Java code, and portable shared
 Java code must be separated by package/module structure instead of mixing runtime-specific behavior in shared classes.
+The separation includes Java CLI entry points and utility scopes: shared CAT command-line utilities must not construct
+Claude-specific scopes such as `MainClaudeTool` when running under Codex, and Codex workflows must not need to export
+synthetic `CLAUDE_*` variables only to satisfy shared CAT utilities.
 
 ## Parent Requirements
 
 None
 
+## Decomposed Into
+
+- `2.1-runtime-neutral-cli-context`
+
+This parent remains `in-progress` while the child issue closes the remaining Java CLI scope and shared utility
+runtime-neutrality work. Close the parent only after the child issue is implemented and the parent post-conditions are
+verified.
+
 ## Risk Assessment
 
 - **Risk Level:** MEDIUM
 - **Concerns:** Runtime detection or path resolution regressions; duplicated or conflicting rules between portable
-  root rules and runtime-specific subdirectories; Claude-only assumptions leaking into Codex
+  root rules and runtime-specific subdirectories; Claude-only assumptions leaking into Codex; shared Java CLIs
+  continuing to require `CLAUDE_SESSION_ID`, `CLAUDE_PROJECT_DIR`, `CLAUDE_PLUGIN_ROOT`, or `CLAUDE_PLUGIN_DATA`
+  when invoked from Codex
 - **Mitigation:** Add path-resolution tests for both runtimes, define deterministic merge/precedence behavior, and run
-  full verification for rule-loading flows
+  full verification for rule-loading flows and representative shared CLI invocations under both Claude and Codex
 
 ## Files to Modify
 
@@ -95,6 +108,10 @@ None
 - `client/pom.xml`, `client/cli/pom.xml`, `client/plugin/pom.xml`, `client/distribution/pom.xml` — Maven parent and
   submodule build definitions
 - `client/cli/**` — Java CLI source, tests, jlink scripts, and module-specific build assets
+- `client/cli/src/main/java/io/github/cowwoc/cat/claude/tool/**` and any replacement portable scope package — split
+  Claude-only environment handling from runtime-neutral CLI scope behavior
+- `client/cli/src/main/java/io/github/cowwoc/cat/claude/hook/util/**` and other shared launcher entry points — remove
+  `MainClaudeTool` coupling from utilities that are bundled into both Claude and Codex runtime artifacts
 - `docs/development/plugin-distribution.md` — developer-facing distribution design
 - `client/plugin/**` files that reference `.claude`, `.codex`, `.agents`, `.cat/rules`, `client/plugin/rules`,
   `client/plugin/hooks`, `client/plugin/skills`, `client/plugin/agents`, or legacy shared locations
@@ -130,6 +147,8 @@ None
   - Claude-specific client code
   - Codex-specific client code
   - Shared portable client code
+- Inventory every Java CLI launcher bundled into the Codex runtime artifact and identify which launchers still create
+  `MainClaudeTool` or otherwise require `CLAUDE_*` variables despite being runtime-neutral CAT utilities
 - Define deterministic resolution behavior when runtime-specific and shared files both exist
 - Define conflict behavior for same-named shared and runtime-specific rules
 
@@ -159,12 +178,25 @@ None
 - Add Codex equivalents under `.codex/` only for non-rule runtime files where runtime-specific behavior is required
 - Introduce or update client package/module boundaries so shared client logic is runtime-neutral, with Claude and Codex
   adapters isolated in runtime-specific packages
+- Introduce a portable CLI scope or equivalent runtime-neutral command context for shared CAT utilities. It must read
+  `CAT_PROJECT_DIR`, `CAT_PLUGIN_ROOT`, `CAT_PLUGIN_DATA`, `CAT_SESSION_ID`, and `CAT_RUNTIME` first, with
+  Claude-specific `CLAUDE_*` handling isolated to the Claude adapter or compatibility layer.
+- Keep `MainClaudeTool` and Claude hook/tool types available only for genuinely Claude-specific hooks, statusline, and
+  runner behavior. Shared utilities such as session-marker, merge, squash, rebase, issue-lock, status/config output,
+  and other launchers present in both flattened artifacts must use the portable scope or runtime-specific adapters.
 - Remove legacy single-location reads once all active references are migrated
 
 ### Job 3
 
 - Update plugin/client code paths that load rules or runtime files so they load shared files plus runtime-specific files
 - Ensure call sites pass or derive runtime context (`claude` or `codex`)
+- Update shared Java CLI entry points so Codex launchers do not require `CLAUDE_SESSION_ID`, `CLAUDE_PROJECT_DIR`,
+  `CLAUDE_PLUGIN_ROOT`, `CLAUDE_PLUGIN_DATA`, or `CLAUDE_CONFIG_DIR` unless the command is explicitly Claude-only.
+- Update `write-session-marker`, `read-session-marker`, `merge-and-cleanup`, `git-squash`, `git-rebase`,
+  `git-merge-linear`, `git-amend`, `issue-lock`, `work-prepare`, and other shared work-flow utilities to use the
+  portable scope or runtime-specific adapters before they are included in Codex runtime artifacts.
+- Update skill and agent examples so Codex `cat:work` and approval-gate flows use `CAT_*` variables only, without
+  temporary `CLAUDE_*` exports that emulate a Claude session.
 - Ensure Claude rule resolution includes `client/plugin/rules/common/*`, `client/plugin/rules/claude/*`,
   `.cat/rules/common/*`, `.cat/rules/claude/*`, and `.claude/rules/*`
 - Ensure Codex rule resolution includes `client/plugin/rules/common/*`, `client/plugin/rules/codex/*`, `.cat/rules/common/*`, and
@@ -187,6 +219,10 @@ None
 
 - Add/adjust tests for runtime detection, runtime-specific file loading, and shared-file inclusion
 - Add regression tests proving Claude and Codex can coexist in one checkout without overwriting each other's files
+- Add regression tests proving representative shared CLI utilities run in a Codex environment with only `CAT_*`
+  variables set and fail only when genuinely required portable variables are missing.
+- Add regression tests proving Claude-specific CLIs still accept `CLAUDE_*` through the Claude adapter and shared CLIs
+  prefer `CAT_*` values when both `CAT_*` and `CLAUDE_*` are present.
 - Add client tests proving shared client code is reused and runtime adapters select the correct
   `client/plugin/rules/{common,claude,codex}`, `.cat/rules/{common,claude,codex}`,
   `client/plugin/hooks/{common,claude,codex}`, `client/plugin/skills/{common,claude,codex}`,
@@ -272,7 +308,12 @@ None
 - [x] Flattened release artifacts preserve licensing through the root `LICENSE.md` file rather than per-agent-file
   headers
 - [x] Public release flows can publish isolated runtime-specific flattened plugin commits with matching jlink binaries
-- [x] Client code separates shared logic from Claude-specific and Codex-specific runtime adapters
+- [ ] Client code separates shared logic from Claude-specific and Codex-specific runtime adapters, including Java CLI
+  entry points and utility scopes
+- [ ] Shared Java CLI utilities bundled into Codex artifacts do not construct `MainClaudeTool` or require synthetic
+  `CLAUDE_*` variables in Codex sessions
+- [ ] Codex `cat:work` merge and approval-gate flows no longer emulate Claude by exporting temporary `CLAUDE_*`
+  variables for shared CAT utilities
 - [x] Runtime loaders resolve shared plus runtime-specific files for the active runtime
 - [x] Claude Code support remains functional
 - [x] Codex support is added without requiring removal of Claude files
