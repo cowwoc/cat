@@ -149,6 +149,183 @@ public final class CodexSessionStartHookTest
   }
 
   /**
+   * Verifies that Codex SessionStart detects subagent input and applies {@code subAgents} frontmatter instead of
+   * main-agent filtering.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void subagentSessionStartInjectsSubagentRules() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("codex-session-start-test-");
+    try
+    {
+      Fixture fixture = createFixture(tempDir);
+      Files.writeString(fixture.pluginRoot().resolve("rules/common/shared.md"), "shared subagent rule",
+        StandardCharsets.UTF_8);
+      Files.writeString(fixture.pluginRoot().resolve("rules/codex/main-only.md"), """
+        ---
+        subAgents: []
+        ---
+        main-agent-only rule
+        """, StandardCharsets.UTF_8);
+      Files.writeString(fixture.pluginRoot().resolve("rules/codex/targeted.md"), """
+        ---
+        subAgents: ["cat:work-execute"]
+        ---
+        targeted work-execute rule
+        """, StandardCharsets.UTF_8);
+      Files.writeString(fixture.projectRoot().resolve(".cat/rules/codex/subagent-only.md"), """
+        ---
+        mainAgent: false
+        ---
+        codex subagent-only rule
+        """, StandardCharsets.UTF_8);
+      String nativeInput = """
+        {
+          "cwd": "%s",
+          "thread_source": "subagent",
+          "agent_role": "cat:work-execute"
+        }
+        """.formatted(fixture.projectRoot().toString().replace("\\", "\\\\"));
+      Map<String, String> environment = Map.of(
+        "CAT_PLUGIN_ROOT", fixture.pluginRoot().toString(),
+        "CAT_PLUGIN_DATA", fixture.pluginData().toString(),
+        "TZ", "UTC");
+
+      SessionStartHook.HookResult result = SessionStartHook.run(new String[0],
+        new ByteArrayInputStream(nativeInput.getBytes(StandardCharsets.UTF_8)), environment);
+
+      requireThat(result.output(), "output").contains("shared subagent rule");
+      requireThat(result.output(), "output").contains("targeted work-execute rule");
+      requireThat(result.output(), "output").contains("codex subagent-only rule");
+      requireThat(result.output(), "output").doesNotContain("main-agent-only rule");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that Codex SessionStart fails fast when subagent input omits the top-level role.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void subagentSessionStartRequiresTopLevelRole() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("codex-session-start-test-");
+    try
+    {
+      Fixture fixture = createFixture(tempDir);
+      Files.writeString(fixture.pluginRoot().resolve("rules/codex/targeted.md"), """
+        ---
+        subAgents: ["cat:work-execute"]
+        ---
+        targeted nested-role rule
+        """, StandardCharsets.UTF_8);
+      String nativeInput = """
+        {
+          "cwd": "%s",
+          "source": {
+            "subagent": {
+              "thread_spawn": {
+                "agent_role": "cat:work-execute"
+              }
+            }
+          }
+        }
+        """.formatted(fixture.projectRoot().toString().replace("\\", "\\\\"));
+      Map<String, String> environment = Map.of(
+        "CAT_PLUGIN_ROOT", fixture.pluginRoot().toString(),
+        "CAT_PLUGIN_DATA", fixture.pluginData().toString(),
+        "TZ", "UTC");
+
+      SessionStartHook.HookResult result = SessionStartHook.run(new String[0],
+        new ByteArrayInputStream(nativeInput.getBytes(StandardCharsets.UTF_8)), environment);
+
+      requireThat(result.output(), "output").contains("SessionStart Handler Errors");
+      requireThat(result.output(), "output").contains("Codex subagent SessionStart payload is missing top-level " +
+        "agent_role");
+      requireThat(result.output(), "output").doesNotContain("targeted nested-role rule");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that authored path-scoped Codex rules are not eagerly injected at SessionStart.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void pathScopedRulesAreNotEager() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("codex-session-start-test-");
+    try
+    {
+      Fixture fixture = createFixture(tempDir);
+      Files.writeString(fixture.pluginRoot().resolve("rules/codex/main-eager.md"),
+        "main eager rule", StandardCharsets.UTF_8);
+      Files.writeString(fixture.pluginRoot().resolve("rules/codex/main-path-scoped.md"), """
+        ---
+        paths: ["*.java"]
+        ---
+        main path-scoped rule
+        """, StandardCharsets.UTF_8);
+      Files.writeString(fixture.pluginRoot().resolve("rules/codex/subagent-eager.md"), """
+        ---
+        mainAgent: false
+        subAgents: ["cat:work-execute"]
+        ---
+        subagent eager rule
+        """, StandardCharsets.UTF_8);
+      Files.writeString(fixture.pluginRoot().resolve("rules/codex/subagent-path-scoped.md"), """
+        ---
+        mainAgent: false
+        subAgents: ["cat:work-execute"]
+        paths: ["*.java"]
+        ---
+        subagent path-scoped rule
+        """, StandardCharsets.UTF_8);
+      Map<String, String> environment = Map.of(
+        "CAT_PLUGIN_ROOT", fixture.pluginRoot().toString(),
+        "CAT_PLUGIN_DATA", fixture.pluginData().toString(),
+        "TZ", "UTC");
+      String mainInput = """
+        {
+          "cwd": "%s",
+          "hook_event_name": "SessionStart"
+        }
+        """.formatted(fixture.projectRoot().toString().replace("\\", "\\\\"));
+      String subagentInput = """
+        {
+          "cwd": "%s",
+          "thread_source": "subagent",
+          "agent_role": "cat:work-execute"
+        }
+        """.formatted(fixture.projectRoot().toString().replace("\\", "\\\\"));
+
+      SessionStartHook.HookResult mainResult = SessionStartHook.run(new String[0],
+        new ByteArrayInputStream(mainInput.getBytes(StandardCharsets.UTF_8)), environment);
+      SessionStartHook.HookResult subagentResult = SessionStartHook.run(new String[0],
+        new ByteArrayInputStream(subagentInput.getBytes(StandardCharsets.UTF_8)), environment);
+
+      requireThat(mainResult.output(), "mainOutput").contains("main eager rule");
+      requireThat(mainResult.output(), "mainOutput").doesNotContain("main path-scoped rule");
+      requireThat(subagentResult.output(), "subagentOutput").contains("subagent eager rule");
+      requireThat(subagentResult.output(), "subagentOutput").doesNotContain("subagent path-scoped rule");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that a blank native payload falls back to environment and working-directory hints.
    *
    * @throws IOException if file operations fail

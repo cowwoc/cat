@@ -11,7 +11,6 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import io.github.cowwoc.cat.agent.AgentPluginScope;
 import io.github.cowwoc.cat.agent.CheckDataMigration;
 import io.github.cowwoc.cat.agent.InjectCriticalThinking;
-import io.github.cowwoc.cat.agent.MainAgentRules;
 import io.github.cowwoc.cat.agent.SessionStartDispatcher;
 import io.github.cowwoc.cat.agent.SessionStartHandler;
 import io.github.cowwoc.cat.agent.TerminalType;
@@ -116,7 +115,7 @@ public final class SessionStartHook
     try (CodexHookScope scope = new CodexHookScope(projectRoot, pluginRoot, pluginData,
       resolvedWorkingDirectory, timezone))
     {
-      return run(scope);
+      return run(scope, nativeInput);
     }
   }
 
@@ -129,7 +128,21 @@ public final class SessionStartHook
    */
   public static HookResult run(AgentPluginScope scope)
   {
+    return run(scope, HookJson.JSON_MAPPER.createObjectNode());
+  }
+
+  /**
+   * Runs the Codex SessionStart handlers for an initialized scope and native hook payload.
+   *
+   * @param scope the Codex hook scope
+   * @param nativeInput the native Codex hook payload
+   * @return the hook output and warnings
+   * @throws NullPointerException if any parameter is null
+   */
+  private static HookResult run(AgentPluginScope scope, JsonNode nativeInput)
+  {
     requireThat(scope, "scope").isNotNull();
+    requireThat(nativeInput, "nativeInput").isNotNull();
     MigrationNotice migrationNotice = new MigrationNotice(new CheckDataMigration(scope));
     SessionStartDispatcher.Result result = SessionStartDispatcher.run(List.of(
       migrationNotice,
@@ -140,7 +153,7 @@ public final class SessionStartHook
       },
       () ->
       {
-        String content = MainAgentRules.load(scope, scope.getYamlMapper());
+        String content = CodexSessionRules.load(scope, nativeInput);
         if (content.isBlank())
           return SessionStartHandler.Result.empty();
         return SessionStartHandler.Result.context(content);
