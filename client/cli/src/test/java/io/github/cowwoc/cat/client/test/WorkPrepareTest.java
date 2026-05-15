@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.client.test;
 import io.github.cowwoc.cat.claude.tool.ClaudeTool;
 import io.github.cowwoc.cat.claude.hook.util.GitCommands;
 import io.github.cowwoc.cat.agent.TrustLevel;
+import io.github.cowwoc.cat.claude.hook.util.IssueLock;
 import io.github.cowwoc.cat.claude.hook.util.WorkPrepare;
 import io.github.cowwoc.cat.claude.hook.util.WorkPrepare.PrepareInput;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
@@ -24,6 +25,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -686,18 +689,19 @@ public class WorkPrepareTest
       GitCommands.runGit(projectPath, "add", ".");
       GitCommands.runGit(projectPath, "commit", "-m", "Add issue");
 
-      // Create a lock file owned by a different session with a recent timestamp (non-stale)
+      // Create a lock file owned by a different session just below stale threshold (non-stale)
       Path locksDir = scope.getCatWorkPath().resolve("locks");
       Files.createDirectories(locksDir);
       String otherSession = UUID.randomUUID().toString();
-      long recentTimestamp = Instant.now().getEpochSecond();
+      long nonStaleTimestamp = Instant.now().getEpochSecond() -
+        IssueLock.STALE_LOCK_THRESHOLD.toSeconds() + 60;
       String lockContent = """
         {
           "session_id": "%s",
           "worktrees": {"/some/worktree": "%s"},
           "created_at": %d,
           "created_iso": "2026-03-01T23:00:00Z"
-        }""".formatted(otherSession, otherSession, recentTimestamp);
+        }""".formatted(otherSession, otherSession, nonStaleTimestamp);
       Files.writeString(locksDir.resolve("2.1-locked-with-wt.lock"), lockContent);
 
       // Create an actual git worktree for the issue branch so the worktree directory exists
@@ -720,9 +724,134 @@ public class WorkPrepareTest
       requireThat(node.path("issue_id").asString(), "issueId").isEqualTo("2.1-locked-with-wt");
       requireThat(node.path("locked_by").asString(), "lockedBy").isEqualTo(otherSession);
       requireThat(node.path("lock_age_seconds").asLong(), "lockAgeSeconds").
-        isGreaterThanOrEqualTo(0L);
+        isLessThan(IssueLock.STALE_LOCK_THRESHOLD.toSeconds());
       requireThat(node.path("worktree_path").asString(), "worktreePath").
         isEqualTo(worktreePath.toString());
+      requireThat(node.path("stale").asBoolean(), "stale").isEqualTo(false);
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that execute returns ERROR with stale=true when the lock is older than the staleness
+   * threshold and the worktree exists — enabling the skill to offer cleanup.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeReturnsErrorWithStaleFieldTrueWhenLockIsOldAndWorktreeExists()
+    throws IOException
+  {
+    Path projectPath = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
+    {
+      createIssue(projectPath, "2", "1", "stale-locked-with-wt", "open");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue");
+
+      // Create a lock file owned by a different session with an old timestamp (stale)
+      Path locksDir = scope.getCatWorkPath().resolve("locks");
+      Files.createDirectories(locksDir);
+      String otherSession = UUID.randomUUID().toString();
+      long oldTimestamp = Instant.now().getEpochSecond() -
+        IssueLock.STALE_LOCK_THRESHOLD.toSeconds() - 1;
+      String lockContent = """
+        {
+          "session_id": "%s",
+          "worktrees": {"/some/worktree": "%s"},
+          "created_at": %d,
+          "created_iso": "2026-01-01T00:00:00Z"
+        }""".formatted(otherSession, otherSession, oldTimestamp);
+      Files.writeString(locksDir.resolve("2.1-stale-locked-with-wt.lock"), lockContent);
+
+      // Create an actual git worktree for the issue branch so the worktree directory exists
+      worktreePath = scope.getCatWorkPath().resolve("worktrees").resolve("2.1-stale-locked-with-wt");
+      Files.createDirectories(worktreePath.getParent());
+      GitCommands.runGit(projectPath, "worktree", "add", "-b", "2.1-stale-locked-with-wt",
+        worktreePath.toString(), "HEAD");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "2.1-stale-locked-with-wt",
+        TrustLevel.MEDIUM, false);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      // ERROR (not LOCKED) so the skill can present a confirmation dialog for stale locks
+      requireThat(node.path("status").asString(), "status").isEqualTo("ERROR");
+      requireThat(node.path("message").asString(), "message").contains("locked");
+      requireThat(node.path("issue_id").asString(), "issueId").isEqualTo("2.1-stale-locked-with-wt");
+      requireThat(node.path("locked_by").asString(), "lockedBy").isEqualTo(otherSession);
+      requireThat(node.path("lock_age_seconds").asLong(), "lockAgeSeconds").
+        isGreaterThanOrEqualTo(IssueLock.STALE_LOCK_THRESHOLD.toSeconds());
+      requireThat(node.path("worktree_path").asString(), "worktreePath").
+        isEqualTo(worktreePath.toString());
+      requireThat(node.path("stale").asBoolean(), "stale").isEqualTo(true);
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectPath, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that execute returns ERROR with stale=true when the lock age equals exactly the
+   * staleness threshold — the >= boundary of the predicate.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeReturnsErrorWithStaleFieldTrueWhenLockAgeEqualsThreshold()
+    throws IOException
+  {
+    Path projectPath = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (ClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
+    {
+      createIssue(projectPath, "2", "1", "boundary-locked-with-wt", "open");
+      GitCommands.runGit(projectPath, "add", ".");
+      GitCommands.runGit(projectPath, "commit", "-m", "Add issue");
+
+      Path locksDir = scope.getCatWorkPath().resolve("locks");
+      Files.createDirectories(locksDir);
+      String otherSession = UUID.randomUUID().toString();
+      long boundaryTimestamp = Instant.now().getEpochSecond() -
+        IssueLock.STALE_LOCK_THRESHOLD.toSeconds();
+      String lockContent = """
+        {
+          "session_id": "%s",
+          "worktrees": {"/some/worktree": "%s"},
+          "created_at": %d,
+          "created_iso": "2026-01-01T00:00:00Z"
+        }""".formatted(otherSession, otherSession, boundaryTimestamp);
+      Files.writeString(locksDir.resolve("2.1-boundary-locked-with-wt.lock"), lockContent);
+
+      worktreePath = scope.getCatWorkPath().resolve("worktrees").resolve("2.1-boundary-locked-with-wt");
+      Files.createDirectories(worktreePath.getParent());
+      GitCommands.runGit(projectPath, "worktree", "add", "-b", "2.1-boundary-locked-with-wt",
+        worktreePath.toString(), "HEAD");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "2.1-boundary-locked-with-wt",
+        TrustLevel.MEDIUM, false);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("ERROR");
+      requireThat(node.path("lock_age_seconds").asLong(), "lockAgeSeconds").
+        isGreaterThanOrEqualTo(IssueLock.STALE_LOCK_THRESHOLD.toSeconds());
+      requireThat(node.path("stale").asBoolean(), "stale").isEqualTo(true);
     }
     finally
     {
@@ -1875,10 +2004,11 @@ public class WorkPrepareTest
       JsonNode cycles = node.path("circular_dependencies");
       requireThat(cycles.size(), "cycleCount").isGreaterThan(0);
 
-      String expectedCycle =
-        "2.1-issue-c -> 2.1-issue-a -> 2.1-issue-b -> 2.1-issue-c";
-      boolean foundCycle = containsEquivalentCycle(cycles, expectedCycle);
-      requireThat(foundCycle, "foundCycle").withContext(expectedCycle, "expectedCycle").isTrue();
+      List<String> expectedCycleNodes = List.of("2.1-issue-a", "2.1-issue-b", "2.1-issue-c");
+      boolean foundCycle = containsEquivalentCycle(cycles, expectedCycleNodes);
+      requireThat(foundCycle, "foundCycle").
+        withContext(expectedCycleNodes, "expectedCycleNodes").
+        withContext(toCycleStrings(cycles), "actualCycles").isTrue();
     }
     finally
     {
@@ -1999,23 +2129,16 @@ public class WorkPrepareTest
       JsonNode cycles = node.path("circular_dependencies");
       requireThat(cycles.size(), "cycleCount").isGreaterThanOrEqualTo(2);
 
-      String expectedDirectCycle = "2.1-issue-y -> 2.1-issue-x -> 2.1-issue-y";
-      String expectedDecomposedCycle =
-        "2.1-issue-c -> 2.1-issue-a -> 2.1-issue-b -> 2.1-issue-c";
-      boolean foundDirectCycle = false;
-      boolean foundDecomposedCycle = false;
-      for (JsonNode cycle : cycles)
-      {
-        String cycleStr = cycle.asString();
-        if (isEquivalentCycle(cycleStr, expectedDirectCycle))
-          foundDirectCycle = true;
-        if (isEquivalentCycle(cycleStr, expectedDecomposedCycle))
-          foundDecomposedCycle = true;
-      }
+      List<String> expectedDirectCycleNodes = List.of("2.1-issue-x", "2.1-issue-y");
+      List<String> expectedDecomposedCycleNodes = List.of("2.1-issue-a", "2.1-issue-b", "2.1-issue-c");
+      boolean foundDirectCycle = containsEquivalentCycle(cycles, expectedDirectCycleNodes);
+      boolean foundDecomposedCycle = containsEquivalentCycle(cycles, expectedDecomposedCycleNodes);
       requireThat(foundDirectCycle, "foundDirectCycle").
-        withContext(expectedDirectCycle, "expectedDirectCycle").isTrue();
+        withContext(expectedDirectCycleNodes, "expectedDirectCycleNodes").
+        withContext(toCycleStrings(cycles), "actualCycles").isTrue();
       requireThat(foundDecomposedCycle, "foundDecomposedCycle").
-        withContext(expectedDecomposedCycle, "expectedDecomposedCycle").isTrue();
+        withContext(expectedDecomposedCycleNodes, "expectedDecomposedCycleNodes").
+        withContext(toCycleStrings(cycles), "actualCycles").isTrue();
     }
     finally
     {
@@ -3414,13 +3537,13 @@ public class WorkPrepareTest
   // -------------------------------------------------------------------------
 
   /**
-   * Verifies that execute returns READY when resume=true and a different session owns the lock.
-   * The lock owner is replaced with the current session.
+   * Verifies that execute returns READY when resume=true and a different session owns a stale lock.
+   * The stale lock owner is replaced with the current session.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeReturnsReadyWhenResumeAndDifferentSessionOwnsLock() throws IOException
+  public void executeReturnsReadyWhenResumeAndDifferentSessionOwnsStaleLock() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
@@ -3430,11 +3553,12 @@ public class WorkPrepareTest
       GitCommands.runGit(projectPath, "add", ".");
       GitCommands.runGit(projectPath, "commit", "-m", "Add issue");
 
-      // Create a lock file owned by a different session with a recent timestamp
+      // Create a lock file owned by a different session with a stale timestamp
       Path locksDir = scope.getCatWorkPath().resolve("locks");
       Files.createDirectories(locksDir);
       String otherSession = UUID.randomUUID().toString();
-      long recentTimestamp = Instant.now().getEpochSecond();
+      long recentTimestamp = Instant.now().getEpochSecond() -
+        IssueLock.STALE_LOCK_THRESHOLD.toSeconds() - 1;
       String lockContent = """
         {
           "session_id": "%s",
@@ -3574,7 +3698,8 @@ public class WorkPrepareTest
       requireThat(resumeNode.path("issue_id").asString(), "issueId").
         isEqualTo("2.1-resume-lock-conflict-second");
       requireThat(resumeNode.path("message").asString(), "message").
-        contains("Session already holds a lock");
+        contains("has an existing worktree locked by another session");
+      requireThat(resumeNode.path("stale").asBoolean(), "stale").isFalse();
     }
     finally
     {
@@ -3744,6 +3869,90 @@ public class WorkPrepareTest
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+  }
+
+  /**
+   * Returns true if any discovered cycle is equivalent to the expected cycle nodes, ignoring
+   * start-node rotation and traversal direction.
+   *
+   * @param cycles         cycle strings returned by work-prepare
+   * @param expectedNodes  expected cycle nodes without a repeated terminal node
+   * @return true if an equivalent cycle exists
+   */
+  private boolean containsEquivalentCycle(JsonNode cycles, List<String> expectedNodes)
+  {
+    for (JsonNode cycle : cycles)
+    {
+      if (cycleMatchesExpectedNodes(cycle.asString(), expectedNodes))
+        return true;
+    }
+    return false;
+  }
+
+  /**
+   * Returns true if a cycle string contains exactly the expected nodes, allowing rotated starts
+   * and reversed traversal.
+   *
+   * @param cycleString    the cycle string (for example, {@code a -> b -> c -> a})
+   * @param expectedNodes  expected cycle nodes without a repeated terminal node
+   * @return true if equivalent
+   */
+  private boolean cycleMatchesExpectedNodes(String cycleString, List<String> expectedNodes)
+  {
+    String[] parts = cycleString.split("\\s*->\\s*");
+    if (parts.length != expectedNodes.size() + 1)
+      return false;
+    if (!parts[0].equals(parts[parts.length - 1]))
+      return false;
+    List<String> actualNodes = Arrays.asList(parts).subList(0, parts.length - 1);
+    if (isRotationMatch(actualNodes, expectedNodes))
+      return true;
+    List<String> reversedExpected = new ArrayList<>(expectedNodes);
+    Collections.reverse(reversedExpected);
+    return isRotationMatch(actualNodes, reversedExpected);
+  }
+
+  /**
+   * Returns true if the two node lists are equal under a cyclic rotation.
+   *
+   * @param actualNodes    nodes from the produced cycle
+   * @param expectedNodes  expected nodes in canonical order
+   * @return true if equal under any rotation
+   */
+  private boolean isRotationMatch(List<String> actualNodes, List<String> expectedNodes)
+  {
+    if (actualNodes.size() != expectedNodes.size())
+      return false;
+    int size = actualNodes.size();
+    for (int offset = 0; offset < size; ++offset)
+    {
+      boolean allMatch = true;
+      for (int index = 0; index < size; ++index)
+      {
+        if (!actualNodes.get(index).equals(expectedNodes.get((index + offset) % size)))
+        {
+          allMatch = false;
+          break;
+        }
+      }
+      if (allMatch)
+        return true;
+    }
+    return false;
+  }
+
+  /**
+   * Converts cycle nodes into strings for assertion context.
+   *
+   * @param cycles cycle node array
+   * @return cycle strings
+   */
+  private List<String> toCycleStrings(JsonNode cycles)
+  {
+    List<String> cycleStrings = new ArrayList<>();
+    for (JsonNode cycle : cycles)
+      cycleStrings.add(cycle.asString());
+    return cycleStrings;
   }
 
   /**

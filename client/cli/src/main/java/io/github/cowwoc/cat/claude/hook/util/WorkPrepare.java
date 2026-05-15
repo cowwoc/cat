@@ -135,16 +135,31 @@ public final class WorkPrepare
   }
 
   /**
+   * Strategy for handling an existing worktree whose lock is not owned by the current session.
+   */
+  public enum LockConflictStrategy
+  {
+    /**
+     * Report the conflict to the caller without changing lock ownership.
+     */
+    REPORT,
+    /**
+     * Resume only when ownership is already safe or the foreign lock is stale.
+     */
+    RESUME_STALE_OR_OWNED
+  }
+
+  /**
    * Input parameters for the prepare phase.
    *
    * @param sessionId the Claude session ID (UUID format)
    * @param excludePattern glob pattern to exclude issues by name, or empty string for none
    * @param issueId specific issue ID to select, or empty string for priority-based selection
    * @param trustLevel the trust level for execution
-   * @param resume whether the user explicitly requested resume/continue semantics
+   * @param lockConflictStrategy how existing-worktree lock conflicts should be handled
    */
   public record PrepareInput(String sessionId, String excludePattern, String issueId,
-    TrustLevel trustLevel, boolean resume)
+    TrustLevel trustLevel, LockConflictStrategy lockConflictStrategy)
   {
     /**
      * Creates new prepare input.
@@ -154,6 +169,21 @@ public final class WorkPrepare
      * @param issueId specific issue ID to select, or empty string for priority-based selection
      * @param trustLevel the trust level for execution
      * @param resume whether the user explicitly requested resume/continue semantics
+     */
+    public PrepareInput(String sessionId, String excludePattern, String issueId,
+      TrustLevel trustLevel, boolean resume)
+    {
+      this(sessionId, excludePattern, issueId, trustLevel, toLockConflictStrategy(resume));
+    }
+
+    /**
+     * Creates new prepare input.
+     *
+     * @param sessionId the Claude session ID (UUID format)
+     * @param excludePattern glob pattern to exclude issues by name, or empty string for none
+     * @param issueId specific issue ID to select, or empty string for priority-based selection
+     * @param trustLevel the trust level for execution
+     * @param lockConflictStrategy how existing-worktree lock conflicts should be handled
      * @throws IllegalArgumentException if {@code sessionId} is blank
      * @throws NullPointerException if {@code excludePattern}, {@code issueId}, or
      *   {@code trustLevel} are null
@@ -164,6 +194,20 @@ public final class WorkPrepare
       requireThat(excludePattern, "excludePattern").isNotNull();
       requireThat(issueId, "issueId").isNotNull();
       requireThat(trustLevel, "trustLevel").isNotNull();
+      requireThat(lockConflictStrategy, "lockConflictStrategy").isNotNull();
+    }
+
+    /**
+     * Converts the legacy resume flag into an explicit strategy.
+     *
+     * @param resume true if the caller explicitly requested resume/continue semantics
+     * @return the lock-conflict strategy
+     */
+    private static LockConflictStrategy toLockConflictStrategy(boolean resume)
+    {
+      if (resume)
+        return LockConflictStrategy.RESUME_STALE_OR_OWNED;
+      return LockConflictStrategy.REPORT;
     }
   }
 
@@ -315,7 +359,8 @@ public final class WorkPrepare
    * For {@code ExistingWorktree} results, this method calls {@code issueLock.check()} to inspect
    * the lock state inline: if the current session owns the lock, it returns a {@code READY} response
    * using the existing worktree path (resume semantics); if another session owns the lock, it returns
-   * a {@code LOCKED} response; if the issue is unlocked, it returns an {@code ERROR} response.
+   * an {@code ERROR} response with {@code locked_by}, {@code lock_age_seconds}, and {@code stale}
+   * fields; if the issue is unlocked, it returns an {@code ERROR} response.
    *
    * @param input the preparation input parameters
    * @param discoveryResult the discovery result to handle
@@ -402,9 +447,9 @@ public final class WorkPrepare
     {
       // The issue has an existing worktree. Check the lock state to determine the correct response:
       // - Locked by current session: resume with READY response
-      // - resume=true: force-release any stale lock, acquire for current session, return READY
-      // - Locked by another session (no resume): return ERROR with locked_by/lock_age_seconds so the
-      //   skill can show a confirmation dialog before the user decides whether to resume
+      // - explicit resume strategy + stale foreign lock: force-release and acquire for current session
+      // - Locked by another session (no resume): return ERROR with locked_by/lock_age_seconds/stale
+      //   so the skill can silently skip (if not stale) or show a confirmation dialog (if stale)
       // - Unlocked (no resume): return ERROR about the existing worktree
       IssueLock issueLock = new IssueLock(scope);
       IssueLock.LockResult lockCheck = issueLock.check(existingWorktree.issueId());
@@ -413,7 +458,8 @@ public final class WorkPrepare
       {
         if (locked.sessionId().equals(input.sessionId()))
           return resumeWithExistingWorktree(existingWorktree, projectPath, mapper);
-        if (input.resume())
+        if (input.lockConflictStrategy() == LockConflictStrategy.RESUME_STALE_OR_OWNED &&
+          locked.ageSeconds() >= IssueLock.STALE_LOCK_THRESHOLD.toSeconds())
           return forceResumeWithExistingWorktree(existingWorktree, issueLock, input, projectPath,
             mapper);
         Map<String, Object> errorResult = new LinkedHashMap<>();
@@ -424,10 +470,11 @@ public final class WorkPrepare
         errorResult.put("locked_by", locked.sessionId());
         errorResult.put("lock_age_seconds", locked.ageSeconds());
         errorResult.put("worktree_path", existingWorktree.worktreePath());
+        errorResult.put("stale", locked.ageSeconds() >= IssueLock.STALE_LOCK_THRESHOLD.toSeconds());
         return mapper.writeValueAsString(errorResult);
       }
       // Unlocked worktree: resume if requested, otherwise return ERROR
-      if (input.resume())
+      if (input.lockConflictStrategy() == LockConflictStrategy.RESUME_STALE_OR_OWNED)
         return forceResumeWithExistingWorktree(existingWorktree, issueLock, input, projectPath,
           mapper);
       Map<String, Object> errorResult = new LinkedHashMap<>();

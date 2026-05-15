@@ -34,6 +34,28 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public final class InstructionTestRunnerTest
 {
   /**
+   * Verifies that SPRT diagnostics reference stable testcase IDs instead of positional numbers.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void sprtDiagnosticsReferenceTestcaseIds() throws IOException
+  {
+    Path sourceRoot = Path.of(System.getProperty("user.dir"), "src/main/java");
+    Path runnerSource = sourceRoot.resolve(
+      "io/github/cowwoc/cat/claude/hook/skills/InstructionTestRunner.java");
+    Path graderSource = sourceRoot.resolve(
+      "io/github/cowwoc/cat/claude/hook/skills/SprtGrader.java");
+
+    String runnerContent = Files.readString(runnerSource, StandardCharsets.UTF_8);
+    String graderContent = Files.readString(graderSource, StandardCharsets.UTF_8);
+
+    requireThat(runnerContent, "runnerContent").doesNotContain("tc" + "Num");
+    requireThat(runnerContent, "runnerContent").doesNotContain("\"TC{}:");
+    requireThat(graderContent, "graderContent").doesNotContain("\"TC{}:");
+  }
+
+  /**
    * Verifies that extract-units returns line-numbered body when file has frontmatter.
    */
   @Test
@@ -1704,7 +1726,7 @@ public final class InstructionTestRunnerTest
 
   /**
    * Verifies that create-isolation-branch includes {@code tc_ids_json} in its return JSON,
-   * containing an ordered array of opaque TC IDs derived from sorted test case filenames.
+   * containing an ordered array of testcase IDs derived from sorted test case filenames.
    */
   @Test
   public void createIsolationBranchIncludesTcIdsJson() throws IOException, InterruptedException
@@ -1713,7 +1735,8 @@ public final class InstructionTestRunnerTest
     Path pluginRoot = Files.createTempDirectory("test-plugin-root-");
     try (var scope = new TestClaudeTool(repoDir, pluginRoot))
     {
-      // Create stub extract-turns binary that copies input to turn1.md in dest dir
+      // Create stub extract-turns binary that copies input to turn1.md in dest dir.
+      // The test relies on SprtIsolationManager's plugin-root fallback path.
       Path binDir = pluginRoot.resolve("client/bin");
       Files.createDirectories(binDir);
       Path extractTurnsBin = binDir.resolve("extract-turns");
@@ -1749,14 +1772,13 @@ public final class InstructionTestRunnerTest
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode root = mapper.readTree(result);
 
-      // tc_ids_json must be a JSON array of opaque IDs in sorted filename order
+      // tc_ids_json must be a JSON array of testcase IDs in sorted filename order.
       requireThat(root.has("tc_ids_json"), "hasTcIdsJson").isTrue();
       JsonNode tcIdsJson = root.path("tc_ids_json");
       requireThat(tcIdsJson.isArray(), "isArray").isTrue();
       requireThat(tcIdsJson.size(), "size").isEqualTo(2);
-      // alpha-test.md sorts first → tc1, beta-test.md → tc2
-      requireThat(tcIdsJson.get(0).asString(), "tcId0").isEqualTo("tc1");
-      requireThat(tcIdsJson.get(1).asString(), "tcId1").isEqualTo("tc2");
+      requireThat(tcIdsJson.get(0).asString(), "tcId0").isEqualTo("alpha-test");
+      requireThat(tcIdsJson.get(1).asString(), "tcId1").isEqualTo("beta-test");
     }
     finally
     {
@@ -1999,7 +2021,7 @@ public final class InstructionTestRunnerTest
       Files.writeString(tempDir.resolve(".claude-plugin/plugin.json"),
         "{\"version\":\"2.1.87\"}", StandardCharsets.UTF_8);
       Files.createDirectories(repoDir.resolve("plugin/tests/myskill"));
-      Files.writeString(repoDir.resolve("plugin/tests/myskill/tc1_turn1.md"),
+      Files.writeString(repoDir.resolve("plugin/tests/myskill/sample-test_turn1.md"),
         "test turn content", StandardCharsets.UTF_8);
       TestUtils.runGit(repoDir, "add", ".");
       TestUtils.runGit(repoDir, "commit", "-m", "add turn files");
@@ -2008,7 +2030,7 @@ public final class InstructionTestRunnerTest
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String result = runner.prepareTrial(new String[]{
         repoDir.toString(), "my-issue-isolation", "plugin/tests/myskill",
-        "tc1", runnerWorktree.toString(), outputDir.toString(), "1"});
+        "sample-test", runnerWorktree.toString(), outputDir.toString(), "1"});
 
       Map<String, String> pairs = new LinkedHashMap<>();
       for (String line : result.strip().split("\n"))
@@ -2045,7 +2067,7 @@ public final class InstructionTestRunnerTest
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Files.createDirectories(repoDir.resolve("plugin/tests/myskill"));
-      Files.writeString(repoDir.resolve("plugin/tests/myskill/tc1_turn1.md"),
+      Files.writeString(repoDir.resolve("plugin/tests/myskill/sample-test_turn1.md"),
         "content", StandardCharsets.UTF_8);
       TestUtils.runGit(repoDir, "add", ".");
       TestUtils.runGit(repoDir, "commit", "-m", "add turn files");
@@ -2054,7 +2076,7 @@ public final class InstructionTestRunnerTest
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       runner.prepareTrial(new String[]{
         repoDir.toString(), "my-issue-isolation", "plugin/tests/myskill",
-        "tc1", runnerWorktree.toString(), outputDir.toString(), "1"});
+        "sample-test", runnerWorktree.toString(), outputDir.toString(), "1"});
     }
     finally
     {
@@ -2079,7 +2101,7 @@ public final class InstructionTestRunnerTest
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       Files.createDirectories(repoDir.resolve("plugin/tests/myskill"));
-      Files.writeString(repoDir.resolve("plugin/tests/myskill/tc1_turn1.md"),
+      Files.writeString(repoDir.resolve("plugin/tests/myskill/sample-test_turn1.md"),
         "content", StandardCharsets.UTF_8);
       TestUtils.runGit(repoDir, "add", ".");
       TestUtils.runGit(repoDir, "commit", "-m", "add turn files");
@@ -2096,7 +2118,7 @@ public final class InstructionTestRunnerTest
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String result = runner.prepareTrial(new String[]{
         repoDir.toString(), "my-issue-isolation", "plugin/tests/myskill",
-        "tc1", runnerWorktree.toString(), outputDir.toString(), "1"});
+        "sample-test", runnerWorktree.toString(), outputDir.toString(), "1"});
 
       Map<String, String> pairs = new LinkedHashMap<>();
       for (String line : result.strip().split("\n"))
@@ -2136,7 +2158,7 @@ public final class InstructionTestRunnerTest
       Files.writeString(tempDir.resolve(".claude-plugin/plugin.json"),
         "{\"version\":\"2.1.87\"}", StandardCharsets.UTF_8);
       Files.createDirectories(repoDir.resolve("plugin/tests/myskill"));
-      Files.writeString(repoDir.resolve("plugin/tests/myskill/tc1_turn1.md"),
+      Files.writeString(repoDir.resolve("plugin/tests/myskill/sample-test_turn1.md"),
         "content", StandardCharsets.UTF_8);
       TestUtils.runGit(repoDir, "add", ".");
       TestUtils.runGit(repoDir, "commit", "-m", "add turn files");
@@ -2145,7 +2167,7 @@ public final class InstructionTestRunnerTest
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String result = runner.prepareTrial(new String[]{
         repoDir.toString(), "my-issue-isolation", "plugin/tests/myskill",
-        "tc1", runnerWorktree.toString(), outputDir.toString(), "1"});
+        "sample-test", runnerWorktree.toString(), outputDir.toString(), "1"});
 
       Map<String, String> pairs = new LinkedHashMap<>();
       for (String line : result.strip().split("\n"))
@@ -2192,7 +2214,7 @@ public final class InstructionTestRunnerTest
       Files.writeString(tempDir.resolve(".claude-plugin/plugin.json"),
         "{\"version\":\"2.1.87\"}", StandardCharsets.UTF_8);
       Files.createDirectories(repoDir.resolve("plugin/tests/myskill"));
-      Files.writeString(repoDir.resolve("plugin/tests/myskill/tc1_turn1.md"),
+      Files.writeString(repoDir.resolve("plugin/tests/myskill/sample-test_turn1.md"),
         "content", StandardCharsets.UTF_8);
       TestUtils.runGit(repoDir, "add", ".");
       TestUtils.runGit(repoDir, "commit", "-m", "add turn files");
@@ -2201,7 +2223,7 @@ public final class InstructionTestRunnerTest
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String result = runner.prepareTrial(new String[]{
         repoDir.toString(), "my-issue-isolation", "plugin/tests/myskill",
-        "tc1", runnerWorktree.toString(), outputDir.toString(), "3"});
+        "sample-test", runnerWorktree.toString(), outputDir.toString(), "3"});
 
       Map<String, String> pairs = new LinkedHashMap<>();
       for (String line : result.strip().split("\n"))
@@ -2211,7 +2233,7 @@ public final class InstructionTestRunnerTest
           pairs.put(line.substring(0, eq), line.substring(eq + 1));
       }
       requireThat(pairs.get("output_json"), "output_json").
-        isEqualTo(outputDir + "/tc1_run3.json");
+        isEqualTo(outputDir + "/sample-test_run3.json");
     }
     finally
     {
@@ -2241,7 +2263,7 @@ public final class InstructionTestRunnerTest
       Files.writeString(tempDir.resolve(".claude-plugin/plugin.json"),
         "{\"version\":\"2.1.87\"}", StandardCharsets.UTF_8);
       Files.createDirectories(repoDir.resolve("plugin/tests/myskill"));
-      Files.writeString(repoDir.resolve("plugin/tests/myskill/tc1_turn1.md"),
+      Files.writeString(repoDir.resolve("plugin/tests/myskill/sample-test_turn1.md"),
         "content", StandardCharsets.UTF_8);
       TestUtils.runGit(repoDir, "add", ".");
       TestUtils.runGit(repoDir, "commit", "-m", "add turn files");
@@ -2250,7 +2272,7 @@ public final class InstructionTestRunnerTest
       InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
       String result = runner.prepareTrial(new String[]{
         repoDir.toString(), "my-issue-isolation", "plugin/tests/myskill",
-        "tc1", runnerWorktree.toString(), outputDir.toString(), "1"});
+        "sample-test", runnerWorktree.toString(), outputDir.toString(), "1"});
 
       Map<String, String> pairs = new LinkedHashMap<>();
       for (String line : result.strip().split("\n"))

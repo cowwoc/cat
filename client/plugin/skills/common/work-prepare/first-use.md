@@ -35,7 +35,7 @@ Return JSON on success:
 
 ```json
 {
-  "status": "READY|NO_ISSUES|LOCKED|BLOCKED|ERROR",
+  "status": "READY|NO_ISSUES|LOCKED|BLOCKED|SKIP|ERROR",
   "issue_id": "2.1-issue-name",
   "major": "2",
   "minor": "1",
@@ -56,7 +56,7 @@ Return JSON on failure:
 
 ```json
 {
-  "status": "NO_ISSUES|LOCKED|BLOCKED|ERROR",
+  "status": "NO_ISSUES|LOCKED|BLOCKED|SKIP|ERROR",
   "message": "Human-readable explanation",
   "suggestion": "Next action to take",
   "blocked_issues": [
@@ -318,19 +318,23 @@ Parse the result and handle statuses:
 - `not_found` - Return NO_ISSUES with extended info (see below)
 - `locked` - Return LOCKED status with owner info
 - Error with foreign session lock (`status: ERROR` + `locked_by` field present) - Check whether the `ERROR` response includes a `locked_by` field:
-  - **`locked_by` present (foreign-session lock):** Present a confirmation dialog to the user:
+  - **`locked_by` present (foreign-session lock):** Check the `stale` field first:
+    - **`stale == false` (lock is active):** Silently skip this issue — do NOT display the error or
+      present any dialog. Return SKIP to the calling orchestrator (`work-with-issue-agent`). The
+      `work-prepare-agent` does NOT loop internally — retry responsibility belongs to the caller.
+    - **`stale == true` or `stale` field absent:** Present a confirmation dialog to the user:
 
-    ```
-    Issue {issue_id} has an existing worktree locked by a previous session.
-    Lock holder: {locked_by}  (age: {lock_age_seconds}s)
-    Worktree: {worktree_path}
-    ```
+      ```
+      Issue {issue_id} has an existing worktree locked by a previous session.
+      Lock holder: {locked_by}  (age: {lock_age_seconds}s)
+      Worktree: {worktree_path}
+      ```
 
-    Options:
-    1. **Resume** — atomically transfer the lock to the current session, then return READY
-       with the existing worktree path
-    2. **Skip** — pick a different issue; do NOT remove the worktree or release the lock
-    3. **Abort** — stop without working on any issue
+      Options:
+      1. **Resume** — atomically transfer the lock to the current session, then return READY
+         with the existing worktree path
+      2. **Skip** — pick a different issue; do NOT remove the worktree or release the lock
+      3. **Abort** — stop without working on any issue
 
     **If user selects Resume:**
     ```bash
@@ -725,8 +729,8 @@ Output the JSON result with all required fields.
 - Planning structure missing: Return ERROR immediately
 - Script returns error: Return ERROR with message
 - Lock unavailable: Return LOCKED, do NOT investigate
-- Existing worktree locked by foreign session (`status: ERROR` + `locked_by` field present): Present resume
-  confirmation dialog (user may transfer the lock and take over)
+- Existing worktree locked by foreign session (`status: ERROR` + `locked_by` field present): if `stale == false`,
+  return `SKIP` status to the caller (do NOT loop internally); if `stale == true` or `stale` absent, present resume confirmation dialog (user may transfer the lock)
 - `status: ERROR` + `locked_by` absent (orphaned worktree — no lock file): Apply Orphaned Worktree Recovery Protocol (Step 2)
 - Issue exceeds hard limit: Release lock (Step 3), then return OVERSIZED
 - **Worktree on wrong branch:** Clean up and return ERROR

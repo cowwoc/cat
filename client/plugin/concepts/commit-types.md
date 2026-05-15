@@ -107,12 +107,18 @@ A single issue typically produces **one or two commits**, but may have more:
 multiple sessions, requires incremental progress, or addresses distinct aspects of the same issue.
 Commits are tracked via index.json file history, not commit footers.
 
-**Issue's index.json vs General Config:**
-- **Issue's index.json changes** → **SAME commit** as implementation (always)
-- **General config** (adding dependencies, updating tooling) → Can be **separate commit**
+**Issue's Own Planning Files vs General Config:**
+- **Issue's planning files** (index.json, plan.md in `.cat/issues/`)
+  → **SAME commit** as implementation (always — these are issue
+  artifacts, not separate topics)
+- **General config** (adding dependencies, updating tooling)
+  → Can be **separate commit**
 
-Any changes to an issue's index.json (marking complete, updating status) are part of
-implementing that issue and belong in the same commit as the code changes.
+Any changes to an issue's own planning files — index.json and plan.md
+(marking complete, updating status, recording implementation steps) —
+are part of implementing that issue and belong in the same commit as
+the code changes. A `planning:` commit that only touches the issue's
+own `.cat/issues/` files is the same topic as the implementation.
 
 **Convention/Infrastructure Updates:**
 

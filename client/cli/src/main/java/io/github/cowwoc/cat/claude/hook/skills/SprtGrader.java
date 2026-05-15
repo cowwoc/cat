@@ -177,7 +177,7 @@ final class SprtGrader
               "\nGrader output:\n" + graderOutput);
             if (graderOutput.contains("API Error") && attempt < maxAttempts)
             {
-              log.warn("TC{}: grader hit API error on attempt {}/{}, retrying in {}s",
+              log.warn("{}: grader hit API error on attempt {}/{}, retrying in {}s",
                 tcId, attempt, maxAttempts, attempt * 5);
               try
               {
@@ -294,7 +294,7 @@ final class SprtGrader
   }
 
   /**
-   * Looks up the original filename stem for an opaque test-case ID.
+   * Looks up the original filename stem for a test-case ID.
    *
    * @param args {@code [isolation_result_json, tc_id]}
    * @return the original filename stem (e.g., {@code "creates-hello-file"})
@@ -311,15 +311,16 @@ final class SprtGrader
       throw new IllegalArgumentException(
         "InstructionTestRunner get-tc-name: 'tc_name_map' field not found in isolation " +
         "result JSON");
-    if (!tcId.startsWith("tc"))
-      throw new IllegalArgumentException(
-        "InstructionTestRunner get-tc-name: tc_id must start with 'tc', got: " + tcId);
-    String numericKey = tcId.substring(2);
-    JsonNode stemNode = tcNameMapNode.path(numericKey);
+    JsonNode stemNode = tcNameMapNode.path(tcId);
+    if (stemNode.isMissingNode() && tcId.startsWith("tc"))
+    {
+      // Backward compatibility with older isolation JSON that keyed tc_name_map by numeric suffix.
+      String numericKey = tcId.substring(2);
+      stemNode = tcNameMapNode.path(numericKey);
+    }
     if (stemNode.isMissingNode())
       throw new IllegalArgumentException(
-        "InstructionTestRunner get-tc-name: tc_id '" + tcId + "' (key '" + numericKey +
-        "') not found in tc_name_map");
+        "InstructionTestRunner get-tc-name: tc_id '" + tcId + "' not found in tc_name_map");
     return stemNode.asString();
   }
 

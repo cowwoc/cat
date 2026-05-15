@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Tests release source contracts.
@@ -87,6 +89,32 @@ public final class ReleaseDocumentationTest
     String workVerify = Files.readString(sourceRoot.resolve("client/plugin/agents/common/work-verify.md"),
       StandardCharsets.UTF_8);
     assertRuntimeNeutralWorkVerification(workVerify, "workVerify");
+  }
+
+  /**
+   * Verifies work-skill turn fixtures use descriptive testcase IDs.
+   *
+   * @throws IOException if reading source files fails
+   */
+  @Test
+  public void workSkillTurnFixturesUseDescriptiveTestcaseIds() throws IOException
+  {
+    Path sourceRoot = findSourceRoot();
+    Path fixtureRoot = sourceRoot.resolve("client/plugin/tests/skills/work/first-use");
+    try (Stream<Path> paths = Files.walk(fixtureRoot))
+    {
+      String numericFixtures = paths.filter(Files::isRegularFile).
+        map(fixtureRoot::relativize).
+        map(Path::toString).
+        filter(path -> path.matches(".*tc\\d+_turn\\d+\\.md")).
+        sorted().
+        collect(Collectors.joining("\n"));
+      requireThat(numericFixtures, "numericFixtures").isEmpty();
+    }
+
+    String testResults = Files.readString(fixtureRoot.resolve("test-results.json"), StandardCharsets.UTF_8);
+    requireThat(testResults.matches("(?s).*\"test_case_id\"\\s*:\\s*\"tc\\d+\".*"),
+      "numericTestCaseId").isFalse();
   }
 
   private static void assertRuntimeNeutralWorkVerification(String content, String name)

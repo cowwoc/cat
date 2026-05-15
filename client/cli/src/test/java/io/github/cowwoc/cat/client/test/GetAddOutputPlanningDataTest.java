@@ -34,7 +34,6 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  @SuppressWarnings("try")
   public void planningValidFalseWhenNoPlanningStructure() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -59,7 +58,6 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  @SuppressWarnings("try")
   public void errorMessageUsesRelativePath() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -87,7 +85,6 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  @SuppressWarnings("try")
   public void inProgressVersionIsIncluded() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -140,7 +137,6 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  @SuppressWarnings("try")
   public void closedVersionIsExcluded() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -169,7 +165,6 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  @SuppressWarnings("try")
   public void missingIndexJsonTreatedAsClosed() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -200,7 +195,6 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  @SuppressWarnings("try")
   public void mixedVersionStatusesHandledCorrectly() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -243,7 +237,6 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  @SuppressWarnings("try")
   public void versionsSortedLexicographically() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -284,7 +277,6 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  @SuppressWarnings("try")
   public void emptyIssueListWhenNoIssueDirs() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -313,7 +305,6 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  @SuppressWarnings("try")
   public void regularFilesNotListedAsIssues() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -350,7 +341,6 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  @SuppressWarnings("try")
   public void issueNamesWithSpecialCharactersListed() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -385,12 +375,56 @@ public class GetAddOutputPlanningDataTest
   }
 
   /**
+   * Verifies that planning output shape is deterministic: existing_issues contains only open issue
+   * directories and is sorted lexicographically.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void existingIssuesShapeDeterministicForPlanningData() throws IOException
+  {
+    try (TestClaudeTool scope = new TestClaudeTool())
+    {
+      Path projectPath = scope.getProjectPath();
+      Path issuesDir = projectPath.resolve(".cat/issues");
+      Path versionDir = issuesDir.resolve("v2/v2.1");
+      Files.createDirectories(versionDir);
+      Files.writeString(versionDir.resolve("index.json"), """
+        {"status":"open"}""");
+
+      Path zOpen = versionDir.resolve("zeta-open");
+      Files.createDirectories(zOpen);
+      Files.writeString(zOpen.resolve("index.json"), """
+        {"status":"open"}""");
+      Path alphaClosed = versionDir.resolve("alpha-closed");
+      Files.createDirectories(alphaClosed);
+      Files.writeString(alphaClosed.resolve("index.json"), """
+        {"status":"closed"}""");
+      Path betaOpen = versionDir.resolve("beta-open");
+      Files.createDirectories(betaOpen);
+      Files.writeString(betaOpen.resolve("index.json"), """
+        {"status":"open"}""");
+
+      GetAddOutput handler = new GetAddOutput(scope);
+      String result = handler.getOutput(new String[0]);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode version = mapper.readTree(result).get("versions").get(0);
+      JsonNode existingIssues = version.get("existing_issues");
+
+      requireThat(version.get("issue_count").asInt(), "issue_count").isEqualTo(2);
+      requireThat(existingIssues.size(), "existing_issues.size").isEqualTo(2);
+      requireThat(existingIssues.get(0).asString(), "existing_issues[0]").isEqualTo("beta-open");
+      requireThat(existingIssues.get(1).asString(), "existing_issues[1]").isEqualTo("zeta-open");
+    }
+  }
+
+  /**
    * Verifies that issue_count equals existing_issues.size() invariant.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  @SuppressWarnings("try")
   public void issueCountEqualsExistingIssuesSize() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -428,7 +462,6 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  @SuppressWarnings("try")
   public void issueCountZeroWhenNoIssues() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -459,7 +492,6 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  @SuppressWarnings("try")
   public void summaryEmptyWhenNoGoalSection() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -487,7 +519,6 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  @SuppressWarnings("try")
   public void summaryEmptyWhenGoalAtEof() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -515,7 +546,6 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  @SuppressWarnings("try")
   public void summarySkipsMultipleBlankLinesAfterGoal() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -544,7 +574,6 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  @SuppressWarnings("try")
   public void summaryPreservesSpecialCharacters() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -577,7 +606,6 @@ public class GetAddOutputPlanningDataTest
    */
   @Test(expectedExceptions = IOException.class,
     expectedExceptionsMessageRegExp = ".*missing required 'status' field.*")
-  @SuppressWarnings("try")
   public void missingStatusFieldThrowsIOException() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -599,7 +627,6 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  @SuppressWarnings("try")
   public void openStatusReadFromIndexJson() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -627,7 +654,6 @@ public class GetAddOutputPlanningDataTest
    */
   @Test(expectedExceptions = IOException.class,
     expectedExceptionsMessageRegExp = "(?s).*'status' field must be a string.*")
-  @SuppressWarnings("try")
   public void nonStringStatusFieldThrowsIOException() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -652,7 +678,6 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  @SuppressWarnings("try")
   public void summaryAt120CharactersNotTruncated() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -683,7 +708,6 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  @SuppressWarnings("try")
   public void summaryTruncatedAt120Characters() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -715,7 +739,6 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  @SuppressWarnings("try")
   public void summaryAt119CharactersNotTruncated() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -748,7 +771,6 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  @SuppressWarnings("try")
   public void invalidMinorVersionFormatExcluded() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -774,7 +796,6 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  @SuppressWarnings("try")
   public void singleDigitMinorVersionIncluded() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -802,7 +823,6 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  @SuppressWarnings("try")
   public void majorDirAtVersionLevelExcluded() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -831,7 +851,6 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  @SuppressWarnings("try")
   public void allRequiredTopLevelFieldsPresent() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -860,7 +879,6 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  @SuppressWarnings("try")
   public void versionNodeHasAllRequiredFields() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -894,7 +912,6 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = NullPointerException.class)
-  @SuppressWarnings("try")
   public void nullArgsThrowsNullPointerException() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -913,7 +930,6 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  @SuppressWarnings("try")
   public void closedIssueExcludedFromExistingIssues() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -948,7 +964,6 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  @SuppressWarnings("try")
   public void openIssueIncludedClosedIssueExcluded() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -990,7 +1005,6 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  @SuppressWarnings("try")
   public void issueWithMissingIndexJsonExcluded() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())

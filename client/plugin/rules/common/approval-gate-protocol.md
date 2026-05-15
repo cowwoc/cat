@@ -9,11 +9,12 @@ See LICENSE.md in the project root for license terms.
 ## Approval Gate Protocol
 
 **CRITICAL**: Destructive operations (merge, force-push, branch deletion) require EXPLICIT authorization via
-AskUserQuestion option selection. Conversational signals do NOT constitute authorization.
+a runtime-supported structured option selection. Conversational signals do NOT constitute authorization.
 
 ### Valid Approval Sources
 
-- Explicit option selection from AskUserQuestion (user clicks "Approve and merge" or equivalent button)
+- Explicit option selection from the current runtime's structured user-choice prompt (user selects "Approve and merge"
+  or equivalent option)
 - The `toolUseResult.answers` array contains a value that is a case-insensitive exact match for one of the presented
   options
 

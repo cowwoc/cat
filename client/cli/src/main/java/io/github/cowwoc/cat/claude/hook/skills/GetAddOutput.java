@@ -23,6 +23,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -226,7 +227,7 @@ public final class GetAddOutput implements SkillOutput
           issueDirs.add(entry);
       }
     }
-    issueDirs.sort(null);
+    issueDirs.sort(Comparator.comparing(path -> path.getFileName().toString()));
     for (Path issueDir : issueDirs)
     {
       if (isOpenIssue(issueDir))

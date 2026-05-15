@@ -251,11 +251,12 @@ Main agent: [Spawns subagent with template above]
 | `<type> <topic>` | `stakeholder payment-processing` | Use specified template |
 | `<topic>` only | `authentication-system` | Ask user which template |
 
-If research type not specified, use AskUserQuestion:
+If research type not specified, use Structured user-choice prompt:
 
 ```
-AskUserQuestion({
-  questions: [{
+Structured user-choice prompt:
+  questions:
+  - {
     question: "What type of research do you need for: {topic}?",
     header: "Research Type",
     options: [
@@ -337,11 +338,12 @@ For other research types:
 
 **Ask user if they want to update plan.md with research results:**
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 
 ```
-AskUserQuestion({
-  questions: [{
+Structured user-choice prompt:
+  questions:
+  - {
     question: "Would you like to save these research findings to a plan.md file?",
     header: "Save Research",
     options: [

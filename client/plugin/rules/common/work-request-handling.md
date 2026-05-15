@@ -23,8 +23,8 @@ See LICENSE.md in the project root for license terms.
 
 **Anti-pattern**: Starting to write code without first creating or selecting a task.
 
-**CRITICAL**: User selecting an implementation option from AskUserQuestion does NOT bypass this rule.
-Create the issue first, then ask Claude to work on it. Direct implementation is only for true trivial fixes.
+**CRITICAL**: User selecting an implementation option from a structured user-choice prompt does NOT bypass this rule.
+Create the issue first, then ask the current runtime to work on it. Direct implementation is only for true trivial fixes.
 
 ## Passing a Description to add
 

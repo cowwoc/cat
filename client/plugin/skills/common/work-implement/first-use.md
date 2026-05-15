@@ -186,7 +186,7 @@ Fix plan.md and retry /cat:work.
 Present the pre-implementation review gate:
 
 ```
-AskUserQuestion:
+Structured user-choice prompt:
   header: "${ISSUE_ID} — Pre-Implementation Review"
   question: |
     **Goal:**

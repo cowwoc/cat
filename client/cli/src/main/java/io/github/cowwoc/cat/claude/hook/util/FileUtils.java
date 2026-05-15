@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.claude.hook.util;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
@@ -107,7 +108,16 @@ public final class FileUtils
             Files.createDirectory(destPath);
         }
         else
-          Files.copy(sourcePath, destPath);
+        {
+          try
+          {
+            Files.copy(sourcePath, destPath);
+          }
+          catch (NoSuchFileException _)
+          {
+            // File was deleted between directory walk and copy (concurrent modification); skip it.
+          }
+        }
       }
     }
   }

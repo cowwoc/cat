@@ -145,15 +145,7 @@ public final class InstructionTestRunner
     requireThat(args, "args").isNotNull();
     requireThat(out, "out").isNotNull();
     if (args.length == 0)
-      throw new IllegalArgumentException(
-        "InstructionTestRunner: no command specified.\n" +
-        "Usage: skill-test-runner <command> [args...]\n" +
-        "Commands: extract-units, extract-model, extract-effort, extract-test-dir, detect-changes, " +
-        "map-units, persist-artifacts, init-sprt, update-sprt, check-boundary, smoke-status, " +
-        "merge-results, create-isolation-branch, create-runner-worktrees, check-run-contamination, " +
-        "remove-runner-worktrees, write-test-results, save-failed-run, remove-runner-worktree, " +
-        "remove-isolation-branch, prepare-run, prepare-trial, get-json-field, get-tc-name, " +
-        "get-worktree-field, run-sprt-batch, run-full-sprt, run-single-test");
+      throw new IllegalArgumentException(noCommandSpecifiedMessage());
 
     String command = args[0];
     String[] rest = Arrays.copyOfRange(args, 1, args.length);
@@ -777,8 +769,8 @@ public final class InstructionTestRunner
    * committing. The original branch is restored even if an error occurs.
    *
    * @param args {@code [worktree_path, test_dir, issue_name]}
-   * @return compact JSON {@code {"isolation_branch":"...","tc_id_map":{"stem":"1",...},
-   *   "tc_name_map":{"1":"stem",...},"tc_ids_json":["tc1","tc2",...]}}
+   * @return compact JSON {@code {"isolation_branch":"...","tc_id_map":{"stem":"stem",...},
+   *   "tc_name_map":{"stem":"stem",...},"tc_ids_json":["stem",...]}}
    * @throws IllegalArgumentException if the argument count is wrong
    * @throws IOException              if the working tree is dirty, or a git or file operation fails
    */
@@ -995,7 +987,7 @@ public final class InstructionTestRunner
     String isolationBranch = args[1];
     String testDirRel = args[2];
     String tcId = args[3];
-    requireThat(tcId, "tcId").matches("tc\\d+");
+    requireThat(tcId, "tcId").matches("[A-Za-z0-9][A-Za-z0-9._-]*");
     String runnerWorktree = args[4];
     String outputDir = args[5];
     String trialNum = args[6];
@@ -1111,15 +1103,14 @@ public final class InstructionTestRunner
   /**
    * Implements the {@code get-tc-name} command.
    * <p>
-   * Looks up the original filename stem for an opaque test-case ID using the
+   * Looks up the original filename stem for a test-case ID using the
    * {@code tc_name_map} field of the JSON returned by {@code create-isolation-branch}.
    *
    * @param args {@code [isolation_result_json, tc_id]}
    * @return the original filename stem (e.g., {@code "creates-hello-file"})
    * @throws NullPointerException     if {@code args} is null
-   * @throws IllegalArgumentException if the argument count is wrong, the JSON is invalid,
-   *                                  {@code tc_id} does not start with {@code "tc"}, or the
-   *                                  ID is not found in the map
+   * @throws IllegalArgumentException if the argument count is wrong, the JSON is invalid, or the ID is not
+   *                                  found in the map
    * @throws IOException              if the JSON cannot be parsed
    */
   public String getTcName(String[] args) throws IOException
@@ -1139,16 +1130,16 @@ public final class InstructionTestRunner
       throw new IllegalArgumentException(
         "InstructionTestRunner get-tc-name: 'tc_name_map' field not found in isolation " +
         "result JSON");
-    if (!tcId.startsWith("tc"))
-      throw new IllegalArgumentException(
-        "InstructionTestRunner get-tc-name: tc_id must start with 'tc', got: " + tcId);
-    // Strip "tc" prefix to get the numeric key used in tc_name_map (e.g., "tc1" → "1")
-    String numericKey = tcId.substring(2);
-    JsonNode stemNode = tcNameMapNode.path(numericKey);
+    JsonNode stemNode = tcNameMapNode.path(tcId);
+    if (stemNode.isMissingNode() && tcId.startsWith("tc"))
+    {
+      // Backward compatibility with older isolation JSON that keyed tc_name_map by numeric suffix.
+      String numericKey = tcId.substring(2);
+      stemNode = tcNameMapNode.path(numericKey);
+    }
     if (stemNode.isMissingNode())
       throw new IllegalArgumentException(
-        "InstructionTestRunner get-tc-name: tc_id '" + tcId + "' (key '" + numericKey +
-        "') not found in tc_name_map");
+        "InstructionTestRunner get-tc-name: tc_id '" + tcId + "' not found in tc_name_map");
     return stemNode.asString();
   }
 
@@ -1294,7 +1285,6 @@ public final class InstructionTestRunner
         String tcId = worktreeNode.path("tc_id").asString();
         String runnerWorktree = worktreeNode.path("runner_worktree").asString();
         int trialNum = worktreeNode.path("trial_num").asInt();
-        int tcNum = Integer.parseInt(tcId.substring(2));
 
         // Prepare trial
         String[] prepareArgs = {
@@ -1336,21 +1326,25 @@ public final class InstructionTestRunner
             {
               // Step 1: Run trial (config at worktree/.cat/config/)
               String[] runnerArgs = {
-                "--cwd", runnerWorktree,
                 "--prompt-file", finalPromptFile,
                 "--model", modelId,
+                "--plugin-source", Path.of(runnerWorktree, "client/plugin").toString(),
+                "--jlink-bin", Path.of(runnerWorktree, "client/cli/target/jlink/claude/bin").toString(),
+                "--cwd", runnerWorktree,
                 "--output", finalOutputJson
               };
               int exitCode;
+              Path runnerLogPath = Path.of(outputDir, tcId + "_run" + trialNum + "_runner.log");
               try (ClaudeTool runnerScope = new MainClaudeTool();
-                PrintStream nullOut = new PrintStream(OutputStream.nullOutputStream(), false, UTF_8))
+                OutputStream logOut = Files.newOutputStream(runnerLogPath);
+                PrintStream logStream = new PrintStream(logOut, true, UTF_8))
               {
-                exitCode = ClaudeRunner.run(runnerScope, runnerArgs, nullOut);
+                exitCode = ClaudeRunner.run(runnerScope, runnerArgs, logStream);
               }
 
               if (!Files.exists(Path.of(finalOutputJson)))
               {
-                log.warn("TC{}: runner failed (exit={})", tcNum, exitCode);
+                log.warn("{}: runner failed (exit={}). Log: {}", tcId, exitCode, runnerLogPath);
                 failed = true;
                 cumulativeFailures.incrementAndGet();
                 // Count runner failures as FAIL in SPRT so consistent failures trigger rejection
@@ -1362,7 +1356,7 @@ public final class InstructionTestRunner
                   String boundaryResult = checkBoundary(boundaryArgs);
                   JsonNode boundaryNode = mapper.readTree(boundaryResult);
                   String decision = boundaryNode.path("decision").asString();
-                  log.info("TC{}: {} (trial={}, runner-failure)", tcNum, decision, trialNum);
+                  log.info("{}: {} (trial={}, runner-failure)", tcId, decision, trialNum);
                   if (decision.equals("ACCEPT") || decision.equals("REJECT"))
                     batchDecidedCount.incrementAndGet();
                   else
@@ -1375,7 +1369,7 @@ public final class InstructionTestRunner
               String contamResult = checkRunContamination(new String[]{finalOutputJson});
               if (contamResult.contains("status=FAIL"))
               {
-                log.warn("TC{}: contamination detected", tcNum);
+                log.warn("{}: contamination detected", tcId);
                 failed = true;
                 return;
               }
@@ -1401,7 +1395,7 @@ public final class InstructionTestRunner
               if (message.contains("Grader for") || message.contains("Grader did not write") ||
                 message.contains("Grader output missing") || message.contains("Grade file"))
               {
-                log.error("TC{}: grader failed - {}", tcNum, message);
+                log.error("{}: grader failed - {}", tcId, message);
                 throw e;
               }
               else
@@ -1430,7 +1424,7 @@ public final class InstructionTestRunner
               JsonNode boundaryNode = mapper.readTree(boundaryResult);
               String decision = boundaryNode.path("decision").asString();
 
-              log.info("TC{}: {} (trial={})", tcNum, decision, trialNum);
+              log.info("{}: {} (trial={})", tcId, decision, trialNum);
 
               if (decision.equals("ACCEPT") || decision.equals("REJECT"))
                 batchDecidedCount.incrementAndGet();
@@ -2826,10 +2820,25 @@ public final class InstructionTestRunner
     requireThat(args, "args").isNotNull();
     requireThat(out, "out").isNotNull();
     if (args.length == 0)
-      throw new IllegalArgumentException(
-        "InstructionTestRunner: no command specified.\n" +
-        "Usage: skill-test-runner <command> [args...]");
-    String claudeCodeVersion = ModelIdResolver.detectClaudeCodeVersion();
+      throw new IllegalArgumentException(noCommandSpecifiedMessage());
+    String claudeCodeVersion = ModelIdResolver.detectClaudeCodeVersionOrLatestMapping();
     new InstructionTestRunner(scope, claudeCodeVersion).run(args, out);
+  }
+
+  /**
+   * Returns the error message for missing CLI commands.
+   *
+   * @return the no-command usage message
+   */
+  private static String noCommandSpecifiedMessage()
+  {
+    return "InstructionTestRunner: no command specified.\n" +
+      "Usage: skill-test-runner <command> [args...]\n" +
+      "Commands: extract-units, extract-model, extract-effort, extract-test-dir, detect-changes, " +
+      "map-units, persist-artifacts, init-sprt, update-sprt, check-boundary, smoke-status, " +
+      "merge-results, create-isolation-branch, create-runner-worktrees, check-run-contamination, " +
+      "remove-runner-worktrees, write-test-results, save-failed-run, remove-runner-worktree, " +
+      "remove-isolation-branch, prepare-run, prepare-trial, get-json-field, get-tc-name, " +
+      "get-worktree-field, run-sprt-batch, run-full-sprt, run-single-test";
   }
 }

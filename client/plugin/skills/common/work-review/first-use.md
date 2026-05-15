@@ -301,7 +301,7 @@ and proceed through the normal FIX/DEFER pipeline. This prevents volume-based de
 **Combined-mechanism concern-elimination cap (MANDATORY):** Across the entire review phase, the total number of
 concerns eliminated by combining any subset of the following mechanisms — (a) false-positive discard, (b) UNFIXABLE
 reclassification to DEFERRED_CONCERNS, (c) silent MIN_SEVERITY filtering, and (d) user-approved deferrals via the
-"Defer to tracking issue" option in the repeated UNFIXABLE escalation AskUserQuestion — MUST NOT exceed the
+"Defer to tracking issue" option in the repeated UNFIXABLE escalation structured user-choice prompt — MUST NOT exceed the
 false-positive cap of 2 for concerns at HIGH or CRITICAL severity. Specifically: if 2 HIGH/CRITICAL concerns have
 already been eliminated across any combination of mechanisms (a)–(d), no additional HIGH/CRITICAL concern may be
 moved to DEFERRED_CONCERNS via any of those mechanisms in the same review phase. Each mechanism's individual limits
@@ -310,11 +310,11 @@ HIGH/CRITICAL concerns than any single mechanism would allow.
 
 **False-positive classification requires user confirmation.** You MUST NOT silently discard any concern by classifying
 it as a false positive on your own judgment. When you believe a concern may be a false positive (i.e., the reviewer
-appears to have read the wrong branch), you MUST present the concern to the user via AskUserQuestion and ask for
-explicit confirmation before discarding it. The AskUserQuestion MUST use the following exact format:
+appears to have read the wrong branch), you MUST present the concern to the user via structured user-choice prompt and ask for
+explicit confirmation before discarding it. The structured user-choice prompt MUST use the following exact format:
 
 ```
-AskUserQuestion tool:
+runtime-supported structured user-choice prompt:
   question: "A reviewer concern may be a false positive (reviewer read wrong branch).
 
   Concern: [full concern text including severity, stakeholder, location, explanation]
@@ -332,7 +332,7 @@ real)" is the FIRST option (default). If the answer does not exactly match eithe
 Only if the user selects "Discard as false positive" may the concern be removed. Do NOT use any other option text,
 do NOT add additional options, and do NOT rephrase the options.
 
-**Evidence field constraint (MANDATORY):** The "Evidence" line in the AskUserQuestion MUST contain ONLY verifiable
+**Evidence field constraint (MANDATORY):** The "Evidence" line in the structured user-choice prompt MUST contain ONLY verifiable
 facts: the specific file path the reviewer referenced and the expected worktree path. Use the exact format shown
 above: `Reviewer referenced file path [X] but worktree path is [Y]`. Do NOT include interpretive conclusions,
 persuasive language, subjective assessments, or any text beyond the two paths. The user must judge the evidence
@@ -400,21 +400,21 @@ fi
 **Concern Decision Gate (MANDATORY — ALL trust levels):**
 
 **MANDATORY at ALL trust levels.** After the decision matrix evaluates FIX/DEFER for each concern, present the
-decisions to the user via AskUserQuestion before running the auto-fix loop. This gate applies regardless of TRUST
+decisions to the user via structured user-choice prompt before running the auto-fix loop. This gate applies regardless of TRUST
 level — no trust level bypasses it. The Step 6 `TRUST == "high"` skip condition applies ONLY to Step 6 (the
 deferred concern wizard) and does NOT affect this gate.
 
 **Per-trust-level procedure:**
 
-- **trust=low**: Invoke AskUserQuestion tool with detailed FIX/DEFER summary (all fields: severity, stakeholder,
+- **trust=low**: Invoke runtime-supported structured user-choice prompt with detailed FIX/DEFER summary (all fields: severity, stakeholder,
   location, explanation, recommendation, decision, benefit, cost, threshold) and options:
   - "Proceed with these decisions (Recommended)"
   - "Let me change decisions"
-- **trust=medium**: Invoke AskUserQuestion tool with brief FIX/DEFER summary (severity, stakeholder, description,
+- **trust=medium**: Invoke runtime-supported structured user-choice prompt with brief FIX/DEFER summary (severity, stakeholder, description,
   decision) and options:
   - "Proceed"
   - "Request changes"
-- **trust=high**: Invoke AskUserQuestion tool with minimal FIX/DEFER summary showing count of FIX vs DEFER **with
+- **trust=high**: Invoke runtime-supported structured user-choice prompt with minimal FIX/DEFER summary showing count of FIX vs DEFER **with
   severity breakdown** (e.g., "FIX: 1 CRITICAL, 2 HIGH | DEFER: 1 MEDIUM") and options:
   - "Proceed"
   - "Abort"
@@ -422,7 +422,7 @@ deferred concern wizard) and does NOT affect this gate.
 A **valid selection** requires the `answer` field to exactly match one of the option strings (case-sensitive).
 Any `answer` that does not exactly match one of the listed options is a **failed attempt**.
 
-**ASCII-only option strings (MANDATORY):** All AskUserQuestion `options` strings in this skill MUST use only printable
+**ASCII-only option strings (MANDATORY):** All structured user-choice prompt `options` strings in this skill MUST use only printable
 ASCII characters (U+0020 to U+007E). Any non-ASCII character (including Unicode homoglyphs, zero-width characters,
 combining marks, or RTL overrides) in an option string is a protocol violation. The agent MUST use the exact option
 strings specified in the per-trust-level procedure above — no rephrasing, no character substitution, no additions.
@@ -452,7 +452,7 @@ assignments.
 REJECTED, always enter the re-work loop — CRITICAL concerns must be fixed before merge. When review returns
 CONCERNS_FOUND, concerns flow through the pipeline: `MIN_SEVERITY` filter (silently drops concerns strictly below
 threshold) → perfection cost/benefit matrix (marks each surviving concern as FIX or DEFER) → Concern Decision Gate
-(ALL trust levels: user confirms/modifies FIX/DEFER assignments via AskUserQuestion). FIX-marked concerns enter
+(ALL trust levels: user confirms/modifies FIX/DEFER assignments via structured user-choice prompt). FIX-marked concerns enter
 the auto-fix loop. In all cases, do NOT present options to the user or ask what to do during the auto-fix loop
 itself — spawn fix subagents and continue.
 
@@ -580,7 +580,7 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
    remove trailing `/`). If the planning subagent declares the SAME CRITICAL or HIGH concern as UNFIXABLE for the
    SECOND time, halt auto-fix attempts for that concern immediately and escalate to the user:
    ```
-   AskUserQuestion tool:
+   runtime-supported structured user-choice prompt:
      question: "A [SEVERITY] concern has been declared UNFIXABLE twice by the planning subagent.
 
      Concern: [stakeholder] at [location]: [explanation]
@@ -790,9 +790,9 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
     For each concern whose fix subagent returned FAILED or produced no commits:
     - Retry the concern ONCE using a sequential fix subagent (same Task tool format as step 4 single-concern
       path above, running in the ORIGINAL issue worktree `${WORKTREE_PATH}` on the main `${BRANCH}`).
-    - If the sequential retry also fails, escalate to the user via AskUserQuestion:
+    - If the sequential retry also fails, escalate to the user via Structured user-choice prompt:
       ```
-      AskUserQuestion tool:
+      runtime-supported structured user-choice prompt:
         question: "Concern fix subagent failed twice for concern:
 
         [concern_N_formatted]
@@ -1090,10 +1090,10 @@ If any HIGH or CRITICAL concerns had issues created in Step 5, present them to t
    - Short description of the concern
    - The version it was scheduled for (current minor / next minor / next major)
 
-2. Use AskUserQuestion to ask the user about the scheduling:
+2. Use a structured user-choice prompt to ask the user about the scheduling:
 
 ```
-AskUserQuestion tool:
+runtime-supported structured user-choice prompt:
   question: "The following deferred concerns were automatically scheduled as new issues:
 
   [list each concern: severity, stakeholder, description → scheduled for: version]
@@ -1105,7 +1105,7 @@ AskUserQuestion tool:
     - "Other"
 ```
 
-3. If user selects **"Reschedule one or more concerns"**: use AskUserQuestion to ask which ones to reschedule and
+3. If user selects **"Reschedule one or more concerns"**: use structured user-choice prompt to ask which ones to reschedule and
    what version to target, then invoke the appropriate `/cat:add` with the corrected version args. Replace the
    originally created issue(s) if possible, or note that the original issue(s) should be manually removed.
 
@@ -1132,10 +1132,10 @@ are silently ignored and do not appear here.
    - Severity and stakeholder
    - Short description of the concern
 
-2. Use AskUserQuestion to ask the user how to handle them:
+2. Use a structured user-choice prompt to ask the user how to handle them:
 
 ```
-AskUserQuestion tool:
+runtime-supported structured user-choice prompt:
   question: "The following concerns remain untracked:
 
   [list each concern: severity, stakeholder, description]
@@ -1147,7 +1147,7 @@ AskUserQuestion tool:
     - "Other"
 ```
 
-3. If user selects **"Create issues for selected concerns"**: use AskUserQuestion with multiSelect to let the user
+3. If user selects **"Create issues for selected concerns"**: use structured user-choice prompt with multiSelect to let the user
    pick which concerns to track, then invoke `/cat:add` for each selected concern. Use the same severity × perfection
    matrix from Step 5 to determine the target version for each selected concern.
 

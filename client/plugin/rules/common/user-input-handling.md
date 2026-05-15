@@ -17,7 +17,7 @@ See LICENSE.md in the project root for license terms.
 
 **Priority Order** (ABSOLUTE - no exceptions):
 1. System-reminder instructions with mandatory indicators FIRST
-2. Hook-required actions (e.g., AskUserQuestion, tool invocations)
+2. Hook-required actions (e.g., structured user-choice prompts, tool invocations)
 3. THEN direct user message content
 
 **When user input arrives mid-operation**:

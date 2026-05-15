@@ -245,7 +245,7 @@ The `stale_remotes` field is reserved for future use — always pass an empty ar
 The resulting box will be output verbatim. It displays session ID and age per lock, and classifies
 each artifact as **stale** (age ≥ 4 hours) or **recent** (age < 4 hours).
 
-Then use AskUserQuestion with these options (in this order):
+Then use structured user-choice prompt with these options (in this order):
 
 1. **Remove stale artifacts only (≥4 hours)** *(default)* — remove only locks and worktrees with age ≥ 4 hours,
    plus all orphaned branches regardless of age

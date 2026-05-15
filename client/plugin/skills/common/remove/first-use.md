@@ -26,7 +26,7 @@ When user says "abort issue", this is AMBIGUOUS:
 
 **If user uses "abort", "cancel", or "stop" with a issue name:**
 
-Use AskUserQuestion FIRST:
+Use a structured user-choice prompt FIRST:
 - header: "Clarify Intent"
 - question: "What do you want to do with issue '{issue-name}'?"
 - options:
@@ -54,7 +54,7 @@ Use AskUserQuestion FIRST:
 
 **Ask what to remove:**
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 - header: "Remove What?"
 - question: "What would you like to remove?"
 - options:
@@ -105,7 +105,7 @@ find .cat/issues/v*/v*.* -mindepth 1 -maxdepth 1 -type d ! -name "v*" 2>/dev/nul
 done
 ```
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 - header: "Select Issue"
 - question: "Which issue do you want to remove?"
 - options: [List of issues with status] + "Cancel"
@@ -147,7 +147,7 @@ Exit command.
 
 If status is `closed`:
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 - header: "Warning"
 - question: "This issue is already closed. Removing it will lose the recorded work. Continue?"
 - options:
@@ -169,7 +169,7 @@ find .cat/issues/v*/v*.* -mindepth 1 -maxdepth 1 -type d ! -name "v*" \
 
 If dependents found:
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 - header: "Dependency Warning"
 - question: "The following issues depend on this issue:
 
@@ -187,7 +187,7 @@ Removing will leave these issues with unmet
 
 **Final confirmation:**
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 - header: "Confirm Removal"
 - question: "Remove issue '{issue-name}' from {major}.{minor}?
 
@@ -316,7 +316,7 @@ for d in .cat/v[0-9]*/; do
 done
 ```
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 - header: "Select Major Version"
 - question: "Which major version do you want to remove?"
 - options: [List of major versions with stats] + "Cancel"
@@ -335,7 +335,7 @@ find .cat -maxdepth 2 -type d -name "v[0-9]*.[0-9]*" 2>/dev/null | while read d;
 done | sort -V
 ```
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 - header: "Select Minor Version"
 - question: "Which minor version do you want to remove?"
 - options: [List of versions] + "Cancel"
@@ -356,7 +356,7 @@ find .cat -maxdepth 3 -type d -name "v[0-9]*.[0-9]*.[0-9]*" 2>/dev/null | while 
 done | sort -V
 ```
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 - header: "Select Patch Version"
 - question: "Which patch version do you want to remove?"
 - options: [List of patch versions] + "Cancel"
@@ -416,7 +416,7 @@ INCOMPLETE=$(find "$VERSION_PATH" -mindepth 1 -maxdepth 1 -type d ! -name "v*" \
 
 **If incomplete work/issues exist:**
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 - header: "Incomplete Work"
 - question: "This {VERSION_TYPE} version has incomplete work:
 
@@ -444,7 +444,7 @@ LATER_MAJORS=$(find .cat -name "index.json" -path ".cat/v[$(($MAJOR+1))-9]*/inde
 
 If dependents found:
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 - header: "Dependency Warning"
 - question: "Later major versions may depend on this one:
 
@@ -459,7 +459,7 @@ Removing may affect project structure. Continue?"
 
 If this is not the last minor version:
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 - header: "Dependency Warning"
 - question: "Minor version {major}.{minor+1} and later implicitly depend on this version. Removing may affect the
   roadmap. Continue?"
@@ -478,7 +478,7 @@ LATER_PATCHES=$(find ".cat/issues/v$MAJOR/v$MAJOR.$MINOR" -maxdepth 1 -type d -n
 
 If later patches exist:
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 - header: "Dependency Warning"
 - question: "Later patch versions exist:
 
@@ -519,7 +519,7 @@ ISSUE_COUNT=$(find "$VERSION_PATH" -mindepth 1 -maxdepth 1 -type d ! -name "issu
 
 **If VERSION_TYPE is "major":**
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 - header: "CONFIRM MAJOR VERSION REMOVAL"
 - question: "You are about to remove Major Version {major}.
 
@@ -537,7 +537,7 @@ This action cannot be
 
 **If VERSION_TYPE is "minor":**
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 - header: "Confirm Removal"
 - question: "Remove minor version {major}.{minor}?
 
@@ -551,7 +551,7 @@ This will delete:
 
 **If VERSION_TYPE is "patch":**
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 - header: "Confirm Removal"
 - question: "Remove patch version $MAJOR.$MINOR.$PATCH?
 

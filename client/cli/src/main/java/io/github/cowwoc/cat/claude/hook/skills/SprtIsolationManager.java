@@ -61,8 +61,8 @@ final class SprtIsolationManager
    * committing. The original branch is restored even if an error occurs.
    *
    * @param args {@code [worktree_path, test_dir, issue_name]}
-   * @return compact JSON {@code {"isolation_branch":"...","tc_id_map":{"stem":"1",...},
-   *   "tc_name_map":{"1":"stem",...},"tc_ids_json":["tc1","tc2",...]}}
+   * @return compact JSON {@code {"isolation_branch":"...","tc_id_map":{"stem":"stem",...},
+   *   "tc_name_map":{"stem":"stem",...},"tc_ids_json":["stem",...]}}
    * @throws IllegalArgumentException if the argument count is wrong
    * @throws IOException              if the working tree is dirty, or a git or file operation fails
    */
@@ -91,18 +91,15 @@ final class SprtIsolationManager
     // Enumerate .md files in testDir sorted, excluding test-results.json (which is not .md anyway)
     List<Path> mdFiles = listMdFiles(testDir);
 
-    // Assign sequential opaque IDs: tc1, tc2, ...
-    // Maps: stem -> opaque id (string), opaque id -> stem
+    // Use the testcase filename stem as the stable ID.
+    // Maps: stem -> testcase id, testcase id -> stem.
     Map<String, String> tcIdMap = new LinkedHashMap<>();
     Map<String, String> tcNameMap = new LinkedHashMap<>();
-    int opaqueIndex = 1;
     for (Path mdFile : mdFiles)
     {
       String stem = stemOf(mdFile);
-      String opaqueId = String.valueOf(opaqueIndex);
-      tcIdMap.put(stem, opaqueId);
-      tcNameMap.put(opaqueId, stem);
-      ++opaqueIndex;
+      tcIdMap.put(stem, stem);
+      tcNameMap.put(stem, stem);
     }
 
     // Get current branch to restore later
@@ -132,14 +129,14 @@ final class SprtIsolationManager
       for (Path mdFile : mdFiles)
       {
         String stem = stemOf(mdFile);
-        String opaqueId = tcIdMap.get(stem);
+        String tcId = tcIdMap.get(stem);
         Path strippedInput = Files.createTempFile("extract-turns-", ".md");
         try
         {
           stripTestCaseFile(mdFile, strippedInput);
-          // extract-turns expects a file path (e.g., /path/tc1.md), not a directory.
-          // It creates files like /path/tc1_turn1.md, /path/tc1_turn2.md
-          Path outputBase = testDir.resolve("tc" + opaqueId + ".md");
+          // extract-turns expects a file path (e.g., /path/testcase-id.md), not a directory.
+          // It creates files like /path/testcase-id_turn1.md, /path/testcase-id_turn2.md
+          Path outputBase = testDir.resolve(tcId + ".md");
           ProcessRunner.Result extractResult = ProcessRunner.run(worktreePath,
             extractTurnsBin.toString(), strippedInput.toString(), outputBase.toString());
           if (extractResult.exitCode() != 0)
@@ -155,11 +152,11 @@ final class SprtIsolationManager
         // Delete the original .md file after extraction
         Files.delete(mdFile);
 
-        // Copy runner fixture if present (fixtures/[stem]_runner.json → tc[N]_runner.json)
+        // Copy runner fixture if present (fixtures/[stem]_runner.json -> [tc-id]_runner.json)
         Path fixtureSource = testDir.resolve("fixtures").resolve(stem + "_runner.json");
         if (Files.exists(fixtureSource))
         {
-          Path fixtureDest = testDir.resolve("tc" + opaqueId + "_runner.json");
+          Path fixtureDest = testDir.resolve(tcId + "_runner.json");
           Files.copy(fixtureSource, fixtureDest, StandardCopyOption.REPLACE_EXISTING);
           Files.delete(fixtureSource);
         }
@@ -196,10 +193,10 @@ final class SprtIsolationManager
     for (Map.Entry<String, String> entry : tcNameMap.entrySet())
       tcNameMapNode.put(entry.getKey(), entry.getValue());
     result.set("tc_name_map", tcNameMapNode);
-    // Ordered array of opaque TC IDs (e.g. ["tc1","tc2"]) for direct use in init-sprt
+    // Ordered array of testcase IDs for direct use in init-sprt.
     ArrayNode tcIdsJsonNode = mapper.createArrayNode();
-    for (String opaqueId : tcNameMap.keySet())
-      tcIdsJsonNode.add("tc" + opaqueId);
+    for (String tcId : tcNameMap.keySet())
+      tcIdsJsonNode.add(tcId);
     result.set("tc_ids_json", tcIdsJsonNode);
     return compactJson(result);
   }

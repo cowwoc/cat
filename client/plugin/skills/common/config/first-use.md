@@ -31,7 +31,7 @@ Extract the following values from the JSON output for use in subsequent steps:
 
 **MANDATORY - Display-Before-Prompt Protocol:**
 
-BLOCKING REQUIREMENT: You MUST output a visual display box BEFORE calling AskUserQuestion.
+BLOCKING REQUIREMENT: You MUST output a visual display box BEFORE calling structured user-choice prompt.
 
 INVOKE: Skill("cat:get-output", args="config.settings")
 
@@ -39,7 +39,7 @@ INVOKE: Skill("cat:get-output", args="config.settings")
 
 **CHECKPOINT: Verify settings box was displayed in Step 2. If not, STOP and output it now.**
 
-**Present main menu using AskUserQuestion:**
+**Present main menu using Structured user-choice prompt:**
 
 Show current values in descriptions using data from Step 1.
 
@@ -72,7 +72,7 @@ If user selects "Other" and types "done", "exit", or "back", proceed to Step 11 
 
 **🎭 Personality — derive or set all personality settings**
 
-AskUserQuestion:
+Structured user-choice prompt:
 - header: "Personality"
 - question: "How would you like to configure your personality settings?"
 - options:
@@ -99,7 +99,7 @@ See `plugin/templates/questionnaire.md` for question content, answer mappings, a
 
 **Question 1:**
 
-AskUserQuestion:
+Structured user-choice prompt:
 - header: "How do you lead? (1/5)"
 - question: |
     It's Wednesday evening and you're on vacation. A junior developer messages you:
@@ -117,7 +117,7 @@ Map answer to TRUST:
 
 **Question 2:**
 
-AskUserQuestion:
+Structured user-choice prompt:
 - header: "Friday deploy (2/5)"
 - question: |
     It's 4:55pm on a Friday and production is down. You've found the fix. Before you push and head out,
@@ -134,7 +134,7 @@ Map answer to CAUTION:
 
 **Question 3:**
 
-AskUserQuestion:
+Structured user-choice prompt:
 - header: "The old module (3/5)"
 - question: |
     You're handed a bug report in a module nobody has touched in two years. Do you:
@@ -150,7 +150,7 @@ Map answer to CURIOSITY:
 
 **Question 4:**
 
-AskUserQuestion:
+Structured user-choice prompt:
 - header: "Someone else's mess (4/5)"
 - question: |
     While fixing a bug you stumble across an obvious hack someone left in the code. Do you:
@@ -166,7 +166,7 @@ Map answer to PERFECTION:
 
 **Question 5:**
 
-AskUserQuestion:
+Structured user-choice prompt:
 - header: "The code review (5/5)"
 - question: |
     You're reviewing a PR with a tricky bug. You'd prefer CAT to:
@@ -227,7 +227,7 @@ in each option description with " (current)".
 
 **Page 1 of 2 — Behavior:**
 
-AskUserQuestion:
+Structured user-choice prompt:
 - header: "Behavior (1/2)"
 - question: "Set your behavior preferences:"
 - questions array (4 questions):
@@ -272,7 +272,7 @@ Map answers: Low → "low", Medium → "medium", High → "high" for each respec
 
 **Page 2 of 2 — Communication:**
 
-AskUserQuestion:
+Structured user-choice prompt:
 - header: "Communication (2/2)"
 - question: "Set your communication preference:"
 - questions array (1 question):
@@ -310,7 +310,7 @@ Return to Step 3 (main menu).
 
 **📏 Width Settings:**
 
-AskUserQuestion:
+Structured user-choice prompt:
 - header: "Width Settings"
 - question: "Which width would you like to configure?"
 - options:
@@ -323,7 +323,7 @@ AskUserQuestion:
 
 **If File Width selected:**
 
-AskUserQuestion:
+Structured user-choice prompt:
 - header: "File Width"
 - question: "What device are you primarily writing files on?"
 - options:
@@ -340,7 +340,7 @@ Map selections:
 
 **If Display Width selected:**
 
-AskUserQuestion:
+Structured user-choice prompt:
 - header: "Display Width"
 - question: "What device are you primarily using?"
 - options:
@@ -360,7 +360,7 @@ Map selections:
 
 **If Custom value selected (for either):**
 
-AskUserQuestion:
+Structured user-choice prompt:
 - header: "Custom Width"
 - question: "Enter width (40-200):"
 - options: ["← Back"]
@@ -381,7 +381,7 @@ Return to Step 3 (main menu) after updating.
 
 **🔀 Completion Workflow selection:**
 
-AskUserQuestion:
+Structured user-choice prompt:
 - header: "Completion Workflow"
 - question: "How should completed issues be integrated? (Current: {completionWorkflow || 'merge'})"
 - options:
@@ -411,7 +411,7 @@ Return to Step 3 (main menu) after updating.
 Min severity controls the minimum concern severity level that is visible at all. Concerns below this level are
 silently ignored — not fixed, not deferred, not tracked.
 
-AskUserQuestion:
+Structured user-choice prompt:
 - header: "Min Severity — Concern Visibility"
 - question: "Minimum severity level to make visible? (Current: {minSeverity || 'low'})"
 - options:
@@ -458,7 +458,7 @@ ls -1d .cat/v[0-9]*/v[0-9]*.[0-9]* 2>/dev/null | \
 
 Determine current minor version from roadmap.md (first non-completed).
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 - header: "Select Version"
 - question: "Which version's conditions do you want to configure?"
 - options:
@@ -469,7 +469,7 @@ Use AskUserQuestion:
 
 **If "Enter version number":**
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 - header: "Version"
 - question: "Enter the version number (e.g., 0.5 or just 0 for major):"
 - options: ["← Back"]
@@ -493,7 +493,7 @@ Empty conditions should be represented as "(none)".
 
 **Step 9.3: Choose action**
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 - header: "Action"
 - question: "What would you like to do?"
 - options:
@@ -508,7 +508,7 @@ Use AskUserQuestion:
 
 **Step 9.4a: Edit pre-conditions**
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 - header: "Pre-conditions"
 - question: "Select entry conditions (current: {current conditions}):"
 - multiSelect: true
@@ -526,7 +526,7 @@ If "Specific version(s) complete":
 
 **Step 9.4b: Edit post-conditions**
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 - header: "Post-conditions"
 - question: "Select exit conditions (current: {current conditions}):"
 - multiSelect: true

@@ -17,10 +17,10 @@ treats the argument as a issue description and skips directly to issue creation 
 
 **Research-then-propose model:** Instead of a multi-step wizard, the skill researches all fields upfront
 (versions, requirements, skill dependencies, name suggestions), renders a single proposal display box, then asks
-conversationally for approval. Zero AskUserQuestion calls on the happy path.
+conversationally for approval. Zero structured user-choice prompt calls on the happy path.
 
 **Post-completion workflow:** After issue or version creation completes, offer any next-step workflow
-progression using AskUserQuestion — do NOT mention internal slash commands (e.g., `/cat:work`,
+progression using a structured user-choice prompt — do NOT mention internal slash commands (e.g., `/cat:work`,
 `/cat:status`) in conversational text. Internal slash commands are not visible to users.
 
 **Reference files** — read on demand as needed:
@@ -74,7 +74,7 @@ If no arguments provided:
 
 **Ask what to add:**
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 - header: "Add What?"
 - question: "What would you like to add?"
 - options:
@@ -262,7 +262,7 @@ After rendering, continue to step: issue_approve_proposal.
 
 Display message: "Does this look good? Should I create it?"
 
-This is a conversational check (not AskUserQuestion) — allow user to:
+This is a conversational check (not structured user-choice prompt) — allow user to:
 - Say "yes" / "looks good" / "create it" to proceed to step: issue_validate_criteria
 - Ask clarifying questions about the proposal
 - Request changes to specific fields
@@ -379,7 +379,7 @@ Parse the subagent response to extract:
 **If CONTRADICTIONS is FAIL:**
 
 - Display contradictions to user
-- Use AskUserQuestion:
+- Use Structured user-choice prompt:
   - header: "Post-conditions Contradiction"
   - question: "The following contradictions were found in post-conditions. How should we proceed?"
   - Provide the contradiction details from subagent
@@ -388,7 +388,7 @@ Parse the subagent response to extract:
     - "Remove contradicting post-conditions" - Remove the post-conditions that contradict principles
     - "Override - post-conditions are correct" - Proceed with post-conditions as-is (I understand the risk)
 
-- If "Revise post-conditions manually": use AskUserQuestion to gather revised POSTCONDITIONS
+- If "Revise post-conditions manually": use structured user-choice prompt to gather revised POSTCONDITIONS
 - If "Remove contradicting post-conditions": auto-remove the contradicting post-conditions identified by subagent
 - If "Override": proceed without changes
 
@@ -421,7 +421,7 @@ ISSUE_DESCRIPTION. Identify:
 - **Ordering constraints:** The new issue should logically precede or follow an existing issue but no dependency
   is currently declared
 
-If one or more concerns are found, use AskUserQuestion:
+If one or more concerns are found, use Structured user-choice prompt:
 - header: "Impact Concerns"
 - question: "The following potential impacts were detected with existing issues in v{major}.{minor}. How would you like to proceed?"
 - Present each concern as context above the question (not as a selectable option):
@@ -481,7 +481,7 @@ implicitly alter:
 
 **4. Present consolidated impact report:**
 
-If any concerns were found across dimensions, use AskUserQuestion:
+If any concerns were found across dimensions, use Structured user-choice prompt:
 - header: "Impact Analysis"
 - question: "Impact analysis found the following concerns. How would you like to proceed?"
 - Present each concern with its dimension label (e.g., "Same-version overlap:", "Cross-version compatibility:",
@@ -715,7 +715,7 @@ If no major versions exist:
 ls -1d .cat/issues/v[0-9]* 2>/dev/null | sed 's|.cat/issues/v||' | sort -V
 ```
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 - header: "Target Major"
 - question: "Which major version should this minor be added to?"
 - options: [List of available major versions] + "Create new major version"
@@ -739,7 +739,7 @@ find .cat -maxdepth 2 -type d -name "v[0-9]*.[0-9]*" 2>/dev/null | while read d;
 done | sort -V
 ```
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 - header: "Target Minor Version"
 - question: "Which minor version should this patch be added to?"
 - options: [List of available minor versions] + "Cancel"
@@ -825,7 +825,7 @@ NEXT_VERSION="$MAJOR.$MINOR.$NEXT_NUMBER"
 
 **Ask for version number:**
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 - header: "Version Number"
 - question: "{VERSION_LABEL} number? (Next available: $NEXT_VERSION)"
 - options:
@@ -878,7 +878,7 @@ fi
 
 **If VERSION_EXISTS is true:** (Do NOT proceed to version_create without resolving the conflict.)
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 - header: "Version Conflict"
 - question: "{VERSION_LABEL} {conflict_version} already exists. What would you like to do?"
 - options:
@@ -1027,14 +1027,14 @@ Follow the discussion workflow:
 
 **1. Open - Features First:**
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 - header: "Focus"
 - question: "What do you want to accomplish in minor version $MAJOR.$MINOR?"
 - options: ["Bug fixes", "Small features", "Improvements", "Let me describe"]
 
 **2. Explore specifics:**
 
-Based on response, ask follow-up questions using AskUserQuestion.
+Based on response, ask follow-up questions using a structured user-choice prompt.
 
 **3. Boundaries:**
 
@@ -1052,18 +1052,18 @@ Present synthesis and confirm with user.
 
 **1. Open - Purpose First:**
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 - header: "Patch Focus"
 - question: "What is the purpose of patch version $MAJOR.$MINOR.$PATCH?"
 - options: ["Bug fixes", "Hot fixes", "Security patches", "Let me describe"]
 
 **2. Explore specifics:**
 
-Based on response, ask follow-up questions using AskUserQuestion.
+Based on response, ask follow-up questions using a structured user-choice prompt.
 
 **3. Scope:**
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 - header: "Scope"
 - question: "How urgent is this patch?"
 - options: ["Critical - production issue", "High - needs release soon", "Normal - next maintenance window", "Low -
@@ -1081,7 +1081,7 @@ Present synthesis and confirm with user.
 
 Apply backward thinking to each goal/focus item and generate REQ-001, REQ-002, etc.
 
-Present for review with AskUserQuestion.
+Present for review with structured user-choice prompt.
 
 </step>
 
@@ -1101,7 +1101,7 @@ Standard conditions are applied automatically - do not ask users to confirm obvi
 
 **Only ask if user wants CUSTOM conditions:**
 
-Use AskUserQuestion:
+Use Structured user-choice prompt:
 - header: "Custom Conditions"
 - question: "Standard conditions will be applied (pre-conditions: dependencies complete, post-conditions: all issues +
   tests pass). Any custom conditions?"

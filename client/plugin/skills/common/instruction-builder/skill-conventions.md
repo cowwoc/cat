@@ -91,6 +91,10 @@ describe required capabilities and behavior in runtime-neutral terms. Do NOT int
 names, runtime names, or concrete invocation examples as the required action unless that exact name is valid
 for every runtime artifact that includes the file.
 
+Before finalizing any edit under `client/plugin/skills/common/` or `client/plugin/rules/common/`, search the changed
+shared content for runtime-specific tool names such as `AskUserQuestion`, `Claude Agent`, and `Codex spawn_agent`.
+Replace them with capability wording unless the runtime artifact builder explicitly substitutes the name later.
+
 Use capability wording in shared files:
 
 ```

@@ -379,7 +379,7 @@ Output all of the following in the current turn, in this order, before invoking 
 Invoke the runtime-specific structured approval tool ONLY AFTER all eight items are output.
 
 Use the active runtime's tool:
-- Claude Code: invoke `AskUserQuestion`.
+- Claude Code: invoke `structured user-choice prompt`.
 - Codex: invoke `request_user_input` only when the current session already exposes it. Codex agents cannot switch
   collaboration modes themselves; `request_user_input` is available only in Plan mode.
 

@@ -127,5 +127,24 @@
     "prevention_verified" : false,
     "recurrence_of" : null,
     "correct_behavior" : "Test that code invokes git with correct arguments (mock/verify) or test business outcome (no duplicate rules loaded). Do not test that git produces expected filesystem state."
+  }, {
+    "id" : "M621",
+    "timestamp" : "2026-04-23T02:06:52Z",
+    "category" : "incorrect_implementation",
+    "description" : "Agent squashed 4 commits into 2 instead of 1, keeping the planning commit (issue plan.md + index.json) separate from the bugfix implementation commit, treating them as different topics",
+    "root_cause" : "DOCUMENTATION CONTRADICTION: git-squash-agent/first-use.md type boundary table listed Planning as a separate third squash category, while the inline rules below the table stated Issue index.json belongs with implementation. The table structure is a stronger visual anchor than inline text, so the agent followed the table and kept planning commits separate.",
+    "cause_signature" : "compliance_failure:skill_incomplete:git_operations",
+    "prevention_type" : "skill",
+    "prevention_path" : "plugin/skills/git-squash-agent/first-use.md",
+    "pattern_keywords" : [ ],
+    "prevention_implemented" : true,
+    "prevention_verified" : false,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : ""
   } ]
 }

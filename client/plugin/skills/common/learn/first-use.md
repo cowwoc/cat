@@ -612,7 +612,7 @@ Commit: {commit_hash}
 {retrospective_status}
 ```
 
-If `retrospective_trigger` is true, use AskUserQuestion to offer user choice:
+If `retrospective_trigger` is true, use structured user-choice prompt to offer user choice:
 
 ```yaml
 question: "Retrospective threshold exceeded. Run retrospective now?"

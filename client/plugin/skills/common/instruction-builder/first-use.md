@@ -293,7 +293,7 @@ DESC_LEN=${#DESCRIPTION}
 echo "Description length: ${DESC_LEN} characters"
 ```
 
-If `DESC_TOO_LONG` is `true`, display a hard-reject message and present AskUserQuestion:
+If `DESC_TOO_LONG` is `true`, display a hard-reject message and present Structured user-choice prompt:
 
 ```
 REJECT: Description exceeds 1536-character limit ({DESC_LEN} characters).
@@ -306,7 +306,7 @@ Please provide a shorter version (≤1536 characters).
 ```
 
 ```
-AskUserQuestion:
+Structured user-choice prompt:
   header: "Description Too Long"
   question: |
     The skill description is {DESC_LEN} characters, which exceeds the 1536-character limit.
@@ -328,7 +328,7 @@ INSTRUCTION_DRAFT=$(printf '%s' "${INSTRUCTION_DRAFT}" | \
   "${CAT_PLUGIN_ROOT}/client/bin/update-skill-description" "${NEW_DESCRIPTION}")
 ```
 
-Re-extract and re-check length. If still > 1536, present the AskUserQuestion again (no limit on
+Re-extract and re-check length. If still > 1536, present the structured user-choice prompt again (no limit on
 retries — require compliance before writing to disk).
 
 If `DESC_TOO_LONG` is `false`, continue to Step 5.
@@ -1660,7 +1660,7 @@ Overall verification passes if all non-skipped items are checked and all skipped
 ### Description validation
 
 - [ ] New Step 4 rejects descriptions > 1536 characters with hard reject (displays char count)
-- [ ] AskUserQuestion presented with current description and character count
+- [ ] structured user-choice prompt presented with current description and character count
 - [ ] INSTRUCTION_DRAFT updated with user-provided replacement before writing to disk
 - [ ] Descriptions of exactly 1536 characters are accepted without prompting
 

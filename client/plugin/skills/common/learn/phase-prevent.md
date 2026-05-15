@@ -715,7 +715,7 @@ When documentation primed the agent for wrong behavior, the fix must be **comple
 When a skill cannot produce its intended output due to missing automation:
 
 1. **Do NOT unilaterally change the output format**
-2. **Use AskUserQuestion to offer the choice:**
+2. **Use a structured user-choice prompt to offer the choice:**
 
 ```yaml
 question: "Skill '{skill}' references output that cannot be generated. How should I proceed?"

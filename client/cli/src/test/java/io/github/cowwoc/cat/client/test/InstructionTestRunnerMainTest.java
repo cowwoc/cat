@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.client.test;
 
 import io.github.cowwoc.cat.claude.hook.ClaudePluginScope;
 import io.github.cowwoc.cat.claude.hook.skills.InstructionTestRunner;
+import io.github.cowwoc.cat.claude.hook.skills.ModelIdResolver;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -86,5 +87,47 @@ public class InstructionTestRunnerMainTest
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+  }
+
+  /**
+   * Verifies that codex-like runtime invocation proceeds to command validation when Claude is
+   * unavailable, instead of failing on version detection.
+   *
+   * @throws IOException if an I/O error occurs
+   * @throws InterruptedException if interrupted
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = "(?s).*unknown command: unknown-command.*")
+  public void codexRuntimeWithoutClaudeUsesBusinessErrorPath() throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("instruction-test-runner-main-test-");
+    String originalValue = System.getProperty(ModelIdResolver.CLAUDE_EXECUTABLE_PROPERTY);
+    System.setProperty(ModelIdResolver.CLAUDE_EXECUTABLE_PROPERTY,
+      "cat-missing-claude-binary-for-test");
+    try (ClaudePluginScope scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+      InstructionTestRunner.run(scope, new String[]{"unknown-command"}, out);
+    }
+    finally
+    {
+      restoreProperty(ModelIdResolver.CLAUDE_EXECUTABLE_PROPERTY, originalValue);
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Restores a system property to its original value.
+   *
+   * @param key the property name
+   * @param value the original value, or {@code null} if it was unset
+   */
+  private static void restoreProperty(String key, String value)
+  {
+    if (value == null)
+      System.clearProperty(key);
+    else
+      System.setProperty(key, value);
   }
 }

@@ -63,7 +63,7 @@ public final class ClaudeRunner implements AutoCloseable
   /**
    * Default timeout for the Claude CLI process.
    */
-  private static final Duration DEFAULT_TIMEOUT = Duration.ofMinutes(3);
+  private static final Duration DEFAULT_TIMEOUT = Duration.ofMinutes(10);
   private final ClaudePluginScope scope;
   private final ObjectWriter compactWriter;
   private Path isolatedConfigDir;
@@ -965,7 +965,6 @@ public final class ClaudeRunner implements AutoCloseable
         "claude-runner resolve-model: expected 1 argument <short_name>, got " + args.length +
         ".\nUsage: claude-runner resolve-model <short_name>");
     String shortName = args[0];
-    String claudeCodeVersion = ModelIdResolver.detectClaudeCodeVersion();
-    return ModelIdResolver.resolve(claudeCodeVersion, shortName);
+    return ModelIdResolver.resolveModelStrict(shortName);
   }
 }

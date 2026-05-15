@@ -336,9 +336,11 @@ Delegation isolates conflict resolution from the main context and allows retry w
 |----------|-------|-----------|
 | Implementation | `feature:`, `bugfix:`, `test:`, `refactor:`, `docs:` | ONE commit |
 | Config/Infrastructure | `config:` | ONE commit (optional, only for general config) |
-| Planning | `planning:` | ONE commit (optional) |
 
 **Key rules when squashing:**
+- **Issue's own planning files** (plan.md, index.json in `.cat/issues/`)
+  → **SAME commit** as implementation (these are issue artifacts, not
+  separate topics)
 - **Issue index.json** → same commit as implementation
 - **Test commits for the issue implementation** → same commit as implementation
 - **Same topic, different type prefixes** (`bugfix:` + `refactor:` on same code) → combine; choose type that best

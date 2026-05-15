@@ -8,6 +8,8 @@ package io.github.cowwoc.cat.claude.hook.skills;
 
 import io.github.cowwoc.cat.agent.ProcessRunner;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Locale;
@@ -29,6 +31,11 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  */
 public final class ModelIdResolver
 {
+  /**
+   * System property used to override the Claude executable name/path for version detection.
+   */
+  public static final String CLAUDE_EXECUTABLE_PROPERTY = "cat.claude.executable";
+
   /**
    * Pattern matching Claude Code version output: {@code "X.Y.Z (Claude Code)"}.
    */
@@ -141,24 +148,80 @@ public final class ModelIdResolver
    */
   public static String detectClaudeCodeVersion()
   {
-    ProcessRunner.Result result = ProcessRunner.run("claude", "--version");
+    String claudeExecutable = System.getProperty(CLAUDE_EXECUTABLE_PROPERTY, "claude");
+    ProcessRunner.Result result = ProcessRunner.run(claudeExecutable, "--version");
     if (result.exitCode() != 0)
     {
       throw new IllegalStateException(
-        "ModelIdResolver.detectClaudeCodeVersion: 'claude --version' failed with exit code " +
+        "ModelIdResolver.detectClaudeCodeVersion: '" + claudeExecutable +
+        " --version' failed with exit code " +
         result.exitCode() + ". stdout: " + result.stdout());
     }
 
-    String stdout = result.stdout().strip();
-    for (String line : stdout.split("\n"))
+    return parseClaudeCodeVersion(result.stdout(), claudeExecutable + " --version");
+  }
+
+  /**
+   * Detects the Claude Code version, falling back to the latest known mapping if {@code claude} is
+   * unavailable in the current runtime.
+   *
+   * @return a Claude Code version string suitable for model-id resolution
+   */
+  public static String detectClaudeCodeVersionOrLatestMapping()
+  {
+    String claudeExecutable = System.getProperty(CLAUDE_EXECUTABLE_PROPERTY, "claude");
+    if (isExecutableUnavailable(claudeExecutable))
+      return VERSION_MAPPINGS.lastKey().toString();
+    return detectClaudeCodeVersion();
+  }
+
+  /**
+   * Returns true when the configured executable cannot be found before invocation.
+   *
+   * @param executable the executable name or path
+   * @return true if the executable is unavailable
+   */
+  private static boolean isExecutableUnavailable(String executable)
+  {
+    Path executablePath = Path.of(executable);
+    if (executablePath.getNameCount() > 1 || executable.contains("/") || executable.contains("\\"))
+      return !Files.isExecutable(executablePath);
+
+    ProcessRunner.Result whichResult = ProcessRunner.run("which", executable);
+    return whichResult.exitCode() != 0;
+  }
+
+  /**
+   * Resolves a short model name using strict Claude Code version detection.
+   *
+   * @param shortName the short model name or fully-qualified model ID
+   * @return the fully-qualified model ID
+   */
+  public static String resolveModelStrict(String shortName)
+  {
+    return resolve(detectClaudeCodeVersion(), shortName);
+  }
+
+  /**
+   * Parses the Claude Code version from {@code claude --version} output.
+   *
+   * @param stdout      command output
+   * @param commandName command label for error reporting
+   * @return the parsed version string
+   * @throws IllegalStateException if the output is unexpected
+   */
+  private static String parseClaudeCodeVersion(String stdout, String commandName)
+  {
+    String normalized = stdout.strip();
+    for (String line : normalized.split("\n"))
     {
       Matcher matcher = VERSION_OUTPUT_PATTERN.matcher(line.strip());
       if (matcher.matches())
         return matcher.group(1);
     }
     throw new IllegalStateException(
-      "ModelIdResolver.detectClaudeCodeVersion: unexpected output from 'claude --version': " +
-      stdout);
+      "ModelIdResolver.detectClaudeCodeVersion: unexpected output from '" + commandName + "': " +
+      normalized);
   }
 
   /**
