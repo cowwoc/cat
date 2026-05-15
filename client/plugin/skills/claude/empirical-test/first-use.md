@@ -15,7 +15,7 @@ normal project context by itself.
 
 ```bash
 : "${CAT_PLUGIN_DATA:?CAT_PLUGIN_DATA is required}"
-RUNNER="${CAT_PLUGIN_DATA}/client/bin/empirical-test-runner"
+RUNNER="${CAT_PLUGIN_ROOT}/client/bin/empirical-test-runner"
 "$RUNNER" \
   --runtime claude \
   --model "${MODEL:?MODEL is required}" \
@@ -28,7 +28,7 @@ RUNNER="${CAT_PLUGIN_DATA}/client/bin/empirical-test-runner"
 
 ```bash
 : "${CAT_PLUGIN_DATA:?CAT_PLUGIN_DATA is required}"
-SESSION_ANALYZER="${CAT_PLUGIN_DATA}/client/bin/session-analyzer"
+SESSION_ANALYZER="${CAT_PLUGIN_ROOT}/client/bin/session-analyzer"
 "$SESSION_ANALYZER" --runtime claude analyze "${TRIAL_SESSION_ID:?TRIAL_SESSION_ID is required}"
 "$SESSION_ANALYZER" --runtime claude errors "${TRIAL_SESSION_ID:?TRIAL_SESSION_ID is required}"
 "$SESSION_ANALYZER" --runtime claude search "${TRIAL_SESSION_ID:?TRIAL_SESSION_ID is required}" "keyword" --context 5

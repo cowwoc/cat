@@ -140,7 +140,7 @@ Task tool:
 - **SUCCESS**: Extract `commits` array. Write squash marker (MANDATORY — gate blocks if absent):
   ```bash
   SQUASH_COMMIT_HASH=$(cd "${WORKTREE_PATH}" && git rev-parse HEAD)
-  "${CAT_PLUGIN_DATA}/client/bin/write-session-marker" "${WORKTREE_PATH}" "${ISSUE_ID}" "squashed:${SQUASH_COMMIT_HASH}"
+  "${CAT_PLUGIN_ROOT}/client/bin/write-session-marker" "${WORKTREE_PATH}" "${ISSUE_ID}" "squashed:${SQUASH_COMMIT_HASH}"
   if [[ $? -ne 0 ]]; then
     echo "ERROR: write-session-marker failed. Do NOT proceed to Step 9." >&2
     exit 1
@@ -261,7 +261,7 @@ After squash, update marker:
 ```bash
 FINAL_COMMIT=$(cd "${WORKTREE_PATH}" && git rev-parse HEAD)
 FINAL_DIFF_STAT=$(cd "${WORKTREE_PATH}" && git diff --stat ${TARGET_BRANCH}..HEAD)
-"${CAT_PLUGIN_DATA}/client/bin/write-session-marker" "${WORKTREE_PATH}" "${ISSUE_ID}" "squashed:${FINAL_COMMIT}"
+"${CAT_PLUGIN_ROOT}/client/bin/write-session-marker" "${WORKTREE_PATH}" "${ISSUE_ID}" "squashed:${FINAL_COMMIT}"
 ```
 
 If squash fails: return FAILED. Do NOT proceed to gate.
@@ -367,7 +367,7 @@ Output all of the following in the current turn, in this order, before invoking 
    from `CONFLICT_RESOLUTIONS` AND run `git diff ${TARGET_BRANCH}...HEAD -- <file>` so the user can verify the
    actual resolved diff. Do NOT show only the self-reported strategy without the accompanying diff.
 7. **All stakeholder concerns** (ALL severities — do NOT suppress MEDIUM or LOW):
-   - Fixed: `"${CAT_PLUGIN_DATA}/client/bin/get-stakeholder-concern-box" "${SEVERITY}" "${STAKEHOLDER}" "${FILE}" "${CONCERN}"`
+   - Fixed: `"${CAT_PLUGIN_ROOT}/client/bin/get-stakeholder-concern-box" "${SEVERITY}" "${STAKEHOLDER}" "${FILE}" "${CONCERN}"`
    - Deferred: include `[deferred: benefit=..., cost=..., threshold=...]`
 8. **Last change request recap** — scan for most recent user message requesting a change to this issue. If found:
    ```
@@ -422,7 +422,7 @@ approvals.
 **If "Approve and merge" selected:**
 - Verify squash precondition — read marker and confirm it starts with `squashed:`:
   ```bash
-  MARKER_VALUE=$("${CAT_PLUGIN_DATA}/client/bin/read-session-marker" "${WORKTREE_PATH}" "${ISSUE_ID}" 2>/dev/null || echo "")
+  MARKER_VALUE=$("${CAT_PLUGIN_ROOT}/client/bin/read-session-marker" "${WORKTREE_PATH}" "${ISSUE_ID}" 2>/dev/null || echo "")
   if [[ ! "$MARKER_VALUE" =~ ^squashed: ]]; then
     echo "ERROR: Cannot approve — squash marker missing or invalid. Current: '${MARKER_VALUE}'. Return to Step 11."
     # Do NOT write 'approved'. Return to Step 11.
@@ -431,7 +431,7 @@ approvals.
   If check fails: return to Step 11. Do NOT write `approved` or proceed to Step 13.
 - Write approval marker:
   ```bash
-  "${CAT_PLUGIN_DATA}/client/bin/write-session-marker" "${WORKTREE_PATH}" "${ISSUE_ID}" "approved"
+  "${CAT_PLUGIN_ROOT}/client/bin/write-session-marker" "${WORKTREE_PATH}" "${ISSUE_ID}" "approved"
   ```
 - Set `APPROVAL_MARKER=true`. Continue to Step 13.
 
@@ -439,7 +439,7 @@ approvals.
 
 Write invalidation marker FIRST (before spawning fix subagent):
 ```bash
-"${CAT_PLUGIN_DATA}/client/bin/write-session-marker" "${WORKTREE_PATH}" "${ISSUE_ID}" "approved:invalidated"
+"${CAT_PLUGIN_ROOT}/client/bin/write-session-marker" "${WORKTREE_PATH}" "${ISSUE_ID}" "approved:invalidated"
 ```
 
 **Iteration cap:** Track `FIX_ITERATION` (starts at 1, max 3). After 3 iterations with MEDIUM+ concerns still
@@ -489,7 +489,7 @@ Return `{"status": "ABORTED", "issue_id": "${ISSUE_ID}", "message": "User aborte
 ## Step 13: Merge Phase
 
 ```bash
-"${CAT_PLUGIN_DATA}/client/bin/progress-banner" ${ISSUE_ID} --phase merging
+"${CAT_PLUGIN_ROOT}/client/bin/progress-banner" ${ISSUE_ID} --phase merging
 ```
 If banner fails: STOP with error. Do NOT skip.
 
@@ -498,7 +498,7 @@ If banner fails: STOP with error. Do NOT skip.
 Read the durable marker to verify approval survives context compaction:
 ```
 if TRUST != "high":
-    MARKER_VALUE=$("${CAT_PLUGIN_DATA}/client/bin/read-session-marker" "${WORKTREE_PATH}" "${ISSUE_ID}" 2>/dev/null | tail -1)
+    MARKER_VALUE=$("${CAT_PLUGIN_ROOT}/client/bin/read-session-marker" "${WORKTREE_PATH}" "${ISSUE_ID}" 2>/dev/null | tail -1)
     if APPROVAL_MARKER != true and MARKER_VALUE != "approved":
         # Re-present full approval gate context, then re-invoke the structured approval tool:
         Structured approval tool: "Ready to merge ${ISSUE_ID} to ${TARGET_BRANCH}?"
@@ -533,7 +533,7 @@ git show-ref --verify --quiet "refs/heads/${BRANCH}" && BRANCH_EXISTS=true || BR
 
 Otherwise, invoke the merge tool and capture its JSON output:
 ```bash
-MERGE_RESULT=$("${CAT_PLUGIN_DATA}/client/bin/merge-and-cleanup" \
+MERGE_RESULT=$("${CAT_PLUGIN_ROOT}/client/bin/merge-and-cleanup" \
   "${CAT_PROJECT_DIR}" "${ISSUE_ID}" "${CAT_SESSION_ID}" "${TARGET_BRANCH}" --worktree "${WORKTREE_PATH}"
 )
 ```
@@ -546,7 +546,7 @@ MERGE_RESULT=$("${CAT_PLUGIN_DATA}/client/bin/merge-and-cleanup" \
 
 **On any merge error:** Invalidate approval marker, then return FAILED:
 ```bash
-"${CAT_PLUGIN_DATA}/client/bin/write-session-marker" "${WORKTREE_PATH}" "${ISSUE_ID}" "approved:invalidated"
+"${CAT_PLUGIN_ROOT}/client/bin/write-session-marker" "${WORKTREE_PATH}" "${ISSUE_ID}" "approved:invalidated"
 ```
 
 ### Post-Merge Verification (BLOCKING)
@@ -612,7 +612,7 @@ Classify errors in order:
 7. None of the above → **permanent** (default to releasing lock)
 
 - **Transient**: hold lock (user can retry)
-- **Permanent**: release lock: `"${CAT_PLUGIN_DATA}/client/bin/issue-lock" release "${ISSUE_ID}" "$CAT_SESSION_ID"`
+- **Permanent**: release lock: `"${CAT_PLUGIN_ROOT}/client/bin/issue-lock" release "${ISSUE_ID}" "$CAT_SESSION_ID"`
 
 ```json
 {

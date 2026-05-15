@@ -90,7 +90,7 @@ public final class StatuslineInstallTest
   }
 
   /**
-   * Verifies that the installed statusLine command path uses CLAUDE_PLUGIN_DATA.
+   * Verifies that the installed statusLine command path uses the provided plugin root.
    *
    * @throws IOException if an I/O error occurs
    */

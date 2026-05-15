@@ -119,7 +119,7 @@ fi
 ```
 
 ```bash
-"${CLAUDE_PLUGIN_DATA}/client/bin/claude-runner" \
+"${CLAUDE_PLUGIN_ROOT}/client/bin/claude-runner" \
   --prompt-file "$PROMPT_FILE" \
   --model haiku \
   --effort medium \
@@ -145,7 +145,7 @@ if [[ "$OUTPUT_FILE" != /tmp/* ]] || [[ ! -f "$OUTPUT_FILE" ]]; then
   echo "ERROR: Invalid output file path: $OUTPUT_FILE" >&2
   exit 1
 fi
-"${CLAUDE_PLUGIN_DATA}/client/bin/claude-runner" \
+"${CLAUDE_PLUGIN_ROOT}/client/bin/claude-runner" \
   --prompt-file "$PROMPT_FILE" \
   --model haiku \
   --effort medium \

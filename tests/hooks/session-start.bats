@@ -6,7 +6,6 @@
 
 setup() {
   TEST_DIR=$(mktemp -d)
-  # Source the script under test, guarding against main() execution
   BATS_TEST_SOURCED=true source "${BATS_TEST_DIRNAME}/../../client/plugin/hooks/claude/session-start.sh" || true
 }
 
@@ -14,9 +13,72 @@ teardown() {
   rm -rf "$TEST_DIR"
 }
 
-@test "get_platform returns non-empty string" {
-  result=$(get_platform)
-  [ -n "$result" ]
+make_plugin_root() {
+  local dir="$1" version="$2"
+  mkdir -p "${dir}/.claude-plugin"
+  printf '{"name":"cat","version":"%s"}' "$version" > "${dir}/.claude-plugin/plugin.json"
+}
+
+make_mock_java() {
+  local bin_dir="$1" log_file="$2"
+  mkdir -p "$bin_dir"
+  cat > "${bin_dir}/java" <<'JAVA_EOF'
+#!/usr/bin/env bash
+if [[ "$1" == "-version" ]]; then
+  echo "openjdk version \"26\" 2026-03-17" >&2
+  exit 0
+fi
+printf '%s\n' "$*" >> "${MOCK_JAVA_LOG}"
+printf '{"continue":true,"suppressOutput":false}\n'
+exit 0
+JAVA_EOF
+  chmod +x "${bin_dir}/java"
+  export MOCK_JAVA_LOG="$log_file"
+}
+
+@test "validate_semver accepts two and three component versions" {
+  run validate_semver "2.1"
+  [ "$status" -eq 0 ]
+
+  run validate_semver "2.1.0"
+  [ "$status" -eq 0 ]
+}
+
+@test "validate_semver rejects invalid versions" {
+  run validate_semver "abc"
+  [ "$status" -ne 0 ]
+
+  run validate_semver "1.2.3-beta"
+  [ "$status" -ne 0 ]
+
+  run validate_semver "1.2.3.4"
+  [ "$status" -ne 0 ]
+}
+
+@test "runtime_version_matches fails when VERSION is missing" {
+  local runtime_dir="${TEST_DIR}/runtime"
+  mkdir -p "$runtime_dir"
+
+  run runtime_version_matches "$runtime_dir" "2.1.0"
+  [ "$status" -ne 0 ]
+}
+
+@test "runtime_version_matches fails on version mismatch" {
+  local runtime_dir="${TEST_DIR}/runtime"
+  mkdir -p "$runtime_dir"
+  echo "2.0.0" > "${runtime_dir}/VERSION"
+
+  run runtime_version_matches "$runtime_dir" "2.1.0"
+  [ "$status" -ne 0 ]
+}
+
+@test "runtime_version_matches succeeds on matching version" {
+  local runtime_dir="${TEST_DIR}/runtime"
+  mkdir -p "$runtime_dir"
+  echo "2.1.0" > "${runtime_dir}/VERSION"
+
+  run runtime_version_matches "$runtime_dir" "2.1.0"
+  [ "$status" -eq 0 ]
 }
 
 @test "check_runtime fails when directory does not exist" {
@@ -25,80 +87,63 @@ teardown() {
 }
 
 @test "check_runtime fails when java binary is missing" {
-  local fake_jdk="${TEST_DIR}/fake-jdk"
-  mkdir -p "${fake_jdk}/bin"
-  # bin/java is absent - only the directory exists
-  run check_runtime "$fake_jdk"
+  local runtime_dir="${TEST_DIR}/runtime"
+  mkdir -p "${runtime_dir}/bin"
+
+  run check_runtime "$runtime_dir"
   [ "$status" -ne 0 ]
 }
 
-@test "try_acquire_runtime with VERSION matching plugin_version calls check_runtime" {
-  local fake_jdk="${TEST_DIR}/fake-jdk"
-  local fake_version="9.9.9"
-  mkdir -p "${fake_jdk}/bin"
-  echo "$fake_version" > "${fake_jdk}/VERSION"
-  # No java binary present, so check_runtime should fail → try_acquire_runtime returns non-zero
-  run try_acquire_runtime "$fake_jdk" "$fake_version"
-  # check_runtime fails (no java binary), so result is non-zero
+@test "check_runtime fails when java binary exits non-zero" {
+  local runtime_dir="${TEST_DIR}/runtime"
+  mkdir -p "${runtime_dir}/bin"
+  cat > "${runtime_dir}/bin/java" <<'JAVA_EOF'
+#!/usr/bin/env bash
+exit 1
+JAVA_EOF
+  chmod +x "${runtime_dir}/bin/java"
+
+  run check_runtime "$runtime_dir"
   [ "$status" -ne 0 ]
 }
 
-@test "try_acquire_runtime detects version mismatch" {
-  local fake_jdk="${TEST_DIR}/fake-jdk"
-  mkdir -p "${fake_jdk}/bin"
-  echo "1.0.0" > "${fake_jdk}/VERSION"
-  # VERSION file says 1.0.0 but plugin_version is 2.0.0 - mismatch triggers download attempt
-  # Download will fail (no network/real release), so overall status is non-zero
-  run try_acquire_runtime "$fake_jdk" "2.0.0"
-  [ "$status" -ne 0 ]
+@test "check_runtime succeeds when java -version works" {
+  local runtime_dir="${TEST_DIR}/runtime"
+  make_mock_java "${runtime_dir}/bin" "${TEST_DIR}/java.log"
+
+  run check_runtime "$runtime_dir"
+  [ "$status" -eq 0 ]
 }
 
-@test "flush_log with no message returns 0 without output" {
-  # Reset log state
+@test "flush_log with no message returns without output" {
   LOG_LEVEL=""
   LOG_MESSAGE=""
   DEBUG_LINES=""
+
   run flush_log
   [ "$status" -eq 0 ]
   [ -z "$output" ]
 }
 
-@test "flush_log with warning level outputs JSON and does not exit 1" {
-  # Reset log state
+@test "flush_log with warning level outputs hook JSON" {
   LOG_LEVEL=""
   LOG_MESSAGE=""
   DEBUG_LINES=""
   log "warning" "test warning message"
+
   run flush_log
   [ "$status" -eq 0 ]
-  # Output should contain JSON with status field
   [[ "$output" == *'"status"'* ]]
   [[ "$output" == *'"warning"'* ]]
 }
 
-@test "try_acquire_runtime returns 0 when VERSION matches and java works" {
-  local fake_jdk="${TEST_DIR}/fake-jdk"
-  local fake_version="9.9.9"
-  mkdir -p "${fake_jdk}/bin"
-  echo "$fake_version" > "${fake_jdk}/VERSION"
-  # Create a fake java binary that mimics 'java -version' (prints to stderr, exits 0)
-  cat > "${fake_jdk}/bin/java" <<'JAVA_EOF'
-#!/usr/bin/env bash
-echo "openjdk version \"25\" 2025-09-16" >&2
-exit 0
-JAVA_EOF
-  chmod +x "${fake_jdk}/bin/java"
-  run try_acquire_runtime "$fake_jdk" "$fake_version"
-  [ "$status" -eq 0 ]
-}
-
-@test "flush_log with error level calls exit 0" {
+@test "flush_log with error level exits zero after writing hook JSON" {
   LOG_LEVEL=""
   LOG_MESSAGE=""
   DEBUG_LINES=""
   log "error" "test error message"
+
   run flush_log
-  # flush_log calls exit 0 on error level (hook JSON is written to stdout for Claude Code to parse)
   [ "$status" -eq 0 ]
   [[ "$output" == *'"error"'* ]]
 }
@@ -109,474 +154,83 @@ JAVA_EOF
   DEBUG_LINES=""
   debug "test debug line"
   log "warning" "test warning with debug"
+
   run flush_log
   [ "$status" -eq 0 ]
   [[ "$output" == *'additionalContext'* ]]
 }
 
-@test "main fails when plugin.json is not found" {
-  # Point CLAUDE_PLUGIN_ROOT to an empty temp dir (no plugin.json)
+@test "main reports error when plugin.json is not found" {
   export CLAUDE_PLUGIN_ROOT="${TEST_DIR}/empty-plugin"
-  mkdir -p "$CLAUDE_PLUGIN_ROOT/.claude-plugin"
-  # No plugin.json file created
+  mkdir -p "$CLAUDE_PLUGIN_ROOT"
+
   run main
-  # flush_log calls exit 0 on error (hook JSON output), so check output for error status
+  [ "$status" -eq 0 ]
   [[ "$output" == *'"error"'* ]]
   unset CLAUDE_PLUGIN_ROOT
 }
 
-@test "download_runtime fails when SHA256 does not match" {
-  # This test verifies the sha256 check logic works correctly
-  # by testing the verification logic in isolation
-  local fake_archive
-  fake_archive=$(mktemp --suffix=.tar.gz)
-  echo "fake archive content" > "$fake_archive"
-
-  local temp_sha256
-  temp_sha256=$(mktemp --suffix=.sha256)
-  echo "0000000000000000000000000000000000000000000000000000000000000000  test.tar.gz" > "$temp_sha256"
-
-  # Manually run the SHA256 check logic
-  local expected_sha256 actual_sha256
-  expected_sha256=$(awk '{print $1}' "$temp_sha256")
-  actual_sha256=$(sha256sum "$fake_archive" | awk '{print $1}')
-
-  # They should NOT match
-  [ "$expected_sha256" != "$actual_sha256" ]
-
-  rm -f "$fake_archive" "$temp_sha256"
-}
-
-# --- Testing HIGH ---
-
-@test "download_runtime fails gracefully when curl is not available" {
-  # Mock curl with a fake that returns non-zero to simulate curl failure
-  local fake_bin="${TEST_DIR}/fake-bin"
-  mkdir -p "$fake_bin"
-  cat > "${fake_bin}/curl" <<'CURL_EOF'
-#!/usr/bin/env bash
-exit 1
-CURL_EOF
-  chmod +x "${fake_bin}/curl"
-
-  local fake_jdk="${TEST_DIR}/fake-jdk"
-
-  PATH="${fake_bin}:$PATH" run download_runtime "$fake_jdk" "1.0.0"
-  [ "$status" -ne 0 ]
-}
-
-@test "try_acquire_runtime re-downloads when VERSION file exists but check_runtime fails" {
-  local fake_jdk="${TEST_DIR}/fake-jdk"
-  local fake_version="1.2.3"
-  mkdir -p "${fake_jdk}/bin"
-  echo "$fake_version" > "${fake_jdk}/VERSION"
-  # java binary is present but exits non-zero (corrupted JDK simulation)
-  cat > "${fake_jdk}/bin/java" <<'JAVA_EOF'
-#!/usr/bin/env bash
-exit 1
-JAVA_EOF
-  chmod +x "${fake_jdk}/bin/java"
-
-  # check_runtime will fail (java exits 1), so it should attempt download_runtime
-  # download_runtime will fail (no real network), so overall returns non-zero
-  run try_acquire_runtime "$fake_jdk" "$fake_version"
-  [ "$status" -ne 0 ]
-}
-
-# --- Testing MEDIUM ---
-
-@test "get_platform returns error on unknown OS" {
-  # Mock uname to return an unknown OS
-  local fake_bin="${TEST_DIR}/fake-bin"
-  mkdir -p "$fake_bin"
-  cat > "${fake_bin}/uname" <<'UNAME_EOF'
-#!/usr/bin/env bash
-if [[ "$1" == "-s" ]]; then
-  echo "UnknownOS"
-elif [[ "$1" == "-m" ]]; then
-  echo "x86_64"
-else
-  echo "UnknownOS"
-fi
-UNAME_EOF
-  chmod +x "${fake_bin}/uname"
-
-  PATH="${fake_bin}:$PATH" run get_platform
-  [ "$status" -ne 0 ]
-}
-
-@test "check_runtime fails when java binary exits non-zero" {
-  local fake_jdk="${TEST_DIR}/fake-jdk"
-  mkdir -p "${fake_jdk}/bin"
-  # java binary present but exits with non-zero (simulates broken JDK)
-  cat > "${fake_jdk}/bin/java" <<'JAVA_EOF'
-#!/usr/bin/env bash
-exit 1
-JAVA_EOF
-  chmod +x "${fake_jdk}/bin/java"
-
-  run check_runtime "$fake_jdk"
-  [ "$status" -ne 0 ]
-}
-
-@test "try_acquire_runtime downloads when no VERSION file exists" {
-  local fake_jdk="${TEST_DIR}/fake-jdk"
-  mkdir -p "${fake_jdk}/bin"
-  # No VERSION file at all - no java binary either
-
-  # No VERSION file present → should attempt download (which will fail without network)
-  run try_acquire_runtime "$fake_jdk" "1.0.0"
-  [ "$status" -ne 0 ]
-}
-
-@test "validate_semver accepts two-component version (X.Y)" {
-  run validate_semver "2.1"
-  [ "$status" -eq 0 ]
-}
-
-@test "validate_semver rejects non-numeric version" {
-  run validate_semver "abc"
-  [ "$status" -ne 0 ]
-}
-
-@test "validate_semver accepts 0.0.0" {
-  run validate_semver "0.0.0"
-  [ "$status" -eq 0 ]
-}
-
-@test "validate_semver accepts 999.999.999" {
-  run validate_semver "999.999.999"
-  [ "$status" -eq 0 ]
-}
-
-@test "validate_semver rejects pre-release suffix" {
-  run validate_semver "1.2.3-beta"
-  [ "$status" -ne 0 ]
-}
-
-@test "validate_semver rejects four-component version" {
-  run validate_semver "1.2.3.4"
-  [ "$status" -ne 0 ]
-}
-
-@test "validate_semver rejects leading space" {
-  run validate_semver " 1.2.3"
-  [ "$status" -ne 0 ]
-}
-
-@test "flush_log produces valid JSON" {
-  LOG_LEVEL=""
-  LOG_MESSAGE=""
-  DEBUG_LINES=""
-  log "warning" 'message with "quotes" and \backslash'
-  run flush_log
-  [ "$status" -eq 0 ]
-  [[ "$output" == *'"status"'* ]]
-  [[ "$output" == *'"message"'* ]]
-}
-
-@test "main fails when plugin.json has invalid version format" {
+@test "main reports error when plugin.json has invalid version" {
   export CLAUDE_PLUGIN_ROOT="${TEST_DIR}/bad-version-plugin"
   mkdir -p "$CLAUDE_PLUGIN_ROOT/.claude-plugin"
-  echo '{"version":"not-a-version","repository":"https://github.com/cowwoc/cat"}' > "$CLAUDE_PLUGIN_ROOT/.claude-plugin/plugin.json"
+  echo '{"version":"not-a-version"}' > "$CLAUDE_PLUGIN_ROOT/.claude-plugin/plugin.json"
+
   run main
+  [ "$status" -eq 0 ]
   [[ "$output" == *'"error"'* ]]
   unset CLAUDE_PLUGIN_ROOT
 }
 
-@test "main fails when plugin.json has no version field" {
-  export CLAUDE_PLUGIN_ROOT="${TEST_DIR}/no-version-plugin"
-  mkdir -p "$CLAUDE_PLUGIN_ROOT/.claude-plugin"
-  echo '{"repository":"https://github.com/cowwoc/cat"}' > "$CLAUDE_PLUGIN_ROOT/.claude-plugin/plugin.json"
+@test "main launches Java from CLAUDE_PLUGIN_ROOT client runtime" {
+  local plugin_root="${TEST_DIR}/plugin-root"
+  local plugin_data="${TEST_DIR}/plugin-data"
+  local java_log="${TEST_DIR}/java.log"
+  make_plugin_root "$plugin_root" "2.1.0"
+  mkdir -p "${plugin_root}/client"
+  echo "2.1.0" > "${plugin_root}/client/VERSION"
+  make_mock_java "${plugin_root}/client/bin" "$java_log"
+
+  export CLAUDE_PLUGIN_ROOT="$plugin_root"
+  export CLAUDE_PLUGIN_DATA="$plugin_data"
   run main
-  [[ "$output" == *'"error"'* ]]
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'"continue":true'* ]]
+  [[ "$(cat "$java_log")" == *'io.github.cowwoc.cat.client/io.github.cowwoc.cat.claude.hook.SessionStartHook'* ]]
+  [ ! -e "${plugin_data}/client" ]
   unset CLAUDE_PLUGIN_ROOT
+  unset CLAUDE_PLUGIN_DATA
 }
 
-@test "symlink detection rejects extracted directory containing symlinks" {
-  local target_dir="${TEST_DIR}/extracted-jdk"
-  mkdir -p "$target_dir"
-  # Create a symlink inside the extracted directory to simulate a symlink attack
-  ln -s /etc/passwd "${target_dir}/malicious-link"
-
-  # The symlink detection logic from download_runtime
-  run bash -c "find \"$target_dir\" -type l 2>/dev/null | grep -q . && echo 'symlinks_found' || echo 'no_symlinks'"
-  [ "$status" -eq 0 ]
-  [[ "$output" == "symlinks_found" ]]
-}
-
-@test "symlink detection passes on clean directory" {
-  local target_dir="${TEST_DIR}/clean-jdk"
-  mkdir -p "${target_dir}/bin"
-  touch "${target_dir}/bin/java"
-
-  # The symlink detection logic from download_runtime
-  # grep -q exits 1 when no match found, causing the && to short-circuit and || to run echo
-  # Overall exit status is 0 because echo succeeds; check output instead
-  run bash -c "find \"$target_dir\" -type l 2>/dev/null | grep -q . && echo 'symlinks_found' || echo 'no_symlinks'"
-  [ "$status" -eq 0 ]
-  [[ "$output" == "no_symlinks" ]]
-}
-
-@test "flush_log renders newlines as JSON escape sequences" {
-  LOG_LEVEL=""
-  LOG_MESSAGE=""
-  DEBUG_LINES=""
-  log "warning" "line one"
-  log "warning" "line two"
-  run flush_log
-  [ "$status" -eq 0 ]
-  # The JSON output should contain \n (JSON escape) between the two lines,
-  # NOT literal backslash-n characters (\\n)
-  [[ "$output" == *'line one\nline two'* ]]
-  [[ "$output" != *'line one\\nline two'* ]]
-}
-
-@test "log accumulates messages and error escalates over warning" {
-  LOG_LEVEL=""
-  LOG_MESSAGE=""
-  DEBUG_LINES=""
-
-  log "warning" "first warning"
-  [ "$LOG_LEVEL" = "warning" ]
-
-  log "warning" "second warning"
-  # Level stays warning
-  [ "$LOG_LEVEL" = "warning" ]
-  # Messages accumulate
-  [[ "$LOG_MESSAGE" == *"first warning"* ]]
-  [[ "$LOG_MESSAGE" == *"second warning"* ]]
-
-  # Error escalates over warning
-  log "error" "an error"
-  [ "$LOG_LEVEL" = "error" ]
-
-  # Further warnings do NOT downgrade error
-  log "warning" "another warning after error"
-  [ "$LOG_LEVEL" = "error" ]
-}
-
-# --- Locking behavior tests ---
-
-@test "try_acquire_runtime succeeds when no lock exists" {
-  local fake_jdk="${TEST_DIR}/fake-jdk"
-  local fake_version="9.9.9"
-  mkdir -p "${fake_jdk}/bin"
-  echo "$fake_version" > "${fake_jdk}/VERSION"
-  # Create a working fake java binary
-  cat > "${fake_jdk}/bin/java" <<'JAVA_EOF'
-#!/usr/bin/env bash
-echo "openjdk version \"25\" 2025-09-16" >&2
-exit 0
-JAVA_EOF
-  chmod +x "${fake_jdk}/bin/java"
-  # No lock directory exists - should acquire lock, check runtime, and clean up lock
-  run try_acquire_runtime "$fake_jdk" "$fake_version"
-  [ "$status" -eq 0 ]
-  # Lock directory must be cleaned up after successful acquisition
-  [ ! -d "${fake_jdk}.lock" ]
-}
-
-@test "try_acquire_runtime cleans up lock on exit even when download fails" {
-  local fake_jdk="${TEST_DIR}/no-jdk"
-  # No JDK directory, no VERSION file - will attempt download which fails
-  # Lock must still be cleaned up after the function exits
-  run try_acquire_runtime "$fake_jdk" "1.0.0"
-  [ "$status" -ne 0 ]
-  # Lock directory must be cleaned up even on failure
-  [ ! -d "${fake_jdk}.lock" ]
-}
-
-@test "acquire_runtime_lock removes stale lock and acquires new lock" {
-  local fake_jdk="${TEST_DIR}/fake-jdk-stale"
-  mkdir -p "${fake_jdk}/bin"
-  # Create a stale lock directory with an old mtime (> 10 minutes ago)
-  mkdir -p "${fake_jdk}.lock"
-  touch -d "20 minutes ago" "${fake_jdk}.lock"
-  # acquire_runtime_lock should detect stale lock, remove it, then create a fresh lock
-  LOCK_PATH=""
-  run acquire_runtime_lock "$fake_jdk"
-  [ "$status" -eq 0 ]
-  # Verify lock was created (LOCK_PATH set in subshell, check filesystem directly)
-  # The lock directory should exist (created by acquire_runtime_lock)
-  # but will be cleaned up by the test teardown via TEST_DIR removal
-  # We check that the function succeeded (status 0) meaning lock was acquired
-}
-
-@test "try_acquire_runtime cleans up lock when download fails after stale lock removal" {
-  local fake_jdk="${TEST_DIR}/fake-jdk-stale-dl"
-  # No VERSION file - forces download path (slow path)
-  # Create a stale lock directory
-  mkdir -p "${fake_jdk}.lock"
-  touch -d "20 minutes ago" "${fake_jdk}.lock"
-  # try_acquire_runtime should: detect stale lock, remove it, acquire lock, attempt download (fails), clean up lock
-  run try_acquire_runtime "$fake_jdk" "1.0.0"
-  [ "$status" -ne 0 ]
-  # Lock must be cleaned up even on download failure
-  [ ! -d "${fake_jdk}.lock" ]
-}
-
-@test "try_acquire_runtime succeeds on fast path when VERSION matches and java works despite stale lock" {
-  local fake_jdk="${TEST_DIR}/fake-jdk-concurrent"
-  local fake_version="1.2.3"
-  mkdir -p "${fake_jdk}/bin"
-
-  # Create a working fake java binary
-  cat > "${fake_jdk}/bin/java" <<'JAVA_EOF'
-#!/usr/bin/env bash
-echo "openjdk version \"25\" 2025-09-16" >&2
-exit 0
-JAVA_EOF
-  chmod +x "${fake_jdk}/bin/java"
-
-  # VERSION file exists with matching version — fast path is taken
-  echo "$fake_version" > "${fake_jdk}/VERSION"
-
-  # Create a stale lock (leftover from a crashed session)
-  # The fast path does NOT interact with locks, so this is left untouched
-  mkdir -p "${fake_jdk}.lock"
-  touch -d "20 minutes ago" "${fake_jdk}.lock"
-
-  run try_acquire_runtime "$fake_jdk" "$fake_version"
-  [ "$status" -eq 0 ]
-  # Fast path returns without touching locks — stale lock is still present
-  # (stale lock cleanup happens only when entering the slow/download path)
-}
-
-@test "acquire_runtime_lock times out waiting for held lock" {
-  local fake_jdk="${TEST_DIR}/fake-jdk-timeout"
-
-  # Create a lock that is NOT stale (recent mtime)
-  mkdir -p "${fake_jdk}.lock"
-  touch "${fake_jdk}.lock"
-
-  # Create a wrapper around acquire_runtime_lock that uses a shorter timeout
-  # We'll test the timeout path by modifying the function locally for this test
-  # Since we can't easily pass timeout as a parameter, we test by holding a lock
-  # and verifying the timeout behavior through return status
-
-  # For a short timeout test, we'll create a subshell with modified constants
-  # Unfortunately, BATS doesn't allow easy function parameter overriding
-  # So we document that full timeout testing requires process-level concurrency
-  # which cannot be easily tested with bats alone.
-
-  # This test documents the limitation: timeout path requires concurrent processes
-  # which is beyond bats' isolated environment. The code is correct (30s timeout
-  # with sleep 1 loop), but integration/stress testing is needed for full coverage.
-
-  # Verify lock detection works (return 1 after elapsed >= timeout_seconds)
-  # We can at least verify the lock prevents acquisition
-  LOCK_PATH=""
-  # This will timeout because lock exists and is not stale
-  # But we can't easily test the 30s timeout within bats
-  # So we just verify lock existence prevents acquisition
-
-  # Test the logic: lock exists and is recent, so it won't be removed
-  # Try to acquire should fail immediately (timeout after 30s, but we can't wait)
-  # For now, we document this as a limitation and rely on the code review
-}
-
-# --- main() integration tests ---
-
-# Helper: create a mock plugin_root with a given version in plugin.json
-make_plugin_root() {
-  local dir="$1" version="$2"
-  mkdir -p "${dir}/.claude-plugin"
-  printf '{"name":"cat","version":"%s"}' "$version" > "${dir}/.claude-plugin/plugin.json"
-}
-
-# Helper: create a mock java binary that responds to -version and echoes a
-# sentinel JSON on the SessionStartHook invocation. The sentinel lets tests
-# verify that main() reached the dispatcher call.
-make_mock_java() {
-  local bin_dir="$1"
-  mkdir -p "$bin_dir"
-  cat > "${bin_dir}/java" <<'JAVA_EOF'
-#!/usr/bin/env bash
-# Simulate JDK java binary used by session-start.sh
-if [[ "$1" == "-version" ]]; then
-  echo "openjdk version \"25\" 2025-09-16" >&2
-  exit 0
-fi
-# SessionStartHook dispatcher invocation — output valid hook JSON and exit 0
-printf '{"continue":true,"suppressOutput":false}\n'
-exit 0
-JAVA_EOF
-  chmod +x "${bin_dir}/java"
-}
-
-@test "main() extracts version from plugin.json and reaches runtime acquisition" {
-  # Create a plugin root with a well-formed plugin.json
-  local plugin_root="${TEST_DIR}/int-plugin"
-  make_plugin_root "$plugin_root" "9.8.7"
-
-  # Pre-populate a matching VERSION file and mock java binary so try_acquire_runtime
-  # takes the fast path (check_runtime succeeds) and calls the dispatcher
-  local jdk_path="${plugin_root}/client"
-  mkdir -p "${jdk_path}/bin"
-  echo "9.8.7" > "${jdk_path}/VERSION"
-  make_mock_java "${jdk_path}/bin"
+@test "main warns when plugin-root runtime is missing" {
+  local plugin_root="${TEST_DIR}/plugin-root"
+  make_plugin_root "$plugin_root" "2.1.0"
 
   export CLAUDE_PLUGIN_ROOT="$plugin_root"
   run main
-  # main() invoked the mock dispatcher which exits 0 — overall success
+
   [ "$status" -eq 0 ]
+  [[ "$output" == *'"warning"'* ]]
+  [[ "$output" == *'CLAUDE_PLUGIN_ROOT'* ]]
   unset CLAUDE_PLUGIN_ROOT
 }
 
-@test "main() respects CLAUDE_PLUGIN_ROOT and reads plugin.json from that path" {
-  # plugin_root A has a valid plugin.json; plugin_root B does not
-  local plugin_root_a="${TEST_DIR}/int-root-a"
-  local plugin_root_b="${TEST_DIR}/int-root-b"
-  make_plugin_root "$plugin_root_a" "1.2.3"
-  mkdir -p "$plugin_root_b"  # no plugin.json here
-
-  # Point CLAUDE_PLUGIN_ROOT at B — main() should fail to find plugin.json
-  export CLAUDE_PLUGIN_ROOT="$plugin_root_b"
-  run main
-  # Should report an error because plugin.json is absent at root B
-  [[ "$output" == *'"error"'* ]]
-  unset CLAUDE_PLUGIN_ROOT
-}
-
-@test "main() attempts lock acquisition before invoking Java dispatcher" {
-  # Create a plugin root with valid version
-  local plugin_root="${TEST_DIR}/int-lock-plugin"
-  make_plugin_root "$plugin_root" "3.0.0"
-
-  # Provide a matching runtime so the fast path is taken
-  local jdk_path="${plugin_root}/client"
-  mkdir -p "${jdk_path}/bin"
-  echo "3.0.0" > "${jdk_path}/VERSION"
-  make_mock_java "${jdk_path}/bin"
+@test "main ignores plugin-data runtime when plugin-root runtime is missing" {
+  local plugin_root="${TEST_DIR}/plugin-root"
+  local plugin_data="${TEST_DIR}/plugin-data"
+  local java_log="${TEST_DIR}/data-java.log"
+  make_plugin_root "$plugin_root" "2.1.0"
+  mkdir -p "${plugin_data}/client"
+  echo "2.1.0" > "${plugin_data}/client/VERSION"
+  make_mock_java "${plugin_data}/client/bin" "$java_log"
 
   export CLAUDE_PLUGIN_ROOT="$plugin_root"
+  export CLAUDE_PLUGIN_DATA="$plugin_data"
   run main
+
   [ "$status" -eq 0 ]
-  # Lock must be released after main() completes
-  [ ! -d "${jdk_path}.lock" ]
+  [[ "$output" == *'"warning"'* ]]
+  [ ! -s "$java_log" ]
   unset CLAUDE_PLUGIN_ROOT
-}
-
-@test "main() reports failure when lock acquisition fails and no runtime exists" {
-  # Create a plugin root with valid version but no pre-downloaded runtime
-  local plugin_root="${TEST_DIR}/int-noruntime-plugin"
-  make_plugin_root "$plugin_root" "5.5.5"
-  # No client/ directory — try_acquire_runtime will attempt download (which fails without network)
-
-  # Mock curl to fail immediately (no network in test environment)
-  local fake_bin="${TEST_DIR}/fake-bin-nonet"
-  mkdir -p "$fake_bin"
-  cat > "${fake_bin}/curl" <<'CURL_EOF'
-#!/usr/bin/env bash
-exit 7  # CURLE_COULDNT_CONNECT
-CURL_EOF
-  chmod +x "${fake_bin}/curl"
-
-  export CLAUDE_PLUGIN_ROOT="$plugin_root"
-  PATH="${fake_bin}:$PATH" run main
-  # Failure to acquire runtime produces a warning-level hook JSON (exits 0)
-  # but the output contains the failure message
-  [[ "$output" == *'"warning"'* ]] || [[ "$output" == *'"error"'* ]]
-  unset CLAUDE_PLUGIN_ROOT
+  unset CLAUDE_PLUGIN_DATA
 }

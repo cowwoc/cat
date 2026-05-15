@@ -99,7 +99,7 @@ Status values:
 Read the caution level from config:
 
 ```bash
-CLIENT_BIN="${CAT_PLUGIN_DATA}/client/bin"
+CLIENT_BIN="${CAT_PLUGIN_ROOT}/client/bin"
 CONFIG=$("${CLIENT_BIN}/get-config-output" effective 2>/dev/null || echo '{"caution":"medium"}')
 CAUTION=$(echo "$CONFIG" | grep -o '"caution"[[:space:]]*:[[:space:]]*"[^"]*"' \
   | sed 's/.*"caution"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/' | tr '[:upper:]' '[:lower:]')

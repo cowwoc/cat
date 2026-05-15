@@ -296,7 +296,7 @@ SKIPPED_LIST=$(echo "$SKIPPED" | tr ' ' ',')
 Render selection box by invoking:
 
 ```bash
-"${CAT_PLUGIN_DATA}/client/bin/get-stakeholder-selection-box" "${SELECTED_COUNT}" "10" "${SELECTED_LIST}" "${SKIPPED_LIST}"
+"${CAT_PLUGIN_ROOT}/client/bin/get-stakeholder-selection-box" "${SELECTED_COUNT}" "10" "${SELECTED_LIST}" "${SKIPPED_LIST}"
 ```
 
 CRITICAL: Args 1 and 2 are integers (count, 10). Copy output verbatim. Add "Overrides (file-based):" if present.
@@ -363,7 +363,7 @@ if [[ -f "${CAT_PLUGIN_ROOT}/lang/${PRIMARY_LANG}.md" ]]; then
 fi
 
 # Read curiosity via effective config tool (applies defaults for missing fields)
-EFFECTIVE_CONFIG=$("${CAT_PLUGIN_DATA}/client/bin/get-config-output" effective) || {
+EFFECTIVE_CONFIG=$("${CAT_PLUGIN_ROOT}/client/bin/get-config-output" effective) || {
     echo "ERROR: Failed to read effective config" >&2
     exit 1
 }
@@ -624,13 +624,13 @@ Build REVIEWER_STATUS_LIST (comma-separated `stakeholder:approval` pairs, post-v
 Render review box by invoking:
 
 ```bash
-"${CAT_PLUGIN_DATA}/client/bin/get-stakeholder-review-box" "${ISSUE_ID}" "${REVIEWER_STATUS_LIST}" "${REVIEW_RESULT}" "${REVIEW_SUMMARY}"
+"${CAT_PLUGIN_ROOT}/client/bin/get-stakeholder-review-box" "${ISSUE_ID}" "${REVIEWER_STATUS_LIST}" "${REVIEW_RESULT}" "${REVIEW_SUMMARY}"
 ```
 
 For each concern, render concern box by invoking:
 
 ```bash
-"${CAT_PLUGIN_DATA}/client/bin/get-stakeholder-concern-box" "${SEVERITY}" "${STAKEHOLDER}" "${FILE_LOCATION}" "${CONCERN_DESCRIPTION}"
+"${CAT_PLUGIN_ROOT}/client/bin/get-stakeholder-concern-box" "${SEVERITY}" "${STAKEHOLDER}" "${FILE_LOCATION}" "${CONCERN_DESCRIPTION}"
 ```
 
 CRITICAL: CONCERN_DESCRIPTION must be the LAST argument (free-form text, may contain spaces).

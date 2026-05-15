@@ -32,7 +32,7 @@ import java.util.Objects;
  * Creates or updates the project's {@code .claude/settings.json} to configure the {@code statusLine}
  * entry to invoke the Java-based statusline command from the CAT jlink bundle.
  * <p>
- * The installed command path is: {@code <pluginData>/client/bin/statusline-command}
+ * The installed command path is: {@code <pluginRoot>/client/bin/statusline-command}
  */
 public final class StatuslineInstall
 {
@@ -58,15 +58,15 @@ public final class StatuslineInstall
    * Java statusline-command tool in the plugin's jlink bundle.
    *
    * @param projectPath the Claude project directory where the statusline is to be installed
-   * @param pluginData the CAT plugin root directory containing the jlink bundle
+   * @param pluginRoot the CAT plugin root directory containing the jlink bundle
    * @return a JSON string with status "OK" and the settings/script paths, or status "ERROR" with a message
-   * @throws NullPointerException if {@code projectPath} or {@code pluginData} are null
+   * @throws NullPointerException if {@code projectPath} or {@code pluginRoot} are null
    * @throws IOException          if an I/O error occurs
    */
-  public String install(Path projectPath, Path pluginData) throws IOException
+  public String install(Path projectPath, Path pluginRoot) throws IOException
   {
     requireThat(projectPath, "projectPath").isNotNull();
-    requireThat(pluginData, "pluginData").isNotNull();
+    requireThat(pluginRoot, "pluginRoot").isNotNull();
 
     Path claudeDir = projectPath.resolve(".claude");
     try
@@ -116,8 +116,8 @@ public final class StatuslineInstall
     // Set statusLine configuration
     ObjectNode statusLine = mapper.createObjectNode();
     statusLine.put("type", "command");
-    // ${CLAUDE_PLUGIN_DATA} does not expand in settings.json so we're forced to expand the path at installation time.
-    Path statuslineCommand = pluginData.resolve("client/bin/statusline-command");
+    // ${CLAUDE_PLUGIN_ROOT} does not expand in settings.json so expand the path at installation time.
+    Path statuslineCommand = pluginRoot.resolve("client/bin/statusline-command");
     statusLine.put("command", statuslineCommand.toString());
     root.set("statusLine", statusLine);
 
@@ -206,7 +206,7 @@ public final class StatuslineInstall
   /**
    * Executes the statusline installation.
    * <p>
-   * Usage: {@code statusline-install <projectPath> <pluginData>}
+   * Usage: {@code statusline-install <projectPath> <pluginRoot>}
    *
    * @param scope the JVM scope
    * @param args  command-line arguments: project directory, plugin root
@@ -221,23 +221,23 @@ public final class StatuslineInstall
 
     if (args.length < 2)
     {
-      out.println(block(scope, "Usage: statusline-install <projectPath> <pluginData>"));
+      out.println(block(scope, "Usage: statusline-install <projectPath> <pluginRoot>"));
       return;
     }
     if (args.length > 2)
     {
       throw new IllegalArgumentException(
-        "Expected exactly 2 arguments (projectPath, pluginData), got " + args.length + ". " +
-          "Usage: statusline-install <projectPath> <pluginData>");
+        "Expected exactly 2 arguments (projectPath, pluginRoot), got " + args.length + ". " +
+          "Usage: statusline-install <projectPath> <pluginRoot>");
     }
 
     Path projectPath = Path.of(args[0]);
-    Path pluginData = Path.of(args[1]);
+    Path pluginRoot = Path.of(args[1]);
 
     StatuslineInstall installer = new StatuslineInstall(scope);
     try
     {
-      String result = installer.install(projectPath, pluginData);
+      String result = installer.install(projectPath, pluginRoot);
       out.println(result);
     }
     catch (IOException e)

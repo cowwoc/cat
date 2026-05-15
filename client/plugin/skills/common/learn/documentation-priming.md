@@ -28,7 +28,7 @@ Include this analysis when:
 Use session-analyzer to identify all documents the agent read:
 
 ```bash
-SESSION_ANALYZER="${CAT_PLUGIN_DATA}/client/bin/session-analyzer"
+SESSION_ANALYZER="${CAT_PLUGIN_ROOT}/client/bin/session-analyzer"
 
 # Find file and skill references that reached the agent
 "$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" search "$SESSION_ID" "Read|Skill|Task|apply_patch|exec_command" \

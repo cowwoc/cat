@@ -33,7 +33,7 @@ Claude Code uses its native hook names and invokes CAT launchers from the instal
 ```text
 Claude Code hook event
   -> plugin/hooks/claude/hooks.json
-  -> plugin/hooks/claude/session-start.sh or ${CLAUDE_PLUGIN_DATA}/client/bin/<launcher>
+  -> plugin/hooks/claude/session-start.sh or ${CLAUDE_PLUGIN_ROOT}/client/bin/<launcher>
   -> jlink runtime
   -> Java handler class
 ```
@@ -58,7 +58,7 @@ environment, and invoke only neutral shared code. They do not invoke Claude Java
 | File | Purpose |
 |------|---------|
 | `plugin/hooks/claude/hooks.json` | Registers Claude Code hook events and maps them to CAT launchers. |
-| `plugin/hooks/claude/session-start.sh` | Claude SessionStart bootstrap. Verifies or installs the bundled jlink runtime before invoking session-start handlers. |
+| `plugin/hooks/claude/session-start.sh` | Claude SessionStart bootstrap. Verifies the bundled jlink runtime before invoking session-start handlers. |
 | `plugin/hooks/codex/hooks.json` | Registers Codex hook events and maps them to bundled CAT launchers. |
 | `plugin/hooks/common/README.md` | Runtime-neutral hook infrastructure documentation. |
 
@@ -144,8 +144,8 @@ During release validation, reinstall from the published or staged release artifa
 
 Troubleshooting:
 
-- If a Claude hook produces no output, check `plugin/hooks/claude/hooks.json`, the bundled runtime under
-  `${CLAUDE_PLUGIN_ROOT}/client/bin/`, and the installed runtime under `${CLAUDE_PLUGIN_DATA}/client/bin/`.
+- If a Claude hook produces no output, check `plugin/hooks/claude/hooks.json` and the bundled runtime under
+  `${CLAUDE_PLUGIN_ROOT}/client/bin/`.
 - If a Codex hook produces no output, check `plugin/hooks/codex/hooks.json`, the bundled runtime under
   `${CAT_PLUGIN_ROOT}/client/bin/`, and the installed plugin cache under `~/.codex/plugins/cache/`.
 - If the jlink build fails, verify that the configured JDK version is installed and that `mvn -f client/pom.xml verify -e` passes.

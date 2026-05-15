@@ -28,7 +28,7 @@ Derive keywords from the mistake description (e.g., command names, file names, s
 Then invoke the extractor directly with those keywords:
 
 ```bash
-"${CAT_PLUGIN_DATA}/client/bin/extract-investigation-context" "keyword1 keyword2 keyword3" 2>/dev/null || \
+"${CAT_PLUGIN_ROOT}/client/bin/extract-investigation-context" "keyword1 keyword2 keyword3" 2>/dev/null || \
   echo '{"error":"pre-extraction unavailable - jlink binary not built"}'
 ```
 
@@ -458,7 +458,7 @@ PHASE3_TMP=$(mktemp -p .cat/work/tmp --suffix=.json)
 printf '%s' "$PHASE3_JSON" > "$PHASE3_TMP"
 
 # Run the record-learning tool — reads Phase 3 JSON from stdin, outputs recording result JSON to stdout
-RECORD_RESULT=$("${CAT_PLUGIN_DATA}/client/bin/record-learning" < "$PHASE3_TMP")
+RECORD_RESULT=$("${CAT_PLUGIN_ROOT}/client/bin/record-learning" < "$PHASE3_TMP")
 RECORD_EXIT=$?
 rm -f "$PHASE3_TMP"
 

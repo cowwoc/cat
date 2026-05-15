@@ -25,5 +25,5 @@ CAT_RUNTIME="${CAT_RUNTIME:-claude}"
 : "${CAT_PROJECT_DIR:?CAT_PROJECT_DIR is required}"
 ```
 
-Use `CAT_PLUGIN_ROOT` for files shipped inside the plugin, and `CAT_PLUGIN_DATA` for generated runtime artifacts such
-as the jlink client under `client/bin/`.
+Use `CAT_PLUGIN_ROOT` for files shipped inside the plugin, including the bundled runtime under
+`client/bin/`. Use `CAT_PLUGIN_DATA` for generated data such as session state, locks, and temporary files.

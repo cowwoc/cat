@@ -11,7 +11,7 @@ Claude session logs live under `${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_
 The current CAT session ID is `${CAT_SESSION_ID}`.
 
 ```bash
-SESSION_ANALYZER="${CAT_PLUGIN_DATA}/client/bin/session-analyzer"
+SESSION_ANALYZER="${CAT_PLUGIN_ROOT}/client/bin/session-analyzer"
 
 "$SESSION_ANALYZER" --runtime claude search "${CAT_SESSION_ID}" "keyword" --context 2
 "$SESSION_ANALYZER" --runtime claude errors "${CAT_SESSION_ID}"

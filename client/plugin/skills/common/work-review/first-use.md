@@ -45,7 +45,7 @@ Parse arguments and display the **Reviewing phase** banner in a chained call:
 ```bash
 read ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH ALL_COMMITS_COMPACT TRUST CAUTION <<< "$ARGUMENTS" && \
 PLAN_MD="${ISSUE_PATH}/plan.md" && \
-"${CAT_PLUGIN_DATA}/client/bin/progress-banner" ${ISSUE_ID} --phase reviewing
+"${CAT_PLUGIN_ROOT}/client/bin/progress-banner" ${ISSUE_ID} --phase reviewing
 ```
 
 **Validate TRUST argument:**
@@ -196,7 +196,7 @@ Note: `TRUST == "high"` does NOT skip review. Review is mandatory regardless of 
 Read CURIOSITY from the effective config:
 
 ```bash
-EFFECTIVE_CONFIG=$("${CAT_PLUGIN_DATA}/client/bin/get-config-output" effective) || {
+EFFECTIVE_CONFIG=$("${CAT_PLUGIN_ROOT}/client/bin/get-config-output" effective) || {
     echo "ERROR: Failed to read effective config" >&2
     exit 1
 }
@@ -270,7 +270,7 @@ If `reviewer_count` is absent from the result (older version of the skill), proc
 If `reviewer_count` is present AND less than the total stakeholder result count, STOP immediately. Do NOT return to
 work-with-issue. Release the lock:
 ```bash
-"${CAT_PLUGIN_DATA}/client/bin/issue-lock" release "${ISSUE_ID}" "$CAT_SESSION_ID"
+"${CAT_PLUGIN_ROOT}/client/bin/issue-lock" release "${ISSUE_ID}" "$CAT_SESSION_ID"
 ```
 
 Then return FAILED status:

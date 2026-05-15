@@ -18,5 +18,5 @@ if [ -z "${CAT_PLUGIN_DATA:-}" ]; then
   echo "CAT_PLUGIN_DATA is required" >&2
   exit 1
 fi
-"${CAT_PLUGIN_DATA}/client/bin/get-output" get-diff "<issue-path>"
+"${CAT_PLUGIN_ROOT}/client/bin/get-output" get-diff "<issue-path>"
 ```

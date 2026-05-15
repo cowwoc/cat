@@ -14,4 +14,4 @@ See LICENSE.md in the project root for license terms.
 
 <!-- cat:include ../../include/token-report.md -->
 
-!`: "${CAT_PLUGIN_DATA:?CAT_PLUGIN_DATA is required}"; "${CAT_PLUGIN_DATA}/client/bin/get-output" token-report`
+!`: "${CAT_PLUGIN_DATA:?CAT_PLUGIN_DATA is required}"; "${CAT_PLUGIN_ROOT}/client/bin/get-output" token-report`

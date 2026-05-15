@@ -42,7 +42,7 @@ It CANNOT be invoked by a subagent.
 **Curiosity level:** Read `curiosity` from the effective config once at skill start:
 
 ```bash
-CURIOSITY=$("${CAT_PLUGIN_DATA}/client/bin/get-config-output" effective \
+CURIOSITY=$("${CAT_PLUGIN_ROOT}/client/bin/get-config-output" effective \
   | grep -o '"curiosity"[[:space:]]*:[[:space:]]*"[^"]*"' \
   | sed 's/.*"curiosity"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 ```
@@ -288,7 +288,7 @@ After compaction, extract the description from `INSTRUCTION_DRAFT` and enforce t
 ```bash
 DESC_TOO_LONG=false
 DESCRIPTION=$(printf '%s' "${INSTRUCTION_DRAFT}" | \
-  "${CAT_PLUGIN_DATA}/client/bin/update-skill-description") || DESC_TOO_LONG=true
+  "${CAT_PLUGIN_ROOT}/client/bin/update-skill-description") || DESC_TOO_LONG=true
 DESC_LEN=${#DESCRIPTION}
 echo "Description length: ${DESC_LEN} characters"
 ```
@@ -325,7 +325,7 @@ After the user provides a shorter description, replace the description line in `
 ```bash
 NEW_DESCRIPTION="<user-provided text>"
 INSTRUCTION_DRAFT=$(printf '%s' "${INSTRUCTION_DRAFT}" | \
-  "${CAT_PLUGIN_DATA}/client/bin/update-skill-description" "${NEW_DESCRIPTION}")
+  "${CAT_PLUGIN_ROOT}/client/bin/update-skill-description" "${NEW_DESCRIPTION}")
 ```
 
 Re-extract and re-check length. If still > 1536, present the AskUserQuestion again (no limit on
@@ -379,7 +379,7 @@ sanity check below.
 
 **TEST_DIR computation:**
 ```bash
-TEST_DIR=$("${CAT_PLUGIN_DATA}/client/bin/instruction-test-runner" extract-test-dir \
+TEST_DIR=$("${CAT_PLUGIN_ROOT}/client/bin/instruction-test-runner" extract-test-dir \
   "${INSTRUCTION_TEXT_PATH}" "${CAT_PROJECT_DIR}")
 ```
 Example: `client/plugin/skills/common/foo/first-use.md` → `{CAT_PROJECT_DIR}/client/plugin/tests/skills/common/foo/first-use`.
@@ -388,7 +388,7 @@ Pass this resolved path as a literal string to all subagents — do NOT pass var
 
 **TEST_MODEL computation:** Read the target instruction file's `model:` frontmatter field:
 ```bash
-TEST_MODEL=$("${CAT_PLUGIN_DATA}/client/bin/instruction-test-runner" extract-model \
+TEST_MODEL=$("${CAT_PLUGIN_ROOT}/client/bin/instruction-test-runner" extract-model \
   "<absolute-path-to-INSTRUCTION_TEXT_PATH>")
 ```
 The script falls back to `haiku` when the field is absent.
@@ -605,7 +605,7 @@ as the VERY FIRST tool call — before validation, before reading test cases, be
 branch, before doing anything else whatsoever:
 
 ```bash
-"${CAT_PLUGIN_DATA}/client/bin/instruction-test-runner" detect-changes \
+"${CAT_PLUGIN_ROOT}/client/bin/instruction-test-runner" detect-changes \
   <INSTRUCTION_DRAFT_SHA> <INSTRUCTION_TEXT_PATH> "${TEST_DIR}"
 ```
 
@@ -671,7 +671,7 @@ determine whether the skill instruction changed and whether new test cases were 
 
 1. Run change detection:
    ```bash
-   "${CAT_PLUGIN_DATA}/client/bin/instruction-test-runner" detect-changes \
+   "${CAT_PLUGIN_ROOT}/client/bin/instruction-test-runner" detect-changes \
      <INSTRUCTION_DRAFT_SHA> <INSTRUCTION_TEXT_PATH> "${TEST_DIR}"
    ```
    Output fields:
@@ -781,7 +781,7 @@ all subagents spawned in this session, then extract the IDs of test-run subagent
 with the rejected test cases:
 
 ```bash
-SESSION_ANALYZER="${CAT_PLUGIN_DATA}/client/bin/session-analyzer"
+SESSION_ANALYZER="${CAT_PLUGIN_ROOT}/client/bin/session-analyzer"
 # List all subagents spawned in this session
 # Expected format: <agent_id> <status> <description> — one subagent per line; $1 is the agent ID field.
 ANALYZE_OUTPUT=$("$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" analyze "${CAT_SESSION_ID}")

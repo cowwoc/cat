@@ -1175,14 +1175,14 @@ if [ -z "${CAT_PLUGIN_DATA:-}" ]; then
   echo "CAT_PLUGIN_DATA is required" >&2
   exit 1
 fi
-"${CAT_PLUGIN_DATA}/client/bin/get-output" status
+"${CAT_PLUGIN_ROOT}/client/bin/get-output" status
 ```
 ```
 
 **Skill content pattern for handler-dispatched skills:**
 
 The thin wrapper skill content MUST follow this exact pattern:
-1. Tell the agent to run `"${CAT_PLUGIN_DATA}/client/bin/get-output" TYPE` through Bash
+1. Tell the agent to run `"${CAT_PLUGIN_ROOT}/client/bin/get-output" TYPE` through Bash
 2. The output is automatically wrapped in `<output type="TYPE">` tags by the dispatcher
 
 **Anti-pattern - meta-description that agents echo literally:**

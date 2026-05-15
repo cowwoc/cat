@@ -45,7 +45,7 @@ Parse arguments and display the **Confirming phase** banner in a chained call:
 ```bash
 read ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH EXECUTION_COMMITS_JSON_PATH FILES_CHANGED TRUST CAUTION <<< "$ARGUMENTS" && \
 PLAN_MD="${ISSUE_PATH}/plan.md" && \
-"${CAT_PLUGIN_DATA}/client/bin/progress-banner" ${ISSUE_ID} --phase confirming
+"${CAT_PLUGIN_ROOT}/client/bin/progress-banner" ${ISSUE_ID} --phase confirming
 ```
 
 ```bash

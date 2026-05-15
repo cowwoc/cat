@@ -134,7 +134,7 @@ This step performs all analysis needed to render a comprehensive proposal withou
 Read the `curiosity` value from effective config:
 
 ```bash
-CONFIG=$("${CAT_PLUGIN_DATA}/client/bin/get-config-output" effective)
+CONFIG=$("${CAT_PLUGIN_ROOT}/client/bin/get-config-output" effective)
 if [[ $? -ne 0 ]]; then
     echo "ERROR: Failed to read effective config" >&2
     exit 1
@@ -241,7 +241,7 @@ PROPOSAL_JSON=$(cat <<'PROPOSAL_EOF'
 PROPOSAL_EOF
 )
 
-${CAT_PLUGIN_DATA}/client/bin/get-output-agent proposal-issue "$PROPOSAL_JSON"
+${CAT_PLUGIN_ROOT}/client/bin/get-output-agent proposal-issue "$PROPOSAL_JSON"
 ```
 
 The output agent renders a comprehensive display box showing:
@@ -591,7 +591,7 @@ dependent index file paths) must be valid JSON string values. Escape any double 
 `\\` before embedding them in the JSON argument. Index content is written to a temp file and does not need JSON escaping.
 
 ```bash
-"${CAT_PLUGIN_DATA}/client/bin/create-issue" --json '{
+"${CAT_PLUGIN_ROOT}/client/bin/create-issue" --json '{
   "major": "${BEST_FIT_VERSION%.*}",
   "minor": "${BEST_FIT_VERSION#*.}",
   "issue_name": "${PRIMARY_NAME}",
@@ -1490,5 +1490,5 @@ if [ -z "${CAT_PLUGIN_DATA:-}" ]; then
   echo "CAT_PLUGIN_DATA is required" >&2
   exit 1
 fi
-"${CAT_PLUGIN_DATA}/client/bin/get-output" add
+"${CAT_PLUGIN_ROOT}/client/bin/get-output" add
 ```

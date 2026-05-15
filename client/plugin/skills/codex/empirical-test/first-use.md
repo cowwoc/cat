@@ -18,7 +18,7 @@ if [ -z "${CAT_PLUGIN_DATA:-}" ]; then
   echo "CAT_PLUGIN_DATA is required" >&2
   exit 1
 fi
-RUNNER="${CAT_PLUGIN_DATA}/client/bin/empirical-test-runner"
+RUNNER="${CAT_PLUGIN_ROOT}/client/bin/empirical-test-runner"
 "$RUNNER" \
   --runtime codex \
   --model "${MODEL:?MODEL is required}" \
@@ -34,7 +34,7 @@ if [ -z "${CAT_PLUGIN_DATA:-}" ]; then
   echo "CAT_PLUGIN_DATA is required" >&2
   exit 1
 fi
-SESSION_ANALYZER="${CAT_PLUGIN_DATA}/client/bin/session-analyzer"
+SESSION_ANALYZER="${CAT_PLUGIN_ROOT}/client/bin/session-analyzer"
 "$SESSION_ANALYZER" --runtime codex analyze "${TRIAL_SESSION_ID:?TRIAL_SESSION_ID is required}"
 "$SESSION_ANALYZER" --runtime codex errors "${TRIAL_SESSION_ID:?TRIAL_SESSION_ID is required}"
 "$SESSION_ANALYZER" --runtime codex search "${TRIAL_SESSION_ID:?TRIAL_SESSION_ID is required}" "keyword" --context 5

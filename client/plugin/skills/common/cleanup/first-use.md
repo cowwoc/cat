@@ -62,7 +62,7 @@ if [ -z "${CAT_PLUGIN_DATA:-}" ]; then
   echo "CAT_PLUGIN_DATA is required" >&2
   exit 1
 fi
-"${CAT_PLUGIN_DATA}/client/bin/get-output" cleanup
+"${CAT_PLUGIN_ROOT}/client/bin/get-output" cleanup
 ```
 
 ---
@@ -93,7 +93,7 @@ Analyze survey results to classify artifacts:
 For each lock, check status and record the full `session_id` (complete UUID, not truncated) for use in Steps 4 and 5:
 ```bash
 issue_id="<from-survey>"
-"${CAT_PLUGIN_DATA}/client/bin/issue-lock" check "$issue_id"
+"${CAT_PLUGIN_ROOT}/client/bin/issue-lock" check "$issue_id"
 ```
 
 Derive age from the branch's last commit time (not the lock file). If the branch does not exist, treat the artifact
@@ -237,7 +237,7 @@ echo '{
     "branches_to_remove": ["2.1-issue-name"],
     "stale_remotes": []
   }
-}' | "${CAT_PLUGIN_DATA}/client/bin/get-cleanup-output" --phase plan
+}' | "${CAT_PLUGIN_ROOT}/client/bin/get-cleanup-output" --phase plan
 ```
 
 Replace the example values with actual items identified in Step 2.
@@ -307,12 +307,12 @@ issue_id="<issue-id-for-this-worktree>"
 EXPECTED_SESSION="<full-session-id-from-step-2>"
 
 # Re-validate: check the lock is still held by the expected session
-CURRENT_LOCK=$("${CAT_PLUGIN_DATA}/client/bin/issue-lock" check "$issue_id" 2>&1)
+CURRENT_LOCK=$("${CAT_PLUGIN_ROOT}/client/bin/issue-lock" check "$issue_id" 2>&1)
 if echo "$CURRENT_LOCK" | grep -qF "$EXPECTED_SESSION"; then
   # Lock still held by the same (abandoned) session — safe to remove worktree then release lock
   cd /workspace
   if git worktree remove "$WORKTREE_PATH" --force; then
-    if "${CAT_PLUGIN_DATA}/client/bin/issue-lock" force-release "$issue_id"; then
+    if "${CAT_PLUGIN_ROOT}/client/bin/issue-lock" force-release "$issue_id"; then
       echo "OK: Worktree removed and lock released for '$issue_id'."
     else
       echo "ERROR: Worktree removed but lock release failed for '$issue_id'. Lock may still be held — manual release may be needed."
@@ -334,7 +334,7 @@ and started using the worktree. Re-check before removing:
 WORKTREE_PATH="<from-plan>"
 issue_id="<issue-id-for-this-worktree>"
 # Re-check: if a lock now exists, a new session has claimed this worktree
-CURRENT_LOCK=$("${CAT_PLUGIN_DATA}/client/bin/issue-lock" check "$issue_id" 2>&1)
+CURRENT_LOCK=$("${CAT_PLUGIN_ROOT}/client/bin/issue-lock" check "$issue_id" 2>&1)
 if echo "$CURRENT_LOCK" | grep -q "locked"; then
   echo "WARNING: Worktree for '$issue_id'.is now locked by a new session. Skipping removal."
 else
@@ -351,9 +351,9 @@ For locks that have no associated worktree (lock-only cleanup), re-validate and 
 issue_id="<from-plan>"
 EXPECTED_SESSION="<full-session-id-from-step-2>"
 # Re-check current lock owner (use -F for literal string match, not regex substring)
-CURRENT_LOCK=$("${CAT_PLUGIN_DATA}/client/bin/issue-lock" check "$issue_id" 2>&1)
+CURRENT_LOCK=$("${CAT_PLUGIN_ROOT}/client/bin/issue-lock" check "$issue_id" 2>&1)
 if echo "$CURRENT_LOCK" | grep -qF "$EXPECTED_SESSION"; then
-  "${CAT_PLUGIN_DATA}/client/bin/issue-lock" force-release "$issue_id"
+  "${CAT_PLUGIN_ROOT}/client/bin/issue-lock" force-release "$issue_id"
 else
   echo "WARNING: Lock for '$issue_id'.is now held by a different session. Skipping."
 fi
@@ -436,7 +436,7 @@ echo '{
     "remaining_branches": [],
     "remaining_locks": []
   }
-}' | "${CAT_PLUGIN_DATA}/client/bin/get-cleanup-output" --phase verify
+}' | "${CAT_PLUGIN_ROOT}/client/bin/get-cleanup-output" --phase verify
 ```
 
 Replace the example values with actual cleanup results.

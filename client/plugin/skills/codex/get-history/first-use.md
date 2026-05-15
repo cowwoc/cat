@@ -13,7 +13,7 @@ Codex session logs live under `$CODEX_HOME/sessions/YYYY/MM/DD/rollout-...<threa
 The current Codex thread ID is `${CODEX_THREAD_ID}`.
 
 ```bash
-SESSION_ANALYZER="${CAT_PLUGIN_DATA}/client/bin/session-analyzer"
+SESSION_ANALYZER="${CAT_PLUGIN_ROOT}/client/bin/session-analyzer"
 
 "$SESSION_ANALYZER" --runtime codex search "${CODEX_THREAD_ID}" "keyword" --context 2
 "$SESSION_ANALYZER" --runtime codex errors "${CODEX_THREAD_ID}"

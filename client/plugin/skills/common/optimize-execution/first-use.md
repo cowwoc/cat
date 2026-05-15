@@ -37,7 +37,7 @@ via `${CAT_RUNTIME}` and `${CAT_SESSION_ID}`.
 Execute the session analyzer to extract all mechanical data:
 
 ```bash
-"${CAT_PLUGIN_DATA}/client/bin/session-analyzer" --runtime "${CAT_RUNTIME}" "${CAT_SESSION_ID}"
+"${CAT_PLUGIN_ROOT}/client/bin/session-analyzer" --runtime "${CAT_RUNTIME}" "${CAT_SESSION_ID}"
 ```
 
 The skill outputs a JSON object with:
@@ -151,7 +151,7 @@ Before proceeding, key terms used below:
 Use the session-analyzer tool for structured, reliable extraction of delegation metrics:
 
 ```bash
-SESSION_ANALYZER="${CAT_PLUGIN_DATA}/client/bin/session-analyzer"
+SESSION_ANALYZER="${CAT_PLUGIN_ROOT}/client/bin/session-analyzer"
 "$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" analyze "${CAT_SESSION_ID}"
 ```
 

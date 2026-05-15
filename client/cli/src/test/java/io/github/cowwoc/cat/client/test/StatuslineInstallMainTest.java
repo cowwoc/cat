@@ -50,6 +50,7 @@ public class StatuslineInstallMainTest
 
       requireThat(json.get("decision").asString(), "decision").isEqualTo("block");
       requireThat(json.get("reason").asString(), "reason").contains("Usage");
+      requireThat(json.get("reason").asString(), "reason").contains("<projectPath> <pluginRoot>");
     }
     finally
     {

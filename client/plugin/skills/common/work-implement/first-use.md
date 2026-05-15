@@ -63,7 +63,7 @@ split on whitespace. Also display the preparing banner in a chained call:
 # Parse positional arguments, set PLAN_MD path, and display preparing banner
 read ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH TARGET_BRANCH ESTIMATED_TOKENS TRUST CAUTION <<< "$ARGUMENTS" && \
 PLAN_MD="${ISSUE_PATH}/plan.md" && \
-"${CAT_PLUGIN_DATA}/client/bin/progress-banner" "${ISSUE_ID}" --phase preparing
+"${CAT_PLUGIN_ROOT}/client/bin/progress-banner" "${ISSUE_ID}" --phase preparing
 ```
 
 ## Step 1: Display Preparing Banner
@@ -73,7 +73,7 @@ Capture the exit code and stdout separately:
 ```bash
 mkdir -p .cat/work/tmp
 BANNER_STDERR_FILE=$(mktemp -p .cat/work/tmp)
-BANNER_OUT=$("${CAT_PLUGIN_DATA}/client/bin/progress-banner" "${ISSUE_ID}" --phase preparing 2>"${BANNER_STDERR_FILE}")
+BANNER_OUT=$("${CAT_PLUGIN_ROOT}/client/bin/progress-banner" "${ISSUE_ID}" --phase preparing 2>"${BANNER_STDERR_FILE}")
 BANNER_EXIT=$?
 ```
 
@@ -106,7 +106,7 @@ if [[ -z "${CAT_SESSION_ID:-}" ]]; then
   exit 1
 fi
 
-LOCK_CHECK=$("${CAT_PLUGIN_DATA}/client/bin/issue-lock" check "${ISSUE_ID}")
+LOCK_CHECK=$("${CAT_PLUGIN_ROOT}/client/bin/issue-lock" check "${ISSUE_ID}")
 if [[ $? -ne 0 ]]; then
   echo "ERROR: Failed to check lock for ${ISSUE_ID}"
   exit 1
@@ -136,7 +136,7 @@ to execution — another session owns this issue.
 Display the **Implementing phase** banner by running:
 
 ```bash
-"${CAT_PLUGIN_DATA}/client/bin/progress-banner" "${ISSUE_ID}" --phase implementing
+"${CAT_PLUGIN_ROOT}/client/bin/progress-banner" "${ISSUE_ID}" --phase implementing
 ```
 
 Capture the exit code and stdout separately:
@@ -144,7 +144,7 @@ Capture the exit code and stdout separately:
 ```bash
 mkdir -p .cat/work/tmp
 BANNER_STDERR_FILE=$(mktemp -p .cat/work/tmp)
-BANNER_OUT=$("${CAT_PLUGIN_DATA}/client/bin/progress-banner" "${ISSUE_ID}" --phase implementing 2>"${BANNER_STDERR_FILE}")
+BANNER_OUT=$("${CAT_PLUGIN_ROOT}/client/bin/progress-banner" "${ISSUE_ID}" --phase implementing 2>"${BANNER_STDERR_FILE}")
 BANNER_EXIT=$?
 ```
 
@@ -209,7 +209,7 @@ Gate result handling:
 - **"Approve and start"**: proceed to Step 5.
 - **"Request changes"**: release lock:
   ```bash
-  "${CAT_PLUGIN_DATA}/client/bin/issue-lock" release "${ISSUE_ID}" "${CAT_SESSION_ID}"
+  "${CAT_PLUGIN_ROOT}/client/bin/issue-lock" release "${ISSUE_ID}" "${CAT_SESSION_ID}"
   ```
   Return:
   ```json
@@ -238,7 +238,7 @@ generate full implementation steps before spawning the implementation subagent:
 1. Read CURIOSITY from config:
 
 ```bash
-CONFIG=$("${CAT_PLUGIN_DATA}/client/bin/get-config-output" effective)
+CONFIG=$("${CAT_PLUGIN_ROOT}/client/bin/get-config-output" effective)
 if [[ $? -ne 0 ]]; then
     echo "ERROR: Failed to read effective config" >&2
     exit 1
@@ -339,7 +339,7 @@ below). The last job for index.json ownership is `### Job ${JOBS_COUNT}` (the hi
 If requirements change, read `CURIOSITY` from config:
 
 ```bash
-CONFIG=$("${CAT_PLUGIN_DATA}/client/bin/get-config-output" effective)
+CONFIG=$("${CAT_PLUGIN_ROOT}/client/bin/get-config-output" effective)
 if [[ $? -ne 0 ]]; then
     echo "ERROR: Failed to read effective config" >&2
     exit 1

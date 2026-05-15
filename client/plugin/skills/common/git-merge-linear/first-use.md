@@ -67,7 +67,7 @@ The `git-merge-linear` binary enforces exactly 1 commit ahead of the target bran
 ## Script Invocation
 
 ```bash
-"${CAT_PLUGIN_DATA}/client/bin/git-merge-linear" \
+"${CAT_PLUGIN_ROOT}/client/bin/git-merge-linear" \
   "$SOURCE_BRANCH" --target "$TARGET_BRANCH"
 ```
 

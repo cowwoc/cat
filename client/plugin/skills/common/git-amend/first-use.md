@@ -32,9 +32,9 @@ without staging first silently omits those edits from the commit.
 For deterministic amend with TOCTOU race detection:
 
 ```bash
-"${CAT_PLUGIN_DATA}/client/bin/git-amend" --no-edit "$WORKTREE_PATH"
+"${CAT_PLUGIN_ROOT}/client/bin/git-amend" --no-edit "$WORKTREE_PATH"
 # Or with new message:
-"${CAT_PLUGIN_DATA}/client/bin/git-amend" --message "new msg" "$WORKTREE_PATH"
+"${CAT_PLUGIN_ROOT}/client/bin/git-amend" --message "new msg" "$WORKTREE_PATH"
 ```
 
 The tool verifies push status before amending and detects if the original commit was pushed during the amend window.
