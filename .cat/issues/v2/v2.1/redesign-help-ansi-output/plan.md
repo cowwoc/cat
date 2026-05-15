@@ -65,7 +65,7 @@ The literal output should be:
   [38;2;255;180;118mperfection[0m  how willing CAT is to improve adjacent problems
   [38;2;255;180;118mverbosity[0m   how much CAT explains while it works
 
-[1;37mCommon work requests[0m
+[1;37mWork prompts[0m
   [38;2;235;116;164mNext issue[0m              Work on the next available issue
   [38;2;235;116;164mResume 1.0-parse[0m       Resume a specific issue
   [38;2;235;116;164mWork on v1 issues[0m       Work all v1.x.x issues
@@ -121,7 +121,7 @@ The Claude slash-command equivalent should match the approved output above, exce
   [38;2;255;180;118mperfection[0m  how willing CAT is to improve adjacent problems
   [38;2;255;180;118mverbosity[0m   how much CAT explains while it works
 
-[1;37mCommon work requests[0m
+[1;37mWork prompts[0m
   [38;2;235;116;164mNext issue[0m              Work on the next available issue
   [38;2;235;116;164mResume 1.0-parse[0m       Resume a specific issue
   [38;2;235;116;164mWork on v1 issues[0m       Work all v1.x.x issues
