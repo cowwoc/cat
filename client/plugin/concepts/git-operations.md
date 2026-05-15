@@ -7,14 +7,15 @@ See LICENSE.md in the project root for license terms.
 
 ## Git Skills vs Raw Commands
 
-CAT provides git skills that handle edge cases correctly. Prefer these over raw git commands:
+CAT provides git skills and CLI utilities that handle edge cases correctly. Prefer these over raw git commands:
 
-| Operation | Use Skill | Instead of |
+| Operation | Use Skill/Utility | Instead of |
 |-----------|-----------|------------|
 | Merge issue to base | `/cat:git-merge-linear` | `git checkout && git merge` |
 | Amend commits | `/cat:git-amend` | `git commit --amend` |
 | Squash commits | `/cat:git-squash` | `git rebase -i` |
 | Rebase | `/cat:git-rebase` | `git rebase` |
+| Move local branch ref | `"${CAT_PLUGIN_ROOT}/client/bin/update-branch" <branch> <target-hash>` | `git branch -f`, `git update-ref` |
 
 **Why skills are preferred:**
 - Handle pre-flight checks (divergence, dirty state)
@@ -28,7 +29,7 @@ These operations are blocked by hooks. Know them upfront to avoid wasted attempt
 
 | Operation | Hook | Why Blocked | Correct Approach |
 |-----------|------|-------------|------------------|
-| `git checkout` in main worktree | M205 | Protects main workspace | Use worktrees or `git branch -f` |
+| `git checkout` in main worktree | M205 | Protects main workspace | Use worktrees; when moving a local branch ref, use `"${CAT_PLUGIN_ROOT}/client/bin/update-branch" <branch> <target-hash>` |
 | `git merge` without `--ff-only` | M047 | Enforces linear history | Rebase first, then `--ff-only` |
 | `git push --force` to main/master | Various | Protects shared branches | Never force-push to main |
 

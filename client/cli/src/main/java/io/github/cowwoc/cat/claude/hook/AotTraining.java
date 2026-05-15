@@ -22,6 +22,7 @@ import io.github.cowwoc.cat.claude.hook.util.HookRegistrar;
 import io.github.cowwoc.cat.claude.hook.util.MarkdownWrapper;
 import io.github.cowwoc.cat.claude.hook.util.SessionAnalyzer;
 import io.github.cowwoc.cat.claude.hook.util.StatusAlignmentValidator;
+import io.github.cowwoc.cat.claude.hook.util.UpdateBranch;
 import io.github.cowwoc.cat.claude.hook.util.WorkPrepare;
 
 import java.io.ByteArrayInputStream;
@@ -147,6 +148,7 @@ public final class AotTraining
     referenceClass(HookRegistrar.class);
     referenceClass(StatusAlignmentValidator.class);
     referenceClass(Feedback.class);
+    referenceClass(UpdateBranch.class);
     return 0;
   }
 

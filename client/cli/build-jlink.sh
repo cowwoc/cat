@@ -54,6 +54,7 @@ declare -a COMMON_HANDLERS=(
   "get-next-issue-box:io.github.cowwoc.cat.claude.hook.skills.GetNextIssueOutput"
   "get-config-output:io.github.cowwoc.cat.claude.hook.skills.GetConfigOutput"
   "update-config:io.github.cowwoc.cat.claude.hook.util.UpdateConfig"
+  "update-branch:io.github.cowwoc.cat.claude.hook.util.UpdateBranch"
   "get-output:io.github.cowwoc.cat.claude.hook.skills.GetOutput"
   "get-status-output:io.github.cowwoc.cat.tool.skills.GetStatusOutput"
   "get-cleanup-output:io.github.cowwoc.cat.claude.hook.skills.GetCleanupOutput"
@@ -591,6 +592,22 @@ verify_status_launcher() {
   log "  get-status-output launcher works"
 }
 
+verify_update_branch_launcher() {
+  log "  Testing update-branch launcher..."
+  local update_output
+  set +e
+  update_output=$("${OUTPUT_DIR}/bin/update-branch" 2>&1)
+  local update_status=$?
+  set -e
+  if [[ "$update_status" -eq 0 ]]; then
+    error "update-branch launcher unexpectedly succeeded without arguments"
+  fi
+  if [[ "$update_output" != *"Usage: update-branch"* ]]; then
+    error "update-branch launcher returned unexpected output: $update_output"
+  fi
+  log "  update-branch launcher works"
+}
+
 verify_image() {
   local runtime="$1"
   log "Verifying ${runtime} jlink image..."
@@ -612,6 +629,7 @@ verify_image() {
       ;;
   esac
   verify_status_launcher
+  verify_update_branch_launcher
 
   log "${runtime} verification complete"
 }

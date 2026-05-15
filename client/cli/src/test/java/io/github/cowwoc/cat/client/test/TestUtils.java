@@ -421,6 +421,25 @@ public final class TestUtils
   }
 
   /**
+   * Verifies that command output is plain text and not a hook JSON payload.
+   *
+   * @param stdout the standard output text
+   * @param stderr the standard error text
+   * @throws NullPointerException if {@code stdout} or {@code stderr} is null
+   */
+  public static void assertPlainText(String stdout, String stderr)
+  {
+    requireThat(stdout, "stdout").isNotNull();
+    requireThat(stderr, "stderr").isNotNull();
+    String mergedOutput = (stdout + "\n" + stderr).strip();
+    if (mergedOutput.isEmpty())
+      return;
+    requireThat(mergedOutput, "mergedOutput").doesNotContain("\"decision\"");
+    requireThat(mergedOutput, "mergedOutput").doesNotContain("\"status\"");
+    requireThat(mergedOutput.startsWith("{"), "startsWithJson").isFalse();
+  }
+
+  /**
    * Gets the current branch name for a directory.
    *
    * @param directory the directory to check
