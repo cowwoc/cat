@@ -203,6 +203,43 @@ public final class PluginArtifactBuilderTest
   }
 
   /**
+   * Verifies that shared skill fragments can render runtime-specific command prefixes.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void buildReplacesRuntimeCommandPrefixPlaceholders() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try
+    {
+      Path repoRoot = tempDir.resolve("repo");
+      Path clientDir = repoRoot.resolve("client");
+      Path pluginDir = clientDir.resolve("plugin");
+      Path targetDir = clientDir.resolve("distribution/target/runtime");
+      createPluginSource(repoRoot, clientDir, pluginDir);
+      Path commonSkill = pluginDir.resolve("skills/common/common-skill");
+      Files.writeString(commonSkill.resolve("first-use.md"),
+        MARKDOWN_LICENSE + "Run ${CAT_COMMAND_PREFIX}cat:status\\n", StandardCharsets.UTF_8);
+
+      new PluginArtifactBuilder(pluginDir, clientDir, targetDir).build();
+
+      String claudeFirstUse = Files.readString(
+        targetDir.resolve("claude/skills/common-skill/first-use.md"), StandardCharsets.UTF_8);
+      String codexFirstUse = Files.readString(
+        targetDir.resolve("codex/skills/common-skill/first-use.md"), StandardCharsets.UTF_8);
+      requireThat(claudeFirstUse, "claudeFirstUse").contains("Run /cat:status");
+      requireThat(claudeFirstUse, "claudeFirstUse").doesNotContain("${CAT_COMMAND_PREFIX}");
+      requireThat(codexFirstUse, "codexFirstUse").contains("Run $cat:status");
+      requireThat(codexFirstUse, "codexFirstUse").doesNotContain("${CAT_COMMAND_PREFIX}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies current runtime artifacts expand shared agent contracts for both runtimes.
    *
    * @throws IOException if file operations fail
@@ -227,6 +264,11 @@ public final class PluginArtifactBuilderTest
       {
         Path runtimeRoot = targetDir.resolve(runtime);
         assertRuntimeArtifactDoesNotContain(runtimeRoot, "cat:include", runtime + "UnresolvedInclude");
+        assertRuntimeArtifactDoesNotContain(runtimeRoot, "${CAT_COMMAND_PREFIX}", runtime + "UnresolvedPrefix");
+        String helpFirstUse = Files.readString(runtimeRoot.resolve("skills/help/first-use.md"),
+          StandardCharsets.UTF_8);
+        requireThat(helpFirstUse, runtime + "HelpFirstUse").doesNotContain("cat:include");
+        requireThat(helpFirstUse, runtime + "HelpFirstUse").doesNotContain("${CAT_COMMAND_PREFIX}");
         String workExecuteAgent = "agents/work-execute.toml";
         if (runtime.equals("claude"))
           workExecuteAgent = "agents/work-execute.md";

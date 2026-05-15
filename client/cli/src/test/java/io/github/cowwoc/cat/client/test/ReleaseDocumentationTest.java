@@ -56,32 +56,6 @@ public final class ReleaseDocumentationTest
   }
 
   /**
-   * Verifies the runtime help skills emit Markdown directly and omit the redundant introductory copy.
-   *
-   * @throws IOException if reading source files fails
-   */
-  @Test
-  public void helpSkillsEmitMarkdownDirectlyWithoutIntroCopy() throws IOException
-  {
-    Path sourceRoot = findSourceRoot();
-    Path clientRoot = sourceRoot.resolve("client");
-    Path claudeFirstUse = clientRoot.resolve("plugin/skills/claude/help/first-use.md");
-    Path codexFirstUse = clientRoot.resolve("plugin/skills/codex/help/first-use.md");
-
-    String claudeHelp = assertHelpSkillContract(claudeFirstUse, "claudeHelp");
-    String codexHelp = assertHelpSkillContract(codexFirstUse, "codexHelp");
-
-    assertNoMarkdownPipeRows(claudeHelp, "claudeHelp");
-    assertNoMarkdownPipeRows(codexHelp, "codexHelp");
-
-    requireThat(claudeHelp, "claudeHelp").contains("Use slash commands to select a CAT workflow explicitly.");
-    requireThat(codexHelp, "codexHelp").contains(
-      "Use dollar-prefixed skill mentions to select a CAT workflow explicitly.");
-    assertHelpSkillPreservesContent(claudeHelp, "claudeHelp", "/cat:");
-    assertHelpSkillPreservesContent(codexHelp, "codexHelp", "$cat:");
-  }
-
-  /**
    * Verifies work-execute instructions do not treat a clean pre-implementation branch as already applied.
    *
    * @throws IOException if reading source files fails
@@ -112,44 +86,7 @@ public final class ReleaseDocumentationTest
     Path sourceRoot = findSourceRoot();
     String workVerify = Files.readString(sourceRoot.resolve("client/plugin/agents/common/work-verify.md"),
       StandardCharsets.UTF_8);
-    String workConfirm = Files.readString(
-      sourceRoot.resolve("client/plugin/skills/common/work-confirm/first-use.md"), StandardCharsets.UTF_8);
-
     assertRuntimeNeutralWorkVerification(workVerify, "workVerify");
-    assertRuntimeNeutralWorkVerification(workConfirm, "workConfirm");
-  }
-
-  private static String assertHelpSkillContract(Path firstUse, String name) throws IOException
-  {
-    String content = Files.readString(firstUse, StandardCharsets.UTF_8);
-    requireThat(content, name).contains("Return the Markdown below as your final assistant response.");
-    requireThat(content, name).contains("Do not wrap the response in a code block.");
-    requireThat(content, name).contains("# CAT Command Reference");
-    requireThat(content, name).doesNotContain("hierarchical project planning with multi-agent issue execution");
-    requireThat(content, name).doesNotContain("add an issue to fix login");
-    return content;
-  }
-
-  private static void assertNoMarkdownPipeRows(String content, String name)
-  {
-    content.lines().filter(line -> line.matches("^\\|.*\\|$")).findFirst().ifPresent(line ->
-    {
-      throw new AssertionError(name + " may not contain Markdown pipe-table row: " + line);
-    });
-  }
-
-  private static void assertHelpSkillPreservesContent(String content, String name, String commandPrefix)
-  {
-    requireThat(content, name).contains(commandPrefix + "init");
-    requireThat(content, name).contains(commandPrefix + "status");
-    requireThat(content, name).contains(commandPrefix + "config");
-    requireThat(content, name).contains(commandPrefix + "cleanup");
-    requireThat(content, name).contains("Work on v1 issues");
-    requireThat(content, name).contains("Work on v1.0 issues");
-    requireThat(content, name).contains("Work on v1.0.1 issues");
-    requireThat(content, name).contains("{major}.{minor}-{issue-name}");
-    requireThat(content, name).contains("{major}.{minor}.{patch}-{issue-name}");
-    requireThat(content, name).contains("{issue-branch}-sub-{uuid}");
   }
 
   private static void assertRuntimeNeutralWorkVerification(String content, String name)

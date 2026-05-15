@@ -555,7 +555,35 @@ public final class PluginArtifactBuilder
     String text = stripSourceLicenseHeader(Files.readString(source, StandardCharsets.UTF_8));
     text = SourceIncludeProcessor.expand(source, text, path -> isAllowedIncludeTarget(runtime, path),
       this::stripSourceLicenseHeader);
+    text = replaceRuntimePlaceholders(runtime, text);
     FileSystemUtils.writeStringIfChanged(target, text);
+  }
+
+  /**
+   * Replaces runtime-specific placeholders in generated instruction text.
+   *
+   * @param runtime the runtime being built
+   * @param text    the source text
+   * @return text with runtime placeholders resolved
+   */
+  private String replaceRuntimePlaceholders(Runtime runtime, String text)
+  {
+    return text.replace("${CAT_COMMAND_PREFIX}", commandPrefix(runtime));
+  }
+
+  /**
+   * Returns the command prefix used to invoke CAT skills in a runtime.
+   *
+   * @param runtime the runtime being built
+   * @return the command prefix
+   */
+  private String commandPrefix(Runtime runtime)
+  {
+    return switch (runtime)
+    {
+      case CLAUDE -> "/";
+      case CODEX -> "$";
+    };
   }
 
   /**

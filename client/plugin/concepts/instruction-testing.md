@@ -22,6 +22,16 @@ and pattern analysis. The `test-results.json` snapshot stored under each instruc
 The full loop: write test cases → spawn parallel runs → grade outputs → aggregate → analyze →
 review with user → improve instruction → repeat until candidate outperforms baseline.
 
+## Java/TestNG Boundary
+
+Do not use Java/TestNG tests to validate the contents of skill files under `client/plugin/skills/**`. Skill-file
+content must be validated with instruction tests, SPRT, organic agent-run validation, or human review, depending on
+the risk and determinism of the change.
+
+Java/TestNG tests may validate runtime code that processes, packages, routes, or loads skills, but they must not
+assert exact prose, examples, command lists, ANSI text, or other `SKILL.md`/`first-use.md` content.
+Presence and absence checks for skill files are allowed when they validate packaging or routing contracts.
+
 ## Eval Set Format
 
 An eval set is a JSON object with a `version` field and a `test_cases` array. Each test case defines the prompt to
