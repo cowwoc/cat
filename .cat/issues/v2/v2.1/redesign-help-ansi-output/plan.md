@@ -29,7 +29,9 @@ feature
 - [ ] Section headers use bold white.
 - [ ] The horizontal divider uses the amber-to-rose gradient.
 - [ ] Commands and example branch names use the rose color from the approved palette, not green.
-- [ ] The help output includes `add`, `work`, `remove`, and `uninstall` in the Codex `$cat:*` output.
+- [ ] The help output includes prompt examples that trigger adding/removing issues or versions instead of listing
+  `add`, `remove`, or `work` as top-level commands.
+- [ ] The help output includes `uninstall` in the Codex `$cat:*` output.
 - [ ] The help output includes `learn` and `optimize-execution` under `Advanced`.
 - [ ] The `Personality traits` section does not include a separate `Values: low, medium, high` line.
 - [ ] The `Branch names` section describes support for `MAJOR`, `MAJOR.MINOR`, and `MAJOR.MINOR.PATCH` versioning
@@ -45,19 +47,16 @@ The literal output should be:
 
 [38;2;255;214;102m━━━━━━━━[38;2;255;180;118m━━━━━━━━[38;2;255;142;146m━━━━━━━━[38;2;235;116;164m━━━━━━━━━━━━━━━━━━━━[0m
 
-[1;37mStart here[0m
-  [38;2;235;116;164m$cat:init[0m       Set up CAT in this project
-  [38;2;235;116;164m$cat:config[0m     Tune autonomy, validation, review depth, cleanup, and detail
-  [38;2;235;116;164m$cat:add[0m        Create a new issue or version
-  [38;2;235;116;164m$cat:remove[0m     Remove an issue or version
-  [38;2;235;116;164m$cat:cleanup[0m    Remove stale locks and abandoned worktrees
-  [38;2;235;116;164m$cat:work[0m       Start or continue issue work
-  [38;2;235;116;164m$cat:status[0m     See active issues, locks, and next steps
-  [38;2;235;116;164m$cat:uninstall[0m  Uninstall CAT from Codex
-
 [1;37mWhat CAT does[0m
   CAT organizes your work, augments code quality, and applies your personal style
   so you can walk away with a sense of ownership and pride in the resulting work.
+
+[1;37mStart here[0m
+  [38;2;235;116;164m$cat:init[0m       Set up CAT in this project
+  [38;2;235;116;164m$cat:config[0m     View or update configuration
+  [38;2;235;116;164m$cat:cleanup[0m    Remove stale locks and abandoned worktrees
+  [38;2;235;116;164m$cat:status[0m     See active issues, locks, and next steps
+  [38;2;235;116;164m$cat:uninstall[0m  Uninstall CAT from Codex
 
 [1;37mPersonality traits[0m
   [38;2;255;180;118mtrust[0m       how much CAT acts independently before asking you
@@ -67,10 +66,16 @@ The literal output should be:
   [38;2;255;180;118mverbosity[0m   how much CAT explains while it works
 
 [1;37mCommon work requests[0m
-  [38;2;235;116;164mNext issue[0m              Work through incomplete issues
+  [38;2;235;116;164mNext issue[0m              Work on the next available issue
+  [38;2;235;116;164mResume 1.0-parse[0m       Resume a specific issue
   [38;2;235;116;164mWork on v1 issues[0m       Work all v1.x.x issues
   [38;2;235;116;164mWork on v1.0 issues[0m     Work all v1.0.x issues
-  [38;2;235;116;164mWork on 1.0-parse[0m       Work one specific issue
+
+[1;37mIssue prompts[0m
+  [38;2;235;116;164mAdd version 2.8[0m
+  [38;2;235;116;164mAdd a screenshot of the X feature to README.md[0m
+  [38;2;235;116;164mRemove version 1.2[0m
+  [38;2;235;116;164mRemove 1.2-add-webscraper[0m
 
 [1;37mAdvanced[0m
   [38;2;235;116;164m$cat:learn[0m               Record mistakes and prevent recurrence
@@ -99,18 +104,15 @@ The Claude slash-command equivalent should match the approved output above, exce
 
 [38;2;255;214;102m━━━━━━━━[38;2;255;180;118m━━━━━━━━[38;2;255;142;146m━━━━━━━━[38;2;235;116;164m━━━━━━━━━━━━━━━━━━━━[0m
 
-[1;37mStart here[0m
-  [38;2;235;116;164m/cat:init[0m       Set up CAT in this project
-  [38;2;235;116;164m/cat:config[0m     Tune autonomy, validation, review depth, cleanup, and detail
-  [38;2;235;116;164m/cat:add[0m        Create a new issue or version
-  [38;2;235;116;164m/cat:remove[0m     Remove an issue or version
-  [38;2;235;116;164m/cat:cleanup[0m    Remove stale locks and abandoned worktrees
-  [38;2;235;116;164m/cat:work[0m       Start or continue issue work
-  [38;2;235;116;164m/cat:status[0m     See active issues, locks, and next steps
-
 [1;37mWhat CAT does[0m
   CAT organizes your work, augments code quality, and applies your personal style
   so you can walk away with a sense of ownership and pride in the resulting work.
+
+[1;37mStart here[0m
+  [38;2;235;116;164m/cat:init[0m       Set up CAT in this project
+  [38;2;235;116;164m/cat:config[0m     View or update configuration
+  [38;2;235;116;164m/cat:cleanup[0m    Remove stale locks and abandoned worktrees
+  [38;2;235;116;164m/cat:status[0m     See active issues, locks, and next steps
 
 [1;37mPersonality traits[0m
   [38;2;255;180;118mtrust[0m       how much CAT acts independently before asking you
@@ -120,10 +122,16 @@ The Claude slash-command equivalent should match the approved output above, exce
   [38;2;255;180;118mverbosity[0m   how much CAT explains while it works
 
 [1;37mCommon work requests[0m
-  [38;2;235;116;164mNext issue[0m              Work through incomplete issues
+  [38;2;235;116;164mNext issue[0m              Work on the next available issue
+  [38;2;235;116;164mResume 1.0-parse[0m       Resume a specific issue
   [38;2;235;116;164mWork on v1 issues[0m       Work all v1.x.x issues
   [38;2;235;116;164mWork on v1.0 issues[0m     Work all v1.0.x issues
-  [38;2;235;116;164mWork on 1.0-parse[0m       Work one specific issue
+
+[1;37mIssue prompts[0m
+  [38;2;235;116;164mAdd version 2.8[0m
+  [38;2;235;116;164mAdd a screenshot of the X feature to README.md[0m
+  [38;2;235;116;164mRemove version 1.2[0m
+  [38;2;235;116;164mRemove 1.2-add-webscraper[0m
 
 [1;37mAdvanced[0m
   [38;2;235;116;164m/cat:learn[0m               Record mistakes and prevent recurrence
