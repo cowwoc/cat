@@ -83,6 +83,37 @@ must have a corresponding token in `argument-hint`.
 - [ ] Count of tokens in argument-hint matches the highest `$N` reference + 1
 - [ ] Each positional arg has a descriptive name (e.g., `<issue-id>`, `<issue-path>`)
 
+**Runtime portability for shared instruction bodies**:
+
+Files under `client/plugin/skills/common/`, `client/plugin/agents/common/`, `client/plugin/rules/common/`,
+and `client/plugin/concepts/` are shared across supported runtimes. When writing or updating these files,
+describe required capabilities and behavior in runtime-neutral terms. Do NOT introduce runtime-specific tool
+names, runtime names, or concrete invocation examples as the required action unless that exact name is valid
+for every runtime artifact that includes the file.
+
+Use capability wording in shared files:
+
+```
+Good:
+  Present a runtime-supported structured user-choice prompt.
+  Spawn the reviewer using the current runtime's isolated stakeholder agent mechanism.
+  Use the runtime's file-read tool to read every changed file.
+
+Bad in shared files:
+  Use AskUserQuestion.
+  Use the Claude Agent tool.
+  Use Codex spawn_agent.
+```
+
+Put concrete runtime-specific tool names and invocation forms in runtime-specific files, rules, or wrappers
+when the exact mechanism matters (for example `client/plugin/skills/claude/`, `client/plugin/skills/codex/`,
+or runtime-specific rules). Do not solve this by inventing a placeholder variable such as `${USER_CHOICE_TOOL}`
+unless the runtime artifact builder actually substitutes it and tests verify the rendered artifact.
+
+Tests for shared instruction bodies should assert the behavior and user-visible choices, not a runtime-specific
+tool invocation. For example, assert that the agent asks through a structured user-choice prompt with
+"Resume", "Clean up", and "Abort" choices instead of asserting that it invoked `AskUserQuestion`.
+
 ---
 
 ## Skill Structure Template
