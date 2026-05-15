@@ -14,12 +14,12 @@ turn** — reads from earlier turns do not satisfy this requirement.
 
 **Reference context instead of re-reading**: When file content was already read earlier in the
 current conversation, reuse that context instead of repeating Read calls unless the file changed.
+For plugin, skill, or bundled reference files, reuse the existing context or previously loaded file
+reference when available. Re-read those files only when the plugin cache has been updated, the
+context was compacted, or a subagent lacks the prior context.
 
 **Batch known-ahead operations**: If you know in advance that multiple independent reads/searches are needed,
 issue them together in one response rather than sequentially.
-
-conversation and is still in context, reference it directly instead of issuing another `Read` with
-identical parameters. Re-reading wastes a tool call round-trip.
 
 **Directory before file write**: When writing files via heredoc (`cat > path/file << 'EOF'`), always
 create the parent directory first with `mkdir -p`. The heredoc write fails if the directory doesn't
