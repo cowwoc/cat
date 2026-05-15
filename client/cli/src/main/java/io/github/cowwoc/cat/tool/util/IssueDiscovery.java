@@ -4,14 +4,13 @@
  * Licensed under the CAT Commercial License.
  * See LICENSE.md in the project root for license terms.
  */
-package io.github.cowwoc.cat.claude.hook.util;
+package io.github.cowwoc.cat.tool.util;
 
 import io.github.cowwoc.cat.agent.GlobMatcher;
 import io.github.cowwoc.cat.agent.ProcessRunner;
 import io.github.cowwoc.cat.agent.Config;
-import io.github.cowwoc.cat.claude.hook.JvmScope;
-import io.github.cowwoc.cat.claude.internal.SharedSecrets;
-import io.github.cowwoc.cat.claude.hook.IssueStatus;
+import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.IssueStatus;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -96,11 +95,6 @@ public final class IssueDiscovery
    * Pattern for issue entries in the exit section of a version plan.md.
    */
   private static final Pattern EXIT_ISSUE_PATTERN = Pattern.compile("^- \\[issue\\] (.+)$");
-
-  static
-  {
-    SharedSecrets.setIssueDiscoveryAccess(IssueDiscovery::parseIssueStatus);
-  }
 
   private final JvmScope scope;
   private final Path projectPath;
@@ -540,7 +534,7 @@ public final class IssueDiscovery
    *
    * @param scope the search scope
    * @param target the target version or issue ID (may be empty)
-   * @param sessionId the Claude session ID for lock acquisition (may be empty to skip locking)
+   * @param sessionId the session ID for lock acquisition (may be empty to skip locking)
    * @param excludePattern a glob-style pattern to exclude issues by name (may be empty)
    * @param overridePostconditions if true, skip post-condition evaluation
    */
@@ -552,7 +546,7 @@ public final class IssueDiscovery
      *
      * @param scope the search scope
      * @param target the target version or issue ID (may be empty)
-     * @param sessionId the Claude session ID for lock acquisition (may be empty to skip locking)
+     * @param sessionId the session ID for lock acquisition (may be empty to skip locking)
      * @param excludePattern a glob-style pattern to exclude issues by name (may be empty)
      * @param overridePostconditions if true, skip post-condition evaluation
      * @throws NullPointerException if {@code scope}, {@code target}, {@code sessionId},
@@ -1183,7 +1177,7 @@ public final class IssueDiscovery
   }
 
   /**
-   * Parses index.json content for the status field. Used via SharedSecrets.
+   * Parses index.json content for the status field.
    *
    * @param content the JSON content of the index.json file
    * @param indexPath the path to the index.json file (used in error messages only)
@@ -1191,7 +1185,7 @@ public final class IssueDiscovery
    * @return the validated status string, or {@code "open"} if absent
    * @throws IOException if the status value is present but non-canonical
    */
-  private static String parseIssueStatus(String content, Path indexPath, JsonMapper mapper) throws IOException
+  public static String parseIssueStatus(String content, Path indexPath, JsonMapper mapper) throws IOException
   {
     return getIssueStatus(content, indexPath, null, mapper);
   }

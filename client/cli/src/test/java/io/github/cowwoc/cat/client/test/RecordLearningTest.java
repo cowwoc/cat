@@ -14,7 +14,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
-import io.github.cowwoc.cat.claude.hook.JvmScope;
+import io.github.cowwoc.cat.tool.JvmScope;
 
 import java.io.IOException;
 import java.nio.file.Files;

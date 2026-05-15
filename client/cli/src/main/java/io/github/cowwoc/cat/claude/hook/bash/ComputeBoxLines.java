@@ -10,7 +10,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.claude.hook.BashHandler;
 import io.github.cowwoc.cat.claude.hook.ClaudeHook;
-import io.github.cowwoc.cat.claude.hook.skills.DisplayUtils;
+import io.github.cowwoc.cat.tool.DisplayUtils;
 
 import java.util.ArrayList;
 import java.util.List;

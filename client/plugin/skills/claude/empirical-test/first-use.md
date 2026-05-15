@@ -14,7 +14,7 @@ normal project context by itself.
 ## Run
 
 ```bash
-: "${CAT_PLUGIN_DATA:?CAT_PLUGIN_DATA is required}"
+: "${CAT_PLUGIN_ROOT:?CAT_PLUGIN_ROOT is required}"
 RUNNER="${CAT_PLUGIN_ROOT}/client/bin/empirical-test-runner"
 "$RUNNER" \
   --runtime claude \
@@ -27,7 +27,7 @@ RUNNER="${CAT_PLUGIN_ROOT}/client/bin/empirical-test-runner"
 ## Inspect
 
 ```bash
-: "${CAT_PLUGIN_DATA:?CAT_PLUGIN_DATA is required}"
+: "${CAT_PLUGIN_ROOT:?CAT_PLUGIN_ROOT is required}"
 SESSION_ANALYZER="${CAT_PLUGIN_ROOT}/client/bin/session-analyzer"
 "$SESSION_ANALYZER" --runtime claude analyze "${TRIAL_SESSION_ID:?TRIAL_SESSION_ID is required}"
 "$SESSION_ANALYZER" --runtime claude errors "${TRIAL_SESSION_ID:?TRIAL_SESSION_ID is required}"

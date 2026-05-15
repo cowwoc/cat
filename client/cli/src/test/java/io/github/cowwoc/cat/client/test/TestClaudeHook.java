@@ -35,6 +35,7 @@ public final class TestClaudeHook extends AbstractClaudeHook
 
   private final TerminalType terminalType;
   private final Path workDir;
+  private final String pluginJsonUrl;
 
   /**
    * Creates a new test hook scope with auto-generated temporary directories and a default empty
@@ -106,6 +107,21 @@ public final class TestClaudeHook extends AbstractClaudeHook
   }
 
   /**
+   * Creates a new test hook scope with specified paths and plugin.json URL override.
+   *
+   * @param projectPath the project directory path
+   * @param pluginRoot the plugin root directory path
+   * @param claudeConfigPath the config directory path
+   * @param pluginJsonUrl the plugin.json URL override to report
+   * @throws NullPointerException if any parameter is null
+   */
+  public TestClaudeHook(Path projectPath, Path pluginRoot, Path claudeConfigPath, String pluginJsonUrl)
+  {
+    this(defaultPayload(getStdinMapper()), projectPath, pluginRoot, claudeConfigPath,
+      TerminalType.WINDOWS_TERMINAL, pluginJsonUrl);
+  }
+
+  /**
    * Creates a new test hook scope with a JSON payload string and specified paths.
    *
    * @param payloadJson the hook input JSON string (must contain a {@code session_id} field)
@@ -170,11 +186,30 @@ public final class TestClaudeHook extends AbstractClaudeHook
   public TestClaudeHook(JsonNode hookPayload, Path projectPath, Path pluginRoot, Path claudeConfigPath,
     TerminalType terminalType)
   {
+    this(hookPayload, projectPath, pluginRoot, claudeConfigPath, terminalType, "");
+  }
+
+  /**
+   * Creates a new test hook scope with all parameters explicit.
+   *
+   * @param hookPayload the parsed hook JSON payload
+   * @param projectPath the project directory path
+   * @param pluginRoot the plugin root directory path
+   * @param claudeConfigPath the config directory path
+   * @param terminalType the terminal type to report
+   * @param pluginJsonUrl the plugin.json URL override to report
+   * @throws NullPointerException if any parameter is null
+   */
+  public TestClaudeHook(JsonNode hookPayload, Path projectPath, Path pluginRoot, Path claudeConfigPath,
+    TerminalType terminalType, String pluginJsonUrl)
+  {
     super(hookPayload, projectPath, pluginRoot, pluginRoot, claudeConfigPath);
     requireThat(projectPath, "projectPath").isNotNull();
     requireThat(terminalType, "terminalType").isNotNull();
+    requireThat(pluginJsonUrl, "pluginJsonUrl").isNotNull();
     this.terminalType = terminalType;
     this.workDir = projectPath;
+    this.pluginJsonUrl = pluginJsonUrl;
   }
 
   /**
@@ -285,9 +320,9 @@ public final class TestClaudeHook extends AbstractClaudeHook
   }
 
   @Override
-  public String getUpdatePluginJsonUrl()
+  public String getPluginJsonUrl()
   {
     ensureOpen();
-    return "";
+    return pluginJsonUrl;
   }
 }

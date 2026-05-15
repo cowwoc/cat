@@ -31,6 +31,7 @@ esac
 CAT_RUNTIME="codex"
 CODEX_HOME="${CODEX_HOME:-${HOME}/.codex}"
 CAT_PLUGIN_DATA="${CAT_PLUGIN_DATA:-${CODEX_HOME}/plugins/data/cat-cat}"
+CAT_CONFIG_DIR="${CAT_CONFIG_DIR:-${CODEX_HOME}}"
 
 if [[ "${RELEASE_TAG}" == "latest" ]]; then
   RELEASE_TAG="$(curl -fsSL https://api.github.com/repos/cowwoc/cat/releases/latest |
@@ -48,6 +49,7 @@ echo "CAT_RUNTIME=${CAT_RUNTIME}"
 echo "RELEASE_TAG=${RELEASE_TAG}"
 echo "ASSET_URL=${ASSET_URL}"
 echo "CAT_PLUGIN_DATA=${CAT_PLUGIN_DATA}"
+echo "CAT_CONFIG_DIR=${CAT_CONFIG_DIR}"
 
 INSTALL_TMP="$(mktemp -d)"
 trap 'rm -rf "${INSTALL_TMP}"' EXIT
@@ -113,6 +115,7 @@ codex plugin marketplace add "${LOCAL_MARKETPLACE_ROOT}"
 
 CODEX_PLUGIN_CACHE_ROOT="${CODEX_HOME}/plugins/cache/cat/cat"
 CODEX_PLUGIN_CACHE="${CODEX_PLUGIN_CACHE_ROOT}/${PLUGIN_VERSION}"
+CAT_PLUGIN_ROOT="${CAT_PLUGIN_ROOT:-${CODEX_PLUGIN_CACHE}}"
 rm -rf "${CODEX_PLUGIN_CACHE_ROOT}"
 
 try_codex_plugin_browser_install() {
@@ -162,13 +165,11 @@ awk '
 mv "${CONFIG_TMP}" "${CODEX_CONFIG}"
 
 mkdir -p "${CAT_PLUGIN_DATA}"
-chmod -R u+w "${CAT_PLUGIN_DATA}/client" 2>/dev/null || true
-rm -rf "${CAT_PLUGIN_DATA}/client"
-cp -R "${RELEASE_ARTIFACT}/client" "${CAT_PLUGIN_DATA}/client"
+mkdir -p "${CAT_CONFIG_DIR}"
 
-"${CAT_PLUGIN_DATA}/client/bin/java" -version
-test -x "${CAT_PLUGIN_DATA}/client/bin/pre-bash"
-test -f "${CAT_PLUGIN_DATA}/client/VERSION"
+"${CAT_PLUGIN_ROOT}/client/bin/java" -version
+test -x "${CAT_PLUGIN_ROOT}/client/bin/pre-bash"
+test -f "${CAT_PLUGIN_ROOT}/client/VERSION"
 test -f "${CODEX_PLUGIN_CACHE}/.codex-plugin/plugin.json"
 test -f "${CODEX_PLUGIN_CACHE}/skills/add/SKILL.md"
 grep -F '[plugins."cat@cat"]' "${CODEX_CONFIG}" >/dev/null

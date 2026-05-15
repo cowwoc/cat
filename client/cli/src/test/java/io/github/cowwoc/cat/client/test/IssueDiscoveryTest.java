@@ -6,11 +6,10 @@
  */
 package io.github.cowwoc.cat.client.test;
 
-import io.github.cowwoc.cat.claude.internal.SharedSecrets;
-import io.github.cowwoc.cat.claude.hook.util.IssueDiscovery;
-import io.github.cowwoc.cat.claude.hook.util.IssueDiscovery.DiscoveryResult;
-import io.github.cowwoc.cat.claude.hook.util.IssueDiscovery.SearchOptions;
-import io.github.cowwoc.cat.claude.hook.util.IssueDiscovery.Scope;
+import io.github.cowwoc.cat.tool.util.IssueDiscovery;
+import io.github.cowwoc.cat.tool.util.IssueDiscovery.DiscoveryResult;
+import io.github.cowwoc.cat.tool.util.IssueDiscovery.SearchOptions;
+import io.github.cowwoc.cat.tool.util.IssueDiscovery.Scope;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import tools.jackson.databind.json.JsonMapper;
@@ -947,7 +946,7 @@ public class IssueDiscoveryTest
     {
       String content = "{\"status\":\"" + status + "\"}";
       Path fakePath = Path.of("fake/index.json");
-      String result = SharedSecrets.getIssueStatus(content, fakePath, scope.getJsonMapper());
+      String result = IssueDiscovery.parseIssueStatus(content, fakePath, scope.getJsonMapper());
       requireThat(result, "result").isEqualTo(status);
     }
   }
@@ -986,7 +985,7 @@ public class IssueDiscoveryTest
     {
       String content = "{\"status\":\"" + status + "\"}";
       Path fakePath = Path.of("fake/index.json");
-      SharedSecrets.getIssueStatus(content, fakePath, scope.getJsonMapper());
+      IssueDiscovery.parseIssueStatus(content, fakePath, scope.getJsonMapper());
     }
   }
 
@@ -1955,7 +1954,7 @@ public class IssueDiscoveryTest
     {
       String content = "{\"resolution\":\"completed\"}";
       Path fakePath = Path.of("fake/index.json");
-      String result = SharedSecrets.getIssueStatus(content, fakePath, scope.getJsonMapper());
+      String result = IssueDiscovery.parseIssueStatus(content, fakePath, scope.getJsonMapper());
       requireThat(result, "result").isEqualTo("open");
     }
   }
@@ -1972,7 +1971,7 @@ public class IssueDiscoveryTest
     {
       String content = "";
       Path fakePath = Path.of("fake/index.json");
-      String result = SharedSecrets.getIssueStatus(content, fakePath, scope.getJsonMapper());
+      String result = IssueDiscovery.parseIssueStatus(content, fakePath, scope.getJsonMapper());
       requireThat(result, "result").isEqualTo("open");
     }
   }

@@ -169,6 +169,26 @@
 				</executions>
 			</plugin>
 			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>license-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>generate-third-party-notices</id>
+						<phase>generate-resources</phase>
+						<goals>
+							<goal>add-third-party</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/generated-resources/licenses</outputDirectory>
+							<thirdPartyFilename>THIRD-PARTY-NOTICES.txt</thirdPartyFilename>
+							<excludedScopes>test,provided,system</excludedScopes>
+							<failOnMissing>true</failOnMissing>
+							<force>true</force>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-checkstyle-plugin</artifactId>
 				<dependencies>

@@ -320,9 +320,13 @@ public final class PluginArtifactBuilderTest
             "to bullets.");
         requireThat(stakeholderReview, runtime + "StakeholderReview").contains("Spawn each stakeholder with:");
         requireThat(stakeholderReview, runtime + "StakeholderReview").contains("## Working Directory");
-        requireThat(stakeholderReview, runtime + "StakeholderReview").contains("WORKTREE_PATH: {WORKTREE_PATH}");
+        requireThat(stakeholderReview, runtime + "StakeholderReview").contains("WORKTREE_PATH={WORKTREE_PATH}");
         requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
           "Changed files (read from WORKTREE_PATH): {CHANGED_FILES_BULLETS}");
+        requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
+          "stakeholder role\ninstructions parse that exact variable assignment");
+        requireThat(stakeholderReview, runtime + "StakeholderReview").doesNotContain(
+          "\nWORKTREE_PATH: {WORKTREE_PATH}");
         requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
           "Read every changed file using absolute paths rooted at {WORKTREE_PATH}/.");
         requireThat(stakeholderReview, runtime + "StakeholderReview").contains(

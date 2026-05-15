@@ -8,9 +8,9 @@ package io.github.cowwoc.cat.claude.hook.skills;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.claude.internal.SharedSecrets;
 import io.github.cowwoc.cat.claude.tool.ClaudeTool;
 import io.github.cowwoc.cat.claude.tool.MainClaudeTool;
-import io.github.cowwoc.cat.claude.internal.SharedSecrets;
 
 import static io.github.cowwoc.cat.claude.hook.Strings.block;
 
@@ -123,7 +123,7 @@ public final class EmpiricalTestRunner
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
-    this.sessionsPath = scope.getClaudeSessionsPath();
+    this.sessionsPath = scope.getSessionsPath();
     this.claudeRunner = new ClaudeRunner(scope);
     this.codexRunner = new CodexRunner(scope);
   }

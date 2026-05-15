@@ -6,6 +6,8 @@
  */
 package io.github.cowwoc.cat.claude.hook.skills;
 
+import io.github.cowwoc.cat.tool.DisplayUtils;
+
 import static io.github.cowwoc.requirements13.jackson.DefaultJacksonValidators.requireThat;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 import java.io.InputStream;

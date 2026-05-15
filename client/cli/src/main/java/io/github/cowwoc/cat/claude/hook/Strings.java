@@ -8,6 +8,8 @@ package io.github.cowwoc.cat.claude.hook;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.tool.JvmScope;
+
 import tools.jackson.databind.node.ObjectNode;
 
 /**

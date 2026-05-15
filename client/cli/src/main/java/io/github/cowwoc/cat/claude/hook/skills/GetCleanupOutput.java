@@ -6,6 +6,8 @@
  */
 package io.github.cowwoc.cat.claude.hook.skills;
 
+import io.github.cowwoc.cat.tool.DisplayUtils;
+
 import java.util.Objects;
 
 import org.slf4j.Logger;
@@ -18,7 +20,7 @@ import io.github.cowwoc.cat.claude.tool.MainClaudeTool;
 import static io.github.cowwoc.cat.claude.hook.Strings.block;
 import io.github.cowwoc.cat.claude.hook.util.IssueLock;
 import io.github.cowwoc.cat.agent.ProcessRunner;
-import io.github.cowwoc.cat.claude.hook.util.SkillOutput;
+import io.github.cowwoc.cat.tool.skills.SkillOutput;
 
 import java.io.IOException;
 import java.io.InputStream;

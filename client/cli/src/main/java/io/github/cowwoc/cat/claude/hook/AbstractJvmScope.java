@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.claude.hook;
 
 import io.github.cowwoc.cat.agent.AbstractAgentScope;
 import io.github.cowwoc.cat.claude.hook.prompt.UserIssues;
+import io.github.cowwoc.cat.tool.JvmScope;
 import io.github.cowwoc.pouch10.core.ConcurrentLazyReference;
 
 import java.nio.file.Path;
@@ -16,7 +17,7 @@ import java.nio.file.Path;
  * Claude-facing JVM scope base class.
  * <p>
  * Runtime-neutral path and mapper behavior lives in {@link AbstractAgentScope}. This class only adds
- * Claude-specific prompt handlers required by {@link JvmScope}.
+ * Claude-specific prompt handlers used by Claude-only scopes.
  */
 public abstract class AbstractJvmScope extends AbstractAgentScope implements JvmScope
 {
@@ -52,7 +53,6 @@ public abstract class AbstractJvmScope extends AbstractAgentScope implements Jvm
     return AbstractAgentScope.encodeProjectPath(projectPath);
   }
 
-  @Override
   public UserIssues getUserIssues()
   {
     ensureOpen();

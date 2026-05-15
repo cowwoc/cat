@@ -6,10 +6,9 @@
  */
 package io.github.cowwoc.cat.claude.hook.skills;
 
-import io.github.cowwoc.cat.claude.hook.ClaudePluginScope;
+import io.github.cowwoc.cat.claude.internal.SharedSecrets;
 import io.github.cowwoc.cat.claude.tool.ClaudeTool;
 import io.github.cowwoc.cat.claude.tool.MainClaudeTool;
-import io.github.cowwoc.cat.claude.internal.SharedSecrets;
 import io.github.cowwoc.cat.agent.ProcessRunner;
 import io.github.cowwoc.cat.agent.VersionUtils;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
@@ -103,7 +102,7 @@ public final class InstructionTestRunner
   }
 
   private final Logger log = LoggerFactory.getLogger(InstructionTestRunner.class);
-  private final ClaudePluginScope scope;
+  private final ClaudeTool scope;
   private final String claudeCodeVersion;
   private final SprtStateManager sprtStateManager;
   private final SprtIsolationManager sprtIsolationManager;
@@ -118,7 +117,7 @@ public final class InstructionTestRunner
    * @throws NullPointerException     if {@code scope} or {@code claudeCodeVersion} are null
    * @throws IllegalArgumentException if {@code claudeCodeVersion} is blank
    */
-  public InstructionTestRunner(ClaudePluginScope scope, String claudeCodeVersion)
+  public InstructionTestRunner(ClaudeTool scope, String claudeCodeVersion)
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(claudeCodeVersion, "claudeCodeVersion").isNotBlank();
@@ -2813,7 +2812,7 @@ public final class InstructionTestRunner
    * @throws IOException              if an I/O error occurs
    * @throws InterruptedException     if waiting for a runner process is interrupted
    */
-  public static void run(ClaudePluginScope scope, String[] args, PrintStream out)
+  public static void run(ClaudeTool scope, String[] args, PrintStream out)
     throws IOException, InterruptedException
   {
     requireThat(scope, "scope").isNotNull();

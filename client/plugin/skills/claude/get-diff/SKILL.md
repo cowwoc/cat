@@ -15,4 +15,4 @@ See LICENSE.md in the project root for license terms.
 
 <!-- cat:include ../../include/get-diff.md -->
 
-!`: "${CAT_PLUGIN_DATA:?CAT_PLUGIN_DATA is required}"; "${CAT_PLUGIN_ROOT}/client/bin/get-output" "$0" get-diff "$1"`
+!`: "${CAT_PLUGIN_ROOT:?CAT_PLUGIN_ROOT is required}"; "${CAT_PLUGIN_ROOT}/client/bin/get-output" "$0" get-diff "$1"`

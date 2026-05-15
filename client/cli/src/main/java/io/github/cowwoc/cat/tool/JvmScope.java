@@ -4,10 +4,9 @@
  * Licensed under the CAT Commercial License.
  * See LICENSE.md in the project root for license terms.
  */
-package io.github.cowwoc.cat.claude.hook;
+package io.github.cowwoc.cat.tool;
 
 import io.github.cowwoc.cat.agent.AgentScope;
-import io.github.cowwoc.cat.claude.hook.prompt.UserIssues;
 
 /**
  * JVM-wide scope providing lazy-loaded singletons and environment configuration.
@@ -19,11 +18,4 @@ import io.github.cowwoc.cat.claude.hook.prompt.UserIssues;
  */
 public interface JvmScope extends AgentScope
 {
-  /**
-   * Returns the user issues prompt handler.
-   *
-   * @return the handler
-   * @throws IllegalStateException if this scope is closed
-   */
-  UserIssues getUserIssues();
 }

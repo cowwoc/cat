@@ -103,6 +103,7 @@ public class SessionStartHookTest
         requireThat(content, "content").contains("CLAUDE_PROJECT_DIR=");
         requireThat(content, "content").contains("CLAUDE_PLUGIN_ROOT=");
         requireThat(content, "content").contains("CLAUDE_PLUGIN_DATA=");
+        requireThat(content, "content").contains("CAT_CONFIG_DIR=");
         // Startup dir must NOT have been written on resume
         requireThat(Files.exists(envFile), "startupEnvFileExists").isFalse();
       }
@@ -320,6 +321,7 @@ public class SessionStartHookTest
         requireThat(content, "content").contains("CLAUDE_SESSION_ID=\"" + clearSessionId + "\"");
         requireThat(content, "content").contains("CLAUDE_PROJECT_DIR=");
         requireThat(content, "content").contains("CLAUDE_PLUGIN_ROOT=");
+        requireThat(content, "content").contains("CAT_CONFIG_DIR=");
       }
       finally
       {
@@ -1738,6 +1740,36 @@ public class SessionStartHookTest
         SessionStartHandler.Result result = new CheckUpdateAvailable(scope).handle();
         requireThat(result.additionalContext(), "additionalContext").isEmpty();
         requireThat(result.stderr(), "stderr").isEmpty();
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that an invalid plugin.json URL override fails fast.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = "(?s).*CAT_PLUGIN_JSON_URL must be an absolute HTTPS URL.*")
+  public void checkUpdateAvailableRejectsInvalidPluginJsonUrl() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("cat-test-update-invalid-url-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-invalid-url-");
+    try
+    {
+      Path pluginJsonDir = pluginRoot.resolve(".claude-plugin");
+      Files.createDirectories(pluginJsonDir);
+      Files.writeString(pluginJsonDir.resolve("plugin.json"), "{\"version\":\"1.0.0\"}");
+
+      try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginRoot, projectPath,
+        "file:///tmp/plugin.json"))
+      {
+        new CheckUpdateAvailable(scope).handle();
       }
     }
     finally

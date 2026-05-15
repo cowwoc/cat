@@ -16,14 +16,17 @@ If a shell does not already have them, initialize them from Claude Code's native
 ```bash
 CAT_PLUGIN_ROOT="${CAT_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}"
 CAT_PLUGIN_DATA="${CAT_PLUGIN_DATA:-${CLAUDE_PLUGIN_DATA:-}}"
+CAT_CONFIG_DIR="${CAT_CONFIG_DIR:-${CLAUDE_CONFIG_DIR:-${HOME}/.claude}}"
 CAT_PROJECT_DIR="${CAT_PROJECT_DIR:-${CLAUDE_PROJECT_DIR:-$(pwd)}}"
 CAT_SESSION_ID="${CAT_SESSION_ID:-${CLAUDE_SESSION_ID:-}}"
 CAT_RUNTIME="${CAT_RUNTIME:-claude}"
 
 : "${CAT_PLUGIN_ROOT:?CAT_PLUGIN_ROOT is required}"
 : "${CAT_PLUGIN_DATA:?CAT_PLUGIN_DATA is required}"
+: "${CAT_CONFIG_DIR:?CAT_CONFIG_DIR is required}"
 : "${CAT_PROJECT_DIR:?CAT_PROJECT_DIR is required}"
 ```
 
-Use `CAT_PLUGIN_ROOT` for files shipped inside the plugin, including the bundled runtime under
-`client/bin/`. Use `CAT_PLUGIN_DATA` for generated data such as session state, locks, and temporary files.
+Use `CAT_PLUGIN_ROOT` for files shipped inside the plugin, including the jlink client under `client/bin/`.
+
+Use `CAT_PLUGIN_DATA` for mutable runtime data generated outside the installed plugin.

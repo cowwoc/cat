@@ -217,10 +217,11 @@ public class ConfigTest
   }
 
   /**
-   * Verifies that legacy Claude work path placeholders remain supported.
+   * Verifies that legacy Claude work path placeholders are rejected.
    */
-  @Test
-  public void legacyClaudeProjectDirWorkPathStillExpands() throws IOException
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*workPath must use .*CAT_PROJECT_DIR.*CLAUDE_PROJECT_DIR.*")
+  public void legacyClaudeProjectDirWorkPathIsRejected() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
     try
@@ -234,7 +235,7 @@ public class ConfigTest
         """);
       try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
       {
-        requireThat(scope.getCatWorkPath(), "catWorkPath").isEqualTo(tempDir.resolve("custom-work"));
+        scope.getCatWorkPath();
       }
     }
     finally

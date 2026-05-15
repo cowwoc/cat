@@ -12,7 +12,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import io.github.cowwoc.cat.agent.Config;
 import io.github.cowwoc.cat.claude.hook.FileWriteHandler;
-import io.github.cowwoc.cat.claude.hook.IssueStatus;
+import io.github.cowwoc.cat.agent.IssueStatus;
 import io.github.cowwoc.cat.claude.hook.ClaudeHook;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;

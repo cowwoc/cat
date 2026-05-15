@@ -6,9 +6,11 @@
  */
 package io.github.cowwoc.cat.claude.tool;
 
-import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
-
-import io.github.cowwoc.cat.claude.hook.AbstractClaudePluginScope;
+import io.github.cowwoc.cat.agent.AgentRuntime;
+import io.github.cowwoc.cat.claude.hook.prompt.UserIssues;
+import io.github.cowwoc.cat.tool.AbstractCliTool;
+import io.github.cowwoc.cat.tool.CliToolConfig;
+import io.github.cowwoc.pouch10.core.ConcurrentLazyReference;
 
 import java.nio.file.Path;
 
@@ -22,9 +24,11 @@ import java.nio.file.Path;
  * <p>
  * <b>Thread Safety:</b> This class is thread-safe.
  */
-public abstract class AbstractClaudeTool extends AbstractClaudePluginScope implements ClaudeTool
+public abstract class AbstractClaudeTool extends AbstractCliTool implements ClaudeTool
 {
-  private final String sessionId;
+  @SuppressWarnings("this-escape")
+  private final ConcurrentLazyReference<UserIssues> userIssues =
+    ConcurrentLazyReference.create(() -> new UserIssues(this));
 
   /**
    * Creates a new abstract Claude tool scope with the given environment values.
@@ -41,15 +45,15 @@ public abstract class AbstractClaudeTool extends AbstractClaudePluginScope imple
   protected AbstractClaudeTool(String sessionId, Path projectPath, Path pluginRoot,
     Path pluginData, Path claudeConfigPath)
   {
-    super(projectPath, pluginRoot, pluginData, claudeConfigPath);
-    requireThat(sessionId, "sessionId").isNotBlank();
-    this.sessionId = sessionId;
+    super(new CliToolConfig(sessionId, projectPath, pluginRoot, pluginData, claudeConfigPath,
+      AgentRuntime.CLAUDE.pluginDescriptor(), AgentRuntime.CLAUDE.ruleDirectories(projectPath, pluginRoot),
+      AgentRuntime.CLAUDE.pluginCacheDescriptor(), Path.of(System.getProperty("user.dir")), "UTC", ""));
   }
 
   @Override
-  public String getSessionId()
+  public UserIssues getUserIssues()
   {
     ensureOpen();
-    return sessionId;
+    return userIssues.getValue();
   }
 }

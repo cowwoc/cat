@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.claude.hook.skills;
 
-import io.github.cowwoc.cat.claude.hook.ClaudePluginScope;
 import io.github.cowwoc.cat.claude.hook.util.GradeSchemaValidator;
 import io.github.cowwoc.cat.claude.tool.ClaudeTool;
 import io.github.cowwoc.cat.claude.tool.MainClaudeTool;
@@ -33,7 +32,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 final class SprtGrader
 {
   private final Logger log = LoggerFactory.getLogger(SprtGrader.class);
-  private final ClaudePluginScope scope;
+  private final ClaudeTool scope;
 
   /**
    * Creates a new SprtGrader.
@@ -41,7 +40,7 @@ final class SprtGrader
    * @param scope the Claude plugin scope providing JSON mapper and other services
    * @throws NullPointerException if {@code scope} is null
    */
-  SprtGrader(ClaudePluginScope scope)
+  SprtGrader(ClaudeTool scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;

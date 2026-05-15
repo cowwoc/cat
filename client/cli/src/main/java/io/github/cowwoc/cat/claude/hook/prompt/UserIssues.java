@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.claude.hook.prompt;
 
-import io.github.cowwoc.cat.claude.hook.JvmScope;
+import io.github.cowwoc.cat.tool.JvmScope;
 import io.github.cowwoc.cat.claude.hook.PromptHandler;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;

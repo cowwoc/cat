@@ -6,15 +6,13 @@
  */
 package io.github.cowwoc.cat.claude.hook.skills;
 
+import static io.github.cowwoc.cat.claude.hook.Strings.block;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import static io.github.cowwoc.cat.claude.hook.Strings.block;
-
-import io.github.cowwoc.cat.claude.tool.ClaudeTool;
 import io.github.cowwoc.cat.claude.hook.ClaudePluginScope;
-import io.github.cowwoc.cat.claude.tool.MainClaudeTool;
 import io.github.cowwoc.cat.claude.hook.util.FileUtils;
-
+import io.github.cowwoc.cat.claude.tool.ClaudeTool;
+import io.github.cowwoc.cat.claude.tool.MainClaudeTool;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 
 import java.io.BufferedReader;
@@ -723,7 +721,7 @@ public final class ClaudeRunner implements AutoCloseable
    * @throws IllegalArgumentException if arguments are invalid
    * @throws IOException              if an I/O error occurs
    */
-  public static int run(ClaudeTool scope, String[] args, PrintStream out) throws IOException
+  public static int run(ClaudePluginScope scope, String[] args, PrintStream out) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();

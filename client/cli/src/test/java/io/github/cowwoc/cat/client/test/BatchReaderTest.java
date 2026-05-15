@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.client.test;
 
-import io.github.cowwoc.cat.claude.hook.JvmScope;
+import io.github.cowwoc.cat.tool.JvmScope;
 import io.github.cowwoc.cat.claude.hook.util.BatchReader;
 import io.github.cowwoc.cat.claude.hook.util.BatchReader.Config;
 import io.github.cowwoc.cat.claude.hook.util.BatchReader.Result;

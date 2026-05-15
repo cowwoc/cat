@@ -121,7 +121,7 @@ public final class InvestigationContextExtractor
     requireThat(out, "out").isNotNull();
     InvestigationContextExtractor extractor = new InvestigationContextExtractor(scope);
     String envSessionId = scope.getSessionId();
-    Path sessionFile = scope.getClaudeSessionsPath().resolve(envSessionId + ".jsonl");
+    Path sessionFile = scope.getSessionsPath().resolve(envSessionId + ".jsonl");
     List<String> keywords = new ArrayList<>();
     for (String arg : args)
       keywords.add(arg);

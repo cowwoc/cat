@@ -6,8 +6,8 @@
  */
 package io.github.cowwoc.cat.client.test;
 
-import io.github.cowwoc.cat.claude.hook.IssueStatus;
-import io.github.cowwoc.cat.claude.hook.skills.DisplayUtils;
+import io.github.cowwoc.cat.agent.IssueStatus;
+import io.github.cowwoc.cat.tool.DisplayUtils;
 import io.github.cowwoc.cat.claude.hook.skills.GetStatusOutput;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;

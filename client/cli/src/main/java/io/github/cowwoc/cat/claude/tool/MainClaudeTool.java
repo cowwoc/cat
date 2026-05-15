@@ -6,10 +6,15 @@
  */
 package io.github.cowwoc.cat.claude.tool;
 
-import io.github.cowwoc.cat.agent.TerminalType;
+import io.github.cowwoc.cat.agent.AgentRuntime;
+import io.github.cowwoc.cat.claude.hook.prompt.UserIssues;
+import io.github.cowwoc.cat.tool.CliToolConfig;
+import io.github.cowwoc.cat.tool.CliEnvironment;
+import io.github.cowwoc.cat.tool.MainCliTool;
 import io.github.cowwoc.pouch10.core.ConcurrentLazyReference;
 
 import java.nio.file.Path;
+import java.util.function.Function;
 
 /**
  * Production implementation of {@link JvmScope} for CLI tool processes.
@@ -20,33 +25,12 @@ import java.nio.file.Path;
  * <p>
  * <b>Thread Safety:</b> This class is thread-safe.
  */
-public final class MainClaudeTool extends AbstractClaudeTool
+public final class MainClaudeTool extends MainCliTool implements ClaudeTool
 {
-  private final ConcurrentLazyReference<TerminalType> terminalTypeRef =
-    ConcurrentLazyReference.create(TerminalType::detect);
-  private final ConcurrentLazyReference<String> tzRef = ConcurrentLazyReference.create(() ->
-  {
-    String tzValue = System.getenv("TZ");
-    if (tzValue == null || tzValue.isBlank())
-      return "UTC";
-    return tzValue;
-  });
-  private final ConcurrentLazyReference<String> anthropicBaseUrlRef =
-    ConcurrentLazyReference.create(() ->
-    {
-      String value = System.getenv("ANTHROPIC_BASE_URL");
-      if (value == null || value.isBlank())
-        return "";
-      return value;
-    });
-  private final ConcurrentLazyReference<String> updatePluginJsonUrlRef =
-    ConcurrentLazyReference.create(() ->
-    {
-      String value = System.getenv("CAT_UPDATE_PLUGIN_JSON_URL");
-      if (value == null || value.isBlank())
-        return "";
-      return value;
-    });
+  @SuppressWarnings("this-escape")
+  private final ConcurrentLazyReference<UserIssues> userIssues =
+    ConcurrentLazyReference.create(() -> new UserIssues(this));
+  private final String anthropicBaseUrl;
 
   /**
    * Creates a new production Claude tool scope.
@@ -58,73 +42,54 @@ public final class MainClaudeTool extends AbstractClaudeTool
    */
   public MainClaudeTool()
   {
-    super(getEnvVar("CLAUDE_SESSION_ID"),
-      Path.of(getEnvVar("CLAUDE_PROJECT_DIR")),
-      Path.of(getEnvVar("CLAUDE_PLUGIN_ROOT")),
-      Path.of(getEnvVar("CLAUDE_PLUGIN_DATA")),
-      readClaudeConfigPath());
+    super(createConfig(System::getenv));
+    this.anthropicBaseUrl = CliEnvironment.optional(System::getenv, "ANTHROPIC_BASE_URL", "");
   }
 
   /**
-   * Reads a required environment variable, failing fast if it is absent or blank.
+   * Creates a resolved Claude CLI configuration from environment variables.
    *
-   * @param name the environment variable name
-   * @return the non-blank value
-   * @throws AssertionError if the variable is not set or is blank
+   * @param environment resolves environment variable names to values
+   * @return the resolved Claude CLI configuration
    */
-  private static String getEnvVar(String name)
+  private static CliToolConfig createConfig(Function<String, String> environment)
   {
-    String value = System.getenv(name);
-    if (value == null || value.isBlank())
-      throw new AssertionError(name + " is not set");
-    return value;
+    Path projectPath = Path.of(CliEnvironment.required(environment, "CLAUDE_PROJECT_DIR"));
+    Path pluginRoot = Path.of(CliEnvironment.required(environment, "CLAUDE_PLUGIN_ROOT"));
+    return new CliToolConfig(CliEnvironment.required(environment, "CLAUDE_SESSION_ID"), projectPath,
+      pluginRoot, Path.of(CliEnvironment.required(environment, "CLAUDE_PLUGIN_DATA")),
+      getClaudeConfigPath(environment), AgentRuntime.CLAUDE.pluginDescriptor(),
+      AgentRuntime.CLAUDE.ruleDirectories(projectPath, pluginRoot),
+      AgentRuntime.CLAUDE.pluginCacheDescriptor(), Path.of(System.getProperty("user.dir")),
+      CliEnvironment.optional(environment, "TZ", "UTC"),
+      CliEnvironment.optional(environment, "CAT_PLUGIN_JSON_URL", ""));
   }
 
   /**
-   * Reads the Claude config directory from the environment or defaults to {@code ~/.claude}.
+   * Resolves the Claude config path.
    *
-   * @return the Claude config directory path
+   * @param environment resolves environment variable names to values
+   * @return the Claude config path
    */
-  private static Path readClaudeConfigPath()
+  private static Path getClaudeConfigPath(Function<String, String> environment)
   {
-    String configDir = System.getenv("CLAUDE_CONFIG_DIR");
-    if (configDir != null && !configDir.isBlank())
-      return Path.of(configDir);
+    String claudeConfigDir = environment.apply("CLAUDE_CONFIG_DIR");
+    if (claudeConfigDir != null && !claudeConfigDir.isBlank())
+      return Path.of(claudeConfigDir);
     return Path.of(System.getProperty("user.home"), ".claude");
-  }
-
-  @Override
-  public Path getWorkDir()
-  {
-    ensureOpen();
-    return Path.of(System.getProperty("user.dir"));
-  }
-
-  @Override
-  public TerminalType getTerminalType()
-  {
-    ensureOpen();
-    return terminalTypeRef.getValue();
-  }
-
-  @Override
-  public String getTimezone()
-  {
-    ensureOpen();
-    return tzRef.getValue();
   }
 
   @Override
   public String getAnthropicBaseUrl()
   {
     ensureOpen();
-    return anthropicBaseUrlRef.getValue();
+    return anthropicBaseUrl;
   }
 
   @Override
-  public String getUpdatePluginJsonUrl()
+  public UserIssues getUserIssues()
   {
     ensureOpen();
-    return updatePluginJsonUrlRef.getValue();
+    return userIssues.getValue();
   }
 }

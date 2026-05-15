@@ -48,16 +48,16 @@ declare -a AUTOMATIC_MODULE_JARS=()
 # Runtime-neutral handler registry: launcher-name:fully.qualified.ClassName
 # Each entry is included in every runtime image.
 declare -a COMMON_HANDLERS=(
-  "token-counter:io.github.cowwoc.cat.claude.hook.TokenCounter"
+  "token-counter:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$TokenCounter"
   "get-checkpoint-box:io.github.cowwoc.cat.claude.hook.skills.GetCheckpointOutput"
   "get-issue-complete-box:io.github.cowwoc.cat.claude.hook.skills.GetIssueCompleteOutput"
   "get-next-issue-box:io.github.cowwoc.cat.claude.hook.skills.GetNextIssueOutput"
   "get-config-output:io.github.cowwoc.cat.claude.hook.skills.GetConfigOutput"
   "update-config:io.github.cowwoc.cat.claude.hook.util.UpdateConfig"
   "get-output:io.github.cowwoc.cat.claude.hook.skills.GetOutput"
-  "get-status-output:io.github.cowwoc.cat.claude.hook.skills.GetStatusOutput"
+  "get-status-output:io.github.cowwoc.cat.tool.skills.GetStatusOutput"
   "get-cleanup-output:io.github.cowwoc.cat.claude.hook.skills.GetCleanupOutput"
-  "create-issue:io.github.cowwoc.cat.claude.hook.util.IssueCreator"
+  "create-issue:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$IssueCreator"
   "session-analyzer:io.github.cowwoc.cat.claude.hook.util.SessionAnalyzer"
   "extract-investigation-context:io.github.cowwoc.cat.claude.hook.util.InvestigationContextExtractor"
   "grade-json-transformer:io.github.cowwoc.cat.claude.hook.util.GradeJsonTransformer"
@@ -68,26 +68,26 @@ declare -a COMMON_HANDLERS=(
   "verify-audit:io.github.cowwoc.cat.claude.hook.skills.VerifyAudit"
   "empirical-test-runner:io.github.cowwoc.cat.claude.hook.skills.EmpiricalTestRunner"
   "merge-and-cleanup:io.github.cowwoc.cat.claude.hook.util.MergeAndCleanup"
-  "git-squash:io.github.cowwoc.cat.claude.hook.util.GitSquash"
-  "git-merge-linear:io.github.cowwoc.cat.claude.hook.util.GitMergeLinear"
-  "git-amend:io.github.cowwoc.cat.claude.hook.util.GitAmend"
-  "git-rebase:io.github.cowwoc.cat.claude.hook.util.GitRebase"
+  "git-squash:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$GitSquash"
+  "git-merge-linear:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$GitMergeLinear"
+  "git-amend:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$GitAmend"
+  "git-rebase:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$GitRebase"
   "work-prepare:io.github.cowwoc.cat.claude.hook.util.WorkPrepare"
-  "issue-lock:io.github.cowwoc.cat.claude.hook.util.IssueLock"
-  "check-existing-work:io.github.cowwoc.cat.claude.hook.util.ExistingWorkChecker"
-  "wrap-markdown:io.github.cowwoc.cat.claude.hook.util.MarkdownWrapper"
-  "batch-read:io.github.cowwoc.cat.claude.hook.util.BatchReader"
+  "issue-lock:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$IssueLock"
+  "check-existing-work:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$ExistingWorkChecker"
+  "wrap-markdown:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$MarkdownWrapper"
+  "batch-read:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$BatchReader"
   "root-cause-analyzer:io.github.cowwoc.cat.claude.hook.util.RootCauseAnalyzer"
-  "validate-status-alignment:io.github.cowwoc.cat.claude.hook.util.StatusAlignmentValidator"
-  "feedback:io.github.cowwoc.cat.claude.hook.util.Feedback"
+  "validate-status-alignment:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$StatusAlignmentValidator"
+  "feedback:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$Feedback"
   "get-add-output:io.github.cowwoc.cat.claude.hook.skills.GetAddOutput"
   "record-learning:io.github.cowwoc.cat.claude.hook.util.RecordLearning"
-  "write-session-marker:io.github.cowwoc.cat.claude.hook.util.WriteSessionMarker"
-  "read-session-marker:io.github.cowwoc.cat.claude.hook.util.ReadSessionMarker"
-  "auto-close-index:io.github.cowwoc.cat.claude.hook.util.AutoCloseIndexJson"
+  "write-session-marker:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$WriteSessionMarker"
+  "read-session-marker:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$ReadSessionMarker"
+  "auto-close-index:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$AutoCloseIndexJson"
   "instruction-test-runner:io.github.cowwoc.cat.claude.hook.skills.InstructionTestRunner"
-  "verify-defer-plan-generation:io.github.cowwoc.cat.claude.hook.util.VerifyDeferPlanGeneration"
-  "write-and-commit:io.github.cowwoc.cat.claude.hook.util.WriteAndCommit"
+  "verify-defer-plan-generation:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$VerifyDeferPlanGeneration"
+  "write-and-commit:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$WriteAndCommit"
   "extract-turns:io.github.cowwoc.cat.claude.hook.skills.ExtractTurnsContent"
   "update-skill-description:io.github.cowwoc.cat.claude.hook.skills.UpdateSkillDescription"
   "build-runtime-artifacts:io.github.cowwoc.cat.agent.PluginArtifactBuilder"
@@ -336,6 +336,15 @@ build_jlink_image() {
   log "${runtime} jlink image created at: $OUTPUT_DIR"
 }
 
+copy_legal_notices() {
+  log "Copying legal notices..."
+  cp "$WORKSPACE_DIR/LICENSE.md" "$OUTPUT_DIR/LICENSE.md"
+  cp "$TARGET_DIR/generated-resources/licenses/THIRD-PARTY-NOTICES.txt" \
+    "$OUTPUT_DIR/THIRD-PARTY-NOTICES.txt"
+  mkdir -p "$OUTPUT_DIR/licenses"
+  cp "$REACTOR_DIR"/legal/licenses/*.txt "$OUTPUT_DIR/licenses/"
+}
+
 # --- Phase 6: Generate startup optimization archives ---
 #
 # Leyden AOT cache with pre-linked classes and method profiles:
@@ -379,13 +388,25 @@ generate_startup_archives() {
   local aot_plugin_data="${TARGET_DIR}/aot-plugin-data"
   local aot_config_dir="${TARGET_DIR}/aot-config-home"
   mkdir -p "$aot_plugin_data" "$aot_config_dir"
+
+  run_aot_command() {
+    if [[ "$runtime" == "claude" ]]; then
+      CLAUDE_PROJECT_DIR="$WORKSPACE_DIR" CLAUDE_PLUGIN_ROOT="${REACTOR_DIR}/plugin" \
+        CLAUDE_PLUGIN_DATA="$aot_plugin_data" CLAUDE_SESSION_ID="aot-training-session" \
+        CLAUDE_CONFIG_DIR="$aot_config_dir" CAT_PROJECT_DIR="$WORKSPACE_DIR" \
+        CAT_PLUGIN_ROOT="${REACTOR_DIR}/plugin" CAT_PLUGIN_DATA="$aot_plugin_data" \
+        CAT_SESSION_ID="aot-training-session" CAT_RUNTIME="$runtime" CAT_CONFIG_DIR="$aot_config_dir" \
+        TZ="${TZ:-UTC}" "$@"
+    else
+      CAT_PROJECT_DIR="$WORKSPACE_DIR" CAT_PLUGIN_ROOT="${REACTOR_DIR}/plugin" \
+        CAT_PLUGIN_DATA="$aot_plugin_data" CAT_SESSION_ID="aot-training-session" \
+        CAT_RUNTIME="$runtime" CAT_CONFIG_DIR="$aot_config_dir" TZ="${TZ:-UTC}" "$@"
+    fi
+  }
+
   # shellcheck disable=SC2064
   trap "rm -f '$aot_output'" RETURN
-  if ! CLAUDE_PROJECT_DIR="$WORKSPACE_DIR" CLAUDE_PLUGIN_ROOT="${REACTOR_DIR}/plugin" \
-    CLAUDE_PLUGIN_DATA="$aot_plugin_data" CLAUDE_CONFIG_DIR="$aot_config_dir" \
-    CAT_PROJECT_DIR="$WORKSPACE_DIR" CAT_PLUGIN_ROOT="${REACTOR_DIR}/plugin" \
-    CAT_PLUGIN_DATA="$aot_plugin_data" CODEX_HOME="$aot_config_dir" TZ="${TZ:-UTC}" \
-    "$java_bin" \
+  if ! run_aot_command "$java_bin" \
       -XX:AOTMode=record \
       -XX:AOTConfiguration="$aot_config" \
       -m "$(handler_main "$training_class")" \
@@ -403,11 +424,7 @@ generate_startup_archives() {
   create_output=$(mktemp)
   # shellcheck disable=SC2064
   trap "rm -f '$create_output'" RETURN
-  if ! printf '{}\n' | CLAUDE_PROJECT_DIR="$WORKSPACE_DIR" CLAUDE_PLUGIN_ROOT="${REACTOR_DIR}/plugin" \
-    CLAUDE_PLUGIN_DATA="$aot_plugin_data" CLAUDE_CONFIG_DIR="$aot_config_dir" \
-    CAT_PROJECT_DIR="$WORKSPACE_DIR" CAT_PLUGIN_ROOT="${REACTOR_DIR}/plugin" \
-    CAT_PLUGIN_DATA="$aot_plugin_data" CODEX_HOME="$aot_config_dir" TZ="${TZ:-UTC}" \
-    "$java_bin" \
+  if ! printf '{}\n' | run_aot_command "$java_bin" \
     -XX:AOTMode=create \
     -XX:AOTConfiguration="$aot_config" \
     -XX:AOTCache="$aot_cache" \
@@ -466,7 +483,7 @@ exec "JAVA_PATH" \
   -XX:+UseSerialGC \
   -XX:TieredStopAtLevel=1 \
   -XX:AOTCache="AOT_PATH" \
-  -m MODULE_CLASS "$@"
+  -m 'MODULE_CLASS' "$@"
 EOF
 
     # Replace MODULE_CLASS and handle ASSERTIONS_FLAG
@@ -541,22 +558,35 @@ verify_status_launcher() {
   local status_project_dir="${TARGET_DIR}/status-verify-project"
   local status_plugin_data="${TARGET_DIR}/status-verify-plugin-data"
   local status_config_dir="${TARGET_DIR}/status-verify-config-home"
-  rm -rf "$status_project_dir" "$status_plugin_data" "$status_config_dir"
-  mkdir -p "$status_project_dir" "$status_plugin_data" "$status_config_dir"
+  local status_codex_home="${TARGET_DIR}/status-verify-codex-home"
+  rm -rf "$status_project_dir" "$status_plugin_data" "$status_config_dir" "$status_codex_home"
+  mkdir -p "$status_project_dir" "$status_plugin_data" "$status_config_dir" "$status_codex_home"
 
   log "  Testing get-status-output launcher..."
   local status_output
-  if ! status_output=$(CLAUDE_PROJECT_DIR="$status_project_dir" \
-    CLAUDE_PLUGIN_ROOT="${REACTOR_DIR}/plugin" \
-    CLAUDE_PLUGIN_DATA="$status_plugin_data" \
-    CLAUDE_CONFIG_DIR="$status_config_dir" \
-    CLAUDE_SESSION_ID="jlink-status-verify-session" \
+  if ! status_output=$(CAT_PROJECT_DIR="$status_project_dir" \
+    CAT_PLUGIN_ROOT="${REACTOR_DIR}/plugin" \
+    CAT_PLUGIN_DATA="$status_plugin_data" \
+    CAT_SESSION_ID="jlink-status-verify-session" \
+    CAT_RUNTIME="codex" \
+    CAT_CONFIG_DIR="$status_config_dir" \
     TZ="${TZ:-UTC}" \
     "${OUTPUT_DIR}/bin/get-status-output"); then
     error "get-status-output launcher failed"
   fi
   if [[ "$status_output" != "No CAT project found. Initialize one first." ]]; then
     error "get-status-output launcher returned unexpected output: $status_output"
+  fi
+
+  if status_output=$(CAT_PROJECT_DIR="$status_project_dir" \
+    CAT_PLUGIN_ROOT="${REACTOR_DIR}/plugin" \
+    CAT_PLUGIN_DATA="$status_plugin_data" \
+    CAT_SESSION_ID="jlink-status-verify-session" \
+    CAT_RUNTIME="codex" \
+    CODEX_HOME="$status_codex_home" \
+    TZ="${TZ:-UTC}" \
+    "${OUTPUT_DIR}/bin/get-status-output" 2>/dev/null); then
+    error "get-status-output launcher unexpectedly accepted CODEX_HOME without CAT_CONFIG_DIR"
   fi
   log "  get-status-output launcher works"
 }
@@ -607,6 +637,7 @@ main() {
     OUTPUT_DIR="${OUTPUT_ROOT}/${runtime}"
     set_runtime_handlers "$runtime"
     build_jlink_image "$runtime"
+    copy_legal_notices
     generate_launchers
     generate_startup_archives "$runtime"
     verify_image "$runtime"

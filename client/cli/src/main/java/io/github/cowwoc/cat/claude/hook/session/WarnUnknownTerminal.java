@@ -10,7 +10,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.agent.SessionStartHandler;
 import io.github.cowwoc.cat.claude.hook.ClaudeHook;
-import io.github.cowwoc.cat.claude.hook.skills.DisplayUtils;
+import io.github.cowwoc.cat.tool.DisplayUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;

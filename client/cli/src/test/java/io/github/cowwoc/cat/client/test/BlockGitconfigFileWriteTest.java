@@ -7,7 +7,7 @@
 package io.github.cowwoc.cat.client.test;
 
 import io.github.cowwoc.cat.claude.hook.FileWriteHandler;
-import io.github.cowwoc.cat.claude.hook.JvmScope;
+import io.github.cowwoc.cat.tool.JvmScope;
 import io.github.cowwoc.cat.claude.hook.write.BlockGitconfigFileWrite;
 import org.testng.annotations.Test;
 import tools.jackson.databind.node.ObjectNode;

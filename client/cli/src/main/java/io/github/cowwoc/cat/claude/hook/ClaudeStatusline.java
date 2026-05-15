@@ -6,6 +6,8 @@
  */
 package io.github.cowwoc.cat.claude.hook;
 
+import io.github.cowwoc.cat.tool.JvmScope;
+
 import java.time.Duration;
 
 /**

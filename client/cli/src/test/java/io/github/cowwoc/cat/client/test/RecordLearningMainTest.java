@@ -14,7 +14,7 @@ import tools.jackson.databind.node.ObjectNode;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import io.github.cowwoc.cat.claude.hook.JvmScope;
+import io.github.cowwoc.cat.tool.JvmScope;
 
 import java.io.IOException;
 import java.io.InputStream;

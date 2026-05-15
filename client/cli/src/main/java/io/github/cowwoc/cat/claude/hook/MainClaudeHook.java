@@ -42,10 +42,10 @@ public final class MainClaudeHook extends AbstractClaudeHook
         return "";
       return value;
     });
-  private final ConcurrentLazyReference<String> updatePluginJsonUrl =
+  private final ConcurrentLazyReference<String> pluginJsonUrl =
     ConcurrentLazyReference.create(() ->
     {
-      String value = System.getenv("CAT_UPDATE_PLUGIN_JSON_URL");
+      String value = System.getenv("CAT_PLUGIN_JSON_URL");
       if (value == null || value.isBlank())
         return "";
       return value;
@@ -99,7 +99,7 @@ public final class MainClaudeHook extends AbstractClaudeHook
   {
     String value = System.getenv(name);
     if (value == null || value.isBlank())
-      throw new AssertionError(name + " is not set");
+      throw new AssertionError(name + " is required and must not be blank");
     return Path.of(value);
   }
 
@@ -157,9 +157,9 @@ public final class MainClaudeHook extends AbstractClaudeHook
   }
 
   @Override
-  public String getUpdatePluginJsonUrl()
+  public String getPluginJsonUrl()
   {
     ensureOpen();
-    return updatePluginJsonUrl.getValue();
+    return pluginJsonUrl.getValue();
   }
 }

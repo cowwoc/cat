@@ -2367,7 +2367,7 @@ public final class SessionAnalyzer
     @Override
     public Path resolveSessionPath(String sessionId)
     {
-      Path basePath = scope.getClaudeSessionsPath();
+      Path basePath = scope.getSessionsPath();
       Path resolved = basePath.resolve(sessionId + ".jsonl");
       if (!resolved.normalize().startsWith(basePath.normalize()))
       {

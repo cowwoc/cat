@@ -9,7 +9,6 @@ package io.github.cowwoc.cat.client.test;
 import io.github.cowwoc.cat.claude.tool.AbstractClaudeTool;
 import io.github.cowwoc.cat.claude.hook.AbstractJvmScope;
 import io.github.cowwoc.cat.claude.tool.ClaudeTool;
-import io.github.cowwoc.cat.claude.hook.JvmScope;
 import io.github.cowwoc.cat.agent.TerminalType;
 import org.testng.annotations.Test;
 
@@ -35,7 +34,7 @@ public final class TestClaudeToolTest
   public void getJsonMapperThrowsAfterClose() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       scope.close();
 
@@ -104,7 +103,7 @@ public final class TestClaudeToolTest
   public void getYamlMapperThrowsAfterClose() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       scope.close();
 
@@ -127,7 +126,7 @@ public final class TestClaudeToolTest
   public void getUserIssuesThrowsAfterClose() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-scope-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       scope.close();
 
@@ -371,7 +370,7 @@ public final class TestClaudeToolTest
     }
 
     @Override
-    public String getUpdatePluginJsonUrl()
+    public String getPluginJsonUrl()
     {
       throw new UnsupportedOperationException();
     }

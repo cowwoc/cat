@@ -13,4 +13,4 @@ See LICENSE.md in the project root for license terms.
 
 <!-- cat:include ../../include/work-complete.md -->
 
-!`: "${CAT_PLUGIN_DATA:?CAT_PLUGIN_DATA is required}"; "${CAT_PLUGIN_ROOT}/client/bin/get-output" work-complete "$1" "$2"`
+!`: "${CAT_PLUGIN_ROOT:?CAT_PLUGIN_ROOT is required}"; "${CAT_PLUGIN_ROOT}/client/bin/get-output" work-complete "$1" "$2"`

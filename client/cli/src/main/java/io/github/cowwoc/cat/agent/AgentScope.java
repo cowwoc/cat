@@ -84,8 +84,8 @@ public interface AgentScope extends AutoCloseable
    * <p>
    * The path is configurable via the {@code workPath} config field (default:
    * {@code ${CAT_PROJECT_DIR}/.cat/work}). Supports variable expansion:
-   * {@code ${CAT_PROJECT_DIR}} and {@code ${CLAUDE_PROJECT_DIR}} expand to the project root path, and a
-   * leading {@code ~} expands to the user home directory.
+   * {@code ${CAT_PROJECT_DIR}} expands to the project root path, and a leading {@code ~} expands to the user
+   * home directory.
    *
    * @return the CAT work directory path
    * @throws IllegalStateException if this scope is closed

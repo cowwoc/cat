@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.client.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.claude.hook.JvmScope;
+import io.github.cowwoc.cat.tool.JvmScope;
 import io.github.cowwoc.cat.claude.hook.PostToolHandler;
 import io.github.cowwoc.cat.claude.tool.post.RemindRestartAfterSkillModification;
 import org.testng.annotations.Test;

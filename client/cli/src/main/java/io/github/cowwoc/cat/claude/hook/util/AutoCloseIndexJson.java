@@ -9,9 +9,10 @@ package io.github.cowwoc.cat.claude.hook.util;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import io.github.cowwoc.cat.claude.hook.JvmScope;
+import io.github.cowwoc.cat.tool.JvmScope;
 import io.github.cowwoc.cat.claude.tool.ClaudeTool;
 import io.github.cowwoc.cat.claude.tool.MainClaudeTool;
+import io.github.cowwoc.cat.tool.util.IssueDiscovery;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;

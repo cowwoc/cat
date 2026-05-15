@@ -9,6 +9,8 @@ package io.github.cowwoc.cat.claude.hook.licensing;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.claude.tool.ClaudeTool;
+import io.github.cowwoc.cat.tool.licensing.LicenseResult;
+import io.github.cowwoc.cat.tool.licensing.Tier;
 
 import java.io.IOException;
 import java.nio.file.Path;

@@ -7,7 +7,7 @@
 package io.github.cowwoc.cat.client.test;
 
 
-import io.github.cowwoc.cat.claude.hook.skills.DisplayUtils;
+import io.github.cowwoc.cat.tool.DisplayUtils;
 import org.testng.annotations.Test;
 
 import java.io.IOException;

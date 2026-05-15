@@ -4,7 +4,7 @@
  * Licensed under the CAT Commercial License.
  * See LICENSE.md in the project root for license terms.
  */
-package io.github.cowwoc.cat.claude.hook.licensing;
+package io.github.cowwoc.cat.tool.licensing;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 

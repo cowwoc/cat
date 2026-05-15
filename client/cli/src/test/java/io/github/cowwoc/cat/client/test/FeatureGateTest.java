@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.client.test;
 
 
 import io.github.cowwoc.cat.claude.hook.licensing.FeatureGate;
-import io.github.cowwoc.cat.claude.hook.licensing.Tier;
+import io.github.cowwoc.cat.tool.licensing.Tier;
 import org.testng.annotations.Test;
 
 import java.io.IOException;

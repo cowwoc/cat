@@ -11,6 +11,7 @@ import static io.github.cowwoc.cat.claude.hook.Strings.block;
 import io.github.cowwoc.cat.claude.tool.ClaudeTool;
 import io.github.cowwoc.cat.claude.tool.MainClaudeTool;
 import io.github.cowwoc.cat.claude.util.PathUtils;
+import io.github.cowwoc.cat.tool.skills.SkillOutput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

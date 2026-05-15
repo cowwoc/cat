@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.client.test;
 
-import io.github.cowwoc.cat.claude.hook.skills.DisplayUtils;
+import io.github.cowwoc.cat.tool.DisplayUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;

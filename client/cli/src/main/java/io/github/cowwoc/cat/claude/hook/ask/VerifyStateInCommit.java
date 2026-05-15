@@ -10,9 +10,9 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.claude.hook.AskHandler;
 import io.github.cowwoc.cat.claude.hook.ClaudeHook;
-import io.github.cowwoc.cat.claude.hook.IssueStatus;
+import io.github.cowwoc.cat.agent.IssueStatus;
 import io.github.cowwoc.cat.claude.hook.util.GitCommands;
-import io.github.cowwoc.cat.claude.hook.util.IssueDiscovery;
+import io.github.cowwoc.cat.tool.util.IssueDiscovery;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 

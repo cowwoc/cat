@@ -491,10 +491,14 @@ This is the review task. Do not acknowledge workspace, project, AGENTS.md, or se
 what rules you will follow. Start the review immediately and return only the JSON review object requested below.
 
 ## Working Directory
-WORKTREE_PATH: {WORKTREE_PATH}
+WORKTREE_PATH={WORKTREE_PATH}
 Changed files (read from WORKTREE_PATH): {CHANGED_FILES_BULLETS}
 
 WORKTREE_PATH is the authoritative working directory for this review.
+The line above is intentionally written as `WORKTREE_PATH=<absolute-path>` because stakeholder role
+instructions parse that exact variable assignment before reviewing. This is the canonical form.
+Do not rewrite it as prose, `WORKTREE_PATH: <absolute-path>`, or any other alternate syntax.
+Do not include multiple `WORKTREE_PATH` lines in the same reviewer prompt.
 Read every changed file using absolute paths rooted at {WORKTREE_PATH}/.
 Use Read/Glob/Grep only within {WORKTREE_PATH}/ and ${CAT_PLUGIN_ROOT}/ (role definition,
 language supplement). Reading outside these paths invalidates the review.

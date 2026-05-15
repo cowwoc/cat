@@ -9,7 +9,7 @@ package io.github.cowwoc.cat.client.test;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 
-import io.github.cowwoc.cat.claude.hook.JvmScope;
+import io.github.cowwoc.cat.tool.JvmScope;
 import io.github.cowwoc.cat.claude.hook.TaskHandler;
 import io.github.cowwoc.cat.claude.hook.task.EnforceCommitBeforeSubagentSpawn;
 import org.testng.annotations.Test;

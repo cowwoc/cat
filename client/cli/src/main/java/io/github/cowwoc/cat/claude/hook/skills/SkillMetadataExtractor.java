@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.claude.hook.skills;
 
-import io.github.cowwoc.cat.claude.hook.JvmScope;
+import io.github.cowwoc.cat.tool.JvmScope;
 import io.github.cowwoc.cat.agent.FrontmatterUtils;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.dataformat.yaml.YAMLMapper;

@@ -6,8 +6,10 @@
  */
 package io.github.cowwoc.cat.claude.hook;
 
-import io.github.cowwoc.cat.claude.hook.skills.DisplayUtils;
+import io.github.cowwoc.cat.tool.DisplayUtils;
 import io.github.cowwoc.cat.agent.AgentPluginScope;
+import io.github.cowwoc.cat.claude.hook.prompt.UserIssues;
+import io.github.cowwoc.cat.tool.JvmScope;
 
 import java.nio.file.Path;
 
@@ -59,6 +61,14 @@ public interface ClaudePluginScope extends AgentPluginScope, JvmScope
   DisplayUtils getDisplayUtils();
 
   /**
+   * Returns the user issues prompt handler.
+   *
+   * @return the handler
+   * @throws IllegalStateException if this scope is closed
+   */
+  UserIssues getUserIssues();
+
+  /**
    * Returns the Anthropic API base URL from the {@code ANTHROPIC_BASE_URL} environment variable.
    * <p>
    * Returns empty string if the variable is not set.
@@ -69,12 +79,15 @@ public interface ClaudePluginScope extends AgentPluginScope, JvmScope
   String getAnthropicBaseUrl();
 
   /**
-   * Returns the plugin.json URL used by the update checker.
+   * Returns the plugin.json URL override used by the update checker.
    * <p>
-   * Returns empty string if the default update URL should be used.
+   * Returns empty string if no override was configured. In that case, the update checker reads
+   * {@code https://raw.githubusercontent.com/cowwoc/cat/main/client/plugin/.claude-plugin/plugin.json}.
+   * Override this value to test or consume a plugin descriptor from another source, such as a fork,
+   * staging branch, or prerelease channel.
    *
-   * @return the plugin.json update URL, or empty string if not set
+   * @return the plugin.json URL override, or empty string if not set
    * @throws IllegalStateException if this scope is closed
    */
-  String getUpdatePluginJsonUrl();
+  String getPluginJsonUrl();
 }

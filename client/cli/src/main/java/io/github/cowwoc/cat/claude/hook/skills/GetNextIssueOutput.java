@@ -10,14 +10,14 @@ import java.io.PrintStream;
 import java.util.Objects;
 
 import io.github.cowwoc.cat.claude.tool.ClaudeTool;
-import io.github.cowwoc.cat.claude.hook.JvmScope;
+import io.github.cowwoc.cat.tool.JvmScope;
 import io.github.cowwoc.cat.claude.tool.MainClaudeTool;
 
 import static io.github.cowwoc.cat.claude.hook.Strings.block;
-import io.github.cowwoc.cat.claude.hook.util.IssueDiscovery;
+import io.github.cowwoc.cat.tool.util.IssueDiscovery;
 import io.github.cowwoc.cat.claude.hook.util.IssueGoalReader;
 import io.github.cowwoc.cat.claude.hook.util.IssueLock;
-import io.github.cowwoc.cat.claude.hook.util.SkillOutput;
+import io.github.cowwoc.cat.tool.skills.SkillOutput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

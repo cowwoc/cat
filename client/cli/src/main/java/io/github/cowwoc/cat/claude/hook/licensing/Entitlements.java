@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.claude.hook.licensing;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.claude.tool.ClaudeTool;
+import io.github.cowwoc.cat.tool.licensing.Tier;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 
 import java.io.IOException;

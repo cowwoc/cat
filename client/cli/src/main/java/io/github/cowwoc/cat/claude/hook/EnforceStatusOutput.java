@@ -10,6 +10,8 @@ import static io.github.cowwoc.cat.claude.hook.Strings.block;
 import static io.github.cowwoc.cat.claude.hook.skills.GetStatusOutput.isPlainSetupStatusOutput;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.tool.JvmScope;
+
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 

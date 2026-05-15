@@ -19,14 +19,14 @@ import java.util.List;
 import java.util.stream.Stream;
 
 /**
- * Enforces that only MainClaudeTool.java and MainClaudeHook.java,
+ * Enforces that only MainCliTool.java, MainClaudeTool.java, and MainClaudeHook.java,
  * TerminalType.java, SessionStartHook.java, MainClaudeStatusline.java, MainCodexTool.java,
  * and ShellParser.java
  * call System.getenv() directly.
  * <p>
  * Hook handlers must access session-specific values (session ID) from HookInput JSON,
- * not from environment variables. CLI commands use {@code MainClaudeTool} (session CLI tools)
- * to read environment variables at startup.
+ * not from environment variables. Shared CLI commands use {@code MainCliTool}, while Claude-only
+ * CLI commands use {@code MainClaudeTool}; both read environment variables at startup.
  * {@code MainClaudeHook} is allowed because it is the production hook scope implementation that reads
  * infrastructure path variables ({@code CLAUDE_PROJECT_DIR}, {@code CLAUDE_PLUGIN_ROOT},
  * {@code CLAUDE_CONFIG_DIR}, {@code TZ}) from the environment at startup.
@@ -70,6 +70,8 @@ public final class EnforceJvmScopeEnvAccessTest
       javaFiles = paths.filter(Files::isRegularFile).
         filter(path -> path.toString().endsWith(".java")).
         filter(path -> !sourceRoot.relativize(path).toString().equals(
+          "io/github/cowwoc/cat/claude/tool/MainCliTool.java")).
+        filter(path -> !sourceRoot.relativize(path).toString().equals(
           "io/github/cowwoc/cat/claude/tool/MainClaudeTool.java")).
         filter(path -> !sourceRoot.relativize(path).toString().equals(
           "io/github/cowwoc/cat/claude/hook/MainClaudeHook.java")).
@@ -99,13 +101,14 @@ public final class EnforceJvmScopeEnvAccessTest
     if (!violations.isEmpty())
     {
       String message = """
-        System.getenv() found in files other than MainClaudeTool.java, \
+        System.getenv() found in files other than MainCliTool.java, MainClaudeTool.java, \
         MainClaudeHook.java, TerminalType.java, \
         SessionStartHook.java, Codex SessionStartHook.java, MainClaudeStatusline.java, MainCodexTool.java, \
         and ShellParser.java.
 
         REQUIREMENT: Hooks must read session-specific values from HookInput JSON (not environment variables).
-        Session CLI commands receive session values from MainClaudeTool which reads them at startup.
+        Session CLI commands receive session values from MainCliTool/MainClaudeTool constructors,
+        which read them at startup.
         Hook handlers use MainClaudeHook or dedicated hook entrypoints to read infrastructure path variables at startup.
 
         Violations found in:
@@ -113,8 +116,8 @@ public final class EnforceJvmScopeEnvAccessTest
 
 
         FIX depends on context:
-          Session CLI main() methods: use MainClaudeTool (or TestClaudeTool in tests) to access \
-        session values — the constructor reads environment variables and stores them as fields.
+          Session CLI main() methods: use MainCliTool (shared) or MainClaudeTool (Claude-specific) \
+        to access session values — constructors read environment variables and store them as fields.
           Hook handler main() methods: use MainClaudeHook or dedicated hook entrypoints to read infrastructure \
         path variables \
         and hook JSON from stdin.
@@ -137,6 +140,7 @@ public final class EnforceJvmScopeEnvAccessTest
     // Maven sets user.dir to the module directory (client/) during test execution.
     Path sourceRoot = Paths.get(System.getProperty("user.dir"), "src/main/java");
     String[] whitelistedFiles = {
+      "io/github/cowwoc/cat/tool/MainCliTool.java",
       "io/github/cowwoc/cat/claude/tool/MainClaudeTool.java",
       "io/github/cowwoc/cat/claude/hook/MainClaudeHook.java",
       "io/github/cowwoc/cat/agent/TerminalType.java",

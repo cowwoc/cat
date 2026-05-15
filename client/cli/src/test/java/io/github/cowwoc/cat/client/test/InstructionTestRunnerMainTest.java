@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.client.test;
 
-import io.github.cowwoc.cat.claude.hook.ClaudePluginScope;
+import io.github.cowwoc.cat.claude.tool.ClaudeTool;
 import io.github.cowwoc.cat.claude.hook.skills.InstructionTestRunner;
 import io.github.cowwoc.cat.claude.hook.skills.ModelIdResolver;
 import org.testng.annotations.Test;
@@ -19,7 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * Tests for {@link InstructionTestRunner#run(ClaudePluginScope, String[], PrintStream)} CLI error path handling.
+ * Tests for {@link InstructionTestRunner#run(ClaudeTool, String[], PrintStream)} CLI error path handling.
  */
 public class InstructionTestRunnerMainTest
 {
@@ -34,7 +34,7 @@ public class InstructionTestRunnerMainTest
   public void noArgsThrowsException() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("instruction-test-runner-main-test-");
-    try (ClaudePluginScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -57,7 +57,7 @@ public class InstructionTestRunnerMainTest
   public void nullArgsThrowsException() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("instruction-test-runner-main-test-");
-    try (ClaudePluginScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       InstructionTestRunner.run(scope, null,
         new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8));
@@ -79,7 +79,7 @@ public class InstructionTestRunnerMainTest
   public void nullOutThrowsException() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("instruction-test-runner-main-test-");
-    try (ClaudePluginScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       InstructionTestRunner.run(scope, new String[]{}, null);
     }
@@ -104,7 +104,7 @@ public class InstructionTestRunnerMainTest
     String originalValue = System.getProperty(ModelIdResolver.CLAUDE_EXECUTABLE_PROPERTY);
     System.setProperty(ModelIdResolver.CLAUDE_EXECUTABLE_PROPERTY,
       "cat-missing-claude-binary-for-test");
-    try (ClaudePluginScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (ClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);

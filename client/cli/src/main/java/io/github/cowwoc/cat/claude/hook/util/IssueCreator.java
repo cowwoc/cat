@@ -12,7 +12,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import static io.github.cowwoc.cat.claude.hook.Strings.block;
 
 import io.github.cowwoc.cat.agent.Config;
-import io.github.cowwoc.cat.claude.hook.JvmScope;
+import io.github.cowwoc.cat.tool.JvmScope;
 import io.github.cowwoc.cat.claude.tool.ClaudeTool;
 import io.github.cowwoc.cat.claude.tool.MainClaudeTool;
 import tools.jackson.databind.JsonNode;

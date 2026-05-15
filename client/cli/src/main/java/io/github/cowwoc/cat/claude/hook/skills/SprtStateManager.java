@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.claude.hook.skills;
 
-import io.github.cowwoc.cat.claude.hook.ClaudePluginScope;
+import io.github.cowwoc.cat.claude.tool.ClaudeTool;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,7 +75,7 @@ final class SprtStateManager
   private static final double PRIOR_BOOST = 1.112;
 
   private final Logger log = LoggerFactory.getLogger(SprtStateManager.class);
-  private final ClaudePluginScope scope;
+  private final ClaudeTool scope;
 
   /**
    * Creates a new SprtStateManager.
@@ -83,7 +83,7 @@ final class SprtStateManager
    * @param scope the Claude plugin scope providing JSON mapper and other services
    * @throws NullPointerException if {@code scope} is null
    */
-  SprtStateManager(ClaudePluginScope scope)
+  SprtStateManager(ClaudeTool scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;

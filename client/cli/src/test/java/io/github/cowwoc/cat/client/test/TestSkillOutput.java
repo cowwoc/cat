@@ -7,7 +7,7 @@
 package io.github.cowwoc.cat.client.test;
 
 import io.github.cowwoc.cat.claude.tool.ClaudeTool;
-import io.github.cowwoc.cat.claude.hook.util.SkillOutput;
+import io.github.cowwoc.cat.tool.skills.SkillOutput;
 
 import java.io.IOException;
 

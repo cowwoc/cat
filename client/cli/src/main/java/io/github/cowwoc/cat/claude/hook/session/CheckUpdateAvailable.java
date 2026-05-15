@@ -175,7 +175,7 @@ public final class CheckUpdateAvailable implements SessionStartHandler
       build())
     {
       HttpRequest request = HttpRequest.newBuilder().
-        uri(URI.create(getUpdateUrl())).
+        uri(getUpdateUri()).
         timeout(TIMEOUT).
         GET().
         build();
@@ -206,14 +206,45 @@ public final class CheckUpdateAvailable implements SessionStartHandler
   /**
    * Returns the endpoint used to check for updates.
    *
-   * @return the configured endpoint, or the default endpoint if no override is configured
+   * @return the configured plugin.json URL override, or {@link #DEFAULT_GITHUB_PLUGIN_JSON_URL}
+   *   if no override is configured
+   * @throws IllegalArgumentException if the configured override is not an absolute HTTPS URL
    */
-  private String getUpdateUrl()
+  private URI getUpdateUri()
   {
-    String configuredUrl = scope.getUpdatePluginJsonUrl();
+    String configuredUrl = scope.getPluginJsonUrl();
     if (configuredUrl != null && !configuredUrl.isBlank())
-      return configuredUrl;
-    return DEFAULT_GITHUB_PLUGIN_JSON_URL;
+      return validatePluginJsonUrl(configuredUrl);
+    return URI.create(DEFAULT_GITHUB_PLUGIN_JSON_URL);
+  }
+
+  /**
+   * Validates a configured plugin.json URL override.
+   *
+   * @param configuredUrl the configured URL
+   * @return the validated URI
+   * @throws IllegalArgumentException if the URL is not an absolute HTTPS URL
+   */
+  private URI validatePluginJsonUrl(String configuredUrl)
+  {
+    URI uri;
+    try
+    {
+      uri = URI.create(configuredUrl);
+    }
+    catch (IllegalArgumentException e)
+    {
+      throw new IllegalArgumentException("CAT_PLUGIN_JSON_URL must be an absolute HTTPS URL: " +
+        configuredUrl + ". Set CAT_PLUGIN_JSON_URL to an https URL or leave it unset to use " +
+        "the bundled plugin.json source.", e);
+    }
+    if (!uri.isAbsolute() || !"https".equalsIgnoreCase(uri.getScheme()) || uri.getHost() == null)
+    {
+      throw new IllegalArgumentException("CAT_PLUGIN_JSON_URL must be an absolute HTTPS URL: " +
+        configuredUrl + ". Set CAT_PLUGIN_JSON_URL to an https URL or leave it unset to use " +
+        "the bundled plugin.json source.");
+    }
+    return uri;
   }
 
   /**

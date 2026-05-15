@@ -4,7 +4,7 @@
  * Licensed under the CAT Commercial License.
  * See LICENSE.md in the project root for license terms.
  */
-package io.github.cowwoc.cat.claude.hook;
+package io.github.cowwoc.cat.agent;
 
 import java.util.Arrays;
 import java.util.Comparator;

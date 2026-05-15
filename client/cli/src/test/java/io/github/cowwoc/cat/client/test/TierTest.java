@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.client.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.claude.hook.licensing.Tier;
+import io.github.cowwoc.cat.tool.licensing.Tier;
 
 import org.testng.annotations.Test;
 

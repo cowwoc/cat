@@ -6,9 +6,9 @@
  */
 package io.github.cowwoc.cat.client.test;
 
-import io.github.cowwoc.cat.claude.hook.licensing.LicenseResult;
+import io.github.cowwoc.cat.tool.licensing.LicenseResult;
 import io.github.cowwoc.cat.claude.hook.licensing.LicenseValidator;
-import io.github.cowwoc.cat.claude.hook.licensing.Tier;
+import io.github.cowwoc.cat.tool.licensing.Tier;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import org.testng.annotations.Test;
 

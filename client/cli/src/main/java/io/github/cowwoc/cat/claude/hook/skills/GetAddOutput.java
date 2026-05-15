@@ -6,10 +6,12 @@
  */
 package io.github.cowwoc.cat.claude.hook.skills;
 
+import io.github.cowwoc.cat.tool.DisplayUtils;
+
 import io.github.cowwoc.cat.agent.Config;
 import io.github.cowwoc.cat.claude.tool.ClaudeTool;
 import io.github.cowwoc.cat.claude.tool.MainClaudeTool;
-import io.github.cowwoc.cat.claude.hook.util.SkillOutput;
+import io.github.cowwoc.cat.tool.skills.SkillOutput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.databind.JsonNode;

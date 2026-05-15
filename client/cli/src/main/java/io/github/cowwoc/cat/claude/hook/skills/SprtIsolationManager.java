@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.claude.hook.skills;
 
-import io.github.cowwoc.cat.claude.hook.ClaudePluginScope;
+import io.github.cowwoc.cat.claude.tool.ClaudeTool;
 import io.github.cowwoc.cat.claude.hook.util.FileUtils;
 import io.github.cowwoc.cat.agent.ProcessRunner;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
@@ -39,7 +39,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  */
 final class SprtIsolationManager
 {
-  private final ClaudePluginScope scope;
+  private final ClaudeTool scope;
 
   /**
    * Creates a new SprtIsolationManager.
@@ -47,7 +47,7 @@ final class SprtIsolationManager
    * @param scope the Claude plugin scope providing JSON mapper and other services
    * @throws NullPointerException if {@code scope} is null
    */
-  SprtIsolationManager(ClaudePluginScope scope)
+  SprtIsolationManager(ClaudeTool scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;

@@ -82,6 +82,39 @@ public final class ClaudeRuntimePathConfigTest
   }
 
   /**
+   * Verifies that the build generates dependency notices and jlink images include legal files.
+   *
+   * @throws IOException if files cannot be read
+   */
+  @Test
+  public void jlinkImagesIncludeLegalNotices() throws IOException
+  {
+    Path repoRoot = repoRoot();
+    String script = Files.readString(repoRoot.resolve("cli/build-jlink.sh"), StandardCharsets.UTF_8);
+
+    requireThat(script, "script").contains("copy_legal_notices");
+    requireThat(script, "script").contains("LICENSE.md");
+    requireThat(script, "script").contains("generated-resources/licenses/THIRD-PARTY-NOTICES.txt");
+    requireThat(script, "script").contains("THIRD-PARTY-NOTICES.txt");
+    requireThat(script, "script").contains("legal/licenses");
+    requireThat(Files.isRegularFile(repoRoot.resolve("legal/licenses/Apache-2.0.txt")),
+      "apacheLicense").isTrue();
+    requireThat(Files.isRegularFile(repoRoot.resolve("legal/licenses/EPL-2.0.txt")),
+      "eplLicense").isTrue();
+    requireThat(Files.isRegularFile(repoRoot.resolve("legal/licenses/LGPL-2.1.txt")),
+      "lgplLicense").isTrue();
+    requireThat(Files.isRegularFile(repoRoot.resolve("legal/licenses/MIT.txt")),
+      "mitLicense").isTrue();
+
+    String pom = Files.readString(repoRoot.resolve("cli/pom.xml"), StandardCharsets.UTF_8);
+    requireThat(pom, "pom").contains("license-maven-plugin");
+    requireThat(pom, "pom").contains("add-third-party");
+    requireThat(pom, "pom").contains("THIRD-PARTY-NOTICES.txt");
+    requireThat(pom, "pom").contains("<failOnMissing>true</failOnMissing>");
+    requireThat(pom, "pom").contains("<excludedScopes>test,provided,system</excludedScopes>");
+  }
+
+  /**
    * Verifies shell tests do not keep assertions for deleted session-start runtime acquisition
    * functions.
    *

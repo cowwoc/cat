@@ -47,9 +47,13 @@ public abstract class AbstractAgentScope implements AgentScope
       Path project = getProjectPath();
       Config config = Config.load(getJsonMapper(), project);
       String workPathStr = config.getString("workPath", "${CAT_PROJECT_DIR}/.cat/work");
+      if (workPathStr.contains("${CLAUDE_PROJECT_DIR}"))
+      {
+        throw new IllegalArgumentException(
+          "workPath must use ${CAT_PROJECT_DIR}; ${CLAUDE_PROJECT_DIR} is not supported");
+      }
       String expandedPath = workPathStr.
-        replace("${CAT_PROJECT_DIR}", project.toString()).
-        replace("${CLAUDE_PROJECT_DIR}", project.toString());
+        replace("${CAT_PROJECT_DIR}", project.toString());
 
       if (expandedPath.startsWith("~"))
       {

@@ -11,7 +11,7 @@ import io.github.cowwoc.cat.claude.hook.PostToolUseFailureHook;
 import io.github.cowwoc.cat.claude.hook.PostToolUseHook;
 import io.github.cowwoc.cat.claude.hook.skills.EmpiricalTestRunner;
 import io.github.cowwoc.cat.claude.hook.skills.InstructionTestRunner;
-import io.github.cowwoc.cat.claude.hook.util.IssueDiscovery;
+import io.github.cowwoc.cat.tool.util.IssueDiscovery;
 import io.github.cowwoc.cat.claude.hook.util.StatuslineCommand;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -38,7 +38,6 @@ public final class SharedSecrets
   private static final Lookup LOOKUP = MethodHandles.lookup();
   private static PostToolUseHookAccess postToolUseHookAccess;
   private static PostToolUseFailureHookAccess postToolUseFailureHookAccess;
-  private static IssueDiscoveryAccess issueDiscoveryAccess;
   private static EmpiricalTestRunnerAccess empiricalTestRunnerAccess;
   private static InstructionTestRunnerAccess instructionTestRunnerAccess;
   private static StatuslineCommandAccess statuslineCommandAccess;
@@ -100,18 +99,6 @@ public final class SharedSecrets
   }
 
   /**
-   * Registers the access object for {@link IssueDiscovery}.
-   *
-   * @param access the access object
-   * @throws NullPointerException if {@code access} is null
-   */
-  public static void setIssueDiscoveryAccess(IssueDiscoveryAccess access)
-  {
-    requireThat(access, "access").isNotNull();
-    issueDiscoveryAccess = access;
-  }
-
-  /**
    * Parses the status field from index.json content and validates it against canonical values.
    *
    * @param content the JSON content of the index.json file
@@ -126,9 +113,7 @@ public final class SharedSecrets
     requireThat(content, "content").isNotNull();
     requireThat(indexPath, "indexPath").isNotNull();
     requireThat(mapper, "mapper").isNotNull();
-    if (issueDiscoveryAccess == null)
-      initialize(IssueDiscovery.class);
-    return issueDiscoveryAccess.getIssueStatus(content, indexPath, mapper);
+    return IssueDiscovery.parseIssueStatus(content, indexPath, mapper);
   }
 
   /**
@@ -300,24 +285,6 @@ public final class SharedSecrets
      * @return a new PostToolUseFailureHook
      */
     PostToolUseFailureHook newPostToolUseFailureHook(List<PostToolHandler> handlers);
-  }
-
-  /**
-   * Provides access to {@link IssueDiscovery}.
-   */
-  @FunctionalInterface
-  public interface IssueDiscoveryAccess
-  {
-    /**
-     * Gets the issue status from index.json content.
-     *
-     * @param content the JSON content of the index.json file
-     * @param indexPath the path to the index.json file (used in error messages only)
-     * @param mapper the JSON mapper to use for parsing
-     * @return the validated status string, or {@code "open"} if absent
-     * @throws IOException if parsing fails
-     */
-    String getIssueStatus(String content, Path indexPath, JsonMapper mapper) throws IOException;
   }
 
   /**

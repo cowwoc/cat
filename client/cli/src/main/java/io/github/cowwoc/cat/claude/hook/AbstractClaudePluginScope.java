@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.claude.hook;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.claude.hook.skills.DisplayUtils;
+import io.github.cowwoc.cat.tool.DisplayUtils;
 import io.github.cowwoc.cat.agent.AbstractAgentPluginScope;
 import io.github.cowwoc.cat.claude.hook.prompt.UserIssues;
 import io.github.cowwoc.pouch10.core.ConcurrentLazyReference;

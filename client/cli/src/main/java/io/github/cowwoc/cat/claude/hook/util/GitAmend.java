@@ -7,7 +7,7 @@
 package io.github.cowwoc.cat.claude.hook.util;
 
 import io.github.cowwoc.cat.agent.ProcessRunner;
-import io.github.cowwoc.cat.claude.hook.JvmScope;
+import io.github.cowwoc.cat.tool.JvmScope;
 import io.github.cowwoc.cat.claude.tool.ClaudeTool;
 import io.github.cowwoc.cat.claude.tool.MainClaudeTool;
 import org.slf4j.Logger;

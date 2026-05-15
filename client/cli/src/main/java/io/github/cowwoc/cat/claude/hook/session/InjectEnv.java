@@ -121,7 +121,9 @@ public final class InjectEnv implements SessionStartHandler
     validateEnvValue(pluginRoot, "CLAUDE_PLUGIN_ROOT");
     validateEnvValue(pluginData, "CLAUDE_PLUGIN_DATA");
     validateEnvValue(sessionId, "CLAUDE_SESSION_ID");
-    String content = buildEnvContent(projectPath, pluginRoot, pluginData, sessionId);
+    String configPath = scope.getClaudeConfigPath().toString();
+    validateEnvValue(configPath, "CAT_CONFIG_DIR");
+    String content = buildEnvContent(projectPath, pluginRoot, pluginData, configPath, sessionId);
     try
     {
       Path sessionEnvBase = envPath.getParent().getParent();
@@ -160,7 +162,9 @@ public final class InjectEnv implements SessionStartHandler
     validateEnvValue(pluginRoot, "CLAUDE_PLUGIN_ROOT");
     validateEnvValue(pluginData, "CLAUDE_PLUGIN_DATA");
     validateEnvValue(sessionId, "CLAUDE_SESSION_ID");
-    String content = buildEnvContent(projectPath, pluginRoot, pluginData, sessionId);
+    String configPath = scope.getClaudeConfigPath().toString();
+    validateEnvValue(configPath, "CAT_CONFIG_DIR");
+    String content = buildEnvContent(projectPath, pluginRoot, pluginData, configPath, sessionId);
     try
     {
       Files.createDirectories(envPath.getParent());
@@ -179,11 +183,12 @@ public final class InjectEnv implements SessionStartHandler
    * @param projectPath the value for CLAUDE_PROJECT_DIR
    * @param pluginRoot  the value for CLAUDE_PLUGIN_ROOT
    * @param pluginData  the value for CLAUDE_PLUGIN_DATA
+   * @param configPath  the value for CAT_CONFIG_DIR
    * @param sessionId   the value for CLAUDE_SESSION_ID
    * @return the export statements to write
    */
   private static String buildEnvContent(String projectPath, String pluginRoot, String pluginData,
-    String sessionId)
+    String configPath, String sessionId)
   {
     return "export CLAUDE_PROJECT_DIR=\"" + projectPath + "\"\n" +
       "export CLAUDE_PLUGIN_ROOT=\"" + pluginRoot + "\"\n" +
@@ -192,6 +197,7 @@ public final class InjectEnv implements SessionStartHandler
       "export CAT_PROJECT_DIR=\"" + projectPath + "\"\n" +
       "export CAT_PLUGIN_ROOT=\"" + pluginRoot + "\"\n" +
       "export CAT_PLUGIN_DATA=\"" + pluginData + "\"\n" +
+      "export CAT_CONFIG_DIR=\"" + configPath + "\"\n" +
       "export CAT_RUNTIME=\"claude\"\n" +
       "export CAT_SESSION_ID=\"" + sessionId + "\"\n";
   }

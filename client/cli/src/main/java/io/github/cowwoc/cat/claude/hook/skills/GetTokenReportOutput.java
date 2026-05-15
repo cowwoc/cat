@@ -6,6 +6,8 @@
  */
 package io.github.cowwoc.cat.claude.hook.skills;
 
+import io.github.cowwoc.cat.tool.DisplayUtils;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -22,9 +24,9 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import io.github.cowwoc.cat.claude.tool.ClaudeTool;
-import io.github.cowwoc.cat.claude.hook.JvmScope;
+import io.github.cowwoc.cat.tool.JvmScope;
 import io.github.cowwoc.cat.claude.tool.MainClaudeTool;
-import io.github.cowwoc.cat.claude.hook.util.SkillOutput;
+import io.github.cowwoc.cat.tool.skills.SkillOutput;
 
 import static io.github.cowwoc.cat.claude.hook.Strings.block;
 import static io.github.cowwoc.cat.claude.hook.skills.JsonHelper.getStringOrDefault;

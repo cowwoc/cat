@@ -6,6 +6,8 @@
  */
 package io.github.cowwoc.cat.claude.hook.skills;
 
+import io.github.cowwoc.cat.tool.DisplayUtils;
+
 import com.github.difflib.text.DiffRow;
 import com.github.difflib.text.DiffRowGenerator;
 
@@ -31,7 +33,7 @@ import static io.github.cowwoc.cat.claude.hook.Strings.block;
 import io.github.cowwoc.cat.claude.tool.ClaudeTool;
 import io.github.cowwoc.cat.claude.tool.MainClaudeTool;
 import io.github.cowwoc.cat.claude.hook.util.GitCommands;
-import io.github.cowwoc.cat.claude.hook.util.SkillOutput;
+import io.github.cowwoc.cat.tool.skills.SkillOutput;
 import tools.jackson.databind.JsonNode;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;

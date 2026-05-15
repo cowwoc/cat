@@ -144,6 +144,83 @@ EOF
         { echo "Expected -ea in launcher with assertions. Got:"; cat "$launcher"; false; }
 }
 
+@test "migrated shared launcher maps to neutral entrypoint" {
+    local test_output_dir="$OUTPUT_DIR"
+    source "$BUILD_JLINK"
+    OUTPUT_DIR="$test_output_dir"
+    HANDLERS=(
+        "token-counter:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$TokenCounter"
+        "create-issue:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$IssueCreator"
+        "git-squash:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$GitSquash"
+        "git-merge-linear:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$GitMergeLinear"
+        "git-amend:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$GitAmend"
+        "git-rebase:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$GitRebase"
+        "issue-lock:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$IssueLock"
+        "check-existing-work:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$ExistingWorkChecker"
+        "wrap-markdown:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$MarkdownWrapper"
+        "batch-read:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$BatchReader"
+        "validate-status-alignment:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$StatusAlignmentValidator"
+        "feedback:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$Feedback"
+        "write-session-marker:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$WriteSessionMarker"
+        "read-session-marker:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$ReadSessionMarker"
+        "auto-close-index:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$AutoCloseIndexJson"
+        "verify-defer-plan-generation:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$VerifyDeferPlanGeneration"
+        "write-and-commit:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$WriteAndCommit"
+    )
+    ENABLE_ASSERTIONS=false
+    generate_launchers
+
+    for handler in "${HANDLERS[@]}"; do
+        launcher_name="${handler%%:*}"
+        entrypoint="${handler#*:}"
+        launcher="$OUTPUT_DIR/bin/$launcher_name"
+        grep -Fq "$entrypoint" "$launcher" || \
+            { echo "Expected neutral $launcher_name entrypoint. Got:"; cat "$launcher"; false; }
+    done
+}
+
+@test "migrated shared launcher preserves nested class name at runtime" {
+    local test_output_dir="$OUTPUT_DIR"
+    source "$BUILD_JLINK"
+    OUTPUT_DIR="$test_output_dir"
+    HANDLERS=("write-session-marker:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$WriteSessionMarker")
+    ENABLE_ASSERTIONS=false
+    generate_launchers
+
+    cat > "$OUTPUT_DIR/bin/java" <<'EOF'
+#!/bin/sh
+printf '%s\n' "$@" > "$OUTPUT_DIR/java-args.txt"
+EOF
+    chmod +x "$OUTPUT_DIR/bin/java"
+    export OUTPUT_DIR
+
+    "$OUTPUT_DIR/bin/write-session-marker" example
+
+    grep -Fq 'io.github.cowwoc.cat.client/io.github.cowwoc.cat.tool.util.SharedUtilityMain$WriteSessionMarker' \
+        "$OUTPUT_DIR/java-args.txt" || \
+        { echo "Expected literal nested class in java args. Got:"; cat "$OUTPUT_DIR/java-args.txt"; false; }
+}
+
+@test "runtime handler selection keeps common and runtime-only launchers separate" {
+    source "$BUILD_JLINK"
+
+    set_runtime_handlers claude
+    printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'token-counter:io.github.cowwoc.cat.tool.util.SharedUtilityMain$TokenCounter' || \
+        { echo "Expected common handler in Claude runtime"; false; }
+    printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'claude-runner:io.github.cowwoc.cat.claude.hook.skills.ClaudeRunner' || \
+        { echo "Expected Claude-only handler"; false; }
+    ! printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'codex-runner:io.github.cowwoc.cat.codex.hook.skills.CodexRunner' || \
+        { echo "Did not expect Codex-only handler in Claude runtime"; false; }
+
+    set_runtime_handlers codex
+    printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'token-counter:io.github.cowwoc.cat.tool.util.SharedUtilityMain$TokenCounter' || \
+        { echo "Expected common handler in Codex runtime"; false; }
+    printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'codex-runner:io.github.cowwoc.cat.codex.hook.skills.CodexRunner' || \
+        { echo "Expected Codex-only handler"; false; }
+    ! printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'claude-runner:io.github.cowwoc.cat.claude.hook.skills.ClaudeRunner' || \
+        { echo "Did not expect Claude-only handler in Codex runtime"; false; }
+}
+
 @test "automatic module patching describes each peer jar once" {
     source "$BUILD_JLINK"
     STAGING_DIR="$(mktemp -d)"
@@ -338,8 +415,8 @@ while [ "$#" -gt 0 ]; do
 done
 cat >/dev/null
 printf '%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
-    "$mode" "$module" "$CLAUDE_PROJECT_DIR" "$CLAUDE_PLUGIN_ROOT" "$CLAUDE_PLUGIN_DATA" \
-    "$CLAUDE_CONFIG_DIR" "$CAT_PROJECT_DIR" "$CAT_PLUGIN_ROOT" "$CODEX_HOME" >> "$AOT_LOG"
+    "$mode" "$module" "${CLAUDE_PROJECT_DIR:-}" "${CLAUDE_PLUGIN_ROOT:-}" "${CLAUDE_PLUGIN_DATA:-}" \
+    "${CLAUDE_CONFIG_DIR:-}" "$CAT_PROJECT_DIR" "$CAT_PLUGIN_ROOT" "$CAT_CONFIG_DIR" >> "$AOT_LOG"
 case "$mode" in
     record) touch "$configuration" ;;
     create) touch "$cache" ;;
@@ -355,16 +432,23 @@ EOF
     grep -q 'record|io.github.cowwoc.cat.client/io.github.cowwoc.cat.codex.hook.CodexAotTraining|' "$AOT_LOG"
     grep -q 'create|io.github.cowwoc.cat.client/io.github.cowwoc.cat.codex.hook.PreBashHook|' "$AOT_LOG"
 
-    while IFS='|' read -r mode module claude_project claude_root claude_data claude_config cat_project cat_root codex_home; do
+    while IFS='|' read -r mode module claude_project claude_root claude_data claude_config cat_project cat_root cat_config; do
         [ -n "$mode" ]
         [ -n "$module" ]
-        [ "$claude_project" = "$WORKSPACE_DIR" ]
+        if [[ "$module" == *".claude."* ]]; then
+            [ "$claude_project" = "$WORKSPACE_DIR" ]
+            [[ "$claude_root" == */plugin ]]
+            [[ "$claude_data" == */aot-plugin-data ]]
+            [[ "$claude_config" == */aot-config-home ]]
+        else
+            [ -z "$claude_project" ]
+            [ -z "$claude_root" ]
+            [ -z "$claude_data" ]
+            [ -z "$claude_config" ]
+        fi
         [ "$cat_project" = "$WORKSPACE_DIR" ]
-        [[ "$claude_root" == */plugin ]]
         [[ "$cat_root" == */plugin ]]
-        [[ "$claude_data" == */aot-plugin-data ]]
-        [[ "$claude_config" == */aot-config-home ]]
-        [[ "$codex_home" == */aot-config-home ]]
+        [[ "$cat_config" == */aot-config-home ]]
     done < "$AOT_LOG"
 }
 

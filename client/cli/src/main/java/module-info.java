@@ -18,6 +18,10 @@ module io.github.cowwoc.cat.client
   requires ch.qos.logback.classic;
 
   exports io.github.cowwoc.cat.agent;
+  exports io.github.cowwoc.cat.tool;
+  exports io.github.cowwoc.cat.tool.licensing;
+  exports io.github.cowwoc.cat.tool.skills;
+  exports io.github.cowwoc.cat.tool.util;
   exports io.github.cowwoc.cat.codex.hook;
   exports io.github.cowwoc.cat.codex.hook.skills;
   exports io.github.cowwoc.cat.codex.tool;

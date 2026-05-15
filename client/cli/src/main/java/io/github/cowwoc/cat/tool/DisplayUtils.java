@@ -4,10 +4,10 @@
  * Licensed under the CAT Commercial License.
  * See LICENSE.md in the project root for license terms.
  */
-package io.github.cowwoc.cat.claude.hook.skills;
+package io.github.cowwoc.cat.tool;
 
 import io.github.cowwoc.cat.agent.TerminalType;
-import io.github.cowwoc.cat.claude.hook.ClaudePluginScope;
+import io.github.cowwoc.cat.agent.AgentPluginScope;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -94,10 +94,10 @@ public final class DisplayUtils
   /**
    * Creates a DisplayUtils for a plugin scope execution context.
    *
-   * @param scope the plugin scope providing JSON mapper, terminal type, and plugin root
+   * @param scope the CLI scope providing JSON mapper, terminal type, and plugin root
    * @throws IOException if {@code emoji-widths.json} exists but cannot be loaded
    */
-  public DisplayUtils(ClaudePluginScope scope) throws IOException
+  public DisplayUtils(AgentPluginScope scope) throws IOException
   {
     JsonMapper mapper = scope.getJsonMapper();
     Path pluginRoot = scope.getPluginRoot();

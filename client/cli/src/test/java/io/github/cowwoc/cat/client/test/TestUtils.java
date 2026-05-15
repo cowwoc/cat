@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.client.test;
 
 import io.github.cowwoc.cat.claude.hook.ClaudeHook;
 import io.github.cowwoc.cat.claude.tool.ClaudeTool;
-import io.github.cowwoc.cat.claude.hook.JvmScope;
+import io.github.cowwoc.cat.tool.JvmScope;
 import io.github.cowwoc.cat.claude.hook.util.FileUtils;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.databind.JsonNode;

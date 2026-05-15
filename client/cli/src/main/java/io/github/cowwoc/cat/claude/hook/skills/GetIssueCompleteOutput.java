@@ -6,18 +6,20 @@
  */
 package io.github.cowwoc.cat.claude.hook.skills;
 
+import io.github.cowwoc.cat.tool.DisplayUtils;
+
 import static io.github.cowwoc.cat.claude.hook.Strings.block;
 
 import java.io.PrintStream;
 
 import io.github.cowwoc.cat.claude.tool.ClaudeTool;
 import io.github.cowwoc.cat.claude.tool.MainClaudeTool;
-import io.github.cowwoc.cat.claude.hook.util.IssueDiscovery;
-import io.github.cowwoc.cat.claude.hook.util.IssueDiscovery.DiscoveryResult;
-import io.github.cowwoc.cat.claude.hook.util.IssueDiscovery.Scope;
-import io.github.cowwoc.cat.claude.hook.util.IssueDiscovery.SearchOptions;
+import io.github.cowwoc.cat.tool.util.IssueDiscovery;
+import io.github.cowwoc.cat.tool.util.IssueDiscovery.DiscoveryResult;
+import io.github.cowwoc.cat.tool.util.IssueDiscovery.Scope;
+import io.github.cowwoc.cat.tool.util.IssueDiscovery.SearchOptions;
 import io.github.cowwoc.cat.claude.hook.util.IssueGoalReader;
-import io.github.cowwoc.cat.claude.hook.util.SkillOutput;
+import io.github.cowwoc.cat.tool.skills.SkillOutput;
 
 import java.io.IOException;
 import java.nio.file.Path;

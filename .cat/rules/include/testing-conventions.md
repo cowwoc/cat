@@ -129,8 +129,8 @@ public void worktreesDoNotLoadDuplicateRules() {
 
 Automated tests should verify runtime behavior with meaningful inputs and outputs. Do not add tests whose only purpose
 is to enforce package-time structure or design constraints, such as asserting that a package contains only certain
-classes, scanning source files for imports, or checking that generated release artifacts have a particular internal
-layout when no runtime behavior is exercised.
+classes, asserting which package or module a class is declared in, scanning source files for imports, or checking that
+generated release artifacts have a particular internal layout when no runtime behavior is exercised.
 
 Do not add build-time tests whose only purpose is to enforce design constraints by scanning source files, package names,
 or textual references. Examples include tests that fail because a runtime-specific package mentions another runtime by

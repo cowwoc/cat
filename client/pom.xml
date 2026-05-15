@@ -30,6 +30,7 @@
 		<checkstyle.version>13.3.0</checkstyle.version>
 		<pmd.version>7.23.0</pmd.version>
 		<exec-maven-plugin.version>3.6.3</exec-maven-plugin.version>
+		<license-maven-plugin.version>2.7.1</license-maven-plugin.version>
 	</properties>
 
 	<build>
@@ -64,6 +65,11 @@
 					<groupId>org.codehaus.mojo</groupId>
 					<artifactId>exec-maven-plugin</artifactId>
 					<version>${exec-maven-plugin.version}</version>
+				</plugin>
+				<plugin>
+					<groupId>org.codehaus.mojo</groupId>
+					<artifactId>license-maven-plugin</artifactId>
+					<version>${license-maven-plugin.version}</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>

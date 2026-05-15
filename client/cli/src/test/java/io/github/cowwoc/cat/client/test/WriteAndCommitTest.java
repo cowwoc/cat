@@ -7,7 +7,7 @@
 package io.github.cowwoc.cat.client.test;
 
 import io.github.cowwoc.cat.claude.hook.util.WriteAndCommit;
-import io.github.cowwoc.cat.claude.hook.JvmScope;
+import io.github.cowwoc.cat.tool.JvmScope;
 import org.testng.annotations.Test;
 
 import java.io.IOException;

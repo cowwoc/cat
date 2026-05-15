@@ -9,7 +9,7 @@ package io.github.cowwoc.cat.client.test;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.claude.hook.FileWriteHandler;
-import io.github.cowwoc.cat.claude.hook.JvmScope;
+import io.github.cowwoc.cat.tool.JvmScope;
 import io.github.cowwoc.cat.claude.hook.write.ValidateSkillTestFormat;
 import org.testng.annotations.Test;
 import tools.jackson.databind.json.JsonMapper;

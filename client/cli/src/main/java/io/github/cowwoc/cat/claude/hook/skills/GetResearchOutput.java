@@ -6,6 +6,8 @@
  */
 package io.github.cowwoc.cat.claude.hook.skills;
 
+import io.github.cowwoc.cat.tool.DisplayUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
