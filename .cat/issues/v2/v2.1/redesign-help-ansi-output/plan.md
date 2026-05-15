@@ -46,13 +46,13 @@ The literal output should be:
 [38;2;255;214;102m━━━━━━━━[38;2;255;180;118m━━━━━━━━[38;2;255;142;146m━━━━━━━━[38;2;235;116;164m━━━━━━━━━━━━━━━━━━━━[0m
 
 [1;37mStart here[0m
-  [38;2;235;116;164m$cat:status[0m     See active issues, locks, and next steps
-  [38;2;235;116;164m$cat:add[0m        Create a new issue or version
-  [38;2;235;116;164m$cat:work[0m       Start or continue issue work
   [38;2;235;116;164m$cat:init[0m       Set up CAT in this project
   [38;2;235;116;164m$cat:config[0m     Tune autonomy, validation, review depth, cleanup, and detail
-  [38;2;235;116;164m$cat:cleanup[0m    Remove stale locks and abandoned worktrees
+  [38;2;235;116;164m$cat:add[0m        Create a new issue or version
   [38;2;235;116;164m$cat:remove[0m     Remove an issue or version
+  [38;2;235;116;164m$cat:cleanup[0m    Remove stale locks and abandoned worktrees
+  [38;2;235;116;164m$cat:work[0m       Start or continue issue work
+  [38;2;235;116;164m$cat:status[0m     See active issues, locks, and next steps
   [38;2;235;116;164m$cat:uninstall[0m  Uninstall CAT from Codex
 
 [1;37mWhat CAT does[0m
@@ -100,13 +100,13 @@ The Claude slash-command equivalent should match the approved output above, exce
 [38;2;255;214;102m━━━━━━━━[38;2;255;180;118m━━━━━━━━[38;2;255;142;146m━━━━━━━━[38;2;235;116;164m━━━━━━━━━━━━━━━━━━━━[0m
 
 [1;37mStart here[0m
-  [38;2;235;116;164m/cat:status[0m     See active issues, locks, and next steps
-  [38;2;235;116;164m/cat:add[0m        Create a new issue or version
-  [38;2;235;116;164m/cat:work[0m       Start or continue issue work
   [38;2;235;116;164m/cat:init[0m       Set up CAT in this project
   [38;2;235;116;164m/cat:config[0m     Tune autonomy, validation, review depth, cleanup, and detail
-  [38;2;235;116;164m/cat:cleanup[0m    Remove stale locks and abandoned worktrees
+  [38;2;235;116;164m/cat:add[0m        Create a new issue or version
   [38;2;235;116;164m/cat:remove[0m     Remove an issue or version
+  [38;2;235;116;164m/cat:cleanup[0m    Remove stale locks and abandoned worktrees
+  [38;2;235;116;164m/cat:work[0m       Start or continue issue work
+  [38;2;235;116;164m/cat:status[0m     See active issues, locks, and next steps
 
 [1;37mWhat CAT does[0m
   CAT organizes your work, augments code quality, and applies your personal style
