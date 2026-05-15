@@ -3,126 +3,180 @@ Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
-# Feedback: File a Bug Report
+# Feedback: File CAT Feedback Publicly
 
-File a bug report for a CAT plugin issue on GitHub. Checks for duplicates before creating a new issue.
+File a CAT plugin bug report or feature request at `https://github.com/cowwoc/cat/issues`.
 
-## Step 1: Gather Context
+Do not publish anything until the user has seen the complete issue content and explicitly approves
+public publication.
 
-Collect information needed for the bug report:
+## Step 1: Classify Feedback
 
-1. Get the CAT version:
-   ```bash
-   cat "${CAT_PROJECT_DIR}/.cat/VERSION" 2>/dev/null || echo "unknown"
-   ```
+Ask the user what kind of feedback they want to file:
 
-2. Scan recent conversation messages for errors to report. Look for:
-   - Preprocessor errors (formatted as `**Preprocessor Error**` blocks)
-   - Build failures or compilation errors
-   - Plugin errors or unexpected failures
-   - Any error the user wants to report
+- Bug report
+- Feature request
 
-3. If `/cat:feedback` was invoked with arguments, use those as additional context (e.g., a description
-   of what went wrong).
+If the user already made the type clear, confirm the inferred type before proceeding. If
+`/cat:feedback` was invoked with arguments, use them as the initial description but still run the
+collection, preview, and approval steps.
 
-## Step 2: Present Wizard
+## Step 2: Gather Context
 
-Use AskUserQuestion to present the detected issue to the user for confirmation. Show:
-
-- **Detected issue title** (suggested from error context, or ask user to describe it)
-- **Category** with options:
-  - Preprocessor error
-  - Build failure
-  - Feature request
-  - Other bug
-
-Ask the user to confirm the title or provide a corrected one. If no error was detected in the
-conversation, ask the user to describe the issue they want to report.
-
-Example wizard prompt:
-```
-I found a preprocessor error in the recent conversation. Would you like to file a bug report?
-
-Suggested title: "Preprocessor error: <brief description>"
-Category: Preprocessor error
-
-Please confirm or edit the title before I search for duplicates.
-```
-
-## Step 3: Search for Duplicates
-
-Always search GitHub for existing issues before creating a new one. Use the `feedback` tool with keywords
-from the confirmed title:
+Get the CAT version:
 
 ```bash
-"${CAT_PLUGIN_DATA}/client/bin/feedback" search "<keywords from title>"
+cat "${CAT_PROJECT_DIR}/.cat/VERSION" 2>/dev/null || echo "unknown"
 ```
 
-The script returns JSON with an `issues` array. Each element has `number`, `title`, `url`, and `state`.
+For bug reports, collect or derive:
 
-**If matching issues are found**, display them to the user and ask via AskUserQuestion:
+- Summary
+- Steps to reproduce
+- Expected behavior
+- Actual behavior
+- Environment, including CAT version and relevant operating context
+- Relevant error output, command output, preprocessor block, issue id, branch, or session context
 
+If the bug relates to an agent mistake, workflow failure, verification failure, stale work, lock
+mistake, or other process defect, invoke or follow the `/cat:learn` workflow before drafting the issue.
+Use the learning output to capture root cause, prevention, and any M-record analysis that applies.
+
+For feature requests, collect:
+
+- Requested capability
+- Motivation or use case
+- Proposed solution, if the user has one
+- Alternatives or constraints, if known
+
+Ask only for missing information that materially changes the public issue. Do not invent facts.
+
+## Step 3: Search Duplicates
+
+Search GitHub issues before creating anything:
+
+```bash
+gh issue list \
+  --repo cowwoc/cat \
+  --state all \
+  --search "<keywords from title and summary>" \
+  --limit 10
 ```
-AskUserQuestion:
-  header: "Duplicates"
-  question: "Found N existing issues that may match. How would you like to proceed?"
-  options:
-    - "Subscribe to #<number>" (for each matching issue, up to 3)
-    - "Create new issue" (none of the matches are duplicates)
-    - "Cancel"
+
+If likely duplicates are found, show the matching issue numbers, titles, states, and URLs. Ask whether
+to use an existing issue, continue with a new issue, or cancel. Stop if the user chooses an existing
+issue or cancels.
+
+If `gh` is unavailable or unauthenticated, tell the user what failed and stop before the preview. Do
+not fall back to browser-prefilled issue creation.
+
+## Step 4: Draft Issue
+
+Build the title, labels, and body.
+
+Bug report labels:
+
+```text
+bug
 ```
 
-If the user selects an existing issue, add a comment or reaction to subscribe and stop.
-
-**If no matching issues are found**, proceed directly to Step 4.
-
-## Step 4: Open Issue in Browser
-
-Build the issue body with diagnostic context:
+Bug report body:
 
 ```markdown
 ## Summary
 
-<user-provided description of the issue>
-
-## Environment
-
-- **CAT Version:** <version from Step 1>
-- **Error:** <error message if applicable>
-- **Directive:** <preprocessor directive if applicable>
+<short description>
 
 ## Steps to Reproduce
 
-<any reproduction steps derived from the error context>
+<ordered steps, or "Unknown" if not available>
+
+## Expected Behavior
+
+<expected result>
+
+## Actual Behavior
+
+<actual result, including concise error snippets when relevant>
+
+## Environment
+
+- CAT Version: <version>
+- Runtime/Agent: <runtime if known>
+- Project/Issue Context: <issue id, branch, command, or "Unknown">
+
+## Analysis
+
+<root cause, prevention, and M-record analysis from /cat:learn when applicable>
 ```
 
-Open the GitHub issue creation page in the user's browser using the `feedback` tool:
+Feature request labels:
+
+```text
+enhancement
+```
+
+Feature request body:
+
+```markdown
+## Description
+
+<requested capability>
+
+## Motivation
+
+<user goal or use case>
+
+## Proposed Solution
+
+<proposal, or "No specific solution proposed">
+
+## Alternatives and Constraints
+
+<alternatives, constraints, or "Unknown">
+```
+
+## Step 5: Preview and Redaction
+
+Show the complete issue exactly as it will be submitted:
+
+- Repository: `cowwoc/cat`
+- Title
+- Labels
+- Full body
+
+Warn that GitHub issues are public. Ask the user to review the content and redact secrets, internal
+URLs, tokens, customer data, private paths, or any other sensitive information before publication.
+
+If the user asks to redact or revise anything, update the draft and show the full preview again.
+
+## Step 6: Explicit Public Approval
+
+After the final preview, ask for explicit permission to publish publicly. The approval option must
+include the phrase:
+
+```text
+Yes, publish publicly
+```
+
+Treat cancellation, refusal, silence, ambiguous approval, or any response other than explicit
+public-publish approval as a stop condition. If stopped, report that no issue was created.
+
+## Step 7: Publish
+
+Only after explicit public approval, create the issue with `gh issue create`:
 
 ```bash
-"${CAT_PLUGIN_DATA}/client/bin/feedback" open \
-  "Title here" \
-  "Body here" \
-  "bug"
+body_file="$(mktemp)"
+cat > "${body_file}" <<'EOF'
+<final approved issue body>
+EOF
+gh issue create \
+  --repo cowwoc/cat \
+  --title "<final approved title>" \
+  --body-file "${body_file}" \
+  --label "<label>"
+rm -f "${body_file}"
 ```
 
-The script constructs a pre-filled GitHub issue URL. No authentication token is required — the user's
-existing browser session handles GitHub login.
-
-The script returns JSON with `status` and `url` fields:
-
-- `status: "opened"` — the browser opened successfully; the URL was loaded in the user's browser.
-- `status: "url_only"` — the browser was unavailable (e.g., headless environment); the user must open
-  the URL manually. A `message` field explains why the browser could not be opened.
-
-## Step 5: Confirm
-
-After opening the browser or finding a duplicate issue, display the result to the user:
-
-- If `status` is `"opened"`: "The issue creation page was opened in your browser. Please review the
-  pre-filled details and click 'Submit new issue' to file the report."
-- If `status` is `"url_only"`: "Unable to open a browser automatically. Please open this URL to file
-  the report:
-
-`<url from JSON response>`"
-- If duplicate found and user subscribed: "You are now subscribed to issue #N at [URL]."
-- If cancelled: "Cancelled. No issue was created."
+Report the created issue URL from `gh issue create`.

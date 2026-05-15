@@ -1,5 +1,5 @@
 ---
-description: File a bug report for a CAT plugin issue on GitHub (checks for duplicates before creating).
+description: File a CAT bug report or feature request on GitHub after duplicate search, full preview, and explicit public approval.
 allowed-tools:
   - Bash
   - Read

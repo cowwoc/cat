@@ -132,7 +132,17 @@ Skill tool:
 Where `EXECUTION_COMMITS_JSON_PATH` is the path to the JSON file containing commits from the implement phase result,
 and `FILES_CHANGED` is the integer count from the implement phase result.
 
-If the confirm phase returns FAILED or BLOCKED, return that status immediately.
+If the confirm phase returns FAILED or BLOCKED for a non-verification workflow/control failure, return
+that status immediately.
+
+**Exception: verification/test failures are recoverable work, not terminal workflow failures.** If the
+confirm result, phase error, or command output identifies failed post-condition verification, failed E2E
+checks, failed targeted tests, or failed `mvn -f client/pom.xml verify -e`, do NOT release the lock and
+do NOT treat the issue as abandoned. Keep the active issue lock, inspect the verify detail files or test
+reports named by the failure, make scoped fixes in `${WORKTREE_PATH}`, commit those fixes, rerun the
+failing targeted tests, then rerun the confirm phase/full verification before continuing to review.
+Only return FAILED/BLOCKED after recovery has been attempted and the remaining blocker is reported to
+the user with the lock still held for this active work session.
 
 ## Phase 3: Review
 
@@ -195,15 +205,23 @@ Return the final status to the `/cat:work` skill:
 If any phase fails:
 
 1. Capture error message and phase name
-2. Attempt lock release: `"${CAT_PLUGIN_DATA}/client/bin/issue-lock" release "${ISSUE_ID}" "$CAT_SESSION_ID"`
-3. Return FAILED status with actual error details
+2. Classify the failure before releasing any lock:
+   - Verification/test failures must be diagnosed and fixed in `${WORKTREE_PATH}` before returning.
+     Do not release the lock merely because tests, E2E checks, or post-condition verification failed.
+   - Workflow/control failures that prevent recovery may release the lock only after user abort/manual
+     cleanup or after recovery requires ending the active work session.
+3. For verification/test failures, rerun targeted failing tests and the required full verification
+   command after fixes before continuing.
+4. Return FAILED status with actual error details only after the recovery path above has been attempted
+   or the failure is classified as an unrecoverable workflow/control failure.
 
 ```json
 {
   "status": "FAILED",
   "phase": "implement|confirm|review|merge",
   "message": "actual error message",
-  "issue_id": "${ISSUE_ID}"
+  "issue_id": "${ISSUE_ID}",
+  "lock_released": true|false
 }
 ```
 

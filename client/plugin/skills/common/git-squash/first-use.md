@@ -23,6 +23,19 @@ approval gate before they can proceed.
 **Why:** Manual `git reset --soft` captures the working directory, which may contain stale files when the base
 advanced. This skill uses `commit-tree` to build commits from HEAD's tree object, ignoring the working directory.
 
+**NEVER manually run `git commit-tree HEAD^{tree} -p <target-branch>` as a fallback after this skill or
+`git-rebase` reports a pre-rebase path-consistency block, rebase conflict, or other safety stop.**
+The whole `HEAD` tree may contain stale changes from unrelated historical work. Turning that tree into a single
+commit on the target branch preserves every stale file change while hiding the unrelated history inside one
+apparently clean commit.
+
+If the deterministic helper blocks before or during rebase:
+- Treat the block as authoritative safety signal, not as permission to bypass the helper.
+- Follow the specific recovery path in the helper output or the `git-rebase` instructions.
+- If recovery requires broad path-alignment or the intended squash scope is ambiguous, stop and escalate to the user.
+- Do not report a successful squash until the target diff is scoped to the intended topic and the helper workflow or
+  documented conflict recovery has completed.
+
 ## Read project.md Squash Policy
 
 **Check project.md for configured squash preferences before proceeding.**
@@ -105,6 +118,11 @@ The script implements: rebase onto target, backup, commit-tree squash, verify, c
 | `REBASE_CONFLICT` | Conflict during pre-squash rebase | Invoke `cat:git-rebase` and follow its `## Handling Conflicts` numbered steps. |
 | `VERIFY_FAILED` | Content changed during squash | Restore from backup branch, investigate diff_stat. Delete backup after investigation. |
 | `ERROR` | Rebase or squash failed | Check backup_branch and error message for details. Delete backup after the error is handled. |
+
+If the helper output contains `decision: "block"` or language such as "Pre-rebase path consistency check failed",
+STOP the squash workflow. Do not construct a replacement commit manually. First fix the path consistency problem
+using the helper guidance, then rerun the deterministic helper. If the path update would touch broad unrelated
+history or old issue records, ask the user how to proceed instead of squashing the full branch tree.
 
 ### CONCURRENT_MODIFICATION Warnings
 
@@ -219,6 +237,17 @@ accidental file loss.
 3. Handle conflicts if any
 4. **Verify immediately** — no changes lost or added
 5. Cleanup backup only after verification passes
+
+**Scope verification before any manual or interactive rewrite:** Before creating a squashed commit by any path other
+than the deterministic helper's `OK` result, compare the candidate diff against the intended topic:
+
+```bash
+git diff --name-only "$TARGET_BRANCH"..HEAD
+git log --oneline "$TARGET_BRANCH"..HEAD
+```
+
+If the branch is hundreds of commits ahead, includes broad historical migrations, or touches files unrelated to the
+requested topic, do not squash the entire `HEAD` tree. Isolate the intended commits first or stop for user guidance.
 
 ### Interactive Rebase Steps
 

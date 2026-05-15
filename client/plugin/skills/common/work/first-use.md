@@ -511,14 +511,36 @@ to continue to the next issue. No delay needed — the work skill handles its ow
 If any phase subagent fails unexpectedly:
 
 1. Capture error message
-2. Run `"${CAT_PLUGIN_DATA}/client/bin/issue-lock" release "${issue_id}" "${CAT_SESSION_ID}"` to release the lock.
-3. Display error to user
-4. Offer: Retry, Abort, or Manual cleanup
+2. Classify the failure before releasing any lock:
+   - **Verification or test failure**: examples include failed post-condition verification, failed
+     E2E checks, failed `mvn -f client/pom.xml verify -e`, failed targeted tests, or failure details
+     written by the confirm/verify phase. Do NOT release the issue lock merely because verification
+     failed.
+   - **Workflow/control failure**: examples include malformed phase JSON, missing required fields,
+     failed launcher invocation, invalid paths, or a subagent infrastructure failure that prevents
+     diagnosis.
+3. For a verification or test failure, keep the lock and attempt recovery in the same issue worktree:
+   - Inspect the failing test reports, command output, or verification detail files to identify the
+     concrete failing assertions or unmet criteria.
+   - Make scoped fixes in `${WORKTREE_PATH}` only, preserving unrelated user changes.
+   - Commit fixes using the implementation commit type (`bugfix:`, `feature:`, `test:`, etc.), not
+     `planning:` unless only plan files changed.
+   - Rerun the failing targeted tests first when a targeted command is available.
+   - Rerun the required full verification command before presenting review or merge:
+     `mvn -f client/pom.xml verify -e`
+   - Repeat diagnosis and fix while progress is being made. If the same verification failure remains
+     after reasonable fix attempts or the cause is outside the issue scope, stop and ask the user how
+     to proceed while keeping the lock held for this active session.
+4. For a workflow/control failure, display the error to the user and offer: Retry, Abort, or Manual
+   cleanup. Release the lock only when the user selects Abort/Manual cleanup or when recovery requires
+   ending the active work session.
+5. Never release the lock before attempting verification-failure recovery unless the user explicitly
+   instructs you to abort or clean up.
 
 ## Success Criteria
 
 - [ ] Phase subagent spawned for each phase
 - [ ] Results collected and parsed as JSON
 - [ ] User approval gate respected (skipped only when `--override-gate` flag is passed)
-- [ ] Lock released on completion or error
+- [ ] Lock released on completion, explicit user abort/manual cleanup, or unrecoverable non-verification error
 - [ ] Progress banners displayed at phase transitions

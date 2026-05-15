@@ -49,8 +49,12 @@ But instead of applying fixes locally, package this as a GitHub issue.
 - **Mitigation:** Preview + explicit permission before publishing
 
 ## Files to Modify
-- `plugin/skills/feedback/feedback.md` - New skill definition
-- `plugin/skills/feedback/index.md` - Skill registration
+- `client/plugin/skills/common/feedback/first-use.md` - Shared feedback workflow
+- `client/plugin/skills/claude/feedback/SKILL.md` - Claude skill registration metadata
+- `client/plugin/skills/codex/feedback/SKILL.md` - Codex skill registration metadata
+- `client/plugin/tests/skills/feedback/first-use/bug-report-preview-and-publish.md` - Bug report scenario coverage
+- `client/plugin/tests/skills/feedback/first-use/feature-request-preview-and-publish.md` - Feature request scenario coverage
+- `client/plugin/tests/skills/feedback/first-use/cancel-or-redact-before-publish.md` - Privacy and cancellation scenario coverage
 
 ## Post-conditions
 - [ ] Functionality works as described
@@ -64,8 +68,8 @@ But instead of applying fixes locally, package this as a GitHub issue.
 ## Sub-Agent Waves
 
 ### Wave 1
-1. **Create skill structure**: Create `plugin/skills/feedback/` directory with skill definition
-   - Verify: Skill files exist
+1. **Update skill structure**: Update runtime feedback skill metadata and shared first-use instructions
+   - Verify: Skill files exist in the current `client/plugin/skills/` layout
 2. **Implement bug report flow**: Integrate with /cat:learn for RCA collection
    - Verify: Bug info collected correctly
 3. **Implement feature request flow**: Simple collection of feature details
@@ -74,5 +78,5 @@ But instead of applying fixes locally, package this as a GitHub issue.
    - Verify: User sees preview, must confirm
 5. **Implement GitHub publishing**: Use `gh issue create`
    - Verify: Issue created on GitHub with correct labels
-6. **Add to skill index**: Register in available skills
-   - Verify: `/cat:feedback` appears in help
+6. **Update skill metadata**: Ensure runtime skill descriptions advertise bug and feature feedback
+   - Verify: `/cat:feedback` appears in available skills
