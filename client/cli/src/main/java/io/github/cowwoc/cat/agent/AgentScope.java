@@ -80,11 +80,14 @@ public interface AgentScope extends AutoCloseable
   Path getCatDir();
 
   /**
-   * Returns the cross-session project CAT directory.
+   * Returns the cross-session project CAT work directory.
    * <p>
-   * Located at {@code {projectPath}/.cat/work/}.
+   * The path is configurable via the {@code workPath} config field (default:
+   * {@code ${CAT_PROJECT_DIR}/.cat/work}). Supports variable expansion:
+   * {@code ${CAT_PROJECT_DIR}} and {@code ${CLAUDE_PROJECT_DIR}} expand to the project root path, and a
+   * leading {@code ~} expands to the user home directory.
    *
-   * @return the project CAT directory path
+   * @return the CAT work directory path
    * @throws IllegalStateException if this scope is closed
    */
   Path getCatWorkPath();
@@ -92,7 +95,7 @@ public interface AgentScope extends AutoCloseable
   /**
    * Returns the per-session CAT directory.
    * <p>
-   * Located at {@code {projectPath}/.cat/work/sessions/{sessionId}/}.
+   * Located at {@code getCatWorkPath()/sessions/{sessionId}}.
    *
    * @param sessionId the session ID
    * @return the session CAT directory path
