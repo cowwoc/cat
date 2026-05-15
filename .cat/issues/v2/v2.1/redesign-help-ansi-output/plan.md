@@ -29,6 +29,8 @@ feature
 - [ ] Section headers use bold white.
 - [ ] The horizontal divider uses the amber-to-rose gradient.
 - [ ] Commands and example branch names use the rose color from the approved palette, not green.
+- [ ] The help output includes `add`, `work`, `remove`, and `uninstall` in the Codex `$cat:*` output.
+- [ ] The help output includes `learn` and `optimize-execution` under `Advanced`.
 - [ ] The `Personality traits` section does not include a separate `Values: low, medium, high` line.
 - [ ] The `Branch names` section describes support for `MAJOR`, `MAJOR.MINOR`, and `MAJOR.MINOR.PATCH` versioning
   schemes and says issue and branch names map to `<version>-title`.
@@ -45,9 +47,13 @@ The literal output should be:
 
 [1;37mStart here[0m
   [38;2;235;116;164m$cat:status[0m     See active issues, locks, and next steps
+  [38;2;235;116;164m$cat:add[0m        Create a new issue or version
+  [38;2;235;116;164m$cat:work[0m       Start or continue issue work
   [38;2;235;116;164m$cat:init[0m       Set up CAT in this project
   [38;2;235;116;164m$cat:config[0m     Tune autonomy, validation, review depth, cleanup, and detail
   [38;2;235;116;164m$cat:cleanup[0m    Remove stale locks and abandoned worktrees
+  [38;2;235;116;164m$cat:remove[0m     Remove an issue or version
+  [38;2;235;116;164m$cat:uninstall[0m  Uninstall CAT from Codex
 
 [1;37mWhat CAT does[0m
   CAT organizes your work, augments code quality, and applies your personal style
@@ -65,6 +71,10 @@ The literal output should be:
   [38;2;235;116;164mWork on v1 issues[0m       Work all v1.x.x issues
   [38;2;235;116;164mWork on v1.0 issues[0m     Work all v1.0.x issues
   [38;2;235;116;164mWork on 1.0-parse[0m       Work one specific issue
+
+[1;37mAdvanced[0m
+  [38;2;235;116;164m$cat:learn[0m               Record mistakes and prevent recurrence
+  [38;2;235;116;164m$cat:optimize-execution[0m  Analyze session efficiency
 
 [1;37mBranch names[0m
   Supports [38;2;255;214;102mMAJOR[0m, [38;2;255;214;102mMAJOR.MINOR[0m, and [38;2;255;214;102mMAJOR.MINOR.PATCH[0m versioning.
@@ -91,9 +101,12 @@ The Claude slash-command equivalent should match the approved output above, exce
 
 [1;37mStart here[0m
   [38;2;235;116;164m/cat:status[0m     See active issues, locks, and next steps
+  [38;2;235;116;164m/cat:add[0m        Create a new issue or version
+  [38;2;235;116;164m/cat:work[0m       Start or continue issue work
   [38;2;235;116;164m/cat:init[0m       Set up CAT in this project
   [38;2;235;116;164m/cat:config[0m     Tune autonomy, validation, review depth, cleanup, and detail
   [38;2;235;116;164m/cat:cleanup[0m    Remove stale locks and abandoned worktrees
+  [38;2;235;116;164m/cat:remove[0m     Remove an issue or version
 
 [1;37mWhat CAT does[0m
   CAT organizes your work, augments code quality, and applies your personal style
@@ -111,6 +124,10 @@ The Claude slash-command equivalent should match the approved output above, exce
   [38;2;235;116;164mWork on v1 issues[0m       Work all v1.x.x issues
   [38;2;235;116;164mWork on v1.0 issues[0m     Work all v1.0.x issues
   [38;2;235;116;164mWork on 1.0-parse[0m       Work one specific issue
+
+[1;37mAdvanced[0m
+  [38;2;235;116;164m/cat:learn[0m               Record mistakes and prevent recurrence
+  [38;2;235;116;164m/cat:optimize-execution[0m  Analyze session efficiency
 
 [1;37mBranch names[0m
   Supports [38;2;255;214;102mMAJOR[0m, [38;2;255;214;102mMAJOR.MINOR[0m, and [38;2;255;214;102mMAJOR.MINOR.PATCH[0m versioning.
