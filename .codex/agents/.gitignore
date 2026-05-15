@@ -1,13 +1,17 @@
 # Installed by plugins
 cat-blue-team-agent.toml
+cat-decompose-issue-agent.toml
 cat-diff-validation-agent.toml
 cat-instruction-analyzer-agent.toml
 cat-instruction-builder-implement-agent.toml
 cat-instruction-design-agent.toml
 cat-instruction-extraction-agent.toml
 cat-instruction-grader-agent.toml
+cat-learn-agent.toml
+cat-plan-builder-agent.toml
 cat-plan-review-agent.toml
 cat-red-team-agent.toml
+cat-research-agent.toml
 cat-stakeholder-architecture.toml
 cat-stakeholder-business.toml
 cat-stakeholder-deployment.toml
