@@ -71,11 +71,11 @@ The literal output should be:
   [38;2;235;116;164mWork on v1 issues[0m       Work all v1.x.x issues
   [38;2;235;116;164mWork on v1.0 issues[0m     Work all v1.0.x issues
 
-[1;37mIssue prompts[0m
-  [38;2;235;116;164mAdd version 2.8[0m
-  [38;2;235;116;164mAdd a screenshot of the X feature to README.md[0m
-  [38;2;235;116;164mRemove version 1.2[0m
-  [38;2;235;116;164mRemove 1.2-add-webscraper[0m
+[1;37mPlanning prompts[0m
+  [38;2;255;180;118mversions[0m  [38;2;235;116;164mAdd version 2.8[0m
+  [38;2;255;180;118mversions[0m  [38;2;235;116;164mRemove version 1.2[0m
+  [38;2;255;180;118missues[0m    [38;2;235;116;164mAdd a screenshot of the X feature to README.md[0m
+  [38;2;255;180;118missues[0m    [38;2;235;116;164mRemove 1.2-add-webscraper[0m
 
 [1;37mAdvanced[0m
   [38;2;235;116;164m$cat:learn[0m               Record mistakes and prevent recurrence
@@ -127,11 +127,11 @@ The Claude slash-command equivalent should match the approved output above, exce
   [38;2;235;116;164mWork on v1 issues[0m       Work all v1.x.x issues
   [38;2;235;116;164mWork on v1.0 issues[0m     Work all v1.0.x issues
 
-[1;37mIssue prompts[0m
-  [38;2;235;116;164mAdd version 2.8[0m
-  [38;2;235;116;164mAdd a screenshot of the X feature to README.md[0m
-  [38;2;235;116;164mRemove version 1.2[0m
-  [38;2;235;116;164mRemove 1.2-add-webscraper[0m
+[1;37mPlanning prompts[0m
+  [38;2;255;180;118mversions[0m  [38;2;235;116;164mAdd version 2.8[0m
+  [38;2;255;180;118mversions[0m  [38;2;235;116;164mRemove version 1.2[0m
+  [38;2;255;180;118missues[0m    [38;2;235;116;164mAdd a screenshot of the X feature to README.md[0m
+  [38;2;255;180;118missues[0m    [38;2;235;116;164mRemove 1.2-add-webscraper[0m
 
 [1;37mAdvanced[0m
   [38;2;235;116;164m/cat:learn[0m               Record mistakes and prevent recurrence
