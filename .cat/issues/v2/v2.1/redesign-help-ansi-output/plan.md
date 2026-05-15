@@ -54,8 +54,8 @@ The literal output should be:
 [1;37mStart here[0m
   [38;2;235;116;164m$cat:init[0m       Set up CAT in this project
   [38;2;235;116;164m$cat:config[0m     View or update configuration
-  [38;2;235;116;164m$cat:cleanup[0m    Remove stale locks and abandoned worktrees
   [38;2;235;116;164m$cat:status[0m     See active issues, locks, and next steps
+  [38;2;235;116;164m$cat:cleanup[0m    Remove stale locks and abandoned worktrees
   [38;2;235;116;164m$cat:uninstall[0m  Uninstall CAT from Codex
 
 [1;37mPersonality traits[0m
@@ -111,8 +111,8 @@ The Claude slash-command equivalent should match the approved output above, exce
 [1;37mStart here[0m
   [38;2;235;116;164m/cat:init[0m       Set up CAT in this project
   [38;2;235;116;164m/cat:config[0m     View or update configuration
-  [38;2;235;116;164m/cat:cleanup[0m    Remove stale locks and abandoned worktrees
   [38;2;235;116;164m/cat:status[0m     See active issues, locks, and next steps
+  [38;2;235;116;164m/cat:cleanup[0m    Remove stale locks and abandoned worktrees
 
 [1;37mPersonality traits[0m
   [38;2;255;180;118mtrust[0m       how much CAT acts independently before asking you
