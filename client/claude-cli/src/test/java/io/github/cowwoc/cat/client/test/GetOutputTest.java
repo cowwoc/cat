@@ -166,6 +166,36 @@ public class GetOutputTest
   }
 
   /**
+   * Verifies that generated instructions define missing, empty, and error-content output handling.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void outputContainsErrorContentFallbackInstructions() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-get-output-errors-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      GetOutput handler = new GetOutput(scope);
+      String result = handler.getOutput(new String[]{"config.no-changes"});
+
+      requireThat(result, "result").
+        contains("missing, empty, or contains error content").
+        contains("Java stack trace").
+        contains("\"status\":\"ERROR\"").
+        contains("\"error\":...").
+        contains("ERROR:`, `FATAL:`, or `FAILURE:").
+        contains("Whitespace-only content is treated as empty");
+      requireThat(result, "result").contains(
+        "Normal output containing the word \"error\" as display data is NOT error content");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that unknown skill type throws IllegalArgumentException with valid types listed.
    *
    * @throws IOException if an I/O error occurs
@@ -397,25 +427,20 @@ public class GetOutputTest
   }
 
   /**
-   * Verifies that when the first argument is a UUID (main agent ID, as passed via {@code $ARGUMENTS}),
-   * it is skipped and the second argument is used as the output type.
+   * Verifies that a UUID first argument is treated as the requested output type.
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
-  public void mainAgentIdAsFirstArgIsSkipped() throws IOException
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Unknown skill.*")
+  public void uuidFirstArgIsNotSkipped() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-skip-$0-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetOutput handler = new GetOutput(scope);
       String agentId = UUID.randomUUID().toString();
-      // When invoked via $ARGUMENTS, first arg is $0 (agent ID), second is the type
-      String result = handler.getOutput(new String[]{agentId, "config.saved"});
-
-      requireThat(result, "result").
-        contains("<output type=\"config.saved\">").
-        contains("SAVED");
+      handler.getOutput(new String[]{agentId, "config.saved"});
     }
     finally
     {
@@ -424,24 +449,20 @@ public class GetOutputTest
   }
 
   /**
-   * Verifies that when the first argument is a subagent ID (UUID/subagents/xxx), it is skipped and
-   * the second argument is used as the output type.
+   * Verifies that a subagent-looking first argument is treated as the requested output type.
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
-  public void subagentIdAsFirstArgIsSkipped() throws IOException
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Unknown skill.*")
+  public void subagentIdFirstArgIsNotSkipped() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-skip-subagent-$0-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetOutput handler = new GetOutput(scope);
       String subagentId = UUID.randomUUID() + "/subagents/abc123";
-      String result = handler.getOutput(new String[]{subagentId, "config.saved"});
-
-      requireThat(result, "result").
-        contains("<output type=\"config.saved\">").
-        contains("SAVED");
+      handler.getOutput(new String[]{subagentId, "config.saved"});
     }
     finally
     {
@@ -476,13 +497,13 @@ public class GetOutputTest
   }
 
   /**
-   * Integration test: verifies that skipAgentId and dot-notation parsing work together correctly
-   * when a subagent ID prefix is combined with a multi-argument dot-notation type invocation.
+   * Verifies that dot-notation parsing does not skip a leading subagent-looking value.
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
-  public void skipAgentIdAndDotNotationIntegration() throws IOException
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Unknown skill.*")
+  public void subagentIdAndDotNotationFirstArgIsNotSkipped() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-integration-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -494,14 +515,9 @@ public class GetOutputTest
 
       GetOutput handler = new GetOutput(scope);
       String agentId = UUID.randomUUID() + "/subagents/abc123";
-      // Full flow: subagent ID is skipped, then dot-notation type parsed, then extra args passed to handler
-      String result = handler.getOutput(new String[]{
+      handler.getOutput(new String[]{
         agentId, "config.conditions-for-version", "v1.0", "no-deps", "ready-to-release"
       });
-
-      requireThat(result, "result").
-        contains("<output type=\"config.conditions-for-version\">").
-        contains("CONDITIONS FOR v1.0");
     }
     finally
     {

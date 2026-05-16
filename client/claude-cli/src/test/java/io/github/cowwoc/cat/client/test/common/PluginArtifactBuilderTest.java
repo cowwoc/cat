@@ -240,6 +240,135 @@ public final class PluginArtifactBuilderTest
   }
 
   /**
+   * Verifies that shared skill fragments can render runtime-specific deterministic output commands.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void buildReplacesRuntimeOutputRenderDirectives() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try
+    {
+      Path repoRoot = tempDir.resolve("repo");
+      Path clientDir = repoRoot.resolve("client");
+      Path pluginDir = clientDir.resolve("plugin");
+      Path targetDir = clientDir.resolve("distribution/target/runtime");
+      createPluginSource(repoRoot, clientDir, pluginDir);
+      Path commonSkill = pluginDir.resolve("skills/common/common-skill");
+      Files.writeString(commonSkill.resolve("first-use.md"),
+        MARKDOWN_LICENSE + "<!-- cat:render-output get-status-output -->\n", StandardCharsets.UTF_8);
+
+      new PluginArtifactBuilder(pluginDir, clientDir, targetDir).build();
+
+      String claudeFirstUse = Files.readString(
+        targetDir.resolve("claude/skills/common-skill/first-use.md"), StandardCharsets.UTF_8);
+      String codexFirstUse = Files.readString(
+        targetDir.resolve("codex/skills/common-skill/first-use.md"), StandardCharsets.UTF_8);
+      requireThat(claudeFirstUse, "claudeFirstUse").
+        contains("Render the display with the deterministic Java output command. " +
+          "Return the generated display exactly.").
+        contains("!`: \"${CAT_PLUGIN_ROOT:?CAT_PLUGIN_ROOT is required}\"; " +
+          "if [ -z \"${CAT_PLUGIN_DATA:-}\" ]; then echo \"CAT_PLUGIN_DATA is required\" >&2; exit 1; fi; " +
+          "\"${CAT_PLUGIN_ROOT}/client/bin/get-status-output\"`").
+        doesNotContain("cat:render-output").
+        doesNotContain("\"$0\"").
+        doesNotContain("```bash");
+      requireThat(codexFirstUse, "codexFirstUse").
+        contains("Render the display with the deterministic Java output command. " +
+          "Return the generated display exactly.").
+        contains("Run the deterministic implementation through Bash:").
+        contains("\"${CAT_PLUGIN_ROOT}/client/bin/get-status-output\"").
+        doesNotContain("cat:render-output").
+        doesNotContain("!`");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that malformed render-output tokens fail the artifact build instead of generating shell text.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void buildRejectsInvalidRenderOutputDirectiveToken() throws IOException
+  {
+    assertRenderOutputDirectiveRejected("<!-- cat:render-output get-output bad$token -->",
+      "Invalid cat:render-output token: bad$token");
+  }
+
+  /**
+   * Verifies that blank render-output directives fail the artifact build instead of leaking into runtime artifacts.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void buildRejectsBlankRenderOutputDirective() throws IOException
+  {
+    assertRenderOutputDirectiveRejected("<!-- cat:render-output -->",
+      "cat:render-output command must not be blank");
+  }
+
+  /**
+   * Verifies that render-output directives require the first token to be a deterministic command.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void buildRejectsRenderOutputPlaceholderCommand() throws IOException
+  {
+    assertRenderOutputDirectiveRejected("<!-- cat:render-output <issue-path> -->",
+      "cat:render-output command must not be a placeholder: <issue-path>");
+  }
+
+  /**
+   * Verifies that render-output placeholders must use literal angle brackets, not HTML entities.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void buildRejectsEscapedRenderOutputPlaceholder() throws IOException
+  {
+    assertRenderOutputDirectiveRejected("<!-- cat:render-output get-output &lt;issue-path&gt; -->",
+      "Invalid cat:render-output token: &lt;issue-path&gt;");
+  }
+
+  private static void assertRenderOutputDirectiveRejected(String directive, String expectedMessage)
+    throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try
+    {
+      Path repoRoot = tempDir.resolve("repo");
+      Path clientDir = repoRoot.resolve("client");
+      Path pluginDir = clientDir.resolve("plugin");
+      Path targetDir = clientDir.resolve("distribution/target/runtime");
+      createPluginSource(repoRoot, clientDir, pluginDir);
+      Path commonSkill = pluginDir.resolve("skills/common/common-skill");
+      Files.writeString(commonSkill.resolve("first-use.md"),
+        MARKDOWN_LICENSE + directive + "\n", StandardCharsets.UTF_8);
+
+      try
+      {
+        new PluginArtifactBuilder(pluginDir, clientDir, targetDir).build();
+      }
+      catch (IllegalStateException e)
+      {
+        requireThat(e.getMessage(), "message").contains(expectedMessage);
+        return;
+      }
+      throw new AssertionError("Expected render-output directive rejection");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies current runtime artifacts expand shared agent contracts for both runtimes.
    *
    * @throws IOException if file operations fail
@@ -269,6 +398,10 @@ public final class PluginArtifactBuilderTest
           StandardCharsets.UTF_8);
         requireThat(helpFirstUse, runtime + "HelpFirstUse").doesNotContain("cat:include");
         requireThat(helpFirstUse, runtime + "HelpFirstUse").doesNotContain("${CAT_COMMAND_PREFIX}");
+        assertOutputRenderSkillConvention(runtimeRoot, runtime, "get-diff", "get-output");
+        assertOutputRenderSkillConvention(runtimeRoot, runtime, "status", "get-status-output");
+        assertOutputRenderSkillConvention(runtimeRoot, runtime, "token-report", "get-output");
+        assertOutputRenderSkillConvention(runtimeRoot, runtime, "work-complete", "get-output");
         String workExecuteAgent = "agents/work-execute.toml";
         if (runtime.equals("claude"))
           workExecuteAgent = "agents/work-execute.md";
@@ -324,6 +457,14 @@ public final class PluginArtifactBuilderTest
         requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
           "Changed files (read from WORKTREE_PATH): {CHANGED_FILES_BULLETS}");
         requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
+          "DISPATCH_HEAD_SHA=$(git rev-parse --verify \"HEAD^{commit}\")");
+        requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
+          "Reviewer dispatch HEAD ${DISPATCH_HEAD_SHA} does not match manifest HEAD ${HEAD_SHA}");
+        requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
+          "Before reading files, verify that the current worktree HEAD is exactly `{HEAD_SHA}`");
+        requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
+          "return REJECTED with a reviewer execution concern instead of reviewing stale content");
+        requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
           "stakeholder role\ninstructions parse that exact variable assignment");
         requireThat(stakeholderReview, runtime + "StakeholderReview").doesNotContain(
           "\nWORKTREE_PATH: {WORKTREE_PATH}");
@@ -340,6 +481,32 @@ public final class PluginArtifactBuilderTest
         requireThat(stakeholderReview, runtime + "StakeholderReview").contains("spawn_agent(message=prompt");
         requireThat(stakeholderReview, runtime + "StakeholderReview").contains("Agent(prompt=prompt");
         requireThat(stakeholderReview, runtime + "StakeholderReview").doesNotContain("cat:include");
+
+        String workReview = Files.readString(runtimeRoot.resolve("skills/work-review/first-use.md"),
+          StandardCharsets.UTF_8);
+        requireThat(workReview, runtime + "WorkReview").contains("reviewed_head_sha");
+        requireThat(workReview, runtime + "WorkReview").contains(
+          "REVIEWED_HEAD_SHA=$(cd \"${WORKTREE_PATH}\" && git rev-parse HEAD)");
+        requireThat(workReview, runtime + "WorkReview").contains(
+          "reject stale review results after later implementation changes");
+        requireThat(workReview, runtime + "WorkReview").doesNotContain("cat:include");
+
+        String workMerge = Files.readString(runtimeRoot.resolve("skills/work-merge/first-use.md"),
+          StandardCharsets.UTF_8);
+        requireThat(workMerge, runtime + "WorkMerge").contains("PERSISTED_HEAD_SHA=");
+        requireThat(workMerge, runtime + "WorkMerge").contains(
+          "CURRENT_HEAD_SHA=$(cd \"${WORKTREE_PATH}\" && git rev-parse HEAD)");
+        requireThat(workMerge, runtime + "WorkMerge").contains("Review result is stale");
+        requireThat(workMerge, runtime + "WorkMerge").contains(
+          "Re-run stakeholder review after the latest implementation change before presenting the approval gate");
+        requireThat(workMerge, runtime + "WorkMerge").doesNotContain("cat:include");
+
+        String workWithIssue = Files.readString(runtimeRoot.resolve("skills/work-with-issue/first-use.md"),
+          StandardCharsets.UTF_8);
+        requireThat(workWithIssue, runtime + "WorkWithIssue").contains("Step 5 freshness check");
+        requireThat(workWithIssue, runtime + "WorkWithIssue").contains(
+          "the merge phase must block the approval gate when the persisted");
+        requireThat(workWithIssue, runtime + "WorkWithIssue").doesNotContain("cat:include");
 
         String configFirstUse = Files.readString(runtimeRoot.resolve("skills/config/first-use.md"),
           StandardCharsets.UTF_8);
@@ -359,6 +526,85 @@ public final class PluginArtifactBuilderTest
             contains("INVOKE: Skill(\"cat:get-output\", args=\"config.settings\")").
             doesNotContain("!`");
         }
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies common output-rendering skills use render directives without repeating generated boilerplate.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void sourceOutputRenderSkillsOnlyUseRenderDirectives() throws IOException
+  {
+    Path sourceRoot = findSourceRoot();
+    Path skillsRoot = sourceRoot.resolve("client/plugin/skills");
+    for (String skillName : new String[]{"get-diff", "status", "token-report", "work-complete"})
+    {
+      String firstUse = Files.readString(skillsRoot.resolve("common/" + skillName + "/first-use.md"),
+        StandardCharsets.UTF_8);
+      requireThat(firstUse, skillName + "FirstUse").doesNotContain("cat:include");
+      requireThat(firstUse, skillName + "FirstUse").contains("cat:render-output");
+      requireThat(firstUse, skillName + "FirstUse").doesNotContain("deterministic Java output command");
+      requireThat(firstUse, skillName + "FirstUse").doesNotContain("Return the generated display exactly");
+      requireThat(Files.exists(skillsRoot.resolve("include/" + skillName + ".md"), LinkOption.NOFOLLOW_LINKS),
+        skillName + "IncludeExists").isFalse();
+    }
+  }
+
+  /**
+   * Verifies that the generated stakeholder-review dispatch guard refuses stale manifest HEADs
+   * before reviewer agents can be spawned.
+   *
+   * @throws IOException if file operations fail
+   * @throws InterruptedException if interrupted while running the guard
+   */
+  @Test
+  public void stakeholderReviewDispatchGuardBlocksStaleHeadBeforeReviewerSpawn()
+    throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try
+    {
+      Path sourceRoot = findSourceRoot();
+      Path tempRepo = tempDir.resolve("repo");
+      Path tempClient = tempRepo.resolve("client");
+      Files.createDirectories(tempRepo);
+      Files.writeString(tempRepo.resolve("LICENSE.md"), "license\n", StandardCharsets.UTF_8);
+      copyDirectory(sourceRoot.resolve("client/plugin"), tempClient.resolve("plugin"));
+
+      Path targetDir = tempClient.resolve("distribution/target/runtime");
+      new PluginArtifactBuilder(tempClient.resolve("plugin"), tempClient, targetDir).build();
+      String stakeholderReview = Files.readString(
+        targetDir.resolve("claude/skills/stakeholder-review/first-use.md"), StandardCharsets.UTF_8);
+      String dispatchGuard = extractExactHeadDispatchGuard(stakeholderReview);
+
+      Path gitRepo = TestUtils.createTempGitRepo("2.1-review-guard");
+      try
+      {
+        String currentHead = TestUtils.runGitCommandWithOutput(gitRepo, "rev-parse", "HEAD");
+        String staleHead = "0" + currentHead.substring(1);
+        if (staleHead.equals(currentHead))
+          staleHead = "1" + currentHead.substring(1);
+        GuardResult staleResult = runDispatchGuard(gitRepo, dispatchGuard, staleHead);
+
+        requireThat(staleResult.exitCode(), "staleExitCode").isNotEqualTo(0);
+        requireThat(staleResult.output(), "staleOutput").contains("does not match manifest HEAD");
+        requireThat(staleResult.output(), "staleOutput").doesNotContain("REVIEWERS_SPAWNED");
+
+        GuardResult currentResult = runDispatchGuard(gitRepo, dispatchGuard, currentHead);
+
+        requireThat(currentResult.exitCode(), "currentExitCode").isEqualTo(0);
+        requireThat(currentResult.output(), "currentOutput").contains("REVIEWERS_SPAWNED");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(gitRepo);
       }
     }
     finally
@@ -893,6 +1139,67 @@ public final class PluginArtifactBuilderTest
   }
 
   /**
+   * Extracts the executable exact-HEAD dispatch guard from generated stakeholder-review instructions.
+   *
+   * @param content the generated stakeholder-review content
+   * @return the dispatch guard shell body
+   */
+  private static String extractExactHeadDispatchGuard(String content)
+  {
+    String guardStart = "DISPATCH_HEAD_SHA=$(git rev-parse --verify \"HEAD^{commit}\")";
+    int start = content.indexOf(guardStart);
+    requireThat(start, "guardStart").isGreaterThanOrEqualTo(0);
+    int end = content.indexOf("\n```", start);
+    requireThat(end, "guardEnd").isGreaterThan(start);
+    return content.substring(start, end);
+  }
+
+  /**
+   * Runs the generated exact-HEAD dispatch guard in a git repository.
+   *
+   * @param gitRepo the git repository
+   * @param dispatchGuard the guard shell body
+   * @param manifestHead the manifest HEAD to compare against
+   * @return the guard process result
+   * @throws IOException if the guard cannot be started
+   * @throws InterruptedException if interrupted while waiting for the guard
+   */
+  private static GuardResult runDispatchGuard(Path gitRepo, String dispatchGuard, String manifestHead)
+    throws IOException, InterruptedException
+  {
+    String script = """
+      set -euo pipefail
+      HEAD_SHA='%s'
+      %s
+      echo REVIEWERS_SPAWNED
+      """.formatted(manifestHead, dispatchGuard);
+    try (Process process = new ProcessBuilder("bash", "-c", script).
+      directory(gitRepo.toFile()).
+      redirectErrorStream(true).
+      start())
+    {
+      boolean completed = process.waitFor(10, TimeUnit.SECONDS);
+      if (!completed)
+      {
+        process.destroyForcibly();
+        throw new AssertionError("Timed out running exact-head dispatch guard");
+      }
+      String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+      return new GuardResult(process.exitValue(), output);
+    }
+  }
+
+  /**
+   * Result of running the exact-HEAD dispatch guard.
+   *
+   * @param exitCode the process exit code
+   * @param output the process output
+   */
+  private record GuardResult(int exitCode, String output)
+  {
+  }
+
+  /**
    * Verifies content while ignoring line wrapping.
    *
    * @param content  the actual content
@@ -905,6 +1212,58 @@ public final class PluginArtifactBuilderTest
   }
 
   /**
+   * Verifies runtime-specific output rendering conventions for generated skill wrappers.
+   *
+   * @param runtimeRoot the runtime artifact root
+   * @param runtime the runtime name
+   * @param skillName the skill directory name
+   * @param commandName the expected command name
+   * @throws IOException if file operations fail
+   */
+  private static void assertOutputRenderSkillConvention(Path runtimeRoot, String runtime, String skillName,
+    String commandName) throws IOException
+  {
+    Path skillDirectory = runtimeRoot.resolve("skills/" + skillName);
+    String content = Files.readString(skillDirectory.resolve("SKILL.md"), StandardCharsets.UTF_8);
+    Path firstUse = skillDirectory.resolve("first-use.md");
+    if (Files.isRegularFile(firstUse, LinkOption.NOFOLLOW_LINKS))
+      content += "\n" + Files.readString(firstUse, StandardCharsets.UTF_8);
+    String assertionPrefix = runtime + capitalize(skillName);
+    assertContainsNormalized(content, assertionPrefix + "DeterministicCommand",
+      "deterministic Java output command");
+    assertContainsNormalized(content, assertionPrefix + "VerbatimOutput",
+      "Return the generated display exactly");
+    requireThat(content, assertionPrefix + "Command").contains(commandName);
+    requireThat(content, assertionPrefix + "NoRenderOutputDirective").doesNotContain("cat:render-output");
+    if (runtime.equals("claude"))
+    {
+      requireThat(content, assertionPrefix + "Preprocessor").contains("!`");
+      requireThat(content, assertionPrefix + "NoDollarZero").doesNotContain("\"$0\"");
+      requireThat(content, assertionPrefix + "NoBash").doesNotContain("```bash");
+      if (skillName.equals("get-diff"))
+        requireThat(content, assertionPrefix + "IssuePathPlaceholder").contains("\"$1\"");
+      if (skillName.equals("work-complete"))
+      {
+        requireThat(content, assertionPrefix + "CompletedIssuePlaceholder").contains("\"$1\"");
+        requireThat(content, assertionPrefix + "TargetBranchPlaceholder").contains("\"$2\"");
+      }
+    }
+    else
+    {
+      assertContainsNormalized(content, assertionPrefix + "BashInstruction",
+        "Run the deterministic implementation through Bash");
+      requireThat(content, assertionPrefix + "NoPreprocessor").doesNotContain("!`");
+      if (skillName.equals("get-diff"))
+        requireThat(content, assertionPrefix + "IssuePathPlaceholder").contains("\"<issue-path>\"");
+      if (skillName.equals("work-complete"))
+      {
+        requireThat(content, assertionPrefix + "CompletedIssuePlaceholder").contains("\"<completed-issue>\"");
+        requireThat(content, assertionPrefix + "TargetBranchPlaceholder").contains("\"<target-branch>\"");
+      }
+    }
+  }
+
+  /**
    * Normalizes generated instruction text for phrase assertions.
    *
    * @param content the content to normalize
@@ -913,6 +1272,19 @@ public final class PluginArtifactBuilderTest
   private static String normalizeInstructionText(String content)
   {
     return content.toLowerCase(Locale.ROOT).replace("`", "").replaceAll("\\s+", " ");
+  }
+
+  /**
+   * Capitalizes the first character of a string.
+   *
+   * @param value the value to capitalize
+   * @return the capitalized value
+   */
+  private static String capitalize(String value)
+  {
+    if (value.isEmpty())
+      return value;
+    return Character.toUpperCase(value.charAt(0)) + value.substring(1);
   }
 
   /**

@@ -322,10 +322,13 @@ REVIEW_RESULT_FILE="${REVIEW_DIR}/${ISSUE_ID}-result.json"
 ```
 
 If `REVIEW_RESULT_FILE` exists:
-- Read the file and extract the `status` field:
+- Read the file and extract the `status` and `reviewed_head_sha` fields:
   ```bash
   PERSISTED_STATUS=$(grep -o '"status"[[:space:]]*:[[:space:]]*"[^"]*"' "${REVIEW_RESULT_FILE}" | \
     head -1 | sed 's/.*"status"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+  PERSISTED_HEAD_SHA=$(grep -o '"reviewed_head_sha"[[:space:]]*:[[:space:]]*"[^"]*"' "${REVIEW_RESULT_FILE}" | \
+    head -1 | sed 's/.*"reviewed_head_sha"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+  CURRENT_HEAD_SHA=$(cd "${WORKTREE_PATH}" && git rev-parse HEAD)
   ```
 - If `PERSISTED_STATUS` is absent or empty: STOP with error:
   ```
@@ -337,6 +340,18 @@ If `REVIEW_RESULT_FILE` exists:
   ```
   ERROR: Review phase reported FAILED status. One or more reviewer subagents did not return a result.
   All reviewer subagents must complete before the approval gate can be presented.
+  Re-run /cat:work to retry the review phase.
+  ```
+- If `PERSISTED_HEAD_SHA` is absent or empty: STOP with error:
+  ```
+  ERROR: Review result file at ${REVIEW_RESULT_FILE} contains no reviewed_head_sha.
+  The review phase must run after the latest implementation change before the approval gate can be presented.
+  Re-run /cat:work to retry the review phase.
+  ```
+- If `PERSISTED_HEAD_SHA != CURRENT_HEAD_SHA`: STOP with error:
+  ```
+  ERROR: Review result is stale. Reviewed HEAD ${PERSISTED_HEAD_SHA}, but current HEAD is ${CURRENT_HEAD_SHA}.
+  Re-run stakeholder review after the latest implementation change before presenting the approval gate.
   Re-run /cat:work to retry the review phase.
   ```
 
@@ -462,7 +477,8 @@ remaining, offer only: ["Approve and merge (with known concerns)", "Request chan
        ${MEDIUM_PLUS_CONCERNS}
    ```
 3. Re-squash ALL commits (MANDATORY, M560): invoke `cat:git-squash` before re-running stakeholder review.
-4. Re-run stakeholder review on squashed state:
+4. Re-run stakeholder review on the newly squashed HEAD. The persisted review result `reviewed_head_sha` must match
+   the current HEAD before the approval gate can be presented:
    `Skill("cat:stakeholder-review", "${ISSUE_ID} ${WORKTREE_PATH} ${CAUTION} ${TARGET_BRANCH} ${ALL_COMMITS_COMPACT}")`
 5. Increment `FIX_ITERATION`. Return to Step 11.
 

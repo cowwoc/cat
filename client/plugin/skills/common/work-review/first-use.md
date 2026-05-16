@@ -1227,10 +1227,13 @@ done
 ```
 
 Write the file. Use printf with a here-doc approach that does not involve redirecting tee or '>' to
-a variable-expanded path — instead construct the JSON as a string variable and write with printf:
+a variable-expanded path — instead construct the JSON as a string variable and write with printf. Include the exact
+reviewed base and head SHAs so the merge phase can reject stale review results after later implementation changes:
 
 ```bash
-REVIEW_RESULT_JSON="{\"status\":\"${REVIEW_STATUS}\",\"has_high_or_critical\":${HAS_HIGH_OR_CRITICAL}}"
+REVIEWED_BASE_SHA=$(cd "${WORKTREE_PATH}" && git rev-parse "${TARGET_BRANCH}")
+REVIEWED_HEAD_SHA=$(cd "${WORKTREE_PATH}" && git rev-parse HEAD)
+REVIEW_RESULT_JSON="{\"status\":\"${REVIEW_STATUS}\",\"has_high_or_critical\":${HAS_HIGH_OR_CRITICAL},\"reviewed_base_sha\":\"${REVIEWED_BASE_SHA}\",\"reviewed_head_sha\":\"${REVIEWED_HEAD_SHA}\"}"
 printf '%s' "${REVIEW_RESULT_JSON}" > "${REVIEW_RESULT_FILE}"
 ```
 

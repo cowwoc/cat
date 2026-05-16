@@ -4,4 +4,4 @@ Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
 
-Render the issue-complete summary with the deterministic Java output command. Return the generated display exactly.
+<!-- cat:render-output get-output get-diff <issue-path> -->

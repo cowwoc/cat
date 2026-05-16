@@ -41,6 +41,10 @@ public final class PluginArtifactBuilder
 {
   private static final Pattern FILE_REFERENCE = Pattern.compile(
     "(?<![A-Za-z0-9_./-])([A-Za-z0-9][A-Za-z0-9_.-]*\\.[A-Za-z0-9][A-Za-z0-9_.-]*)(?![A-Za-z0-9_./-])");
+  private static final Pattern RENDER_OUTPUT_DIRECTIVE =
+    Pattern.compile("(?m)^\\s*<!--\\s*cat:render-output\\b(.*?)\\s*-->\\s*$");
+  private static final Pattern RENDER_OUTPUT_TOKEN = Pattern.compile("[A-Za-z0-9][A-Za-z0-9_.-]*");
+  private static final Pattern RENDER_OUTPUT_PLACEHOLDER = Pattern.compile("<[A-Za-z0-9][A-Za-z0-9_.-]*>");
   private static final Pattern MARKDOWN_LICENSE_HEADER = Pattern.compile(
     "\\A(?<frontmatter>---\\R.*?\\R---\\R)?" +
       "<!--\\R" +
@@ -285,6 +289,8 @@ public final class PluginArtifactBuilder
               throw new IllegalStateException("Runtime artifact contains source license text: " + file);
             if (text.contains("cat:include"))
               throw new IllegalStateException("Runtime artifact contains unresolved cat:include marker: " + file);
+            if (text.contains("cat:render-output"))
+              throw new IllegalStateException("Runtime artifact contains unresolved cat:render-output marker: " + file);
           }
           return FileVisitResult.CONTINUE;
         }
@@ -568,9 +574,149 @@ public final class PluginArtifactBuilder
    */
   private String replaceRuntimePlaceholders(Runtime runtime, String text)
   {
-    return text.
+    return replaceRenderOutputDirectives(runtime, text).
       replace("${CAT_COMMAND_PREFIX}", commandPrefix(runtime)).
       replace("${CAT_CONFIG_SETTINGS_RENDER_STEP}", configSettingsRenderStep(runtime));
+  }
+
+  /**
+   * Replaces source-only output rendering directives with runtime-specific instructions.
+   *
+   * @param runtime the runtime being built
+   * @param text    the source text
+   * @return text with output rendering directives resolved
+   */
+  private String replaceRenderOutputDirectives(Runtime runtime, String text)
+  {
+    Matcher matcher = RENDER_OUTPUT_DIRECTIVE.matcher(text);
+    return matcher.replaceAll(result -> Matcher.quoteReplacement(renderOutput(runtime, result.group(1))));
+  }
+
+  /**
+   * Returns runtime-specific instructions for invoking a deterministic output command.
+   *
+   * @param runtime the runtime being built
+   * @param rawArguments directive arguments
+   * @return runtime-specific output rendering instructions
+   */
+  private String renderOutput(Runtime runtime, String rawArguments)
+  {
+    List<String> tokens = Stream.of(rawArguments.strip().split("\\s+")).
+      filter(token -> !token.isEmpty()).
+      toList();
+    if (tokens.isEmpty())
+      throw new IllegalStateException("cat:render-output command must not be blank");
+    for (String token : tokens)
+      validateRenderOutputToken(token);
+    if (isPlaceholder(tokens.getFirst()))
+      throw new IllegalStateException("cat:render-output command must not be a placeholder: " + tokens.getFirst());
+    return switch (runtime)
+    {
+      case CLAUDE -> renderClaudeOutput(tokens);
+      case CODEX -> renderCodexOutput(tokens);
+    };
+  }
+
+  /**
+   * Returns Claude-specific preprocessor output rendering instructions.
+   *
+   * @param tokens command tokens
+   * @return Claude-specific output rendering instructions
+   */
+  private String renderClaudeOutput(List<String> tokens)
+  {
+    StringBuilder command = new StringBuilder(256);
+    command.append(renderOutputPurpose()).append("\n\n").
+      append("!`: \"${CAT_PLUGIN_ROOT:?CAT_PLUGIN_ROOT is required}\"; " +
+        "if [ -z \"${CAT_PLUGIN_DATA:-}\" ]; then echo \"CAT_PLUGIN_DATA is required\" >&2; exit 1; fi; " +
+        "\"${CAT_PLUGIN_ROOT}/client/bin/").append(tokens.getFirst()).append('"');
+    int argumentIndex = 1;
+    for (String token : tokens.subList(1, tokens.size()))
+    {
+      command.append(' ');
+      if (isPlaceholder(token))
+      {
+        command.append("\"$").append(argumentIndex).append('"');
+        ++argumentIndex;
+      }
+      else
+        command.append('"').append(token).append('"');
+    }
+    return command.append('`').toString();
+  }
+
+  /**
+   * Returns Codex-specific Bash output rendering instructions.
+   *
+   * @param tokens command tokens
+   * @return Codex-specific output rendering instructions
+   */
+  private String renderCodexOutput(List<String> tokens)
+  {
+    StringBuilder output = new StringBuilder(512);
+    output.append(renderOutputPurpose()).append("\n\n").
+      append("Run the deterministic implementation through Bash");
+    List<String> placeholders = tokens.stream().
+      filter(PluginArtifactBuilder::isPlaceholder).
+      toList();
+    if (!placeholders.isEmpty())
+    {
+      output.append(", replacing ");
+      for (int i = 0; i < placeholders.size(); ++i)
+      {
+        if (i > 0)
+        {
+          if (i == placeholders.size() - 1)
+            output.append(" and ");
+          else
+            output.append(", ");
+        }
+        output.append('`').append(placeholders.get(i)).append('`');
+      }
+      output.append(" with the skill arguments");
+    }
+    output.append(":\n\n```bash\nif [ -z \"${CAT_PLUGIN_DATA:-}\" ]; then\n").
+      append("  echo \"CAT_PLUGIN_DATA is required\" >&2\n").
+      append("  exit 1\n").
+      append("fi\n\"${CAT_PLUGIN_ROOT}/client/bin/").
+      append(tokens.getFirst()).append('"');
+    for (String token : tokens.subList(1, tokens.size()))
+      output.append(' ').append('"').append(token).append('"');
+    return output.append("\n```").toString();
+  }
+
+  /**
+   * Returns the common instruction text for deterministic output rendering.
+   *
+   * @return the common output rendering purpose
+   */
+  private static String renderOutputPurpose()
+  {
+    return "Render the display with the deterministic Java output command. Return the generated display exactly.";
+  }
+
+  /**
+   * Indicates whether a token is an argument placeholder.
+   *
+   * @param token the token
+   * @return true if the token is a placeholder
+   */
+  private static boolean isPlaceholder(String token)
+  {
+    return RENDER_OUTPUT_PLACEHOLDER.matcher(token).matches();
+  }
+
+  /**
+   * Validates a directive token before generating shell instructions.
+   *
+   * @param token the token to validate
+   * @throws IllegalStateException if the token is invalid
+   */
+  private static void validateRenderOutputToken(String token)
+  {
+    if (RENDER_OUTPUT_TOKEN.matcher(token).matches() || isPlaceholder(token))
+      return;
+    throw new IllegalStateException("Invalid cat:render-output token: " + token);
   }
 
   /**

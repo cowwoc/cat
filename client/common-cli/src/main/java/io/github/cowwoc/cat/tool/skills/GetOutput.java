@@ -8,8 +8,9 @@ package io.github.cowwoc.cat.tool.skills;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,8 +18,6 @@ import org.slf4j.LoggerFactory;
 import io.github.cowwoc.cat.tool.CliTool;
 import io.github.cowwoc.cat.tool.JvmScope;
 import io.github.cowwoc.cat.tool.MainCliTool;
-import io.github.cowwoc.cat.tool.util.AgentIdPatterns;
-
 import static io.github.cowwoc.cat.tool.Strings.block;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -37,6 +36,23 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  */
 public final class GetOutput implements SkillOutput
 {
+  /**
+   * Ordered skill handlers for dispatch and error messages.
+   */
+  private static final List<Handler> HANDLERS = List.of(
+    new Handler("status", GetStatusOutput::new),
+    new Handler("token-report", GetTokenReportOutput::new),
+    new Handler("get-diff", GetDiffOutput::new),
+    new Handler("cleanup", GetCleanupOutput::new),
+    new Handler("retrospective", GetRetrospectiveOutput::new),
+    new Handler("config", GetConfigOutput::new),
+    new Handler("init", GetInitOutput::new),
+    new Handler("work-complete", GetIssueCompleteOutput::new),
+    new Handler("statusline", GetStatuslineOutput::new),
+    new Handler("instruction-test-aggregator", InstructionTestAggregator::new),
+    new Handler("description-optimizer", DescriptionOptimizer::new),
+    new Handler("add", GetAddOutput::new));
+
   /**
    * The JVM scope for accessing shared services.
    */
@@ -57,21 +73,13 @@ public final class GetOutput implements SkillOutput
   /**
    * Generates output by dispatching to the appropriate skill handler.
    * <p>
-   * When invoked via {@code get-output/first-use.md} with {@code $ARGUMENTS}, the first
-   * argument is the agent ID ({@code $0}) and is skipped. The second argument is then the output
-   * type in dot-notation: {@code skill[.page]}.
-   * <p>
-   * When invoked directly (e.g., from CLI or tests without an agent ID prefix), and the first
-   * argument matches the agent ID format (UUID or UUID/subagents/...), it is also skipped.
-   * Otherwise, the first argument is used as the type directly.
-   * <p>
    * The type format is {@code skill[.page]}: the part before the first dot selects the handler,
    * and the optional part after the dot is passed as a page argument. Any additional arguments are
    * passed through to the handler.
    * <p>
    * The output is wrapped in {@code <output type="...">} tags.
    *
-   * @param args the preprocessor arguments: [$0-agent-id (skipped), type, ...extra-args]
+   * @param args the preprocessor arguments: [type, ...extra-args]
    * @return the generated output wrapped in an output tag
    * @throws NullPointerException if {@code args} is null
    * @throws IllegalArgumentException if no type argument is provided or if the skill is unknown
@@ -82,15 +90,12 @@ public final class GetOutput implements SkillOutput
   {
     requireThat(args, "args").isNotNull();
 
-    // Skip $0 (the agent ID) which is always the first argument when invoked via $ARGUMENTS
-    String[] effectiveArgs = skipAgentId(args);
-
-    if (effectiveArgs.length < 1)
+    if (args.length < 1)
       throw new IllegalArgumentException(
         "get-output requires a type argument. Usage: get-output <type> [extra-args...]\n" +
         "Type format: skill[.page] (e.g., status, config.settings, init.choose-your-partner)");
 
-    String type = effectiveArgs[0];
+    String type = args[0];
     int dotIndex = type.indexOf('.');
     String skill;
     String page;
@@ -106,8 +111,8 @@ public final class GetOutput implements SkillOutput
     }
 
     // Build handler args: [page (if present), ...extra-args]
-    String[] extraArgs = new String[effectiveArgs.length - 1];
-    System.arraycopy(effectiveArgs, 1, extraArgs, 0, effectiveArgs.length - 1);
+    String[] extraArgs = new String[args.length - 1];
+    System.arraycopy(args, 1, extraArgs, 0, args.length - 1);
 
     String[] handlerArgs;
     if (page.isEmpty())
@@ -119,25 +124,10 @@ public final class GetOutput implements SkillOutput
       System.arraycopy(extraArgs, 0, handlerArgs, 1, extraArgs.length);
     }
 
-    String content = switch (skill)
-    {
-      case "status" -> new GetStatusOutput(scope).getOutput(handlerArgs);
-      case "token-report" -> new GetTokenReportOutput(scope).getOutput(handlerArgs);
-      case "get-diff" -> new GetDiffOutput(scope).getOutput(handlerArgs);
-      case "cleanup" -> new GetCleanupOutput(scope).getOutput(handlerArgs);
-      case "retrospective" -> new GetRetrospectiveOutput(scope).getOutput(handlerArgs);
-      case "config" -> new GetConfigOutput(scope).getOutput(handlerArgs);
-      case "init" -> new GetInitOutput(scope).getOutput(handlerArgs);
-      case "work-complete" -> new GetIssueCompleteOutput(scope).getOutput(handlerArgs);
-      case "statusline" -> new GetStatuslineOutput(scope).getOutput(handlerArgs);
-      case "instruction-test-aggregator" -> new InstructionTestAggregator(scope).getOutput(handlerArgs);
-      case "description-optimizer" -> new DescriptionOptimizer(scope).getOutput(handlerArgs);
-      case "add" -> new GetAddOutput(scope).getOutput(handlerArgs);
-      default -> throw new IllegalArgumentException("Unknown skill: '" + skill +
-        "'. Valid skills: status, token-report, get-diff, cleanup, retrospective, " +
-        "config, init, work-complete, statusline, " +
-        "instruction-test-aggregator, description-optimizer, add");
-    };
+    SkillOutput handler = handlerFor(skill);
+    if (handler == null)
+      throw new IllegalArgumentException("Unknown skill: '" + skill + "'. Valid skills: " + validSkills());
+    String content = handler.getOutput(handlerArgs);
 
     if (content == null)
       return null;
@@ -200,26 +190,56 @@ public final class GetOutput implements SkillOutput
   }
 
   /**
-   * Skips the first argument if it matches the agent ID format (UUID or subagent ID).
-   * <p>
-   * When invoked via {@code get-output/first-use.md} with {@code $ARGUMENTS}, the first
-   * argument is the agent ID ({@code $0}). This method strips it so the remaining arguments
-   * start with the output type.
+   * Returns the handler for a skill name.
    *
-   * @param args the raw arguments array
-   * @return the arguments with the agent ID prefix removed if present, or the original array if
-   *   the first argument is not an agent ID
+   * @param skill the skill name
+   * @return the handler, or null if the skill is unknown
    */
-  private static String[] skipAgentId(String[] args)
+  private SkillOutput handlerFor(String skill)
   {
-    if (args.length > 0)
+    for (Handler handler : HANDLERS)
     {
-      String first = args[0];
-      if (AgentIdPatterns.SESSION_ID_PATTERN.matcher(first).matches() ||
-        AgentIdPatterns.SUBAGENT_ID_PATTERN.matcher(first).matches())
-        return Arrays.copyOfRange(args, 1, args.length);
+      if (handler.name().equals(skill))
+        return handler.outputFactory().create(scope);
     }
-    return args;
+    return null;
+  }
+
+  /**
+   * Returns valid skill names for error messages.
+   *
+   * @return a comma-separated list of valid skill names
+   */
+  private static String validSkills()
+  {
+    return HANDLERS.stream().
+      map(Handler::name).
+      collect(Collectors.joining(", "));
+  }
+
+  /**
+   * Creates a skill output handler.
+   */
+  @FunctionalInterface
+  private interface OutputFactory
+  {
+    /**
+     * Creates a skill output handler.
+     *
+     * @param scope the JVM scope for accessing shared services
+     * @return the skill output handler
+     */
+    SkillOutput create(CliTool scope);
+  }
+
+  /**
+   * Binds a skill name to its handler factory.
+   *
+   * @param name the skill name
+   * @param outputFactory the handler factory
+   */
+  private record Handler(String name, OutputFactory outputFactory)
+  {
   }
 
   /**

@@ -11,6 +11,4 @@ Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
 
-<!-- cat:include ../../include/work-complete.md -->
-
-!`: "${CAT_PLUGIN_ROOT:?CAT_PLUGIN_ROOT is required}"; "${CAT_PLUGIN_ROOT}/client/bin/get-output" work-complete "$1" "$2"`
+See `${CAT_PLUGIN_ROOT}/rules/common/skill-loading.md` and follow it exactly.

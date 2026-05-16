@@ -505,6 +505,21 @@ CHANGED_FILE_COUNT, CLIENT_FILE_COUNT, and CHANGED_FILES_FINGERPRINT.
 **CRITICAL — Parallel Dispatch:** Issue ALL reviewer agent calls in a single message. Do NOT await results
 between calls.
 
+**Exact-HEAD dispatch guard (MANDATORY):** Immediately before spawning reviewer agents, verify that the worktree HEAD
+still matches the manifest HEAD captured above. Do not dispatch reviewers against a mutable or changed HEAD:
+
+```bash
+DISPATCH_HEAD_SHA=$(git rev-parse --verify "HEAD^{commit}") || {
+    echo "ERROR: HEAD is not a valid commit ref before reviewer dispatch." >&2
+    exit 1
+}
+if [[ "${DISPATCH_HEAD_SHA}" != "${HEAD_SHA}" ]]; then
+    echo "ERROR: Reviewer dispatch HEAD ${DISPATCH_HEAD_SHA} does not match manifest HEAD ${HEAD_SHA}." >&2
+    echo "Re-run stakeholder review after the latest implementation change." >&2
+    exit 1
+fi
+```
+
 Spawn each stakeholder with:
 
 ```
@@ -528,6 +543,8 @@ The line above is intentionally written as `WORKTREE_PATH=<absolute-path>` becau
 instructions parse that exact variable assignment before reviewing. This is the canonical form.
 Do not rewrite it as prose, `WORKTREE_PATH: <absolute-path>`, or any other alternate syntax.
 Do not include multiple `WORKTREE_PATH` lines in the same reviewer prompt.
+Before reading files, verify that the current worktree HEAD is exactly `{HEAD_SHA}`. If the current worktree HEAD
+differs from `{HEAD_SHA}`, return REJECTED with a reviewer execution concern instead of reviewing stale content.
 Read every changed file using absolute paths rooted at {WORKTREE_PATH}/.
 Use Read/Glob/Grep only within {WORKTREE_PATH}/ and ${CAT_PLUGIN_ROOT}/ (role definition,
 language supplement). Reading outside these paths invalidates the review.
@@ -721,6 +738,8 @@ Fail if missing. Action: caution_level="none" → skip; "quick"|"changed"|"all" 
 - [ ] Reviewer subagents used stakeholder-specific agent types, not generic/default agents
 - [ ] Agent-spawning tool only — Task tool and `run_in_background: true` were NOT used for reviewer subagents
 - [ ] `BASE_SHA` and `HEAD_SHA` pinned before reviewer dispatch; all diffs used `${BASE_SHA}..${HEAD_SHA}` not mutable `HEAD`
+- [ ] `DISPATCH_HEAD_SHA` checked immediately before spawning reviewers and matched pinned `HEAD_SHA`
+- [ ] Reviewer prompts required current worktree HEAD verification before reading files
 - [ ] Review manifest written under `${WORKTREE_PATH}/.cat/work/review/manifest.json`
 - [ ] Stale `*-concerns.json` files cleared before reviewer dispatch
 - [ ] Each reviewer JSON metadata matched `target_branch`, `reviewed_base_sha`, `reviewed_head_sha`,
