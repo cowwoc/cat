@@ -248,7 +248,7 @@ Build COMMITS_COMPACT from the execution result's commits array.
 ```
 Skill tool:
   skill: "cat:stakeholder-review"
-  args: "${ISSUE_ID} ${WORKTREE_PATH} ${CAUTION} ${COMMITS_COMPACT}"
+  args: "${ISSUE_ID} ${WORKTREE_PATH} ${CAUTION} ${TARGET_BRANCH} ${COMMITS_COMPACT}"
 ```
 
 The stakeholder-review skill will spawn its own reviewer subagents and return aggregated results.
@@ -259,7 +259,7 @@ Before parsing the stakeholder-review result, verify that the returned JSON cont
 greater than the count of selected stakeholders.
 
 `reviewer_count` is a top-level integer field in the JSON output from `stakeholder-review` (set in Step 4 of
-that skill to the number of Task tool responses actually received, before synthetic results were added).
+that skill to the number of reviewer Agent responses actually received, before synthetic results were added).
 
 The count of selected stakeholders is the total number of stakeholder results returned in the review output
 (including any synthetic REJECTED results added for missing reviewers). Extract this count from the result's
@@ -347,9 +347,17 @@ The `cat:stakeholder-review` skill returns a JSON object. Extract the following 
 
 - `REVIEW_STATUS` = `review_result.review_status` (e.g., `"REVIEW_PASSED"` or `"CONCERNS_FOUND"`)
 - `ALL_CONCERNS` = `review_result.concerns[]` — the full list of concern objects returned by the review
+- `REVIEWED_BASE_SHA` = `review_result.reviewed_base_sha` if present; otherwise read
+  `${WORKTREE_PATH}/.cat/work/review/manifest.json`
+- `REVIEWED_HEAD_SHA` = `review_result.reviewed_head_sha` if present; otherwise read
+  `${WORKTREE_PATH}/.cat/work/review/manifest.json`
+- `CHANGED_FILE_COUNT` = `review_result.changed_file_count` if present; otherwise read
+  `${WORKTREE_PATH}/.cat/work/review/manifest.json`
 
 Store `ALL_CONCERNS` for use in the auto-fix loop and the approval gate. Each concern object has fields:
 `severity`, `stakeholder`, `location`, `explanation`, `recommendation`, and optionally `detail_file`.
+Store `REVIEWED_BASE_SHA` and `REVIEWED_HEAD_SHA` for all downstream file-scope checks so the cost/benefit and
+auto-fix logic uses the same immutable diff that reviewers saw.
 
 **Severity immutability (MANDATORY):** The `severity` field of each concern object is set by the stakeholder
 reviewer and MUST NOT be modified, re-interpreted, downgraded, or overridden at any point during the review phase.
@@ -882,7 +890,7 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
    ```
    Skill tool:
      skill: "cat:stakeholder-review"
-     args: "${ISSUE_ID} ${WORKTREE_PATH} ${CAUTION} ${ALL_COMMITS_COMPACT}"
+     args: "${ISSUE_ID} ${WORKTREE_PATH} ${CAUTION} ${TARGET_BRANCH} ${ALL_COMMITS_COMPACT}"
    ```
 14. **Merge prior unresolved concerns (MANDATORY):** After parsing the new review result into `ALL_CONCERNS`, merge
    `PRIOR_UNRESOLVED_CONCERNS` back: for each concern in `PRIOR_UNRESOLVED_CONCERNS`, check whether a concern with
@@ -950,8 +958,8 @@ defer it.
 **Step 1: Read the list of files changed by this issue:**
 
 ```bash
-# Compare against target branch (what the issue changed)
-cd "${WORKTREE_PATH}" && git diff --name-only "${TARGET_BRANCH}..HEAD"
+# Compare against the pinned review manifest (what reviewers actually reviewed)
+cd "${WORKTREE_PATH}" && git diff --name-only "${REVIEWED_BASE_SHA}..${REVIEWED_HEAD_SHA}"
 ```
 
 **Step 2: For each remaining concern, calculate benefit and cost:**
@@ -970,7 +978,7 @@ modifications to files or code NOT already changed by the current issue:
 - 10: Significant out-of-scope changes (~30+ lines or architectural changes across files)
 
 **Cost validation (MANDATORY):** Cost=0 may ONLY be assigned when the concern's `location` field references a file
-that appears in the `git diff --name-only "${TARGET_BRANCH}..HEAD"` output from Step 1. If the concern's location
+that appears in the `git diff --name-only "${REVIEWED_BASE_SHA}..${REVIEWED_HEAD_SHA}"` output from Step 1. If the concern's location
 references a file NOT in that list, cost MUST be >= 1. If the concern has no `location` field or the location does
 not reference a specific file, cost MUST be >= 1 (the fix scope is unknown and cannot be confirmed as in-scope).
 When presenting the Concern Decision Gate, include the cost assignment and the file(s) used to justify it so

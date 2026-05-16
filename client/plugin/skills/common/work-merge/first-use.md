@@ -463,7 +463,7 @@ remaining, offer only: ["Approve and merge (with known concerns)", "Request chan
    ```
 3. Re-squash ALL commits (MANDATORY, M560): invoke `cat:git-squash` before re-running stakeholder review.
 4. Re-run stakeholder review on squashed state:
-   `Skill("cat:stakeholder-review", "${ISSUE_ID} ${WORKTREE_PATH} ${CAUTION} ${ALL_COMMITS_COMPACT}")`
+   `Skill("cat:stakeholder-review", "${ISSUE_ID} ${WORKTREE_PATH} ${CAUTION} ${TARGET_BRANCH} ${ALL_COMMITS_COMPACT}")`
 5. Increment `FIX_ITERATION`. Return to Step 11.
 
 **If changes requested:** Return to user with feedback for iteration. Return status:

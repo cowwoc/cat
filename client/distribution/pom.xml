@@ -20,7 +20,19 @@
 	<dependencies>
 		<dependency>
 			<groupId>io.github.cowwoc.cat</groupId>
-			<artifactId>cat-cli</artifactId>
+			<artifactId>cat-common-cli</artifactId>
+			<version>${project.version}</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.github.cowwoc.cat</groupId>
+			<artifactId>cat-claude-cli</artifactId>
+			<version>${project.version}</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.github.cowwoc.cat</groupId>
+			<artifactId>cat-codex-cli</artifactId>
 			<version>${project.version}</version>
 			<scope>runtime</scope>
 		</dependency>
@@ -38,6 +50,18 @@
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>exec-maven-plugin</artifactId>
 				<executions>
+					<execution>
+						<id>build-jlink-images</id>
+						<phase>package</phase>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+						<configuration>
+							<executable>${project.basedir}/scripts/build-jlink-images.sh</executable>
+							<workingDirectory>${project.basedir}</workingDirectory>
+							<commandlineArgs>${jlink.extra.args}</commandlineArgs>
+						</configuration>
+					</execution>
 					<execution>
 						<id>build-runtime-plugin-artifacts</id>
 						<phase>package</phase>

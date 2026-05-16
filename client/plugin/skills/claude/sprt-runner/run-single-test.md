@@ -10,7 +10,7 @@ Use `run-sprt` as the canonical entrypoint for SPRT runs.
 ## Usage
 
 ```bash
-"${WORKTREE_PATH}/client/cli/target/jlink/claude/bin/instruction-test-runner" run-sprt \
+"${WORKTREE_PATH}/client/distribution/target/jlink/claude/bin/instruction-test-runner" run-sprt \
   <worktree_path> \
   <test_dir> \
   <test_model> \

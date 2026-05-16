@@ -78,8 +78,8 @@ Status values:
     runtime-native test infrastructure.
   - `CAT_RUNTIME` must be set before runtime E2E invocation. If it is unset for a high-caution E2E run, set E2E
     status to FAILED because the verifier cannot select the correct runtime artifact.
-  - Runtime invocation must use an absolute binary path:
-    `${WORKTREE_PATH}/client/cli/target/jlink/${CAT_RUNTIME}/bin/instruction-test-runner ...`
+  - Runtime invocation must use an absolute binary path from the selected runtime's worktree jlink image:
+    `${RUNTIME_BIN}/instruction-test-runner ...`
     Do NOT invoke `instruction-test-runner` via PATH lookup.
   - If a high-caution E2E run fails because the selected runtime path depends on another runtime's infrastructure,
     set E2E status to FAILED. Record the failure evidence in `${VERIFY_DIR}/e2e-test-output.json` and use explanation

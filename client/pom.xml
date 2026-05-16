@@ -13,7 +13,9 @@
 	<description>CAT Maven reactor</description>
 
 	<modules>
-		<module>cli</module>
+		<module>common-cli</module>
+		<module>codex-cli</module>
+		<module>claude-cli</module>
 		<module>plugin</module>
 		<module>distribution</module>
 	</modules>

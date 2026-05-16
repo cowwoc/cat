@@ -1,0 +1,143 @@
+/*
+ * Copyright (c) 2026 Gili Tzabari. All rights reserved.
+ *
+ * Licensed under the CAT Commercial License.
+ * See LICENSE.md in the project root for license terms.
+ */
+package io.github.cowwoc.cat.claude.hook;
+
+import io.github.cowwoc.pouch10.core.ConcurrentLazyReference;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+
+import java.io.IOException;
+import java.nio.file.Path;
+
+/**
+ * Production implementation of {@link ClaudeHook} for hook handler processes.
+ * <p>
+ * Reads infrastructure path variables ({@code CLAUDE_PROJECT_DIR}, {@code CLAUDE_PLUGIN_ROOT},
+ * {@code CLAUDE_PLUGIN_DATA}, {@code CLAUDE_CONFIG_DIR}, {@code TZ}) from {@code System.getenv()}
+ * and reads hook JSON from stdin at construction time.
+ * <p>
+ * <b>Thread Safety:</b> This class is thread-safe.
+ */
+public final class MainClaudeHook extends AbstractClaudeHook
+{
+  private final ConcurrentLazyReference<String> anthropicBaseUrl =
+    ConcurrentLazyReference.create(() ->
+    {
+      String value = System.getenv("ANTHROPIC_BASE_URL");
+      if (value == null || value.isBlank())
+        return "";
+      return value;
+    });
+  private final ConcurrentLazyReference<String> pluginJsonUrl =
+    ConcurrentLazyReference.create(() ->
+    {
+      String value = System.getenv("CAT_PLUGIN_JSON_URL");
+      if (value == null || value.isBlank())
+        return "";
+      return value;
+    });
+
+  /**
+   * Creates a new production hook scope.
+   * <p>
+   * Reads infrastructure path variables from {@code System.getenv()} and parses hook JSON from
+   * stdin. Fails immediately with {@link AssertionError} if any required path variable is absent.
+   *
+   * @throws AssertionError if {@code CLAUDE_PROJECT_DIR} or {@code CLAUDE_PLUGIN_ROOT} are not set
+   * @throws IllegalStateException if stdin has no piped input, contains blank or malformed JSON, or
+   *   is missing a session_id
+   */
+  public MainClaudeHook()
+  {
+    super(readStdin(), readEnvPath("CLAUDE_PROJECT_DIR"), readEnvPath("CLAUDE_PLUGIN_ROOT"),
+      readPluginDataPath(), readConfigPath(), Path.of(System.getProperty("user.dir")),
+      readOptionalEnv("TZ", "UTC"));
+  }
+
+  /**
+   * Reads the hook JSON from stdin.
+   *
+   * @return the parsed JSON node
+   * @throws IllegalStateException if stdin has no piped input or contains blank/malformed JSON
+   */
+  private static JsonNode readStdin()
+  {
+    try
+    {
+      if (System.console() != null && System.in.available() == 0)
+        throw new IllegalStateException("No piped input available on stdin.");
+    }
+    catch (IOException e)
+    {
+      throw new IllegalStateException("Failed to check stdin availability.", e);
+    }
+    JsonMapper mapper = getStdinMapper();
+    return readFrom(mapper, System.in);
+  }
+
+  /**
+   * Reads a required environment variable as a Path, failing fast if absent or blank.
+   *
+   * @param name the environment variable name
+   * @return the Path value
+   * @throws AssertionError if the variable is not set or is blank
+   */
+  private static Path readEnvPath(String name)
+  {
+    String value = System.getenv(name);
+    if (value == null || value.isBlank())
+      throw new AssertionError(name + " is required and must not be blank");
+    return Path.of(value);
+  }
+
+  /**
+   * Reads the plugin data directory from {@code CLAUDE_PLUGIN_DATA}.
+   *
+   * @return the plugin data directory path
+   * @throws AssertionError if {@code CLAUDE_PLUGIN_DATA} is not set
+   */
+  private static Path readPluginDataPath()
+  {
+    return readEnvPath("CLAUDE_PLUGIN_DATA");
+  }
+
+  /**
+   * Reads the Claude config directory from {@code CLAUDE_CONFIG_DIR}, defaulting to
+   * {@code ~/.claude} if unset.
+   *
+   * @return the config directory path
+   */
+  private static Path readConfigPath()
+  {
+    String configDir = System.getenv("CLAUDE_CONFIG_DIR");
+    if (configDir != null && !configDir.isBlank())
+      return Path.of(configDir);
+    return Path.of(System.getProperty("user.home"), ".claude");
+  }
+
+  private static String readOptionalEnv(String name, String defaultValue)
+  {
+    String value = System.getenv(name);
+    if (value == null || value.isBlank())
+      return defaultValue;
+    return value;
+  }
+
+  @Override
+  public String getAnthropicBaseUrl()
+  {
+    ensureOpen();
+    return anthropicBaseUrl.getValue();
+  }
+
+  @Override
+  public String getPluginJsonUrl()
+  {
+    ensureOpen();
+    return pluginJsonUrl.getValue();
+  }
+}

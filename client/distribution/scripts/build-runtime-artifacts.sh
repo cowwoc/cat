@@ -12,7 +12,7 @@ PLUGIN_DIR="${CLIENT_DIR}/plugin"
 TARGET_DIR="${DISTRIBUTION_DIR}/target/runtime"
 BUILDER=""
 for runtime in codex claude; do
-  candidate="${CLIENT_DIR}/cli/target/jlink/${runtime}/bin/build-runtime-artifacts"
+  candidate="${DISTRIBUTION_DIR}/target/jlink/${runtime}/bin/build-runtime-artifacts"
   if [[ -x "$candidate" ]]; then
     BUILDER="$candidate"
     break
@@ -20,8 +20,8 @@ for runtime in codex claude; do
 done
 
 if [[ -z "$BUILDER" ]]; then
-  echo "ERROR: build-runtime-artifacts launcher not found in any runtime image under ${CLIENT_DIR}/cli/target/jlink" >&2
-  echo "Run: ${CLIENT_DIR}/mvnw -f ${CLIENT_DIR}/pom.xml -pl cli verify -e" >&2
+  echo "ERROR: build-runtime-artifacts launcher not found in any runtime image under ${DISTRIBUTION_DIR}/target/jlink" >&2
+  echo "Run: ${CLIENT_DIR}/mvnw -f ${CLIENT_DIR}/pom.xml -pl distribution -am package -e" >&2
   exit 1
 fi
 

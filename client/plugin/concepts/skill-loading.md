@@ -82,7 +82,7 @@ argument-hint: "[description]"
 1. Create `client/plugin/skills/common/{skill-name}/` for portable skills, or the matching runtime-specific directory
 2. Create `SKILL.md`
 3. Create `first-use.md` with full skill content
-4. If dispatching to Java, register handler in `client/cli/build-jlink.sh` and call the binary launcher from `SKILL.md`
+4. If dispatching to Java, register the handler in the runtime image build script and call the binary launcher from `SKILL.md`
 5. Skill is available as `cat:{skill-name}`
 
 `client/plugin/skills/**` is the development source layout. Runtime installations are generated from these sources.
@@ -91,7 +91,7 @@ argument-hint: "[description]"
 
 For Java-dispatched skills:
 
-- Add launcher entry in `client/cli/build-jlink.sh` HANDLERS array
+- Add launcher entry in the runtime image build script's HANDLERS array
 - Call launcher from `SKILL.md`
 - Do **not** use `${CAT_PLUGIN_ROOT}/rules/common/skill-loading.md` as if it were a command dispatcher
 

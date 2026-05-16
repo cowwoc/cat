@@ -34,7 +34,7 @@ Read, Glob, and Grep tools. This enables reviewers to catch:
 Positional space-separated arguments:
 
 ```
-<issue_id> <worktree_path> <caution_level> <commits_compact>
+<issue_id> <worktree_path> <caution_level> <target_branch> <commits_compact>
 ```
 
 | Position | Name | Example |
@@ -42,11 +42,17 @@ Positional space-separated arguments:
 | 0 | issue_id | `2.1-issue-name` |
 | 1 | worktree_path | `${HOME}/.cat/worktrees/2.1-issue-name` |
 | 2 | caution_level | `quick` or `changed` or `all` |
-| 3 | commits_compact | `hash:type,hash:type` (e.g., `abc123:bugfix,def456:test`) |
+| 3 | target_branch | `v2.1` |
+| 4 | commits_compact | `hash:type,hash:type` (e.g., `abc123:bugfix,def456:test`) |
 
 Parse from ARGUMENTS:
 ```bash
-read ISSUE_ID WORKTREE_PATH CAUTION_LEVEL COMMITS_COMPACT <<< "$ARGUMENTS"
+read ISSUE_ID WORKTREE_PATH CAUTION_LEVEL TARGET_BRANCH COMMITS_COMPACT <<< "$ARGUMENTS"
+if [[ -z "${TARGET_BRANCH:-}" || -z "${COMMITS_COMPACT:-}" ]]; then
+    echo "ERROR: stakeholder-review requires target_branch and commits_compact arguments." >&2
+    echo "Usage: <issue_id> <worktree_path> <caution_level> <target_branch> <commits_compact>" >&2
+    exit 1
+fi
 ```
 
 Commits can be expanded by splitting on `,` then `:` to get hash and type.
@@ -192,17 +198,18 @@ if [[ "$(basename "$GIT_DIR_PARENT")" != "worktrees" ]]; then
     echo "ERROR: Not in a CAT issue worktree. Stakeholder review requires worktree context. Run via /cat:work." >&2
     exit 1
 fi
-if [[ -z "${TARGET_BRANCH:-}" ]]; then
-    TARGET_BRANCH=$(git merge-base HEAD @{upstream} 2>/dev/null) || {
-        echo "ERROR: TARGET_BRANCH is unset and git merge-base failed. Cannot determine diff base." >&2
-        echo "Solution: Ensure the worktree branch has an upstream set, or pass TARGET_BRANCH explicitly." >&2
-        exit 1
-    }
-fi
-
-CHANGED_FILES=$(git diff --name-only "${TARGET_BRANCH}..HEAD") || {
-    echo "ERROR: git diff --name-only '${TARGET_BRANCH}..HEAD' failed. The target branch ref may be invalid or deleted." >&2
+BASE_SHA=$(git rev-parse --verify "${TARGET_BRANCH}^{commit}") || {
+    echo "ERROR: TARGET_BRANCH is not a valid commit ref: ${TARGET_BRANCH}" >&2
     echo "Solution: Verify TARGET_BRANCH ('${TARGET_BRANCH}') exists: git rev-parse --verify '${TARGET_BRANCH}'" >&2
+    exit 1
+}
+HEAD_SHA=$(git rev-parse --verify "HEAD^{commit}") || {
+    echo "ERROR: HEAD is not a valid commit ref." >&2
+    exit 1
+}
+
+CHANGED_FILES=$(git diff --name-only "${BASE_SHA}..${HEAD_SHA}") || {
+    echo "ERROR: git diff --name-only '${BASE_SHA}..${HEAD_SHA}' failed." >&2
     exit 1
 }
 
@@ -328,21 +335,35 @@ if [[ "$(basename "$GIT_DIR_PARENT")" != "worktrees" ]]; then
     echo "ERROR: Not in a CAT issue worktree. Stakeholder review requires worktree context. Run via /cat:work." >&2
     exit 1
 fi
-if [[ -z "${TARGET_BRANCH:-}" ]]; then
-    TARGET_BRANCH=$(git merge-base HEAD @{upstream} 2>/dev/null) || {
-        echo "ERROR: TARGET_BRANCH is unset and git merge-base failed. Cannot determine diff base." >&2
-        echo "Solution: Ensure the worktree branch has an upstream set, or pass TARGET_BRANCH explicitly." >&2
-        exit 1
-    }
-fi
-CHANGED_FILES=$(git diff --name-only "${TARGET_BRANCH}..HEAD") || {
-    echo "ERROR: git diff --name-only '${TARGET_BRANCH}..HEAD' failed. The target branch ref may be invalid or deleted." >&2
+BASE_SHA=$(git rev-parse --verify "${TARGET_BRANCH}^{commit}") || {
+    echo "ERROR: TARGET_BRANCH is not a valid commit ref: ${TARGET_BRANCH}" >&2
     echo "Solution: Verify TARGET_BRANCH ('${TARGET_BRANCH}') exists: git rev-parse --verify '${TARGET_BRANCH}'" >&2
     exit 1
 }
+HEAD_SHA=$(git rev-parse --verify "HEAD^{commit}") || {
+    echo "ERROR: HEAD is not a valid commit ref." >&2
+    exit 1
+}
+CHANGED_FILES=$(git diff --name-only "${BASE_SHA}..${HEAD_SHA}") || {
+    echo "ERROR: git diff --name-only '${BASE_SHA}..${HEAD_SHA}' failed." >&2
+    exit 1
+}
+CHANGED_FILE_COUNT=$(printf '%s\n' "$CHANGED_FILES" | sed '/^$/d' | wc -l | tr -d ' ')
+CLIENT_FILE_COUNT=$(printf '%s\n' "$CHANGED_FILES" | grep -c '^client/' || true)
+CHANGED_FILES_FINGERPRINT=$(printf '%s\n' "$CHANGED_FILES" | git hash-object --stdin) || {
+    echo "ERROR: Failed to fingerprint changed-file manifest." >&2
+    exit 1
+}
+REVIEW_DIR="${WORKTREE_PATH}/.cat/work/review"
+mkdir -p "$REVIEW_DIR"
+find "$REVIEW_DIR" -maxdepth 1 -type f -name '*-concerns.json' -delete
+REVIEW_MANIFEST="${REVIEW_DIR}/manifest.json"
+cat > "$REVIEW_MANIFEST" <<EOF
+{"target_branch":"${TARGET_BRANCH}","reviewed_base_sha":"${BASE_SHA}","reviewed_head_sha":"${HEAD_SHA}","changed_file_count":${CHANGED_FILE_COUNT},"client_file_count":${CLIENT_FILE_COUNT},"changed_files_fingerprint":"${CHANGED_FILES_FINGERPRINT}"}
+EOF
 # Truncate diff to 500 lines max to avoid consuming subagent context windows on large changes
-DIFF_SUMMARY=$(git diff "${TARGET_BRANCH}..HEAD" -U3) || {
-    echo "ERROR: git diff '${TARGET_BRANCH}..HEAD' failed." >&2
+DIFF_SUMMARY=$(git diff "${BASE_SHA}..${HEAD_SHA}" -U3) || {
+    echo "ERROR: git diff '${BASE_SHA}..${HEAD_SHA}' failed." >&2
     exit 1
 }
 DIFF_LINE_COUNT=$(echo "$DIFF_SUMMARY" | wc -l)
@@ -478,7 +499,8 @@ execution error instead of silently substituting generic reviewers.
 Prepare prompts: for each stakeholder in $SELECTED, collect conventions from CONVENTION_MAP, gather
 ISSUE_PLAN_PATH and VERSION_PLAN_PATH (use VERSION_ID extraction from Step 1), extract
 DOMAIN_KNOWLEDGE from plan.md `## Domain Knowledge` section (if present), and convert CHANGED_FILES
-to bullets.
+to bullets. Fill all review-manifest placeholders from the pinned parent values: TARGET_BRANCH, BASE_SHA, HEAD_SHA,
+CHANGED_FILE_COUNT, CLIENT_FILE_COUNT, and CHANGED_FILES_FINGERPRINT.
 
 **CRITICAL — Parallel Dispatch:** Issue ALL reviewer agent calls in a single message. Do NOT await results
 between calls.
@@ -493,6 +515,13 @@ what rules you will follow. Start the review immediately and return only the JSO
 ## Working Directory
 WORKTREE_PATH={WORKTREE_PATH}
 Changed files (read from WORKTREE_PATH): {CHANGED_FILES_BULLETS}
+Review manifest:
+- target_branch: {TARGET_BRANCH}
+- reviewed_base_sha: {BASE_SHA}
+- reviewed_head_sha: {HEAD_SHA}
+- changed_file_count: {CHANGED_FILE_COUNT}
+- client_file_count: {CLIENT_FILE_COUNT}
+- changed_files_fingerprint: {CHANGED_FILES_FINGERPRINT}
 
 WORKTREE_PATH is the authoritative working directory for this review.
 The line above is intentionally written as `WORKTREE_PATH=<absolute-path>` because stakeholder role
@@ -532,6 +561,11 @@ Read: ${CAT_PLUGIN_ROOT}/agents/common/stakeholder-{stakeholder}.md
 MANDATORY: Read EVERY file in the "Changed files" list using Read tool (diff may be truncated).
 Evaluate project impact, accumulated patterns, consistency, completeness.
 
+MANDATORY: Return review metadata matching the manifest exactly. The inline JSON review object MUST include
+top-level fields `target_branch`, `reviewed_base_sha`, `reviewed_head_sha`, `changed_file_count`, and
+`changed_files_fingerprint` with the exact values from the Review manifest. If you cannot verify the manifest, return
+REJECTED with a reviewer execution concern instead of reviewing a guessed diff.
+
 Testing concerns must identify missing runtime behavior coverage with meaningful inputs and outputs. Do not request
 source-scanning, package-structure, or release-artifact-layout tests unless they exercise runtime behavior. If a
 source-scanning or layout-only test was removed, treat that as acceptable unless the implementation leaves an equivalent
@@ -569,7 +603,7 @@ a synthetic REJECTED result with concerns:
 recommendation: 'Retry /cat:work or check for background task failures.'}]`
 
 Parse Agent tool output as JSON — do NOT infer verdicts from context. Every verdict comes from actual
-Agent results. Expected format: `{stakeholder, approval: APPROVED|CONCERNS|REJECTED, concerns: [{severity, location, explanation, recommendation, detail_file}]}`
+Agent results. Expected format: `{stakeholder, approval: APPROVED|CONCERNS|REJECTED, target_branch, reviewed_base_sha, reviewed_head_sha, changed_file_count, changed_files_fingerprint, concerns: [{severity, location, explanation, recommendation, detail_file}]}`
 
 **Retry acknowledgement or non-JSON responses once before failing:** If a reviewer returns an acknowledgement,
 setup summary, prose-only response, empty response, or any other invalid JSON, do not immediately render it as
@@ -590,6 +624,10 @@ per reviewer.
 Validation rules:
 - Invalid JSON after the one allowed retry → REJECTED with parse failure note
 - Unrecognized approval (e.g., PASSED, LGTM) → REJECTED
+- Review metadata mismatch (`target_branch`, `reviewed_base_sha`, `reviewed_head_sha`, `changed_file_count`, or
+  `changed_files_fingerprint` absent or different from the parent manifest) → retry once with the same prompt. If the
+  retry still mismatches, replace that review
+  with REJECTED and concern: "Reviewer metadata did not match parent review manifest — review may reflect stale content."
 - Worktree path audit: scan tool calls for paths outside `${WORKTREE_PATH}/` and `${CAT_PLUGIN_ROOT}/`. If violated, append HIGH severity concern: "Reviewer accessed file outside worktree — review may reflect stale content."
 - Stakeholder identity mismatch: use spawned role (not self-reported) for rendering
 - detail_file validation: verify path starts with `${WORKTREE_PATH}/`; replace if invalid
@@ -599,6 +637,9 @@ After processing all reviewer results and before writing the final JSON output, 
 number of Agent tool responses actually received (before any synthetic results were added for missing reviewers).
 Include a `reviewer_count` field in the top-level result JSON, set to `ACTUAL_REVIEWER_COUNT`.
 Example: `"reviewer_count": 3`
+Also include the parent manifest metadata in the top-level result JSON:
+`target_branch`, `reviewed_base_sha`, `reviewed_head_sha`, `changed_file_count`, and
+`changed_files_fingerprint`. These fields must come from the parent manifest, not from any reviewer response.
 
 ### Step 5: Aggregate Results
 
@@ -679,6 +720,11 @@ Fail if missing. Action: caution_level="none" → skip; "quick"|"changed"|"all" 
       `fork_context: false` when available, otherwise `fork_turns: "none"`
 - [ ] Reviewer subagents used stakeholder-specific agent types, not generic/default agents
 - [ ] Agent-spawning tool only — Task tool and `run_in_background: true` were NOT used for reviewer subagents
+- [ ] `BASE_SHA` and `HEAD_SHA` pinned before reviewer dispatch; all diffs used `${BASE_SHA}..${HEAD_SHA}` not mutable `HEAD`
+- [ ] Review manifest written under `${WORKTREE_PATH}/.cat/work/review/manifest.json`
+- [ ] Stale `*-concerns.json` files cleared before reviewer dispatch
+- [ ] Each reviewer JSON metadata matched `target_branch`, `reviewed_base_sha`, `reviewed_head_sha`,
+      `changed_file_count`, and `changed_files_fingerprint`
 - [ ] Received Agent result count verified against SELECTED_COUNT before parsing (Step 4 reviewer count check)
 - [ ] Missing reviewers added as synthetic REJECTED results before parsing
 - [ ] `reviewer_count` field included in top-level result JSON (set to actual received count, before synthetic results)

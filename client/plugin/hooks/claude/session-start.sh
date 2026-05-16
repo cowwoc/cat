@@ -174,7 +174,7 @@ main() {
     local java_exit=0
     "${plugin_root}/client/bin/java" \
       -Xms16m -Xmx64m -XX:+UseSerialGC -XX:TieredStopAtLevel=1 \
-      -m io.github.cowwoc.cat.client/io.github.cowwoc.cat.claude.hook.SessionStartHook || java_exit=$?
+      -m io.github.cowwoc.cat.claude.cli/io.github.cowwoc.cat.claude.hook.SessionStartHook || java_exit=$?
 
     if [[ "$java_exit" -ne 0 ]]; then
       log "error" "SessionStartHook Java dispatcher failed (exit code $java_exit). Run with CLAUDE_CODE_DEBUG_LOGS_DIR=/tmp/cat-debug.log for details."

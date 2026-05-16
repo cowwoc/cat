@@ -676,7 +676,7 @@ This check ensures the agent is reminded that decomposed parents require all sub
 Run the renderer and output its result verbatim:
 
 ```bash
-CLIENT_BIN="${CAT_PROJECT_DIR}/client/cli/target/jlink/${CAT_RUNTIME:-claude}/bin"
+CLIENT_BIN=$(find "${CAT_PROJECT_DIR}/client" -path "*/target/jlink/${CAT_RUNTIME:-claude}/bin" -type d -print -quit)
 "$CLIENT_BIN/get-add-output" --type issue --name "${PRIMARY_NAME}" --version "${BEST_FIT_VERSION}" --issue-type "${ISSUE_TYPE}" --dependencies "${AUTO_DETECTED_DEPS_JSON}"
 ```
 
@@ -1451,7 +1451,7 @@ EOF
 Run the renderer and output its result verbatim:
 
 ```bash
-CLIENT_BIN="${CAT_PROJECT_DIR}/client/cli/target/jlink/${CAT_RUNTIME:-claude}/bin"
+CLIENT_BIN=$(find "${CAT_PROJECT_DIR}/client" -path "*/target/jlink/${CAT_RUNTIME:-claude}/bin" -type d -print -quit)
 "$CLIENT_BIN/get-add-output" --type version --name "{version-name}" --version "{version}" --version-type "{VERSION_TYPE}" --parent "{parent-info}" --path "{version-path}"
 ```
 

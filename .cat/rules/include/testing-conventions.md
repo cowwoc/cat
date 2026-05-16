@@ -125,21 +125,20 @@ public void worktreesDoNotLoadDuplicateRules() {
 - After invoking external tools (git, curl, npm, etc.) — test the invocation, not the side effects
 - Testing tool configuration state (sparse-checkout list, gitignore rules) — verify your code sets it correctly
 
-### Do Not Test Design Constraints By Scanning Source
+### Test Runtime Behavior Only
 
-Automated tests should verify runtime behavior with meaningful inputs and outputs. Do not add tests whose only purpose
-is to enforce package-time structure or design constraints, such as asserting that a package contains only certain
-classes, asserting which package or module a class is declared in, scanning source files for imports, or checking that
-generated release artifacts have a particular internal layout when no runtime behavior is exercised.
+Automated tests must validate runtime behavior with meaningful inputs and outputs. Do not add tests that check whether
+design constraints, package boundaries, source layout, build-time wiring, or release-artifact layout constraints hold
+unless the test executes product code and observes user- or caller-visible behavior.
 
-Do not add build-time tests whose only purpose is to enforce design constraints by scanning source files, package names,
-or textual references. Examples include tests that fail because a runtime-specific package mentions another runtime by
-name, tests that assert a directory contains no imports from a broad category of packages, or tests that verify a package
-contains only a specific set of classes.
+Do not add tests whose only purpose is to assert that a package contains only certain classes, that a class is declared
+in a specific package or module, that source files do or do not import or mention particular symbols, or that generated
+release artifacts have a particular internal layout. These are design and build-time constraints, not runtime behavior.
 
-These constraints belong in code review, architecture notes, or convention files, not in the test suite. Build-time
-tests should cover executable behavior with meaningful inputs and outputs. Design-boundary concerns should be reviewed
-manually unless they can be expressed as direct product behavior.
+Runtime-specific boundary concerns, such as whether common code mentions Claude-only or Codex-only concepts, belong in
+code review, architecture notes, and convention files unless they can be expressed as direct executable behavior.
+Build-time tests should cover executable build behavior only when the build output is itself the product behavior being
+validated.
 
 ### Do Not Test Non-Code File Contents
 

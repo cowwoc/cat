@@ -1,0 +1,9 @@
+{
+  "status": "open",
+  "dependencies": [
+    "split-runtime-rules-directories",
+    "add-codex-missing-hooks"
+  ],
+  "blocks": [],
+  "target_branch": "v2.1"
+}

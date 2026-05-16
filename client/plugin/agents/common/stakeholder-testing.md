@@ -197,6 +197,11 @@ Return compact JSON inline. Write full details to the detail file, not inline.
 {
   "stakeholder": "testing",
   "approval": "APPROVED|CONCERNS|REJECTED",
+  "target_branch": "target branch from Review manifest",
+  "reviewed_base_sha": "base SHA from Review manifest",
+  "reviewed_head_sha": "head SHA from Review manifest",
+  "changed_file_count": 0,
+  "changed_files_fingerprint": "changed-file fingerprint from Review manifest",
   "concerns": [
     {
       "severity": "CRITICAL|HIGH|MEDIUM|LOW",

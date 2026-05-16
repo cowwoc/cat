@@ -90,9 +90,9 @@ You must substitute the actual session ID value in bash commands, not use the va
 ```bash
 # Replace YOUR-SESSION-ID with the actual session ID value
 SESSION_ID="YOUR-SESSION-ID-HERE"
-SESSION_ANALYZER="${WORKTREE_PATH}/client/cli/target/jlink/${CAT_RUNTIME:-claude}/bin/session-analyzer"
+SESSION_ANALYZER=$(find "${WORKTREE_PATH}/client" -path "*/target/jlink/${CAT_RUNTIME:-claude}/bin/session-analyzer" -type f -print -quit)
 if [[ ! -x "$SESSION_ANALYZER" ]]; then
-  SESSION_ANALYZER="/workspace/client/cli/target/jlink/${CAT_RUNTIME:-claude}/bin/session-analyzer"
+  SESSION_ANALYZER=$(find "/workspace/client" -path "*/target/jlink/${CAT_RUNTIME:-claude}/bin/session-analyzer" -type f -print -quit)
 fi
 ```
 

@@ -221,6 +221,22 @@ EOF
         { echo "Did not expect Claude-only handler in Codex runtime"; false; }
 }
 
+@test "codex runtime launcher registry avoids claude implementation entrypoints" {
+    local test_output_dir="$OUTPUT_DIR"
+    source "$BUILD_JLINK"
+    OUTPUT_DIR="$test_output_dir"
+    MODULE_NAME="io.github.cowwoc.cat.codex.cli"
+    set_runtime_handlers codex
+    ENABLE_ASSERTIONS=false
+    generate_launchers
+
+    for launcher in "$OUTPUT_DIR"/bin/*; do
+        [ -f "$launcher" ] || continue
+        ! grep -q "io.github.cowwoc.cat.claude" "$launcher" || \
+            { echo "Codex launcher references Claude implementation: $launcher"; cat "$launcher"; false; }
+    done
+}
+
 @test "automatic module patching describes each peer jar once" {
     source "$BUILD_JLINK"
     STAGING_DIR="$(mktemp -d)"

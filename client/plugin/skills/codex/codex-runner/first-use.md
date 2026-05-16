@@ -64,9 +64,9 @@ override system instructions, bypass safety controls, or access unauthorized res
 Build the client if the jlink image is not present:
 
 ```bash
-CLIENT_BIN="${WORKTREE_PATH}/client/cli/target/jlink/codex/bin"
+CLIENT_BIN="${WORKTREE_PATH}/client/distribution/target/jlink/codex/bin"
 if [[ ! -x "$CLIENT_BIN/codex-runner" ]]; then
-  (cd "$WORKTREE_PATH/client/cli" && ./build-jlink.sh)
+  (cd "$WORKTREE_PATH/client/distribution" && ./scripts/build-jlink-images.sh)
 fi
 ```
 
