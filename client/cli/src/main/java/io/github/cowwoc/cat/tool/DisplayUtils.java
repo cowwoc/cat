@@ -233,6 +233,21 @@ public final class DisplayUtils
 
       if (!matched)
       {
+        int codePoint = text.codePointAt(i);
+        if (isVariationSelector(codePoint))
+        {
+          i += Character.charCount(codePoint);
+          continue;
+        }
+        if (text.charAt(i) == '\033' && i + 1 < textLen && text.charAt(i + 1) == '[')
+        {
+          i += 2;
+          while (i < textLen && !Character.isLetter(text.charAt(i)))
+            ++i;
+          if (i < textLen)
+            ++i;
+          continue;
+        }
         // Regular character = width 1
         ++width;
         ++i;
@@ -240,6 +255,17 @@ public final class DisplayUtils
     }
 
     return width;
+  }
+
+  /**
+   * Indicates whether a code point is a Unicode variation selector.
+   *
+   * @param codePoint the code point to test
+   * @return {@code true} if the code point is a variation selector
+   */
+  private boolean isVariationSelector(int codePoint)
+  {
+    return codePoint >= 0xFE00 && codePoint <= 0xFE0F || codePoint >= 0xE0100 && codePoint <= 0xE01EF;
   }
 
   /**

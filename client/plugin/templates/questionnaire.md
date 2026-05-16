@@ -21,9 +21,9 @@ You tell them:
 ```
 
 **Options:**
-- "Push it when you're ready" → TRUST=high
-- "Send me a quick summary to review before pushing anything out" → TRUST=medium
-- "Sit tight until Monday — we'll go through everything together before it ships" → TRUST=low
+- "Push it when you're ready." → TRUST=high
+- "Send me a quick summary to review before pushing anything out." → TRUST=medium
+- "Sit tight until Monday — we'll go through everything together before it ships." → TRUST=low
 
 ### Question 2: Caution
 
@@ -36,9 +36,9 @@ you run:
 ```
 
 **Options:**
-- "Nothing — you live dangerously" → CAUTION=low
-- "The tests for what you changed — close enough" → CAUTION=medium
-- "The full test suite — the pub can wait" → CAUTION=high
+- "Nothing — you live dangerously." → CAUTION=low
+- "The tests for what you changed — close enough." → CAUTION=medium
+- "The full test suite — the pub can wait." → CAUTION=high
 
 ### Question 3: Curiosity
 
@@ -50,9 +50,9 @@ You're handed a bug report in a module nobody has touched in two years. Do you:
 ```
 
 **Options:**
-- "Fix the line, close the ticket, move on" → CURIOSITY=low
-- "Poke around enough to understand what you're changing" → CURIOSITY=medium
-- "Read the whole thing — you don't touch code you don't understand" → CURIOSITY=high
+- "Fix the line, close the ticket, move on." → CURIOSITY=low
+- "Poke around enough to understand what you're changing." → CURIOSITY=medium
+- "Read the whole thing — you don't touch code you don't understand." → CURIOSITY=high
 
 ### Question 4: Perfection
 
@@ -64,9 +64,9 @@ While fixing a bug you stumble across an obvious hack someone left in the code. 
 ```
 
 **Options:**
-- "Leave it — it's a problem for another day" → PERFECTION=low
-- "Clean it up if it'll take less than ten minutes" → PERFECTION=medium
-- "Fix it — you're not leaving that in the codebase" → PERFECTION=high
+- "Leave it — it's a problem for another day." → PERFECTION=low
+- "Clean it up if it'll take less than ten minutes." → PERFECTION=medium
+- "Fix it — you're not leaving that in the codebase." → PERFECTION=high
 
 ### Question 5: Verbosity
 
@@ -74,13 +74,13 @@ While fixing a bug you stumble across an obvious hack someone left in the code. 
 
 **Question:**
 ```
-You're reviewing a PR with a tricky bug. You'd prefer CAT to:
+When explaining why a change was made, you'd prefer CAT to:
 ```
 
 **Options:**
-- "Give you the short answer" → VERBOSITY=low
-- "Walk you through the reasoning" → VERBOSITY=medium
-- "Explain everything, including what it ruled out" → VERBOSITY=high
+- "Give you the short answer." → VERBOSITY=low
+- "Walk you through the reasoning." → VERBOSITY=medium
+- "Explain everything, including what it ruled out." → VERBOSITY=high
 
 ## Explanation Text Lookup
 

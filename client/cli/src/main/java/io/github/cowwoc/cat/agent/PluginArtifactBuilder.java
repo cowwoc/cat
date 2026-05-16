@@ -568,7 +568,9 @@ public final class PluginArtifactBuilder
    */
   private String replaceRuntimePlaceholders(Runtime runtime, String text)
   {
-    return text.replace("${CAT_COMMAND_PREFIX}", commandPrefix(runtime));
+    return text.
+      replace("${CAT_COMMAND_PREFIX}", commandPrefix(runtime)).
+      replace("${CAT_CONFIG_SETTINGS_RENDER_STEP}", configSettingsRenderStep(runtime));
   }
 
   /**
@@ -583,6 +585,26 @@ public final class PluginArtifactBuilder
     {
       case CLAUDE -> "/";
       case CODEX -> "$";
+    };
+  }
+
+  /**
+   * Returns the runtime-specific instruction for rendering the initial config settings box.
+   *
+   * @param runtime the runtime being built
+   * @return the runtime-specific instruction text
+   */
+  private String configSettingsRenderStep(Runtime runtime)
+  {
+    return switch (runtime)
+    {
+      case CLAUDE -> """
+        The rendered settings box is injected below by Claude's silent preprocessor. Output only the complete inner
+        content of the last `<output type="config.settings">` tag exactly as-is before prompting.
+
+        """ + "!`: \"${CAT_PLUGIN_ROOT:?CAT_PLUGIN_ROOT is required}\"; " +
+        "\"${CAT_PLUGIN_ROOT}/client/bin/get-output\" \"$0\" config.settings`";
+      case CODEX -> "INVOKE: Skill(\"cat:get-output\", args=\"config.settings\")";
     };
   }
 

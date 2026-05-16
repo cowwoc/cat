@@ -58,6 +58,34 @@ public class GetOutputTest
   }
 
   /**
+   * Verifies that generated instructions for dot-notation output types point at the full tag type.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void dotNotationInstructionsReferenceFullOutputType() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-get-output-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Path catDir = tempDir.resolve(".cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("config.json"), "{}");
+
+      GetOutput handler = new GetOutput(scope);
+      String result = handler.getOutput(new String[]{"config.settings"});
+
+      requireThat(result, "result").
+        contains("`<output type=\"config.settings\">`").
+        doesNotContain("`<output type=\"config\">`");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that single skill name (no page) routes correctly.
    *
    * @throws IOException if an I/O error occurs

@@ -33,7 +33,7 @@ Extract the following values from the JSON output for use in subsequent steps:
 
 BLOCKING REQUIREMENT: You MUST output a visual display box BEFORE calling structured user-choice prompt.
 
-INVOKE: Skill("cat:get-output", args="config.settings")
+${CAT_CONFIG_SETTINGS_RENDER_STEP}
 
 ### Step 3: Present main menu
 
@@ -44,10 +44,11 @@ INVOKE: Skill("cat:get-output", args="config.settings")
 Show current values in descriptions using data from Step 1.
 
 - header: "Settings"
+- title alignment: left
 - question: "What would you like to configure?"
 - options:
   - label: "🎭 Personality"
-    description: "Currently: {trust} · {caution} · {curiosity} · {perfection} · {verbosity}"
+    description: "Currently: trust={trust} · caution={caution} · curiosity={curiosity} · perfection={perfection} · verbosity={verbosity}"
   - label: "📏 Width Settings"
     description: "Currently: file={fileWidth || 120} · display={displayWidth || 120} characters"
   - label: "🔀 Completion Workflow"
@@ -74,6 +75,7 @@ If user selects "Other" and types "done", "exit", or "back", proceed to Step 11 
 
 Structured user-choice prompt:
 - header: "Personality"
+- title alignment: left
 - question: "How would you like to configure your personality settings?"
 - options:
   - label: "🧭 Guided setup"
@@ -101,17 +103,18 @@ See `plugin/templates/questionnaire.md` for question content, answer mappings, a
 
 Structured user-choice prompt:
 - header: "How do you lead? (1/5)"
+- title alignment: left
 - question: |
     It's Wednesday evening and you're on vacation. A junior developer messages you:
     "I'm close to finishing the new feature — what should I do when I have it?"
     You tell them:
 - options:
-  - "Push it when you're ready"
-  - "Send me a quick summary to review before pushing anything out"
-  - "Sit tight until Monday — we'll go through everything together before it ships"
+  - "Push it when you're ready."
+  - "Send me a quick summary to review before pushing anything out."
+  - "Sit tight until Monday — we'll go through everything together before it ships."
 
 Map answer to TRUST:
-- "Push it when you're ready" → TRUST=high
+- "Push it when you're ready." → TRUST=high
 - "Send me a quick summary..." → TRUST=medium
 - "Sit tight until Monday..." → TRUST=low
 
@@ -119,32 +122,34 @@ Map answer to TRUST:
 
 Structured user-choice prompt:
 - header: "Friday deploy (2/5)"
+- title alignment: left
 - question: |
     It's 4:55pm on a Friday and production is down. You've found the fix. Before you push and head out,
     you run:
 - options:
-  - "Nothing — you live dangerously"
-  - "The tests for what you changed — close enough"
-  - "The full test suite — the pub can wait"
+  - "Nothing — you live dangerously."
+  - "The tests for what you changed — close enough."
+  - "The full test suite — the pub can wait."
 
 Map answer to CAUTION:
-- "Nothing — you live dangerously" → CAUTION=low
-- "The tests for what you changed — close enough" → CAUTION=medium
-- "The full test suite — the pub can wait" → CAUTION=high
+- "Nothing — you live dangerously." → CAUTION=low
+- "The tests for what you changed — close enough." → CAUTION=medium
+- "The full test suite — the pub can wait." → CAUTION=high
 
 **Question 3:**
 
 Structured user-choice prompt:
 - header: "The old module (3/5)"
+- title alignment: left
 - question: |
     You're handed a bug report in a module nobody has touched in two years. Do you:
 - options:
-  - "Fix the line, close the ticket, move on"
-  - "Poke around enough to understand what you're changing"
-  - "Read the whole thing — you don't touch code you don't understand"
+  - "Fix the line, close the ticket, move on."
+  - "Poke around enough to understand what you're changing."
+  - "Read the whole thing — you don't touch code you don't understand."
 
 Map answer to CURIOSITY:
-- "Fix the line, close the ticket, move on" → CURIOSITY=low
+- "Fix the line, close the ticket, move on." → CURIOSITY=low
 - "Poke around enough to understand..." → CURIOSITY=medium
 - "Read the whole thing..." → CURIOSITY=high
 
@@ -152,33 +157,35 @@ Map answer to CURIOSITY:
 
 Structured user-choice prompt:
 - header: "Someone else's mess (4/5)"
+- title alignment: left
 - question: |
     While fixing a bug you stumble across an obvious hack someone left in the code. Do you:
 - options:
-  - "Leave it — it's a problem for another day"
-  - "Clean it up if it'll take less than ten minutes"
-  - "Fix it — you're not leaving that in the codebase"
+  - "Leave it — it's a problem for another day."
+  - "Clean it up if it'll take less than ten minutes."
+  - "Fix it — you're not leaving that in the codebase."
 
 Map answer to PERFECTION:
 - "Leave it..." → PERFECTION=low
-- "Clean it up if it'll take less than ten minutes" → PERFECTION=medium
-- "Fix it — you're not leaving that in the codebase" → PERFECTION=high
+- "Clean it up if it'll take less than ten minutes." → PERFECTION=medium
+- "Fix it — you're not leaving that in the codebase." → PERFECTION=high
 
 **Question 5:**
 
 Structured user-choice prompt:
 - header: "The code review (5/5)"
+- title alignment: left
 - question: |
-    You're reviewing a PR with a tricky bug. You'd prefer CAT to:
+    When explaining why a change was made, you'd prefer CAT to:
 - options:
-  - "Give you the short answer"
-  - "Walk you through the reasoning"
-  - "Explain everything, including what it ruled out"
+  - "Give you the short answer."
+  - "Walk you through the reasoning."
+  - "Explain everything, including what it ruled out."
 
 Map answer to VERBOSITY:
-- "Give you the short answer" → VERBOSITY=low
-- "Walk you through the reasoning" → VERBOSITY=medium
-- "Explain everything, including what it ruled out" → VERBOSITY=high
+- "Give you the short answer." → VERBOSITY=low
+- "Walk you through the reasoning." → VERBOSITY=medium
+- "Explain everything, including what it ruled out." → VERBOSITY=high
 
 **After collecting all 5 answers, display results as plain text:**
 
@@ -220,91 +227,87 @@ After updating config.json, return to Step 2 (display settings box and main menu
 
 ### Step 5a: Manual settings
 
-**⚙️ Manual Settings — set all personality settings directly**
+**⚙️ Manual Settings — set one personality setting directly**
 
-Present two pages. Read current values from config (loaded in Step 1) to mark the current selection
-in each option description with " (current)".
+First ask which personality setting to update. Then ask for the new value for only the selected setting.
+Do not ask for trust, caution, curiosity, perfection, and verbosity in sequence.
 
-**Page 1 of 2 — Behavior:**
+Read current values from config (loaded in Step 1) to show current values in the setting menu and mark the current
+selection in value option descriptions with " (current)".
 
-Structured user-choice prompt:
-- header: "Behavior (1/2)"
-- question: "Set your behavior preferences:"
-- questions array (4 questions):
-  1. question: "Trust — How much autonomy should CAT have?"
-     header: "Trust"
-     options:
-     - label: "Low"
-       description: "Stops frequently to request approval{' (current)' if trust=='low'}"
-     - label: "Medium"
-       description: "Auto-continues between issues, stops at approval gates{' (current)' if trust=='medium'}"
-     - label: "High"
-       description: "Fully autonomous, skips approval gates{' (current)' if trust=='high'}"
-  2. question: "Caution — How thoroughly should CAT test before merging?"
-     header: "Caution"
-     options:
-     - label: "Low"
-       description: "Compile only (fastest feedback){' (current)' if caution=='low'}"
-     - label: "Medium"
-       description: "Compile, unit tests, and issue-specific E2E tests (default){' (current)' if caution=='medium'}"
-     - label: "High"
-       description: "Compile, unit tests, and all E2E tests (maximum confidence){' (current)' if caution=='high'}"
-  3. question: "Curiosity — How broadly should CAT run stakeholder review?"
-     header: "Curiosity"
-     options:
-     - label: "Low"
-       description: "Skip automatic stakeholder review; review only runs if explicitly invoked{' (current)' if curiosity=='low'}"
-     - label: "Medium"
-       description: "Run automatic stakeholder review scoped to changed files and direct dependencies{' (current)' if curiosity=='medium'}"
-     - label: "High"
-       description: "Run automatic stakeholder review with holistic system integration scope{' (current)' if curiosity=='high'}"
-  4. question: "Perfection — How much should CAT pursue perfection?"
-     header: "Perfection"
-     options:
-     - label: "Low"
-       description: "Stay focused on the primary goal, defer tangential improvements{' (current)' if perfection=='low'}"
-     - label: "Medium"
-       description: "Fix issues that are easy to address, defer complex ones{' (current)' if perfection=='medium'}"
-     - label: "High"
-       description: "Fix every issue encountered, even if tangential to the primary goal{' (current)' if perfection=='high'}"
-
-Map answers: Low → "low", Medium → "medium", High → "high" for each respective setting.
-
-**Page 2 of 2 — Communication:**
+**Choose setting:**
 
 Structured user-choice prompt:
-- header: "Communication (2/2)"
-- question: "Set your communication preference:"
-- questions array (1 question):
-  1. question: "Verbosity — How much should CAT explain its reasoning?"
-     header: "Verbosity"
-     options:
-     - label: "Low"
-       description: "Progress banners and errors only — no reasoning, no summaries beyond phase markers{' (current)' if verbosity=='low'}"
-     - label: "Medium"
-       description: "Phase-transition summaries — what was done, key decisions{' (current)' if verbosity=='medium'}"
-     - label: "High"
-       description: "Full reasoning — alternatives considered, tradeoffs noted, rationale for each decision{' (current)' if verbosity=='high'}"
+- header: "Manual Settings"
+- title alignment: left
+- question: "Which personality setting would you like to update?"
+- options:
+  - label: "Trust"
+    description: "Currently: {trust} — autonomy and approval behavior"
+  - label: "Caution"
+    description: "Currently: {caution} — test depth before merging"
+  - label: "Curiosity"
+    description: "Currently: {curiosity} — stakeholder review breadth"
+  - label: "Perfection"
+    description: "Currently: {perfection} — willingness to fix tangential issues"
+  - label: "Verbosity"
+    description: "Currently: {verbosity} — explanation detail"
+  - label: "← Back"
+    description: "Return to personality menu"
 
-Map answer: Low → "low", Medium → "medium", High → "high" for verbosity.
+If "← Back" is selected, return to Step 4.
 
-**After collecting all answers from both pages, update config.json:**
+Map setting selection to `{setting_key}` and `{setting_name}`:
+- "Trust" → setting_key=`trust`, setting_name=`Trust`
+- "Caution" → setting_key=`caution`, setting_name=`Caution`
+- "Curiosity" → setting_key=`curiosity`, setting_name=`Curiosity`
+- "Perfection" → setting_key=`perfection`, setting_name=`Perfection`
+- "Verbosity" → setting_key=`verbosity`, setting_name=`Verbosity`
+
+Store the selected setting's current value as `{old_value}`.
+
+**Choose new value:**
+
+Structured user-choice prompt:
+- header: "{setting_name}"
+- title alignment: left
+- question: "What value should {setting_name} use?"
+- options:
+  - label: "Low"
+    description: "{low_description}{' (current)' if old_value=='low'}"
+  - label: "Medium"
+    description: "{medium_description}{' (current)' if old_value=='medium'}"
+  - label: "High"
+    description: "{high_description}{' (current)' if old_value=='high'}"
+  - label: "← Back"
+    description: "Choose a different personality setting"
+
+If "← Back" is selected, return to the "Choose setting" prompt above.
+
+Use descriptions based on `{setting_key}`:
+
+| setting_key | Low | Medium | High |
+|-------------|-----|--------|------|
+| trust | Stops frequently to request approval | Auto-continues between issues, stops at approval gates | Fully autonomous, skips approval gates |
+| caution | Compile only (fastest feedback) | Compile, unit tests, and issue-specific E2E tests (default) | Compile, unit tests, and all E2E tests (maximum confidence) |
+| curiosity | Skip automatic stakeholder review; review only runs if explicitly invoked | Run automatic stakeholder review scoped to changed files and direct dependencies | Run automatic stakeholder review with holistic system integration scope |
+| perfection | Stay focused on the primary goal, defer tangential improvements | Fix issues that are easy to address, defer complex ones | Fix every issue encountered, even if tangential to the primary goal |
+| verbosity | Progress banners and errors only — no reasoning, no summaries beyond phase markers | Phase-transition summaries — what was done, key decisions | Full reasoning — alternatives considered, tradeoffs noted, rationale for each decision |
+
+Map value answer: Low → `low`, Medium → `medium`, High → `high`.
+
+**After collecting the selected value, update config.json:**
 
 ```bash
-"${CAT_PLUGIN_ROOT}/client/bin/update-config" \
-  "trust={trust_value}" "caution={caution_value}" "curiosity={curiosity_value}" \
-  "perfection={perfection_value}" "verbosity={verbosity_value}"
+"${CAT_PLUGIN_ROOT}/client/bin/update-config" "{setting_key}={new_value}"
 ```
 
-Where `{trust_value}`, `{caution_value}`, etc. are the lowercase values selected above (e.g., "low", "medium", "high").
+Where `{new_value}` is the lowercase selected value (e.g., "low", "medium", "high").
 If the command outputs `{"status":"ERROR",...}`, display the error message and do not proceed.
 
-INVOKE: Skill("cat:get-output", args="config.setting-updated personality {old_summary} {new_summary}")
+INVOKE: Skill("cat:get-output", args="config.setting-updated {setting_name} {old_value} {new_value}")
 
-Where `{old_summary}` is the previous values joined as "trust:X caution:X curiosity:X perfection:X verbosity:X"
-and `{new_summary}` is the new values in the same format.
-
-Return to Step 3 (main menu).
+Return to Step 2 (display settings box and main menu).
 
 ### Step 6: Width settings
 
@@ -312,6 +315,7 @@ Return to Step 3 (main menu).
 
 Structured user-choice prompt:
 - header: "Width Settings"
+- title alignment: left
 - question: "Which width would you like to configure?"
 - options:
   - label: "📄 File Width"
@@ -325,6 +329,7 @@ Structured user-choice prompt:
 
 Structured user-choice prompt:
 - header: "File Width"
+- title alignment: left
 - question: "What device are you primarily writing files on?"
 - options:
   - label: "🖥️ Desktop/Laptop (Default)"
@@ -342,6 +347,7 @@ Map selections:
 
 Structured user-choice prompt:
 - header: "Display Width"
+- title alignment: left
 - question: "What device are you primarily using?"
 - options:
   - label: "🖥️ Desktop/Laptop (Default)"
@@ -362,6 +368,7 @@ Map selections:
 
 Structured user-choice prompt:
 - header: "Custom Width"
+- title alignment: left
 - question: "Enter width (40-200):"
 - options: ["← Back"]
 
@@ -383,6 +390,7 @@ Return to Step 3 (main menu) after updating.
 
 Structured user-choice prompt:
 - header: "Completion Workflow"
+- title alignment: left
 - question: "How should completed issues be integrated? (Current: {completionWorkflow || 'merge'})"
 - options:
   - label: "🔀 Merge (Default)"
@@ -413,6 +421,7 @@ silently ignored — not fixed, not deferred, not tracked.
 
 Structured user-choice prompt:
 - header: "Min Severity — Concern Visibility"
+- title alignment: left
 - question: "Minimum severity level to make visible? (Current: {minSeverity || 'low'})"
 - options:
   - label: "LOW (Default)"
@@ -460,6 +469,7 @@ Determine current minor version from roadmap.md (first non-completed).
 
 Use Structured user-choice prompt:
 - header: "Select Version"
+- title alignment: left
 - question: "Which version's conditions do you want to configure?"
 - options:
   - "v{X}.{Y-1} - Previous minor" (if exists)
@@ -471,6 +481,7 @@ Use Structured user-choice prompt:
 
 Use Structured user-choice prompt:
 - header: "Version"
+- title alignment: left
 - question: "Enter the version number (e.g., 0.5 or just 0 for major):"
 - options: ["← Back"]
 
@@ -495,6 +506,7 @@ Empty conditions should be represented as "(none)".
 
 Use Structured user-choice prompt:
 - header: "Action"
+- title alignment: left
 - question: "What would you like to do?"
 - options:
   - label: "Edit pre-conditions"
@@ -510,6 +522,7 @@ Use Structured user-choice prompt:
 
 Use Structured user-choice prompt:
 - header: "Pre-conditions"
+- title alignment: left
 - question: "Select entry conditions (current: {current conditions}):"
 - multiSelect: true
 - options:
@@ -528,6 +541,7 @@ If "Specific version(s) complete":
 
 Use Structured user-choice prompt:
 - header: "Post-conditions"
+- title alignment: left
 - question: "Select exit conditions (current: {current conditions}):"
 - multiSelect: true
 - options:

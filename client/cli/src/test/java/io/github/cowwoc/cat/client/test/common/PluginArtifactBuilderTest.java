@@ -340,6 +340,25 @@ public final class PluginArtifactBuilderTest
         requireThat(stakeholderReview, runtime + "StakeholderReview").contains("spawn_agent(message=prompt");
         requireThat(stakeholderReview, runtime + "StakeholderReview").contains("Agent(prompt=prompt");
         requireThat(stakeholderReview, runtime + "StakeholderReview").doesNotContain("cat:include");
+
+        String configFirstUse = Files.readString(runtimeRoot.resolve("skills/config/first-use.md"),
+          StandardCharsets.UTF_8);
+        String configSettingsStep = configFirstUse.substring(configFirstUse.indexOf("### Step 2:"),
+          configFirstUse.indexOf("### Step 3:"));
+        if (runtime.equals("claude"))
+        {
+          requireThat(configSettingsStep, "claudeConfigSettingsStep").
+            contains("!`: \"${CAT_PLUGIN_ROOT:?CAT_PLUGIN_ROOT is required}\"; " +
+              "\"${CAT_PLUGIN_ROOT}/client/bin/get-output\" \"$0\" config.settings`").
+            contains("<output type=\"config.settings\">").
+            doesNotContain("INVOKE: Skill(\"cat:get-output\", args=\"config.settings\")");
+        }
+        else
+        {
+          requireThat(configSettingsStep, "codexConfigSettingsStep").
+            contains("INVOKE: Skill(\"cat:get-output\", args=\"config.settings\")").
+            doesNotContain("!`");
+        }
       }
     }
     finally

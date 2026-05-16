@@ -196,8 +196,8 @@ public final class GetOutput implements SkillOutput
 
       <output type="%s">
       %s
-      </output>""".formatted(skill, skill, skill, skill, skill, skill, skill, skill, skill, skill, skill, skill,
-        sanitizedType, content);
+      </output>""".formatted(skill, skill, sanitizedType, sanitizedType, sanitizedType, skill, skill, sanitizedType,
+        skill, skill, sanitizedType, sanitizedType, sanitizedType, content);
   }
 
   /**

@@ -34,6 +34,12 @@ import java.util.Objects;
  */
 public final class GetConfigOutput implements SkillOutput
 {
+  private static final String RESET = "\033[0m";
+  private static final String BOLD_WHITE = "\033[1;37m";
+  private static final String GOLD = "\033[38;2;255;214;102m";
+  private static final String PEACH = "\033[38;2;255;180;118m";
+  private static final String ROSE = "\033[38;2;235;116;164m";
+
   /**
    * The JVM scope for accessing shared services.
    */
@@ -400,7 +406,7 @@ public final class GetConfigOutput implements SkillOutput
   private String buildSimpleHeaderBox(String icon, String title, List<String> contentLines)
   {
     DisplayUtils display = scope.getDisplayUtils();
-    String header = icon + " " + title;
+    String header = BOLD_WHITE + icon + " " + title + RESET;
     int headerWidth = display.displayWidth(header);
 
     // Calculate max width from content
@@ -412,23 +418,49 @@ public final class GetConfigOutput implements SkillOutput
         maxWidth = w;
     }
 
-    StringBuilder sb = new StringBuilder();
+    StringBuilder sb = new StringBuilder((maxWidth + 4) * (contentLines.size() + 2));
 
     // Header top with embedded title
-    String prefix = DisplayUtils.HORIZONTAL_LINE + DisplayUtils.HORIZONTAL_LINE + DisplayUtils.HORIZONTAL_LINE + " ";
-    int suffixDashCount = maxWidth - prefix.length() - headerWidth + 2;
-    if (suffixDashCount < 1)
-      suffixDashCount = 1;
-    sb.append('╭').append(prefix).append(header).append(' ').
-      append(DisplayUtils.HORIZONTAL_LINE.repeat(suffixDashCount)).append("╮\n");
+    String prefix = " ";
+    int rightPadding = display.displayWidth(prefix + icon + " ");
+    int minimumSuffixDashCount = 3;
+    maxWidth = Math.max(maxWidth, prefix.length() + headerWidth + rightPadding + minimumSuffixDashCount - 2);
+    int suffixDashCount = maxWidth + 2 - prefix.length() - headerWidth - rightPadding;
+    if (suffixDashCount < 0)
+      suffixDashCount = 0;
+    sb.append('╭').append(gradientLine(prefix)).append(RESET).append(header).append(" ".repeat(rightPadding)).
+      append(gradientLine(DisplayUtils.HORIZONTAL_LINE.repeat(suffixDashCount))).append(RESET).append("╮\n");
 
     // Content lines
     for (String content : contentLines)
       sb.append(display.buildLine(content, maxWidth)).append('\n');
 
     // Bottom border
-    sb.append(display.buildBottomBorder(maxWidth));
+    sb.append('╰').append(gradientLine(DisplayUtils.HORIZONTAL_LINE.repeat(maxWidth + 2))).append(RESET).append('╯');
 
     return sb.toString();
+  }
+
+  /**
+   * Applies the restrained help-style accent gradient to box borders.
+   *
+   * @param text the border text
+   * @return the colored text
+   */
+  private String gradientLine(String text)
+  {
+    if (text.isEmpty())
+      return text;
+    int first = Math.max(1, text.length() / 3);
+    int second = Math.max(first + 1, first * 2);
+    if (second > text.length())
+      second = text.length();
+    StringBuilder result = new StringBuilder(text.length() + GOLD.length() + PEACH.length() + ROSE.length());
+    result.append(GOLD).append(text, 0, first);
+    if (first < second)
+      result.append(PEACH).append(text, first, second);
+    if (second < text.length())
+      result.append(ROSE).append(text, second, text.length());
+    return result.toString();
   }
 }

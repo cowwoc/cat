@@ -76,6 +76,51 @@ public class DisplayUtilsTest
   }
 
   /**
+   * Verifies that ANSI escape sequences do not contribute to terminal display width.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void displayWidthIgnoresAnsiEscapeSequences() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      DisplayUtils display = new DisplayUtils(scope);
+      String colored = "\033[38;2;255;180;118mtrust\033[0m";
+
+      requireThat(display.displayWidth(colored), "coloredWidth").isEqualTo(5);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that emoji variation selectors do not contribute to terminal display width.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void displayWidthIgnoresEmojiVariationSelectors() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      DisplayUtils display = new DisplayUtils(scope);
+
+      requireThat(display.displayWidth("⚙️"), "gearWidth").isEqualTo(2);
+      requireThat(display.displayWidth("🛡️"), "shieldWidth").isEqualTo(2);
+      requireThat(display.displayWidth("🖥️"), "desktopWidth").isEqualTo(2);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that buildLine pads content shorter than minWidth.
    * <p>
    * Tests structural property: content shorter than minWidth is padded.
@@ -125,6 +170,31 @@ public class DisplayUtilsTest
       int emojiWidth = display.displayWidth(emojiLine);
 
       requireThat(asciiWidth, "asciiWidth").isEqualTo(emojiWidth);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that colored and uncolored content produce aligned box lines.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void buildLineConsistentWidthWithAnsiContent() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      DisplayUtils display = new DisplayUtils(scope);
+
+      String plainLine = display.buildLine("trust: medium", 20);
+      String coloredLine = display.buildLine("\033[38;2;255;180;118mtrust\033[0m: medium", 20);
+
+      requireThat(display.displayWidth(coloredLine), "coloredLineWidth").
+        isEqualTo(display.displayWidth(plainLine));
     }
     finally
     {

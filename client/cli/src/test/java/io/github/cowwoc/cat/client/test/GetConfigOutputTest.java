@@ -184,6 +184,76 @@ public class GetConfigOutputTest
   }
 
   /**
+   * Verifies that getCurrentSettings uses restrained ANSI accents and keeps all box lines aligned.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getCurrentSettingsUsesAnsiAccentsAndAlignedLines() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-config-output-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Path catDir = tempDir.resolve(".cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("config.json"), "{}");
+
+      GetConfigOutput handler = new GetConfigOutput(scope);
+      String result = handler.getCurrentSettings(tempDir);
+
+      requireThat(stripAnsi(result).split("\n")[0], "headerLine").startsWith("╭ ⚙️ CURRENT SETTINGS    ─");
+      requireThat(result, "result").contains("\033[38;2;");
+      requireThat(result, "result").
+        contains("\033[0m\033[1;37m").
+        doesNotContain("\033[38;2;255;214;102m\033[38;2;255;180;118m").
+        doesNotContain("\033[38;2;255;180;118m\033[38;2;235;116;164m");
+      String[] lines = result.split("\n");
+      int expectedWidth = scope.getDisplayUtils().displayWidth(lines[0]);
+      for (int i = 0; i < lines.length; ++i)
+        requireThat(scope.getDisplayUtils().displayWidth(lines[i]), "lineWidth" + i).isEqualTo(expectedWidth);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that compact settings output keeps the header title left-aligned and all box lines aligned.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void compactCurrentSettingsKeepsHeaderAligned() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-config-output-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      Path catDir = tempDir.resolve(".cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("config.json"), "{\"displayWidth\": 50}");
+
+      GetConfigOutput handler = new GetConfigOutput(scope);
+      String result = handler.getCurrentSettings(tempDir);
+
+      String[] lines = result.split("\n");
+      requireThat(stripAnsi(lines[0]), "headerLine").startsWith("╭ ⚙️ CURRENT SETTINGS    ─");
+      int expectedWidth = scope.getDisplayUtils().displayWidth(lines[0]);
+      for (int i = 0; i < lines.length; ++i)
+        requireThat(scope.getDisplayUtils().displayWidth(lines[i]), "lineWidth" + i).isEqualTo(expectedWidth);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  private static String stripAnsi(String text)
+  {
+    return text.replaceAll("\\033\\[[0-9;]*m", "");
+  }
+
+  /**
    * Verifies that minSeverity with empty string value is handled correctly.
    *
    * @throws IOException if an I/O error occurs
