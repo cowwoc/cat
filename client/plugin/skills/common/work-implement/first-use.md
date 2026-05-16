@@ -623,7 +623,64 @@ fi
 ```
 
 The subagent branch name and worktree path are returned in the Task tool result when `isolation: "worktree"` is
-used. Use that branch name in the merge command above.
+used. Use that branch name in the merge command above. If Task output truncation removes any of `agentId`, branch
+name, or worktree path, use `TaskGet` to recover the full result metadata. If `TaskGet` also fails to provide the
+metadata, STOP and return FAILED status with message "Unable to retrieve agentId, branch name, or worktree path for
+implementation subagent after truncation".
+
+### Cleanup Successfully Merged Subagent Worktrees
+
+After a subagent branch has been successfully fast-forward merged into the parent issue branch, immediately clean up
+that isolated subagent worktree and branch. This cleanup is mandatory for both single-subagent execution and parallel
+job execution. It prevents stale `*-jobN` worktrees and branches from being left behind after their commits have
+already been integrated.
+
+Use the subagent worktree path from the Task tool result metadata. Before deletion, prove that the path belongs to
+the expected subagent branch and is not the parent issue worktree:
+
+```bash
+SUBAGENT_WORKTREE="<worktree path from Task tool result metadata>"
+
+if [[ -z "${SUBAGENT_WORKTREE}" || "${SUBAGENT_WORKTREE}" != /* ]]; then
+  echo "ERROR: Subagent worktree path is missing or not absolute: ${SUBAGENT_WORKTREE}"
+  exit 1
+fi
+
+CANONICAL_PARENT_WORKTREE=$(realpath -m "${WORKTREE_PATH}")
+CANONICAL_SUBAGENT_WORKTREE=$(realpath -m "${SUBAGENT_WORKTREE}")
+SUBAGENT_WORKTREE="${CANONICAL_SUBAGENT_WORKTREE}"
+
+if [[ "${SUBAGENT_WORKTREE}" == "${CANONICAL_PARENT_WORKTREE}" ]] || \
+   [[ "${SUBAGENT_WORKTREE}" != "${CANONICAL_PARENT_WORKTREE}-"* ]]; then
+  echo "ERROR: Refusing to remove unexpected subagent worktree path: ${SUBAGENT_WORKTREE}"
+  exit 1
+fi
+
+REGISTERED_BRANCH=$(git -C "${WORKTREE_PATH}" worktree list --porcelain | \
+  awk -v path="${SUBAGENT_WORKTREE}" '
+    $1 == "worktree" { in_target = ($2 == path); next }
+    in_target && $1 == "branch" { sub("^refs/heads/", "", $2); print $2; exit }
+  ')
+if [[ "${REGISTERED_BRANCH}" != "${SUBAGENT_BRANCH}" ]]; then
+  echo "ERROR: Subagent worktree ${SUBAGENT_WORKTREE} is registered to branch ${REGISTERED_BRANCH}, not ${SUBAGENT_BRANCH}"
+  exit 1
+fi
+
+git -C "${WORKTREE_PATH}" worktree remove --force "${SUBAGENT_WORKTREE}"
+if [[ $? -ne 0 ]]; then
+  echo "ERROR: Failed to remove subagent worktree ${SUBAGENT_WORKTREE}"
+  exit 1
+fi
+
+git -C "${WORKTREE_PATH}" branch -d "${SUBAGENT_BRANCH}"
+if [[ $? -ne 0 ]]; then
+  echo "ERROR: Failed to delete merged subagent branch ${SUBAGENT_BRANCH}"
+  exit 1
+fi
+```
+
+If the merge fails, skip cleanup and leave the subagent worktree available for diagnosis. Do not delete the branch or
+worktree until the failed merge has been resolved or the user explicitly chooses cleanup.
 
 ### Parallel Subagent Execution (two or more jobs)
 
@@ -830,11 +887,12 @@ directly, the job is still complete when its Task tool result appears — the re
 completeness. Do NOT attempt to read the output file directly or use TaskOutput on Agent tasks. Wait for the
 system notification of the Task tool result, then proceed.
 
-**Truncated metadata recovery:** The `agentId` and branch name are essential for collect-results and merge
+**Truncated metadata recovery:** The `agentId`, branch name, and worktree path are essential for collect-results,
+merge, and cleanup
 steps. If truncation removes these fields from the visible Task tool result, do NOT fabricate or guess
-values. Instead, use `TaskGet` with the task ID to retrieve the full result metadata including the `agentId`
-and branch name. If `TaskGet` also fails to provide the metadata, STOP and return FAILED status with message
-"Unable to retrieve agentId or branch name for job N after truncation".
+values. Instead, use `TaskGet` with the task ID to retrieve the full result metadata including the `agentId`,
+branch name, and worktree path. If `TaskGet` also fails to provide the metadata, STOP and return FAILED status with
+message "Unable to retrieve agentId, branch name, or worktree path for job N after truncation".
 
 For each completed subagent, call collect-results:
 
@@ -892,11 +950,48 @@ if [[ $? -ne 0 ]]; then
   echo "Use /cat:git-merge-linear to resolve the diverged history before merging the next job."
   exit 1
 fi
+SUBAGENT_WORKTREE="<worktree path from Task tool result metadata for this job>"
+if [[ -z "${SUBAGENT_WORKTREE}" || "${SUBAGENT_WORKTREE}" != /* ]]; then
+  echo "ERROR: Subagent worktree path is missing or not absolute for job ${NEXT_MERGE}: ${SUBAGENT_WORKTREE}"
+  exit 1
+fi
+CANONICAL_PARENT_WORKTREE=$(realpath -m "${WORKTREE_PATH}")
+CANONICAL_SUBAGENT_WORKTREE=$(realpath -m "${SUBAGENT_WORKTREE}")
+SUBAGENT_WORKTREE="${CANONICAL_SUBAGENT_WORKTREE}"
+if [[ "${SUBAGENT_WORKTREE}" == "${CANONICAL_PARENT_WORKTREE}" ]] || \
+   [[ "${SUBAGENT_WORKTREE}" != "${CANONICAL_PARENT_WORKTREE}-"* ]]; then
+  echo "ERROR: Refusing to remove unexpected subagent worktree path for job ${NEXT_MERGE}: ${SUBAGENT_WORKTREE}"
+  exit 1
+fi
+REGISTERED_BRANCH=$(git -C "${WORKTREE_PATH}" worktree list --porcelain | \
+  awk -v path="${SUBAGENT_WORKTREE}" '
+    $1 == "worktree" { in_target = ($2 == path); next }
+    in_target && $1 == "branch" { sub("^refs/heads/", "", $2); print $2; exit }
+  ')
+if [[ "${REGISTERED_BRANCH}" != "${SUBAGENT_BRANCH}" ]]; then
+  echo "ERROR: Subagent worktree ${SUBAGENT_WORKTREE} is registered to branch ${REGISTERED_BRANCH}, not ${SUBAGENT_BRANCH}"
+  exit 1
+fi
+git -C "${WORKTREE_PATH}" worktree remove --force "${SUBAGENT_WORKTREE}"
+if [[ $? -ne 0 ]]; then
+  echo "ERROR: Failed to remove subagent worktree ${SUBAGENT_WORKTREE} for job ${NEXT_MERGE}"
+  exit 1
+fi
+git -C "${WORKTREE_PATH}" branch -d "${SUBAGENT_BRANCH}"
+if [[ $? -ne 0 ]]; then
+  echo "ERROR: Failed to delete merged subagent branch ${SUBAGENT_BRANCH} for job ${NEXT_MERGE}"
+  exit 1
+fi
 # ... repeat for each job in ascending order using NEXT_MERGE counter
 ```
 
 The subagent branch name and worktree path for each job are returned in the Task tool result when
 `isolation: "worktree"` is used.
+
+For parallel jobs, cleanup is part of the strict ascending merge sequence: merge job `NEXT_MERGE`, remove that
+job's subagent worktree, delete that job's merged subagent branch, then increment `NEXT_MERGE`. Do this cleanup
+before incrementing `NEXT_MERGE` so every job's branch/worktree lifecycle is completed in the same deterministic
+order as collection and merging.
 
 - Collect commits from all jobs into a single combined list
 - If any job returns FAILED or BLOCKED, stop and report failure

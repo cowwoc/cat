@@ -422,6 +422,11 @@ public final class PluginArtifactBuilderTest
         assertNoEmptyDiffAlreadyImplementedRule(workExecute, runtime + "WorkExecute");
         requireThat(workExecute, runtime + "WorkExecute").doesNotContain("cat:include");
 
+        String workImplement = Files.readString(runtimeRoot.resolve("skills/work-implement/first-use.md"),
+          StandardCharsets.UTF_8);
+        assertWorkImplementCleanupConvention(workImplement, runtime + "WorkImplement");
+        requireThat(workImplement, runtime + "WorkImplement").doesNotContain("cat:include");
+
         String workVerifyAgent = "agents/work-verify.toml";
         if (runtime.equals("claude"))
           workVerifyAgent = "agents/work-verify.md";
@@ -554,6 +559,40 @@ public final class PluginArtifactBuilderTest
       requireThat(firstUse, skillName + "FirstUse").doesNotContain("Return the generated display exactly");
       requireThat(Files.exists(skillsRoot.resolve("include/" + skillName + ".md"), LinkOption.NOFOLLOW_LINKS),
         skillName + "IncludeExists").isFalse();
+    }
+  }
+
+  /**
+   * Verifies that implementation subagent worktrees and branches are cleaned up after successful merges.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void workImplementCleansUpSubagentWorktreesAfterMerge() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try
+    {
+      Path sourceRoot = findSourceRoot();
+      Path tempRepo = tempDir.resolve("repo");
+      Path tempClient = tempRepo.resolve("client");
+      Files.createDirectories(tempRepo);
+      Files.writeString(tempRepo.resolve("LICENSE.md"), "license\n", StandardCharsets.UTF_8);
+      copyDirectory(sourceRoot.resolve("client/plugin"), tempClient.resolve("plugin"));
+
+      Path targetDir = tempClient.resolve("distribution/target/runtime");
+      new PluginArtifactBuilder(tempClient.resolve("plugin"), tempClient, targetDir).build();
+
+      for (String runtime : new String[]{"claude", "codex"})
+      {
+        Path workImplement = targetDir.resolve(runtime + "/skills/work-implement/first-use.md");
+        String firstUse = Files.readString(workImplement, StandardCharsets.UTF_8);
+        assertWorkImplementCleanupConvention(firstUse, runtime + "WorkImplementCleanup");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -1120,6 +1159,38 @@ public final class PluginArtifactBuilderTest
     requireThat(normalizeInstructionText(content), name).doesNotContain(
       "implementation diff is empty, return already_implemented");
     requireThat(content, name).doesNotContain("no diff for the\nimplementation files");
+  }
+
+  /**
+   * Verifies that work-implement requires branch-bound cleanup of merged subagent worktrees.
+   *
+   * @param content the work-implement skill content
+   * @param name    the assertion name
+   */
+  private static void assertWorkImplementCleanupConvention(String content, String name)
+  {
+    String cleanupSection = content.substring(
+      content.indexOf("### Cleanup Successfully Merged Subagent Worktrees"),
+      content.indexOf("### Parallel Subagent Execution"));
+    String parallelMergeSection = content.substring(
+      content.indexOf("For each job's branch name received from the Task tool result"),
+      content.indexOf("The subagent branch name and worktree path for each job"));
+
+    requireThat(content, name).contains("### Cleanup Successfully Merged Subagent Worktrees");
+    requireThat(cleanupSection, name + "Cleanup").contains(
+      "REGISTERED_BRANCH=$(git -C \"${WORKTREE_PATH}\" worktree list --porcelain");
+    requireThat(cleanupSection, name + "Cleanup").contains(
+      "git -C \"${WORKTREE_PATH}\" worktree remove --force \"${SUBAGENT_WORKTREE}\"");
+    requireThat(cleanupSection, name + "Cleanup").contains(
+      "git -C \"${WORKTREE_PATH}\" branch -d \"${SUBAGENT_BRANCH}\"");
+    requireThat(content, name).contains("skip cleanup and leave the subagent worktree available for diagnosis");
+    requireThat(parallelMergeSection, name + "Parallel").contains(
+      "REGISTERED_BRANCH=$(git -C \"${WORKTREE_PATH}\" worktree list --porcelain");
+    requireThat(parallelMergeSection, name + "Parallel").contains(
+      "git -C \"${WORKTREE_PATH}\" worktree remove --force \"${SUBAGENT_WORKTREE}\"");
+    requireThat(parallelMergeSection, name + "Parallel").contains(
+      "git -C \"${WORKTREE_PATH}\" branch -d \"${SUBAGENT_BRANCH}\"");
+    requireThat(content, name).contains("before incrementing `NEXT_MERGE`");
   }
 
   /**
