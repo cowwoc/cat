@@ -9,9 +9,8 @@ package io.github.cowwoc.cat.codex.hook.skills;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import io.github.cowwoc.cat.agent.AbstractAgentPluginScope;
 import io.github.cowwoc.cat.agent.AgentPluginScope;
-import io.github.cowwoc.cat.agent.TerminalType;
+import io.github.cowwoc.cat.codex.tool.MainCodexTool;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 
 import java.io.BufferedReader;
@@ -27,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -47,11 +47,16 @@ public final class CodexRunner
   private static final List<String> EFFORT_LEVELS = List.of("minimal", "low", "medium",
     "high", "xhigh");
   /**
+   * Sandbox mode used for nested Codex executions in already-sandboxed CAT runtimes.
+   */
+  private static final String NESTED_SANDBOX_MODE = "danger-full-access";
+  /**
    * Default timeout for the Codex CLI process.
    */
   private static final Duration DEFAULT_TIMEOUT = Duration.ofMinutes(3);
   private final AgentPluginScope scope;
   private final Duration timeout;
+  private final Map<String, String> environment;
 
   /**
    * Creates a new Codex process launcher.
@@ -74,12 +79,28 @@ public final class CodexRunner
    */
   public CodexRunner(AgentPluginScope scope, Duration timeout)
   {
+    this(scope, timeout, commandPolicyEnvironment(scope));
+  }
+
+  /**
+   * Creates a new Codex process launcher.
+   *
+   * @param scope       the scope providing the JSON mapper
+   * @param timeout     the process timeout
+   * @param environment the environment used for command policy decisions
+   * @throws NullPointerException     if {@code scope}, {@code timeout}, or {@code environment} are null
+   * @throws IllegalArgumentException if {@code timeout} is not positive
+   */
+  public CodexRunner(AgentPluginScope scope, Duration timeout, Map<String, String> environment)
+  {
     requireThat(scope, "scope").isNotNull();
     requireThat(timeout, "timeout").isNotNull();
+    requireThat(environment, "environment").isNotNull();
     if (!timeout.isPositive())
       throw new IllegalArgumentException("timeout must be positive");
     this.scope = scope;
     this.timeout = timeout;
+    this.environment = Map.copyOf(environment);
   }
 
   /**
@@ -114,12 +135,46 @@ public final class CodexRunner
     command.add(lastMessageOutputPath.toString());
     command.add("--cd");
     command.add(cwd.toString());
+    if (isExternallySandboxedRuntime())
+    {
+      command.add("--sandbox");
+      command.add(NESTED_SANDBOX_MODE);
+    }
     command.add("--model");
     command.add(model);
     command.add("-c");
     command.add("model_reasoning_effort=\"" + effort + "\"");
     command.add("-");
     return command;
+  }
+
+  /**
+   * Returns {@code true} if the runner is already executing inside a Codex-managed sandbox.
+   *
+   * @return {@code true} if nested Codex executions need an explicit sandbox override
+   */
+  private boolean isExternallySandboxedRuntime()
+  {
+    String codexTool = environment.get("CODEX_TOOL");
+    String codexCi = environment.get("CODEX_CI");
+    return Objects.equals(codexTool, "codex-cli") ||
+      Objects.equals(codexCi, "1") ||
+      (codexCi != null && codexCi.equalsIgnoreCase("true"));
+  }
+
+  /**
+   * Returns the command-policy environment exposed by production Codex scopes.
+   *
+   * @param scope the scope that may provide command-policy environment values
+   * @return the environment values used for command policy decisions
+   * @throws NullPointerException if {@code scope} is null
+   */
+  private static Map<String, String> commandPolicyEnvironment(AgentPluginScope scope)
+  {
+    requireThat(scope, "scope").isNotNull();
+    if (scope instanceof MainCodexTool mainCodexTool)
+      return mainCodexTool.getCommandEnvironment();
+    return Map.of();
   }
 
   /**
@@ -519,7 +574,7 @@ public final class CodexRunner
    */
   public static void main(String[] args)
   {
-    try (AgentPluginScope scope = new CommandLineScope(Path.of(System.getProperty("user.dir"))))
+    try (AgentPluginScope scope = new MainCodexTool())
     {
       try
       {
@@ -612,40 +667,6 @@ public final class CodexRunner
       requireThat(texts, "texts").isNotNull();
       requireThat(toolUses, "toolUses").isNotNull();
       requireThat(writeContents, "writeContents").isNotNull();
-    }
-  }
-
-  private static final class CommandLineScope extends AbstractAgentPluginScope
-  {
-    private final Path workDir;
-
-    private CommandLineScope(Path projectPath)
-    {
-      super(projectPath.toAbsolutePath(), projectPath.toAbsolutePath(), projectPath.toAbsolutePath(),
-        Path.of(".codex-plugin").resolve("plugin.json"), List.of(), Path.of(".codex-plugin").
-          resolve("plugin.json"));
-      this.workDir = projectPath.toAbsolutePath();
-    }
-
-    @Override
-    public Path getWorkDir()
-    {
-      ensureOpen();
-      return workDir;
-    }
-
-    @Override
-    public TerminalType getTerminalType()
-    {
-      ensureOpen();
-      return TerminalType.detect();
-    }
-
-    @Override
-    public String getTimezone()
-    {
-      ensureOpen();
-      return "UTC";
     }
   }
 }

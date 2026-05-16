@@ -46,3 +46,4 @@ See LICENSE.md in the project root for license terms.
 |---------|-------|-----|
 | `!Files.exists(path)` | True for both "doesn't exist" and "can't determine" (permissions) | `Files.notExists(path)` |
 | `String.trim()` | Only handles ASCII whitespace (≤ U+0020), misses Unicode whitespace | `String.strip()` |
+| `"<literal>".equals(value)` | Reverses natural operand order for null safety | `Objects.equals(value, "<literal>")` |

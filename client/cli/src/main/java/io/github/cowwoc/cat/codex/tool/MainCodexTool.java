@@ -12,6 +12,7 @@ import io.github.cowwoc.pouch10.core.ConcurrentLazyReference;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Production implementation of a Codex CLI scope.
@@ -27,6 +28,7 @@ public final class MainCodexTool extends AbstractAgentPluginScope
   private final Path workDir;
   private final Path codexHome;
   private final String timezone;
+  private final Map<String, String> commandEnvironment;
 
   /**
    * Creates a new production Codex tool scope.
@@ -34,7 +36,7 @@ public final class MainCodexTool extends AbstractAgentPluginScope
   public MainCodexTool()
   {
     this(Path.of(System.getProperty("user.dir")).toAbsolutePath(), getCodexHomeFromEnvironment(),
-      getTimezoneFromEnvironment());
+      getTimezoneFromEnvironment(), getCommandEnvironmentFromEnvironment());
   }
 
   /**
@@ -42,15 +44,18 @@ public final class MainCodexTool extends AbstractAgentPluginScope
    *
    * @param projectPath the project path
    * @param codexHome the Codex home directory
-   * @param timezone the timezone
+   * @param timezone           the timezone
+   * @param commandEnvironment environment values used for command policy decisions
    */
-  private MainCodexTool(Path projectPath, Path codexHome, String timezone)
+  private MainCodexTool(Path projectPath, Path codexHome, String timezone,
+    Map<String, String> commandEnvironment)
   {
     super(projectPath, projectPath, projectPath, Path.of(".codex-plugin").resolve("plugin.json"),
       List.of(), Path.of(".codex-plugin").resolve("plugin.json"));
     this.workDir = projectPath;
     this.codexHome = codexHome;
     this.timezone = timezone;
+    this.commandEnvironment = Map.copyOf(commandEnvironment);
   }
 
   /**
@@ -86,6 +91,17 @@ public final class MainCodexTool extends AbstractAgentPluginScope
   }
 
   /**
+   * Returns environment values used for command policy decisions.
+   *
+   * @return environment values used for command policy decisions
+   */
+  public Map<String, String> getCommandEnvironment()
+  {
+    ensureOpen();
+    return commandEnvironment;
+  }
+
+  /**
    * Reads the Codex home directory from the environment or defaults to {@code ~/.codex}.
    *
    * @return the Codex home directory
@@ -109,5 +125,16 @@ public final class MainCodexTool extends AbstractAgentPluginScope
     if (timezone == null || timezone.isBlank())
       return "UTC";
     return timezone;
+  }
+
+  /**
+   * Reads the environment values that affect Codex command construction.
+   *
+   * @return environment values used for command policy decisions
+   */
+  private static Map<String, String> getCommandEnvironmentFromEnvironment()
+  {
+    return Map.of("CODEX_TOOL", System.getenv().getOrDefault("CODEX_TOOL", ""),
+      "CODEX_CI", System.getenv().getOrDefault("CODEX_CI", ""));
   }
 }

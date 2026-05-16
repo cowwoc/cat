@@ -21,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import org.testng.annotations.Test;
 
 /**
@@ -63,7 +64,33 @@ public final class CodexRunnerTest
     Path tempDir = Files.createTempDirectory("test-");
     try (TestCodexTool scope = new TestCodexTool(tempDir, tempDir))
     {
-      CodexRunner runner = new CodexRunner(scope);
+      CodexRunner runner = new CodexRunner(scope, Duration.ofMinutes(3),
+        Map.of("CODEX_TOOL", "codex-cli"));
+      Path outputPath = tempDir.resolve("last-message.txt");
+
+      List<String> command = runner.buildCommand("gpt-5.5", "high", tempDir, outputPath);
+
+      requireThat(command, "command").isEqualTo(List.of("codex", "exec", "--json",
+        "--output-last-message", outputPath.toString(), "--cd", tempDir.toString(),
+        "--sandbox", "danger-full-access", "--model", "gpt-5.5", "-c",
+        "model_reasoning_effort=\"high\"", "-"));
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that normal Codex executions keep the default sandbox policy.
+   */
+  @Test
+  public void buildCommandUsesDefaultSandboxOutsideCodexRuntime() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestCodexTool scope = new TestCodexTool(tempDir, tempDir))
+    {
+      CodexRunner runner = new CodexRunner(scope, Duration.ofMinutes(3), Map.of());
       Path outputPath = tempDir.resolve("last-message.txt");
 
       List<String> command = runner.buildCommand("gpt-5.5", "high", tempDir, outputPath);
