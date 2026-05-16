@@ -1,3 +1,4 @@
 {
-  "status" : "open"
+  "status" : "closed",
+  "target_branch" : "v2.1"
 }

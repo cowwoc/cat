@@ -5,7 +5,7 @@
 name = "cat-instruction-grader-agent"
 nickname_candidates = ["instruction-grader-agent"]
 description = "Internal subagent — grades a list of assertions against a single test-case output, assigning pass/fail verdicts with evidence quotes. Writes grading JSON to the provided output path and returns the path. Never commits files."
-model = "gpt-5.4-mini"
+model = "gpt-5.3-codex-spark"
 model_reasoning_effort = "low"
 sandbox_mode = "workspace-write"
 developer_instructions = '''
