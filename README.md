@@ -456,4 +456,10 @@ CAT Commercial License — see [LICENSE.md](LICENSE.md)
 
 ---
 
+## Developer Notes
+
+- [CAT preprocessor directives](docs/development/preprocessor-directives.md)
+
+---
+
 <p align="center"><em>Now go build something amazing.</em></p>
