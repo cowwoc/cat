@@ -8,9 +8,8 @@
 #   - JSON output templates contain internal_summary (not user_summary)
 #   - Each phase file uses user-centric preamble framing
 
-load "${BATS_TEST_DIRNAME}/../../../../tests/test_helper"
-
-LEARN_DIR="${BATS_TEST_DIRNAME}/.."
+REPO_ROOT="$(cd "${BATS_TEST_DIRNAME}/../../../../../../.." && pwd)"
+LEARN_DIR="${REPO_ROOT}/client/plugin/skills/common/learn"
 
 @test "phase-investigate.md contains internal_summary field" {
     grep -q '"internal_summary"' "${LEARN_DIR}/phase-investigate.md"

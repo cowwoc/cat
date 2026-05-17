@@ -12,8 +12,8 @@
 # of invoking the actual skill.
 
 TEST_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")" && pwd)"
-PROJECT_ROOT="$(cd "$TEST_DIR/.." && pwd)"
-FIRST_USE_MD="$PROJECT_ROOT/plugin/skills/add-agent/first-use.md"
+PROJECT_ROOT="$(cd "$TEST_DIR/../../../.." && pwd)"
+FIRST_USE_MD="$PROJECT_ROOT/client/plugin/skills/common/add/first-use.md"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Detection helper
@@ -46,8 +46,8 @@ contains_slash_command() {
     grep -qF '/cat:work' "$FIRST_USE_MD"
 }
 
-@test "first-use.md guidance directs use of AskUserQuestion for next-step progression" {
-    grep -q 'AskUserQuestion' "$FIRST_USE_MD"
+@test "first-use.md guidance directs use of structured user-choice prompt for next-step progression" {
+    grep -q 'structured user-choice prompt' "$FIRST_USE_MD"
 }
 
 # ─────────────────────────────────────────────────────────────────────────────

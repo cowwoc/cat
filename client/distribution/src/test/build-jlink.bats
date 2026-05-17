@@ -4,16 +4,16 @@
 # Licensed under the CAT Commercial License.
 # See LICENSE.md in the project root for license terms.
 #
-# Tests for client/cli/build-jlink.sh AOT error reporting behavior.
+# Tests for client/distribution/scripts/build-jlink-images.sh AOT error reporting behavior.
 # These tests use a purpose-built AOT test harness script to exercise the
 # generate_startup_archives logic in isolation.
 
 # The AOT harness is a minimal script that mirrors the error-reporting pattern
-# used by generate_startup_archives in build-jlink.sh. Testing with the harness
+# used by generate_startup_archives in build-jlink-images.sh. Testing with the harness
 # keeps tests fast and eliminates the need for a real jlink build.
 
 HARNESS="$BATS_TEST_DIRNAME/aot-harness.sh"
-BUILD_JLINK="$BATS_TEST_DIRNAME/../client/cli/build-jlink.sh"
+BUILD_JLINK="$BATS_TEST_DIRNAME/../../scripts/build-jlink-images.sh"
 
 setup() {
     FAKE_BIN_DIR="$(mktemp -d)"
@@ -358,7 +358,8 @@ EOF
     PRE_BASH_LOG="$OUTPUT_DIR/pre-bash.log"
     SESSION_START_LOG="$OUTPUT_DIR/session-start.log"
     STATUS_LOG="$OUTPUT_DIR/status.log"
-    export PRE_BASH_LOG SESSION_START_LOG STATUS_LOG
+    UPDATE_BRANCH_LOG="$OUTPUT_DIR/update-branch.log"
+    export PRE_BASH_LOG SESSION_START_LOG STATUS_LOG UPDATE_BRANCH_LOG
 
     cat > "$OUTPUT_DIR/bin/java" <<'EOF'
 #!/bin/sh
@@ -376,22 +377,33 @@ cat >/dev/null
 printf '%s\n' "session-start" >> "$SESSION_START_LOG"
 printf '%s\n' '{"hookSpecificOutput":"ok"}'
 EOF
-    cat > "$OUTPUT_DIR/bin/get-status-output" <<'EOF'
+cat > "$OUTPUT_DIR/bin/get-status-output" <<'EOF'
 #!/bin/sh
 cat >/dev/null
+if [ -n "${CODEX_HOME:-}" ] && [ -z "${CAT_CONFIG_DIR:-}" ]; then
+    exit 1
+fi
 printf '%s\n' "status" >> "$STATUS_LOG"
 printf '%s\n' "No CAT project found. Initialize one first."
 EOF
+    cat > "$OUTPUT_DIR/bin/update-branch" <<'EOF'
+#!/bin/sh
+printf '%s\n' "update-branch" >> "$UPDATE_BRANCH_LOG"
+printf '%s\n' "Usage: update-branch"
+exit 1
+EOF
     chmod +x "$OUTPUT_DIR/bin/java" "$OUTPUT_DIR/bin/pre-bash" "$OUTPUT_DIR/bin/session-start" \
-        "$OUTPUT_DIR/bin/get-status-output"
+        "$OUTPUT_DIR/bin/get-status-output" "$OUTPUT_DIR/bin/update-branch"
 
     run verify_image claude
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"Testing claude pre-bash launcher"* ]]
     [[ "$output" == *"Testing get-status-output launcher"* ]]
+    [[ "$output" == *"Testing update-branch launcher"* ]]
     [ "$(grep -c 'pre-bash' "$PRE_BASH_LOG")" -eq 1 ]
     [ "$(grep -c 'status' "$STATUS_LOG")" -eq 1 ]
+    [ "$(grep -c 'update-branch' "$UPDATE_BRANCH_LOG")" -eq 1 ]
     [ ! -f "$SESSION_START_LOG" ]
 
     run verify_image codex
@@ -400,9 +412,11 @@ EOF
     [[ "$output" == *"Testing codex pre-bash launcher"* ]]
     [[ "$output" == *"Testing codex session-start launcher"* ]]
     [[ "$output" == *"Testing get-status-output launcher"* ]]
+    [[ "$output" == *"Testing update-branch launcher"* ]]
     [ "$(grep -c 'pre-bash' "$PRE_BASH_LOG")" -eq 2 ]
     [ "$(grep -c 'session-start' "$SESSION_START_LOG")" -eq 1 ]
     [ "$(grep -c 'status' "$STATUS_LOG")" -eq 2 ]
+    [ "$(grep -c 'update-branch' "$UPDATE_BRANCH_LOG")" -eq 2 ]
 }
 
 @test "generate_startup_archives uses runtime-specific AOT entrypoints and hook environment" {
@@ -445,10 +459,10 @@ EOF
     generate_startup_archives claude
     generate_startup_archives codex
 
-    grep -q 'record|io.github.cowwoc.cat.client/io.github.cowwoc.cat.claude.hook.AotTraining|' "$AOT_LOG"
-    grep -q 'create|io.github.cowwoc.cat.client/io.github.cowwoc.cat.claude.hook.PreToolUseHook|' "$AOT_LOG"
-    grep -q 'record|io.github.cowwoc.cat.client/io.github.cowwoc.cat.codex.hook.CodexAotTraining|' "$AOT_LOG"
-    grep -q 'create|io.github.cowwoc.cat.client/io.github.cowwoc.cat.codex.hook.PreBashHook|' "$AOT_LOG"
+    grep -q 'record|io.github.cowwoc.cat.claude.cli/io.github.cowwoc.cat.claude.hook.AotTraining|' "$AOT_LOG"
+    grep -q 'create|io.github.cowwoc.cat.claude.cli/io.github.cowwoc.cat.claude.hook.PreToolUseHook|' "$AOT_LOG"
+    grep -q 'record|io.github.cowwoc.cat.codex.cli/io.github.cowwoc.cat.codex.hook.CodexAotTraining|' "$AOT_LOG"
+    grep -q 'create|io.github.cowwoc.cat.codex.cli/io.github.cowwoc.cat.codex.hook.PreBashHook|' "$AOT_LOG"
 
     while IFS='|' read -r mode module claude_project claude_root claude_data claude_config cat_project cat_root cat_config; do
         [ -n "$mode" ]
@@ -519,7 +533,7 @@ EOF
         { echo "Expected codex cache creation failure. Got: $output"; false; }
 }
 
-@test "build-jlink.sh exits non-zero on unknown argument" {
+@test "build-jlink-images.sh exits non-zero on unknown argument" {
     run bash "$BUILD_JLINK" --unknown-flag
 
     [ "$status" -ne 0 ]

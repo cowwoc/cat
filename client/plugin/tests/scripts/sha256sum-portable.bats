@@ -4,12 +4,12 @@
 # Licensed under the CAT Commercial License.
 # See LICENSE.md in the project root for license terms.
 #
-# Unit tests for plugin/scripts/sha256sum-portable.sh.
+# Unit tests for client/plugin/scripts/sha256sum-portable.sh.
 # Tests verify sha256sum_portable() delegates to sha256sum (Linux) or shasum -a 256 (macOS),
 # and fails gracefully when neither is available.
 
-SCRIPT_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)"
-HELPER_SCRIPT="${SCRIPT_DIR}/plugin/scripts/sha256sum-portable.sh"
+SCRIPT_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")/../../../.." && pwd)"
+HELPER_SCRIPT="${SCRIPT_DIR}/client/plugin/scripts/sha256sum-portable.sh"
 
 setup() {
     STUB_BIN_DIR="$(mktemp -d)"

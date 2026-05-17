@@ -6,7 +6,7 @@
 
 setup() {
   TEST_DIR=$(mktemp -d)
-  BATS_TEST_SOURCED=true source "${BATS_TEST_DIRNAME}/../../client/plugin/hooks/claude/session-start.sh" || true
+  BATS_TEST_SOURCED=true source "${BATS_TEST_DIRNAME}/../../../hooks/claude/session-start.sh" || true
 }
 
 teardown() {

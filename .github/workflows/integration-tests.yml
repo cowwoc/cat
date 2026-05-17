@@ -5,8 +5,10 @@ on:
     branches:
       - '**'
     paths:
-      - 'server/**'
+      - '.codex/skills/cat-update/SKILL.md'
       - '.github/workflows/integration-tests.yml'
+      - 'client/**'
+      - 'tests/**'
   workflow_dispatch:
     inputs:
       ref:
@@ -23,19 +25,50 @@ jobs:
         with:
           ref: ${{ github.event.inputs.ref || github.ref }}
 
-      - name: Set up JDK 21
+      - name: Set up JDK 26
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
+          java-version: '26'
           distribution: 'temurin'
           cache: maven
 
-      - name: Run integration tests
-        run: mvn test -f server/pom.xml -P integration-tests
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: client/plugin/package-lock.json
+
+      - name: Install Bats
+        run: npm ci --prefix client/plugin
+
+      - name: Run Maven verification
+        run: ./client/mvnw -f client/pom.xml verify -Djlink.extra.args=--enable-assertions
+
+      - name: Run Bats tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          BATS_PROJECT="$(mktemp -d)"
+          trap 'rm -rf "${BATS_PROJECT}"' EXIT
+          cp -a "${GITHUB_WORKSPACE}/." "${BATS_PROJECT}/"
+          rm -rf "${BATS_PROJECT}/.git" "${BATS_PROJECT}"/client/*/target
+          BATS="${BATS_PROJECT}/client/plugin/node_modules/.bin/bats"
+          mapfile -d '' BATS_TESTS < <(
+            find "${BATS_PROJECT}/client/plugin/tests/scripts" \
+              "${BATS_PROJECT}/client/distribution/src/test" \
+              -name '*.bats' -print0 | sort -z
+          )
+          if (( ${#BATS_TESTS[@]} == 0 )); then
+            echo "ERROR: No Bats tests found." >&2
+            exit 1
+          fi
+          cd "${BATS_PROJECT}"
+          "${BATS}" "${BATS_TESTS[@]}"
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results
-          path: server/target/surefire-reports/
+          path: client/**/target/surefire-reports/

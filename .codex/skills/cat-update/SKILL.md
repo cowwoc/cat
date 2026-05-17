@@ -26,6 +26,27 @@ CAT_PLUGIN_DATA="${CAT_PLUGIN_DATA:-${CODEX_HOME}/plugins/data/cat-cat}"
 
 mvn -f "${PROJECT_DIR}/client/pom.xml" verify -Djlink.extra.args=--enable-assertions
 
+BATS_BIN="${PROJECT_DIR}/client/plugin/node_modules/.bin/bats"
+if [[ ! -x "${BATS_BIN}" ]]; then
+  npm ci --prefix "${PROJECT_DIR}/client/plugin"
+fi
+BATS_PROJECT="$(mktemp -d)"
+trap 'rm -rf "${BATS_PROJECT}"' EXIT
+cp -a "${PROJECT_DIR}/." "${BATS_PROJECT}/"
+rm -rf "${BATS_PROJECT}/.git" "${BATS_PROJECT}"/client/*/target
+mapfile -d '' BATS_TESTS < <(
+  find "${BATS_PROJECT}/client/plugin/tests/scripts" \
+    "${BATS_PROJECT}/client/distribution/src/test" \
+    -name '*.bats' -print0 | sort -z
+)
+if (( ${#BATS_TESTS[@]} == 0 )); then
+  echo "ERROR: No Bats tests found." >&2
+  exit 1
+fi
+cd "${BATS_PROJECT}"
+"${BATS_BIN}" "${BATS_TESTS[@]}"
+cd "${PROJECT_DIR}"
+
 RELEASE_ARTIFACT="${PROJECT_DIR}/client/distribution/target/runtime/codex"
 test -f "${RELEASE_ARTIFACT}/client/VERSION"
 test -f "${RELEASE_ARTIFACT}/.codex-plugin/plugin.json"
@@ -153,6 +174,7 @@ After the command succeeds, tell the user to restart Codex to complete the insta
 ## Verification
 
 - The Maven build exits with code 0.
+- The Bats test suite exits with code 0.
 - `${CODEX_HOME}/plugins/cat-marketplace/plugins/cat/.codex-plugin/plugin.json` exists.
 - `${CODEX_HOME}/plugins/cache/cat/cat/{version}/skills/add/SKILL.md` exists.
 - `${CAT_PLUGIN_DATA}/client/bin/java -version` runs successfully.

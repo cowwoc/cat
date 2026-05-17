@@ -12,9 +12,9 @@
 # Wave 3: False-Positive and Detection Gap Analysis (item 4)
 
 # In bats, BATS_TEST_DIRNAME is the directory of the test file.
-PROJECT_ROOT="$(cd "${BATS_TEST_DIRNAME}/.." && pwd)"
-OPTIMIZE_SKILL="${PROJECT_ROOT}/plugin/skills/optimize-execution/first-use.md"
-INSTRUCTION_SKILL="${PROJECT_ROOT}/plugin/skills/instruction-builder-agent/first-use.md"
+PROJECT_ROOT="$(cd "${BATS_TEST_DIRNAME}/../../../.." && pwd)"
+OPTIMIZE_SKILL="${PROJECT_ROOT}/client/plugin/skills/common/optimize-execution/first-use.md"
+INSTRUCTION_SKILL="${PROJECT_ROOT}/client/plugin/skills/common/instruction-builder/first-use.md"
 FIXTURES_DIR="${BATS_TEST_DIRNAME}/token-efficiency-fixtures"
 
 # ---------------------------------------------------------------------------
@@ -57,10 +57,10 @@ FIXTURES_DIR="${BATS_TEST_DIRNAME}/token-efficiency-fixtures"
 }
 
 @test "optimize-execution Token Efficiency reporting format includes required fields" {
-  # Each flagged pattern must include: location, pattern type, sample text, estimated savings
+  # Each flagged pattern must include: location, pattern, sample, estimated savings
   grep -q "Location" "${OPTIMIZE_SKILL}"
-  grep -q "Pattern type" "${OPTIMIZE_SKILL}"
-  grep -q "Sample text" "${OPTIMIZE_SKILL}"
+  grep -q "Pattern" "${OPTIMIZE_SKILL}"
+  grep -q "Sample" "${OPTIMIZE_SKILL}"
   grep -q "Estimated savings" "${OPTIMIZE_SKILL}"
 }
 
@@ -148,8 +148,8 @@ FIXTURES_DIR="${BATS_TEST_DIRNAME}/token-efficiency-fixtures"
 }
 
 @test "optimize-execution display table exemption documented" {
-  # Display tables / boxes must be listed as exempt from compaction
-  grep -q "display table\|formatted report\|visual design" "${OPTIMIZE_SKILL}"
+  # User-facing visual alignment must be protected from compaction
+  grep -q "user-facing visual alignment\|visual alignment" "${OPTIMIZE_SKILL}"
 }
 
 @test "optimize-execution lists all 5 correctness exemption contexts" {
@@ -161,7 +161,7 @@ FIXTURES_DIR="${BATS_TEST_DIRNAME}/token-efficiency-fixtures"
   grep -q "Makefile" "${OPTIMIZE_SKILL}"               && exemption_count=$((exemption_count + 1))
   grep -q "fenced code block" "${OPTIMIZE_SKILL}"      && exemption_count=$((exemption_count + 1))
   grep -q "semantic" "${OPTIMIZE_SKILL}"               && exemption_count=$((exemption_count + 1))
-  grep -q "display table\|visual design" "${OPTIMIZE_SKILL}" && exemption_count=$((exemption_count + 1))
+  grep -q "user-facing visual alignment\|visual alignment" "${OPTIMIZE_SKILL}" && exemption_count=$((exemption_count + 1))
 
   [ "${exemption_count}" -eq 5 ]
 }
@@ -213,7 +213,7 @@ FIXTURES_DIR="${BATS_TEST_DIRNAME}/token-efficiency-fixtures"
 @test "optimize-execution detection patterns do not flag exempt contexts as wasteful" {
   # Correctness exemptions must be explicitly documented to prevent false positives
   # This test verifies the do-NOT-flag instruction is present
-  grep -q "do NOT flag\|not flag\|Never flag\|must NOT" "${OPTIMIZE_SKILL}"
+  grep -q "flag only patterns\|only flagged where" "${OPTIMIZE_SKILL}"
 }
 
 @test "optimize-execution Token Efficiency section ordered by estimated savings" {

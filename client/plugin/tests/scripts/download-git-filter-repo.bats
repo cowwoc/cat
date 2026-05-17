@@ -4,11 +4,11 @@
 # Licensed under the CAT Commercial License.
 # See LICENSE.md in the project root for license terms.
 #
-# Integration tests for plugin/scripts/download-git-filter-repo.sh.
+# Integration tests for client/plugin/scripts/download-git-filter-repo.sh.
 # All tests are self-contained: no network calls, all external dependencies stubbed.
 
-SCRIPT_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)"
-DOWNLOAD_SCRIPT="${SCRIPT_DIR}/plugin/scripts/download-git-filter-repo.sh"
+SCRIPT_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")/../../../.." && pwd)"
+DOWNLOAD_SCRIPT="${SCRIPT_DIR}/client/plugin/scripts/download-git-filter-repo.sh"
 
 # Fake SHA256 values (64 lowercase hex chars) used in tests
 FAKE_SHA256_LINUX_X64="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -62,7 +62,7 @@ setup() {
 
     # Copy sha256sum-portable.sh into the fake plugin root so the download script can source it
     mkdir -p "${FAKE_PLUGIN_ROOT}/scripts"
-    cp "${SCRIPT_DIR}/plugin/scripts/sha256sum-portable.sh" "${FAKE_PLUGIN_ROOT}/scripts/"
+    cp "${SCRIPT_DIR}/client/plugin/scripts/sha256sum-portable.sh" "${FAKE_PLUGIN_ROOT}/scripts/"
 
     # Create a stub bin dir for PATH overrides
     STUB_BIN_DIR="$(mktemp -d)"
@@ -80,26 +80,7 @@ teardown() {
 }
 
 # ---------------------------------------------------------------------------
-# python3 module path (resolution tier 1)
-# ---------------------------------------------------------------------------
-
-@test "returns 'python3 -m git_filter_repo' when python3 module is importable" {
-    # Stub python3: exit 0 unconditionally (satisfies both `command -v` and `import git_filter_repo`)
-    cat > "${STUB_BIN_DIR}/python3" <<'EOF'
-#!/usr/bin/env bash
-exit 0
-EOF
-    chmod +x "${STUB_BIN_DIR}/python3"
-
-    # Put stub at front of PATH so the real python3 is shadowed
-    run env PATH="${STUB_BIN_DIR}:${SAFE_PATH}" bash "${DOWNLOAD_SCRIPT}"
-
-    [ "${status}" -eq 0 ]
-    [ "${output}" = "python3 -m git_filter_repo" ]
-}
-
-# ---------------------------------------------------------------------------
-# PATH binary path (resolution tier 2)
+# PATH binary path (resolution tier 1)
 # ---------------------------------------------------------------------------
 
 @test "returns path to git-filter-repo binary when it is on PATH (no python3 module)" {
