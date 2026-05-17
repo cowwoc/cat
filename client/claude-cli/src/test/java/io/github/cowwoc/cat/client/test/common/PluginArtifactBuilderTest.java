@@ -203,6 +203,43 @@ public final class PluginArtifactBuilderTest
   }
 
   /**
+   * Verifies that runtime-specific companion files shadow common companion files that are referenced by the common
+   * skill body.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void buildRuntimeSkillWrappersShadowCommonCompanions() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try
+    {
+      Path repoRoot = tempDir.resolve("repo");
+      Path clientDir = repoRoot.resolve("client");
+      Path pluginDir = clientDir.resolve("plugin");
+      Path targetDir = clientDir.resolve("distribution/target/runtime");
+      createPluginSource(repoRoot, clientDir, pluginDir);
+      Files.createDirectories(pluginDir.resolve("skills/claude/common-skill"));
+      Files.writeString(pluginDir.resolve("skills/claude/common-skill/SKILL.md"),
+        MARKDOWN_LICENSE + "---\ndescription: Shared Claude skill\nmodel: haiku\neffort: low\n---\n" +
+          "<!-- cat:include ../../common/common-skill/SKILL.md -->\n",
+        StandardCharsets.UTF_8);
+      Files.writeString(pluginDir.resolve("skills/claude/common-skill/helper.md"),
+        MARKDOWN_LICENSE + "claude overlay content\n", StandardCharsets.UTF_8);
+
+      new PluginArtifactBuilder(pluginDir, clientDir, targetDir).build();
+
+      Path claudeHelper = targetDir.resolve("claude/skills/common-skill/helper.md");
+      String helper = Files.readString(claudeHelper, StandardCharsets.UTF_8);
+      requireThat(helper, "claudeHelper").contains("claude overlay content").doesNotContain("helper body");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that shared skill fragments can render runtime-specific command prefixes.
    *
    * @throws IOException if file operations fail

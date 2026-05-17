@@ -3,7 +3,7 @@ Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
-# Subagent Investigation Guide
+# Subagent-Mistake Investigation Guide
 
 Loaded conditionally by phase-investigate.md when the mistake involves a subagent.
 
@@ -17,26 +17,24 @@ The delegation prompt IS the primary "document" the subagent received. Check it 
 ## Check for Technically Impossible Instructions
 
 When a subagent fails to follow instructions, check whether the instructions were **technically possible** given the
-active runtime's subagent architecture:
+active runtime's subagent architecture.
 
-| Subagent Capability | Available? | Evidence |
-|---------------------|------------|----------|
-| Spawn nested subagents | Runtime-dependent | Check the active runtime's subagent capability model |
-| Invoke skills dynamically | Runtime-dependent | Check whether the active runtime injects or exposes skills to subagents |
-| Read/Write/Edit files | YES | Standard file tools available |
-| Run bash commands | YES | Bash tool available |
-| Web search/fetch | YES | Available to subagents |
+Do not infer impossibility from behavior outside the active subagent context. Verify the active subagent's available
+tools, capability model, and actual tool errors before classifying an instruction as impossible.
 
 **If instructions required unavailable capabilities:**
 
 ```yaml
 technically_impossible_check:
  instruction_required: "Spawn reviewer subagents for each finding"
- capability_needed: "Task tool"
+ runtime: "{active runtime}"
+ capability_needed: "{specific tool or capability}"
  available_to_subagent: false
- conclusion: "IMPOSSIBLE - subagents cannot spawn subagents (Task tool not available in subagent context), so instruction cannot be executed as written"
+ conclusion: >
+  IMPOSSIBLE in this runtime because the required capability is not available to the subagent.
  root_cause: "architectural_flaw"
- fix_type: "Redesign workflow so the main agent spawns reviewers directly"
+ fix_type: >
+  Redesign the workflow so the unavailable capability is performed by an agent or process that has it.
 ```
 
 **Common patterns of impossible instructions:**
@@ -44,8 +42,8 @@ technically_impossible_check:
 | Instruction Pattern | Why Impossible | Correct Design |
 |--------------------|----------------|----------------|
 | "Subagent must invoke /cat:skill" | Wrong only if the skill name is invalid or missing | Use Skill tool directly with the correct skill name |
-| "Spawn reviewer subagents" | Task tool unavailable | Main agent spawns reviewers directly |
-| "Delegate to sub-subagent" | Max depth is 1 | Flatten to single delegation level |
+| "Spawn reviewer subagents" | Only impossible when the active runtime does not expose agent spawning to that subagent | Move spawning to an agent/process that has the capability, or keep nested spawning if the runtime supports it |
+| "Delegate to sub-subagent" | Only impossible when the active runtime enforces a delegation-depth limit that blocks it | Flatten to a supported depth, or keep the nested design if the runtime supports it |
 | "Use parallel-execute skill" | Wrong only if the skill is unavailable in this environment | Use Skill tool if available, otherwise use equivalent direct tool calls |
 
 **When this check identifies impossible instructions:**
@@ -62,8 +60,8 @@ having skills preloaded via frontmatter.
 
 **Runtime-specific skill preloading:**
 
-Runtime agents defined in `plugin/agents/<runtime>/` can specify skills to preload. custom-agent TOML definitions
-live in `plugin/agents/<runtime>/`, and shared role bodies live in `plugin/agents/common/`:
+Runtime agents can specify skills to preload. Keep adapter-specific details in runtime-specific agent files and keep
+shared behavior in shared agent bodies.
 
 ```yaml
 ---
@@ -77,9 +75,6 @@ skills:
   - git-merge-linear
 ---
 ```
-
-Runtime wrappers define which role body and supporting instructions a subagent receives at startup. Keep runtime
-adapter details in runtime-specific agent files and keep shared behavior in `plugin/agents/common/`.
 
 **Questions to ask when subagent makes a mistake:**
 

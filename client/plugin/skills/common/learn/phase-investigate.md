@@ -207,9 +207,10 @@ When a mistake involves invoking a tool/skill with wrong parameters:
 3. Check what documentation showed similar-looking parameters that may have primed the incorrect usage
 4. The cause is often "saw parameter X used somewhere, assumed it applies to tool Y"
 
-**For subagent mistakes:** Read `phase-investigate-subagent.md` (in the same directory as this file) for subagent-specific
-investigation checks including delegation prompt analysis, technically impossible instructions, and missing skill
-preloading.
+**For subagent mistakes:** Read `phase-investigate-subagent-mistake.md` (in the same directory as this file) for
+subagent-mistake investigation checks including delegation prompt analysis, technically impossible instructions, and
+missing skill preloading. That file will direct you to the active runtime's capability appendix before you classify an
+instruction as impossible.
 
 **CRITICAL: Trace the FULL priming chain:**
 

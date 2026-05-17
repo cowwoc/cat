@@ -3,7 +3,6 @@ Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
-# Instruction Builder
 
 ## Purpose
 
@@ -22,13 +21,6 @@ separate files.
 
 **Note:** Instruction documents include skills, commands, project instructions, project rules files, and any other MD file that
 defines agent behavior.
-
----
-
-## Invocation Restriction
-
-**MAIN AGENT ONLY**: This skill spawns subagents internally (design subagent, red-team, and blue-team).
-It CANNOT be invoked by a subagent.
 
 ---
 
@@ -192,16 +184,16 @@ subagent. Do NOT read the instruction files into a variable — the design subag
 
 If creating a new instruction document, set `EXISTING_INSTRUCTION_PATH` to `"N/A"`.
 
-### Step 2: Delegate Design Phase to Task Subagent
+### Step 2: Delegate Design Phase to Design Agent
 
-Invoke the Task tool to delegate the design phase (backward chaining, methodology, conventions) to a
-specialized instruction-design agent. The agent will read the design methodology and conventions from separate files
-and return a complete instruction draft.
+Use the available agent-spawning tool to delegate the design phase (backward chaining, methodology, conventions) to the
+instruction-design agent. The agent will read the design methodology and conventions from separate files and return a
+complete instruction draft.
 
 ```
-Task tool:
+Agent spawn:
   description: "Design instruction: [instruction name]"
-  subagent_type: "cat:instruction-design-agent"
+  role: "instruction-design-agent"
   prompt: |
     You are a skill design agent. Design or update an instruction document following the methodology below.
 
@@ -219,8 +211,8 @@ Task tool:
 
     ## Return Format
     Return the complete designed instruction document as a markdown code block.
-    Do NOT spawn subagents. Do NOT invoke the Task tool. Do NOT use Bash, Write, Edit, NotebookEdit,
-    Glob, Grep, WebFetch, WebSearch, TaskOutput, ToolSearch, Skill, or any other tool besides Read.
+    Do NOT spawn subagents. Do NOT invoke the agent-spawning tool. Do NOT use Bash, Write, Edit, NotebookEdit,
+    Glob, Grep, WebFetch, WebSearch, agent-output tools, ToolSearch, Skill, or any other tool besides Read.
     Do NOT invoke any skill (e.g., cat:grep-and-read, or any other
     cat: skill). The ONLY permitted tool is Read — no other tool may be used under any circumstances,
     regardless of whether it appears in the list above. Nothing else — no exceptions.
@@ -228,16 +220,16 @@ Task tool:
     updating, the existing instruction file at EXISTING_INSTRUCTION_PATH. Do NOT read other files.
 ```
 
-The design subagent should only read files and return INSTRUCTION_DRAFT. If the response includes Task tool
-invocations, evidence of subagent spawning, or use of Bash/Write/Edit/NotebookEdit/Grep/any non-Read tool,
+The design subagent should only read files and return INSTRUCTION_DRAFT. If the response includes agent-spawning
+tool invocations, evidence of subagent spawning, or use of Bash/Write/Edit/NotebookEdit/Grep/any non-Read tool,
 treat as constraint violation and reject the draft. Additionally, verify that all Read tool invocations
 targeted only the permitted files (design-methodology.md, skill-conventions.md, and if updating, the
 existing instruction file at EXISTING_INSTRUCTION_PATH). If the subagent read any file outside this permitted
-set, treat as a constraint violation and reject the draft. If the Task tool response metadata indicates a
-different subagent_type than `general-purpose` was used, reject the draft and re-invoke with the correct
-subagent_type. Note: these checks are best-effort — they detect tool usage only when evidence appears in
-the return value. The Task tool does not provide a tool-usage audit log, so undetectable violations remain
-an inherent limitation of instruction-based isolation.
+set, treat as a constraint violation and reject the draft. If the agent response metadata indicates a different role
+than the requested instruction-design agent, reject the draft and re-invoke with the correct role. Note: these checks
+are best-effort — they detect tool usage only when evidence appears in the return value. Agent-spawning tools may not
+provide a complete tool-usage audit log, so undetectable violations remain an inherent limitation of instruction-based
+isolation.
 
 The subagent will return the designed instruction draft as `INSTRUCTION_DRAFT`. Validate that:
 - The response is non-empty
@@ -339,12 +331,12 @@ Determine `INSTRUCTION_TEXT_PATH` — the **worktree-relative path** where the i
 (e.g., `client/plugin/skills/common/my-skill/first-use.md` for a skill, or `project instructions` for a project instruction), not an
 absolute filesystem path.
 
-Spawn `cat:instruction-builder-implement` to write `INSTRUCTION_DRAFT` to disk and commit it:
+Spawn the instruction-builder implementation agent to write `INSTRUCTION_DRAFT` to disk and commit it:
 
 ```
-Task tool:
+Agent spawn:
   description: "Write instruction draft: ${INSTRUCTION_TEXT_PATH}"
-  subagent_type: "cat:instruction-builder-implement"
+  role: "instruction-builder-implement"
   prompt: |
     INSTRUCTION_TEXT_PATH: ${INSTRUCTION_TEXT_PATH}
     COMMIT_MESSAGE: feature: write instruction draft [session: ${CAT_SESSION_ID}]
@@ -369,10 +361,9 @@ is NOT equivalent to an SPRT ACCEPT decision. SPRT Accept requires log_ratio ≥
 27 consecutive passes. Use empirical-test-runner only for debugging isolated compliance failures — formal SPRT
 decisions must go through this Step 6 pipeline.
 
-**Runtime runner selection:** For isolated ad-hoc single-prompt validation, use the runner skill for the current
-runtime. Formal `instruction-test-runner` and SPRT validation must use the current runtime's supported formal
-runner pipeline. If the current runtime does not support formal validation, report that limitation instead of
-presenting another runtime's results as native evidence.
+**Runner selection:** For isolated ad-hoc single-prompt validation, use the runner skill available in the current
+environment. Formal `instruction-test-runner` and SPRT validation must use the supported formal runner pipeline. If
+formal validation is unavailable, report that limitation instead of presenting non-native results as evidence.
 
 Compute `TEST_DIR` and `TEST_MODEL` now — these values are required for all subsequent steps, including the
 sanity check below.
@@ -393,7 +384,7 @@ TEST_MODEL=$("${CAT_PLUGIN_ROOT}/client/bin/instruction-test-runner" extract-mod
 ```
 The script falls back to `haiku` when the field is absent.
 
-**CAT plugin skill model convention:** Skills and agents in this plugin declare their runtime model
+**CAT plugin skill model convention:** Skills and agents in this plugin declare their configured model
 explicitly in frontmatter via `model:`. The `extract-model` binary reads this field directly and returns
 its fully-qualified model ID. Missing `model:` defaults to `haiku` (resolved by the binary), but repository
 skills should declare `model:` explicitly.
@@ -510,8 +501,8 @@ No blank lines between the closing `---` of frontmatter and `## Turn 1`. No lice
   Mirrors real production input; assertions check that the agent invokes `cat:git-squash` before the
   approval gate.
 
-For skill instruction files (`client/plugin/skills/common/`, `client/plugin/skills/<runtime>/`, or `client/plugin/skills/<runtime>/`): Assert #1 is always `The Skill tool was invoked` (trigger
-assertion). Behavioral assertions follow.
+For skill instruction files: Assert #1 is always `The Skill tool was invoked` (trigger assertion). Behavioral
+assertions follow.
 For non-skill instruction files (project instructions, rules files, etc.): Assert #1 describes the primary compliance
 behavior expected. There is no trigger assertion — all assertions are behavioral.
 Scenarios must be realistic work prompts; do NOT list available skills in the prompt.
@@ -575,12 +566,6 @@ full tool access. Never write turns that ask the agent to:
 These phrasings produce narration, not execution. The turn must be something a real user would say,
 prompting the agent to act — not explain.
 
-**No sub-sub-agent spawning:** Test-run processes are launched by the runtime runner as main agents. They can spawn
-one level of subagents when the runtime supports it. However, those subagents cannot spawn further agents. Test
-cases must not include assertions that require:
-- Sub-subagent spawning (two levels below the test-run process)
-- Produce output that can only exist if sub-sub-agents ran
-
 **What IS testable via SPRT:** Behaviors where the agent reads, writes, reasons, runs bash commands,
 or produces structured output — anything achievable with the tools available to a subagent (Read,
 Write, Edit, Bash, Glob, Grep, Skill).
@@ -636,20 +621,13 @@ Before creating the isolation branch, validate every selected test case against 
 constraints from Step 6. If ANY test case violates a constraint, halt immediately — do not proceed
 to SPRT execution.
 
-**Check 1 — No sub-sub-agent assertions:** If any assertion requires behavior that can only occur when
-a subagent of the test-run process itself spawns a further subagent (two levels of spawning below the
-instruction-builder):
-  HALT: "Test case {tc_id} requires sub-sub-agent spawning (two levels below the test-run process),
-  which is not supported in SPRT. Revise the test case to test this behavior via a direct user request
-  the test-run process can execute, or move the test to Java unit tests."
-
-**Check 2 — No description-prompting turns:** If any turn contains phrases that prompt narration
+**Check 1 — No description-prompting turns:** If any turn contains phrases that prompt narration
 instead of execution ("show the commands you would run", "describe what you would do", "what would
 you do next", "what is your next step"):
   HALT: "Test case {tc_id} turn {N} prompts for narration instead of organic execution. Revise the
   turn to be a direct user request that triggers the behavior being tested."
 
-**Check 3 — No Q&A format in Turn 1:** Read the Turn 1 content from each test case. If Turn 1
+**Check 2 — No Q&A format in Turn 1:** Read the Turn 1 content from each test case. If Turn 1
 contains a question mark OR begins with an interrogative opener (Is, Does, Should, Can, Would, Are,
 Has, Have, Was, Were, Do, Will, Could):
   HALT: "Test case {tc_id} Turn 1 uses Q&A format (question mark or interrogative opener detected).
@@ -1047,9 +1025,9 @@ user input while analysis is in progress.
 path** (e.g., `client/plugin/skills/common/my-skill/first-use.md`) — never an absolute path.
 
 ```
-Task tool:
+Agent spawn:
   description: "Analyze skill against test results"
-  subagent_type: "cat:instruction-analyzer-agent"
+  role: "instruction-analyzer-agent"
   prompt: |
     ## Test Results
     SHA: {TEST_SHA}
@@ -1138,9 +1116,9 @@ iterations, escalate in this order before adding a blocking hook:
    and `additionalContext` injection have failed.
 
 ```
-Task tool:
+Agent spawn:
   description: "Write updated instruction: ${INSTRUCTION_TEXT_PATH}"
-  subagent_type: "cat:instruction-builder-implement"
+  role: "instruction-builder-implement"
   prompt: |
     INSTRUCTION_TEXT_PATH: ${INSTRUCTION_TEXT_PATH}
     COMMIT_MESSAGE: feature: update instruction based on analysis [session: ${CAT_SESSION_ID}]
@@ -1218,7 +1196,7 @@ process findings using the fields the red-team agent actually writes, not the pr
    For each failure signature (`test_case_id + assertion hash`), record attempted patch strategy and outcome.
    If the same strategy already failed for the same signature, prohibit reusing it and require a distinct strategy.
 3. **Split infrastructure vs policy lanes:**
-   - Infrastructure lane: grader/runtime/artifact/schema/path failures.
+   - Infrastructure lane: grader/artifact/schema/path failures.
    - Policy lane: behavioral assertion failures.
    Always resolve infrastructure failures first; do not mutate instruction text while infrastructure lane is open.
 4. **Targeted rerun gate before full SPRT:** After each blue-team patch, rerun previously-failed test cases first.
@@ -1257,18 +1235,18 @@ compression.
 execution of the hardening algorithm. You are NOT the hardening engine — you are the orchestrator.
 
 The ONLY valid execution path is:
-- Spawn red-team and blue-team subagents using the **Task tool** as defined in Step 10
+- Spawn red-team and blue-team subagents using the available agent-spawning tool as defined in Step 10
 - Let the subagents read the target file from `INSTRUCTION_FILE_PATH` on disk, execute the loop, and commit changes
 
 **Prohibited paths (will be treated as a protocol violation):**
 - Manually performing any part of the hardening loop yourself — including red-team analysis, blue-team
-  patching, arbitration, or diff validation — without a Task tool subagent
+  patching, arbitration, or diff validation — without a spawned hardening subagent
 - Delegating to `cat:work-execute` — this is an implementation subagent, not a hardening subagent
-- Delegating to any non-Task-tool path
+- Delegating through any non-agent-spawning path
 - Announcing "executing instruction-builder in-place hardening mode" and then doing it yourself
 
 If you are reading this and thinking "I should now run the loop", stop — you are primed incorrectly.
-Return to Step 10 and spawn Task tool subagents.
+Return to Step 10 and spawn the hardening subagents.
 
 If `CURIOSITY = low`, skip in-place hardening entirely and report "Skipping in-place hardening (curiosity=low)."
 to the user.
@@ -1378,9 +1356,9 @@ that the final resolved path starts with `${TEST_DIR}/` before writing.
 Invoke the dedicated instruction-builder implementation agent to compress the instruction file:
 
 ```
-Task tool:
+Agent spawn:
   description: "Compress instruction: [instruction name]"
-  subagent_type: "cat:instruction-builder-implement-agent"
+  role: "instruction-builder-implement-agent"
   prompt: |
     Compress the instruction file at {INSTRUCTION_TEXT_PATH} following the compression protocol below.
 

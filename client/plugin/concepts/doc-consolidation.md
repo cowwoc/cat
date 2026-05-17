@@ -169,5 +169,5 @@ File B does not compensate for NOT_EQUIVALENT on File A.
 - `cat:instruction-builder` — reduce token count while preserving meaning
 - `instruction-builder/validation-protocol.md` — validate semantic equivalence; provides the binary verdict used
   as the consolidation gate
-- `client/plugin/skills/common/instruction-builder/first-use.md` — full methodology, phase-by-phase instructions, and
+- `client/plugin/skills/include/instruction-builder.md` — full methodology, phase-by-phase instructions, and
   validation evidence from Waves 1–3

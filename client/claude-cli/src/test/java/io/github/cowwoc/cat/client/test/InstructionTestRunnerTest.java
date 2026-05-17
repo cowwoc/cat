@@ -1476,7 +1476,7 @@ public final class InstructionTestRunnerTest
   {
     Path repoRoot = Path.of("").toAbsolutePath().normalize().getParent();
     requireThat(repoRoot, "repoRoot").isNotNull();
-    Path promptFile = repoRoot.resolve("plugin/skills/common/stakeholder-review/first-use.md");
+    Path promptFile = repoRoot.resolve("plugin/skills/include/stakeholder-review.md");
     String prompt = Files.readString(promptFile, StandardCharsets.UTF_8);
 
     requireThat(prompt, "prompt").contains("## Working Directory");

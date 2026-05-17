@@ -3,19 +3,6 @@ Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
-# Skill: stakeholder-review
-
-Multi-perspective stakeholder review gate for implementation quality assurance.
-
-## Invocation Restriction
-
-**MAIN AGENT ONLY**: This skill spawns subagents internally. It CANNOT be invoked by
-a subagent (subagents cannot spawn nested subagents or invoke skills).
-
-If you need this skill's functionality within delegated work:
-1. Main agent invokes this skill directly
-2. Pass results to the implementation subagent
-3. See: `plugin/concepts/subagent-delegation.md` § "Model Selection for Subagents"
 
 ## Purpose
 

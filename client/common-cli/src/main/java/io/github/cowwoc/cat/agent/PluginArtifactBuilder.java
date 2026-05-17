@@ -221,9 +221,13 @@ public final class PluginArtifactBuilder
         if (Files.exists(targetSkill, LinkOption.NOFOLLOW_LINKS))
           deleteDirectory(targetSkill);
         Path commonSkill = pluginDir.resolve("skills/common").resolve(skillDirectory.getFileName());
+        Set<Path> commonRuntimeFiles = Set.of();
         if (Files.isDirectory(commonSkill, LinkOption.NOFOLLOW_LINKS))
+        {
+          commonRuntimeFiles = getRuntimeSkillFiles(commonSkill);
           copyRuntimeSkillTree(runtime, commonSkill, targetSkill);
-        copyRuntimeSkillTree(runtime, skillDirectory, targetSkill);
+        }
+        copyRuntimeSkillTree(runtime, skillDirectory, targetSkill, commonRuntimeFiles);
       }
     }
   }
@@ -517,7 +521,23 @@ public final class PluginArtifactBuilder
    */
   private void copyRuntimeSkillTree(Runtime runtime, Path source, Path target) throws IOException
   {
-    Set<Path> runtimeFiles = getRuntimeSkillFiles(source);
+    copyRuntimeSkillTree(runtime, source, target, Set.of());
+  }
+
+  /**
+   * Copies runtime-visible skill files, their referenced companion files, and requested overlay files.
+   *
+   * @param runtime the runtime being built
+   * @param source the source skill directory
+   * @param target the target skill directory
+   * @param additionalRuntimeFiles companion files to copy when present in {@code source}
+   * @throws IOException if file operations fail
+   */
+  private void copyRuntimeSkillTree(Runtime runtime, Path source, Path target, Set<Path> additionalRuntimeFiles)
+    throws IOException
+  {
+    Set<Path> runtimeFiles = new LinkedHashSet<>(getRuntimeSkillFiles(source));
+    runtimeFiles.addAll(additionalRuntimeFiles);
     Files.walkFileTree(source, new SimpleFileVisitor<>()
     {
       @Override

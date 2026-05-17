@@ -14,7 +14,7 @@
 # In bats, BATS_TEST_DIRNAME is the directory of the test file.
 PROJECT_ROOT="$(cd "${BATS_TEST_DIRNAME}/../../../.." && pwd)"
 OPTIMIZE_SKILL="${PROJECT_ROOT}/client/plugin/skills/common/optimize-execution/first-use.md"
-INSTRUCTION_SKILL="${PROJECT_ROOT}/client/plugin/skills/common/instruction-builder/first-use.md"
+INSTRUCTION_SKILL="${PROJECT_ROOT}/client/plugin/skills/include/instruction-builder.md"
 FIXTURES_DIR="${BATS_TEST_DIRNAME}/token-efficiency-fixtures"
 
 # ---------------------------------------------------------------------------

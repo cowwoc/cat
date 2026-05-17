@@ -169,7 +169,7 @@ redundant subagent read. The key distinction is that the main agent read it for 
   language-specific style) *inline* — these are short, high-value conventions the main agent already knows, not
   large file contents the subagent could read itself.
 
-- `client/plugin/skills/common/instruction-builder/first-use.md` **Step 2** (Design Subagent Delegation): the design subagent is
+- `client/plugin/skills/include/instruction-builder.md` **Step 2** (Design Subagent Delegation): the design subagent is
   passed the existing skill content inline (already read in Step 1) and file path references for methodology and
   conventions documents it will read itself, rather than pre-expanding all supporting files into the main agent prompt.
 
