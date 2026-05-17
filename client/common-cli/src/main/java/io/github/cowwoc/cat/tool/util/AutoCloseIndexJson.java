@@ -9,7 +9,7 @@ package io.github.cowwoc.cat.tool.util;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.CliTool;
 import io.github.cowwoc.cat.tool.MainCliTool;
 import tools.jackson.databind.JsonNode;
@@ -40,7 +40,7 @@ import java.util.Objects;
  */
 public final class AutoCloseIndexJson
 {
-  private final JvmScope scope;
+  private final AgentScope scope;
 
   /**
    * Creates a new AutoCloseIndexJson.
@@ -48,7 +48,7 @@ public final class AutoCloseIndexJson
    * @param scope the JVM scope providing the JSON mapper
    * @throws NullPointerException if {@code scope} is null
    */
-  public AutoCloseIndexJson(JvmScope scope)
+  public AutoCloseIndexJson(AgentScope scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -171,7 +171,7 @@ public final class AutoCloseIndexJson
    * @throws NullPointerException if {@code args} or {@code out} are null
    * @throws IOException          if reading/writing index.json or running git add fails
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  public static void run(AgentScope scope, String[] args, PrintStream out) throws IOException
   {
     requireThat(args, "args").isNotNull();
     requireThat(out, "out").isNotNull();

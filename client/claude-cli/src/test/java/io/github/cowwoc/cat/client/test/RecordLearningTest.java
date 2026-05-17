@@ -14,7 +14,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -993,7 +993,7 @@ public final class RecordLearningTest
    * @param ids the mistake IDs to include
    * @throws IOException if file writing fails
    */
-  private void initializeMistakesFile(JvmScope scope, Path retroDir, String yearMonth, String... ids)
+  private void initializeMistakesFile(AgentScope scope, Path retroDir, String yearMonth, String... ids)
     throws IOException
   {
     // Build entries with no recurrence_of and no cause_signature
@@ -1012,7 +1012,7 @@ public final class RecordLearningTest
    * @param entries arrays of [id, recurrenceOf, causeSignature] (null values are stored as JSON null)
    * @throws IOException if file writing fails
    */
-  private void initializeMistakesFileWithSignatures(JvmScope scope, Path retroDir, String yearMonth,
+  private void initializeMistakesFileWithSignatures(AgentScope scope, Path retroDir, String yearMonth,
     String[]... entries) throws IOException
   {
     ObjectNode data = scope.getJsonMapper().createObjectNode();

@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.client.test;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.util.RetrospectiveMigrator;
 import org.testng.annotations.Test;
 
@@ -33,7 +33,7 @@ public class RetrospectiveMigratorMainTest
   public void dryRunOnEmptyProjectProducesOutput() throws IOException
   {
     Path tempDir = Files.createTempDirectory("retrospective-migrator-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -59,7 +59,7 @@ public class RetrospectiveMigratorMainTest
   public void nullArgsThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("retrospective-migrator-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       RetrospectiveMigrator.run(scope, null,
         new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8));
@@ -80,7 +80,7 @@ public class RetrospectiveMigratorMainTest
   public void nullOutThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("retrospective-migrator-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       RetrospectiveMigrator.run(scope, new String[]{"dummy"}, null);
     }
@@ -100,7 +100,7 @@ public class RetrospectiveMigratorMainTest
   public void unknownArgThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("retrospective-migrator-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);

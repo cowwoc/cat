@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.client.test;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.util.VerifyDeferPlanGeneration;
 import org.testng.annotations.Test;
 
@@ -20,7 +20,7 @@ import java.nio.file.Path;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Tests for {@link VerifyDeferPlanGeneration#run(JvmScope, String[], PrintStream)} CLI error path handling.
+ * Tests for {@link VerifyDeferPlanGeneration#run(AgentScope, String[], PrintStream)} CLI error path handling.
  */
 public class VerifyDeferPlanGenerationMainTest
 {
@@ -33,7 +33,7 @@ public class VerifyDeferPlanGenerationMainTest
   public void noArgsProducesOutput() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-defer-plan-generation-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -57,7 +57,7 @@ public class VerifyDeferPlanGenerationMainTest
   public void nullArgsThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-defer-plan-generation-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       VerifyDeferPlanGeneration.run(scope, null,
         new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8));
@@ -78,7 +78,7 @@ public class VerifyDeferPlanGenerationMainTest
   public void nullOutThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-defer-plan-generation-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       VerifyDeferPlanGeneration.run(scope, new String[]{}, null);
     }

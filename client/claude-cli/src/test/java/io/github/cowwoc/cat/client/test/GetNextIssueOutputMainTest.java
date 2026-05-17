@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.client.test;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.skills.GetNextIssueOutput;
 import org.testng.annotations.Test;
 
@@ -20,7 +20,7 @@ import java.nio.file.Path;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Tests for {@link GetNextIssueOutput#run(JvmScope, String[], PrintStream)} CLI error path handling.
+ * Tests for {@link GetNextIssueOutput#run(AgentScope, String[], PrintStream)} CLI error path handling.
  */
 public class GetNextIssueOutputMainTest
 {
@@ -34,7 +34,7 @@ public class GetNextIssueOutputMainTest
   public void noArgsThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-next-issue-output-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -56,7 +56,7 @@ public class GetNextIssueOutputMainTest
   public void nullArgsThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-next-issue-output-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetNextIssueOutput.run(scope, null,
         new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8));
@@ -77,7 +77,7 @@ public class GetNextIssueOutputMainTest
   public void nullOutThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-next-issue-output-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       GetNextIssueOutput.run(scope, new String[]{}, null);
     }
@@ -97,7 +97,7 @@ public class GetNextIssueOutputMainTest
   public void unknownArgThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-next-issue-output-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -119,7 +119,7 @@ public class GetNextIssueOutputMainTest
   public void missingCompletedIssueThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-next-issue-output-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -144,7 +144,7 @@ public class GetNextIssueOutputMainTest
   public void allRequiredFlagsHappyPath() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-next-issue-output-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -170,7 +170,7 @@ public class GetNextIssueOutputMainTest
   public void excludePatternFlagIsRecognized() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-next-issue-output-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);

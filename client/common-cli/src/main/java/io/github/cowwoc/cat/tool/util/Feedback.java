@@ -10,7 +10,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import static io.github.cowwoc.cat.tool.Strings.block;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.CliTool;
 import io.github.cowwoc.cat.tool.MainCliTool;
 import org.slf4j.Logger;
@@ -53,7 +53,7 @@ public final class Feedback implements AutoCloseable
   private static final String REPOSITORY = "cowwoc/cat";
   private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(30);
 
-  private final JvmScope scope;
+  private final AgentScope scope;
   private final HttpClient httpClient;
 
   /**
@@ -62,7 +62,7 @@ public final class Feedback implements AutoCloseable
    * @param scope the JVM scope providing the JSON mapper
    * @throws NullPointerException if {@code scope} is null
    */
-  public Feedback(JvmScope scope)
+  public Feedback(AgentScope scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -292,7 +292,7 @@ public final class Feedback implements AutoCloseable
    * @param args     the command-line arguments
    * @param out      the output stream to write to
    */
-  private static void runSearch(Feedback feedback, JvmScope scope, String[] args, PrintStream out)
+  private static void runSearch(Feedback feedback, AgentScope scope, String[] args, PrintStream out)
   {
     String query = args[1];
     try
@@ -314,7 +314,7 @@ public final class Feedback implements AutoCloseable
    * @param args     the command-line arguments
    * @param out      the output stream to write to
    */
-  private static void runOpen(Feedback feedback, JvmScope scope, String[] args, PrintStream out)
+  private static void runOpen(Feedback feedback, AgentScope scope, String[] args, PrintStream out)
   {
     if (args.length < 3)
     {
@@ -389,7 +389,7 @@ public final class Feedback implements AutoCloseable
    * @throws NullPointerException if any of {@code scope}, {@code args}, or {@code out} are null
    * @throws IOException          if an I/O error occurs
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  public static void run(AgentScope scope, String[] args, PrintStream out) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();

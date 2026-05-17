@@ -11,7 +11,7 @@ import static io.github.cowwoc.cat.tool.util.CliArgs.optionalInt;
 import static io.github.cowwoc.cat.tool.util.CliArgs.optionalString;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.CliTool;
 import io.github.cowwoc.cat.tool.MainCliTool;
 import tools.jackson.databind.json.JsonMapper;
@@ -179,7 +179,7 @@ public final class BatchReader
    * @param out   the output stream to write output to
    * @throws NullPointerException if {@code args} or {@code out} are null
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out)
+  public static void run(AgentScope scope, String[] args, PrintStream out)
   {
     requireThat(args, "args").isNotNull();
     requireThat(out, "out").isNotNull();

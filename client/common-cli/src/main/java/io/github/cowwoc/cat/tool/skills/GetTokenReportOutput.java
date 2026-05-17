@@ -24,7 +24,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import io.github.cowwoc.cat.tool.CliTool;
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.MainCliTool;
 
 import static io.github.cowwoc.cat.tool.Strings.block;
@@ -569,7 +569,7 @@ public final class GetTokenReportOutput implements SkillOutput
    * @throws NullPointerException if {@code scope}, {@code args} or {@code out} are null
    * @throws IOException          if an I/O error occurs
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  public static void run(AgentScope scope, String[] args, PrintStream out) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();

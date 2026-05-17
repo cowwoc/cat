@@ -9,7 +9,7 @@ package io.github.cowwoc.cat.client.test;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.claude.hook.TaskHandler;
 import io.github.cowwoc.cat.claude.hook.task.EnforceCommitBeforeSubagentSpawn;
 import org.testng.annotations.Test;
@@ -64,7 +64,7 @@ public final class EnforceCommitBeforeSubagentSpawnTest
    * @return the path to the worktree
    * @throws IOException if worktree creation fails
    */
-  private static Path createWorktree(Path mainRepo, JvmScope scope, String issueId) throws IOException
+  private static Path createWorktree(Path mainRepo, AgentScope scope, String issueId) throws IOException
   {
     Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
     Files.createDirectories(worktreesDir);

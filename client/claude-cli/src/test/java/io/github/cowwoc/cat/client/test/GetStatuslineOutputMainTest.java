@@ -20,7 +20,7 @@ import java.nio.file.Path;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Tests for {@link GetStatuslineOutput#run(JvmScope, String[], PrintStream)} CLI error path handling.
+ * Tests for {@link GetStatuslineOutput#run(AgentScope, String[], PrintStream)} CLI error path handling.
  */
 public class GetStatuslineOutputMainTest
 {

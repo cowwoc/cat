@@ -6,19 +6,18 @@
  */
 package io.github.cowwoc.cat.tool;
 
-import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
-
 import io.github.cowwoc.cat.agent.AgentRuntime;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.function.Function;
 
 /**
  * Production implementation of a runtime-neutral CLI scope for shared CAT utilities.
  * <p>
- * Reads runtime-neutral variables ({@code CAT_SESSION_ID}, {@code CAT_PROJECT_DIR},
- * {@code CAT_PLUGIN_ROOT}, {@code CAT_PLUGIN_DATA}, {@code CAT_CONFIG_DIR},
- * {@code CAT_RUNTIME}) and fails fast if any are unset or blank.
+ * Reads explicit {@code CAT_*} overrides when present, otherwise derives scope values from runtime
+ * harness variables and launcher context. Skills may keep {@code CAT_*} variables for LLM-visible
+ * workflow decisions without exporting those aliases through to Java CLI processes.
  * <p>
  * <b>Thread Safety:</b> This class is thread-safe.
  */
@@ -29,7 +28,7 @@ public class MainCliTool extends AbstractCliTool
    */
   public MainCliTool()
   {
-    this(System::getenv, Path.of(System.getProperty("user.dir")));
+    this(System::getenv, System::getProperty, Path.of(System.getProperty("user.dir")));
   }
 
   /**
@@ -40,38 +39,56 @@ public class MainCliTool extends AbstractCliTool
    */
   public MainCliTool(Function<String, String> environment, Path workDir)
   {
-    this(createConfig(environment, workDir));
+    this(environment, System::getProperty, workDir);
+  }
+
+  /**
+   * Creates a new runtime-neutral CLI scope for tests.
+   *
+   * @param environment resolves environment variable names to values
+   * @param systemProperty resolves system property names to values
+   * @param workDir the process working directory
+   */
+  public MainCliTool(Function<String, String> environment, Function<String, String> systemProperty,
+    Path workDir)
+  {
+    super(environment, systemProperty, workDir);
+  }
+
+  /**
+   * Creates a new CLI scope by deriving values for a specific runtime.
+   *
+   * @param runtime the runtime to derive values for
+   * @param environment resolves environment variable names to values
+   * @param systemProperty resolves system property names to values
+   * @param workDir the process working directory
+   */
+  protected MainCliTool(AgentRuntime runtime, Function<String, String> environment,
+    Function<String, String> systemProperty, Path workDir)
+  {
+    super(runtime, environment, systemProperty, workDir);
   }
 
   /**
    * Creates a new CLI scope from resolved values.
    *
-   * @param config the resolved CLI scope configuration
-   */
-  protected MainCliTool(CliToolConfig config)
-  {
-    super(config);
-  }
-
-  /**
-   * Creates a resolved CLI configuration from environment variables.
-   *
-   * @param environment resolves environment variable names to values
+   * @param sessionId the session ID
+   * @param projectPath the project directory
+   * @param pluginRoot the plugin root directory
+   * @param pluginData the plugin data directory
+   * @param configPath the active runtime config directory
+   * @param pluginDescriptor the plugin descriptor path relative to the plugin root
+   * @param ruleDirectories the ordered rule directories
+   * @param pluginCacheDescriptor the plugin cache descriptor path relative to the plugin root, or {@code null}
    * @param workDir the process working directory
-   * @return the resolved CLI configuration
+   * @param timezone the timezone
+   * @param pluginJsonUrl the plugin.json URL
    */
-  private static CliToolConfig createConfig(Function<String, String> environment, Path workDir)
+  protected MainCliTool(String sessionId, Path projectPath, Path pluginRoot, Path pluginData,
+    Path configPath, Path pluginDescriptor, List<Path> ruleDirectories, Path pluginCacheDescriptor,
+    Path workDir, String timezone, String pluginJsonUrl)
   {
-    String sessionId = CliEnvironment.required(environment, "CAT_SESSION_ID");
-    Path projectPath = Path.of(CliEnvironment.required(environment, "CAT_PROJECT_DIR"));
-    Path pluginRoot = Path.of(CliEnvironment.required(environment, "CAT_PLUGIN_ROOT"));
-    Path pluginData = Path.of(CliEnvironment.required(environment, "CAT_PLUGIN_DATA"));
-    Path configPath = Path.of(CliEnvironment.required(environment, "CAT_CONFIG_DIR"));
-    AgentRuntime runtime = AgentRuntime.fromId(CliEnvironment.required(environment, "CAT_RUNTIME"));
-    requireThat(runtime, "runtime").isNotNull();
-    return new CliToolConfig(sessionId, projectPath, pluginRoot, pluginData, configPath,
-      runtime.pluginDescriptor(), runtime.ruleDirectories(projectPath, pluginRoot),
-      runtime.pluginCacheDescriptor(), workDir, CliEnvironment.optional(environment, "TZ", "UTC"),
-      CliEnvironment.optional(environment, "CAT_PLUGIN_JSON_URL", ""));
+    super(sessionId, projectPath, pluginRoot, pluginData, configPath, pluginDescriptor,
+      ruleDirectories, pluginCacheDescriptor, workDir, timezone, pluginJsonUrl);
   }
 }

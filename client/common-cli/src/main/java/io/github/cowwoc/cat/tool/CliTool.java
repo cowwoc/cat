@@ -13,7 +13,7 @@ import java.nio.file.Path;
 /**
  * Runtime-neutral CLI scope for shared CAT command-line utilities.
  */
-public interface CliTool extends AgentPluginScope, JvmScope
+public interface CliTool extends AgentPluginScope
 {
   /**
    * Returns the CAT session ID.

@@ -9,7 +9,7 @@ package io.github.cowwoc.cat.client.test;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.claude.hook.FileWriteHandler;
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.claude.hook.write.ValidateSkillTestFormat;
 import org.testng.annotations.Test;
 import tools.jackson.databind.json.JsonMapper;
@@ -45,7 +45,7 @@ public final class ValidateSkillTestFormatTest
   @Test
   public void nonTestFilesAreNotValidated() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (AgentScope scope = new TestClaudeTool())
     {
       ValidateSkillTestFormat handler = new ValidateSkillTestFormat();
       JsonMapper mapper = scope.getJsonMapper();
@@ -65,7 +65,7 @@ public final class ValidateSkillTestFormatTest
   @Test
   public void validTestCaseIsAccepted() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (AgentScope scope = new TestClaudeTool())
     {
       ValidateSkillTestFormat handler = new ValidateSkillTestFormat();
       JsonMapper mapper = scope.getJsonMapper();
@@ -85,7 +85,7 @@ public final class ValidateSkillTestFormatTest
   @Test
   public void missingFrontmatterIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (AgentScope scope = new TestClaudeTool())
     {
       ValidateSkillTestFormat handler = new ValidateSkillTestFormat();
       JsonMapper mapper = scope.getJsonMapper();
@@ -116,7 +116,7 @@ public final class ValidateSkillTestFormatTest
   @Test
   public void missingCategoryFrontmatterFieldIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (AgentScope scope = new TestClaudeTool())
     {
       ValidateSkillTestFormat handler = new ValidateSkillTestFormat();
       JsonMapper mapper = scope.getJsonMapper();
@@ -151,7 +151,7 @@ public final class ValidateSkillTestFormatTest
   @Test
   public void missingTurn1SectionIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (AgentScope scope = new TestClaudeTool())
     {
       ValidateSkillTestFormat handler = new ValidateSkillTestFormat();
       JsonMapper mapper = scope.getJsonMapper();
@@ -181,7 +181,7 @@ public final class ValidateSkillTestFormatTest
   @Test
   public void missingAssertionsSectionIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (AgentScope scope = new TestClaudeTool())
     {
       ValidateSkillTestFormat handler = new ValidateSkillTestFormat();
       JsonMapper mapper = scope.getJsonMapper();
@@ -222,7 +222,7 @@ public final class ValidateSkillTestFormatTest
       Path testFile = skillTestDir.resolve("squash-trigger-basic.md");
       Files.writeString(testFile, VALID_CONTENT);
 
-      try (JvmScope scope = new TestClaudeTool())
+      try (AgentScope scope = new TestClaudeTool())
       {
         ValidateSkillTestFormat handler = new ValidateSkillTestFormat();
         JsonMapper mapper = scope.getJsonMapper();
@@ -250,7 +250,7 @@ public final class ValidateSkillTestFormatTest
   @Test
   public void emptyEditOperationIsAllowed() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (AgentScope scope = new TestClaudeTool())
     {
       ValidateSkillTestFormat handler = new ValidateSkillTestFormat();
       JsonMapper mapper = scope.getJsonMapper();
@@ -271,7 +271,7 @@ public final class ValidateSkillTestFormatTest
   @Test
   public void nonContiguousTurnSectionsAreBlocked() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (AgentScope scope = new TestClaudeTool())
     {
       ValidateSkillTestFormat handler = new ValidateSkillTestFormat();
       JsonMapper mapper = scope.getJsonMapper();
@@ -309,7 +309,7 @@ public final class ValidateSkillTestFormatTest
   @Test
   public void headingsInsideCodeBlocksAreIgnored() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (AgentScope scope = new TestClaudeTool())
     {
       ValidateSkillTestFormat handler = new ValidateSkillTestFormat();
       JsonMapper mapper = scope.getJsonMapper();
@@ -353,7 +353,7 @@ public final class ValidateSkillTestFormatTest
   @Test
   public void missingBlankLineBeforeFirstSectionIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (AgentScope scope = new TestClaudeTool())
     {
       ValidateSkillTestFormat handler = new ValidateSkillTestFormat();
       JsonMapper mapper = scope.getJsonMapper();
@@ -385,7 +385,7 @@ public final class ValidateSkillTestFormatTest
   @Test
   public void missingBlankLineBeforeSectionHeaderIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (AgentScope scope = new TestClaudeTool())
     {
       ValidateSkillTestFormat handler = new ValidateSkillTestFormat();
       JsonMapper mapper = scope.getJsonMapper();
@@ -417,7 +417,7 @@ public final class ValidateSkillTestFormatTest
   @Test
   public void missingBlankLineAfterSectionHeaderIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (AgentScope scope = new TestClaudeTool())
     {
       ValidateSkillTestFormat handler = new ValidateSkillTestFormat();
       JsonMapper mapper = scope.getJsonMapper();
@@ -449,7 +449,7 @@ public final class ValidateSkillTestFormatTest
   @Test
   public void uppercaseCategoryIsBlocked() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (AgentScope scope = new TestClaudeTool())
     {
       ValidateSkillTestFormat handler = new ValidateSkillTestFormat();
       JsonMapper mapper = scope.getJsonMapper();
@@ -483,7 +483,7 @@ public final class ValidateSkillTestFormatTest
   @Test
   public void fixtureCategoryIsAccepted() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (AgentScope scope = new TestClaudeTool())
     {
       ValidateSkillTestFormat handler = new ValidateSkillTestFormat();
       JsonMapper mapper = scope.getJsonMapper();
@@ -515,7 +515,7 @@ public final class ValidateSkillTestFormatTest
   @Test
   public void multipleTurnsAreAccepted() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (AgentScope scope = new TestClaudeTool())
     {
       ValidateSkillTestFormat handler = new ValidateSkillTestFormat();
       JsonMapper mapper = scope.getJsonMapper();

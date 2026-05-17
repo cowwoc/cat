@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.client.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.claude.hook.PostToolHandler;
 import io.github.cowwoc.cat.claude.tool.post.RemindRestartAfterSkillModification;
 import org.testng.annotations.Test;
@@ -31,7 +31,7 @@ public final class RemindRestartAfterSkillModificationTest
   public void nonWriteEditToolAllowsQuietly() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       RemindRestartAfterSkillModification handler = new RemindRestartAfterSkillModification();
@@ -65,7 +65,7 @@ public final class RemindRestartAfterSkillModificationTest
   public void nonSkillFileAllowsQuietly() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       RemindRestartAfterSkillModification handler = new RemindRestartAfterSkillModification();
@@ -99,7 +99,7 @@ public final class RemindRestartAfterSkillModificationTest
   public void skillDefinitionModifiedReturnsWarning() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       RemindRestartAfterSkillModification handler = new RemindRestartAfterSkillModification();
@@ -135,7 +135,7 @@ public final class RemindRestartAfterSkillModificationTest
   public void settingsJsonModifiedReturnsWarning() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       RemindRestartAfterSkillModification handler = new RemindRestartAfterSkillModification();
@@ -171,7 +171,7 @@ public final class RemindRestartAfterSkillModificationTest
   public void hookScriptModifiedReturnsWarning() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       RemindRestartAfterSkillModification handler = new RemindRestartAfterSkillModification();
@@ -207,7 +207,7 @@ public final class RemindRestartAfterSkillModificationTest
   public void editToolSkillModificationReturnsWarning() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       RemindRestartAfterSkillModification handler = new RemindRestartAfterSkillModification();
@@ -241,7 +241,7 @@ public final class RemindRestartAfterSkillModificationTest
   public void missingFilePathAllowsQuietly() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       RemindRestartAfterSkillModification handler = new RemindRestartAfterSkillModification();

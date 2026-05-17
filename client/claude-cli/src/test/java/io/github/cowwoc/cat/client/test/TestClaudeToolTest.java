@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.client.test;
 
 import io.github.cowwoc.cat.claude.tool.AbstractClaudeTool;
 import io.github.cowwoc.cat.claude.tool.ClaudeTool;
-import io.github.cowwoc.cat.claude.hook.AbstractJvmScope;
+import io.github.cowwoc.cat.agent.AbstractAgentScope;
 import io.github.cowwoc.cat.tool.CliTool;
 import io.github.cowwoc.cat.agent.TerminalType;
 import org.testng.annotations.Test;
@@ -286,7 +286,7 @@ public final class TestClaudeToolTest
   @Test
   public void encodeProjectPathReplacesSlashesWithHyphens()
   {
-    String encoded = AbstractJvmScope.encodeProjectPath("/workspace");
+    String encoded = AbstractAgentScope.encodeProjectPath("/workspace");
     requireThat(encoded, "encoded").isEqualTo("-workspace");
   }
 
@@ -296,7 +296,7 @@ public final class TestClaudeToolTest
   @Test
   public void encodeProjectPathReplacesDotsWithHyphens()
   {
-    String encoded = AbstractJvmScope.encodeProjectPath("/home/user/my.project");
+    String encoded = AbstractAgentScope.encodeProjectPath("/home/user/my.project");
     requireThat(encoded, "encoded").isEqualTo("-home-user-my-project");
   }
 
@@ -306,14 +306,14 @@ public final class TestClaudeToolTest
   @Test
   public void encodeProjectPathReplacesSpacesWithHyphens()
   {
-    String encoded = AbstractJvmScope.encodeProjectPath("/home/user/my project");
+    String encoded = AbstractAgentScope.encodeProjectPath("/home/user/my project");
     requireThat(encoded, "encoded").isEqualTo("-home-user-my-project");
   }
 
   // MainCliTool cannot be unit-tested directly: its constructor reads environment variables
   // (CLAUDE_PROJECT_DIR, CLAUDE_PLUGIN_ROOT, CLAUDE_SESSION_ID) that are not set in Maven test
   // contexts. Equivalent coverage is provided via integration tests that run with the full hook
-  // environment, and by the TestClaudeTool tests above which exercise all AbstractJvmScope logic
+  // environment, and by the TestClaudeTool tests above which exercise all AbstractAgentScope logic
   // with injectable paths.
 
   /**

@@ -25,7 +25,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * the project directory but outside the active worktree, while allowing writes to paths
  * inside the worktree, outside the project directory, or when no session lock exists.
  * <p>
- * Lock and worktree files are created via {@link JvmScope#getCatWorkPath()} to match
+ * Lock and worktree files are created via {@link AgentScope#getCatWorkPath()} to match
  * the external CAT storage location used by the production code.
  * <p>
  * Each test is self-contained with its own temporary directory structure.

@@ -9,6 +9,8 @@ package io.github.cowwoc.cat.claude.hook;
 import static io.github.cowwoc.requirements13.jackson.DefaultJacksonValidators.requireThat;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.agent.AbstractAgentScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -103,8 +105,8 @@ public abstract class AbstractClaudeHook extends AbstractClaudePluginScope imple
    * Returns a minimal {@link JsonMapper} for bootstrap use, before a scope instance is available.
    * <p>
    * This is one of two permitted call sites for {@code JsonMapper.builder()} — the other is
-   * {@link AbstractJvmScope}. All other code must obtain a mapper via
-   * {@link JvmScope#getJsonMapper()}.
+   * {@link AbstractAgentScope}. All other code must obtain a mapper via
+   * {@link AgentScope#getJsonMapper()}.
    *
    * @return a plain {@link JsonMapper} instance
    */

@@ -17,7 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * Test implementation of JvmScope with injectable environment paths.
+ * Test implementation of AgentScope with injectable environment paths.
  * <p>
  * Accepts {@code claudeProjectPath} and {@code claudePluginRoot} as constructor parameters
  * so tests can point to temporary directories populated with test data.

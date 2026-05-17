@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.tool.util;
 
 import static io.github.cowwoc.cat.tool.Strings.block;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 
 import java.io.PrintStream;
 import java.util.Objects;
@@ -71,7 +71,7 @@ public final class CliArgs
    * @param out the output stream
    * @return the parsed integer value, or empty if the value is missing or not an integer
    */
-  public static OptionalInt optionalInt(int flagIndex, String[] args, String flagName, JvmScope scope,
+  public static OptionalInt optionalInt(int flagIndex, String[] args, String flagName, AgentScope scope,
     PrintStream out)
   {
     try
@@ -97,7 +97,7 @@ public final class CliArgs
    * @return the flag value, or empty if the value is missing
    */
   public static Optional<String> optionalString(int flagIndex, String[] args, String flagName,
-    JvmScope scope, PrintStream out)
+    AgentScope scope, PrintStream out)
   {
     try
     {

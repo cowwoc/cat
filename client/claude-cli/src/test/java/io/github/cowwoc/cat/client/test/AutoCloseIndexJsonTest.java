@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.client.test;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.util.AutoCloseIndexJson;
 import org.testng.annotations.Test;
 
@@ -34,7 +34,7 @@ public class AutoCloseIndexJsonTest
   public void nonCatBranchReturnsNotUpdated() throws IOException
   {
     Path tempDir = Files.createTempDirectory("auto-close-index-test");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       String result = new AutoCloseIndexJson(scope).getOutput(
         new String[]{tempDir.toString(), "main"});
@@ -56,7 +56,7 @@ public class AutoCloseIndexJsonTest
   public void absentIndexJsonReturnsNotUpdated() throws IOException
   {
     Path tempDir = Files.createTempDirectory("auto-close-index-test");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       // Branch follows CAT naming but index.json does not exist
       String result = new AutoCloseIndexJson(scope).getOutput(
@@ -79,7 +79,7 @@ public class AutoCloseIndexJsonTest
   public void alreadyClosedReturnsNotUpdated() throws IOException
   {
     Path tempDir = Files.createTempDirectory("auto-close-index-test");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path indexJson = tempDir.resolve(".cat/issues/v2/v2.1/my-issue/index.json");
       Files.createDirectories(indexJson.getParent());
@@ -118,7 +118,7 @@ public class AutoCloseIndexJsonTest
     {
       // Create a real git repo so git add can run
       Path repoDir = TestUtils.createTempGitRepo("2.1-my-issue");
-      try (JvmScope scope = new TestClaudeTool(repoDir, repoDir))
+      try (AgentScope scope = new TestClaudeTool(repoDir, repoDir))
       {
         Path indexJson = repoDir.resolve(".cat/issues/v2/v2.1/my-issue/index.json");
         Files.createDirectories(indexJson.getParent());
@@ -162,7 +162,7 @@ public class AutoCloseIndexJsonTest
   public void rejectsWhenArgCountIsNotTwo() throws IOException
   {
     Path tempDir = Files.createTempDirectory("auto-close-index-test");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       new AutoCloseIndexJson(scope).getOutput(new String[]{"/tmp/worktree"});
     }
@@ -183,7 +183,7 @@ public class AutoCloseIndexJsonTest
   public void rejectsBlankWorktreePath() throws IOException
   {
     Path tempDir = Files.createTempDirectory("auto-close-index-test");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       new AutoCloseIndexJson(scope).getOutput(new String[]{"", "2.1-my-issue"});
     }
@@ -204,7 +204,7 @@ public class AutoCloseIndexJsonTest
   public void rejectsBlankBranch() throws IOException
   {
     Path tempDir = Files.createTempDirectory("auto-close-index-test");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       new AutoCloseIndexJson(scope).getOutput(new String[]{tempDir.toString(), ""});
     }

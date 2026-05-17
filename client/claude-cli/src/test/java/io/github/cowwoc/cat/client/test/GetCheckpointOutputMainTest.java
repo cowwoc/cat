@@ -21,7 +21,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 
 /**
- * Tests for {@link GetCheckpointOutput#run(JvmScope, String[], PrintStream)} CLI error path handling.
+ * Tests for {@link GetCheckpointOutput#run(AgentScope, String[], PrintStream)} CLI error path handling.
  */
 public class GetCheckpointOutputMainTest
 {

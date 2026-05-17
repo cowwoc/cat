@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.client.test;
 
-import io.github.cowwoc.cat.claude.hook.AbstractJvmScope;
+import io.github.cowwoc.cat.agent.AbstractAgentScope;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -16,12 +16,12 @@ import java.nio.file.Path;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Tests for JvmScope path resolution methods: {@code getCatWorkPath()} and {@code getCatSessionPath()}.
+ * Tests for AgentScope path resolution methods: {@code getCatWorkPath()} and {@code getCatSessionPath()}.
  * <p>
  * Verifies the encoding algorithm ({@code /} and {@code .} replaced by {@code -}) and the resulting
  * directory structure under the config dir.
  */
-public final class JvmScopePathResolutionTest
+public final class AgentScopePathResolutionTest
 {
   /**
    * Verifies that getCatWorkPath() returns the correct path for a project directory.
@@ -79,7 +79,7 @@ public final class JvmScopePathResolutionTest
   public void encodingReplacesDots()
   {
     String projectPath = "/home/user/my.project";
-    String encoded = AbstractJvmScope.encodeProjectPath(projectPath);
+    String encoded = AbstractAgentScope.encodeProjectPath(projectPath);
     requireThat(encoded, "encoded").isEqualTo("-home-user-my-project");
   }
 
@@ -89,7 +89,7 @@ public final class JvmScopePathResolutionTest
   @Test
   public void encodingForWorkspace()
   {
-    String encoded = AbstractJvmScope.encodeProjectPath("/workspace");
+    String encoded = AbstractAgentScope.encodeProjectPath("/workspace");
     requireThat(encoded, "encoded").isEqualTo("-workspace");
   }
 
@@ -101,7 +101,7 @@ public final class JvmScopePathResolutionTest
   @Test
   public void encodingForNestedPathWithDots()
   {
-    String encoded = AbstractJvmScope.encodeProjectPath("/home/user/my.project/v1.2");
+    String encoded = AbstractAgentScope.encodeProjectPath("/home/user/my.project/v1.2");
     requireThat(encoded, "encoded").isEqualTo("-home-user-my-project-v1-2");
   }
 
@@ -163,7 +163,7 @@ public final class JvmScopePathResolutionTest
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path result = scope.getClaudeSessionsPath();
-      String encoded = AbstractJvmScope.encodeProjectPath(tempDir.toString());
+      String encoded = AbstractAgentScope.encodeProjectPath(tempDir.toString());
       Path expected = tempDir.resolve("projects").resolve(encoded);
       requireThat(result, "result").isEqualTo(expected);
     }
@@ -187,7 +187,7 @@ public final class JvmScopePathResolutionTest
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path result = scope.getClaudeSessionPath("test-session");
-      String encoded = AbstractJvmScope.encodeProjectPath(tempDir.toString());
+      String encoded = AbstractAgentScope.encodeProjectPath(tempDir.toString());
       String sessionId = "test-session";
       Path expected = tempDir.resolve("projects").resolve(encoded).resolve(sessionId);
       requireThat(result, "result").isEqualTo(expected);
@@ -318,7 +318,7 @@ public final class JvmScopePathResolutionTest
    * @throws IOException if temporary directory creation fails
    */
   @Test
-  public void mainJvmScopeGetWorkDirReturnsUserDir() throws IOException
+  public void mainCliToolGetWorkDirReturnsUserDir() throws IOException
   {
     String userDir = System.getProperty("user.dir");
     requireThat(userDir, "userDir").isNotNull();
@@ -356,7 +356,7 @@ public final class JvmScopePathResolutionTest
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginDir))
     {
       Path result = scope.getClaudeSessionPath("test-session");
-      String encoded = AbstractJvmScope.encodeProjectPath(projectPath.toString());
+      String encoded = AbstractAgentScope.encodeProjectPath(projectPath.toString());
       Path expected = projectPath.resolve("projects").resolve(encoded).resolve("test-session");
       requireThat(result, "result").isEqualTo(expected);
       // Verify encoding replaced spaces with hyphens (encoded should not contain spaces)
@@ -385,7 +385,7 @@ public final class JvmScopePathResolutionTest
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, pluginDir))
     {
       Path result = scope.getClaudeSessionsPath();
-      String encoded = AbstractJvmScope.encodeProjectPath(projectPath.toString());
+      String encoded = AbstractAgentScope.encodeProjectPath(projectPath.toString());
       Path expected = projectPath.resolve("projects").resolve(encoded);
       requireThat(result, "result").isEqualTo(expected);
       // Verify encoding replaced all spaces and slashes with hyphens

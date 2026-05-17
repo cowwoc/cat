@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.client.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.util.VerifyDeferPlanGeneration;
 import org.testng.annotations.Test;
 
@@ -74,7 +74,7 @@ public final class VerifyDeferPlanGenerationTest
   public void allChecksPass() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-defer-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       writeAddSkill(tempDir, "Some content with planTempFile=$(mktemp but no plan builder ref");
       writeWorkImplementSkill(tempDir, "Content with hasSteps and cat:plan-builder invocation");
@@ -106,7 +106,7 @@ public final class VerifyDeferPlanGenerationTest
   public void check1FailsWhenPlanBuilderPresent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-defer-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       writeAddSkill(tempDir,
         "Content with planTempFile=$(mktemp and cat:plan-builder present");
@@ -139,7 +139,7 @@ public final class VerifyDeferPlanGenerationTest
   public void check2FailsWhenLightweightPlanMissing() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-defer-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       writeAddSkill(tempDir, "Content without the lightweight plan block");
       writeWorkImplementSkill(tempDir, "Content with hasSteps and cat:plan-builder invocation");
@@ -171,7 +171,7 @@ public final class VerifyDeferPlanGenerationTest
   public void check3FailsWhenHasStepsMissing() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-defer-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       writeAddSkill(tempDir, "Content with planTempFile=$(mktemp but no plan builder ref");
       writeWorkImplementSkill(tempDir, "Content with cat:plan-builder but no steps check");
@@ -203,7 +203,7 @@ public final class VerifyDeferPlanGenerationTest
   public void check4FailsWhenPlanBuilderMissing() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-defer-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       writeAddSkill(tempDir, "Content with planTempFile=$(mktemp but no plan builder ref");
       writeWorkImplementSkill(tempDir, "Content with hasSteps but no plan builder agent");
@@ -235,7 +235,7 @@ public final class VerifyDeferPlanGenerationTest
   public void missingAddSkillFile() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-defer-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       writeWorkImplementSkill(tempDir, "Content with hasSteps and cat:plan-builder invocation");
 
@@ -268,7 +268,7 @@ public final class VerifyDeferPlanGenerationTest
   public void missingWorkImplementSkillFile() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-defer-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       writeAddSkill(tempDir, "Content with planTempFile=$(mktemp but no plan builder ref");
 
@@ -300,7 +300,7 @@ public final class VerifyDeferPlanGenerationTest
   public void bothSkillFilesMissing() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-defer-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, false, UTF_8);
@@ -330,7 +330,7 @@ public final class VerifyDeferPlanGenerationTest
   public void fallbackToScopeProjectPath() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-defer-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       writeAddSkill(tempDir, "Some content with planTempFile=$(mktemp but no plan builder ref");
       writeWorkImplementSkill(tempDir, "Content with hasSteps and cat:plan-builder invocation");

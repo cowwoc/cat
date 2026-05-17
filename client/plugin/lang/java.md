@@ -33,6 +33,7 @@ See LICENSE.md in the project root for license terms.
 | `Thread.sleep()` in tests | Flaky timing dependency |
 | Missing `@Test` | Test won't execute |
 | `assertEquals` with floats | Needs delta parameter |
+| `try { call(); fail(); } catch (ExpectedException e) { ... }` in TestNG tests | Prefer `@Test(expectedExceptions = ExpectedException.class, expectedExceptionsMessageRegExp = "...")` |
 
 ## Architecture
 | Pattern | Issue |

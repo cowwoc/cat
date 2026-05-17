@@ -1231,7 +1231,7 @@ re-runs via `get-output` with new args, and the agent follows the already-loaded
  is fresh every time via `get-output`, but the skill instructions are not re-loaded, saving significant context.
  After context compaction, skill markers reset so skills re-load in full automatically.
 - Java handlers compose output from multiple sources (config files, git state, session data)
-- Output is type-safe and testable via `TestJvmScope` (see `tests/` directory)
+- Output is type-safe and testable via dedicated test scope fixtures (for example `TestClaudeTool`)
 - Agent cannot attempt manual construction — it only sees the final rendered output
 
 **Benefits of delegated pattern**:

@@ -30,13 +30,13 @@ Then invoke the extractor directly with those keywords:
 ```bash
 : "${CAT_PLUGIN_ROOT:?CAT_PLUGIN_ROOT is required from CAT runtime injection}"
 : "${CAT_PLUGIN_DATA:?CAT_PLUGIN_DATA is required}"
-: "${CAT_CONFIG_DIR:?CAT_CONFIG_DIR is required}"
 : "${CAT_PROJECT_DIR:?CAT_PROJECT_DIR is required}"
 : "${CAT_RUNTIME:?CAT_RUNTIME is required}"
 CAT_SESSION_ID="${CAT_SESSION_ID:-${CODEX_THREAD_ID:-}}"
 : "${CAT_SESSION_ID:?CAT_SESSION_ID is required; do not generate a fallback UUID}"
-export CAT_PLUGIN_ROOT CAT_PLUGIN_DATA CAT_CONFIG_DIR CAT_PROJECT_DIR CAT_RUNTIME CAT_SESSION_ID
-"${CAT_PLUGIN_ROOT}/client/bin/extract-investigation-context" "keyword1 keyword2 keyword3" 2>/dev/null || \
+CAT_CLIENT_BIN="${CAT_PLUGIN_ROOT}/client/bin"
+export -n CAT_PLUGIN_ROOT CAT_PLUGIN_DATA CAT_PROJECT_DIR CAT_RUNTIME CAT_SESSION_ID 2>/dev/null || true
+"${CAT_CLIENT_BIN}/extract-investigation-context" "keyword1 keyword2 keyword3" 2>/dev/null || \
   echo '{"error":"pre-extraction unavailable - jlink binary not built"}'
 ```
 
@@ -574,13 +574,13 @@ printf '%s' "$PHASE3_JSON" > "$PHASE3_TMP"
 # Run the record-learning tool — reads Phase 3 JSON from stdin, outputs recording result JSON to stdout
 : "${CAT_PLUGIN_ROOT:?CAT_PLUGIN_ROOT is required from CAT runtime injection}"
 : "${CAT_PLUGIN_DATA:?CAT_PLUGIN_DATA is required}"
-: "${CAT_CONFIG_DIR:?CAT_CONFIG_DIR is required}"
 : "${CAT_PROJECT_DIR:?CAT_PROJECT_DIR is required}"
 : "${CAT_RUNTIME:?CAT_RUNTIME is required}"
 CAT_SESSION_ID="${CAT_SESSION_ID:-${CODEX_THREAD_ID:-}}"
 : "${CAT_SESSION_ID:?CAT_SESSION_ID is required; do not generate a fallback UUID}"
-export CAT_PLUGIN_ROOT CAT_PLUGIN_DATA CAT_CONFIG_DIR CAT_PROJECT_DIR CAT_RUNTIME CAT_SESSION_ID
-RECORD_RESULT=$("${CAT_PLUGIN_ROOT}/client/bin/record-learning" < "$PHASE3_TMP")
+CAT_CLIENT_BIN="${CAT_PLUGIN_ROOT}/client/bin"
+export -n CAT_PLUGIN_ROOT CAT_PLUGIN_DATA CAT_PROJECT_DIR CAT_RUNTIME CAT_SESSION_ID 2>/dev/null || true
+RECORD_RESULT=$("${CAT_CLIENT_BIN}/record-learning" < "$PHASE3_TMP")
 RECORD_EXIT=$?
 rm -f "$PHASE3_TMP"
 

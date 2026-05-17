@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.client.test;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.util.MarkdownWrapper;
 import org.testng.annotations.Test;
 
@@ -34,7 +34,7 @@ public class MarkdownWrapperMainTest
   public void stdinContentIsWrappedToStdout() throws IOException
   {
     Path tempDir = Files.createTempDirectory("markdown-wrapper-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       String input = "This is a short line.";
       ByteArrayInputStream in = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
@@ -61,7 +61,7 @@ public class MarkdownWrapperMainTest
   public void invalidWidthThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("markdown-wrapper-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayInputStream in = new ByteArrayInputStream(new byte[0]);
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -85,7 +85,7 @@ public class MarkdownWrapperMainTest
   public void nullArgsThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("markdown-wrapper-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       MarkdownWrapper.run(scope, null,
         new ByteArrayInputStream(new byte[0]),
@@ -107,7 +107,7 @@ public class MarkdownWrapperMainTest
   public void nullOutThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("markdown-wrapper-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       MarkdownWrapper.run(scope, new String[]{},
         new ByteArrayInputStream(new byte[0]), null);
@@ -128,7 +128,7 @@ public class MarkdownWrapperMainTest
   public void unknownArgThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("markdown-wrapper-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -151,7 +151,7 @@ public class MarkdownWrapperMainTest
   public void nullInThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("markdown-wrapper-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -172,7 +172,7 @@ public class MarkdownWrapperMainTest
   public void customWidthIsApplied() throws IOException
   {
     Path tempDir = Files.createTempDirectory("markdown-wrapper-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       String input = "word1 word2 word3 word4 word5 word6 word7 word8 word9 word10 word11 word12 word13";
       ByteArrayInputStream in = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
@@ -202,7 +202,7 @@ public class MarkdownWrapperMainTest
   {
     Path tempDir = Files.createTempDirectory("markdown-wrapper-main-test-");
     Path tempFile = Files.createTempFile("markdown-wrapper-test-", ".md");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       String longContent = "word1 word2 word3 word4 word5 word6 word7 word8 word9 word10";
       Files.writeString(tempFile, longContent, StandardCharsets.UTF_8);

@@ -24,8 +24,8 @@ import java.nio.file.Path;
  * Tests verify the detection of get-diff usage (or lack thereof) when approval questions are presented.
  * <p>
  * Session files are placed at {@code {claudeConfigPath}/projects/{encodedProjectDir}/{sessionId}.jsonl}, resolved via
- * {@link JvmScope#getClaudeSessionsPath()}. The {@code .cat} directory is resolved via
- * {@link JvmScope#getProjectPath()}, matching the production code's path resolution.
+ * {@link AgentScope#getClaudeSessionsPath()}. The {@code .cat} directory is resolved via
+ * {@link AgentScope#getProjectPath()}, matching the production code's path resolution.
  */
 public final class WarnApprovalWithoutRenderDiffTest
 {

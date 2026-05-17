@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.tool.util;
 
 import static io.github.cowwoc.cat.tool.Strings.block;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.CliTool;
 import io.github.cowwoc.cat.tool.MainCliTool;
 import tools.jackson.core.JacksonException;
@@ -76,7 +76,7 @@ public final class IssueLock
     DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC);
   private static final int MAX_LOCK_FILES = 1000;
 
-  private final JvmScope scope;
+  private final AgentScope scope;
   private final Clock clock;
   private final PrintStream warnings;
   private final Path lockDir;
@@ -87,7 +87,7 @@ public final class IssueLock
    * @param scope the JVM scope providing JSON mapper and project directory
    * @throws NullPointerException if {@code scope} is null
    */
-  public IssueLock(JvmScope scope)
+  public IssueLock(AgentScope scope)
   {
     this(scope, Clock.systemUTC(), System.err);
   }
@@ -99,7 +99,7 @@ public final class IssueLock
    * @param clock the clock to use for determining lock staleness
    * @throws NullPointerException if {@code scope} or {@code clock} are null
    */
-  public IssueLock(JvmScope scope, Clock clock)
+  public IssueLock(AgentScope scope, Clock clock)
   {
     this(scope, clock, System.err);
   }
@@ -112,7 +112,7 @@ public final class IssueLock
    * @param warnings the stream to write warning messages to
    * @throws NullPointerException if {@code scope}, {@code clock}, or {@code warnings} are null
    */
-  public IssueLock(JvmScope scope, Clock clock, PrintStream warnings)
+  public IssueLock(AgentScope scope, Clock clock, PrintStream warnings)
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(clock, "clock").isNotNull();
@@ -940,7 +940,7 @@ public final class IssueLock
    * @param out   the output stream for all results
    * @throws NullPointerException if {@code scope}, {@code args}, or {@code out} are null
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out)
+  public static void run(AgentScope scope, String[] args, PrintStream out)
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();
@@ -988,7 +988,7 @@ public final class IssueLock
    * @param out        the output stream
    * @throws IOException if the operation fails
    */
-  private static void handleAcquire(IssueLock lock, JsonMapper mapper, JvmScope scope, String[] args,
+  private static void handleAcquire(IssueLock lock, JsonMapper mapper, AgentScope scope, String[] args,
     PrintStream out) throws IOException
   {
     if (args.length < 4)
@@ -1013,7 +1013,7 @@ public final class IssueLock
    * @param out        the output stream
    * @throws IOException if the operation fails
    */
-  private static void handleRelease(IssueLock lock, JsonMapper mapper, JvmScope scope, String[] args,
+  private static void handleRelease(IssueLock lock, JsonMapper mapper, AgentScope scope, String[] args,
     PrintStream out) throws IOException
   {
     if (args.length < 3)
@@ -1035,7 +1035,7 @@ public final class IssueLock
    * @param out        the output stream
    * @throws IOException if the operation fails
    */
-  private static void handleForceRelease(IssueLock lock, JsonMapper mapper, JvmScope scope,
+  private static void handleForceRelease(IssueLock lock, JsonMapper mapper, AgentScope scope,
     String[] args, PrintStream out) throws IOException
   {
     if (args.length < 2)
@@ -1057,7 +1057,7 @@ public final class IssueLock
    * @param out        the output stream
    * @throws IOException if the operation fails
    */
-  private static void handleTransfer(IssueLock lock, JsonMapper mapper, JvmScope scope, String[] args,
+  private static void handleTransfer(IssueLock lock, JsonMapper mapper, AgentScope scope, String[] args,
     PrintStream out) throws IOException
   {
     if (args.length < 5)
@@ -1083,7 +1083,7 @@ public final class IssueLock
    * @param out        the output stream
    * @throws IOException if the operation fails
    */
-  private static void handleCheck(IssueLock lock, JsonMapper mapper, JvmScope scope, String[] args,
+  private static void handleCheck(IssueLock lock, JsonMapper mapper, AgentScope scope, String[] args,
     PrintStream out) throws IOException
   {
     if (args.length < 2)

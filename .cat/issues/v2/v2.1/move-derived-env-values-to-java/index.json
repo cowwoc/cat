@@ -1,6 +1,8 @@
 {
-  "status" : "open",
+  "status" : "closed",
   "dependencies" : [ ],
   "blocks" : [ ],
-  "parent" : "2.1-split-runtime-rules-directories"
+  "parent" : "2.1-split-runtime-rules-directories",
+  "target_branch" : "v2.1",
+  "resolution" : "implemented"
 }

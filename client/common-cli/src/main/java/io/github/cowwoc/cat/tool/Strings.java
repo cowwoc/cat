@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.tool;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.agent.AgentScope;
 
 import tools.jackson.databind.node.ObjectNode;
 
@@ -86,7 +87,7 @@ public final class Strings
    * @throws NullPointerException     if {@code scope} or {@code reason} are null
    * @throws IllegalArgumentException if {@code reason} is blank
    */
-  public static String block(JvmScope scope, String reason)
+  public static String block(AgentScope scope, String reason)
   {
     requireThat(reason, "reason").isNotBlank();
     ObjectNode response = scope.getJsonMapper().createObjectNode();

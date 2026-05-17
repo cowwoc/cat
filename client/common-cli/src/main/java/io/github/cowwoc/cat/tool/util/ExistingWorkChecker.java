@@ -9,7 +9,7 @@ package io.github.cowwoc.cat.tool.util;
 import static io.github.cowwoc.cat.tool.Strings.block;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.CliTool;
 import io.github.cowwoc.cat.tool.MainCliTool;
 import org.slf4j.Logger;
@@ -132,7 +132,7 @@ public final class ExistingWorkChecker
    * @throws NullPointerException if {@code scope}, {@code args}, {@code out}, or {@code err} are null
    * @throws IOException if git operations fail
    */
-  public static boolean run(JvmScope scope, String[] args, PrintStream out, PrintStream err) throws IOException
+  public static boolean run(AgentScope scope, String[] args, PrintStream out, PrintStream err) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();

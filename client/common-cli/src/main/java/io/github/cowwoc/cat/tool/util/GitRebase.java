@@ -9,7 +9,7 @@ package io.github.cowwoc.cat.tool.util;
 import static io.github.cowwoc.cat.tool.Strings.block;
 
 import io.github.cowwoc.cat.agent.ProcessRunner;
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.CliTool;
 import io.github.cowwoc.cat.tool.MainCliTool;
 import org.slf4j.Logger;
@@ -59,7 +59,7 @@ public final class GitRebase
 {
   private static final DateTimeFormatter BACKUP_TIMESTAMP_FORMATTER =
     DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
-  private final JvmScope scope;
+  private final AgentScope scope;
   private final Path workingDirectory;
 
   /**
@@ -69,7 +69,7 @@ public final class GitRebase
    * @param workingDirectory the working directory or worktree path for git commands
    * @throws NullPointerException if any argument is null
    */
-  public GitRebase(JvmScope scope, Path workingDirectory)
+  public GitRebase(AgentScope scope, Path workingDirectory)
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(workingDirectory, "workingDirectory").isNotNull();
@@ -778,7 +778,7 @@ public final class GitRebase
    * @param out   the output stream to write JSON to
    * @throws NullPointerException if {@code args} or {@code out} are null
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out)
+  public static void run(AgentScope scope, String[] args, PrintStream out)
   {
     requireThat(args, "args").isNotNull();
     requireThat(out, "out").isNotNull();

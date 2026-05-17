@@ -31,7 +31,6 @@ esac
 CAT_RUNTIME="codex"
 CODEX_HOME="${CODEX_HOME:-${HOME}/.codex}"
 CAT_PLUGIN_DATA="${CAT_PLUGIN_DATA:-${CODEX_HOME}/plugins/data/cat-cat}"
-CAT_CONFIG_DIR="${CAT_CONFIG_DIR:-${CODEX_HOME}}"
 
 if [[ "${RELEASE_TAG}" == "latest" ]]; then
   RELEASE_TAG="$(curl -fsSL https://api.github.com/repos/cowwoc/cat/releases/latest |
@@ -49,7 +48,6 @@ echo "CAT_RUNTIME=${CAT_RUNTIME}"
 echo "RELEASE_TAG=${RELEASE_TAG}"
 echo "ASSET_URL=${ASSET_URL}"
 echo "CAT_PLUGIN_DATA=${CAT_PLUGIN_DATA}"
-echo "CAT_CONFIG_DIR=${CAT_CONFIG_DIR}"
 
 INSTALL_TMP="$(mktemp -d)"
 trap 'rm -rf "${INSTALL_TMP}"' EXIT
@@ -165,7 +163,7 @@ awk '
 mv "${CONFIG_TMP}" "${CODEX_CONFIG}"
 
 mkdir -p "${CAT_PLUGIN_DATA}"
-mkdir -p "${CAT_CONFIG_DIR}"
+mkdir -p "${CODEX_HOME}"
 
 "${CAT_PLUGIN_ROOT}/client/bin/java" -version
 test -x "${CAT_PLUGIN_ROOT}/client/bin/pre-bash"

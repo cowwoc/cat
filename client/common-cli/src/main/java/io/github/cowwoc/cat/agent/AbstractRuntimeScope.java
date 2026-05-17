@@ -11,6 +11,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import io.github.cowwoc.pouch10.core.ConcurrentLazyReference;
 
 import java.nio.file.Path;
+import java.util.List;
 
 /**
  * Shared base implementation for runtime-specific plugin scopes.
@@ -24,37 +25,37 @@ public abstract class AbstractRuntimeScope extends AbstractAgentPluginScope
 {
   private final ConcurrentLazyReference<TerminalType> terminalTypeRef =
     ConcurrentLazyReference.create(TerminalType::detect);
-  private final RuntimeScopeConfig config;
+  private final Path workDir;
+  private final String timezone;
 
   /**
    * Creates a new runtime-aware plugin scope.
    *
-   * @param config the resolved runtime scope configuration
+   * @param projectPath the project directory
+   * @param pluginRoot the plugin root directory
+   * @param pluginData the plugin data directory
+   * @param pluginDescriptor the plugin descriptor path relative to the plugin root
+   * @param ruleDirectories the ordered rule directories
+   * @param pluginCacheDescriptor the plugin cache descriptor path relative to the plugin root, or {@code null}
+   * @param workDir the process working directory
+   * @param timezone the timezone
    */
-  protected AbstractRuntimeScope(RuntimeScopeConfig config)
+  protected AbstractRuntimeScope(Path projectPath, Path pluginRoot, Path pluginData,
+    Path pluginDescriptor, List<Path> ruleDirectories, Path pluginCacheDescriptor, Path workDir,
+    String timezone)
   {
-    super(requireConfig(config).projectPath(), config.pluginRoot(), config.pluginData(),
-      config.pluginDescriptor(), config.ruleDirectories(), config.pluginCacheDescriptor());
-    this.config = config;
-  }
-
-  /**
-   * Validates the configuration before superclass construction.
-   *
-   * @param config the configuration to validate
-   * @return {@code config}
-   */
-  private static RuntimeScopeConfig requireConfig(RuntimeScopeConfig config)
-  {
-    requireThat(config, "config").isNotNull();
-    return config;
+    super(projectPath, pluginRoot, pluginData, pluginDescriptor, ruleDirectories, pluginCacheDescriptor);
+    requireThat(workDir, "workDir").isNotNull();
+    requireThat(timezone, "timezone").isNotBlank();
+    this.workDir = workDir;
+    this.timezone = timezone;
   }
 
   @Override
   public Path getWorkDir()
   {
     ensureOpen();
-    return config.workDir();
+    return workDir;
   }
 
   @Override
@@ -68,6 +69,6 @@ public abstract class AbstractRuntimeScope extends AbstractAgentPluginScope
   public String getTimezone()
   {
     ensureOpen();
-    return config.timezone();
+    return timezone;
   }
 }

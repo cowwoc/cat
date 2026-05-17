@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.client.test;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.util.StatusAlignmentValidator;
 import org.testng.annotations.Test;
 
@@ -34,7 +34,7 @@ public class StatusAlignmentValidatorMainTest
   public void emptyInputProducesOutput() throws IOException
   {
     Path tempDir = Files.createTempDirectory("status-alignment-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayInputStream in = new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8));
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -61,7 +61,7 @@ public class StatusAlignmentValidatorMainTest
   public void nullInThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("status-alignment-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       StatusAlignmentValidator.run(scope, new String[]{}, null,
         new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8));
@@ -82,7 +82,7 @@ public class StatusAlignmentValidatorMainTest
   public void nullOutThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("status-alignment-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       StatusAlignmentValidator.run(scope, new String[]{},
         new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8)), null);

@@ -15,7 +15,7 @@ import java.io.IOException;
  * Test implementation of SkillOutput with a CliTool constructor.
  * <p>
  * Used to verify that invokeSkillOutput() correctly handles SkillOutput classes
- * whose constructor takes CliTool rather than JvmScope.
+ * whose constructor takes CliTool rather than AgentScope.
  */
 public final class TestClaudeToolSkillOutput implements SkillOutput
 {

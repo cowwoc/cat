@@ -107,13 +107,13 @@ use the **Quick Workflow**. Otherwise use the **Interactive Rebase Workflow**.
 ```bash
 : "${CAT_PLUGIN_ROOT:?CAT_PLUGIN_ROOT is required from CAT runtime injection}"
 : "${CAT_PLUGIN_DATA:?CAT_PLUGIN_DATA is required}"
-: "${CAT_CONFIG_DIR:?CAT_CONFIG_DIR is required}"
 : "${CAT_PROJECT_DIR:?CAT_PROJECT_DIR is required}"
 : "${CAT_RUNTIME:?CAT_RUNTIME is required}"
 CAT_SESSION_ID="${CAT_SESSION_ID:-${CODEX_THREAD_ID:-}}"
 : "${CAT_SESSION_ID:?CAT_SESSION_ID is required; do not generate a fallback UUID}"
-export CAT_PLUGIN_ROOT CAT_PLUGIN_DATA CAT_CONFIG_DIR CAT_PROJECT_DIR CAT_RUNTIME CAT_SESSION_ID
-"${CAT_PLUGIN_ROOT}/client/bin/git-squash" "<target-branch>" "$MESSAGE" "$WORKTREE_PATH"
+CAT_CLIENT_BIN="${CAT_PLUGIN_ROOT}/client/bin"
+export -n CAT_PLUGIN_ROOT CAT_PLUGIN_DATA CAT_PROJECT_DIR CAT_RUNTIME CAT_SESSION_ID 2>/dev/null || true
+"${CAT_CLIENT_BIN}/git-squash" "<target-branch>" "$MESSAGE" "$WORKTREE_PATH"
 ```
 
 The script implements: rebase onto target, backup, commit-tree squash, verify, cleanup. Outputs JSON on success.

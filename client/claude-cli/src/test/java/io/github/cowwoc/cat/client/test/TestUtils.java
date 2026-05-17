@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.client.test;
 
 import io.github.cowwoc.cat.claude.hook.ClaudeHook;
 import io.github.cowwoc.cat.tool.CliTool;
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.util.FileUtils;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.databind.JsonNode;
@@ -481,7 +481,7 @@ public final class TestUtils
    * @throws IOException if the lock file cannot be written
    * @throws NullPointerException if {@code scope}, {@code issueId}, or {@code sessionId} are null
    */
-  public static void writeLockFile(JvmScope scope, String issueId, String sessionId) throws IOException
+  public static void writeLockFile(AgentScope scope, String issueId, String sessionId) throws IOException
   {
     Path lockDir = scope.getCatWorkPath().resolve("locks");
     Files.createDirectories(lockDir);
@@ -500,7 +500,7 @@ public final class TestUtils
    * @throws IOException if the directory cannot be created
    * @throws NullPointerException if {@code scope} or {@code issueId} are null
    */
-  public static Path createWorktreeDir(JvmScope scope, String issueId) throws IOException
+  public static Path createWorktreeDir(AgentScope scope, String issueId) throws IOException
   {
     Path worktreeDir = scope.getCatWorkPath().resolve("worktrees").resolve(issueId);
     Files.createDirectories(worktreeDir);

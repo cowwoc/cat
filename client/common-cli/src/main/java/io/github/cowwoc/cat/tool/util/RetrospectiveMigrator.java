@@ -12,7 +12,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.agent.Config;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.CliTool;
 import io.github.cowwoc.cat.tool.MainCliTool;
 import org.slf4j.Logger;
@@ -52,7 +52,7 @@ public final class RetrospectiveMigrator
     DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
   };
 
-  private final JvmScope scope;
+  private final AgentScope scope;
 
   /**
    * Creates a new retrospective migrator.
@@ -60,7 +60,7 @@ public final class RetrospectiveMigrator
    * @param scope the JVM scope providing JSON mapper
    * @throws NullPointerException if {@code scope} is null
    */
-  public RetrospectiveMigrator(JvmScope scope)
+  public RetrospectiveMigrator(AgentScope scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -103,7 +103,7 @@ public final class RetrospectiveMigrator
    * @throws NullPointerException if any of {@code scope}, {@code args}, or {@code out} are null
    * @throws IOException          if the operation fails
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  public static void run(AgentScope scope, String[] args, PrintStream out) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();

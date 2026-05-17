@@ -7,7 +7,7 @@
 package io.github.cowwoc.cat.client.test;
 
 import io.github.cowwoc.cat.claude.hook.EnforceStatusOutput;
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
@@ -87,7 +87,7 @@ public final class EnforceStatusOutputTest
   public void stopHookActiveWithBoxPresent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path transcriptFile = tempDir.resolve("transcript.jsonl");
@@ -113,7 +113,7 @@ public final class EnforceStatusOutputTest
   public void stopHookActiveWithBoxMissing() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path transcriptFile = tempDir.resolve("transcript.jsonl");
@@ -157,7 +157,7 @@ public final class EnforceStatusOutputTest
   public void stopHookActiveWithPlainStatusErrorPresent(String text) throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path transcriptFile = tempDir.resolve("transcript.jsonl");
@@ -183,7 +183,7 @@ public final class EnforceStatusOutputTest
   public void firstAttemptWithBoxPresent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path transcriptFile = tempDir.resolve("transcript.jsonl");
@@ -208,7 +208,7 @@ public final class EnforceStatusOutputTest
   public void firstAttemptWithPlainStatusErrorPresent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path transcriptFile = tempDir.resolve("transcript.jsonl");
@@ -233,7 +233,7 @@ public final class EnforceStatusOutputTest
   public void firstAttemptWithMissingPlanningStatusErrorPresent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path transcriptFile = tempDir.resolve("transcript.jsonl");
@@ -258,7 +258,7 @@ public final class EnforceStatusOutputTest
   public void firstAttemptWithAugmentedPlainStatusErrorBlocks() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path transcriptFile = tempDir.resolve("transcript.jsonl");
@@ -287,7 +287,7 @@ public final class EnforceStatusOutputTest
   public void firstAttemptWithBoxMissing() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path transcriptFile = tempDir.resolve("transcript.jsonl");
@@ -315,7 +315,7 @@ public final class EnforceStatusOutputTest
   public void statusBeyondRecentWindow() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path transcriptFile = tempDir.resolve("transcript.jsonl");
@@ -352,7 +352,7 @@ public final class EnforceStatusOutputTest
   public void emptyTranscriptFile() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path transcriptFile = tempDir.resolve("transcript.jsonl");
@@ -378,7 +378,7 @@ public final class EnforceStatusOutputTest
   public void malformedJsonInTranscript() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       Path transcriptFile = tempDir.resolve("transcript.jsonl");
@@ -491,7 +491,7 @@ public final class EnforceStatusOutputTest
   public void noTranscriptContextSkipsEnforcement() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       // No transcript path, no session ID — hook has no context, should skip enforcement

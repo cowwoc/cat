@@ -2,5 +2,8 @@
   "status": "in-progress",
   "dependencies": [],
   "blocks": [],
-  "decomposedInto": ["2.1-runtime-neutral-cli-context"]
+  "decomposedInto": [
+    "2.1-runtime-neutral-cli-context",
+    "2.1-move-derived-env-values-to-java"
+  ]
 }

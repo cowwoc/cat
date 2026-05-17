@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.claude.hook;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.agent.AbstractAgentScope;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 
@@ -20,12 +21,12 @@ import java.time.Duration;
 /**
  * Abstract base class for scopes that provide statusline rendering capabilities.
  * <p>
- * Extends {@link AbstractJvmScope} with the {@link ClaudeStatusline} contract, giving subclasses
+ * Extends {@link AbstractAgentScope} with the {@link ClaudeStatusline} contract, giving subclasses
  * access to the JSON mapper and CAT work path required to render the Claude Code statusline.
  * <p>
  * <b>Thread Safety:</b> This class is thread-safe.
  */
-public abstract class AbstractClaudeStatusline extends AbstractJvmScope implements ClaudeStatusline
+public abstract class AbstractClaudeStatusline extends AbstractAgentScope implements ClaudeStatusline
 {
   private String modelDisplayName = "unknown";
   private String sessionId = "unknown";

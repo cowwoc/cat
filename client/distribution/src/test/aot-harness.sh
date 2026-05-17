@@ -36,9 +36,9 @@ log "Recording AOT training data..."
 aot_stderr=$(mktemp)
 trap 'rm -f "$aot_stderr"' EXIT
 
-if ! CAT_PROJECT_DIR="${OUTPUT_DIR}" CAT_PLUGIN_ROOT="${OUTPUT_DIR}/plugin" \
-  CAT_PLUGIN_DATA="${OUTPUT_DIR}/plugin-data" CAT_CONFIG_DIR="${OUTPUT_DIR}/config" \
-  CAT_SESSION_ID="aot-harness-session" CAT_RUNTIME="claude" \
+if ! CLAUDE_PROJECT_DIR="${OUTPUT_DIR}" CLAUDE_PLUGIN_ROOT="${OUTPUT_DIR}/plugin" \
+  CLAUDE_PLUGIN_DATA="${OUTPUT_DIR}/plugin-data" CLAUDE_CONFIG_DIR="${OUTPUT_DIR}/config" \
+  CLAUDE_SESSION_ID="aot-harness-session" \
   "$java_bin" \
     -XX:AOTMode=record \
     -XX:AOTConfiguration="$aot_config" \

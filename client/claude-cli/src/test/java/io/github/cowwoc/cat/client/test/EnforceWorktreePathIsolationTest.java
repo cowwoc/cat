@@ -33,7 +33,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * <p>
  * The {@code TestClaudeTool(projectPath, projectPath)} constructor sets {@code configDir = projectPath},
  * so external paths resolve relative to {@code projectPath}. Lock and worktree files are created
- * via {@link JvmScope#getCatWorkPath()} to stay consistent with what the production code looks up.
+ * via {@link AgentScope#getCatWorkPath()} to stay consistent with what the production code looks up.
  * <p>
  * Tests are designed for parallel execution - each test is self-contained
  * with no shared state.

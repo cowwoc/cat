@@ -10,7 +10,7 @@ import static io.github.cowwoc.cat.tool.Strings.block;
 import static io.github.cowwoc.cat.claude.hook.skills.GetStatusOutput.isPlainSetupStatusOutput;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.Strings;
 
 import tools.jackson.databind.JsonNode;
@@ -153,7 +153,7 @@ public final class EnforceStatusOutput
    * @throws IOException if the transcript file cannot be read
    */
   public static String check(JsonMapper mapper, String transcriptPath, boolean stopHookActive,
-    JvmScope scope, String sessionId, Path sessionBasePath) throws IOException
+    AgentScope scope, String sessionId, Path sessionBasePath) throws IOException
   {
     // Check for pending-agent-result flag before any other enforcement
     if (!sessionId.isEmpty())

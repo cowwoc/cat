@@ -12,7 +12,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import static io.github.cowwoc.cat.tool.Strings.block;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.CliTool;
 import io.github.cowwoc.cat.tool.MainCliTool;
 import tools.jackson.databind.node.ObjectNode;
@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
  */
 public final class GitMergeLinear
 {
-  private final JvmScope scope;
+  private final AgentScope scope;
   private final String directory;
 
   /**
@@ -48,7 +48,7 @@ public final class GitMergeLinear
    * @throws NullPointerException if {@code scope} is null
    * @throws IllegalArgumentException if {@code directory} is blank
    */
-  public GitMergeLinear(JvmScope scope, String directory)
+  public GitMergeLinear(AgentScope scope, String directory)
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(directory, "directory").isNotBlank();
@@ -318,7 +318,7 @@ public final class GitMergeLinear
    * @param out   the output stream to write JSON to
    * @throws NullPointerException if {@code args} or {@code out} are null
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out)
+  public static void run(AgentScope scope, String[] args, PrintStream out)
   {
     requireThat(args, "args").isNotNull();
     requireThat(out, "out").isNotNull();

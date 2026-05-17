@@ -13,17 +13,21 @@ import io.github.cowwoc.cat.claude.hook.ClaudeHook;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Set;
 
 /**
- * Persists Claude environment variables into CLAUDE_ENV_FILE for Bash tool invocations.
+ * Persists CAT environment variables into CLAUDE_ENV_FILE for Bash tool invocations.
  * <p>
- * Appends {@code CLAUDE_PROJECT_DIR}, {@code CLAUDE_PLUGIN_ROOT},
- * {@code CLAUDE_PLUGIN_DATA}, {@code CLAUDE_SESSION_ID}, and their runtime-neutral {@code CAT_*}
- * aliases to the env file so they are available in all subsequent Bash tool calls.
+ * Appends the runtime-neutral {@code CAT_*} aliases that skills need directly to the env file so they
+ * are available in all subsequent Bash tool calls.
  * <p>
  * Writes for new sessions (source="startup"), cleared sessions (source="clear"), and resumed sessions
  * (source="resume"). On compacted (source="compact") sessions, the env file already has the correct content.
@@ -61,8 +65,8 @@ public final class InjectEnv implements SessionStartHandler
    * The env file path is obtained from the constructor parameter.
    *
    * @return a result with a warning if a symlink was skipped, otherwise empty
-   * @throws AssertionError if required environment variables are not set (CLAUDE_PROJECT_DIR,
-   *   CLAUDE_PLUGIN_ROOT) or if session_id is not found in hook input
+   * @throws AssertionError if required environment variables are not set or if session_id is not found in
+   *   hook input
    * @throws IllegalArgumentException if any environment value contains dangerous shell characters, or if
    *   {@code source} is not one of "startup", "clear", "resume", or "compact"
    * @throws WrappedCheckedException if writing to the env file fails
@@ -73,7 +77,7 @@ public final class InjectEnv implements SessionStartHandler
     if (Files.isSymbolicLink(envFile))
       return Result.context("InjectEnv: CLAUDE_ENV_FILE is a symlink - skipping for security");
 
-    // CLAUDE_SESSION_ID is empty in the hook environment. Read from stdin JSON instead.
+    // The hook environment does not provide a reliable session ID. Read from stdin JSON instead.
     String sessionId = scope.getSessionId();
     requireThat(sessionId, "session_id").isNotEmpty();
 
@@ -114,22 +118,13 @@ public final class InjectEnv implements SessionStartHandler
    */
   private Result handleResume(Path envPath, String sessionId)
   {
-    String projectPath = scope.getProjectPath().toString();
-    String pluginRoot = scope.getPluginRoot().toString();
-    String pluginData = scope.getPluginData().toString();
-    validateEnvValue(projectPath, "CLAUDE_PROJECT_DIR");
-    validateEnvValue(pluginRoot, "CLAUDE_PLUGIN_ROOT");
-    validateEnvValue(pluginData, "CLAUDE_PLUGIN_DATA");
-    validateEnvValue(sessionId, "CLAUDE_SESSION_ID");
-    String configPath = scope.getClaudeConfigPath().toString();
-    validateEnvValue(configPath, "CAT_CONFIG_DIR");
-    String content = buildEnvContent(projectPath, pluginRoot, pluginData, configPath, sessionId);
+    String envContent = buildEnvContent(sessionId);
     try
     {
       Path sessionEnvBase = envPath.getParent().getParent();
       Path resumedSessionDir = sessionEnvBase.resolve(sessionId);
       Files.createDirectories(resumedSessionDir);
-      String warning = writeEnvFileToDir(resumedSessionDir, envPath.getFileName(), content,
+      String warning = writeEnvFileToDir(resumedSessionDir, envPath.getFileName(), envContent,
         "InjectEnv: resumed session env file is a symlink - skipping for security", true);
       if (!warning.isEmpty())
         return Result.context(warning);
@@ -155,20 +150,11 @@ public final class InjectEnv implements SessionStartHandler
    */
   private Result handleStartup(Path envPath, String sessionId)
   {
-    String projectPath = scope.getProjectPath().toString();
-    String pluginRoot = scope.getPluginRoot().toString();
-    String pluginData = scope.getPluginData().toString();
-    validateEnvValue(projectPath, "CLAUDE_PROJECT_DIR");
-    validateEnvValue(pluginRoot, "CLAUDE_PLUGIN_ROOT");
-    validateEnvValue(pluginData, "CLAUDE_PLUGIN_DATA");
-    validateEnvValue(sessionId, "CLAUDE_SESSION_ID");
-    String configPath = scope.getClaudeConfigPath().toString();
-    validateEnvValue(configPath, "CAT_CONFIG_DIR");
-    String content = buildEnvContent(projectPath, pluginRoot, pluginData, configPath, sessionId);
+    String envContent = buildEnvContent(sessionId);
     try
     {
       Files.createDirectories(envPath.getParent());
-      writeEnvFileToDir(envPath.getParent(), envPath.getFileName(), content, "", false);
+      writeEnvFileToDir(envPath.getParent(), envPath.getFileName(), envContent, "", false);
     }
     catch (IOException e)
     {
@@ -178,23 +164,23 @@ public final class InjectEnv implements SessionStartHandler
   }
 
   /**
-   * Builds the env file content string for runtime-specific variables and CAT aliases.
+   * Builds the env file content string for LLM-facing CAT aliases.
    *
-   * @param projectPath the value for CLAUDE_PROJECT_DIR
-   * @param pluginRoot  the value for CLAUDE_PLUGIN_ROOT
-   * @param pluginData  the value for CLAUDE_PLUGIN_DATA
-   * @param configPath  the value for CAT_CONFIG_DIR
-   * @param sessionId   the value for CLAUDE_SESSION_ID
+   * @param sessionId the value for CAT_SESSION_ID
    * @return the export statements to write
    */
-  private static String buildEnvContent(String projectPath, String pluginRoot, String pluginData,
-    String configPath, String sessionId)
+  private String buildEnvContent(String sessionId)
   {
-    return "export CLAUDE_PROJECT_DIR=\"" + projectPath + "\"\n" +
-      "export CLAUDE_PLUGIN_ROOT=\"" + pluginRoot + "\"\n" +
-      "export CLAUDE_PLUGIN_DATA=\"" + pluginData + "\"\n" +
-      "export CLAUDE_SESSION_ID=\"" + sessionId + "\"\n" +
-      "export CAT_PROJECT_DIR=\"" + projectPath + "\"\n" +
+    String projectPath = scope.getProjectPath().toString();
+    String pluginRoot = scope.getPluginRoot().toString();
+    String pluginData = scope.getPluginData().toString();
+    String configPath = scope.getClaudeConfigPath().toString();
+    validateEnvValue(projectPath, "CAT_PROJECT_DIR");
+    validateEnvValue(pluginRoot, "CAT_PLUGIN_ROOT");
+    validateEnvValue(pluginData, "CAT_PLUGIN_DATA");
+    validateEnvValue(configPath, "CAT_CONFIG_DIR");
+    validateEnvValue(sessionId, "CAT_SESSION_ID");
+    return "export CAT_PROJECT_DIR=\"" + projectPath + "\"\n" +
       "export CAT_PLUGIN_ROOT=\"" + pluginRoot + "\"\n" +
       "export CAT_PLUGIN_DATA=\"" + pluginData + "\"\n" +
       "export CAT_CONFIG_DIR=\"" + configPath + "\"\n" +
@@ -242,15 +228,23 @@ public final class InjectEnv implements SessionStartHandler
     throws IOException
   {
     Path envFile = targetDir.resolve(envFileName);
-    if (Files.isSymbolicLink(envFile))
-      return warningIfSymlink;
     StandardOpenOption writeMode;
     if (overwrite)
       writeMode = StandardOpenOption.TRUNCATE_EXISTING;
     else
       writeMode = StandardOpenOption.APPEND;
-    Files.writeString(envFile, content, StandardCharsets.UTF_8,
-      StandardOpenOption.CREATE, writeMode);
+    Set<OpenOption> options = Set.of(StandardOpenOption.CREATE, StandardOpenOption.WRITE, writeMode,
+      LinkOption.NOFOLLOW_LINKS);
+    try (SeekableByteChannel channel = Files.newByteChannel(envFile, options))
+    {
+      channel.write(ByteBuffer.wrap(content.getBytes(StandardCharsets.UTF_8)));
+    }
+    catch (IOException e)
+    {
+      if (!warningIfSymlink.isEmpty() && Files.isSymbolicLink(envFile))
+        return warningIfSymlink;
+      throw e;
+    }
     return "";
   }
 }

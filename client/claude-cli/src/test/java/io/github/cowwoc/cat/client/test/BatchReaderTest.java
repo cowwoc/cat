@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.client.test;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.util.BatchReader;
 import io.github.cowwoc.cat.tool.util.BatchReader.Config;
 import io.github.cowwoc.cat.tool.util.BatchReader.Result;
@@ -109,7 +109,7 @@ public class BatchReaderTest
       "2024-01-01T00:00:00Z");
 
     Path tempDir = Files.createTempDirectory("test-batch-reader-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       String json = result.toJson(scope.getJsonMapper());
 
@@ -303,7 +303,7 @@ public class BatchReaderTest
   public void unknownFlagCausesError() throws IOException
   {
     Path tempDir = Files.createTempDirectory("batch-reader-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -332,7 +332,7 @@ public class BatchReaderTest
   public void maxFilesMissingValueCausesError() throws IOException
   {
     Path tempDir = Files.createTempDirectory("batch-reader-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -360,7 +360,7 @@ public class BatchReaderTest
   public void maxFilesNonIntegerValueCausesError() throws IOException
   {
     Path tempDir = Files.createTempDirectory("batch-reader-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -387,7 +387,7 @@ public class BatchReaderTest
   public void contextLinesMissingValueCausesError() throws IOException
   {
     Path tempDir = Files.createTempDirectory("batch-reader-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -414,7 +414,7 @@ public class BatchReaderTest
   public void contextLinesNonIntegerValueCausesError() throws IOException
   {
     Path tempDir = Files.createTempDirectory("batch-reader-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -442,7 +442,7 @@ public class BatchReaderTest
   public void fileTypeMissingValueCausesError() throws IOException
   {
     Path tempDir = Files.createTempDirectory("batch-reader-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);

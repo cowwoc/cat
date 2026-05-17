@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.tool;
 import static io.github.cowwoc.cat.tool.Strings.block;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.agent.AgentScope;
 
 import com.knuddels.jtokkit.Encodings;
 import com.knuddels.jtokkit.api.Encoding;
@@ -90,7 +91,7 @@ public final class TokenCounter
    * @throws IllegalArgumentException if no file paths are provided
    * @throws IOException              if file reading fails
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  public static void run(AgentScope scope, String[] args, PrintStream out) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();

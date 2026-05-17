@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.client.test;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.util.IssueCreator;
 import org.testng.annotations.Test;
 import tools.jackson.databind.json.JsonMapper;
@@ -36,7 +36,7 @@ public class IssueCreatorTest
   public void executeRejectsNullInput() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       IssueCreator creator = new IssueCreator(scope);
       creator.execute(null);
@@ -57,7 +57,7 @@ public class IssueCreatorTest
   public void executeRejectsEmptyInput() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       IssueCreator creator = new IssueCreator(scope);
       creator.execute("");
@@ -78,7 +78,7 @@ public class IssueCreatorTest
   public void executeRejectsMalformedJson() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       IssueCreator creator = new IssueCreator(scope);
       creator.execute("{invalid}");
@@ -100,7 +100,7 @@ public class IssueCreatorTest
   {
     Path tempDir = Files.createTempDirectory("test-");
     Path indexTempFile = Files.createTempFile("index-", ".json");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       Files.writeString(indexTempFile, "{}");
       IssueCreator creator = new IssueCreator(scope);
@@ -131,7 +131,7 @@ public class IssueCreatorTest
   {
     Path tempDir = Files.createTempDirectory("test-");
     Path indexTempFile = Files.createTempFile("index-", ".json");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       Files.writeString(indexTempFile, "{}");
       IssueCreator creator = new IssueCreator(scope);
@@ -162,7 +162,7 @@ public class IssueCreatorTest
   {
     Path tempDir = Files.createTempDirectory("test-");
     Path indexTempFile = Files.createTempFile("index-", ".json");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       Files.writeString(indexTempFile, "{}");
       IssueCreator creator = new IssueCreator(scope);
@@ -192,7 +192,7 @@ public class IssueCreatorTest
   public void executeRejectsMissingIndexFile() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       IssueCreator creator = new IssueCreator(scope);
       String json = """
@@ -221,7 +221,7 @@ public class IssueCreatorTest
   {
     Path tempDir = Files.createTempDirectory("test-");
     Path indexTempFile = Files.createTempFile("index-", ".json");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       Files.writeString(indexTempFile, "{}");
       IssueCreator creator = new IssueCreator(scope);
@@ -251,7 +251,7 @@ public class IssueCreatorTest
   {
     Path tempDir = Files.createTempDirectory("test-");
     Path indexTempFile = Files.createTempFile("index-", ".json");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       Files.writeString(indexTempFile, "{}");
       IssueCreator creator = new IssueCreator(scope);
@@ -329,7 +329,7 @@ public class IssueCreatorTest
   {
     Path tempDir = setupGitRepo();
     Path indexTempFile = Files.createTempFile("index-", ".json");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       Files.writeString(indexTempFile, "{\"status\": \"open\"}");
       IssueCreator creator = new IssueCreator(scope);
@@ -386,7 +386,7 @@ public class IssueCreatorTest
   {
     Path tempDir = setupGitRepo();
     Path indexTempFile = Files.createTempFile("index-", ".json");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       Files.writeString(indexTempFile, "{}");
       IssueCreator creator = new IssueCreator(scope);
@@ -426,7 +426,7 @@ public class IssueCreatorTest
     Path tempDir = setupGitRepo();
     Path indexTempFile1 = Files.createTempFile("index-", ".json");
     Path indexTempFile2 = Files.createTempFile("index-", ".json");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       Files.writeString(indexTempFile1, "{\"status\": \"open\"}");
       Files.writeString(indexTempFile2, "{\"status\": \"open\"}");
@@ -486,7 +486,7 @@ public class IssueCreatorTest
   {
     Path tempDir = Files.createTempDirectory("issue-creator-test-nongit");
     Path indexTempFile = Files.createTempFile("index-", ".json");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       Path versionDir = tempDir.resolve(".cat/issues/v2/v2.1");
       Files.createDirectories(versionDir);
@@ -528,7 +528,7 @@ public class IssueCreatorTest
     Path indexTempFile = Files.createTempFile("index-", ".json");
 
     boolean madeReadOnly = versionDir.toFile().setReadOnly();
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       Files.writeString(indexTempFile, "{\"status\": \"open\"}");
       IssueCreator creator = new IssueCreator(scope);
@@ -563,7 +563,7 @@ public class IssueCreatorTest
   {
     Path tempDir = setupGitRepo();
     Path indexTempFile = Files.createTempFile("index-", ".json");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       Files.writeString(indexTempFile, "{\"status\": \"open\"}");
       Path dependent = tempDir.resolve(".cat/issues/v2/v2.1/dependent/index.json");
@@ -610,7 +610,7 @@ public class IssueCreatorTest
   {
     Path tempDir = setupGitRepo();
     Path indexTempFile = Files.createTempFile("index-", ".json");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       Files.writeString(indexTempFile, "{\"status\": \"open\"}");
       Path dependent = tempDir.resolve(".cat/issues/v2/v2.1/dependent/index.json");
@@ -654,7 +654,7 @@ public class IssueCreatorTest
   {
     Path tempDir = setupGitRepo();
     Path indexTempFile = Files.createTempFile("index-", ".json");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       Files.writeString(indexTempFile, "{\"status\": \"open\"}");
       Path dependent = tempDir.resolve(".cat/issues/v2/v2.1/dependent/index.json");
@@ -700,7 +700,7 @@ public class IssueCreatorTest
   {
     Path tempDir = setupGitRepo();
     Path indexTempFile = Files.createTempFile("index-", ".json");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       Files.writeString(indexTempFile, "{\"status\": \"open\"}");
       Path missing = tempDir.resolve(".cat/issues/v2/v2.1/missing/index.json");

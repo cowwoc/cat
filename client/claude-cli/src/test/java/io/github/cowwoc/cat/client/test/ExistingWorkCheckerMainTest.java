@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.client.test;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.util.ExistingWorkChecker;
 import org.testng.annotations.Test;
 
@@ -33,7 +33,7 @@ public class ExistingWorkCheckerMainTest
   public void noArgsProducesError() throws IOException
   {
     Path tempDir = Files.createTempDirectory("existing-work-checker-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream outBuffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(outBuffer, true, StandardCharsets.UTF_8);
@@ -61,7 +61,7 @@ public class ExistingWorkCheckerMainTest
   public void missingTargetBranchProducesError() throws IOException
   {
     Path tempDir = Files.createTempDirectory("existing-work-checker-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream outBuffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(outBuffer, true, StandardCharsets.UTF_8);
@@ -91,7 +91,7 @@ public class ExistingWorkCheckerMainTest
   public void nullOutThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("existing-work-checker-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ExistingWorkChecker.run(scope, new String[]{"dummy"}, null,
         new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8));
@@ -111,7 +111,7 @@ public class ExistingWorkCheckerMainTest
   public void unknownArgProducesError() throws IOException
   {
     Path tempDir = Files.createTempDirectory("existing-work-checker-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream outBuffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(outBuffer, true, StandardCharsets.UTF_8);

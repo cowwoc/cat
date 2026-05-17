@@ -9,7 +9,7 @@ package io.github.cowwoc.cat.tool.util;
 import static io.github.cowwoc.cat.tool.Strings.block;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.CliTool;
 import io.github.cowwoc.cat.tool.MainCliTool;
 import org.slf4j.Logger;
@@ -87,7 +87,7 @@ public final class VerifyDeferPlanGeneration
    * @return 0 if all checks passed, 1 if any check failed
    * @throws NullPointerException if {@code scope}, {@code args}, or {@code out} are null
    */
-  public static int run(JvmScope scope, String[] args, PrintStream out)
+  public static int run(AgentScope scope, String[] args, PrintStream out)
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();

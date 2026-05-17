@@ -18,7 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * Tests for {@link GetConfigOutput#run(JvmScope, String[], PrintStream)} CLI error path handling.
+ * Tests for {@link GetConfigOutput#run(AgentScope, String[], PrintStream)} CLI error path handling.
  */
 public class GetConfigOutputMainTest
 {

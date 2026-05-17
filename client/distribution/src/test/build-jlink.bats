@@ -380,9 +380,6 @@ EOF
 cat > "$OUTPUT_DIR/bin/get-status-output" <<'EOF'
 #!/bin/sh
 cat >/dev/null
-if [ -n "${CODEX_HOME:-}" ] && [ -z "${CAT_CONFIG_DIR:-}" ]; then
-    exit 1
-fi
 printf '%s\n' "status" >> "$STATUS_LOG"
 printf '%s\n' "No CAT project found. Initialize one first."
 EOF
@@ -446,9 +443,9 @@ while [ "$#" -gt 0 ]; do
     shift || true
 done
 cat >/dev/null
-printf '%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
+printf '%s|%s|%s|%s|%s|%s|%s|%s\n' \
     "$mode" "$module" "${CLAUDE_PROJECT_DIR:-}" "${CLAUDE_PLUGIN_ROOT:-}" "${CLAUDE_PLUGIN_DATA:-}" \
-    "${CLAUDE_CONFIG_DIR:-}" "$CAT_PROJECT_DIR" "$CAT_PLUGIN_ROOT" "$CAT_CONFIG_DIR" >> "$AOT_LOG"
+    "${CLAUDE_CONFIG_DIR:-}" "${CODEX_THREAD_ID:-}" "${CODEX_HOME:-}" >> "$AOT_LOG"
 case "$mode" in
     record) touch "$configuration" ;;
     create) touch "$cache" ;;
@@ -464,7 +461,7 @@ EOF
     grep -q 'record|io.github.cowwoc.cat.codex.cli/io.github.cowwoc.cat.codex.hook.CodexAotTraining|' "$AOT_LOG"
     grep -q 'create|io.github.cowwoc.cat.codex.cli/io.github.cowwoc.cat.codex.hook.PreBashHook|' "$AOT_LOG"
 
-    while IFS='|' read -r mode module claude_project claude_root claude_data claude_config cat_project cat_root cat_config; do
+    while IFS='|' read -r mode module claude_project claude_root claude_data claude_config codex_thread codex_home; do
         [ -n "$mode" ]
         [ -n "$module" ]
         if [[ "$module" == *".claude."* ]]; then
@@ -472,15 +469,16 @@ EOF
             [[ "$claude_root" == */plugin ]]
             [[ "$claude_data" == */aot-plugin-data ]]
             [[ "$claude_config" == */aot-config-home ]]
+            [ -z "$codex_thread" ]
+            [ -z "$codex_home" ]
         else
             [ -z "$claude_project" ]
             [ -z "$claude_root" ]
             [ -z "$claude_data" ]
             [ -z "$claude_config" ]
+            [ "$codex_thread" = "aot-training-session" ]
+            [[ "$codex_home" == */aot-config-home ]]
         fi
-        [ "$cat_project" = "$WORKSPACE_DIR" ]
-        [[ "$cat_root" == */plugin ]]
-        [[ "$cat_config" == */aot-config-home ]]
     done < "$AOT_LOG"
 }
 

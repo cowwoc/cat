@@ -11,7 +11,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import io.github.cowwoc.cat.agent.AbstractRuntimeScope;
 import io.github.cowwoc.cat.agent.AgentPluginScope;
-import io.github.cowwoc.cat.agent.RuntimeScopeConfig;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 
 import java.io.BufferedReader;
@@ -615,19 +614,31 @@ public final class CodexRunnerSupport
     }
   }
 
+  /**
+   * Minimal runtime scope used when invoking Codex runner support from the command line.
+   */
   private static final class CommandLineScope extends AbstractRuntimeScope
   {
+    /**
+     * Creates a new command-line scope for the given project path.
+     *
+     * @param projectPath the project path
+     */
     private CommandLineScope(Path projectPath)
     {
-      super(toRuntimeConfig(projectPath));
+      this(projectPath.toAbsolutePath(), Path.of(".codex-plugin").resolve("plugin.json"));
     }
 
-    private static RuntimeScopeConfig toRuntimeConfig(Path projectPath)
+    /**
+     * Creates a new command-line scope with resolved paths.
+     *
+     * @param projectPath the absolute project path
+     * @param pluginDescriptor the plugin descriptor path relative to the plugin root
+     */
+    private CommandLineScope(Path projectPath, Path pluginDescriptor)
     {
-      Path absoluteProjectPath = projectPath.toAbsolutePath();
-      Path pluginDescriptor = Path.of(".codex-plugin").resolve("plugin.json");
-      return new RuntimeScopeConfig(absoluteProjectPath, absoluteProjectPath, absoluteProjectPath,
-        pluginDescriptor, List.of(), pluginDescriptor, absoluteProjectPath, "UTC");
+      super(projectPath, projectPath, projectPath, pluginDescriptor, List.of(), pluginDescriptor,
+        projectPath, "UTC");
     }
   }
 }

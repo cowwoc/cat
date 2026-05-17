@@ -13,7 +13,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import static io.github.cowwoc.cat.tool.Strings.block;
 
 import io.github.cowwoc.cat.agent.ProcessRunner;
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.CliTool;
 import io.github.cowwoc.cat.tool.MainCliTool;
 import org.slf4j.Logger;
@@ -47,7 +47,7 @@ public final class GitSquash
     Pattern.compile("^(feature|bugfix|refactor|test|performance|config|planning|docs): \\S");
   private static final DateTimeFormatter BACKUP_TIMESTAMP_FORMATTER =
     DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
-  private final JvmScope scope;
+  private final AgentScope scope;
   private final String directory;
 
   /**
@@ -58,7 +58,7 @@ public final class GitSquash
    * @throws NullPointerException     if {@code scope} is null
    * @throws IllegalArgumentException if {@code directory} is blank
    */
-  public GitSquash(JvmScope scope, String directory)
+  public GitSquash(AgentScope scope, String directory)
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(directory, "directory").isNotBlank();
@@ -365,7 +365,7 @@ public final class GitSquash
    * @param out   the output stream to write JSON to
    * @throws NullPointerException if {@code args} or {@code out} are null
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out)
+  public static void run(AgentScope scope, String[] args, PrintStream out)
   {
     requireThat(args, "args").isNotNull();
     requireThat(out, "out").isNotNull();

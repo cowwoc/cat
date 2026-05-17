@@ -8,7 +8,6 @@ package io.github.cowwoc.cat.codex.tool;
 
 import io.github.cowwoc.cat.agent.AbstractRuntimeScope;
 import io.github.cowwoc.cat.agent.AgentRuntime;
-import io.github.cowwoc.cat.agent.RuntimeScopeConfig;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -46,9 +45,8 @@ public final class MainCodexTool extends AbstractRuntimeScope
   private MainCodexTool(Path projectPath, Path codexHome, String timezone,
     Map<String, String> commandEnvironment)
   {
-    super(new RuntimeScopeConfig(projectPath, projectPath, projectPath,
-      AgentRuntime.CODEX.pluginDescriptor(), List.of(), AgentRuntime.CODEX.pluginCacheDescriptor(),
-      projectPath, timezone));
+    super(projectPath, projectPath, projectPath, AgentRuntime.CODEX.pluginDescriptor(), List.of(),
+      AgentRuntime.CODEX.pluginCacheDescriptor(), projectPath, timezone);
     this.codexHome = codexHome;
     this.commandEnvironment = Map.copyOf(commandEnvironment);
   }

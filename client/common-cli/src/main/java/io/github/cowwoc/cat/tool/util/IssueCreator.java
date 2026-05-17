@@ -12,7 +12,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import static io.github.cowwoc.cat.tool.Strings.block;
 
 import io.github.cowwoc.cat.agent.Config;
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.CliTool;
 import io.github.cowwoc.cat.tool.MainCliTool;
 import tools.jackson.databind.JsonNode;
@@ -50,7 +50,7 @@ public final class IssueCreator
    * @param scope the JVM scope providing configuration and services
    * @throws NullPointerException if {@code scope} is null
    */
-  public IssueCreator(JvmScope scope)
+  public IssueCreator(AgentScope scope)
   {
     this.mapper = scope.getJsonMapper();
   }
@@ -250,7 +250,7 @@ public final class IssueCreator
    * @throws NullPointerException if any of {@code scope}, {@code args}, {@code in}, or {@code out} are null
    * @throws IOException          if the operation fails
    */
-  public static void run(JvmScope scope, String[] args, InputStream in, PrintStream out) throws IOException
+  public static void run(AgentScope scope, String[] args, InputStream in, PrintStream out) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();

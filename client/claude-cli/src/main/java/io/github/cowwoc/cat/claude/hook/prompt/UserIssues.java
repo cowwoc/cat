@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.claude.hook.prompt;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.claude.hook.PromptHandler;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -36,7 +36,7 @@ public final class UserIssues implements PromptHandler
     "ignored", "you ignored", "didn't acknowledge", "didn't respond to",
     "expected behavior");
 
-  private final JvmScope scope;
+  private final AgentScope scope;
 
   /**
    * Creates a new user issues handler.
@@ -44,7 +44,7 @@ public final class UserIssues implements PromptHandler
    * @param scope the JVM scope providing JSON scope.getJsonMapper()
    * @throws NullPointerException if {@code scope} is null
    */
-  public UserIssues(JvmScope scope)
+  public UserIssues(AgentScope scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;

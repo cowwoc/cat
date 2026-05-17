@@ -41,14 +41,14 @@ public final class CliEnvironment
    *
    * @param environment resolves environment variable names to values
    * @param name the environment variable name
-   * @param defaultValue the value to return when the environment variable is unset or blank
+   * @param defaultValue the value to return when the environment variable is unset
    * @return the configured value, or {@code defaultValue}
    */
   public static String optional(Function<String, String> environment, String name,
     String defaultValue)
   {
     String value = environment.apply(name);
-    if (value == null || value.isBlank())
+    if (value == null)
       return defaultValue;
     return value;
   }

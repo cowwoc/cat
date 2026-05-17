@@ -3,8 +3,10 @@
 ## Goal
 
 Identify environment values used by CAT for Claude and Codex separately, classify which values are runtime-provided
-harness values versus CAT-defined values that differ from the harness values, and move CAT-derived values that are only
-needed by Java CLI code out of LLM-facing skill parameters and environment injection.
+harness values versus CAT-defined values that differ from the harness values, and enforce that CAT-defined values
+needed by LLM/skill text but not supplied by the runtime harness are not passed from the LLM to Java CLIs. When Java
+CLI code needs such values, derive them inside Java scope/context code (for example `JvmScope`, `MainCliTool`, or a
+runtime adapter equivalent) instead of LLM-to-CLI passthrough.
 
 ## Parent Issue
 
@@ -23,7 +25,8 @@ needed by Java CLI code out of LLM-facing skill parameters and environment injec
 
 - `client/plugin/skills/**` - remove LLM-facing env exports/parameters for Java-only CAT-derived values.
 - `client/plugin/agents/**` - remove duplicated Java-only env plumbing if present.
-- `client/cli/**` and related Java CLI modules - derive Java-only CAT values from runtime harness values internally.
+- `client/cli/**` and related Java CLI modules - derive Java-only CAT values from runtime harness values or stable
+  scope/context state internally (for example in `JvmScope`, `MainCliTool`, or runtime adapter equivalents).
 - `client/distribution/**` - update runtime launcher/env injection only where it injects Java-only CAT-derived values.
 - Tests under `client/**/src/test/**` covering both Claude and Codex behavior.
 
@@ -59,7 +62,11 @@ needed by Java CLI code out of LLM-facing skill parameters and environment injec
 - Move definitions for Java-only CAT-derived values into Java code or runtime adapter code.
 - Remove those values from skill-file command examples, agent prompt plumbing, launcher parameter lists, or environment
   injection sites where the LLM only passed them through to Java.
-- Preserve explicit LLM-facing variables where skills need to read, branch on, or interpolate them for non-Java work.
+- Implement derivation in `JvmScope`, `MainCliTool`, runtime adapter code, or equivalent scope/context classes where
+  Java invocation context is assembled.
+- Preserve explicit LLM-facing variables where skills need to read, branch on, or interpolate them for non-Java work,
+  but ensure CLI invocation snippets and launch paths do not pipe those values through to Java when derivation is
+  possible from runtime context or stable scope state.
 - Keep Claude and Codex behavior separate where runtime harness values differ.
 
 ### Job 4
@@ -74,8 +81,11 @@ needed by Java CLI code out of LLM-facing skill parameters and environment injec
 - [ ] Claude runtime env variables are inventoried and classified into harness-provided versus CAT-defined categories.
 - [ ] Codex runtime env variables are inventoried and classified into harness-provided versus CAT-defined categories.
 - [ ] CAT-defined values derived from harness values are marked as LLM-needed or Java-only.
-- [ ] Java-only CAT-derived values are derived inside Java/runtime adapter code instead of being passed by skills or
-  injected into LLM-facing environments.
-- [ ] Skill and agent files no longer ask the LLM to pass Java-only derived values.
+- [ ] Java-only CAT-derived values are derived inside Java/runtime adapter scope/context code (for example `JvmScope`,
+  `MainCliTool`, or equivalent classes) instead of being passed from LLM skill text to Java CLI commands.
+- [ ] Skill and agent files no longer ask the LLM to pass Java-only derived values, while still allowing LLM-visible
+  reads/decisions for values needed in non-Java workflow logic.
+- [ ] CLI invocation snippets and launcher paths no longer pipe CAT-defined non-harness values to Java when Java can
+  derive them from runtime context or stable scope state.
 - [ ] Runtime-specific behavior remains correct for both Claude and Codex.
 - [ ] `mvn -f client/pom.xml verify -e` passes.

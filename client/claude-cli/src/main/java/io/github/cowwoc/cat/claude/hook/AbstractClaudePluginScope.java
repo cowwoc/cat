@@ -10,7 +10,6 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.agent.AbstractRuntimeScope;
 import io.github.cowwoc.cat.agent.AgentRuntime;
-import io.github.cowwoc.cat.agent.RuntimeScopeConfig;
 import io.github.cowwoc.cat.tool.DisplayUtils;
 import io.github.cowwoc.cat.claude.hook.prompt.UserIssues;
 import io.github.cowwoc.pouch10.core.ConcurrentLazyReference;
@@ -78,9 +77,9 @@ public abstract class AbstractClaudePluginScope extends AbstractRuntimeScope
   protected AbstractClaudePluginScope(Path projectPath, Path pluginRoot, Path pluginData,
     Path claudeConfigPath, Path workDir, String timezone)
   {
-    super(new RuntimeScopeConfig(projectPath, pluginRoot, pluginData,
-      AgentRuntime.CLAUDE.pluginDescriptor(), AgentRuntime.CLAUDE.ruleDirectories(projectPath, pluginRoot),
-      AgentRuntime.CLAUDE.pluginCacheDescriptor(), workDir, timezone));
+    super(projectPath, pluginRoot, pluginData, AgentRuntime.CLAUDE.pluginDescriptor(),
+      AgentRuntime.CLAUDE.ruleDirectories(projectPath, pluginRoot),
+      AgentRuntime.CLAUDE.pluginCacheDescriptor(), workDir, timezone);
     requireThat(claudeConfigPath, "claudeConfigPath").isNotNull();
     this.claudeConfigPath = claudeConfigPath;
   }

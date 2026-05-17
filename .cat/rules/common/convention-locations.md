@@ -9,7 +9,7 @@ or miss their intended target.
 | Audience | Location | Injected Into |
 |----------|----------|---------------|
 | **End-users** (all CAT users) | `client/plugin/rules/{common,claude,codex}/`, `client/plugin/` files | Every CAT session via SessionStartHook |
-| **Plugin developers** (CAT contributors) | `.claude/rules/`, `.cat/rules/{common,claude,codex}/` | Development sessions on this repo |
+| **Plugin developers** (CAT contributors) | `.cat/rules/{common,claude,codex}/` | Development sessions on this repo |
 
 ## End-User Conventions (plugin)
 
@@ -34,16 +34,13 @@ approval gates, delegation policies. These ship with the plugin and are injected
 ## Plugin Development Conventions (project)
 
 Coding standards, style guides, and testing rules that apply only when developing the CAT plugin itself.
-These are checked into this repository's `.claude/` directory and are NOT distributed to end-users.
+These are checked into this repository's `.cat/rules/` directory and are NOT distributed to end-users.
 
 **Where to add:**
-- `.claude/rules/*.md` — Claude-facing development conventions loaded directly by Claude Code
-- `.claude/rules/java.md` — Java coding standards (path-restricted to `*.java`)
 - `.cat/rules/common/*.md` — portable development conventions with audience filtering (main-only, subagent-only)
 - `.cat/rules/claude/*.md` and `.cat/rules/codex/*.md` — runtime-specific development conventions
 
 **Decision rule:**
-- Put Claude Code bootstrap/configuration conventions under `.claude/rules/` when Claude must load them natively.
 - Put portable CAT repository conventions under `.cat/rules/common/` when both Claude and Codex agents should receive
   them while working on this repository.
 - Put repository-only runtime exceptions under `.cat/rules/claude/` or `.cat/rules/codex/`.

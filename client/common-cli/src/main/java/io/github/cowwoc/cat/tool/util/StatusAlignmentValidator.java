@@ -10,7 +10,7 @@ import static io.github.cowwoc.cat.tool.Strings.block;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.tool.CliTool;
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.MainCliTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,7 +113,7 @@ public final class StatusAlignmentValidator
    * @throws NullPointerException if any of {@code scope}, {@code args}, {@code in}, or {@code out} are null
    * @throws IOException          if reading from the input stream fails
    */
-  public static void run(JvmScope scope, String[] args, InputStream in, PrintStream out) throws IOException
+  public static void run(AgentScope scope, String[] args, InputStream in, PrintStream out) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();

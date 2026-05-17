@@ -14,7 +14,7 @@ import tools.jackson.databind.node.ObjectNode;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -425,7 +425,7 @@ public class RecordLearningMainTest
    * @param description the mistake description
    * @return an ObjectNode representing Phase 3 output
    */
-  private ObjectNode buildPhase3Input(JvmScope scope, String description)
+  private ObjectNode buildPhase3Input(AgentScope scope, String description)
   {
     return RecordLearningTestUtils.buildPhase3Input(scope, description, null, null);
   }

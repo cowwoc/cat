@@ -10,7 +10,6 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.agent.AbstractRuntimeScope;
 import io.github.cowwoc.cat.agent.AgentRuntime;
-import io.github.cowwoc.cat.agent.RuntimeScopeConfig;
 
 import java.nio.file.Path;
 
@@ -49,9 +48,9 @@ public abstract class AbstractCodexHook extends AbstractRuntimeScope
   protected AbstractCodexHook(Path projectPath, Path pluginRoot, Path pluginData, Path workDir,
     String timezone)
   {
-    super(new RuntimeScopeConfig(projectPath, pluginRoot, pluginData,
-      AgentRuntime.CODEX.pluginDescriptor(), AgentRuntime.CODEX.ruleDirectories(projectPath, pluginRoot),
-      AgentRuntime.CODEX.pluginCacheDescriptor(), workDir, timezone));
+    super(projectPath, pluginRoot, pluginData, AgentRuntime.CODEX.pluginDescriptor(),
+      AgentRuntime.CODEX.ruleDirectories(projectPath, pluginRoot),
+      AgentRuntime.CODEX.pluginCacheDescriptor(), workDir, timezone);
     requireThat(projectPath, "projectPath").isNotNull().isAbsolute();
     requireThat(pluginRoot, "pluginRoot").isNotNull().isAbsolute();
     requireThat(pluginData, "pluginData").isNotNull().isAbsolute();

@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.tool.skills;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.CliTool;
 import io.github.cowwoc.cat.tool.MainCliTool;
 import org.slf4j.Logger;
@@ -47,7 +47,7 @@ public final class GradeJsonTransformer
    * @throws IOException if validation fails or I/O error occurs
    * @throws NullPointerException if any parameter is null
    */
-  public void transform(Path inputPath, String runId, Path outputPath, JvmScope scope) throws IOException
+  public void transform(Path inputPath, String runId, Path outputPath, AgentScope scope) throws IOException
   {
     requireThat(inputPath, "inputPath").isNotNull();
     requireThat(runId, "runId").isNotBlank();

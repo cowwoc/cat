@@ -410,7 +410,7 @@ generate_startup_archives() {
 
   # Leyden AOT: record runtime-specific training data, then create a pre-linked cache.
   log "Recording ${runtime} AOT training data..."
-  # Set environment variables required by MainJvmScope so handlers can initialize.
+  # Set environment variables required by the runtime scopes so handlers can initialize.
   # Capture stdout+stderr: filter known-harmless Jackson SQL warnings on success, show all on failure.
   local aot_output
   aot_output=$(mktemp)
@@ -420,16 +420,16 @@ generate_startup_archives() {
 
   run_aot_command() {
     if [[ "$runtime" == "claude" ]]; then
-      CLAUDE_PROJECT_DIR="$WORKSPACE_DIR" CLAUDE_PLUGIN_ROOT="${REACTOR_DIR}/plugin" \
+      env -u CAT_PROJECT_DIR -u CAT_PLUGIN_ROOT -u CAT_PLUGIN_DATA -u CAT_SESSION_ID \
+        -u CAT_RUNTIME -u CAT_CONFIG_DIR -u CODEX_THREAD_ID -u CODEX_HOME \
+        CLAUDE_PROJECT_DIR="$WORKSPACE_DIR" CLAUDE_PLUGIN_ROOT="${REACTOR_DIR}/plugin" \
         CLAUDE_PLUGIN_DATA="$aot_plugin_data" CLAUDE_SESSION_ID="aot-training-session" \
-        CLAUDE_CONFIG_DIR="$aot_config_dir" CAT_PROJECT_DIR="$WORKSPACE_DIR" \
-        CAT_PLUGIN_ROOT="${REACTOR_DIR}/plugin" CAT_PLUGIN_DATA="$aot_plugin_data" \
-        CAT_SESSION_ID="aot-training-session" CAT_RUNTIME="$runtime" CAT_CONFIG_DIR="$aot_config_dir" \
-        TZ="${TZ:-UTC}" "$@"
+        CLAUDE_CONFIG_DIR="$aot_config_dir" TZ="${TZ:-UTC}" "$@"
     else
-      CAT_PROJECT_DIR="$WORKSPACE_DIR" CAT_PLUGIN_ROOT="${REACTOR_DIR}/plugin" \
-        CAT_PLUGIN_DATA="$aot_plugin_data" CAT_SESSION_ID="aot-training-session" \
-        CAT_RUNTIME="$runtime" CAT_CONFIG_DIR="$aot_config_dir" TZ="${TZ:-UTC}" "$@"
+      env -u CAT_PROJECT_DIR -u CAT_PLUGIN_ROOT -u CAT_PLUGIN_DATA -u CAT_SESSION_ID \
+        -u CAT_RUNTIME -u CAT_CONFIG_DIR -u CLAUDE_PROJECT_DIR -u CLAUDE_PLUGIN_ROOT \
+        -u CLAUDE_PLUGIN_DATA -u CLAUDE_SESSION_ID -u CLAUDE_CONFIG_DIR \
+        CODEX_THREAD_ID="aot-training-session" CODEX_HOME="$aot_config_dir" TZ="${TZ:-UTC}" "$@"
     fi
   }
 
@@ -515,6 +515,7 @@ exec "JAVA_PATH" \
   -Dstdin.encoding=UTF-8 \
   -Dstdout.encoding=UTF-8 \
   -Dstderr.encoding=UTF-8 \
+  -Dcat.launcher.dir="$DIR" \
   -XX:+UseSerialGC \
   -XX:TieredStopAtLevel=1 \
   -XX:AOTCache="AOT_PATH" \
@@ -582,8 +583,12 @@ verify_codex_session_start_launcher() {
 
   log "  Testing codex session-start launcher..."
   local session_output
-  session_output=$(printf '{"cwd":"%s","plugin_root":"%s"}\n' "$smoke_project" "$smoke_plugin" | \
-    CAT_PLUGIN_DATA="$smoke_data" CODEX_HOME="${smoke_dir}/codex-home" TZ="${TZ:-UTC}" \
+  session_output=$(printf '{"cwd":"%s","plugin_root":"%s","plugin_data":"%s"}\n' \
+    "$smoke_project" "$smoke_plugin" "$smoke_data" | \
+    env -u CAT_PROJECT_DIR -u CAT_PLUGIN_ROOT -u CAT_PLUGIN_DATA -u CAT_SESSION_ID \
+      -u CAT_RUNTIME -u CAT_CONFIG_DIR -u CLAUDE_PROJECT_DIR -u CLAUDE_PLUGIN_ROOT \
+      -u CLAUDE_PLUGIN_DATA -u CLAUDE_SESSION_ID -u CLAUDE_CONFIG_DIR \
+      CODEX_HOME="${smoke_dir}/codex-home" TZ="${TZ:-UTC}" \
     "${OUTPUT_DIR}/bin/session-start") || error "codex session-start launcher failed"
   if [[ "$session_output" != *'"hookSpecificOutput"'* ]]; then
     error "codex session-start launcher did not emit hookSpecificOutput"
@@ -603,30 +608,19 @@ verify_status_launcher() {
 
   log "  Testing get-status-output launcher..."
   local status_output
-  if ! status_output=$(CAT_PROJECT_DIR="$status_project_dir" \
-    CAT_PLUGIN_ROOT="${REACTOR_DIR}/plugin" \
-    CAT_PLUGIN_DATA="$status_plugin_data" \
-    CAT_SESSION_ID="jlink-status-verify-session" \
-    CAT_RUNTIME="codex" \
-    CAT_CONFIG_DIR="$status_config_dir" \
-    TZ="${TZ:-UTC}" \
-    "${OUTPUT_DIR}/bin/get-status-output"); then
+  if ! status_output=$(cd "$status_project_dir" && \
+    env -u CAT_PROJECT_DIR -u CAT_PLUGIN_ROOT -u CAT_PLUGIN_DATA -u CAT_SESSION_ID \
+    -u CAT_RUNTIME -u CAT_CONFIG_DIR -u CLAUDE_PROJECT_DIR -u CLAUDE_PLUGIN_ROOT \
+    -u CLAUDE_PLUGIN_DATA -u CLAUDE_SESSION_ID -u CLAUDE_CONFIG_DIR \
+    CAT_JVM_OPTS="-Dcat.plugin.root=${REACTOR_DIR}/plugin ${CAT_JVM_OPTS:-}" \
+    CODEX_THREAD_ID="jlink-status-verify-session" CODEX_HOME="$status_codex_home" \
+    TZ="${TZ:-UTC}" "${OUTPUT_DIR}/bin/get-status-output"); then
     error "get-status-output launcher failed"
   fi
   if [[ "$status_output" != "No CAT project found. Initialize one first." ]]; then
     error "get-status-output launcher returned unexpected output: $status_output"
   fi
 
-  if status_output=$(CAT_PROJECT_DIR="$status_project_dir" \
-    CAT_PLUGIN_ROOT="${REACTOR_DIR}/plugin" \
-    CAT_PLUGIN_DATA="$status_plugin_data" \
-    CAT_SESSION_ID="jlink-status-verify-session" \
-    CAT_RUNTIME="codex" \
-    CODEX_HOME="$status_codex_home" \
-    TZ="${TZ:-UTC}" \
-    "${OUTPUT_DIR}/bin/get-status-output" 2>/dev/null); then
-    error "get-status-output launcher unexpectedly accepted CODEX_HOME without CAT_CONFIG_DIR"
-  fi
   log "  get-status-output launcher works"
 }
 

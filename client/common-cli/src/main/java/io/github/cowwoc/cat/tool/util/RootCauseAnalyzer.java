@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.tool.util;
 
 import static io.github.cowwoc.cat.tool.Strings.block;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.CliTool;
 import io.github.cowwoc.cat.tool.MainCliTool;
 import io.github.cowwoc.cat.tool.skills.JsonHelper;
@@ -37,7 +37,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public final class RootCauseAnalyzer
 {
   private final Path retrospectivesDir;
-  private final JvmScope scope;
+  private final AgentScope scope;
 
   /**
    * Creates a new root cause analyzer.
@@ -45,7 +45,7 @@ public final class RootCauseAnalyzer
    * @param projectPath the project root directory
    * @param scope the JVM scope for accessing shared services
    */
-  public RootCauseAnalyzer(Path projectPath, JvmScope scope)
+  public RootCauseAnalyzer(Path projectPath, AgentScope scope)
   {
     requireThat(projectPath, "projectPath").isNotNull();
     requireThat(scope, "scope").isNotNull();
@@ -260,7 +260,7 @@ public final class RootCauseAnalyzer
    * @throws IllegalArgumentException if the start-id argument is invalid
    * @throws IOException              if file operations fail
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  public static void run(AgentScope scope, String[] args, PrintStream out) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();

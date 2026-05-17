@@ -1009,11 +1009,11 @@ location. Only use `requireThat(x, "x").isNotNull()` when the parameter is store
 the dereferencing happens much later (making the NPE harder to trace).
 
 ```java
-// Good - no explicit null check needed; scope.getRuntimeProjectDir() would NPE on null
-public BlockMainRebase(JvmScope scope)
+// Good - no explicit null check needed; scope.getProjectPath() would NPE on null
+public BlockMainRebase(AgentScope scope)
 {
   this.scope = scope;
-  this.projectDir = scope.getRuntimeProjectDir();
+  this.projectDir = scope.getProjectPath();
 }
 
 // Good - explicit null check needed; name is stored without dereferencing
@@ -1257,33 +1257,34 @@ the correct implementation for its runtime context.
 
 ```java
 // Good - interface defines contract, abstract class provides derived methods
-public interface JvmScope extends AutoCloseable
+public interface AgentScope extends AutoCloseable
 {
-  Path getRuntimeConfigDir();
-  Path getRuntimeProjectDir();
+  Path getConfigPath();
+  Path getProjectPath();
 }
 
-public abstract class AbstractJvmScope implements JvmScope
+public abstract class AbstractAgentScope implements AgentScope
 {
   public Path getProjectCatDir()
   {
-    return getRuntimeConfigDir().resolve("projects").resolve(getEncodedProjectDir()).resolve("cat");
+    return getConfigPath().resolve("projects").resolve(encodeProjectPath(getProjectPath().toString())).
+      resolve("cat");
   }
 
-  public static String encodeProjectPath(String projectPath)
+  public String encodeProjectPath(String projectPath)
   {
     return projectPath.replace("/", "-").replace(".", "-");
   }
 }
 
 // Avoid - implementation logic in the interface
-public interface JvmScope extends AutoCloseable
+public interface AgentScope extends AutoCloseable
 {
-  Path getRuntimeConfigDir();
+  Path getConfigPath();
 
   default Path getProjectCatDir()  // implementation in interface
   {
-    return getRuntimeConfigDir().resolve("...");
+    return getConfigPath().resolve("...");
   }
 
   static String encodeProjectPath(String path)  // utility in interface
@@ -1292,6 +1293,11 @@ public interface JvmScope extends AutoCloseable
   }
 }
 ```
+
+Scope classes should expose the values they own directly through the scope API. Do not create `*Config` records or
+config getters that callers have to unpack before constructing the next scope. If multiple concrete scope
+implementations need the same derived value, derive it once in the abstract scope implementation and let concrete
+classes invoke the superclass constructor with only their runtime-specific inputs.
 
 **When `default` methods ARE acceptable:**
 - Backward-compatible additions to a widely-implemented interface
@@ -1368,7 +1374,7 @@ class in the same package calls it (in which case package-private is sufficient)
 
 ```java
 // Good - final class uses private instead of protected
-public final class MainRuntimeTool implements RuntimeTool
+public final class MainCliTool implements CliTool
 {
   private String getEnvVar(String name)
   {
@@ -1377,7 +1383,7 @@ public final class MainRuntimeTool implements RuntimeTool
 }
 
 // Avoid - protected in a final class (no subclass can ever override this)
-public final class MainRuntimeTool implements RuntimeTool
+public final class MainCliTool implements CliTool
 {
   protected String getEnvVar(String name)
   {
@@ -1443,7 +1449,7 @@ scope-based ServiceLocators for inversion of control. Scopes are explicit object
 provide access to shared services — no reflection, no annotations, no proxies, no config files. The dependency graph is
 verified at compile-time.
 
-**Scopes represent contexts where values remain constant.** `JvmScope` spans the application lifetime. Child scopes
+**Scopes represent contexts where values remain constant.** `AgentScope` spans the application lifetime. Child scopes
 (e.g., `RequestScope`) inherit from parent scopes, matching resource lifetimes. This prevents impossible configurations
 like an HTTP request outliving its database connection.
 
@@ -1451,9 +1457,9 @@ like an HTTP request outliving its database connection.
 // Good - pouch scope passed through constructor
 public final class GetDiffOutput
 {
-  private final JvmScope scope;
+  private final CliTool scope;
 
-  public GetDiffOutput(JvmScope scope)
+  public GetDiffOutput(CliTool scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -1482,17 +1488,17 @@ public final class GetDiffOutput
 ```
 
 **Pass the scope, not its components.** If a constructor or method takes one or more parameters derived from a
-ServiceLocator scope like `JvmScope`, pass the scope directly instead. The class should pull whatever it needs from
+ServiceLocator scope like `AgentScope` or `CliTool`, pass the scope directly instead. The class should pull whatever it needs from
 the scope internally. This keeps constructors stable when new dependencies are added and avoids proliferating scope
 accessors through call chains.
 
 **Scope implementations:**
-- `MainRuntimeTool` — production use for session CLI tools (in `main()` methods that require `CAT_SESSION_ID`
-  and `CAT_ENV_FILE`), reads all session environment configuration
-- `MainJvmScope` — production use for infrastructure CLI tools (in `main()` methods that do NOT require session
-  vars), reads only infrastructure vars. Example tools include `IssueLock`, `HookRegistrar`, and
-  `StatusAlignmentValidator`.
-- `TestRuntimeTool` — test use, accepts injectable paths: `new TestRuntimeTool(tempDir, tempDir)`
+- `MainCliTool` — production use for shared CLI tools, derives CAT scope values from the active runtime harness and
+  exposes those values directly through `CliTool`
+- `MainClaudeTool` / `MainCodexTool` — production runtime-specific tool scopes
+- `MainClaudeHook` / `MainCodexHook` — production runtime-specific hook scopes
+- Test scopes such as `TestClaudeTool`, `TestClaudeHook`, and `TestCodexHook` — accept injectable paths and
+  deterministic defaults
 
 When a runtime has paired production and test scopes, such as `MainCodexHook` and `TestCodexHook`, introduce an
 `Abstract*` scope for their shared behavior. Delegate as much common code as possible into the abstract scope, then keep
@@ -1505,7 +1511,17 @@ defaults. Do not duplicate shared scope behavior between the production and test
 - Compile-time dependency graph verification (no runtime surprises)
 - Scope hierarchy enforces resource lifetime constraints
 - Each test instantiates its own scope hierarchy, executing as if in a separate JVM
-- `JvmScope` lifecycle management (via `try-with-resources`) handles cleanup
+- `AgentScope` lifecycle management (via `try-with-resources`) handles cleanup
+
+### Builders vs Mandatory Constructors
+
+Do not introduce a builder solely to reduce constructor argument count when all properties are mandatory. A direct
+constructor fails at compile time when callers omit a required value; a builder usually converts that mistake into a
+runtime validation failure. Prefer compile-time failures for required dependencies and state.
+
+Use a builder only when it provides a real type-safety or ergonomics benefit beyond argument count, such as optional
+properties, many independent defaults, staged builders that preserve compile-time mandatory-field checks, or a public
+API where named setters are materially clearer for callers.
 
 ### main() in Business Logic Classes
 Classes with testable business logic may include a `main()` method for CLI invocation. Do not extract `main()` into a
@@ -1516,13 +1532,13 @@ separate command class - this adds a file with no value. The pattern of construc
 // Good - business logic class with CLI entry point
 public final class GetDiffOutput
 {
-  public GetDiffOutput(JvmScope scope) { ... }
+  public GetDiffOutput(CliTool scope) { ... }
 
   public String getOutput() { ... }  // Testable business logic
 
   public static void main(String[] args)  // CLI entry point via hook.sh
   {
-    try (JvmScope scope = new MainRuntimeTool())
+    try (CliTool scope = new MainCliTool())
     {
       String output = new GetDiffOutput(scope).getOutput();
       if (output != null)
@@ -1537,7 +1553,7 @@ public final class RenderDiffCommand  // Don't create this
   public static void main(String[] args)
   {
     // Trivial delegation adds no value
-    new GetDiffOutput(new MainRuntimeTool()).getOutput();
+    new GetDiffOutput(new MainCliTool()).getOutput();
   }
 }
 ```
@@ -1578,13 +1594,13 @@ ArrayList<String> names = new ArrayList<>();
 HashMap<String, Integer> index = new HashMap<>();
 
 // Good - interface type used for try-with-resources
-try (RuntimeTool scope = new MainRuntimeTool())
+try (CliTool scope = new MainCliTool())
 {
   ...
 }
 
 // Avoid - concrete class on left side of try-with-resources
-try (MainRuntimeTool scope = new MainRuntimeTool())
+try (MainCliTool scope = new MainCliTool())
 {
   ...
 }
@@ -1612,7 +1628,7 @@ additional scope instances in catch blocks:
 // Good - one scope, nested try-catch inside
 public static void main(String[] args)
 {
-  try (RuntimeTool scope = new MainRuntimeTool())
+  try (CliTool scope = new MainCliTool())
   {
     try
     {
@@ -1636,13 +1652,13 @@ public static void main(String[] args)
 // Avoid - multiple scope instances
 public static void main(String[] args)
 {
-  try (RuntimeTool scope = new MainRuntimeTool())
+  try (CliTool scope = new MainCliTool())
   {
     new MyClass(scope).run(args, System.out);
   }
   catch (RuntimeException | AssertionError e)
   {
-    try (RuntimeTool errorScope = new MainRuntimeTool())   // Don't do this
+    try (CliTool errorScope = new MainCliTool())   // Don't do this
     {
       System.out.println(new HookOutput(errorScope).block(...));
     }
@@ -1692,32 +1708,31 @@ depending on the execution context. Never call `System.getenv()` directly outsid
 
 | Context | Correct API |
 |---------|-------------|
-| Session CLI commands (`main()` methods) — have `CAT_SESSION_ID` | `scope.getSessionId()` via `RuntimeTool` |
-| Infrastructure CLI commands (`main()` methods) — invoked outside a session (e.g., by skill preprocessor) | `scope.getPluginRoot()` etc. via `JvmScope` |
+| Session CLI commands (`main()` methods) — have `CAT_SESSION_ID` | `scope.getSessionId()` via `CliTool` |
+| Infrastructure CLI commands (`main()` methods) — invoked outside a session (e.g., by skill preprocessor) | `scope.getPluginRoot()` etc. via `AgentPluginScope` |
 | Hook handlers | `HookInput.getSessionId()` |
 | Skill directive variable substitution | `System.getenv(name)` (whitelisted; see below) |
 
 **Why:** Hook handlers receive session-specific values from the `HookInput` JSON payload, not from environment
 variables. Reading environment variables in hook handlers bypasses this contract. Session CLI commands use
-`MainRuntimeTool` (a `RuntimeTool` implementation) which reads session env vars at startup. Infrastructure CLI commands
-(such as `IssueLock`, `HookRegistrar`, and `StatusAlignmentValidator`) use `MainJvmScope`, which reads only
-infrastructure path vars and does not require `CAT_SESSION_ID`.
+`MainCliTool` (a `CliTool` implementation) which derives session and plugin values at startup. Infrastructure CLI
+commands use the narrowest runtime-specific `AgentPluginScope` implementation that exposes the values they need.
 
 ```java
 // Good - session CLI main() method reads session ID via scope
 public static void main(String[] args)
 {
-  try (RuntimeTool scope = new MainRuntimeTool())
+  try (CliTool scope = new MainCliTool())
   {
     String sessionId = scope.getSessionId();
     // ...
   }
 }
 
-// Good - infrastructure CLI main() method uses MainJvmScope (no session vars required)
+// Good - infrastructure CLI main() method uses an AgentPluginScope (no session vars required)
 public static void main(String[] args)
 {
-  try (JvmScope scope = new MainJvmScope())
+  try (AgentPluginScope scope = new MainCodexTool())
   {
     Path pluginRoot = scope.getPluginRoot();
     // ...
@@ -1746,8 +1761,8 @@ public Result handle(HookInput input)
 }
 ```
 
-`EnforceJvmScopeEnvAccessTest` enforces this convention by scanning all Java source files and failing the build if
-`System.getenv(` appears outside approved boundary classes.
+The env-access enforcement test scans Java source files and fails the build if `System.getenv(` appears outside
+approved boundary classes.
 
 Approved boundary classes each have a specific reason for direct env var access:
 - Session runtime scope implementations read session env vars at startup and store them as fields.
@@ -1757,14 +1772,12 @@ Approved boundary classes each have a specific reason for direct env var access:
 - Terminal detection reads standard terminal env vars such as `TERM` and `TERM_PROGRAM`.
 
 **Scope implementations:**
-- `MainRuntimeTool` — production use for session CLI tools (in `main()` methods that require `CAT_SESSION_ID`),
-  reads all session environment configuration
-- `MainJvmScope` — production use for infrastructure CLI tools (in `main()` methods that do NOT require session
-  vars), reads only infrastructure vars. Example tools include `IssueLock`, `HookRegistrar`, and
-  `StatusAlignmentValidator`.
-- `MainRuntimeHook` — production use for hook handler `main()` methods, reads infrastructure path vars and hook
-  JSON from stdin
-- `TestRuntimeTool` — test use, accepts injectable paths: `new TestRuntimeTool(tempDir, tempDir)`
+- `MainCliTool` — production use for shared CLI tools, derives CAT values from the active runtime harness and
+  environment
+- `MainClaudeTool` / `MainCodexTool` — production runtime-specific tool scopes
+- `MainClaudeHook` / `MainCodexHook` — production runtime-specific hook scopes
+- `TestClaudeTool`, `TestClaudeHook`, and other `Test*` scopes — test use with injectable paths and deterministic
+  values
 
 ## Exception Handling
 
@@ -2018,9 +2031,9 @@ these Java-specific constraints:
    over shared helpers or inheritance.
 6. **Use test-specific scopes, not `Main*` scopes** - tests must never interact with production `Main*` scope
    implementations because they read environment variables, stdin, or runtime-specific filesystem locations that may
-   not be set in test contexts. Use injectable `Test*` scopes such as `TestRuntimeTool(tempDir, tempDir)`,
+   not be set in test contexts. Use injectable `Test*` scopes such as `TestClaudeTool(tempDir, tempDir)`,
    `TestCodexTool`, `TestCodexHook`, `TestClaudeTool`, or `TestClaudeHook` instead.
-7. **Never use scope-provided objects after closing the scope** - objects returned by `JvmScope` (e.g., `JsonMapper`,
+7. **Never use scope-provided objects after closing the scope** - objects returned by `AgentScope` (e.g., `JsonMapper`,
    `DisplayUtils`) must not be used after the scope is closed. Keep the scope open for the entire duration of the test.
    Do not create helper methods like `getTestMapper()` that open a scope, extract an object, and close the scope.
 8. **No `System.setErr()`/`System.setOut()`** - these mutate JVM-wide shared state and are not thread-safe. Instead:
@@ -2033,12 +2046,12 @@ these Java-specific constraints:
    missing file check), passing `"."` is acceptable since no git command actually runs.
 
 ```java
-// Good - self-contained test with TestRuntimeTool
+// Good - self-contained test with TestClaudeTool
 @Test
 public void testProcess() throws IOException
 {
   Path tempDir = Files.createTempDirectory("test-");
-  try (JvmScope scope = new TestRuntimeTool(tempDir, tempDir))
+  try (AgentPluginScope scope = new TestClaudeTool(tempDir, tempDir))
   {
     JsonMapper mapper = scope.getJsonMapper();
     var result = process(scope, input);

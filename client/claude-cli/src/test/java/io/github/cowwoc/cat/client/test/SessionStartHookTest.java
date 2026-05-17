@@ -99,11 +99,12 @@ public class SessionStartHookTest
         Path resumedEnvFile = resumedDir.resolve("sessionstart-hook-1.sh");
         requireThat(Files.exists(resumedEnvFile), "resumedEnvFileExists").isTrue();
         String content = Files.readString(resumedEnvFile);
-        requireThat(content, "content").contains("CLAUDE_SESSION_ID=\"" + resumedId + "\"");
-        requireThat(content, "content").contains("CLAUDE_PROJECT_DIR=");
-        requireThat(content, "content").contains("CLAUDE_PLUGIN_ROOT=");
-        requireThat(content, "content").contains("CLAUDE_PLUGIN_DATA=");
+        requireThat(content, "content").contains("CAT_SESSION_ID=\"" + resumedId + "\"");
+        requireThat(content, "content").contains("CAT_PROJECT_DIR=");
+        requireThat(content, "content").contains("CAT_PLUGIN_ROOT=");
+        requireThat(content, "content").contains("CAT_PLUGIN_DATA=");
         requireThat(content, "content").contains("CAT_CONFIG_DIR=");
+        requireThat(content, "content").doesNotContain("CLAUDE_");
         // Startup dir must NOT have been written on resume
         requireThat(Files.exists(envFile), "startupEnvFileExists").isFalse();
       }
@@ -188,7 +189,7 @@ public class SessionStartHookTest
 
       // Pre-populate the resumed session env file as if a prior startup write had already done so
       Files.writeString(resumedEnvFile,
-        "export CLAUDE_SESSION_ID=\"old-session\"\nexport CLAUDE_PROJECT_DIR=\"/old\"\n");
+        "export CAT_SESSION_ID=\"old-session\"\nexport CAT_PROJECT_DIR=\"/old\"\n");
 
       Path projectPath = Files.createTempDirectory("cat-test-project-");
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -203,18 +204,18 @@ public class SessionStartHookTest
         }
         // File must contain the new session ID, not the old one
         String content = Files.readString(resumedEnvFile);
-        requireThat(content, "content").contains("CLAUDE_SESSION_ID=\"" + resumedId + "\"");
+        requireThat(content, "content").contains("CAT_SESSION_ID=\"" + resumedId + "\"");
         // Old session ID must not be present — file was overwritten, not appended
         requireThat(content, "content").doesNotContain("old-session");
-        // CLAUDE_SESSION_ID must appear exactly once (not duplicated)
+        // CAT_SESSION_ID must appear exactly once (not duplicated)
         int count = 0;
         int index = 0;
-        index = content.indexOf("CLAUDE_SESSION_ID", index);
+        index = content.indexOf("CAT_SESSION_ID", index);
         while (index != -1)
         {
           ++count;
           ++index;
-          index = content.indexOf("CLAUDE_SESSION_ID", index);
+          index = content.indexOf("CAT_SESSION_ID", index);
         }
         requireThat(count, "sessionIdOccurrences").isEqualTo(1);
       }
@@ -269,9 +270,10 @@ public class SessionStartHookTest
         // Env file must be written to the resumed session directory
         requireThat(Files.exists(envFile), "resumedEnvFileExists").isTrue();
         String content = Files.readString(envFile);
-        requireThat(content, "content").contains("CLAUDE_SESSION_ID=\"" + resumedId + "\"");
-        requireThat(content, "content").contains("CLAUDE_PROJECT_DIR=");
-        requireThat(content, "content").contains("CLAUDE_PLUGIN_ROOT=");
+        requireThat(content, "content").contains("CAT_SESSION_ID=\"" + resumedId + "\"");
+        requireThat(content, "content").contains("CAT_PROJECT_DIR=");
+        requireThat(content, "content").contains("CAT_PLUGIN_ROOT=");
+        requireThat(content, "content").doesNotContain("CLAUDE_");
       }
       finally
       {
@@ -318,10 +320,11 @@ public class SessionStartHookTest
         }
         requireThat(Files.exists(envFile), "envFileExists").isTrue();
         String content = Files.readString(envFile);
-        requireThat(content, "content").contains("CLAUDE_SESSION_ID=\"" + clearSessionId + "\"");
-        requireThat(content, "content").contains("CLAUDE_PROJECT_DIR=");
-        requireThat(content, "content").contains("CLAUDE_PLUGIN_ROOT=");
+        requireThat(content, "content").contains("CAT_SESSION_ID=\"" + clearSessionId + "\"");
+        requireThat(content, "content").contains("CAT_PROJECT_DIR=");
+        requireThat(content, "content").contains("CAT_PLUGIN_ROOT=");
         requireThat(content, "content").contains("CAT_CONFIG_DIR=");
+        requireThat(content, "content").doesNotContain("CLAUDE_");
       }
       finally
       {
@@ -410,15 +413,15 @@ public class SessionStartHookTest
         // File should exist but should not be double-written (appended twice)
         requireThat(Files.exists(envFile), "envFileExists").isTrue();
         String content = Files.readString(envFile);
-        // Count occurrences of CLAUDE_SESSION_ID - should appear exactly once
+        // Count occurrences of CAT_SESSION_ID - should appear exactly once
         int count = 0;
         int idx = 0;
-        idx = content.indexOf("CLAUDE_SESSION_ID", idx);
+        idx = content.indexOf("CAT_SESSION_ID", idx);
         while (idx != -1)
         {
           ++count;
           ++idx;
-          idx = content.indexOf("CLAUDE_SESSION_ID", idx);
+          idx = content.indexOf("CAT_SESSION_ID", idx);
         }
         requireThat(count, "sessionIdOccurrences").isEqualTo(1);
       }

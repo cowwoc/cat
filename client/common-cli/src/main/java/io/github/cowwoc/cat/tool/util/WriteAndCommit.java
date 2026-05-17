@@ -13,7 +13,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import static io.github.cowwoc.cat.tool.Strings.block;
 
 import io.github.cowwoc.cat.agent.ExecutableFiles;
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.CliTool;
 import io.github.cowwoc.cat.tool.MainCliTool;
 import org.slf4j.Logger;
@@ -37,7 +37,7 @@ import java.util.Objects;
 public final class WriteAndCommit
 {
   private final Logger log = LoggerFactory.getLogger(WriteAndCommit.class);
-  private final JvmScope scope;
+  private final AgentScope scope;
 
   /**
    * Creates a new WriteAndCommit instance.
@@ -45,7 +45,7 @@ public final class WriteAndCommit
    * @param scope the JVM scope providing JSON mapper
    * @throws NullPointerException if {@code scope} is null
    */
-  public WriteAndCommit(JvmScope scope)
+  public WriteAndCommit(AgentScope scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -208,7 +208,7 @@ public final class WriteAndCommit
    * @param out   the output stream to write output to
    * @throws NullPointerException if {@code args} or {@code out} are null
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out)
+  public static void run(AgentScope scope, String[] args, PrintStream out)
   {
     requireThat(args, "args").isNotNull();
     requireThat(out, "out").isNotNull();

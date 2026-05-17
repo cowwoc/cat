@@ -25,7 +25,7 @@ import java.util.stream.Stream;
 import io.github.cowwoc.cat.agent.Config;
 import io.github.cowwoc.cat.tool.CliTool;
 import io.github.cowwoc.cat.agent.IssueStatus;
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.agent.LockFile;
 import io.github.cowwoc.cat.tool.MainCliTool;
 import io.github.cowwoc.cat.tool.licensing.LicenseResult;
@@ -1411,7 +1411,7 @@ public final class GetStatusOutput implements SkillOutput
    * @throws NullPointerException     if {@code scope} or {@code reason} are null
    * @throws IllegalArgumentException if {@code reason} is blank
    */
-  private static String block(JvmScope scope, String reason)
+  private static String block(AgentScope scope, String reason)
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(reason, "reason").isNotBlank();
@@ -1437,7 +1437,7 @@ public final class GetStatusOutput implements SkillOutput
    * @throws NullPointerException if {@code scope}, {@code args} or {@code out} are null
    * @throws IOException          if an I/O error occurs
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  public static void run(AgentScope scope, String[] args, PrintStream out) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();

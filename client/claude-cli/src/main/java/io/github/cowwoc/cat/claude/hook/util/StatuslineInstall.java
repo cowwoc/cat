@@ -10,7 +10,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import static io.github.cowwoc.cat.tool.Strings.block;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.Strings;
 import io.github.cowwoc.cat.claude.tool.ClaudeTool;
 import io.github.cowwoc.cat.claude.tool.MainClaudeTool;
@@ -44,7 +44,7 @@ public final class StatuslineInstall
    * @param scope the JVM scope for accessing shared services
    * @throws NullPointerException if {@code scope} is null
    */
-  public StatuslineInstall(JvmScope scope)
+  public StatuslineInstall(AgentScope scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.mapper = scope.getJsonMapper();
@@ -213,7 +213,7 @@ public final class StatuslineInstall
    * @param out   the output stream to write to
    * @throws NullPointerException if any of {@code scope}, {@code args}, or {@code out} are null
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out)
+  public static void run(AgentScope scope, String[] args, PrintStream out)
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();

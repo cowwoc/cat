@@ -9,18 +9,17 @@ package io.github.cowwoc.cat.claude.hook;
 import io.github.cowwoc.cat.tool.DisplayUtils;
 import io.github.cowwoc.cat.agent.AgentPluginScope;
 import io.github.cowwoc.cat.claude.hook.prompt.UserIssues;
-import io.github.cowwoc.cat.tool.JvmScope;
 
 import java.nio.file.Path;
 
 /**
- * A {@link JvmScope} that provides plugin-context methods shared by both {@link ClaudeHook} and
+ * A plugin scope that provides plugin-context methods shared by both {@link ClaudeHook} and
  * {@link ClaudeTool}, but not required by {@link ClaudeStatusline}.
  * <p>
  * Exposes the plugin root directory, plugin prefix, Claude config directory, session paths,
  * and display utilities.
  */
-public interface ClaudePluginScope extends AgentPluginScope, JvmScope
+public interface ClaudePluginScope extends AgentPluginScope
 {
   /**
    * Returns the Claude config directory (typically {@code ~/.claude}).

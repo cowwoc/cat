@@ -7,5 +7,5 @@ convention file (see CLAUDE.md § "Convention File Locations"), not MEMORY.md.
 | Content Type | Location |
 |---|---|
 | Short-term workarounds, discoveries | `MEMORY.md` |
-| Project development conventions | `.claude/rules/` |
+| Project development conventions | `.cat/rules/{common,claude,codex}/` |
 | End-user behavioral rules | `plugin/rules/common/`, `plugin/` files |

@@ -12,7 +12,7 @@ Instances must NEVER:
 
 **Temporary files/directories (ephemeral state — not needed across session restarts):**
 - ✅ Use `mktemp -d` or `mktemp` for unique per-invocation isolation
-- ✅ Store in `/tmp` or per-session directories (e.g., `${CAT_CONFIG_DIR}/projects/.../${CAT_SESSION_ID}/`)
+- ✅ Store in `/tmp` or per-session directories (e.g., `${CAT_PLUGIN_DATA}/sessions/${CAT_SESSION_ID}/`)
 - ❌ Use hardcoded paths like `../repo-clean.git` or `/tmp/shared-work/`
 - ❌ Use paths like `${WORKTREE_PARENT}/shared-dir/` (multiple instances share the parent)
 

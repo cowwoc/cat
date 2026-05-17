@@ -25,7 +25,7 @@ matches UUID format.
 
 - [ ] plugin/scripts/validate-uuid.sh exists
 - [ ] File begins with shebang: #!/usr/bin/env bash
-- [ ] File includes license header comment block immediately after shebang (per .claude/rules/license-header.md)
+- [ ] File includes license header comment block immediately after shebang (per .cat/rules/common/license-header.md)
 - [ ] File contains function: validate_uuid() { [[ "$1" =~ ^[0-9a-fA-F]\{8\}-[0-9a-fA-F]\{4\}-[0-9a-fA-F]\{4\}-[0-9a-fA-F]\{4\}-[0-9a-fA-F]\{12\}$ ]]; }
 - [ ] File ends with test block: validate_uuid "3734035c-0c9b-4063-9d0f-aad98ed260a6" && echo "valid" || echo "invalid"
 

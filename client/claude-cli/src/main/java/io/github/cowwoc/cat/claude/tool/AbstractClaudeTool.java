@@ -9,7 +9,6 @@ package io.github.cowwoc.cat.claude.tool;
 import io.github.cowwoc.cat.agent.AgentRuntime;
 import io.github.cowwoc.cat.claude.hook.prompt.UserIssues;
 import io.github.cowwoc.cat.tool.AbstractCliTool;
-import io.github.cowwoc.cat.tool.CliToolConfig;
 import io.github.cowwoc.pouch10.core.ConcurrentLazyReference;
 
 import java.nio.file.Path;
@@ -45,9 +44,9 @@ public abstract class AbstractClaudeTool extends AbstractCliTool implements Clau
   protected AbstractClaudeTool(String sessionId, Path projectPath, Path pluginRoot,
     Path pluginData, Path claudeConfigPath)
   {
-    super(new CliToolConfig(sessionId, projectPath, pluginRoot, pluginData, claudeConfigPath,
+    super(sessionId, projectPath, pluginRoot, pluginData, claudeConfigPath,
       AgentRuntime.CLAUDE.pluginDescriptor(), AgentRuntime.CLAUDE.ruleDirectories(projectPath, pluginRoot),
-      AgentRuntime.CLAUDE.pluginCacheDescriptor(), Path.of(System.getProperty("user.dir")), "UTC", ""));
+      AgentRuntime.CLAUDE.pluginCacheDescriptor(), Path.of(System.getProperty("user.dir")), "UTC", "");
   }
 
   @Override

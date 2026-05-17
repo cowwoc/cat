@@ -20,7 +20,7 @@ import java.nio.file.Path;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Tests for {@link GetCleanupOutput#run(JvmScope, String[], PrintStream)} CLI error path handling.
+ * Tests for {@link GetCleanupOutput#run(AgentScope, String[], PrintStream)} CLI error path handling.
  */
 public class GetCleanupOutputMainTest
 {

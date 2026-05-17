@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.tool.skills;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.agent.FrontmatterUtils;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.dataformat.yaml.YAMLMapper;
@@ -37,7 +37,7 @@ final class SkillMetadataExtractor
    * @param claudeCodeVersion the Claude Code version string for model ID resolution
    * @throws NullPointerException if any argument is null
    */
-  SkillMetadataExtractor(JvmScope scope, String claudeCodeVersion)
+  SkillMetadataExtractor(AgentScope scope, String claudeCodeVersion)
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(claudeCodeVersion, "claudeCodeVersion").isNotNull();

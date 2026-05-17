@@ -9,7 +9,7 @@ package io.github.cowwoc.cat.tool.util;
 import io.github.cowwoc.cat.agent.GlobMatcher;
 import io.github.cowwoc.cat.agent.ProcessRunner;
 import io.github.cowwoc.cat.agent.Config;
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.agent.IssueStatus;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
@@ -96,7 +96,7 @@ public final class IssueDiscovery
    */
   private static final Pattern EXIT_ISSUE_PATTERN = Pattern.compile("^- \\[issue\\] (.+)$");
 
-  private final JvmScope scope;
+  private final AgentScope scope;
   private final Path projectPath;
   private final Path issuesDir;
   private final JsonMapper mapper;
@@ -126,7 +126,7 @@ public final class IssueDiscovery
    * @param scope the JVM scope providing configuration and services
    * @throws IllegalArgumentException if the project directory is not a valid CAT project
    */
-  public IssueDiscovery(JvmScope scope)
+  public IssueDiscovery(AgentScope scope)
   {
     this.scope = scope;
     this.projectPath = scope.getProjectPath();

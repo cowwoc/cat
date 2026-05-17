@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.client.test;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
@@ -37,7 +37,7 @@ final class RecordLearningTestUtils
    * @param lastRetrospective the last retrospective ISO timestamp, or null
    * @throws IOException if file writing fails
    */
-  static void initializeIndex(JvmScope scope, Path retroDir, int count, String lastRetrospective)
+  static void initializeIndex(AgentScope scope, Path retroDir, int count, String lastRetrospective)
     throws IOException
   {
     ObjectNode index = scope.getJsonMapper().createObjectNode();
@@ -69,7 +69,7 @@ final class RecordLearningTestUtils
    * @param causeSignature the cause signature triple, or null if not classified
    * @return an ObjectNode representing Phase 3 output
    */
-  static ObjectNode buildPhase3Input(JvmScope scope, String description, String recurrenceOf,
+  static ObjectNode buildPhase3Input(AgentScope scope, String description, String recurrenceOf,
     String causeSignature)
   {
     ObjectNode input = scope.getJsonMapper().createObjectNode();

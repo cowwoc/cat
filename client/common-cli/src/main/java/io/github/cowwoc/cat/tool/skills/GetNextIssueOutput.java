@@ -10,7 +10,7 @@ import java.io.PrintStream;
 import java.util.Objects;
 
 import io.github.cowwoc.cat.tool.CliTool;
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.MainCliTool;
 
 import static io.github.cowwoc.cat.tool.Strings.block;
@@ -186,7 +186,7 @@ public final class GetNextIssueOutput implements SkillOutput
    * @throws IllegalArgumentException if required arguments are missing
    * @throws IOException              if an I/O error occurs
    */
-  public static void run(JvmScope scope, String[] args, PrintStream out) throws IOException
+  public static void run(AgentScope scope, String[] args, PrintStream out) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();

@@ -6,14 +6,14 @@
  */
 package io.github.cowwoc.cat.claude.hook;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 
 import java.time.Duration;
 
 /**
- * A {@link JvmScope} that provides the infrastructure needed to render the Claude Code statusline.
+ * A {@link AgentScope} that provides the infrastructure needed to render the Claude Code statusline.
  */
-public interface ClaudeStatusline extends JvmScope
+public interface ClaudeStatusline extends AgentScope
 {
   /**
    * Returns the model display name parsed from the statusline JSON.

@@ -75,6 +75,7 @@ None
 ## Decomposed Into
 
 - `2.1-runtime-neutral-cli-context`
+- `2.1-move-derived-env-values-to-java`
 
 This parent remains `in-progress` while the child issue closes the remaining Java CLI scope and shared utility
 runtime-neutrality work. Close the parent only after the child issue is implemented and the parent post-conditions are

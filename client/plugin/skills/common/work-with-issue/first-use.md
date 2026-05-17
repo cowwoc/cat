@@ -38,6 +38,11 @@ The following steps are **mandatory** and must not be skipped without explicit u
 require user permission to execute — they are pre-approved as part of the `/cat:work` workflow. Steps marked **BLOCKING**
 are additionally enforced by hooks or explicit STOP instructions that block progress mechanically if skipped.
 
+- **Completion means approval-gate completion, not commits** — after implementation commits, successful tests, or a
+  clean worktree, do not send a final response or report the issue complete until Phase 4 returns `SUCCESS`,
+  `ABORTED`, `CHANGES_REQUESTED`, or `FAILED`. If the worktree still exists and the issue branch still exists,
+  continue confirm → review → merge. A committed implementation with `index.json status: closed` is still
+  "implementation running" until the merge approval gate has been presented and resolved.
 - **Step 5: Review Phase (Stakeholder Review)** — always invoke `cat:stakeholder-review` except for config-driven
   exceptions (CAUTION=none or TRUST=high); do not skip based on perceived simplicity or short feedback cycles
 - **Step 5 freshness check** — if any implementation, review-fix, or user-feedback change modifies HEAD after a

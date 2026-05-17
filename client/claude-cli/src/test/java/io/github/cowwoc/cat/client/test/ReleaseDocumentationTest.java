@@ -180,7 +180,6 @@ public final class ReleaseDocumentationTest
     String content = Files.readString(path, StandardCharsets.UTF_8);
     requireThat(content, name).contains("CAT_PLUGIN_ROOT");
     requireThat(content, name).contains("CAT_PLUGIN_DATA");
-    requireThat(content, name).contains("CAT_CONFIG_DIR");
     requireThat(content, name).contains("CAT_PROJECT_DIR");
     requireThat(content, name).contains("CAT_RUNTIME");
     requireThat(content, name).contains("CAT_SESSION_ID");

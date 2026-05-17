@@ -7,7 +7,7 @@
 package io.github.cowwoc.cat.client.test;
 
 import io.github.cowwoc.cat.tool.util.GitMergeLinear;
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 
 import org.testng.annotations.Test;
@@ -37,7 +37,7 @@ public class GitMergeLinearTest
     expectedExceptionsMessageRegExp = ".*sourceBranch.*")
   public void executeRejectsNullSourceBranch() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (AgentScope scope = new TestClaudeTool())
     {
       GitMergeLinear cmd = new GitMergeLinear(scope, ".");
 
@@ -54,7 +54,7 @@ public class GitMergeLinearTest
     expectedExceptionsMessageRegExp = ".*sourceBranch.*")
   public void executeRejectsBlankSourceBranch() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (AgentScope scope = new TestClaudeTool())
     {
       GitMergeLinear cmd = new GitMergeLinear(scope, ".");
 
@@ -71,7 +71,7 @@ public class GitMergeLinearTest
     expectedExceptionsMessageRegExp = ".*targetBranch.*")
   public void executeRejectsNullTargetBranch() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (AgentScope scope = new TestClaudeTool())
     {
       GitMergeLinear cmd = new GitMergeLinear(scope, ".");
 
@@ -90,7 +90,7 @@ public class GitMergeLinearTest
     expectedExceptionsMessageRegExp = ".*targetBranch.*")
   public void executeRejectsBlankTargetBranch() throws IOException
   {
-    try (JvmScope scope = new TestClaudeTool())
+    try (AgentScope scope = new TestClaudeTool())
     {
       GitMergeLinear cmd = new GitMergeLinear(scope, ".");
 
@@ -116,7 +116,7 @@ public class GitMergeLinearTest
       TestUtils.runGit(repoDir, "checkout", "main");
 
       Path pluginRoot = Files.createTempDirectory("plugin-root-");
-      try (JvmScope scope = new TestClaudeTool(repoDir, pluginRoot))
+      try (AgentScope scope = new TestClaudeTool(repoDir, pluginRoot))
       {
         GitMergeLinear cmd = new GitMergeLinear(scope, repoDir.toString());
         String result = cmd.execute("task-branch", "main");
@@ -159,7 +159,7 @@ public class GitMergeLinearTest
       TestUtils.runGit(repoDir, "checkout", "main");
 
       Path pluginRoot = Files.createTempDirectory("plugin-root-");
-      try (JvmScope scope = new TestClaudeTool(repoDir, pluginRoot))
+      try (AgentScope scope = new TestClaudeTool(repoDir, pluginRoot))
       {
         GitMergeLinear cmd = new GitMergeLinear(scope, repoDir.toString());
         cmd.execute("task-branch", "main");
@@ -191,7 +191,7 @@ public class GitMergeLinearTest
       // Stay on task-branch (not main) and try to merge into main
 
       Path pluginRoot = Files.createTempDirectory("plugin-root-");
-      try (JvmScope scope = new TestClaudeTool(repoDir, pluginRoot))
+      try (AgentScope scope = new TestClaudeTool(repoDir, pluginRoot))
       {
         GitMergeLinear cmd = new GitMergeLinear(scope, repoDir.toString());
         cmd.execute("task-branch", "main");

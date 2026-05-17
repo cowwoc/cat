@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.client.test;
 
-import io.github.cowwoc.cat.tool.JvmScope;
+import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.tool.util.IssueCreator;
 import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
@@ -36,7 +36,7 @@ public class IssueCreatorMainTest
   public void invalidArgsProducesBlockResponseWithUsage() throws IOException
   {
     Path tempDir = Files.createTempDirectory("issue-creator-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
@@ -69,7 +69,7 @@ public class IssueCreatorMainTest
   public void nullArgsThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("issue-creator-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       IssueCreator.run(scope, null,
         new ByteArrayInputStream(new byte[0]),
@@ -91,7 +91,7 @@ public class IssueCreatorMainTest
   public void nullOutThrowsException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("issue-creator-main-test-");
-    try (JvmScope scope = new TestClaudeTool(tempDir, tempDir))
+    try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
     {
       IssueCreator.run(scope, new String[]{"dummy"},
         new ByteArrayInputStream(new byte[0]), null);
