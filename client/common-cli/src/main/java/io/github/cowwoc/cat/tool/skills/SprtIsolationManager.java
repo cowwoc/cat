@@ -40,17 +40,22 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 final class SprtIsolationManager
 {
   private final CliTool scope;
+  private final String runtimeId;
 
   /**
    * Creates a new SprtIsolationManager.
    *
-   * @param scope the Claude plugin scope providing JSON mapper and other services
-   * @throws NullPointerException if {@code scope} is null
+   * @param scope the active plugin scope providing JSON mapper and other services
+   * @param runtimeId the active runtime identifier
+   * @throws NullPointerException if {@code scope} or {@code runtimeId} are null
+   * @throws IllegalArgumentException if {@code runtimeId} is blank
    */
-  SprtIsolationManager(CliTool scope)
+  SprtIsolationManager(CliTool scope, String runtimeId)
   {
     requireThat(scope, "scope").isNotNull();
+    requireThat(runtimeId, "runtimeId").isNotBlank();
     this.scope = scope;
+    this.runtimeId = runtimeId;
   }
 
   /**
@@ -123,7 +128,8 @@ final class SprtIsolationManager
           orphanResult.exitCode() + ": " + orphanResult.stdout());
 
       // For each file, call extract-turns binary on a stripped temporary copy
-      Path extractTurnsBin = worktreePath.resolve("client/distribution/target/jlink/claude/bin/extract-turns");
+      Path extractTurnsBin = worktreePath.resolve("client/distribution/target/jlink").
+        resolve(runtimeId).resolve("bin/extract-turns");
       if (Files.notExists(extractTurnsBin))
         extractTurnsBin = scope.getPluginRoot().resolve("client/bin/extract-turns");
       for (Path mdFile : mdFiles)

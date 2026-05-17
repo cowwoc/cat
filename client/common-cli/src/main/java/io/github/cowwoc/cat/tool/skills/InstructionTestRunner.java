@@ -55,7 +55,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * Dispatches subcommands: extract-units, extract-model, extract-test-dir, detect-changes,
  * map-units, persist-artifacts, init-sprt, update-sprt, check-boundary, smoke-status, merge-results,
  * create-runner-worktrees, check-run-contamination, remove-runner-worktrees, remove-runner-worktree,
- * prepare-trial, get-json-field, run-sprt-batch, run-full-sprt.
+ * prepare-trial, get-json-field, run-sprt.
  * <p>
  * {@code prepare-trial} outputs {@code key=value} lines (all scalar paths); the combined prompt
  * is written to a file so {@code claude-runner} receives a path via {@code --prompt}.
@@ -92,10 +92,11 @@ public final class InstructionTestRunner
       }
 
       @Override
-      public String[] buildGraderArgs(Path graderPromptFile, String modelId, String runnerWorktree,
-        Path jlinkBin)
+      public String[] parseRunSprtArgs(String[] args)
       {
-        return InstructionTestRunner.buildGraderArgs(graderPromptFile, modelId, runnerWorktree, jlinkBin);
+        RunSprtArguments parsed = InstructionTestRunner.parseRunSprtArgs(args);
+        return new String[]{parsed.worktreePath(), parsed.testDir(), parsed.testModel(),
+          parsed.testEffort(), parsed.sessionId()};
       }
     });
   }
@@ -105,6 +106,7 @@ public final class InstructionTestRunner
   private final String claudeCodeVersion;
   private final SprtStateManager sprtStateManager;
   private final SprtIsolationManager sprtIsolationManager;
+  private final SprtRuntimeRunner sprtRuntimeRunner;
   private final SprtGrader sprtGrader;
   private final SkillMetadataExtractor skillMetadataExtractor;
 
@@ -123,8 +125,9 @@ public final class InstructionTestRunner
     this.scope = scope;
     this.claudeCodeVersion = claudeCodeVersion;
     this.sprtStateManager = new SprtStateManager(scope);
-    this.sprtIsolationManager = new SprtIsolationManager(scope);
-    this.sprtGrader = new SprtGrader(scope);
+    this.sprtRuntimeRunner = new SprtRuntimeRunner(scope);
+    this.sprtIsolationManager = new SprtIsolationManager(scope, sprtRuntimeRunner.runtime().id());
+    this.sprtGrader = new SprtGrader(scope, sprtRuntimeRunner);
     this.skillMetadataExtractor = new SkillMetadataExtractor(scope, claudeCodeVersion);
   }
 
@@ -167,16 +170,13 @@ public final class InstructionTestRunner
       case "remove-runner-worktree" -> out.println(removeRunnerWorktree(rest));
       case "prepare-trial" -> out.println(prepareTrial(rest));
       case "get-json-field" -> out.println(getJsonField(rest));
-      case "run-sprt-batch" -> out.println(runSprtBatch(rest));
-      case "run-full-sprt" -> runFullSprt(rest, out);
-      case "run-single-test" -> runSingleTest(rest, out);
+      case "run-sprt" -> runSprt(rest, out);
       default -> throw new IllegalArgumentException(
         "InstructionTestRunner: unknown command: " + command + "\n" +
         "Valid commands: extract-units, extract-model, extract-effort, extract-test-dir, detect-changes, " +
         "map-units, persist-artifacts, init-sprt, update-sprt, check-boundary, smoke-status, " +
         "merge-results, create-runner-worktrees, check-run-contamination, remove-runner-worktrees, " +
-        "remove-runner-worktree, prepare-trial, get-json-field, run-sprt-batch, run-full-sprt, " +
-        "run-single-test");
+        "remove-runner-worktree, prepare-trial, get-json-field, run-sprt");
     }
   }
 
@@ -926,6 +926,7 @@ public final class InstructionTestRunner
     Path testDir = Path.of(args[1]);
     if (!testDir.isAbsolute())
       testDir = worktreePath.resolve(testDir);
+    validatePathWithinBoundary(worktreePath, testDir);
     if (!Files.isDirectory(testDir))
       throw new IllegalArgumentException(
         "InstructionTestRunner prepare-run: test_dir does not exist: " + testDir);
@@ -1024,7 +1025,8 @@ public final class InstructionTestRunner
       "Example: " + runnerWorktree + "/some/file.txt\n" +
       "Never use any other root for file operations.";
 
-    String jlinkBin = runnerWorktree + "/client/distribution/target/jlink/claude/bin";
+    String jlinkBin = runnerWorktree + "/client/distribution/target/jlink/" +
+      sprtRuntimeRunner.runtime().id() + "/bin";
     if (!Files.isDirectory(Path.of(jlinkBin)))
       throw new IOException(
         "InstructionTestRunner prepare-trial: jlink directory not found in runner worktree: " +
@@ -1190,36 +1192,39 @@ public final class InstructionTestRunner
       "InstructionTestRunner get-worktree-field: tc_id '" + tcId +
       "' not found in worktrees array");
   }
+
   /**
-   * Implements the {@code run-sprt-batch} command.
+   * Implements one internal SPRT batch.
    * <p>
    * Orchestrates a single SPRT batch run: creates runner worktrees, prepares trials, launches
    * claude-runner instances, grades results, updates SPRT state, checks boundaries, and cleans up.
    *
-   * @param args {@code [worktree_path, sprt_state_json, issue_name, test_dir_rel, session_id,
-   *   model_id, batch_num, isolation_result_json]}
+   * @param worktreePathStr    the worktree under test
+   * @param sprtStateJson      the SPRT state file
+   * @param issueName          the issue name
+   * @param testDirRel         the test directory relative to the worktree
+   * @param sessionId          the current CAT session ID
+   * @param modelId            the model ID for trial execution
+   * @param testEffort         the effort level for trial execution
+   * @param batchNum           the current batch number
+   * @param isolationResultJson the isolation result JSON
    * @return compact JSON: {@code {"decided_count": N, "inconclusive_tcs": ["tc1", ...]}}
    * @throws IllegalArgumentException if arguments are invalid
    * @throws IOException              if an I/O error occurs
    * @throws InterruptedException     if waiting for a runner process is interrupted
    */
-  public String runSprtBatch(String[] args) throws IOException, InterruptedException
+  private String runSprtBatch(String worktreePathStr, String sprtStateJson, String issueName,
+    String testDirRel, String sessionId, String modelId, String testEffort, int batchNum,
+    String isolationResultJson) throws IOException, InterruptedException
   {
-    requireThat(args, "args").isNotNull();
-    if (args.length != 8)
-      throw new IllegalArgumentException(
-        "InstructionTestRunner run-sprt-batch: expected 8 arguments, got " + args.length + ".\n" +
-        "Usage: instruction-test-runner run-sprt-batch <worktree_path> <sprt_state_json> " +
-        "<issue_name> <test_dir_rel> <session_id> <model_id> <batch_num> <isolation_result_json>");
-
-    String worktreePathStr = args[0];
-    String sprtStateJson = args[1];
-    String issueName = args[2];
-    String testDirRel = args[3];
-    String sessionId = args[4];
-    String modelId = args[5];
-    int batchNum = Integer.parseInt(args[6]);
-    String isolationResultJson = args[7];
+    requireThat(worktreePathStr, "worktreePathStr").isNotBlank();
+    requireThat(sprtStateJson, "sprtStateJson").isNotBlank();
+    requireThat(issueName, "issueName").isNotBlank();
+    requireThat(testDirRel, "testDirRel").isNotBlank();
+    requireThat(sessionId, "sessionId").isNotBlank();
+    requireThat(modelId, "modelId").isNotBlank();
+    requireThat(testEffort, "testEffort").isNotBlank();
+    requireThat(isolationResultJson, "isolationResultJson").isNotBlank();
 
     JsonMapper mapper = scope.getJsonMapper();
     Object sprtLock = new Object();
@@ -1323,21 +1328,13 @@ public final class InstructionTestRunner
             if (!finalHasFixture)
             {
               // Step 1: Run trial (config at worktree/.cat/config/)
-              String[] runnerArgs = {
-                "--prompt-file", finalPromptFile,
-                "--model", modelId,
-                "--plugin-source", Path.of(runnerWorktree, "client/plugin").toString(),
-                "--jlink-bin", Path.of(runnerWorktree, "client/distribution/target/jlink/claude/bin").toString(),
-                "--cwd", runnerWorktree,
-                "--output", finalOutputJson
-              };
               int exitCode;
               Path runnerLogPath = Path.of(outputDir, tcId + "_run" + trialNum + "_runner.log");
-              try (CliTool runnerScope = new MainCliTool();
-                OutputStream logOut = Files.newOutputStream(runnerLogPath);
+              try (OutputStream logOut = Files.newOutputStream(runnerLogPath);
                 PrintStream logStream = new PrintStream(logOut, true, UTF_8))
               {
-                exitCode = ClaudeRunner.run(runnerScope, runnerArgs, logStream);
+                exitCode = sprtRuntimeRunner.runTrial(Path.of(finalPromptFile), modelId, testEffort,
+                  runnerWorktree, finalOutputJson, logStream);
               }
 
               if (!Files.exists(Path.of(finalOutputJson)))
@@ -1381,8 +1378,8 @@ public final class InstructionTestRunner
             {
               // Use worktreePathStr so the grader reads assertions from the issue worktree,
               // where test files still exist with their ## Assertions sections.
-              verdict = sprtGrader.gradeTc(tcId, trialNum, finalOutputJson, modelId, runnerWorktree,
-                Path.of(runnerWorktree, "client/distribution/target/jlink/claude/bin"),
+              verdict = sprtGrader.gradeTc(tcId, trialNum, finalOutputJson, modelId, testEffort,
+                runnerWorktree,
                 Path.of(worktreePathStr, testDirRel).toString(),
                 gradeFilePath, isolationResultJson);
             }
@@ -1499,69 +1496,27 @@ public final class InstructionTestRunner
   }
 
   /**
-   * Implements the {@code run-full-sprt} command.
+   * Implements the {@code run-sprt} command.
    * <p>
    * Orchestrates the complete SPRT workflow: prepare run, create isolation branch, initialize SPRT state,
    * run batches until all test cases reach decisions, write test results, and cleanup.
    *
-   * @param args {@code [--worktree-bin] <worktree_path> <test_dir> <test_model> <session_id> [<effort>]}
-   *             where {@code --worktree-bin} is an optional flag indicating the re-exec has already happened
+   * @param args {@code <worktree_path> <test_dir> <test_model> <effort> <session_id>}
    * @param out  the output stream for progress messages (goes to stderr in bash)
    * @throws IllegalArgumentException if the argument count is wrong
    * @throws IOException              if any I/O operation fails
    * @throws InterruptedException     if a batch run is interrupted
    */
-  private void runFullSprt(String[] args, PrintStream out) throws IOException, InterruptedException
+  private void runSprt(String[] args, PrintStream out) throws IOException, InterruptedException
   {
-    requireThat(args, "args").isNotNull();
+    RunSprtArguments parsedArgs = parseRunSprtArgs(args);
+    String worktreePath = parsedArgs.worktreePath();
+    String testDir = parsedArgs.testDir();
+    String testModel = parsedArgs.testModel();
+    String testEffort = parsedArgs.testEffort();
+    String sessionId = parsedArgs.sessionId();
 
-    // Strip optional --worktree-bin flag (present when re-execed from the worktree binary).
-    boolean usingWorktreeBin = args.length > 0 && args[0].equals("--worktree-bin");
-    if (usingWorktreeBin)
-      args = Arrays.copyOfRange(args, 1, args.length);
-
-    if (args.length < 4 || args.length > 5)
-      throw new IllegalArgumentException(
-        "InstructionTestRunner run-full-sprt: expected 4 or 5 arguments " +
-        "<worktree_path> <test_dir> <test_model> <session_id> [<effort>], got " + args.length + ".\n" +
-        "Usage: instruction-test-runner run-full-sprt <worktree_path> <test_dir> <test_model> " +
-        "<session_id> [<effort>]");
-
-    String worktreePath = args[0];
-    String testDir = args[1];
-    String testModel = args[2];
-    String sessionId = args[3];
-    String testEffort = "";
-    if (args.length > 4)
-      testEffort = args[4];
-
-    // Re-exec from the worktree's own jlink binary so the correct (rebuilt) version runs.
-    // CLAUDE_PLUGIN_ROOT may point to a stale workspace binary; the worktree binary is always current.
-    if (!usingWorktreeBin)
-    {
-      Path worktreeRunner = Path.of(worktreePath).
-        resolve("client/distribution/target/jlink/claude/bin/instruction-test-runner");
-      if (!Files.isExecutable(worktreeRunner))
-        throw new IOException(
-          "InstructionTestRunner run-full-sprt: worktree binary not found at " + worktreeRunner +
-          ". Run 'mvn -f client/pom.xml package' before starting SPRT.");
-      List<String> cmd = new ArrayList<>();
-      cmd.add(worktreeRunner.toString());
-      cmd.add("run-full-sprt");
-      cmd.add("--worktree-bin");
-      cmd.addAll(List.of(args));
-      ProcessBuilder pb = new ProcessBuilder(cmd);
-      pb.environment().put("CLAUDE_PLUGIN_ROOT",
-        Path.of(worktreePath).resolve("client/plugin").toString());
-      pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-      pb.redirectError(ProcessBuilder.Redirect.INHERIT);
-      int exitCode = pb.start().waitFor();
-      if (exitCode != 0)
-        throw new IOException(
-          "InstructionTestRunner run-full-sprt: re-exec from worktree binary failed with " +
-          "exit code " + exitCode);
-      return;
-    }
+    sprtRuntimeRunner.validateConfiguration(testModel, testEffort);
 
     JsonMapper mapper = scope.getJsonMapper();
 
@@ -1689,10 +1644,8 @@ public final class InstructionTestRunner
       {
         // Run one trial for all currently undecided TCs
         long batchStartMs = System.currentTimeMillis();
-        String batchResult = runSprtBatch(new String[]{
-          worktreePath, sprtStatePath.toString(), issueName, testDirRel.toString(),
-          sessionId, testModel, String.valueOf(batchNum), isolationResult
-        });
+        String batchResult = runSprtBatch(worktreePath, sprtStatePath.toString(), issueName,
+          testDirRel.toString(), sessionId, testModel, testEffort, batchNum, isolationResult);
         batchDurationsMs.add(System.currentTimeMillis() - batchStartMs);
         batchResultNode = mapper.readTree(batchResult);
         batchEarlyAbort = batchResultNode.path("early_abort").asBoolean(false);
@@ -1898,444 +1851,26 @@ public final class InstructionTestRunner
     out.println("COMPLETE: overall_decision=" + overallDecision);
   }
 
-  /**
-   * Context data for running a single SPRT test or filtered subset of tests.
-   *
-   * @param issueName the issue name derived from the worktree path
-   * @param testDirRel the test directory relative to the worktree root
-   * @param sprtStatePath the path to the SPRT state JSON file
-   * @param isolationResult the JSON output from the isolation branch creation
-   * @param isolationBranch the name of the isolation branch
-   * @param filteredTcIds the list of test case IDs matching the filter pattern
-   * @param decisions the map of test case IDs to their current SPRT decisions
-   */
-  private record SingleTestContext(
-    String issueName,
-    Path testDirRel,
-    Path sprtStatePath,
-    String isolationResult,
-    String isolationBranch,
-    List<String> filteredTcIds,
-    Map<String, String> decisions)
+  private record RunSprtArguments(String worktreePath, String testDir, String testModel,
+                                  String testEffort, String sessionId)
   {
   }
 
-  /**
-   * Implements the {@code run-single-test} command.
-   * <p>
-   * Runs a subset of SPRT tests matching the specified name pattern. This is a simplified interface
-   * compared to {@code run-full-sprt} that allows running individual tests or a filtered set of tests.
-   *
-   * @param args {@code [worktree_path, test_dir, test_pattern, test_model, project_dir, session_id]}
-   *             where {@code test_pattern} is a test name or glob pattern (e.g., "invoke_with_prompt_file"
-   *             or "*warning*")
-   * @param out  the output stream
-   * @throws IOException          if an I/O error occurs
-   * @throws InterruptedException if waiting for a runner process is interrupted
-   */
-  private void runSingleTest(String[] args, PrintStream out) throws IOException, InterruptedException
-  {
-    validateRunSingleTestArgs(args);
-
-    String worktreePath = args[0];
-    String testDir = args[1];
-    String testPattern = args[2];
-    String testModel = args[3];
-    String sessionId = args[4];
-
-    JsonMapper mapper = scope.getJsonMapper();
-    SingleTestContext context = prepareSingleTestRun(worktreePath, testDir, testPattern, testModel,
-      sessionId, "", mapper, out);
-
-    Map<String, Integer> runCounts = runSprtLoop(worktreePath, sessionId, testModel,
-      context, mapper, out);
-
-    finalizeSingleTestRun(worktreePath, testDir, context, runCounts, out);
-  }
-
-  /**
-   * Validates arguments for run-single-test command.
-   *
-   * @param args the command arguments
-   * @throws IllegalArgumentException if arguments are invalid
-   */
-  private void validateRunSingleTestArgs(String[] args)
+  private static RunSprtArguments parseRunSprtArgs(String[] args)
   {
     requireThat(args, "args").isNotNull();
     if (args.length != 5)
       throw new IllegalArgumentException(
-        "InstructionTestRunner run-single-test: expected 5 arguments " +
-        "<worktree_path> <test_dir> <test_pattern> <test_model> <session_id>, got " +
-        args.length + ".\n" +
-        "Usage: instruction-test-runner run-single-test <worktree_path> <test_dir> <test_pattern> " +
-        "<test_model> <session_id>");
-  }
-
-  /**
-   * Prepares a single test run by cleaning up prior runs, creating an isolation branch,
-   * filtering test cases by pattern, and initializing SPRT state.
-   *
-   * @param worktreePath the worktree path
-   * @param testDir      the test directory
-   * @param testPattern  the test pattern (exact name or glob)
-   * @param testModel    the test model
-   * @param sessionId    the Claude session ID for SPRT state initialization
-   * @param testEffort   the effort level for SPRT state initialization, or empty string if none
-   * @param mapper       the JSON mapper
-   * @param out          the output stream
-   * @return context containing issue name, SPRT state path, isolation result, and filtered test case IDs
-   * @throws IOException if an I/O error occurs
-   */
-  private SingleTestContext prepareSingleTestRun(String worktreePath, String testDir,
-    String testPattern, String testModel, String sessionId, String testEffort, JsonMapper mapper,
-    PrintStream out)
-    throws IOException
-  {
-    // Step 1: prepare-run
-    out.println("Step 1: Running prepare-run...");
-    String prepareOutput = prepareRun(new String[]{worktreePath, testDir});
-    Map<String, String> prepareVars = parseKeyValue(prepareOutput);
-    String testDirAbs = prepareVars.get("test_dir_abs");
-    String testDirRelValue = prepareVars.get("test_dir_rel");
-    String issueName = prepareVars.get("issue_name");
-    String sprtStatePathValue = prepareVars.get("sprt_state_path");
-    Path testDirRel = Path.of(testDirRelValue);
-    Path sprtStatePath = Path.of(sprtStatePathValue);
-    out.println("  TEST_DIR_ABS: " + testDirAbs);
-    out.println("  ISSUE_NAME: " + issueName);
-    out.println("  SPRT_STATE_PATH: " + sprtStatePath);
-    out.println("  TEST_PATTERN: " + testPattern);
-    out.println();
-
-    // Step 2: Cleanup previous run
-    out.println("Step 2: Cleaning up previous run...");
-    removeIsolationBranch(new String[]{worktreePath, issueName + "-isolation"});
-    removeRunnerWorktrees(new String[]{worktreePath, issueName});
-    out.println();
-
-    // Step 3: Create isolation branch
-    out.println("Step 3: Creating isolation branch...");
-    String isolationResult = createIsolationBranch(new String[]{worktreePath, testDirAbs, issueName});
-    JsonNode isolationNode = mapper.readTree(isolationResult);
-    String isolationBranch = isolationNode.path("isolation_branch").asString();
-    ArrayNode tcIdsArray = (ArrayNode) isolationNode.path("tc_ids_json");
-
-    // Step 3b: Filter tests by pattern
-    List<String> allTcIds = new ArrayList<>();
-    for (JsonNode tcIdNode : tcIdsArray)
-      allTcIds.add(tcIdNode.asString());
-
-    List<String> filteredTcIds = new ArrayList<>();
-    for (String tcId : allTcIds)
-    {
-      String originalStem = getTcName(new String[]{isolationResult, tcId});
-      if (matchesPattern(originalStem, testPattern))
-        filteredTcIds.add(tcId);
-    }
-
-    if (filteredTcIds.isEmpty())
-    {
-      out.println("ERROR: No tests match pattern '" + testPattern + "'");
-      out.println("Available tests:");
-      for (String tcId : allTcIds)
-      {
-        String stem = getTcName(new String[]{isolationResult, tcId});
-        out.println("  - " + stem);
-      }
-      throw new IllegalArgumentException("No tests match pattern: " + testPattern);
-    }
-
-    out.println("  Isolation branch: " + isolationBranch);
-    out.println("  Total test cases: " + allTcIds.size());
-    out.println("  Filtered test cases: " + filteredTcIds.size());
-    for (String tcId : filteredTcIds)
-    {
-      String stem = getTcName(new String[]{isolationResult, tcId});
-      out.println("    " + tcId + ": " + stem);
-    }
-    out.println();
-
-    // Step 4: Initialize SPRT with filtered test cases
-    out.println("Step 4: Initializing SPRT state...");
-    ArrayNode filteredTcIdsArray = mapper.createArrayNode();
-    for (String tcId : filteredTcIds)
-      filteredTcIdsArray.add(tcId);
-    initSprt(new String[]{sprtStatePath.toString(), mapper.writeValueAsString(filteredTcIdsArray), "/dev/null",
-      testModel, sessionId, "--effort", testEffort});
-    out.println("  SPRT state initialized at: " + sprtStatePath);
-    out.println();
-
-    Map<String, String> decisions = new HashMap<>();
-    return new SingleTestContext(issueName, testDirRel, sprtStatePath, isolationResult, isolationBranch,
-      filteredTcIds, decisions);
-  }
-
-  /**
-   * Runs the SPRT loop until all test cases reach a decision or the 50-run truncation limit.
-   *
-   * @param worktreePath the worktree path
-   * @param sessionId the Claude session ID
-   * @param testModel the test model
-   * @param context the test context
-   * @param mapper the JSON mapper
-   * @param out the output stream
-   * @return a map of test case IDs to run counts
-   * @throws IOException if an I/O error occurs
-   * @throws InterruptedException if waiting is interrupted
-   */
-  private Map<String, Integer> runSprtLoop(String worktreePath,
-    String sessionId, String testModel, SingleTestContext context, JsonMapper mapper,
-    PrintStream out)
-    throws IOException, InterruptedException
-  {
-    out.println("=== Starting SPRT Loop ===");
-    out.println("Test cases: " + context.filteredTcIds().size());
-    out.println();
-
-    int batchNum = 0;
-    List<String> undecided = new ArrayList<>(context.filteredTcIds());
-    Map<String, Integer> runCounts = new HashMap<>();
-    for (String tcId : context.filteredTcIds())
-      runCounts.put(tcId, 0);
-
-    while (!undecided.isEmpty())
-    {
-      ++batchNum;
-      out.println("=== Batch " + batchNum + ": " + undecided.size() + " test case(s) remaining ===");
-
-      String batchResult = runSprtBatch(new String[]{
-        worktreePath, context.sprtStatePath().toString(), context.issueName(), context.testDirRel().toString(),
-        sessionId, testModel, String.valueOf(batchNum), context.isolationResult()
-      });
-      JsonNode batchResultNode = mapper.readTree(batchResult);
-      boolean batchEarlyAbort = batchResultNode.path("early_abort").asBoolean(false);
-
-      boolean anyReject = processBatchResults(undecided, runCounts, context, mapper, out);
-
-      printBatchSummary(batchNum, context, runCounts, mapper, out);
-
-      if (batchEarlyAbort)
-      {
-        int totalFailures = batchResultNode.path("cumulative_failures").asInt(0);
-        out.println("=== Early Failure Detection (Batch " + batchNum + ") ===");
-        out.println("Detected " + totalFailures + " total failures. Batch interrupted mid-execution.");
-        out.println("Stopping early to provide fast feedback.");
-        out.println();
-        handleEarlyAbort(undecided, runCounts, context, out);
-        break;
-      }
-
-      if (anyReject)
-      {
-        handleEarlyAbort(undecided, runCounts, context, out);
-        break;
-      }
-    }
-
-    out.println("=== SPRT Loop Complete ===");
-    out.println();
-    return runCounts;
-  }
-
-  /**
-   * Processes batch results and updates decisions.
-   *
-   * @param undecided the list of undecided test cases (mutated)
-   * @param runCounts the run counts map
-   * @param context the test context
-   * @param mapper the JSON mapper
-   * @param out the output stream
-   * @return {@code true} if any test case was rejected
-   * @throws IOException if an I/O error occurs
-   */
-  private boolean processBatchResults(List<String> undecided, Map<String, Integer> runCounts,
-    SingleTestContext context, JsonMapper mapper, PrintStream out)
-    throws IOException
-  {
-    boolean anyReject = false;
-    List<String> stillUndecided = new ArrayList<>();
-
-    for (String tcId : undecided)
-    {
-      String boundaryResult = checkBoundary(new String[]{context.sprtStatePath().toString(), tcId});
-      JsonNode boundaryNode = mapper.readTree(boundaryResult);
-      String decision = boundaryNode.path("decision").asString();
-      int runs = runCounts.get(tcId) + 1;
-      runCounts.put(tcId, runs);
-
-      if (decision.equals("ACCEPT") || decision.equals("REJECT"))
-      {
-        context.decisions().put(tcId, decision);
-        out.println("  ✓ " + tcId + ": " + decision + " (" + runs + " runs)");
-        if (decision.equals("REJECT"))
-          anyReject = true;
-      }
-      else if (runs >= 50)
-      {
-        context.decisions().put(tcId, "REJECT");
-        out.println("  ✗ " + tcId + ": REJECT (truncated at 50 runs)");
-        anyReject = true;
-      }
-      else
-      {
-        stillUndecided.add(tcId);
-      }
-    }
-
-    undecided.clear();
-    undecided.addAll(stillUndecided);
-    out.println();
-    return anyReject;
-  }
-
-  /**
-   * Prints a batch summary showing SPRT state for all test cases.
-   *
-   * @param batchNum the batch number
-   * @param context the test context
-   * @param runCounts the run counts map
-   * @param mapper the JSON mapper
-   * @param out the output stream
-   * @throws IOException if an I/O error occurs
-   */
-  private void printBatchSummary(int batchNum, SingleTestContext context,
-    Map<String, Integer> runCounts, JsonMapper mapper, PrintStream out)
-    throws IOException
-  {
-    out.println("=== Batch " + batchNum + " Summary ===");
-    out.println();
-
-    String sprtStateJson = Files.readString(context.sprtStatePath());
-    JsonNode sprtState = mapper.readTree(sprtStateJson);
-    JsonNode sprtNode = sprtState.path("sprt_state");
-
-    out.printf("%-10s %-7s %-7s %-12s %-6s %-20s%n",
-      "TC", "Passes", "Fails", "Decision", "Runs", "Runs to Convergence");
-    out.println("-".repeat(72));
-
-    for (String tcId : context.filteredTcIds())
-    {
-      JsonNode tcNode = sprtNode.path(tcId);
-      int passes = tcNode.path("passes").asInt(0);
-      int fails = tcNode.path("fails").asInt(0);
-      double logRatio = tcNode.path("log_ratio").asDouble(0.0);
-      String decision = context.decisions().getOrDefault(tcId, "INCONCLUSIVE");
-      int runs = runCounts.get(tcId);
-
-      String convergence;
-      if (decision.equals("INCONCLUSIVE"))
-      {
-        double toAccept = 2.944 - logRatio;
-        int runsToAccept = (int) Math.ceil(toAccept / 0.1112);
-        convergence = "~" + runsToAccept + " more";
-      }
-      else
-      {
-        convergence = "-";
-      }
-
-      out.printf("%-10s %-7d %-7d %-12s %-6d %-20s%n",
-        tcId, passes, fails, decision, runs, convergence);
-    }
-    out.println();
-  }
-
-  /**
-   * Handles early SPRT abort when a test case is rejected.
-   *
-   * @param undecided the list of undecided test cases
-   * @param runCounts the run counts map
-   * @param context the test context
-   * @param out the output stream
-   */
-  private void handleEarlyAbort(List<String> undecided, Map<String, Integer> runCounts,
-    SingleTestContext context, PrintStream out)
-  {
-    out.println("=== SPRT Aborted: At least one test case REJECT detected ===");
-    out.println("Remaining test cases (" + undecided.size() + ") will be marked INCONCLUSIVE.");
-    for (String tcId : undecided)
-    {
-      context.decisions().put(tcId, "INCONCLUSIVE");
-      out.println("  " + tcId + ": INCONCLUSIVE (aborted after " + runCounts.get(tcId) + " runs)");
-    }
-    out.println();
-  }
-
-  /**
-   * Finalizes a single test run by writing results, cleaning up, and reporting.
-   *
-   * @param worktreePath the worktree path
-   * @param testDir the test directory
-   * @param context the test context
-   * @param runCounts the run counts map
-   * @param out the output stream
-   * @throws IOException if an I/O error occurs
-   */
-  private void finalizeSingleTestRun(String worktreePath, String testDir,
-    SingleTestContext context, Map<String, Integer> runCounts, PrintStream out)
-    throws IOException
-  {
-    // Step 6: Write test results
-    out.println("Step 6: Writing test results...");
-    Map<String, String> prepareVars = parseKeyValue(
-      prepareRun(new String[]{worktreePath, testDir}));
-    String testDirAbs = prepareVars.get("test_dir_abs");
-    String writeOutput = writeTestResults(new String[]{worktreePath, context.sprtStatePath().toString(),
-      testDirAbs});
-    Map<String, String> writeVars = parseKeyValue(writeOutput);
-    String overallDecision = writeVars.get("overall_decision");
-    String testSha = writeVars.get("test_sha");
-    out.println("  Overall decision: " + overallDecision);
-    out.println("  Test SHA: " + testSha);
-    out.println();
-
-    // Step 7: Cleanup
-    out.println("Step 7: Cleanup...");
-    removeIsolationBranch(new String[]{worktreePath, context.isolationBranch()});
-    removeRunnerWorktrees(new String[]{worktreePath, context.issueName()});
-    out.println();
-
-    // Step 8: Report results
-    out.println("=== SPRT Results ===");
-    out.println();
-    out.println("Overall Decision: " + overallDecision);
-    out.println("Test SHA: " + testSha);
-    out.println();
-
-    for (String tcId : context.filteredTcIds())
-    {
-      String originalStem = getTcName(new String[]{context.isolationResult(), tcId});
-      out.println(tcId + ": " + context.decisions().get(tcId) + " (" + runCounts.get(tcId) +
-        " runs) - " + originalStem + ".md");
-    }
-
-    out.println();
-    out.println("COMPLETE: overall_decision=" + overallDecision);
-  }
-
-  /**
-   * Checks if a test name matches the given pattern.
-   * <p>
-   * Supports simple glob patterns with {@code *} wildcard.
-   *
-   * @param testName the test name to check
-   * @param pattern  the pattern (exact name or glob with *)
-   * @return {@code true} if the test name matches the pattern
-   */
-  private static boolean matchesPattern(String testName, String pattern)
-  {
-    requireThat(testName, "testName").isNotNull();
-    requireThat(pattern, "pattern").isNotNull();
-
-    if (pattern.equals(testName))
-      return true;
-
-    if (!pattern.contains("*"))
-      return false;
-
-    // Convert glob pattern to regex
-    String regex = pattern.replace(".", "\\.").replace("*", ".*");
-    return testName.matches(regex);
+        "InstructionTestRunner run-sprt: expected 5 arguments " +
+        "<worktree_path> <test_dir> <test_model> <effort> <session_id>, got " + args.length + ".\n" +
+        "Usage: instruction-test-runner run-sprt <worktree_path> <test_dir> <test_model> " +
+        "<effort> <session_id>");
+    requireThat(args[0], "worktree_path").isNotBlank();
+    requireThat(args[1], "test_dir").isNotBlank();
+    requireThat(args[2], "test_model").isNotBlank();
+    requireThat(args[3], "effort").isNotBlank();
+    requireThat(args[4], "session_id").isNotBlank();
+    return new RunSprtArguments(args[0], args[1], args[2], args[3], args[4]);
   }
 
   /**
@@ -2588,31 +2123,6 @@ public final class InstructionTestRunner
   }
 
   /**
-   * Builds the grader argument array for ClaudeRunner invocation.
-   * <p>
-   * Exposed for testing to validate the --agent argument is correctly constructed.
-   *
-   * @param graderPromptFile the grader prompt file path
-   * @param modelId          the model ID to use for grading
-   * @param runnerWorktree   the runner worktree path (contains .cat/config/)
-   * @param jlinkBin         the jlink binary directory path
-   * @return the grader arguments array
-   * @throws NullPointerException if any parameter is null
-   */
-  private static String[] buildGraderArgs(Path graderPromptFile, String modelId, String runnerWorktree,
-    Path jlinkBin)
-  {
-    return new String[]{
-      "--prompt-file", graderPromptFile.toString(),
-      "--model", modelId,
-      "--agent", "instruction-grader-agent",
-      "--plugin-source", Path.of(runnerWorktree, "client/plugin").toString(),
-      "--jlink-bin", jlinkBin.toString(),
-      "--cwd", runnerWorktree
-    };
-  }
-
-  /**
    * Computes the SHA-256 hex digest of the contents of a file.
    *
    * @param filePath path to the file
@@ -2720,10 +2230,14 @@ public final class InstructionTestRunner
    * @param candidate the path to check
    * @throws IllegalArgumentException if {@code candidate} is outside {@code boundary}
    */
-  private void validatePathWithinBoundary(Path boundary, Path candidate)
+  private void validatePathWithinBoundary(Path boundary, Path candidate) throws IOException
   {
-    Path resolvedBoundary = boundary.toAbsolutePath().normalize();
-    Path resolvedCandidate = candidate.toAbsolutePath().normalize();
+    Path resolvedBoundary = boundary.toRealPath();
+    Path resolvedCandidate;
+    if (Files.exists(candidate))
+      resolvedCandidate = candidate.toRealPath();
+    else
+      resolvedCandidate = candidate.toAbsolutePath().normalize();
     if (!resolvedCandidate.startsWith(resolvedBoundary))
       throw new IllegalArgumentException(
         "InstructionTestRunner: path traversal detected: '" + candidate + "' is outside '" + boundary + "'");
@@ -2837,6 +2351,6 @@ public final class InstructionTestRunner
       "merge-results, create-isolation-branch, create-runner-worktrees, check-run-contamination, " +
       "remove-runner-worktrees, write-test-results, save-failed-run, remove-runner-worktree, " +
       "remove-isolation-branch, prepare-run, prepare-trial, get-json-field, get-tc-name, " +
-      "get-worktree-field, run-sprt-batch, run-full-sprt, run-single-test";
+      "get-worktree-field, run-sprt";
   }
 }

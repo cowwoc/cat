@@ -5,8 +5,10 @@ See LICENSE.md in the project root for license terms.
 -->
 # Codex SPRT Runner
 
-CAT's formal SPRT pipeline is not yet Codex-backed. The Java `instruction-test-runner` and grader pipeline still
-depend on a non-Codex runner and stream format.
+Run CAT's formal SPRT pipeline through the Codex jlink `instruction-test-runner` binary. Use the canonical
+`run-sprt` command.
 
-Do not present `cat:sprt-runner` results as Codex-runtime validation from Codex. For isolated Codex behavior checks,
-use `cat:codex-runner` with explicit `--model` and `--effort`.
+The effort argument belongs immediately after the model id. The runner executes trials and graders using the runtime
+that invoked `instruction-test-runner`; from Codex it launches Codex-backed trial and grader runs.
+
+<!-- cat:include ../../include/sprt-runner.md -->

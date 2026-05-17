@@ -865,6 +865,24 @@ implemented.
 
 In those cases, set `empirical_verification_skipped: true` in output JSON with a brief reason.
 
+## Step 10: Produce Atomic Prevention Rules for Phase 4 Gate
+
+Before emitting the final JSON, produce `prevention_rules` as a required non-empty array of concrete
+imperative rules. These rules are consumed by `learn/first-use.md` Step 4c atomicity gating.
+
+Rules for each array entry:
+- one prevention rule sentence per array element
+- imperative phrasing ("Always ...", "Run ...", "Validate ...")
+- concrete context (file/command/condition/artifact)
+- includes behavior that can be observed as pass/fail
+
+Invalid vague rules (must not appear):
+- `be more careful`
+- `ensure correctness`
+
+Valid specific rule example:
+- `Always validate commit hash before calling record-learning`
+
 ## Output Format
 
 Your final message must be ONLY this JSON object (no other text) — the main agent will parse this to
@@ -888,6 +906,9 @@ orchestrate the next phase. Copy and fill in the values:
   "files_modified": [
     "/absolute/path/to/file1",
     "/absolute/path/to/file2"
+  ],
+  "prevention_rules": [
+    "Always validate commit hash before calling record-learning"
   ],
   "prevention_description": "What was changed and why",
   "cause_signature": "<cause_type>:<barrier_type>:<context>",

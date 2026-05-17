@@ -580,6 +580,14 @@ Severity: CRITICAL (blocks release, data loss, security breach) > HIGH (material
 
 Review scope: {REVIEW_SCOPE}
 
+Compaction reminder:
+- WORKTREE_PATH={WORKTREE_PATH}
+- target_branch={TARGET_BRANCH}
+- reviewed_base_sha={BASE_SHA}
+- reviewed_head_sha={HEAD_SHA}
+- changed_file_count={CHANGED_FILE_COUNT}
+- changed_files_fingerprint={CHANGED_FILES_FINGERPRINT}
+
 Return ONLY valid JSON matching your stakeholder definition.
 ```
 

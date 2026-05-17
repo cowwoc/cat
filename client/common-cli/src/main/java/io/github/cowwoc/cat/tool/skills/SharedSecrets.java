@@ -31,6 +31,7 @@ public final class SharedSecrets
   private static final Lookup LOOKUP = MethodHandles.lookup();
   private static EmpiricalTestRunnerAccess empiricalTestRunnerAccess;
   private static InstructionTestRunnerAccess instructionTestRunnerAccess;
+  private static SprtRuntimeRunnerAccess sprtRuntimeRunnerAccess;
   private static StatuslineCommandAccess statuslineCommandAccess;
 
   private SharedSecrets()
@@ -127,27 +128,160 @@ public final class SharedSecrets
   }
 
   /**
-   * Builds the grader argument array for ClaudeRunner invocation.
-   * <p>
-   * Exposed for testing to validate the --agent argument is correctly constructed.
+   * Parses {@code run-sprt} arguments for tests.
    *
-   * @param graderPromptFile the grader prompt file path
-   * @param modelId the model ID to use
-   * @param runnerWorktree the runner worktree path
-   * @param jlinkBin the jlink binary path
-   * @return the grader arguments array
-   * @throws NullPointerException if any parameter is null
+   * @param args the raw command arguments
+   * @return {@code [worktree_path, test_dir, test_model, effort, session_id]}
    */
-  public static String[] buildGraderArgs(Path graderPromptFile, String modelId, String runnerWorktree,
-    Path jlinkBin)
+  public static String[] parseRunSprtArgs(String[] args)
   {
-    requireThat(graderPromptFile, "graderPromptFile").isNotNull();
-    requireThat(modelId, "modelId").isNotNull();
-    requireThat(runnerWorktree, "runnerWorktree").isNotNull();
-    requireThat(jlinkBin, "jlinkBin").isNotNull();
+    requireThat(args, "args").isNotNull();
     if (instructionTestRunnerAccess == null)
       initialize(InstructionTestRunner.class);
-    return instructionTestRunnerAccess.buildGraderArgs(graderPromptFile, modelId, runnerWorktree, jlinkBin);
+    return instructionTestRunnerAccess.parseRunSprtArgs(args);
+  }
+
+  /**
+   * Builds Claude trial runner arguments for tests.
+   *
+   * @param promptFile     the prompt file
+   * @param modelId        the model ID
+   * @param effort         the reasoning effort
+   * @param runnerWorktree the runner worktree
+   * @param outputJson     the output JSON path
+   * @param jlinkBin       the jlink binary directory
+   * @return the runner arguments
+   */
+  public static String[] buildClaudeTrialArgs(Path promptFile, String modelId, String effort,
+    String runnerWorktree, String outputJson, Path jlinkBin)
+  {
+    if (sprtRuntimeRunnerAccess == null)
+      initialize(SprtRuntimeRunner.class);
+    return sprtRuntimeRunnerAccess.buildClaudeTrialArgs(promptFile, modelId, effort,
+      runnerWorktree, outputJson, jlinkBin);
+  }
+
+  /**
+   * Builds Codex trial runner arguments for tests.
+   *
+   * @param promptFile     the prompt file
+   * @param modelId        the model ID
+   * @param effort         the reasoning effort
+   * @param runnerWorktree the runner worktree
+   * @param outputJson     the output JSON path
+   * @return the runner arguments
+   */
+  public static String[] buildCodexTrialArgs(Path promptFile, String modelId, String effort,
+    String runnerWorktree, String outputJson)
+  {
+    if (sprtRuntimeRunnerAccess == null)
+      initialize(SprtRuntimeRunner.class);
+    return sprtRuntimeRunnerAccess.buildCodexTrialArgs(promptFile, modelId, effort,
+      runnerWorktree, outputJson);
+  }
+
+  /**
+   * Builds Claude grader arguments for tests.
+   *
+   * @param graderPromptFile the grader prompt file
+   * @param modelId          the model ID
+   * @param effort           the reasoning effort
+   * @param runnerWorktree   the runner worktree
+   * @param jlinkBin         the jlink binary directory
+   * @return the grader arguments
+   */
+  public static String[] buildClaudeGraderArgs(Path graderPromptFile, String modelId, String effort,
+    String runnerWorktree, Path jlinkBin)
+  {
+    if (sprtRuntimeRunnerAccess == null)
+      initialize(SprtRuntimeRunner.class);
+    return sprtRuntimeRunnerAccess.buildClaudeGraderArgs(graderPromptFile, modelId, effort,
+      runnerWorktree, jlinkBin);
+  }
+
+  /**
+   * Builds Codex grader arguments for tests.
+   *
+   * @param graderPromptFile the grader prompt file
+   * @param modelId          the model ID
+   * @param effort           the reasoning effort
+   * @param runnerWorktree   the runner worktree
+   * @return the grader arguments
+   */
+  public static String[] buildCodexGraderArgs(Path graderPromptFile, String modelId, String effort,
+    String runnerWorktree)
+  {
+    if (sprtRuntimeRunnerAccess == null)
+      initialize(SprtRuntimeRunner.class);
+    return sprtRuntimeRunnerAccess.buildCodexGraderArgs(graderPromptFile, modelId, effort,
+      runnerWorktree);
+  }
+
+  /**
+   * Resolves an SPRT runtime descriptor for tests.
+   *
+   * @param descriptor the plugin descriptor path
+   * @return the runtime identifier
+   */
+  public static String sprtRuntimeIdForDescriptor(Path descriptor)
+  {
+    requireThat(descriptor, "descriptor").isNotNull();
+    if (sprtRuntimeRunnerAccess == null)
+      initialize(SprtRuntimeRunner.class);
+    return sprtRuntimeRunnerAccess.runtimeIdForDescriptor(descriptor);
+  }
+
+  /**
+   * Builds runtime-dispatched trial arguments for tests.
+   *
+   * @param descriptor     the plugin descriptor path
+   * @param promptFile     the prompt file
+   * @param modelId        the model ID
+   * @param effort         the reasoning effort
+   * @param runnerWorktree the runner worktree
+   * @param outputJson     the output JSON path
+   * @return the runner arguments
+   */
+  public static String[] buildTrialArgsForDescriptor(Path descriptor, Path promptFile,
+    String modelId, String effort, String runnerWorktree, String outputJson)
+  {
+    requireThat(descriptor, "descriptor").isNotNull();
+    if (sprtRuntimeRunnerAccess == null)
+      initialize(SprtRuntimeRunner.class);
+    return sprtRuntimeRunnerAccess.buildTrialArgsForDescriptor(descriptor, promptFile, modelId,
+      effort, runnerWorktree, outputJson);
+  }
+
+  /**
+   * Builds runtime-dispatched grader arguments for tests.
+   *
+   * @param descriptor       the plugin descriptor path
+   * @param graderPromptFile the grader prompt file
+   * @param modelId          the model ID
+   * @param effort           the reasoning effort
+   * @param runnerWorktree   the runner worktree
+   * @return the runner arguments
+   */
+  public static String[] buildGraderArgsForDescriptor(Path descriptor, Path graderPromptFile,
+    String modelId, String effort, String runnerWorktree)
+  {
+    requireThat(descriptor, "descriptor").isNotNull();
+    if (sprtRuntimeRunnerAccess == null)
+      initialize(SprtRuntimeRunner.class);
+    return sprtRuntimeRunnerAccess.buildGraderArgsForDescriptor(descriptor, graderPromptFile,
+      modelId, effort, runnerWorktree);
+  }
+
+  /**
+   * Registers the access object for {@link SprtRuntimeRunner}.
+   *
+   * @param access the access object
+   * @throws NullPointerException if {@code access} is null
+   */
+  public static void setSprtRuntimeRunnerAccess(SprtRuntimeRunnerAccess access)
+  {
+    requireThat(access, "access").isNotNull();
+    sprtRuntimeRunnerAccess = access;
   }
 
   /**
@@ -227,17 +361,105 @@ public final class SharedSecrets
     String sha256Bytes(byte[] bytes);
 
     /**
-     * Builds the grader argument array for ClaudeRunner invocation.
-     * <p>
-     * Exposed for testing to validate the --agent argument is correctly constructed.
+     * Parses {@code run-sprt} arguments.
      *
-     * @param graderPromptFile the grader prompt file path
-     * @param modelId the model ID to use
-     * @param runnerWorktree the runner worktree path
-     * @param jlinkBin the jlink binary path
-     * @return the grader arguments array
+     * @param args the raw command arguments
+     * @return {@code [worktree_path, test_dir, test_model, effort, session_id]}
      */
-    String[] buildGraderArgs(Path graderPromptFile, String modelId, String runnerWorktree, Path jlinkBin);
+    String[] parseRunSprtArgs(String[] args);
+  }
+
+  /**
+   * Provides access to {@link SprtRuntimeRunner} internal methods.
+   */
+  public interface SprtRuntimeRunnerAccess
+  {
+    /**
+     * Builds Claude trial runner arguments.
+     *
+     * @param promptFile     the prompt file
+     * @param modelId        the model ID
+     * @param effort         the reasoning effort
+     * @param runnerWorktree the runner worktree
+     * @param outputJson     the output JSON path
+     * @param jlinkBin       the jlink binary directory
+     * @return the runner arguments
+     */
+    String[] buildClaudeTrialArgs(Path promptFile, String modelId, String effort,
+      String runnerWorktree, String outputJson, Path jlinkBin);
+
+    /**
+     * Builds Codex trial runner arguments.
+     *
+     * @param promptFile     the prompt file
+     * @param modelId        the model ID
+     * @param effort         the reasoning effort
+     * @param runnerWorktree the runner worktree
+     * @param outputJson     the output JSON path
+     * @return the runner arguments
+     */
+    String[] buildCodexTrialArgs(Path promptFile, String modelId, String effort,
+      String runnerWorktree, String outputJson);
+
+    /**
+     * Builds Claude grader arguments.
+     *
+     * @param graderPromptFile the grader prompt file
+     * @param modelId          the model ID
+     * @param effort           the reasoning effort
+     * @param runnerWorktree   the runner worktree
+     * @param jlinkBin         the jlink binary directory
+     * @return the grader arguments
+     */
+    String[] buildClaudeGraderArgs(Path graderPromptFile, String modelId, String effort,
+      String runnerWorktree, Path jlinkBin);
+
+    /**
+     * Builds Codex grader arguments.
+     *
+     * @param graderPromptFile the grader prompt file
+     * @param modelId          the model ID
+     * @param effort           the reasoning effort
+     * @param runnerWorktree   the runner worktree
+     * @return the grader arguments
+     */
+    String[] buildCodexGraderArgs(Path graderPromptFile, String modelId, String effort,
+      String runnerWorktree);
+
+    /**
+     * Resolves an SPRT runtime descriptor.
+     *
+     * @param descriptor the plugin descriptor path
+     * @return the runtime identifier
+     */
+    String runtimeIdForDescriptor(Path descriptor);
+
+    /**
+     * Builds runtime-dispatched trial arguments.
+     *
+     * @param descriptor     the plugin descriptor path
+     * @param promptFile     the prompt file
+     * @param modelId        the model ID
+     * @param effort         the reasoning effort
+     * @param runnerWorktree the runner worktree
+     * @param outputJson     the output JSON path
+     * @return the runner arguments
+     */
+    String[] buildTrialArgsForDescriptor(Path descriptor, Path promptFile, String modelId,
+      String effort, String runnerWorktree, String outputJson);
+
+    /**
+     * Builds runtime-dispatched grader arguments.
+     *
+     * @param descriptor       the plugin descriptor path
+     * @param graderPromptFile the grader prompt file
+     * @param modelId          the model ID
+     * @param effort           the reasoning effort
+     * @param runnerWorktree   the runner worktree
+     * @return the runner arguments
+     */
+    String[] buildGraderArgsForDescriptor(Path descriptor, Path graderPromptFile, String modelId,
+      String effort, String runnerWorktree);
   }
 
   /**

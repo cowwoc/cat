@@ -30,6 +30,7 @@ Path-specific shared rule bodies live in `.cat/rules/include/`. Runtime director
 |-----------|----------|-------|---------|
 | [backwards-compatibility.md](backwards-compatibility.md) | all agents | always | Require migrations instead of legacy fallbacks |
 | [convention-locations.md](convention-locations.md) | main agent only | always | Where to put end-user vs plugin-dev conventions |
+| [dependency-boundaries.md](dependency-boundaries.md) | main agent only | always | Keep dependencies and test seams owned by the relevant behavior |
 | [edit-planning.md](edit-planning.md) | all agents | always | Plan independent edits together |
 | [hooks.md](hooks.md) | main agent only | always | Runtime-neutral hook guidance |
 | [license-header.md](license-header.md) | all agents | always | Apply CAT license headers |

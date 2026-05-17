@@ -1,6 +1,6 @@
 ---
 name: sprt-runner
-description: Explain that CAT's formal SPRT runner is not yet Codex-backed and direct Codex users to ad-hoc codex-runner checks
+description: Run CAT's formal SPRT instruction-test pipeline from the Codex runtime using instruction-test-runner run-sprt
 ---
 <!--
 Copyright (c) 2026 Gili Tzabari. All rights reserved.

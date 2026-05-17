@@ -8,7 +8,6 @@ package io.github.cowwoc.cat.tool.skills;
 
 import io.github.cowwoc.cat.tool.util.GradeSchemaValidator;
 import io.github.cowwoc.cat.tool.CliTool;
-import io.github.cowwoc.cat.tool.MainCliTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.databind.JsonNode;
@@ -33,21 +32,25 @@ final class SprtGrader
 {
   private final Logger log = LoggerFactory.getLogger(SprtGrader.class);
   private final CliTool scope;
+  private final SprtRuntimeRunner runtimeRunner;
 
   /**
    * Creates a new SprtGrader.
    *
-   * @param scope the Claude plugin scope providing JSON mapper and other services
-   * @throws NullPointerException if {@code scope} is null
+   * @param scope the active plugin scope providing JSON mapper and other services
+   * @param runtimeRunner the active runtime runner
+   * @throws NullPointerException if {@code scope} or {@code runtimeRunner} are null
    */
-  SprtGrader(CliTool scope)
+  SprtGrader(CliTool scope, SprtRuntimeRunner runtimeRunner)
   {
     requireThat(scope, "scope").isNotNull();
+    requireThat(runtimeRunner, "runtimeRunner").isNotNull();
     this.scope = scope;
+    this.runtimeRunner = runtimeRunner;
   }
 
   /**
-   * Grades a single test case by spawning a grader agent via ClaudeRunner.
+   * Grades a single test case by spawning a grader agent via the active runtime.
    * <p>
    * The grader agent reads the test scenario file and transcript, evaluates assertions,
    * and writes a grade.json file to the specified output path.
@@ -56,8 +59,8 @@ final class SprtGrader
    * @param trialNum       the trial number
    * @param outputJson     path to the runner output JSON (transcript)
    * @param modelId        the model ID to use for grading
+   * @param effort         the reasoning effort to use for grading
    * @param runnerWorktree path to the runner worktree
-   * @param jlinkBin       the jlink binary directory path
    * @param testDir        path to the test directory containing scenario MD files
    * @param gradeOutputPath path where grader should write grade.json
    * @param isolationResult JSON string from create-isolation-branch (contains tc_name_map)
@@ -65,7 +68,7 @@ final class SprtGrader
    * @throws IOException if grading fails
    */
   String gradeTc(String tcId, int trialNum, String outputJson, String modelId,
-    String runnerWorktree, Path jlinkBin, String testDir,
+    String effort, String runnerWorktree, String testDir,
     String gradeOutputPath, String isolationResult)
     throws IOException
   {
@@ -79,8 +82,8 @@ final class SprtGrader
         trialNum, gradeOutputPath, runnerWorktree);
       Files.writeString(graderPromptFile, graderPrompt, UTF_8);
 
-      Path actualGradePath = invokeGrader(tcId, graderPromptFile, modelId, runnerWorktree,
-        jlinkBin, gradeOutputPath, trialNum);
+      Path actualGradePath = invokeGrader(tcId, graderPromptFile, modelId, effort,
+        runnerWorktree, gradeOutputPath, trialNum);
 
       String runId = tcId + "_run" + trialNum;
       ensureTestCaseId(actualGradePath, runId);
@@ -145,59 +148,55 @@ final class SprtGrader
    * @param tcId the test case ID
    * @param graderPromptFile the grader prompt file
    * @param modelId the model ID to use for grading
+   * @param effort the reasoning effort to use for grading
    * @param runnerWorktree the runner worktree path
-   * @param jlinkBin the jlink binary directory path
    * @param gradeOutputPath the expected output path for the grade file
    * @param trialNum the trial number
    * @return the actual path where the grade file was written
    * @throws IOException if the grader fails or the grade file is not found
    */
   Path invokeGrader(String tcId, Path graderPromptFile, String modelId,
-    String runnerWorktree, Path jlinkBin, String gradeOutputPath, int trialNum)
+    String effort, String runnerWorktree, String gradeOutputPath, int trialNum)
     throws IOException
   {
     int maxAttempts = 3;
     IOException lastException = null;
     for (int attempt = 1; attempt <= maxAttempts; attempt += 1)
     {
-      try (CliTool graderScope = new MainCliTool())
+      Path graderStdout = Files.createTempFile("grader-stdout-", ".txt");
+      try (PrintStream graderOut = new PrintStream(graderStdout.toFile(), UTF_8))
       {
-        String[] graderArgs = buildGraderArgs(graderPromptFile, modelId, runnerWorktree, jlinkBin);
+        int exitCode = runtimeRunner.runGrader(graderPromptFile, modelId, effort,
+          runnerWorktree, graderOut);
 
-        Path graderStdout = Files.createTempFile("grader-stdout-", ".txt");
-        try (PrintStream graderOut = new PrintStream(graderStdout.toFile(), UTF_8))
+        if (exitCode != 0)
         {
-          int exitCode = ClaudeRunner.run(graderScope, graderArgs, graderOut);
-
-          if (exitCode != 0)
+          String graderOutput = Files.readString(graderStdout, UTF_8);
+          lastException = new IOException("Grader for " + tcId + " exited with code " + exitCode +
+            "\nGrader output:\n" + graderOutput);
+          if (graderOutput.contains("API Error") && attempt < maxAttempts)
           {
-            String graderOutput = Files.readString(graderStdout, UTF_8);
-            lastException = new IOException("Grader for " + tcId + " exited with code " + exitCode +
-              "\nGrader output:\n" + graderOutput);
-            if (graderOutput.contains("API Error") && attempt < maxAttempts)
+            log.warn("{}: grader hit API error on attempt {}/{}, retrying in {}s",
+              tcId, attempt, maxAttempts, attempt * 5);
+            try
             {
-              log.warn("{}: grader hit API error on attempt {}/{}, retrying in {}s",
-                tcId, attempt, maxAttempts, attempt * 5);
-              try
-              {
-                Thread.sleep(attempt * 5000L);
-              }
-              catch (InterruptedException _)
-              {
-                Thread.currentThread().interrupt();
-                throw lastException;
-              }
-              continue;
+              Thread.sleep(attempt * 5000L);
             }
-            throw lastException;
+            catch (InterruptedException _)
+            {
+              Thread.currentThread().interrupt();
+              throw lastException;
+            }
+            continue;
           }
+          throw lastException;
+        }
 
-          return findGradeFile(tcId, gradeOutputPath, runnerWorktree, trialNum, graderStdout);
-        }
-        finally
-        {
-          Files.deleteIfExists(graderStdout);
-        }
+        return findGradeFile(tcId, gradeOutputPath, runnerWorktree, trialNum, graderStdout);
+      }
+      finally
+      {
+        Files.deleteIfExists(graderStdout);
       }
     }
     throw lastException;
@@ -321,27 +320,5 @@ final class SprtGrader
       throw new IllegalArgumentException(
         "InstructionTestRunner get-tc-name: tc_id '" + tcId + "' not found in tc_name_map");
     return stemNode.asString();
-  }
-
-  /**
-   * Builds the grader argument array for ClaudeRunner invocation.
-   *
-   * @param graderPromptFile the grader prompt file path
-   * @param modelId          the model ID to use for grading
-   * @param runnerWorktree   the runner worktree path (contains .cat/config/)
-   * @param jlinkBin         the jlink binary directory path
-   * @return the grader arguments array
-   */
-  private static String[] buildGraderArgs(Path graderPromptFile, String modelId, String runnerWorktree,
-    Path jlinkBin)
-  {
-    return new String[]{
-      "--prompt-file", graderPromptFile.toString(),
-      "--model", modelId,
-      "--agent", "instruction-grader-agent",
-      "--plugin-source", Path.of(runnerWorktree, "client/plugin").toString(),
-      "--jlink-bin", jlinkBin.toString(),
-      "--cwd", runnerWorktree
-    };
   }
 }

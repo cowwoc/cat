@@ -8,6 +8,9 @@ package io.github.cowwoc.cat.client.test;
 
 import io.github.cowwoc.cat.tool.skills.SharedSecrets;
 import io.github.cowwoc.cat.tool.skills.InstructionTestRunner;
+import io.github.cowwoc.cat.tool.MainCliTool;
+import io.github.cowwoc.cat.agent.AgentRuntime;
+import org.testng.SkipException;
 import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -355,6 +358,415 @@ public final class InstructionTestRunnerTest
       requireThat(tc1.path("passes").asInt(), "passes").isEqualTo(0);
       requireThat(tc1.path("decision").asString(), "decision").isEqualTo("INCONCLUSIVE");
       requireThat(tc1.path("carried_forward").asBoolean(), "carriedForward").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that run-sprt is the canonical public SPRT command.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*InstructionTestRunner run-sprt: expected 5 arguments.*")
+  public void runSprtCommandIsRecognized() throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      runner.run(new String[]{"run-sprt"}, System.out);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that run-sprt is recognized when invoked under the Codex runtime.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*InstructionTestRunner run-sprt: expected 5 arguments.*")
+  public void runSprtCommandIsRecognizedForCodexRuntime() throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new MainCliTool(name -> switch (name)
+    {
+      case "CAT_SESSION_ID" -> "test-session-id";
+      case "CAT_PROJECT_DIR", "CAT_PLUGIN_ROOT", "CAT_PLUGIN_DATA", "CAT_CONFIG_DIR" ->
+        tempDir.toString();
+      case "CAT_RUNTIME" -> "codex";
+      default -> null;
+    }, tempDir))
+    {
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      runner.run(new String[]{"run-sprt"}, System.out);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that run-sprt requires effort to be specified explicitly.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*InstructionTestRunner run-sprt: expected 5 arguments.*")
+  public void runSprtRejectsMissingEffort() throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      runner.run(new String[]{"run-sprt", tempDir.toString(), "tests", "claude-haiku-4-5",
+        "test-session-id"}, System.out);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that run-sprt rejects test directories that traverse outside the worktree before any
+   * runner work starts.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*outside.*")
+  public void runSprtRejectsRelativeTestDirOutsideWorktree() throws IOException, InterruptedException
+  {
+    Path parent = Files.createTempDirectory("test-skill-test-runner-parent-");
+    Path worktree = parent.resolve("worktree");
+    Path outside = parent.resolve("outside");
+    try (var scope = new TestClaudeTool(worktree, worktree))
+    {
+      Files.createDirectories(worktree);
+      Files.createDirectories(outside);
+      Files.writeString(outside.resolve("test-case.md"), "# Test", StandardCharsets.UTF_8);
+
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      runner.run(new String[]{"run-sprt", worktree.toString(), "../outside",
+        "claude-haiku-4-5", "high", "test-session-id"}, System.out);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(parent);
+    }
+  }
+
+  /**
+   * Verifies that run-sprt rejects symlinked test directories that resolve outside the worktree.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*outside.*")
+  public void runSprtRejectsSymlinkedTestDirOutsideWorktree() throws IOException, InterruptedException
+  {
+    Path parent = Files.createTempDirectory("test-skill-test-runner-parent-");
+    Path worktree = parent.resolve("worktree");
+    Path outside = parent.resolve("outside");
+    try (var scope = new TestClaudeTool(worktree, worktree))
+    {
+      Files.createDirectories(worktree);
+      Files.createDirectories(outside);
+      Files.writeString(outside.resolve("test-case.md"), "# Test", StandardCharsets.UTF_8);
+      try
+      {
+        Files.createSymbolicLink(worktree.resolve("linked-tests"), outside);
+      }
+      catch (UnsupportedOperationException | IOException e)
+      {
+        throw new SkipException("Symbolic links are not available in this test environment", e);
+      }
+
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      runner.run(new String[]{"run-sprt", worktree.toString(), "linked-tests",
+        "claude-haiku-4-5", "high", "test-session-id"}, System.out);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(parent);
+    }
+  }
+
+  /**
+   * Verifies that run-sprt validates Claude model IDs at the command entrypoint.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid Claude model ID.*")
+  public void runSprtRejectsUnsupportedClaudeModelAtEntrypoint()
+    throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      runner.run(new String[]{"run-sprt", tempDir.toString(), "tests", "gpt-5.3-codex",
+        "high", "test-session-id"}, System.out);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that run-sprt validates Codex model IDs at the command entrypoint.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid Codex model ID.*")
+  public void runSprtRejectsUnsupportedCodexModelAtEntrypoint()
+    throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new MainCliTool(name -> switch (name)
+    {
+      case "CAT_SESSION_ID" -> "test-session-id";
+      case "CAT_PROJECT_DIR", "CAT_PLUGIN_ROOT", "CAT_PLUGIN_DATA", "CAT_CONFIG_DIR" ->
+        tempDir.toString();
+      case "CAT_RUNTIME" -> "codex";
+      default -> null;
+    }, tempDir))
+    {
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      runner.run(new String[]{"run-sprt", tempDir.toString(), "tests", "claude-haiku-4-5",
+        "high", "test-session-id"}, System.out);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that run-sprt validates effort values at the command entrypoint.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid effort.*")
+  public void runSprtRejectsUnsupportedEffortAtEntrypoint()
+    throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      runner.run(new String[]{"run-sprt", tempDir.toString(), "tests", "claude-haiku-4-5",
+        "extreme", "test-session-id"}, System.out);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that run-sprt validates Codex effort values at the command entrypoint.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid effort.*")
+  public void runSprtRejectsUnsupportedCodexEffortAtEntrypoint()
+    throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new MainCliTool(name -> switch (name)
+    {
+      case "CAT_SESSION_ID" -> "test-session-id";
+      case "CAT_PROJECT_DIR", "CAT_PLUGIN_ROOT", "CAT_PLUGIN_DATA", "CAT_CONFIG_DIR" ->
+        tempDir.toString();
+      case "CAT_RUNTIME" -> "codex";
+      default -> null;
+    }, tempDir))
+    {
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      runner.run(new String[]{"run-sprt", tempDir.toString(), "tests", "gpt-5.3-codex",
+        "extreme", "test-session-id"}, System.out);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that run-sprt argument parsing keeps effort immediately after the model ID.
+   */
+  @Test
+  public void parseRunSprtArgsRequiresExplicitEffort()
+  {
+    String[] parsed = SharedSecrets.parseRunSprtArgs(new String[]{
+      "/tmp/worktree", "client/plugin/tests/skills/learn", "claude-haiku-4-5", "high",
+      "test-session-id"});
+
+    requireThat(parsed, "parsed").length().isEqualTo(5);
+    requireThat(parsed[0], "worktreePath").isEqualTo("/tmp/worktree");
+    requireThat(parsed[1], "testDir").isEqualTo("client/plugin/tests/skills/learn");
+    requireThat(parsed[2], "testModel").isEqualTo("claude-haiku-4-5");
+    requireThat(parsed[3], "testEffort").isEqualTo("high");
+    requireThat(parsed[4], "sessionId").isEqualTo("test-session-id");
+  }
+
+  /**
+   * Verifies that run-sprt does not accept a missing effort argument.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*InstructionTestRunner run-sprt: expected 5 arguments.*")
+  public void parseRunSprtArgsRejectsMissingEffort()
+  {
+    SharedSecrets.parseRunSprtArgs(new String[]{"/tmp/worktree", "tests", "claude-haiku-4-5",
+      "test-session-id"});
+  }
+
+  /**
+   * Verifies that run-sprt rejects too many arguments.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*InstructionTestRunner run-sprt: expected 5 arguments.*")
+  public void parseRunSprtArgsRejectsExtraArguments()
+  {
+    SharedSecrets.parseRunSprtArgs(new String[]{"/tmp/worktree", "tests", "claude-haiku-4-5",
+      "high", "test-session-id", "extra"});
+  }
+
+  /**
+   * Verifies that run-sprt rejects a null argument array.
+   */
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*args.*")
+  public void parseRunSprtArgsRejectsNullArguments()
+  {
+    SharedSecrets.parseRunSprtArgs(null);
+  }
+
+  /**
+   * Verifies that run-sprt rejects a null model argument.
+   */
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*test_model.*")
+  public void parseRunSprtArgsRejectsNullModel()
+  {
+    SharedSecrets.parseRunSprtArgs(new String[]{"/tmp/worktree", "tests", null,
+      "high", "test-session-id"});
+  }
+
+  /**
+   * Verifies that run-sprt rejects a blank worktree path.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*worktree_path.*")
+  public void parseRunSprtArgsRejectsBlankWorktreePath()
+  {
+    SharedSecrets.parseRunSprtArgs(new String[]{" ", "tests", "claude-haiku-4-5",
+      "high", "test-session-id"});
+  }
+
+  /**
+   * Verifies that run-sprt rejects a null test directory.
+   */
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*test_dir.*")
+  public void parseRunSprtArgsRejectsNullTestDirectory()
+  {
+    SharedSecrets.parseRunSprtArgs(new String[]{"/tmp/worktree", null, "claude-haiku-4-5",
+      "high", "test-session-id"});
+  }
+
+  /**
+   * Verifies that run-sprt rejects a blank test directory.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*test_dir.*")
+  public void parseRunSprtArgsRejectsBlankTestDirectory()
+  {
+    SharedSecrets.parseRunSprtArgs(new String[]{"/tmp/worktree", " ", "claude-haiku-4-5",
+      "high", "test-session-id"});
+  }
+
+  /**
+   * Verifies that run-sprt rejects a blank model argument.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*test_model.*")
+  public void parseRunSprtArgsRejectsBlankModel()
+  {
+    SharedSecrets.parseRunSprtArgs(new String[]{"/tmp/worktree", "tests", " ",
+      "high", "test-session-id"});
+  }
+
+  /**
+   * Verifies that run-sprt rejects a blank effort argument.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*effort.*")
+  public void parseRunSprtArgsRejectsBlankEffort()
+  {
+    SharedSecrets.parseRunSprtArgs(new String[]{"/tmp/worktree", "tests", "claude-haiku-4-5",
+      " ", "test-session-id"});
+  }
+
+  /**
+   * Verifies that run-sprt rejects a blank session ID.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*session_id.*")
+  public void parseRunSprtArgsRejectsBlankSessionId()
+  {
+    SharedSecrets.parseRunSprtArgs(new String[]{"/tmp/worktree", "tests", "claude-haiku-4-5",
+      "high", " "});
+  }
+
+  /**
+   * Verifies that batch execution remains an internal implementation detail driven by run-sprt.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*unknown command: run-sprt-batch.*")
+  public void runSprtBatchCommandIsInternal() throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      runner.run(new String[]{"run-sprt-batch"}, new PrintStream(new ByteArrayOutputStream(), true,
+        StandardCharsets.UTF_8));
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that obsolete SPRT command names are no longer accepted.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*unknown command: run-full-sprt.*")
+  public void runFullSprtCommandIsRemoved() throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      runner.run(new String[]{"run-full-sprt"}, System.out);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that the focused single-test SPRT command is no longer accepted.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*unknown command: run-single-test.*")
+  public void runSingleTestCommandIsRemoved() throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      runner.run(new String[]{"run-single-test"}, System.out);
     }
     finally
     {
@@ -1922,6 +2334,29 @@ public final class InstructionTestRunnerTest
   }
 
   /**
+   * Verifies that prepare-run rejects test directories outside the worktree.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*outside.*")
+  public void prepareRunRejectsTestDirOutsideWorktree() throws IOException, InterruptedException
+  {
+    Path worktree = Files.createTempDirectory("test-worktree-");
+    Path outside = Files.createTempDirectory("test-outside-");
+    try (var scope = new TestClaudeTool(worktree, worktree))
+    {
+      Files.writeString(outside.resolve("test-case.md"), "# Test", StandardCharsets.UTF_8);
+
+      InstructionTestRunner runner = new InstructionTestRunner(scope, "2.1.87");
+      runner.prepareRun(new String[]{worktree.toString(), outside.toString()});
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(worktree);
+      TestUtils.deleteDirectoryRecursively(outside);
+    }
+  }
+
+  /**
    * Verifies that get-json-field extracts a top-level string field from a JSON object.
    */
   @Test
@@ -2340,36 +2775,40 @@ public final class InstructionTestRunnerTest
   }
 
   /**
-   * Verifies that buildGraderArgs constructs the correct argument array with --agent flag,
-   * --prompt-file, --model, --plugin-source, --jlink-bin, and --cwd.
+   * Verifies that the Claude trial runner receives the expected argument shape.
    */
   @Test
-  public void buildGraderArgsUsesAgentFlag() throws IOException
+  public void buildClaudeTrialArgsIncludesRuntimeSpecificArguments() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("test-grader-args-");
+    Path tempDir = Files.createTempDirectory("test-trial-args-");
     try
     {
-      Path graderPromptFile = tempDir.resolve("grader-prompt.txt");
-      Files.writeString(graderPromptFile, "test prompt", StandardCharsets.UTF_8);
+      Path promptFile = tempDir.resolve("trial-prompt.txt");
+      Files.writeString(promptFile, "test prompt", StandardCharsets.UTF_8);
       String runnerWorktree = tempDir.toString();
       String modelId = "claude-sonnet-4-5";
+      String effort = "high";
+      String outputJson = tempDir.resolve("output.json").toString();
       Path jlinkBin = tempDir.resolve("client/distribution/target/jlink/claude/bin");
 
-      String[] args = SharedSecrets.buildGraderArgs(graderPromptFile, modelId, runnerWorktree, jlinkBin);
+      String[] args = SharedSecrets.buildClaudeTrialArgs(promptFile, modelId, effort,
+        runnerWorktree, outputJson, jlinkBin);
 
-      requireThat(args, "args").length().isEqualTo(12);
+      requireThat(args, "args").length().isEqualTo(14);
       requireThat(args[0], "args[0]").isEqualTo("--prompt-file");
-      requireThat(args[1], "args[1]").isEqualTo(graderPromptFile.toString());
+      requireThat(args[1], "args[1]").isEqualTo(promptFile.toString());
       requireThat(args[2], "args[2]").isEqualTo("--model");
       requireThat(args[3], "args[3]").isEqualTo(modelId);
-      requireThat(args[4], "args[4]").isEqualTo("--agent");
-      requireThat(args[5], "args[5]").isEqualTo("instruction-grader-agent");
+      requireThat(args[4], "args[4]").isEqualTo("--effort");
+      requireThat(args[5], "args[5]").isEqualTo(effort);
       requireThat(args[6], "args[6]").isEqualTo("--plugin-source");
       requireThat(args[7], "args[7]").isEqualTo(Path.of(runnerWorktree, "client/plugin").toString());
       requireThat(args[8], "args[8]").isEqualTo("--jlink-bin");
       requireThat(args[9], "args[9]").isEqualTo(jlinkBin.toString());
       requireThat(args[10], "args[10]").isEqualTo("--cwd");
       requireThat(args[11], "args[11]").isEqualTo(runnerWorktree);
+      requireThat(args[12], "args[12]").isEqualTo("--output");
+      requireThat(args[13], "args[13]").isEqualTo(outputJson);
     }
     finally
     {
@@ -2378,12 +2817,532 @@ public final class InstructionTestRunnerTest
   }
 
   /**
-   * Verifies that buildGraderArgs rejects null parameters.
+   * Verifies that the Codex trial runner receives the expected argument shape.
+   */
+  @Test
+  public void buildCodexTrialArgsIncludesRuntimeSpecificArguments() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-trial-args-");
+    try
+    {
+      Path promptFile = tempDir.resolve("trial-prompt.txt");
+      Files.writeString(promptFile, "test prompt", StandardCharsets.UTF_8);
+      String runnerWorktree = tempDir.toString();
+      String modelId = "gpt-5.3-codex";
+      String effort = "xhigh";
+      String outputJson = tempDir.resolve("output.json").toString();
+
+      String[] args = SharedSecrets.buildCodexTrialArgs(promptFile, modelId, effort,
+        runnerWorktree, outputJson);
+
+      requireThat(args, "args").length().isEqualTo(10);
+      requireThat(args[0], "args[0]").isEqualTo("--prompt-file");
+      requireThat(args[1], "args[1]").isEqualTo(promptFile.toString());
+      requireThat(args[2], "args[2]").isEqualTo("--model");
+      requireThat(args[3], "args[3]").isEqualTo(modelId);
+      requireThat(args[4], "args[4]").isEqualTo("--effort");
+      requireThat(args[5], "args[5]").isEqualTo(effort);
+      requireThat(args[6], "args[6]").isEqualTo("--cwd");
+      requireThat(args[7], "args[7]").isEqualTo(runnerWorktree);
+      requireThat(args[8], "args[8]").isEqualTo("--output");
+      requireThat(args[9], "args[9]").isEqualTo(outputJson);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that the Claude grader receives the expected argument shape.
+   */
+  @Test
+  public void buildClaudeGraderArgsUsesAgentFlag() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-grader-args-");
+    try
+    {
+      Path graderPromptFile = tempDir.resolve("grader-prompt.txt");
+      Files.writeString(graderPromptFile, "test prompt", StandardCharsets.UTF_8);
+      String runnerWorktree = tempDir.toString();
+      String modelId = "claude-sonnet-4-5";
+      String effort = "medium";
+      Path jlinkBin = tempDir.resolve("client/distribution/target/jlink/claude/bin");
+
+      String[] args = SharedSecrets.buildClaudeGraderArgs(graderPromptFile, modelId, effort,
+        runnerWorktree, jlinkBin);
+
+      requireThat(args, "args").length().isEqualTo(14);
+      requireThat(args[0], "args[0]").isEqualTo("--prompt-file");
+      requireThat(args[1], "args[1]").isEqualTo(graderPromptFile.toString());
+      requireThat(args[2], "args[2]").isEqualTo("--model");
+      requireThat(args[3], "args[3]").isEqualTo(modelId);
+      requireThat(args[4], "args[4]").isEqualTo("--effort");
+      requireThat(args[5], "args[5]").isEqualTo(effort);
+      requireThat(args[6], "args[6]").isEqualTo("--agent");
+      requireThat(args[7], "args[7]").isEqualTo("instruction-grader-agent");
+      requireThat(args[8], "args[8]").isEqualTo("--plugin-source");
+      requireThat(args[9], "args[9]").isEqualTo(Path.of(runnerWorktree, "client/plugin").toString());
+      requireThat(args[10], "args[10]").isEqualTo("--jlink-bin");
+      requireThat(args[11], "args[11]").isEqualTo(jlinkBin.toString());
+      requireThat(args[12], "args[12]").isEqualTo("--cwd");
+      requireThat(args[13], "args[13]").isEqualTo(runnerWorktree);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that the Codex grader receives the expected argument shape.
+   */
+  @Test
+  public void buildCodexGraderArgsIncludesRuntimeSpecificArguments() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-grader-args-");
+    try
+    {
+      Path graderPromptFile = tempDir.resolve("grader-prompt.txt");
+      Files.writeString(graderPromptFile, "test prompt", StandardCharsets.UTF_8);
+      String runnerWorktree = tempDir.toString();
+      String modelId = "gpt-5.3-codex";
+      String effort = "high";
+
+      String[] args = SharedSecrets.buildCodexGraderArgs(graderPromptFile, modelId, effort,
+        runnerWorktree);
+
+      requireThat(args, "args").length().isEqualTo(8);
+      requireThat(args[0], "args[0]").isEqualTo("--prompt-file");
+      requireThat(args[1], "args[1]").isEqualTo(graderPromptFile.toString());
+      requireThat(args[2], "args[2]").isEqualTo("--model");
+      requireThat(args[3], "args[3]").isEqualTo(modelId);
+      requireThat(args[4], "args[4]").isEqualTo("--effort");
+      requireThat(args[5], "args[5]").isEqualTo(effort);
+      requireThat(args[6], "args[6]").isEqualTo("--cwd");
+      requireThat(args[7], "args[7]").isEqualTo(runnerWorktree);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that Claude trial argument building rejects a null prompt file.
+   */
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*promptFile.*")
+  public void buildClaudeTrialArgsRejectsNullPromptFile()
+  {
+    SharedSecrets.buildClaudeTrialArgs(null, "claude-sonnet-4-5", "high", "/tmp/worktree",
+      "/tmp/output.json", Path.of("/tmp/worktree/client/distribution/target/jlink/claude/bin"));
+  }
+
+  /**
+   * Verifies that Codex trial argument building rejects a blank model ID.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*modelId.*")
+  public void buildCodexTrialArgsRejectsBlankModelId()
+  {
+    SharedSecrets.buildCodexTrialArgs(Path.of("/tmp/prompt.txt"), " ", "high",
+      "/tmp/worktree", "/tmp/output.json");
+  }
+
+  /**
+   * Verifies that Claude grader argument building rejects a blank effort.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*effort.*")
+  public void buildClaudeGraderArgsRejectsBlankEffort()
+  {
+    SharedSecrets.buildClaudeGraderArgs(Path.of("/tmp/grader-prompt.txt"), "claude-sonnet-4-5",
+      " ", "/tmp/worktree",
+      Path.of("/tmp/worktree/client/distribution/target/jlink/claude/bin"));
+  }
+
+  /**
+   * Verifies that Codex grader argument building rejects a blank runner worktree.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*runnerWorktree.*")
+  public void buildCodexGraderArgsRejectsBlankRunnerWorktree()
+  {
+    SharedSecrets.buildCodexGraderArgs(Path.of("/tmp/grader-prompt.txt"), "gpt-5.3-codex",
+      "high", " ");
+  }
+
+  /**
+   * Verifies that runtime-dispatched trial argument building rejects a null descriptor.
+   */
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*descriptor.*")
+  public void runtimeTrialArgsRejectNullDescriptor()
+  {
+    SharedSecrets.buildTrialArgsForDescriptor(null, Path.of("/tmp/prompt.txt"),
+      "claude-sonnet-4-5", "high", "/tmp/worktree", "/tmp/output.json");
+  }
+
+  /**
+   * Verifies that runtime-dispatched trial argument building rejects an unsupported descriptor.
+   */
+  @Test(expectedExceptions = IllegalStateException.class,
+    expectedExceptionsMessageRegExp = ".*Unsupported CAT runtime descriptor.*")
+  public void runtimeTrialArgsRejectUnsupportedDescriptor()
+  {
+    SharedSecrets.buildTrialArgsForDescriptor(Path.of("/tmp/unsupported-plugin.json"),
+      Path.of("/tmp/prompt.txt"), "claude-sonnet-4-5", "high", "/tmp/worktree",
+      "/tmp/output.json");
+  }
+
+  /**
+   * Verifies that runtime-dispatched trial argument building rejects a null prompt.
+   */
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*promptFile.*")
+  public void runtimeTrialArgsRejectNullPrompt()
+  {
+    SharedSecrets.buildTrialArgsForDescriptor(AgentRuntime.CLAUDE.pluginDescriptor(), null,
+      "claude-sonnet-4-5", "high", "/tmp/worktree", "/tmp/output.json");
+  }
+
+  /**
+   * Verifies that runtime-dispatched trial argument building rejects a blank output path.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*outputJson.*")
+  public void runtimeTrialArgsRejectBlankOutput()
+  {
+    SharedSecrets.buildTrialArgsForDescriptor(AgentRuntime.CODEX.pluginDescriptor(),
+      Path.of("/tmp/prompt.txt"), "gpt-5.3-codex", "high", "/tmp/worktree", " ");
+  }
+
+  /**
+   * Verifies that runtime-dispatched Claude trial arguments reject a blank model ID.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*modelId.*")
+  public void runtimeClaudeTrialArgsRejectBlankModel()
+  {
+    SharedSecrets.buildTrialArgsForDescriptor(AgentRuntime.CLAUDE.pluginDescriptor(),
+      Path.of("/tmp/prompt.txt"), " ", "high", "/tmp/worktree", "/tmp/output.json");
+  }
+
+  /**
+   * Verifies that runtime-dispatched Codex trial arguments reject a blank effort.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*effort.*")
+  public void runtimeCodexTrialArgsRejectBlankEffort()
+  {
+    SharedSecrets.buildTrialArgsForDescriptor(AgentRuntime.CODEX.pluginDescriptor(),
+      Path.of("/tmp/prompt.txt"), "gpt-5.3-codex", " ", "/tmp/worktree", "/tmp/output.json");
+  }
+
+  /**
+   * Verifies that runtime-dispatched Claude trial arguments reject unsupported model IDs.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid Claude model ID.*")
+  public void runtimeClaudeTrialArgsRejectUnsupportedModel()
+  {
+    SharedSecrets.buildTrialArgsForDescriptor(AgentRuntime.CLAUDE.pluginDescriptor(),
+      Path.of("/tmp/prompt.txt"), "gpt-5.3-codex", "high", "/tmp/worktree",
+      "/tmp/output.json");
+  }
+
+  /**
+   * Verifies that runtime-dispatched Codex trial arguments reject unsupported efforts.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid effort.*")
+  public void runtimeCodexTrialArgsRejectUnsupportedEffort()
+  {
+    SharedSecrets.buildTrialArgsForDescriptor(AgentRuntime.CODEX.pluginDescriptor(),
+      Path.of("/tmp/prompt.txt"), "gpt-5.3-codex", "extreme", "/tmp/worktree",
+      "/tmp/output.json");
+  }
+
+  /**
+   * Verifies that runtime-dispatched Claude trial arguments reject Codex-only efforts.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid effort.*")
+  public void runtimeClaudeTrialArgsRejectCodexOnlyEffort()
+  {
+    SharedSecrets.buildClaudeTrialArgs(Path.of("/tmp/prompt.txt"), "claude-sonnet-4-5",
+      "minimal", "/tmp/worktree", "/tmp/output.json", Path.of("/tmp/jlink/bin"));
+  }
+
+  /**
+   * Verifies that runtime-dispatched Codex trial arguments reject Claude-only efforts.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid effort.*")
+  public void runtimeCodexTrialArgsRejectClaudeOnlyEffort()
+  {
+    SharedSecrets.buildTrialArgsForDescriptor(AgentRuntime.CODEX.pluginDescriptor(),
+      Path.of("/tmp/prompt.txt"), "gpt-5.3-codex", "max", "/tmp/worktree",
+      "/tmp/output.json");
+  }
+
+  /**
+   * Verifies that runtime-dispatched Claude trial arguments accept Claude-only efforts.
+   */
+  @Test
+  public void runtimeClaudeTrialArgsAcceptClaudeOnlyEffort()
+  {
+    String[] args = SharedSecrets.buildClaudeTrialArgs(Path.of("/tmp/prompt.txt"),
+      "claude-sonnet-4-5", "max", "/tmp/worktree", "/tmp/output.json",
+      Path.of("/tmp/jlink/bin"));
+
+    requireThat(args[5], "effort").isEqualTo("max");
+  }
+
+  /**
+   * Verifies that runtime-dispatched grader argument building rejects a null prompt.
    */
   @Test(expectedExceptions = NullPointerException.class,
     expectedExceptionsMessageRegExp = ".*graderPromptFile.*")
-  public void buildGraderArgsRejectsNullPromptFile()
+  public void runtimeGraderArgsRejectNullPrompt()
   {
-    SharedSecrets.buildGraderArgs(null, "model", "/tmp/worktree", Path.of("/tmp/jlink/bin"));
+    SharedSecrets.buildGraderArgsForDescriptor(AgentRuntime.CLAUDE.pluginDescriptor(), null,
+      "claude-sonnet-4-5", "high", "/tmp/worktree");
+  }
+
+  /**
+   * Verifies that runtime-dispatched grader argument building rejects a blank runner worktree.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*runnerWorktree.*")
+  public void runtimeGraderArgsRejectBlankRunnerWorktree()
+  {
+    SharedSecrets.buildGraderArgsForDescriptor(AgentRuntime.CODEX.pluginDescriptor(),
+      Path.of("/tmp/grader-prompt.txt"), "gpt-5.3-codex", "high", " ");
+  }
+
+  /**
+   * Verifies that runtime-dispatched Claude grader arguments reject a null model ID.
+   */
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*modelId.*")
+  public void runtimeClaudeGraderArgsRejectNullModel()
+  {
+    SharedSecrets.buildGraderArgsForDescriptor(AgentRuntime.CLAUDE.pluginDescriptor(),
+      Path.of("/tmp/grader-prompt.txt"), null, "high", "/tmp/worktree");
+  }
+
+  /**
+   * Verifies that runtime-dispatched Codex grader arguments reject a blank effort.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*effort.*")
+  public void runtimeCodexGraderArgsRejectBlankEffort()
+  {
+    SharedSecrets.buildGraderArgsForDescriptor(AgentRuntime.CODEX.pluginDescriptor(),
+      Path.of("/tmp/grader-prompt.txt"), "gpt-5.3-codex", " ", "/tmp/worktree");
+  }
+
+  /**
+   * Verifies that runtime-dispatched Claude grader arguments reject unsupported efforts.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid effort.*")
+  public void runtimeClaudeGraderArgsRejectUnsupportedEffort()
+  {
+    SharedSecrets.buildGraderArgsForDescriptor(AgentRuntime.CLAUDE.pluginDescriptor(),
+      Path.of("/tmp/grader-prompt.txt"), "claude-sonnet-4-5", "extreme", "/tmp/worktree");
+  }
+
+  /**
+   * Verifies that runtime-dispatched Codex grader arguments reject unsupported model IDs.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid Codex model ID.*")
+  public void runtimeCodexGraderArgsRejectUnsupportedModel()
+  {
+    SharedSecrets.buildGraderArgsForDescriptor(AgentRuntime.CODEX.pluginDescriptor(),
+      Path.of("/tmp/grader-prompt.txt"), "claude-sonnet-4-5", "high", "/tmp/worktree");
+  }
+
+  /**
+   * Verifies that runtime-dispatched trial arguments select the Claude runner shape.
+   */
+  @Test
+  public void runtimeTrialArgsUseClaudeShape() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-runtime-trial-args-");
+    try
+    {
+      Path promptFile = tempDir.resolve("trial-prompt.txt");
+      Files.writeString(promptFile, "test prompt", StandardCharsets.UTF_8);
+      String runnerWorktree = tempDir.toString();
+      Files.createDirectories(
+        tempDir.resolve("client/distribution/target/jlink/claude/bin"));
+      String outputJson = tempDir.resolve("output.json").toString();
+
+      String[] args = SharedSecrets.buildTrialArgsForDescriptor(
+        AgentRuntime.CLAUDE.pluginDescriptor(), promptFile, "claude-sonnet-4-5", "high",
+        runnerWorktree, outputJson);
+
+      requireThat(args, "args").length().isEqualTo(14);
+      requireThat(args[6], "pluginSourceFlag").isEqualTo("--plugin-source");
+      requireThat(args[8], "jlinkFlag").isEqualTo("--jlink-bin");
+      requireThat(args[9], "jlinkPath").isEqualTo(
+        Path.of(runnerWorktree, "client/distribution/target/jlink/claude/bin").toString());
+      requireThat(args[12], "outputFlag").isEqualTo("--output");
+      requireThat(args[13], "outputJson").isEqualTo(outputJson);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that runtime-dispatched Claude trial arguments fail fast when the runner worktree
+   * does not contain a runtime jlink directory.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*jlink directory not found in runner worktree.*")
+  public void runtimeTrialArgsRejectMissingRunnerJlink() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-runtime-trial-args-");
+    try
+    {
+      Path promptFile = tempDir.resolve("trial-prompt.txt");
+      Files.writeString(promptFile, "test prompt", StandardCharsets.UTF_8);
+      SharedSecrets.buildTrialArgsForDescriptor(AgentRuntime.CLAUDE.pluginDescriptor(),
+        promptFile, "claude-sonnet-4-5", "high", tempDir.toString(),
+        tempDir.resolve("output.json").toString());
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that runtime-dispatched trial arguments select the Codex runner shape.
+   */
+  @Test
+  public void runtimeTrialArgsUseCodexShape() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-runtime-trial-args-");
+    try
+    {
+      Path promptFile = tempDir.resolve("trial-prompt.txt");
+      Files.writeString(promptFile, "test prompt", StandardCharsets.UTF_8);
+      String runnerWorktree = tempDir.toString();
+      String outputJson = tempDir.resolve("output.json").toString();
+
+      String[] args = SharedSecrets.buildTrialArgsForDescriptor(
+        AgentRuntime.CODEX.pluginDescriptor(), promptFile, "gpt-5.3-codex", "xhigh",
+        runnerWorktree, outputJson);
+
+      requireThat(args, "args").length().isEqualTo(10);
+      requireThat(args[0], "promptFlag").isEqualTo("--prompt-file");
+      requireThat(args[4], "effortFlag").isEqualTo("--effort");
+      requireThat(args[6], "cwdFlag").isEqualTo("--cwd");
+      requireThat(args[8], "outputFlag").isEqualTo("--output");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that runtime-dispatched grader arguments select the Claude runner shape.
+   */
+  @Test
+  public void runtimeGraderArgsUseClaudeShape() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-runtime-grader-args-");
+    try
+    {
+      Path promptFile = tempDir.resolve("grader-prompt.txt");
+      Files.writeString(promptFile, "test prompt", StandardCharsets.UTF_8);
+      String runnerWorktree = tempDir.toString();
+      Files.createDirectories(
+        tempDir.resolve("client/distribution/target/jlink/claude/bin"));
+
+      String[] args = SharedSecrets.buildGraderArgsForDescriptor(
+        AgentRuntime.CLAUDE.pluginDescriptor(), promptFile, "claude-sonnet-4-5", "medium",
+        runnerWorktree);
+
+      requireThat(args, "args").length().isEqualTo(14);
+      requireThat(args[6], "agentFlag").isEqualTo("--agent");
+      requireThat(args[7], "agentName").isEqualTo("instruction-grader-agent");
+      requireThat(args[10], "jlinkFlag").isEqualTo("--jlink-bin");
+      requireThat(args[11], "jlinkPath").isEqualTo(
+        Path.of(runnerWorktree, "client/distribution/target/jlink/claude/bin").toString());
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that runtime-dispatched grader arguments select the Codex runner shape.
+   */
+  @Test
+  public void runtimeGraderArgsUseCodexShape() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-runtime-grader-args-");
+    try
+    {
+      Path promptFile = tempDir.resolve("grader-prompt.txt");
+      Files.writeString(promptFile, "test prompt", StandardCharsets.UTF_8);
+      String runnerWorktree = tempDir.toString();
+
+      String[] args = SharedSecrets.buildGraderArgsForDescriptor(
+        AgentRuntime.CODEX.pluginDescriptor(), promptFile, "gpt-5.3-codex", "high",
+        runnerWorktree);
+
+      requireThat(args, "args").length().isEqualTo(8);
+      requireThat(args[0], "promptFlag").isEqualTo("--prompt-file");
+      requireThat(args[4], "effortFlag").isEqualTo("--effort");
+      requireThat(args[6], "cwdFlag").isEqualTo("--cwd");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that supported SPRT runtime descriptors resolve to their runtime identifiers.
+   */
+  @Test
+  public void sprtRuntimeResolvesSupportedDescriptors()
+  {
+    requireThat(SharedSecrets.sprtRuntimeIdForDescriptor(AgentRuntime.CLAUDE.pluginDescriptor()),
+      "claudeRuntime").isEqualTo("claude");
+    requireThat(SharedSecrets.sprtRuntimeIdForDescriptor(AgentRuntime.CODEX.pluginDescriptor()),
+      "codexRuntime").isEqualTo("codex");
+  }
+
+  /**
+   * Verifies that SPRT runtime resolution fails fast for unsupported descriptors.
+   */
+  @Test(expectedExceptions = IllegalStateException.class,
+    expectedExceptionsMessageRegExp = ".*Unsupported CAT runtime descriptor.*")
+  public void sprtRuntimeRejectsUnsupportedDescriptor()
+  {
+    SharedSecrets.sprtRuntimeIdForDescriptor(Path.of("unsupported/plugin.json"));
+  }
+
+  /**
+   * Verifies that buildClaudeGraderArgs rejects null parameters.
+   */
+  @Test(expectedExceptions = NullPointerException.class,
+    expectedExceptionsMessageRegExp = ".*graderPromptFile.*")
+  public void buildClaudeGraderArgsRejectsNullPromptFile()
+  {
+    SharedSecrets.buildClaudeGraderArgs(null, "model", "medium", "/tmp/worktree",
+      Path.of("/tmp/jlink/bin"));
   }
 }

@@ -234,10 +234,11 @@ Required fields (exhaustive — no others are treated as required):
 - `analyze`: object with ALL required keys. Required keys (MANDATORY to validate EACH using exhaustive field checks):
   `mistake_description`, `root_cause`, `cause_signature`, `rca_depth_verified`, `rca_depth_check`, `rca_depth_evidence`,
   `category`. If any key is missing, stop with an error naming each missing key.
-- `prevent`: object with ALL required keys. Required keys (MANDATORY to validate EACH using exhaustive field checks): `prevention_implemented`, `prevention_commit_hash`, `prevention_path` (when hash is non-null), `issue_creation_info` (when prevention_implemented is false). If any key is missing, stop with an error naming each missing key.
+- `prevent`: object with ALL required keys. Required keys (MANDATORY to validate EACH using exhaustive field checks): `prevention_implemented`, `prevention_commit_hash`, `prevention_path` (when hash is non-null), `issue_creation_info` (when prevention_implemented is false), `prevention_rules`. If any key is missing, stop with an error naming each missing key.
 - `prevent.prevention_implemented`: boolean (true or false — must be explicitly present)
 - `prevent.prevention_commit_hash`: string or null (must be explicitly present)
 - `prevent.prevention_path`: non-empty string (must be explicitly present when `prevention_commit_hash` is non-null)
+- `prevent.prevention_rules`: non-empty JSON array of prevention rule strings (must be explicitly present)
 - **Cross-field rule (bidirectional, MANDATORY enforcement):** Enforce ALL of the following in code:
   - If `prevention_implemented` is `true`, then `prevention_commit_hash` MUST be non-null.
   - If `prevention_commit_hash` is non-null, then `prevention_implemented` MUST be `true`.
@@ -257,7 +258,7 @@ Required fields (exhaustive — no others are treated as required):
   if [[ "$IMPLEMENTED" == "true" ]] && [[ -n "$ISSUE_INFO" ]]; then exit 1; fi
   ```
 
-**Validation order:** Check ALL fields in Steps 4a and 4b BEFORE proceeding to Step 4c. Use explicit boolean checkpoint markers (see Step 4c) to enforce this in code. If multiple fields are missing or invalid, report ALL of them in the error message, not just the first one found.
+**Validation order:** Check ALL fields in Steps 4a and 4b BEFORE proceeding to Step 4c. Use explicit boolean checkpoint markers (see Step 4d) to enforce this in code. If multiple fields are missing or invalid, report ALL of them in the error message, not just the first one found.
 
 **Error display format:**
 ```
@@ -398,23 +399,128 @@ if [[ $CODE_CHANGES -eq 0 ]]; then
 fi
 ```
 
-### Step 4c: Run record-learning CLI
+### Step 4c: Atomicity Quality Gate for Prevention Rules
 
-**MANDATORY:** Steps 4a and 4b MUST complete successfully before proceeding to Step 4c. Do NOT skip validation.
-In background mode, when the notification arrives, re-execute Steps 4a and 4b before calling record-learning.
+After Step 4a and Step 4b pass, enforce an atomicity gate on `prevent.prevention_rules` before invoking
+`record-learning`.
+
+**Hard-block conditions:** Stop immediately if `prevent.prevention_rules` is:
+- missing
+- null
+- not an array
+- an empty array
+
+**Per-rule rubric:** Evaluate every rule against these three criteria using deterministic pass/fail checks:
+- `specific`: passes only when the rule names a concrete target/context, such as a file/path, command, condition,
+  artifact, commit hash, lock file, branch, test, or named CAT skill/tool
+- `verifiable`: passes only when the rule describes observable behavior that can be checked, such as validating,
+  comparing, asserting, running a command/test, checking an exit code, blocking before a named operation, or confirming
+  a file/state/field value
+- `actionable`: passes only when the rule is an imperative action starting with an explicit verb such as `Always`,
+  `Run`, `Validate`, `Check`, `Verify`, `Inspect`, `Compare`, `Reject`, `Block`, or `Require`, and is not a generic
+  aspiration
+
+Evaluate every rule and accumulate all failures before exiting. Do not stop at the first failed rule. When failing,
+emit this exact JSON block shape in the error output, with one `failed_rules[]` entry per failed rule:
+
+```json
+{
+  "atomicity_gate_failed": true,
+  "failed_rules": [
+    {
+      "rule_index": 0,
+      "rule_text": "<original rule>",
+      "failed_criteria": ["specific", "verifiable"],
+      "rewrite_guidance": "Rewrite as a concrete action with observable pass/fail check."
+    }
+  ]
+}
+```
+
+Do not invoke `record-learning` when the atomicity gate fails.
+
+Use explicit machine-enforced checks. The orchestrator MUST parse JSON with `jq`; regex extraction is forbidden for
+this gate because it can misclassify empty arrays, non-arrays, or malformed JSON-like text.
+
+```bash
+# PHASE_JSON_FILE contains the complete parsed Phase 3 JSON object from the subagent output
+if ! jq -e '
+  .prevent.prevention_rules
+  | type == "array"
+  and length > 0
+  and all(.[]; type == "string" and (gsub("[[:space:]]"; "") | length > 0))
+' "$PHASE_JSON_FILE" >/dev/null; then
+  echo "ERROR: prevent.prevention_rules must be a non-empty JSON array of non-empty strings. Learning NOT recorded."
+  exit 1
+fi
+
+mapfile -t PREVENTION_RULES < <(jq -r '.prevent.prevention_rules[]' "$PHASE_JSON_FILE")
+FAILED_RULES_JSON='[]'
+
+for i in "${!PREVENTION_RULES[@]}"; do
+  rule="${PREVENTION_RULES[$i]}"
+  rule_lower=$(printf '%s' "$rule" | tr '[:upper:]' '[:lower:]')
+  failed_criteria=()
+
+  if ! printf '%s' "$rule_lower" | grep -Eq '(`[^`]+`|/|file|path|command|condition|artifact|commit hash|lock file|branch|test|skill|tool|record-learning)'; then
+    failed_criteria+=("specific")
+  fi
+
+  if ! printf '%s' "$rule_lower" | grep -Eq '(validate|verify|check|assert|compare|run|exit code|pass|fail|block|reject|before|after|when|if|confirm|record-learning)'; then
+    failed_criteria+=("verifiable")
+  fi
+
+  if ! printf '%s' "$rule" | grep -Eq '^(Always|Run|Validate|Check|Verify|Inspect|Compare|Reject|Block|Require)[[:space:]]+' ||
+     printf '%s' "$rule_lower" | grep -Eq '^(be more careful|ensure correctness|do better|avoid mistakes|pay attention)$'; then
+    failed_criteria+=("actionable")
+  fi
+
+  if [[ ${#failed_criteria[@]} -gt 0 ]]; then
+    failed_json=$(printf '%s\n' "${failed_criteria[@]}" | jq -R . | jq -s .)
+    FAILED_RULES_JSON=$(jq \
+      --argjson rule_index "$i" \
+      --arg rule_text "$rule" \
+      --argjson failed_criteria "$failed_json" \
+      '. + [{
+        "rule_index": $rule_index,
+        "rule_text": $rule_text,
+        "failed_criteria": $failed_criteria,
+        "rewrite_guidance": "Rewrite as a concrete action with observable pass/fail check."
+      }]' <<< "$FAILED_RULES_JSON")
+  fi
+done
+
+if [[ "$(jq 'length' <<< "$FAILED_RULES_JSON")" -gt 0 ]]; then
+  jq -n --argjson failed_rules "$FAILED_RULES_JSON" \
+    '{"atomicity_gate_failed": true, "failed_rules": $failed_rules}'
+  echo "ERROR: Prevention rule atomicity gate failed. Learning NOT recorded."
+  exit 1
+fi
+
+# Example vague rules (must fail): "be more careful", "ensure correctness"
+# Example specific rule (should pass): "Always validate commit hash before calling record-learning"
+```
+
+### Step 4d: Run record-learning CLI
+
+**MANDATORY:** Steps 4a, 4b, and 4c MUST complete successfully before proceeding to Step 4d. Do NOT skip validation.
+In background mode, when the notification arrives, re-execute Steps 4a, 4b, and 4c before calling record-learning.
 The orchestrator MUST NOT bypass validation based on assumption that "the background task completed, so JSON is valid."
 
-**MANDATORY checkpoint enforcement:** Before invoking record-learning, add an explicit checkpoint that verifies Steps 4a and 4b both completed:
+**MANDATORY checkpoint enforcement:** Before invoking record-learning, add an explicit checkpoint that verifies Steps 4a, 4b, and 4c all completed:
 ```bash
 STEP_4A_COMPLETED=false
 STEP_4B_COMPLETED=false
+STEP_4C_COMPLETED=false
 # ... after Step 4a validation passes ...
 STEP_4A_COMPLETED=true
 # ... after Step 4b validation passes ...
 STEP_4B_COMPLETED=true
-# Before proceeding to record-learning, verify both completed
-if [[ "$STEP_4A_COMPLETED" != "true" ]] || [[ "$STEP_4B_COMPLETED" != "true" ]]; then
-  echo "ERROR: Step 4a validation not performed before Step 4c (4a=$STEP_4A_COMPLETED, 4b=$STEP_4B_COMPLETED). Learning NOT recorded."
+# ... after Step 4c atomicity gate passes ...
+STEP_4C_COMPLETED=true
+# Before proceeding to record-learning, verify all completed
+if [[ "$STEP_4A_COMPLETED" != "true" ]] || [[ "$STEP_4B_COMPLETED" != "true" ]] || [[ "$STEP_4C_COMPLETED" != "true" ]]; then
+  echo "ERROR: Step 4 validation not performed before Step 4d (4a=$STEP_4A_COMPLETED, 4b=$STEP_4B_COMPLETED, 4c=$STEP_4C_COMPLETED). Learning NOT recorded."
   exit 1
 fi
 ```
@@ -499,6 +605,7 @@ Capture this as the Phase 4 result and proceed to Step 5.
 | `prevention_implemented=true` but `prevention_commit_hash=null` (Step 4a) | `ERROR: prevention_implemented is true but prevention_commit_hash is null. Learning NOT recorded.` + resolution guidance, stop |
 | `prevention_implemented=false` but `prevention_commit_hash` is non-null (Step 4a) | `ERROR: prevention_commit_hash is non-null but prevention_implemented is false. These fields must be in agreement. Learning NOT recorded.`, stop |
 | `prevention_implemented=true` but `issue_creation_info` is populated (Step 4a) | `ERROR: prevention_implemented is true but issue_creation_info is populated. These must not both be present. Learning NOT recorded.`, stop |
+| `prevent.prevention_rules` missing/null/non-array/empty (Step 4a/4c) | `ERROR: prevent.prevention_rules is missing, null, not an array, or empty. Learning NOT recorded.`, stop |
 | Commit hash not valid hex format (Step 4b Check 1) | `ERROR: prevention_commit_hash '{hash}' is not a valid hex hash. Learning NOT recorded.`, stop |
 | Commit hash not found in git (Step 4b Check 1) | `ERROR: prevention_commit_hash '{hash}' does not exist in git. Learning NOT recorded.` + verification guidance, stop |
 | Commit timestamp not numeric (Step 4b Check 2) | `ERROR: Could not retrieve commit timestamp for '{hash}'. Learning NOT recorded.`, stop |
@@ -508,7 +615,8 @@ Capture this as the Phase 4 result and proceed to Step 5.
 | Prevention path resolves outside git root (Step 4b Check 3) | `ERROR: prevention_path resolves outside git root: '{resolved_path}'. Learning NOT recorded.`, stop |
 | Commit does not touch prevention_path (Step 4b Check 3) | `ERROR: Commit '{hash}' does not touch '{path}'. Learning NOT recorded.` + changed files list, stop |
 | Diff contains only whitespace/comment changes (Step 4b Check 3) | `ERROR: Commit '{hash}' contains only whitespace, blank lines, or comment-only changes to '{path}'. Prevention must include meaningful code changes. Learning NOT recorded.`, stop |
-| Step 4a or 4b validation not performed before Step 4c (Step 4c) | `ERROR: Step 4a or 4b validation not completed (4a={status}, 4b={status}). Learning NOT recorded.` + guidance to re-run steps in sequence, stop |
+| Any prevention rule fails `specific`, `verifiable`, or `actionable` (Step 4c) | emit `atomicity_gate_failed` JSON with `failed_rules[].rule_index`, `failed_rules[].failed_criteria`, and `failed_rules[].rewrite_guidance`; do not invoke `record-learning` |
+| Step 4a, 4b, or 4c validation not performed before Step 4d (Step 4d) | `ERROR: Step 4 validation not completed (4a={status}, 4b={status}, 4c={status}). Learning NOT recorded.` + guidance to re-run steps in sequence, stop |
 | `record-learning` exits non-zero | `ERROR: record-learning failed (exit {code}): {output}`, stop |
 | Output is not valid JSON | `ERROR: record-learning output is not valid JSON. Learning NOT recorded.` + raw output, stop |
 

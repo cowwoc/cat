@@ -140,6 +140,14 @@ code review, architecture notes, and convention files unless they can be express
 Build-time tests should cover executable build behavior only when the build output is itself the product behavior being
 validated.
 
+### Test Access Seams
+
+Shared-secret or other test-only access seams must be registered by the class that owns the behavior under test.
+Do not route tests for runtime-specific helper methods through an unrelated common orchestrator.
+
+Keep shared test access methods named after the behavior they expose, not after the incidental caller that currently
+reaches it.
+
 ### Do Not Test Non-Code File Contents
 
 Do not add tests that verify the literal contents of non-code files such as Markdown instructions, documentation,
