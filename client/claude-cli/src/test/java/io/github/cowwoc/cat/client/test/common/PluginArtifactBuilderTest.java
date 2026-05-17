@@ -133,6 +133,16 @@ public final class PluginArtifactBuilderTest
         "codexSessionStartExecutable").isTrue();
       requireThat(Files.exists(claudeRoot.resolve("commands")), "claudeDoesNotShipCommands").isFalse();
       requireThat(Files.exists(codexRoot.resolve("commands")), "codexDoesNotShipCommands").isFalse();
+      requireThat(claudeRoot.resolve("lib/git-filter-repo-linux-x64"), "claudeBundledGitFilterRepo").isRegularFile();
+      requireThat(Files.isExecutable(claudeRoot.resolve("lib/git-filter-repo-linux-x64")),
+        "claudeBundledGitFilterRepoExecutable").isTrue();
+      requireThat(Files.exists(claudeRoot.resolve("lib/git-filter-repo-linux-x64.tmp.1234.5678")),
+        "claudeTransientGitFilterRepoDownload").isFalse();
+      requireThat(codexRoot.resolve("lib/git-filter-repo-linux-x64"), "codexBundledGitFilterRepo").isRegularFile();
+      requireThat(Files.isExecutable(codexRoot.resolve("lib/git-filter-repo-linux-x64")),
+        "codexBundledGitFilterRepoExecutable").isTrue();
+      requireThat(Files.exists(codexRoot.resolve("lib/git-filter-repo-linux-x64.tmp.1234.5678")),
+        "codexTransientGitFilterRepoDownload").isFalse();
 
       requireThat(claudeRoot.resolve("skills/claude-skill/SKILL.md"), "claudeSkillAfterGeneration").
         isRegularFile();
@@ -422,6 +432,7 @@ public final class PluginArtifactBuilderTest
       Files.createDirectories(tempRepo);
       Files.writeString(tempRepo.resolve("LICENSE.md"), "license\n", StandardCharsets.UTF_8);
       copyDirectory(sourceRoot.resolve("client/plugin"), tempClient.resolve("plugin"));
+      ensureBundledGitFilterRepo(tempClient.resolve("plugin"));
 
       Path targetDir = tempClient.resolve("distribution/target/runtime");
       new PluginArtifactBuilder(tempClient.resolve("plugin"), tempClient, targetDir).build();
@@ -616,6 +627,7 @@ public final class PluginArtifactBuilderTest
       Files.createDirectories(tempRepo);
       Files.writeString(tempRepo.resolve("LICENSE.md"), "license\n", StandardCharsets.UTF_8);
       copyDirectory(sourceRoot.resolve("client/plugin"), tempClient.resolve("plugin"));
+      ensureBundledGitFilterRepo(tempClient.resolve("plugin"));
 
       Path targetDir = tempClient.resolve("distribution/target/runtime");
       new PluginArtifactBuilder(tempClient.resolve("plugin"), tempClient, targetDir).build();
@@ -653,6 +665,7 @@ public final class PluginArtifactBuilderTest
       Files.createDirectories(tempRepo);
       Files.writeString(tempRepo.resolve("LICENSE.md"), "license\n", StandardCharsets.UTF_8);
       copyDirectory(sourceRoot.resolve("client/plugin"), tempClient.resolve("plugin"));
+      ensureBundledGitFilterRepo(tempClient.resolve("plugin"));
 
       Path targetDir = tempClient.resolve("distribution/target/runtime");
       new PluginArtifactBuilder(tempClient.resolve("plugin"), tempClient, targetDir).build();
@@ -975,7 +988,7 @@ public final class PluginArtifactBuilderTest
     Files.createDirectories(clientDir);
     Files.writeString(repoRoot.resolve("LICENSE.md"), "license\n", StandardCharsets.UTF_8);
     for (String directory : new String[]{
-      ".git-filter-repo-config", "concepts", "config", "lang", "migrations", "scripts",
+      ".git-filter-repo-config", "concepts", "config", "lang", "lib", "migrations", "scripts",
       "templates", ".claude-plugin", ".codex-plugin", "rules/common", "rules/claude",
       "rules/codex", "hooks/common", "hooks/claude", "hooks/codex",
       "skills/common/common-skill", "skills/claude/claude-skill",
@@ -996,6 +1009,7 @@ public final class PluginArtifactBuilderTest
     Files.writeString(pluginDir.resolve("emoji-widths.json"), "{}\n", StandardCharsets.UTF_8);
     Files.writeString(pluginDir.resolve("package.json"), "{}\n", StandardCharsets.UTF_8);
     Files.writeString(pluginDir.resolve("package-lock.json"), "{}\n", StandardCharsets.UTF_8);
+    ensureBundledGitFilterRepo(pluginDir);
     Path javaLauncher = clientDir.resolve("distribution/target/jlink/claude/bin/java");
     Files.writeString(javaLauncher, """
       #!/bin/sh
@@ -1075,6 +1089,23 @@ public final class PluginArtifactBuilderTest
         "# Licensed under the CAT Commercial License.\n" +
         "# See LICENSE.md in the project root for license terms.\n" +
         "name = \"agent\"\n", StandardCharsets.UTF_8);
+  }
+
+  /**
+   * Ensures the test plugin tree contains an executable bundled git-filter-repo binary.
+   *
+   * @param pluginDir the plugin root directory
+   * @throws IOException if file operations fail
+   */
+  private static void ensureBundledGitFilterRepo(Path pluginDir) throws IOException
+  {
+    Files.createDirectories(pluginDir.resolve("lib"));
+    Path bundledBinary = pluginDir.resolve("lib/git-filter-repo-linux-x64");
+    if (!Files.exists(bundledBinary, LinkOption.NOFOLLOW_LINKS))
+      Files.writeString(bundledBinary, "binary\n", StandardCharsets.UTF_8);
+    bundledBinary.toFile().setExecutable(true, false);
+    Files.writeString(pluginDir.resolve("lib/git-filter-repo-linux-x64.tmp.1234.5678"), "incomplete\n",
+      StandardCharsets.UTF_8);
   }
 
   /**

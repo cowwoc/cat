@@ -28,6 +28,14 @@ Derive keywords from the mistake description (e.g., command names, file names, s
 Then invoke the extractor directly with those keywords:
 
 ```bash
+: "${CAT_PLUGIN_ROOT:?CAT_PLUGIN_ROOT is required from CAT runtime injection}"
+: "${CAT_PLUGIN_DATA:?CAT_PLUGIN_DATA is required}"
+: "${CAT_CONFIG_DIR:?CAT_CONFIG_DIR is required}"
+: "${CAT_PROJECT_DIR:?CAT_PROJECT_DIR is required}"
+: "${CAT_RUNTIME:?CAT_RUNTIME is required}"
+CAT_SESSION_ID="${CAT_SESSION_ID:-${CODEX_THREAD_ID:-}}"
+: "${CAT_SESSION_ID:?CAT_SESSION_ID is required; do not generate a fallback UUID}"
+export CAT_PLUGIN_ROOT CAT_PLUGIN_DATA CAT_CONFIG_DIR CAT_PROJECT_DIR CAT_RUNTIME CAT_SESSION_ID
 "${CAT_PLUGIN_ROOT}/client/bin/extract-investigation-context" "keyword1 keyword2 keyword3" 2>/dev/null || \
   echo '{"error":"pre-extraction unavailable - jlink binary not built"}'
 ```
@@ -150,10 +158,10 @@ Delegate to general-purpose subagent using the Task tool with these JSON paramet
 **Note:** If the subagent was spawned in background (Step 2), Steps 4-7 execute when the background task
 notification arrives, not immediately after Step 3. MANDATORY: The orchestrator MUST implement a timeout mechanism
 to detect stalled background tasks. The timeout MUST be enforced in code (not advisory): if the background notification
-does not arrive within **150 seconds** (5 minutes, supporting complex multi-phase analyses), the orchestrator MUST
+does not arrive within **300 seconds** (5 minutes, supporting complex multi-phase analyses), the orchestrator MUST
 display this recovery message and stop waiting:
 ```
-The background learn task appears to be stalled (no notification received after 150 seconds).
+The background learn task appears to be stalled (no notification received after 300 seconds).
 Options:
 1. Check task logs and background task output for status
 2. Manual recovery: Invoke /cat:learn in foreground mode to re-run the analysis
@@ -161,7 +169,7 @@ Options:
 Timeout enforcement example (MANDATORY in code):
 ```bash
 START_TIME=$(date +%s)
-TIMEOUT=150
+TIMEOUT=300
 while [[ $(($(date +%s) - START_TIME)) -lt $TIMEOUT ]]; do
   if [[ -f "$NOTIFICATION_FILE" ]]; then
     # Process notification (Steps 4-7)
@@ -170,7 +178,7 @@ while [[ $(($(date +%s) - START_TIME)) -lt $TIMEOUT ]]; do
   sleep 2  # Poll every 2 seconds
 done
 if [[ $(($(date +%s) - START_TIME)) -ge $TIMEOUT ]]; then
-  echo "ERROR: Background task timeout (150s exceeded). Learning NOT recorded."
+  echo "ERROR: Background task timeout (300s exceeded). Learning NOT recorded."
   exit 1
 fi
 ```
@@ -458,6 +466,14 @@ PHASE3_TMP=$(mktemp -p .cat/work/tmp --suffix=.json)
 printf '%s' "$PHASE3_JSON" > "$PHASE3_TMP"
 
 # Run the record-learning tool — reads Phase 3 JSON from stdin, outputs recording result JSON to stdout
+: "${CAT_PLUGIN_ROOT:?CAT_PLUGIN_ROOT is required from CAT runtime injection}"
+: "${CAT_PLUGIN_DATA:?CAT_PLUGIN_DATA is required}"
+: "${CAT_CONFIG_DIR:?CAT_CONFIG_DIR is required}"
+: "${CAT_PROJECT_DIR:?CAT_PROJECT_DIR is required}"
+: "${CAT_RUNTIME:?CAT_RUNTIME is required}"
+CAT_SESSION_ID="${CAT_SESSION_ID:-${CODEX_THREAD_ID:-}}"
+: "${CAT_SESSION_ID:?CAT_SESSION_ID is required; do not generate a fallback UUID}"
+export CAT_PLUGIN_ROOT CAT_PLUGIN_DATA CAT_CONFIG_DIR CAT_PROJECT_DIR CAT_RUNTIME CAT_SESSION_ID
 RECORD_RESULT=$("${CAT_PLUGIN_ROOT}/client/bin/record-learning" < "$PHASE3_TMP")
 RECORD_EXIT=$?
 rm -f "$PHASE3_TMP"

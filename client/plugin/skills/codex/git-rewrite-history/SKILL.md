@@ -1,5 +1,5 @@
 ---
-description: "MANDATORY: Use instead of git filter-branch - git filter-repo with Python detection and on-demand binary download"
+description: "MANDATORY: Use instead of git filter-branch - git filter-repo with bundled binary resolution"
 ---
 <!--
 Copyright (c) 2026 Gili Tzabari. All rights reserved.

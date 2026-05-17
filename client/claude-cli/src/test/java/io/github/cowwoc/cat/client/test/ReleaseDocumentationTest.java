@@ -53,8 +53,55 @@ public final class ReleaseDocumentationTest
     String gitFilterRepoDownloader = Files.readString(clientRoot.resolve("plugin/scripts/download-git-filter-repo.sh"),
       StandardCharsets.UTF_8);
     requireThat(gitFilterRepoDownloader, "gitFilterRepoDownloader").
-      contains("REPO_NAME=\"cat\"");
-    requireThat(gitFilterRepoDownloader, "gitFilterRepoDownloader").doesNotContain("python");
+      doesNotContain("curl");
+    requireThat(gitFilterRepoDownloader, "gitFilterRepoDownloader").
+      doesNotContain("BINARY_URL=");
+    requireThat(gitFilterRepoDownloader, "gitFilterRepoDownloader").
+      doesNotContain("command -v git-filter-repo");
+    requireThat(gitFilterRepoDownloader, "gitFilterRepoDownloader").
+      contains("ERROR: Bundled git-filter-repo executable not found");
+
+    String commonGitRewriteHistory = Files.readString(
+      clientRoot.resolve("plugin/skills/common/git-rewrite-history/first-use.md"), StandardCharsets.UTF_8);
+    requireThat(commonGitRewriteHistory, "commonGitRewriteHistory").
+      contains("fail-fast resolution of the bundled standalone binary");
+    requireThat(commonGitRewriteHistory, "commonGitRewriteHistory").
+      doesNotContain("executable on `PATH`");
+    requireThat(commonGitRewriteHistory, "commonGitRewriteHistory").
+      doesNotContain("executable on PATH");
+    requireThat(commonGitRewriteHistory, "commonGitRewriteHistory").
+      doesNotContain("on `PATH` or the path to the bundled");
+
+    String claudeGitRewriteHistory = Files.readString(
+      clientRoot.resolve("plugin/skills/claude/git-rewrite-history/SKILL.md"), StandardCharsets.UTF_8);
+    requireThat(claudeGitRewriteHistory, "claudeGitRewriteHistory").
+      doesNotContain("PATH or bundled binary resolution");
+
+    String codexGitRewriteHistory = Files.readString(
+      clientRoot.resolve("plugin/skills/codex/git-rewrite-history/SKILL.md"), StandardCharsets.UTF_8);
+    requireThat(codexGitRewriteHistory, "codexGitRewriteHistory").
+      doesNotContain("PATH or bundled binary resolution");
+  }
+
+  /**
+   * Verifies skills that invoke CAT launchers define the complete runtime environment first.
+   *
+   * @throws IOException if reading source files fails
+   */
+  @Test
+  public void catLauncherSkillsDefineRuntimeEnvironment() throws IOException
+  {
+    Path sourceRoot = findSourceRoot();
+    Path skillRoot = sourceRoot.resolve("client/plugin/skills/common");
+    assertDefinesCatRuntimeEnvironment(skillRoot.resolve("git-squash/first-use.md"), "gitSquashSkill");
+    assertDefinesCatRuntimeEnvironment(skillRoot.resolve("get-output/first-use.md"), "getOutputSkill");
+    assertDefinesCatRuntimeEnvironment(skillRoot.resolve("learn/first-use.md"), "learnSkill");
+
+    String learnSkill = Files.readString(skillRoot.resolve("learn/first-use.md"), StandardCharsets.UTF_8);
+    requireThat(learnSkill, "learnSkill").contains("TIMEOUT=300");
+    requireThat(learnSkill, "learnSkill").contains("300 seconds");
+    requireThat(learnSkill, "learnSkill").doesNotContain("TIMEOUT=150");
+    requireThat(learnSkill, "learnSkill").doesNotContain("150 seconds");
   }
 
   /**
@@ -126,6 +173,21 @@ public final class ReleaseDocumentationTest
     requireThat(content, name).doesNotContain("Codex");
     requireThat(content, name).doesNotContain("CAT_RUNTIME:-claude");
     requireThat(content, name).doesNotContain("ModelIdResolver.detectClaudeCodeVersion");
+  }
+
+  private static void assertDefinesCatRuntimeEnvironment(Path path, String name) throws IOException
+  {
+    String content = Files.readString(path, StandardCharsets.UTF_8);
+    requireThat(content, name).contains("CAT_PLUGIN_ROOT");
+    requireThat(content, name).contains("CAT_PLUGIN_DATA");
+    requireThat(content, name).contains("CAT_CONFIG_DIR");
+    requireThat(content, name).contains("CAT_PROJECT_DIR");
+    requireThat(content, name).contains("CAT_RUNTIME");
+    requireThat(content, name).contains("CAT_SESSION_ID");
+    requireThat(content, name).contains("CODEX_THREAD_ID");
+    requireThat(content, name).contains("do not generate a fallback UUID");
+    requireThat(content, name).contains("CAT_PLUGIN_ROOT is required from CAT runtime injection");
+    requireThat(content, name).doesNotContain("find \"${CODEX_HOME}/plugins/cache\"");
   }
 
   private static Path findSourceRoot()

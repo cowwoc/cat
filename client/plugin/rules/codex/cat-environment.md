@@ -12,30 +12,17 @@ Use this block at the top of Bash commands that need `CAT_PLUGIN_ROOT`, `CAT_PLU
 `CAT_PROJECT_DIR`, `CAT_RUNTIME`, or `CAT_SESSION_ID`:
 
 ```bash
-CODEX_HOME="${CODEX_HOME:-${HOME}/.codex}"
-CAT_RUNTIME="${CAT_RUNTIME:-codex}"
-CAT_PROJECT_DIR="${CAT_PROJECT_DIR:-$(pwd)}"
-CAT_PLUGIN_DATA="${CAT_PLUGIN_DATA:-${CODEX_HOME}/plugins/data/cat-cat}"
-CAT_CONFIG_DIR="${CAT_CONFIG_DIR:-${CODEX_HOME}}"
+: "${CAT_PLUGIN_ROOT:?CAT_PLUGIN_ROOT is required from CAT runtime injection}"
+: "${CAT_PLUGIN_DATA:?CAT_PLUGIN_DATA is required}"
+: "${CAT_CONFIG_DIR:?CAT_CONFIG_DIR is required}"
+: "${CAT_PROJECT_DIR:?CAT_PROJECT_DIR is required}"
+: "${CAT_RUNTIME:?CAT_RUNTIME is required}"
 CAT_SESSION_ID="${CAT_SESSION_ID:-${CODEX_THREAD_ID:-}}"
 
 # Do not synthesize CAT_SESSION_ID. On Codex it must come from CODEX_THREAD_ID.
 # If CODEX_THREAD_ID is unavailable, stop and report the missing runtime context.
-
-if [[ -z "${CAT_PLUGIN_ROOT:-}" ]]; then
-  CAT_PLUGIN_DESCRIPTOR="$(find "${CODEX_HOME}/plugins/cache" \
-    -path '*/cat/*/.codex-plugin/plugin.json' \
-    -type f -print -quit 2>/dev/null || true)"
-  if [[ -n "${CAT_PLUGIN_DESCRIPTOR}" ]]; then
-    CAT_PLUGIN_ROOT="${CAT_PLUGIN_DESCRIPTOR%/.codex-plugin/plugin.json}"
-  fi
-fi
-
-: "${CAT_PLUGIN_ROOT:?CAT plugin cache not found under ${CODEX_HOME}/plugins/cache}"
-: "${CAT_PLUGIN_DATA:?CAT_PLUGIN_DATA is required}"
-: "${CAT_CONFIG_DIR:?CAT_CONFIG_DIR is required}"
-: "${CAT_PROJECT_DIR:?CAT_PROJECT_DIR is required}"
 : "${CAT_SESSION_ID:?CAT_SESSION_ID is required; do not generate a fallback UUID}"
+export CAT_PLUGIN_ROOT CAT_PLUGIN_DATA CAT_CONFIG_DIR CAT_PROJECT_DIR CAT_RUNTIME CAT_SESSION_ID
 ```
 
 Use `CAT_PLUGIN_ROOT` for files shipped inside the installed plugin cache, including the jlink client under

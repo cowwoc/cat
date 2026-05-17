@@ -153,6 +153,7 @@ public final class PluginArtifactBuilder
     copyTree(pluginDir.resolve("concepts"), target.resolve("concepts"));
     copyTree(pluginDir.resolve("config"), target.resolve("config"));
     copyTree(pluginDir.resolve("lang"), target.resolve("lang"));
+    copyTree(pluginDir.resolve("lib"), target.resolve("lib"));
     copyTree(pluginDir.resolve("migrations"), target.resolve("migrations"));
     copyTree(pluginDir.resolve("scripts"), target.resolve("scripts"));
     copyTree(pluginDir.resolve("templates"), target.resolve("templates"));
@@ -407,6 +408,7 @@ public final class PluginArtifactBuilder
     if (Files.exists(commonAgents, LinkOption.NOFOLLOW_LINKS))
       throw new IllegalStateException("Runtime artifact must not contain common agent sources: " + commonAgents);
     verifyNoSourceOnlySkillFiles(target.resolve("skills"));
+    verifyBundledGitFilterRepo(target.resolve("lib"));
   }
 
   /**
@@ -428,6 +430,34 @@ public final class PluginArtifactBuilder
         toList();
       if (!invalidFiles.isEmpty())
         throw new IllegalStateException("Runtime artifact contains source-only skill files: " + invalidFiles);
+    }
+  }
+
+  /**
+   * Verifies that runtime artifacts include bundled git-filter-repo binaries and that they are executable.
+   *
+   * @param libRoot the runtime lib directory
+   * @throws IOException if file operations fail
+   */
+  private void verifyBundledGitFilterRepo(Path libRoot) throws IOException
+  {
+    if (!Files.isDirectory(libRoot, LinkOption.NOFOLLOW_LINKS))
+      throw new IllegalStateException("Runtime artifact is missing lib directory: " + libRoot);
+    try (Stream<Path> stream = Files.list(libRoot))
+    {
+      List<Path> bundledBinaries = stream.
+        filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)).
+        filter(path -> path.getFileName().toString().startsWith("git-filter-repo-")).
+        filter(path -> !path.getFileName().toString().endsWith(".version")).
+        sorted().
+        toList();
+      if (bundledBinaries.isEmpty())
+        throw new IllegalStateException("Runtime artifact is missing bundled git-filter-repo binary in " + libRoot);
+      for (Path binary : bundledBinaries)
+      {
+        if (!Files.isExecutable(binary))
+          throw new IllegalStateException("Bundled git-filter-repo is not executable: " + binary);
+      }
     }
   }
 
@@ -468,11 +498,25 @@ public final class PluginArtifactBuilder
       @Override
       public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException
       {
+        if (isGitFilterRepoTemporaryFile(file))
+          return FileVisitResult.CONTINUE;
         Path relative = source.relativize(file);
         copyFileSystemEntry(file, target.resolve(relative));
         return FileVisitResult.CONTINUE;
       }
     });
+  }
+
+  /**
+   * Returns true if a file is an incomplete git-filter-repo download artifact.
+   *
+   * @param file the file to inspect
+   * @return true if the file is transient build output
+   */
+  private boolean isGitFilterRepoTemporaryFile(Path file)
+  {
+    String fileName = file.getFileName().toString();
+    return fileName.startsWith("git-filter-repo-") && fileName.contains(".tmp.");
   }
 
   /**

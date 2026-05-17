@@ -1,0 +1,23 @@
+{
+  "period" : "2026-05",
+  "mistakes" : [ {
+    "id" : "M622",
+    "timestamp" : "2026-05-17T03:32:15Z",
+    "category" : "protocol_violation",
+    "description" : "CAT CLI launcher was invoked repeatedly without required CAT environment variables because the invoking skill did not show the full runtime environment preamble.",
+    "root_cause" : "CAT skill instructions for direct client/bin launcher calls under-specified required runtime-neutral environment setup, so the agent used trial-and-error retries (adding CAT_SESSION_ID, then CAT_PROJECT_DIR, then CAT_PLUGIN_DATA) instead of loading the complete Codex CAT environment block first.",
+    "cause_signature" : "compliance_failure:validation_absent:cli_invocation",
+    "prevention_type" : "instruction",
+    "prevention_path" : "client/plugin/skills/common/git-squash/first-use.md",
+    "pattern_keywords" : [ "CAT_SESSION_ID", "CAT_PROJECT_DIR", "CAT_PLUGIN_DATA", "CAT_RUNTIME", "git-squash", "launcher" ],
+    "prevention_implemented" : true,
+    "prevention_verified" : true,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : "Before invoking any CAT launcher under client/bin, initialize CAT_PLUGIN_ROOT, CAT_PLUGIN_DATA, CAT_CONFIG_DIR, CAT_PROJECT_DIR, CAT_RUNTIME, and CAT_SESSION_ID in the same command invocation or abort."
+  } ]
+}

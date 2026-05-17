@@ -7,8 +7,8 @@ See LICENSE.md in the project root for license terms.
 
 ## Purpose
 
-Safely rewrite git history using git filter-repo, with automatic tool resolution from an executable on `PATH` or a
-downloaded standalone binary. Always use this skill instead of `git filter-branch`.
+Safely rewrite git history using git filter-repo, with fail-fast resolution of the bundled standalone binary in the
+CAT runtime artifact. Always use this skill instead of `git filter-branch`.
 
 **Why git filter-repo over alternatives:**
 
@@ -25,7 +25,7 @@ downloaded standalone binary. Always use this skill instead of `git filter-branc
   Filename-only tools accidentally remove ALL files with a matching name across all directories — making
   them unsafe for files like `plan.md` that exist in many directories.
 - **Actively maintained and recommended by git itself** as the preferred history rewriting tool.
-- **No Python requirement**: a standalone binary is downloaded on first use when `git-filter-repo` is not on `PATH`.
+- **No Python requirement**: runtime artifacts include a bundled standalone binary.
 
 ---
 
@@ -39,17 +39,14 @@ Before any operation, resolve the tool invocation string:
 FILTER_REPO=$("${CAT_PLUGIN_ROOT}/scripts/download-git-filter-repo.sh")
 ```
 
-This returns either the `git-filter-repo` executable on `PATH` or the path to a cached standalone binary.
+This returns the path to the bundled standalone binary.
 
 ```bash
 "$FILTER_REPO" [options]
 ```
 
-To force re-download and re-verification (e.g., after suspected corruption):
-
-```bash
-GFR_FORCE_DOWNLOAD=1 FILTER_REPO=$("${CAT_PLUGIN_ROOT}/scripts/download-git-filter-repo.sh")
-```
+If resolution fails because the bundled binary is missing, corrupted, or not executable, reinstall the CAT runtime
+artifact.
 
 ### Step 2: Create a backup branch
 
