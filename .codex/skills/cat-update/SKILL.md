@@ -34,18 +34,7 @@ BATS_PROJECT="$(mktemp -d)"
 trap 'rm -rf "${BATS_PROJECT}"' EXIT
 cp -a "${PROJECT_DIR}/." "${BATS_PROJECT}/"
 rm -rf "${BATS_PROJECT}/.git" "${BATS_PROJECT}"/client/*/target
-mapfile -d '' BATS_TESTS < <(
-  find "${BATS_PROJECT}/client/plugin/tests/scripts" \
-    "${BATS_PROJECT}/client/distribution/src/test" \
-    -name '*.bats' -print0 | sort -z
-)
-if (( ${#BATS_TESTS[@]} == 0 )); then
-  echo "ERROR: No Bats tests found." >&2
-  exit 1
-fi
-cd "${BATS_PROJECT}"
-"${BATS_BIN}" "${BATS_TESTS[@]}"
-cd "${PROJECT_DIR}"
+npm run --prefix "${BATS_PROJECT}/client/plugin" test
 
 RELEASE_ARTIFACT="${PROJECT_DIR}/client/distribution/target/runtime/codex"
 test -f "${RELEASE_ARTIFACT}/client/VERSION"
