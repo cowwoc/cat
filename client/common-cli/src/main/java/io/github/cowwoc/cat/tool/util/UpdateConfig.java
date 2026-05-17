@@ -341,11 +341,25 @@ public final class UpdateConfig
 
     // Merge updates into existing
     existing.putAll(updates);
+    Map<String, Object> defaults = Config.defaultValues();
+    existing.entrySet().removeIf(entry -> Objects.equals(defaults.get(entry.getKey()), entry.getValue()));
 
-    // Write to a temp file in the same directory, then atomically rename
-    Path tempPath = configPath.resolveSibling("config.json.tmp");
-    Files.writeString(tempPath, mapper.writeValueAsString(existing));
-    Files.move(tempPath, configPath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+    // Write to a randomized temp file in the same directory, then atomically rename.
+    Path tempPath = Files.createTempFile(configPath.getParent(), "config-", ".json.tmp");
+    String serialized;
+    if (existing.isEmpty())
+      serialized = "{}";
+    else
+      serialized = mapper.writeValueAsString(existing);
+    try
+    {
+      Files.writeString(tempPath, serialized);
+      Files.move(tempPath, configPath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+    }
+    finally
+    {
+      Files.deleteIfExists(tempPath);
+    }
   }
 
   /**

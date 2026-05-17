@@ -80,6 +80,16 @@ public final class Config
   }
 
   /**
+   * Returns the canonical default value for each known configuration key.
+   *
+   * @return an immutable map of configuration defaults
+   */
+  public static Map<String, Object> defaultValues()
+  {
+    return DEFAULTS;
+  }
+
+  /**
    * Load configuration with three-layer override.
    * <p>
    * Loading order (later overrides earlier):

@@ -15,6 +15,7 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -127,6 +128,28 @@ public class UpdateConfigTest
   }
 
   /**
+   * Verifies that a blank key returns an error response.
+   */
+  @Test
+  public void blankKeyReturnsError() throws Exception
+  {
+    Path tempDir = Files.createTempDirectory("update-config-test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+      UpdateConfig.run(scope, new String[]{"=medium"}, out);
+
+      String output = buffer.toString(StandardCharsets.UTF_8);
+      requireThat(output, "output").contains("\"status\":\"ERROR\"");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that an invalid enum value for a known key returns an error response.
    */
   @Test
@@ -193,6 +216,62 @@ public class UpdateConfigTest
   }
 
   /**
+   * Verifies that valid width boundary values are accepted.
+   */
+  @Test
+  public void widthBoundariesAreAccepted() throws Exception
+  {
+    Path tempDir = Files.createTempDirectory("update-config-test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+      UpdateConfig.run(scope, new String[]{"fileWidth=40", "displayWidth=200"}, out);
+
+      String output = buffer.toString(StandardCharsets.UTF_8);
+      requireThat(output, "output").contains("\"status\":\"OK\"");
+
+      Path configPath = tempDir.resolve(Config.CAT_DIR_NAME).resolve("config.json");
+      String configContent = Files.readString(configPath);
+      Map<String, Object> parsed = scope.getJsonMapper().readValue(configContent,
+        new tools.jackson.core.type.TypeReference<>()
+        {
+        });
+      requireThat(parsed.get("fileWidth"), "fileWidth").isEqualTo(40);
+      requireThat(parsed.get("displayWidth"), "displayWidth").isEqualTo(200);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that width values just outside valid boundaries return an error response.
+   */
+  @Test
+  public void widthValuesOutsideBoundariesReturnError() throws Exception
+  {
+    Path tempDir = Files.createTempDirectory("update-config-test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream lowBuffer = new ByteArrayOutputStream();
+      PrintStream lowOut = new PrintStream(lowBuffer, true, StandardCharsets.UTF_8);
+      UpdateConfig.run(scope, new String[]{"fileWidth=39"}, lowOut);
+      requireThat(lowBuffer.toString(StandardCharsets.UTF_8), "lowOutput").contains("\"status\":\"ERROR\"");
+
+      ByteArrayOutputStream highBuffer = new ByteArrayOutputStream();
+      PrintStream highOut = new PrintStream(highBuffer, true, StandardCharsets.UTF_8);
+      UpdateConfig.run(scope, new String[]{"displayWidth=201"}, highOut);
+      requireThat(highBuffer.toString(StandardCharsets.UTF_8), "highOutput").contains("\"status\":\"ERROR\"");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that an invalid value for completionWorkflow returns an error response.
    */
   @Test
@@ -236,8 +315,138 @@ public class UpdateConfigTest
       requireThat(Files.exists(configPath), "configExists").isTrue();
 
       String configContent = Files.readString(configPath);
-      requireThat(configContent, "configContent").contains("\"trust\"");
-      requireThat(configContent, "configContent").contains("\"medium\"");
+      requireThat(configContent, "configContent").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that setting an existing override back to its default removes the key from raw config.json.
+   */
+  @Test
+  public void defaultValueUpdateRemovesExistingOverride() throws Exception
+  {
+    Path tempDir = Files.createTempDirectory("update-config-test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream firstBuffer = new ByteArrayOutputStream();
+      PrintStream firstOut = new PrintStream(firstBuffer, true, StandardCharsets.UTF_8);
+      UpdateConfig.run(scope, new String[]{"trust=high"}, firstOut);
+      requireThat(firstBuffer.toString(StandardCharsets.UTF_8), "firstOutput").contains("\"status\":\"OK\"");
+
+      ByteArrayOutputStream secondBuffer = new ByteArrayOutputStream();
+      PrintStream secondOut = new PrintStream(secondBuffer, true, StandardCharsets.UTF_8);
+      UpdateConfig.run(scope, new String[]{"trust=medium"}, secondOut);
+      requireThat(secondBuffer.toString(StandardCharsets.UTF_8), "secondOutput").contains("\"status\":\"OK\"");
+
+      Path configPath = tempDir.resolve(Config.CAT_DIR_NAME).resolve("config.json");
+      String configContent = Files.readString(configPath);
+      Map<String, Object> parsed = scope.getJsonMapper().readValue(configContent,
+        new tools.jackson.core.type.TypeReference<>()
+        {
+        });
+      requireThat(parsed.containsKey("trust"), "containsTrust").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that removing a default-valued key preserves unrelated non-default overrides.
+   */
+  @Test
+  public void defaultValueUpdatePreservesOtherOverrides() throws Exception
+  {
+    Path tempDir = Files.createTempDirectory("update-config-test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream firstBuffer = new ByteArrayOutputStream();
+      PrintStream firstOut = new PrintStream(firstBuffer, true, StandardCharsets.UTF_8);
+      UpdateConfig.run(scope, new String[]{"trust=high", "fileWidth=100"}, firstOut);
+      requireThat(firstBuffer.toString(StandardCharsets.UTF_8), "firstOutput").contains("\"status\":\"OK\"");
+
+      ByteArrayOutputStream secondBuffer = new ByteArrayOutputStream();
+      PrintStream secondOut = new PrintStream(secondBuffer, true, StandardCharsets.UTF_8);
+      UpdateConfig.run(scope, new String[]{"trust=medium"}, secondOut);
+      requireThat(secondBuffer.toString(StandardCharsets.UTF_8), "secondOutput").contains("\"status\":\"OK\"");
+
+      Path configPath = tempDir.resolve(Config.CAT_DIR_NAME).resolve("config.json");
+      String configContent = Files.readString(configPath);
+      Map<String, Object> parsed = scope.getJsonMapper().readValue(configContent,
+        new tools.jackson.core.type.TypeReference<>()
+        {
+        });
+      requireThat(parsed.containsKey("trust"), "containsTrust").isFalse();
+      requireThat(parsed.get("fileWidth"), "fileWidth").isEqualTo(100);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that writing only default values yields an empty raw config object.
+   */
+  @Test
+  public void defaultOnlyBatchWritesEmptyObject() throws Exception
+  {
+    Path tempDir = Files.createTempDirectory("update-config-test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+      UpdateConfig.run(scope, new String[]{
+        "trust=medium",
+        "caution=medium",
+        "curiosity=medium",
+        "perfection=medium",
+        "verbosity=medium",
+        "completionWorkflow=merge",
+        "minSeverity=low",
+        "fileWidth=120",
+        "displayWidth=120",
+        "license="
+      }, out);
+      requireThat(buffer.toString(StandardCharsets.UTF_8), "output").contains("\"status\":\"OK\"");
+
+      Path configPath = tempDir.resolve(Config.CAT_DIR_NAME).resolve("config.json");
+      String configContent = Files.readString(configPath);
+      requireThat(configContent, "configContent").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that non-default updates continue to persist unchanged.
+   */
+  @Test
+  public void nonDefaultValuesStillPersist() throws Exception
+  {
+    Path tempDir = Files.createTempDirectory("update-config-test-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
+      UpdateConfig.run(scope, new String[]{"trust=low", "fileWidth=100"}, out);
+      requireThat(buffer.toString(StandardCharsets.UTF_8), "output").contains("\"status\":\"OK\"");
+
+      Path configPath = tempDir.resolve(Config.CAT_DIR_NAME).resolve("config.json");
+      String configContent = Files.readString(configPath);
+      Map<String, Object> parsed = scope.getJsonMapper().readValue(configContent,
+        new tools.jackson.core.type.TypeReference<>()
+        {
+        });
+      requireThat(parsed.get("trust"), "trust").isEqualTo("low");
+      requireThat(parsed.get("fileWidth"), "fileWidth").isEqualTo(100);
     }
     finally
     {
