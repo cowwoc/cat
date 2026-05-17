@@ -528,6 +528,10 @@ public final class PluginArtifactBuilderTest
         requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
           "Do NOT use a generic/default agent type for stakeholder review");
         requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
+          "Reviewer subagents are leaf reviewers");
+        requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
+          "Do NOT call `spawn_agent`, `wait_agent`, `list_agents`,");
+        requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
           "agent_type=<stakeholder-agent-type>");
         requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
           "subagent_type=<stakeholder-agent-type>");
@@ -552,6 +556,18 @@ public final class PluginArtifactBuilderTest
         requireThat(workMerge, runtime + "WorkMerge").contains("Review result is stale");
         requireThat(workMerge, runtime + "WorkMerge").contains(
           "Re-run stakeholder review after the latest implementation change before presenting the approval gate");
+        requireThat(workMerge, runtime + "WorkMerge").contains(
+          "case-insensitive exact match");
+        requireThat(workMerge, runtime + "WorkMerge").contains(
+          "${USER_RESPONSE,,}");
+        requireThat(workMerge, runtime + "WorkMerge").contains(
+          "Do not rerun `cat:stakeholder-review` solely because the rebase changed the commit SHA");
+        requireThat(workMerge, runtime + "WorkMerge").contains(
+          "Preserve the approval only when the rebase is mechanical");
+        requireThat(workMerge, runtime + "WorkMerge").contains(
+          "write `approved:invalidated`");
+        requireThat(workMerge, runtime + "WorkMerge").contains(
+          "return to the appropriate review or approval path");
         requireThat(workMerge, runtime + "WorkMerge").doesNotContain("cat:include");
 
         String workWithIssue = Files.readString(runtimeRoot.resolve("skills/work-with-issue/first-use.md"),

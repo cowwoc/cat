@@ -45,9 +45,11 @@ are additionally enforced by hooks or explicit STOP instructions that block prog
   "implementation running" until the merge approval gate has been presented and resolved.
 - **Step 5: Review Phase (Stakeholder Review)** — always invoke `cat:stakeholder-review` except for config-driven
   exceptions (CAUTION=none or TRUST=high); do not skip based on perceived simplicity or short feedback cycles
-- **Step 5 freshness check** — if any implementation, review-fix, or user-feedback change modifies HEAD after a
-  stakeholder review, re-run the review; the merge phase must block the approval gate when the persisted
-  `reviewed_head_sha` does not match the current HEAD
+- **Step 5 freshness check before approval** — before presenting the approval gate, if any implementation,
+  review-fix, or user-feedback change modifies HEAD after a stakeholder review, re-run the review. Before approval,
+  the merge phase must block the approval gate when the persisted `reviewed_head_sha` does not match the current HEAD.
+  After the user has approved the gate, a mechanical rebase caused only by the target branch advancing changes the
+  commit SHA but does not by itself invalidate the stakeholder review or require rerunning it.
 - **Step 7: Squash Commits by Topic Before Review** — always squash before the approval gate; do not proceed to
   Step 8 without completing this step
 - **Step 8: Rebase onto Target Branch Before Approval Gate** — always rebase the squashed branch onto the current tip

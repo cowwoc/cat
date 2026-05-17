@@ -310,7 +310,11 @@ ALL background tasks (started with `run_in_background: true`) — including any 
 review phase — must have delivered `<task-notification>` before presenting pre-gate output or the structured
 approval tool. Do NOT assume completion based on time or conversation turns.
 
-**Reviewer completion check (MANDATORY):**
+**Reviewer completion check before approval (MANDATORY):**
+
+This freshness check protects the approval gate. It is evaluated before the user is asked to approve merge. Do not
+reuse this check after approval to force a stakeholder-review rerun solely because a merge-time rebase changed the
+commit SHA while replaying the same approved patch onto a newer target branch.
 
 `ISSUE_ID` is the issue identifier passed as a parameter to `work-merge` (the same `issue_id` used throughout
 the merge skill for lock files and state). `CAUTION` is already parsed from the `$ARGUMENTS` binding at the top of
@@ -400,7 +404,7 @@ Use the active runtime's tool:
 
 If no structured input tool is available:
 - Claude Code: fail closed; do not write the approval marker and do not accept chat approval.
-- Codex Default mode: ask the user verbally with the exact same option labels. Only an exact user response matching
+- Codex Default mode: ask the user verbally with the same option labels. Only a case-insensitive exact match for
   one presented option is accepted. Do not accept `"yes"`, `"ok"`, `"proceed"`, `"go ahead"`, or paraphrases.
 
 Approval options:
@@ -420,17 +424,31 @@ Reply with exactly one option:
 - Abort
 ```
 
-If MEDIUM+ concerns exist, include `Fix remaining concerns` in the same list. The next user response must exactly
-match one listed option to be accepted.
+If MEDIUM+ concerns exist, include `Fix remaining concerns` in the same list. The next user response must be a
+case-insensitive exact match for one listed option to be accepted. For example, `approve and merge` maps to
+`Approve and merge`, but `approve`, `yes`, and `go ahead` do not.
 
 **CRITICAL:** Empty response = no selection = GATE REJECTED. Re-present entire gate.
-Conversational signals ("continue", "ok", "yes", "proceed", "go ahead", "approve and merge") are NOT valid
-approvals.
+Conversational signals ("continue", "ok", "yes", "proceed", "go ahead") are NOT valid approvals.
 
 **Gate result detection:**
 - Structured or Codex verbal response empty or null → GATE REJECTED
-- Structured or Codex verbal response does not exactly match a presented option → GATE REJECTED
-- Structured or Codex verbal response exactly matches a presented option → GATE ACCEPTED
+- Structured or Codex verbal response is not a case-insensitive exact match for a presented option → GATE REJECTED
+- Structured or Codex verbal response is a case-insensitive exact match for a presented option → GATE ACCEPTED
+
+Codex verbal approval matching must use exact option matching after case-folding only:
+```bash
+SELECTED_OPTION=""
+for OPTION in "${APPROVAL_OPTIONS[@]}"; do
+  if [[ "${USER_RESPONSE,,}" == "${OPTION,,}" ]]; then
+    SELECTED_OPTION="$OPTION"
+    break
+  fi
+done
+if [[ -z "$SELECTED_OPTION" ]]; then
+  echo "GATE REJECTED: response must exactly match one presented option"
+fi
+```
 
 **If GATE REJECTED:** Re-display full context and re-invoke the structured approval tool. Do NOT proceed to Step 13.
 
@@ -522,6 +540,21 @@ if TRUST != "high":
         # On "Abort": return ABORTED. On "Approve and merge": set APPROVAL_MARKER=true, continue.
 ```
 
+### Post-Approval Target Advancement
+
+After the approval marker is written, target-branch movement is handled as part of merge execution, not as a reason to
+restart stakeholder review. If `${TARGET_BRANCH}` advances after approval and the issue branch must be rebased before
+it can fast-forward merge:
+
+- Do not compare the post-rebase HEAD to the persisted `reviewed_head_sha` for the purpose of blocking merge.
+- Do not rerun `cat:stakeholder-review` solely because the rebase changed the commit SHA.
+- Do not overwrite the durable `approved` marker with a new `squashed:<hash>` marker during this post-approval path.
+- Preserve the approval only when the rebase is mechanical: no conflicts, no manual edits, and no semantic change to
+  the approved patch.
+- If the rebase has conflicts, requires manual edits, changes the approved patch semantics, or introduces any
+  implementation change beyond replaying the approved commits onto the newer target, write `approved:invalidated` and
+  return to the appropriate review or approval path.
+
 ### Execute Merge
 
 Capture pre-merge tip before invoking the tool:
@@ -569,10 +602,10 @@ MERGE_RESULT=$("${STABLE_MERGE_PLUGIN_ROOT}/client/bin/merge-and-cleanup" \
 | Output | Action |
 |--------|--------|
 | `"status": "success"` | Continue to post-merge verification |
-| `"status": "error"`: branch diverged | Rebase onto target then retry |
+| `"status": "error"`: branch diverged | Rebase onto target, preserve approval for mechanical rebase, then retry |
 | `"status": "error"`: dirty worktree | Commit/stash changes first |
 
-**On any merge error:** Invalidate approval marker, then return FAILED:
+**On any merge error that requires manual intervention:** Invalidate approval marker, then return FAILED:
 ```bash
 "${CAT_PLUGIN_ROOT}/client/bin/write-session-marker" "${WORKTREE_PATH}" "${ISSUE_ID}" "approved:invalidated"
 ```
@@ -640,8 +673,8 @@ concerns) and re-invoke the structured approval tool in the NEXT response. Unkno
 re-present.
 
 **Approval gate interruption:** Any non-option message = GATE REJECTED. Answer the question, then re-present
-the full gate with all options. Only explicit structured input option selection or exact Codex verbal option selection
-counts as valid approval.
+the full gate with all options. Only explicit structured input option selection or a Codex verbal response that is a
+case-insensitive exact match for a presented option counts as valid approval.
 
 Invalid signals: "continue", "ok", "yes", "proceed", "go ahead" — these are NOT approvals. See
 `plugin/rules/common/approval-gate-protocol.md` for the authoritative list.

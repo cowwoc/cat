@@ -12,9 +12,11 @@ After the user has approved the approval gate, if the target branch advances and
 
 ## Post-conditions
 
-- [ ] The merge workflow documents that `reviewed_head_sha` freshness checks apply before presenting the approval gate, not as a standalone reason to rerun stakeholder review after the gate has already been approved.
-- [ ] If `v2.1` or another target branch advances after approval, the merge workflow may rebase the approved commit onto the newer target without rerunning stakeholder review solely because the rebased commit has a different SHA.
-- [ ] Approval remains valid only when the rebase is mechanical and does not require conflict resolution or manual implementation edits.
-- [ ] If the post-approval rebase has conflicts, requires manual edits, changes the approved patch semantics, or otherwise introduces unreviewed implementation changes, the workflow invalidates approval and returns to the appropriate review or approval path.
-- [ ] The skill instructions prevent agents from using a post-approval `reviewed_head_sha` mismatch as a reason to restart stakeholder review when the mismatch is caused only by the merge-time rebase.
-- [ ] Deterministic verification covers the updated skill text and the expected post-approval branch-advanced scenario.
+- [x] The merge workflow documents that `reviewed_head_sha` freshness checks apply before presenting the approval gate, not as a standalone reason to rerun stakeholder review after the gate has already been approved.
+- [x] If `v2.1` or another target branch advances after approval, the merge workflow may rebase the approved commit onto the newer target without rerunning stakeholder review solely because the rebased commit has a different SHA.
+- [x] Approval remains valid only when the rebase is mechanical and does not require conflict resolution or manual implementation edits.
+- [x] If the post-approval rebase has conflicts, requires manual edits, changes the approved patch semantics, or otherwise introduces unreviewed implementation changes, the workflow invalidates approval and returns to the appropriate review or approval path.
+- [x] The skill instructions prevent agents from using a post-approval `reviewed_head_sha` mismatch as a reason to restart stakeholder review when the mismatch is caused only by the merge-time rebase.
+- [x] The approval gate accepts case-insensitive exact matches for listed options, so `approve and merge` is accepted as `Approve and merge` without allowing paraphrases such as `yes` or `go ahead`.
+- [x] Stakeholder reviewer prompts explicitly prevent reviewer subagents from spawning, polling, or waiting on other stakeholders.
+- [x] Deterministic verification covers the updated skill text and the expected post-approval branch-advanced scenario.
