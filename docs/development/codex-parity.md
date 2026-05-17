@@ -109,9 +109,8 @@ Future work for full Codex parity:
   uninstaller.
 - **Runtime-neutral skill cleanup:** common skills should use `CAT_PLUGIN_ROOT`, `CAT_PLUGIN_DATA`,
   `CAT_PROJECT_DIR`, `CAT_RUNTIME`, and `CAT_SESSION_ID` for CAT infrastructure paths only when the active runtime has
-  made those variables available. Claude Code gets them through CAT's SessionStart environment-file injection and
-  `client/plugin/rules/claude/cat-environment.md` documents the fallback mapping from `CLAUDE_*` names. Codex hook
-  subprocesses get them from CAT's hook wrapper, while ordinary Codex Bash commands must initialize them with
+  made those variables available. Claude Code gets them through CAT's SessionStart environment-file injection. Codex
+  hook subprocesses get them from CAT's hook wrapper, while ordinary Codex Bash commands must initialize them with
   `client/plugin/rules/codex/cat-environment.md`. Skills whose behavior depends on Claude-specific or Codex-specific
   session formats, runners, hooks, agents, or environment bootstrapping should live under
   `client/plugin/skills/claude/` or `client/plugin/skills/codex/` and link to shared guidance in

@@ -1,5 +1,4 @@
 ---
-mainAgent: true
 subAgents: []
 ---
 <!--

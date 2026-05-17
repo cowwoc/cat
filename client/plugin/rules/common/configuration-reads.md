@@ -1,5 +1,4 @@
 ---
-mainAgent: true
 subAgents: ["cat:work-implement"]
 paths: [".cat/config.json", "*.sh"]
 ---

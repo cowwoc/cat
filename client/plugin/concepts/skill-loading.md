@@ -100,9 +100,9 @@ For Java-dispatched skills:
 ## Referencing Files From Skills
 
 Use `${CAT_PLUGIN_ROOT}` for cross-directory references after applying the active runtime's CAT environment rule.
-Claude Code receives these variables through CAT's SessionStart environment-file injection, with a Claude-specific
-fallback in `plugin/rules/claude/cat-environment.md`. Codex ordinary Bash commands do not have a global future-shell
-injection mechanism, so Codex-facing Bash snippets that need CAT paths must include the bootstrap block from
+Claude Code receives these variables through CAT's SessionStart environment-file injection. Codex ordinary Bash
+commands do not have a global future-shell injection mechanism, so Codex-facing Bash snippets that need CAT paths must
+include the bootstrap block from
 `plugin/rules/codex/cat-environment.md`.
 Use relative paths only for files inside the same skill directory.
 

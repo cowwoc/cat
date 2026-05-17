@@ -6,6 +6,7 @@
  */
 package io.github.cowwoc.cat.client.test;
 
+import io.github.cowwoc.cat.agent.FrontmatterUtils;
 import io.github.cowwoc.cat.agent.GlobMatcher;
 import io.github.cowwoc.cat.agent.RulesDiscovery;
 import io.github.cowwoc.cat.agent.RulesDiscovery.RuleFile;
@@ -15,7 +16,9 @@ import tools.jackson.dataformat.yaml.YAMLMapper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -57,6 +60,31 @@ public final class RulesDiscoveryTest
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+  }
+
+  /**
+   * Verifies that bundled rule files do not declare frontmatter values that match loader defaults.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void bundledRulesOmitDefaultFrontmatterValues() throws IOException
+  {
+    Path rulesDir = findRepositoryRoot().resolve("client/plugin/rules");
+    List<Path> violations = new ArrayList<>();
+    try (Stream<Path> stream = Files.walk(rulesDir))
+    {
+      for (Path ruleFile : stream.filter(Files::isRegularFile).filter(path ->
+        path.getFileName().toString().endsWith(".md")).toList())
+      {
+        String frontmatter = FrontmatterUtils.extractFrontmatter(Files.readString(ruleFile));
+        if (frontmatter == null)
+          continue;
+        if (frontmatter.lines().anyMatch(line -> line.equals("mainAgent: true") || line.equals("paths: []")))
+          violations.add(rulesDir.relativize(ruleFile));
+      }
+    }
+    requireThat(violations, "violations").isEmpty();
   }
 
   /**
@@ -1526,5 +1554,17 @@ public final class RulesDiscoveryTest
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+  }
+
+  private static Path findRepositoryRoot()
+  {
+    Path candidate = Path.of(System.getProperty("user.dir")).toAbsolutePath().normalize();
+    while (candidate != null)
+    {
+      if (Files.isDirectory(candidate.resolve("client/plugin/rules")))
+        return candidate;
+      candidate = candidate.getParent();
+    }
+    throw new IllegalStateException("Could not locate repository root from " + System.getProperty("user.dir"));
   }
 }

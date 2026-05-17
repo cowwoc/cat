@@ -1,6 +1,3 @@
----
-mainAgent: true
----
 <!--
 Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
@@ -22,6 +19,9 @@ CAT_PLUGIN_DATA="${CAT_PLUGIN_DATA:-${CODEX_HOME}/plugins/data/cat-cat}"
 CAT_CONFIG_DIR="${CAT_CONFIG_DIR:-${CODEX_HOME}}"
 CAT_SESSION_ID="${CAT_SESSION_ID:-${CODEX_THREAD_ID:-}}"
 
+# Do not synthesize CAT_SESSION_ID. On Codex it must come from CODEX_THREAD_ID.
+# If CODEX_THREAD_ID is unavailable, stop and report the missing runtime context.
+
 if [[ -z "${CAT_PLUGIN_ROOT:-}" ]]; then
   CAT_PLUGIN_DESCRIPTOR="$(find "${CODEX_HOME}/plugins/cache" \
     -path '*/cat/*/.codex-plugin/plugin.json' \
@@ -35,6 +35,7 @@ fi
 : "${CAT_PLUGIN_DATA:?CAT_PLUGIN_DATA is required}"
 : "${CAT_CONFIG_DIR:?CAT_CONFIG_DIR is required}"
 : "${CAT_PROJECT_DIR:?CAT_PROJECT_DIR is required}"
+: "${CAT_SESSION_ID:?CAT_SESSION_ID is required; do not generate a fallback UUID}"
 ```
 
 Use `CAT_PLUGIN_ROOT` for files shipped inside the installed plugin cache, including the jlink client under
