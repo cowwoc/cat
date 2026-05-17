@@ -31,11 +31,8 @@ import java.nio.file.Paths;
 /**
  * Merge issue branch and clean up worktree, branch, and lock.
  * <p>
- * Handles the happy path of the merging phase for CAT's /cat:work command:
- * 1. Fast-forward merge issue branch to target branch in the main worktree
- * 2. Remove the issue worktree
- * 3. Delete the issue branch
- * 4. Release the issue lock
+ * Provides both monolithic merge-and-cleanup execution and split merge-only / cleanup-only phases
+ * for CAT's /cat:work command.
  */
 public final class MergeAndCleanup
 {
@@ -59,7 +56,7 @@ public final class MergeAndCleanup
    * <p>
    * Note: Both the issue worktree and the main worktree are checked before merge. The issue worktree's
    * state is verified via {@link #isWorktreeDirty(String)}, and the main worktree's state is verified
-   * via {@link #verifyMainWorkspaceClean(Path)}. The merge itself is atomic (git fast-forward merge)
+   * via {@link #verifyMainWorkspaceClean(String)}. The merge itself is atomic (git fast-forward merge)
    * and cannot be partially applied.
    *
    * @param projectPath the project root directory
@@ -95,48 +92,90 @@ public final class MergeAndCleanup
     if (worktreePath.isEmpty() || !Files.isDirectory(Paths.get(worktreePath)))
       throw new IOException("Worktree not found for issue branch: " + taskBranch);
 
-    if (isWorktreeDirty(worktreePath))
-    {
-      throw new IOException("Worktree has uncommitted changes: " + worktreePath +
-        ". Commit or stash changes first.");
-    }
+    guardAgainstSelfDeletingCleanup(worktreePath, pluginRoot);
 
-    verifyMainWorkspaceClean(projectPath);
-
-    syncTargetBranchWithOrigin(projectPath, targetBranch);
-
-    int diverged = getDivergenceCount(worktreePath, targetBranch);
-    if (diverged > 0)
-      rebaseOnto(worktreePath, targetBranch);
-
-    if (!isFastForwardPossible(worktreePath, targetBranch))
-    {
-      throw new IOException("Fast-forward merge not possible. Issue branch has diverged from " +
-        targetBranch + ". Rebase required.");
-    }
-
-    String commitSha = getCommitSha(worktreePath, "HEAD");
-    fastForwardMerge(projectPath, taskBranch);
-
-    removeWorktree(projectPath, worktreePath);
-    deleteBranch(projectPath, taskBranch);
-
-    boolean lockReleased = false;
-    try
-    {
-      IssueLock issueLock = new IssueLock(scope);
-      issueLock.release(issueId, sessionId);
-      lockReleased = true;
-    }
-    catch (IllegalArgumentException _)
-    {
-      // Not a CAT project or lock directory not set up - skip lock release
-    }
+    String commitSha = mergeIssueBranch(projectPath, worktreePath, targetBranch, taskBranch);
+    boolean lockReleased = cleanupMergedIssue(projectPath, issueId, sessionId, targetBranch,
+      worktreePath, taskBranch, commitSha, pluginRoot);
 
     long endTime = System.currentTimeMillis();
     long duration = (endTime - startTime) / 1000;
 
     return buildSuccessJson(issueId, targetBranch, commitSha, lockReleased, duration);
+  }
+
+  /**
+   * Merges an issue branch into the target branch without removing the worktree or deleting the branch.
+   *
+   * @param projectPath the project root directory
+   * @param issueId the issue identifier
+   * @param targetBranch the target branch name to merge to
+   * @param worktreePath the optional worktree path (empty for auto-detect)
+   * @return JSON string with operation result
+   * @throws IOException if the operation fails
+   */
+  public String executeMergeOnly(String projectPath, String issueId, String targetBranch,
+    String worktreePath) throws IOException
+  {
+    requireThat(projectPath, "projectPath").isNotBlank();
+    requireThat(issueId, "issueId").isNotBlank();
+    requireThat(targetBranch, "targetBranch").isNotBlank();
+    requireThat(worktreePath, "worktreePath").isNotNull();
+
+    Path projectRootPath = Paths.get(projectPath);
+    if (!Files.isDirectory(projectRootPath.resolve(Config.CAT_DIR_NAME)))
+      throw new IOException("Not a CAT project: '" + projectPath + "' (no .cat directory)");
+
+    String taskBranch = issueId;
+    if (worktreePath.isEmpty())
+      worktreePath = findWorktreeForBranch(projectPath, taskBranch);
+
+    if (worktreePath.isEmpty() || !Files.isDirectory(Paths.get(worktreePath)))
+      throw new IOException("Worktree not found for issue branch: " + taskBranch);
+
+    long startTime = System.currentTimeMillis();
+    String commitSha = mergeIssueBranch(projectPath, worktreePath, targetBranch, taskBranch);
+    long duration = (System.currentTimeMillis() - startTime) / 1000;
+    return buildMergeJson(issueId, targetBranch, commitSha, duration);
+  }
+
+  /**
+   * Cleans up a worktree, branch, and lock after verifying the target branch contains the expected commit.
+   *
+   * @param projectPath the project root directory
+   * @param issueId the issue identifier
+   * @param sessionId the Claude session UUID
+   * @param targetBranch the target branch name that must contain the merged commit
+   * @param worktreePath the optional worktree path (empty for auto-detect)
+   * @param expectedCommit the expected merged commit SHA or prefix
+   * @param pluginRoot the plugin root directory
+   * @return JSON string with operation result
+   * @throws IOException if the operation fails
+   */
+  public String executeCleanupOnly(String projectPath, String issueId, String sessionId,
+    String targetBranch, String worktreePath, String expectedCommit, String pluginRoot) throws IOException
+  {
+    requireThat(projectPath, "projectPath").isNotBlank();
+    requireThat(issueId, "issueId").isNotBlank();
+    requireThat(sessionId, "sessionId").isNotBlank();
+    requireThat(targetBranch, "targetBranch").isNotBlank();
+    requireThat(worktreePath, "worktreePath").isNotNull();
+    requireThat(expectedCommit, "expectedCommit").isNotBlank();
+    requireThat(pluginRoot, "pluginRoot").isNotBlank();
+
+    Path projectRootPath = Paths.get(projectPath);
+    if (!Files.isDirectory(projectRootPath.resolve(Config.CAT_DIR_NAME)))
+      throw new IOException("Not a CAT project: '" + projectPath + "' (no .cat directory)");
+
+    String taskBranch = issueId;
+    if (worktreePath.isEmpty())
+      worktreePath = findWorktreeForBranch(projectPath, taskBranch);
+
+    long startTime = System.currentTimeMillis();
+    boolean lockReleased = cleanupMergedIssue(projectPath, issueId, sessionId, targetBranch,
+      worktreePath, taskBranch, expectedCommit, pluginRoot);
+    long duration = (System.currentTimeMillis() - startTime) / 1000;
+    return buildCleanupJson(issueId, targetBranch, expectedCommit, lockReleased, duration);
   }
 
   /**
@@ -176,6 +215,44 @@ public final class MergeAndCleanup
   {
     String status = runGit(Path.of(worktreePath), "status", "--porcelain");
     return !status.isEmpty();
+  }
+
+  /**
+   * Merges an issue branch into the target branch and leaves cleanup to a separate phase.
+   *
+   * @param projectPath the project root directory
+   * @param worktreePath the issue worktree path
+   * @param targetBranch the target branch name
+   * @param taskBranch the issue branch name
+   * @return the merged commit SHA
+   * @throws IOException if the operation fails
+   */
+  private String mergeIssueBranch(String projectPath, String worktreePath, String targetBranch,
+    String taskBranch) throws IOException
+  {
+    if (isWorktreeDirty(worktreePath))
+    {
+      throw new IOException("Worktree has uncommitted changes: " + worktreePath +
+        ". Commit or stash changes first.");
+    }
+
+    verifyMainWorkspaceClean(projectPath);
+
+    syncTargetBranchWithOrigin(projectPath, targetBranch);
+
+    int diverged = getDivergenceCount(worktreePath, targetBranch);
+    if (diverged > 0)
+      rebaseOnto(worktreePath, targetBranch);
+
+    if (!isFastForwardPossible(worktreePath, targetBranch))
+    {
+      throw new IOException("Fast-forward merge not possible. Issue branch has diverged from " +
+        targetBranch + ". Rebase required.");
+    }
+
+    String commitSha = getCommitSha(worktreePath, "HEAD");
+    fastForwardMerge(projectPath, taskBranch);
+    return commitSha;
   }
 
   /**
@@ -428,6 +505,91 @@ public final class MergeAndCleanup
     runGit(Path.of(projectPath), "branch", "-d", branch);
   }
 
+  /**
+   * Cleans up merged issue artifacts after verifying the target branch contains the expected commit.
+   *
+   * @param projectPath the project root directory
+   * @param issueId the issue identifier
+   * @param sessionId the Claude session UUID
+   * @param targetBranch the target branch name
+   * @param worktreePath the optional issue worktree path
+   * @param taskBranch the issue branch name
+   * @param expectedCommit the expected merged commit SHA or prefix
+   * @param pluginRoot the plugin root directory
+   * @return true if the lock was released
+   * @throws IOException if cleanup is unsafe or cannot be completed
+   */
+  private boolean cleanupMergedIssue(String projectPath, String issueId, String sessionId,
+    String targetBranch, String worktreePath, String taskBranch, String expectedCommit, String pluginRoot)
+    throws IOException
+  {
+    if (worktreePath != null && !worktreePath.isEmpty() && Files.isDirectory(Path.of(worktreePath)))
+      guardAgainstSelfDeletingCleanup(worktreePath, pluginRoot);
+
+    String targetCommit = runGitCommandSingleLineInDirectory(projectPath, "rev-parse", targetBranch);
+    if (!targetCommit.startsWith(expectedCommit) && !expectedCommit.startsWith(targetCommit))
+    {
+      throw new IOException("Refusing cleanup: " + targetBranch + " points to " + targetCommit +
+        ", not expected merged commit " + expectedCommit);
+    }
+
+    if (worktreePath != null && !worktreePath.isEmpty() && Files.isDirectory(Path.of(worktreePath)))
+      removeWorktree(projectPath, worktreePath);
+    if (branchExists(projectPath, taskBranch))
+      deleteBranch(projectPath, taskBranch);
+
+    boolean lockReleased = false;
+    try
+    {
+      IssueLock issueLock = new IssueLock(scope);
+      issueLock.release(issueId, sessionId);
+      lockReleased = true;
+    }
+    catch (IllegalArgumentException _)
+    {
+      // Not a CAT project or lock directory not set up - skip lock release
+    }
+    return lockReleased;
+  }
+
+  /**
+   * Verifies cleanup will not delete the runtime context that is executing the cleanup.
+   *
+   * @param worktreePath the worktree that would be removed
+   * @param pluginRoot the active plugin root
+   * @throws IOException if cleanup would remove the active runtime context
+   */
+  private void guardAgainstSelfDeletingCleanup(String worktreePath, String pluginRoot) throws IOException
+  {
+    Path worktree = Path.of(worktreePath).toAbsolutePath().normalize();
+    rejectInsideWorktree("plugin root", Path.of(pluginRoot), worktree);
+    rejectInsideWorktree("current working directory", Path.of(System.getProperty("user.dir")), worktree);
+    rejectInsideWorktree("Java runtime", Path.of(System.getProperty("java.home")), worktree);
+  }
+
+  private void rejectInsideWorktree(String name, Path path, Path worktree) throws IOException
+  {
+    Path normalized = path.toAbsolutePath().normalize();
+    if (normalized.startsWith(worktree))
+    {
+      throw new IOException("Refusing to remove worktree while " + name +
+        " is inside the worktree being removed: " + normalized);
+    }
+  }
+
+  private boolean branchExists(String projectPath, String branch) throws IOException
+  {
+    try
+    {
+      runGit(Path.of(projectPath), "show-ref", "--verify", "--quiet", "refs/heads/" + branch);
+      return true;
+    }
+    catch (IOException _)
+    {
+      return false;
+    }
+  }
+
 
   /**
    * Builds the success JSON response.
@@ -453,6 +615,37 @@ public final class MergeAndCleanup
     json.put("lock_released", lockReleased);
     json.put("duration_seconds", duration);
 
+    return scope.getJsonMapper().writerWithDefaultPrettyPrinter().writeValueAsString(json);
+  }
+
+  private String buildMergeJson(String issueId, String targetBranch, String commitSha, long duration)
+    throws IOException
+  {
+    ObjectNode json = scope.getJsonMapper().createObjectNode();
+    json.put("status", "success");
+    json.put("phase", "merge");
+    json.put("message", "Merged issue branch; cleanup still required");
+    json.put("issue_id", issueId);
+    json.put("target_branch", targetBranch);
+    json.put("merged_commit", commitSha);
+    json.put("cleanup_required", true);
+    json.put("duration_seconds", duration);
+    return scope.getJsonMapper().writerWithDefaultPrettyPrinter().writeValueAsString(json);
+  }
+
+  private String buildCleanupJson(String issueId, String targetBranch, String commitSha,
+    boolean lockReleased, long duration)
+    throws IOException
+  {
+    ObjectNode json = scope.getJsonMapper().createObjectNode();
+    json.put("status", "success");
+    json.put("phase", "cleanup");
+    json.put("message", "Cleaned up merged issue");
+    json.put("issue_id", issueId);
+    json.put("target_branch", targetBranch);
+    json.put("merged_commit", commitSha);
+    json.put("lock_released", lockReleased);
+    json.put("duration_seconds", duration);
     return scope.getJsonMapper().writerWithDefaultPrettyPrinter().writeValueAsString(json);
   }
 
@@ -507,6 +700,9 @@ public final class MergeAndCleanup
     }
 
     String worktreePath = "";
+    String expectedCommit = "";
+    boolean mergeOnly = false;
+    boolean cleanupOnly = false;
     for (int i = 4; i < args.length; ++i)
     {
       if (args[i].equals("--worktree") && i + 1 < args.length)
@@ -514,12 +710,30 @@ public final class MergeAndCleanup
         worktreePath = args[i + 1];
         ++i;
       }
+      else if (args[i].equals("--expected-commit") && i + 1 < args.length)
+      {
+        expectedCommit = args[i + 1];
+        ++i;
+      }
+      else if (args[i].equals("--merge-only"))
+      {
+        mergeOnly = true;
+      }
+      else if (args[i].equals("--cleanup-only"))
+      {
+        cleanupOnly = true;
+      }
       else
       {
         throw new IllegalArgumentException(
-          "Unknown argument: " + args[i] + ". Valid arguments: --worktree <path>");
+          "Unknown argument: " + args[i] +
+            ". Valid arguments: --worktree <path>, --merge-only, --cleanup-only, --expected-commit <sha>");
       }
     }
+    if (mergeOnly && cleanupOnly)
+      throw new IllegalArgumentException("--merge-only and --cleanup-only are mutually exclusive");
+    if (cleanupOnly && expectedCommit.isBlank())
+      throw new IllegalArgumentException("--cleanup-only requires --expected-commit <sha>");
 
     String projectPath = args[0];
     String issueId = args[1];
@@ -529,7 +743,16 @@ public final class MergeAndCleanup
     MergeAndCleanup cmd = new MergeAndCleanup(scope);
     try
     {
-      String result = cmd.execute(projectPath, issueId, sessionId, targetBranch, worktreePath, pluginRoot);
+      String result;
+      if (mergeOnly)
+        result = cmd.executeMergeOnly(projectPath, issueId, targetBranch, worktreePath);
+      else if (cleanupOnly)
+      {
+        result = cmd.executeCleanupOnly(projectPath, issueId, sessionId, targetBranch,
+          worktreePath, expectedCommit, pluginRoot);
+      }
+      else
+        result = cmd.execute(projectPath, issueId, sessionId, targetBranch, worktreePath, pluginRoot);
       out.println(result);
     }
     catch (IOException e)

@@ -549,8 +549,20 @@ git show-ref --verify --quiet "refs/heads/${BRANCH}" && BRANCH_EXISTS=true || BR
 
 Otherwise, invoke the merge tool and capture its JSON output:
 ```bash
-MERGE_RESULT=$("${CAT_PLUGIN_ROOT}/client/bin/merge-and-cleanup" \
-  "${CAT_PROJECT_DIR}" "${ISSUE_ID}" "${CAT_SESSION_ID}" "${TARGET_BRANCH}" --worktree "${WORKTREE_PATH}"
+STABLE_MERGE_PLUGIN_ROOT="${CAT_PLUGIN_ROOT}"
+PROJECT_RUNTIME_ROOT="${CAT_PROJECT_DIR}/client/distribution/target/runtime/${CAT_RUNTIME}"
+if [[ "${STABLE_MERGE_PLUGIN_ROOT}" == "${WORKTREE_PATH}"* ]]; then
+  if [[ -x "${PROJECT_RUNTIME_ROOT}/client/bin/merge-and-cleanup" ]]; then
+    STABLE_MERGE_PLUGIN_ROOT="${PROJECT_RUNTIME_ROOT}"
+  else
+    echo "ERROR: merge cleanup runtime is inside ${WORKTREE_PATH}, and no stable project runtime exists at ${PROJECT_RUNTIME_ROOT}." >&2
+    echo "Re-run merge from a stable CAT runtime outside the worktree before cleanup." >&2
+    exit 1
+  fi
+fi
+
+MERGE_RESULT=$("${STABLE_MERGE_PLUGIN_ROOT}/client/bin/merge-and-cleanup" \
+  "${CAT_PROJECT_DIR}" "${ISSUE_ID}" "${CAT_SESSION_ID}" "${TARGET_BRANCH}" --worktree "${WORKTREE_PATH}" --merge-only
 )
 ```
 
@@ -565,11 +577,11 @@ MERGE_RESULT=$("${CAT_PLUGIN_ROOT}/client/bin/merge-and-cleanup" \
 "${CAT_PLUGIN_ROOT}/client/bin/write-session-marker" "${WORKTREE_PATH}" "${ISSUE_ID}" "approved:invalidated"
 ```
 
-### Post-Merge Verification (BLOCKING)
+### Post-Merge Verification Before Cleanup (BLOCKING)
 
-Run this block only after invoking `merge-and-cleanup` in the current Step 13 attempt. Idempotency cases that return
-synthesized SUCCESS already verified the target branch's closed issue state and must not run this block without
-current-session `MERGE_RESULT` JSON.
+Run this block only after invoking `merge-and-cleanup --merge-only` in the current Step 13 attempt. Idempotency cases
+that return synthesized SUCCESS already verified the target branch's closed issue state and must not run this block
+without current-session `MERGE_RESULT` JSON.
 
 ```bash
 POST_MERGE_TIP=$(git -C "${CAT_PROJECT_DIR}" rev-parse "${TARGET_BRANCH}" 2>/dev/null)
@@ -588,7 +600,25 @@ if [[ "${POST_MERGE_TIP}" != "${MERGED_COMMIT}"* ]]; then
 fi
 ```
 
-If verification fails: STOP — do NOT invoke `work-complete`. Re-execute Step 13.
+If merge verification fails: STOP — do NOT clean up the worktree or invoke `work-complete`. Re-execute Step 13.
+
+### Cleanup Merged Issue
+
+Only after merge verification succeeds, run cleanup from the stable merge runtime:
+
+```bash
+CLEANUP_RESULT=$("${STABLE_MERGE_PLUGIN_ROOT}/client/bin/merge-and-cleanup" \
+  "${CAT_PROJECT_DIR}" "${ISSUE_ID}" "${CAT_SESSION_ID}" "${TARGET_BRANCH}" \
+  --worktree "${WORKTREE_PATH}" --cleanup-only --expected-commit "${MERGED_COMMIT}"
+)
+```
+
+Cleanup is idempotent. If `MERGE_RESULT` succeeded but cleanup fails, report the issue as merged with cleanup
+incomplete. Do NOT retry the merge. Re-run only the cleanup command after resolving the cleanup error.
+
+If cleanup reports an unsafe runtime/cwd/plugin-root path inside `${WORKTREE_PATH}`, STOP and rerun cleanup from a
+stable CAT runtime outside the worktree. Do not manually remove the worktree first; the cleanup tool verifies the
+target branch commit before deleting artifacts.
 
 ## Step 14: Return Success
 

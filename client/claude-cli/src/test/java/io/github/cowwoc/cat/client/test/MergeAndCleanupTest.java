@@ -8,8 +8,12 @@ package io.github.cowwoc.cat.client.test;
 
 import io.github.cowwoc.cat.tool.util.MergeAndCleanup;
 import org.testng.annotations.Test;
+import tools.jackson.databind.JsonNode;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -647,7 +651,7 @@ public class MergeAndCleanupTest
    * <p>
    * The worktree isolation model ensures that each issue worktree is independent. Before merge, the
    * worktree must be clean (no uncommitted changes) to guarantee the merge state is consistent with
-   * what the user sees on their file system. This test validates the cleanup phase's safety check.
+   * what the user sees on their file system. This test validates the pre-merge safety check.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -712,6 +716,288 @@ public class MergeAndCleanupTest
       TestUtils.deleteDirectoryRecursively(localRepo);
       TestUtils.deleteDirectoryRecursively(originRepo);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that a monolithic merge-and-cleanup refuses to run when the plugin root is inside the
+   * worktree that cleanup would remove.
+   * <p>
+   * The failure must occur before the target branch is merged so an unsafe invocation cannot leave a
+   * partially merged issue behind.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeRejectsPluginRootInsideDeletedWorktreeBeforeMerge() throws IOException
+  {
+    Path originRepo = Files.createTempDirectory("origin-repo-");
+    Path mainRepo = Files.createTempDirectory("main-repo-");
+    Path worktreesDir = Files.createTempDirectory("worktrees-");
+
+    try
+    {
+      TestUtils.runGit(originRepo, "init", "--bare", "--initial-branch=v2.1");
+
+      TestUtils.runGit(mainRepo, "init", "--initial-branch=v2.1");
+      TestUtils.runGit(mainRepo, "config", "user.email", "test@example.com");
+      TestUtils.runGit(mainRepo, "config", "user.name", "Test User");
+      Files.writeString(mainRepo.resolve("README.md"), "initial");
+      TestUtils.runGit(mainRepo, "add", "README.md");
+      TestUtils.runGit(mainRepo, "commit", "-m", "Initial commit");
+      TestUtils.runGit(mainRepo, "remote", "add", "origin", originRepo.toString());
+      TestUtils.runGit(mainRepo, "push", "-u", "origin", "v2.1");
+
+      String issueBranch = "unsafe-plugin-root";
+      Path issueWorktree = TestUtils.createWorktree(mainRepo, worktreesDir, issueBranch);
+      TestUtils.runGit(issueWorktree, "config", "user.email", "test@example.com");
+      TestUtils.runGit(issueWorktree, "config", "user.name", "Test User");
+      Files.writeString(issueWorktree.resolve("issue-work.txt"), "issue work");
+      TestUtils.runGit(issueWorktree, "add", "issue-work.txt");
+      TestUtils.runGit(issueWorktree, "commit", "-m", "Issue commit");
+
+      Files.createDirectories(mainRepo.resolve(".cat"));
+      Path unsafePluginRoot = issueWorktree.resolve("client/distribution/target/runtime/codex");
+      Files.createDirectories(unsafePluginRoot);
+
+      try (TestClaudeTool scope = new TestClaudeTool(mainRepo, unsafePluginRoot))
+      {
+        MergeAndCleanup cmd = new MergeAndCleanup(scope);
+        try
+        {
+          cmd.execute(mainRepo.toString(), issueBranch, "test-session", "v2.1",
+            issueWorktree.toString(), unsafePluginRoot.toString());
+          throw new AssertionError("Expected unsafe plugin root to be rejected");
+        }
+        catch (IOException e)
+        {
+          requireThat(e.getMessage(), "message").contains("Refusing");
+          requireThat(e.getMessage(), "message").contains("inside the worktree");
+        }
+      }
+
+      String v21Log = TestUtils.runGitCommandWithOutput(mainRepo, "log", "--oneline", "v2.1");
+      requireThat(v21Log, "v21Log").doesNotContain("Issue commit");
+      requireThat(Files.isDirectory(issueWorktree), "worktreeStillExists").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(worktreesDir);
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+      TestUtils.deleteDirectoryRecursively(originRepo);
+    }
+  }
+
+  /**
+   * Verifies that merge and cleanup can run as separate, retryable phases.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void runSupportsMergeOnlyThenCleanupOnly() throws IOException
+  {
+    Path originRepo = Files.createTempDirectory("origin-repo-");
+    Path mainRepo = Files.createTempDirectory("main-repo-");
+    Path worktreesDir = Files.createTempDirectory("worktrees-");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+
+    try
+    {
+      TestUtils.runGit(originRepo, "init", "--bare", "--initial-branch=v2.1");
+
+      TestUtils.runGit(mainRepo, "init", "--initial-branch=v2.1");
+      TestUtils.runGit(mainRepo, "config", "user.email", "test@example.com");
+      TestUtils.runGit(mainRepo, "config", "user.name", "Test User");
+      Files.writeString(mainRepo.resolve("README.md"), "initial");
+      TestUtils.runGit(mainRepo, "add", "README.md");
+      TestUtils.runGit(mainRepo, "commit", "-m", "Initial commit");
+      TestUtils.runGit(mainRepo, "remote", "add", "origin", originRepo.toString());
+      TestUtils.runGit(mainRepo, "push", "-u", "origin", "v2.1");
+
+      String issueBranch = "split-phase-issue";
+      Path issueWorktree = TestUtils.createWorktree(mainRepo, worktreesDir, issueBranch);
+      TestUtils.runGit(issueWorktree, "config", "user.email", "test@example.com");
+      TestUtils.runGit(issueWorktree, "config", "user.name", "Test User");
+      Files.writeString(issueWorktree.resolve("issue-work.txt"), "issue work");
+      TestUtils.runGit(issueWorktree, "add", "issue-work.txt");
+      TestUtils.runGit(issueWorktree, "commit", "-m", "Issue commit");
+      String expectedCommit = TestUtils.runGitCommandWithOutput(issueWorktree, "rev-parse", "HEAD").strip();
+
+      Files.createDirectories(mainRepo.resolve(".cat"));
+
+      try (TestClaudeTool scope = new TestClaudeTool(mainRepo, pluginRoot))
+      {
+        ByteArrayOutputStream mergeBuffer = new ByteArrayOutputStream();
+        MergeAndCleanup.run(scope, new String[]{
+          mainRepo.toString(),
+          issueBranch,
+          "test-session",
+          "v2.1",
+          "--worktree",
+          issueWorktree.toString(),
+          "--merge-only"
+        }, new PrintStream(mergeBuffer, true, StandardCharsets.UTF_8));
+        JsonNode mergeJson = scope.getJsonMapper().readTree(mergeBuffer.toString(StandardCharsets.UTF_8));
+        requireThat(mergeJson.get("status").asString(), "mergeStatus").isEqualTo("success");
+        requireThat(mergeJson.get("phase").asString(), "mergePhase").isEqualTo("merge");
+        requireThat(Files.isDirectory(issueWorktree), "worktreeStillExistsAfterMerge").isTrue();
+        requireThat(TestUtils.runGitCommandWithOutput(mainRepo, "branch", "--list", issueBranch),
+          "branchList").contains(issueBranch);
+
+        ByteArrayOutputStream failedCleanupBuffer = new ByteArrayOutputStream();
+        MergeAndCleanup.run(scope, new String[]{
+          mainRepo.toString(),
+          issueBranch,
+          "test-session",
+          "v2.1",
+          "--worktree",
+          issueWorktree.toString(),
+          "--cleanup-only",
+          "--expected-commit",
+          "0000000"
+        }, new PrintStream(failedCleanupBuffer, true, StandardCharsets.UTF_8));
+        String failedCleanupOutput = failedCleanupBuffer.toString(StandardCharsets.UTF_8);
+        requireThat(failedCleanupOutput, "failedCleanupOutput").contains("Refusing cleanup");
+        requireThat(failedCleanupOutput, "failedCleanupOutput").contains("not expected merged commit");
+        requireThat(Files.isDirectory(issueWorktree), "worktreeStillExistsAfterFailedCleanup").isTrue();
+        requireThat(TestUtils.runGitCommandWithOutput(mainRepo, "branch", "--list", issueBranch),
+          "branchExistsAfterFailedCleanup").contains(issueBranch);
+
+        ByteArrayOutputStream cleanupBuffer = new ByteArrayOutputStream();
+        MergeAndCleanup.run(scope, new String[]{
+          mainRepo.toString(),
+          issueBranch,
+          "test-session",
+          "v2.1",
+          "--worktree",
+          issueWorktree.toString(),
+          "--cleanup-only",
+          "--expected-commit",
+          expectedCommit
+        }, new PrintStream(cleanupBuffer, true, StandardCharsets.UTF_8));
+        JsonNode cleanupJson = scope.getJsonMapper().readTree(cleanupBuffer.toString(StandardCharsets.UTF_8));
+        requireThat(cleanupJson.get("status").asString(), "cleanupStatus").isEqualTo("success");
+        requireThat(cleanupJson.get("phase").asString(), "cleanupPhase").isEqualTo("cleanup");
+
+        ByteArrayOutputStream retryCleanupBuffer = new ByteArrayOutputStream();
+        MergeAndCleanup.run(scope, new String[]{
+          mainRepo.toString(),
+          issueBranch,
+          "test-session",
+          "v2.1",
+          "--worktree",
+          issueWorktree.toString(),
+          "--cleanup-only",
+          "--expected-commit",
+          expectedCommit
+        }, new PrintStream(retryCleanupBuffer, true, StandardCharsets.UTF_8));
+        JsonNode retryCleanupJson = scope.getJsonMapper().
+          readTree(retryCleanupBuffer.toString(StandardCharsets.UTF_8));
+        requireThat(retryCleanupJson.get("status").asString(), "retryCleanupStatus").isEqualTo("success");
+        requireThat(retryCleanupJson.get("phase").asString(), "retryCleanupPhase").isEqualTo("cleanup");
+      }
+
+      String v21Log = TestUtils.runGitCommandWithOutput(mainRepo, "log", "--oneline", "v2.1");
+      requireThat(v21Log, "v21Log").contains("Issue commit");
+      requireThat(Files.notExists(issueWorktree), "worktreeRemoved").isTrue();
+      requireThat(TestUtils.runGitCommandWithOutput(mainRepo, "branch", "--list", issueBranch).strip(),
+        "branchRemoved").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(worktreesDir);
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+      TestUtils.deleteDirectoryRecursively(originRepo);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that cleanup-only refuses to run when the plugin root is inside the worktree that
+   * cleanup would remove.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void runCleanupOnlyRejectsPluginRootInsideDeletedWorktree() throws IOException
+  {
+    Path originRepo = Files.createTempDirectory("origin-repo-");
+    Path mainRepo = Files.createTempDirectory("main-repo-");
+    Path worktreesDir = Files.createTempDirectory("worktrees-");
+    Path stablePluginRoot = Files.createTempDirectory("test-plugin");
+
+    try
+    {
+      TestUtils.runGit(originRepo, "init", "--bare", "--initial-branch=v2.1");
+
+      TestUtils.runGit(mainRepo, "init", "--initial-branch=v2.1");
+      TestUtils.runGit(mainRepo, "config", "user.email", "test@example.com");
+      TestUtils.runGit(mainRepo, "config", "user.name", "Test User");
+      Files.writeString(mainRepo.resolve("README.md"), "initial");
+      TestUtils.runGit(mainRepo, "add", "README.md");
+      TestUtils.runGit(mainRepo, "commit", "-m", "Initial commit");
+      TestUtils.runGit(mainRepo, "remote", "add", "origin", originRepo.toString());
+      TestUtils.runGit(mainRepo, "push", "-u", "origin", "v2.1");
+
+      String issueBranch = "unsafe-cleanup-only";
+      Path issueWorktree = TestUtils.createWorktree(mainRepo, worktreesDir, issueBranch);
+      TestUtils.runGit(issueWorktree, "config", "user.email", "test@example.com");
+      TestUtils.runGit(issueWorktree, "config", "user.name", "Test User");
+      Files.writeString(issueWorktree.resolve("issue-work.txt"), "issue work");
+      TestUtils.runGit(issueWorktree, "add", "issue-work.txt");
+      TestUtils.runGit(issueWorktree, "commit", "-m", "Issue commit");
+      String expectedCommit = TestUtils.runGitCommandWithOutput(issueWorktree, "rev-parse", "HEAD").strip();
+
+      Files.createDirectories(mainRepo.resolve(".cat"));
+
+      try (TestClaudeTool scope = new TestClaudeTool(mainRepo, stablePluginRoot))
+      {
+        ByteArrayOutputStream mergeBuffer = new ByteArrayOutputStream();
+        MergeAndCleanup.run(scope, new String[]{
+          mainRepo.toString(),
+          issueBranch,
+          "test-session",
+          "v2.1",
+          "--worktree",
+          issueWorktree.toString(),
+          "--merge-only"
+        }, new PrintStream(mergeBuffer, true, StandardCharsets.UTF_8));
+        JsonNode mergeJson = scope.getJsonMapper().readTree(mergeBuffer.toString(StandardCharsets.UTF_8));
+        requireThat(mergeJson.get("status").asString(), "mergeStatus").isEqualTo("success");
+      }
+
+      Path unsafePluginRoot = issueWorktree.resolve("client/distribution/target/runtime/codex");
+      Files.createDirectories(unsafePluginRoot);
+
+      try (TestClaudeTool scope = new TestClaudeTool(mainRepo, unsafePluginRoot))
+      {
+        ByteArrayOutputStream cleanupBuffer = new ByteArrayOutputStream();
+        MergeAndCleanup.run(scope, new String[]{
+          mainRepo.toString(),
+          issueBranch,
+          "test-session",
+          "v2.1",
+          "--worktree",
+          issueWorktree.toString(),
+          "--cleanup-only",
+          "--expected-commit",
+          expectedCommit
+        }, new PrintStream(cleanupBuffer, true, StandardCharsets.UTF_8));
+        String cleanupOutput = cleanupBuffer.toString(StandardCharsets.UTF_8);
+        requireThat(cleanupOutput, "cleanupOutput").contains("Refusing");
+        requireThat(cleanupOutput, "cleanupOutput").contains("inside the worktree");
+      }
+
+      requireThat(Files.isDirectory(issueWorktree), "worktreeStillExists").isTrue();
+      requireThat(TestUtils.runGitCommandWithOutput(mainRepo, "branch", "--list", issueBranch),
+        "branchStillExists").contains(issueBranch);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(worktreesDir);
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+      TestUtils.deleteDirectoryRecursively(originRepo);
+      TestUtils.deleteDirectoryRecursively(stablePluginRoot);
     }
   }
 }
