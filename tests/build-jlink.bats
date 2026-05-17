@@ -149,23 +149,25 @@ EOF
     source "$BUILD_JLINK"
     OUTPUT_DIR="$test_output_dir"
     HANDLERS=(
-        "token-counter:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$TokenCounter"
-        "create-issue:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$IssueCreator"
-        "git-squash:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$GitSquash"
-        "git-merge-linear:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$GitMergeLinear"
-        "git-amend:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$GitAmend"
-        "git-rebase:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$GitRebase"
-        "issue-lock:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$IssueLock"
-        "check-existing-work:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$ExistingWorkChecker"
-        "wrap-markdown:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$MarkdownWrapper"
-        "batch-read:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$BatchReader"
-        "validate-status-alignment:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$StatusAlignmentValidator"
-        "feedback:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$Feedback"
-        "write-session-marker:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$WriteSessionMarker"
-        "read-session-marker:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$ReadSessionMarker"
-        "auto-close-index:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$AutoCloseIndexJson"
-        "verify-defer-plan-generation:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$VerifyDeferPlanGeneration"
-        "write-and-commit:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$WriteAndCommit"
+        "token-counter:io.github.cowwoc.cat.tool.TokenCounter"
+        "get-output:io.github.cowwoc.cat.tool.skills.GetOutput"
+        "get-add-output:io.github.cowwoc.cat.tool.skills.GetAddOutput"
+        "create-issue:io.github.cowwoc.cat.tool.util.IssueCreator"
+        "git-squash:io.github.cowwoc.cat.tool.util.GitSquash"
+        "git-merge-linear:io.github.cowwoc.cat.tool.util.GitMergeLinear"
+        "git-amend:io.github.cowwoc.cat.tool.util.GitAmend"
+        "git-rebase:io.github.cowwoc.cat.tool.util.GitRebase"
+        "issue-lock:io.github.cowwoc.cat.tool.util.IssueLock"
+        "check-existing-work:io.github.cowwoc.cat.tool.util.ExistingWorkChecker"
+        "wrap-markdown:io.github.cowwoc.cat.tool.util.MarkdownWrapper"
+        "batch-read:io.github.cowwoc.cat.tool.util.BatchReader"
+        "validate-status-alignment:io.github.cowwoc.cat.tool.util.StatusAlignmentValidator"
+        "feedback:io.github.cowwoc.cat.tool.util.Feedback"
+        "write-session-marker:io.github.cowwoc.cat.tool.util.WriteSessionMarker"
+        "read-session-marker:io.github.cowwoc.cat.tool.util.ReadSessionMarker"
+        "auto-close-index:io.github.cowwoc.cat.tool.util.AutoCloseIndexJson"
+        "verify-defer-plan-generation:io.github.cowwoc.cat.tool.util.VerifyDeferPlanGeneration"
+        "write-and-commit:io.github.cowwoc.cat.tool.util.WriteAndCommit"
     )
     ENABLE_ASSERTIONS=false
     generate_launchers
@@ -179,11 +181,11 @@ EOF
     done
 }
 
-@test "migrated shared launcher preserves nested class name at runtime" {
+@test "migrated shared launcher preserves direct class name at runtime" {
     local test_output_dir="$OUTPUT_DIR"
     source "$BUILD_JLINK"
     OUTPUT_DIR="$test_output_dir"
-    HANDLERS=("write-session-marker:io.github.cowwoc.cat.tool.util.SharedUtilityMain\$WriteSessionMarker")
+    HANDLERS=("write-session-marker:io.github.cowwoc.cat.tool.util.WriteSessionMarker")
     ENABLE_ASSERTIONS=false
     generate_launchers
 
@@ -196,28 +198,28 @@ EOF
 
     "$OUTPUT_DIR/bin/write-session-marker" example
 
-    grep -Fq 'io.github.cowwoc.cat.client/io.github.cowwoc.cat.tool.util.SharedUtilityMain$WriteSessionMarker' \
+    grep -Fq 'io.github.cowwoc.cat.common.cli/io.github.cowwoc.cat.tool.util.WriteSessionMarker' \
         "$OUTPUT_DIR/java-args.txt" || \
-        { echo "Expected literal nested class in java args. Got:"; cat "$OUTPUT_DIR/java-args.txt"; false; }
+        { echo "Expected direct class in java args. Got:"; cat "$OUTPUT_DIR/java-args.txt"; false; }
 }
 
 @test "runtime handler selection keeps common and runtime-only launchers separate" {
     source "$BUILD_JLINK"
 
     set_runtime_handlers claude
-    printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'token-counter:io.github.cowwoc.cat.tool.util.SharedUtilityMain$TokenCounter' || \
+    printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'token-counter:io.github.cowwoc.cat.tool.TokenCounter' || \
         { echo "Expected common handler in Claude runtime"; false; }
-    printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'claude-runner:io.github.cowwoc.cat.claude.hook.skills.ClaudeRunner' || \
+    printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'claude-runner:io.github.cowwoc.cat.tool.skills.ClaudeRunner' || \
         { echo "Expected Claude-only handler"; false; }
     ! printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'codex-runner:io.github.cowwoc.cat.codex.hook.skills.CodexRunner' || \
         { echo "Did not expect Codex-only handler in Claude runtime"; false; }
 
     set_runtime_handlers codex
-    printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'token-counter:io.github.cowwoc.cat.tool.util.SharedUtilityMain$TokenCounter' || \
+    printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'token-counter:io.github.cowwoc.cat.tool.TokenCounter' || \
         { echo "Expected common handler in Codex runtime"; false; }
     printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'codex-runner:io.github.cowwoc.cat.codex.hook.skills.CodexRunner' || \
         { echo "Expected Codex-only handler"; false; }
-    ! printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'claude-runner:io.github.cowwoc.cat.claude.hook.skills.ClaudeRunner' || \
+    ! printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'claude-runner:io.github.cowwoc.cat.tool.skills.ClaudeRunner' || \
         { echo "Did not expect Claude-only handler in Codex runtime"; false; }
 }
 
