@@ -1152,6 +1152,18 @@ else
             continue
         fi
 
+        issue_dir=$(dirname "$planFile")
+        state_file="${issue_dir}/STATE.md"
+        if [[ ! -f "$state_file" ]]; then
+            log_migration "WARNING: Missing STATE.md for issue: ${issue_dir} - skipping"
+            continue
+        fi
+
+        # Skip closed issues.
+        if grep -q "^- \\*\\*Status:\\*\\* closed$" "$state_file" 2>/dev/null; then
+            continue
+        fi
+
         sed -i 's/^## Satisfies$/## Parent Requirements/' "$planFile"
         ((phase14_changed++)) || true
         log_migration "  Updated: $planFile"
