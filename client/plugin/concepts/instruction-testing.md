@@ -24,9 +24,11 @@ review with user → improve instruction → repeat until candidate outperforms 
 
 ## Java/TestNG Boundary
 
-Do not use Java/TestNG tests to validate the contents of skill files under `client/plugin/skills/**`. Skill-file
-content must be validated with instruction tests, SPRT, organic agent-run validation, or human review, depending on
-the risk and determinism of the change.
+Do not use Java/TestNG tests to validate the contents of skill files under `client/plugin/skills/**`.
+Skill validation is behavior-first:
+- Use SPRT/instruction tests to validate skill behavior.
+- Use Bats for shell-script behavior.
+- Avoid literal file-content assertions for skill prose and Java source prose.
 
 Java/TestNG tests may validate runtime code that processes, packages, routes, or loads skills, but they must not
 assert exact prose, examples, command lists, ANSI text, or other `SKILL.md`/`first-use.md` content.
