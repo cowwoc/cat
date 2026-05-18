@@ -621,6 +621,10 @@ Offering closure without criteria verification is a protocol violation.
 
 After Phase 1 returns READY, delegate remaining phases to the work-with-issue skill.
 
+**Important runtime boundary:** `work-with-issue` is a skill orchestration entrypoint, not a
+`client/bin` launcher. Do NOT attempt to execute `${CAT_PLUGIN_ROOT}/client/bin/work-with-issue`.
+Invoke it only via the Skill tool as shown below.
+
 This skill receives the issue ID and metadata, allowing its exclamation-backtick preprocessing to
 render progress banners automatically for all 4 phases.
 

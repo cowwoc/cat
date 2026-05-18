@@ -8,6 +8,9 @@ See LICENSE.md in the project root for license terms.
 Thin orchestrator for `/cat:work`. Delegates each work phase to its dedicated phase skill in sequence.
 Each phase skill loads only its own content, reducing per-phase context load.
 
+`work-with-issue` is skill-only orchestration. It is not exposed as a `client/bin` launcher and must
+be invoked through the Skill tool (`cat:work-with-issue`), not through shell execution.
+
 **Architecture:** This skill is invoked by `/cat:work` after issue discovery (Phase 1). The main agent
 delegates each phase to a dedicated skill:
 - Implement: `cat:work-implement` (banners, lock verify, subagent delegation)
