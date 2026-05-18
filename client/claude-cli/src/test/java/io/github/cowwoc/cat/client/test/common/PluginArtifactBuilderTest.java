@@ -1235,15 +1235,46 @@ public final class PluginArtifactBuilderTest
   private static void assertRuntimeArtifactDoesNotContain(Path runtimeRoot, String text, String name)
     throws IOException
   {
+    byte[] needle = text.getBytes(StandardCharsets.UTF_8);
     try (Stream<Path> files = Files.walk(runtimeRoot))
     {
       for (Path file : files.filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)).toList())
       {
-        String content = Files.readString(file, StandardCharsets.UTF_8);
-        if (content.contains(text))
+        byte[] content = Files.readAllBytes(file);
+        if (containsBytes(content, needle))
           throw new AssertionError(name + ": " + runtimeRoot.relativize(file) + " contains " + text);
       }
     }
+  }
+
+  /**
+   * Returns true if {@code haystack} contains {@code needle} as a contiguous sequence.
+   *
+   * @param haystack the bytes to scan
+   * @param needle   the bytes to look for
+   * @return true if found
+   */
+  private static boolean containsBytes(byte[] haystack, byte[] needle)
+  {
+    if (needle.length == 0)
+      return true;
+    if (haystack.length < needle.length)
+      return false;
+    for (int i = 0; i <= haystack.length - needle.length; ++i)
+    {
+      boolean match = true;
+      for (int j = 0; j < needle.length; j += 1)
+      {
+        if (haystack[i + j] != needle[j])
+        {
+          match = false;
+          break;
+        }
+      }
+      if (match)
+        return true;
+    }
+    return false;
   }
 
   /**

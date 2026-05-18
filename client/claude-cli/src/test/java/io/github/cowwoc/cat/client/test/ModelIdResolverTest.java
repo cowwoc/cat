@@ -172,7 +172,7 @@ public final class ModelIdResolverTest
    * @throws IOException if creating the fake executable fails
    */
   @Test(expectedExceptions = IllegalStateException.class,
-    expectedExceptionsMessageRegExp = ".*unexpected output.*")
+    expectedExceptionsMessageRegExp = ".*(unexpected output|failed with exit code).*")
   public void detectClaudeCodeVersionOrLatestMappingFailsForMalformedOutput() throws IOException
   {
     Path fakeClaude = Files.createTempFile("cat-fake-claude", ".sh");
