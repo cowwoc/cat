@@ -43,6 +43,10 @@ are additionally enforced by hooks or explicit STOP instructions that block prog
   `ABORTED`, `CHANGES_REQUESTED`, or `FAILED`. If the worktree still exists and the issue branch still exists,
   continue confirm → review → merge. A committed implementation with `index.json status: closed` is still
   "implementation running" until the merge approval gate has been presented and resolved.
+- **Approval gate is mandatory before merge (BLOCKING)** — never run `git merge`, `merge-and-cleanup`, branch
+  deletion, or lock/worktree cleanup that implies merge completion until the approval gate has been presented to the
+  user and the user explicitly approves. If a merge happens before explicit approval, treat it as a protocol
+  violation: stop, report the mistake, and restore commits to the issue branch/worktree before continuing.
 - **Step 5: Review Phase (Stakeholder Review)** — always invoke `cat:stakeholder-review` except for config-driven
   exceptions (CAUTION=none or TRUST=high); do not skip based on perceived simplicity or short feedback cycles
 - **Step 5 freshness check before approval** — before presenting the approval gate, if any implementation,
@@ -194,6 +198,9 @@ and review phases.
 
 Capture the final result. The merge skill handles the approval gate and returns when the user
 approves merge, requests changes, or aborts.
+
+**Do not bypass this contract:** if no explicit user approval has been captured for the current approval gate prompt,
+Phase 4 must not perform merge actions.
 
 ## Return Result
 
