@@ -19,5 +19,24 @@
       "catches_variations" : true
     },
     "correct_behavior" : "Before invoking any CAT launcher under client/bin, initialize CAT_PLUGIN_ROOT, CAT_PLUGIN_DATA, CAT_CONFIG_DIR, CAT_PROJECT_DIR, CAT_RUNTIME, and CAT_SESSION_ID in the same command invocation or abort."
+  }, {
+    "id" : "M623",
+    "timestamp" : "2026-05-18T17:41:44Z",
+    "category" : "tool_limitation",
+    "description" : "git-squash/git-rebase launchers returned conflict JSON but no active interactive rebase state was available for continuation, leading to manual fallback attempts outside deterministic workflow.",
+    "root_cause" : "DOCUMENTATION GAP: git-rebase and downstream merge/squash guidance described CONFLICT handling as if a resumable interactive rebase state persisted, but the git-rebase launcher aborts the rebase before returning CONFLICT JSON. This mismatch primed agents to attempt git rebase --continue without an active rebase state.",
+    "cause_signature" : "tool_limitation:skill_incomplete:git_operations",
+    "prevention_type" : "skill",
+    "prevention_path" : "client/plugin/skills/common/git-rebase/first-use.md",
+    "pattern_keywords" : [ "git-squash", "git-rebase", "CONFLICT", "rebase --continue", "backup-before-rebase", "launcher-abort" ],
+    "prevention_implemented" : true,
+    "prevention_verified" : true,
+    "recurrence_of" : null,
+    "prevention_quality" : {
+      "verification_type" : "positive",
+      "fragility" : "low",
+      "catches_variations" : true
+    },
+    "correct_behavior" : "When git-rebase returns CONFLICT, treat it as a post-abort conflict report. Start a native rebase session explicitly before any git rebase --continue steps, resolve conflicts there, then rerun deterministic squash/rebase workflow instead of bypassing with ad-hoc squash fallbacks."
   } ]
 }
