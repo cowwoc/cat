@@ -49,6 +49,10 @@ are additionally enforced by hooks or explicit STOP instructions that block prog
   violation: stop, report the mistake, and restore commits to the issue branch/worktree before continuing.
 - **Step 5: Review Phase (Stakeholder Review)** — always invoke `cat:stakeholder-review` except for config-driven
   exceptions (CAUTION=none or TRUST=high); do not skip based on perceived simplicity or short feedback cycles
+- **No approval gate before review completion (BLOCKING)** — when review is required by config (`CAUTION != none` and
+  `TRUST != high`), do not present, request, or imply an approval gate outcome until Phase 3 has executed and
+  returned a parseable result for the current HEAD. If review is missing, stale, or unparseable, STOP and run/re-run
+  Phase 3 before any merge-gate interaction.
 - **Step 5 freshness check before approval** — before presenting the approval gate, if any implementation,
   review-fix, or user-feedback change modifies HEAD after a stakeholder review, re-run the review. Before approval,
   the merge phase must block the approval gate when the persisted `reviewed_head_sha` does not match the current HEAD.
@@ -201,6 +205,9 @@ approves merge, requests changes, or aborts.
 
 **Do not bypass this contract:** if no explicit user approval has been captured for the current approval gate prompt,
 Phase 4 must not perform merge actions.
+**Review-before-gate validation (BLOCKING):** before Phase 4 begins, verify Phase 3 produced a valid result for this
+run. If review is required and Phase 3 result is absent, malformed, or tied to an older HEAD, do not continue to
+merge. Return a failure that explicitly states stakeholder review must run first.
 
 ## Return Result
 
