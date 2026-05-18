@@ -536,3 +536,27 @@ EOF
 
     [ "$status" -ne 0 ]
 }
+
+@test "runtime descriptor writer creates codex plugin descriptor with version" {
+    local test_output_root
+    test_output_root="$(mktemp -d)"
+    source "$BUILD_JLINK"
+    OUTPUT_ROOT="$test_output_root"
+
+    write_runtime_plugin_descriptors "2.1"
+
+    [ -f "$OUTPUT_ROOT/codex/.codex-plugin/plugin.json" ]
+    grep -q '"version":"2.1"' "$OUTPUT_ROOT/codex/.codex-plugin/plugin.json"
+}
+
+@test "runtime descriptor writer creates claude plugin descriptor with version" {
+    local test_output_root
+    test_output_root="$(mktemp -d)"
+    source "$BUILD_JLINK"
+    OUTPUT_ROOT="$test_output_root"
+
+    write_runtime_plugin_descriptors "2.1"
+
+    [ -f "$OUTPUT_ROOT/claude/.claude-plugin/plugin.json" ]
+    grep -q '"version":"2.1"' "$OUTPUT_ROOT/claude/.claude-plugin/plugin.json"
+}

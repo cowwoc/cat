@@ -374,6 +374,26 @@ copy_legal_notices() {
   cp "$REACTOR_DIR"/legal/licenses/*.txt "$OUTPUT_DIR/licenses/"
 }
 
+plugin_version() {
+  local jar_name
+  jar_name="$(basename "$COMMON_JAR")"
+  local version="${jar_name#cat-common-cli-}"
+  version="${version%.jar}"
+  if [[ ! "$version" =~ ^[0-9]+(\.[0-9]+){0,2}$ ]]; then
+    error "Unable to derive plugin version from JAR name: $jar_name"
+  fi
+  echo "$version"
+}
+
+write_runtime_plugin_descriptors() {
+  local version="$1"
+  local claude_descriptor_dir="${OUTPUT_ROOT}/claude/.claude-plugin"
+  local codex_descriptor_dir="${OUTPUT_ROOT}/codex/.codex-plugin"
+  mkdir -p "$claude_descriptor_dir" "$codex_descriptor_dir"
+  printf '{"version":"%s"}\n' "$version" > "${claude_descriptor_dir}/plugin.json"
+  printf '{"version":"%s"}\n' "$version" > "${codex_descriptor_dir}/plugin.json"
+}
+
 # --- Phase 6: Generate startup optimization archives ---
 #
 # Leyden AOT cache with pre-linked classes and method profiles:
@@ -692,6 +712,7 @@ main() {
     generate_startup_archives "$runtime"
     verify_image "$runtime"
   done
+  write_runtime_plugin_descriptors "$(plugin_version)"
 
   log "Build complete!"
   log "Output: $OUTPUT_ROOT"
