@@ -20,6 +20,9 @@
 - **Convention changes belong with their application:** When adding a new convention to a language or style file (e.g., `java.md`) AND applying it across files in the same session, include the convention file change in the SAME commit as the files that apply it. Group by topic (establish + apply = one unit), not by file location.
 - **index.json belongs with implementation:** When closing an issue, index.json updates belong in the SAME commit as the implementation work, using the implementation's commit type (feature:/bugfix:/docs:/etc), NOT in a separate planning: commit
 - If a commit would touch both docs and non-docs files, split it into separate commits
+- **Do not report uncommitted implementation as review-ready:** Before presenting progress for user review,
+  commit all implementation changes so the user can inspect exact diffs and history. If changes are not committed,
+  continue working until they are committed or clearly state that review is blocked pending commit.
 - **Do not update closed issue files:** Never modify plan.md or index.json of closed issues unless the user explicitly
   instructs you to. Closed issue files are archival records. **Exception:** Automated migration scripts under
   `plugin/migrations/` must process all issues including closed ones to ensure consistent file formats across the

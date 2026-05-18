@@ -10,3 +10,7 @@ message with `--output-last-message`.
 
 Runtime-specific tests should cover only runtime-specific behavior. Do not create duplicate routing or negative
 tests whose only difference is replacing `claude` with `codex` in the skill name or prompt.
+
+Keep runtime-specific skill behavior in runtime-specific wrappers, not common skill bodies. Place runtime-only
+bootstrap, environment handling, and control-flow differences under runtime-specific skill paths, while keeping
+`client/plugin/skills/common/**` runtime-agnostic.
