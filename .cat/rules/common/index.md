@@ -29,7 +29,10 @@ Path-specific shared rule bodies live in `.cat/rules/include/`. Runtime director
 | Rule File | Audience | Paths | Purpose |
 |-----------|----------|-------|---------|
 | [backwards-compatibility.md](backwards-compatibility.md) | all agents | always | Require migrations instead of legacy fallbacks |
+| [commit-types.md](commit-types.md) | main agent only | always | Enforce commit type selection and commit grouping rules |
 | [convention-locations.md](convention-locations.md) | main agent only | always | Where to put end-user vs plugin-dev conventions |
+| [issue-workflow.md](issue-workflow.md) | main agent only | always | Require issue workflow for plugin/client changes |
+| [approval-gate.md](approval-gate.md) | main agent only | always | Re-squash commits before every approval gate |
 | [dependency-boundaries.md](dependency-boundaries.md) | main agent only | always | Keep dependencies and test seams owned by the relevant behavior |
 | [edit-planning.md](edit-planning.md) | all agents | always | Plan independent edits together |
 | [hooks.md](hooks.md) | main agent only | always | Runtime-neutral hook guidance |
@@ -37,6 +40,8 @@ Path-specific shared rule bodies live in `.cat/rules/include/`. Runtime director
 | [pre-existing-problems.md](pre-existing-problems.md) | all agents | always | Fix pre-existing problems when they violate issue goals |
 | [report-problems.md](report-problems.md) | all agents | always | Report stale references |
 | [runtime-duplication.md](runtime-duplication.md) | all agents | always | Keep runtime-specific guidance in runtime directories |
+| [testing-requirements.md](testing-requirements.md) | main agent only | always | Enforce TDD and full verify before review |
+| [testing-scope.md](testing-scope.md) | main agent only | always | Behavior-first boundaries for Bats, SPRT, and TestNG |
 | [terminology.md](terminology.md) | all agents | always | Keep config terminology identical across code/docs |
 
 ## Included Files
