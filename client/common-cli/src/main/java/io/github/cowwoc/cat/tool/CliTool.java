@@ -11,7 +11,7 @@ import io.github.cowwoc.cat.agent.AgentPluginScope;
 import java.nio.file.Path;
 
 /**
- * Runtime-neutral CLI scope for shared CAT command-line utilities.
+ * Engine-neutral CLI scope for shared CAT command-line utilities.
  */
 public interface CliTool extends AgentPluginScope
 {
@@ -24,7 +24,7 @@ public interface CliTool extends AgentPluginScope
   String getSessionId();
 
   /**
-   * Returns the active runtime config directory.
+   * Returns the active engine config directory.
    *
    * @return the config directory path
    * @throws IllegalStateException if this scope is closed
@@ -32,7 +32,7 @@ public interface CliTool extends AgentPluginScope
   Path getConfigPath();
 
   /**
-   * Returns the active runtime sessions directory.
+   * Returns the active engine sessions directory.
    *
    * @return the sessions directory path
    * @throws IllegalStateException if this scope is closed
@@ -40,7 +40,7 @@ public interface CliTool extends AgentPluginScope
   Path getSessionsPath();
 
   /**
-   * Returns the active runtime session directory.
+   * Returns the active engine session directory.
    *
    * @param sessionId the session ID
    * @return the session directory path

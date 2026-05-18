@@ -2,7 +2,7 @@
 
 These rules apply to all data structures **owned by CAT**: JSON files, YAML files, key=value output lines,
 and any other structured formats written and read by CAT tooling. They do **not** apply to 3rd-party-owned
-formats such as runtime hook payloads, git output, or external API responses.
+formats such as engine hook payloads, git output, or external API responses.
 
 ## Key Names
 
@@ -71,6 +71,6 @@ a result directly to stdout for immediate shell capture). Any file persisted to 
 | Test result JSON (`test-results.json`) | Yes | Yes |
 | key=value output lines from Java CLI tools | Yes | Yes |
 | CAT YAML frontmatter fields (e.g., `category:`, `effort:`) | Yes | Yes |
-| Runtime hook payloads (e.g., `tool_name`, `role`, `type`) | No — runtime-owned | No |
+| Engine hook payloads (e.g., `tool_name`, `role`, `type`) | No — engine-owned | No |
 | Git porcelain output | No — git | No |
 | External API response fields | No — 3rd party | No |

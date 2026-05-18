@@ -51,7 +51,7 @@ fi
 Pass any arguments from the user request as regular quoted CLI arguments.
 ````
 
-Do not use Claude preprocessor syntax in Codex skill bodies. If a Claude runtime wrapper needs preprocessing, keep that
+Do not use Claude preprocessor syntax in Codex skill bodies. If a Claude engine wrapper needs preprocessing, keep that
 syntax in Claude-specific skill content rather than shared Codex-facing instructions.
 
 Use one CLI command per skill when the command can own the full deterministic workflow: argument parsing, validation,
@@ -104,7 +104,7 @@ test_sha=abc123
 **Skill instruction tells the LLM:**
 ```bash
 # Outputs key=value lines; declare as STATUS, OVERALL_DECISION, TEST_SHA
-"${CLAUDE_PLUGIN_DATA}/client/bin/instruction-test-runner" \
+"${CLAUDE_PLUGIN_DATA}/client/bin/sprt-runner" \
   write-test-results "${WORKTREE_PATH}" "${SPRT_STATE_PATH}" "${TEST_DIR}"
 ```
 
@@ -126,7 +126,7 @@ Use compact JSON when the output contains arrays, nested objects, or multi-line 
 
 For complex outputs, the LLM extracts individual fields with `get-json-field`:
 ```bash
-OUTPUT_DIR=$("${CLAUDE_PLUGIN_DATA}/client/bin/instruction-test-runner" \
+OUTPUT_DIR=$("${CLAUDE_PLUGIN_DATA}/client/bin/sprt-runner" \
   get-json-field "${CREATE_RESULT}" "output_dir")
 ```
 

@@ -488,12 +488,12 @@ create_sub-issues "parser-lexer" "parser-ast" "parser-semantic"
 update_orchestration_plan
 ```
 
-### Distinguish runtime dependencies from extraction dependencies
+### Distinguish engine dependencies from extraction dependencies
 
-For code extraction/refactoring issues, runtime method calls are NOT issue dependencies.
+For code extraction/refactoring issues, engine method calls are NOT issue dependencies.
 
 ```yaml
-# ❌ Confusing runtime calls with issue dependencies
+# ❌ Confusing engine calls with issue dependencies
 # "parseUnary calls parsePostfix, so extract-unary must run before extract-postfix"
 sub-issues:
   1.2-extract-unary: []

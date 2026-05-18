@@ -229,7 +229,7 @@ execution_workflow:
   for_each_action_item:
     - Read action item description
     - Determine implementation approach:
-        hook: Create/update a runtime-specific hook configuration
+        hook: Create/update a engine-specific hook configuration
         skill: Create/update skill in cat/skills/
         code: Modify source code
         documentation: Update project instructions or skill docs

@@ -4,22 +4,22 @@
 # Licensed under the CAT Commercial License.
 # See LICENSE.md in the project root for license terms.
 #
-# build-jlink-images.sh - Create self-contained runtime-specific jlink images
+# build-jlink-images.sh - Create self-contained engine-specific jlink images
 #
 # Pipeline:
 #   1. Build the client JAR (if needed)
-#   2. Stage runtime dependency JARs
+#   2. Stage engine dependency JARs
 #   3. Patch automatic modules with generated module-info.class
-#   4. Create runtime-specific jlink images
+#   4. Create engine-specific jlink images
 #   5. Generate per-handler launcher scripts
-#   6. Generate runtime-specific Leyden AOT startup archives
+#   6. Generate engine-specific Leyden AOT startup archives
 #   7. Verify jlink images
 #
 # Usage:
 #   ./scripts/build-jlink-images.sh
 #
 # Output:
-#   target/jlink/{claude,codex}/ - Complete runtime-specific jlink images with launchers
+#   target/jlink/{claude,codex}/ - Complete engine-specific jlink images with launchers
 
 set -euo pipefail
 
@@ -39,9 +39,9 @@ STAGING_DIR="${TARGET_DIR}/jlink-staging"
 PATCH_DIR="${TARGET_DIR}/module-patches"
 OUTPUT_ROOT="${TARGET_DIR}/jlink"
 OUTPUT_DIR="${OUTPUT_ROOT}/claude"
-COMMON_JAR="${REACTOR_DIR}/common-cli/target/cat-common-cli-2.1.jar"
-CLAUDE_JAR="${REACTOR_DIR}/claude-cli/target/cat-claude-cli-2.1.jar"
-CODEX_JAR="${REACTOR_DIR}/codex-cli/target/cat-codex-cli-2.1.jar"
+COMMON_JAR="${REACTOR_DIR}/common-cli/target/client-common-cli-2.1.jar"
+CLAUDE_JAR="${REACTOR_DIR}/claude-cli/target/client-claude-cli-2.1.jar"
+CODEX_JAR="${REACTOR_DIR}/codex-cli/target/client-codex-cli-2.1.jar"
 COMMON_MODULE_NAME="io.github.cowwoc.cat.common.cli"
 CLAUDE_MODULE_NAME="io.github.cowwoc.cat.claude.cli"
 CODEX_MODULE_NAME="io.github.cowwoc.cat.codex.cli"
@@ -49,8 +49,8 @@ ENABLE_ASSERTIONS=false
 declare -a PATCH_MODULE_PATH_JARS=()
 declare -a AUTOMATIC_MODULE_JARS=()
 
-# Runtime-neutral handler registry: launcher-name:fully.qualified.ClassName
-# Each entry is included in every runtime image.
+# Engine-neutral handler registry: launcher-name:fully.qualified.ClassName
+# Each entry is included in every engine image.
 declare -a COMMON_HANDLERS=(
   "token-counter:io.github.cowwoc.cat.tool.TokenCounter"
   "get-checkpoint-box:io.github.cowwoc.cat.tool.skills.GetCheckpointOutput"
@@ -71,7 +71,6 @@ declare -a COMMON_HANDLERS=(
   "get-stakeholder-review-box:io.github.cowwoc.cat.tool.skills.GetStakeholderReviewBox"
   "get-stakeholder-concern-box:io.github.cowwoc.cat.tool.skills.GetStakeholderConcernBox"
   "verify-audit:io.github.cowwoc.cat.tool.skills.VerifyAudit"
-  "empirical-test-runner:io.github.cowwoc.cat.tool.skills.EmpiricalTestRunner"
   "merge-and-cleanup:io.github.cowwoc.cat.tool.util.MergeAndCleanup"
   "git-squash:io.github.cowwoc.cat.tool.util.GitSquash"
   "git-merge-linear:io.github.cowwoc.cat.tool.util.GitMergeLinear"
@@ -90,17 +89,17 @@ declare -a COMMON_HANDLERS=(
   "write-session-marker:io.github.cowwoc.cat.tool.util.WriteSessionMarker"
   "read-session-marker:io.github.cowwoc.cat.tool.util.ReadSessionMarker"
   "auto-close-index:io.github.cowwoc.cat.tool.util.AutoCloseIndexJson"
-  "instruction-test-runner:io.github.cowwoc.cat.tool.skills.InstructionTestRunner"
+  "sprt-runner:io.github.cowwoc.cat.tool.skills.SprtRunner"
   "verify-defer-plan-generation:io.github.cowwoc.cat.tool.util.VerifyDeferPlanGeneration"
   "write-and-commit:io.github.cowwoc.cat.tool.util.WriteAndCommit"
   "extract-turns:io.github.cowwoc.cat.tool.skills.ExtractTurnsContent"
   "update-skill-description:io.github.cowwoc.cat.tool.skills.UpdateSkillDescription"
-  "build-runtime-artifacts:io.github.cowwoc.cat.agent.PluginArtifactBuilder"
+  "build-engine-artifacts:io.github.cowwoc.cat.agent.PluginArtifactBuilder"
 )
 
 # Claude-only handlers.
 declare -a CLAUDE_HANDLERS=(
-  "claude-runner:io.github.cowwoc.cat.tool.skills.ClaudeRunner"
+  "claude-runner:io.github.cowwoc.cat.claude.engine.ClaudeRunner"
   "register-hook:io.github.cowwoc.cat.claude.hook.util.HookRegistrar"
   "statusline-command:io.github.cowwoc.cat.claude.hook.util.StatuslineCommand"
   "statusline-install:io.github.cowwoc.cat.claude.hook.util.StatuslineInstall"
@@ -121,7 +120,7 @@ declare -a CLAUDE_HANDLERS=(
 
 # Codex-only handlers.
 declare -a CODEX_HANDLERS=(
-  "codex-runner:io.github.cowwoc.cat.codex.hook.skills.CodexRunner"
+  "codex-runner:io.github.cowwoc.cat.codex.engine.CodexRunner"
   "session-start:io.github.cowwoc.cat.codex.hook.SessionStartHook"
   "pre-bash:io.github.cowwoc.cat.codex.hook.PreBashHook"
 )
@@ -163,15 +162,15 @@ run_all_handlers() {
   done
 }
 
-# Selects the handler registry for one runtime image.
-# Usage: set_runtime_handlers <claude|codex>
-set_runtime_handlers() {
-  local runtime="$1"
+# Selects the handler registry for one engine image.
+# Usage: set_engine_handlers <claude|codex>
+set_engine_handlers() {
+  local engine="$1"
   HANDLERS=("${COMMON_HANDLERS[@]}")
-  case "$runtime" in
+  case "$engine" in
     claude) HANDLERS+=("${CLAUDE_HANDLERS[@]}") ;;
     codex) HANDLERS+=("${CODEX_HANDLERS[@]}") ;;
-    *) error "Unknown runtime: $runtime" ;;
+    *) error "Unknown engine: $engine" ;;
   esac
 }
 
@@ -195,7 +194,7 @@ ensure_client_jar() {
 # --- Phase 2: Stage dependencies ---
 
 stage_dependencies() {
-  log "Staging runtime dependencies..."
+  log "Staging engine dependencies..."
   rm -rf "$STAGING_DIR"
   mkdir -p "$STAGING_DIR"
 
@@ -336,15 +335,15 @@ patch_automatic_modules() {
 # --- Phase 4: Build jlink image ---
 
 build_jlink_image() {
-  local runtime="$1"
-  log "Building ${runtime} jlink image..."
+  local engine="$1"
+  log "Building ${engine} jlink image..."
 
   local module_path="${COMMON_JAR}:${CLAUDE_JAR}:${CODEX_JAR}:${STAGING_DIR}"
   local root_modules
-  case "$runtime" in
+  case "$engine" in
     claude) root_modules="${COMMON_MODULE_NAME},${CLAUDE_MODULE_NAME}" ;;
     codex) root_modules="${COMMON_MODULE_NAME},${CODEX_MODULE_NAME}" ;;
-    *) error "Unknown runtime: $runtime" ;;
+    *) error "Unknown engine: $engine" ;;
   esac
 
   rm -rf "$OUTPUT_DIR"
@@ -362,7 +361,7 @@ build_jlink_image() {
   # Remove nocoops CDS archive (only needed for heaps >32GB)
   rm -f "${OUTPUT_DIR}/lib/server/classes_nocoops.jsa"
 
-  log "${runtime} jlink image created at: $OUTPUT_DIR"
+  log "${engine} jlink image created at: $OUTPUT_DIR"
 }
 
 copy_legal_notices() {
@@ -377,7 +376,7 @@ copy_legal_notices() {
 plugin_version() {
   local jar_name
   jar_name="$(basename "$COMMON_JAR")"
-  local version="${jar_name#cat-common-cli-}"
+  local version="${jar_name#client-common-cli-}"
   version="${version%.jar}"
   if [[ ! "$version" =~ ^[0-9]+(\.[0-9]+){0,2}$ ]]; then
     error "Unable to derive plugin version from JAR name: $jar_name"
@@ -385,7 +384,7 @@ plugin_version() {
   echo "$version"
 }
 
-write_runtime_plugin_descriptors() {
+write_engine_plugin_descriptors() {
   local version="$1"
   local claude_descriptor_dir="${OUTPUT_ROOT}/claude/.claude-plugin"
   local codex_descriptor_dir="${OUTPUT_ROOT}/codex/.codex-plugin"
@@ -400,13 +399,13 @@ write_runtime_plugin_descriptors() {
 #   Eliminates class initialization overhead
 
 generate_startup_archives() {
-  local runtime="$1"
+  local engine="$1"
   local java_bin="${OUTPUT_DIR}/bin/java"
   local aot_config="${OUTPUT_DIR}/lib/server/aot-config.aotconf"
   local aot_cache="${OUTPUT_DIR}/lib/server/aot-cache.aot"
   local training_class
   local create_class
-  case "$runtime" in
+  case "$engine" in
     claude)
       training_class="io.github.cowwoc.cat.claude.hook.AotTraining"
       create_class="io.github.cowwoc.cat.claude.hook.PreToolUseHook"
@@ -415,7 +414,7 @@ generate_startup_archives() {
       training_class="io.github.cowwoc.cat.codex.hook.CodexAotTraining"
       create_class="io.github.cowwoc.cat.codex.hook.PreBashHook"
       ;;
-    *) error "Unknown runtime: $runtime" ;;
+    *) error "Unknown engine: $engine" ;;
   esac
 
   # JVM AOT messages (warnings, informational) go to stdout. The five lines below are
@@ -428,9 +427,9 @@ generate_startup_archives() {
   suppress_pattern+='|Skipping tools/jackson/databind/ext/sql/JavaSqlDateSerializer'
   suppress_pattern+='|Skipping tools/jackson/databind/ext/beans/JavaBeansAnnotationsImpl'
 
-  # Leyden AOT: record runtime-specific training data, then create a pre-linked cache.
-  log "Recording ${runtime} AOT training data..."
-  # Set environment variables required by the runtime scopes so handlers can initialize.
+  # Leyden AOT: record engine-specific training data, then create a pre-linked cache.
+  log "Recording ${engine} AOT training data..."
+  # Set environment variables required by the engine scopes so handlers can initialize.
   # Capture stdout+stderr: filter known-harmless Jackson SQL warnings on success, show all on failure.
   local aot_output
   aot_output=$(mktemp)
@@ -439,15 +438,15 @@ generate_startup_archives() {
   mkdir -p "$aot_plugin_data" "$aot_config_dir"
 
   run_aot_command() {
-    if [[ "$runtime" == "claude" ]]; then
+    if [[ "$engine" == "claude" ]]; then
       env -u CAT_PROJECT_DIR -u CAT_PLUGIN_ROOT -u CAT_PLUGIN_DATA -u CAT_SESSION_ID \
-        -u CAT_RUNTIME -u CAT_CONFIG_DIR -u CODEX_THREAD_ID -u CODEX_HOME \
+        -u CAT_ENGINE -u CAT_CONFIG_DIR -u CODEX_THREAD_ID -u CODEX_HOME \
         CLAUDE_PROJECT_DIR="$WORKSPACE_DIR" CLAUDE_PLUGIN_ROOT="${REACTOR_DIR}/plugin" \
         CLAUDE_PLUGIN_DATA="$aot_plugin_data" CLAUDE_SESSION_ID="aot-training-session" \
         CLAUDE_CONFIG_DIR="$aot_config_dir" TZ="${TZ:-UTC}" "$@"
     else
       env -u CAT_PROJECT_DIR -u CAT_PLUGIN_ROOT -u CAT_PLUGIN_DATA -u CAT_SESSION_ID \
-        -u CAT_RUNTIME -u CAT_CONFIG_DIR -u CLAUDE_PROJECT_DIR -u CLAUDE_PLUGIN_ROOT \
+        -u CAT_ENGINE -u CAT_CONFIG_DIR -u CLAUDE_PROJECT_DIR -u CLAUDE_PLUGIN_ROOT \
         -u CLAUDE_PLUGIN_DATA -u CLAUDE_SESSION_ID -u CLAUDE_CONFIG_DIR \
         CODEX_THREAD_ID="aot-training-session" CODEX_HOME="$aot_config_dir" TZ="${TZ:-UTC}" "$@"
     fi
@@ -461,7 +460,7 @@ generate_startup_archives() {
       -m "$(handler_main "$training_class")" \
       >"$aot_output" 2>&1; then
     cat "$aot_output" >&2
-    error "Failed to record ${runtime} AOT training data"
+    error "Failed to record ${engine} AOT training data"
   fi
   grep -Ev "$suppress_pattern" "$aot_output" >&2 || true
   rm -f "$aot_output"
@@ -481,15 +480,15 @@ generate_startup_archives() {
     -m "$(handler_main "$create_class")" \
     >"$create_output" 2>&1; then
     cat "$create_output" >&2
-    error "Failed to create ${runtime} AOT cache"
+    error "Failed to create ${engine} AOT cache"
   fi
   grep -Ev "$suppress_pattern" "$create_output" >&2 || true
   rm -f "$create_output"
   trap - RETURN
 
   rm -f "$aot_config"
-  log "  ${runtime} AOT cache: $(du -h "$aot_cache" | cut -f1)"
-  log "${runtime} startup archives complete"
+  log "  ${engine} AOT cache: $(du -h "$aot_cache" | cut -f1)"
+  log "${engine} startup archives complete"
 }
 
 # --- Phase 5: Generate launcher scripts ---
@@ -578,13 +577,13 @@ EOF
 # --- Phase 7: Verify ---
 
 verify_pre_bash_launcher() {
-  local runtime="$1"
+  local engine="$1"
   local launcher="${OUTPUT_DIR}/bin/pre-bash"
-  log "  Testing ${runtime} pre-bash launcher..."
+  log "  Testing ${engine} pre-bash launcher..."
   if echo '{}' | "$launcher" &>/dev/null; then
-    log "  ${runtime} pre-bash launcher works"
+    log "  ${engine} pre-bash launcher works"
   else
-    log "  Warning: ${runtime} pre-bash launcher test failed"
+    log "  Warning: ${engine} pre-bash launcher test failed"
   fi
 }
 
@@ -606,7 +605,7 @@ verify_codex_session_start_launcher() {
   session_output=$(printf '{"cwd":"%s","plugin_root":"%s","plugin_data":"%s"}\n' \
     "$smoke_project" "$smoke_plugin" "$smoke_data" | \
     env -u CAT_PROJECT_DIR -u CAT_PLUGIN_ROOT -u CAT_PLUGIN_DATA -u CAT_SESSION_ID \
-      -u CAT_RUNTIME -u CAT_CONFIG_DIR -u CLAUDE_PROJECT_DIR -u CLAUDE_PLUGIN_ROOT \
+      -u CAT_ENGINE -u CAT_CONFIG_DIR -u CLAUDE_PROJECT_DIR -u CLAUDE_PLUGIN_ROOT \
       -u CLAUDE_PLUGIN_DATA -u CLAUDE_SESSION_ID -u CLAUDE_CONFIG_DIR \
       CODEX_HOME="${smoke_dir}/codex-home" TZ="${TZ:-UTC}" \
     "${OUTPUT_DIR}/bin/session-start") || error "codex session-start launcher failed"
@@ -630,7 +629,7 @@ verify_status_launcher() {
   local status_output
   if ! status_output=$(cd "$status_project_dir" && \
     env -u CAT_PROJECT_DIR -u CAT_PLUGIN_ROOT -u CAT_PLUGIN_DATA -u CAT_SESSION_ID \
-    -u CAT_RUNTIME -u CAT_CONFIG_DIR -u CLAUDE_PROJECT_DIR -u CLAUDE_PLUGIN_ROOT \
+    -u CAT_ENGINE -u CAT_CONFIG_DIR -u CLAUDE_PROJECT_DIR -u CLAUDE_PLUGIN_ROOT \
     -u CLAUDE_PLUGIN_DATA -u CLAUDE_SESSION_ID -u CLAUDE_CONFIG_DIR \
     CAT_JVM_OPTS="-Dcat.plugin.root=${REACTOR_DIR}/plugin ${CAT_JVM_OPTS:-}" \
     CODEX_THREAD_ID="jlink-status-verify-session" CODEX_HOME="$status_codex_home" \
@@ -661,29 +660,29 @@ verify_update_branch_launcher() {
 }
 
 verify_image() {
-  local runtime="$1"
-  log "Verifying ${runtime} jlink image..."
+  local engine="$1"
+  log "Verifying ${engine} jlink image..."
 
   if ! "${OUTPUT_DIR}/bin/java" -version &>/dev/null; then
     error "java -version failed"
   fi
 
-  case "$runtime" in
+  case "$engine" in
     claude)
-      verify_pre_bash_launcher "$runtime"
+      verify_pre_bash_launcher "$engine"
       ;;
     codex)
-      verify_pre_bash_launcher "$runtime"
+      verify_pre_bash_launcher "$engine"
       verify_codex_session_start_launcher
       ;;
     *)
-      error "Unknown runtime: $runtime"
+      error "Unknown engine: $engine"
       ;;
   esac
   verify_status_launcher
   verify_update_branch_launcher
 
-  log "${runtime} verification complete"
+  log "${engine} verification complete"
 }
 
 # --- Main ---
@@ -703,23 +702,23 @@ main() {
   stage_dependencies
   patch_automatic_modules
   rm -rf "$OUTPUT_ROOT"
-  for runtime in claude codex; do
-    OUTPUT_DIR="${OUTPUT_ROOT}/${runtime}"
-    set_runtime_handlers "$runtime"
-    build_jlink_image "$runtime"
+  for engine in claude codex; do
+    OUTPUT_DIR="${OUTPUT_ROOT}/${engine}"
+    set_engine_handlers "$engine"
+    build_jlink_image "$engine"
     copy_legal_notices
     generate_launchers
-    generate_startup_archives "$runtime"
-    verify_image "$runtime"
+    generate_startup_archives "$engine"
+    verify_image "$engine"
   done
-  write_runtime_plugin_descriptors "$(plugin_version)"
+  write_engine_plugin_descriptors "$(plugin_version)"
 
   log "Build complete!"
   log "Output: $OUTPUT_ROOT"
-  for runtime in claude codex; do
-    OUTPUT_DIR="${OUTPUT_ROOT}/${runtime}"
-    set_runtime_handlers "$runtime"
-    log "${runtime} launchers:"
+  for engine in claude codex; do
+    OUTPUT_DIR="${OUTPUT_ROOT}/${engine}"
+    set_engine_handlers "$engine"
+    log "${engine} launchers:"
     for handler in "${HANDLERS[@]}"; do
       log "  - ${OUTPUT_DIR}/bin/${handler%%:*}"
     done

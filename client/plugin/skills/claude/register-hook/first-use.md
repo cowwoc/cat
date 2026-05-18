@@ -17,7 +17,7 @@ See LICENSE.md in the project root for license terms.
 | **Project hooks** | `.claude/settings.json` | Project-specific behavior (this skill) |
 | **Claude plugin hooks** | `plugin/hooks/claude/hooks.json` | CAT plugin behavior in Claude Code (do NOT use this skill) |
 
-This skill is for **project hooks only**. CAT plugin hooks are pre-registered in runtime-specific plugin hook configs
+This skill is for **project hooks only**. CAT plugin hooks are pre-registered in engine-specific plugin hook configs
 and loaded automatically - do not attempt to register them in settings.json.
 
 ## When to Use This Skill

@@ -8,8 +8,8 @@ package io.github.cowwoc.cat.claude.hook;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.agent.AbstractRuntimeScope;
-import io.github.cowwoc.cat.agent.AgentRuntime;
+import io.github.cowwoc.cat.agent.AbstractEngineScope;
+import io.github.cowwoc.cat.agent.AgentEngine;
 import io.github.cowwoc.cat.tool.DisplayUtils;
 import io.github.cowwoc.cat.claude.hook.prompt.UserIssues;
 import io.github.cowwoc.pouch10.core.ConcurrentLazyReference;
@@ -27,7 +27,7 @@ import java.nio.file.Path;
  * <p>
  * <b>Thread Safety:</b> This class is thread-safe.
  */
-public abstract class AbstractClaudePluginScope extends AbstractRuntimeScope
+public abstract class AbstractClaudePluginScope extends AbstractEngineScope
   implements ClaudePluginScope
 {
   private final Path claudeConfigPath;
@@ -64,7 +64,7 @@ public abstract class AbstractClaudePluginScope extends AbstractRuntimeScope
   }
 
   /**
-   * Creates a new abstract plugin scope with explicit process-scoped runtime values.
+   * Creates a new abstract plugin scope with explicit process-scoped engine values.
    *
    * @param projectPath the project's root directory
    * @param pluginRoot the Claude plugin root directory
@@ -77,9 +77,9 @@ public abstract class AbstractClaudePluginScope extends AbstractRuntimeScope
   protected AbstractClaudePluginScope(Path projectPath, Path pluginRoot, Path pluginData,
     Path claudeConfigPath, Path workDir, String timezone)
   {
-    super(projectPath, pluginRoot, pluginData, AgentRuntime.CLAUDE.pluginDescriptor(),
-      AgentRuntime.CLAUDE.ruleDirectories(projectPath, pluginRoot),
-      AgentRuntime.CLAUDE.pluginCacheDescriptor(), workDir, timezone);
+    super(projectPath, pluginRoot, pluginData, AgentEngine.CLAUDE.pluginDescriptor(),
+      AgentEngine.CLAUDE.ruleDirectories(projectPath, pluginRoot),
+      AgentEngine.CLAUDE.pluginCacheDescriptor(), workDir, timezone);
     requireThat(claudeConfigPath, "claudeConfigPath").isNotNull();
     this.claudeConfigPath = claudeConfigPath;
   }

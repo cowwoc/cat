@@ -31,6 +31,7 @@ module io.github.cowwoc.cat.claude.cli
   exports io.github.cowwoc.cat.claude.hook.task;
   exports io.github.cowwoc.cat.claude.hook.util;
   exports io.github.cowwoc.cat.claude.hook.write;
+  exports io.github.cowwoc.cat.claude.engine;
   opens io.github.cowwoc.cat.claude.hook.skills to tools.jackson.databind;
   opens io.github.cowwoc.cat.claude.hook to io.github.cowwoc.cat.client.test;
   opens io.github.cowwoc.cat.claude.hook.util to io.github.cowwoc.cat.client.test;

@@ -90,9 +90,9 @@ You must substitute the actual session ID value in bash commands, not use the va
 ```bash
 # Replace YOUR-SESSION-ID with the actual session ID value
 SESSION_ID="YOUR-SESSION-ID-HERE"
-SESSION_ANALYZER=$(find "${WORKTREE_PATH}/client" -path "*/target/jlink/${CAT_RUNTIME:-claude}/bin/session-analyzer" -type f -print -quit)
+SESSION_ANALYZER=$(find "${WORKTREE_PATH}/client" -path "*/target/jlink/${CAT_ENGINE:-claude}/bin/session-analyzer" -type f -print -quit)
 if [[ ! -x "$SESSION_ANALYZER" ]]; then
-  SESSION_ANALYZER=$(find "/workspace/client" -path "*/target/jlink/${CAT_RUNTIME:-claude}/bin/session-analyzer" -type f -print -quit)
+  SESSION_ANALYZER=$(find "/workspace/client" -path "*/target/jlink/${CAT_ENGINE:-claude}/bin/session-analyzer" -type f -print -quit)
 fi
 ```
 
@@ -112,16 +112,16 @@ Use raw JSONL as the primary source to determine what the agent actually receive
 
 ```bash
 # Find what content was delivered for a specific skill or document
-"$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" search "$SESSION_ID" "skill-name-or-keyword" --context 5
+"$SESSION_ANALYZER" --engine "${CAT_ENGINE}" search "$SESSION_ID" "skill-name-or-keyword" --context 5
 
 # Search for multiple keywords in a single file scan (use --regex with alternation)
-"$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" search "$SESSION_ID" "keyword1|keyword2|keyword3" --regex --context 5
+"$SESSION_ANALYZER" --engine "${CAT_ENGINE}" search "$SESSION_ID" "keyword1|keyword2|keyword3" --regex --context 5
 
 # Find tool errors that may have triggered the mistake
-"$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" errors "$SESSION_ID"
+"$SESSION_ANALYZER" --engine "${CAT_ENGINE}" errors "$SESSION_ID"
 
 # Get session overview with agent discovery
-"$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" analyze "$SESSION_ID"
+"$SESSION_ANALYZER" --engine "${CAT_ENGINE}" analyze "$SESSION_ID"
 ```
 
 **Agent investigation:** If the mistake happened inside an agent, the parent session JSONL does not contain the
@@ -129,14 +129,14 @@ agent's full conversation. Use `analyze` to discover agent IDs, then search thei
 
 ```bash
 # Discover agent IDs (listed in analyze output under "agents")
-"$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" analyze "$SESSION_ID"
+"$SESSION_ANALYZER" --engine "${CAT_ENGINE}" analyze "$SESSION_ID"
 
 # Search a specific agent's conversation using the agent ID/path from analyze output
-SUBAGENT_SESSION_ID="<runtime-specific agent id/path from analyze output>"
-"$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" search "$SUBAGENT_SESSION_ID" "keyword" --context 5
+SUBAGENT_SESSION_ID="<engine-specific agent id/path from analyze output>"
+"$SESSION_ANALYZER" --engine "${CAT_ENGINE}" search "$SUBAGENT_SESSION_ID" "keyword" --context 5
 
 # Search for multiple keywords in an agent's conversation in one scan
-"$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" search "$SUBAGENT_SESSION_ID" "keyword1|keyword2" --regex --context 5
+"$SESSION_ANALYZER" --engine "${CAT_ENGINE}" search "$SUBAGENT_SESSION_ID" "keyword1|keyword2" --regex --context 5
 ```
 
 **What to verify in JSONL before looking at source files:**
@@ -152,7 +152,7 @@ After JSONL examination, use source files for comparison only. Source files are 
 
 ```bash
 # Cross-reference documents read, skill invocations, and delegation prompts in one scan
-"$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" search "$SESSION_ID" "Read|Skill|Task|apply_patch|exec_command" \
+"$SESSION_ANALYZER" --engine "${CAT_ENGINE}" search "$SESSION_ID" "Read|Skill|Task|apply_patch|exec_command" \
   --regex --context 5
 ```
 
@@ -209,7 +209,7 @@ When a mistake involves invoking a tool/skill with wrong parameters:
 
 **For agent mistakes:** Read `phase-investigate-agent-mistake.md` (in the same directory as this file) for
 agent-mistake investigation checks including delegation prompt analysis, technically impossible instructions, and
-missing skill preloading. That file will direct you to the active runtime's capability appendix before you classify an
+missing skill preloading. That file will direct you to the active engine's capability appendix before you classify an
 instruction as impossible.
 
 **CRITICAL: Trace the FULL priming chain:**
@@ -236,10 +236,10 @@ Message described problem without actionable guidance
 
 ```bash
 # Find agent failure messages that preceded the bad decision
-"$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" search "$SESSION_ID" "FAILED" --context 5
+"$SESSION_ANALYZER" --engine "${CAT_ENGINE}" search "$SESSION_ID" "FAILED" --context 5
 
 # Find tool errors (non-zero exit codes, error patterns)
-"$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" errors "$SESSION_ID"
+"$SESSION_ANALYZER" --engine "${CAT_ENGINE}" errors "$SESSION_ID"
 ```
 
 **If an agent failure message primed the main agent:**

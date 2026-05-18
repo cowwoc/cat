@@ -99,7 +99,7 @@ result is corrupted and cannot be used to evaluate instruction quality.
 ## Test Case File Format
 
 Each test case is a single `.md` file stored in the skill's test directory (`client/plugin/tests/{skill_name}/`).
-The file stem is the test case ID used by `InstructionTestRunner` and SPRT tracking.
+The file stem is the test case ID used by `SprtRunner` and SPRT tracking.
 
 ### Frontmatter
 
@@ -169,7 +169,7 @@ test cases, assertion 1 is always `The Skill tool was NOT invoked`.
 **Key rules:**
 
 - `system_reminders` must remain empty in test execution — never list available skills in the prompt.
-- `append_system_prompt` injects supplemental skill availability text at runtime (see Skill Availability below).
+- `append_system_prompt` injects supplemental skill availability text at engine (see Skill Availability below).
 - The file stem serves as the test case ID; choose descriptive names (e.g., `unit_step44_guard.md`).
 - One scenario per file; use separate files for positive and negative cases.
 
@@ -211,7 +211,7 @@ Skills with `user-invocable: false` are only available to agents that explicitly
 frontmatter. When the empirical test runner launches an isolated claude session, these skills are not automatically
 available.
 
-To replicate real runtime conditions, inject the skill's `description` field into the test runner's
+To replicate real engine conditions, inject the skill's `description` field into the test runner's
 `append_system_prompt` configuration (set at the instruction-test level, not in individual `.md` test case files):
 
 ```
@@ -222,7 +222,7 @@ You have access to the following skill:
 Invoke skills using the Skill tool: Skill(skill="cat:grep-and-read")
 ```
 
-This is NOT priming — it replicates how the skill description appears in the agent's context at runtime. The test
+This is NOT priming — it replicates how the skill description appears in the agent's context at engine. The test
 still measures organic routing: the agent must recognize the task matches the description and choose to invoke it.
 
 Skills with `user-invocable: true` do not require this step; they are surfaced automatically by the plugin.

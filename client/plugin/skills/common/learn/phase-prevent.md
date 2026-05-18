@@ -101,7 +101,7 @@ Instead, commit prevention to one of these locations:
 - `client/plugin/skills/common/<skill-name>/` — for rules specific to one portable skill
 - `plugin/concepts/` — for conceptual reference material
 - `.cat/rules/common/` — for portable project-level rules
-- `.cat/rules/<runtime>/` or `.cat/rules/<runtime>/` — for runtime-specific project-level rules
+- `.cat/rules/<engine>/` or `.cat/rules/<engine>/` — for engine-specific project-level rules
 
 Choose the target location based on the audience of the rule (see Fix Location Checklist in Step 9).
 </fail_fast_rule>
@@ -358,7 +358,7 @@ prevention_path: "work.md"  # Already says MANDATORY - and it FAILED!
 
 # ✅ CORRECT: Escalate to hook that enforces the behavior
 prevention_type: hook
-prevention_path: "${CAT_PLUGIN_ROOT}/hooks/<runtime>/enforce-lock-protocol.sh"
+prevention_path: "${CAT_PLUGIN_ROOT}/hooks/<engine>/enforce-lock-protocol.sh"
 action: |
   Create hook that detects lock investigation patterns and blocks them.
   Or: Modify IssueLock.java to output ONLY "find another issue" guidance,
@@ -843,10 +843,10 @@ Skip only when: fix is unique to one file (typo) or no similar files exist (veri
 Documentation changes for compliance failures require empirical verification — committing a skill edit without running
 skipping empirical verification provides no feedback loop and allows the same failure to recur immediately.
 
-**Invoke `/cat:empirical-test` before recording the prevention as complete:**
+**Invoke `/cat:spawn-engine` before recording the prevention as complete:**
 
 ```
-/cat:empirical-test "[describe the compliance failure that was fixed]"
+/cat:spawn-engine "[describe the compliance failure that was fixed]"
 ```
 
 The empirical test must confirm the fixed skill content achieves ≥95% compliance before the prevention is considered

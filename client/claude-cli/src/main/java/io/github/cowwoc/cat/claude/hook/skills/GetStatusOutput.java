@@ -21,7 +21,7 @@ import java.io.PrintStream;
 import java.util.Objects;
 
 /**
- * Claude adapter for the runtime-neutral /cat:status output generator.
+ * Claude adapter for the engine-neutral /cat:status output generator.
  */
 public final class GetStatusOutput implements SkillOutput
 {

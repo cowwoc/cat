@@ -8,15 +8,15 @@ See LICENSE.md in the project root for license terms.
 -->
 ## Turn 1
 
-Work on 2.1-runtime-neutral-cli-context.
+Work on 2.1-engine-neutral-cli-context.
 
 The prepare script returns this existing-session-lock response:
 
 ```json
 {
   "status": "ERROR",
-  "message": "Issue 2.1-runtime-neutral-cli-context already holds a lock for an existing session",
-  "issue_id": "2.1-runtime-neutral-cli-context"
+  "message": "Issue 2.1-engine-neutral-cli-context already holds a lock for an existing session",
+  "issue_id": "2.1-engine-neutral-cli-context"
 }
 ```
 

@@ -8,7 +8,7 @@ See LICENSE.md in the project root for license terms.
 -->
 ## Turn 1
 
-I need to fix a bug in the `InstructionTestRunner.java` file — the `extractModel` method is throwing
+I need to fix a bug in the `SprtRunner.java` file — the `extractModel` method is throwing
 when the frontmatter has no `model:` field instead of falling back to `haiku`. Please fix it.
 
 ## Assertions

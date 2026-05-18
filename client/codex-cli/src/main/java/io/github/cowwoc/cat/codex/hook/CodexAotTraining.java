@@ -59,7 +59,7 @@ public final class CodexAotTraining
   }
 
   /**
-   * Exercises Codex hook entrypoints that are included in the runtime image.
+   * Exercises Codex hook entrypoints that are included in the engine image.
    *
    * @throws IOException if the temporary SessionStart fixture cannot be created or deleted
    */

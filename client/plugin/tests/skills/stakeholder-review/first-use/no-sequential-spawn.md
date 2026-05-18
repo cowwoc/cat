@@ -13,8 +13,8 @@ Three stakeholders are selected for a review: requirements, architecture, and te
 ## Assertions
 
 1. agent spawns all three reviewers in parallel rather than sequentially
-2. agent uses native agents of the current runtime instance and does not launch `codex exec`,
-   `cat:codex-runner`, or another runner skill
+2. agent uses native agents of the current engine instance and does not launch `codex exec`,
+   `cat:spawn-engine`, or another runner skill
 3. agent sets the stakeholder-specific agent type for requirements, architecture, and testing
 4. agent uses isolated forks with no inherited conversation history for all three reviewers
 5. on Codex, agent uses `fork_context: false` when the current tool surface exposes it, otherwise

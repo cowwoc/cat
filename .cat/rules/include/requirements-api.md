@@ -61,7 +61,7 @@ private void processInternal(String data)
 }
 ```
 
-This validates during development (with `-ea` flag) but has zero runtime cost in production.
+This validates during development (with `-ea` flag) but has zero engine cost in production.
 
 ## Parameter Naming
 

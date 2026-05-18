@@ -17,7 +17,7 @@ The delegation prompt IS the primary "document" the agent received. Check it for
 ## Check for Technically Impossible Instructions
 
 When an agent fails to follow instructions, check whether the instructions were **technically possible** given the
-active runtime's agent architecture.
+active engine's agent architecture.
 
 Do not infer impossibility from behavior outside the active agent context. Verify the active agent's available
 tools, capability model, and actual tool errors before classifying an instruction as impossible.
@@ -27,11 +27,11 @@ tools, capability model, and actual tool errors before classifying an instructio
 ```yaml
 technically_impossible_check:
  instruction_required: "Spawn reviewer agents for each finding"
- runtime: "{active runtime}"
+ engine: "{active engine}"
  capability_needed: "{specific tool or capability}"
  available_to_subagent: false
  conclusion: >
-  IMPOSSIBLE in this runtime because the required capability is not available to the agent.
+  IMPOSSIBLE in this engine because the required capability is not available to the agent.
  root_cause: "architectural_flaw"
  fix_type: >
   Redesign the workflow so the unavailable capability is performed by an agent or process that has it.
@@ -42,8 +42,8 @@ technically_impossible_check:
 | Instruction Pattern | Why Impossible | Correct Design |
 |--------------------|----------------|----------------|
 | "Agent must invoke /cat:skill" | Wrong only if the skill name is invalid or missing | Use Skill tool directly with the correct skill name |
-| "Spawn reviewer agents" | Only impossible when the active runtime does not expose agent spawning to that agent | Move spawning to an agent/process that has the capability, or keep nested spawning if the runtime supports it |
-| "Delegate to nested agent" | Only impossible when the active runtime enforces a delegation-depth limit that blocks it | Flatten to a supported depth, or keep the nested design if the runtime supports it |
+| "Spawn reviewer agents" | Only impossible when the active engine does not expose agent spawning to that agent | Move spawning to an agent/process that has the capability, or keep nested spawning if the engine supports it |
+| "Delegate to nested agent" | Only impossible when the active engine enforces a delegation-depth limit that blocks it | Flatten to a supported depth, or keep the nested design if the engine supports it |
 | "Use parallel-execute skill" | Wrong only if the skill is unavailable in this environment | Use Skill tool if available, otherwise use equivalent direct tool calls |
 
 **When this check identifies impossible instructions:**
@@ -58,9 +58,9 @@ technically_impossible_check:
 When an agent fails to follow skill-based guidance correctly, check whether the agent would have benefited from
 having skills preloaded via frontmatter.
 
-**Runtime-specific skill preloading:**
+**Engine-specific skill preloading:**
 
-Runtime agents can specify skills to preload. Keep adapter-specific details in runtime-specific agent files and keep
+Engine agents can specify skills to preload. Keep adapter-specific details in engine-specific agent files and keep
 shared behavior in shared agent bodies.
 
 ```yaml
@@ -80,10 +80,10 @@ skills:
 
 | Question | If YES |
 |----------|--------|
-| Did agent need skill knowledge it didn't have? | Add it to the runtime-specific agent definition |
+| Did agent need skill knowledge it didn't have? | Add it to the engine-specific agent definition |
 | Was `general-purpose` agent used for domain-specific work? | Create dedicated agent type |
 | Did agent try to invoke a skill (and fail)? | Move the needed skill knowledge to the agent definition |
-| Would preloaded guidance have prevented the mistake? | Add the guidance to the runtime-specific agent definition |
+| Would preloaded guidance have prevented the mistake? | Add the guidance to the engine-specific agent definition |
 
 **If general-purpose agent was used and skills would help:**
 
@@ -103,9 +103,9 @@ subagent_skills_analysis:
 **Prevention pattern for skill preloading issues:**
 
 1. Identify the skills the agent needed
-2. Check if a dedicated agent type already exists (check `plugin/agents/<runtime>/` and shared `plugin/agents/common/`)
+2. Check if a dedicated agent type already exists (check `plugin/agents/<engine>/` and shared `plugin/agents/common/`)
 3. If yes: Use that agent type instead of `general-purpose`
-4. If no: Create a shared body in `plugin/agents/common/{name}.md` and a runtime wrapper in `plugin/agents/<runtime>/`
+4. If no: Create a shared body in `plugin/agents/common/{name}.md` and a engine wrapper in `plugin/agents/<engine>/`
 5. Update the delegation code to use the new agent type
 
 **Record in mistake entry:**

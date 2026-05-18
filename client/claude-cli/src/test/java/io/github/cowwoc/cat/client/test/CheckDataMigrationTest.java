@@ -186,7 +186,7 @@ public final class CheckDataMigrationTest
   }
 
   /**
-   * Verifies that current-install migrations receive CAT runtime variables and can source
+   * Verifies that current-install migrations receive CAT engine variables and can source
    * {@code migrations/lib/utils.sh} via {@code CAT_PLUGIN_ROOT}.
    *
    * @throws IOException if file operations fail

@@ -17,7 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
 /**
- * Shared file-system helpers for agent runtime setup.
+ * Shared file-system helpers for agent engine setup.
  */
 public final class FileSystemUtils
 {

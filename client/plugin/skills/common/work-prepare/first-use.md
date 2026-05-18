@@ -5,7 +5,7 @@ See LICENSE.md in the project root for license terms.
 -->
 # Work Phase: Prepare
 
-**ALGORITHM DOCUMENTATION ONLY. Runtime logic implemented in `util.WorkPrepare` Java class (launcher: `client/bin/work-prepare`).**
+**ALGORITHM DOCUMENTATION ONLY. Engine logic implemented in `util.WorkPrepare` Java class (launcher: `client/bin/work-prepare`).**
 
 This document describes the preparation phase algorithm for `/cat:work`. The actual implementation
 is a deterministic Java launcher that performs all steps without LLM decision-making.

@@ -29,7 +29,7 @@ public final class VersionUtils
   }
 
   /**
-   * Reads the plugin version from the active runtime's plugin descriptor.
+   * Reads the plugin version from the active engine's plugin descriptor.
    *
    * @param scope the plugin scope providing the plugin root directory and JSON parsing
    * @return the version string

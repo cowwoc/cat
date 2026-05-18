@@ -31,10 +31,10 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
- * Builds flattened runtime-specific plugin artifacts.
+ * Builds flattened engine-specific plugin artifacts.
  * <p>
- * The source tree keeps runtime-neutral and runtime-specific instruction files separate. Release artifacts
- * expose only the content relevant to one runtime, inline always-loaded shared instruction fragments, and
+ * The source tree keeps engine-neutral and engine-specific instruction files separate. Release artifacts
+ * expose only the content relevant to one engine, inline always-loaded shared instruction fragments, and
  * strip source license headers from files that are injected into agent context.
  */
 public final class PluginArtifactBuilder
@@ -70,7 +70,7 @@ public final class PluginArtifactBuilder
    *
    * @param pluginDir the plugin source directory
    * @param clientDir the Maven parent client directory
-   * @param targetDir the output directory for flattened runtime artifacts
+   * @param targetDir the output directory for flattened engine artifacts
    * @throws NullPointerException if any argument is null
    */
   public PluginArtifactBuilder(Path pluginDir, Path clientDir, Path targetDir)
@@ -82,7 +82,7 @@ public final class PluginArtifactBuilder
   }
 
   /**
-   * Builds all runtime artifacts.
+   * Builds all engine artifacts.
    *
    * @throws IOException if file operations fail
    */
@@ -90,64 +90,64 @@ public final class PluginArtifactBuilder
   {
     if (Files.isDirectory(targetDir, LinkOption.NOFOLLOW_LINKS))
       deleteDirectory(targetDir);
-    buildRuntime(Runtime.CLAUDE);
-    buildRuntime(Runtime.CODEX);
-    System.out.println("Built runtime plugin artifacts:");
-    System.out.println("  " + targetDir.resolve(Runtime.CLAUDE.directoryName));
-    System.out.println("  " + targetDir.resolve(Runtime.CODEX.directoryName));
+    buildEngine(Engine.CLAUDE);
+    buildEngine(Engine.CODEX);
+    System.out.println("Built engine plugin artifacts:");
+    System.out.println("  " + targetDir.resolve(Engine.CLAUDE.directoryName));
+    System.out.println("  " + targetDir.resolve(Engine.CODEX.directoryName));
   }
 
   /**
-   * Builds one runtime-specific plugin artifact.
+   * Builds one engine-specific plugin artifact.
    *
-   * @param runtime the runtime to build
+   * @param engine the engine to build
    * @throws IOException if file operations fail
    */
-  private void buildRuntime(Runtime runtime) throws IOException
+  private void buildEngine(Engine engine) throws IOException
   {
-    Path target = targetDir.resolve(runtime.directoryName);
+    Path target = targetDir.resolve(engine.directoryName);
     Files.createDirectories(target);
 
-    copyCommonPluginFiles(runtime, target);
-    copyTree(pluginDir.resolve(runtime.manifestDirectory), target.resolve(runtime.manifestDirectory));
+    copyCommonPluginFiles(engine, target);
+    copyTree(pluginDir.resolve(engine.manifestDirectory), target.resolve(engine.manifestDirectory));
 
     Files.createDirectories(target.resolve("rules"));
     copyTree(pluginDir.resolve("rules/common"), target.resolve("rules/common"));
-    copyTree(pluginDir.resolve("rules").resolve(runtime.directoryName),
-      target.resolve("rules").resolve(runtime.directoryName));
+    copyTree(pluginDir.resolve("rules").resolve(engine.directoryName),
+      target.resolve("rules").resolve(engine.directoryName));
 
     Files.createDirectories(target.resolve("hooks"));
     copyTree(pluginDir.resolve("hooks/common"), target.resolve("hooks/common"));
-    copyTree(pluginDir.resolve("hooks").resolve(runtime.directoryName),
-      target.resolve("hooks").resolve(runtime.directoryName));
-    copyFile(pluginDir.resolve("hooks").resolve(runtime.directoryName).resolve("hooks.json"),
+    copyTree(pluginDir.resolve("hooks").resolve(engine.directoryName),
+      target.resolve("hooks").resolve(engine.directoryName));
+    copyFile(pluginDir.resolve("hooks").resolve(engine.directoryName).resolve("hooks.json"),
       target.resolve("hooks/hooks.json"));
 
     Files.createDirectories(target.resolve("skills"));
-    copySkillSet(runtime, pluginDir.resolve("skills/common"), target.resolve("skills"));
-    copyRuntimeSkillSet(runtime, pluginDir.resolve("skills").resolve(runtime.directoryName), target.resolve("skills"));
+    copySkillSet(engine, pluginDir.resolve("skills/common"), target.resolve("skills"));
+    copyEngineSkillSet(engine, pluginDir.resolve("skills").resolve(engine.directoryName), target.resolve("skills"));
 
     Files.createDirectories(target.resolve("agents"));
-    if (runtime == Runtime.CLAUDE)
-      copyInstructionTree(runtime, pluginDir.resolve("agents/claude"), target.resolve("agents"));
+    if (engine == Engine.CLAUDE)
+      copyInstructionTree(engine, pluginDir.resolve("agents/claude"), target.resolve("agents"));
     else
-      copyInstructionTree(runtime, pluginDir.resolve("agents/codex"), target.resolve("agents"));
+      copyInstructionTree(engine, pluginDir.resolve("agents/codex"), target.resolve("agents"));
     deleteNamedFiles(target.resolve("agents"), "README.md");
 
     stripAndVerifyAgentFacingFiles(target);
-    writeRuntimeVersion(target, runtime.manifestDirectory);
+    writeEngineVersion(target, engine.manifestDirectory);
     makeShellScriptsExecutable(target);
-    verifyRuntimeArtifact(target);
+    verifyEngineArtifact(target);
   }
 
   /**
-   * Copies plugin files that are shared by all runtime artifacts.
+   * Copies plugin files that are shared by all engine artifacts.
    *
-   * @param runtime the runtime being built
-   * @param target the root directory of the runtime artifact currently being assembled
+   * @param engine the engine being built
+   * @param target the root directory of the engine artifact currently being assembled
    * @throws IOException if file operations fail
    */
-  private void copyCommonPluginFiles(Runtime runtime, Path target) throws IOException
+  private void copyCommonPluginFiles(Engine engine, Path target) throws IOException
   {
     copyTree(pluginDir.resolve(".git-filter-repo-config"), target.resolve(".git-filter-repo-config"));
     copyTree(pluginDir.resolve("concepts"), target.resolve("concepts"));
@@ -163,20 +163,20 @@ public final class PluginArtifactBuilder
     copyFile(pluginDir.resolve("package-lock.json"), target.resolve("package-lock.json"));
     copyFile(clientDir.getParent().resolve("LICENSE.md"), target.resolve("LICENSE.md"));
 
-    Path runtimeJlinkDir = cliJlinkRoot.resolve(runtime.directoryName);
-    if (Files.isDirectory(runtimeJlinkDir, LinkOption.NOFOLLOW_LINKS))
-      copyTree(runtimeJlinkDir, target.resolve("client"));
+    Path engineJlinkDir = cliJlinkRoot.resolve(engine.directoryName);
+    if (Files.isDirectory(engineJlinkDir, LinkOption.NOFOLLOW_LINKS))
+      copyTree(engineJlinkDir, target.resolve("client"));
   }
 
   /**
-   * Copies all runtime-visible skills from a skill source directory.
+   * Copies all engine-visible skills from a skill source directory.
    *
-   * @param runtime the runtime being built
+   * @param engine the engine being built
    * @param source the source skill root
    * @param target the target skill root
    * @throws IOException if file operations fail
    */
-  private void copySkillSet(Runtime runtime, Path source, Path target) throws IOException
+  private void copySkillSet(Engine engine, Path source, Path target) throws IOException
   {
     if (!Files.isDirectory(source, LinkOption.NOFOLLOW_LINKS))
       return;
@@ -192,20 +192,20 @@ public final class PluginArtifactBuilder
         Path targetSkill = target.resolve(skillDirectory.getFileName());
         if (Files.exists(targetSkill, LinkOption.NOFOLLOW_LINKS))
           deleteDirectory(targetSkill);
-        copyRuntimeSkillTree(runtime, skillDirectory, targetSkill);
+        copyEngineSkillTree(engine, skillDirectory, targetSkill);
       }
     }
   }
 
   /**
-   * Copies runtime-specific skill directories and overlays shared skill support files when present.
+   * Copies engine-specific skill directories and overlays shared skill support files when present.
    *
-   * @param runtime the runtime being built
-   * @param source the runtime-specific skill root
+   * @param engine the engine being built
+   * @param source the engine-specific skill root
    * @param target the target skill root
    * @throws IOException if file operations fail
    */
-  private void copyRuntimeSkillSet(Runtime runtime, Path source, Path target) throws IOException
+  private void copyEngineSkillSet(Engine engine, Path source, Path target) throws IOException
   {
     if (!Files.isDirectory(source, LinkOption.NOFOLLOW_LINKS))
       return;
@@ -222,25 +222,25 @@ public final class PluginArtifactBuilder
         if (Files.exists(targetSkill, LinkOption.NOFOLLOW_LINKS))
           deleteDirectory(targetSkill);
         Path commonSkill = pluginDir.resolve("skills/common").resolve(skillDirectory.getFileName());
-        Set<Path> commonRuntimeFiles = Set.of();
+        Set<Path> commonEngineFiles = Set.of();
         if (Files.isDirectory(commonSkill, LinkOption.NOFOLLOW_LINKS))
         {
-          commonRuntimeFiles = getRuntimeSkillFiles(commonSkill);
-          copyRuntimeSkillTree(runtime, commonSkill, targetSkill);
+          commonEngineFiles = getEngineSkillFiles(commonSkill);
+          copyEngineSkillTree(engine, commonSkill, targetSkill);
         }
-        copyRuntimeSkillTree(runtime, skillDirectory, targetSkill, commonRuntimeFiles);
+        copyEngineSkillTree(engine, skillDirectory, targetSkill, commonEngineFiles);
       }
     }
   }
 
   /**
-   * Checks whether an include target may be expanded for the runtime artifact.
+   * Checks whether an include target may be expanded for the engine artifact.
    *
-   * @param runtime the runtime being built
+   * @param engine the engine being built
    * @param path the candidate include target
-   * @return true if the target is in a runtime-visible source tree
+   * @return true if the target is in a engine-visible source tree
    */
-  private boolean isAllowedIncludeTarget(Runtime runtime, Path path)
+  private boolean isAllowedIncludeTarget(Engine engine, Path path)
   {
     if (!path.startsWith(pluginDir) || isSourceOnlyPath(pluginDir.relativize(path)))
       return false;
@@ -251,10 +251,10 @@ public final class PluginArtifactBuilder
       pluginDir.resolve("rules/common"),
       pluginDir.resolve("hooks/common"),
       pluginDir.resolve("concepts"),
-      pluginDir.resolve("agents").resolve(runtime.directoryName),
-      pluginDir.resolve("skills").resolve(runtime.directoryName),
-      pluginDir.resolve("rules").resolve(runtime.directoryName),
-      pluginDir.resolve("hooks").resolve(runtime.directoryName));
+      pluginDir.resolve("agents").resolve(engine.directoryName),
+      pluginDir.resolve("skills").resolve(engine.directoryName),
+      pluginDir.resolve("rules").resolve(engine.directoryName),
+      pluginDir.resolve("hooks").resolve(engine.directoryName));
     for (Path allowedRoot : allowedRoots)
     {
       if (path.startsWith(allowedRoot.toAbsolutePath().normalize()))
@@ -267,7 +267,7 @@ public final class PluginArtifactBuilder
    * Removes source license headers from generated agent-facing text files and verifies that source-only
    * markers are gone.
    *
-   * @param target the runtime artifact root
+   * @param target the engine artifact root
    * @throws IOException if file operations fail
    */
   private void stripAndVerifyAgentFacingFiles(Path target) throws IOException
@@ -291,11 +291,11 @@ public final class PluginArtifactBuilder
               text = HASH_LICENSE_HEADER.matcher(text).replaceFirst("");
             FileSystemUtils.writeStringIfChanged(file, text);
             if (containsSourceLicenseText(text))
-              throw new IllegalStateException("Runtime artifact contains source license text: " + file);
+              throw new IllegalStateException("Engine artifact contains source license text: " + file);
             if (text.contains("cat:include"))
-              throw new IllegalStateException("Runtime artifact contains unresolved cat:include marker: " + file);
+              throw new IllegalStateException("Engine artifact contains unresolved cat:include marker: " + file);
             if (text.contains("cat:render-output"))
-              throw new IllegalStateException("Runtime artifact contains unresolved cat:render-output marker: " + file);
+              throw new IllegalStateException("Engine artifact contains unresolved cat:render-output marker: " + file);
           }
           return FileVisitResult.CONTINUE;
         }
@@ -332,13 +332,13 @@ public final class PluginArtifactBuilder
   }
 
   /**
-   * Writes the runtime artifact version file from its plugin manifest.
+   * Writes the engine artifact version file from its plugin manifest.
    *
-   * @param target the runtime artifact root
-   * @param manifestDirectory the runtime manifest directory
+   * @param target the engine artifact root
+   * @param manifestDirectory the engine manifest directory
    * @throws IOException if file operations fail
    */
-  private void writeRuntimeVersion(Path target, String manifestDirectory) throws IOException
+  private void writeEngineVersion(Path target, String manifestDirectory) throws IOException
   {
     Path manifest = target.resolve(manifestDirectory).resolve("plugin.json");
     Path versionFile = target.resolve("client/VERSION");
@@ -377,7 +377,7 @@ public final class PluginArtifactBuilder
   }
 
   /**
-   * Marks shell scripts in the runtime artifact as executable.
+   * Marks shell scripts in the engine artifact as executable.
    *
    * @param root the directory to scan
    * @throws IOException if file operations fail
@@ -397,24 +397,24 @@ public final class PluginArtifactBuilder
   }
 
   /**
-   * Verifies that the runtime artifact does not expose source-only content.
+   * Verifies that the engine artifact does not expose source-only content.
    *
-   * @param target the runtime artifact root
+   * @param target the engine artifact root
    * @throws IOException if file operations fail
    */
-  private void verifyRuntimeArtifact(Path target) throws IOException
+  private void verifyEngineArtifact(Path target) throws IOException
   {
     Path commonAgents = target.resolve("agents/common");
     if (Files.exists(commonAgents, LinkOption.NOFOLLOW_LINKS))
-      throw new IllegalStateException("Runtime artifact must not contain common agent sources: " + commonAgents);
+      throw new IllegalStateException("Engine artifact must not contain common agent sources: " + commonAgents);
     verifyNoSourceOnlySkillFiles(target.resolve("skills"));
     verifyBundledGitFilterRepo(target.resolve("lib"));
   }
 
   /**
-   * Verifies that source-only skill test files were excluded from the runtime artifact.
+   * Verifies that source-only skill test files were excluded from the engine artifact.
    *
-   * @param skillsRoot the runtime skill root
+   * @param skillsRoot the engine skill root
    * @throws IOException if file operations fail
    */
   private void verifyNoSourceOnlySkillFiles(Path skillsRoot) throws IOException
@@ -429,20 +429,20 @@ public final class PluginArtifactBuilder
         sorted().
         toList();
       if (!invalidFiles.isEmpty())
-        throw new IllegalStateException("Runtime artifact contains source-only skill files: " + invalidFiles);
+        throw new IllegalStateException("Engine artifact contains source-only skill files: " + invalidFiles);
     }
   }
 
   /**
-   * Verifies that runtime artifacts include bundled git-filter-repo binaries and that they are executable.
+   * Verifies that engine artifacts include bundled git-filter-repo binaries and that they are executable.
    *
-   * @param libRoot the runtime lib directory
+   * @param libRoot the engine lib directory
    * @throws IOException if file operations fail
    */
   private void verifyBundledGitFilterRepo(Path libRoot) throws IOException
   {
     if (!Files.isDirectory(libRoot, LinkOption.NOFOLLOW_LINKS))
-      throw new IllegalStateException("Runtime artifact is missing lib directory: " + libRoot);
+      throw new IllegalStateException("Engine artifact is missing lib directory: " + libRoot);
     try (Stream<Path> stream = Files.list(libRoot))
     {
       List<Path> bundledBinaries = stream.
@@ -452,7 +452,7 @@ public final class PluginArtifactBuilder
         sorted().
         toList();
       if (bundledBinaries.isEmpty())
-        throw new IllegalStateException("Runtime artifact is missing bundled git-filter-repo binary in " + libRoot);
+        throw new IllegalStateException("Engine artifact is missing bundled git-filter-repo binary in " + libRoot);
       for (Path binary : bundledBinaries)
       {
         if (!Files.isExecutable(binary))
@@ -520,14 +520,14 @@ public final class PluginArtifactBuilder
   }
 
   /**
-   * Copies instruction files while expanding runtime-allowed includes.
+   * Copies instruction files while expanding engine-allowed includes.
    *
-   * @param runtime the runtime being built
+   * @param engine the engine being built
    * @param source the source directory
    * @param target the target directory
    * @throws IOException if file operations fail
    */
-  private void copyInstructionTree(Runtime runtime, Path source, Path target) throws IOException
+  private void copyInstructionTree(Engine engine, Path source, Path target) throws IOException
   {
     if (!Files.isDirectory(source, LinkOption.NOFOLLOW_LINKS))
       return;
@@ -547,7 +547,7 @@ public final class PluginArtifactBuilder
         Path relative = source.relativize(file);
         Path targetFile = target.resolve(relative);
         if (isMarkdownOrToml(file))
-          copyInstructionFile(runtime, file, targetFile);
+          copyInstructionFile(engine, file, targetFile);
         else
           copyFileSystemEntry(file, targetFile);
         return FileVisitResult.CONTINUE;
@@ -556,32 +556,32 @@ public final class PluginArtifactBuilder
   }
 
   /**
-   * Copies runtime-visible skill files and their referenced companion files.
+   * Copies engine-visible skill files and their referenced companion files.
    *
-   * @param runtime the runtime being built
+   * @param engine the engine being built
    * @param source the source skill directory
    * @param target the target skill directory
    * @throws IOException if file operations fail
    */
-  private void copyRuntimeSkillTree(Runtime runtime, Path source, Path target) throws IOException
+  private void copyEngineSkillTree(Engine engine, Path source, Path target) throws IOException
   {
-    copyRuntimeSkillTree(runtime, source, target, Set.of());
+    copyEngineSkillTree(engine, source, target, Set.of());
   }
 
   /**
-   * Copies runtime-visible skill files, their referenced companion files, and requested overlay files.
+   * Copies engine-visible skill files, their referenced companion files, and requested overlay files.
    *
-   * @param runtime the runtime being built
+   * @param engine the engine being built
    * @param source the source skill directory
    * @param target the target skill directory
-   * @param additionalRuntimeFiles companion files to copy when present in {@code source}
+   * @param additionalEngineFiles companion files to copy when present in {@code source}
    * @throws IOException if file operations fail
    */
-  private void copyRuntimeSkillTree(Runtime runtime, Path source, Path target, Set<Path> additionalRuntimeFiles)
+  private void copyEngineSkillTree(Engine engine, Path source, Path target, Set<Path> additionalEngineFiles)
     throws IOException
   {
-    Set<Path> runtimeFiles = new LinkedHashSet<>(getRuntimeSkillFiles(source));
-    runtimeFiles.addAll(additionalRuntimeFiles);
+    Set<Path> engineFiles = new LinkedHashSet<>(getEngineSkillFiles(source));
+    engineFiles.addAll(additionalEngineFiles);
     Files.walkFileTree(source, new SimpleFileVisitor<>()
     {
       @Override
@@ -598,11 +598,11 @@ public final class PluginArtifactBuilder
       public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException
       {
         Path relative = source.relativize(file);
-        if (runtimeFiles.contains(relative))
+        if (engineFiles.contains(relative))
         {
           Path targetFile = target.resolve(relative);
           if (isMarkdownOrToml(file))
-            copyInstructionFile(runtime, file, targetFile);
+            copyInstructionFile(engine, file, targetFile);
           else
             copyFileSystemEntry(file, targetFile);
         }
@@ -614,56 +614,56 @@ public final class PluginArtifactBuilder
   /**
    * Copies an instruction file after removing source headers and expanding includes.
    *
-   * @param runtime the runtime being built
+   * @param engine the engine being built
    * @param source the source instruction file
    * @param target the target instruction file
    * @throws IOException if file operations fail
    */
-  private void copyInstructionFile(Runtime runtime, Path source, Path target) throws IOException
+  private void copyInstructionFile(Engine engine, Path source, Path target) throws IOException
   {
     Files.createDirectories(target.getParent());
     String text = stripSourceLicenseHeader(Files.readString(source, StandardCharsets.UTF_8));
-    text = SourceIncludeProcessor.expand(source, text, path -> isAllowedIncludeTarget(runtime, path),
+    text = SourceIncludeProcessor.expand(source, text, path -> isAllowedIncludeTarget(engine, path),
       this::stripSourceLicenseHeader);
-    text = replaceRuntimePlaceholders(runtime, text);
+    text = replaceEnginePlaceholders(engine, text);
     FileSystemUtils.writeStringIfChanged(target, text);
   }
 
   /**
-   * Replaces runtime-specific placeholders in generated instruction text.
+   * Replaces engine-specific placeholders in generated instruction text.
    *
-   * @param runtime the runtime being built
+   * @param engine the engine being built
    * @param text    the source text
-   * @return text with runtime placeholders resolved
+   * @return text with engine placeholders resolved
    */
-  private String replaceRuntimePlaceholders(Runtime runtime, String text)
+  private String replaceEnginePlaceholders(Engine engine, String text)
   {
-    return replaceRenderOutputDirectives(runtime, text).
-      replace("${CAT_COMMAND_PREFIX}", commandPrefix(runtime)).
-      replace("${CAT_CONFIG_SETTINGS_RENDER_STEP}", configSettingsRenderStep(runtime));
+    return replaceRenderOutputDirectives(engine, text).
+      replace("${CAT_COMMAND_PREFIX}", commandPrefix(engine)).
+      replace("${CAT_CONFIG_SETTINGS_RENDER_STEP}", configSettingsRenderStep(engine));
   }
 
   /**
-   * Replaces source-only output rendering directives with runtime-specific instructions.
+   * Replaces source-only output rendering directives with engine-specific instructions.
    *
-   * @param runtime the runtime being built
+   * @param engine the engine being built
    * @param text    the source text
    * @return text with output rendering directives resolved
    */
-  private String replaceRenderOutputDirectives(Runtime runtime, String text)
+  private String replaceRenderOutputDirectives(Engine engine, String text)
   {
     Matcher matcher = RENDER_OUTPUT_DIRECTIVE.matcher(text);
-    return matcher.replaceAll(result -> Matcher.quoteReplacement(renderOutput(runtime, result.group(1))));
+    return matcher.replaceAll(result -> Matcher.quoteReplacement(renderOutput(engine, result.group(1))));
   }
 
   /**
-   * Returns runtime-specific instructions for invoking a deterministic output command.
+   * Returns engine-specific instructions for invoking a deterministic output command.
    *
-   * @param runtime the runtime being built
+   * @param engine the engine being built
    * @param rawArguments directive arguments
-   * @return runtime-specific output rendering instructions
+   * @return engine-specific output rendering instructions
    */
-  private String renderOutput(Runtime runtime, String rawArguments)
+  private String renderOutput(Engine engine, String rawArguments)
   {
     List<String> tokens = Stream.of(rawArguments.strip().split("\\s+")).
       filter(token -> !token.isEmpty()).
@@ -674,7 +674,7 @@ public final class PluginArtifactBuilder
       validateRenderOutputToken(token);
     if (isPlaceholder(tokens.getFirst()))
       throw new IllegalStateException("cat:render-output command must not be a placeholder: " + tokens.getFirst());
-    return switch (runtime)
+    return switch (engine)
     {
       case CLAUDE -> renderClaudeOutput(tokens);
       case CODEX -> renderCodexOutput(tokens);
@@ -784,14 +784,14 @@ public final class PluginArtifactBuilder
   }
 
   /**
-   * Returns the command prefix used to invoke CAT skills in a runtime.
+   * Returns the command prefix used to invoke CAT skills in a engine.
    *
-   * @param runtime the runtime being built
+   * @param engine the engine being built
    * @return the command prefix
    */
-  private String commandPrefix(Runtime runtime)
+  private String commandPrefix(Engine engine)
   {
-    return switch (runtime)
+    return switch (engine)
     {
       case CLAUDE -> "/";
       case CODEX -> "$";
@@ -799,14 +799,14 @@ public final class PluginArtifactBuilder
   }
 
   /**
-   * Returns the runtime-specific instruction for rendering the initial config settings box.
+   * Returns the engine-specific instruction for rendering the initial config settings box.
    *
-   * @param runtime the runtime being built
-   * @return the runtime-specific instruction text
+   * @param engine the engine being built
+   * @return the engine-specific instruction text
    */
-  private String configSettingsRenderStep(Runtime runtime)
+  private String configSettingsRenderStep(Engine engine)
   {
-    return switch (runtime)
+    return switch (engine)
     {
       case CLAUDE -> """
         The rendered settings box is injected below by Claude's silent preprocessor. Output only the complete inner
@@ -819,13 +819,13 @@ public final class PluginArtifactBuilder
   }
 
   /**
-   * Finds skill files that should be included in a runtime artifact.
+   * Finds skill files that should be included in a engine artifact.
    *
    * @param source the source skill directory
-   * @return relative paths to runtime-visible skill files
+   * @return relative paths to engine-visible skill files
    * @throws IOException if file operations fail
    */
-  private Set<Path> getRuntimeSkillFiles(Path source) throws IOException
+  private Set<Path> getEngineSkillFiles(Path source) throws IOException
   {
     Map<String, Path> candidateByFileName = new HashMap<>();
     Set<Path> included = new LinkedHashSet<>();
@@ -867,7 +867,7 @@ public final class PluginArtifactBuilder
   }
 
   /**
-   * Adds a runtime skill companion-file candidate by file name.
+   * Adds a engine skill companion-file candidate by file name.
    *
    * @param candidateByFileName candidate paths keyed by file name
    * @param candidate the candidate path to add
@@ -878,13 +878,13 @@ public final class PluginArtifactBuilder
     Path previous = candidateByFileName.putIfAbsent(fileName, candidate);
     if (previous != null)
     {
-      throw new IllegalStateException("Duplicate runtime skill companion filename '" + fileName +
+      throw new IllegalStateException("Duplicate engine skill companion filename '" + fileName +
         "' in " + previous + " and " + candidate);
     }
   }
 
   /**
-   * Checks whether a path is authoring-only and should be excluded from runtime artifacts.
+   * Checks whether a path is authoring-only and should be excluded from engine artifacts.
    *
    * @param relative the path relative to the scanned root
    * @return true if the path is source-only
@@ -940,7 +940,7 @@ public final class PluginArtifactBuilder
   }
 
   /**
-   * Copies the safe target of a jlink symlink into the runtime artifact.
+   * Copies the safe target of a jlink symlink into the engine artifact.
    *
    * @param source the symlink source
    * @param target the target file
@@ -1011,11 +1011,11 @@ public final class PluginArtifactBuilder
   {
     if (args.length != 3)
       throw new IllegalArgumentException(
-        "Usage: build-runtime-artifacts <plugin-dir> <client-dir> <target-dir>");
+        "Usage: build-engine-artifacts <plugin-dir> <client-dir> <target-dir>");
     new PluginArtifactBuilder(Path.of(args[0]), Path.of(args[1]), Path.of(args[2])).build();
   }
 
-  private enum Runtime
+  private enum Engine
   {
     CLAUDE("claude", ".claude-plugin"),
     CODEX("codex", ".codex-plugin");
@@ -1024,12 +1024,12 @@ public final class PluginArtifactBuilder
     private final String manifestDirectory;
 
     /**
-     * Creates a runtime descriptor.
+     * Creates a engine descriptor.
      *
-     * @param directoryName the runtime directory name
+     * @param directoryName the engine directory name
      * @param manifestDirectory the plugin manifest directory name
      */
-    Runtime(String directoryName, String manifestDirectory)
+    Engine(String directoryName, String manifestDirectory)
     {
       this.directoryName = directoryName;
       this.manifestDirectory = manifestDirectory;

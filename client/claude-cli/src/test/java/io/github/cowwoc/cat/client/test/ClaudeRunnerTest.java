@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.client.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.tool.skills.ClaudeRunner;
+import io.github.cowwoc.cat.claude.engine.ClaudeRunner;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

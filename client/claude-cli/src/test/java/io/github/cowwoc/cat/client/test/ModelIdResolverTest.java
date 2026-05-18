@@ -145,7 +145,7 @@ public final class ModelIdResolverTest
   }
 
   /**
-   * Verifies that runtime-safe version detection falls back to the latest known mapping when Claude
+   * Verifies that engine-safe version detection falls back to the latest known mapping when Claude
    * is unavailable.
    */
   @Test
@@ -167,7 +167,7 @@ public final class ModelIdResolverTest
   }
 
   /**
-   * Verifies that runtime-safe version detection does not hide malformed executable output.
+   * Verifies that engine-safe version detection does not hide malformed executable output.
    *
    * @throws IOException if creating the fake executable fails
    */

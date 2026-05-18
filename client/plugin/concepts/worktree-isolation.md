@@ -174,7 +174,7 @@ git rebase "$TARGET_BRANCH" || exit 1
 TARGET_BRANCH="main"  # Assumption, not from parameters
 git rebase "$TARGET_BRANCH"
 
-# WRONG: Using jq (not available in the plugin runtime environment)
+# WRONG: Using jq (not available in the plugin engine environment)
 TRUST=$(jq -r '.trust' .cat/config.json)
 
 # WRONG: Manually parsing config.json with grep/sed (fragile, no defaults)

@@ -115,7 +115,7 @@ recorded_prevention:
 situation: "Workflow said MANDATORY but agent ignored it"
 recorded_prevention:
   type: hook
-  path: "plugin/hooks/<runtime>/enforce-lock-protocol.sh"
+  path: "plugin/hooks/<engine>/enforce-lock-protocol.sh"
   action: "Created hook that blocks lock bypass attempts"
 ```
 

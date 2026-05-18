@@ -85,7 +85,7 @@ cargo test test_name
 ### Verify Test FAILS:
 - Look for failure output confirming test ran and failed
 - The test must **compile and run** but fail at an assertion — a compilation error or syntax error does NOT
-  count as a valid RED failure (fix the error and re-run until you get a runtime assertion failure)
+  count as a valid RED failure (fix the error and re-run until you get a engine assertion failure)
 - If test **passes**: feature may already exist or test is wrong - investigate
 
 ### Commit:

@@ -60,12 +60,12 @@ final class SkillMetadataExtractor
     requireThat(args, "args").isNotNull();
     if (args.length != 1)
       throw new IllegalArgumentException(
-        "InstructionTestRunner extract-units: expected 1 argument <skill_path>, got " + args.length + ".\n" +
+        "SprtRunner extract-units: expected 1 argument <skill_path>, got " + args.length + ".\n" +
         "Usage: skill-test-runner extract-units <skill_path>");
     Path skillPath = Path.of(args[0]);
     if (Files.notExists(skillPath))
       throw new IllegalArgumentException(
-        "InstructionTestRunner extract-units: file not found: " + skillPath);
+        "SprtRunner extract-units: file not found: " + skillPath);
     return bodyWithLineNumbers(skillPath);
   }
 
@@ -86,12 +86,12 @@ final class SkillMetadataExtractor
     requireThat(args, "args").isNotNull();
     if (args.length != 1)
       throw new IllegalArgumentException(
-        "InstructionTestRunner extract-model: expected 1 argument <skill_path>, got " + args.length + ".\n" +
+        "SprtRunner extract-model: expected 1 argument <skill_path>, got " + args.length + ".\n" +
         "Usage: skill-test-runner extract-model <skill_path>");
     Path skillPath = Path.of(args[0]);
     if (Files.notExists(skillPath))
       throw new IllegalArgumentException(
-        "InstructionTestRunner extract-model: file not found: " + skillPath);
+        "SprtRunner extract-model: file not found: " + skillPath);
 
     String model = extractStringField(skillPath, "model");
     if (model.isBlank())
@@ -115,13 +115,13 @@ final class SkillMetadataExtractor
     requireThat(args, "args").isNotNull();
     if (args.length != 1)
       throw new IllegalArgumentException(
-        "InstructionTestRunner extract-effort: expected 1 argument <skill_path>, got " +
+        "SprtRunner extract-effort: expected 1 argument <skill_path>, got " +
         args.length + ".\n" +
-        "Usage: instruction-test-runner extract-effort <skill_path>");
+        "Usage: sprt-runner extract-effort <skill_path>");
     Path skillPath = Path.of(args[0]);
     if (Files.notExists(skillPath))
       throw new IllegalArgumentException(
-        "InstructionTestRunner extract-effort: file not found: " + skillPath);
+        "SprtRunner extract-effort: file not found: " + skillPath);
 
     return extractStringField(skillPath, "effort");
   }
@@ -141,8 +141,8 @@ final class SkillMetadataExtractor
   {
     if (args.length != 2)
       throw new IllegalArgumentException(
-        "InstructionTestRunner extract-test-dir: expected 2 arguments <instruction-path> <project-dir>, got " +
-        args.length + ".\nUsage: instruction-test-runner extract-test-dir " +
+        "SprtRunner extract-test-dir: expected 2 arguments <instruction-path> <project-dir>, got " +
+        args.length + ".\nUsage: sprt-runner extract-test-dir " +
         "<instruction-text-path> <project-dir>");
     String instructionPath = args[0];
     String projectDir = args[1];

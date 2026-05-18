@@ -45,7 +45,7 @@ patterns)
 
 **Spawn configuration:**
 ```yaml
-Runtime-native agent tool:
+Engine-native agent tool:
   agent_type: "cat-research-agent"
   description: "Stakeholder research: {topic}"
   prompt: |
@@ -99,7 +99,7 @@ Main agent: [Spawns agent with template above, substituting {topic}]
 
 **Spawn configuration:**
 ```yaml
-Runtime-native agent tool:
+Engine-native agent tool:
   agent_type: "cat-research-agent"
   description: "Implementation research: {topic}"
   prompt: |
@@ -148,7 +148,7 @@ Main agent: [Spawns agent with template above]
 
 **Spawn configuration:**
 ```yaml
-Runtime-native agent tool:
+Engine-native agent tool:
   agent_type: "cat-research-agent"
   description: "Codebase exploration: {topic}"
   prompt: |
@@ -197,7 +197,7 @@ Main agent: [Spawns agent with template above]
 
 **Spawn configuration:**
 ```yaml
-Runtime-native agent tool:
+Engine-native agent tool:
   agent_type: "cat-research-agent"
   description: "External docs research: {topic}"
   prompt: |
@@ -304,7 +304,7 @@ Structured user-choice prompt:
 Example for stakeholder research:
 
 ```
-Runtime-native agent tool:
+Engine-native agent tool:
   agent_type: "cat-research-agent"
   description: "Stakeholder research: payment-processing"
   prompt: [Template 1 content with {topic} substituted]

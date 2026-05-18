@@ -10,7 +10,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 /**
- * Runtime-neutral plugin scope shared by all agent runtimes.
+ * Engine-neutral plugin scope shared by all agent engines.
  */
 public interface AgentPluginScope extends AgentScope
 {
@@ -23,7 +23,7 @@ public interface AgentPluginScope extends AgentScope
   Path getPluginRoot();
 
   /**
-   * Returns the ordered rule directories for the active runtime.
+   * Returns the ordered rule directories for the active engine.
    *
    * @return the ordered rule directories
    * @throws IllegalStateException if this scope is closed
@@ -57,7 +57,7 @@ public interface AgentPluginScope extends AgentScope
   /**
    * Returns the plugin cache descriptor path relative to the plugin root.
    *
-   * @return the descriptor path, or {@code null} if this runtime does not use a cache descriptor
+   * @return the descriptor path, or {@code null} if this engine does not use a cache descriptor
    * @throws IllegalStateException if this scope is closed
    */
   Path getPluginCacheDescriptor();

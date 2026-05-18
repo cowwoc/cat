@@ -18,7 +18,7 @@ See `plugin/concepts/rules-audience.md` for full documentation of the two-tier r
 
 Always-on shared rules live in `.cat/rules/common/`.
 
-Path-specific shared rule bodies live in `.cat/rules/include/`. Runtime directories decide how to expose them:
+Path-specific shared rule bodies live in `.cat/rules/include/`. Engine directories decide how to expose them:
 - `.cat/rules/claude/` uses `paths` frontmatter plus `cat:include` stubs so Claude's CAT hook can load the bodies on
   demand.
 - `.cat/rules/codex/` uses always-loaded stubs that declare `paths` and `include`, then apply
@@ -35,11 +35,11 @@ Path-specific shared rule bodies live in `.cat/rules/include/`. Runtime director
 | [approval-gate.md](approval-gate.md) | main agent only | always | Re-squash commits before every approval gate |
 | [dependency-boundaries.md](dependency-boundaries.md) | main agent only | always | Keep dependencies and test seams owned by the relevant behavior |
 | [edit-planning.md](edit-planning.md) | all agents | always | Plan independent edits together |
-| [hooks.md](hooks.md) | main agent only | always | Runtime-neutral hook guidance |
+| [hooks.md](hooks.md) | main agent only | always | Engine-neutral hook guidance |
 | [license-header.md](license-header.md) | all agents | always | Apply CAT license headers |
 | [pre-existing-problems.md](pre-existing-problems.md) | all agents | always | Fix pre-existing problems when they violate issue goals |
 | [report-problems.md](report-problems.md) | all agents | always | Report stale references |
-| [runtime-duplication.md](runtime-duplication.md) | all agents | always | Keep runtime-specific guidance in runtime directories |
+| [engine-duplication.md](engine-duplication.md) | all agents | always | Keep engine-specific guidance in engine directories |
 | [testing-requirements.md](testing-requirements.md) | main agent only | always | Enforce TDD and full verify before review |
 | [testing-scope.md](testing-scope.md) | main agent only | always | Behavior-first boundaries for Bats, SPRT, and TestNG |
 | [terminology.md](terminology.md) | all agents | always | Keep config terminology identical across code/docs |

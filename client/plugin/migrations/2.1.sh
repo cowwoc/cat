@@ -555,7 +555,7 @@ fi
 if [[ ! -f "$gitignore_file" ]]; then
     log_migration "No .gitignore found - copying template"
     cp "$gitignore_template" "$gitignore_file"
-    # work/ contains runtime data (locks/, worktrees/, verify/) and must not be committed
+    # work/ contains engine data (locks/, worktrees/, verify/) and must not be committed
     if ! grep -qF "work/" "$gitignore_file" 2>/dev/null; then
         printf '%s\n' "work/" >> "$gitignore_file"
     fi
@@ -652,7 +652,7 @@ else
         fi
     done <<< "$patterns"
 
-    # Ensure work/ is present (runtime data: locks/, worktrees/, verify/)
+    # Ensure work/ is present (engine data: locks/, worktrees/, verify/)
     if ! grep -qF "work/" "$gitignore_file" 2>/dev/null; then
         printf '%s\n' "work/" >> "$gitignore_file"
         log_migration "  Added missing pattern: work/"
@@ -1894,13 +1894,13 @@ log_migration "Phase 28 complete"
 
 log_migration "Phase 29: Install/update Codex custom agent copies"
 
-is_codex_runtime=false
+is_codex_engine=false
 if [[ -n "${CODEX_TOOL:-}" ]] || [[ -n "${CODEX_HOME:-}" ]] || [[ -n "${CODEX_THREAD_ID:-}" ]] ||
     [[ "${CLAUDE_CONFIG_DIR:-}" == *".codex"* ]]; then
-    is_codex_runtime=true
+    is_codex_engine=true
 fi
 
-if [[ "$is_codex_runtime" == "true" ]]; then
+if [[ "$is_codex_engine" == "true" ]]; then
     source_agents="${CAT_PLUGIN_ROOT}/agents"
     if [[ ! -d "$source_agents" && -d "${CAT_PLUGIN_ROOT}/agents/codex" ]]; then
         source_agents="${CAT_PLUGIN_ROOT}/agents/codex"
@@ -1949,7 +1949,7 @@ if [[ "$is_codex_runtime" == "true" ]]; then
         log_migration "Phase 29: source Codex agent directory not found - skipping"
     fi
 else
-    log_migration "Phase 29: non-Codex runtime detected - skipping"
+    log_migration "Phase 29: non-Codex engine detected - skipping"
 fi
 
 log_success "Migration to 2.1 completed"

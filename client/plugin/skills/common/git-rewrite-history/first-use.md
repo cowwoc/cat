@@ -8,7 +8,7 @@ See LICENSE.md in the project root for license terms.
 ## Purpose
 
 Safely rewrite git history using git filter-repo, with fail-fast resolution of the bundled standalone binary in the
-CAT runtime artifact. Always use this skill instead of `git filter-branch`.
+CAT engine artifact. Always use this skill instead of `git filter-branch`.
 
 **Why git filter-repo over alternatives:**
 
@@ -25,7 +25,7 @@ CAT runtime artifact. Always use this skill instead of `git filter-branch`.
   Filename-only tools accidentally remove ALL files with a matching name across all directories — making
   them unsafe for files like `plan.md` that exist in many directories.
 - **Actively maintained and recommended by git itself** as the preferred history rewriting tool.
-- **No Python requirement**: runtime artifacts include a bundled standalone binary.
+- **No Python requirement**: engine artifacts include a bundled standalone binary.
 
 ---
 
@@ -45,7 +45,7 @@ This returns the path to the bundled standalone binary.
 "$FILTER_REPO" [options]
 ```
 
-If resolution fails because the bundled binary is missing, corrupted, or not executable, reinstall the CAT runtime
+If resolution fails because the bundled binary is missing, corrupted, or not executable, reinstall the CAT engine
 artifact.
 
 ### Step 2: Create a backup branch

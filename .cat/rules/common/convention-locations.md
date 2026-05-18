@@ -18,16 +18,16 @@ approval gates, delegation policies. These ship with the plugin and are injected
 
 **Where to add:**
 - `client/plugin/rules/common/*.md` — portable session-level behavioral rules (injected on every SessionStart)
-- `client/plugin/rules/claude/*.md` and `client/plugin/rules/codex/*.md` — runtime-specific behavioral rules
+- `client/plugin/rules/claude/*.md` and `client/plugin/rules/codex/*.md` — engine-specific behavioral rules
 - `client/plugin/agents/common/*.md` — portable agent bodies
-- `client/plugin/agents/claude/*.md` and `client/plugin/agents/codex/*.md` — runtime-specific agent wrappers/definitions
+- `client/plugin/agents/claude/*.md` and `client/plugin/agents/codex/*.md` — engine-specific agent wrappers/definitions
 - `client/plugin/concepts/*.md` — reference documentation loaded by skills on demand
 
 **Decision rule:**
-- Put conventions under `client/plugin/rules/common/` when every installed runtime must receive them.
+- Put conventions under `client/plugin/rules/common/` when every installed engine must receive them.
 - Put conventions under `client/plugin/rules/claude/` or `client/plugin/rules/codex/` when only one installed
-  runtime must receive them.
-- Put shared agent bodies under `client/plugin/agents/common/`; put runtime wrappers under
+  engine must receive them.
+- Put shared agent bodies under `client/plugin/agents/common/`; put engine wrappers under
   `client/plugin/agents/claude/` or `client/plugin/agents/codex/`.
 - Do not put CAT repository development standards under `client/plugin/`; that would ship them to end-users.
 
@@ -38,10 +38,10 @@ These are checked into this repository's `.cat/rules/` directory and are NOT dis
 
 **Where to add:**
 - `.cat/rules/common/*.md` — portable development conventions with audience filtering (main-only, subagent-only)
-- `.cat/rules/claude/*.md` and `.cat/rules/codex/*.md` — runtime-specific development conventions
+- `.cat/rules/claude/*.md` and `.cat/rules/codex/*.md` — engine-specific development conventions
 
 **Decision rule:**
 - Put portable CAT repository conventions under `.cat/rules/common/` when both Claude and Codex agents should receive
   them while working on this repository.
-- Put repository-only runtime exceptions under `.cat/rules/claude/` or `.cat/rules/codex/`.
+- Put repository-only engine exceptions under `.cat/rules/claude/` or `.cat/rules/codex/`.
 - Do not put end-user workflow rules under `.cat/rules/`; they will not ship in flattened plugin artifacts.

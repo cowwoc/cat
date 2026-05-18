@@ -10,7 +10,7 @@ See LICENSE.md in the project root for license terms.
 ## Critical Issue
 
 If you delete the directory you're currently in, **all subsequent Bash commands will fail** with "Exit code 1" and
-The agent runtime must be restarted. This is unrecoverable without restart.
+The agent engine must be restarted. This is unrecoverable without restart.
 
 ## Mandatory Pre-Delete Checklist
 
@@ -57,7 +57,7 @@ rm -rf /path/to/workspace/test-dir  # Breaks shell
 ## Recovery
 
 If shell breaks (all commands return "Exit code 1"):
-1. **Restart the agent runtime** - this is the only fix
+1. **Restart the agent engine** - this is the only fix
 2. The shell session cannot recover from a deleted working directory
 
 ## Quick Reference

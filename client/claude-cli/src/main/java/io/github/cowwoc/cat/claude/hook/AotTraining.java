@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.claude.hook;
 
-import io.github.cowwoc.cat.tool.skills.EmpiricalTestRunner;
 import io.github.cowwoc.cat.tool.skills.GetCheckpointOutput;
 import io.github.cowwoc.cat.tool.skills.GetCleanupOutput;
 import io.github.cowwoc.cat.tool.skills.GetIssueCompleteOutput;
@@ -36,7 +35,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 /**
  * Exercises Claude handler code paths in a single JVM invocation for AOT training.
  * <p>
- * During the build, this replaces many separate JVM launches with one invocation for the Claude runtime.
+ * During the build, this replaces many separate JVM launches with one invocation for the Claude engine.
  */
 public final class AotTraining
 {
@@ -142,7 +141,6 @@ public final class AotTraining
     referenceClass(GetNextIssueOutput.class);
     referenceClass(SessionAnalyzer.class);
     referenceClass(ProgressBanner.class);
-    referenceClass(EmpiricalTestRunner.class);
     referenceClass(WorkPrepare.class);
     referenceClass(MarkdownWrapper.class);
     referenceClass(BatchReader.class);

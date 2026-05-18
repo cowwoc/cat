@@ -12,10 +12,10 @@ import tools.jackson.dataformat.yaml.YAMLMapper;
 import java.nio.file.Path;
 
 /**
- * Runtime-neutral JVM scope providing lazy-loaded singletons and project paths.
+ * Engine-neutral JVM scope providing lazy-loaded singletons and project paths.
  * <p>
- * Runtime-specific scope interfaces may extend this contract with additional methods that only
- * make sense for one agent runtime.
+ * Engine-specific scope interfaces may extend this contract with additional methods that only
+ * make sense for one agent engine.
  */
 public interface AgentScope extends AutoCloseable
 {

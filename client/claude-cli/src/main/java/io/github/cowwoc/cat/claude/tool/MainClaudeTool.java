@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.claude.tool;
 
-import io.github.cowwoc.cat.agent.AgentRuntime;
+import io.github.cowwoc.cat.agent.AgentEngine;
 import io.github.cowwoc.cat.claude.hook.prompt.UserIssues;
 import io.github.cowwoc.cat.tool.CliEnvironment;
 import io.github.cowwoc.cat.tool.MainCliTool;
@@ -39,7 +39,7 @@ public final class MainClaudeTool extends MainCliTool implements ClaudeTool
    */
   public MainClaudeTool()
   {
-    super(AgentRuntime.CLAUDE, System::getenv, System::getProperty,
+    super(AgentEngine.CLAUDE, System::getenv, System::getProperty,
       Path.of(System.getProperty("user.dir")));
     this.anthropicBaseUrl = CliEnvironment.optional(System::getenv, "ANTHROPIC_BASE_URL", "");
   }

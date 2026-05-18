@@ -55,63 +55,63 @@ JAVA_EOF
   [ "$status" -ne 0 ]
 }
 
-@test "runtime_version_matches fails when VERSION is missing" {
-  local runtime_dir="${TEST_DIR}/runtime"
-  mkdir -p "$runtime_dir"
+@test "engine_version_matches fails when VERSION is missing" {
+  local engine_dir="${TEST_DIR}/engine"
+  mkdir -p "$engine_dir"
 
-  run runtime_version_matches "$runtime_dir" "2.1.0"
+  run engine_version_matches "$engine_dir" "2.1.0"
   [ "$status" -ne 0 ]
 }
 
-@test "runtime_version_matches fails on version mismatch" {
-  local runtime_dir="${TEST_DIR}/runtime"
-  mkdir -p "$runtime_dir"
-  echo "2.0.0" > "${runtime_dir}/VERSION"
+@test "engine_version_matches fails on version mismatch" {
+  local engine_dir="${TEST_DIR}/engine"
+  mkdir -p "$engine_dir"
+  echo "2.0.0" > "${engine_dir}/VERSION"
 
-  run runtime_version_matches "$runtime_dir" "2.1.0"
+  run engine_version_matches "$engine_dir" "2.1.0"
   [ "$status" -ne 0 ]
 }
 
-@test "runtime_version_matches succeeds on matching version" {
-  local runtime_dir="${TEST_DIR}/runtime"
-  mkdir -p "$runtime_dir"
-  echo "2.1.0" > "${runtime_dir}/VERSION"
+@test "engine_version_matches succeeds on matching version" {
+  local engine_dir="${TEST_DIR}/engine"
+  mkdir -p "$engine_dir"
+  echo "2.1.0" > "${engine_dir}/VERSION"
 
-  run runtime_version_matches "$runtime_dir" "2.1.0"
+  run engine_version_matches "$engine_dir" "2.1.0"
   [ "$status" -eq 0 ]
 }
 
-@test "check_runtime fails when directory does not exist" {
-  run check_runtime "/nonexistent/path/$$"
+@test "check_engine fails when directory does not exist" {
+  run check_engine "/nonexistent/path/$$"
   [ "$status" -ne 0 ]
 }
 
-@test "check_runtime fails when java binary is missing" {
-  local runtime_dir="${TEST_DIR}/runtime"
-  mkdir -p "${runtime_dir}/bin"
+@test "check_engine fails when java binary is missing" {
+  local engine_dir="${TEST_DIR}/engine"
+  mkdir -p "${engine_dir}/bin"
 
-  run check_runtime "$runtime_dir"
+  run check_engine "$engine_dir"
   [ "$status" -ne 0 ]
 }
 
-@test "check_runtime fails when java binary exits non-zero" {
-  local runtime_dir="${TEST_DIR}/runtime"
-  mkdir -p "${runtime_dir}/bin"
-  cat > "${runtime_dir}/bin/java" <<'JAVA_EOF'
+@test "check_engine fails when java binary exits non-zero" {
+  local engine_dir="${TEST_DIR}/engine"
+  mkdir -p "${engine_dir}/bin"
+  cat > "${engine_dir}/bin/java" <<'JAVA_EOF'
 #!/usr/bin/env bash
 exit 1
 JAVA_EOF
-  chmod +x "${runtime_dir}/bin/java"
+  chmod +x "${engine_dir}/bin/java"
 
-  run check_runtime "$runtime_dir"
+  run check_engine "$engine_dir"
   [ "$status" -ne 0 ]
 }
 
-@test "check_runtime succeeds when java -version works" {
-  local runtime_dir="${TEST_DIR}/runtime"
-  make_mock_java "${runtime_dir}/bin" "${TEST_DIR}/java.log"
+@test "check_engine succeeds when java -version works" {
+  local engine_dir="${TEST_DIR}/engine"
+  make_mock_java "${engine_dir}/bin" "${TEST_DIR}/java.log"
 
-  run check_runtime "$runtime_dir"
+  run check_engine "$engine_dir"
   [ "$status" -eq 0 ]
 }
 
@@ -181,7 +181,7 @@ JAVA_EOF
   unset CLAUDE_PLUGIN_ROOT
 }
 
-@test "main launches Java from CLAUDE_PLUGIN_ROOT client runtime" {
+@test "main launches Java from CLAUDE_PLUGIN_ROOT client engine" {
   local plugin_root="${TEST_DIR}/plugin-root"
   local plugin_data="${TEST_DIR}/plugin-data"
   local java_log="${TEST_DIR}/java.log"
@@ -202,7 +202,7 @@ JAVA_EOF
   unset CLAUDE_PLUGIN_DATA
 }
 
-@test "main warns when plugin-root runtime is missing" {
+@test "main warns when plugin-root engine is missing" {
   local plugin_root="${TEST_DIR}/plugin-root"
   make_plugin_root "$plugin_root" "2.1.0"
 
@@ -215,7 +215,7 @@ JAVA_EOF
   unset CLAUDE_PLUGIN_ROOT
 }
 
-@test "main ignores plugin-data runtime when plugin-root runtime is missing" {
+@test "main ignores plugin-data engine when plugin-root engine is missing" {
   local plugin_root="${TEST_DIR}/plugin-root"
   local plugin_data="${TEST_DIR}/plugin-data"
   local java_log="${TEST_DIR}/data-java.log"

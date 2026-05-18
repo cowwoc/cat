@@ -31,7 +31,7 @@ case "${1:-build}" in
     build)
     echo "Building CAT Claude CLI JAR..."
     "$MVN" -f "${SCRIPT_DIR}/pom.xml" package -DskipTests -q
-    echo "Done: ${SCRIPT_DIR}/target/cat-claude-cli-2.1.jar"
+    echo "Done: ${SCRIPT_DIR}/target/client-claude-cli-2.1.jar"
         ;;
     test)
         "$MVN" -f "${SCRIPT_DIR}/pom.xml" test

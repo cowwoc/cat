@@ -8,7 +8,7 @@ file are not independent.
 Requirements:
 - Determine the full set of independent edit targets before applying changes.
 - Read each existing file before editing it.
-- Apply edits using the active runtime's file-editing mechanism.
+- Apply edits using the active engine's file-editing mechanism.
 - Retry only failed edits; do not re-apply successful edits.
 
 This is guidance only for edit planning. It does not bypass project rules, hooks, or worktree restrictions.

@@ -84,18 +84,18 @@ public final class ReleaseDocumentationTest
   }
 
   /**
-   * Verifies skills that invoke CAT launchers define the complete runtime environment first.
+   * Verifies skills that invoke CAT launchers define the complete engine environment first.
    *
    * @throws IOException if reading source files fails
    */
   @Test
-  public void catLauncherSkillsDefineRuntimeEnvironment() throws IOException
+  public void catLauncherSkillsDefineEngineEnvironment() throws IOException
   {
     Path sourceRoot = findSourceRoot();
     Path skillRoot = sourceRoot.resolve("client/plugin/skills/common");
-    assertDefinesCatRuntimeEnvironment(skillRoot.resolve("git-squash/first-use.md"), "gitSquashSkill");
-    assertDefinesCatRuntimeEnvironment(skillRoot.resolve("get-output/first-use.md"), "getOutputSkill");
-    assertDefinesCatRuntimeEnvironment(skillRoot.resolve("learn/first-use.md"), "learnSkill");
+    assertDefinesCatEngineEnvironment(skillRoot.resolve("git-squash/first-use.md"), "gitSquashSkill");
+    assertDefinesCatEngineEnvironment(skillRoot.resolve("get-output/first-use.md"), "getOutputSkill");
+    assertDefinesCatEngineEnvironment(skillRoot.resolve("learn/first-use.md"), "learnSkill");
 
     String learnSkill = Files.readString(skillRoot.resolve("learn/first-use.md"), StandardCharsets.UTF_8);
     requireThat(learnSkill, "learnSkill").contains("TIMEOUT=300");
@@ -125,17 +125,17 @@ public final class ReleaseDocumentationTest
   }
 
   /**
-   * Verifies common work verification instructions stay runtime-neutral.
+   * Verifies common work verification instructions stay engine-neutral.
    *
    * @throws IOException if reading source files fails
    */
   @Test
-  public void commonWorkVerificationUsesRuntimeNeutralTerminology() throws IOException
+  public void commonWorkVerificationUsesEngineNeutralTerminology() throws IOException
   {
     Path sourceRoot = findSourceRoot();
     String workVerify = Files.readString(sourceRoot.resolve("client/plugin/agents/common/work-verify.md"),
       StandardCharsets.UTF_8);
-    assertRuntimeNeutralWorkVerification(workVerify, "workVerify");
+    assertEngineNeutralWorkVerification(workVerify, "workVerify");
   }
 
   /**
@@ -164,28 +164,28 @@ public final class ReleaseDocumentationTest
       "numericTestCaseId").isFalse();
   }
 
-  private static void assertRuntimeNeutralWorkVerification(String content, String name)
+  private static void assertEngineNeutralWorkVerification(String content, String name)
   {
-    requireThat(content, name).contains("E2E tests must use the runtime selected by `CAT_RUNTIME`");
-    requireThat(content, name).contains("runtime-native test infrastructure");
-    requireThat(content, name).contains("Do not skip E2E because another runtime's infrastructure is unavailable");
+    requireThat(content, name).contains("E2E tests must use the engine selected by `CAT_ENGINE`");
+    requireThat(content, name).contains("engine-native test infrastructure");
+    requireThat(content, name).contains("Do not skip E2E because another engine's infrastructure is unavailable");
     requireThat(content, name).doesNotContain("Claude");
     requireThat(content, name).doesNotContain("Codex");
-    requireThat(content, name).doesNotContain("CAT_RUNTIME:-claude");
+    requireThat(content, name).doesNotContain("CAT_ENGINE:-claude");
     requireThat(content, name).doesNotContain("ModelIdResolver.detectClaudeCodeVersion");
   }
 
-  private static void assertDefinesCatRuntimeEnvironment(Path path, String name) throws IOException
+  private static void assertDefinesCatEngineEnvironment(Path path, String name) throws IOException
   {
     String content = Files.readString(path, StandardCharsets.UTF_8);
     requireThat(content, name).contains("CAT_PLUGIN_ROOT");
     requireThat(content, name).contains("CAT_PLUGIN_DATA");
     requireThat(content, name).contains("CAT_PROJECT_DIR");
-    requireThat(content, name).contains("CAT_RUNTIME");
+    requireThat(content, name).contains("CAT_ENGINE");
     requireThat(content, name).contains("CAT_SESSION_ID");
     requireThat(content, name).contains("CODEX_THREAD_ID");
     requireThat(content, name).contains("do not generate a fallback UUID");
-    requireThat(content, name).contains("CAT_PLUGIN_ROOT is required from CAT runtime injection");
+    requireThat(content, name).contains("CAT_PLUGIN_ROOT is required from CAT engine injection");
     requireThat(content, name).doesNotContain("find \"${CODEX_HOME}/plugins/cache\"");
   }
 

@@ -1,6 +1,6 @@
 ---
 name: sprt-runner
-description: Run CAT's formal SPRT instruction-test pipeline from the Codex runtime using instruction-test-runner run-sprt
+description: Run CAT's formal SPRT instruction-test pipeline from the Codex engine using sprt-runner run-sprt
 ---
 <!--
 Copyright (c) 2026 Gili Tzabari. All rights reserved.

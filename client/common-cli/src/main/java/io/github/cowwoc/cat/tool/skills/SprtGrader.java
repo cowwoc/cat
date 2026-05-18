@@ -32,25 +32,25 @@ final class SprtGrader
 {
   private final Logger log = LoggerFactory.getLogger(SprtGrader.class);
   private final CliTool scope;
-  private final SprtRuntimeRunner runtimeRunner;
+  private final SprtEngineRunner engineRunner;
 
   /**
    * Creates a new SprtGrader.
    *
    * @param scope the active plugin scope providing JSON mapper and other services
-   * @param runtimeRunner the active runtime runner
-   * @throws NullPointerException if {@code scope} or {@code runtimeRunner} are null
+   * @param engineRunner the active engine runner
+   * @throws NullPointerException if {@code scope} or {@code engineRunner} are null
    */
-  SprtGrader(CliTool scope, SprtRuntimeRunner runtimeRunner)
+  SprtGrader(CliTool scope, SprtEngineRunner engineRunner)
   {
     requireThat(scope, "scope").isNotNull();
-    requireThat(runtimeRunner, "runtimeRunner").isNotNull();
+    requireThat(engineRunner, "engineRunner").isNotNull();
     this.scope = scope;
-    this.runtimeRunner = runtimeRunner;
+    this.engineRunner = engineRunner;
   }
 
   /**
-   * Grades a single test case by spawning a grader agent via the active runtime.
+   * Grades a single test case by spawning a grader agent via the active engine.
    * <p>
    * The grader agent reads the test scenario file and transcript, evaluates assertions,
    * and writes a grade.json file to the specified output path.
@@ -166,7 +166,7 @@ final class SprtGrader
       Path graderStdout = Files.createTempFile("grader-stdout-", ".txt");
       try (PrintStream graderOut = new PrintStream(graderStdout.toFile(), UTF_8))
       {
-        int exitCode = runtimeRunner.runGrader(graderPromptFile, modelId, effort,
+        int exitCode = engineRunner.runGrader(graderPromptFile, modelId, effort,
           runnerWorktree, graderOut);
 
         if (exitCode != 0)
@@ -307,7 +307,7 @@ final class SprtGrader
     JsonNode tcNameMapNode = root.path("tc_name_map");
     if (tcNameMapNode.isMissingNode())
       throw new IllegalArgumentException(
-        "InstructionTestRunner get-tc-name: 'tc_name_map' field not found in isolation " +
+        "SprtRunner get-tc-name: 'tc_name_map' field not found in isolation " +
         "result JSON");
     JsonNode stemNode = tcNameMapNode.path(tcId);
     if (stemNode.isMissingNode() && tcId.startsWith("tc"))
@@ -318,7 +318,7 @@ final class SprtGrader
     }
     if (stemNode.isMissingNode())
       throw new IllegalArgumentException(
-        "InstructionTestRunner get-tc-name: tc_id '" + tcId + "' not found in tc_name_map");
+        "SprtRunner get-tc-name: tc_id '" + tcId + "' not found in tc_name_map");
     return stemNode.asString();
   }
 }

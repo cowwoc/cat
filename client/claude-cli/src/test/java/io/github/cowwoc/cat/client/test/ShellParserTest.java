@@ -485,7 +485,7 @@ public class ShellParserTest
    * Verifies that an unquoted assignment containing a mid-value command substitution is skipped.
    * <p>
    * {@code FOO=prefix$(cmd)suffix} cannot be evaluated statically because {@code $(cmd)} is a
-   * runtime command substitution. The assignment must not appear in the result map.
+   * engine command substitution. The assignment must not appear in the result map.
    */
   @Test
   public void parseScriptAssignmentsSkipsMidValueCommandSubstitution()

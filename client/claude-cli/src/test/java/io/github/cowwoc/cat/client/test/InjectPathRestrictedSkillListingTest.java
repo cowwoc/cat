@@ -41,7 +41,7 @@ public final class InjectPathRestrictedSkillListingTest
     {
       Path pluginsDir = tempDir.resolve("plugins");
       Files.createDirectories(pluginsDir);
-      Path catPluginDir = tempDir.resolve("cat-plugin");
+      Path catPluginDir = tempDir.resolve("client-plugin");
       Path skillDir = catPluginDir.resolve("skills/common/java-conventions");
       Files.createDirectories(skillDir);
       Files.writeString(skillDir.resolve("SKILL.md"), """
@@ -95,7 +95,7 @@ public final class InjectPathRestrictedSkillListingTest
     {
       Path pluginsDir = tempDir.resolve("plugins");
       Files.createDirectories(pluginsDir);
-      Path catPluginDir = tempDir.resolve("cat-plugin");
+      Path catPluginDir = tempDir.resolve("client-plugin");
       Path skillDir = catPluginDir.resolve("skills/common/java-conventions");
       Files.createDirectories(skillDir);
       Files.writeString(skillDir.resolve("SKILL.md"), """
@@ -147,7 +147,7 @@ public final class InjectPathRestrictedSkillListingTest
     {
       Path pluginsDir = tempDir.resolve("plugins");
       Files.createDirectories(pluginsDir);
-      Path catPluginDir = tempDir.resolve("cat-plugin");
+      Path catPluginDir = tempDir.resolve("client-plugin");
       Path skillDir = catPluginDir.resolve("skills/common/java-conventions");
       Files.createDirectories(skillDir);
       Files.writeString(skillDir.resolve("SKILL.md"), """
@@ -202,7 +202,7 @@ public final class InjectPathRestrictedSkillListingTest
     {
       Path pluginsDir = tempDir.resolve("plugins");
       Files.createDirectories(pluginsDir);
-      Path catPluginDir = tempDir.resolve("cat-plugin");
+      Path catPluginDir = tempDir.resolve("client-plugin");
       Path skillDir = catPluginDir.resolve("skills/common/java-conventions");
       Files.createDirectories(skillDir);
       Files.writeString(skillDir.resolve("SKILL.md"), """
@@ -260,7 +260,7 @@ public final class InjectPathRestrictedSkillListingTest
     {
       Path pluginsDir = tempDir.resolve("plugins");
       Files.createDirectories(pluginsDir);
-      Path catPluginDir = tempDir.resolve("cat-plugin");
+      Path catPluginDir = tempDir.resolve("client-plugin");
       Path skillDir = catPluginDir.resolve("skills/common/help");
       Files.createDirectories(skillDir);
       Files.writeString(skillDir.resolve("SKILL.md"), """
@@ -313,7 +313,7 @@ public final class InjectPathRestrictedSkillListingTest
     {
       Path pluginsDir = tempDir.resolve("plugins");
       Files.createDirectories(pluginsDir);
-      Path catPluginDir = tempDir.resolve("cat-plugin");
+      Path catPluginDir = tempDir.resolve("client-plugin");
       Path skillDir = catPluginDir.resolve("skills/common/java-conventions");
       Files.createDirectories(skillDir);
       Files.writeString(skillDir.resolve("SKILL.md"), """
@@ -366,7 +366,7 @@ public final class InjectPathRestrictedSkillListingTest
     {
       Path pluginsDir = tempDir.resolve("plugins");
       Files.createDirectories(pluginsDir);
-      Path catPluginDir = tempDir.resolve("cat-plugin");
+      Path catPluginDir = tempDir.resolve("client-plugin");
       Path skillDir = catPluginDir.resolve("skills/common/java-conventions");
       Files.createDirectories(skillDir);
       Files.writeString(skillDir.resolve("SKILL.md"), """

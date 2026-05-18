@@ -119,30 +119,30 @@ Task tool:
          occurrence of a line matching `^## Type` in the file — the authoritative field is always near
          the top of plan.md, never inside a Jobs section. Do NOT infer type from commit
          messages, issue ID naming, or other heuristics.
-       - For `feature`, `bugfix`, `refactor`, and `performance` issue types: run runtime E2E tests
+       - For `feature`, `bugfix`, `refactor`, and `performance` issue types: run engine E2E tests
          using worktree artifacts.
        - For `docs` and `config` issue types only: set e2e status to SKIPPED. Any issue type not
-         in this exhaustive list must be treated as requiring runtime E2E tests.
-       - E2E isolation: use worktree runtime artifacts for `${CAT_RUNTIME}` and
+         in this exhaustive list must be treated as requiring engine E2E tests.
+       - E2E isolation: use worktree engine artifacts for `${CAT_ENGINE}` and
          `${WORKTREE_PATH}/client/plugin/scripts/`, never the cached plugin installation
-       - E2E tests must use the runtime selected by `CAT_RUNTIME`. E2E runs must use the selected runtime's artifacts
-         and runtime-native test infrastructure.
-       - `CAT_RUNTIME` must be set before runtime E2E invocation. If it is unset for a high-caution E2E run, set E2E
-         status to FAILED because the verifier cannot select the correct runtime artifact.
-       - Runtime invocation must use an absolute binary path from the selected runtime's worktree jlink image:
-         `${RUNTIME_BIN}/instruction-test-runner ...`
-         Do NOT invoke `instruction-test-runner` via PATH lookup.
-       - If a high-caution E2E run fails because the selected runtime path depends on another runtime's
+       - E2E tests must use the engine selected by `CAT_ENGINE`. E2E runs must use the selected engine's artifacts
+         and engine-native test infrastructure.
+       - `CAT_ENGINE` must be set before engine E2E invocation. If it is unset for a high-caution E2E run, set E2E
+         status to FAILED because the verifier cannot select the correct engine artifact.
+       - Engine invocation must use an absolute binary path from the selected engine's worktree jlink image:
+         `${RUNTIME_BIN}/sprt-runner ...`
+         Do NOT invoke `sprt-runner` via PATH lookup.
+       - If a high-caution E2E run fails because the selected engine path depends on another engine's
          infrastructure, set E2E status to FAILED. Record the failure evidence in `${VERIFY_DIR}/e2e-test-output.json`
-         and use explanation "E2E failed: selected runtime requires runtime-native E2E infrastructure".
-       - Do not skip E2E because another runtime's infrastructure is unavailable. Missing runtime artifacts,
-         unsupported commands, assertion failures, or dependencies on the wrong runtime infrastructure are E2E
-         failures for runtime behavior issues.
-       - Clean-worktree preflight is mandatory before runtime E2E invocation:
+         and use explanation "E2E failed: selected engine requires engine-native E2E infrastructure".
+       - Do not skip E2E because another engine's infrastructure is unavailable. Missing engine artifacts,
+         unsupported commands, assertion failures, or dependencies on the wrong engine infrastructure are E2E
+         failures for engine behavior issues.
+       - Clean-worktree preflight is mandatory before engine E2E invocation:
          `cd "${WORKTREE_PATH}" && git status --porcelain`
-         If any output is present, STOP with a clear failure message that runtime E2E cannot run until
+         If any output is present, STOP with a clear failure message that engine E2E cannot run until
          all changes are committed or stashed.
-       - Runtime invocation required — do NOT substitute file inspection for running the artifact
+       - Engine invocation required — do NOT substitute file inspection for running the artifact
     3. Create the verify output directory and write detailed analysis files:
        ```bash
        source "${CAT_PLUGIN_ROOT}/scripts/cat-env.sh"

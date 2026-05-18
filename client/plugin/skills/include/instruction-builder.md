@@ -362,7 +362,7 @@ is NOT equivalent to an SPRT ACCEPT decision. SPRT Accept requires log_ratio ≥
 decisions must go through this Step 6 pipeline.
 
 **Runner selection:** For isolated ad-hoc single-prompt validation, use the runner skill available in the current
-environment. Formal `instruction-test-runner` and SPRT validation must use the supported formal runner pipeline. If
+environment. Formal `sprt-runner` and SPRT validation must use the supported formal runner pipeline. If
 formal validation is unavailable, report that limitation instead of presenting non-native results as evidence.
 
 Compute `TEST_DIR` and `TEST_MODEL` now — these values are required for all subsequent steps, including the
@@ -370,7 +370,7 @@ sanity check below.
 
 **TEST_DIR computation:**
 ```bash
-TEST_DIR=$("${CAT_PLUGIN_ROOT}/client/bin/instruction-test-runner" extract-test-dir \
+TEST_DIR=$("${CAT_PLUGIN_ROOT}/client/bin/sprt-runner" extract-test-dir \
   "${INSTRUCTION_TEXT_PATH}" "${CAT_PROJECT_DIR}")
 ```
 Example: `client/plugin/skills/common/foo/first-use.md` → `{CAT_PROJECT_DIR}/client/plugin/tests/skills/common/foo/first-use`.
@@ -379,7 +379,7 @@ Pass this resolved path as a literal string to all agents — do NOT pass variab
 
 **TEST_MODEL computation:** Read the target instruction file's `model:` frontmatter field:
 ```bash
-TEST_MODEL=$("${CAT_PLUGIN_ROOT}/client/bin/instruction-test-runner" extract-model \
+TEST_MODEL=$("${CAT_PLUGIN_ROOT}/client/bin/sprt-runner" extract-model \
   "<absolute-path-to-INSTRUCTION_TEXT_PATH>")
 ```
 The script falls back to `haiku` when the field is absent.
@@ -465,7 +465,9 @@ what the agent says in a verbal response.
 
 **Scenario file naming:** Use domain-specific names for the file stem (e.g., `unit_step44_guard`,
 `unit_step44_reject`) rather than sequential IDs (e.g., `unit_1`, `unit_2`) to make each unit's intent
-self-describing. Note: these descriptive names appear only in the main agent's test directory. On the
+self-describing. Do not use versioned stems like `v1`, `v2`, `test1`, or `test2`; filenames must describe
+the behavior under test (for example, `fork-context-isolated-spawn`, `missing-worktree-error`). Note: these
+descriptive names appear only in the main agent's test directory. On the
 sanitized branch, turn files are renamed to opaque numeric IDs (see § Test-Runner Filesystem Isolation)
 so the test-run agent never sees descriptive filenames that could reveal test intent.
 
@@ -590,7 +592,7 @@ as the VERY FIRST tool call — before validation, before reading test cases, be
 branch, before doing anything else whatsoever:
 
 ```bash
-"${CAT_PLUGIN_ROOT}/client/bin/instruction-test-runner" detect-changes \
+"${CAT_PLUGIN_ROOT}/client/bin/sprt-runner" detect-changes \
   <INSTRUCTION_DRAFT_SHA> <INSTRUCTION_TEXT_PATH> "${TEST_DIR}"
 ```
 
@@ -649,7 +651,7 @@ determine whether the skill instruction changed and whether new test cases were 
 
 1. Run change detection:
    ```bash
-   "${CAT_PLUGIN_ROOT}/client/bin/instruction-test-runner" detect-changes \
+   "${CAT_PLUGIN_ROOT}/client/bin/sprt-runner" detect-changes \
      <INSTRUCTION_DRAFT_SHA> <INSTRUCTION_TEXT_PATH> "${TEST_DIR}"
    ```
    Output fields:
@@ -762,7 +764,7 @@ with the rejected test cases:
 SESSION_ANALYZER="${CAT_PLUGIN_ROOT}/client/bin/session-analyzer"
 # List all agents spawned in this session
 # Expected format: <agent_id> <status> <description> — one agent per line; $1 is the agent ID field.
-ANALYZE_OUTPUT=$("$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" analyze "${CAT_SESSION_ID}")
+ANALYZE_OUTPUT=$("$SESSION_ANALYZER" --engine "${CAT_ENGINE}" analyze "${CAT_SESSION_ID}")
 # Parse ANALYZE_OUTPUT to identify agents spawned during test runs. Store their IDs in AGENT_IDS.
 AGENT_IDS=$(echo "$ANALYZE_OUTPUT" | grep -i "test-run\|rejected" | awk '{print $1}')
 # Cap to maximum 5 AGENT_IDs per rejected test case to limit investigation scope.
@@ -828,7 +830,7 @@ to sub-step 8 (the report).
 
 ```bash
 # Can be parallelized or consolidated with sub-steps 6 and 7 into a single session-analyzer pass.
-"$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" search "${CAT_SESSION_ID}/agents/${AGENT_ID}" \
+"$SESSION_ANALYZER" --engine "${CAT_ENGINE}" search "${CAT_SESSION_ID}/agents/${AGENT_ID}" \
   "Would you like|What would you|follow.up" --regex --context 5
 ```
 
@@ -855,7 +857,7 @@ reasoning recorded in thinking blocks:
 
 ```bash
 # Can be parallelized or consolidated with sub-steps 4 and 7 into a single session-analyzer pass.
-"$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" search "${CAT_SESSION_ID}/agents/${AGENT_ID}" \
+"$SESSION_ANALYZER" --engine "${CAT_ENGINE}" search "${CAT_SESSION_ID}/agents/${AGENT_ID}" \
   "<thinking>" --context 10
 ```
 
@@ -875,7 +877,7 @@ Proceed immediately to sub-step 7 without asking questions or requesting confirm
 
 ```bash
 # Can be parallelized or consolidated with sub-steps 4 and 6 into a single session-analyzer pass.
-"$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" search "${CAT_SESSION_ID}/agents/${AGENT_ID}" \
+"$SESSION_ANALYZER" --engine "${CAT_ENGINE}" search "${CAT_SESSION_ID}/agents/${AGENT_ID}" \
   "unless|except|if user|may|optional" --regex --context 3
 ```
 
@@ -1587,9 +1589,9 @@ anything the agent only needs after the skill is already loaded.
 (hallucinates step names, invents procedures, or responds without skill-specific knowledge), use
 `cat:get-history` to read the agent's conversation and diagnose the root cause:
 
-1. **Check if the Skill tool was invoked.** Use `session-analyzer --runtime "${CAT_RUNTIME}" file-history` on the agent to
+1. **Check if the Skill tool was invoked.** Use `session-analyzer --engine "${CAT_ENGINE}" file-history` on the agent to
    list all tool operations. If no Skill invocation appears, the agent decided not to load the skill.
-   To understand why, search for the agent's reasoning: `session-analyzer --runtime "${CAT_RUNTIME}" search
+   To understand why, search for the agent's reasoning: `session-analyzer --engine "${CAT_ENGINE}" search
    "${CAT_SESSION_ID}/agents/agent-${ID}" "<thinking>" --context 10`. The thinking blocks
    reveal how the agent evaluated the available skills and why it decided none matched the prompt.
    The root cause is the skill's `description` frontmatter — it does not contain trigger words that

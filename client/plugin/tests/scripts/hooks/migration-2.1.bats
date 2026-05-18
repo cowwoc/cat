@@ -1176,12 +1176,12 @@ EOF
 
 @test "2.1.sh phase 28: moves Codex-specific project rules to .cat/rules/codex" {
     mkdir -p "$TEST_TEMP_DIR/.codex/rules"
-    echo "codex rule" > "$TEST_TEMP_DIR/.codex/rules/runtime.md"
+    echo "codex rule" > "$TEST_TEMP_DIR/.codex/rules/engine.md"
     setup_config_fixture
 
     cd "$TEST_TEMP_DIR"
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
-    [ "$(cat .cat/rules/codex/runtime.md)" = "codex rule" ]
-    [ ! -f ".codex/rules/runtime.md" ]
+    [ "$(cat .cat/rules/codex/engine.md)" = "codex rule" ]
+    [ ! -f ".codex/rules/engine.md" ]
 }

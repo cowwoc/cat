@@ -13,10 +13,10 @@ The current CAT session ID is `${CAT_SESSION_ID}`.
 ```bash
 SESSION_ANALYZER="${CAT_PLUGIN_ROOT}/client/bin/session-analyzer"
 
-"$SESSION_ANALYZER" --runtime claude search "${CAT_SESSION_ID}" "keyword" --context 2
-"$SESSION_ANALYZER" --runtime claude errors "${CAT_SESSION_ID}"
-"$SESSION_ANALYZER" --runtime claude file-history "${CAT_SESSION_ID}" "config.json"
-"$SESSION_ANALYZER" --runtime claude analyze "${CAT_SESSION_ID}"
+"$SESSION_ANALYZER" --engine claude search "${CAT_SESSION_ID}" "keyword" --context 2
+"$SESSION_ANALYZER" --engine claude errors "${CAT_SESSION_ID}"
+"$SESSION_ANALYZER" --engine claude file-history "${CAT_SESSION_ID}" "config.json"
+"$SESSION_ANALYZER" --engine claude analyze "${CAT_SESSION_ID}"
 ```
 
 ## Claude Subagents
@@ -25,11 +25,11 @@ Claude subagent sessions are stored under the parent session. Find `agentId` val
 the subagent path to `session-analyzer`:
 
 ```bash
-"$SESSION_ANALYZER" --runtime claude search "${CAT_SESSION_ID}" "agentId"
+"$SESSION_ANALYZER" --engine claude search "${CAT_SESSION_ID}" "agentId"
 
 AGENT_ID="ad630cb"
-"$SESSION_ANALYZER" --runtime claude analyze "${CAT_SESSION_ID}/subagents/agent-${AGENT_ID}"
-"$SESSION_ANALYZER" --runtime claude search "${CAT_SESSION_ID}/subagents/agent-${AGENT_ID}" "instruction-builder"
+"$SESSION_ANALYZER" --engine claude analyze "${CAT_SESSION_ID}/subagents/agent-${AGENT_ID}"
+"$SESSION_ANALYZER" --engine claude search "${CAT_SESSION_ID}/subagents/agent-${AGENT_ID}" "instruction-builder"
 ```
 
 The `agentId` usually appears in Task tool results as `"agentId":"..."` or `agentId: ...`.

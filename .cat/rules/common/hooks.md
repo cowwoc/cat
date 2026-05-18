@@ -8,18 +8,18 @@ CAT has two hook locations:
 | Hook Type | Location | Use Case |
 |-----------|----------|----------|
 | **Portable plugin hook files** | `client/plugin/hooks/common/` | Shared hook documentation and helpers |
-| **Runtime plugin hooks** | `client/plugin/hooks/<runtime>/hooks.json` | Runtime-specific hook registration |
+| **Engine plugin hooks** | `client/plugin/hooks/<engine>/hooks.json` | Engine-specific hook registration |
 
-`client/plugin/hooks/common/` is documentation/helper content only. Runtime hook registration lives in the
-runtime-specific `hooks.json` files.
+`client/plugin/hooks/common/` is documentation/helper content only. Engine hook registration lives in the
+engine-specific `hooks.json` files.
 
 ## Plugin Hooks
 
-Plugin hooks are pre-registered in runtime-specific plugin hook configs and loaded automatically by the active plugin
+Plugin hooks are pre-registered in engine-specific plugin hook configs and loaded automatically by the active plugin
 system.
 
 Do not attempt to register plugin hooks in project hook settings. When investigating whether a plugin hook is active,
-check the active runtime's `client/plugin/hooks/<runtime>/hooks.json`.
+check the active engine's `client/plugin/hooks/<engine>/hooks.json`.
 
 ## CLI Tool Output Categories
 
@@ -27,11 +27,11 @@ CAT has two categories of Java CLI tools, each with a different output contract:
 
 | Tool category | Output consumer | Output contract |
 |---------------|-----------------|-----------------|
-| **Hook handlers** | The active runtime hook engine | The runtime's hook output format |
+| **Hook handlers** | The active engine hook engine | The engine's hook output format |
 | **Skill CLI tools** | The skill that invoked the command | The skill-defined business format |
 
 Skill CLI tools may use business-format JSON such as `{"status":"...", "message":"..."}` when the skill Markdown
-defines and parses that schema. Hook handlers must use the active runtime's hook output contract instead.
+defines and parses that schema. Hook handlers must use the active engine's hook output contract instead.
 
 ## Hook Output Guidance
 

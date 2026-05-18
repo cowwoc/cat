@@ -31,7 +31,7 @@ When current level failed, escalate:
 | Process | Code fix | Make incorrect path impossible in code |
 | Skill | Hook | Add enforcement that blocks wrong approach |
 | Threshold | Lower threshold + hook | Add monitoring that forces action |
-| Validation | Code fix | Compile-time or runtime enforcement |
+| Validation | Code fix | Compile-time or engine enforcement |
 
 ## Priming Root Cause
 
@@ -52,7 +52,7 @@ wrong behavior and rely on the hook catching it. Fix the source.
 
 | Priming Source | Can Modify? | Prevention Action |
 |----------------|-------------|-------------------|
-| Skill file in `client/plugin/skills/common/`, `client/plugin/skills/<runtime>/`, or `client/plugin/skills/<runtime>/` | Yes | Rewrite or remove the priming section |
+| Skill file in `client/plugin/skills/common/`, `client/plugin/skills/<engine>/`, or `client/plugin/skills/<engine>/` | Yes | Rewrite or remove the priming section |
 | Concept doc in `plugin/concepts/` | Yes | Rewrite or remove the priming section |
 | External documentation (out of repo) | No | Add hook to intercept/enforce correct behavior |
 | Read-only reference required for context | No | Add enforcement layer; mark as priming risk |

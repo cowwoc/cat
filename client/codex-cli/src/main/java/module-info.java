@@ -17,7 +17,6 @@ module io.github.cowwoc.cat.codex.cli
   requires ch.qos.logback.classic;
 
   exports io.github.cowwoc.cat.codex.hook;
-  exports io.github.cowwoc.cat.codex.hook.skills;
+  exports io.github.cowwoc.cat.codex.engine;
   exports io.github.cowwoc.cat.codex.tool;
-  opens io.github.cowwoc.cat.codex.hook.skills to tools.jackson.databind;
 }

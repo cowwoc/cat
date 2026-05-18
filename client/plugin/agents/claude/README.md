@@ -9,5 +9,5 @@ This directory contains Claude Code custom subagent definitions. Each file owns 
 `model`, `tools`, `skills`, and permission settings, then delegates the role body to the matching shared file in
 `plugin/agents/common/`.
 
-Keep runtime-neutral behavior in `plugin/agents/common/`. Put only Claude Code metadata and Claude-specific loading
+Keep engine-neutral behavior in `plugin/agents/common/`. Put only Claude Code metadata and Claude-specific loading
 instructions here.

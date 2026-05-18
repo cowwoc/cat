@@ -18,7 +18,7 @@ There is no prior test history for this skill. Run the empirical tests.
 ## Assertions
 
 1. The Skill tool was invoked
-2. The agent invokes `instruction-test-runner init-sprt` to initialize SPRT state before running trials
-3. The agent invokes `instruction-test-runner update-sprt` to update the log-ratio after each trial result
+2. The agent invokes `sprt-runner init-sprt` to initialize SPRT state before running trials
+3. The agent invokes `sprt-runner update-sprt` to update the log-ratio after each trial result
 4. The agent does not use Python, manual log-ratio arithmetic, or any method other than the
-   `instruction-test-runner` Java CLI to track or update SPRT state
+   `sprt-runner` Java CLI to track or update SPRT state

@@ -438,7 +438,7 @@ are not counted — only files whose content contains the basename string.
 
 **Scope:** The search covers `*.md`, `*.sh`, and `*.json` files under the worktree, excluding:
 - `.git/` — git internals
-- `.cat/` — issue tracking, config, and runtime data (not source files)
+- `.cat/` — issue tracking, config, and engine data (not source files)
 - `target/` — build artifacts
 
 ```bash
@@ -521,9 +521,9 @@ Task tool:
     - If steps say to invoke a skill that was pre-invoked above, use the provided results
     - Update index.json in the SAME commit as implementation (status: closed, progress: 100%)
     - Run tests if applicable
-    - **Honest test result reporting:** If empirical test execution (e.g., via `cat:empirical-test`)
+    - **Honest test result reporting:** If empirical test execution (e.g., via `cat:spawn-engine`)
       cannot be completed, you MUST explicitly report the failure with the specific reason rather than
-      fabricating output values. Acceptable failure reasons: runtime unavailable (e.g., Java not on PATH,
+      fabricating output values. Acceptable failure reasons: engine unavailable (e.g., Java not on PATH,
       missing dependency), test framework error (e.g., TestNG configuration failure, missing test class),
       config incompatibility (e.g., unsupported OS, missing environment variable), or any other concrete
       blocker. Never invent pass/fail counts, scores, or compliance verdicts — fabricated results create
@@ -805,9 +805,9 @@ Task tool:
       else "NOT the index.json owner"]. [If owner: "Update index.json in your final commit: status: closed,
       progress: 100%." Else: "Do NOT modify index.json in any commit."]
     - Run tests if applicable
-    - **Honest test result reporting:** If empirical test execution (e.g., via `cat:empirical-test`)
+    - **Honest test result reporting:** If empirical test execution (e.g., via `cat:spawn-engine`)
       cannot be completed, you MUST explicitly report the failure with the specific reason rather than
-      fabricating output values. Acceptable failure reasons: runtime unavailable (e.g., Java not on PATH,
+      fabricating output values. Acceptable failure reasons: engine unavailable (e.g., Java not on PATH,
       missing dependency), test framework error (e.g., TestNG configuration failure, missing test class),
       config incompatibility (e.g., unsupported OS, missing environment variable), or any other concrete
       blocker. Never invent pass/fail counts, scores, or compliance verdicts — fabricated results create

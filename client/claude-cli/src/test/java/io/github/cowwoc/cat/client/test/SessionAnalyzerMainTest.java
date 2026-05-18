@@ -26,13 +26,13 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public class SessionAnalyzerMainTest
 {
   /**
-   * Verifies that invoking run() without a runtime throws IllegalArgumentException.
+   * Verifies that invoking run() without a engine throws IllegalArgumentException.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*--runtime.*required.*")
-  public void noArgsThrowsRuntimeRequiredException() throws IOException
+    expectedExceptionsMessageRegExp = ".*--engine.*required.*")
+  public void noArgsThrowsEngineRequiredException() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-analyzer-main-test-");
     try (CliTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -49,13 +49,13 @@ public class SessionAnalyzerMainTest
   }
 
   /**
-   * Verifies that invoking run() with only a runtime throws IllegalArgumentException with usage information.
+   * Verifies that invoking run() with only a engine throws IllegalArgumentException with usage information.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = "(?s).*Usage.*SessionAnalyzer.*")
-  public void runtimeOnlyThrowsExceptionWithUsage() throws IOException
+  public void engineOnlyThrowsExceptionWithUsage() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-analyzer-main-test-");
     try (CliTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -63,7 +63,7 @@ public class SessionAnalyzerMainTest
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
 
-      SessionAnalyzer.run(scope, new String[]{"--runtime", "claude"}, out);
+      SessionAnalyzer.run(scope, new String[]{"--engine", "claude"}, out);
     }
     finally
     {
@@ -104,7 +104,7 @@ public class SessionAnalyzerMainTest
     Path tempDir = Files.createTempDirectory("session-analyzer-main-test-");
     try (CliTool scope = new TestClaudeTool(tempDir, tempDir))
     {
-      SessionAnalyzer.run(scope, new String[]{"--runtime", "claude", "dummy"}, null);
+      SessionAnalyzer.run(scope, new String[]{"--engine", "claude", "dummy"}, null);
     }
     finally
     {
@@ -123,7 +123,7 @@ public class SessionAnalyzerMainTest
   {
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
-    SessionAnalyzer.run(null, new String[]{"--runtime", "claude", "dummy"}, out);
+    SessionAnalyzer.run(null, new String[]{"--engine", "claude", "dummy"}, out);
   }
 
   /**
@@ -140,7 +140,7 @@ public class SessionAnalyzerMainTest
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
-      SessionAnalyzer.run(scope, new String[]{"--runtime", "claude", "analyze"}, out);
+      SessionAnalyzer.run(scope, new String[]{"--engine", "claude", "analyze"}, out);
     }
     finally
     {
@@ -163,7 +163,7 @@ public class SessionAnalyzerMainTest
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
-      SessionAnalyzer.run(scope, new String[]{"--runtime", "claude", "search", "some-session-id"}, out);
+      SessionAnalyzer.run(scope, new String[]{"--engine", "claude", "search", "some-session-id"}, out);
     }
     finally
     {
@@ -185,7 +185,7 @@ public class SessionAnalyzerMainTest
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
-      SessionAnalyzer.run(scope, new String[]{"--runtime", "claude", "errors"}, out);
+      SessionAnalyzer.run(scope, new String[]{"--engine", "claude", "errors"}, out);
     }
     finally
     {
@@ -208,7 +208,7 @@ public class SessionAnalyzerMainTest
     {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
-      SessionAnalyzer.run(scope, new String[]{"--runtime", "claude", "file-history", "some-session-id"}, out);
+      SessionAnalyzer.run(scope, new String[]{"--engine", "claude", "file-history", "some-session-id"}, out);
     }
     finally
     {
@@ -234,7 +234,7 @@ public class SessionAnalyzerMainTest
 
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
-      SessionAnalyzer.run(scope, new String[]{"--runtime", "claude", "analyze", "test-session"}, out);
+      SessionAnalyzer.run(scope, new String[]{"--engine", "claude", "analyze", "test-session"}, out);
 
       String output = buffer.toString(StandardCharsets.UTF_8).strip();
       requireThat(output, "output").isNotBlank();
@@ -263,7 +263,7 @@ public class SessionAnalyzerMainTest
 
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
-      SessionAnalyzer.run(scope, new String[]{"--runtime", "claude", "errors", "test-session"}, out);
+      SessionAnalyzer.run(scope, new String[]{"--engine", "claude", "errors", "test-session"}, out);
 
       String output = buffer.toString(StandardCharsets.UTF_8).strip();
       requireThat(output, "output").isNotBlank();
@@ -292,7 +292,7 @@ public class SessionAnalyzerMainTest
 
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(buffer, true, StandardCharsets.UTF_8);
-      SessionAnalyzer.run(scope, new String[]{"--runtime", "claude", "search", "test-session", "msg1"}, out);
+      SessionAnalyzer.run(scope, new String[]{"--engine", "claude", "search", "test-session", "msg1"}, out);
 
       String output = buffer.toString(StandardCharsets.UTF_8).strip();
       requireThat(output, "output").isNotBlank();

@@ -21,7 +21,7 @@ SESSION_FILE="${CAT_PROJECT_DIR}/.cat/sessions/${CAT_SESSION_ID}.jsonl"
 # Each line has input_tokens, cache_read_input_tokens, cache_creation_input_tokens
 # Note: sort -t'"' -k4,4 -u deduplicates by the 4th double-quoted field (message uuid).
 # This assumes one observed JSONL field order: {"type":"...", "uuid":"..."}
-# Runtime formats and field order may differ; if field order changes, this deduplication will silently fail.
+# Engine formats and field order may differ; if field order changes, this deduplication will silently fail.
 # Prefer session-analyzer.
 grep '"type":"assistant"' "$SESSION_FILE" | grep -v '"parentToolUseID"' | \
   sort -t'"' -k4,4 -u

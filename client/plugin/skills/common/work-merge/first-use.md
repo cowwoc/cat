@@ -215,7 +215,7 @@ IMPACT_SEVERITY=$(echo "${IMPACT_JSON}" | grep -o '"severity"[[:space:]]*:[[:spa
 |-------------------|--------|
 | `NO_IMPACT` / `LOW` | Continue to Step 10 |
 | `MEDIUM` | Auto-revise plan.md then continue to Step 10 |
-| `HIGH` | Write proposal file, ask user via the runtime's structured input tool |
+| `HIGH` | Write proposal file, ask user via the engine's structured input tool |
 
 **MEDIUM:** Read EFFORT from config, then invoke:
 ```
@@ -223,7 +223,7 @@ Skill("cat:plan-builder", args="${EFFORT} revise ${ISSUE_PATH} rebase introduced
 ```
 If implementation was already committed, spawn a code-revision agent to apply the revised plan.md.
 
-**HIGH:** Write `${ISSUE_PATH}/rebase-conflict-proposal.md` summarizing the conflict, then present via the runtime's
+**HIGH:** Write `${ISSUE_PATH}/rebase-conflict-proposal.md` summarizing the conflict, then present via the engine's
 structured input tool.
 
 ## Step 10: Instruction-Builder Review (MANDATORY — BLOCKING)
@@ -397,9 +397,9 @@ Output all of the following in the current turn, in this order, before invoking 
    ```
    If no issue-specific change request exists or outcome cannot be confirmed, skip this item.
 
-Invoke the runtime-specific structured approval tool ONLY AFTER all eight items are output.
+Invoke the engine-specific structured approval tool ONLY AFTER all eight items are output.
 
-Use the active runtime's tool:
+Use the active engine's tool:
 - Claude Code: invoke `structured user-choice prompt`.
 - Codex: invoke `request_user_input` only when the current session already exposes it. Codex agents cannot switch
   collaboration modes themselves; `request_user_input` is available only in Plan mode.
@@ -585,13 +585,13 @@ git show-ref --verify --quiet "refs/heads/${BRANCH}" && BRANCH_EXISTS=true || BR
 Otherwise, invoke the merge tool and capture its JSON output:
 ```bash
 STABLE_MERGE_PLUGIN_ROOT="${CAT_PLUGIN_ROOT}"
-PROJECT_RUNTIME_ROOT="${CAT_PROJECT_DIR}/client/distribution/target/runtime/${CAT_RUNTIME}"
+PROJECT_RUNTIME_ROOT="${CAT_PROJECT_DIR}/client/distribution/target/engine/${CAT_ENGINE}"
 if [[ "${STABLE_MERGE_PLUGIN_ROOT}" == "${WORKTREE_PATH}"* ]]; then
   if [[ -x "${PROJECT_RUNTIME_ROOT}/client/bin/merge-and-cleanup" ]]; then
     STABLE_MERGE_PLUGIN_ROOT="${PROJECT_RUNTIME_ROOT}"
   else
-    echo "ERROR: merge cleanup runtime is inside ${WORKTREE_PATH}, and no stable project runtime exists at ${PROJECT_RUNTIME_ROOT}." >&2
-    echo "Re-run merge from a stable CAT runtime outside the worktree before cleanup." >&2
+    echo "ERROR: merge cleanup engine is inside ${WORKTREE_PATH}, and no stable project engine exists at ${PROJECT_RUNTIME_ROOT}." >&2
+    echo "Re-run merge from a stable CAT engine outside the worktree before cleanup." >&2
     exit 1
   fi
 fi
@@ -639,7 +639,7 @@ If merge verification fails: STOP — do NOT clean up the worktree or invoke `wo
 
 ### Cleanup Merged Issue
 
-Only after merge verification succeeds, run cleanup from the stable merge runtime:
+Only after merge verification succeeds, run cleanup from the stable merge engine:
 
 ```bash
 CLEANUP_RESULT=$("${STABLE_MERGE_PLUGIN_ROOT}/client/bin/merge-and-cleanup" \
@@ -651,8 +651,8 @@ CLEANUP_RESULT=$("${STABLE_MERGE_PLUGIN_ROOT}/client/bin/merge-and-cleanup" \
 Cleanup is idempotent. If `MERGE_RESULT` succeeded but cleanup fails, report the issue as merged with cleanup
 incomplete. Do NOT retry the merge. Re-run only the cleanup command after resolving the cleanup error.
 
-If cleanup reports an unsafe runtime/cwd/plugin-root path inside `${WORKTREE_PATH}`, STOP and rerun cleanup from a
-stable CAT runtime outside the worktree. Do not manually remove the worktree first; the cleanup tool verifies the
+If cleanup reports an unsafe engine/cwd/plugin-root path inside `${WORKTREE_PATH}`, STOP and rerun cleanup from a
+stable CAT engine outside the worktree. Do not manually remove the worktree first; the cleanup tool verifies the
 target branch commit before deleting artifacts.
 
 ## Step 14: Return Success

@@ -28,14 +28,14 @@ Derive keywords from the mistake description (e.g., command names, file names, s
 Then invoke the extractor directly with those keywords:
 
 ```bash
-: "${CAT_PLUGIN_ROOT:?CAT_PLUGIN_ROOT is required from CAT runtime injection}"
+: "${CAT_PLUGIN_ROOT:?CAT_PLUGIN_ROOT is required from CAT engine injection}"
 : "${CAT_PLUGIN_DATA:?CAT_PLUGIN_DATA is required}"
 : "${CAT_PROJECT_DIR:?CAT_PROJECT_DIR is required}"
-: "${CAT_RUNTIME:?CAT_RUNTIME is required}"
+: "${CAT_ENGINE:?CAT_ENGINE is required}"
 CAT_SESSION_ID="${CAT_SESSION_ID:-${CODEX_THREAD_ID:-}}"
 : "${CAT_SESSION_ID:?CAT_SESSION_ID is required; do not generate a fallback UUID}"
 CAT_CLIENT_BIN="${CAT_PLUGIN_ROOT}/client/bin"
-export -n CAT_PLUGIN_ROOT CAT_PLUGIN_DATA CAT_PROJECT_DIR CAT_RUNTIME CAT_SESSION_ID 2>/dev/null || true
+export -n CAT_PLUGIN_ROOT CAT_PLUGIN_DATA CAT_PROJECT_DIR CAT_ENGINE CAT_SESSION_ID 2>/dev/null || true
 "${CAT_CLIENT_BIN}/extract-investigation-context" "keyword1 keyword2 keyword3" 2>/dev/null || \
   echo '{"error":"pre-extraction unavailable - jlink binary not built"}'
 ```
@@ -76,7 +76,7 @@ SPAWN_EPOCH=$(date +%s%N)  # Millisecond precision to prevent same-second exploi
 # File path MUST include session ID to prevent cross-instance collision
 # and use full hash (not truncated) to eliminate collision risk
 SPAWN_EPOCH_HASH=$(printf "%s:%s" "$CAT_SESSION_ID" "$SPAWN_EPOCH" | sha256sum | cut -d' ' -f1)
-SPAWN_EPOCH_FILE="${CAT_PROJECT_DIR}/.cat/runtime/${CAT_SESSION_ID}/learn-spawn-epoch.${SPAWN_EPOCH_HASH}"
+SPAWN_EPOCH_FILE="${CAT_PROJECT_DIR}/.cat/engine/${CAT_SESSION_ID}/learn-spawn-epoch.${SPAWN_EPOCH_HASH}"
 mkdir -p "$(dirname "$SPAWN_EPOCH_FILE")"
 printf '%s:%s' "$SPAWN_EPOCH" "$SPAWN_EPOCH_HASH" > "$SPAWN_EPOCH_FILE"
 # Pass SPAWN_EPOCH_FILE path to background task completion notification handler
@@ -572,14 +572,14 @@ PHASE3_TMP=$(mktemp -p .cat/work/tmp --suffix=.json)
 printf '%s' "$PHASE3_JSON" > "$PHASE3_TMP"
 
 # Run the record-learning tool — reads Phase 3 JSON from stdin, outputs recording result JSON to stdout
-: "${CAT_PLUGIN_ROOT:?CAT_PLUGIN_ROOT is required from CAT runtime injection}"
+: "${CAT_PLUGIN_ROOT:?CAT_PLUGIN_ROOT is required from CAT engine injection}"
 : "${CAT_PLUGIN_DATA:?CAT_PLUGIN_DATA is required}"
 : "${CAT_PROJECT_DIR:?CAT_PROJECT_DIR is required}"
-: "${CAT_RUNTIME:?CAT_RUNTIME is required}"
+: "${CAT_ENGINE:?CAT_ENGINE is required}"
 CAT_SESSION_ID="${CAT_SESSION_ID:-${CODEX_THREAD_ID:-}}"
 : "${CAT_SESSION_ID:?CAT_SESSION_ID is required; do not generate a fallback UUID}"
 CAT_CLIENT_BIN="${CAT_PLUGIN_ROOT}/client/bin"
-export -n CAT_PLUGIN_ROOT CAT_PLUGIN_DATA CAT_PROJECT_DIR CAT_RUNTIME CAT_SESSION_ID 2>/dev/null || true
+export -n CAT_PLUGIN_ROOT CAT_PLUGIN_DATA CAT_PROJECT_DIR CAT_ENGINE CAT_SESSION_ID 2>/dev/null || true
 RECORD_RESULT=$("${CAT_CLIENT_BIN}/record-learning" < "$PHASE3_TMP")
 RECORD_EXIT=$?
 rm -f "$PHASE3_TMP"

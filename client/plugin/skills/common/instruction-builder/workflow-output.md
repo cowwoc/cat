@@ -42,7 +42,7 @@ Now analyze the results...
 ```
 
 **How it works:**
-1. When the runtime loads the skill, it finds [BANG]`command` patterns
+1. When the engine loads the skill, it finds [BANG]`command` patterns
 2. Each command executes **immediately** during skill expansion
 3. The command output **replaces the placeholder** in the skill content
 4. The agent receives the fully-rendered prompt with actual data

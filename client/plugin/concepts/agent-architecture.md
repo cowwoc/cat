@@ -194,7 +194,7 @@ COMPACTIONS=$(jq -s '[.[] | select(.type == "summary")] | length' "${SESSION_FIL
 
 ### Skill Invocation
 
-- **Agents CAN invoke the Skill tool** — Not in the agent exclusion set. Invokable at runtime, not just via
+- **Agents CAN invoke the Skill tool** — Not in the agent exclusion set. Invokable at engine, not just via
   `skills:` frontmatter preloading. Empirically confirmed.
 - **Native skill listing fires only for main agent** — Claude Code's `<available_skills>` injection does NOT fire for
   agents. Agents receive no skill listings from Claude Code itself.

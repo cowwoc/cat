@@ -554,22 +554,22 @@ public final class SessionAnalyzer
    */
   public static void main(String[] args)
   {
-    RuntimeSelection runtimeSelection;
+    EngineSelection engineSelection;
     try
     {
-      runtimeSelection = RuntimeSelection.parse(args);
+      engineSelection = EngineSelection.parse(args);
     }
     catch (IllegalArgumentException e)
     {
       System.out.println(Objects.toString(e.getMessage(), e.getClass().getSimpleName()));
       return;
     }
-    if (runtimeSelection.runtime() == AgentRuntime.CODEX)
+    if (engineSelection.engine() == AgentEngine.CODEX)
     {
       try (MainCliTool scope = new MainCliTool())
       {
-        Path codexHome = runtimeSelection.codexHome().orElseGet(scope::getConfigPath);
-        run(forCodex(scope, codexHome), runtimeSelection.args(), System.out);
+        Path codexHome = engineSelection.codexHome().orElseGet(scope::getConfigPath);
+        run(forCodex(scope, codexHome), engineSelection.args(), System.out);
       }
       catch (IllegalArgumentException | IOException e)
       {
@@ -587,7 +587,7 @@ public final class SessionAnalyzer
     {
       try
       {
-        run(new SessionAnalyzer(scope), runtimeSelection.args(), System.out);
+        run(new SessionAnalyzer(scope), engineSelection.args(), System.out);
       }
       catch (IllegalArgumentException | IOException e)
       {
@@ -627,14 +627,14 @@ public final class SessionAnalyzer
   public static void run(CliTool scope, String[] args, PrintStream out) throws IOException
   {
     requireThat(scope, "scope").isNotNull();
-    RuntimeSelection runtimeSelection = RuntimeSelection.parse(args);
-    if (runtimeSelection.runtime() != AgentRuntime.CLAUDE)
+    EngineSelection engineSelection = EngineSelection.parse(args);
+    if (engineSelection.engine() != AgentEngine.CLAUDE)
     {
       throw new IllegalArgumentException(
-        "Claude scope can only run with --runtime claude, got: " + runtimeSelection.runtime().name().
+        "Claude scope can only run with --engine claude, got: " + engineSelection.engine().name().
           toLowerCase(Locale.ROOT));
     }
-    run(new SessionAnalyzer(scope), runtimeSelection.args(), out);
+    run(new SessionAnalyzer(scope), engineSelection.args(), out);
   }
 
   /**
@@ -667,17 +667,17 @@ public final class SessionAnalyzer
     if (args.length < 1)
     {
       throw new IllegalArgumentException("""
-        Usage: SessionAnalyzer --runtime claude <session-id>
-               SessionAnalyzer --runtime claude analyze <session-id>
-               SessionAnalyzer --runtime claude search <session-id> <pattern> [--context N] [--regex]
-               SessionAnalyzer --runtime claude errors <session-id>
-               SessionAnalyzer --runtime claude file-history <session-id> <path-pattern>
-               SessionAnalyzer --runtime codex <thread-id>
-               SessionAnalyzer --runtime codex --codex-home <path> <thread-id>
-               SessionAnalyzer --runtime codex analyze <thread-id>
-               SessionAnalyzer --runtime codex search <thread-id> <pattern> [--context N] [--regex]
-               SessionAnalyzer --runtime codex errors <thread-id>
-               SessionAnalyzer --runtime codex file-history <thread-id> <path-pattern>""");
+        Usage: SessionAnalyzer --engine claude <session-id>
+               SessionAnalyzer --engine claude analyze <session-id>
+               SessionAnalyzer --engine claude search <session-id> <pattern> [--context N] [--regex]
+               SessionAnalyzer --engine claude errors <session-id>
+               SessionAnalyzer --engine claude file-history <session-id> <path-pattern>
+               SessionAnalyzer --engine codex <thread-id>
+               SessionAnalyzer --engine codex --codex-home <path> <thread-id>
+               SessionAnalyzer --engine codex analyze <thread-id>
+               SessionAnalyzer --engine codex search <thread-id> <pattern> [--context N] [--regex]
+               SessionAnalyzer --engine codex errors <thread-id>
+               SessionAnalyzer --engine codex file-history <thread-id> <path-pattern>""");
     }
 
     String firstArg = args[0];
@@ -687,7 +687,7 @@ public final class SessionAnalyzer
       case "analyze" ->
       {
         if (args.length < 2)
-          throw new IllegalArgumentException("Usage: SessionAnalyzer --runtime <runtime> analyze <session-id>");
+          throw new IllegalArgumentException("Usage: SessionAnalyzer --engine <engine> analyze <session-id>");
         result = analyzer.analyzeSession(analyzer.resolveSessionPath(args[1]));
       }
       case "search" ->
@@ -695,14 +695,14 @@ public final class SessionAnalyzer
         if (args.length < 3)
         {
           throw new IllegalArgumentException(
-            "Usage: SessionAnalyzer --runtime <runtime> search <session-id> <pattern> [--context N] [--regex]");
+            "Usage: SessionAnalyzer --engine <engine> search <session-id> <pattern> [--context N] [--regex]");
         }
         result = runSearchCommand(analyzer, args);
       }
       case "errors" ->
       {
         if (args.length < 2)
-          throw new IllegalArgumentException("Usage: SessionAnalyzer --runtime <runtime> errors <session-id>");
+          throw new IllegalArgumentException("Usage: SessionAnalyzer --engine <engine> errors <session-id>");
         result = analyzer.errors(analyzer.resolveSessionPath(args[1]));
       }
       case "file-history" ->
@@ -710,7 +710,7 @@ public final class SessionAnalyzer
         if (args.length < 3)
         {
           throw new IllegalArgumentException(
-            "Usage: SessionAnalyzer --runtime <runtime> file-history <session-id> <path-pattern>");
+            "Usage: SessionAnalyzer --engine <engine> file-history <session-id> <path-pattern>");
         }
         result = analyzer.fileHistory(analyzer.resolveSessionPath(args[1]), args[2]);
       }
@@ -767,7 +767,7 @@ public final class SessionAnalyzer
    * per-agent and combined metrics.
    *
    * @param filePath path to the session JSONL file
-   * @return JSON object containing main, runtime-specific child-session analysis, and combined analysis
+   * @return JSON object containing main, engine-specific child-session analysis, and combined analysis
    * @throws NullPointerException if filePath is null
    * @throws IOException if file reading or parsing fails
    */
@@ -2305,7 +2305,7 @@ public final class SessionAnalyzer
   }
 
   /**
-   * Session log adapter for a concrete runtime.
+   * Session log adapter for a concrete engine.
    */
   private interface SessionLogAdapter
   {
@@ -2328,7 +2328,7 @@ public final class SessionAnalyzer
     List<JsonNode> parseJsonl(Path filePath) throws IOException;
 
     /**
-     * Discovers child session logs for the runtime.
+     * Discovers child session logs for the engine.
      *
      * @param entries normalized parent entries
      * @param filePath the parent session file
@@ -2979,65 +2979,65 @@ public final class SessionAnalyzer
   }
 
   /**
-   * Supported session log runtimes.
+   * Supported session log engines.
    */
-  private enum AgentRuntime
+  private enum AgentEngine
   {
     CLAUDE,
     CODEX
   }
 
   /**
-   * Parsed runtime CLI options.
+   * Parsed engine CLI options.
    *
-   * @param runtime the selected runtime
+   * @param engine the selected engine
    * @param codexHome the optional Codex home override
-   * @param args the command arguments after removing runtime flags
+   * @param args the command arguments after removing engine flags
    */
-  private record RuntimeSelection(AgentRuntime runtime, Optional<Path> codexHome, String[] args)
+  private record EngineSelection(AgentEngine engine, Optional<Path> codexHome, String[] args)
   {
     /**
-     * Creates a runtime selection.
+     * Creates a engine selection.
      *
-     * @param runtime the selected runtime
+     * @param engine the selected engine
      * @param codexHome the optional Codex home override
-     * @param args the command arguments after removing runtime flags
+     * @param args the command arguments after removing engine flags
      * @throws NullPointerException if any parameter is null
      */
-    private RuntimeSelection
+    private EngineSelection
     {
-      requireThat(runtime, "runtime").isNotNull();
+      requireThat(engine, "engine").isNotNull();
       requireThat(codexHome, "codexHome").isNotNull();
       requireThat(args, "args").isNotNull();
     }
 
     /**
-     * Parses runtime CLI options.
+     * Parses engine CLI options.
      *
      * @param args the raw CLI arguments
-     * @return the runtime selection
+     * @return the engine selection
      */
-    private static RuntimeSelection parse(String[] args)
+    private static EngineSelection parse(String[] args)
     {
       requireThat(args, "args").isNotNull();
 
-      AgentRuntime runtime = null;
+      AgentEngine engine = null;
       Optional<Path> codexHome = Optional.empty();
       List<String> strippedArgs = new ArrayList<>();
       for (int i = 0; i < args.length; ++i)
       {
         String arg = args[i];
-        if ("--runtime".equals(arg))
+        if ("--engine".equals(arg))
         {
           if (i + 1 >= args.length)
-            throw new IllegalArgumentException("--runtime requires claude or codex");
+            throw new IllegalArgumentException("--engine requires claude or codex");
           String value = args[i + 1];
           ++i;
-          runtime = switch (value)
+          engine = switch (value)
           {
-            case "claude" -> AgentRuntime.CLAUDE;
-            case "codex" -> AgentRuntime.CODEX;
-            default -> throw new IllegalArgumentException("--runtime requires claude or codex, got: " + value);
+            case "claude" -> AgentEngine.CLAUDE;
+            case "codex" -> AgentEngine.CODEX;
+            default -> throw new IllegalArgumentException("--engine requires claude or codex, got: " + value);
           };
         }
         else if ("--codex-home".equals(arg))
@@ -3050,11 +3050,11 @@ public final class SessionAnalyzer
         else
           strippedArgs.add(arg);
       }
-      if (runtime == null)
-        throw new IllegalArgumentException("--runtime claude or --runtime codex is required");
-      if (runtime != AgentRuntime.CODEX && codexHome.isPresent())
-        throw new IllegalArgumentException("--codex-home may only be used with --runtime codex");
-      return new RuntimeSelection(runtime, codexHome, strippedArgs.toArray(String[]::new));
+      if (engine == null)
+        throw new IllegalArgumentException("--engine claude or --engine codex is required");
+      if (engine != AgentEngine.CODEX && codexHome.isPresent())
+        throw new IllegalArgumentException("--codex-home may only be used with --engine codex");
+      return new EngineSelection(engine, codexHome, strippedArgs.toArray(String[]::new));
     }
   }
 

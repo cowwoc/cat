@@ -40,22 +40,22 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 final class SprtIsolationManager
 {
   private final CliTool scope;
-  private final String runtimeId;
+  private final String engineId;
 
   /**
    * Creates a new SprtIsolationManager.
    *
    * @param scope the active plugin scope providing JSON mapper and other services
-   * @param runtimeId the active runtime identifier
-   * @throws NullPointerException if {@code scope} or {@code runtimeId} are null
-   * @throws IllegalArgumentException if {@code runtimeId} is blank
+   * @param engineId the active engine identifier
+   * @throws NullPointerException if {@code scope} or {@code engineId} are null
+   * @throws IllegalArgumentException if {@code engineId} is blank
    */
-  SprtIsolationManager(CliTool scope, String runtimeId)
+  SprtIsolationManager(CliTool scope, String engineId)
   {
     requireThat(scope, "scope").isNotNull();
-    requireThat(runtimeId, "runtimeId").isNotBlank();
+    requireThat(engineId, "engineId").isNotBlank();
     this.scope = scope;
-    this.runtimeId = runtimeId;
+    this.engineId = engineId;
   }
 
   /**
@@ -76,9 +76,9 @@ final class SprtIsolationManager
     requireThat(args, "args").isNotNull();
     if (args.length != 3)
       throw new IllegalArgumentException(
-        "InstructionTestRunner create-isolation-branch: expected 3 arguments " +
+        "SprtRunner create-isolation-branch: expected 3 arguments " +
         "<worktree_path> <test_dir> <issue_name>, got " + args.length + ".\n" +
-        "Usage: instruction-test-runner create-isolation-branch " +
+        "Usage: sprt-runner create-isolation-branch " +
         "<worktree_path> <test_dir> <issue_name>");
 
     Path worktreePath = Path.of(args[0]);
@@ -89,7 +89,7 @@ final class SprtIsolationManager
     ProcessRunner.Result statusResult = ProcessRunner.run(worktreePath, "git", "status", "--porcelain");
     if (!statusResult.output().isBlank())
       throw new IOException(
-        "InstructionTestRunner create-isolation-branch: worktree has uncommitted changes in " +
+        "SprtRunner create-isolation-branch: worktree has uncommitted changes in " +
         worktreePath + ". Commit or stash all changes before creating the isolation branch.\n" +
         "Uncommitted changes:\n" + statusResult.output());
 
@@ -112,7 +112,7 @@ final class SprtIsolationManager
     String originalBranch = branchResult.output().strip();
     if (originalBranch.isBlank())
       throw new IOException(
-        "InstructionTestRunner create-isolation-branch: git branch --show-current returned no output " +
+        "SprtRunner create-isolation-branch: git branch --show-current returned no output " +
         "in directory: " + worktreePath);
 
     String isolationBranch = issueName + "-isolation";
@@ -124,12 +124,12 @@ final class SprtIsolationManager
         "--orphan", isolationBranch);
       if (orphanResult.exitCode() != 0)
         throw new IOException(
-          "InstructionTestRunner create-isolation-branch: git checkout --orphan failed with exit code " +
+          "SprtRunner create-isolation-branch: git checkout --orphan failed with exit code " +
           orphanResult.exitCode() + ": " + orphanResult.output());
 
       // For each file, call extract-turns binary on a stripped temporary copy
       Path extractTurnsBin = worktreePath.resolve("client/distribution/target/jlink").
-        resolve(runtimeId).resolve("bin/extract-turns");
+        resolve(engineId).resolve("bin/extract-turns");
       if (Files.notExists(extractTurnsBin))
         extractTurnsBin = scope.getPluginRoot().resolve("client/bin/extract-turns");
       for (Path mdFile : mdFiles)
@@ -147,7 +147,7 @@ final class SprtIsolationManager
             extractTurnsBin.toString(), strippedInput.toString(), outputBase.toString());
           if (extractResult.exitCode() != 0)
             throw new IOException(
-              "InstructionTestRunner create-isolation-branch: extract-turns failed for " + mdFile +
+              "SprtRunner create-isolation-branch: extract-turns failed for " + mdFile +
               " with exit code " + extractResult.exitCode() + ": " + extractResult.output());
         }
         finally
@@ -172,14 +172,14 @@ final class SprtIsolationManager
       ProcessRunner.Result addResult = ProcessRunner.run(worktreePath, "git", "add", "-A");
       if (addResult.exitCode() != 0)
         throw new IOException(
-          "InstructionTestRunner create-isolation-branch: git add -A failed with exit code " +
+          "SprtRunner create-isolation-branch: git add -A failed with exit code " +
           addResult.exitCode() + ": " + addResult.output());
 
       ProcessRunner.Result commitResult = ProcessRunner.run(worktreePath, "git", "commit",
         "-m", "test-runner workspace");
       if (commitResult.exitCode() != 0)
         throw new IOException(
-          "InstructionTestRunner create-isolation-branch: git commit failed with exit code " +
+          "SprtRunner create-isolation-branch: git commit failed with exit code " +
           commitResult.exitCode() + ": " + commitResult.output());
     }
     finally
@@ -224,10 +224,10 @@ final class SprtIsolationManager
     requireThat(args, "args").isNotNull();
     if (args.length != 4)
       throw new IllegalArgumentException(
-        "InstructionTestRunner create-runner-worktrees: expected 4 arguments " +
+        "SprtRunner create-runner-worktrees: expected 4 arguments " +
         "<worktree_path> <sprt_state_path> <issue_name> <session_id>, got " +
         args.length + ".\n" +
-        "Usage: instruction-test-runner create-runner-worktrees " +
+        "Usage: sprt-runner create-runner-worktrees " +
         "<worktree_path> <sprt_state_path> <issue_name> <session_id>");
 
     Path worktreePath = Path.of(args[0]);
@@ -237,7 +237,7 @@ final class SprtIsolationManager
 
     if (Files.notExists(sprtStatePath))
       throw new IllegalArgumentException(
-        "InstructionTestRunner create-runner-worktrees: state file not found: " + sprtStatePath);
+        "SprtRunner create-runner-worktrees: state file not found: " + sprtStatePath);
 
     // Create the output directory for this session's test run JSON files
     Path outputDir = worktreePath.resolve(".cat/work/test-runs").resolve(sessionId);
@@ -269,7 +269,7 @@ final class SprtIsolationManager
           runnerWorktree, issueName + "-isolation");
         if (worktreeResult.exitCode() != 0)
           throw new IOException(
-            "InstructionTestRunner create-runner-worktrees: git worktree add failed for " +
+            "SprtRunner create-runner-worktrees: git worktree add failed for " +
             tcId + " with exit code " + worktreeResult.exitCode() + ": " + worktreeResult.output());
 
         // Copy jlink directory from the issue worktree to the runner worktree so that
@@ -313,9 +313,9 @@ final class SprtIsolationManager
     requireThat(args, "args").isNotNull();
     if (args.length != 2)
       throw new IllegalArgumentException(
-        "InstructionTestRunner remove-runner-worktrees: expected 2 arguments " +
+        "SprtRunner remove-runner-worktrees: expected 2 arguments " +
         "<worktree_path> <issue_name>, got " + args.length + ".\n" +
-        "Usage: instruction-test-runner remove-runner-worktrees <worktree_path> <issue_name>");
+        "Usage: sprt-runner remove-runner-worktrees <worktree_path> <issue_name>");
 
     Path worktreePath = Path.of(args[0]);
     String issueName = args[1];
@@ -367,14 +367,14 @@ final class SprtIsolationManager
         "git", "worktree", "remove", "--force", wtPath);
       if (removeResult.exitCode() != 0)
         throw new IOException(
-          "InstructionTestRunner remove-runner-worktrees: git worktree remove failed for " +
+          "SprtRunner remove-runner-worktrees: git worktree remove failed for " +
           wtPath + " with exit code " + removeResult.exitCode() + ": " + removeResult.output());
 
       ProcessRunner.Result deleteBranchResult = ProcessRunner.run(worktreePath,
         "git", "branch", "-D", branch);
       if (deleteBranchResult.exitCode() != 0)
         throw new IOException(
-          "InstructionTestRunner remove-runner-worktrees: git branch -D failed for " +
+          "SprtRunner remove-runner-worktrees: git branch -D failed for " +
           branch + " with exit code " + deleteBranchResult.exitCode() + ": " +
           deleteBranchResult.output());
 
@@ -403,9 +403,9 @@ final class SprtIsolationManager
     requireThat(args, "args").isNotNull();
     if (args.length != 2)
       throw new IllegalArgumentException(
-        "InstructionTestRunner remove-isolation-branch: expected 2 arguments " +
+        "SprtRunner remove-isolation-branch: expected 2 arguments " +
         "<worktree_path> <isolation_branch>, got " + args.length + ".\n" +
-        "Usage: instruction-test-runner remove-isolation-branch <worktree_path> <isolation_branch>");
+        "Usage: sprt-runner remove-isolation-branch <worktree_path> <isolation_branch>");
 
     Path worktreePath = Path.of(args[0]);
     String isolationBranch = args[1];
@@ -432,9 +432,9 @@ final class SprtIsolationManager
     requireThat(args, "args").isNotNull();
     if (args.length != 3)
       throw new IllegalArgumentException(
-        "InstructionTestRunner remove-runner-worktree: expected 3 arguments " +
+        "SprtRunner remove-runner-worktree: expected 3 arguments " +
         "<worktree_path> <runner_worktree> <runner_branch>, got " + args.length + ".\n" +
-        "Usage: instruction-test-runner remove-runner-worktree " +
+        "Usage: sprt-runner remove-runner-worktree " +
         "<worktree_path> <runner_worktree> <runner_branch>");
 
     Path worktreePath = Path.of(args[0]);
@@ -445,7 +445,7 @@ final class SprtIsolationManager
       "git", "worktree", "remove", "--force", runnerWorktree);
     if (removeResult.exitCode() != 0)
       throw new IOException(
-        "InstructionTestRunner remove-runner-worktree: git worktree remove failed for " +
+        "SprtRunner remove-runner-worktree: git worktree remove failed for " +
         runnerWorktree + " with exit code " + removeResult.exitCode() + ": " +
         removeResult.output());
 
@@ -471,14 +471,14 @@ final class SprtIsolationManager
     requireThat(args, "args").isNotNull();
     if (args.length != 1)
       throw new IllegalArgumentException(
-        "InstructionTestRunner check-run-contamination: expected 1 argument <stdout_file>, got " +
+        "SprtRunner check-run-contamination: expected 1 argument <stdout_file>, got " +
         args.length + ".\n" +
-        "Usage: instruction-test-runner check-run-contamination <stdout_file>");
+        "Usage: sprt-runner check-run-contamination <stdout_file>");
 
     Path stdoutFile = Path.of(args[0]);
     if (Files.notExists(stdoutFile))
       throw new IllegalArgumentException(
-        "InstructionTestRunner check-run-contamination: file not found: " + stdoutFile);
+        "SprtRunner check-run-contamination: file not found: " + stdoutFile);
 
     String content = Files.readString(stdoutFile, UTF_8);
     String lower = content.toLowerCase(Locale.ROOT);

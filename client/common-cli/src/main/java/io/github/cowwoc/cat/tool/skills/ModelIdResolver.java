@@ -163,7 +163,7 @@ public final class ModelIdResolver
 
   /**
    * Detects the Claude Code version, falling back to the latest known mapping if {@code claude} is
-   * unavailable in the current runtime.
+   * unavailable in the current engine.
    *
    * @return a Claude Code version string suitable for model-id resolution
    */

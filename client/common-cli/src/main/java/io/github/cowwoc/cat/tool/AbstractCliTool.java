@@ -8,8 +8,8 @@ package io.github.cowwoc.cat.tool;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.agent.AbstractRuntimeScope;
-import io.github.cowwoc.cat.agent.AgentRuntime;
+import io.github.cowwoc.cat.agent.AbstractEngineScope;
+import io.github.cowwoc.cat.agent.AgentEngine;
 import io.github.cowwoc.pouch10.core.ConcurrentLazyReference;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 
@@ -21,18 +21,18 @@ import java.util.function.Function;
 /**
  * Shared base implementation for CLI scopes.
  * <p>
- * Runtime-specific subclasses provide resolved plugin descriptor and rule directory values.
+ * Engine-specific subclasses provide resolved plugin descriptor and rule directory values.
  * <p>
  * <b>Thread Safety:</b> This class is thread-safe.
  */
-public abstract class AbstractCliTool extends AbstractRuntimeScope implements CliTool
+public abstract class AbstractCliTool extends AbstractEngineScope implements CliTool
 {
   /**
    * Resolved session ID derived by this scope.
    */
   private final String sessionId;
   /**
-   * Resolved runtime config directory derived by this scope.
+   * Resolved engine config directory derived by this scope.
    */
   private final Path configPath;
   /**
@@ -66,17 +66,17 @@ public abstract class AbstractCliTool extends AbstractRuntimeScope implements Cl
   }
 
   /**
-   * Creates a new CLI scope by deriving values for a specific runtime.
+   * Creates a new CLI scope by deriving values for a specific engine.
    *
-   * @param runtime the runtime to derive values for
+   * @param engine the engine to derive values for
    * @param environment resolves environment variable names to values
    * @param systemProperty resolves system property names to values
    * @param workDir the process working directory
    */
-  protected AbstractCliTool(AgentRuntime runtime, Function<String, String> environment,
+  protected AbstractCliTool(AgentEngine engine, Function<String, String> environment,
     Function<String, String> systemProperty, Path workDir)
   {
-    this(new CliScopeResolver(runtime, environment, systemProperty, workDir));
+    this(new CliScopeResolver(engine, environment, systemProperty, workDir));
   }
 
   /**
@@ -99,7 +99,7 @@ public abstract class AbstractCliTool extends AbstractRuntimeScope implements Cl
    * @param projectPath the project directory
    * @param pluginRoot the plugin root directory
    * @param pluginData the plugin data directory
-   * @param configPath the active runtime config directory
+   * @param configPath the active engine config directory
    * @param pluginDescriptor the plugin descriptor path relative to the plugin root
    * @param ruleDirectories the ordered rule directories
    * @param pluginCacheDescriptor the plugin cache descriptor path relative to the plugin root, or {@code null}
@@ -165,13 +165,13 @@ public abstract class AbstractCliTool extends AbstractRuntimeScope implements Cl
   }
 
   /**
-   * Assembles resolved CLI scope values from focused runtime helpers.
+   * Assembles resolved CLI scope values from focused engine helpers.
    */
   private static final class CliScopeResolver
   {
-    private final AgentRuntime runtime;
+    private final AgentEngine engine;
     private final ExplicitValues values;
-    private final RuntimeValueResolver runtimeValues;
+    private final EngineValueResolver engineValues;
     private final Path workDir;
 
     /**
@@ -188,25 +188,25 @@ public abstract class AbstractCliTool extends AbstractRuntimeScope implements Cl
     }
 
     /**
-     * Creates a new resolver for a specific runtime.
+     * Creates a new resolver for a specific engine.
      *
-     * @param runtime the runtime to derive values for, or {@code null} to infer from context
+     * @param engine the engine to derive values for, or {@code null} to infer from context
      * @param environment resolves environment variable names to values
      * @param systemProperty resolves system property names to values
      * @param workDir the process working directory
      */
-    private CliScopeResolver(AgentRuntime runtime, Function<String, String> environment,
+    private CliScopeResolver(AgentEngine engine, Function<String, String> environment,
       Function<String, String> systemProperty, Path workDir)
     {
       requireThat(workDir, "workDir").isNotNull();
       this.values = new ExplicitValues(environment, systemProperty);
       this.workDir = workDir;
-      RuntimeDetector runtimeDetector = new RuntimeDetector(values);
-      if (runtime == null)
-        this.runtime = runtimeDetector.resolveRuntime();
+      EngineDetector engineDetector = new EngineDetector(values);
+      if (engine == null)
+        this.engine = engineDetector.resolveEngine();
       else
-        this.runtime = runtime;
-      this.runtimeValues = new RuntimeValueResolver(this.runtime, values, workDir);
+        this.engine = engine;
+      this.engineValues = new EngineValueResolver(this.engine, values, workDir);
     }
 
     /**
@@ -216,7 +216,7 @@ public abstract class AbstractCliTool extends AbstractRuntimeScope implements Cl
      */
     private String sessionId()
     {
-      return runtimeValues.sessionId();
+      return engineValues.sessionId();
     }
 
     /**
@@ -226,7 +226,7 @@ public abstract class AbstractCliTool extends AbstractRuntimeScope implements Cl
      */
     private Path projectPath()
     {
-      return runtimeValues.projectPath();
+      return engineValues.projectPath();
     }
 
     /**
@@ -236,7 +236,7 @@ public abstract class AbstractCliTool extends AbstractRuntimeScope implements Cl
      */
     private Path pluginRoot()
     {
-      return runtimeValues.pluginRoot();
+      return engineValues.pluginRoot();
     }
 
     /**
@@ -246,17 +246,17 @@ public abstract class AbstractCliTool extends AbstractRuntimeScope implements Cl
      */
     private Path pluginData()
     {
-      return runtimeValues.pluginData();
+      return engineValues.pluginData();
     }
 
     /**
-     * Returns the resolved runtime config directory.
+     * Returns the resolved engine config directory.
      *
-     * @return the runtime config directory
+     * @return the engine config directory
      */
     private Path configPath()
     {
-      return runtimeValues.configPath();
+      return engineValues.configPath();
     }
 
     /**
@@ -266,7 +266,7 @@ public abstract class AbstractCliTool extends AbstractRuntimeScope implements Cl
      */
     private Path pluginDescriptor()
     {
-      return runtime.pluginDescriptor();
+      return engine.pluginDescriptor();
     }
 
     /**
@@ -276,7 +276,7 @@ public abstract class AbstractCliTool extends AbstractRuntimeScope implements Cl
      */
     private List<Path> ruleDirectories()
     {
-      return runtime.ruleDirectories(projectPath(), pluginRoot());
+      return engine.ruleDirectories(projectPath(), pluginRoot());
     }
 
     /**
@@ -286,7 +286,7 @@ public abstract class AbstractCliTool extends AbstractRuntimeScope implements Cl
      */
     private Path pluginCacheDescriptor()
     {
-      return runtime.pluginCacheDescriptor();
+      return engine.pluginCacheDescriptor();
     }
 
     /**
@@ -321,70 +321,70 @@ public abstract class AbstractCliTool extends AbstractRuntimeScope implements Cl
   }
 
   /**
-   * Detects the active runtime from runtime harness and CAT fallback values.
+   * Detects the active engine from engine harness and CAT fallback values.
    */
-  private static final class RuntimeDetector
+  private static final class EngineDetector
   {
     private final ExplicitValues values;
 
     /**
-     * Creates a new runtime detector.
+     * Creates a new engine detector.
      *
      * @param values the explicit value reader
      */
-    private RuntimeDetector(ExplicitValues values)
+    private EngineDetector(ExplicitValues values)
     {
       this.values = values;
     }
 
     /**
-     * Resolves the active runtime.
+     * Resolves the active engine.
      *
-     * @return the active runtime
+     * @return the active engine
      */
-    private AgentRuntime resolveRuntime()
+    private AgentEngine resolveEngine()
     {
       boolean hasClaudeHarness = values.hasEnvironmentValue("CLAUDE_SESSION_ID", "CLAUDE_PROJECT_DIR",
         "CLAUDE_PLUGIN_ROOT", "CLAUDE_PLUGIN_DATA", "CLAUDE_CONFIG_DIR");
       boolean hasCodexHarness = values.hasEnvironmentValue("CODEX_THREAD_ID", "CODEX_HOME") ||
         values.looksLikeCodexLauncher();
-      String catRuntime = values.environmentValue("CAT_RUNTIME");
+      String catEngine = values.environmentValue("CAT_ENGINE");
       if (hasClaudeHarness && hasCodexHarness)
       {
-        if (catRuntime != null)
-          return AgentRuntime.fromId(catRuntime);
-        throw new AssertionError("Runtime harness is ambiguous: both Claude and Codex values are present; " +
-          "CAT_RUNTIME is required and must not be blank");
+        if (catEngine != null)
+          return AgentEngine.fromId(catEngine);
+        throw new AssertionError("Engine harness is ambiguous: both Claude and Codex values are present; " +
+          "CAT_ENGINE is required and must not be blank");
       }
       if (hasClaudeHarness)
-        return AgentRuntime.CLAUDE;
+        return AgentEngine.CLAUDE;
       if (hasCodexHarness)
-        return AgentRuntime.CODEX;
-      if (catRuntime != null)
-        return AgentRuntime.fromId(catRuntime);
-      throw new AssertionError("CAT_RUNTIME is required and must not be blank");
+        return AgentEngine.CODEX;
+      if (catEngine != null)
+        return AgentEngine.fromId(catEngine);
+      throw new AssertionError("CAT_ENGINE is required and must not be blank");
     }
   }
 
   /**
-   * Derives runtime-dependent CLI values from explicit runtime inputs.
+   * Derives engine-dependent CLI values from explicit engine inputs.
    */
-  private static final class RuntimeValueResolver
+  private static final class EngineValueResolver
   {
-    private final AgentRuntime runtime;
+    private final AgentEngine engine;
     private final ExplicitValues values;
     private final Path workDir;
 
     /**
-     * Creates a new runtime value resolver.
+     * Creates a new engine value resolver.
      *
-     * @param runtime the active runtime
+     * @param engine the active engine
      * @param values the explicit value reader
      * @param workDir the process working directory
      */
-    private RuntimeValueResolver(AgentRuntime runtime, ExplicitValues values, Path workDir)
+    private EngineValueResolver(AgentEngine engine, ExplicitValues values, Path workDir)
     {
-      this.runtime = runtime;
+      this.engine = engine;
       this.values = values;
       this.workDir = workDir;
     }
@@ -396,7 +396,7 @@ public abstract class AbstractCliTool extends AbstractRuntimeScope implements Cl
      */
     private String sessionId()
     {
-      String derivedSessionId = switch (runtime)
+      String derivedSessionId = switch (engine)
       {
         case CLAUDE -> values.environmentValue("CLAUDE_SESSION_ID");
         case CODEX -> values.environmentValue("CODEX_THREAD_ID");
@@ -414,9 +414,9 @@ public abstract class AbstractCliTool extends AbstractRuntimeScope implements Cl
     private Path projectPath()
     {
       String claudeProjectDir = values.environmentValue("CLAUDE_PROJECT_DIR");
-      if (runtime == AgentRuntime.CLAUDE && claudeProjectDir != null)
+      if (engine == AgentEngine.CLAUDE && claudeProjectDir != null)
         return Path.of(claudeProjectDir);
-      if (runtime == AgentRuntime.CODEX && values.hasEnvironmentValue("CODEX_THREAD_ID", "CODEX_HOME"))
+      if (engine == AgentEngine.CODEX && values.hasEnvironmentValue("CODEX_THREAD_ID", "CODEX_HOME"))
         return workDir.toAbsolutePath().normalize();
       return Path.of(values.requiredEnvironmentValue("CAT_PROJECT_DIR"));
     }
@@ -429,7 +429,7 @@ public abstract class AbstractCliTool extends AbstractRuntimeScope implements Cl
     private Path pluginRoot()
     {
       String claudePluginRoot = values.environmentValue("CLAUDE_PLUGIN_ROOT");
-      if (runtime == AgentRuntime.CLAUDE && claudePluginRoot != null)
+      if (engine == AgentEngine.CLAUDE && claudePluginRoot != null)
         return Path.of(claudePluginRoot);
       String explicitProperty = values.systemProperty("cat.plugin.root");
       if (explicitProperty != null)
@@ -451,9 +451,9 @@ public abstract class AbstractCliTool extends AbstractRuntimeScope implements Cl
     private Path pluginData()
     {
       String claudePluginData = values.environmentValue("CLAUDE_PLUGIN_DATA");
-      if (runtime == AgentRuntime.CLAUDE && claudePluginData != null)
+      if (engine == AgentEngine.CLAUDE && claudePluginData != null)
         return Path.of(claudePluginData);
-      if (runtime == AgentRuntime.CODEX)
+      if (engine == AgentEngine.CODEX)
       {
         String codexHome = values.environmentValue("CODEX_HOME");
         Path base;
@@ -467,23 +467,23 @@ public abstract class AbstractCliTool extends AbstractRuntimeScope implements Cl
     }
 
     /**
-     * Resolves the runtime config directory.
+     * Resolves the engine config directory.
      *
      * @return the config directory
      */
     private Path configPath()
     {
-      String runtimeConfig = switch (runtime)
+      String engineConfig = switch (engine)
       {
         case CLAUDE -> values.environmentValue("CLAUDE_CONFIG_DIR");
         case CODEX -> values.environmentValue("CODEX_HOME");
       };
-      if (runtimeConfig != null)
-        return Path.of(runtimeConfig);
+      if (engineConfig != null)
+        return Path.of(engineConfig);
       String catConfigDir = values.environmentValue("CAT_CONFIG_DIR");
       if (catConfigDir != null)
         return Path.of(catConfigDir);
-      return switch (runtime)
+      return switch (engine)
       {
         case CLAUDE -> userHome().resolve(".claude");
         case CODEX -> userHome().resolve(".codex");
@@ -522,7 +522,7 @@ public abstract class AbstractCliTool extends AbstractRuntimeScope implements Cl
     {
       requireThat(environment, "environment").isNotNull();
       requireThat(systemProperty, "systemProperty").isNotNull();
-      validateEnvironmentValues(environment, "CAT_RUNTIME", "CAT_SESSION_ID", "CAT_PROJECT_DIR",
+      validateEnvironmentValues(environment, "CAT_ENGINE", "CAT_SESSION_ID", "CAT_PROJECT_DIR",
         "CAT_PLUGIN_ROOT", "CAT_PLUGIN_DATA", "CAT_CONFIG_DIR");
       this.environment = environment;
       this.systemProperty = systemProperty;
@@ -638,7 +638,7 @@ public abstract class AbstractCliTool extends AbstractRuntimeScope implements Cl
     }
 
     /**
-     * Returns {@code true} if the launcher path indicates the Codex runtime.
+     * Returns {@code true} if the launcher path indicates the Codex engine.
      *
      * @return {@code true} if the launcher is Codex-specific
      */

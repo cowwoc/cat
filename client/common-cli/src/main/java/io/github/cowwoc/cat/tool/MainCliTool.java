@@ -6,16 +6,16 @@
  */
 package io.github.cowwoc.cat.tool;
 
-import io.github.cowwoc.cat.agent.AgentRuntime;
+import io.github.cowwoc.cat.agent.AgentEngine;
 
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Function;
 
 /**
- * Production implementation of a runtime-neutral CLI scope for shared CAT utilities.
+ * Production implementation of a engine-neutral CLI scope for shared CAT utilities.
  * <p>
- * Reads explicit {@code CAT_*} overrides when present, otherwise derives scope values from runtime
+ * Reads explicit {@code CAT_*} overrides when present, otherwise derives scope values from engine
  * harness variables and launcher context. Skills may keep {@code CAT_*} variables for LLM-visible
  * workflow decisions without exporting those aliases through to Java CLI processes.
  * <p>
@@ -24,7 +24,7 @@ import java.util.function.Function;
 public class MainCliTool extends AbstractCliTool
 {
   /**
-   * Creates a new runtime-neutral CLI scope.
+   * Creates a new engine-neutral CLI scope.
    */
   public MainCliTool()
   {
@@ -32,7 +32,7 @@ public class MainCliTool extends AbstractCliTool
   }
 
   /**
-   * Creates a new runtime-neutral CLI scope for tests.
+   * Creates a new engine-neutral CLI scope for tests.
    *
    * @param environment resolves environment variable names to values
    * @param workDir the process working directory
@@ -43,7 +43,7 @@ public class MainCliTool extends AbstractCliTool
   }
 
   /**
-   * Creates a new runtime-neutral CLI scope for tests.
+   * Creates a new engine-neutral CLI scope for tests.
    *
    * @param environment resolves environment variable names to values
    * @param systemProperty resolves system property names to values
@@ -56,17 +56,17 @@ public class MainCliTool extends AbstractCliTool
   }
 
   /**
-   * Creates a new CLI scope by deriving values for a specific runtime.
+   * Creates a new CLI scope by deriving values for a specific engine.
    *
-   * @param runtime the runtime to derive values for
+   * @param engine the engine to derive values for
    * @param environment resolves environment variable names to values
    * @param systemProperty resolves system property names to values
    * @param workDir the process working directory
    */
-  protected MainCliTool(AgentRuntime runtime, Function<String, String> environment,
+  protected MainCliTool(AgentEngine engine, Function<String, String> environment,
     Function<String, String> systemProperty, Path workDir)
   {
-    super(runtime, environment, systemProperty, workDir);
+    super(engine, environment, systemProperty, workDir);
   }
 
   /**
@@ -76,7 +76,7 @@ public class MainCliTool extends AbstractCliTool
    * @param projectPath the project directory
    * @param pluginRoot the plugin root directory
    * @param pluginData the plugin data directory
-   * @param configPath the active runtime config directory
+   * @param configPath the active engine config directory
    * @param pluginDescriptor the plugin descriptor path relative to the plugin root
    * @param ruleDirectories the ordered rule directories
    * @param pluginCacheDescriptor the plugin cache descriptor path relative to the plugin root, or {@code null}

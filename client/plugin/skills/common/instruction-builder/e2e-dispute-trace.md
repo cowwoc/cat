@@ -31,7 +31,7 @@ documenting the expected end-to-end behavior of the blue-team dispute mechanism.
       "id": "RT-1",
       "severity": "HIGH",
       "description": "The skill references ${WORKTREE_PATH} but this variable is not available in the \
-plugin execution environment. Commit operations will fail at runtime because the worktree root cannot be \
+plugin execution environment. Commit operations will fail at engine because the worktree root cannot be \
 resolved.",
       "location": "SKILL.md line 12"
     }
@@ -70,7 +70,7 @@ The red-team's claim that the variable is unavailable is factually incorrect.
       "id": "RT-1",
       "severity": "HIGH",
       "false_premise": "Red-team claimed ${WORKTREE_PATH} is not available in the plugin execution \
-environment and that commit operations will fail at runtime.",
+environment and that commit operations will fail at engine.",
       "evidence": "WORKTREE_PATH is a documented built-in variable injected by the plugin at skill \
 invocation time. See plugin/concepts/skill-loading.md § Built-in Variables: \
 [CAT_PLUGIN_ROOT, CAT_SESSION_ID, CAT_PROJECT_DIR, WORKTREE_PATH]. The variable is \
@@ -129,7 +129,7 @@ RT-1 entry in `findings.json` and writes the updated file.
       "id": "RT-1",
       "severity": "HIGH",
       "false_premise": "Red-team claimed ${WORKTREE_PATH} is not available in the plugin execution \
-environment and that commit operations will fail at runtime.",
+environment and that commit operations will fail at engine.",
       "evidence": "WORKTREE_PATH is a documented built-in variable injected by the plugin at skill \
 invocation time. See plugin/concepts/skill-loading.md § Built-in Variables: \
 [CAT_PLUGIN_ROOT, CAT_SESSION_ID, CAT_PROJECT_DIR, WORKTREE_PATH]. The variable is \
@@ -183,7 +183,7 @@ finding RT-1 has already been evaluated. Red-team returns an updated `findings.j
       "id": "RT-1",
       "severity": "HIGH",
       "false_premise": "Red-team claimed ${WORKTREE_PATH} is not available in the plugin execution \
-environment and that commit operations will fail at runtime.",
+environment and that commit operations will fail at engine.",
       "evidence": "WORKTREE_PATH is a documented built-in variable injected by the plugin at skill \
 invocation time. See plugin/concepts/skill-loading.md § Built-in Variables: \
 [CAT_PLUGIN_ROOT, CAT_SESSION_ID, CAT_PROJECT_DIR, WORKTREE_PATH]. The variable is \

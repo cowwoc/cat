@@ -332,7 +332,7 @@ cause_signature: "<cause_type>:<barrier_type>:<context>"
 | `compliance_failure` | Agent knew the rule but did not follow it |
 | `knowledge_gap` | Agent lacked information needed to act correctly |
 | `tool_limitation` | Tool could not perform the needed operation |
-| `environment_mismatch` | Runtime state (cwd, branch, config) did not match expectation |
+| `environment_mismatch` | Engine state (cwd, branch, config) did not match expectation |
 | `context_degradation` | Long session caused agent to lose track of earlier constraints |
 | `architectural_conflict` | Task requires the agent to fight its own training |
 

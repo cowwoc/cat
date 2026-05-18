@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.client.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.agent.AgentRuntime;
+import io.github.cowwoc.cat.agent.AgentEngine;
 import io.github.cowwoc.cat.tool.CliEnvironment;
 import io.github.cowwoc.cat.tool.MainCliTool;
 import org.testng.annotations.DataProvider;
@@ -39,18 +39,18 @@ public final class MainCliToolTest
   }
 
   /**
-   * Verifies the Claude runtime metadata used by shared CLI scope construction.
+   * Verifies the Claude engine metadata used by shared CLI scope construction.
    */
   @Test
-  public void claudeRuntimeMetadata()
+  public void claudeEngineMetadata()
   {
     Path project = Path.of("/workspace/project");
     Path pluginRoot = Path.of("/workspace/plugin");
 
-    requireThat(AgentRuntime.CLAUDE.pluginDescriptor(), "pluginDescriptor").
+    requireThat(AgentEngine.CLAUDE.pluginDescriptor(), "pluginDescriptor").
       isEqualTo(Path.of(".claude-plugin/plugin.json"));
-    requireThat(AgentRuntime.CLAUDE.pluginCacheDescriptor(), "pluginCacheDescriptor").isNull();
-    requireThat(AgentRuntime.CLAUDE.ruleDirectories(project, pluginRoot), "ruleDirectories").isEqualTo(List.of(
+    requireThat(AgentEngine.CLAUDE.pluginCacheDescriptor(), "pluginCacheDescriptor").isNull();
+    requireThat(AgentEngine.CLAUDE.ruleDirectories(project, pluginRoot), "ruleDirectories").isEqualTo(List.of(
       pluginRoot.resolve("rules/common"),
       pluginRoot.resolve("rules/claude"),
       project.resolve(".cat/rules/common"),
@@ -59,19 +59,19 @@ public final class MainCliToolTest
   }
 
   /**
-   * Verifies the Codex runtime metadata used by shared CLI scope construction.
+   * Verifies the Codex engine metadata used by shared CLI scope construction.
    */
   @Test
-  public void codexRuntimeMetadata()
+  public void codexEngineMetadata()
   {
     Path project = Path.of("/workspace/project");
     Path pluginRoot = Path.of("/workspace/plugin");
 
-    requireThat(AgentRuntime.CODEX.pluginDescriptor(), "pluginDescriptor").
+    requireThat(AgentEngine.CODEX.pluginDescriptor(), "pluginDescriptor").
       isEqualTo(Path.of(".codex-plugin/plugin.json"));
-    requireThat(AgentRuntime.CODEX.pluginCacheDescriptor(), "pluginCacheDescriptor").
+    requireThat(AgentEngine.CODEX.pluginCacheDescriptor(), "pluginCacheDescriptor").
       isEqualTo(Path.of(".codex-plugin/plugin.json"));
-    requireThat(AgentRuntime.CODEX.ruleDirectories(project, pluginRoot), "ruleDirectories").isEqualTo(List.of(
+    requireThat(AgentEngine.CODEX.ruleDirectories(project, pluginRoot), "ruleDirectories").isEqualTo(List.of(
       pluginRoot.resolve("rules/common"),
       pluginRoot.resolve("rules/codex"),
       project.resolve(".cat/rules/common"),
@@ -104,7 +104,7 @@ public final class MainCliToolTest
       environment.put("CAT_PLUGIN_ROOT", pluginRoot.toString());
       environment.put("CAT_PLUGIN_DATA", pluginData.toString());
       environment.put("CAT_CONFIG_DIR", root.resolve("cat-config").toString());
-      environment.put("CAT_RUNTIME", "codex");
+      environment.put("CAT_ENGINE", "codex");
       environment.put("TZ", "America/New_York");
       Map<String, String> properties = Map.of("user.home", userHome.toString());
 
@@ -127,41 +127,41 @@ public final class MainCliToolTest
   }
 
   /**
-   * Provides mixed-case runtime values.
+   * Provides mixed-case engine values.
    *
-   * @return mixed-case runtime values and expected descriptors
+   * @return mixed-case engine values and expected descriptors
    */
   @DataProvider
-  public Object[][] mixedCaseRuntimes()
+  public Object[][] mixedCaseEngines()
   {
     return new Object[][]
     {
-      {"ClAuDe", AgentRuntime.CLAUDE},
-      {"CoDeX", AgentRuntime.CODEX}
+      {"ClAuDe", AgentEngine.CLAUDE},
+      {"CoDeX", AgentEngine.CODEX}
     };
   }
 
   /**
-   * Verifies that CAT_RUNTIME matching is case-insensitive for all supported runtimes.
+   * Verifies that CAT_ENGINE matching is case-insensitive for all supported engines.
    *
-   * @param runtimeId the mixed-case runtime identifier
-   * @param expectedRuntime the expected runtime
+   * @param engineId the mixed-case engine identifier
+   * @param expectedEngine the expected engine
    */
-  @Test(dataProvider = "mixedCaseRuntimes")
-  public void catRuntimeAcceptsMixedCase(String runtimeId, AgentRuntime expectedRuntime)
+  @Test(dataProvider = "mixedCaseEngines")
+  public void catEngineAcceptsMixedCase(String engineId, AgentEngine expectedEngine)
   {
     Map<String, String> environment = validCodexEnvironment();
-    environment.put("CAT_RUNTIME", runtimeId);
+    environment.put("CAT_ENGINE", engineId);
 
     try (MainCliTool scope = new MainCliTool(environment::get, Path.of("/tmp")))
     {
       requireThat(scope.getPluginDescriptor(), "pluginDescriptor").
-        isEqualTo(expectedRuntime.pluginDescriptor());
+        isEqualTo(expectedEngine.pluginDescriptor());
     }
   }
 
   /**
-   * Verifies that runtime harness values take precedence when CAT_* aliases are also present.
+   * Verifies that engine harness values take precedence when CAT_* aliases are also present.
    *
    * @throws Exception if file operations fail
    */
@@ -172,8 +172,8 @@ public final class MainCliToolTest
     try
     {
       Path catProject = root.resolve("cat-project");
-      Path catPluginRoot = root.resolve("cat-plugin");
-      Path catPluginData = root.resolve("cat-plugin-data");
+      Path catPluginRoot = root.resolve("client-plugin");
+      Path catPluginData = root.resolve("client-plugin-data");
       Path claudeProject = root.resolve("claude-project");
       Path claudePluginRoot = root.resolve("claude-plugin");
       Path claudePluginData = root.resolve("claude-plugin-data");
@@ -195,7 +195,7 @@ public final class MainCliToolTest
       environment.put("CLAUDE_PLUGIN_DATA", claudePluginData.toString());
       environment.put("CLAUDE_CONFIG_DIR", claudePluginData.resolve("claude-config").toString());
       environment.put("CAT_CONFIG_DIR", catPluginData.resolve("cat-config").toString());
-      environment.put("CAT_RUNTIME", "codex");
+      environment.put("CAT_ENGINE", "codex");
 
       try (MainCliTool scope = new MainCliTool(environment::get, root))
       {
@@ -206,7 +206,7 @@ public final class MainCliToolTest
         requireThat(scope.getConfigPath(), "configPath").
           isEqualTo(claudePluginData.resolve("claude-config"));
         requireThat(scope.getPluginDescriptor(), "pluginDescriptor").
-          isEqualTo(AgentRuntime.CLAUDE.pluginDescriptor());
+          isEqualTo(AgentEngine.CLAUDE.pluginDescriptor());
       }
     }
     finally
@@ -250,7 +250,7 @@ public final class MainCliToolTest
         requireThat(scope.getPluginData(), "pluginData").isEqualTo(pluginData);
         requireThat(scope.getConfigPath(), "configPath").isEqualTo(claudeConfig);
         requireThat(scope.getPluginDescriptor(), "pluginDescriptor").
-          isEqualTo(AgentRuntime.CLAUDE.pluginDescriptor());
+          isEqualTo(AgentEngine.CLAUDE.pluginDescriptor());
       }
     }
     finally
@@ -292,7 +292,7 @@ public final class MainCliToolTest
           isEqualTo(codexHome.resolve("plugins/data/cat-cat"));
         requireThat(scope.getConfigPath(), "configPath").isEqualTo(codexHome);
         requireThat(scope.getPluginDescriptor(), "pluginDescriptor").
-          isEqualTo(AgentRuntime.CODEX.pluginDescriptor());
+          isEqualTo(AgentEngine.CODEX.pluginDescriptor());
       }
     }
     finally
@@ -302,12 +302,12 @@ public final class MainCliToolTest
   }
 
   /**
-   * Verifies that the Codex launcher path can identify the runtime when runtime environment values are absent.
+   * Verifies that the Codex launcher path can identify the engine when engine environment values are absent.
    *
    * @throws Exception if file operations fail
    */
   @Test
-  public void codexLauncherContextSatisfiesRuntimeSelection() throws Exception
+  public void codexLauncherContextSatisfiesEngineSelection() throws Exception
   {
     Path root = Files.createTempDirectory("main-cli-tool-codex-launcher-");
     try
@@ -339,11 +339,11 @@ public final class MainCliToolTest
           isEqualTo(userHome.resolve(".codex/plugins/data/cat-cat"));
         requireThat(scope.getConfigPath(), "configPath").isEqualTo(userHome.resolve(".codex"));
         requireThat(scope.getPluginDescriptor(), "pluginDescriptor").
-          isEqualTo(AgentRuntime.CODEX.pluginDescriptor());
+          isEqualTo(AgentEngine.CODEX.pluginDescriptor());
         requireThat(scope.getRuleDirectories(), "ruleDirectories").
-          isEqualTo(AgentRuntime.CODEX.ruleDirectories(project, pluginRoot));
+          isEqualTo(AgentEngine.CODEX.ruleDirectories(project, pluginRoot));
         requireThat(scope.getPluginCacheDescriptor(), "pluginCacheDescriptor").
-          isEqualTo(AgentRuntime.CODEX.pluginCacheDescriptor());
+          isEqualTo(AgentEngine.CODEX.pluginCacheDescriptor());
       }
     }
     finally
@@ -353,11 +353,11 @@ public final class MainCliToolTest
   }
 
   /**
-   * Verifies that mixed runtime harness values fail fast unless the runtime is explicitly disambiguated.
+   * Verifies that mixed engine harness values fail fast unless the engine is explicitly disambiguated.
    */
   @Test(expectedExceptions = AssertionError.class,
-    expectedExceptionsMessageRegExp = "(?s).*Runtime harness is ambiguous.*CAT_RUNTIME is required.*")
-  public void mixedRuntimeHarnessValuesRequireExplicitRuntime()
+    expectedExceptionsMessageRegExp = "(?s).*Engine harness is ambiguous.*CAT_ENGINE is required.*")
+  public void mixedEngineHarnessValuesRequireExplicitEngine()
   {
     Map<String, String> environment = new HashMap<>();
     environment.put("CLAUDE_SESSION_ID", "claude-session");
@@ -371,33 +371,33 @@ public final class MainCliToolTest
   }
 
   /**
-   * Provides explicit runtime disambiguation cases.
+   * Provides explicit engine disambiguation cases.
    *
-   * @return runtime IDs and expected runtimes
+   * @return engine IDs and expected engines
    */
   @DataProvider
-  public Object[][] explicitRuntimeDisambiguation()
+  public Object[][] explicitEngineDisambiguation()
   {
     return new Object[][]
     {
-      {"claude", AgentRuntime.CLAUDE, "claude-session"},
-      {"codex", AgentRuntime.CODEX, "codex-session"}
+      {"claude", AgentEngine.CLAUDE, "claude-session"},
+      {"codex", AgentEngine.CODEX, "codex-session"}
     };
   }
 
   /**
-   * Verifies that {@code CAT_RUNTIME} disambiguates mixed runtime harness values.
+   * Verifies that {@code CAT_ENGINE} disambiguates mixed engine harness values.
    *
-   * @param runtimeId the explicit runtime ID
-   * @param expectedRuntime the expected runtime
+   * @param engineId the explicit engine ID
+   * @param expectedEngine the expected engine
    * @param expectedSessionId the expected session ID
    */
-  @Test(dataProvider = "explicitRuntimeDisambiguation")
-  public void catRuntimeDisambiguatesMixedRuntimeHarnessValues(String runtimeId,
-    AgentRuntime expectedRuntime, String expectedSessionId)
+  @Test(dataProvider = "explicitEngineDisambiguation")
+  public void catEngineDisambiguatesMixedEngineHarnessValues(String engineId,
+    AgentEngine expectedEngine, String expectedSessionId)
   {
     Map<String, String> environment = new HashMap<>();
-    environment.put("CAT_RUNTIME", runtimeId);
+    environment.put("CAT_ENGINE", engineId);
     environment.put("CLAUDE_SESSION_ID", "claude-session");
     environment.put("CLAUDE_PROJECT_DIR", "/tmp/claude-project");
     environment.put("CLAUDE_PLUGIN_ROOT", "/tmp/claude-plugin");
@@ -411,7 +411,7 @@ public final class MainCliToolTest
     {
       requireThat(scope.getSessionId(), "sessionId").isEqualTo(expectedSessionId);
       requireThat(scope.getPluginDescriptor(), "pluginDescriptor").
-        isEqualTo(expectedRuntime.pluginDescriptor());
+        isEqualTo(expectedEngine.pluginDescriptor());
     }
   }
 
@@ -426,17 +426,17 @@ public final class MainCliToolTest
     environment.put("CAT_PROJECT_DIR", "/tmp/project");
     environment.put("CAT_PLUGIN_ROOT", "/tmp/plugin");
     environment.put("CAT_PLUGIN_DATA", "/tmp/plugin-data");
-    environment.put("CAT_RUNTIME", "codex");
+    environment.put("CAT_ENGINE", "codex");
     new MainCliTool(environment::get, Path.of("/tmp"));
   }
 
   /**
-   * Verifies that Codex runtime derives its config directory from CODEX_HOME when CAT_CONFIG_DIR is absent.
+   * Verifies that Codex engine derives its config directory from CODEX_HOME when CAT_CONFIG_DIR is absent.
    *
    * @throws Exception if file operations fail
    */
   @Test
-  public void codexRuntimeDerivesConfigDirFromCodexHome() throws Exception
+  public void codexEngineDerivesConfigDirFromCodexHome() throws Exception
   {
     Path root = Files.createTempDirectory("main-cli-tool-codex-config-");
     try
@@ -455,7 +455,7 @@ public final class MainCliToolTest
       environment.put("CAT_PROJECT_DIR", project.toString());
       environment.put("CAT_PLUGIN_ROOT", pluginRoot.toString());
       environment.put("CAT_PLUGIN_DATA", pluginData.toString());
-      environment.put("CAT_RUNTIME", "codex");
+      environment.put("CAT_ENGINE", "codex");
       environment.put("CODEX_HOME", codexHome.toString());
 
       try (MainCliTool scope = new MainCliTool(environment::get, root))
@@ -470,12 +470,12 @@ public final class MainCliToolTest
   }
 
   /**
-   * Verifies that Codex runtime falls back to {@code CAT_CONFIG_DIR} when {@code CODEX_HOME} is absent.
+   * Verifies that Codex engine falls back to {@code CAT_CONFIG_DIR} when {@code CODEX_HOME} is absent.
    *
    * @throws Exception if file operations fail
    */
   @Test
-  public void codexRuntimeUsesCatConfigDirWhenCodexHomeIsAbsent() throws Exception
+  public void codexEngineUsesCatConfigDirWhenCodexHomeIsAbsent() throws Exception
   {
     Path root = Files.createTempDirectory("main-cli-tool-codex-cat-config-");
     try
@@ -495,7 +495,7 @@ public final class MainCliToolTest
       environment.put("CAT_PLUGIN_ROOT", pluginRoot.toString());
       environment.put("CAT_PLUGIN_DATA", pluginData.toString());
       environment.put("CAT_CONFIG_DIR", catConfig.toString());
-      environment.put("CAT_RUNTIME", "codex");
+      environment.put("CAT_ENGINE", "codex");
 
       try (MainCliTool scope = new MainCliTool(environment::get, root))
       {
@@ -509,12 +509,12 @@ public final class MainCliToolTest
   }
 
   /**
-   * Verifies that Claude runtime derives its config directory from CLAUDE_CONFIG_DIR when CAT_CONFIG_DIR is absent.
+   * Verifies that Claude engine derives its config directory from CLAUDE_CONFIG_DIR when CAT_CONFIG_DIR is absent.
    *
    * @throws Exception if file operations fail
    */
   @Test
-  public void claudeRuntimeDerivesConfigDirFromClaudeConfigDir() throws Exception
+  public void claudeEngineDerivesConfigDirFromClaudeConfigDir() throws Exception
   {
     Path root = Files.createTempDirectory("main-cli-tool-claude-config-");
     try
@@ -533,7 +533,7 @@ public final class MainCliToolTest
       environment.put("CAT_PROJECT_DIR", project.toString());
       environment.put("CAT_PLUGIN_ROOT", pluginRoot.toString());
       environment.put("CAT_PLUGIN_DATA", pluginData.toString());
-      environment.put("CAT_RUNTIME", "claude");
+      environment.put("CAT_ENGINE", "claude");
       environment.put("CLAUDE_CONFIG_DIR", claudeConfig.toString());
 
       try (MainCliTool scope = new MainCliTool(environment::get, root))
@@ -548,12 +548,12 @@ public final class MainCliToolTest
   }
 
   /**
-   * Verifies that Claude runtime defaults its config directory to {@code user.home/.claude}.
+   * Verifies that Claude engine defaults its config directory to {@code user.home/.claude}.
    *
    * @throws Exception if file operations fail
    */
   @Test
-  public void claudeRuntimeDefaultsConfigDirToUserHome() throws Exception
+  public void claudeEngineDefaultsConfigDirToUserHome() throws Exception
   {
     Path root = Files.createTempDirectory("main-cli-tool-claude-home-config-");
     try
@@ -572,7 +572,7 @@ public final class MainCliToolTest
       environment.put("CLAUDE_PROJECT_DIR", project.toString());
       environment.put("CLAUDE_PLUGIN_ROOT", pluginRoot.toString());
       environment.put("CLAUDE_PLUGIN_DATA", pluginData.toString());
-      environment.put("CAT_RUNTIME", "claude");
+      environment.put("CAT_ENGINE", "claude");
       Map<String, String> properties = Map.of("user.home", userHome.toString());
 
       try (MainCliTool scope = new MainCliTool(environment::get, properties::get, root))
@@ -587,12 +587,12 @@ public final class MainCliToolTest
   }
 
   /**
-   * Verifies that Codex runtime defaults its config directory to {@code user.home/.codex}.
+   * Verifies that Codex engine defaults its config directory to {@code user.home/.codex}.
    *
    * @throws Exception if file operations fail
    */
   @Test
-  public void codexRuntimeDefaultsConfigDirToUserHome() throws Exception
+  public void codexEngineDefaultsConfigDirToUserHome() throws Exception
   {
     Path root = Files.createTempDirectory("main-cli-tool-codex-home-config-");
     try
@@ -610,7 +610,7 @@ public final class MainCliToolTest
       Map<String, String> environment = new HashMap<>();
       environment.put("CODEX_THREAD_ID", "codex-session");
       environment.put("CAT_PLUGIN_DATA", pluginData.toString());
-      environment.put("CAT_RUNTIME", "codex");
+      environment.put("CAT_ENGINE", "codex");
       Map<String, String> properties = Map.of(
         "cat.launcher.dir", launcherDir.toString(),
         "user.home", userHome.toString());
@@ -627,12 +627,12 @@ public final class MainCliToolTest
   }
 
   /**
-   * Verifies that Codex runtime defaults its plugin data directory to {@code user.home/.codex/plugins/data/cat-cat}.
+   * Verifies that Codex engine defaults its plugin data directory to {@code user.home/.codex/plugins/data/cat-cat}.
    *
    * @throws Exception if file operations fail
    */
   @Test
-  public void codexRuntimeDefaultsPluginDataDirToUserHome() throws Exception
+  public void codexEngineDefaultsPluginDataDirToUserHome() throws Exception
   {
     Path root = Files.createTempDirectory("main-cli-tool-codex-home-plugin-data-");
     try
@@ -664,11 +664,11 @@ public final class MainCliToolTest
   }
 
   /**
-   * Verifies that shared CLI scopes fail fast when {@code CAT_RUNTIME} is absent.
+   * Verifies that shared CLI scopes fail fast when {@code CAT_ENGINE} is absent.
    */
   @Test(expectedExceptions = AssertionError.class,
-    expectedExceptionsMessageRegExp = "(?s).*CAT_RUNTIME is required and must not be blank.*")
-  public void missingRuntimeFailsFast()
+    expectedExceptionsMessageRegExp = "(?s).*CAT_ENGINE is required and must not be blank.*")
+  public void missingEngineFailsFast()
   {
     Map<String, String> environment = new HashMap<>();
     environment.put("CAT_SESSION_ID", "cat-session");
@@ -694,7 +694,7 @@ public final class MainCliToolTest
       {"CAT_PLUGIN_ROOT"},
       {"CAT_PLUGIN_DATA"},
       {"CAT_CONFIG_DIR"},
-      {"CAT_RUNTIME"}
+      {"CAT_ENGINE"}
     };
   }
 
@@ -717,12 +717,12 @@ public final class MainCliToolTest
   }
 
   /**
-   * Verifies that unsupported runtime values fail fast.
+   * Verifies that unsupported engine values fail fast.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp =
-      "(?s).*Unsupported CAT_RUNTIME: unsupported.*must be one of: claude, codex.*case-insensitive.*")
-  public void unsupportedRuntimeFailsFast()
+      "(?s).*Unsupported CAT_ENGINE: unsupported.*must be one of: claude, codex.*case-insensitive.*")
+  public void unsupportedEngineFailsFast()
   {
     Map<String, String> environment = new HashMap<>();
     environment.put("CAT_SESSION_ID", "cat-session");
@@ -730,12 +730,12 @@ public final class MainCliToolTest
     environment.put("CAT_PLUGIN_ROOT", "/tmp/plugin");
     environment.put("CAT_PLUGIN_DATA", "/tmp/plugin-data");
     environment.put("CAT_CONFIG_DIR", "/tmp/cat-config");
-    environment.put("CAT_RUNTIME", "unsupported");
+    environment.put("CAT_ENGINE", "unsupported");
     new MainCliTool(environment::get, Path.of("/tmp"));
   }
 
   /**
-   * Verifies that blank runtime config variables fail fast.
+   * Verifies that blank engine config variables fail fast.
    *
    * @throws Exception if file operations fail
    */
@@ -792,7 +792,7 @@ public final class MainCliToolTest
       environment.put("CAT_PLUGIN_ROOT", pluginRoot.toString());
       environment.put("CAT_PLUGIN_DATA", pluginData.toString());
       environment.put("CAT_CONFIG_DIR", catConfig.toString());
-      environment.put("CAT_RUNTIME", "codex");
+      environment.put("CAT_ENGINE", "codex");
       environment.put("CODEX_HOME", codexHome.toString());
 
       try (MainCliTool scope = new MainCliTool(environment::get, root))
@@ -807,7 +807,7 @@ public final class MainCliToolTest
   }
 
   /**
-   * Verifies that Claude runtime ignores CODEX_HOME while deriving shared CLI scope configuration.
+   * Verifies that Claude engine ignores CODEX_HOME while deriving shared CLI scope configuration.
    *
    * @throws Exception if file operations fail
    */
@@ -833,7 +833,7 @@ public final class MainCliToolTest
       environment.put("CAT_PROJECT_DIR", project.toString());
       environment.put("CAT_PLUGIN_ROOT", pluginRoot.toString());
       environment.put("CAT_PLUGIN_DATA", pluginData.toString());
-      environment.put("CAT_RUNTIME", "claude");
+      environment.put("CAT_ENGINE", "claude");
       environment.put("CODEX_HOME", codexHome.toString());
       environment.put("CLAUDE_CONFIG_DIR", claudeConfig.toString());
 
@@ -861,7 +861,7 @@ public final class MainCliToolTest
     environment.put("CAT_PLUGIN_ROOT", "/tmp/plugin");
     environment.put("CAT_PLUGIN_DATA", "/tmp/plugin-data");
     environment.put("CAT_CONFIG_DIR", "/tmp/cat-config");
-    environment.put("CAT_RUNTIME", "codex");
+    environment.put("CAT_ENGINE", "codex");
     return environment;
   }
 }

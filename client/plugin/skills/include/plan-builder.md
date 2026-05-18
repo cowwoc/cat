@@ -6,7 +6,7 @@ See LICENSE.md in the project root for license terms.
 
 Delegate plan building to the dedicated plan-builder agent.
 
-Use the runtime's native agent-spawning tool:
+Use the engine's native agent-spawning tool:
 
 - Codex: spawn `cat-plan-builder-agent` with isolated context (`fork_turns: "none"` when available).
 - Claude: spawn `cat:plan-builder-agent`.
@@ -16,4 +16,4 @@ revision context already known to the main agent. The spawned agent must read an
 `${CAT_PLUGIN_ROOT}/skills/plan-builder/first-use.md`.
 
 After the agent returns, report the plan path, whether it was created or revised, and any blockers. Do not build or
-revise the plan directly in the main agent unless the runtime cannot spawn the dedicated agent.
+revise the plan directly in the main agent unless the engine cannot spawn the dedicated agent.

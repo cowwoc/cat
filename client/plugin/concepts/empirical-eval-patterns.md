@@ -6,7 +6,7 @@ See LICENSE.md in the project root for license terms.
 # Empirical Evaluation Patterns
 
 Reference patterns for structured grading, blind comparison, post-hoc analysis, and hypothesis-driven
-test design used by the `cat:empirical-test` skill.
+test design used by the `cat:spawn-engine` skill.
 
 ## Structured Grading Rubrics
 

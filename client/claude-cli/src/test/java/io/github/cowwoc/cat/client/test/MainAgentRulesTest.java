@@ -21,7 +21,7 @@ import java.util.List;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Tests for runtime-aware main-agent rule loading.
+ * Tests for engine-aware main-agent rule loading.
  */
 public final class MainAgentRulesTest
 {

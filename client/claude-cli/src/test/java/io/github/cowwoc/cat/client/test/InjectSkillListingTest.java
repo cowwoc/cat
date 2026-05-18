@@ -37,7 +37,7 @@ public final class InjectSkillListingTest
     {
       Path pluginsDir = tempDir.resolve("plugins");
       Files.createDirectories(pluginsDir);
-      Path catPluginDir = tempDir.resolve("cat-plugin");
+      Path catPluginDir = tempDir.resolve("client-plugin");
       Path helpSkillDir = catPluginDir.resolve("skills/common/help");
       Files.createDirectories(helpSkillDir);
       Files.writeString(helpSkillDir.resolve("SKILL.md"), """
@@ -87,7 +87,7 @@ public final class InjectSkillListingTest
     {
       Path pluginsDir = tempDir.resolve("plugins");
       Files.createDirectories(pluginsDir);
-      Path catPluginDir = tempDir.resolve("cat-plugin");
+      Path catPluginDir = tempDir.resolve("client-plugin");
       Path helpSkillDir = catPluginDir.resolve("skills/common/help");
       Files.createDirectories(helpSkillDir);
       Files.writeString(helpSkillDir.resolve("SKILL.md"), """
@@ -138,7 +138,7 @@ public final class InjectSkillListingTest
       // Create plugin structure with a core skill — but compact must not inject anything
       Path pluginsDir = tempDir.resolve("plugins");
       Files.createDirectories(pluginsDir);
-      Path catPluginDir = tempDir.resolve("cat-plugin");
+      Path catPluginDir = tempDir.resolve("client-plugin");
       Path helpSkillDir = catPluginDir.resolve("skills/common/help");
       Files.createDirectories(helpSkillDir);
       Files.writeString(helpSkillDir.resolve("SKILL.md"), """
@@ -188,7 +188,7 @@ public final class InjectSkillListingTest
       // Create plugin structure with a core skill — but resume must not inject anything
       Path pluginsDir = tempDir.resolve("plugins");
       Files.createDirectories(pluginsDir);
-      Path catPluginDir = tempDir.resolve("cat-plugin");
+      Path catPluginDir = tempDir.resolve("client-plugin");
       Path helpSkillDir = catPluginDir.resolve("skills/common/help");
       Files.createDirectories(helpSkillDir);
       Files.writeString(helpSkillDir.resolve("SKILL.md"), """
@@ -291,7 +291,7 @@ public final class InjectSkillListingTest
     {
       Path pluginsDir = tempDir.resolve("plugins");
       Files.createDirectories(pluginsDir);
-      Path catPluginDir = tempDir.resolve("cat-plugin-nodesc");
+      Path catPluginDir = tempDir.resolve("client-plugin-nodesc");
       // Use a core skill name but omit the description field
       Path skillDir = catPluginDir.resolve("skills/common/help");
       Files.createDirectories(skillDir);
@@ -342,7 +342,7 @@ public final class InjectSkillListingTest
     {
       Path pluginsDir = tempDir.resolve("plugins");
       Files.createDirectories(pluginsDir);
-      Path catPluginDir = tempDir.resolve("cat-plugin-invocable");
+      Path catPluginDir = tempDir.resolve("client-plugin-invocable");
       // Use a core skill name (help) with disable-model-invocation: false
       Path skillDir = catPluginDir.resolve("skills/common/help");
       Files.createDirectories(skillDir);
@@ -395,7 +395,7 @@ public final class InjectSkillListingTest
     {
       Path pluginsDir = tempDir.resolve("plugins");
       Files.createDirectories(pluginsDir);
-      Path catPluginDir = tempDir.resolve("cat-plugin-noat");
+      Path catPluginDir = tempDir.resolve("client-plugin-noat");
       Path skillDir = catPluginDir.resolve("skills/common/help");
       Files.createDirectories(skillDir);
       Files.writeString(skillDir.resolve("SKILL.md"), """

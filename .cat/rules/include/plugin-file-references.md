@@ -6,12 +6,12 @@ reference source-only paths that exist only in the developer's repository and ar
 ## Definitions
 
 **Deployed file** — Any file under `client/plugin/`. These files are packaged and installed on end-user machines via
-the plugin distribution. End users have access to them at runtime.
+the plugin distribution. End users have access to them at engine.
 
 **Source-only path** — Any path outside `client/plugin/` that exists only in the developer's repository. Common
 examples:
 
-- Runtime-specific project rule directories — developer-facing conventions and rules (not shipped to end users)
+- Engine-specific project rule directories — developer-facing conventions and rules (not shipped to end users)
 - `.cat/issues/` — Issue tracking artifacts (not shipped to end users)
 - `client/src/` — Java source files (compiled to binaries; source not shipped)
 - `docs/` — Project documentation (not shipped to end users)
@@ -22,10 +22,10 @@ examples:
 
 - A path in a `See <path>` instruction or note
 - A path in a `See also` cross-reference
-- A directive that reads a source-only file at runtime:
+- A directive that reads a source-only file at engine:
 
   ```
-  [runtime preprocessor directive that reads .cat/rules/common/foo.md]
+  [engine preprocessor directive that reads .cat/rules/common/foo.md]
   ```
 - An agent instruction like "Read `.cat/rules/common/foo.md` for details"
 
@@ -64,8 +64,8 @@ For hook registration details, see `.cat/rules/common/hooks.md`.   ← WRONG: .c
 | Rule audience | Correct location |
 |---------------|------------------|
 | End users (shipped to their machines) | `client/plugin/rules/common/` |
-| Plugin developers only (not shipped) | `.cat/rules/common/` or runtime-specific project rule directories |
-| Runtime-specific shipped rules | `client/plugin/rules/<runtime>/` |
+| Plugin developers only (not shipped) | `.cat/rules/common/` or engine-specific project rule directories |
+| Engine-specific shipped rules | `client/plugin/rules/<engine>/` |
 
-When a plugin file needs to document a convention that end users must follow across runtimes, add the rule to
+When a plugin file needs to document a convention that end users must follow across engines, add the rule to
 `client/plugin/rules/common/` and reference it from there. Do not point plugin files at project-local rule paths.

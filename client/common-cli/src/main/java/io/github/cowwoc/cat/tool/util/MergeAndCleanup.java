@@ -553,18 +553,18 @@ public final class MergeAndCleanup
   }
 
   /**
-   * Verifies cleanup will not delete the runtime context that is executing the cleanup.
+   * Verifies cleanup will not delete the engine context that is executing the cleanup.
    *
    * @param worktreePath the worktree that would be removed
    * @param pluginRoot the active plugin root
-   * @throws IOException if cleanup would remove the active runtime context
+   * @throws IOException if cleanup would remove the active engine context
    */
   private void guardAgainstSelfDeletingCleanup(String worktreePath, String pluginRoot) throws IOException
   {
     Path worktree = Path.of(worktreePath).toAbsolutePath().normalize();
     rejectInsideWorktree("plugin root", Path.of(pluginRoot), worktree);
     rejectInsideWorktree("current working directory", Path.of(System.getProperty("user.dir")), worktree);
-    rejectInsideWorktree("Java runtime", Path.of(System.getProperty("java.home")), worktree);
+    rejectInsideWorktree("Java engine", Path.of(System.getProperty("java.home")), worktree);
   }
 
   private void rejectInsideWorktree(String name, Path path, Path worktree) throws IOException

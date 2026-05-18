@@ -53,9 +53,9 @@ Each status includes evidence (file paths, line content, command output).
 Parse JSON arguments and run verify-audit to validate the issue and verify file specs from plan.md.
 
 ```bash
-CLIENT_BIN=$(find "${WORKTREE_PATH}/client" -path "*/target/jlink/${CAT_RUNTIME:-claude}/bin" -type d -print -quit)
+CLIENT_BIN=$(find "${WORKTREE_PATH}/client" -path "*/target/jlink/${CAT_ENGINE:-claude}/bin" -type d -print -quit)
 if [ ! -x "$CLIENT_BIN/verify-audit" ]; then
-  CLIENT_BIN=$(find "/workspace/client" -path "*/target/jlink/${CAT_RUNTIME:-claude}/bin" -type d -print -quit)
+  CLIENT_BIN=$(find "/workspace/client" -path "*/target/jlink/${CAT_ENGINE:-claude}/bin" -type d -print -quit)
 fi
 
 PREPARED=$(echo "${ARGUMENTS}" | "$CLIENT_BIN/verify-audit" prepare)
@@ -80,7 +80,7 @@ Display: "◆ Found {N} post-conditions"
 **Spawn verification agents:**
 
 For each post-condition criterion, spawn a verification agent using the Task tool with:
-- Use the runtime-native lightweight verification agent or default agent configured for the runtime.
+- Use the engine-native lightweight verification agent or default agent configured for the engine.
 - Do not set an inline model value in the skill prompt.
 - `prompt:` the verification prompt below
 

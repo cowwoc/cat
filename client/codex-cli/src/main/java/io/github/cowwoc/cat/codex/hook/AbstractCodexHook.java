@@ -8,8 +8,8 @@ package io.github.cowwoc.cat.codex.hook;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.agent.AbstractRuntimeScope;
-import io.github.cowwoc.cat.agent.AgentRuntime;
+import io.github.cowwoc.cat.agent.AbstractEngineScope;
+import io.github.cowwoc.cat.agent.AgentEngine;
 
 import java.nio.file.Path;
 
@@ -18,7 +18,7 @@ import java.nio.file.Path;
  * <p>
  * Centralizes Codex hook plugin paths shared by production and test hook scopes.
  */
-public abstract class AbstractCodexHook extends AbstractRuntimeScope
+public abstract class AbstractCodexHook extends AbstractEngineScope
 {
   /**
    * Creates a new Codex hook scope.
@@ -35,7 +35,7 @@ public abstract class AbstractCodexHook extends AbstractRuntimeScope
   }
 
   /**
-   * Creates a new Codex hook scope with explicit process-scoped runtime values.
+   * Creates a new Codex hook scope with explicit process-scoped engine values.
    *
    * @param projectPath the project directory path
    * @param pluginRoot the plugin root directory path
@@ -48,9 +48,9 @@ public abstract class AbstractCodexHook extends AbstractRuntimeScope
   protected AbstractCodexHook(Path projectPath, Path pluginRoot, Path pluginData, Path workDir,
     String timezone)
   {
-    super(projectPath, pluginRoot, pluginData, AgentRuntime.CODEX.pluginDescriptor(),
-      AgentRuntime.CODEX.ruleDirectories(projectPath, pluginRoot),
-      AgentRuntime.CODEX.pluginCacheDescriptor(), workDir, timezone);
+    super(projectPath, pluginRoot, pluginData, AgentEngine.CODEX.pluginDescriptor(),
+      AgentEngine.CODEX.ruleDirectories(projectPath, pluginRoot),
+      AgentEngine.CODEX.pluginCacheDescriptor(), workDir, timezone);
     requireThat(projectPath, "projectPath").isNotNull().isAbsolute();
     requireThat(pluginRoot, "pluginRoot").isNotNull().isAbsolute();
     requireThat(pluginData, "pluginData").isNotNull().isAbsolute();

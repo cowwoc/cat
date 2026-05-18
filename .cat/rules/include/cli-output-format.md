@@ -37,7 +37,7 @@ RUN_WORKTREES["${tc_id}"]=$(echo "${WORKTREES_RESULT}" | grep -o "{[^}]*\"tc_id\
 **Right — agent calls a CLI tool that returns a scalar:**
 ```bash
 # Agent delegates extraction to a Java subcommand; receives a plain scalar string
-RUN_WORKTREES["${tc_id}"]=$("${CAT_PLUGIN_DATA}/client/bin/instruction-test-runner" \
+RUN_WORKTREES["${tc_id}"]=$("${CAT_PLUGIN_DATA}/client/bin/sprt-runner" \
   get-worktree-field "${WORKTREES_RESULT}" "${tc_id}" "runner_worktree")
 ```
 
@@ -48,6 +48,6 @@ with no prefix or wrapping. The caller captures it via `$()`.
 
 ```bash
 # Returns the string value directly — no "name=..." prefix
-ORIGINAL_STEM=$("${CAT_PLUGIN_DATA}/client/bin/instruction-test-runner" \
+ORIGINAL_STEM=$("${CAT_PLUGIN_DATA}/client/bin/sprt-runner" \
   get-tc-name "${ISOLATION_RESULT}" "${tc_id}")
 ```

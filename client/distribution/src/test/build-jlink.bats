@@ -181,7 +181,7 @@ EOF
     done
 }
 
-@test "migrated shared launcher preserves direct class name at runtime" {
+@test "migrated shared launcher preserves direct class name at engine" {
     local test_output_dir="$OUTPUT_DIR"
     source "$BUILD_JLINK"
     OUTPUT_DIR="$test_output_dir"
@@ -203,32 +203,32 @@ EOF
         { echo "Expected direct class in java args. Got:"; cat "$OUTPUT_DIR/java-args.txt"; false; }
 }
 
-@test "runtime handler selection keeps common and runtime-only launchers separate" {
+@test "engine handler selection keeps common and engine-only launchers separate" {
     source "$BUILD_JLINK"
 
-    set_runtime_handlers claude
+    set_engine_handlers claude
     printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'token-counter:io.github.cowwoc.cat.tool.TokenCounter' || \
-        { echo "Expected common handler in Claude runtime"; false; }
-    printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'claude-runner:io.github.cowwoc.cat.tool.skills.ClaudeRunner' || \
+        { echo "Expected common handler in Claude engine"; false; }
+    printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'claude-runner:io.github.cowwoc.cat.claude.engine.ClaudeRunner' || \
         { echo "Expected Claude-only handler"; false; }
-    ! printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'codex-runner:io.github.cowwoc.cat.codex.hook.skills.CodexRunner' || \
-        { echo "Did not expect Codex-only handler in Claude runtime"; false; }
+    ! printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'codex-runner:io.github.cowwoc.cat.codex.engine.CodexRunner' || \
+        { echo "Did not expect Codex-only handler in Claude engine"; false; }
 
-    set_runtime_handlers codex
+    set_engine_handlers codex
     printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'token-counter:io.github.cowwoc.cat.tool.TokenCounter' || \
-        { echo "Expected common handler in Codex runtime"; false; }
-    printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'codex-runner:io.github.cowwoc.cat.codex.hook.skills.CodexRunner' || \
+        { echo "Expected common handler in Codex engine"; false; }
+    printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'codex-runner:io.github.cowwoc.cat.codex.engine.CodexRunner' || \
         { echo "Expected Codex-only handler"; false; }
-    ! printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'claude-runner:io.github.cowwoc.cat.tool.skills.ClaudeRunner' || \
-        { echo "Did not expect Claude-only handler in Codex runtime"; false; }
+    ! printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'claude-runner:io.github.cowwoc.cat.claude.engine.ClaudeRunner' || \
+        { echo "Did not expect Claude-only handler in Codex engine"; false; }
 }
 
-@test "codex runtime launcher registry avoids claude implementation entrypoints" {
+@test "codex engine launcher registry avoids claude implementation entrypoints" {
     local test_output_dir="$OUTPUT_DIR"
     source "$BUILD_JLINK"
     OUTPUT_DIR="$test_output_dir"
     MODULE_NAME="io.github.cowwoc.cat.codex.cli"
-    set_runtime_handlers codex
+    set_engine_handlers codex
     ENABLE_ASSERTIONS=false
     generate_launchers
 
@@ -351,7 +351,7 @@ EOF
         { echo "Named module should not be updated. Got:"; cat "$UPDATE_LOG"; false; }
 }
 
-@test "verify_image reports runtime-specific smoke launchers" {
+@test "verify_image reports engine-specific smoke launchers" {
     local test_output_dir="$OUTPUT_DIR"
     source "$BUILD_JLINK"
     OUTPUT_DIR="$test_output_dir"
@@ -416,7 +416,7 @@ EOF
     [ "$(grep -c 'update-branch' "$UPDATE_BRANCH_LOG")" -eq 2 ]
 }
 
-@test "generate_startup_archives uses runtime-specific AOT entrypoints and hook environment" {
+@test "generate_startup_archives uses engine-specific AOT entrypoints and hook environment" {
     local test_output_dir="$OUTPUT_DIR"
     source "$BUILD_JLINK"
     OUTPUT_DIR="$test_output_dir"
@@ -482,7 +482,7 @@ EOF
     done < "$AOT_LOG"
 }
 
-@test "generate_startup_archives reports runtime-specific AOT cache creation failures" {
+@test "generate_startup_archives reports engine-specific AOT cache creation failures" {
     local test_output_dir="$OUTPUT_DIR"
     source "$BUILD_JLINK"
     OUTPUT_DIR="$test_output_dir"
@@ -537,25 +537,25 @@ EOF
     [ "$status" -ne 0 ]
 }
 
-@test "runtime descriptor writer creates codex plugin descriptor with version" {
+@test "engine descriptor writer creates codex plugin descriptor with version" {
     local test_output_root
     test_output_root="$(mktemp -d)"
     source "$BUILD_JLINK"
     OUTPUT_ROOT="$test_output_root"
 
-    write_runtime_plugin_descriptors "2.1"
+    write_engine_plugin_descriptors "2.1"
 
     [ -f "$OUTPUT_ROOT/codex/.codex-plugin/plugin.json" ]
     grep -q '"version":"2.1"' "$OUTPUT_ROOT/codex/.codex-plugin/plugin.json"
 }
 
-@test "runtime descriptor writer creates claude plugin descriptor with version" {
+@test "engine descriptor writer creates claude plugin descriptor with version" {
     local test_output_root
     test_output_root="$(mktemp -d)"
     source "$BUILD_JLINK"
     OUTPUT_ROOT="$test_output_root"
 
-    write_runtime_plugin_descriptors "2.1"
+    write_engine_plugin_descriptors "2.1"
 
     [ -f "$OUTPUT_ROOT/claude/.claude-plugin/plugin.json" ]
     grep -q '"version":"2.1"' "$OUTPUT_ROOT/claude/.claude-plugin/plugin.json"

@@ -14,7 +14,7 @@ import io.github.cowwoc.cat.tool.licensing.LicenseResult;
 import java.nio.file.Path;
 
 /**
- * Claude adapter for the runtime-neutral license validator.
+ * Claude adapter for the engine-neutral license validator.
  */
 public final class LicenseValidator
 {

@@ -102,7 +102,7 @@ Bug report body:
 ## Environment
 
 - CAT Version: <version>
-- Runtime/Agent: <runtime if known>
+- Engine/Agent: <engine if known>
 - Project/Issue Context: <issue id, branch, command, or "Unknown">
 
 ## Analysis

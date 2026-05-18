@@ -156,7 +156,7 @@ When `work-prepare` returns CORRUPT, the issue directory has index.json but no p
 executed without recovery.
 
 1. Display the message from the CORRUPT JSON to the user.
-2. Present a runtime-supported Structured user-choice prompt:
+2. Present a engine-supported Structured user-choice prompt:
 
    ```
    header: "Corrupt Issue Detected"
@@ -587,7 +587,7 @@ IS_DECOMPOSED=$(grep -q "^## Decomposed Into" "$ISSUE_STATE" && echo "true" || e
 
 1. Read plan.md acceptance criteria: `cat "${issue_path}/plan.md"`
 2. Verify each acceptance criterion is satisfied (spawn an Explore agent if needed)
-3. Only after all criteria are verified, use a runtime-supported structured user-choice prompt to offer closure:
+3. Only after all criteria are verified, use a engine-supported structured user-choice prompt to offer closure:
    ```
    header: "${issue_id}"
    question: "All sub-issues are closed. Close parent issue ${issue_id}?"
@@ -621,7 +621,7 @@ Offering closure without criteria verification is a protocol violation.
 
 After Phase 1 returns READY, delegate remaining phases to the work-with-issue skill.
 
-**Important runtime boundary:** `work-with-issue` is a skill orchestration entrypoint, not a
+**Important engine boundary:** `work-with-issue` is a skill orchestration entrypoint, not a
 `client/bin` launcher. Do NOT attempt to execute `${CAT_PLUGIN_ROOT}/client/bin/work-with-issue`.
 Invoke it only via the Skill tool as shown below.
 

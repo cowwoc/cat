@@ -28,7 +28,7 @@ import java.util.Map;
  * SessionStart hook for Codex.
  * <p>
  * Codex does not need an environment-file bootstrap, but it does need CAT migrations and the
- * same portable and runtime-specific main-agent rules injected as session context.
+ * same portable and engine-specific main-agent rules injected as session context.
  */
 public final class SessionStartHook
 {

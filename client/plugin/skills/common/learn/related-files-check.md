@@ -29,7 +29,7 @@ pattern_fixed:
 # Examples by file type:
 
 # Skills with skill output content
-grep -l '!\`' client/plugin/skills/{common,<runtime>}/*/SKILL.md
+grep -l '!\`' client/plugin/skills/{common,<engine>}/*/SKILL.md
 
 # Handlers with similar validation
 find plugin/hooks -name "*.py" -exec grep -l "similar_pattern" {} \;

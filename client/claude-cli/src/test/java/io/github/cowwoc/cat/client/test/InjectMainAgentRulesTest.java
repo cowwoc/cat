@@ -151,8 +151,8 @@ public final class InjectMainAgentRulesTest
   @Test
   public void handleLoadsSharedAndClaudeProjectRulesOnly() throws IOException
   {
-    Path projectPath = Files.createTempDirectory("inject-rules-runtime-project-");
-    Path pluginDir = Files.createTempDirectory("inject-rules-runtime-plugin-");
+    Path projectPath = Files.createTempDirectory("inject-rules-engine-project-");
+    Path pluginDir = Files.createTempDirectory("inject-rules-engine-plugin-");
     try (TestClaudeHook scope = new TestClaudeHook(projectPath, pluginDir, projectPath))
     {
       Path sharedRulesDir = scope.getProjectPath().resolve(".cat/rules/common");
@@ -162,7 +162,7 @@ public final class InjectMainAgentRulesTest
         mainAgent: true
         ---
         # Shared project rule
-        Portable instruction for all runtimes.
+        Portable instruction for all engines.
         """);
 
       Path claudeRulesDir = scope.getProjectPath().resolve(".claude/rules");
@@ -190,7 +190,7 @@ public final class InjectMainAgentRulesTest
       SessionStartHandler.Result result = handler.handle();
 
       requireThat(result.additionalContext(), "additionalContext").contains("Shared project rule");
-      requireThat(result.additionalContext(), "additionalContext").contains("Portable instruction for all runtimes.");
+      requireThat(result.additionalContext(), "additionalContext").contains("Portable instruction for all engines.");
       requireThat(result.additionalContext(), "additionalContext").contains("Claude project rule");
       requireThat(result.additionalContext(), "additionalContext").contains("Claude-only instruction.");
       requireThat(result.additionalContext(), "additionalContext").doesNotContain("Codex project rule");

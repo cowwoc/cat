@@ -757,7 +757,7 @@ public class MergeAndCleanupTest
       TestUtils.runGit(issueWorktree, "commit", "-m", "Issue commit");
 
       Files.createDirectories(mainRepo.resolve(".cat"));
-      Path unsafePluginRoot = issueWorktree.resolve("client/distribution/target/runtime/codex");
+      Path unsafePluginRoot = issueWorktree.resolve("client/distribution/target/engine/codex");
       Files.createDirectories(unsafePluginRoot);
 
       try (TestClaudeTool scope = new TestClaudeTool(mainRepo, unsafePluginRoot))
@@ -966,7 +966,7 @@ public class MergeAndCleanupTest
         requireThat(mergeJson.get("status").asString(), "mergeStatus").isEqualTo("success");
       }
 
-      Path unsafePluginRoot = issueWorktree.resolve("client/distribution/target/runtime/codex");
+      Path unsafePluginRoot = issueWorktree.resolve("client/distribution/target/engine/codex");
       Files.createDirectories(unsafePluginRoot);
 
       try (TestClaudeTool scope = new TestClaudeTool(mainRepo, unsafePluginRoot))

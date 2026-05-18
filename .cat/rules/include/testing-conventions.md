@@ -42,7 +42,7 @@ session.
 
 **When a re-run is NOT required:**
 - Only documentation, comments, or non-source files changed (e.g., `.md`, `.txt`)
-- Only planning artifacts or runtime-loaded project instruction files changed
+- Only planning artifacts or engine-loaded project instruction files changed
 - The last build passed and nothing has been committed or staged since
 
 ### Test Isolation
@@ -54,13 +54,13 @@ Tests must be **self-contained**, **thread-safe**, and must **never impact the p
    before any external operation, this is acceptable since no command actually runs.
 2. **No production environment side effects** — tests must not modify files, git state, processes, or configuration
    outside their temporary directories.
-3. **Concurrent safety** — multiple test runs, parallel tests, and concurrent runtime instances must not interfere
+3. **Concurrent safety** — multiple test runs, parallel tests, and concurrent engine instances must not interfere
    with each other or with the host environment. Avoid JVM-global or process-global mutation (e.g., environment
    variables, system properties, stdout/stderr redirection, current working directory).
 4. **Deterministic** — test results must not depend on host machine configuration, repository state, or timing. Use
    controlled inputs and injectable dependencies (e.g., `Clock` for time, temp dirs for paths).
 5. **Test-specific scopes only** — test code must interact with `Test*` scope implementations, not `Main*` production
-   scopes. Production scopes read host environment variables, stdin, or runtime-specific filesystem locations and are
+   scopes. Production scopes read host environment variables, stdin, or engine-specific filesystem locations and are
    reserved for production entrypoints. For example, use `TestCodexTool`, `TestCodexHook`, `TestClaudeTool`, or
    `TestClaudeHook` instead of `MainCodexTool`, `MainCodexHook`, `MainClaudeTool`, or `MainClaudeHook`.
 
@@ -125,17 +125,17 @@ public void worktreesDoNotLoadDuplicateRules() {
 - After invoking external tools (git, curl, npm, etc.) — test the invocation, not the side effects
 - Testing tool configuration state (sparse-checkout list, gitignore rules) — verify your code sets it correctly
 
-### Test Runtime Behavior Only
+### Test Engine Behavior Only
 
-Automated tests must validate runtime behavior with meaningful inputs and outputs. Do not add tests that check whether
+Automated tests must validate engine behavior with meaningful inputs and outputs. Do not add tests that check whether
 design constraints, package boundaries, source layout, build-time wiring, or release-artifact layout constraints hold
 unless the test executes product code and observes user- or caller-visible behavior.
 
 Do not add tests whose only purpose is to assert that a package contains only certain classes, that a class is declared
 in a specific package or module, that source files do or do not import or mention particular symbols, or that generated
-release artifacts have a particular internal layout. These are design and build-time constraints, not runtime behavior.
+release artifacts have a particular internal layout. These are design and build-time constraints, not engine behavior.
 
-Runtime-specific boundary concerns, such as whether common code mentions Claude-only or Codex-only concepts, belong in
+Engine-specific boundary concerns, such as whether common code mentions Claude-only or Codex-only concepts, belong in
 code review, architecture notes, and convention files unless they can be expressed as direct executable behavior.
 Build-time tests should cover executable build behavior only when the build output is itself the product behavior being
 validated.
@@ -143,7 +143,7 @@ validated.
 ### Test Access Seams
 
 Shared-secret or other test-only access seams must be registered by the class that owns the behavior under test.
-Do not route tests for runtime-specific helper methods through an unrelated common orchestrator.
+Do not route tests for engine-specific helper methods through an unrelated common orchestrator.
 
 Keep shared test access methods named after the behavior they expose, not after the incidental caller that currently
 reaches it.
@@ -154,13 +154,13 @@ Do not add tests that verify the literal contents of non-code files such as Mark
 plans, rules, skills, or concepts. This includes tests that scan `.md` files for frontmatter keys, phrases, include
 targets, section names, or source-layout conventions.
 
-If a non-code file affects runtime behavior, test the executable behavior that consumes it instead. For example, test
-that an artifact builder produces the expected runtime artifact from synthetic inputs, or that a parser rejects invalid
+If a non-code file affects engine behavior, test the executable behavior that consumes it instead. For example, test
+that an artifact builder produces the expected engine artifact from synthetic inputs, or that a parser rejects invalid
 synthetic content. Do not test that repository Markdown files contain or omit specific text.
 
 ### Do Not Add Retrospective Documentation Tests
 
 Do not add tests that merely document a change after the fact. A test belongs in the suite only when it would catch a
 real behavioral regression that matters to users or callers. Avoid tests whose only value is proving that a recently
-removed implementation detail, retired artifact layout, or historical packaging choice remains absent when no runtime
+removed implementation detail, retired artifact layout, or historical packaging choice remains absent when no engine
 behavior is exercised.

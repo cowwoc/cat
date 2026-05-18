@@ -4,7 +4,7 @@
 # Licensed under the CAT Commercial License.
 # See LICENSE.md in the project root for license terms.
 #
-# session-start.sh - Validate bundled runtime and run session handlers.
+# session-start.sh - Validate bundled engine and run session handlers.
 
 set -euo pipefail
 
@@ -83,33 +83,33 @@ validate_semver() {
   fi
 }
 
-runtime_version_matches() {
-  local runtime_dir="$1" plugin_version="$2"
-  local version_file="${runtime_dir}/VERSION"
+engine_version_matches() {
+  local engine_dir="$1" plugin_version="$2"
+  local version_file="${engine_dir}/VERSION"
 
   if [[ ! -f "$version_file" ]]; then
     fail "No VERSION file found at $version_file"
     return 1
   fi
 
-  local runtime_version
-  runtime_version=$(cat "$version_file")
-  debug "Runtime version at $runtime_dir: $runtime_version, plugin version: $plugin_version"
-  if [[ "$runtime_version" != "$plugin_version" ]]; then
-    fail "Runtime version mismatch at $runtime_dir: expected $plugin_version, found $runtime_version"
+  local engine_version
+  engine_version=$(cat "$version_file")
+  debug "Engine version at $engine_dir: $engine_version, plugin version: $plugin_version"
+  if [[ "$engine_version" != "$plugin_version" ]]; then
+    fail "Engine version mismatch at $engine_dir: expected $plugin_version, found $engine_version"
     return 1
   fi
 }
 
-check_runtime() {
-  local runtime_dir="$1"
+check_engine() {
+  local engine_dir="$1"
 
-  if [[ ! -d "$runtime_dir" ]]; then
-    fail "Runtime directory does not exist: $runtime_dir"
+  if [[ ! -d "$engine_dir" ]]; then
+    fail "Engine directory does not exist: $engine_dir"
     return 1
   fi
 
-  local java_bin="${runtime_dir}/bin/java"
+  local java_bin="${engine_dir}/bin/java"
   if [[ ! -x "$java_bin" ]]; then
     fail "java binary not executable or missing: $java_bin"
     return 1
@@ -121,7 +121,7 @@ check_runtime() {
     return 1
   }
 
-  debug "JDK runtime verified at: $runtime_dir"
+  debug "JDK engine verified at: $engine_dir"
 }
 
 main() {
@@ -165,11 +165,11 @@ main() {
     debug "$line"
   done < <(env | sort)
 
-  local runtime_dir="${plugin_root}/client"
-  debug "JDK path: $runtime_dir"
+  local engine_dir="${plugin_root}/client"
+  debug "JDK path: $engine_dir"
 
-  if runtime_version_matches "$runtime_dir" "$plugin_version" && check_runtime "$runtime_dir"; then
-    debug "JDK runtime ready, invoking Java dispatcher"
+  if engine_version_matches "$engine_dir" "$plugin_version" && check_engine "$engine_dir"; then
+    debug "JDK engine ready, invoking Java dispatcher"
 
     local java_exit=0
     "${plugin_root}/client/bin/java" \
@@ -185,7 +185,7 @@ main() {
   fi
 
   local cause="${FAILURE_CAUSE:-Unknown failure}"
-  local msg="Bundled CAT hooks runtime under CLAUDE_PLUGIN_ROOT is missing or invalid (version ${plugin_version})."
+  local msg="Bundled CAT hooks engine under CLAUDE_PLUGIN_ROOT is missing or invalid (version ${plugin_version})."
   msg+=$'\n'"Cause: ${cause}"
   msg+=$'\n'"Session will start without hook processing."
   if [[ -n "$DEBUG_LINES" ]]; then

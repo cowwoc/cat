@@ -73,7 +73,7 @@ docs: update documentation
 
 ### 5. Approval Gate (Interactive Mode)
 
-Present the merge context through the active runtime's structured input tool:
+Present the merge context through the active engine's structured input tool:
 - Claude Code: `AskUserQuestion`.
 - Codex: `request_user_input` when available.
 

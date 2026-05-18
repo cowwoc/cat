@@ -9,7 +9,7 @@ package io.github.cowwoc.cat.tool.runner;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import io.github.cowwoc.cat.agent.AbstractRuntimeScope;
+import io.github.cowwoc.cat.agent.AbstractEngineScope;
 import io.github.cowwoc.cat.agent.AgentPluginScope;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 
@@ -615,9 +615,9 @@ public final class CodexRunnerSupport
   }
 
   /**
-   * Minimal runtime scope used when invoking Codex runner support from the command line.
+   * Minimal engine scope used when invoking Codex runner support from the command line.
    */
-  private static final class CommandLineScope extends AbstractRuntimeScope
+  private static final class CommandLineScope extends AbstractEngineScope
   {
     /**
      * Creates a new command-line scope for the given project path.

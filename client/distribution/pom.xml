@@ -6,39 +6,39 @@
 
 	<parent>
 		<groupId>io.github.cowwoc.cat</groupId>
-		<artifactId>cat</artifactId>
+		<artifactId>client</artifactId>
 		<version>2.1</version>
 		<relativePath>..</relativePath>
 	</parent>
 
-	<artifactId>cat-distribution</artifactId>
+	<artifactId>client-distribution</artifactId>
 	<packaging>pom</packaging>
 
 	<name>CAT distribution</name>
-	<description>Builds flattened runtime-specific CAT plugin artifacts from the CLI and plugin modules</description>
+	<description>Builds flattened engine-specific CAT plugin artifacts from the CLI and plugin modules</description>
 
 	<dependencies>
 		<dependency>
 			<groupId>io.github.cowwoc.cat</groupId>
-			<artifactId>cat-common-cli</artifactId>
+			<artifactId>client-common-cli</artifactId>
 			<version>${project.version}</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>io.github.cowwoc.cat</groupId>
-			<artifactId>cat-claude-cli</artifactId>
+			<artifactId>client-claude-cli</artifactId>
 			<version>${project.version}</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>io.github.cowwoc.cat</groupId>
-			<artifactId>cat-codex-cli</artifactId>
+			<artifactId>client-codex-cli</artifactId>
 			<version>${project.version}</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>io.github.cowwoc.cat</groupId>
-			<artifactId>cat-plugin</artifactId>
+			<artifactId>client-plugin</artifactId>
 			<version>${project.version}</version>
 			<type>pom</type>
 		</dependency>
@@ -63,13 +63,13 @@
 						</configuration>
 					</execution>
 					<execution>
-						<id>build-runtime-plugin-artifacts</id>
+						<id>build-engine-plugin-artifacts</id>
 						<phase>package</phase>
 						<goals>
 							<goal>exec</goal>
 						</goals>
 						<configuration>
-							<executable>${project.basedir}/scripts/build-runtime-artifacts.sh</executable>
+							<executable>${project.basedir}/scripts/build-engine-artifacts.sh</executable>
 							<workingDirectory>${project.basedir}</workingDirectory>
 						</configuration>
 					</execution>

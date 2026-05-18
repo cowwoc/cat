@@ -7,7 +7,7 @@
 - The shared instance is configured with pretty print (`SerializationFeature.INDENT_OUTPUT`)
 - In production code, get the mapper from the scope passed to your class
 - In tests, create a test scope and call `scope.getJsonMapper()`
-- In CLI `main()` methods, create the appropriate runtime scope and call `scope.getJsonMapper()`
+- In CLI `main()` methods, create the appropriate engine scope and call `scope.getJsonMapper()`
 
 ## JsonNode API
 

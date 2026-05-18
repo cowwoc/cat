@@ -24,7 +24,7 @@ Do not replace a skill invocation with a manual substitute prompt.
 
 ### The `argument-hint` Field
 
-`argument-hint` documents arguments expected by the SKILL.md preprocessor command in Claude runtime wrappers.
+`argument-hint` documents arguments expected by the SKILL.md preprocessor command in Claude engine wrappers.
 It is display-only and does not affect parsing.
 
 | Syntax | Meaning | Example |
@@ -79,19 +79,19 @@ argument-hint: "[description]"
 
 ## Creating a New Plugin Skill
 
-1. Create `client/plugin/skills/common/{skill-name}/` for portable skills, or the matching runtime-specific directory
+1. Create `client/plugin/skills/common/{skill-name}/` for portable skills, or the matching engine-specific directory
 2. Create `SKILL.md`
 3. Create `first-use.md` with full skill content
-4. If dispatching to Java, register the handler in the runtime image build script and call the binary launcher from `SKILL.md`
+4. If dispatching to Java, register the handler in the engine image build script and call the binary launcher from `SKILL.md`
 5. Skill is available as `cat:{skill-name}`
 
-`client/plugin/skills/**` is the development source layout. Runtime installations are generated from these sources.
+`client/plugin/skills/**` is the development source layout. Engine installations are generated from these sources.
 
 ### Java Handler Requirement
 
 For Java-dispatched skills:
 
-- Add launcher entry in the runtime image build script's HANDLERS array
+- Add launcher entry in the engine image build script's HANDLERS array
 - Call launcher from `SKILL.md`
 - Do **not** use `${CAT_PLUGIN_ROOT}/rules/common/skill-loading.md` as if it were a command dispatcher
 
@@ -99,14 +99,14 @@ For Java-dispatched skills:
 
 ## Referencing Files From Skills
 
-Use `${CAT_PLUGIN_ROOT}` for cross-directory references after applying the active runtime's CAT environment rule.
+Use `${CAT_PLUGIN_ROOT}` for cross-directory references after applying the active engine's CAT environment rule.
 Claude Code receives these variables through CAT's SessionStart environment-file injection. Codex ordinary Bash
 commands do not have a global future-shell injection mechanism, so Codex-facing Bash snippets that need CAT paths must
 include the bootstrap block from
 `plugin/rules/codex/cat-environment.md`.
 Use relative paths only for files inside the same skill directory.
 
-Runtime CAT environment rules apply to instructions the agent executes after skill loading. They do not initialize the
+Engine CAT environment rules apply to instructions the agent executes after skill loading. They do not initialize the
 environment for preprocessor directives themselves. Codex-invocable `SKILL.md` preprocessor commands must not depend on
 `CAT_*` variables unless they invoke a wrapper that sets them first.
 

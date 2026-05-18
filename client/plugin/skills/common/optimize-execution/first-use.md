@@ -21,8 +21,8 @@ alignment and readability). Report efficiency opportunities only when fixing the
 
 ## Prerequisites
 
-This skill builds on the `get-history` skill for session data access. The runtime and session ID must be available
-via `${CAT_RUNTIME}` and `${CAT_SESSION_ID}`.
+This skill builds on the `get-history` skill for session data access. The engine and session ID must be available
+via `${CAT_ENGINE}` and `${CAT_SESSION_ID}`.
 
 ## Usage
 
@@ -37,7 +37,7 @@ via `${CAT_RUNTIME}` and `${CAT_SESSION_ID}`.
 Execute the session analyzer to extract all mechanical data:
 
 ```bash
-"${CAT_PLUGIN_ROOT}/client/bin/session-analyzer" --runtime "${CAT_RUNTIME}" "${CAT_SESSION_ID}"
+"${CAT_PLUGIN_ROOT}/client/bin/session-analyzer" --engine "${CAT_ENGINE}" "${CAT_SESSION_ID}"
 ```
 
 The skill outputs a JSON object with:
@@ -152,13 +152,13 @@ Use the session-analyzer tool for structured, reliable extraction of delegation 
 
 ```bash
 SESSION_ANALYZER="${CAT_PLUGIN_ROOT}/client/bin/session-analyzer"
-"$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" analyze "${CAT_SESSION_ID}"
+"$SESSION_ANALYZER" --engine "${CAT_ENGINE}" analyze "${CAT_SESSION_ID}"
 ```
 
 This produces structured JSON output with per-delegation metrics already computed, avoiding fragile text parsing.
 Use this output to populate the per-delegation analysis in the output format below.
 
-Runtime support analyzes the selected session's messages, tool calls, tool outputs, token-count events, file
+Engine support analyzes the selected session's messages, tool calls, tool outputs, token-count events, file
 history, and supported agent logs.
 
 **Error conditions:**

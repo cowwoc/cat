@@ -7,7 +7,7 @@ All source files in the CAT project must include a license header referencing th
 - **Source tree:** All source files must carry a license header unless they are explicitly listed under Exemptions.
   This includes plugin instruction sources that are later read by agents.
 - **Flattened release artifacts:** Agent-facing generated files must not carry license headers. The release processor
-  strips source headers from files under `client/distribution/target/runtime/**/{agents,concepts,rules,skills}/` before
+  strips source headers from files under `client/distribution/target/engine/**/{agents,concepts,rules,skills}/` before
   users install the plugin.
 - **Do not solve release token waste by omitting source headers.** Add the source header, then strip it during release
   processing when the file is agent-facing.
@@ -102,7 +102,7 @@ name = "cat-example"
 ```
 
 **Agent-facing source files:** Plugin instruction sources carry license headers in the source tree. The flattened
-release processor strips these headers from agent-facing release files before installation so runtime context does not
+release processor strips these headers from agent-facing release files before installation so engine context does not
 waste tokens on license boilerplate.
 
 ### JSON Files (*.json)
@@ -115,12 +115,12 @@ The following files do not require license headers:
 
 - `*.json` files (no comment syntax)
 - `*.xml` files (configuration files, no semantic code)
-- Runtime-loaded project instruction files
-- All `*.md` files under runtime-specific project rule directories outside `.cat/rules/**`
-- Agent-facing files in flattened release artifacts under `client/distribution/target/runtime/**` (generated files; the
+- Engine-loaded project instruction files
+- All `*.md` files under engine-specific project rule directories outside `.cat/rules/**`
+- Agent-facing files in flattened release artifacts under `client/distribution/target/engine/**` (generated files; the
   release processor strips source license headers before installation)
 - Files under `.cat/rules/**` (project rule files loaded into agent context)
-- Files in `.cat/` (planning artifacts, config, runtime data)
+- Files in `.cat/` (planning artifacts, config, engine data)
 - `LICENSE.md` itself
 - Build artifacts (`target/`, `node_modules/`, etc.)
 - Project root documentation (`README.md`, `changelog.md`)

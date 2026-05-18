@@ -39,10 +39,10 @@ public final class PluginArtifactBuilderTest
     -->
     """;
   /**
-   * Verifies that release artifacts contain only runtime-specific files and copied license terms.
+   * Verifies that release artifacts contain only engine-specific files and copied license terms.
    */
   @Test
-  public void buildFlattensRuntimeSpecificArtifacts() throws IOException, InterruptedException
+  public void buildFlattensEngineSpecificArtifacts() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try
@@ -50,7 +50,7 @@ public final class PluginArtifactBuilderTest
       Path repoRoot = tempDir.resolve("repo");
       Path clientDir = repoRoot.resolve("client");
       Path pluginDir = clientDir.resolve("plugin");
-      Path targetDir = clientDir.resolve("distribution/target/runtime");
+      Path targetDir = clientDir.resolve("distribution/target/engine");
       createPluginSource(repoRoot, clientDir, pluginDir);
 
       new PluginArtifactBuilder(pluginDir, clientDir, targetDir).build();
@@ -162,12 +162,12 @@ public final class PluginArtifactBuilderTest
   }
 
   /**
-   * Verifies that runtime-specific skill wrappers can share common skill bodies and companion files.
+   * Verifies that engine-specific skill wrappers can share common skill bodies and companion files.
    *
    * @throws IOException if file operations fail
    */
   @Test
-  public void buildRuntimeSkillWrappersIncludeCommonCompanions() throws IOException
+  public void buildEngineSkillWrappersIncludeCommonCompanions() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try
@@ -175,7 +175,7 @@ public final class PluginArtifactBuilderTest
       Path repoRoot = tempDir.resolve("repo");
       Path clientDir = repoRoot.resolve("client");
       Path pluginDir = clientDir.resolve("plugin");
-      Path targetDir = clientDir.resolve("distribution/target/runtime");
+      Path targetDir = clientDir.resolve("distribution/target/engine");
       createPluginSource(repoRoot, clientDir, pluginDir);
       Path commonSkill = pluginDir.resolve("skills/common/common-skill");
       Files.delete(commonSkill.resolve("SKILL.md"));
@@ -213,13 +213,13 @@ public final class PluginArtifactBuilderTest
   }
 
   /**
-   * Verifies that runtime-specific companion files shadow common companion files that are referenced by the common
+   * Verifies that engine-specific companion files shadow common companion files that are referenced by the common
    * skill body.
    *
    * @throws IOException if file operations fail
    */
   @Test
-  public void buildRuntimeSkillWrappersShadowCommonCompanions() throws IOException
+  public void buildEngineSkillWrappersShadowCommonCompanions() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try
@@ -227,7 +227,7 @@ public final class PluginArtifactBuilderTest
       Path repoRoot = tempDir.resolve("repo");
       Path clientDir = repoRoot.resolve("client");
       Path pluginDir = clientDir.resolve("plugin");
-      Path targetDir = clientDir.resolve("distribution/target/runtime");
+      Path targetDir = clientDir.resolve("distribution/target/engine");
       createPluginSource(repoRoot, clientDir, pluginDir);
       Files.createDirectories(pluginDir.resolve("skills/claude/common-skill"));
       Files.writeString(pluginDir.resolve("skills/claude/common-skill/SKILL.md"),
@@ -250,12 +250,12 @@ public final class PluginArtifactBuilderTest
   }
 
   /**
-   * Verifies that shared skill fragments can render runtime-specific command prefixes.
+   * Verifies that shared skill fragments can render engine-specific command prefixes.
    *
    * @throws IOException if file operations fail
    */
   @Test
-  public void buildReplacesRuntimeCommandPrefixPlaceholders() throws IOException
+  public void buildReplacesEngineCommandPrefixPlaceholders() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try
@@ -263,7 +263,7 @@ public final class PluginArtifactBuilderTest
       Path repoRoot = tempDir.resolve("repo");
       Path clientDir = repoRoot.resolve("client");
       Path pluginDir = clientDir.resolve("plugin");
-      Path targetDir = clientDir.resolve("distribution/target/runtime");
+      Path targetDir = clientDir.resolve("distribution/target/engine");
       createPluginSource(repoRoot, clientDir, pluginDir);
       Path commonSkill = pluginDir.resolve("skills/common/common-skill");
       Files.writeString(commonSkill.resolve("first-use.md"),
@@ -287,12 +287,12 @@ public final class PluginArtifactBuilderTest
   }
 
   /**
-   * Verifies that shared skill fragments can render runtime-specific deterministic output commands.
+   * Verifies that shared skill fragments can render engine-specific deterministic output commands.
    *
    * @throws IOException if file operations fail
    */
   @Test
-  public void buildReplacesRuntimeOutputRenderDirectives() throws IOException
+  public void buildReplacesEngineOutputRenderDirectives() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try
@@ -300,7 +300,7 @@ public final class PluginArtifactBuilderTest
       Path repoRoot = tempDir.resolve("repo");
       Path clientDir = repoRoot.resolve("client");
       Path pluginDir = clientDir.resolve("plugin");
-      Path targetDir = clientDir.resolve("distribution/target/runtime");
+      Path targetDir = clientDir.resolve("distribution/target/engine");
       createPluginSource(repoRoot, clientDir, pluginDir);
       Path commonSkill = pluginDir.resolve("skills/common/common-skill");
       Files.writeString(commonSkill.resolve("first-use.md"),
@@ -348,7 +348,7 @@ public final class PluginArtifactBuilderTest
   }
 
   /**
-   * Verifies that blank render-output directives fail the artifact build instead of leaking into runtime artifacts.
+   * Verifies that blank render-output directives fail the artifact build instead of leaking into engine artifacts.
    *
    * @throws IOException if file operations fail
    */
@@ -392,7 +392,7 @@ public final class PluginArtifactBuilderTest
       Path repoRoot = tempDir.resolve("repo");
       Path clientDir = repoRoot.resolve("client");
       Path pluginDir = clientDir.resolve("plugin");
-      Path targetDir = clientDir.resolve("distribution/target/runtime");
+      Path targetDir = clientDir.resolve("distribution/target/engine");
       createPluginSource(repoRoot, clientDir, pluginDir);
       Path commonSkill = pluginDir.resolve("skills/common/common-skill");
       Files.writeString(commonSkill.resolve("first-use.md"),
@@ -416,12 +416,12 @@ public final class PluginArtifactBuilderTest
   }
 
   /**
-   * Verifies current runtime artifacts expand shared agent contracts for both runtimes.
+   * Verifies current engine artifacts expand shared agent contracts for both engines.
    *
    * @throws IOException if file operations fail
    */
   @Test
-  public void buildCurrentRuntimeArtifactsExpandAgentContracts() throws IOException
+  public void buildCurrentEngineArtifactsExpandAgentContracts() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try
@@ -434,155 +434,155 @@ public final class PluginArtifactBuilderTest
       copyDirectory(sourceRoot.resolve("client/plugin"), tempClient.resolve("plugin"));
       ensureBundledGitFilterRepo(tempClient.resolve("plugin"));
 
-      Path targetDir = tempClient.resolve("distribution/target/runtime");
+      Path targetDir = tempClient.resolve("distribution/target/engine");
       new PluginArtifactBuilder(tempClient.resolve("plugin"), tempClient, targetDir).build();
 
-      for (String runtime : new String[]{"claude", "codex"})
+      for (String engine : new String[]{"claude", "codex"})
       {
-        Path runtimeRoot = targetDir.resolve(runtime);
-        assertRuntimeArtifactDoesNotContain(runtimeRoot, "cat:include", runtime + "UnresolvedInclude");
-        assertRuntimeArtifactDoesNotContain(runtimeRoot, "${CAT_COMMAND_PREFIX}", runtime + "UnresolvedPrefix");
-        String helpFirstUse = Files.readString(runtimeRoot.resolve("skills/help/first-use.md"),
+        Path engineRoot = targetDir.resolve(engine);
+        assertEngineArtifactDoesNotContain(engineRoot, "cat:include", engine + "UnresolvedInclude");
+        assertEngineArtifactDoesNotContain(engineRoot, "${CAT_COMMAND_PREFIX}", engine + "UnresolvedPrefix");
+        String helpFirstUse = Files.readString(engineRoot.resolve("skills/help/first-use.md"),
           StandardCharsets.UTF_8);
-        requireThat(helpFirstUse, runtime + "HelpFirstUse").doesNotContain("cat:include");
-        requireThat(helpFirstUse, runtime + "HelpFirstUse").doesNotContain("${CAT_COMMAND_PREFIX}");
-        assertOutputRenderSkillConvention(runtimeRoot, runtime, "get-diff", "get-output");
-        assertOutputRenderSkillConvention(runtimeRoot, runtime, "status", "get-status-output");
-        assertOutputRenderSkillConvention(runtimeRoot, runtime, "token-report", "get-output");
-        assertOutputRenderSkillConvention(runtimeRoot, runtime, "work-complete", "get-output");
+        requireThat(helpFirstUse, engine + "HelpFirstUse").doesNotContain("cat:include");
+        requireThat(helpFirstUse, engine + "HelpFirstUse").doesNotContain("${CAT_COMMAND_PREFIX}");
+        assertOutputRenderSkillConvention(engineRoot, engine, "get-diff", "get-output");
+        assertOutputRenderSkillConvention(engineRoot, engine, "status", "get-status-output");
+        assertOutputRenderSkillConvention(engineRoot, engine, "token-report", "get-output");
+        assertOutputRenderSkillConvention(engineRoot, engine, "work-complete", "get-output");
         String workExecuteAgent = "agents/work-execute.toml";
-        if (runtime.equals("claude"))
+        if (engine.equals("claude"))
           workExecuteAgent = "agents/work-execute.md";
-        String workExecute = Files.readString(runtimeRoot.resolve(workExecuteAgent), StandardCharsets.UTF_8);
-        requireThat(workExecute, runtime + "WorkExecute").contains(
+        String workExecute = Files.readString(engineRoot.resolve(workExecuteAgent), StandardCharsets.UTF_8);
+        requireThat(workExecute, engine + "WorkExecute").contains(
           "Read plan.md before deciding whether implementation is already applied");
-        requireThat(workExecute, runtime + "WorkExecute").contains(
+        requireThat(workExecute, engine + "WorkExecute").contains(
           "A clean pre-implementation branch with no implementation diff is normal");
-        requireThat(workExecute, runtime + "WorkExecute").contains(
+        requireThat(workExecute, engine + "WorkExecute").contains(
           "Do not classify an empty implementation diff as already applied");
-        requireThat(workExecute, runtime + "WorkExecute").contains(
+        requireThat(workExecute, engine + "WorkExecute").contains(
           "Only use the already-applied path when there is positive evidence");
-        requireThat(workExecute, runtime + "WorkExecute").contains(
+        requireThat(workExecute, engine + "WorkExecute").contains(
           "If positive evidence is absent, proceed with the implementation plan even when");
-        requireThat(workExecute, runtime + "WorkExecute").contains(
+        requireThat(workExecute, engine + "WorkExecute").contains(
           "`git diff ${TARGET_BRANCH}..HEAD -- <implementation-files>` is empty");
-        requireThat(workExecute, runtime + "WorkExecute").contains("ALREADY_IMPLEMENTED");
-        assertNoEmptyDiffAlreadyImplementedRule(workExecute, runtime + "WorkExecute");
-        requireThat(workExecute, runtime + "WorkExecute").doesNotContain("cat:include");
+        requireThat(workExecute, engine + "WorkExecute").contains("ALREADY_IMPLEMENTED");
+        assertNoEmptyDiffAlreadyImplementedRule(workExecute, engine + "WorkExecute");
+        requireThat(workExecute, engine + "WorkExecute").doesNotContain("cat:include");
 
-        String workImplement = Files.readString(runtimeRoot.resolve("skills/work-implement/first-use.md"),
+        String workImplement = Files.readString(engineRoot.resolve("skills/work-implement/first-use.md"),
           StandardCharsets.UTF_8);
-        assertWorkImplementCleanupConvention(workImplement, runtime + "WorkImplement");
-        requireThat(workImplement, runtime + "WorkImplement").doesNotContain("cat:include");
+        assertWorkImplementCleanupConvention(workImplement, engine + "WorkImplement");
+        requireThat(workImplement, engine + "WorkImplement").doesNotContain("cat:include");
 
         String workVerifyAgent = "agents/work-verify.toml";
-        if (runtime.equals("claude"))
+        if (engine.equals("claude"))
           workVerifyAgent = "agents/work-verify.md";
-        String workVerify = Files.readString(runtimeRoot.resolve(workVerifyAgent), StandardCharsets.UTF_8);
-        assertContainsNormalized(workVerify, runtime + "WorkVerify",
-          "E2E tests must use the runtime selected by `CAT_RUNTIME`");
-        assertContainsNormalized(workVerify, runtime + "WorkVerify",
-          "E2E runs must use the selected runtime's artifacts and runtime-native test infrastructure");
-        assertNoRuntimeSpecificCommonE2ESkip(workVerify, runtime + "WorkVerify");
-        assertNoBlanketCodexE2ESkipRule(workVerify, runtime + "WorkVerify");
-        requireThat(workVerify, runtime + "WorkVerify").doesNotContain("cat:include");
+        String workVerify = Files.readString(engineRoot.resolve(workVerifyAgent), StandardCharsets.UTF_8);
+        assertContainsNormalized(workVerify, engine + "WorkVerify",
+          "E2E tests must use the engine selected by `CAT_ENGINE`");
+        assertContainsNormalized(workVerify, engine + "WorkVerify",
+          "E2E runs must use the selected engine's artifacts and engine-native test infrastructure");
+        assertNoEngineSpecificCommonE2ESkip(workVerify, engine + "WorkVerify");
+        assertNoBlanketCodexE2ESkipRule(workVerify, engine + "WorkVerify");
+        requireThat(workVerify, engine + "WorkVerify").doesNotContain("cat:include");
 
-        String workConfirm = Files.readString(runtimeRoot.resolve("skills/work-confirm/first-use.md"),
+        String workConfirm = Files.readString(engineRoot.resolve("skills/work-confirm/first-use.md"),
           StandardCharsets.UTF_8);
-        assertContainsNormalized(workConfirm, runtime + "WorkConfirm",
-          "E2E tests must use the runtime selected by `CAT_RUNTIME`");
-        assertContainsNormalized(workConfirm, runtime + "WorkConfirm",
-          "E2E runs must use the selected runtime's artifacts and runtime-native test infrastructure");
-        assertNoRuntimeSpecificCommonE2ESkip(workConfirm, runtime + "WorkConfirm");
-        assertNoBlanketCodexE2ESkipRule(workConfirm, runtime + "WorkConfirm");
-        requireThat(workConfirm, runtime + "WorkConfirm").doesNotContain("cat:include");
+        assertContainsNormalized(workConfirm, engine + "WorkConfirm",
+          "E2E tests must use the engine selected by `CAT_ENGINE`");
+        assertContainsNormalized(workConfirm, engine + "WorkConfirm",
+          "E2E runs must use the selected engine's artifacts and engine-native test infrastructure");
+        assertNoEngineSpecificCommonE2ESkip(workConfirm, engine + "WorkConfirm");
+        assertNoBlanketCodexE2ESkipRule(workConfirm, engine + "WorkConfirm");
+        requireThat(workConfirm, engine + "WorkConfirm").doesNotContain("cat:include");
 
-        String stakeholderReview = Files.readString(runtimeRoot.resolve("skills/stakeholder-review/first-use.md"),
+        String stakeholderReview = Files.readString(engineRoot.resolve("skills/stakeholder-review/first-use.md"),
           StandardCharsets.UTF_8);
-        assertContainsNormalized(stakeholderReview, runtime + "StakeholderReview",
+        assertContainsNormalized(stakeholderReview, engine + "StakeholderReview",
           "Prepare prompts: for each stakeholder in $SELECTED, collect conventions from CONVENTION_MAP, gather " +
             "ISSUE_PLAN_PATH and VERSION_PLAN_PATH (use VERSION_ID extraction from Step 1), extract " +
             "DOMAIN_KNOWLEDGE from plan.md `## Domain Knowledge` section (if present), and convert CHANGED_FILES " +
             "to bullets.");
-        requireThat(stakeholderReview, runtime + "StakeholderReview").contains("Spawn each stakeholder with:");
-        requireThat(stakeholderReview, runtime + "StakeholderReview").contains("## Working Directory");
-        requireThat(stakeholderReview, runtime + "StakeholderReview").contains("WORKTREE_PATH={WORKTREE_PATH}");
-        requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
+        requireThat(stakeholderReview, engine + "StakeholderReview").contains("Spawn each stakeholder with:");
+        requireThat(stakeholderReview, engine + "StakeholderReview").contains("## Working Directory");
+        requireThat(stakeholderReview, engine + "StakeholderReview").contains("WORKTREE_PATH={WORKTREE_PATH}");
+        requireThat(stakeholderReview, engine + "StakeholderReview").contains(
           "Changed files (read from WORKTREE_PATH): {CHANGED_FILES_BULLETS}");
-        requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
+        requireThat(stakeholderReview, engine + "StakeholderReview").contains(
           "DISPATCH_HEAD_SHA=$(git rev-parse --verify \"HEAD^{commit}\")");
-        requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
+        requireThat(stakeholderReview, engine + "StakeholderReview").contains(
           "Reviewer dispatch HEAD ${DISPATCH_HEAD_SHA} does not match manifest HEAD ${HEAD_SHA}");
-        requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
+        requireThat(stakeholderReview, engine + "StakeholderReview").contains(
           "Before reading files, verify that the current worktree HEAD is exactly `{HEAD_SHA}`");
-        requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
+        requireThat(stakeholderReview, engine + "StakeholderReview").contains(
           "return REJECTED with a reviewer execution concern instead of reviewing stale content");
-        requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
+        requireThat(stakeholderReview, engine + "StakeholderReview").contains(
           "stakeholder role\ninstructions parse that exact variable assignment");
-        requireThat(stakeholderReview, runtime + "StakeholderReview").doesNotContain(
+        requireThat(stakeholderReview, engine + "StakeholderReview").doesNotContain(
           "\nWORKTREE_PATH: {WORKTREE_PATH}");
-        requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
+        requireThat(stakeholderReview, engine + "StakeholderReview").contains(
           "Read every changed file using absolute paths rooted at {WORKTREE_PATH}/.");
-        requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
+        requireThat(stakeholderReview, engine + "StakeholderReview").contains(
           "Each reviewer MUST also use its stakeholder-specific agent type");
-        requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
+        requireThat(stakeholderReview, engine + "StakeholderReview").contains(
           "Do NOT use a generic/default agent type for stakeholder review");
-        requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
+        requireThat(stakeholderReview, engine + "StakeholderReview").contains(
           "Reviewer agents are leaf reviewers");
-        requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
+        requireThat(stakeholderReview, engine + "StakeholderReview").contains(
           "Do NOT call `spawn_agent`, `wait_agent`, `list_agents`,");
-        requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
+        requireThat(stakeholderReview, engine + "StakeholderReview").contains(
           "agent_type=<stakeholder-agent-type>");
-        requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
+        requireThat(stakeholderReview, engine + "StakeholderReview").contains(
           "subagent_type=<stakeholder-agent-type>");
-        requireThat(stakeholderReview, runtime + "StakeholderReview").contains("spawn_agent(message=prompt");
-        requireThat(stakeholderReview, runtime + "StakeholderReview").contains("Agent(prompt=prompt");
-        requireThat(stakeholderReview, runtime + "StakeholderReview").doesNotContain("cat:include");
+        requireThat(stakeholderReview, engine + "StakeholderReview").contains("spawn_agent(message=prompt");
+        requireThat(stakeholderReview, engine + "StakeholderReview").contains("Agent(prompt=prompt");
+        requireThat(stakeholderReview, engine + "StakeholderReview").doesNotContain("cat:include");
 
-        String workReview = Files.readString(runtimeRoot.resolve("skills/work-review/first-use.md"),
+        String workReview = Files.readString(engineRoot.resolve("skills/work-review/first-use.md"),
           StandardCharsets.UTF_8);
-        requireThat(workReview, runtime + "WorkReview").contains("reviewed_head_sha");
-        requireThat(workReview, runtime + "WorkReview").contains(
+        requireThat(workReview, engine + "WorkReview").contains("reviewed_head_sha");
+        requireThat(workReview, engine + "WorkReview").contains(
           "REVIEWED_HEAD_SHA=$(cd \"${WORKTREE_PATH}\" && git rev-parse HEAD)");
-        requireThat(workReview, runtime + "WorkReview").contains(
+        requireThat(workReview, engine + "WorkReview").contains(
           "reject stale review results after later implementation changes");
-        assertWorkReviewAutoFixPlanArtifactContract(workReview, runtime + "WorkReview");
-        requireThat(workReview, runtime + "WorkReview").doesNotContain("cat:include");
+        assertWorkReviewAutoFixPlanArtifactContract(workReview, engine + "WorkReview");
+        requireThat(workReview, engine + "WorkReview").doesNotContain("cat:include");
 
-        String workMerge = Files.readString(runtimeRoot.resolve("skills/work-merge/first-use.md"),
+        String workMerge = Files.readString(engineRoot.resolve("skills/work-merge/first-use.md"),
           StandardCharsets.UTF_8);
-        requireThat(workMerge, runtime + "WorkMerge").contains("PERSISTED_HEAD_SHA=");
-        requireThat(workMerge, runtime + "WorkMerge").contains(
+        requireThat(workMerge, engine + "WorkMerge").contains("PERSISTED_HEAD_SHA=");
+        requireThat(workMerge, engine + "WorkMerge").contains(
           "CURRENT_HEAD_SHA=$(cd \"${WORKTREE_PATH}\" && git rev-parse HEAD)");
-        requireThat(workMerge, runtime + "WorkMerge").contains("Review result is stale");
-        requireThat(workMerge, runtime + "WorkMerge").contains(
+        requireThat(workMerge, engine + "WorkMerge").contains("Review result is stale");
+        requireThat(workMerge, engine + "WorkMerge").contains(
           "Re-run stakeholder review after the latest implementation change before presenting the approval gate");
-        requireThat(workMerge, runtime + "WorkMerge").contains(
+        requireThat(workMerge, engine + "WorkMerge").contains(
           "case-insensitive exact match");
-        requireThat(workMerge, runtime + "WorkMerge").contains(
+        requireThat(workMerge, engine + "WorkMerge").contains(
           "${USER_RESPONSE,,}");
-        requireThat(workMerge, runtime + "WorkMerge").contains(
+        requireThat(workMerge, engine + "WorkMerge").contains(
           "Do not rerun `cat:stakeholder-review` solely because the rebase changed the commit SHA");
-        requireThat(workMerge, runtime + "WorkMerge").contains(
+        requireThat(workMerge, engine + "WorkMerge").contains(
           "Preserve the approval only when the rebase is mechanical");
-        requireThat(workMerge, runtime + "WorkMerge").contains(
+        requireThat(workMerge, engine + "WorkMerge").contains(
           "write `approved:invalidated`");
-        requireThat(workMerge, runtime + "WorkMerge").contains(
+        requireThat(workMerge, engine + "WorkMerge").contains(
           "return to the appropriate review or approval path");
-        requireThat(workMerge, runtime + "WorkMerge").doesNotContain("cat:include");
+        requireThat(workMerge, engine + "WorkMerge").doesNotContain("cat:include");
 
-        String workWithIssue = Files.readString(runtimeRoot.resolve("skills/work-with-issue/first-use.md"),
+        String workWithIssue = Files.readString(engineRoot.resolve("skills/work-with-issue/first-use.md"),
           StandardCharsets.UTF_8);
-        requireThat(workWithIssue, runtime + "WorkWithIssue").contains("Step 5 freshness check");
-        requireThat(workWithIssue, runtime + "WorkWithIssue").contains(
+        requireThat(workWithIssue, engine + "WorkWithIssue").contains("Step 5 freshness check");
+        requireThat(workWithIssue, engine + "WorkWithIssue").contains(
           "the merge phase must block the approval gate when the persisted");
-        requireThat(workWithIssue, runtime + "WorkWithIssue").doesNotContain("cat:include");
+        requireThat(workWithIssue, engine + "WorkWithIssue").doesNotContain("cat:include");
 
-        String configFirstUse = Files.readString(runtimeRoot.resolve("skills/config/first-use.md"),
+        String configFirstUse = Files.readString(engineRoot.resolve("skills/config/first-use.md"),
           StandardCharsets.UTF_8);
         String configSettingsStep = configFirstUse.substring(configFirstUse.indexOf("### Step 2:"),
           configFirstUse.indexOf("### Step 3:"));
-        if (runtime.equals("claude"))
+        if (engine.equals("claude"))
         {
           requireThat(configSettingsStep, "claudeConfigSettingsStep").
             contains("!`: \"${CAT_PLUGIN_ROOT:?CAT_PLUGIN_ROOT is required}\"; " +
@@ -646,14 +646,14 @@ public final class PluginArtifactBuilderTest
       copyDirectory(sourceRoot.resolve("client/plugin"), tempClient.resolve("plugin"));
       ensureBundledGitFilterRepo(tempClient.resolve("plugin"));
 
-      Path targetDir = tempClient.resolve("distribution/target/runtime");
+      Path targetDir = tempClient.resolve("distribution/target/engine");
       new PluginArtifactBuilder(tempClient.resolve("plugin"), tempClient, targetDir).build();
 
-      for (String runtime : new String[]{"claude", "codex"})
+      for (String engine : new String[]{"claude", "codex"})
       {
-        Path workImplement = targetDir.resolve(runtime + "/skills/work-implement/first-use.md");
+        Path workImplement = targetDir.resolve(engine + "/skills/work-implement/first-use.md");
         String firstUse = Files.readString(workImplement, StandardCharsets.UTF_8);
-        assertWorkImplementCleanupConvention(firstUse, runtime + "WorkImplementCleanup");
+        assertWorkImplementCleanupConvention(firstUse, engine + "WorkImplementCleanup");
       }
     }
     finally
@@ -684,7 +684,7 @@ public final class PluginArtifactBuilderTest
       copyDirectory(sourceRoot.resolve("client/plugin"), tempClient.resolve("plugin"));
       ensureBundledGitFilterRepo(tempClient.resolve("plugin"));
 
-      Path targetDir = tempClient.resolve("distribution/target/runtime");
+      Path targetDir = tempClient.resolve("distribution/target/engine");
       new PluginArtifactBuilder(tempClient.resolve("plugin"), tempClient, targetDir).build();
       String stakeholderReview = Files.readString(
         targetDir.resolve("claude/skills/stakeholder-review/first-use.md"), StandardCharsets.UTF_8);
@@ -731,7 +731,7 @@ public final class PluginArtifactBuilderTest
       Path repoRoot = tempDir.resolve("repo");
       Path clientDir = repoRoot.resolve("client");
       Path pluginDir = clientDir.resolve("plugin");
-      Path targetDir = clientDir.resolve("distribution/target/runtime");
+      Path targetDir = clientDir.resolve("distribution/target/engine");
       createPluginSource(repoRoot, clientDir, pluginDir);
       Path link = pluginDir.resolve("concepts/link.md");
       try
@@ -772,7 +772,7 @@ public final class PluginArtifactBuilderTest
       Path repoRoot = tempDir.resolve("repo");
       Path clientDir = repoRoot.resolve("client");
       Path pluginDir = clientDir.resolve("plugin");
-      Path targetDir = clientDir.resolve("distribution/target/runtime");
+      Path targetDir = clientDir.resolve("distribution/target/engine");
       createPluginSource(repoRoot, clientDir, pluginDir);
       Path claudeLibDir = clientDir.resolve("distribution/target/jlink/claude/lib");
       Path codexLibDir = clientDir.resolve("distribution/target/jlink/codex/lib");
@@ -815,7 +815,7 @@ public final class PluginArtifactBuilderTest
       Path repoRoot = tempDir.resolve("repo");
       Path clientDir = repoRoot.resolve("client");
       Path pluginDir = clientDir.resolve("plugin");
-      Path targetDir = clientDir.resolve("distribution/target/runtime");
+      Path targetDir = clientDir.resolve("distribution/target/engine");
       createPluginSource(repoRoot, clientDir, pluginDir);
       Path claudeLibDir = clientDir.resolve("distribution/target/jlink/claude/lib");
       Path codexLibDir = clientDir.resolve("distribution/target/jlink/codex/lib");
@@ -850,10 +850,10 @@ public final class PluginArtifactBuilderTest
   }
 
   /**
-   * Verifies that include expansion cannot cross runtime boundaries.
+   * Verifies that include expansion cannot cross engine boundaries.
    */
   @Test
-  public void buildRejectsCrossRuntimeIncludeTargets() throws IOException
+  public void buildRejectsCrossEngineIncludeTargets() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try
@@ -861,7 +861,7 @@ public final class PluginArtifactBuilderTest
       Path repoRoot = tempDir.resolve("repo");
       Path clientDir = repoRoot.resolve("client");
       Path pluginDir = clientDir.resolve("plugin");
-      Path targetDir = clientDir.resolve("distribution/target/runtime");
+      Path targetDir = clientDir.resolve("distribution/target/engine");
       createPluginSource(repoRoot, clientDir, pluginDir);
       Files.writeString(pluginDir.resolve("agents/claude/agent.md"),
         MARKDOWN_LICENSE + "claude agent\n<!-- cat:include ../codex/agent.toml -->",
@@ -876,7 +876,7 @@ public final class PluginArtifactBuilderTest
         requireThat(e.getMessage(), "message").contains("not allowed");
         return;
       }
-      throw new AssertionError("Expected cross-runtime cat:include rejection");
+      throw new AssertionError("Expected cross-engine cat:include rejection");
     }
     finally
     {
@@ -885,7 +885,7 @@ public final class PluginArtifactBuilderTest
   }
 
   /**
-   * Verifies that include expansion cannot pull source-only skill fixtures into the runtime artifact.
+   * Verifies that include expansion cannot pull source-only skill fixtures into the engine artifact.
    */
   @Test
   public void buildRejectsSourceOnlyIncludeTargets() throws IOException
@@ -896,7 +896,7 @@ public final class PluginArtifactBuilderTest
       Path repoRoot = tempDir.resolve("repo");
       Path clientDir = repoRoot.resolve("client");
       Path pluginDir = clientDir.resolve("plugin");
-      Path targetDir = clientDir.resolve("distribution/target/runtime");
+      Path targetDir = clientDir.resolve("distribution/target/engine");
       createPluginSource(repoRoot, clientDir, pluginDir);
       Files.writeString(pluginDir.resolve("agents/claude/agent.md"),
         MARKDOWN_LICENSE + "claude agent\n<!-- cat:include ../../skills/common/common-skill/tests/test.bats -->",
@@ -920,10 +920,10 @@ public final class PluginArtifactBuilderTest
   }
 
   /**
-   * Verifies that duplicate runtime companion basenames are rejected instead of guessed.
+   * Verifies that duplicate engine companion basenames are rejected instead of guessed.
    */
   @Test
-  public void buildRejectsDuplicateRuntimeSkillCompanionNames() throws IOException
+  public void buildRejectsDuplicateEngineSkillCompanionNames() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try
@@ -931,7 +931,7 @@ public final class PluginArtifactBuilderTest
       Path repoRoot = tempDir.resolve("repo");
       Path clientDir = repoRoot.resolve("client");
       Path pluginDir = clientDir.resolve("plugin");
-      Path targetDir = clientDir.resolve("distribution/target/runtime");
+      Path targetDir = clientDir.resolve("distribution/target/engine");
       createPluginSource(repoRoot, clientDir, pluginDir);
       Path nested = pluginDir.resolve("skills/common/common-skill/nested");
       Files.createDirectories(nested);
@@ -944,10 +944,10 @@ public final class PluginArtifactBuilderTest
       }
       catch (IllegalStateException e)
       {
-        requireThat(e.getMessage(), "message").contains("Duplicate runtime skill companion filename");
+        requireThat(e.getMessage(), "message").contains("Duplicate engine skill companion filename");
         return;
       }
-      throw new AssertionError("Expected duplicate runtime skill companion filename rejection");
+      throw new AssertionError("Expected duplicate engine skill companion filename rejection");
     }
     finally
     {
@@ -967,7 +967,7 @@ public final class PluginArtifactBuilderTest
       Path repoRoot = tempDir.resolve("repo");
       Path clientDir = repoRoot.resolve("client");
       Path pluginDir = clientDir.resolve("plugin");
-      Path targetDir = clientDir.resolve("distribution/target/runtime");
+      Path targetDir = clientDir.resolve("distribution/target/engine");
       createPluginSource(repoRoot, clientDir, pluginDir);
       Files.writeString(pluginDir.resolve("rules/common/java.md"), """
         ---
@@ -992,7 +992,7 @@ public final class PluginArtifactBuilderTest
   }
 
   /**
-   * Verifies runtime artifacts include migration utility scripts needed by migration entrypoints.
+   * Verifies engine artifacts include migration utility scripts needed by migration entrypoints.
    */
   @Test
   public void buildIncludesMigrationUtilityScripts() throws IOException
@@ -1003,7 +1003,7 @@ public final class PluginArtifactBuilderTest
       Path repoRoot = tempDir.resolve("repo");
       Path clientDir = repoRoot.resolve("client");
       Path pluginDir = clientDir.resolve("plugin");
-      Path targetDir = clientDir.resolve("distribution/target/runtime");
+      Path targetDir = clientDir.resolve("distribution/target/engine");
       createPluginSource(repoRoot, clientDir, pluginDir);
 
       new PluginArtifactBuilder(pluginDir, clientDir, targetDir).build();
@@ -1020,7 +1020,7 @@ public final class PluginArtifactBuilderTest
   }
 
   /**
-   * Creates a minimal plugin source tree for runtime artifact tests.
+   * Creates a minimal plugin source tree for engine artifact tests.
    *
    * @param repoRoot the temporary repository root
    * @param clientDir the temporary client directory
@@ -1071,9 +1071,9 @@ public final class PluginArtifactBuilderTest
     Files.writeString(clientDir.resolve("distribution/target/jlink/codex/bin/tool"), "tool\n", StandardCharsets.UTF_8);
     Files.writeString(clientDir.resolve("distribution/target/jlink/claude/bin/pre-read"),
       "io.github.cowwoc.cat.claude.hook.PreReadHook\n", StandardCharsets.UTF_8);
-    writeRuntimeLauncher(clientDir.resolve("distribution/target/jlink/codex/bin/pre-bash"),
+    writeEngineLauncher(clientDir.resolve("distribution/target/jlink/codex/bin/pre-bash"),
       "io.github.cowwoc.cat.codex.hook.PreBashHook");
-    writeRuntimeLauncher(clientDir.resolve("distribution/target/jlink/codex/bin/session-start"),
+    writeEngineLauncher(clientDir.resolve("distribution/target/jlink/codex/bin/session-start"),
       "io.github.cowwoc.cat.codex.hook.SessionStartHook");
     Files.writeString(pluginDir.resolve("hooks/claude/hooks.json"), "{}\n", StandardCharsets.UTF_8);
     Files.writeString(pluginDir.resolve("hooks/codex/hooks.json"), "{}\n", StandardCharsets.UTF_8);
@@ -1210,39 +1210,39 @@ public final class PluginArtifactBuilderTest
   }
 
   /**
-   * Counts the skill directories in a runtime artifact.
+   * Counts the skill directories in a engine artifact.
    *
-   * @param runtimeRoot the runtime artifact root
+   * @param engineRoot the engine artifact root
    * @return the number of skill directories
    * @throws IOException if file operations fail
    */
-  private static long countSkillDirectories(Path runtimeRoot) throws IOException
+  private static long countSkillDirectories(Path engineRoot) throws IOException
   {
-    try (Stream<Path> skills = Files.list(runtimeRoot.resolve("skills")))
+    try (Stream<Path> skills = Files.list(engineRoot.resolve("skills")))
     {
       return skills.filter(Files::isDirectory).count();
     }
   }
 
   /**
-   * Verifies that no generated runtime artifact file contains source-only markers.
+   * Verifies that no generated engine artifact file contains source-only markers.
    *
-   * @param runtimeRoot the runtime artifact root
+   * @param engineRoot the engine artifact root
    * @param text        the marker text that must not be shipped
    * @param name        the assertion name
    * @throws IOException if file operations fail
    */
-  private static void assertRuntimeArtifactDoesNotContain(Path runtimeRoot, String text, String name)
+  private static void assertEngineArtifactDoesNotContain(Path engineRoot, String text, String name)
     throws IOException
   {
     byte[] needle = text.getBytes(StandardCharsets.UTF_8);
-    try (Stream<Path> files = Files.walk(runtimeRoot))
+    try (Stream<Path> files = Files.walk(engineRoot))
     {
       for (Path file : files.filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)).toList())
       {
         byte[] content = Files.readAllBytes(file);
         if (containsBytes(content, needle))
-          throw new AssertionError(name + ": " + runtimeRoot.relativize(file) + " contains " + text);
+          throw new AssertionError(name + ": " + engineRoot.relativize(file) + " contains " + text);
       }
     }
   }
@@ -1278,7 +1278,7 @@ public final class PluginArtifactBuilderTest
   }
 
   /**
-   * Verifies the generated runtime work-review instructions enforce the auto-fix planning artifact contract.
+   * Verifies the generated engine work-review instructions enforce the auto-fix planning artifact contract.
    *
    * @param content the rendered work-review skill content
    * @param name    the assertion name
@@ -1299,16 +1299,16 @@ public final class PluginArtifactBuilderTest
   }
 
   /**
-   * Verifies that common E2E verification does not accept another runtime's infrastructure as a skip reason.
+   * Verifies that common E2E verification does not accept another engine's infrastructure as a skip reason.
    *
    * @param content the generated work verification content
    * @param name    the assertion name
    */
-  private static void assertNoRuntimeSpecificCommonE2ESkip(String content, String name)
+  private static void assertNoEngineSpecificCommonE2ESkip(String content, String name)
   {
     String normalized = normalizeInstructionText(content);
     requireThat(normalized, name).doesNotContain(
-      "another runtime's infrastructure is unavailable, set e2e status to skipped");
+      "another engine's infrastructure is unavailable, set e2e status to skipped");
     requireThat(normalized, name).doesNotContain(
       "codex sessions without claude code e2e infrastructure");
     requireThat(normalized, name).doesNotContain(
@@ -1456,30 +1456,30 @@ public final class PluginArtifactBuilderTest
   }
 
   /**
-   * Verifies runtime-specific output rendering conventions for generated skill wrappers.
+   * Verifies engine-specific output rendering conventions for generated skill wrappers.
    *
-   * @param runtimeRoot the runtime artifact root
-   * @param runtime the runtime name
+   * @param engineRoot the engine artifact root
+   * @param engine the engine name
    * @param skillName the skill directory name
    * @param commandName the expected command name
    * @throws IOException if file operations fail
    */
-  private static void assertOutputRenderSkillConvention(Path runtimeRoot, String runtime, String skillName,
+  private static void assertOutputRenderSkillConvention(Path engineRoot, String engine, String skillName,
     String commandName) throws IOException
   {
-    Path skillDirectory = runtimeRoot.resolve("skills/" + skillName);
+    Path skillDirectory = engineRoot.resolve("skills/" + skillName);
     String content = Files.readString(skillDirectory.resolve("SKILL.md"), StandardCharsets.UTF_8);
     Path firstUse = skillDirectory.resolve("first-use.md");
     if (Files.isRegularFile(firstUse, LinkOption.NOFOLLOW_LINKS))
       content += "\n" + Files.readString(firstUse, StandardCharsets.UTF_8);
-    String assertionPrefix = runtime + capitalize(skillName);
+    String assertionPrefix = engine + capitalize(skillName);
     assertContainsNormalized(content, assertionPrefix + "DeterministicCommand",
       "deterministic Java output command");
     assertContainsNormalized(content, assertionPrefix + "VerbatimOutput",
       "Return the generated display exactly");
     requireThat(content, assertionPrefix + "Command").contains(commandName);
     requireThat(content, assertionPrefix + "NoRenderOutputDirective").doesNotContain("cat:render-output");
-    if (runtime.equals("claude"))
+    if (engine.equals("claude"))
     {
       requireThat(content, assertionPrefix + "Preprocessor").contains("!`");
       requireThat(content, assertionPrefix + "NoDollarZero").doesNotContain("\"$0\"");
@@ -1532,13 +1532,13 @@ public final class PluginArtifactBuilderTest
   }
 
   /**
-   * Writes a launcher script that mimics a jlink-generated runtime launcher.
+   * Writes a launcher script that mimics a jlink-generated engine launcher.
    *
    * @param launcher the launcher path
    * @param className the module main class
    * @throws IOException if the launcher cannot be written
    */
-  private static void writeRuntimeLauncher(Path launcher, String className) throws IOException
+  private static void writeEngineLauncher(Path launcher, String className) throws IOException
   {
     String moduleName;
     if (className.startsWith("io.github.cowwoc.cat.codex."))

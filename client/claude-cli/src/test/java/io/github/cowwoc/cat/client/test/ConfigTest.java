@@ -200,7 +200,7 @@ public class ConfigTest
   }
 
   /**
-   * Verifies that the default work path uses the runtime-neutral project placeholder.
+   * Verifies that the default work path uses the engine-neutral project placeholder.
    */
   @Test
   public void defaultWorkPathUsesCatProjectDir() throws IOException

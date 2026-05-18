@@ -293,7 +293,7 @@ this training will repeatedly fail despite documentation fixes:
 | Exact reproduction | Interpretation instinct | User-centric framing |
 | Strict protocol following | Flexible helpfulness | Enforcement hooks |
 
-**NOTE:** Hook stop messages are runtime-controlled and may be wrapped with prefixes that make
+**NOTE:** Hook stop messages are engine-controlled and may be wrapped with prefixes that make
 the output appear like an error message. Do not attempt to bypass the LLM for output - use
 user-centric framing instead.
 

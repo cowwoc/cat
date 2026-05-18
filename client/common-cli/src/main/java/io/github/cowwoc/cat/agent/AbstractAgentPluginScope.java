@@ -12,9 +12,9 @@ import java.nio.file.Path;
 import java.util.List;
 
 /**
- * Abstract base class for plugin scopes shared by supported agent runtimes.
+ * Abstract base class for plugin scopes shared by supported agent engines.
  * <p>
- * Stores runtime-neutral plugin paths and resolves runtime-specific rule directories internally.
+ * Stores engine-neutral plugin paths and resolves engine-specific rule directories internally.
  */
 public abstract class AbstractAgentPluginScope extends AbstractAgentScope implements AgentPluginScope
 {
@@ -35,9 +35,9 @@ public abstract class AbstractAgentPluginScope extends AbstractAgentScope implem
    * @param pluginRoot the plugin root directory
    * @param pluginData the plugin data directory
    * @param pluginDescriptor the plugin descriptor path relative to the plugin root
-   * @param ruleDirectories the ordered rule directories for the active runtime
-   * @param pluginCacheDescriptor the runtime-specific plugin cache descriptor path relative to the plugin
-   *   root, or {@code null} if the runtime does not install plugins into a cache
+   * @param ruleDirectories the ordered rule directories for the active engine
+   * @param pluginCacheDescriptor the engine-specific plugin cache descriptor path relative to the plugin
+   *   root, or {@code null} if the engine does not install plugins into a cache
    * @throws NullPointerException if any parameter is null
    */
   protected AbstractAgentPluginScope(Path projectPath, Path pluginRoot, Path pluginData,

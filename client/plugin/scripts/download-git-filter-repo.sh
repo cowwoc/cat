@@ -30,14 +30,14 @@ EXPECTED_SHA256="$(git_filter_repo_expected_sha256 "${CONF}" "${PLATFORM}")"
 if [[ ! -f "${BUNDLED_BINARY}" ]]; then
   echo "ERROR: Bundled git-filter-repo executable not found" >&2
   echo "Expected bundled path: ${BUNDLED_BINARY}" >&2
-  echo "Reinstall CAT runtime artifact to restore bundled tools." >&2
+  echo "Reinstall CAT engine artifact to restore bundled tools." >&2
   exit 1
 fi
 
 if [[ ! -x "${BUNDLED_BINARY}" ]]; then
   echo "ERROR: Bundled git-filter-repo is not executable" >&2
   echo "Expected bundled path: ${BUNDLED_BINARY}" >&2
-  echo "Reinstall CAT runtime artifact to restore executable permissions." >&2
+  echo "Reinstall CAT engine artifact to restore executable permissions." >&2
   exit 1
 fi
 
@@ -52,7 +52,7 @@ if [[ "${ACTUAL_SHA256}" != "${EXPECTED_SHA256}" ]]; then
   echo "Expected: ${EXPECTED_SHA256}" >&2
   echo "Actual:   ${ACTUAL_SHA256}" >&2
   echo "Expected bundled path: ${BUNDLED_BINARY}" >&2
-  echo "Reinstall CAT runtime artifact to restore bundled tools." >&2
+  echo "Reinstall CAT engine artifact to restore bundled tools." >&2
   exit 1
 fi
 

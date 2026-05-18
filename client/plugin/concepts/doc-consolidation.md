@@ -61,7 +61,7 @@ goals other than the primary chain goal.
 
 ### Conditionally-Loaded Multi-File Sets
 
-**Characteristics**: Multiple files where each file is loaded on-demand based on runtime logic, not eagerly loaded
+**Characteristics**: Multiple files where each file is loaded on-demand based on engine logic, not eagerly loaded
 together. Common patterns include `first-use.md` (loaded only on first skill invocation), agent `.md` files (loaded
 only when that stakeholder/agent type is selected), and concept files (loaded by skills on demand).
 

@@ -19,7 +19,7 @@ import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Abstract base class providing runtime-neutral implementations of derived path methods and shared
+ * Abstract base class providing engine-neutral implementations of derived path methods and shared
  * lazy-initialized service instances for {@link AgentScope}.
  * <p>
  * <b>Thread Safety:</b> This class is thread-safe.

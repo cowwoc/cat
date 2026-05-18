@@ -107,7 +107,7 @@ PATH_EOF
     [ "${status}" -ne 0 ]
     [[ "${output}" == *"ERROR: Bundled git-filter-repo executable not found"* ]] || [[ "${lines[*]}" == *"ERROR: Bundled git-filter-repo executable not found"* ]]
     [[ "${output}" == *"Expected bundled path:"* ]] || [[ "${lines[*]}" == *"Expected bundled path:"* ]]
-    [[ "${output}" == *"Reinstall CAT runtime artifact"* ]] || [[ "${lines[*]}" == *"Reinstall CAT runtime artifact"* ]]
+    [[ "${output}" == *"Reinstall CAT engine artifact"* ]] || [[ "${lines[*]}" == *"Reinstall CAT engine artifact"* ]]
 }
 
 @test "fails fast when bundled executable is not executable" {

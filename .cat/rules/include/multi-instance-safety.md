@@ -1,6 +1,6 @@
 ## Multi-Instance Safety
 
-**MANDATORY:** All changes must be safe when multiple runtime instances run concurrently, each in its own isolated
+**MANDATORY:** All changes must be safe when multiple engine instances run concurrently, each in its own isolated
 worktree.
 
 Instances must NEVER:
@@ -49,7 +49,7 @@ rm -rf "$WORK_DIR"
 - Marker files must be per-session: `${SESSION_DIR}/marker-name` (not in worktree/main workspace)
 - Use `${CAT_SESSION_ID}` as part of any file path that tracks instance state
 - **CRITICAL:** When you encounter a lock file with a `session_id` different from your own (`${CAT_SESSION_ID}`), it is
-  **NOT necessarily stale** — it belongs to another active runtime instance. Do NOT assume it is old or try to delete
+  **NOT necessarily stale** — it belongs to another active engine instance. Do NOT assume it is old or try to delete
   it. Multiple instances run concurrently, each with its own session ID. A lock file containing a different `session_id`
   is evidence of concurrent work, not abandoned work.
 

@@ -172,7 +172,7 @@ compliance as `mvn compile | grep error`, but runs in milliseconds.
 ## Test Case File Path Constraints
 
 When a test case instructs an agent to create files, those files **must** be written to `.cat/work/`
-(relative to the agent's working directory). Do **not** use absolute paths or runtime-private agent directories.
+(relative to the agent's working directory). Do **not** use absolute paths or engine-private agent directories.
 
 **Required: use `.cat/work/`**
 
@@ -187,8 +187,8 @@ Multiple parallel tests and runner instances never conflict.
 # WRONG: absolute /tmp/ path — shared across all processes on the machine
 /tmp/validate-uuid.sh
 
-# WRONG: path under a runtime-private agent directory, not the intended output location
-.runtime/worktrees/agent-XXXX/.cat/work/validate-uuid.sh
+# WRONG: path under a engine-private agent directory, not the intended output location
+.engine/worktrees/agent-XXXX/.cat/work/validate-uuid.sh
 ```
 
 **Why not tracked directories like `plugin/` or `client/`?** Files there are staged and committed during

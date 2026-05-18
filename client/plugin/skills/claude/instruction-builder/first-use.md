@@ -13,7 +13,7 @@ Claude Code subagent.
 
 ## Claude Code Test Case Constraint
 
-Claude Code test-run agents can spawn one level of subagents when the runtime supports it, but Claude Code subagents
+Claude Code test-run agents can spawn one level of subagents when the engine supports it, but Claude Code subagents
 cannot spawn further agents. Test cases must not include assertions that require:
 - Sub-subagent spawning two levels below the test-run process
 - Output that can only exist if sub-subagents ran

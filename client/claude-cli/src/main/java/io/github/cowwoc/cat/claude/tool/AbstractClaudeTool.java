@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.claude.tool;
 
-import io.github.cowwoc.cat.agent.AgentRuntime;
+import io.github.cowwoc.cat.agent.AgentEngine;
 import io.github.cowwoc.cat.claude.hook.prompt.UserIssues;
 import io.github.cowwoc.cat.tool.AbstractCliTool;
 import io.github.cowwoc.pouch10.core.ConcurrentLazyReference;
@@ -45,8 +45,8 @@ public abstract class AbstractClaudeTool extends AbstractCliTool implements Clau
     Path pluginData, Path claudeConfigPath)
   {
     super(sessionId, projectPath, pluginRoot, pluginData, claudeConfigPath,
-      AgentRuntime.CLAUDE.pluginDescriptor(), AgentRuntime.CLAUDE.ruleDirectories(projectPath, pluginRoot),
-      AgentRuntime.CLAUDE.pluginCacheDescriptor(), Path.of(System.getProperty("user.dir")), "UTC", "");
+      AgentEngine.CLAUDE.pluginDescriptor(), AgentEngine.CLAUDE.ruleDirectories(projectPath, pluginRoot),
+      AgentEngine.CLAUDE.pluginCacheDescriptor(), Path.of(System.getProperty("user.dir")), "UTC", "");
   }
 
   @Override

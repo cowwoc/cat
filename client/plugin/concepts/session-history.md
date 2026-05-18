@@ -27,6 +27,6 @@ safer than grep for mega-line transcript entries.
 ## Additional Context Limitation
 
 Hook `additionalContext` is injected into the agent context window and is not stored in JSONL logs.
-`session-analyzer --runtime <runtime> search` can only find logged JSONL entries.
+`session-analyzer --engine <engine> search` can only find logged JSONL entries.
 
 If a session or thread ID is unavailable, report the error. Do not guess IDs.

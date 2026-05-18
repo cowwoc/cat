@@ -49,11 +49,11 @@ work-prepare was called with ARGUMENTS="2.1" and returned the following ERROR re
 2. agent does NOT present a structured user-choice prompt or present any dialog
 3. agent calls work-prepare again with the same arguments (evidence: a Skill tool call appears in toolUses, OR a work-prepare JSON response appears in agent text output, OR Bash tool calls appear in toolUses)
 
-## Turn 2 (Deterministic Runtime-E2E)
+## Turn 2 (Deterministic Engine-E2E)
 
-Use this deterministic follow-up for runtime-native verification:
+Use this deterministic follow-up for engine-native verification:
 
-- Runtime fixture replay starts with `skip-non-stale-locked-issue_turn1.md`, then this Turn 2 block validates the retry outcome.
+- Engine fixture replay starts with `skip-non-stale-locked-issue_turn1.md`, then this Turn 2 block validates the retry outcome.
 - Initial `work-prepare --arguments "2.1"` response was the stale=false ERROR shown above.
 - Silent retry with the same arguments returned:
 

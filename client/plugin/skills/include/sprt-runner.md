@@ -60,14 +60,15 @@ If `overall_decision` is REJECT, the Investigation Procedure section provides st
 - `worktree_path` points to a clean git worktree on the issue branch
 - `test_dir` is a path (absolute or relative to `worktree_path`) containing one or more `*.md` test case files
 - `test_model` is the model identifier to use for all trial runs (must match the skill under test)
-- `${CAT_PLUGIN_ROOT}/client/bin/instruction-test-runner` binary is available
+- `${CAT_PLUGIN_ROOT}/client/bin/sprt-runner` binary is available
 - `${CAT_PLUGIN_ROOT}/client/bin/extract-turns` binary is available (splits multi-turn scenarios into individual turn files)
 
-This SPRT implementation runs on the active CAT runtime. Test runners and graders are spawned through the same runtime that invokes `instruction-test-runner`.
+This SPRT implementation runs on the active CAT engine. Trial and grader process launches are executed through
+`cat:spawn-engine` semantics inside `sprt-runner` for the active engine.
 
 ### Valid Model Names
 
-The `test_model` argument accepts the model IDs supported by the active runtime. Runtime-specific aliases may be accepted by the underlying runner; unknown aliases fail fast with an error identifying the unknown value.
+The `test_model` argument accepts the model IDs supported by the active engine. Engine-specific aliases may be accepted by the underlying runner; unknown aliases fail fast with an error identifying the unknown value.
 
 ---
 
@@ -93,7 +94,7 @@ otherwise                             → return INCONCLUSIVE
 - A = log((1 − β) / α) = log(19) ≈ 2.944 (accept boundary)
 - B = log(β / (1 − α)) = log(0.0526) ≈ −2.944 (reject boundary)
 
-These constants are defined and Javadoc-documented in `InstructionTestRunner.java` (constants `SPRT_LOG_PASS`,
+These constants are defined and Javadoc-documented in `SprtRunner.java` (constants `SPRT_LOG_PASS`,
 `SPRT_LOG_FAIL`, `SPRT_ACCEPT`, `SPRT_REJECT`). The values here are the authoritative reference; the Java
 implementation is the authoritative source of truth.
 
@@ -120,7 +121,7 @@ consider increasing the trial budget or revising the test scenario for clearer s
 
 ## API Boundary
 
-The `instruction-test-runner` binary exposes one public SPRT entry point for skills and agents:
+The `sprt-runner` binary exposes one public SPRT entry point for skills and agents:
 
 | Command | Scope | Use case |
 |---------|-------|----------|
@@ -129,7 +130,7 @@ The `instruction-test-runner` binary exposes one public SPRT entry point for ski
 `run-sprt` usage:
 
 ```bash
-instruction-test-runner run-sprt \
+sprt-runner run-sprt \
   <worktree_path> <test_dir> <test_model> <effort> <session_id>
 ```
 
@@ -174,7 +175,7 @@ violation and must be treated as prohibition failures.
 - Filesystem isolation (orphan-branch worktree) ensures assertions are structurally absent
 
 **Grader agents** (no tool restrictions):
-- Graders run through the active runtime inside the run worktree, which has assertions structurally absent
+- Graders run through the active engine inside the run worktree, which has assertions structurally absent
 - Full tool access is permitted; the run worktree isolation is the primary defense
 
 **Isolation model:** Both test runners and graders execute inside run worktrees branched from an orphan
@@ -208,7 +209,8 @@ The index.json file is at: `client/plugin/tests/skills/common/work-execute/.../f
 
 ## Plugin Cache Isolation
 
-Both test runners and graders are spawned through the active runtime with the run worktree as their plugin source.
+Both test runners and graders are spawned through `cat:spawn-engine` semantics on the active engine with the run
+worktree as their plugin source.
 This gives both components an isolated config directory containing exactly the plugin version committed
 to the run worktree (branched from the isolation branch, which captured the full working tree
 at creation time). Neither test runners nor graders read from `CAT_PLUGIN_ROOT`.
@@ -228,7 +230,7 @@ No manual cache sync or `/reload-plugins` is needed.
 
 ## Procedure
 
-The SPRT workflow is executed via `instruction-test-runner run-sprt` with effort immediately after the model id.
+The SPRT workflow is executed via `sprt-runner run-sprt` with effort immediately after the model id.
 
 **Step 0 (if retrying after client updates):** Kill any previous background SPRT instance and clean up artifacts:
 
@@ -267,11 +269,11 @@ TEST_EFFORT="$3"
 EXPECTED_INSTRUCTION_SHA="$4"
 TEST_RUN_ID="$(basename "${TEST_DIR}")-$(date +%Y%m%d%H%M%S)"
 
-# Use the model id or alias accepted by the active runtime.
+# Use the model id or alias accepted by the active engine.
 TEST_MODEL_ID="${TEST_MODEL}"
-SPRT_RUNTIME="${CAT_RUNTIME:-}"
+SPRT_RUNTIME="${CAT_ENGINE:-}"
 if [[ -z "${SPRT_RUNTIME}" ]]; then
-  echo "ERROR: CAT_RUNTIME must be set to the active runtime (claude or codex)" >&2
+  echo "ERROR: CAT_ENGINE must be set to the active engine (claude or codex)" >&2
   exit 1
 fi
 
@@ -287,7 +289,7 @@ Bash tool:
   description: "Start SPRT runner"
   run_in_background: true
   command: |
-    "${WORKTREE_PATH}/client/distribution/target/jlink/${SPRT_RUNTIME}/bin/instruction-test-runner" run-sprt \
+    "${WORKTREE_PATH}/client/distribution/target/jlink/${SPRT_RUNTIME}/bin/sprt-runner" run-sprt \
       "${WORKTREE_PATH}" "${TEST_DIR}" "${TEST_MODEL_ID}" \
       "${TEST_EFFORT}" "${CAT_SESSION_ID}" \
       > "${OUTPUT_FILE}" 2>&1
@@ -301,7 +303,7 @@ when the runner exits abnormally. You will be notified when the background task 
 ```bash
 # Wait briefly for the java process to start, then capture its PID
 sleep 1
-SPRT_PID=$(ps aux | grep "instruction-test-runner.*run-sprt" | grep -v grep | awk '{print $2}' | head -1)
+SPRT_PID=$(ps aux | grep "sprt-runner.*run-sprt" | grep -v grep | awk '{print $2}' | head -1)
 if [[ -z "${SPRT_PID}" ]]; then
   echo "ERROR: Could not find SPRT process PID" >&2
   exit 1
@@ -363,12 +365,12 @@ to finish:
    RUN_WORKTREE="${WORKTREE_PATH}/.cat/work/worktrees/$(basename ${WORKTREE_PATH})-tc{N}-r{M}"
    ls "${RUN_WORKTREE}/.cat/work/" 2>/dev/null || echo "Run worktree missing"
    ```
-4. Find the failing component's session or process output. Runtime sessions, when available, are scoped to
+4. Find the failing component's session or process output. Engine sessions, when available, are scoped to
    the run worktree config under `${RUN_WORKTREE}/.cat/config`; otherwise inspect the captured runner and grader
    stdout files in `${RUN_WORKTREE}/.cat/work/`.
 5. If a session exists, invoke the `cat:get-history` skill on it:
-   - Use `session-analyzer --runtime ${SPRT_RUNTIME} errors <session_id>` to surface tool errors
-   - Use `session-analyzer --runtime ${SPRT_RUNTIME} search <session_id> "keyword"` to find relevant events
+   - Use `session-analyzer --engine ${SPRT_RUNTIME} errors <session_id>` to surface tool errors
+   - Use `session-analyzer --engine ${SPRT_RUNTIME} search <session_id> "keyword"` to find relevant events
    - For a runner failure: look for what the agent did and why it exited non-zero
    - For a grader failure: look for whether the agent wrote its grade JSON and what errors occurred
 6. If no session exists, the process crashed before its first API call (process-level failure).
@@ -449,7 +451,7 @@ The SPRT command performs the complete SPRT workflow:
 2. **Cleanup prior runs** — Removes orphaned SPRT worktrees and branches
 3. **Create isolation branch** — Strips assertions, creates opaque test case files, commits to orphan branch
 4. **Initialize SPRT** — Sets up per-test-case state tracking with configured thresholds
-5. **SPRT loop** — Adaptive batching: creates run worktrees, spawns parallel trials through the active runtime, grades outputs, updates SPRT state, repeats until all test cases decided or truncated at 50 runs
+5. **SPRT loop** — Adaptive batching: creates run worktrees, spawns parallel trials through the active engine, grades outputs, updates SPRT state, repeats until all test cases decided or truncated at 50 runs
 6. **Write results** — Commits test-results.json to test directory, returns overall decision
 7. **Cleanup** — Removes all run worktrees, branches, and isolation branch
 8. **Report** — Outputs structured results table with per-test-case decisions and token usage
@@ -497,7 +499,7 @@ cd "${WORKTREE_PATH}/.cat/work/test-runs/${TEST_RUN_ID}"
 for TC_DIR in tc*/ ; do
   TC_ID="${TC_DIR%/}"
   # Read the test case decision from sprt-state.json
-  DECISION=$("${CAT_PLUGIN_ROOT}/client/bin/instruction-test-runner" get-json-field \
+  DECISION=$("${CAT_PLUGIN_ROOT}/client/bin/sprt-runner" get-json-field \
     "$(cat ${WORKTREE_PATH}/.cat/work/sprt-state.json)" \
     "sprt_state.${TC_ID}.decision")
   

@@ -75,7 +75,7 @@ try (java.util.stream.Stream<Path> walk = Files.walk(dir))
 
 ```java
 // Good - import nested class directly
-import io.github.cowwoc.cat.runtime.hook.util.IssueDiscovery.DiscoveryResult.ExistingWorktree;
+import io.github.cowwoc.cat.engine.hook.util.IssueDiscovery.DiscoveryResult.ExistingWorktree;
 
 if (discoveryResult instanceof ExistingWorktree existingWorktree)
 {
@@ -684,7 +684,7 @@ if ("Skill".equals(toolName))
 Use `Strings.equalsIgnoreCase()` for null-safe case-insensitive comparison:
 
 ```java
-import static io.github.cowwoc.cat.runtime.hook.Strings.equalsIgnoreCase;
+import static io.github.cowwoc.cat.engine.hook.Strings.equalsIgnoreCase;
 
 // Good - null-safe, reads naturally
 if (equalsIgnoreCase(toolName, "Bash"))
@@ -791,7 +791,7 @@ in executable code. Use the simple class name in the Javadoc tag:
 
 ```java
 // Good - import added, simple name in {@link}
-import io.github.cowwoc.cat.runtime.hook.skills.DisplayUtils;
+import io.github.cowwoc.cat.engine.hook.skills.DisplayUtils;
 
 /**
  * This file is consumed by {@link DisplayUtils}.
@@ -799,7 +799,7 @@ import io.github.cowwoc.cat.runtime.hook.skills.DisplayUtils;
 
 // Avoid - fully qualified name in {@link}
 /**
- * This file is consumed by {@link io.github.cowwoc.cat.runtime.hook.skills.DisplayUtils}.
+ * This file is consumed by {@link io.github.cowwoc.cat.engine.hook.skills.DisplayUtils}.
  */
 ```
 
@@ -897,7 +897,7 @@ public class Config
  * Context object passed to skill handlers.
  *
  * @param userPrompt the user's prompt text
- * @param sessionId the runtime session ID
+ * @param sessionId the engine session ID
  */
 public record SkillContext(String userPrompt, String sessionId)
 {
@@ -1259,7 +1259,7 @@ methods); implementation logic — even derived convenience methods — belongs 
 Abstract classes must omit methods that cannot be properly implemented at their level. Do not satisfy an interface
 contract by returning fallback values such as `""`, `null`, empty collections, or no-op results merely because a
 subclass is expected to override the method. Leave the method abstract and require each concrete subclass to provide
-the correct implementation for its runtime context.
+the correct implementation for its engine context.
 
 ```java
 // Good - interface defines contract, abstract class provides derived methods
@@ -1303,7 +1303,7 @@ public interface AgentScope extends AutoCloseable
 Scope classes should expose the values they own directly through the scope API. Do not create `*Config` records or
 config getters that callers have to unpack before constructing the next scope. If multiple concrete scope
 implementations need the same derived value, derive it once in the abstract scope implementation and let concrete
-classes invoke the superclass constructor with only their runtime-specific inputs.
+classes invoke the superclass constructor with only their engine-specific inputs.
 
 **When `default` methods ARE acceptable:**
 - Backward-compatible additions to a widely-implemented interface
@@ -1433,9 +1433,9 @@ unless your subclass needs to override it with custom behavior.
 **Example - Bad (delegation-only method):**
 ```java
 @Override
-public Path getRuntimeConfigPath()
+public Path getEngineConfigPath()
 {
-  return super.getRuntimeConfigPath();
+  return super.getEngineConfigPath();
 }
 ```
 
@@ -1499,22 +1499,22 @@ the scope internally. This keeps constructors stable when new dependencies are a
 accessors through call chains.
 
 **Scope implementations:**
-- `MainCliTool` — production use for shared CLI tools, derives CAT scope values from the active runtime harness and
+- `MainCliTool` — production use for shared CLI tools, derives CAT scope values from the active engine harness and
   exposes those values directly through `CliTool`
-- `MainClaudeTool` / `MainCodexTool` — production runtime-specific tool scopes
-- `MainClaudeHook` / `MainCodexHook` — production runtime-specific hook scopes
+- `MainClaudeTool` / `MainCodexTool` — production engine-specific tool scopes
+- `MainClaudeHook` / `MainCodexHook` — production engine-specific hook scopes
 - Test scopes such as `TestClaudeTool`, `TestClaudeHook`, and `TestCodexHook` — accept injectable paths and
   deterministic defaults
 
-When a runtime has paired production and test scopes, such as `MainCodexHook` and `TestCodexHook`, introduce an
+When a engine has paired production and test scopes, such as `MainCodexHook` and `TestCodexHook`, introduce an
 `Abstract*` scope for their shared behavior. Delegate as much common code as possible into the abstract scope, then keep
-`Main*` and `Test*` subclasses focused on the parts that genuinely differ: production entrypoints read runtime
+`Main*` and `Test*` subclasses focused on the parts that genuinely differ: production entrypoints read engine
 environment, stdin, or installed filesystem locations, while test scopes accept injectable values and deterministic
 defaults. Do not duplicate shared scope behavior between the production and test classes.
 
 **Why pouch over DI frameworks:**
 - No magic — explicit constructor wiring, fully debuggable code flow
-- Compile-time dependency graph verification (no runtime surprises)
+- Compile-time dependency graph verification (no engine surprises)
 - Scope hierarchy enforces resource lifetime constraints
 - Each test instantiates its own scope hierarchy, executing as if in a separate JVM
 - `AgentScope` lifecycle management (via `try-with-resources`) handles cleanup
@@ -1523,7 +1523,7 @@ defaults. Do not duplicate shared scope behavior between the production and test
 
 Do not introduce a builder solely to reduce constructor argument count when all properties are mandatory. A direct
 constructor fails at compile time when callers omit a required value; a builder usually converts that mistake into a
-runtime validation failure. Prefer compile-time failures for required dependencies and state.
+engine validation failure. Prefer compile-time failures for required dependencies and state.
 
 Use a builder only when it provides a real type-safety or ergonomics benefit beyond argument count, such as optional
 properties, many independent defaults, staged builders that preserve compile-time mandatory-field checks, or a public
@@ -1709,8 +1709,8 @@ private Map<String, Object> loadConfig()
 
 ## Environment Variable Access
 
-Runtime environment variables (e.g., `CAT_SESSION_ID`, `CAT_PLUGIN_ROOT`) must be read through the correct API
-depending on the execution context. Never call `System.getenv()` directly outside approved runtime boundary classes.
+Engine environment variables (e.g., `CAT_SESSION_ID`, `CAT_PLUGIN_ROOT`) must be read through the correct API
+depending on the execution context. Never call `System.getenv()` directly outside approved engine boundary classes.
 
 | Context | Correct API |
 |---------|-------------|
@@ -1722,7 +1722,7 @@ depending on the execution context. Never call `System.getenv()` directly outsid
 **Why:** Hook handlers receive session-specific values from the `HookInput` JSON payload, not from environment
 variables. Reading environment variables in hook handlers bypasses this contract. Session CLI commands use
 `MainCliTool` (a `CliTool` implementation) which derives session and plugin values at startup. Infrastructure CLI
-commands use the narrowest runtime-specific `AgentPluginScope` implementation that exposes the values they need.
+commands use the narrowest engine-specific `AgentPluginScope` implementation that exposes the values they need.
 
 ```java
 // Good - session CLI main() method reads session ID via scope
@@ -1771,17 +1771,17 @@ The env-access enforcement test scans Java source files and fails the build if `
 approved boundary classes.
 
 Approved boundary classes each have a specific reason for direct env var access:
-- Session runtime scope implementations read session env vars at startup and store them as fields.
+- Session engine scope implementations read session env vars at startup and store them as fields.
 - Infrastructure scope implementations read infrastructure path vars for tools that run without session context.
 - Hook scope implementations read infrastructure path vars and hook JSON from stdin.
 - Skill variable substitution expands env var references in skill directive templates.
 - Terminal detection reads standard terminal env vars such as `TERM` and `TERM_PROGRAM`.
 
 **Scope implementations:**
-- `MainCliTool` — production use for shared CLI tools, derives CAT values from the active runtime harness and
+- `MainCliTool` — production use for shared CLI tools, derives CAT values from the active engine harness and
   environment
-- `MainClaudeTool` / `MainCodexTool` — production runtime-specific tool scopes
-- `MainClaudeHook` / `MainCodexHook` — production runtime-specific hook scopes
+- `MainClaudeTool` / `MainCodexTool` — production engine-specific tool scopes
+- `MainClaudeHook` / `MainCodexHook` — production engine-specific hook scopes
 - `TestClaudeTool`, `TestClaudeHook`, and other `Test*` scopes — test use with injectable paths and deterministic
   values
 
@@ -1906,7 +1906,7 @@ unchecked wrapper types (`UncheckedIOException`, custom wrappers, etc.).
 ### Logger Instantiation
 
 Loggers must always be **non-static** instance fields. Use `getClass()` for non-final classes
-(captures the runtime subclass name); use a concrete class literal for `final` classes (no
+(captures the engine subclass name); use a concrete class literal for `final` classes (no
 subclasses possible):
 
 ```java
@@ -1947,7 +1947,7 @@ public static void main(String[] args)
 private static final Logger log = LoggerFactory.getLogger(MyClass.class);
 ```
 
-**Why:** Non-static loggers use `getClass()` which correctly captures the runtime subclass name in
+**Why:** Non-static loggers use `getClass()` which correctly captures the engine subclass name in
 inheritance hierarchies. Static loggers always report the declaring class, hiding which subclass
 actually ran the code. Creating a logger on demand in static contexts is equivalent — `LoggerFactory`
 caches instances internally so there is no meaningful overhead.
@@ -2036,7 +2036,7 @@ these Java-specific constraints:
 5. **No TestBase classes** - each test method must inline its own setup. This boilerplate is intentional and preferred
    over shared helpers or inheritance.
 6. **Use test-specific scopes, not `Main*` scopes** - tests must never interact with production `Main*` scope
-   implementations because they read environment variables, stdin, or runtime-specific filesystem locations that may
+   implementations because they read environment variables, stdin, or engine-specific filesystem locations that may
    not be set in test contexts. Use injectable `Test*` scopes such as `TestClaudeTool(tempDir, tempDir)`,
    `TestCodexTool`, `TestCodexHook`, `TestClaudeTool`, or `TestClaudeHook` instead.
 7. **Never use scope-provided objects after closing the scope** - objects returned by `AgentScope` (e.g., `JsonMapper`,
@@ -2216,32 +2216,32 @@ All modules must define `module-info.java`. Tests reside in a separate module fr
 ### Naming Convention
 | Implementation | Test Module | Test Package |
 |----------------|-------------|--------------|
-| `io.github.cowwoc.cat.client.runtime` | `io.github.cowwoc.cat.client.runtime.test` | `io.github.cowwoc.cat.client.test` |
+| `io.github.cowwoc.cat.client.engine` | `io.github.cowwoc.cat.client.engine.test` | `io.github.cowwoc.cat.client.test` |
 | `com.example.foo` | `com.example.foo.test` | `com.example.foo.test` |
 
 ### Module Exports for Testing
 The implementation module must export internal packages to the test module:
 
 ```java
-// module-info.java for io.github.cowwoc.cat.client.runtime (module name; packages are io.github.cowwoc.cat.runtime.hook/tool)
-module io.github.cowwoc.cat.client.runtime
+// module-info.java for io.github.cowwoc.cat.client.engine (module name; packages are io.github.cowwoc.cat.engine.hook/tool)
+module io.github.cowwoc.cat.client.engine
 {
   requires tools.jackson.databind;
 
-  // Public API — packages are under runtime.hook and runtime.tool
-  exports io.github.cowwoc.cat.runtime.hook;
-  exports io.github.cowwoc.cat.runtime.tool;
+  // Public API — packages are under engine.hook and engine.tool
+  exports io.github.cowwoc.cat.engine.hook;
+  exports io.github.cowwoc.cat.engine.tool;
 
   // Internal packages exported only to test module
-  exports io.github.cowwoc.cat.runtime.hook.internal to io.github.cowwoc.cat.client.runtime.test;
+  exports io.github.cowwoc.cat.engine.hook.internal to io.github.cowwoc.cat.client.engine.test;
 }
 ```
 
 ```java
-// module-info.java for io.github.cowwoc.cat.client.runtime.test
-module io.github.cowwoc.cat.client.runtime.test
+// module-info.java for io.github.cowwoc.cat.client.engine.test
+module io.github.cowwoc.cat.client.engine.test
 {
-  requires io.github.cowwoc.cat.client.runtime;
+  requires io.github.cowwoc.cat.client.engine;
   requires org.testng;
   requires io.github.cowwoc.requirements13.java;
 }
@@ -2276,17 +2276,17 @@ client/                      # Maven project root
 ├── pom.xml
 ├── build.sh
 ├── mvnw
-├── src/main/java/           # Implementation module (io.github.cowwoc.cat.client.runtime) — packages under io.github.cowwoc.cat.runtime.hook/tool
-│   ├── module-info.java     # Module io.github.cowwoc.cat.client.runtime
+├── src/main/java/           # Implementation module (io.github.cowwoc.cat.client.engine) — packages under io.github.cowwoc.cat.engine.hook/tool
+│   ├── module-info.java     # Module io.github.cowwoc.cat.client.engine
 │   └── io/github/cowwoc/cat/
-│       └── runtime/
+│       └── engine/
 │           ├── tool/          # Tool-related classes
 │           │   └── post/
 │           └── hook/          # Hook-related classes
 │               ├── ask/
 │               ├── bash/
 │               └── ...
-└── src/test/java/           # Test module (io.github.cowwoc.cat.client.runtime.test)
+└── src/test/java/           # Test module (io.github.cowwoc.cat.client.engine.test)
     └── io/github/cowwoc/cat/client/test/
         └── module-info.java
 ```

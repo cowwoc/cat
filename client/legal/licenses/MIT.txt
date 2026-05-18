@@ -1,4 +1,4 @@
-MIT License notices for bundled runtime dependencies
+MIT License notices for bundled engine dependencies
 
 com.knuddels:jtokkit
 

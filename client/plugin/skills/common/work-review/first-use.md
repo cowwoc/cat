@@ -314,7 +314,7 @@ appears to have read the wrong branch), you MUST present the concern to the user
 explicit confirmation before discarding it. The structured user-choice prompt MUST use the following exact format:
 
 ```
-runtime-supported structured user-choice prompt:
+engine-supported structured user-choice prompt:
   question: "A reviewer concern may be a false positive (reviewer read wrong branch).
 
   Concern: [full concern text including severity, stakeholder, location, explanation]
@@ -438,15 +438,15 @@ deferred concern wizard) and does NOT affect this gate.
 
 **Per-trust-level procedure:**
 
-- **trust=low**: Invoke runtime-supported structured user-choice prompt with detailed FIX/DEFER summary (all fields: severity, stakeholder,
+- **trust=low**: Invoke engine-supported structured user-choice prompt with detailed FIX/DEFER summary (all fields: severity, stakeholder,
   location, explanation, recommendation, decision, benefit, cost, threshold) and options:
   - "Proceed with these decisions (Recommended)"
   - "Let me change decisions"
-- **trust=medium**: Invoke runtime-supported structured user-choice prompt with brief FIX/DEFER summary (severity, stakeholder, description,
+- **trust=medium**: Invoke engine-supported structured user-choice prompt with brief FIX/DEFER summary (severity, stakeholder, description,
   decision) and options:
   - "Proceed"
   - "Request changes"
-- **trust=high**: Invoke runtime-supported structured user-choice prompt with minimal FIX/DEFER summary showing count of FIX vs DEFER **with
+- **trust=high**: Invoke engine-supported structured user-choice prompt with minimal FIX/DEFER summary showing count of FIX vs DEFER **with
   severity breakdown** (e.g., "FIX: 1 CRITICAL, 2 HIGH | DEFER: 1 MEDIUM") and options:
   - "Proceed"
   - "Abort"
@@ -618,7 +618,7 @@ other severities. If any CRITICAL concern is in the FIX list, the agent prompts 
    remove trailing `/`). If the planning agent declares the SAME CRITICAL or HIGH concern as UNFIXABLE for the
    SECOND time, halt auto-fix attempts for that concern immediately and escalate to the user:
    ```
-   runtime-supported structured user-choice prompt:
+   engine-supported structured user-choice prompt:
      question: "A [SEVERITY] concern has been declared UNFIXABLE twice by the planning agent.
 
      Concern: [stakeholder] at [location]: [explanation]
@@ -830,7 +830,7 @@ other severities. If any CRITICAL concern is in the FIX list, the agent prompts 
       path above, running in the ORIGINAL issue worktree `${WORKTREE_PATH}` on the main `${BRANCH}`).
     - If the sequential retry also fails, escalate to the user via Structured user-choice prompt:
       ```
-      runtime-supported structured user-choice prompt:
+      engine-supported structured user-choice prompt:
         question: "Concern fix agent failed twice for concern:
 
         [concern_N_formatted]
@@ -1131,7 +1131,7 @@ If any HIGH or CRITICAL concerns had issues created in Step 5, present them to t
 2. Use a structured user-choice prompt to ask the user about the scheduling:
 
 ```
-runtime-supported structured user-choice prompt:
+engine-supported structured user-choice prompt:
   question: "The following deferred concerns were automatically scheduled as new issues:
 
   [list each concern: severity, stakeholder, description → scheduled for: version]
@@ -1173,7 +1173,7 @@ are silently ignored and do not appear here.
 2. Use a structured user-choice prompt to ask the user how to handle them:
 
 ```
-runtime-supported structured user-choice prompt:
+engine-supported structured user-choice prompt:
   question: "The following concerns remain untracked:
 
   [list each concern: severity, stakeholder, description]

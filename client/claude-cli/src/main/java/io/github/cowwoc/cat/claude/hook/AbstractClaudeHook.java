@@ -79,7 +79,7 @@ public abstract class AbstractClaudeHook extends AbstractClaudePluginScope imple
   }
 
   /**
-   * Creates a new abstract Claude hook scope with explicit process-scoped runtime values.
+   * Creates a new abstract Claude hook scope with explicit process-scoped engine values.
    *
    * @param data the parsed hook JSON payload
    * @param projectPath the project's root directory

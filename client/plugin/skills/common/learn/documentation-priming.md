@@ -31,11 +31,11 @@ Use session-analyzer to identify all documents the agent read:
 SESSION_ANALYZER="${CAT_PLUGIN_ROOT}/client/bin/session-analyzer"
 
 # Find file and skill references that reached the agent
-"$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" search "$SESSION_ID" "Read|Skill|Task|apply_patch|exec_command" \
+"$SESSION_ANALYZER" --engine "${CAT_ENGINE}" search "$SESSION_ID" "Read|Skill|Task|apply_patch|exec_command" \
   --regex --context 3
 
-# Get a full session overview, including runtime-supported agent discovery
-"$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" analyze "$SESSION_ID"
+# Get a full session overview, including engine-supported agent discovery
+"$SESSION_ANALYZER" --engine "${CAT_ENGINE}" analyze "$SESSION_ID"
 ```
 
 ### Step 2: Check Each Document for Priming Patterns

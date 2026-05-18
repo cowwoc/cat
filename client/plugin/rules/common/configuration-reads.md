@@ -46,7 +46,7 @@ git rebase "$TARGET_BRANCH"
 
 **Pattern (WRONG):**
 ```bash
-# WRONG: jq is not available in the plugin runtime environment
+# WRONG: jq is not available in the plugin engine environment
 TRUST=$(jq -r '.trust' .cat/config.json)
 
 # WRONG: Manually parsing config.json (fragile, no defaults for missing entries)

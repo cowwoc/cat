@@ -5,13 +5,13 @@ See LICENSE.md in the project root for license terms.
 -->
 # CAT Shared Agent Bodies
 
-This directory contains runtime-neutral role bodies for CAT agents. Runtime-specific wrappers live in:
+This directory contains engine-neutral role bodies for CAT agents. Engine-specific wrappers live in:
 
 - `plugin/agents/claude/` for Claude Code custom agents
 - `plugin/agents/codex/` for Codex custom-agent definitions
 
-Do not add Claude Code frontmatter, Codex model names, tool lists, or runtime-specific invocation syntax to files in
-this directory. Put those details in the runtime wrapper and keep the role body here focused on behavior,
+Do not add Claude Code frontmatter, Codex model names, tool lists, or engine-specific invocation syntax to files in
+this directory. Put those details in the engine wrapper and keep the role body here focused on behavior,
 responsibilities, inputs, outputs, and review criteria.
 
 ## Directory Structure
@@ -36,9 +36,9 @@ plugin/agents/common/
 
 ## Wrapper Contract
 
-Every shared body should have matching runtime wrappers with the same filename:
+Every shared body should have matching engine wrappers with the same filename:
 
 - Claude wrapper: `plugin/agents/claude/{name}.md`
 - Codex wrapper: `plugin/agents/codex/{name}.toml`
 
-The wrapper owns runtime-specific metadata. The shared body owns the agent role.
+The wrapper owns engine-specific metadata. The shared body owns the agent role.

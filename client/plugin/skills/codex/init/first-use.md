@@ -5,7 +5,7 @@ See LICENSE.md in the project root for license terms.
 -->
 # Initialize CAT
 
-Initialize CAT planning files and rules for the current runtime.
+Initialize CAT planning files and rules for the current engine.
 
 ## Steps
 
@@ -16,7 +16,7 @@ Initialize CAT planning files and rules for the current runtime.
 [ -d .git ] || git init
 ```
 
-2. Create the portable and runtime-specific directories.
+2. Create the portable and engine-specific directories.
 
 ```bash
 mkdir -p .cat/issues .cat/rules/common .cat/rules/codex .codex
@@ -32,7 +32,7 @@ cp "${CAT_PLUGIN_ROOT}/templates/roadmap.md" .cat/roadmap.md
 cp "${CAT_PLUGIN_ROOT}/templates/config.json" .cat/config.json
 ```
 
-4. Install bundled portable and runtime-specific rules when present.
+4. Install bundled portable and engine-specific rules when present.
 
 ```bash
 <!-- cat:include ../../include/codex-home-bootstrap.md -->

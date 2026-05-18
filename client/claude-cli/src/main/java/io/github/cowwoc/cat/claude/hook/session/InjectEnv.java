@@ -26,7 +26,7 @@ import java.util.Set;
 /**
  * Persists CAT environment variables into CLAUDE_ENV_FILE for Bash tool invocations.
  * <p>
- * Appends the runtime-neutral {@code CAT_*} aliases that skills need directly to the env file so they
+ * Appends the engine-neutral {@code CAT_*} aliases that skills need directly to the env file so they
  * are available in all subsequent Bash tool calls.
  * <p>
  * Writes for new sessions (source="startup"), cleared sessions (source="clear"), and resumed sessions
@@ -184,7 +184,7 @@ public final class InjectEnv implements SessionStartHandler
       "export CAT_PLUGIN_ROOT=\"" + pluginRoot + "\"\n" +
       "export CAT_PLUGIN_DATA=\"" + pluginData + "\"\n" +
       "export CAT_CONFIG_DIR=\"" + configPath + "\"\n" +
-      "export CAT_RUNTIME=\"claude\"\n" +
+      "export CAT_ENGINE=\"claude\"\n" +
       "export CAT_SESSION_ID=\"" + sessionId + "\"\n";
   }
 

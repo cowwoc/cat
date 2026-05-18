@@ -5,8 +5,8 @@ See LICENSE.md in the project root for license terms.
 -->
 # CAT Hooks Infrastructure
 
-CAT hooks are split by runtime. Runtime-specific hook registration files live under `plugin/hooks/<runtime>/`;
-runtime-specific Java entrypoints live under their runtime package, and reusable behavior lives in neutral shared
+CAT hooks are split by engine. Engine-specific hook registration files live under `plugin/hooks/<engine>/`;
+engine-specific Java entrypoints live under their engine package, and reusable behavior lives in neutral shared
 packages.
 
 Codex hook support is intentionally partial, not a full Claude Code parity claim. CAT ships Codex hook adapters for
@@ -26,25 +26,25 @@ plugin/hooks/
     `-- hooks.json
 ```
 
-## Runtime Flow
+## Engine Flow
 
-Claude Code uses its native hook names and invokes CAT launchers from the installed client runtime:
+Claude Code uses its native hook names and invokes CAT launchers from the installed client engine:
 
 ```text
 Claude Code hook event
   -> plugin/hooks/claude/hooks.json
   -> plugin/hooks/claude/session-start.sh or ${CLAUDE_PLUGIN_ROOT}/client/bin/<launcher>
-  -> jlink runtime
+  -> jlink engine
   -> Java handler class
 ```
 
-Codex uses its hook configuration and invokes Codex-native Java entrypoints from the bundled runtime:
+Codex uses its hook configuration and invokes Codex-native Java entrypoints from the bundled engine:
 
 ```text
 Codex hook event
   -> plugin/hooks/codex/hooks.json
   -> ${CAT_PLUGIN_ROOT}/client/bin/<handler>
-  -> jlink runtime
+  -> jlink engine
   -> Codex Java entrypoint
   -> native Codex payload parser
   -> neutral shared helper, when applicable
@@ -58,9 +58,9 @@ environment, and invoke only neutral shared code. They do not invoke Claude Java
 | File | Purpose |
 |------|---------|
 | `plugin/hooks/claude/hooks.json` | Registers Claude Code hook events and maps them to CAT launchers. |
-| `plugin/hooks/claude/session-start.sh` | Claude SessionStart bootstrap. Verifies the bundled jlink runtime before invoking session-start handlers. |
+| `plugin/hooks/claude/session-start.sh` | Claude SessionStart bootstrap. Verifies the bundled jlink engine before invoking session-start handlers. |
 | `plugin/hooks/codex/hooks.json` | Registers Codex hook events and maps them to bundled CAT launchers. |
-| `plugin/hooks/common/README.md` | Runtime-neutral hook infrastructure documentation. |
+| `plugin/hooks/common/README.md` | Engine-neutral hook infrastructure documentation. |
 
 ## Hook Coverage
 
@@ -79,7 +79,7 @@ environment, and invoke only neutral shared code. They do not invoke Claude Java
 
 CAT currently registers Codex hooks for session-start context loading and the Bash pre-hook guard. It does not ship
 no-op Codex launchers for Claude-only behavior, and it does not attempt to port Claude-only `Read|Glob|Grep`,
-`Task|Skill`, prompt, post-tool, stop/status, or session-end hook behavior until Codex exposes compatible runtime
+`Task|Skill`, prompt, post-tool, stop/status, or session-end hook behavior until Codex exposes compatible engine
 events that CAT can handle meaningfully.
 
 CAT intentionally does not emulate Claude Code's `SubagentStart` hook for Codex. Claude Code needs that hook because
@@ -87,21 +87,21 @@ Claude agents do not automatically receive CAT's lightweight agent rules and ski
 agents use Codex sessions/configuration and receive native skill discovery for their effective configuration, so
 duplicating the Claude injection would waste context and risk conflicting with Codex's own skill mechanism.
 
-## jlink Runtime
+## jlink Engine
 
-The jlink image is a self-contained JDK runtime with only the modules needed for hook execution. It includes the CAT
+The jlink image is a self-contained JDK engine with only the modules needed for hook execution. It includes the CAT
 client application JAR, JSON processing dependencies, and logging.
 
 Benefits:
 
 - Smaller than a full JDK distribution.
-- Self-contained, so runtime hooks do not require a system Java install.
+- Self-contained, so engine hooks do not require a system Java install.
 - Uses generated launcher scripts for each Java handler.
 
-Runtime structure:
+Engine structure:
 
 ```text
-runtime/client/
+engine/client/
 |-- bin/
 |   |-- java
 |   |-- pre-bash
@@ -116,7 +116,7 @@ runtime/client/
 Most hook handlers are registered by the client build as `launcher-name:ClassName`. The build generates a
 `bin/<launcher-name>` shell script for each entry.
 
-| Launcher | Class | Runtime usage |
+| Launcher | Class | Engine usage |
 |----------|-------|---------------|
 | `pre-bash` | `PreToolUseHook` / `PreBashHook` | Claude and Codex Bash pre-hooks |
 | `post-bash` | `PostBashHook` | Claude Bash post-hooks |
@@ -126,26 +126,26 @@ Most hook handlers are registered by the client build as `launcher-name:ClassNam
 | `session-end` | `SessionEndHook` | Claude session end |
 | `enforce-status` | `EnforceStatusOutput` | Claude stop/status enforcement |
 
-Session start is a runtime bootstrap path rather than a generated launcher:
+Session start is a engine bootstrap path rather than a generated launcher:
 
-| Runtime | Entry point | Handler |
+| Engine | Entry point | Handler |
 |---------|-------------|---------|
 | Claude | `plugin/hooks/claude/session-start.sh` | `io.github.cowwoc.cat.claude.hook.SessionStartHook` |
 | Codex | `client/bin/session-start` | `io.github.cowwoc.cat.codex.hook.SessionStartHook` |
 
-Handlers are runtime-specific when the hook payloads or event model differ. Runtime-specific code should stay under
-the runtime package. Reusable logic should live under a neutral package and should not depend on Claude or Codex
+Handlers are engine-specific when the hook payloads or event model differ. Engine-specific code should stay under
+the engine package. Reusable logic should live under a neutral package and should not depend on Claude or Codex
 entrypoints.
 
 ## Development
 
 During release validation, reinstall from the published or staged release artifact. The release artifact comes from
-`cowwoc/cat` GitHub Releases and includes the bundled jlink runtime used by the active runtime.
+`cowwoc/cat` GitHub Releases and includes the bundled jlink engine used by the active engine.
 
 Troubleshooting:
 
-- If a Claude hook produces no output, check `plugin/hooks/claude/hooks.json` and the bundled runtime under
+- If a Claude hook produces no output, check `plugin/hooks/claude/hooks.json` and the bundled engine under
   `${CLAUDE_PLUGIN_ROOT}/client/bin/`.
-- If a Codex hook produces no output, check `plugin/hooks/codex/hooks.json`, the bundled runtime under
+- If a Codex hook produces no output, check `plugin/hooks/codex/hooks.json`, the bundled engine under
   `${CAT_PLUGIN_ROOT}/client/bin/`, and the installed plugin cache under `~/.codex/plugins/cache/`.
 - If the jlink build fails, verify that the configured JDK version is installed and that `mvn -f client/pom.xml verify -e` passes.

@@ -72,27 +72,27 @@ Status values:
 - Keep explanations in the `criteria` and `e2e` fields to one line each
 - The `detail_file` field is OPTIONAL — only include it when the criterion is Missing or Partial
 - **E2E Testing Guidance:**
-  - For feature/bugfix/refactor/performance issues AND CAUTION == "high": Run runtime E2E tests using worktree
+  - For feature/bugfix/refactor/performance issues AND CAUTION == "high": Run engine E2E tests using worktree
     artifacts (not cached plugin). For other caution levels, set e2e status to SKIPPED.
-  - E2E tests must use the runtime selected by `CAT_RUNTIME`. E2E runs must use the selected runtime's artifacts and
-    runtime-native test infrastructure.
-  - `CAT_RUNTIME` must be set before runtime E2E invocation. If it is unset for a high-caution E2E run, set E2E
-    status to FAILED because the verifier cannot select the correct runtime artifact.
-  - Runtime invocation must use an absolute binary path from the selected runtime's worktree jlink image:
-    `${RUNTIME_BIN}/instruction-test-runner ...`
-    Do NOT invoke `instruction-test-runner` via PATH lookup.
-  - If a high-caution E2E run fails because the selected runtime path depends on another runtime's infrastructure,
+  - E2E tests must use the engine selected by `CAT_ENGINE`. E2E runs must use the selected engine's artifacts and
+    engine-native test infrastructure.
+  - `CAT_ENGINE` must be set before engine E2E invocation. If it is unset for a high-caution E2E run, set E2E
+    status to FAILED because the verifier cannot select the correct engine artifact.
+  - Engine invocation must use an absolute binary path from the selected engine's worktree jlink image:
+    `${RUNTIME_BIN}/sprt-runner ...`
+    Do NOT invoke `sprt-runner` via PATH lookup.
+  - If a high-caution E2E run fails because the selected engine path depends on another engine's infrastructure,
     set E2E status to FAILED. Record the failure evidence in `${VERIFY_DIR}/e2e-test-output.json` and use explanation
-    "E2E failed: selected runtime requires runtime-native E2E infrastructure".
-  - Do not skip E2E because another runtime's infrastructure is unavailable. Missing runtime artifacts, unsupported
-    commands, assertion failures, or dependencies on the wrong runtime infrastructure are E2E failures for runtime
+    "E2E failed: selected engine requires engine-native E2E infrastructure".
+  - Do not skip E2E because another engine's infrastructure is unavailable. Missing engine artifacts, unsupported
+    commands, assertion failures, or dependencies on the wrong engine infrastructure are E2E failures for engine
     behavior issues.
-  - Before runtime E2E invocation, run a clean-worktree preflight:
+  - Before engine E2E invocation, run a clean-worktree preflight:
     `cd "${WORKTREE_PATH}" && git status --porcelain`
-    If any output is present, set e2e status to FAILED with an explanation that runtime E2E requires a clean
+    If any output is present, set e2e status to FAILED with an explanation that engine E2E requires a clean
     worktree (commit or stash changes first), then stop E2E execution.
-  - Runtime invocation required — static file inspection, syntax checks, or unit tests do not count as E2E testing
-  - For docs and config issues (no runtime behavior changes), set e2e status to SKIPPED
+  - Engine invocation required — static file inspection, syntax checks, or unit tests do not count as E2E testing
+  - For docs and config issues (no engine behavior changes), set e2e status to SKIPPED
 
 ### Build Verification (caution-based)
 
@@ -141,8 +141,8 @@ Update this logic:
 - For `docs` and `config` issue types only: set e2e status to SKIPPED (existing behavior, unchanged)
 - For all other issue types: run E2E **only if CAUTION == "high"**; otherwise set e2e status to SKIPPED
   with explanation "E2E skipped (caution: ${CAUTION})"
-- If a high-caution runtime E2E attempt fails because the selected runtime path still depends on another runtime's
+- If a high-caution engine E2E attempt fails because the selected engine path still depends on another engine's
   infrastructure, set e2e status to FAILED with explanation
-  "E2E failed: selected runtime requires runtime-native E2E infrastructure".
+  "E2E failed: selected engine requires engine-native E2E infrastructure".
 
 Any `Missing` criterion from compile or unit tests contributes to the overall `INCOMPLETE` status.

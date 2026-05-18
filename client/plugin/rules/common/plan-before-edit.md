@@ -2,7 +2,7 @@
 description: >
   Use when renaming, removing, or moving a symbol across multiple files — scan all occurrences first,
   build a complete file-to-changes plan, apply all edits without intermediate compilation, then verify
-  the build once. Use this for coordinated symbol changes; batch-write behavior is governed by the runtime-loaded
+  the build once. Use this for coordinated symbol changes; batch-write behavior is governed by the engine-loaded
   CAT batch-write rule.
 model: haiku
 effort: low

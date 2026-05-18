@@ -8,7 +8,6 @@ module io.github.cowwoc.cat.client.test
 {
   requires io.github.cowwoc.cat.common.cli;
   requires io.github.cowwoc.cat.claude.cli;
-  requires io.github.cowwoc.cat.codex.cli;
   requires org.testng;
   requires io.github.cowwoc.requirements13.java;
   requires io.github.cowwoc.requirements13.jackson;
@@ -19,6 +18,5 @@ module io.github.cowwoc.cat.client.test
 
   exports io.github.cowwoc.cat.client.test to org.testng;
   exports io.github.cowwoc.cat.client.test.claude to org.testng;
-  exports io.github.cowwoc.cat.client.test.codex to org.testng;
   exports io.github.cowwoc.cat.client.test.common to org.testng;
 }

@@ -54,7 +54,7 @@ Commit messages are available via `git log` in the worktree if needed.
 ## Stakeholders
 
 10 perspectives: requirements, architecture, security, design, testing, performance, deployment, ux, business, legal.
-Each runtime has a runtime-specific stakeholder agent definition; shared role bodies live under
+Each engine has a engine-specific stakeholder agent definition; shared role bodies live under
 `plugin/agents/common/`.
 
 ## Progress Output
@@ -464,12 +464,12 @@ all issued at the same time. Do NOT loop or spawn reviewers one at a time. Total
 the MAX of reviewer times rather than the SUM.
 
 **MANDATORY — Isolated foreground reviewer agents only:** Issue ALL reviewer agent calls in one message.
-Use the runtime's agent-spawning tool directly. Do NOT use the Task tool. Do NOT set
+Use the engine's agent-spawning tool directly. Do NOT use the Task tool. Do NOT set
 `run_in_background: true`. Reviewer agents MUST complete as foreground tasks so their results are
 received before Step 4 begins.
 
-Each reviewer MUST run as a native agent of the current runtime instance. Do NOT launch a nested runtime
-process such as `codex exec`, `cat:codex-runner`, or any runner skill to perform stakeholder review.
+Each reviewer MUST run as a native agent of the current engine instance. Do NOT launch a nested engine
+process such as `codex exec`, `cat:spawn-engine`, or any runner skill to perform stakeholder review.
 
 Each reviewer MUST run as an isolated fork with no inherited conversation history:
 - Codex: use the `spawn_agent` tool exposed in the current Codex session. If the tool exposes
@@ -478,17 +478,17 @@ Each reviewer MUST run as an isolated fork with no inherited conversation histor
   is not meant to be used right now. It is disabled by default, so do not add a
   `[features.multi_agent_v2]` section to `config.toml`; to increase pre-v2 agent concurrency, set
   `[agents] max_threads = <count>` instead.
-- Runtimes with an equivalent history/fork option: choose the option that gives the reviewer no parent
+- Engines with an equivalent history/fork option: choose the option that gives the reviewer no parent
   conversation history beyond the prompt supplied in this step.
 
 Each reviewer MUST also use its stakeholder-specific agent type:
-- Codex: set `agent_type` to the runtime-specific CAT stakeholder agent type for that stakeholder
+- Codex: set `agent_type` to the engine-specific CAT stakeholder agent type for that stakeholder
   (for example, the agent type corresponding to `cat-stakeholder-requirements` for the requirements
-  reviewer) when the runtime exposes CAT stakeholder agent types.
+  reviewer) when the engine exposes CAT stakeholder agent types.
 - Claude: set `subagent_type` to the stakeholder agent type for that stakeholder.
 
 Do NOT use a generic/default agent type for stakeholder review when a stakeholder-specific agent type is
-available. If the runtime does not expose the requested stakeholder agent types, stop and report the
+available. If the engine does not expose the requested stakeholder agent types, stop and report the
 execution error instead of silently substituting generic reviewers.
 
 Prepare prompts: for each stakeholder in $SELECTED, collect conventions from CONVENTION_MAP, gather
@@ -582,10 +582,10 @@ top-level fields `target_branch`, `reviewed_base_sha`, `reviewed_head_sha`, `cha
 `changed_files_fingerprint` with the exact values from the Review manifest. If you cannot verify the manifest, return
 REJECTED with a reviewer execution concern instead of reviewing a guessed diff.
 
-Testing concerns must identify missing runtime behavior coverage with meaningful inputs and outputs. Do not request
-source-scanning, package-structure, or release-artifact-layout tests unless they exercise runtime behavior. If a
+Testing concerns must identify missing engine behavior coverage with meaningful inputs and outputs. Do not request
+source-scanning, package-structure, or release-artifact-layout tests unless they exercise engine behavior. If a
 source-scanning or layout-only test was removed, treat that as acceptable unless the implementation leaves an equivalent
-runtime behavior untested.
+engine behavior untested.
 
 Severity: CRITICAL (blocks release, data loss, security breach) > HIGH (material degradation)
 > MEDIUM (meaningful improvement, deferrable) > LOW (minor suggestion).
@@ -612,7 +612,7 @@ Issue ALL reviewer calls in one message with isolated forks and stakeholder-spec
   agent_type=<stakeholder-agent-type>, task_name=<stakeholder-task-name>, model=optional)`.
 - Claude: `Agent(prompt=prompt, subagent_type=<stakeholder-agent-type>, model=optional)`.
 
-NEVER use the Task tool, a nested runtime runner, a full-history fork, a generic/default agent type, or
+NEVER use the Task tool, a nested engine runner, a full-history fork, a generic/default agent type, or
 `run_in_background: true`.
 
 **Reviewer prompt hardening (MANDATORY):**
@@ -620,7 +620,7 @@ NEVER use the Task tool, a nested runtime runner, a full-history fork, a generic
   prompt body.
 - Do not include additional `WORKTREE_PATH=` literals anywhere else in that reviewer prompt (including explanatory
   prose or examples).
-- Use isolated reviewer forks with no inherited conversation history for the active runtime. Never inherit full parent
+- Use isolated reviewer forks with no inherited conversation history for the active engine. Never inherit full parent
   history for stakeholder reviewer agents.
 
 ### Step 4: Collect Reviews
@@ -765,7 +765,7 @@ Fail if missing. Action: caution_level="none" → skip; "quick"|"changed"|"all" 
 
 - [ ] All selected stakeholder reviewer calls issued before verdict text (fabrication check)
 - [ ] Reviewer call count equals selected stakeholder count (mismatch = fabrication)
-- [ ] Reviewer agents used native current-session agents, not `codex exec`, `cat:codex-runner`, or runner skills
+- [ ] Reviewer agents used native current-session agents, not `codex exec`, `cat:spawn-engine`, or runner skills
 - [ ] Reviewer agents used isolated forks with no inherited conversation history; Codex reviewer calls used
       `fork_context: false` when available, otherwise `fork_turns: "none"`
 - [ ] Reviewer agents used stakeholder-specific agent types, not generic/default agents

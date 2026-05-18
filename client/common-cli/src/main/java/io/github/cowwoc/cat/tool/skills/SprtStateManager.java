@@ -106,7 +106,7 @@ final class SprtStateManager
     requireThat(args, "args").isNotNull();
     if (args.length < 5)
       throw new IllegalArgumentException(
-        "InstructionTestRunner init-sprt: expected at least 5 arguments, got " + args.length + ".\n" +
+        "SprtRunner init-sprt: expected at least 5 arguments, got " + args.length + ".\n" +
         "Usage: skill-test-runner init-sprt <sprt_state_path> <rerun_tc_ids_json> " +
         "<prior_instruction_test_json_path> <next_model_id> <session_id> [--prior-boost]");
 
@@ -114,11 +114,11 @@ final class SprtStateManager
     String nextModelId = args[3];
     if (nextModelId.isBlank())
       throw new IllegalArgumentException(
-        "InstructionTestRunner init-sprt: next_model_id must not be blank");
+        "SprtRunner init-sprt: next_model_id must not be blank");
     String sessionId = args[4];
     if (sessionId.isBlank())
       throw new IllegalArgumentException(
-        "InstructionTestRunner init-sprt: session_id must not be blank");
+        "SprtRunner init-sprt: session_id must not be blank");
     String rerunJson = args[1];
     String priorPath = args[2];
     boolean usePriorBoost = false;
@@ -137,7 +137,7 @@ final class SprtStateManager
     boolean hasPrior = !priorPath.equals("none");
     if (hasPrior && Files.notExists(Path.of(priorPath)))
       throw new IllegalArgumentException(
-        "InstructionTestRunner init-sprt: prior instruction-test file not found: " + priorPath);
+        "SprtRunner init-sprt: prior instruction-test file not found: " + priorPath);
 
     JsonMapper mapper = scope.getJsonMapper();
 
@@ -309,7 +309,7 @@ final class SprtStateManager
     requireThat(args, "args").isNotNull();
     if (args.length != 3)
       throw new IllegalArgumentException(
-        "InstructionTestRunner update-sprt: expected 3 arguments, got " + args.length + ".\n" +
+        "SprtRunner update-sprt: expected 3 arguments, got " + args.length + ".\n" +
         "Usage: skill-test-runner update-sprt <sprt_state_path> <tc_id> <passed>");
 
     Path statePath = Path.of(args[0]);
@@ -318,10 +318,10 @@ final class SprtStateManager
 
     if (Files.notExists(statePath))
       throw new IllegalArgumentException(
-        "InstructionTestRunner update-sprt: state file not found: " + statePath);
+        "SprtRunner update-sprt: state file not found: " + statePath);
     if (!passedStr.equals("true") && !passedStr.equals("false"))
       throw new IllegalArgumentException(
-        "InstructionTestRunner update-sprt: <passed> must be 'true' or 'false', got: " + passedStr);
+        "SprtRunner update-sprt: <passed> must be 'true' or 'false', got: " + passedStr);
 
     boolean passed = passedStr.equals("true");
     JsonMapper mapper = scope.getJsonMapper();
@@ -432,7 +432,7 @@ final class SprtStateManager
     requireThat(args, "args").isNotNull();
     if (args.length != 2)
       throw new IllegalArgumentException(
-        "InstructionTestRunner check-boundary: expected 2 arguments, got " + args.length + ".\n" +
+        "SprtRunner check-boundary: expected 2 arguments, got " + args.length + ".\n" +
         "Usage: skill-test-runner check-boundary <sprt_state_path> <tc_id>");
 
     Path statePath = Path.of(args[0]);
@@ -440,7 +440,7 @@ final class SprtStateManager
 
     if (Files.notExists(statePath))
       throw new IllegalArgumentException(
-        "InstructionTestRunner check-boundary: state file not found: " + statePath);
+        "SprtRunner check-boundary: state file not found: " + statePath);
 
     JsonMapper mapper = scope.getJsonMapper();
     JsonNode stateRoot = mapper.readTree(statePath.toFile());
@@ -477,7 +477,7 @@ final class SprtStateManager
     requireThat(args, "args").isNotNull();
     if (args.length != 2)
       throw new IllegalArgumentException(
-        "InstructionTestRunner smoke-status: expected 2 arguments, got " + args.length + ".\n" +
+        "SprtRunner smoke-status: expected 2 arguments, got " + args.length + ".\n" +
         "Usage: skill-test-runner smoke-status <sprt_state_path> <tc_id>");
 
     Path statePath = Path.of(args[0]);
@@ -485,7 +485,7 @@ final class SprtStateManager
 
     if (Files.notExists(statePath))
       throw new IllegalArgumentException(
-        "InstructionTestRunner smoke-status: state file not found: " + statePath);
+        "SprtRunner smoke-status: state file not found: " + statePath);
 
     JsonMapper mapper = scope.getJsonMapper();
     JsonNode stateRoot = mapper.readTree(statePath.toFile());

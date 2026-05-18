@@ -56,7 +56,7 @@ text at the end (fallback for skills that read arguments as agent instructions).
 
 ## Composition: Skill A Invokes Skill B
 
-Skill A determines runtime values, then invokes Skill B with those values as arguments.
+Skill A determines engine values, then invokes Skill B with those values as arguments.
 Skill B's preprocessor runs the command invisibly using the passed arguments.
 
 ```
@@ -116,7 +116,7 @@ When `/cat:work-complete 2.1-fix-bug v2.1` is invoked:
 
 When converting a visible Bash call to silent execution, **never drop arguments** that the original command accepted.
 If the original command used agent-determined values (e.g., keywords, filters, IDs), use the composition pattern:
-Skill A determines the values at runtime, then invokes Skill B with those values as arguments.
+Skill A determines the values at engine, then invokes Skill B with those values as arguments.
 
 **Wrong:** Remove keyword arguments because "preprocessing can't use agent-determined values."
 Preprocessing CAN use agent-determined values — that is the entire purpose of argument substitution (step 1 above).

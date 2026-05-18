@@ -1326,7 +1326,7 @@ public final class RulesDiscoveryTest
   }
 
   /**
-   * Verifies that the runtime rule-loading helper expands {@code cat:include} directives before
+   * Verifies that the engine rule-loading helper expands {@code cat:include} directives before
    * filtering and rendering project-local rules.
    *
    * @throws IOException if file operations fail
@@ -1364,15 +1364,15 @@ public final class RulesDiscoveryTest
   }
 
   /**
-   * Verifies that runtime-specific rule stubs can include shared bodies from the sibling include
+   * Verifies that engine-specific rule stubs can include shared bodies from the sibling include
    * directory.
    *
    * @throws IOException if file operations fail
    */
   @Test
-  public void getCatRulesForAudienceExpandsRuntimeSiblingIncludes() throws IOException
+  public void getCatRulesForAudienceExpandsEngineSiblingIncludes() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("rules-test-runtime-include-");
+    Path tempDir = Files.createTempDirectory("rules-test-engine-include-");
     try
     {
       Path rulesRoot = tempDir.resolve(".cat/rules");

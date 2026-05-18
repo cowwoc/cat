@@ -93,7 +93,7 @@ Check categories in order. **First match wins.**
 **Markers:** "must", "required", "should", "shall", or no specific markers
 
 **Examples:**
-- "Must restart the agent runtime" → REQUIREMENT
+- "Must restart the agent engine" → REQUIREMENT
 - "Should validate input" → REQUIREMENT
 - "Restart the service" → REQUIREMENT
 

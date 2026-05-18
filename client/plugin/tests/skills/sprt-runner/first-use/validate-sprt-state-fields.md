@@ -8,18 +8,18 @@ See LICENSE.md in the project root for license terms.
 -->
 ## Turn 1
 
-Initialize a SPRT state file and record a trial result using the instruction-test-runner binary.
+Initialize a SPRT state file and record a trial result using the sprt-runner binary.
 
 Step 1 — Create the output directory and initialize SPRT state:
 ```bash
 mkdir -p .cat/work
-"${CLAUDE_PLUGIN_ROOT}/client/bin/instruction-test-runner" init-sprt \
+"${CLAUDE_PLUGIN_ROOT}/client/bin/sprt-runner" init-sprt \
   ".cat/work/sprt-state.json" '["tc1"]' "/dev/null" "claude-haiku-4-5"
 ```
 
 Step 2 — Record a PASS result for tc1:
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/client/bin/instruction-test-runner" update-sprt \
+"${CLAUDE_PLUGIN_ROOT}/client/bin/sprt-runner" update-sprt \
   ".cat/work/sprt-state.json" "tc1" "true"
 ```
 

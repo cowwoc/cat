@@ -29,9 +29,8 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public final class SharedSecrets
 {
   private static final Lookup LOOKUP = MethodHandles.lookup();
-  private static EmpiricalTestRunnerAccess empiricalTestRunnerAccess;
-  private static InstructionTestRunnerAccess instructionTestRunnerAccess;
-  private static SprtRuntimeRunnerAccess sprtRuntimeRunnerAccess;
+  private static SprtRunnerAccess instructionTestRunnerAccess;
+  private static SprtEngineRunnerAccess sprtEngineRunnerAccess;
   private static StatuslineCommandAccess statuslineCommandAccess;
 
   private SharedSecrets()
@@ -57,74 +56,12 @@ public final class SharedSecrets
   }
 
   /**
-   * Registers the access object for {@link EmpiricalTestRunner}.
+   * Registers the access object for {@link SprtRunner}.
    *
    * @param access the access object
    * @throws NullPointerException if {@code access} is null
    */
-  public static void setEmpiricalTestRunnerAccess(EmpiricalTestRunnerAccess access)
-  {
-    requireThat(access, "access").isNotNull();
-    empiricalTestRunnerAccess = access;
-  }
-
-  /**
-   * Creates an isolated git worktree for a single empirical test run.
-   *
-   * @param baseRepo the base git repository to branch from
-   * @return the path of the newly created worktree
-   * @throws NullPointerException if {@code baseRepo} is null
-   * @throws IOException if the temporary directory cannot be created or the git command fails
-   */
-  public static Path createTestWorktree(Path baseRepo) throws IOException
-  {
-    requireThat(baseRepo, "baseRepo").isNotNull();
-    if (empiricalTestRunnerAccess == null)
-      initialize(EmpiricalTestRunner.class);
-    return empiricalTestRunnerAccess.createTestWorktree(baseRepo);
-  }
-
-  /**
-   * Removes a test worktree created by {@link #createTestWorktree(Path)}.
-   *
-   * @param baseRepo     the base git repository
-   * @param worktreePath the worktree path to remove
-   * @throws NullPointerException if {@code baseRepo} or {@code worktreePath} are null
-   */
-  public static void removeTestWorktree(Path baseRepo, Path worktreePath)
-  {
-    requireThat(baseRepo, "baseRepo").isNotNull();
-    requireThat(worktreePath, "worktreePath").isNotNull();
-    if (empiricalTestRunnerAccess == null)
-      initialize(EmpiricalTestRunner.class);
-    empiricalTestRunnerAccess.removeTestWorktree(baseRepo, worktreePath);
-  }
-
-  /**
-   * Collects session files (main and nested agent sessions) for an empirical test run.
-   *
-   * @param sessionsPath the root sessions directory
-   * @param sessionId the session identifier
-   * @return ordered session files (main first, then nested)
-   * @throws NullPointerException if {@code sessionsPath} or {@code sessionId} are null
-   * @throws IOException if session discovery fails
-   */
-  public static java.util.List<Path> collectSessionFiles(Path sessionsPath, String sessionId) throws IOException
-  {
-    requireThat(sessionsPath, "sessionsPath").isNotNull();
-    requireThat(sessionId, "sessionId").isNotNull();
-    if (empiricalTestRunnerAccess == null)
-      initialize(EmpiricalTestRunner.class);
-    return empiricalTestRunnerAccess.collectSessionFiles(sessionsPath, sessionId);
-  }
-
-  /**
-   * Registers the access object for {@link InstructionTestRunner}.
-   *
-   * @param access the access object
-   * @throws NullPointerException if {@code access} is null
-   */
-  public static void setInstructionTestRunnerAccess(InstructionTestRunnerAccess access)
+  public static void setSprtRunnerAccess(SprtRunnerAccess access)
   {
     requireThat(access, "access").isNotNull();
     instructionTestRunnerAccess = access;
@@ -141,7 +78,7 @@ public final class SharedSecrets
   {
     requireThat(bytes, "bytes").isNotNull();
     if (instructionTestRunnerAccess == null)
-      initialize(InstructionTestRunner.class);
+      initialize(SprtRunner.class);
     return instructionTestRunnerAccess.sha256Bytes(bytes);
   }
 
@@ -155,7 +92,7 @@ public final class SharedSecrets
   {
     requireThat(args, "args").isNotNull();
     if (instructionTestRunnerAccess == null)
-      initialize(InstructionTestRunner.class);
+      initialize(SprtRunner.class);
     return instructionTestRunnerAccess.parseRunSprtArgs(args);
   }
 
@@ -173,9 +110,9 @@ public final class SharedSecrets
   public static String[] buildClaudeTrialArgs(Path promptFile, String modelId, String effort,
     String runnerWorktree, String outputJson, Path jlinkBin)
   {
-    if (sprtRuntimeRunnerAccess == null)
-      initialize(SprtRuntimeRunner.class);
-    return sprtRuntimeRunnerAccess.buildClaudeTrialArgs(promptFile, modelId, effort,
+    if (sprtEngineRunnerAccess == null)
+      initialize(SprtEngineRunner.class);
+    return sprtEngineRunnerAccess.buildClaudeTrialArgs(promptFile, modelId, effort,
       runnerWorktree, outputJson, jlinkBin);
   }
 
@@ -192,9 +129,9 @@ public final class SharedSecrets
   public static String[] buildCodexTrialArgs(Path promptFile, String modelId, String effort,
     String runnerWorktree, String outputJson)
   {
-    if (sprtRuntimeRunnerAccess == null)
-      initialize(SprtRuntimeRunner.class);
-    return sprtRuntimeRunnerAccess.buildCodexTrialArgs(promptFile, modelId, effort,
+    if (sprtEngineRunnerAccess == null)
+      initialize(SprtEngineRunner.class);
+    return sprtEngineRunnerAccess.buildCodexTrialArgs(promptFile, modelId, effort,
       runnerWorktree, outputJson);
   }
 
@@ -211,9 +148,9 @@ public final class SharedSecrets
   public static String[] buildClaudeGraderArgs(Path graderPromptFile, String modelId, String effort,
     String runnerWorktree, Path jlinkBin)
   {
-    if (sprtRuntimeRunnerAccess == null)
-      initialize(SprtRuntimeRunner.class);
-    return sprtRuntimeRunnerAccess.buildClaudeGraderArgs(graderPromptFile, modelId, effort,
+    if (sprtEngineRunnerAccess == null)
+      initialize(SprtEngineRunner.class);
+    return sprtEngineRunnerAccess.buildClaudeGraderArgs(graderPromptFile, modelId, effort,
       runnerWorktree, jlinkBin);
   }
 
@@ -229,28 +166,28 @@ public final class SharedSecrets
   public static String[] buildCodexGraderArgs(Path graderPromptFile, String modelId, String effort,
     String runnerWorktree)
   {
-    if (sprtRuntimeRunnerAccess == null)
-      initialize(SprtRuntimeRunner.class);
-    return sprtRuntimeRunnerAccess.buildCodexGraderArgs(graderPromptFile, modelId, effort,
+    if (sprtEngineRunnerAccess == null)
+      initialize(SprtEngineRunner.class);
+    return sprtEngineRunnerAccess.buildCodexGraderArgs(graderPromptFile, modelId, effort,
       runnerWorktree);
   }
 
   /**
-   * Resolves an SPRT runtime descriptor for tests.
+   * Resolves an SPRT engine descriptor for tests.
    *
    * @param descriptor the plugin descriptor path
-   * @return the runtime identifier
+   * @return the engine identifier
    */
-  public static String sprtRuntimeIdForDescriptor(Path descriptor)
+  public static String sprtEngineIdForDescriptor(Path descriptor)
   {
     requireThat(descriptor, "descriptor").isNotNull();
-    if (sprtRuntimeRunnerAccess == null)
-      initialize(SprtRuntimeRunner.class);
-    return sprtRuntimeRunnerAccess.runtimeIdForDescriptor(descriptor);
+    if (sprtEngineRunnerAccess == null)
+      initialize(SprtEngineRunner.class);
+    return sprtEngineRunnerAccess.engineIdForDescriptor(descriptor);
   }
 
   /**
-   * Builds runtime-dispatched trial arguments for tests.
+   * Builds engine-dispatched trial arguments for tests.
    *
    * @param descriptor     the plugin descriptor path
    * @param promptFile     the prompt file
@@ -264,14 +201,14 @@ public final class SharedSecrets
     String modelId, String effort, String runnerWorktree, String outputJson)
   {
     requireThat(descriptor, "descriptor").isNotNull();
-    if (sprtRuntimeRunnerAccess == null)
-      initialize(SprtRuntimeRunner.class);
-    return sprtRuntimeRunnerAccess.buildTrialArgsForDescriptor(descriptor, promptFile, modelId,
+    if (sprtEngineRunnerAccess == null)
+      initialize(SprtEngineRunner.class);
+    return sprtEngineRunnerAccess.buildTrialArgsForDescriptor(descriptor, promptFile, modelId,
       effort, runnerWorktree, outputJson);
   }
 
   /**
-   * Builds runtime-dispatched grader arguments for tests.
+   * Builds engine-dispatched grader arguments for tests.
    *
    * @param descriptor       the plugin descriptor path
    * @param graderPromptFile the grader prompt file
@@ -284,22 +221,22 @@ public final class SharedSecrets
     String modelId, String effort, String runnerWorktree)
   {
     requireThat(descriptor, "descriptor").isNotNull();
-    if (sprtRuntimeRunnerAccess == null)
-      initialize(SprtRuntimeRunner.class);
-    return sprtRuntimeRunnerAccess.buildGraderArgsForDescriptor(descriptor, graderPromptFile,
+    if (sprtEngineRunnerAccess == null)
+      initialize(SprtEngineRunner.class);
+    return sprtEngineRunnerAccess.buildGraderArgsForDescriptor(descriptor, graderPromptFile,
       modelId, effort, runnerWorktree);
   }
 
   /**
-   * Registers the access object for {@link SprtRuntimeRunner}.
+   * Registers the access object for {@link SprtEngineRunner}.
    *
    * @param access the access object
    * @throws NullPointerException if {@code access} is null
    */
-  public static void setSprtRuntimeRunnerAccess(SprtRuntimeRunnerAccess access)
+  public static void setSprtEngineRunnerAccess(SprtEngineRunnerAccess access)
   {
     requireThat(access, "access").isNotNull();
-    sprtRuntimeRunnerAccess = access;
+    sprtEngineRunnerAccess = access;
   }
 
   /**
@@ -366,9 +303,9 @@ public final class SharedSecrets
   }
 
   /**
-   * Provides access to {@link InstructionTestRunner} internal methods.
+   * Provides access to {@link SprtRunner} internal methods.
    */
-  public interface InstructionTestRunnerAccess
+  public interface SprtRunnerAccess
   {
     /**
      * Computes the SHA-256 hex digest of the given bytes.
@@ -388,9 +325,9 @@ public final class SharedSecrets
   }
 
   /**
-   * Provides access to {@link SprtRuntimeRunner} internal methods.
+   * Provides access to {@link SprtEngineRunner} internal methods.
    */
-  public interface SprtRuntimeRunnerAccess
+  public interface SprtEngineRunnerAccess
   {
     /**
      * Builds Claude trial runner arguments.
@@ -445,15 +382,15 @@ public final class SharedSecrets
       String runnerWorktree);
 
     /**
-     * Resolves an SPRT runtime descriptor.
+     * Resolves an SPRT engine descriptor.
      *
      * @param descriptor the plugin descriptor path
-     * @return the runtime identifier
+     * @return the engine identifier
      */
-    String runtimeIdForDescriptor(Path descriptor);
+    String engineIdForDescriptor(Path descriptor);
 
     /**
-     * Builds runtime-dispatched trial arguments.
+     * Builds engine-dispatched trial arguments.
      *
      * @param descriptor     the plugin descriptor path
      * @param promptFile     the prompt file
@@ -467,7 +404,7 @@ public final class SharedSecrets
       String effort, String runnerWorktree, String outputJson);
 
     /**
-     * Builds runtime-dispatched grader arguments.
+     * Builds engine-dispatched grader arguments.
      *
      * @param descriptor       the plugin descriptor path
      * @param graderPromptFile the grader prompt file
@@ -478,39 +415,6 @@ public final class SharedSecrets
      */
     String[] buildGraderArgsForDescriptor(Path descriptor, Path graderPromptFile, String modelId,
       String effort, String runnerWorktree);
-  }
-
-  /**
-   * Provides access to {@link EmpiricalTestRunner} trial worktree management.
-   */
-  public interface EmpiricalTestRunnerAccess
-  {
-    /**
-     * Creates an isolated git worktree for a single test run.
-     *
-     * @param baseRepo the base git repository to branch from
-     * @return the path of the newly created worktree
-     * @throws IOException if the worktree cannot be created
-     */
-    Path createTestWorktree(Path baseRepo) throws IOException;
-
-    /**
-     * Removes a test worktree.
-     *
-     * @param baseRepo     the base git repository
-     * @param worktreePath the worktree path to remove
-     */
-    void removeTestWorktree(Path baseRepo, Path worktreePath);
-
-    /**
-     * Collects session files for a session ID.
-     *
-     * @param sessionsPath the root sessions directory
-     * @param sessionId the session identifier
-     * @return ordered session files (main first, then nested)
-     * @throws IOException if session discovery fails
-     */
-    java.util.List<Path> collectSessionFiles(Path sessionsPath, String sessionId) throws IOException;
   }
 
   /**

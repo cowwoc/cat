@@ -13,7 +13,7 @@ import tools.jackson.dataformat.yaml.YAMLMapper;
 import java.util.List;
 
 /**
- * Loads session-start rules for the main agent across supported runtimes.
+ * Loads session-start rules for the main agent across supported engines.
  */
 public final class MainAgentRules
 {
@@ -22,7 +22,7 @@ public final class MainAgentRules
   }
 
   /**
-   * Loads the non-path-restricted rules for the scope's active runtime.
+   * Loads the non-path-restricted rules for the scope's active engine.
    *
    * @param scope the plugin scope
    * @param yamlMapper the YAML mapper used for rule frontmatter
