@@ -15,7 +15,7 @@ None
 - `plugin/tests/skills/test-add-skill-template.bats` — new integration test
 
 ## Pre-conditions
-- [ ] All dependent issues are closed
+- [x] All dependent issues are closed
 
 ## Sub-Agent Waves
 
@@ -25,5 +25,5 @@ None
   - Files: `plugin/tests/skills/test-add-skill-template.bats`
 
 ## Post-conditions
-- [ ] Test exists and passes: generated PLAN.md contains `## Parent Requirements`
-- [ ] Test runs in isolated temp directory with no side effects
+- [x] Test exists and passes: generated PLAN.md contains `## Parent Requirements`
+- [x] Test runs in isolated temp directory with no side effects

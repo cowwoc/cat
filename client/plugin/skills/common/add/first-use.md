@@ -563,6 +563,10 @@ plan_temp_file=$(mktemp -p .cat/work/tmp --suffix=.md)
 
 ${ISSUE_DESCRIPTION}
 
+## Parent Requirements
+
+None
+
 ## Pre-conditions
 
 (none)
