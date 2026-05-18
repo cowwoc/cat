@@ -123,7 +123,7 @@ The script implements: rebase onto target, backup, commit-tree squash, verify, c
 | Status | Meaning | Agent Recovery Action |
 |--------|---------|----------------------|
 | `OK` | Squash completed successfully | Verify working tree (see below), then report success |
-| `REBASE_CONFLICT` | Conflict during pre-squash rebase | Invoke `cat:git-rebase` and follow its `## Handling Conflicts` numbered steps. |
+| `REBASE_CONFLICT` | Conflict during pre-squash rebase | Invoke `cat:git-rebase`. If it returns `CONFLICT`, start a manual rebase session using the `git-rebase` skill's conflict workflow (launcher conflict output is post-abort, not an active rebase state), then rerun `git-squash`. |
 | `VERIFY_FAILED` | Content changed during squash | Restore from backup branch, investigate diff_stat. Delete backup after investigation. |
 | `ERROR` | Rebase or squash failed | Check backup_branch and error message for details. Delete backup after the error is handled. |
 

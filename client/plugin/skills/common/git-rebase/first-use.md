@@ -105,7 +105,7 @@ When a backup_branch was created before the error, its name appears on a `backup
 | Status | Meaning | Agent Recovery Action |
 |--------|---------|----------------------|
 | `OK` | Rebase completed successfully | Report commits rebased, verify no content changes. Delete backup branch (see below). |
-| `CONFLICT` | Rebase stopped due to conflicts | Follow the numbered steps in **## Handling Conflicts** below. Backup preserved at backup_branch. Delete backup after resolution or abort is complete. |
+| `CONFLICT` | Rebase stopped due to conflicts | The launcher already ran `git rebase --abort`, so no interactive rebase state remains. Start a manual rebase session as documented in **## Handling Conflicts** below, then resolve conflicts. Backup preserved at backup_branch. Delete backup after resolution or abort is complete. |
 | `block` decision | Rebase failed (not a conflict) | Parse backup_branch from the reason field if present. Restore from backup if needed. Delete backup after the error is handled. |
 
 **On OK status:** After a successful rebase:
@@ -162,6 +162,26 @@ This silent failure is particularly dangerous because `git rebase` reports succe
 
 Rebase conflicts are normal and expected when branches have diverged. The solution is to resolve conflicts and continue,
 not to abandon rebase for cherry-picking.
+
+**Step 0: Start a manual rebase session (required after launcher `CONFLICT`).**
+
+The deterministic `git-rebase` launcher always aborts before returning `status: CONFLICT`. That means conflict
+markers and the interactive rebase state are not preserved. You must start a native rebase session before using
+`git rebase --continue`.
+
+```bash
+# Use the pinned target from the CONFLICT JSON output if available
+PINNED_TARGET="${TARGET_BRANCH}"
+
+# Confirm clean state before starting manual rebase
+git status --porcelain
+
+# Start a native rebase session that can be continued interactively
+FORK_POINT=$(git merge-base HEAD "$PINNED_TARGET")
+git rebase --onto "$PINNED_TARGET" "$FORK_POINT"
+```
+
+If this command exits with conflicts, continue with Steps 1-6 below.
 
 **Step 1: Inspect the conflicting files.**
 

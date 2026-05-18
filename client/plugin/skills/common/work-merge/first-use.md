@@ -182,7 +182,9 @@ Skill("cat:git-rebase", args="{WORKTREE_PATH} {TARGET_BRANCH}")
 ```
 
 - **CONFLICT**: Follow the numbered steps in **## Handling Conflicts** in the git-rebase skill. Record
-  `CONFLICT_RESOLUTIONS`. Set `REBASE_HAD_CONFLICTS=true`. Delete backup branch. Proceed to Step 9c.
+  `CONFLICT_RESOLUTIONS`. The deterministic launcher returns `CONFLICT` after aborting the rebase, so first start
+  a native rebase session (use `OLD_FORK_POINT` from Step 9a and pinned `target_branch` from the JSON response),
+  then run the conflict-resolution steps. Set `REBASE_HAD_CONFLICTS=true`. Delete backup branch. Proceed to Step 9c.
 - **OK**: Delete backup branch. Proceed to Step 9c.
 - **ERROR**: Output error, restore from backup if needed. STOP.
 
