@@ -247,7 +247,7 @@ public final class GetWorkOutput implements SkillOutput
    *
    * @param issueName the issue name
    * @param iteration the feedback iteration number
-   * @param subagentTokensK the subagent tokens in thousands
+   * @param subagentTokensK the agent tokens in thousands
    * @param totalTokensK the total tokens in thousands
    * @param issueBranch the issue branch name
    * @return the formatted box
@@ -269,7 +269,7 @@ public final class GetWorkOutput implements SkillOutput
       "**Feedback iteration:** " + iteration,
       "");
     List<String> metricsLines = List.of(
-      "**Feedback subagent:** " + subagentTokensK + "K tokens",
+      "**Feedback agent:** " + subagentTokensK + "K tokens",
       "**Total tokens (all iterations):** " + totalTokensK + "K");
     List<String> branchLines = List.of(
       "**Branch:** " + issueBranch,

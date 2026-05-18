@@ -43,7 +43,7 @@ references — parenthetical labels, verb phrases, inline descriptions — will 
 
 ## When to Run
 
-Run the grep **immediately after** the rename subagent completes — before squashing or presenting
+Run the grep **immediately after** the rename agent completes — before squashing or presenting
 an approval gate. Do not defer until the user reports missed instances.
 
 ## Why

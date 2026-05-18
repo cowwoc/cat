@@ -16,7 +16,7 @@ commit squashing, branch merging, worktree cleanup, and state updates.
 - **Step 10: Instruction-Builder Review** — invoke `cat:instruction-builder` for modified skill/command files before gate
 - **Step 11: Squash Before Approval Gate** — squash immediately before presenting gate. Re-squash ALL commits
   on EVERY presentation, including after user feedback.
-  - **Background Task Completion** — ALL background tasks — including any reviewer subagents
+  - **Background Task Completion** — ALL background tasks — including any reviewer agents
     spawned during the review phase — must have returned via `<task-notification>` before invoking the
     structured approval tool.
 
@@ -106,10 +106,10 @@ Return FAILED status:
 
 ## Step 8: Squash Commits by Topic Before Review (MANDATORY)
 
-**MANDATORY:** Delegate to a squash subagent. The approval gate (Step 11) blocks if this step was skipped.
+**MANDATORY:** Delegate to a squash agent. The approval gate (Step 11) blocks if this step was skipped.
 
 It is correct and expected to squash commits on `${BRANCH}` when index.json shows `closed` — this means the
-implementation subagent finished (State 1 complete) and merge preparation is running. This authorization applies
+implementation agent finished (State 1 complete) and merge preparation is running. This authorization applies
 only to `${BRANCH}`.
 
 Extract the primary commit message:
@@ -119,7 +119,7 @@ PRIMARY_COMMIT_MESSAGE=$(echo "$COMMITS_JSON" | \
   sed 's/"message"[[:space:]]*:[[:space:]]*"\(.*\)"/\1/')
 ```
 
-Spawn the squash subagent:
+Spawn the squash agent:
 ```
 Task tool:
   description: "Squash: rebase, squash commits, verify index.json"
@@ -221,7 +221,7 @@ IMPACT_SEVERITY=$(echo "${IMPACT_JSON}" | grep -o '"severity"[[:space:]]*:[[:spa
 ```
 Skill("cat:plan-builder", args="${EFFORT} revise ${ISSUE_PATH} rebase introduced upstream changes — see ${ANALYSIS_PATH}")
 ```
-If implementation was already committed, spawn a code-revision subagent to apply the revised plan.md.
+If implementation was already committed, spawn a code-revision agent to apply the revised plan.md.
 
 **HIGH:** Write `${ISSUE_PATH}/rebase-conflict-proposal.md` summarizing the conflict, then present via the runtime's
 structured input tool.
@@ -308,7 +308,7 @@ If `HIGH_TRUST_PAUSE == "true"`:
 
 ### Pre-Gate Background Task Completion (MANDATORY — BLOCKING)
 
-ALL background tasks (started with `run_in_background: true`) — including any reviewer subagents spawned during the
+ALL background tasks (started with `run_in_background: true`) — including any reviewer agents spawned during the
 review phase — must have delivered `<task-notification>` before presenting pre-gate output or the structured
 approval tool. Do NOT assume completion based on time or conversation turns.
 
@@ -339,13 +339,13 @@ If `REVIEW_RESULT_FILE` exists:
 - If `PERSISTED_STATUS` is absent or empty: STOP with error:
   ```
   ERROR: Review result file at ${REVIEW_RESULT_FILE} exists but contains no valid status.
-  All reviewer subagents must complete before the approval gate can be presented.
+  All reviewer agents must complete before the approval gate can be presented.
   Re-run /cat:work to retry the review phase.
   ```
 - If `PERSISTED_STATUS == "FAILED"`: STOP with error:
   ```
-  ERROR: Review phase reported FAILED status. One or more reviewer subagents did not return a result.
-  All reviewer subagents must complete before the approval gate can be presented.
+  ERROR: Review phase reported FAILED status. One or more reviewer agents did not return a result.
+  All reviewer agents must complete before the approval gate can be presented.
   Re-run /cat:work to retry the review phase.
   ```
 - If `PERSISTED_HEAD_SHA` is absent or empty: STOP with error:
@@ -366,7 +366,7 @@ If `REVIEW_RESULT_FILE` does not exist AND `CAUTION != "low"` (i.e., review was 
   ```
   ERROR: Review result file not found at ${REVIEW_RESULT_FILE}.
   The review phase must complete successfully before the approval gate is shown.
-  Ensure the review phase ran and all reviewer subagents returned results.
+  Ensure the review phase ran and all reviewer agents returned results.
   Re-run /cat:work to retry.
   ```
 
@@ -472,7 +472,7 @@ fi
 
 **If "Fix remaining concerns" selected:**
 
-Write invalidation marker FIRST (before spawning fix subagent):
+Write invalidation marker FIRST (before spawning fix agent):
 ```bash
 "${CAT_PLUGIN_ROOT}/client/bin/write-session-marker" "${WORKTREE_PATH}" "${ISSUE_ID}" "approved:invalidated"
 ```
@@ -481,7 +481,7 @@ Write invalidation marker FIRST (before spawning fix subagent):
 remaining, offer only: ["Approve and merge (with known concerns)", "Request changes", "Abort"].
 
 1. Extract MEDIUM+ concerns
-2. Spawn `cat:work-execute` subagent to fix each concern. Pass `ISSUE_PATH` explicitly:
+2. Spawn `cat:work-execute` agent to fix each concern. Pass `ISSUE_PATH` explicitly:
    ```
    Task tool:
      description: "Fix remaining concerns for ${ISSUE_ID}"

@@ -16,7 +16,7 @@ import tools.jackson.databind.JsonNode;
 import java.util.List;
 
 /**
- * Selects Codex SessionStart rules for main-agent and subagent sessions.
+ * Selects Codex SessionStart rules for main-agent and agent sessions.
  */
 final class CodexSessionRules
 {
@@ -37,21 +37,21 @@ final class CodexSessionRules
     requireThat(scope, "scope").isNotNull();
     requireThat(nativeInput, "nativeInput").isNotNull();
     CodexSessionContext sessionContext = CodexSessionContext.from(nativeInput);
-    if (!sessionContext.subagent())
+    if (!sessionContext.agent())
       return MainAgentRules.load(scope, scope.getYamlMapper());
     return RulesDiscovery.getCatRulesForAudience(scope.getRuleDirectories(), scope.getYamlMapper(),
-      (rules, activeFiles) -> RulesDiscovery.filterForSubagent(rules,
-        sessionContext.subagentName(), activeFiles),
+      (rules, activeFiles) -> RulesDiscovery.filterForAgent(rules,
+        sessionContext.agentName(), activeFiles),
       List.of());
   }
 
   /**
    * The Codex session audience derived from native SessionStart input.
    *
-   * @param subagent true if the session belongs to a subagent
-   * @param subagentName the top-level Codex subagent role used for rule matching
+   * @param agent true if the session belongs to an agent
+   * @param agentName the top-level Codex agent role used for rule matching
    */
-  private record CodexSessionContext(boolean subagent, String subagentName)
+  private record CodexSessionContext(boolean agent, String agentName)
   {
     /**
      * Extracts the SessionStart audience from the native Codex payload.
@@ -61,17 +61,17 @@ final class CodexSessionRules
      */
     private static CodexSessionContext from(JsonNode input)
     {
-      boolean subagent = "subagent".equals(text(input, "thread_source")) ||
+      boolean nestedAgentSession = "subagent".equals(text(input, "thread_source")) ||
         !input.at("/source/subagent").isMissingNode();
-      if (!subagent)
+      if (!nestedAgentSession)
         return new CodexSessionContext(false, "");
-      String subagentName = text(input, "agent_role");
-      if (subagentName.isEmpty())
+      String agentName = text(input, "agent_role");
+      if (agentName.isEmpty())
       {
-        throw new IllegalArgumentException("Codex subagent SessionStart payload is missing top-level " +
+        throw new IllegalArgumentException("Codex agent SessionStart payload is missing top-level " +
           "agent_role");
       }
-      return new CodexSessionContext(true, subagentName);
+      return new CodexSessionContext(true, agentName);
     }
 
     /**

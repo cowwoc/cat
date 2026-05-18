@@ -230,7 +230,7 @@ Only include test files modified in the CURRENT RED-GREEN-REFACTOR cycle (not fi
 behavior cycles that were already hardened).
 
 Determine the worktree root by running `git rev-parse --show-toplevel` and store as `WORKTREE_ROOT`. Pass
-`WORKTREE_ROOT` as a resolved literal string to all subagents — do NOT pass variable references.
+`WORKTREE_ROOT` as a resolved literal string to all agents — do NOT pass variable references.
 
 ### Adversarial Hardening Loop (Convergence-Based)
 

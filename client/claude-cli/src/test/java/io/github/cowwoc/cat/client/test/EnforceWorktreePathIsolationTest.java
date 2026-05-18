@@ -813,4 +813,61 @@ public class EnforceWorktreePathIsolationTest
       TestUtils.deleteDirectoryRecursively(repoPath);
     }
   }
+
+  /**
+   * Verifies malformed non-object lock payloads are ignored without crashing.
+   */
+  @Test
+  public void malformedLockPayloadArrayIsIgnored() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("ewpi-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+    {
+      Path lockDir = scope.getCatWorkPath().resolve("locks");
+      Files.createDirectories(lockDir);
+      Files.writeString(lockDir.resolve(ISSUE_ID + ".lock"), "[]");
+
+      EnforceWorktreePathIsolation handler = new EnforceWorktreePathIsolation(scope);
+      ObjectNode input = scope.getJsonMapper().createObjectNode();
+      input.put("file_path", projectPath.resolve("plugin/test.py").toString());
+
+      FileWriteHandler.Result result = handler.check(input, SESSION_ID);
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies lock payloads with incompatible worktrees value types are ignored without crashing.
+   */
+  @Test
+  public void malformedWorktreesTypeIsIgnored() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("ewpi-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+    {
+      Path lockDir = scope.getCatWorkPath().resolve("locks");
+      Files.createDirectories(lockDir);
+      String malformedLock = """
+        {"session_id":"%s","worktrees":"not-an-object"}
+        """.formatted(SESSION_ID);
+      Files.writeString(lockDir.resolve(ISSUE_ID + ".lock"), malformedLock);
+
+      EnforceWorktreePathIsolation handler = new EnforceWorktreePathIsolation(scope);
+      ObjectNode input = scope.getJsonMapper().createObjectNode();
+      input.put("file_path", projectPath.resolve("plugin/test.py").toString());
+
+      FileWriteHandler.Result result = handler.check(input, SESSION_ID);
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
 }

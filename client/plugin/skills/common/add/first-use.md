@@ -306,9 +306,9 @@ Gather the following for validation:
 - POSTCONDITIONS (from issue_ask_type_and_criteria)
 - All ancestor version requirements (from issue_discuss_and_requirements and ancestor plan.md files)
 
-**Spawn requirements stakeholder subagent:**
+**Spawn requirements stakeholder agent:**
 
-Use Task tool to spawn a cat:stakeholder-requirements subagent with the following prompt:
+Use Task tool to spawn a cat:stakeholder-requirements agent with the following prompt:
 
 ```
 You are validating post-conditions for a CAT issue before plan.md creation.
@@ -347,21 +347,21 @@ Contradictions found (if FAIL): [describe each contradiction with reference to p
 ADDITIONAL_CRITERIA: [list additional post-conditions to add, or "None"]
 ```
 
-Capture the subagent's response.
+Capture the agent's response.
 
-**Handle subagent failure:**
+**Handle agent failure:**
 
-If the subagent fails to return output, times out, or returns unparseable output:
+If the agent fails to return output, times out, or returns unparseable output:
 - Display: "Requirements validation could not be completed. Proceeding with existing criteria."
 - Skip validation processing and proceed to next step (issue_impact_analysis)
 
-If the subagent returns output but individual fields are missing or unparseable:
+If the agent returns output but individual fields are missing or unparseable:
 - Treat missing fields as PASS (no issues detected for that check)
 - Process any successfully returned fields normally
 
 **Process validation results:**
 
-Parse the subagent response to extract:
+Parse the agent response to extract:
 - COMPLETENESS status
 - VERSION_REQUIREMENTS status
 - CONTRADICTIONS status
@@ -382,14 +382,14 @@ Parse the subagent response to extract:
 - Use Structured user-choice prompt:
   - header: "Post-conditions Contradiction"
   - question: "The following contradictions were found in post-conditions. How should we proceed?"
-  - Provide the contradiction details from subagent
+  - Provide the contradiction details from agent
   - options:
     - "Revise post-conditions manually" - Let me rewrite the problematic post-conditions
     - "Remove contradicting post-conditions" - Remove the post-conditions that contradict principles
     - "Override - post-conditions are correct" - Proceed with post-conditions as-is (I understand the risk)
 
 - If "Revise post-conditions manually": use structured user-choice prompt to gather revised POSTCONDITIONS
-- If "Remove contradicting post-conditions": auto-remove the contradicting post-conditions identified by subagent
+- If "Remove contradicting post-conditions": auto-remove the contradicting post-conditions identified by agent
 - If "Override": proceed without changes
 
 **If all checks PASS:**

@@ -110,13 +110,13 @@ public final class GetTokenReportOutput implements SkillOutput
     if (!Files.exists(sessionFile))
       return null;
 
-    // Extract subagent data directly from session file
+    // Extract agent data directly from session file
     SubagentData data = extractSubagentData(sessionFile);
     if (data == null)
       return null;
 
-    if (data.subagents.isEmpty())
-      return "No subagent data found in session.";
+    if (data.agents.isEmpty())
+      return "No agent data found in session.";
 
     // Build table lines
     List<String> lines = buildTableLines(data);
@@ -125,23 +125,23 @@ public final class GetTokenReportOutput implements SkillOutput
 
     return tableLines + "\n" +
            "\n" +
-           "Summary: " + data.subagents.size() + " subagents, " + data.totalTokens + " total tokens\n" +
+           "Summary: " + data.agents.size() + " agents, " + data.totalTokens + " total tokens\n" +
            "\n" +
            "Legend:\n" +
-           "- Percentages show context utilization per subagent\n" +
+           "- Percentages show context utilization per agent\n" +
            "- Warning emoji inside Context column indicates high (>=40%) usage\n" +
            "- Critical emoji inside Context column indicates exceeded (>=80%) limit";
   }
 
   /**
-   * Extracts subagent data from session JSONL file.
+   * Extracts agent data from session JSONL file.
    *
    * @param sessionFile the session file path
    * @return the extracted data, or null on error
    */
   private SubagentData extractSubagentData(Path sessionFile)
   {
-    List<SubagentEntry> subagents = new ArrayList<>();
+    List<SubagentEntry> agents = new ArrayList<>();
     int totalTokens = 0;
     int totalDurationMs = 0;
 
@@ -188,7 +188,7 @@ public final class GetTokenReportOutput implements SkillOutput
           // Extract task info
           JsonNode input = item.get("input");
           String taskType = "";
-          String description = "Subagent task";
+          String description = "Agent task";
 
           if (input != null)
           {
@@ -201,7 +201,7 @@ public final class GetTokenReportOutput implements SkillOutput
                 firstLine = firstLine.substring(3);
               taskType = truncate(firstLine, 25);
             }
-            description = truncate(getStringOrDefault(input, "description", "Subagent task"), 28);
+            description = truncate(getStringOrDefault(input, "description", "Agent task"), 28);
           }
 
           // Find the result for this tool_use
@@ -209,12 +209,12 @@ public final class GetTokenReportOutput implements SkillOutput
 
           if (result.tokens > 0)
           {
-            SubagentEntry subagent = new SubagentEntry();
-            subagent.type = taskType;
-            subagent.description = description;
-            subagent.tokens = result.tokens;
-            subagent.durationMs = result.durationMs;
-            subagents.add(subagent);
+            SubagentEntry agent = new SubagentEntry();
+            agent.type = taskType;
+            agent.description = description;
+            agent.tokens = result.tokens;
+            agent.durationMs = result.durationMs;
+            agents.add(agent);
 
             totalTokens += result.tokens;
             totalDurationMs += result.durationMs;
@@ -228,7 +228,7 @@ public final class GetTokenReportOutput implements SkillOutput
     }
 
     SubagentData data = new SubagentData();
-    data.subagents = subagents;
+    data.agents = agents;
     data.totalTokens = totalTokens;
     data.totalDurationMs = totalDurationMs;
     return data;
@@ -306,7 +306,7 @@ public final class GetTokenReportOutput implements SkillOutput
   /**
    * Builds all table lines with exact formatting.
    *
-   * @param data the subagent data
+   * @param data the agent data
    * @return the list of table lines
    */
   private List<String> buildTableLines(SubagentData data)
@@ -338,15 +338,15 @@ public final class GetTokenReportOutput implements SkillOutput
     lines.add(divider);
 
     // Data rows
-    for (SubagentEntry subagent : data.subagents)
+    for (SubagentEntry agent : data.agents)
     {
-      String typeVal = truncate(subagent.type, TYPE_WIDTH);
-      String descVal = truncate(subagent.description, DESCRIPTION_WIDTH);
-      String tokensVal = formatTokens(subagent.tokens);
-      String durationVal = formatDuration(subagent.durationMs);
+      String typeVal = truncate(agent.type, TYPE_WIDTH);
+      String descVal = truncate(agent.description, DESCRIPTION_WIDTH);
+      String tokensVal = formatTokens(agent.tokens);
+      String durationVal = formatDuration(agent.durationMs);
 
       // Context with emoji indicator INSIDE
-      ContextStatus status = contextStatus(subagent.tokens);
+      ContextStatus status = contextStatus(agent.tokens);
       String contextContent;
       if (status.level.equals("critical"))
         contextContent = status.text + "🚨";  // Police car light emoji
@@ -498,17 +498,17 @@ public final class GetTokenReportOutput implements SkillOutput
   }
 
   /**
-   * Holds aggregated subagent data.
+   * Holds aggregated agent data.
    */
   private static final class SubagentData
   {
-    List<SubagentEntry> subagents = new ArrayList<>();
+    List<SubagentEntry> agents = new ArrayList<>();
     int totalTokens;
     int totalDurationMs;
   }
 
   /**
-   * Holds data for a single subagent.
+   * Holds data for a single agent.
    */
   private static final class SubagentEntry
   {

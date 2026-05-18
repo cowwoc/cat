@@ -6,7 +6,7 @@ See LICENSE.md in the project root for license terms.
 # Work Phase: Confirm
 
 Confirm phase for `/cat:work`. Verifies that plan.md post-conditions were implemented before
-stakeholder quality review. Spawns a verify subagent, handles fix iteration if criteria are missing.
+stakeholder quality review. Spawns a verify agent, handles fix iteration if criteria are missing.
 
 ## Arguments Format
 
@@ -66,12 +66,12 @@ Do NOT skip the banner or continue without it. **The banner must run regardless 
 CAUTION — even when `CAUTION == "low"`. The banner and the skip check are independent; skipping
 verification does not authorize skipping the banner.**
 
-### Delegate Verification to Subagent
+### Delegate Verification to Agent
 
-Spawn a verify subagent to check post-conditions and run E2E tests. The verify subagent writes detailed
+Spawn a verify agent to check post-conditions and run E2E tests. The verify agent writes detailed
 analysis to files and returns only a compact JSON summary.
 
-**Subagent type is mandatory:** Always spawn with `subagent_type: "cat:work-verify"`. Do NOT use
+**Agent type is mandatory:** Always spawn with `subagent_type: "cat:work-verify"`. Do NOT use
 `"general-purpose"` or any other type — the `cat:work-verify` type loads required skill context that
 the prompt alone cannot substitute.
 
@@ -180,14 +180,14 @@ Task tool:
 
 ### Handle Verification Result
 
-Parse the compact JSON returned by the verify subagent. Do NOT read the detail files — they are for
-fix subagents only. The main agent must never read `criteria-analysis.json` or `e2e-test-output.json`
-directly; doing so is not a substitute for subagent delegation.
+Parse the compact JSON returned by the verify agent. Do NOT read the detail files — they are for
+fix agents only. The main agent must never read `criteria-analysis.json` or `e2e-test-output.json`
+directly; doing so is not a substitute for agent delegation.
 
-Extract detail file paths for use in fix subagent prompts:
+Extract detail file paths for use in fix agent prompts:
 - Collect the `detail_file` value from each entry in `criteria[]`
 - Collect `e2e.detail_file`
-- Combine into a list: this is `DETAIL_FILE_PATHS` (used as `${detail_file_paths_from_compact_json}` in subagent prompts)
+- Combine into a list: this is `DETAIL_FILE_PATHS` (used as `${detail_file_paths_from_compact_json}` in agent prompts)
 
 Also store the parsed `execution_commits_json` (from `EXECUTION_COMMITS_JSON` argument) as a
 mutable variable `CURRENT_COMMITS_JSON`. This is the variable that step 5 updates and that
@@ -197,7 +197,7 @@ re-spawned verify prompts must use — always use `CURRENT_COMMITS_JSON` (never 
 **If the JSON is malformed, unparseable, or the `status` field contains a value other than
 `COMPLETE`, `PARTIAL`, or `INCOMPLETE`**, STOP immediately:
 ```
-FAIL: verify subagent returned invalid JSON or unrecognized status.
+FAIL: verify agent returned invalid JSON or unrecognized status.
 Cannot proceed to review without verified post-conditions.
 ```
 Do NOT default to COMPLETE or any other status. Do NOT continue to the next phase.
@@ -232,19 +232,19 @@ the first result is PARTIAL or INCOMPLETE. Do NOT re-initialize inside any branc
    - Partial criteria: items in `criteria[]` with `status: "Partial"`
    - Failed E2E: `e2e.status == "FAILED"`
 
-3. Spawn a **planning subagent** to revise plan.md with fix steps.
+3. Spawn a **planning agent** to revise plan.md with fix steps.
 
-   **If the planning subagent returns `"status": "FAILED"`**, STOP the fix loop immediately. Do NOT
-   spawn the implementation subagent. Note the planning failure in the return JSON and proceed to the
+   **If the planning agent returns `"status": "FAILED"`**, STOP the fix loop immediately. Do NOT
+   spawn the implementation agent. Note the planning failure in the return JSON and proceed to the
    next phase with remaining gaps documented. The current VERIFY_ITERATION still counts — do NOT
    retry the same iteration.
 
-   **If the planning subagent returns `"status": "SUCCESS"` but `fix_steps` is empty, missing, or
+   **If the planning agent returns `"status": "SUCCESS"` but `fix_steps` is empty, missing, or
    contains only whitespace/blank entries**, treat as FAILED — STOP the fix loop and proceed to the
-   next phase. A SUCCESS with no actionable fix steps means the planning subagent produced nothing
+   next phase. A SUCCESS with no actionable fix steps means the planning agent produced nothing
    actionable.
 
-   Spawn the planning subagent:
+   Spawn the planning agent:
    ```
    Task tool:
      description: "Plan fixes for missing post-conditions (iteration ${VERIFY_ITERATION})"
@@ -260,7 +260,7 @@ the first result is PARTIAL or INCOMPLETE. Do NOT re-initialize inside any branc
        ## Missing Post-conditions
        ${missing_criteria_compact_json}
 
-       ## Detail Files (pass to implementation subagent — do NOT return their contents in your response)
+       ## Detail Files (pass to implementation agent — do NOT return their contents in your response)
        ${detail_file_paths_from_compact_json}
 
        ## Instructions
@@ -294,7 +294,7 @@ the first result is PARTIAL or INCOMPLETE. Do NOT re-initialize inside any branc
        ```
    ```
 
-4. Spawn an **implementation subagent** to execute the fix steps:
+4. Spawn an **implementation agent** to execute the fix steps:
    ```
    Task tool:
      description: "Implement fixes for missing post-conditions (iteration ${VERIFY_ITERATION})"
@@ -334,13 +334,13 @@ the first result is PARTIAL or INCOMPLETE. Do NOT re-initialize inside any branc
        ```
    ```
 
-   **If the implementation subagent returns `"status": "FAILED"`**, STOP the fix loop immediately.
-   Before exiting: if the implementation subagent's result includes any `commits` (partial work before
+   **If the implementation agent returns `"status": "FAILED"`**, STOP the fix loop immediately.
+   Before exiting: if the implementation agent's result includes any `commits` (partial work before
    the failure), append those commits to `CURRENT_COMMITS_JSON` so downstream phases have the complete
    commit history. Then proceed to the next phase with remaining gaps documented. The current
    VERIFY_ITERATION still counts. Do NOT proceed to steps 5-6.
 
-   **If the implementation subagent returns `"status": "PARTIAL"` or `"SUCCESS"`**, proceed to steps 5-6.
+   **If the implementation agent returns `"status": "PARTIAL"` or `"SUCCESS"`**, proceed to steps 5-6.
    Steps 5 AND 6 are MANDATORY regardless of PARTIAL or SUCCESS — always update CURRENT_COMMITS_JSON
    with whatever commits were produced and always re-verify. Do NOT skip step 6 on the grounds that
    implementation returned SUCCESS; re-verification is required to confirm and record the outcome.
@@ -348,28 +348,28 @@ the first result is PARTIAL or INCOMPLETE. Do NOT re-initialize inside any branc
 **Steps 3, 4, 5, and 6 are STRICTLY SEQUENTIAL — never spawn step 4 until step 3 completes, never
 spawn step 6 until step 5 completes. Do NOT make parallel Task tool calls between any of these steps.**
 
-5. Append the implementation subagent's commits to `CURRENT_COMMITS_JSON` and add its `filesChanged`
-   to the running total. This MUST happen before re-spawning the verify subagent. Never use the original
+5. Append the implementation agent's commits to `CURRENT_COMMITS_JSON` and add its `filesChanged`
+   to the running total. This MUST happen before re-spawning the verify agent. Never use the original
    `EXECUTION_COMMITS_JSON` argument in re-verification prompts — always use the updated `CURRENT_COMMITS_JSON`.
 
-6. Re-spawn the verify subagent by constructing a NEW prompt from the template (do NOT reuse or re-send
+6. Re-spawn the verify agent by constructing a NEW prompt from the template (do NOT reuse or re-send
    the original rendered prompt string). Substitute the CURRENT value of `CURRENT_COMMITS_JSON` (which
    now includes fix commits) and the updated `filesChanged` total into the prompt before spawning.
-   The re-rendered prompt must reflect the post-fix state. Note: the planning subagent appended fix steps
-   only to the `## Jobs` section of plan.md — never to the post-conditions. The verify subagent
+   The re-rendered prompt must reflect the post-fix state. Note: the planning agent appended fix steps
+   only to the `## Jobs` section of plan.md — never to the post-conditions. The verify agent
    evaluates the same post-conditions as the initial invocation.
 
 **If still INCOMPLETE or PARTIAL after 2 iterations:**
 - Note the remaining gaps in the return JSON
 - The iteration cap is exhausted — proceed to the next phase with gaps documented. This supersedes the general
   PARTIAL prohibition: once both fix iterations are consumed, surfacing gaps to the review phase is correct.
-  Do NOT enter another fix loop or spawn more fix subagents.
+  Do NOT enter another fix loop or spawn more fix agents.
 
 ## Rejection Handling
 
 ### PARTIAL Verification Result
 
-When the verify subagent returns `"status": "PARTIAL"`, some post-conditions are unmet but none are
+When the verify agent returns `"status": "PARTIAL"`, some post-conditions are unmet but none are
 fully missing. STOP — do not proceed to the review phase. Re-enter the fix loop described above,
 subject to the same `VERIFY_ITERATION < 2` cap. The iteration counter applies equally to PARTIAL
 re-entries — it is never reset between PARTIAL and INCOMPLETE transitions.

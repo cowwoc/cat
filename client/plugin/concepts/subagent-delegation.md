@@ -3,11 +3,11 @@ Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
-# Subagent Delegation Principles
+# Agent Delegation Principles
 
 ## Capability Limitations
 
-If any step requires a tool or capability you don't have access to (e.g., Skill tool, spawning subagents), return
+If any step requires a tool or capability you don't have access to (e.g., Skill tool, spawning agents), return
 BLOCKED status immediately. Do NOT silently substitute or work around missing capabilities.
 
 When a delegation prompt instructs you to use a specific tool that is unavailable, fail-fast with:
@@ -26,36 +26,36 @@ orchestrating agent needs to know the exact blocker to adjust its delegation str
 
 ## Tool Access
 
-**General-purpose subagents have access to ALL tools**, including Task and Skill.
+**General-purpose agents have access to ALL tools**, including Task and Skill.
 
 If a plan.md or delegation prompt specifies using a skill (e.g., `cat:instruction-builder`), invoke it directly via the Skill
-tool. Do not assume tool limitations exist - subagents have full tool access.
+tool. Do not assume tool limitations exist - agents have full tool access.
 
-## Spawning Subagents: Task vs Agent vs TaskCreate
+## Spawning Agents: Task vs Agent vs TaskCreate
 
-**Use the Task tool to spawn parallel job subagents that require worktree isolation, NOT the Agent tool.**
+**Use the Task tool to spawn parallel job agents that require worktree isolation, NOT the Agent tool.**
 
 These are three completely different tools:
 
-- **Task**: Isolated subagent spawner. Spawns with `isolation: "worktree"`, giving the subagent its own git
-  worktree. Commits made inside the subagent persist after it completes and can be merged back.
-- **Agent**: In-process subagent spawner. No worktree isolation — the subagent's git state and all its commits
+- **Task**: Isolated agent spawner. Spawns with `isolation: "worktree"`, giving the agent its own git
+  worktree. Commits made inside the agent persist after it completes and can be merged back.
+- **Agent**: In-process agent spawner. No worktree isolation — the agent's git state and all its commits
   are destroyed when it completes.
 - **TaskCreate**: Todo tracker. Adds an item to the task list UI (does NOT spawn anything).
 
 **Critical distinction — Task vs Agent worktree behavior:**
 
-When `work-implement` spawns job subagents using `isolation: "worktree"`, the Task tool is **required**.
+When `work-implement` spawns job agents using `isolation: "worktree"`, the Task tool is **required**.
 Using the Agent tool instead silently breaks worktree isolation:
 
-- **Task tool**: subagent gets its own git worktree; commits made inside survive after the subagent finishes and can
+- **Task tool**: agent gets its own git worktree; commits made inside survive after the agent finishes and can
   be merged back into the issue branch via the branch name in the Task result metadata.
-- **Agent tool**: subagent's worktree and all its commits are destroyed when the subagent completes. The main agent
+- **Agent tool**: agent's worktree and all its commits are destroyed when the agent completes. The main agent
   receives the JSON result but the actual git commits are unrecoverable. The work appears to succeed but nothing
   was committed.
 
 **Common confusion**: System reminders mention "TaskCreate" for task tracking. When you see
-"Task tool:" in a skill, this means the **Task** tool (subagent spawner), not TaskCreate.
+"Task tool:" in a skill, this means the **Task** tool (agent spawner), not TaskCreate.
 
 ```
 # ✅ CORRECT: Isolated worktree — commits survive, can be merged back
@@ -75,7 +75,7 @@ TaskCreate:
   description: "..."
 ```
 
-## Model Selection for Subagents
+## Model Selection for Agents
 
 **MANDATORY: Always specify a model explicitly. Never use the default.**
 
@@ -83,7 +83,7 @@ Choose the model based on issue complexity:
 
 | Issue Type | Model | Reasoning |
 |-----------|-------|-----------|
-| Skill invocation (orchestration only) | `haiku` | Skill is pure orchestration, subagent just runs it |
+| Skill invocation (orchestration only) | `haiku` | Skill is pure orchestration, agent just runs it |
 | Skill invocation (skill exposes algorithm) | `sonnet` | Skill doc shows HOW to do it; haiku will apply algorithm manually |
 | Simple file operations | `haiku` | Explicit instructions, no reasoning needed |
 | Run commands, check output | `haiku` | Purely mechanical execution |
@@ -94,7 +94,7 @@ Choose the model based on issue complexity:
 | Critical validation gates | `opus` | Asymmetric failure costs justify higher accuracy |
 
 **Decision rule:** If the execution plan can be followed with zero reasoning (copy-paste level
-explicit), use `haiku`. If the subagent needs to understand WHY to do something correctly,
+explicit), use `haiku`. If the agent needs to understand WHY to do something correctly,
 use `sonnet`. If failure would be very costly or the task requires generating novel approaches,
 consider `opus`.
 
@@ -139,24 +139,24 @@ should be delegated at all. Work requiring Opus-level reasoning often benefits f
 
 ## Core Constraint
 
-**Claude Code does not allow users to supervise subagent execution.**
+**Claude Code does not allow users to supervise agent execution.**
 
-When a subagent is spawned:
-- User cannot see what the subagent is doing
+When an agent is spawned:
+- User cannot see what the agent is doing
 - User cannot correct mistakes in real-time
 - User cannot answer questions
 - User cannot provide clarification
-- Subagent cannot ask for help
+- Agent cannot ask for help
 
-The subagent runs to completion (or failure) without any human oversight.
+The agent runs to completion (or failure) without any human oversight.
 
 ## Implications for Main Agent
 
 ### Decision Authority
 
-The main agent is the **decision maker**. The subagent is the **executor** or **information gatherer**.
+The main agent is the **decision maker**. The agent is the **executor** or **information gatherer**.
 
-| Main Agent Does | Subagent Does |
+| Main Agent Does | Agent Does |
 |-----------------|---------------|
 | Make decisions | Execute decisions OR gather info |
 | Choose approach | Follow approach (never choose) |
@@ -167,13 +167,13 @@ The main agent is the **decision maker**. The subagent is the **executor** or **
 
 ### Fail-Fast Requirement
 
-**CRITICAL**: Subagents must fail-fast when encountering problems.
+**CRITICAL**: Agents must fail-fast when encountering problems.
 
 ```
-# ❌ WRONG: Subagent tries fallback behaviors
+# ❌ WRONG: Agent tries fallback behaviors
 "If you can't find the auth module, look in legacy/ or try common patterns"
 
-# ✅ RIGHT: Subagent stops and reports
+# ✅ RIGHT: Agent stops and reports
 "Find the auth module in src/auth/.
  FAIL-FAST: If not found within 5 minutes, report:
    'BLOCKED: Auth module not at expected location src/auth/'
@@ -185,7 +185,7 @@ Better to fail and let the main agent (with user access) decide how to proceed.
 
 ### Prompt = Complete Specification
 
-The subagent prompt is not a "request" - it's a **complete specification** that requires no
+The agent prompt is not a "request" - it's a **complete specification** that requires no
 interpretation. Think of it like:
 
 - **Bad**: Email to a colleague ("Can you handle the auth stuff?")
@@ -195,30 +195,30 @@ interpretation. Think of it like:
 
 Before spawning, the main agent must be able to answer "yes" to all:
 
-1. Have I read every file the subagent will modify?
+1. Have I read every file the agent will modify?
 2. Have I made every design/architecture decision?
 3. Can I provide actual code, not just descriptions?
 4. Do I know exactly what "success" looks like?
 5. Have I specified what to do if things go wrong?
 6. Is my commit message written?
-7. If the subagent will write or edit files, have I included relevant project conventions
+7. If the agent will write or edit files, have I included relevant project conventions
    (e.g., line wrapping, license headers, language-specific style) in the prompt?
 
 If any answer is "no", do not spawn. Gather more information first.
 
 ### Acceptance Criteria Requirement
 
-**CRITICAL: Every subagent delegation MUST include explicit acceptance criteria.**
+**CRITICAL: Every agent delegation MUST include explicit acceptance criteria.**
 
 Acceptance criteria define what specific outputs validate successful completion. Without them,
 "success" becomes subjective and validation gets skipped.
 
-**For issue-based delegations** (subagent working on a tracked issue):
+**For issue-based delegations** (agent working on a tracked issue):
 
 1. Read the issue's plan.md `## Acceptance Criteria` section
 2. Extract each measurable criterion (scores, test results, build status)
-3. Include criteria in subagent prompt with explicit instruction to produce that output
-4. On subagent completion, verify each criterion has evidence in output
+3. Include criteria in agent prompt with explicit instruction to produce that output
+4. On agent completion, verify each criterion has evidence in output
 
 ```yaml
 # Example: plan.md says "Execution equivalence verified (score = 1.0 from validation protocol)"
@@ -243,19 +243,19 @@ acceptance_criteria:
 
 **FAIL-FAST on missing validation:**
 
-When subagent output lacks evidence of criteria satisfaction:
+When agent output lacks evidence of criteria satisfaction:
 
 ```
 ❌ ACCEPTANCE CRITERIA NOT MET
 
 Required: {criterion}
-Subagent output: {missing | value}
+Agent output: {missing | value}
 
 BLOCKING: Cannot proceed without validation evidence.
 Action: Re-run validation or adjust approach.
 ```
 
-**Why this exists:** When subagent prompts bypass skill-mandated validations (e.g., custom
+**Why this exists:** When agent prompts bypass skill-mandated validations (e.g., custom
 compression prompt without validation), criteria go unchecked. Requiring explicit criteria
 in the delegation catches these gaps at spawn time rather than after completion.
 
@@ -263,13 +263,13 @@ in the delegation catches these gaps at spawn time rather than after completion.
 
 ### Exploration + Decision in Same Delegation
 
-Subagents CAN explore/research. They must NOT decide based on findings.
+Agents CAN explore/research. They must NOT decide based on findings.
 
 ```
-# ❌ WRONG: Subagent explores AND decides
+# ❌ WRONG: Agent explores AND decides
 "Find where rate limiting should be added and implement it"
 
-# ✅ RIGHT: Subagent explores, returns findings only
+# ✅ RIGHT: Agent explores, returns findings only
 "Find all places where rate limiting could be added.
  Return: file paths, method signatures, current behavior.
  FAIL-FAST: If unclear after 10 min, report BLOCKED.
@@ -280,13 +280,13 @@ Subagents CAN explore/research. They must NOT decide based on findings.
  [exact code to add]"
 ```
 
-**Why it fails**: When exploration and implementation are combined, the subagent makes decisions
+**Why it fails**: When exploration and implementation are combined, the agent makes decisions
 the user can't review. Separating them lets the main agent (with user access) make decisions.
 
 ### Delegating Decisions
 
 ```
-# ❌ WRONG: Subagent must choose
+# ❌ WRONG: Agent must choose
 "Use appropriate error handling for the network calls"
 
 # ✅ RIGHT: Decision made by main agent
@@ -296,12 +296,12 @@ the user can't review. Separating them lets the main agent (with user access) ma
  - Other exceptions: rethrow wrapped in NetworkException"
 ```
 
-**Why it fails**: "Appropriate" is subjective. The subagent's choice may not match user expectations.
+**Why it fails**: "Appropriate" is subjective. The agent's choice may not match user expectations.
 
 ### Vague Success Criteria
 
 ```
-# ❌ WRONG: Subagent must judge
+# ❌ WRONG: Agent must judge
 "Make sure the feature works correctly"
 
 # ✅ RIGHT: Objective verification
@@ -311,7 +311,7 @@ the user can't review. Separating them lets the main agent (with user access) ma
  Expected output: 'All scenarios passed'"
 ```
 
-**Why it fails**: Without objective criteria, subagent may declare success when user would not.
+**Why it fails**: Without objective criteria, agent may declare success when user would not.
 
 ### Incomplete Edge Cases
 
@@ -328,7 +328,7 @@ the user can't review. Separating them lets the main agent (with user access) ma
  - Empty string: throw IllegalArgumentException"
 ```
 
-**Why it fails**: Subagent implements the obvious case; edge cases cause silent bugs.
+**Why it fails**: Agent implements the obvious case; edge cases cause silent bugs.
 
 ### Output Format Priming
 
@@ -344,8 +344,8 @@ the user can't review. Separating them lets the main agent (with user access) ma
  - status: {success if score >= threshold, else failed}"
 ```
 
-**Why it fails**: Specifying expected values in output format tells the subagent what to report,
-not what to measure. When actual results differ from expected, the subagent may report the expected
+**Why it fails**: Specifying expected values in output format tells the agent what to report,
+not what to measure. When actual results differ from expected, the agent may report the expected
 value rather than the actual value. This is a form of documentation priming.
 
 **Rule**: Output format defines *structure* (field names, types). Never include *content* (expected
@@ -353,24 +353,24 @@ values, required outcomes). Acceptance criteria belong in a separate section, no
 
 ### Validation Separation Requirement
 
-**CRITICAL: Subagents that PRODUCE output must NOT also VALIDATE it.**
+**CRITICAL: Agents that PRODUCE output must NOT also VALIDATE it.**
 
-When a subagent creates/modifies content that requires validation:
+When an agent creates/modifies content that requires validation:
 
 ```
-# ❌ WRONG: Same subagent produces AND validates
+# ❌ WRONG: Same agent produces AND validates
 "Compress these 40 files.
  Verify each scores 1.0 via validation protocol."
-# Subagent may skip validation or fabricate scores
+# Agent may skip validation or fabricate scores
 
 # ✅ RIGHT: Separate production from validation
-STEP 1: Subagent A compresses files (NO validation instruction)
-STEP 2: Main agent OR Subagent B runs validation protocol from cat:instruction-builder on each file
+STEP 1: Agent A compresses files (NO validation instruction)
+STEP 2: Main agent OR Agent B runs validation protocol from cat:instruction-builder on each file
 STEP 3: Main agent reviews actual scores, decides next action
 ```
 
 **Why separation is mandatory:**
-1. Producer bias: Subagent that created content is motivated to report success
+1. Producer bias: Agent that created content is motivated to report success
 2. Priming risk: Knowing the threshold (1.0) primes fabrication
 3. No oversight: User cannot verify validation actually ran
 4. Skill bypass: Custom prompts may omit skill-mandated validations
@@ -379,9 +379,9 @@ STEP 3: Main agent reviews actual scores, decides next action
 
 | Issue Type | Producer | Validator |
 |------------|----------|-----------|
-| Document compression | Compression subagent | Main agent via `cat:instruction-builder` validation protocol |
-| Code generation | Implementation subagent | Test runner (separate step) |
-| File transformation | Transform subagent | Diff/verification subagent |
+| Document compression | Compression agent | Main agent via `cat:instruction-builder` validation protocol |
+| Code generation | Implementation agent | Test runner (separate step) |
+| File transformation | Transform agent | Diff/verification agent |
 
 **Main agent MUST verify validation evidence:**
 - Check for actual tool invocations (not just claimed scores)
@@ -390,9 +390,9 @@ STEP 3: Main agent reviews actual scores, decides next action
 
 ## Result Presentation
 
-When presenting subagent results to users, preserve the format specified by the source skill.
+When presenting agent results to users, preserve the format specified by the source skill.
 
-**Problem:** Subagents return structured data (JSON). Presenting agents may recompose this into
+**Problem:** Agents return structured data (JSON). Presenting agents may recompose this into
 custom formats, losing units, context, or required formatting from the source skill.
 
 **Rule:** Before presenting results, check if the invoked skill specifies an output format.
@@ -408,11 +408,11 @@ If so, use that format - don't compose your own.
 
 ```
 # ❌ WRONG: Recompose results into custom format
-Subagent returns: {"tokens_before": 1598, "tokens_after": 1278}
+Agent returns: {"tokens_before": 1598, "tokens_after": 1278}
 You present: "| Before | After |" (units unclear)
 
 # ✅ RIGHT: Use source skill's format
-Subagent returns: {"tokens_before": 1598, "tokens_after": 1278}
+Agent returns: {"tokens_before": 1598, "tokens_after": 1278}
 Check cat:instruction-builder format specification
 Present: "| Tokens (Before) | Tokens (After) |" (matches skill spec)
 ```
@@ -423,7 +423,7 @@ Present: "| Tokens (Before) | Tokens (After) |" (matches skill spec)
 
 ### Prompt Length
 
-Good subagent prompts are **longer than you'd expect**. If your prompt is a few sentences, it's
+Good agent prompts are **longer than you'd expect**. If your prompt is a few sentences, it's
 probably missing something.
 
 Typical good prompt includes:
@@ -444,7 +444,7 @@ Imagine giving your prompt to a robot that:
 
 Would the robot produce correct output? If not, the prompt needs more detail.
 
-## When Not to Use Subagents
+## When Not to Use Agents
 
 Some work should NOT be delegated:
 
@@ -456,9 +456,9 @@ Some work should NOT be delegated:
 
 These require the main agent (with user access) to make decisions.
 
-## Valid Subagent Work
+## Valid Agent Work
 
-Subagents ARE appropriate for:
+Agents ARE appropriate for:
 
 1. **Pure exploration** - "find all usages of X, return list" (no action)
 2. **Research** - "what patterns does this codebase use for Y?" (report only)
@@ -466,4 +466,4 @@ Subagents ARE appropriate for:
 4. **Verification** - "run these tests, report pass/fail"
 5. **Data collection** - "count lines, list files, measure metrics"
 
-The key: subagent returns information OR executes explicit instructions. Never both.
+The key: agent returns information OR executes explicit instructions. Never both.

@@ -3,35 +3,35 @@ Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
-# Subagent-Mistake Investigation Guide
+# Agent-Mistake Investigation Guide
 
-Loaded conditionally by phase-investigate.md when the mistake involves a subagent.
+Loaded conditionally by phase-investigate.md when the mistake involves an agent.
 
 ## Check the Delegation Prompt
 
-The delegation prompt IS the primary "document" the subagent received. Check it for:
+The delegation prompt IS the primary "document" the agent received. Check it for:
 - Expected values embedded in output format (e.g., "score: 1.0 (required)")
 - Outcome requirements that conflict with reality (e.g., "MUST be 1.0")
-- Any content telling the subagent what to report vs what to measure
+- Any content telling the agent what to report vs what to measure
 
 ## Check for Technically Impossible Instructions
 
-When a subagent fails to follow instructions, check whether the instructions were **technically possible** given the
-active runtime's subagent architecture.
+When an agent fails to follow instructions, check whether the instructions were **technically possible** given the
+active runtime's agent architecture.
 
-Do not infer impossibility from behavior outside the active subagent context. Verify the active subagent's available
+Do not infer impossibility from behavior outside the active agent context. Verify the active agent's available
 tools, capability model, and actual tool errors before classifying an instruction as impossible.
 
 **If instructions required unavailable capabilities:**
 
 ```yaml
 technically_impossible_check:
- instruction_required: "Spawn reviewer subagents for each finding"
+ instruction_required: "Spawn reviewer agents for each finding"
  runtime: "{active runtime}"
  capability_needed: "{specific tool or capability}"
  available_to_subagent: false
  conclusion: >
-  IMPOSSIBLE in this runtime because the required capability is not available to the subagent.
+  IMPOSSIBLE in this runtime because the required capability is not available to the agent.
  root_cause: "architectural_flaw"
  fix_type: >
   Redesign the workflow so the unavailable capability is performed by an agent or process that has it.
@@ -41,9 +41,9 @@ technically_impossible_check:
 
 | Instruction Pattern | Why Impossible | Correct Design |
 |--------------------|----------------|----------------|
-| "Subagent must invoke /cat:skill" | Wrong only if the skill name is invalid or missing | Use Skill tool directly with the correct skill name |
-| "Spawn reviewer subagents" | Only impossible when the active runtime does not expose agent spawning to that subagent | Move spawning to an agent/process that has the capability, or keep nested spawning if the runtime supports it |
-| "Delegate to sub-subagent" | Only impossible when the active runtime enforces a delegation-depth limit that blocks it | Flatten to a supported depth, or keep the nested design if the runtime supports it |
+| "Agent must invoke /cat:skill" | Wrong only if the skill name is invalid or missing | Use Skill tool directly with the correct skill name |
+| "Spawn reviewer agents" | Only impossible when the active runtime does not expose agent spawning to that agent | Move spawning to an agent/process that has the capability, or keep nested spawning if the runtime supports it |
+| "Delegate to nested agent" | Only impossible when the active runtime enforces a delegation-depth limit that blocks it | Flatten to a supported depth, or keep the nested design if the runtime supports it |
 | "Use parallel-execute skill" | Wrong only if the skill is unavailable in this environment | Use Skill tool if available, otherwise use equivalent direct tool calls |
 
 **When this check identifies impossible instructions:**
@@ -55,7 +55,7 @@ technically_impossible_check:
 
 ## Check for Missing Skill Preloading
 
-When a subagent fails to follow skill-based guidance correctly, check whether the subagent would have benefited from
+When an agent fails to follow skill-based guidance correctly, check whether the agent would have benefited from
 having skills preloaded via frontmatter.
 
 **Runtime-specific skill preloading:**
@@ -76,13 +76,13 @@ skills:
 ---
 ```
 
-**Questions to ask when subagent makes a mistake:**
+**Questions to ask when agent makes a mistake:**
 
 | Question | If YES |
 |----------|--------|
-| Did subagent need skill knowledge it didn't have? | Add it to the runtime-specific agent definition |
-| Was `general-purpose` subagent used for domain-specific work? | Create dedicated agent type |
-| Did subagent try to invoke a skill (and fail)? | Move the needed skill knowledge to the agent definition |
+| Did agent need skill knowledge it didn't have? | Add it to the runtime-specific agent definition |
+| Was `general-purpose` agent used for domain-specific work? | Create dedicated agent type |
+| Did agent try to invoke a skill (and fail)? | Move the needed skill knowledge to the agent definition |
 | Would preloaded guidance have prevented the mistake? | Add the guidance to the runtime-specific agent definition |
 
 **If general-purpose agent was used and skills would help:**
@@ -97,12 +97,12 @@ subagent_skills_analysis:
  recommendation:
  action: "Invoke the required skill via Skill tool before proceeding"
  skills_to_load: ["skill-1", "skill-2"]
- rationale: "Subagent can load skill instructions directly via Skill tool"
+ rationale: "Agent can load skill instructions directly via Skill tool"
 ```
 
 **Prevention pattern for skill preloading issues:**
 
-1. Identify the skills the subagent needed
+1. Identify the skills the agent needed
 2. Check if a dedicated agent type already exists (check `plugin/agents/<runtime>/` and shared `plugin/agents/common/`)
 3. If yes: Use that agent type instead of `general-purpose`
 4. If no: Create a shared body in `plugin/agents/common/{name}.md` and a runtime wrapper in `plugin/agents/<runtime>/`
@@ -113,7 +113,7 @@ subagent_skills_analysis:
 ```json
 {
   "category": "architectural_flaw",
-  "root_cause": "Subagent lacked skill knowledge; general-purpose agent used for domain work",
+  "root_cause": "Agent lacked skill knowledge; general-purpose agent used for domain work",
   "prevention_type": "config",
   "prevention_path": "plugin/agents/common/{new-agent}.md",
   "subagent_skills_needed": ["skill-1", "skill-2"]

@@ -88,11 +88,11 @@
       "category": "commands"
     },
     "single-agent-execution": {
-      "description": "Execute issues with single subagent",
+      "description": "Execute issues with single agent",
       "category": "execution"
     },
     "multi-agent-orchestration": {
-      "description": "Coordinate multiple subagents",
+      "description": "Coordinate multiple agents",
       "category": "execution"
     },
     "parallel-issue-execution": {

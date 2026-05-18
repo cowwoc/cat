@@ -53,7 +53,7 @@ together provide a clear picture of what ran, what failed, and in what order, pr
 - Root cause document identified (use `documents_read` as index, verify content only if needed)
 
 **When JSONL is required:** Use raw JSONL when you need to verify exact content delivery — e.g., confirming a skill's
-content matched the source file, detecting injection or truncation, or examining a subagent's full conversation.
+content matched the source file, detecting injection or truncation, or examining an agent's full conversation.
 
 **Parallel reference file reads:** If you need to read reference files (scripts, skill files, agent definitions),
 read all of them in a single parallel batch at the start of this phase rather than reading them one at a time as
@@ -79,7 +79,7 @@ Memory is unreliable for causation, timing, attribution.
 
 **Start with pre-computed context** (`tool_call_sequences`, `mistake_timeline`). Use raw JSONL only when the
 pre-computed context does not provide enough detail — for example, when verifying exact content delivery, detecting
-injection or truncation, or investigating a subagent whose conversation is not captured in pre-computed context.
+injection or truncation, or investigating an agent whose conversation is not captured in pre-computed context.
 
 **NOTE on raw JSONL:** Source files show what *should* be delivered; JSONL shows what *was* delivered. When you DO
 need to verify content delivery, JSONL is authoritative over source files.
@@ -108,7 +108,7 @@ Use raw JSONL as the primary source to determine what the agent actually receive
 | `search <session-id> <pattern> --context N --regex` | Find multiple keywords in one scan using regex alternation (e.g., `"Read\|Skill\|Task"`) |
 | `errors <session-id>` | Find tool failures, non-zero exit codes, error patterns |
 | `file-history <session-id> <path>` | Trace all reads/writes/edits to a specific file path |
-| `analyze <session-id>` | Get full session overview including subagent discovery |
+| `analyze <session-id>` | Get full session overview including agent discovery |
 
 ```bash
 # Find what content was delivered for a specific skill or document
@@ -120,22 +120,22 @@ Use raw JSONL as the primary source to determine what the agent actually receive
 # Find tool errors that may have triggered the mistake
 "$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" errors "$SESSION_ID"
 
-# Get session overview with subagent discovery
+# Get session overview with agent discovery
 "$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" analyze "$SESSION_ID"
 ```
 
-**Subagent investigation:** If the mistake happened inside a subagent, the parent session JSONL does not contain the
-subagent's full conversation. Use `analyze` to discover subagent IDs, then search their individual JSONL files:
+**Agent investigation:** If the mistake happened inside an agent, the parent session JSONL does not contain the
+agent's full conversation. Use `analyze` to discover agent IDs, then search their individual JSONL files:
 
 ```bash
-# Discover subagent IDs (listed in analyze output under "subagents")
+# Discover agent IDs (listed in analyze output under "agents")
 "$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" analyze "$SESSION_ID"
 
-# Search a specific subagent's conversation using the subagent ID/path from analyze output
-SUBAGENT_SESSION_ID="<runtime-specific subagent id/path from analyze output>"
+# Search a specific agent's conversation using the agent ID/path from analyze output
+SUBAGENT_SESSION_ID="<runtime-specific agent id/path from analyze output>"
 "$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" search "$SUBAGENT_SESSION_ID" "keyword" --context 5
 
-# Search for multiple keywords in a subagent's conversation in one scan
+# Search for multiple keywords in an agent's conversation in one scan
 "$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" search "$SUBAGENT_SESSION_ID" "keyword1|keyword2" --regex --context 5
 ```
 
@@ -162,12 +162,12 @@ After JSONL examination, use source files for comparison only. Source files are 
 |---------|---------|------|
 | Algorithm before invocation | "How to compress: 1. Remove redundancy..." | Agent bypasses skill |
 | Output format with values | "validation_score: 1.0 (required)" | Agent fabricates output |
-| Cost/efficiency language | "This spawns 2 subagents..." | Agent takes shortcuts |
+| Cost/efficiency language | "This spawns 2 agents..." | Agent takes shortcuts |
 | Conflicting general guidance | "Be concise" + "copy verbatim" | General overrides specific |
 | Cognitive anchor (default/fallback) | "defaults to /workspace" | Agent falls back to named default when primary path fails |
 
 Also check the content of expanded skill files (from `skill_invocations`): review the delegation prompts and skill
-content that subagents received for any of the above patterns, especially cognitive anchors establishing default paths
+content that agents received for any of the above patterns, especially cognitive anchors establishing default paths
 or values.
 
 **SKILL EXECUTION FAILURES - Use instruction-builder:**
@@ -207,8 +207,8 @@ When a mistake involves invoking a tool/skill with wrong parameters:
 3. Check what documentation showed similar-looking parameters that may have primed the incorrect usage
 4. The cause is often "saw parameter X used somewhere, assumed it applies to tool Y"
 
-**For subagent mistakes:** Read `phase-investigate-subagent-mistake.md` (in the same directory as this file) for
-subagent-mistake investigation checks including delegation prompt analysis, technically impossible instructions, and
+**For agent mistakes:** Read `phase-investigate-agent-mistake.md` (in the same directory as this file) for
+agent-mistake investigation checks including delegation prompt analysis, technically impossible instructions, and
 missing skill preloading. That file will direct you to the active runtime's capability appendix before you classify an
 instruction as impossible.
 
@@ -217,16 +217,16 @@ instruction as impossible.
 When the main agent wrote a bad delegation prompt, ask: **What primed the MAIN AGENT to write that prompt?**
 
 Common priming sources for main agent decisions:
-1. **Previous subagent failure messages** - "excessive nesting" or "token budget" may prime bypasses
+1. **Previous agent failure messages** - "excessive nesting" or "token budget" may prime bypasses
 2. **Error messages from tools** - May suggest workarounds that violate protocols
-3. **Cost/efficiency concerns in skill docs** - "This spawns N subagents" primes shortcuts
+3. **Cost/efficiency concerns in skill docs** - "This spawns N agents" primes shortcuts
 
 **Trace the chain backwards:**
 
 ```
 Main agent wrote bad prompt
   ↑ WHY?
-Previous subagent returned FAILED with message
+Previous agent returned FAILED with message
   ↑ WHY did that message prime a bad decision?
 Message described problem without actionable guidance
   ↑ FIX: Improve failure message guidance, not just main agent behavior
@@ -235,14 +235,14 @@ Message described problem without actionable guidance
 **Search session history for failure messages:**
 
 ```bash
-# Find subagent failure messages that preceded the bad decision
+# Find agent failure messages that preceded the bad decision
 "$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" search "$SESSION_ID" "FAILED" --context 5
 
 # Find tool errors (non-zero exit codes, error patterns)
 "$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" errors "$SESSION_ID"
 ```
 
-**If a subagent failure message primed the main agent:**
+**If an agent failure message primed the main agent:**
 
 The fix must address BOTH:
 1. The main agent's behavior (don't bypass skills)

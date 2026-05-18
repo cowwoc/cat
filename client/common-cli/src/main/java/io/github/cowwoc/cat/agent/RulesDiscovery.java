@@ -35,7 +35,7 @@ import java.util.stream.Stream;
  * <ul>
  *   <li>{@code mainAgent: true|false} — whether to inject into the main agent (default: true)</li>
  *   <li>{@code subAgents: [type1, type2]} or {@code subAgents: []} —
- *       which subagent types receive this rule (default when omitted: all subagents)</li>
+ *       which agent types receive this rule (default when omitted: all agents)</li>
  *   <li>{@code paths: ["*.java", "src/**"]} — only inject when an active file matches one of
  *       these globs (default: always inject)</li>
  * </ul>
@@ -48,7 +48,7 @@ public final class RulesDiscovery
    * @param path       the path to the rule file
    * @param contextPath the rule path to show in injected context
    * @param mainAgent  whether to inject into the main agent
-   * @param subAgents  the subagent types that receive this rule; {@code null} means all subagents
+   * @param subAgents  the agent types that receive this rule; {@code null} means all agents
    *                   (default when omitted from frontmatter), empty means none
    * @param paths      glob patterns restricting injection to matching active files; empty means always inject
    * @param content    the file body with leading YAML frontmatter stripped
@@ -67,7 +67,7 @@ public final class RulesDiscovery
      * @param path      the file path
      * @param contextPath the rule path to show in injected context
      * @param mainAgent inject into main agent
-     * @param subAgents subagent types ({@code null} means all subagents)
+     * @param subAgents agent types ({@code null} means all agents)
      * @param paths     glob patterns
      * @param content   file content (body without frontmatter)
      * @throws NullPointerException if {@code path}, {@code contextPath}, {@code paths}, or
@@ -353,26 +353,26 @@ public final class RulesDiscovery
   }
 
   /**
-   * Filters rules for a subagent, applying audience and paths filtering.
+   * Filters rules for an agent, applying audience and paths filtering.
    *
-   * @param rules           all discovered rules
-   * @param subagentType    the type identifier of the subagent (e.g. {@code "cat:work-execute"})
-   * @param activeFiles     the list of files currently being operated on (for paths matching)
-   * @return rules where subAgents is {@code null} (all) or contains the subagent type, and paths match
+   * @param rules       all discovered rules
+   * @param agentType   the type identifier of the agent (e.g. {@code "cat:work-execute"})
+   * @param activeFiles the list of files currently being operated on (for paths matching)
+   * @return rules where subAgents is {@code null} (all) or contains the agent type, and paths match
    * @throws NullPointerException if any parameter is null
    */
-  public static List<RuleFile> filterForSubagent(List<RuleFile> rules, String subagentType,
+  public static List<RuleFile> filterForAgent(List<RuleFile> rules, String agentType,
     List<String> activeFiles)
   {
     requireThat(rules, "rules").isNotNull();
-    requireThat(subagentType, "subagentType").isNotNull();
+    requireThat(agentType, "agentType").isNotNull();
     requireThat(activeFiles, "activeFiles").isNotNull();
 
     List<RuleFile> result = new ArrayList<>();
     for (RuleFile rule : rules)
     {
       List<String> subAgents = rule.subAgents();
-      if (subAgents != null && !subAgents.contains(subagentType))
+      if (subAgents != null && !subAgents.contains(agentType))
         continue;
       if (!matchesPaths(rule.paths(), activeFiles))
         continue;

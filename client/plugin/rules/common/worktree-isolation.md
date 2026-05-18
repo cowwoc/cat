@@ -7,7 +7,7 @@ See LICENSE.md in the project root for license terms.
 **CRITICAL**: NEVER work on issues in the main worktree. ALWAYS use isolated worktrees.
 *(Enforced by hook - Edit/Write blocked on protected branches for plugin/ files)*
 
-**Correct flow**: ask Claude to add an issue -> ask Claude to work on it (creates worktree) -> delegate to subagent -> merge back
+**Correct flow**: ask Claude to add an issue -> ask Claude to work on it (creates worktree) -> delegate to agent -> merge back
 
 **Working in worktrees**: `cd` into the worktree directory instead of using `git -C` from outside.
 This ensures all file operations target the worktree, not the main workspace.

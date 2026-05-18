@@ -3,19 +3,19 @@ Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
-# Subagent Context Minimization
+# Agent Context Minimization
 
 ## Purpose
 
-When the main agent reads files, runs commands, or expands content solely to pass it into a subagent prompt, that
+When the main agent reads files, runs commands, or expands content solely to pass it into an agent prompt, that
 content permanently inflates the main agent's context window for every subsequent turn. The goal of context
-minimization is to keep the main agent's context lean by having subagents load their own content from disk rather than
+minimization is to keep the main agent's context lean by having agents load their own content from disk rather than
 having the main agent relay it. This reduces cumulative token costs and allows the main agent to sustain more turns
 before context pressure forces early completion or compaction.
 
-## When to Delegate to a Subagent
+## When to Delegate to a Agent
 
-**Always delegate to subagents.** Even when the main agent's context is low, delegation preserves the main agent's
+**Always delegate to agents.** Even when the main agent's context is low, delegation preserves the main agent's
 context budget for orchestration across long sessions and back-to-back issues. A main agent that stays lean can sustain
 many more turns before context compaction forces early completion — and this strategic benefit applies regardless of
 current context size.
@@ -27,7 +27,7 @@ agent's window outweighs the spawn overhead for most non-trivial phases.
 For the full estimation formula (including inline vs. delegation cost calculation), see
 [optimize-execution](../skills/optimize-execution/first-use.md) Step 4.
 
-**Additional cost benefit:** Subagent tokens have a higher cache-read ratio (0.1x pricing) than main agent tokens at
+**Additional cost benefit:** Agent tokens have a higher cache-read ratio (0.1x pricing) than main agent tokens at
 the same context size. This makes the actual cost savings ~1.5-2x larger than raw token counts suggest — an additional
 reason to prefer delegation.
 
@@ -35,20 +35,20 @@ reason to prefer delegation.
 
 ### File References
 
-Pass file paths (absolute, or relative to the worktree root) to the subagent rather than pasting file content into
-the prompt. The subagent reads the file in its own context at a fraction of the cost.
+Pass file paths (absolute, or relative to the worktree root) to the agent rather than pasting file content into
+the prompt. The agent reads the file in its own context at a fraction of the cost.
 
 ```
 ✅ CORRECT: pass the path
   "Read plan.md at: /workspace/.claude/worktrees/my-issue/.cat/issues/v2/v2.1/my-issue/plan.md"
 
 ❌ WRONG: paste the content
-  "Here is subagent-delegation.md: [600 lines of content pasted inline]"
+  "Here is agent-delegation.md: [600 lines of content pasted inline]"
 ```
 
 ### Git References
 
-Pass commit SHAs or branch names rather than diff text or file snapshots. The subagent can run `git show` or
+Pass commit SHAs or branch names rather than diff text or file snapshots. The agent can run `git show` or
 `git diff` in its own context.
 
 ```
@@ -62,7 +62,7 @@ Pass commit SHAs or branch names rather than diff text or file snapshots. The su
 ### Task Descriptions
 
 Pass a description of what to do — with well-defined inputs and expected outputs — rather than a pre-read expansion
-of the files or instructions the subagent will need.
+of the files or instructions the agent will need.
 
 ```
 ✅ CORRECT: pass the description with references
@@ -75,10 +75,10 @@ of the files or instructions the subagent will need.
 
 ## Correct Patterns
 
-### Pass File Path to Subagent
+### Pass File Path to Agent
 
 ```yaml
-# Main agent identifies what the subagent needs, passes the path only
+# Main agent identifies what the agent needs, passes the path only
 Task tool:
   subagent_type: "general-purpose"
   model: "sonnet"
@@ -112,14 +112,14 @@ Task tool:
     Add a Related Concepts section to the file at:
       ${WORKTREE_PATH}/client/plugin/skills/common/optimize-execution/first-use.md
     Append exactly the following text at the end of the existing ## Related Concepts section:
-      - **subagent-context-minimization**: When and how to pass file paths instead of
-        file content to subagents
-    Commit with message: "docs: add subagent-context-minimization reference"
+      - **agent-context-minimization**: When and how to pass file paths instead of
+        file content to agents
+    Commit with message: "docs: add agent-context-minimization reference"
 ```
 
 ## Anti-Patterns
 
-### Main Agent Reads File Then Pastes Into Subagent Prompt
+### Main Agent Reads File Then Pastes Into Agent Prompt
 
 ```
 # Main agent reads 5 source files and pastes them all into the prompt
@@ -129,53 +129,53 @@ Task: "Refactor AuthService. Here is the current content: [600 lines pasted] ...
 
 PROBLEM: Each relayed file adds its full content to the main agent's context permanently,
 compounding with every subsequent main agent turn. For a 500-line file (~2k tokens),
-relaying instead of letting the subagent read it costs 2k × remaining_main_turns tokens.
+relaying instead of letting the agent read it costs 2k × remaining_main_turns tokens.
 ```
 
-### Main Agent Runs `git diff` Then Pastes Output Into Subagent Prompt
+### Main Agent Runs `git diff` Then Pastes Output Into Agent Prompt
 
 ```
-# Main agent runs diff and pastes output for a review subagent
+# Main agent runs diff and pastes output for a review agent
 [Bash: git diff HEAD~1 HEAD]  ← main agent context grows by diff output
 Task: "Review these changes: [500 lines of diff pasted] ..."
 
-PROBLEM: The review subagent can run git diff itself. The main agent has loaded content
+PROBLEM: The review agent can run git diff itself. The main agent has loaded content
 it does not need for its own decisions, and that content persists for all future turns.
 ```
 
-### Main Agent Reads Test Output Then Passes Verbatim to Fix Subagent
+### Main Agent Reads Test Output Then Passes Verbatim to Fix Agent
 
 ```
-# Main agent runs tests, pastes failure output into fix subagent prompt
+# Main agent runs tests, pastes failure output into fix agent prompt
 [Bash: mvn test 2>&1]  ← main agent context grows by full test output
 Task: "Fix the failing tests. Here is the output: [300 lines of test output] ..."
 
-PROBLEM: The fix subagent can re-run the tests and get the output in its own context.
+PROBLEM: The fix agent can re-run the tests and get the output in its own context.
 Passing the verbatim output wastes main agent context without benefit.
 ```
 
 **Exception:** If the main agent already read the file or ran the command for its *own* decision-making (for example,
-reviewing plan.md to choose which job to execute), it MAY include that content in the subagent prompt to avoid a
-redundant subagent read. The key distinction is that the main agent read it for its own purpose first, not as a relay.
+reviewing plan.md to choose which job to execute), it MAY include that content in the agent prompt to avoid a
+redundant agent read. The key distinction is that the main agent read it for its own purpose first, not as a relay.
 
 ## Codebase Examples
 
 - `client/plugin/skills/common/optimize-execution/first-use.md` **Step 6, item 10** (Content Relay Detection): describes how to detect
-  main agent Read/Grep/Bash calls whose output is only used to populate a subagent prompt, and recommends letting the
-  subagent load its own content instead.
+  main agent Read/Grep/Bash calls whose output is only used to populate an agent prompt, and recommends letting the
+  agent load its own content instead.
 
-- `plugin/concepts/subagent-delegation.md` **Pre-Spawn Checklist item 7**: notes that if the subagent will write or
+- `plugin/concepts/agent-delegation.md` **Pre-Spawn Checklist item 7**: notes that if the agent will write or
   edit files, the main agent should include relevant project conventions (e.g., line wrapping, license headers,
   language-specific style) *inline* — these are short, high-value conventions the main agent already knows, not
-  large file contents the subagent could read itself.
+  large file contents the agent could read itself.
 
-- `client/plugin/skills/include/instruction-builder.md` **Step 2** (Design Subagent Delegation): the design subagent is
+- `client/plugin/skills/include/instruction-builder.md` **Step 2** (Design Agent Delegation): the design agent is
   passed the existing skill content inline (already read in Step 1) and file path references for methodology and
   conventions documents it will read itself, rather than pre-expanding all supporting files into the main agent prompt.
 
 ## Related Concepts
 
-- **subagent-delegation**: General subagent safety rules: fail-fast behavior, prompt completeness, acceptance
-  criteria, and validation separation — `plugin/concepts/subagent-delegation.md`
+- **agent-delegation**: General agent safety rules: fail-fast behavior, prompt completeness, acceptance
+  criteria, and validation separation — `plugin/concepts/agent-delegation.md`
 - **optimize-execution**: Post-hoc session analysis including the full delegation cost estimation formula and
   content relay detection — `client/plugin/skills/common/optimize-execution/first-use.md`

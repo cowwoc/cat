@@ -1,6 +1,6 @@
 ---
 description: >
-  Use for quick token health check during sessions, after subagent completion,
+  Use for quick token health check during sessions, after agent completion,
   or before deciding whether to decompose remaining work
 ---
 <!--

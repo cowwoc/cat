@@ -176,7 +176,7 @@ When a test case instructs an agent to create files, those files **must** be wri
 
 **Required: use `.cat/work/`**
 
-Each test-run subagent executes in its own isolated worktree. Writing to `.cat/work/validate-uuid.sh`
+Each test-run agent executes in its own isolated worktree. Writing to `.cat/work/validate-uuid.sh`
 creates the file at `AGENT_WORKTREE/.cat/work/validate-uuid.sh` — a unique absolute path per runner.
 Multiple parallel tests and runner instances never conflict.
 

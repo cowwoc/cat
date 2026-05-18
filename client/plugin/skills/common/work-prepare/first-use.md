@@ -596,7 +596,7 @@ COMMIT_SUMMARY=$(echo "$EXISTING_WORK_RESULT" | grep -oE '"commit_summary"[[:spa
 ```
 
 **Why this matters:** Without checking for existing commits, the orchestrator spawns
-an execution subagent for work that's already done. When `has_existing_work: true`, the main
+an execution agent for work that's already done. When `has_existing_work: true`, the main
 agent should skip execution phase and proceed directly to review/merge.
 
 **Why a Java tool:** This check is entirely deterministic - it just runs git commands and
@@ -742,4 +742,4 @@ This skill loads:
 - version-paths.md (path resolution)
 - agent-architecture.md (context limits only)
 
-Main agent does NOT need to load these - subagent handles internally.
+Main agent does NOT need to load these - agent handles internally.

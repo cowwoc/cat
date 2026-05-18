@@ -1,5 +1,5 @@
 ---
-description: Use when a subagent finishes - collect its commits, metrics, and state updates
+description: Use when an agent finishes - collect its commits, metrics, and state updates
 ---
 <!--
 Copyright (c) 2026 Gili Tzabari. All rights reserved.

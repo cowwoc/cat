@@ -20,7 +20,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * <p>
  * Accepts one argument: the path to the skill's SKILL.md file.
  * <p>
- * Outputs a formatted calibration request that asks the subagent to generate test queries
+ * Outputs a formatted calibration request that asks the agent to generate test queries
  * from the description and evaluate trigger precision.
  */
 public final class DescriptionTester implements SkillOutput

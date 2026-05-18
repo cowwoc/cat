@@ -8,7 +8,7 @@ See LICENSE.md in the project root for license terms.
 > See `${CAT_PLUGIN_ROOT}/concepts/work-decomposition.md` for the full execution model and parallelism rules.
 
 Implement phase for `/cat:work`. Displays preparing/implementing banners, verifies lock ownership,
-and orchestrates subagent execution of the implementation plan.
+and orchestrates agent execution of the implementation plan.
 
 ## Arguments Format
 
@@ -49,9 +49,9 @@ It may NOT be derived by reading plan.md into context and counting `### Job ` oc
 other than running that Bash command. If the command was not run (e.g., because plan.md was already in context),
 run it now before returning.
 
-**Relay prohibition:** `jobs_count` (even when correctly grep-derived) MUST NOT be embedded into any subagent
-prompt text. Do NOT write "there are N jobs" or "JOBS_COUNT=N" or any equivalent into a subagent prompt.
-Each subagent determines its own job count by reading `PLAN_MD_PATH` directly.
+**Relay prohibition:** `jobs_count` (even when correctly grep-derived) MUST NOT be embedded into any agent
+prompt text. Do NOT write "there are N jobs" or "JOBS_COUNT=N" or any equivalent into an agent prompt.
+Each agent determines its own job count by reading `PLAN_MD_PATH` directly.
 
 ## Configuration
 
@@ -233,7 +233,7 @@ echo "hasSteps=true" || echo "hasSteps=false"
 ```
 
 **If `hasSteps=false`** (lightweight plan created by `/cat:add`): invoke `cat:plan-builder` in revise mode to
-generate full implementation steps before spawning the implementation subagent:
+generate full implementation steps before spawning the implementation agent:
 
 1. Read CURIOSITY from config:
 
@@ -289,13 +289,13 @@ Skill tool:
 
 **Complete each skill fully before delegation.** Pre-invoked skills may have built-in
 iteration loops, validation gates, or multi-step workflows. Run each skill to its documented
-completion state before passing results to the implementation subagent. Do NOT pass intermediate
-or failed results to the subagent for manual fixing — that bypasses the skill's quality gates.
+completion state before passing results to the implementation agent. Do NOT pass intermediate
+or failed results to the agent for manual fixing — that bypasses the skill's quality gates.
 
-Capture the output from these skills - the implementation subagent will need the results.
+Capture the output from these skills - the implementation agent will need the results.
 
 **Pre-Invoked Skill Results content restriction:** When including pre-invoked skill output in the
-subagent prompt, include only the direct functional output (e.g., transformed file contents, metrics,
+agent prompt, include only the direct functional output (e.g., transformed file contents, metrics,
 validation results). Do NOT include any skill output that describes, summarizes, quotes, or paraphrases
 plan.md content — even if that description originates from the skill rather than from the agent directly.
 A skill that reads plan.md and echoes its goal or steps back as part of its output does not make that
@@ -328,10 +328,10 @@ Use this exact command — do NOT substitute alternative counting logic or Bash 
 prohibited. The `echo` is part of the same command; do not split detection and printing into separate Bash
 calls. No further Bash calls are permitted after this step before the prepare phase begins.
 
-**If jobs are empty or only one job is present (`JOBS_COUNT` is 0 or 1):** proceed to single-subagent execution
+**If jobs are empty or only one job is present (`JOBS_COUNT` is 0 or 1):** proceed to single-agent execution
 (see below). Parse execution items from `## Jobs` / `### Job 1`.
 
-**If two or more jobs are present (`JOBS_COUNT` >= 2):** use parallel execution (see Parallel Subagent Execution
+**If two or more jobs are present (`JOBS_COUNT` >= 2):** use parallel execution (see Parallel Agent Execution
 below). The last job for index.json ownership is `### Job ${JOBS_COUNT}` (the highest numbered job).
 
 ### Mid-Work plan.md Revision
@@ -355,31 +355,31 @@ After revision, re-read the updated plan.md and adjust remaining execution accor
 
 ### Delegation Prompt Construction
 
-**Subagents read plan.md directly — do NOT relay its content into prompts.**
+**Agents read plan.md directly — do NOT relay its content into prompts.**
 
-Pass `PLAN_MD_PATH` so the subagent can read the Goal and Jobs/Steps sections itself.
+Pass `PLAN_MD_PATH` so the agent can read the Goal and Jobs/Steps sections itself.
 Do NOT extract and paste those sections into the prompt — that is the content relay anti-pattern.
 
-**Why:** Subagents that receive a `PLAN_MD_PATH` and read plan.md themselves always see the authoritative
+**Why:** Agents that receive a `PLAN_MD_PATH` and read plan.md themselves always see the authoritative
 content, preserving plan.md's structure exactly (distinct steps remain distinct, no re-summarization).
 Pasting content into prompts creates a stale copy that can diverge, wastes tokens, and risks
 interpretive distortion.
 
 **Pattern:**
-- ✅ Pass `PLAN_MD_PATH: ${PLAN_MD}` and instruct the subagent to read Goal and Execution sections itself
-- ✅ Trust plan.md structure — subagents read it directly, no relay needed
+- ✅ Pass `PLAN_MD_PATH: ${PLAN_MD}` and instruct the agent to read Goal and Execution sections itself
+- ✅ Trust plan.md structure — agents read it directly, no relay needed
 - ❌ Do NOT inline `${ISSUE_GOAL}` or Jobs content into the prompt
 - ❌ Do NOT add interpretive summaries or aggregate instructions that restate plan.md differently
 
 ### Commit-Before-Spawn Requirement
 
-**BLOCKING:** Before spawning ANY implementation subagent (single or parallel), commit all pending changes in
+**BLOCKING:** Before spawning ANY implementation agent (single or parallel), commit all pending changes in
 the worktree. This is enforced by the `EnforceCommitBeforeSubagentSpawn` hook, which blocks Task spawning of
 `cat:work-execute` when the worktree is dirty.
 
-**Why:** Each subagent is spawned with `isolation: "worktree"`, creating a separate git worktree branched from
+**Why:** Each agent is spawned with `isolation: "worktree"`, creating a separate git worktree branched from
 the current HEAD of the issue branch. Uncommitted changes in the main agent's worktree are NOT visible in the
-subagent's worktree. All changes must be committed before spawning so the subagent sees the complete state.
+agent's worktree. All changes must be committed before spawning so the agent sees the complete state.
 
 ```bash
 cd "${WORKTREE_PATH}" && git status --porcelain  # Must be empty before spawning
@@ -424,7 +424,7 @@ Each file to be staged must be named explicitly by its full path relative to the
 
 ### Schema Migration Coverage Check
 
-After all pending changes are committed and before spawning any subagent, run a schema migration coverage check.
+After all pending changes are committed and before spawning any agent, run a schema migration coverage check.
 This check warns when a schema-relevant file was modified in the current commit set but other unmodified source files
 still contain its filename as a literal string — indicating those files may also need updating (e.g., a skill that
 hardcodes a filename that was renamed, or a migration script referencing an old path).
@@ -485,11 +485,11 @@ are not counted — only files whose content contains the basename string.
 } || true
 ```
 
-This check is advisory only — it WARNS but does not BLOCK. Continue to subagent delegation regardless of output.
+This check is advisory only — it WARNS but does not BLOCK. Continue to agent delegation regardless of output.
 
-### Single-Subagent Execution (no groups or only one group)
+### Single-Agent Execution (no groups or only one group)
 
-Spawn a subagent to implement the issue:
+Spawn an agent to implement the issue:
 
 ```
 Task tool:
@@ -561,11 +561,11 @@ Task tool:
     }
     ```
 
-    CRITICAL: You are the implementation agent - implement directly, do NOT spawn another subagent.
+    CRITICAL: You are the implementation agent - implement directly, do NOT spawn another agent.
 ```
 
-Immediately after the subagent returns its Task tool result, invoke `cat:collect-results`.
-Collect results immediately after each subagent completes before continuing merge orchestration.
+Immediately after the agent returns its Task tool result, invoke `cat:collect-results`.
+Collect results immediately after each agent completes before continuing merge orchestration.
 
 ```
 Skill tool:
@@ -582,7 +582,7 @@ path traversal sequences). If validation fails, STOP and return FAILED status �
 or malformed ID to collect-results.
 
 Pass `SUBAGENT_RAW_ID` as the first argument and let the collect-results skill resolve session context internally.
-Do not construct compound session/subagent identifiers in the caller.
+Do not construct compound session/agent identifiers in the caller.
 
 Then validate and merge its commits back into the issue branch:
 
@@ -591,58 +591,58 @@ SUBAGENT_BRANCH="<branch name from Task tool result metadata>"
 
 # Validate BRANCH is non-empty before using it in prefix checks
 if [[ -z "${BRANCH}" ]]; then
-  echo "ERROR: BRANCH variable is empty — cannot validate subagent branch prefix."
+  echo "ERROR: BRANCH variable is empty — cannot validate agent branch prefix."
   exit 1
 fi
 
 # Validate branch name: alphanumeric, hyphens, underscores only — no slashes, dots, or path separators
 if [[ ! "${SUBAGENT_BRANCH}" =~ ^[a-zA-Z0-9_-]+$ ]]; then
-  echo "ERROR: Subagent branch name contains invalid characters: ${SUBAGENT_BRANCH}"
+  echo "ERROR: Agent branch name contains invalid characters: ${SUBAGENT_BRANCH}"
   exit 1
 fi
 
 # Validate prefix: must start with BRANCH followed by exactly a hyphen and at least one more character
 if [[ ! "${SUBAGENT_BRANCH}" =~ ^[a-zA-Z0-9_-]+-[a-zA-Z0-9_-]+$ ]] || \
    [[ "${SUBAGENT_BRANCH}" != "${BRANCH}-"* ]]; then
-  echo "ERROR: Subagent branch ${SUBAGENT_BRANCH} does not have expected prefix ${BRANCH}-"
+  echo "ERROR: Agent branch ${SUBAGENT_BRANCH} does not have expected prefix ${BRANCH}-"
   exit 1
 fi
 
 # Verify the branch actually exists in git before merging
 if ! git -C "${WORKTREE_PATH}" rev-parse --verify "refs/heads/${SUBAGENT_BRANCH}" >/dev/null 2>&1; then
-  echo "ERROR: Subagent branch ${SUBAGENT_BRANCH} does not exist in git. Cannot merge."
+  echo "ERROR: Agent branch ${SUBAGENT_BRANCH} does not exist in git. Cannot merge."
   exit 1
 fi
 
 cd "${WORKTREE_PATH}" && git merge --ff-only "${SUBAGENT_BRANCH}"
 if [[ $? -ne 0 ]]; then
-  echo "ERROR: Fast-forward merge of ${SUBAGENT_BRANCH} failed. The subagent branch has diverged."
+  echo "ERROR: Fast-forward merge of ${SUBAGENT_BRANCH} failed. The agent branch has diverged."
   echo "Use /cat:git-merge-linear to resolve the diverged history."
   exit 1
 fi
 ```
 
-The subagent branch name and worktree path are returned in the Task tool result when `isolation: "worktree"` is
+The agent branch name and worktree path are returned in the Task tool result when `isolation: "worktree"` is
 used. Use that branch name in the merge command above. If Task output truncation removes any of `agentId`, branch
 name, or worktree path, use `TaskGet` to recover the full result metadata. If `TaskGet` also fails to provide the
 metadata, STOP and return FAILED status with message "Unable to retrieve agentId, branch name, or worktree path for
-implementation subagent after truncation".
+implementation agent after truncation".
 
-### Cleanup Successfully Merged Subagent Worktrees
+### Cleanup Successfully Merged Agent Worktrees
 
-After a subagent branch has been successfully fast-forward merged into the parent issue branch, immediately clean up
-that isolated subagent worktree and branch. This cleanup is mandatory for both single-subagent execution and parallel
+After an agent branch has been successfully fast-forward merged into the parent issue branch, immediately clean up
+that isolated agent worktree and branch. This cleanup is mandatory for both single-agent execution and parallel
 job execution. It prevents stale `*-jobN` worktrees and branches from being left behind after their commits have
 already been integrated.
 
-Use the subagent worktree path from the Task tool result metadata. Before deletion, prove that the path belongs to
-the expected subagent branch and is not the parent issue worktree:
+Use the agent worktree path from the Task tool result metadata. Before deletion, prove that the path belongs to
+the expected agent branch and is not the parent issue worktree:
 
 ```bash
 SUBAGENT_WORKTREE="<worktree path from Task tool result metadata>"
 
 if [[ -z "${SUBAGENT_WORKTREE}" || "${SUBAGENT_WORKTREE}" != /* ]]; then
-  echo "ERROR: Subagent worktree path is missing or not absolute: ${SUBAGENT_WORKTREE}"
+  echo "ERROR: Agent worktree path is missing or not absolute: ${SUBAGENT_WORKTREE}"
   exit 1
 fi
 
@@ -652,7 +652,7 @@ SUBAGENT_WORKTREE="${CANONICAL_SUBAGENT_WORKTREE}"
 
 if [[ "${SUBAGENT_WORKTREE}" == "${CANONICAL_PARENT_WORKTREE}" ]] || \
    [[ "${SUBAGENT_WORKTREE}" != "${CANONICAL_PARENT_WORKTREE}-"* ]]; then
-  echo "ERROR: Refusing to remove unexpected subagent worktree path: ${SUBAGENT_WORKTREE}"
+  echo "ERROR: Refusing to remove unexpected agent worktree path: ${SUBAGENT_WORKTREE}"
   exit 1
 fi
 
@@ -662,40 +662,40 @@ REGISTERED_BRANCH=$(git -C "${WORKTREE_PATH}" worktree list --porcelain | \
     in_target && $1 == "branch" { sub("^refs/heads/", "", $2); print $2; exit }
   ')
 if [[ "${REGISTERED_BRANCH}" != "${SUBAGENT_BRANCH}" ]]; then
-  echo "ERROR: Subagent worktree ${SUBAGENT_WORKTREE} is registered to branch ${REGISTERED_BRANCH}, not ${SUBAGENT_BRANCH}"
+  echo "ERROR: Agent worktree ${SUBAGENT_WORKTREE} is registered to branch ${REGISTERED_BRANCH}, not ${SUBAGENT_BRANCH}"
   exit 1
 fi
 
 git -C "${WORKTREE_PATH}" worktree remove --force "${SUBAGENT_WORKTREE}"
 if [[ $? -ne 0 ]]; then
-  echo "ERROR: Failed to remove subagent worktree ${SUBAGENT_WORKTREE}"
+  echo "ERROR: Failed to remove agent worktree ${SUBAGENT_WORKTREE}"
   exit 1
 fi
 
 git -C "${WORKTREE_PATH}" branch -d "${SUBAGENT_BRANCH}"
 if [[ $? -ne 0 ]]; then
-  echo "ERROR: Failed to delete merged subagent branch ${SUBAGENT_BRANCH}"
+  echo "ERROR: Failed to delete merged agent branch ${SUBAGENT_BRANCH}"
   exit 1
 fi
 ```
 
-If the merge fails, skip cleanup and leave the subagent worktree available for diagnosis. Do not delete the branch or
+If the merge fails, skip cleanup and leave the agent worktree available for diagnosis. Do not delete the branch or
 worktree until the failed merge has been resolved or the user explicitly chooses cleanup.
 
-### Parallel Subagent Execution (two or more jobs)
+### Parallel Agent Execution (two or more jobs)
 
-When plan.md contains two or more jobs, spawn one subagent per job simultaneously.
-Each subagent is spawned with `isolation: "worktree"` — it gets its own isolated git worktree branched from
-the issue branch HEAD. Subagents execute concurrently without shared disk state. The last job's subagent
+When plan.md contains two or more jobs, spawn one agent per job simultaneously.
+Each agent is spawned with `isolation: "worktree"` — it gets its own isolated git worktree branched from
+the issue branch HEAD. Agents execute concurrently without shared disk state. The last job's agent
 updates index.json; other jobs skip it.
 
-**IMPORTANT:** Each parallel subagent commits to its own isolated worktree branch. After all subagents
-complete, the main agent merges each subagent branch back into the issue branch in ascending job order
+**IMPORTANT:** Each parallel agent commits to its own isolated worktree branch. After all agents
+complete, the main agent merges each agent branch back into the issue branch in ascending job order
 (Job 1 first, then Job 2, etc.).
-Only the last job subagent updates index.json.
+Only the last job agent updates index.json.
 
 **CRITICAL: Parallel means one API response — not "start Job 1, then start Job 2".**
-When `JOBS_COUNT` >= 2, spawn ALL job subagents in a SINGLE assistant API response by making multiple
+When `JOBS_COUNT` >= 2, spawn ALL job agents in a SINGLE assistant API response by making multiple
 Task tool calls in that same response. An "API response" is one assistant message turn: everything between
 receiving the user/tool input and sending back the next assistant message. Do NOT spawn Job 1, await its
 result, then spawn Job 2 in a separate API response — that is sequential execution masquerading as parallel.
@@ -715,9 +715,9 @@ reading plan.md), the `PLAN_MD_PATH` reference, and the `ASSIGNED_JOB` number. N
 output from another job in order to be constructed. Therefore, all prompts can and must be fully drafted
 before any Task call is issued.
 
-**`JOBS_COUNT` must NOT appear in any subagent prompt.** Do not embed the numeric job count (e.g.,
-"JOBS_COUNT=3", "there are 3 jobs", or any equivalent phrasing) into a subagent prompt. Including it
-would relay structural plan.md metadata, which is prohibited. Each subagent reads `PLAN_MD_PATH` directly
+**`JOBS_COUNT` must NOT appear in any agent prompt.** Do not embed the numeric job count (e.g.,
+"JOBS_COUNT=3", "there are 3 jobs", or any equivalent phrasing) into an agent prompt. Including it
+would relay structural plan.md metadata, which is prohibited. Each agent reads `PLAN_MD_PATH` directly
 and determines job structure itself.
 
 **Prepare ALL prompts before issuing ANY tool call in the spawn phase.**
@@ -739,7 +739,7 @@ Two-phase execution:
 
    **`JOBS_COUNT` routing is determined by the canonical Bash command result only.** Even after reading
    plan.md into context, the agent MUST NOT use the in-context plan.md content to decide whether to use
-   single-subagent or parallel execution. The routing decision (single vs. parallel) MUST wait for and
+   single-agent or parallel execution. The routing decision (single vs. parallel) MUST wait for and
    use the integer value printed by the canonical detection command. If the canonical command has not yet
    been run, run it before making any routing decision.
 
@@ -765,8 +765,8 @@ Two-phase execution:
 Correct pattern (one message, two Task calls, nothing between them):
 
 ```
-Task tool call: Job 1 subagent
-Task tool call: Job 2 subagent
+Task tool call: Job 1 agent
+Task tool call: Job 2 agent
 ```
 
 For each job (example for Job 1 with steps 1, 2, 3):
@@ -851,11 +851,11 @@ Task tool:
     }
     ```
 
-    CRITICAL: You are the implementation agent - implement directly, do NOT spawn another subagent.
+    CRITICAL: You are the implementation agent - implement directly, do NOT spawn another agent.
 ```
 
-**Wait for ALL job subagents to complete before invoking collect-results for ANY of them.**
-Collect results immediately after each subagent completes before continuing merge orchestration
+**Wait for ALL job agents to complete before invoking collect-results for ANY of them.**
+Collect results immediately after each agent completes before continuing merge orchestration
 for each completed Agent tool result.
 
 **CRITICAL: Do NOT call collect-results for Job N until EVERY job from 1 to JOBS_COUNT has returned
@@ -873,7 +873,7 @@ protocol violation — it leaves the implementation in a partial state.
    Repeat until `NEXT_COLLECT > JOBS_COUNT`. Do NOT skip ahead or reorder — each collect-results call
    MUST process jobs in strict ascending order (1, 2, 3, ..., N).
 7. After all collect-results calls complete, initialize a counter: `NEXT_MERGE=1`. Merge each
-   subagent branch in strict ascending order: merge job `NEXT_MERGE`, then increment
+   agent branch in strict ascending order: merge job `NEXT_MERGE`, then increment
    `NEXT_MERGE=$((NEXT_MERGE + 1))`. Repeat until `NEXT_MERGE > JOBS_COUNT`. Do NOT merge out of order.
 
 NEVER proceed to collect-results after only a subset of jobs have returned.
@@ -894,7 +894,7 @@ values. Instead, use `TaskGet` with the task ID to retrieve the full result meta
 branch name, and worktree path. If `TaskGet` also fails to provide the metadata, STOP and return FAILED status with
 message "Unable to retrieve agentId, branch name, or worktree path for job N after truncation".
 
-For each completed subagent, call collect-results:
+For each completed agent, call collect-results:
 
 ```
 Skill tool:
@@ -903,14 +903,14 @@ Skill tool:
 ```
 
 Where `SUBAGENT_RAW_ID` is the `agentId:` value from that job's Task tool result footer.
-Apply the same SUBAGENT_RAW_ID validation as described in the single-subagent section: verify it is
+Apply the same SUBAGENT_RAW_ID validation as described in the single-agent section: verify it is
 non-empty and contains only alphanumeric characters, hyphens, and underscores before constructing
 the compound ID. If validation fails, STOP and return FAILED status.
 
 Pass `SUBAGENT_RAW_ID` as the first argument and let the collect-results skill resolve session context internally.
-Do not construct compound session/subagent identifiers in the caller.
+Do not construct compound session/agent identifiers in the caller.
 
-Then validate and merge each subagent branch back into the issue branch using the `NEXT_MERGE` counter
+Then validate and merge each agent branch back into the issue branch using the `NEXT_MERGE` counter
 from the parallel job completion protocol (step 7). Process job `NEXT_MERGE`, then increment. Do NOT
 merge any job out of ascending order.
 
@@ -921,26 +921,26 @@ SUBAGENT_BRANCH="<branch name from Task tool result metadata for this job>"
 
 # Validate BRANCH is non-empty before using it in prefix checks
 if [[ -z "${BRANCH}" ]]; then
-  echo "ERROR: BRANCH variable is empty — cannot validate subagent branch prefix."
+  echo "ERROR: BRANCH variable is empty — cannot validate agent branch prefix."
   exit 1
 fi
 
 # Validate branch name: alphanumeric, hyphens, underscores only — no slashes, dots, or path separators
 if [[ ! "${SUBAGENT_BRANCH}" =~ ^[a-zA-Z0-9_-]+$ ]]; then
-  echo "ERROR: Subagent branch name contains invalid characters: ${SUBAGENT_BRANCH}"
+  echo "ERROR: Agent branch name contains invalid characters: ${SUBAGENT_BRANCH}"
   exit 1
 fi
 
 # Validate prefix: must start with BRANCH followed by exactly a hyphen and at least one more character
 if [[ ! "${SUBAGENT_BRANCH}" =~ ^[a-zA-Z0-9_-]+-[a-zA-Z0-9_-]+$ ]] || \
    [[ "${SUBAGENT_BRANCH}" != "${BRANCH}-"* ]]; then
-  echo "ERROR: Subagent branch ${SUBAGENT_BRANCH} does not have expected prefix ${BRANCH}-"
+  echo "ERROR: Agent branch ${SUBAGENT_BRANCH} does not have expected prefix ${BRANCH}-"
   exit 1
 fi
 
 # Verify the branch actually exists in git before merging
 if ! git -C "${WORKTREE_PATH}" rev-parse --verify "refs/heads/${SUBAGENT_BRANCH}" >/dev/null 2>&1; then
-  echo "ERROR: Subagent branch ${SUBAGENT_BRANCH} does not exist in git. Cannot merge."
+  echo "ERROR: Agent branch ${SUBAGENT_BRANCH} does not exist in git. Cannot merge."
   exit 1
 fi
 
@@ -952,7 +952,7 @@ if [[ $? -ne 0 ]]; then
 fi
 SUBAGENT_WORKTREE="<worktree path from Task tool result metadata for this job>"
 if [[ -z "${SUBAGENT_WORKTREE}" || "${SUBAGENT_WORKTREE}" != /* ]]; then
-  echo "ERROR: Subagent worktree path is missing or not absolute for job ${NEXT_MERGE}: ${SUBAGENT_WORKTREE}"
+  echo "ERROR: Agent worktree path is missing or not absolute for job ${NEXT_MERGE}: ${SUBAGENT_WORKTREE}"
   exit 1
 fi
 CANONICAL_PARENT_WORKTREE=$(realpath -m "${WORKTREE_PATH}")
@@ -960,7 +960,7 @@ CANONICAL_SUBAGENT_WORKTREE=$(realpath -m "${SUBAGENT_WORKTREE}")
 SUBAGENT_WORKTREE="${CANONICAL_SUBAGENT_WORKTREE}"
 if [[ "${SUBAGENT_WORKTREE}" == "${CANONICAL_PARENT_WORKTREE}" ]] || \
    [[ "${SUBAGENT_WORKTREE}" != "${CANONICAL_PARENT_WORKTREE}-"* ]]; then
-  echo "ERROR: Refusing to remove unexpected subagent worktree path for job ${NEXT_MERGE}: ${SUBAGENT_WORKTREE}"
+  echo "ERROR: Refusing to remove unexpected agent worktree path for job ${NEXT_MERGE}: ${SUBAGENT_WORKTREE}"
   exit 1
 fi
 REGISTERED_BRANCH=$(git -C "${WORKTREE_PATH}" worktree list --porcelain | \
@@ -969,27 +969,27 @@ REGISTERED_BRANCH=$(git -C "${WORKTREE_PATH}" worktree list --porcelain | \
     in_target && $1 == "branch" { sub("^refs/heads/", "", $2); print $2; exit }
   ')
 if [[ "${REGISTERED_BRANCH}" != "${SUBAGENT_BRANCH}" ]]; then
-  echo "ERROR: Subagent worktree ${SUBAGENT_WORKTREE} is registered to branch ${REGISTERED_BRANCH}, not ${SUBAGENT_BRANCH}"
+  echo "ERROR: Agent worktree ${SUBAGENT_WORKTREE} is registered to branch ${REGISTERED_BRANCH}, not ${SUBAGENT_BRANCH}"
   exit 1
 fi
 git -C "${WORKTREE_PATH}" worktree remove --force "${SUBAGENT_WORKTREE}"
 if [[ $? -ne 0 ]]; then
-  echo "ERROR: Failed to remove subagent worktree ${SUBAGENT_WORKTREE} for job ${NEXT_MERGE}"
+  echo "ERROR: Failed to remove agent worktree ${SUBAGENT_WORKTREE} for job ${NEXT_MERGE}"
   exit 1
 fi
 git -C "${WORKTREE_PATH}" branch -d "${SUBAGENT_BRANCH}"
 if [[ $? -ne 0 ]]; then
-  echo "ERROR: Failed to delete merged subagent branch ${SUBAGENT_BRANCH} for job ${NEXT_MERGE}"
+  echo "ERROR: Failed to delete merged agent branch ${SUBAGENT_BRANCH} for job ${NEXT_MERGE}"
   exit 1
 fi
 # ... repeat for each job in ascending order using NEXT_MERGE counter
 ```
 
-The subagent branch name and worktree path for each job are returned in the Task tool result when
+The agent branch name and worktree path for each job are returned in the Task tool result when
 `isolation: "worktree"` is used.
 
 For parallel jobs, cleanup is part of the strict ascending merge sequence: merge job `NEXT_MERGE`, remove that
-job's subagent worktree, delete that job's merged subagent branch, then increment `NEXT_MERGE`. Do this cleanup
+job's agent worktree, delete that job's merged agent branch, then increment `NEXT_MERGE`. Do this cleanup
 before incrementing `NEXT_MERGE` so every job's branch/worktree lifecycle is completed in the same deterministic
 order as collection and merging.
 
@@ -999,7 +999,7 @@ order as collection and merging.
 
 ### Reactive Job Re-Splitting
 
-After collecting the result from a completed job subagent, check `percent_of_context` before spawning
+After collecting the result from a completed job agent, check `percent_of_context` before spawning
 the next job:
 
 **If `percent_of_context > 40`** (high context usage):
@@ -1014,13 +1014,13 @@ the next job:
 
 **If `percent_of_context <= 40`**: proceed without modifying plan.md.
 
-This check applies whether using single-subagent or parallel execution — always check `percent_of_context`
+This check applies whether using single-agent or parallel execution — always check `percent_of_context`
 from the most recently completed job's result before starting the next job. See
 `plugin/concepts/token-warning.md` for compaction-event handling that interacts with this flow.
 
 ### Handle Execution Result
 
-Parse the subagent result(s):
+Parse the agent result(s):
 
 - **SUCCESS/PARTIAL** (all groups): Merge commits, aggregate metrics, proceed to verification
 - **ALREADY_IMPLEMENTED** (all groups, or mix of SUCCESS/PARTIAL/ALREADY_IMPLEMENTED with no FAILED/BLOCKED):
@@ -1031,12 +1031,12 @@ Parse the subagent result(s):
 
 ### Verify Commit Messages
 
-After execution completes, verify that the subagent used the correct commit messages and amend any mismatches before
+After execution completes, verify that the agent used the correct commit messages and amend any mismatches before
 proceeding to stakeholder review.
 
-**Note the expected commit message before spawning the subagent:**
+**Note the expected commit message before spawning the agent:**
 
-The delegation prompt specifies the commit message format the subagent should use. The expected commit type is
+The delegation prompt specifies the commit message format the agent should use. The expected commit type is
 determined per-commit based on what the orchestrator specified in the delegation prompt. Issues may produce multiple
 commit types (e.g., `feature:` for implementation + `docs:` for documentation). Each commit's type prefix should match
 what the orchestrator instructed for that specific deliverable.
@@ -1052,14 +1052,14 @@ This returns lines of: `<commit-hash> <commit-subject>`.
 **Error handling:** If git log fails (non-zero exit code), log a warning and skip verification. Verification failures
 should not block the workflow.
 
-**Compare against subagent-reported messages:**
+**Compare against agent-reported messages:**
 
 1. Check if the execution result's `commits[]` array is empty. If empty, skip verification.
 2. Check if git log returned no commits. If no commits, skip verification.
 3. For each commit in the `commits[]` array:
    - Extract the reported `hash` and `message` values
    - Find the corresponding line in git log output by matching the hash
-   - If hash not found in git log output, treat as HIGH severity (subagent reporting error)
+   - If hash not found in git log output, treat as HIGH severity (agent reporting error)
    - If found, compare the reported message against the actual commit subject from git log
    - Verify the commit message uses the expected type prefix specified in the delegation prompt
 
@@ -1067,7 +1067,7 @@ should not block the workflow.
 
 If the number of commits in `commits[]` differs from the number of lines in git log output:
 - Extra commits in git log (not in reported array): Log WARNING - note them but do not amend (not actionable)
-- Missing commits (in reported array but not in git log): Log HIGH severity - indicates subagent reporting error
+- Missing commits (in reported array but not in git log): Log HIGH severity - indicates agent reporting error
 
 **If message mismatch detected:**
 

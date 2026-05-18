@@ -10,25 +10,25 @@ Post-issue workflow for merging closed issue work and cleaning up worktrees.
 
 ## Prerequisites
 - Issue execution finished
-- Subagent branches ready for merge
+- Agent branches ready for merge
 - Approval received (interactive mode)
 
 ## Workflow Steps
 
-### 1. Collect Subagent Branches
+### 1. Collect Agent Branches
 
-Identify all subagent branches for the issue:
+Identify all agent branches for the issue:
 ```
 {major}.{minor}-{issue-name}-sub-*
 ```
 
-### 2. Sequential Subagent Merge
+### 2. Sequential Agent Merge
 
-For each subagent branch (subagent branches within an issue worktree may use --ff-only):
+For each agent branch (agent branches within an issue worktree may use --ff-only):
 ```bash
 # In issue worktree
 git checkout {major}.{minor}-{issue-name}
-git merge --ff-only {subagent-branch}
+git merge --ff-only {agent-branch}
 ```
 
 Handle conflicts if they arise:
@@ -38,7 +38,7 @@ Handle conflicts if they arise:
 
 ### 3. Run Verification
 
-After all subagent merges:
+After all agent merges:
 ```bash
 # Build project
 ./mvnw clean compile
@@ -188,7 +188,7 @@ git symbolic-ref HEAD refs/heads/{target-branch}
 # Delete source branch
 git branch -d {major}.{minor}-{issue-name}
 
-# Delete all subagent branches for this issue
+# Delete all agent branches for this issue
 git branch -d {major}.{minor}-{issue-name}-sub-*
 ```
 

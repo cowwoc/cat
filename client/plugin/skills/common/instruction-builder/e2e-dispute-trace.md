@@ -22,7 +22,7 @@ documenting the expected end-to-end behavior of the blue-team dispute mechanism.
 
 ## Round 1 — Red-Team Phase
 
-**Red-team subagent spawned.** It analyzes `git-commit-agent/SKILL.md` and writes `findings.json`:
+**Red-team agent spawned.** It analyzes `git-commit-agent/SKILL.md` and writes `findings.json`:
 
 ```json
 {
@@ -46,7 +46,7 @@ resolved.",
 
 ## Round 1 — Blue-Team Phase
 
-**Blue-team subagent spawned** with the findings at `abc1234` and the Dispute Protocol:
+**Blue-team agent spawned** with the findings at `abc1234` and the Dispute Protocol:
 
 > Before patching any finding, verify its premise. If a finding claims something that is factually incorrect
 > ... do NOT patch it. Instead, move it from the `loopholes` array to the `disputed` array in findings.json
@@ -88,10 +88,10 @@ No skill file changes are committed — only `findings.json` is updated.
 
 ## Round 1 — Arbitration Phase
 
-Because blue-team moved RT-1 to `disputed`, the main agent spawns a fresh arbitration subagent (not the
+Because blue-team moved RT-1 to `disputed`, the main agent spawns a fresh arbitration agent (not the
 red-team or blue-team agent) to independently verify the dispute.
 
-**Arbitration subagent spawned** with the disputed entries from `def5678`:
+**Arbitration agent spawned** with the disputed entries from `def5678`:
 
 > You are an independent arbitration agent. For each disputed finding, read the `"false_premise"` and
 > `"evidence"` fields. Independently verify the evidence. Return a JSON verdict array.
@@ -146,7 +146,7 @@ No rejected disputes — blue-team is not resumed. Proceed to diff validation.
 
 ## Diff Validation
 
-The diff-validation subagent checks `git diff abc1234..def5678 -- git-commit-agent/SKILL.md`.
+The diff-validation agent checks `git diff abc1234..def5678 -- git-commit-agent/SKILL.md`.
 
 Result: `{"status": "VALID"}` — no skill file was modified, which is correct because the only disputed
 finding was moved to the `disputed` array and required no patch.
@@ -169,7 +169,7 @@ Increment round counter. If round < 10: continue to next iteration.
 
 ## Round 2 — Red-Team Phase
 
-**Red-team subagent resumed.** It re-analyzes `git-commit-agent/SKILL.md` from `def5678` for any new loopholes not
+**Red-team agent resumed.** It re-analyzes `git-commit-agent/SKILL.md` from `def5678` for any new loopholes not
 previously identified.
 
 **Red-team evaluation:** No new loopholes are found. The skill file has not changed since round 1, and the original

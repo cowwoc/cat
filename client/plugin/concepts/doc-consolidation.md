@@ -63,7 +63,7 @@ goals other than the primary chain goal.
 
 **Characteristics**: Multiple files where each file is loaded on-demand based on runtime logic, not eagerly loaded
 together. Common patterns include `first-use.md` (loaded only on first skill invocation), agent `.md` files (loaded
-only when that stakeholder/subagent type is selected), and concept files (loaded by skills on demand).
+only when that stakeholder/agent type is selected), and concept files (loaded by skills on demand).
 
 **Consolidation strategy**: Do NOT consolidate. The file separation exists to minimize context injection — only the
 files needed for the current execution path are loaded. Merging them into a single file would cause all content to be
@@ -72,12 +72,12 @@ injected upfront, defeating the lazy-loading design and wasting context on conte
 ### Architecture-Bounded Multi-File Sets
 
 **Characteristics**: Multiple files separated by design, where each file serves a distinct audience. Common patterns
-include orchestrator + subagent pairs, caller + implementation pairs, and public API + internal documentation pairs.
+include orchestrator + agent pairs, caller + implementation pairs, and public API + internal documentation pairs.
 
 **Markers to detect**:
 - `**INTERNAL DOCUMENT**` or equivalent audience restriction header
 - Language like "X is intentionally not in this file" or "Do not read this if you are Y"
-- A file that invokes another as a subagent (the invocation is an architectural boundary)
+- A file that invokes another as an agent (the invocation is an architectural boundary)
 
 **Consolidation strategy**: Do NOT consolidate. These files exist as separate documents because the separation is a
 design invariant, not a documentation defect. Consolidating them exposes internals to the caller, violating
@@ -102,7 +102,7 @@ as subsections in the consolidated document, not dissolved into adjacent steps.
 
 ### FM-2: Architectural Encapsulation Violated
 
-Files with explicit audience separation (orchestrator, subagent, public caller, private implementation) cannot be
+Files with explicit audience separation (orchestrator, agent, public caller, private implementation) cannot be
 merged without violating the architectural invariant that motivated the separation.
 
 **Evidence**: Wave 2 — `first-use.md` and `compression-protocol.md` are separated specifically because the orchestrator

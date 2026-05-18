@@ -77,10 +77,10 @@ criterion listed as a checkbox item (`- [ ]` or `- [x]`). These are the criteria
 
 Display: "◆ Found {N} post-conditions"
 
-**Spawn verification subagents:**
+**Spawn verification agents:**
 
-For each post-condition criterion, spawn a verification subagent using the Task tool with:
-- Use the runtime-native lightweight verification agent or default subagent configured for the runtime.
+For each post-condition criterion, spawn a verification agent using the Task tool with:
+- Use the runtime-native lightweight verification agent or default agent configured for the runtime.
 - Do not set an inline model value in the skill prompt.
 - `prompt:` the verification prompt below
 
@@ -132,7 +132,7 @@ Return a JSON array with one entry for this criterion:
 Be thorough but efficient. Check actual implementation, not just file existence.
 ```
 
-Spawn all subagents in parallel (multiple Task tool calls in a single message). They will run concurrently and
+Spawn all agents in parallel (multiple Task tool calls in a single message). They will run concurrently and
 return results together.
 
 Store all returned task IDs for result collection in the next step.
@@ -143,9 +143,9 @@ Store all returned task IDs for result collection in the next step.
 
 **Collect verification results and generate report:**
 
-Wait for all verification subagents to complete. Use TaskOutput to retrieve each subagent's JSON response.
+Wait for all verification agents to complete. Use TaskOutput to retrieve each agent's JSON response.
 
-Each subagent returns a JSON array of criterion objects:
+Each agent returns a JSON array of criterion objects:
 ```
 [
   {"criterion": "...", "status": "Done|Partial|Missing", "evidence": [...], "notes": "..."}
@@ -157,7 +157,7 @@ Aggregate all criterion results into a single `criteria_results` array, then com
 The combined JSON must follow this structure:
 ```json
 {
-  "criteria_results": [...all criterion objects from all subagents...],
+  "criteria_results": [...all criterion objects from all agents...],
   "file_results": {"modify": {...}, "delete": {...}}
 }
 ```
@@ -198,7 +198,7 @@ echo "$REPORT"
 
 **Read-only operation:** This skill never modifies files. It only reads and reports.
 
-**Subagent usage:** Verification subagents use Read, Glob, Grep, and Bash tools to investigate the codebase. Their
+**Agent usage:** Verification agents use Read, Glob, Grep, and Bash tools to investigate the codebase. Their
 internal tool calls are invisible to the user.
 
 **No auto-fix:** This skill reports findings only. If issues are found, the user must decide whether to re-run

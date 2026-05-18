@@ -471,6 +471,28 @@ public class GetOutputTest
   }
 
   /**
+   * Verifies that a Codex-style agent-looking first argument is treated as the requested output type.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Unknown skill.*")
+  public void agentIdFirstArgIsNotSkipped() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-get-output-skip-agent-$0-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      GetOutput handler = new GetOutput(scope);
+      String agentId = UUID.randomUUID() + "/agents/abc123";
+      handler.getOutput(new String[]{agentId, "config.saved"});
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that when the first argument is NOT an agent ID (e.g., a type token), it is used as
    * the type directly without skipping.
    *
@@ -589,6 +611,29 @@ public class GetOutputTest
       // UUID followed by /subagents/ with invalid characters (spaces) in identifier — must NOT be skipped
       String invalidSubagentId = UUID.randomUUID() + "/subagents/agent id with spaces";
       handler.getOutput(new String[]{invalidSubagentId, "config.saved"});
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a value matching the UUID prefix but missing the /agents/{id} suffix is
+   * not treated as an agent ID and is not skipped.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Unknown skill.*")
+  public void agentIdWithoutIdentifierNotSkipped() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-get-output-no-agent-id-");
+    try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      GetOutput handler = new GetOutput(scope);
+      String incompleteAgentId = UUID.randomUUID() + "/agents/";
+      handler.getOutput(new String[]{incompleteAgentId, "config.saved"});
     }
     finally
     {

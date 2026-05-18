@@ -497,7 +497,7 @@ public final class CheckDataMigration implements SessionStartHandler
     return Result.both("CAT plugin install migration completed for version " + pluginVersion,
       "CAT plugin install migration completed for version " + pluginVersion + ".\n" +
         "If CAT custom agents were installed or updated, restart, resume, or clear the agent for " +
-        "subagent changes to take effect.\n");
+        "agent changes to take effect.\n");
   }
 
   /**

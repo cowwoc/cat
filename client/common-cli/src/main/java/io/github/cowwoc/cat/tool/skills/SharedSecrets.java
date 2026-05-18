@@ -101,6 +101,24 @@ public final class SharedSecrets
   }
 
   /**
+   * Collects session files (main and nested agent sessions) for an empirical test run.
+   *
+   * @param sessionsPath the root sessions directory
+   * @param sessionId the session identifier
+   * @return ordered session files (main first, then nested)
+   * @throws NullPointerException if {@code sessionsPath} or {@code sessionId} are null
+   * @throws IOException if session discovery fails
+   */
+  public static java.util.List<Path> collectSessionFiles(Path sessionsPath, String sessionId) throws IOException
+  {
+    requireThat(sessionsPath, "sessionsPath").isNotNull();
+    requireThat(sessionId, "sessionId").isNotNull();
+    if (empiricalTestRunnerAccess == null)
+      initialize(EmpiricalTestRunner.class);
+    return empiricalTestRunnerAccess.collectSessionFiles(sessionsPath, sessionId);
+  }
+
+  /**
    * Registers the access object for {@link InstructionTestRunner}.
    *
    * @param access the access object
@@ -483,6 +501,16 @@ public final class SharedSecrets
      * @param worktreePath the worktree path to remove
      */
     void removeTestWorktree(Path baseRepo, Path worktreePath);
+
+    /**
+     * Collects session files for a session ID.
+     *
+     * @param sessionsPath the root sessions directory
+     * @param sessionId the session identifier
+     * @return ordered session files (main first, then nested)
+     * @throws IOException if session discovery fails
+     */
+    java.util.List<Path> collectSessionFiles(Path sessionsPath, String sessionId) throws IOException;
   }
 
   /**

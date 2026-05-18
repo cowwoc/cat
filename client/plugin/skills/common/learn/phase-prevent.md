@@ -245,16 +245,16 @@ If `would_have_blocked: false` or `prevents_root_cause: false`:
 
 **Fix Source, Not Symptoms:**
 
-When a mistake involves incorrect output from a subagent or downstream process:
+When a mistake involves incorrect output from an agent or downstream process:
 
 | Symptom Fix (❌ WRONG) | Source Fix (✅ CORRECT) |
 |------------------------|-------------------------|
 | Add validation to catch bad output | Fix the prompt/input that caused bad output |
 | Add check for fabricated scores | Remove priming content from delegation prompt |
 | Add warning when result looks wrong | Fix the instructions that led to wrong result |
-| Double-check subagent work | Fix the task description given to subagent |
+| Double-check agent work | Fix the task description given to agent |
 
-**The question to ask:** "Why did the subagent produce wrong output?"
+**The question to ask:** "Why did the agent produce wrong output?"
 - If answer involves the PROMPT you gave it → fix the prompt
 - If answer involves the DOCUMENTATION it read → fix the documentation
 - Adding validation AFTER is treating the symptom, not the cause
@@ -262,23 +262,23 @@ When a mistake involves incorrect output from a subagent or downstream process:
 **Example - M355 Pattern:**
 
 ```yaml
-# Mistake: Subagent reported unexpected validation scores
+# Mistake: Agent reported unexpected validation scores
 
 # ❌ SYMPTOM FIX: Add validation layer to catch "wrong" results
 prevention: "Run independent validation and compare scores"
-prevents_root_cause: false  # Another subagent is no more independent!
+prevents_root_cause: false  # Another agent is no more independent!
 
 # ✅ SOURCE FIX: Investigate and fix the prompt or skill
 prevention: "Review delegation prompt for priming; fix skill instructions if ambiguous"
-prevents_root_cause: true  # Subagent now produces correct results
+prevents_root_cause: true  # Agent now produces correct results
 ```
 
 **Note:** Identical scores (e.g., all 1.0) do NOT inherently indicate fabrication. Multiple files
 can legitimately achieve the same score. When results differ from expectations, investigate the prompt
 or skill methodology - don't add validation layers.
 
-**Anti-pattern:** "The subagent did X wrong, so I'll add a check for X."
-**Correct approach:** "The subagent did X wrong because my prompt said Y. Fix Y."
+**Anti-pattern:** "The agent did X wrong, so I'll add a check for X."
+**Correct approach:** "The agent did X wrong because my prompt said Y. Fix Y."
 
 **Example - would_have_blocked: false:**
 
@@ -567,7 +567,7 @@ fix_location_checklist:
 
 **Common mistake:** Editing the file you're currently working with because it's convenient,
 instead of finding the appropriate depth. Example: Putting "use Tokens header for compression" in
-work-with-issue.md (generic) instead of subagent-delegation.md (concept doc for all result presentation).
+work-with-issue.md (generic) instead of agent-delegation.md (concept doc for all result presentation).
 
 **Fix Location Principle: Apply to deepest document possible.**
 
@@ -575,12 +575,12 @@ When choosing WHERE to implement a fix, prefer the lowest-level document that ad
 
 | Level | Example | Benefit |
 |-------|---------|---------|
-| Concept doc | `concepts/subagent-delegation.md` | All skills/workflows referencing it inherit the fix |
+| Concept doc | `concepts/agent-delegation.md` | All skills/workflows referencing it inherit the fix |
 | Skill doc | `skills/example-skill/SKILL.md` | All invocations of that skill get the fix |
 | Workflow doc | `concepts/work.md` | Specific workflow improved |
 | Command doc | `commands/work.md` | Single entry point fixed |
 
-**Why depth matters:** A fix in a concept document (e.g., subagent-delegation.md) benefits every skill
+**Why depth matters:** A fix in a concept document (e.g., agent-delegation.md) benefits every skill
 and workflow that references it. A fix in a command document benefits only that command. Apply fixes
 at the deepest level where they're relevant to maximize fix propagation.
 
@@ -598,7 +598,7 @@ triggered the problem. The fix should cover all similar cases.
 |--------------|-------------------|
 | Skill-specific doc (e.g., skill SKILL.md) | May reference that skill's specific behavior |
 | General doc (e.g., `work-with-issue/SKILL.md`) | Must apply to ALL skills handled by that doc |
-| Concept doc (e.g., `concepts/subagent-delegation.md`) | Must apply to ALL contexts using that concept |
+| Concept doc (e.g., `concepts/agent-delegation.md`) | Must apply to ALL contexts using that concept |
 
 Example: If a skill's iteration loop was bypassed, and the fix goes in a general workflow document,
 write "complete each skill fully before delegation" — not skill-specific instructions.

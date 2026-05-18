@@ -7,7 +7,7 @@ See LICENSE.md in the project root for license terms.
 
 This directory contains runtime-neutral role bodies for CAT agents. Runtime-specific wrappers live in:
 
-- `plugin/agents/claude/` for Claude Code custom subagents
+- `plugin/agents/claude/` for Claude Code custom agents
 - `plugin/agents/codex/` for Codex custom-agent definitions
 
 Do not add Claude Code frontmatter, Codex model names, tool lists, or runtime-specific invocation syntax to files in

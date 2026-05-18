@@ -5,7 +5,7 @@ See LICENSE.md in the project root for license terms.
 -->
 # Codex Custom Agents
 
-This directory contains native Codex custom subagent definitions in TOML format. Codex does not currently let plugins register custom agents through `.codex-plugin/plugin.json`, so CAT's 2.1 migration copies these files from the flattened installed plugin into the project `.codex/agents/` directory when running under Codex.
+This directory contains native Codex custom agent definitions in TOML format. Codex does not currently let plugins register custom agents through `.codex-plugin/plugin.json`, so CAT's 2.1 migration copies these files from the flattened installed plugin into the project `.codex/agents/` directory when running under Codex.
 
 Each TOML file owns Codex-specific metadata such as `model`, `model_reasoning_effort`, and `sandbox_mode`. The agent instructions assume Codex's documented installed plugin cache layout at `~/.codex/plugins/cache/$MARKETPLACE_NAME/$PLUGIN_NAME/$VERSION/`, then load the matching runtime-neutral role body from `plugin/agents/common/`.
 

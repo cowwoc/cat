@@ -20,7 +20,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 /**
  * Prepares a description optimization request by reading the skill file, splitting the eval set
  * into a 60/40 train/test partition, and formatting a structured optimization prompt for the
- * description-optimizer subagent.
+ * description-optimizer agent.
  * <p>
  * Accepts four arguments:
  * <ol>
@@ -36,7 +36,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  *   <li>The current skill description</li>
  *   <li>Train and test partitions of the eval set (60/40 deterministic split)</li>
  *   <li>Split sizes ({@code train_size} and {@code test_size})</li>
- *   <li>Instructions for the subagent to iterate up to {@code max_iterations} times</li>
+ *   <li>Instructions for the agent to iterate up to {@code max_iterations} times</li>
  *   <li>Instructions to return {@code best_description} selected by test score</li>
  * </ul>
  * <p>
@@ -69,7 +69,7 @@ public final class DescriptionOptimizer implements SkillOutput
    * Generates a structured description optimization prompt.
    * <p>
    * Reads the skill file to extract the current description, parses the eval set, computes the
-   * 60/40 train/test split, and formats the optimization request for the subagent.
+   * 60/40 train/test split, and formats the optimization request for the agent.
    *
    * @param args four arguments: [skill-path, eval-set-json, model-id, max-iterations]
    * @return a formatted optimization prompt as JSON-embedded text

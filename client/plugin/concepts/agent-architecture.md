@@ -11,12 +11,12 @@ See LICENSE.md in the project root for license terms.
 
 | Area | Actions |
 |------|---------|
-| Orchestration | Coordinate subagent execution |
+| Orchestration | Coordinate agent execution |
 | Planning | Read code, make decisions, decompose issues |
 | Metadata | Create/update planning documents |
 | Git operations | Branch creation, merging |
 | Conflict resolution | Resolve merge conflicts |
-| Queue processing | Handle subagent returns serially |
+| Queue processing | Handle agent returns serially |
 | State updates | Update index.json after completions |
 
 ### Does NOT
@@ -28,10 +28,10 @@ See LICENSE.md in the project root for license terms.
 ### No Exceptions for "Small Fixes"
 
 **MANDATORY**: Main agent NEVER edits source code directly, even for:
-- Merge conflict resolution (spawn subagent)
-- 1-3 line fixes (spawn subagent)
-- Compilation error fixes (spawn subagent)
-- Style corrections (spawn subagent)
+- Merge conflict resolution (spawn agent)
+- 1-3 line fixes (spawn agent)
+- Compilation error fixes (spawn agent)
+- Style corrections (spawn agent)
 
 **Anti-pattern**: "This is just a small fix, I'll do it directly" → ALWAYS delegate.
 
@@ -44,15 +44,15 @@ BEFORE using the Edit tool on ANY source file (.java, .md code docs, etc.), STOP
 
 1. **Am I the main agent?** (orchestrating a CAT issue)
 2. **Is this a source/documentation file?** (not index.json, plan.md, changelog.md)
-3. **Is a subagent already running or could one be spawned?**
+3. **Is an agent already running or could one be spawned?**
 
 If answers are YES/YES/YES → **SPAWN SUBAGENT INSTEAD**
 
 **This applies even for "simple" changes:**
-- Variable renaming → subagent
-- Comment updates → subagent
-- Style fixes → subagent
-- Convention updates to style guides → subagent
+- Variable renaming → agent
+- Comment updates → agent
+- Style fixes → agent
+- Convention updates to style guides → agent
 
 **Rationale:** "Simple" edits bypass the delegation boundary. If it touches code, delegate it.
 
@@ -93,20 +93,20 @@ Agent: "Working directly without issue tracking. [proceeds to fix]"
 
 **What this does NOT change:**
 - The issue workflow remains unchanged
-- Subagent delegation rules remain unchanged
+- Agent delegation rules remain unchanged
 - Main agent still does not write production code directly
 
 ### Worktree Usage
 
 Main agent uses worktrees ONLY for:
-- Merging subagent branches into issue branches
+- Merging agent branches into issue branches
 - Merging issue branches into main
 
-## Subagent Types
+## Agent Types
 
-### Implementation Subagent
+### Implementation Agent
 
-Standard subagent for executing coding issues.
+Standard agent for executing coding issues.
 
 | Area | Actions |
 |------|---------|
@@ -117,9 +117,9 @@ Standard subagent for executing coding issues.
 | Reporting | Return metrics on completion |
 | Fail-fast | Return immediately on plan issues |
 
-### Exploration Subagent
+### Exploration Agent
 
-Specialized subagent for issue preparation, codebase exploration, and verification.
+Specialized agent for issue preparation, codebase exploration, and verification.
 Handles three phases internally to hide noisy tool calls from user.
 
 | Phase | Responsibilities | Output |
@@ -144,13 +144,13 @@ Handles three phases internally to hide noisy tool calls from user.
 - Main agent receives structured data for decision-making
 - Preparation work isolated from main agent context
 
-See `spawn-subagent` skill → "Expanded Exploration Subagent" for full details.
+See `spawn-agent` skill → "Expanded Exploration Agent" for full details.
 
-## Subagent Responsibilities
+## Agent Responsibilities
 
 ### Token Tracking
 
-Subagents read session file:
+Agents read session file:
 ```
 ${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT_DIR}/{CLAUDE_SESSION_ID}.jsonl
 ```
@@ -161,7 +161,7 @@ Collect:
 
 ### Return Protocol
 
-**MANDATORY**: On completion, subagent MUST output a completion report.
+**MANDATORY**: On completion, agent MUST output a completion report.
 
 **Format**:
 ```json
@@ -194,12 +194,12 @@ COMPACTIONS=$(jq -s '[.[] | select(.type == "summary")] | length' "${SESSION_FIL
 
 ### Skill Invocation
 
-- **Subagents CAN invoke the Skill tool** — Not in the subagent exclusion set. Invokable at runtime, not just via
+- **Agents CAN invoke the Skill tool** — Not in the agent exclusion set. Invokable at runtime, not just via
   `skills:` frontmatter preloading. Empirically confirmed.
 - **Native skill listing fires only for main agent** — Claude Code's `<available_skills>` injection does NOT fire for
-  subagents. Subagents receive no skill listings from Claude Code itself.
+  agents. Agents receive no skill listings from Claude Code itself.
 - **SubagentStartHook fills the gap** — Injects skill listings as `<system-reminder>` (`hook_additional_context` type).
-  This is the only mechanism that tells subagents which skills exist and when to invoke them.
+  This is the only mechanism that tells agents which skills exist and when to invoke them.
 - **JSONL filtering of hook context** — Claude Code filters `hook_additional_context` from JSONL transcripts by
   default. Set `CLAUDE_CODE_SAVE_HOOK_ADDITIONAL_CONTEXT=1` to include them. Skill listings are invisible in
   transcripts but present in live context.
@@ -209,9 +209,9 @@ COMPACTIONS=$(jq -s '[.[] | select(.type == "summary")] | length' "${SESSION_FIL
 ```
 Main Agent
     |
-    +---> Spawn Subagent 1 (issue-a)
+    +---> Spawn Agent 1 (issue-a)
     |         |
-    +---> Spawn Subagent 2 (issue-b)
+    +---> Spawn Agent 2 (issue-b)
     |         |
     v         v
     [Wait for completions]
@@ -228,7 +228,7 @@ Main Agent
 
 ## Parallel Execution
 
-- No arbitrary limits on concurrent subagents
+- No arbitrary limits on concurrent agents
 - Main agent manages based on available resources
 - Independent issues execute simultaneously
 - Dependent issues wait for prerequisites
@@ -293,14 +293,14 @@ Result: Quality crash before reaching hard limit. This is why soft target is 40%
 
 ### Main Agent Responsibilities
 
-**Pre-Spawn (BEFORE spawning any subagent):**
+**Pre-Spawn (BEFORE spawning any agent):**
 
 1. Calculate estimated tokens from issue analysis
 2. Calculate hard limit: `HARD_LIMIT = CONTEXT_LIMIT * 80 / 100`
 3. Validate: `estimate < hard_limit`
 4. If validation fails: MANDATORY decomposition (do NOT spawn)
 
-**Post-Spawn (AFTER subagent completes):**
+**Post-Spawn (AFTER agent completes):**
 
 1. Collect actual token usage from `.completion.json`
 2. Compare actual against hard limit
@@ -326,7 +326,7 @@ Result: Quality crash before reaching hard limit. This is why soft target is 40%
 │           │                 │                                   │
 │           v                 v                                   │
 │        YES: Spawn      NO: MANDATORY                            │
-│        subagent        decomposition                            │
+│        agent        decomposition                            │
 │           │            (do NOT spawn)                           │
 │           v                                                     │
 │  4. Monitor execution                                           │
@@ -348,29 +348,29 @@ Result: Quality crash before reaching hard limit. This is why soft target is 40%
 
 ### Aggregate Reporting Format
 
-For multi-subagent issues, generate aggregate token report:
+For multi-agent issues, generate aggregate token report:
 
 ```
 ## Aggregate Token Report
 
-| Subagent | Tokens | % of Limit | Status |
+| Agent | Tokens | % of Limit | Status |
 |----------|--------|------------|--------|
 | issue-sub-a1b2c3d4 | 65,000 | 32% | OK |
 | issue-sub-e5f6g7h8 | 170,000 | 85% | EXCEEDED |
 | issue-sub-i9j0k1l2 | 45,000 | 22% | OK |
 
 **Total tokens:** 280,000
-**Subagents exceeded hard limit:** 1
+**Agents exceeded hard limit:** 1
 ```
 
 ### Violation Handling Process
 
-When a subagent exceeds the hard limit:
+When an agent exceeds the hard limit:
 
-1. **Flag:** Mark subagent status as EXCEEDED in aggregate report
+1. **Flag:** Mark agent status as EXCEEDED in aggregate report
 2. **Record:** Invoke `/cat:learn` with:
    - Mistake reference: A018
-   - Subagent ID
+   - Agent ID
    - Actual tokens used
    - Hard limit value
    - Issue context

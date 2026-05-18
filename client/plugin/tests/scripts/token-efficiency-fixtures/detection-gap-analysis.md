@@ -161,7 +161,7 @@ as a known gap requiring judgment.
 **Gap 8: Downstream reference detection.** The specification includes "never referenced
 downstream" as a criterion. However, detecting whether a section's output is referenced
 downstream requires understanding the full skill's data flow. For example, a section might
-produce a variable `SCAN_RESULTS` that is passed to a subagent prompt. Detecting this usage
+produce a variable `SCAN_RESULTS` that is passed to an agent prompt. Detecting this usage
 is beyond text-pattern matching. The current specification does not address this gap — it
 relies on agent judgment to assess downstream usage.
 

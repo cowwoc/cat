@@ -528,7 +528,7 @@ public final class PluginArtifactBuilderTest
         requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
           "Do NOT use a generic/default agent type for stakeholder review");
         requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
-          "Reviewer subagents are leaf reviewers");
+          "Reviewer agents are leaf reviewers");
         requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
           "Do NOT call `spawn_agent`, `wait_agent`, `list_agents`,");
         requireThat(stakeholderReview, runtime + "StakeholderReview").contains(
@@ -628,7 +628,7 @@ public final class PluginArtifactBuilderTest
   }
 
   /**
-   * Verifies that implementation subagent worktrees and branches are cleaned up after successful merges.
+   * Verifies that implementation agent worktrees and branches are cleaned up after successful merges.
    *
    * @throws IOException if file operations fail
    */
@@ -1304,7 +1304,7 @@ public final class PluginArtifactBuilderTest
   }
 
   /**
-   * Verifies that work-implement requires branch-bound cleanup of merged subagent worktrees.
+   * Verifies that work-implement requires branch-bound cleanup of merged agent worktrees.
    *
    * @param content the work-implement skill content
    * @param name    the assertion name
@@ -1312,20 +1312,20 @@ public final class PluginArtifactBuilderTest
   private static void assertWorkImplementCleanupConvention(String content, String name)
   {
     String cleanupSection = content.substring(
-      content.indexOf("### Cleanup Successfully Merged Subagent Worktrees"),
-      content.indexOf("### Parallel Subagent Execution"));
+      content.indexOf("### Cleanup Successfully Merged Agent Worktrees"),
+      content.indexOf("### Parallel Agent Execution"));
     String parallelMergeSection = content.substring(
       content.indexOf("For each job's branch name received from the Task tool result"),
-      content.indexOf("The subagent branch name and worktree path for each job"));
+      content.indexOf("The agent branch name and worktree path for each job"));
 
-    requireThat(content, name).contains("### Cleanup Successfully Merged Subagent Worktrees");
+    requireThat(content, name).contains("### Cleanup Successfully Merged Agent Worktrees");
     requireThat(cleanupSection, name + "Cleanup").contains(
       "REGISTERED_BRANCH=$(git -C \"${WORKTREE_PATH}\" worktree list --porcelain");
     requireThat(cleanupSection, name + "Cleanup").contains(
       "git -C \"${WORKTREE_PATH}\" worktree remove --force \"${SUBAGENT_WORKTREE}\"");
     requireThat(cleanupSection, name + "Cleanup").contains(
       "git -C \"${WORKTREE_PATH}\" branch -d \"${SUBAGENT_BRANCH}\"");
-    requireThat(content, name).contains("skip cleanup and leave the subagent worktree available for diagnosis");
+    requireThat(content, name).contains("skip cleanup and leave the agent worktree available for diagnosis");
     requireThat(parallelMergeSection, name + "Parallel").contains(
       "REGISTERED_BRANCH=$(git -C \"${WORKTREE_PATH}\" worktree list --porcelain");
     requireThat(parallelMergeSection, name + "Parallel").contains(

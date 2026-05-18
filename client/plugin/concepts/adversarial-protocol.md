@@ -13,10 +13,10 @@ to harden instructions and test suites through alternating red-team and blue-tea
 The adversarial protocol runs red-team and blue-team agents iteratively to find and close gaps in instructions
 or test code. The loop continues until convergence (no major findings remain) with no arbitrary round limits.
 
-**Why two separate persistent subagents:**
+**Why two separate persistent agents:**
 A single agent playing both roles anchors on its own attack vectors — it knows exactly which loopholes it
 invented, so it subconsciously over-fits the defense to those attacks and under-defends against variations.
-Separate subagents eliminate this bias. Reusing the same agent across rounds (via `resume`) is more efficient
+Separate agents eliminate this bias. Reusing the same agent across rounds (via `resume`) is more efficient
 than spawning fresh agents each round; to counter anchoring risk from reuse, agents are explicitly instructed
 to seek new attack vectors each round rather than revisiting prior findings.
 
@@ -203,7 +203,7 @@ fails, abort with "ERROR: red-team returned invalid or detached commit hash {RED
 
 **Freshness check:** Additionally verify the commit advanced by running
 `git log --oneline {PREV_COMMIT}..{COMMIT_HASH}` and confirming at least one entry exists. If the log is empty,
-the subagent returned a stale commit hash (no new work was committed). Log "ERROR: subagent returned stale commit
+the agent returned a stale commit hash (no new work was committed). Log "ERROR: agent returned stale commit
 hash {COMMIT_HASH} (no commits since {PREV_COMMIT})" and abort.
 
 **Termination check:** Parse the JSON object from the last line of the red-team's response. Extract the
@@ -337,19 +337,19 @@ the `commit` field as `BLUE_TEAM_COMMIT_HASH` and the `has_new_disputes` field.
 
 **Freshness check:** Additionally verify the commit advanced by running
 `git log --oneline {PREV_COMMIT}..{COMMIT_HASH}` and confirming at least one entry exists. If the log is empty,
-the subagent returned a stale commit hash (no new work was committed). Log "ERROR: subagent returned stale commit
+the agent returned a stale commit hash (no new work was committed). Log "ERROR: agent returned stale commit
 hash {COMMIT_HASH} (no commits since {PREV_COMMIT})" and abort.
 
 ### Step 3: Arbitration Phase (Dispute Verification)
 
-**When to run:** If the blue-team's `has_new_disputes` field is `true`, spawn a fresh arbitration subagent to
+**When to run:** If the blue-team's `has_new_disputes` field is `true`, spawn a fresh arbitration agent to
 independently verify each dispute before it is accepted.
 
 **Detection:** Check the `has_new_disputes` field from the blue-team's JSON return. If `has_new_disputes` is
 `false`: skip arbitration and proceed to Step 4 (diff validation). If `has_new_disputes` is `true`: spawn
 the arbitration agent below.
 
-**Arbitration subagent prompt:**
+**Arbitration agent prompt:**
 
 ```
 Task tool:
@@ -557,7 +557,7 @@ are not re-introduced into the loopholes list.
 
 After successful diff validation:
 
-1. No variable update needed. Subagents read from {TARGET_FILE_PATH} on disk in each round. Update
+1. No variable update needed. Agents read from {TARGET_FILE_PATH} on disk in each round. Update
    `COMMIT_SHA` to `BLUE_TEAM_COMMIT_HASH` so the next round's red-team reads the latest patched content.
 2. Increment round counter.
 3. Return to Step 1 (red-team analysis) to check for remaining loopholes.

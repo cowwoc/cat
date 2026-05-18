@@ -148,7 +148,9 @@ if (value == null)
 ```
 
 ### Increment/Decrement Operators
-Prefer prefix increment/decrement (`++i`, `--i`) over compound assignment:
+Prefer prefix increment/decrement (`++i`, `--i`) over compound assignment.
+When incrementing/decrementing by one, write `++i` / `--i` (or `i++` / `i--` when needed by expression semantics),
+not `i += 1` / `i -= 1`:
 
 ```java
 // Good - prefix increment
@@ -158,6 +160,10 @@ for (int i = 0; i < 10; ++i)
 // Avoid - compound assignment for simple increment
 for (int i = 0; i < 10; i += 1)
 count += 1;
+
+// Avoid - compound assignment for simple decrement
+for (int i = 10; i > 0; i -= 1)
+process(i);
 ```
 
 ### Iteration

@@ -49,9 +49,9 @@ because manual computation is error-prone.
 when computing deterministic values (widths, alignments, formatting). The handler
 guarantees correctness.
 
-### 2. Subagent Fail-Fast
+### 2. Agent Fail-Fast
 
-Subagents must fail-fast when encountering problems, not attempt recovery.
+Agents must fail-fast when encountering problems, not attempt recovery.
 
 ```markdown
 FAIL-FAST CONDITIONS:
@@ -68,7 +68,7 @@ FAIL-FAST: If you cannot locate the authentication code within 10 minutes,
 report BLOCKED with search attempts. Do NOT guess or make assumptions.
 ```
 
-**Why?** Subagents lack full context. Recovery attempts may:
+**Why?** Agents lack full context. Recovery attempts may:
 - Make incorrect assumptions
 - Waste tokens on wrong paths
 - Produce work that must be discarded
@@ -150,10 +150,10 @@ Requirement unclear? Report BLOCKED:
 ## Escalation Flow
 
 ```
-Subagent encounters error
+Agent encounters error
           |
           v
-Subagent fails fast, returns to main agent
+Agent fails fast, returns to main agent
           |
           v
 Main agent attempts resolution
@@ -192,15 +192,15 @@ Lines 45-52 have conflicting changes from:
 3. Ask Claude to resume work on the issue
 ```
 
-### Main Agent Response to Subagent Skill Failures
+### Main Agent Response to Agent Skill Failures
 
-**CRITICAL: When a subagent fails to invoke a skill, main agent must NOT do the work manually.**
+**CRITICAL: When an agent fails to invoke a skill, main agent must NOT do the work manually.**
 
 ```
-Subagent delegated to invoke /cat:some-skill
+Agent delegated to invoke /cat:some-skill
           |
           v
-Subagent returns FAILED (skill invocation issues)
+Agent returns FAILED (skill invocation issues)
           |
           v
 Main agent MUST NOT:
@@ -219,7 +219,7 @@ Main agent MUST:
 - Manual implementation bypasses this validation
 - The skill exists precisely BECAUSE manual work is error-prone or requires validation
 
-**Escalation options when subagent fails at skill invocation:**
+**Escalation options when agent fails at skill invocation:**
 
 | Option | When to use |
 |--------|-------------|
@@ -229,13 +229,13 @@ Main agent MUST:
 
 **Anti-pattern:**
 ```
-# BAD - Main agent sees subagent failure and decides to "just do it"
-Subagent: "FAILED: recursion issues with cat:instruction-builder"
+# BAD - Main agent sees agent failure and decides to "just do it"
+Agent: "FAILED: recursion issues with cat:instruction-builder"
 Main agent: "Let me take a more direct approach..."
 Main agent: [Uses Edit tool to compress file manually]
 
 # GOOD - Main agent respects skill boundary
-Subagent: "FAILED: recursion issues with cat:instruction-builder"
+Agent: "FAILED: recursion issues with cat:instruction-builder"
 Main agent: "The skill invocation failed. Let me retry with a single file first,
              or ask the user how to proceed."
 ```

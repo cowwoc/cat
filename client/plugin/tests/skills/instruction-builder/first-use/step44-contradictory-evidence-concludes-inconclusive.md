@@ -13,7 +13,7 @@ Please create a new skill called `activity-logger` that logs timestamped user me
 ## Turn 2
 
 The SPRT tests ran and TC1 failed (overall decision Reject). The investigation collected the following
-evidence: no batch contamination detected (each run used a fresh subagent), thinking blocks show the agent
+evidence: no batch contamination detected (each run used a fresh agent), thinking blocks show the agent
 expressed uncertainty ('I am unsure whether the skill wants me to output X or Y') but no clear intent to
 override, compliance search found one match that could be either a follow-up question or a clarifying output
 prefix, priming sources search found a vague escape clause 'when appropriate'. The evidence is contradictory.

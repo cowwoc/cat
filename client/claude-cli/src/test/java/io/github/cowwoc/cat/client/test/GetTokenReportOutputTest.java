@@ -64,14 +64,14 @@ public class GetTokenReportOutputTest
 
       try
       {
-        // Write an empty JSONL file (no subagent data)
+        // Write an empty JSONL file (no agent data)
         Files.writeString(sessionFile, "");
 
         GetTokenReportOutput handler = new GetTokenReportOutput(scope);
         String result = handler.getOutput(sessionId);
 
-        // Empty file has no subagent data
-        requireThat(result, "result").isEqualTo("No subagent data found in session.");
+        // Empty file has no agent data
+        requireThat(result, "result").isEqualTo("No agent data found in session.");
       }
       finally
       {
@@ -106,7 +106,7 @@ public class GetTokenReportOutputTest
         GetTokenReportOutput handler = new GetTokenReportOutput(scope);
         String result = handler.getOutput(sessionId);
 
-        requireThat(result, "result").isEqualTo("No subagent data found in session.");
+        requireThat(result, "result").isEqualTo("No agent data found in session.");
       }
       finally
       {
@@ -148,7 +148,7 @@ public class GetTokenReportOutputTest
         String result = handler.getOutput(sessionId);
 
         requireThat(result, "result").isNotNull().
-          contains("Summary:").contains("1 subagents").contains("50000 total tokens").
+          contains("Summary:").contains("1 agents").contains("50000 total tokens").
           contains("Legend:");
       }
       finally
@@ -204,7 +204,7 @@ public class GetTokenReportOutputTest
   }
 
   /**
-   * Verifies that multiple subagents are counted and totaled correctly.
+   * Verifies that multiple agents are counted and totaled correctly.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -217,7 +217,7 @@ public class GetTokenReportOutputTest
         ".config", "claude", "projects", "-workspace");
       Files.createDirectories(sessionDir);
 
-      String sessionId = "test-multi-subagents-" + Thread.currentThread().threadId();
+      String sessionId = "test-multi-agents-" + Thread.currentThread().threadId();
       Path sessionFile = sessionDir.resolve(sessionId + ".jsonl");
 
       try
@@ -239,7 +239,7 @@ public class GetTokenReportOutputTest
         String result = handler.getOutput(sessionId);
 
         requireThat(result, "result").isNotNull().
-          contains("2 subagents").contains("50000 total tokens");
+          contains("2 agents").contains("50000 total tokens");
       }
       finally
       {

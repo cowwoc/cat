@@ -1,5 +1,5 @@
 ---
-description: Internal implement phase (invoked by /cat:work-with-issue) - displays banners, verifies lock, spawns implementation subagent
+description: Internal implement phase (invoked by /cat:work-with-issue) - displays banners, verifies lock, spawns implementation agent
 allowed-tools:
   - Read
   - Bash

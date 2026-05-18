@@ -69,8 +69,8 @@ decisions. Include:
 - Complete lists (all files, all references to update, all post-conditions)
 - Research findings that inform implementation decisions
 
-If the execution subagent needs to make judgment calls about "how" to implement, the plan.md is not detailed enough.
-The subagent should only decide "how to write the code", not "what approach to take".
+If the execution agent needs to make judgment calls about "how" to implement, the plan.md is not detailed enough.
+The agent should only decide "how to write the code", not "what approach to take".
 
 ## plan.md Templates
 
@@ -83,7 +83,7 @@ cat "${CAT_PLUGIN_ROOT}/concepts/issue-plan.md"
 
 **CRITICAL:** Follow template guidance to separate Execution Jobs/Steps (actions only) from Success Criteria
 (measurable outcomes). Do NOT include expected values like "score = 1.0" in Execution sections as this primes
-subagents to fabricate results.
+agents to fabricate results.
 
 ## Jobs for Parallel Execution
 
@@ -115,7 +115,7 @@ Rules for jobs:
 
 ### Job Sizing Guidance
 
-When writing jobs, size each job's work to stay within 40% of a subagent's context budget.
+When writing jobs, size each job's work to stay within 40% of an agent's context budget.
 
 **Estimation heuristic:**
 - Count the number of files the job's work must modify or create
@@ -126,7 +126,7 @@ When writing jobs, size each job's work to stay within 40% of a subagent's conte
 **Splitting jobs with too much work:**
 If a job's work would exceed the 40% budget, split it into two jobs of roughly equal scope before
 writing plan.md. Move the second half of the job's items into a new job immediately after it.
-Aim for jobs with equal work scope so each subagent uses approximately the same context fraction.
+Aim for jobs with equal work scope so each agent uses approximately the same context fraction.
 
 **Example — oversized job split:**
 
@@ -149,10 +149,10 @@ Split into:
 - Update 6 service classes (G–L) to use new interface
 ```
 
-**Main Agent Jobs (optional):** If the issue requires skills that spawn their own subagents (e.g.,
+**Main Agent Jobs (optional):** If the issue requires skills that spawn their own agents (e.g.,
 `/cat:instruction-builder`, `/cat:stakeholder-review`), add a `## Main Agent Jobs` section
 **above** `## Jobs`. The main agent executes these skills directly before spawning implementation
-subagents. Each bullet is a skill invocation:
+agents. Each bullet is a skill invocation:
 
 ```markdown
 ## Main Agent Jobs
@@ -203,7 +203,7 @@ Goal/Problem section:
 **Step 4:** Preserve completed work and adjust remaining execution steps.
 
 **Step 5:** Write the revised plan.md content to `PLAN_OUTPUT_PATH` = `${ISSUE_PATH}/plan.md` (delegate the
-file write to a subagent).
+file write to an agent).
 
 **Step 6:** Run the Iterative Completeness Review (see section below), passing `PLAN_OUTPUT_PATH` and `ISSUE_GOAL`
 (from the existing plan.md `## Goal` section).
@@ -214,14 +214,14 @@ file write to a subagent).
 
 Skip this section entirely if curiosity is `low`. The draft is already written to `PLAN_OUTPUT_PATH`.
 
-For curiosity `medium` or `high`, delegate the entire review-and-fix loop to a single subagent. The subagent
+For curiosity `medium` or `high`, delegate the entire review-and-fix loop to a single agent. The agent
 reads the draft from disk, reviews it, fixes gaps directly in the file, and returns only the iteration count.
 No plan content flows through the main agent's context.
 
 **Prerequisite:** The draft plan.md must already be written to `PLAN_OUTPUT_PATH` before invoking the
-review subagent.
+review agent.
 
-Spawn the review-and-fix subagent:
+Spawn the review-and-fix agent:
 
 ```
 Task tool:

@@ -19,5 +19,5 @@ TC2: Accept (log_ratio 2.944). Session ID: 'sess-abc123'. What happens next?
 
 1. The Skill tool was invoked
 2. The agent begins an investigation procedure for the SPRT failure by retrieving or analyzing
-   subagent transcripts rather than speculating about causes without evidence
+   agent transcripts rather than speculating about causes without evidence
 3. The agent produces an investigation report or structured findings identifying the root cause

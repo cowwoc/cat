@@ -8,7 +8,7 @@ See LICENSE.md in the project root for license terms.
 
 Design or update instruction documents (skills, commands, project instructions, rules files, or any other MD file that defines
 agent behavior) by reasoning backward from the goal to required preconditions, then converting to forward-execution
-steps. This skill delegates the design phase to a Task subagent which reads detailed methodology and conventions from
+steps. This skill delegates the design phase to a Task agent which reads detailed methodology and conventions from
 separate files.
 
 ---
@@ -69,7 +69,7 @@ XML tags (`<objective>`, `<process>`, `<step>`, `<execution_context>`) are requi
 ```xml
 <execution_context>
 [CAT work concepts](${CAT_PLUGIN_ROOT}/concepts/work.md)
-[subagent delegation concept](${CAT_PLUGIN_ROOT}/concepts/subagent-delegation.md)
+[agent delegation concept](${CAT_PLUGIN_ROOT}/concepts/agent-delegation.md)
 </execution_context>
 
 <process>
@@ -142,19 +142,19 @@ assertions for empirically verifying agent compliance. They are executed through
 
 ---
 
-## Subagent Command Allowlist
+## Agent Command Allowlist
 
-All subagents spawned by this skill operate under a strict command allowlist. Deviations are a constraint
+All agents spawned by this skill operate under a strict command allowlist. Deviations are a constraint
 violation and must be treated as prohibition failures.
 
-**Test-run subagents** (no tool restrictions):
-- Test-run subagents execute organically with full tool access to test natural behavior
+**Test-run agents** (no tool restrictions):
+- Test-run agents execute organically with full tool access to test natural behavior
 - Filesystem isolation (orphan-branch worktree) ensures assertions are structurally absent
 
-**Grader and analyzer subagents** (read-only):
+**Grader and analyzer agents** (read-only):
 - Allowed: `cat`, `head`, `tail`, `wc`, `grep`, `sort`, `uniq`, `stat`
 
-**Grader and analyzer restrictions** (applies to grader and analyzer subagents only — NOT test-run):
+**Grader and analyzer restrictions** (applies to grader and analyzer agents only — NOT test-run):
 - This allowlist covers external commands AND all shell built-ins (echo, printf, read, source, eval,
   set, export, type, compgen, declare, test, mapfile, readarray, command, builtin, trap, enable, hash,
   kill, wait, and any other built-in not on the allowlist)
@@ -163,10 +163,10 @@ violation and must be treated as prohibition failures.
 - Do NOT use shell redirection operators (`>`, `>>`, `<`, `<<`, `2>`) for any purpose
 - Do NOT use any Bash command not on the allowlist
 
-**Isolation model:** Test-run subagents execute in worktrees created from an orphan branch where assertions
+**Isolation model:** Test-run agents execute in worktrees created from an orphan branch where assertions
 have been structurally removed (see § Test-Runner Filesystem Isolation in Step 6). This provides filesystem-level
 isolation: assertions do not exist on the test-runner's disk and cannot be recovered via git history. The command
-allowlist and instruction-based prohibitions serve as a secondary defense layer. Grader subagents run in the main
+allowlist and instruction-based prohibitions serve as a secondary defense layer. Grader agents run in the main
 issue worktree where assertions are present.
 
 All test cases use the `.md` scenario format committed to `client/plugin/tests/{skill_name}/`. Scenarios run
@@ -180,7 +180,7 @@ compliance in a single pass. SPRT operates on the combined pass/fail outcome.
 ### Step 1: Collect Existing Instruction Content (if updating)
 
 If the caller provides an existing instruction file path, store it as `EXISTING_INSTRUCTION_PATH` for the design
-subagent. Do NOT read the instruction files into a variable — the design subagent will read them from disk itself.
+agent. Do NOT read the instruction files into a variable — the design agent will read them from disk itself.
 
 If creating a new instruction document, set `EXISTING_INSTRUCTION_PATH` to `"N/A"`.
 
@@ -211,7 +211,7 @@ Agent spawn:
 
     ## Return Format
     Return the complete designed instruction document as a markdown code block.
-    Do NOT spawn subagents. Do NOT invoke the agent-spawning tool. Do NOT use Bash, Write, Edit, NotebookEdit,
+    Do NOT spawn agents. Do NOT invoke the agent-spawning tool. Do NOT use Bash, Write, Edit, NotebookEdit,
     Glob, Grep, WebFetch, WebSearch, agent-output tools, ToolSearch, Skill, or any other tool besides Read.
     Do NOT invoke any skill (e.g., cat:grep-and-read, or any other
     cat: skill). The ONLY permitted tool is Read — no other tool may be used under any circumstances,
@@ -220,30 +220,30 @@ Agent spawn:
     updating, the existing instruction file at EXISTING_INSTRUCTION_PATH. Do NOT read other files.
 ```
 
-The design subagent should only read files and return INSTRUCTION_DRAFT. If the response includes agent-spawning
-tool invocations, evidence of subagent spawning, or use of Bash/Write/Edit/NotebookEdit/Grep/any non-Read tool,
+The design agent should only read files and return INSTRUCTION_DRAFT. If the response includes agent-spawning
+tool invocations, evidence of agent spawning, or use of Bash/Write/Edit/NotebookEdit/Grep/any non-Read tool,
 treat as constraint violation and reject the draft. Additionally, verify that all Read tool invocations
 targeted only the permitted files (design-methodology.md, skill-conventions.md, and if updating, the
-existing instruction file at EXISTING_INSTRUCTION_PATH). If the subagent read any file outside this permitted
+existing instruction file at EXISTING_INSTRUCTION_PATH). If the agent read any file outside this permitted
 set, treat as a constraint violation and reject the draft. If the agent response metadata indicates a different role
 than the requested instruction-design agent, reject the draft and re-invoke with the correct role. Note: these checks
 are best-effort — they detect tool usage only when evidence appears in the return value. Agent-spawning tools may not
 provide a complete tool-usage audit log, so undetectable violations remain an inherent limitation of instruction-based
 isolation.
 
-The subagent will return the designed instruction draft as `INSTRUCTION_DRAFT`. Validate that:
+The agent will return the designed instruction draft as `INSTRUCTION_DRAFT`. Validate that:
 - The response is non-empty
 - The response is a valid markdown code block
 - The content contains Purpose, Procedure, and Verification sections
 - Each required section (Purpose, Procedure, Verification) contains non-empty content (not just a heading)
 
 If the response is empty, not a markdown code block, missing required sections, or has empty sections,
-reject the draft and re-invoke the design subagent with clarifying instructions.
+reject the draft and re-invoke the design agent with clarifying instructions.
 
 ### Step 3: Compact-Output Pass
 
 Before writing the draft to disk, review `INSTRUCTION_DRAFT` for output-token waste. Apply each compaction rule
-below inline (no subagent needed). **Correctness takes priority over compactness** — both semantic correctness
+below inline (no agent needed). **Correctness takes priority over compactness** — both semantic correctness
 (meaning/parsing) and visual correctness (user-facing output alignment and readability) override any size
 reduction.
 
@@ -265,7 +265,7 @@ reduction.
 4. **Deduplicate repeated guidance** — if the same rule or constraint appears in two or more steps verbatim
    or near-verbatim, keep it in the most authoritative location and replace the others with a brief reference.
 5. **Omit receiver-irrelevant output** — review what each output section communicates to its receiver (user,
-   subagent, or calling skill). Remove content the receiver cannot act on or does not need: internal reasoning
+   agent, or calling skill). Remove content the receiver cannot act on or does not need: internal reasoning
    steps that informed a decision but weren't requested, full context that the receiver already has, verbose
    status updates that duplicate information the receiver already knows.
 
@@ -345,8 +345,8 @@ Agent spawn:
       <paste INSTRUCTION_DRAFT verbatim here>
 ```
 
-The subagent returns `{"status": "success", "commit_sha": "<SHA>"}`. Store the SHA as
-`INSTRUCTION_DRAFT_SHA`. The instruction text is now on disk and committed, so subagents can read it via
+The agent returns `{"status": "success", "commit_sha": "<SHA>"}`. Store the SHA as
+`INSTRUCTION_DRAFT_SHA`. The instruction text is now on disk and committed, so agents can read it via
 `git show <SHA>:<INSTRUCTION_TEXT_PATH>` or `cat <INSTRUCTION_TEXT_PATH>`.
 
 **If CURIOSITY = low:** Skip Steps 5–12 entirely and proceed to Output Format.
@@ -375,7 +375,7 @@ TEST_DIR=$("${CAT_PLUGIN_ROOT}/client/bin/instruction-test-runner" extract-test-
 ```
 Example: `client/plugin/skills/common/foo/first-use.md` → `{CAT_PROJECT_DIR}/client/plugin/tests/skills/common/foo/first-use`.
 For non-plugin paths: `project instructions` → `{CAT_PROJECT_DIR}/client/plugin/tests/project-instructions`.
-Pass this resolved path as a literal string to all subagents — do NOT pass variable references.
+Pass this resolved path as a literal string to all agents — do NOT pass variable references.
 
 **TEST_MODEL computation:** Read the target instruction file's `model:` frontmatter field:
 ```bash
@@ -389,7 +389,7 @@ explicitly in frontmatter via `model:`. The `extract-model` binary reads this fi
 its fully-qualified model ID. Missing `model:` defaults to `haiku` (resolved by the binary), but repository
 skills should declare `model:` explicitly.
 Store the result as `TEST_MODEL` and pass it as a resolved literal string to all test-run and grader
-subagents. **CRITICAL: Do NOT hardcode `haiku` or any other model name** — always use the value from
+agents. **CRITICAL: Do NOT hardcode `haiku` or any other model name** — always use the value from
 `extract-model`. Hardcoding a model bypasses per-skill model configuration and may test against the
 wrong model, invalidating all SPRT results. **Do NOT override TEST_MODEL for any reason, including
 debugging a failing test case.** If a trial fails, investigate the test content, prompt, and assertions
@@ -397,16 +397,16 @@ debugging a failing test case.** If a trial fails, investigate the test content,
 violating statistical assumptions; any such trial must be discarded and re-run with the correct model.
 
 **Artifact location:** `TEST_DIR` is the stable directory under `client/plugin/tests/` corresponding to the instruction
-file. Each test-run subagent receives `TEST_DIR`, `CAT_SESSION_ID`, and `TEST_MODEL` as pre-resolved literal
-strings, so no subagent ever expands these variables independently. Subagents must not derive their own
+file. Each test-run agent receives `TEST_DIR`, `CAT_SESSION_ID`, and `TEST_MODEL` as pre-resolved literal
+strings, so no agent ever expands these variables independently. Agents must not derive their own
 session ID — they must use the value passed by the main agent.
 
-**Concurrent session safety:** Each test-run subagent spawns with `isolation: "worktree"`, giving it an
-isolated copy of the repository. Each subagent writes results to its own worktree's `test-results.json`, then
+**Concurrent session safety:** Each test-run agent spawns with `isolation: "worktree"`, giving it an
+isolated copy of the repository. Each agent writes results to its own worktree's `test-results.json`, then
 `cat:collect-results` merges the changes back after each job completes. This eliminates write contention
 without file locking — concurrent sessions targeting the same skill each work in separate worktrees.
 
-**Sanity check:** Before proceeding to Step 6, spawn one `TEST_MODEL` test-run subagent with the instruction
+**Sanity check:** Before proceeding to Step 6, spawn one `TEST_MODEL` test-run agent with the instruction
 active on a scenario that exercises the instruction's primary purpose (a prompt that triggers the instruction's
 main behavior, not an empty or no-op input). Verify the output contains at least one substantive result from
 the instruction's procedure (e.g., a generated step, a produced artifact, or a decision — not merely an echo
@@ -418,7 +418,7 @@ the result to the user.
 
 Extract semantic units from the instruction file using the Nine-Category Extraction Algorithm embedded in
 `${CAT_PLUGIN_ROOT}/skills/instruction-builder/validation-protocol.md` (Section 1). Perform this
-extraction inline (do NOT spawn a subagent for extraction). Read the validation-protocol.md file to apply
+extraction inline (do NOT spawn an agent for extraction). Read the validation-protocol.md file to apply
 the algorithm.
 
 For each extracted unit, classify it as behaviorally testable or not:
@@ -467,7 +467,7 @@ what the agent says in a verbal response.
 `unit_step44_reject`) rather than sequential IDs (e.g., `unit_1`, `unit_2`) to make each unit's intent
 self-describing. Note: these descriptive names appear only in the main agent's test directory. On the
 sanitized branch, turn files are renamed to opaque numeric IDs (see § Test-Runner Filesystem Isolation)
-so the test-run subagent never sees descriptive filenames that could reveal test intent.
+so the test-run agent never sees descriptive filenames that could reveal test intent.
 
 **Scenario file format:** For each testable semantic unit, generate a `.md` file in `${TEST_DIR}/` named
 `<unit_stem>.md` (the file stem serves as the test case ID).
@@ -551,7 +551,7 @@ cd "${TEST_DIR}" && git add *.md && cd - && \
   git -C "${CAT_PROJECT_DIR}" add "${TEST_DIR}/*.md" && \
   git -C "${CAT_PROJECT_DIR}" commit -m "test: generate test cases [session: ${CAT_SESSION_ID}]"
 ```
-Store the commit SHA as `TEST_SET_SHA`. Do NOT retain test case content in context — test-run subagents
+Store the commit SHA as `TEST_SET_SHA`. Do NOT retain test case content in context — test-run agents
 read from the committed `.md` file for their assigned test case.
 
 #### Test Case Constraints
@@ -567,7 +567,7 @@ These phrasings produce narration, not execution. The turn must be something a r
 prompting the agent to act — not explain.
 
 **What IS testable via SPRT:** Behaviors where the agent reads, writes, reasons, runs bash commands,
-or produces structured output — anything achievable with the tools available to a subagent (Read,
+or produces structured output — anything achievable with the tools available to an agent (Read,
 Write, Edit, Bash, Glob, Grep, Skill).
 
 **Self-contained scenarios:** Test scenarios must be self-contained within the scope of the skill being
@@ -682,7 +682,7 @@ args: "${TEST_DIR} ${WORKTREE_PATH} ${TEST_MODEL} ${TEST_EFFORT} ${INSTRUCTION_D
 
 `cat:sprt-runner` handles: isolation branch creation, test case enumeration and opaque-ID
 renaming, SPRT state initialization (p0=0.95, p1=0.85, α=β=0.05), job dispatch with parallel
-trial subagents, grader invocation for each run, boundary checking
+trial agents, grader invocation for each run, boundary checking
 (A=log(19)≈2.944, B=log(0.0526)≈−2.944), test-results.json commit, and per-test-case reporting.
 
 It returns a structured report containing `overall_decision` (Accept, Reject, or Inconclusive),
@@ -728,7 +728,7 @@ report must cover the design-flaw classification (see "Decision criteria" below)
 
 When SPRT rejects one or more test cases (or routes here via design-flaw detection), automatically run a
 structured failure investigation before presenting results to the user. The investigation examines raw
-subagent conversation transcripts to distinguish genuine skill failures from test environment artifacts
+agent conversation transcripts to distinguish genuine skill failures from test environment artifacts
 (batch contamination, shared context priming, model-default behaviors) and assertion design flaws.
 
 **AUTONOMOUS EXECUTION:** This step runs automatically without user interaction. Do NOT ask clarifying
@@ -754,22 +754,22 @@ report.
 decision is "Reject" from `test-results.json`. Example: if TC1 and TC3 have `"decision": "Reject"`,
 set `REJECTED_TC_IDS=("TC1" "TC3")`.
 
-**Sub-step 2 — Discover test-run subagent IDs** (automatic): Run the following command to list
-all subagents spawned in this session, then extract the IDs of test-run subagents associated
+**Sub-step 2 — Discover test-run agent IDs** (automatic): Run the following command to list
+all agents spawned in this session, then extract the IDs of test-run agents associated
 with the rejected test cases:
 
 ```bash
 SESSION_ANALYZER="${CAT_PLUGIN_ROOT}/client/bin/session-analyzer"
-# List all subagents spawned in this session
-# Expected format: <agent_id> <status> <description> — one subagent per line; $1 is the agent ID field.
+# List all agents spawned in this session
+# Expected format: <agent_id> <status> <description> — one agent per line; $1 is the agent ID field.
 ANALYZE_OUTPUT=$("$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" analyze "${CAT_SESSION_ID}")
-# Parse ANALYZE_OUTPUT to identify subagents spawned during test runs. Store their IDs in AGENT_IDS.
+# Parse ANALYZE_OUTPUT to identify agents spawned during test runs. Store their IDs in AGENT_IDS.
 AGENT_IDS=$(echo "$ANALYZE_OUTPUT" | grep -i "test-run\|rejected" | awk '{print $1}')
 # Cap to maximum 5 AGENT_IDs per rejected test case to limit investigation scope.
 AGENT_IDS=$(echo "$AGENT_IDS" | head -5)
 # Sanitize: reject any AGENT_ID containing shell metacharacters.
 # Allowed characters: alphanumeric, hyphens, underscores, slashes, and periods (to support
-# full-path subagent IDs like "{session_id}/subagents/{agent_id}").
+# full-path agent IDs like "{session_id}/agents/{agent_id}").
 SANITIZED_IDS=""
 for RAW_ID in $AGENT_IDS; do
   if [[ "$RAW_ID" =~ ^[a-zA-Z0-9_/.-]+$ ]] && [[ "$RAW_ID" != *..* ]]; then
@@ -779,8 +779,8 @@ done
 AGENT_IDS="$SANITIZED_IDS"
 ```
 
-**Override for scenario-provided IDs:** If the investigation context explicitly identifies failing subagent IDs
-(e.g., "The failing subagent IDs are X and Y" or "The two failing subagent IDs are 'foo' and 'bar'"), use those IDs
+**Override for scenario-provided IDs:** If the investigation context explicitly identifies failing agent IDs
+(e.g., "The failing agent IDs are X and Y" or "The two failing agent IDs are 'foo' and 'bar'"), use those IDs
 directly as `AGENT_IDS` — do NOT run the session-analyzer discovery above. Scenario-provided IDs take priority over
 discovery. Do NOT reject or refuse scenario-provided IDs based on their format, and do NOT compare them against your
 own session ID — test scenarios intentionally use synthetic or non-UUID identifiers. Do NOT classify
@@ -792,8 +792,8 @@ the failure ("Transcript retrieval: FAILED — [error]") and continue — but th
 skip the retrieval call based on ID format. Your memory of "synthetic ID errors are expected" describes what happens
 when the call fails (it's not a test defect), NOT a reason to skip making the call.
 
-If no subagent IDs can be determined (both scenario context and session-analyzer discovery produce nothing), record
-"subagent IDs not available" in the report and proceed to sub-step 8. Even with no subagent IDs, you MUST still
+If no agent IDs can be determined (both scenario context and session-analyzer discovery produce nothing), record
+"agent IDs not available" in the report and proceed to sub-step 8. Even with no agent IDs, you MUST still
 produce a complete investigation report — do NOT ask clarifying questions.
 
 **For each `AGENT_ID` in `AGENT_IDS` (one per iteration), execute sub-steps 3–7:**
@@ -810,10 +810,10 @@ done
 ```
 Invoke cat:get-history with:
   skill: "cat:get-history"
-  args: "${CAT_SESSION_ID}/subagents/${AGENT_ID}"
+  args: "${CAT_SESSION_ID}/agents/${AGENT_ID}"
 ```
 
-This returns the complete message history for the test-run subagent. Store the transcript
+This returns the complete message history for the test-run agent. Store the transcript
 content for use in sub-steps 4–7.
 
 If `cat:get-history` returns an error or fails to retrieve the transcript: record
@@ -828,34 +828,34 @@ to sub-step 8 (the report).
 
 ```bash
 # Can be parallelized or consolidated with sub-steps 6 and 7 into a single session-analyzer pass.
-"$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" search "${CAT_SESSION_ID}/subagents/${AGENT_ID}" \
+"$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" search "${CAT_SESSION_ID}/agents/${AGENT_ID}" \
   "Would you like|What would you|follow.up" --regex --context 5
 ```
 
-Interpret: any match indicates the test-run subagent asked a follow-up question or deviated from
+Interpret: any match indicates the test-run agent asked a follow-up question or deviated from
 the instruction document's requirement to produce direct output. Record each match with its surrounding context lines
 as a "compliance failure" candidate.
 
 **Sub-step 5 — Check for batch contamination** (automatic + interpret):
 
 Reuse `ANALYZE_OUTPUT` from sub-step 2 (do NOT invoke session-analyzer again). Check the output for
-subagent freshness: each test-run subagent should appear as a separate, independent entry with
+agent freshness: each test-run agent should appear as a separate, independent entry with
 no `resume` field present (the pre-spawn gate requires `resume` to be entirely absent, not set to any value).
-If a subagent entry contains `resume: true`, `resume: false`, or a `conversation_id` field, it was not
-spawned correctly. If two or more runs share a subagent ID, batch contamination is confirmed.
+If an agent entry contains `resume: true`, `resume: false`, or a `conversation_id` field, it was not
+spawned correctly. If two or more runs share an agent ID, batch contamination is confirmed.
 
 Interpret: signs of batch contamination in the transcripts from sub-step 3:
-- Runs 1–N pass, then runs N+1–M fail within the same subagent conversation
+- Runs 1–N pass, then runs N+1–M fail within the same agent conversation
 - Earlier run output visible in later run context (prior test case prompt or response visible in the
   transcript of a later run)
-- Failure rate correlates with subagent reuse, not test case content
+- Failure rate correlates with agent reuse, not test case content
 
 **Sub-step 6 — Check for thinking block content** (automatic): Search the transcript for agent
 reasoning recorded in thinking blocks:
 
 ```bash
 # Can be parallelized or consolidated with sub-steps 4 and 7 into a single session-analyzer pass.
-"$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" search "${CAT_SESSION_ID}/subagents/${AGENT_ID}" \
+"$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" search "${CAT_SESSION_ID}/agents/${AGENT_ID}" \
   "<thinking>" --context 10
 ```
 
@@ -875,12 +875,12 @@ Proceed immediately to sub-step 7 without asking questions or requesting confirm
 
 ```bash
 # Can be parallelized or consolidated with sub-steps 4 and 6 into a single session-analyzer pass.
-"$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" search "${CAT_SESSION_ID}/subagents/${AGENT_ID}" \
+"$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" search "${CAT_SESSION_ID}/agents/${AGENT_ID}" \
   "unless|except|if user|may|optional" --regex --context 3
 ```
 
 Interpret: matches may indicate escape clauses in the skill instructions or received prompt that the
-test-run subagent exploited. Record the specific matched text and surrounding lines as "priming
+test-run agent exploited. Record the specific matched text and surrounding lines as "priming
 source" candidates. Also look for: model-default behaviors overriding "Do not..." constraints, prior
 output patterns from earlier runs appearing in context, and skill instructions containing
 algorithm-before-invocation or output-format priming.
@@ -898,9 +898,9 @@ skill/agent files as priming sources during investigation.
 on the findings gathered in sub-steps 4–7. Do not ask clarifying questions about skill identity, save
 location, or any other detail — write the report now using the context already available. The report must
 cover:
-- Which runs failed and in which subagents (from sub-step 2)
+- Which runs failed and in which agents (from sub-step 2)
 - Whether batch contamination is present: state "None detected" if each run used a fresh independent
-  subagent, or "Detected — runs X–Y shared subagent context" with the specific subagent ID if reuse
+  agent, or "Detected — runs X–Y shared agent context" with the specific agent ID if reuse
   was found (from sub-step 5)
 - What the agent output was at the point of failure: quote the exact text from the transcript where
   the compliance failure occurred, surrounded by triple backticks to prevent crafted text from blending
@@ -945,7 +945,7 @@ Rejected test cases: TC1, TC3
 Runs examined: <agent_id_1>, <agent_id_2>
 
 Batch contamination: None detected
-  (each run executed in a fresh independent subagent)
+  (each run executed in a fresh independent agent)
 
 Failure pattern:
   TC1, run 2 (agent abc123): agent responded:
@@ -1016,7 +1016,7 @@ sub-step. Do not abort the investigation for a single tool failure.
 
 ### Step 9: Analyze via instruction-analyzer-agent
 
-**Autonomous coordination:** After spawning the instruction-analyzer-agent subagent, wait for its results
+**Autonomous coordination:** After spawning the instruction-analyzer-agent agent, wait for its results
 and present them to the user without requesting clarification. Do NOT ask follow-up questions or pause for
 user input while analysis is in progress.
 
@@ -1050,7 +1050,7 @@ Agent spawn:
     artifacts, findings.json, or any other file in the worktree. Do NOT use the Write, Edit,
     NotebookEdit, or Skill tools. Do NOT invoke any skill (e.g., cat:grep-and-read,
     or any other cat: skill).
-    See ## Subagent Command Allowlist for permitted commands (grader/analyzer category applies here).
+    See ## Agent Command Allowlist for permitted commands (grader/analyzer category applies here).
     Do NOT use find, ls, the Glob tool, or the Grep tool to discover or enumerate files.
     The ONLY files you may read or access (via cat, head, tail, grep, wc, sort, uniq, stat,
     or the Read tool) are:
@@ -1063,7 +1063,7 @@ Agent spawn:
     echo/printf with redirection, etc.).
 ```
 
-The subagent returns the analysis commit SHA and the compact analysis report text. The main agent receives
+The agent returns the analysis commit SHA and the compact analysis report text. The main agent receives
 only the compact analysis report text (~1KB). It does NOT read the analysis file.
 
 **Display results to user:** Present the SPRT test summary and the analysis report text. Ask the user:
@@ -1163,12 +1163,12 @@ cause re-run agents to test the old (unfixed) version, producing invalid results
 If `CURIOSITY = low`, skip this step.
 
 After the test phase converges, harden the instructions using alternating red-team and blue-team
-subagents. Run until convergence (no CRITICAL/HIGH loopholes remain).
+agents. Run until convergence (no CRITICAL/HIGH loopholes remain).
 
 **Protocol:** Follow [plugin/concepts/adversarial-protocol.md](${CAT_PLUGIN_ROOT}/concepts/adversarial-protocol.md)
 for the complete adversarial loop including:
 - Red-team → blue-team → arbitration → diff-validation flow
-- Structured JSON returns from each subagent (commit hash + control flow metadata)
+- Structured JSON returns from each agent (commit hash + control flow metadata)
 - Dispute mechanism, arbitration, and convergence criterion
 - Round advancement and error handling
 
@@ -1184,7 +1184,7 @@ process findings using the fields the red-team agent actually writes, not the pr
 |-----------|-------|
 | `target_type` | `instructions` |
 | `TARGET_FILE_PATH` | `{INSTRUCTION_FILE_PATH}` (the instruction file being hardened) |
-| `CURRENT_CONTENT` | Pass `TARGET_FILE_PATH` — subagents read the file from disk themselves. Do NOT embed file content inline in subagent prompts. |
+| `CURRENT_CONTENT` | Pass `TARGET_FILE_PATH` — agents read the file from disk themselves. Do NOT embed file content inline in agent prompts. |
 
 **Convergence controls (MANDATORY):**
 
@@ -1235,18 +1235,18 @@ compression.
 execution of the hardening algorithm. You are NOT the hardening engine — you are the orchestrator.
 
 The ONLY valid execution path is:
-- Spawn red-team and blue-team subagents using the available agent-spawning tool as defined in Step 10
-- Let the subagents read the target file from `INSTRUCTION_FILE_PATH` on disk, execute the loop, and commit changes
+- Spawn red-team and blue-team agents using the available agent-spawning tool as defined in Step 10
+- Let the agents read the target file from `INSTRUCTION_FILE_PATH` on disk, execute the loop, and commit changes
 
 **Prohibited paths (will be treated as a protocol violation):**
 - Manually performing any part of the hardening loop yourself — including red-team analysis, blue-team
-  patching, arbitration, or diff validation — without a spawned hardening subagent
-- Delegating to `cat:work-execute` — this is an implementation subagent, not a hardening subagent
+  patching, arbitration, or diff validation — without a spawned hardening agent
+- Delegating to `cat:work-execute` — this is an implementation agent, not a hardening agent
 - Delegating through any non-agent-spawning path
 - Announcing "executing instruction-builder in-place hardening mode" and then doing it yourself
 
 If you are reading this and thinking "I should now run the loop", stop — you are primed incorrectly.
-Return to Step 10 and spawn the hardening subagents.
+Return to Step 10 and spawn the hardening agents.
 
 If `CURIOSITY = low`, skip in-place hardening entirely and report "Skipping in-place hardening (curiosity=low)."
 to the user.
@@ -1264,11 +1264,11 @@ full workflow (Steps 1–10) with the message: "No prior test found for this ski
 including test evaluation."
 
 1. Store the file path as `INSTRUCTION_FILE_PATH`. Do NOT read the file into `CURRENT_INSTRUCTIONS` and relay
-   it inline to subagents — subagents read the file from `INSTRUCTION_FILE_PATH` themselves. Determine
+   it inline to agents — agents read the file from `INSTRUCTION_FILE_PATH` themselves. Determine
    the worktree root by running `git rev-parse --show-toplevel` from within the worktree; store as
-   `WORKTREE_ROOT`. Pass `WORKTREE_ROOT` to all red-team and blue-team subagent prompts so they can
+   `WORKTREE_ROOT`. Pass `WORKTREE_ROOT` to all red-team and blue-team agent prompts so they can
    construct absolute paths for **direct filesystem operations** (e.g., `cat {WORKTREE_ROOT}/instruction-builder/findings.json`,
-   `mkdir -p {WORKTREE_ROOT}/...`). For `git show` commands, subagents must use repo-relative paths
+   `mkdir -p {WORKTREE_ROOT}/...`). For `git show` commands, agents must use repo-relative paths
    (e.g., `git show <sha>:instruction-builder/findings.json`) as specified in the shared adversarial protocol.
 2. Run the full RED→BLUE loop as defined in Step 10 and the shared adversarial protocol. Each round
    produces commits from red-team (findings.json) and blue-team (patched instruction file). The loop
@@ -1287,23 +1287,23 @@ By default, process files **sequentially** (safe for all worktrees). Between seq
 previous skill's `instruction-builder/findings.json` (or `instruction-builder/findings-<skill-name>.json` if using per-skill paths) before starting
 the next skill to prevent stale disputes from contaminating subsequent red-team analysis. Parallel processing
 is allowed when each instruction file is independent (no shared file-to-file dependencies). In parallel mode,
-each subagent runs the full RED→BLUE loop for its own file, committing per-round — never touching other
-instruction files. Each parallel subagent must use an instruction-specific findings path
+each agent runs the full RED→BLUE loop for its own file, committing per-round — never touching other
+instruction files. Each parallel agent must use an instruction-specific findings path
 (`{WORKTREE_ROOT}/instruction-builder/findings-<skill-name>.json`) instead of the shared `{WORKTREE_ROOT}/instruction-builder/findings.json` to
 avoid overwrite collisions between concurrent red-team agents. Derive `<skill-name>` as
 `<directory-name>-<file-stem>` (e.g., `work-agent-first-use` for
 `client/plugin/skills/common/work-agent/first-use.md`, `git-commit-agent-SKILL` for
 `client/plugin/skills/common/git-commit-agent/SKILL.md`). This compound key avoids collisions when a single skill
 directory contains both SKILL.md and first-use.md. Pass the skill-specific findings path to the
-red-team and blue-team subagent prompts via a `FINDINGS_PATH` parameter. The subagent prompt MUST
+red-team and blue-team agent prompts via a `FINDINGS_PATH` parameter. The agent prompt MUST
 include an explicit instruction: "Write findings to {FINDINGS_PATH} instead of
 {WORKTREE_ROOT}/instruction-builder/findings.json. All reads and writes of findings.json in your procedure are
 redirected to this path." This overrides the default `{WORKTREE_ROOT}/instruction-builder/findings.json` in the
 receiving agent's procedure.
-Parallel subagents must not commit shared files (e.g., index files or aggregated docs) to avoid merge
-conflicts; those are updated once after all parallel subagents complete. The concurrent commit safety
+Parallel agents must not commit shared files (e.g., index files or aggregated docs) to avoid merge
+conflicts; those are updated once after all parallel agents complete. The concurrent commit safety
 retry protocol (exponential backoff with jitter, up to 3 retries) from Step 6 also applies to all
-red-team and blue-team commits in batch parallel mode. Each parallel subagent must retry on ref-lock
+red-team and blue-team commits in batch parallel mode. Each parallel agent must retry on ref-lock
 contention using the same backoff schedule: first retry after 1-2 seconds (randomized), second after
 2-4 seconds, third after 4-8 seconds.
 
@@ -1345,7 +1345,7 @@ failures before proceeding to compression.
 
 #### Compress
 
-Before invoking the compression subagent, derive `{instruction-filename}` as the basename of
+Before invoking the compression agent, derive `{instruction-filename}` as the basename of
 `INSTRUCTION_TEXT_PATH` (e.g., `first-use` from `client/plugin/skills/common/my-skill/first-use.md`). Sanitize
 `{instruction-filename}` by stripping any path separator characters (`/`, `\`, `..`), URL-encoded
 separators (`%2F`, `%5C`), and null bytes (`%00`, `\0`) — reject and abort if the basename contains
@@ -1381,7 +1381,7 @@ Agent spawn:
     Do NOT use any allowlisted command (including sort, uniq, stat) against any file not in
     this list — doing so constitutes a file read even if the command is nominally "read-only".
     Do NOT read any other file — including scenario `.md` files, test-results.json, findings.json, config
-    files, peer subagent output files, or any file not listed in (1)-(3) regardless of its location.
+    files, peer agent output files, or any file not listed in (1)-(3) regardless of its location.
     Do NOT list or explore the skill directory's test/ subdirectory. Do NOT use the Glob or Grep tool
     to discover or enumerate files. Do NOT use grep with recursive flags (-r, -R, --include, -l combined
     with directory paths) as this provides directory discovery. Do NOT modify {INSTRUCTION_TEXT_PATH}. Use
@@ -1390,7 +1390,7 @@ Agent spawn:
     and the Write tool is the ONLY permitted mechanism for writing it. Do NOT use the Edit tool,
     NotebookEdit tool, or the Skill tool. Do NOT invoke any skill (e.g., cat:batch-write,
     cat:grep-and-read, or any other cat: skill).
-    See ## Subagent Command Allowlist for permitted commands (grader/analyzer category applies here).
+    See ## Agent Command Allowlist for permitted commands (grader/analyzer category applies here).
     Do NOT use shell redirection operators (>, >>, <, <<, 2>) or any command that writes, moves,
     copies, or deletes files.
 ```
@@ -1469,7 +1469,7 @@ boundaries.
 **Architectural hard gate**: Before any reorganization, verify:
 - No file contains `**INTERNAL DOCUMENT**` or an explicit audience restriction
 - No file contains language like "X is intentionally not in this file"
-- Files are not an orchestrator + subagent pair where one invokes the other
+- Files are not an orchestrator + agent pair where one invokes the other
 - Files are not loaded by different conditional branches with incompatible audiences
 
 If any gate check triggers: skip reorganization for the affected pair and document the finding.
@@ -1481,8 +1481,8 @@ If any gate check triggers: skip reorganization for the affected pair and docume
 For each `.md` file in the skill directory:
 1. Identify its loading pattern: always-loaded (main entry point) vs. conditionally-loaded (referenced by
    directives, loaded on demand via `read` calls within steps)
-2. Identify its audience: caller-facing (instructions for the invoking agent) vs. subagent-facing
-   (instructions for a spawned subagent)
+2. Identify its audience: caller-facing (instructions for the invoking agent) vs. agent-facing
+   (instructions for a spawned agent)
 
 **Phase 1 — Extract semantic units from all files:**
 
@@ -1583,14 +1583,14 @@ conditions, user synonyms, and disambiguation from similar skills. Never include
 to this decision: post-invocation behavior, agent instructions, trust levels, internal architecture, or
 anything the agent only needs after the skill is already loaded.
 
-**Diagnosing skill-loading failures in SPRT:** When a test-run subagent produces wrong behavior
+**Diagnosing skill-loading failures in SPRT:** When a test-run agent produces wrong behavior
 (hallucinates step names, invents procedures, or responds without skill-specific knowledge), use
-`cat:get-history` to read the subagent's conversation and diagnose the root cause:
+`cat:get-history` to read the agent's conversation and diagnose the root cause:
 
-1. **Check if the Skill tool was invoked.** Use `session-analyzer --runtime "${CAT_RUNTIME}" file-history` on the subagent to
+1. **Check if the Skill tool was invoked.** Use `session-analyzer --runtime "${CAT_RUNTIME}" file-history` on the agent to
    list all tool operations. If no Skill invocation appears, the agent decided not to load the skill.
    To understand why, search for the agent's reasoning: `session-analyzer --runtime "${CAT_RUNTIME}" search
-   "${CAT_SESSION_ID}/subagents/agent-${ID}" "<thinking>" --context 10`. The thinking blocks
+   "${CAT_SESSION_ID}/agents/agent-${ID}" "<thinking>" --context 10`. The thinking blocks
    reveal how the agent evaluated the available skills and why it decided none matched the prompt.
    The root cause is the skill's `description` frontmatter — it does not contain trigger words that
    match the test scenario's prompt. Fix the description to cover the prompt's vocabulary.
@@ -1599,7 +1599,7 @@ anything the agent only needs after the skill is already loaded.
 2. **Check which version loaded.** If the Skill tool WAS invoked, the agent loaded the skill from the
    **plugin cache** — not from the worktree. The cached version may have different step numbers,
    procedures, or constraints than the worktree version being tested. This is a known limitation:
-   SPRT test-run subagents load skills from the installed plugin cache, so test assertions must match
+   SPRT test-run agents load skills from the installed plugin cache, so test assertions must match
    the cached version's step numbers and routing, not the worktree's modified version.
 3. **Negative test failures.** If a negative test case unexpectedly triggers the skill (the agent
    loads it when it should not), the description is too broad — narrow it to exclude the out-of-scope
@@ -1609,8 +1609,8 @@ anything the agent only needs after the skill is already loaded.
 
 ## Related Concepts
 
-- **subagent-context-minimization**: When to delegate to subagents and how to pass references instead of
-  content — `plugin/concepts/subagent-context-minimization.md`
+- **agent-context-minimization**: When to delegate to agents and how to pass references instead of
+  content — `plugin/concepts/agent-context-minimization.md`
 - **instruction-analyzer-agent**: Detects delegation opportunities and content relay anti-patterns in skill
   procedures — `plugin/agents/common/instruction-analyzer-agent.md`
 - **Cross-file reorganization**: The four-phase classify-extract-reconstruct-verify pipeline used in Step 13
@@ -1631,7 +1631,7 @@ Overall verification passes if all non-skipped items are checked and all skipped
 
 ### Design phase
 
-- [ ] Design subagent returned a complete draft with non-empty Purpose, Procedure, and Verification sections
+- [ ] Design agent returned a complete draft with non-empty Purpose, Procedure, and Verification sections
 - [ ] Compact-output pass applied before writing draft to disk; correctness exemptions respected
 - [ ] Instruction draft written and committed; `INSTRUCTION_DRAFT_SHA` stored
 
@@ -1662,9 +1662,9 @@ Overall verification passes if all non-skipped items are checked and all skipped
 - [ ] Each test case runs its own independent SPRT; rejection of any case stops all remaining cases (early-stop)
 - [ ] SPRT decisions made pipelined (after each test-run completion), not batched per job; log_ratio updated
   immediately after each run grading before dispatching the next run
-- [ ] Each test run uses a fresh non-resumed `TEST_MODEL` subagent (no `resume` or `conversation_id` fields)
+- [ ] Each test run uses a fresh non-resumed `TEST_MODEL` agent (no `resume` or `conversation_id` fields)
 - [ ] `TEST_MODEL` read from skill frontmatter via `extract-model`; never hardcoded
-- [ ] Each assertion graded by a separate `TEST_MODEL` grader subagent (no inline grading)
+- [ ] Each assertion graded by a separate `TEST_MODEL` grader agent (no inline grading)
 - [ ] Run outputs written to temp files only; `test-results.json` committed once after SPRT completes with Accept or Reject
 - [ ] SPRT jobs continued until Accept boundary (log_ratio ≥ 2.944) formally crossed — Inconclusive is never a final state
 - [ ] Test results show meaningful signal: SPRT log_ratios demonstrate non-trivial discrimination (not all cases
@@ -1672,7 +1672,7 @@ Overall verification passes if all non-skipped items are checked and all skipped
 - [ ] Result Inspection Checklist (4 checks) performed before updating SPRT log_ratio
 - [ ] Re-test after hardening uses identical SPRT parameters (p0, p1, α, β) and same test case set (`TEST_SET_SHA`)
 - [ ] Token usage summary displayed after SPRT; `test-results.json` includes per-case and aggregate totals
-- [ ] `TEST_DIR`, `CAT_SESSION_ID`, `TEST_MODEL` passed as resolved literal strings to all subagents
+- [ ] `TEST_DIR`, `CAT_SESSION_ID`, `TEST_MODEL` passed as resolved literal strings to all agents
 
 ### Failure investigation
 
@@ -1695,8 +1695,8 @@ Overall verification passes if all non-skipped items are checked and all skipped
 ### Adversarial hardening
 
 - [ ] Follows shared adversarial protocol from `plugin/concepts/adversarial-protocol.md`; `target_type: instructions`
-- [ ] Main agent never reads findings.json directly — uses structured JSON returns from subagents
-- [ ] Subagents read `TARGET_FILE_PATH` from disk; file content not embedded inline in prompts
+- [ ] Main agent never reads findings.json directly — uses structured JSON returns from agents
+- [ ] Agents read `TARGET_FILE_PATH` from disk; file content not embedded inline in prompts
 - [ ] In-place mode: verifies prior `test-results.json` before skipping Steps 1–6; per-round commits
 - [ ] In-place mode: precondition check passes (`${TEST_DIR}/test-results.json` exists); falls back to full
   workflow with explanatory message when absent
@@ -1711,12 +1711,12 @@ Overall verification passes if all non-skipped items are checked and all skipped
 - [ ] Semantic pre-check gates compression before full SPRT re-test
 - [ ] Retries capped at 3; uncompressed version accepted after 3 failures
 - [ ] Post-compression acceptance criteria identical to post-hardening SPRT parameters
-- [ ] Compression subagent restricted to reading instruction file, protected-sections.txt, and compression-protocol.md only
+- [ ] Compression agent restricted to reading instruction file, protected-sections.txt, and compression-protocol.md only
 
 ### Cross-File Reorganization
 
 - [ ] All companion files in the skill directory classified by loading pattern and audience before any moves
-- [ ] Architectural hard gate applied before each move (no internal documents, no orchestrator+subagent pairs)
+- [ ] Architectural hard gate applied before each move (no internal documents, no orchestrator+agent pairs)
 - [ ] Binary equivalence verified after each move: no semantic units lost, all cross-references updated
 - [ ] Loop-back to Step 12 triggered when `first-use.md` is modified by reorganization
 - [ ] No content moved across skill boundaries

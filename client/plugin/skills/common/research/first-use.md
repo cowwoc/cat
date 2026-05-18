@@ -31,7 +31,7 @@ read by the dedicated research agent, the agent executes the selected template d
 - Just need to read a few files (use Read/Grep directly)
 
 **Dedicated-agent mode:** If the current agent is `cat-research-agent` or `research-agent`, execute the selected
-research template directly. Do not spawn another research subagent.
+research template directly. Do not spawn another research agent.
 Reference: concepts/delegation-rules.md
 
 </when_to_use>
@@ -88,7 +88,7 @@ Runtime-native agent tool:
 **Example usage:**
 ```
 User: Research stakeholder concerns for payment-processing
-Main agent: [Spawns subagent with template above, substituting {topic}]
+Main agent: [Spawns agent with template above, substituting {topic}]
 ```
 
 ---
@@ -137,7 +137,7 @@ Runtime-native agent tool:
 **Example usage:**
 ```
 User: Research how to implement rate-limiting-middleware
-Main agent: [Spawns subagent with template above]
+Main agent: [Spawns agent with template above]
 ```
 
 ---
@@ -186,7 +186,7 @@ Runtime-native agent tool:
 **Example usage:**
 ```
 User: Explore the codebase to understand authentication-system
-Main agent: [Spawns subagent with template above]
+Main agent: [Spawns agent with template above]
 ```
 
 ---
@@ -235,7 +235,7 @@ Runtime-native agent tool:
 **Example usage:**
 ```
 User: Research external documentation for stripe-connect-api
-Main agent: [Spawns subagent with template above]
+Main agent: [Spawns agent with template above]
 ```
 
 </templates>
@@ -288,7 +288,7 @@ Structured user-choice prompt:
 
 **Map user selection to template:**
 
-| Selection | Template | Subagent Type | Model |
+| Selection | Template | Agent Type | Model |
 |-----------|----------|---------------|-------|
 | Stakeholder Research | Template 1 | cat-research-agent | explicit agent config |
 | Implementation Research | Template 2 | cat-research-agent | explicit agent config |
@@ -299,7 +299,7 @@ Structured user-choice prompt:
 
 <step name="spawn_subagent">
 
-**Run the selected template in the dedicated research agent. If this file is being read by `cat-research-agent`, execute the selected template directly and do not spawn another subagent:**
+**Run the selected template in the dedicated research agent. If this file is being read by `cat-research-agent`, execute the selected template directly and do not spawn another agent:**
 
 Example for stakeholder research:
 
@@ -310,7 +310,7 @@ Runtime-native agent tool:
   prompt: [Template 1 content with {topic} substituted]
 ```
 
-Wait for subagent to complete and return results.
+Wait for agent to complete and return results.
 
 </step>
 
@@ -318,7 +318,7 @@ Wait for subagent to complete and return results.
 
 **Present research results to user:**
 
-The subagent will return structured research findings. Display these to the user
+The agent will return structured research findings. Display these to the user
 with any necessary context or navigation aids.
 
 For stakeholder research specifically:
@@ -366,7 +366,7 @@ If yes, ask for plan.md path or version identifier:
 - If path provided: Use specified path
 - If neither: Ask user to specify
 
-Update plan.md with research section containing subagent's findings.
+Update plan.md with research section containing agent's findings.
 
 </step>
 
@@ -390,8 +390,8 @@ Ready to proceed with implementation planning.
 
 - [ ] Research type and topic identified from arguments or user input
 - [ ] Appropriate template selected based on research needs
-- [ ] Subagent spawned with correct configuration (model, type, prompt)
-- [ ] Research results received from subagent
+- [ ] Agent spawned with correct configuration (model, type, prompt)
+- [ ] Research results received from agent
 - [ ] Results presented to user in structured format
 - [ ] User offered option to save to plan.md (if desired)
 - [ ] Research findings available for implementation planning

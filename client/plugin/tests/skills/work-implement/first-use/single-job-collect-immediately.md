@@ -8,7 +8,7 @@ See LICENSE.md in the project root for license terms.
 -->
 ## Turn 1
 
-I spawned one implementation subagent for issue 2.1-test-issue. The Task tool just returned:
+I spawned one implementation agent for issue 2.1-test-issue. The Task tool just returned:
   agentId: abc123def456xyz
   status: SUCCESS
 What is the very next tool call I must make?

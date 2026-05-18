@@ -59,7 +59,7 @@ Each runtime has a runtime-specific stakeholder agent definition; shared role bo
 
 ## Progress Output
 
-Subagent reviews run in parallel. The `report` step invokes review box skills — these are
+Agent reviews run in parallel. The `report` step invokes review box skills — these are
 the sole user-facing output. Do NOT write a text summary.
 
 ## Process
@@ -304,8 +304,13 @@ the space-separated list of stakeholders to run.
 
 1. Identify files changed in implementation
 2. Collect diff summary for orientation
-3. Pass file paths to subagents — they read files independently using Read/Glob/Grep tools
+3. Pass file paths to agents — they read files independently using Read/Glob/Grep tools
 4. Use stakeholder selection from Step 1
+
+**Manifest freshness invariant (MANDATORY):** This skill must derive `BASE_SHA`, `HEAD_SHA`,
+`CHANGED_FILES`, and `CHANGED_FILES_FINGERPRINT` from live git state in the current worktree on
+every invocation. Do not reuse values from prior runs, prior manifests, or caller-provided
+metadata snapshots.
 
 **Worktree Isolation:** cd into WORKTREE_PATH before running git commands — avoid `/workspace/` directly.
 
@@ -348,7 +353,9 @@ REVIEW_MANIFEST="${REVIEW_DIR}/manifest.json"
 cat > "$REVIEW_MANIFEST" <<EOF
 {"target_branch":"${TARGET_BRANCH}","reviewed_base_sha":"${BASE_SHA}","reviewed_head_sha":"${HEAD_SHA}","changed_file_count":${CHANGED_FILE_COUNT},"client_file_count":${CLIENT_FILE_COUNT},"changed_files_fingerprint":"${CHANGED_FILES_FINGERPRINT}"}
 EOF
-# Truncate diff to 500 lines max to avoid consuming subagent context windows on large changes
+# Persist reviewer inputs derived from this exact manifest (overwrite prior run artifacts).
+printf '%s\n' "$CHANGED_FILES" > "${REVIEW_DIR}/changed-files.txt"
+# Truncate diff to 500 lines max to avoid consuming agent context windows on large changes
 DIFF_SUMMARY=$(git diff "${BASE_SHA}..${HEAD_SHA}" -U3) || {
     echo "ERROR: git diff '${BASE_SHA}..${HEAD_SHA}' failed." >&2
     exit 1
@@ -359,6 +366,7 @@ if [[ "$DIFF_LINE_COUNT" -gt 500 ]]; then
     DIFF_SUMMARY="${DIFF_SUMMARY}
 ... [truncated: ${DIFF_LINE_COUNT} total lines, showing first 500. Reviewers: use Read/Grep tools for full context.]"
 fi
+printf '%s\n' "$DIFF_SUMMARY" > "${REVIEW_DIR}/diff-summary.txt"
 PRIMARY_LANG=$(echo "$CHANGED_FILES" | grep -oE '\.[a-z]+$' | sort | uniq -c | sort -rn | head -1 | awk '{print $2}' | tr -d '.') && \
 SOURCE_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(java|py|ts|js|go|rs|c|cpp|cs)$' || true) && \
 TEST_FILES=$(echo "$CHANGED_FILES" | grep -E '(Test|Spec|_test|_spec)\.' || true) && \
@@ -426,11 +434,11 @@ fi
 
 ### Step 3: Spawn Reviewers
 
-**Spawn all stakeholder subagents simultaneously in one message:**
+**Spawn all stakeholder agents simultaneously in one message:**
 
 > **ANTI-FABRICATION GUARD — MANDATORY**
 >
-> Approval verdicts (APPROVED, CONCERNS, REJECTED) come EXCLUSIVELY from subagent Agent tool
+> Approval verdicts (APPROVED, CONCERNS, REJECTED) come EXCLUSIVELY from agent Agent tool
 > responses. You MUST issue Agent tool calls for EVERY selected stakeholder and wait for their
 > results before writing any verdict.
 >
@@ -451,16 +459,16 @@ fi
 > If fewer results arrived than expected, treat each missing reviewer as FAILED with verdict REJECTED
 > and a `parse_error` note: "Reviewer did not return an Agent result."
 
-All selected reviewers MUST be dispatched in a single response — one reviewer subagent per stakeholder,
+All selected reviewers MUST be dispatched in a single response — one reviewer agent per stakeholder,
 all issued at the same time. Do NOT loop or spawn reviewers one at a time. Total wall time becomes
 the MAX of reviewer times rather than the SUM.
 
 **MANDATORY — Isolated foreground reviewer agents only:** Issue ALL reviewer agent calls in one message.
 Use the runtime's agent-spawning tool directly. Do NOT use the Task tool. Do NOT set
-`run_in_background: true`. Reviewer subagents MUST complete as foreground tasks so their results are
+`run_in_background: true`. Reviewer agents MUST complete as foreground tasks so their results are
 received before Step 4 begins.
 
-Each reviewer MUST run as a native subagent of the current runtime instance. Do NOT launch a nested runtime
+Each reviewer MUST run as a native agent of the current runtime instance. Do NOT launch a nested runtime
 process such as `codex exec`, `cat:codex-runner`, or any runner skill to perform stakeholder review.
 
 Each reviewer MUST run as an isolated fork with no inherited conversation history:
@@ -468,7 +476,7 @@ Each reviewer MUST run as an isolated fork with no inherited conversation histor
   `fork_context`, set `fork_context: false`. If the tool exposes `fork_turns`, set `fork_turns:
   "none"`. Per https://github.com/openai/codex/issues/20543#issuecomment-4358442924, Multi-agents v2
   is not meant to be used right now. It is disabled by default, so do not add a
-  `[features.multi_agent_v2]` section to `config.toml`; to increase pre-v2 subagent concurrency, set
+  `[features.multi_agent_v2]` section to `config.toml`; to increase pre-v2 agent concurrency, set
   `[agents] max_threads = <count>` instead.
 - Runtimes with an equivalent history/fork option: choose the option that gives the reviewer no parent
   conversation history beyond the prompt supplied in this step.
@@ -514,7 +522,7 @@ You are the {stakeholder} stakeholder reviewing an implementation.
 This is the review task. Do not acknowledge workspace, project, AGENTS.md, or setup instructions. Do not summarize
 what rules you will follow. Start the review immediately and return only the JSON review object requested below.
 
-Reviewer subagents are leaf reviewers. Do NOT call `spawn_agent`, `wait_agent`, `list_agents`, `followup_task`, the
+Reviewer agents are leaf reviewers. Do NOT call `spawn_agent`, `wait_agent`, `list_agents`, `followup_task`, the
 Task tool, or any other agent-management tool. Do NOT wait for, poll, inspect, or coordinate with other stakeholders.
 Perform only your own review and return exactly one JSON review object directly to the parent.
 
@@ -607,6 +615,14 @@ Issue ALL reviewer calls in one message with isolated forks and stakeholder-spec
 NEVER use the Task tool, a nested runtime runner, a full-history fork, a generic/default agent type, or
 `run_in_background: true`.
 
+**Reviewer prompt hardening (MANDATORY):**
+- Build each reviewer prompt so exactly one literal `WORKTREE_PATH=<absolute-path>` assignment is visible in the
+  prompt body.
+- Do not include additional `WORKTREE_PATH=` literals anywhere else in that reviewer prompt (including explanatory
+  prose or examples).
+- Use isolated reviewer forks with no inherited conversation history for the active runtime. Never inherit full parent
+  history for stakeholder reviewer agents.
+
 ### Step 4: Collect Reviews
 
 **Collect and parse stakeholder reviews:**
@@ -615,7 +631,7 @@ NEVER use the Task tool, a nested runtime runner, a full-history fork, a generic
 The expected count is `SELECTED_COUNT` — the integer count of stakeholders selected in Step 1 (it is the length of
 the selected-stakeholders list). If the received count is less than `SELECTED_COUNT`: for each missing reviewer, add
 a synthetic REJECTED result with concerns:
-`[{severity: 'CRITICAL', location: 'N/A', explanation: 'Reviewer subagent did not return a result.',
+`[{severity: 'CRITICAL', location: 'N/A', explanation: 'Reviewer agent did not return a result.',
 recommendation: 'Retry /cat:work or check for background task failures.'}]`
 
 Parse Agent tool output as JSON — do NOT infer verdicts from context. Every verdict comes from actual
@@ -637,6 +653,21 @@ If the retry also returns invalid JSON or an unrecognized approval value, then t
 a parse failure concern. Record that the retry was attempted in the concern explanation. Do not retry more than once
 per reviewer.
 
+**Retry false "no working directory" rejections once before failing:** If a reviewer returns valid JSON with
+`approval: "REJECTED"` and includes the exact concern explanation
+"No working directory provided in reviewer prompt. Cannot determine which branch to read files from.", do not
+immediately treat this as an implementation concern. First classify it as a reviewer execution failure and issue one
+retry for that reviewer using the same stakeholder-specific agent type and isolated-fork settings. The retry prompt
+MUST:
+
+- Include the original review prompt in full.
+- Explicitly restate the canonical line once as `WORKTREE_PATH=<absolute-path>` under `## Working Directory`.
+- Instruct the reviewer to use that single visible assignment as authoritative task context.
+- Avoid adding any additional `WORKTREE_PATH=` occurrences outside the single canonical assignment.
+
+If the retry returns the same "No working directory provided..." rejection again, keep that reviewer as REJECTED and
+record that the deterministic retry path was exhausted.
+
 Validation rules:
 - Invalid JSON after the one allowed retry → REJECTED with parse failure note
 - Unrecognized approval (e.g., PASSED, LGTM) → REJECTED
@@ -644,6 +675,9 @@ Validation rules:
   `changed_files_fingerprint` absent or different from the parent manifest) → retry once with the same prompt. If the
   retry still mismatches, replace that review
   with REJECTED and concern: "Reviewer metadata did not match parent review manifest — review may reflect stale content."
+- Parent-manifest drift check: after collecting all reviewer results and before emitting output, re-read
+  `HEAD` in the worktree. If it differs from manifest `reviewed_head_sha`, abort this run and return REJECTED with
+  one CRITICAL concern instructing the caller to rerun stakeholder review on current `HEAD`.
 - Worktree path audit: scan tool calls for paths outside `${WORKTREE_PATH}/` and `${CAT_PLUGIN_ROOT}/`. If violated, append HIGH severity concern: "Reviewer accessed file outside worktree — review may reflect stale content."
 - Stakeholder identity mismatch: use spawned role (not self-reported) for rendering
 - detail_file validation: verify path starts with `${WORKTREE_PATH}/`; replace if invalid
@@ -731,11 +765,11 @@ Fail if missing. Action: caution_level="none" → skip; "quick"|"changed"|"all" 
 
 - [ ] All selected stakeholder reviewer calls issued before verdict text (fabrication check)
 - [ ] Reviewer call count equals selected stakeholder count (mismatch = fabrication)
-- [ ] Reviewer subagents used native current-session subagents, not `codex exec`, `cat:codex-runner`, or runner skills
-- [ ] Reviewer subagents used isolated forks with no inherited conversation history; Codex reviewer calls used
+- [ ] Reviewer agents used native current-session agents, not `codex exec`, `cat:codex-runner`, or runner skills
+- [ ] Reviewer agents used isolated forks with no inherited conversation history; Codex reviewer calls used
       `fork_context: false` when available, otherwise `fork_turns: "none"`
-- [ ] Reviewer subagents used stakeholder-specific agent types, not generic/default agents
-- [ ] Agent-spawning tool only — Task tool and `run_in_background: true` were NOT used for reviewer subagents
+- [ ] Reviewer agents used stakeholder-specific agent types, not generic/default agents
+- [ ] Agent-spawning tool only — Task tool and `run_in_background: true` were NOT used for reviewer agents
 - [ ] `BASE_SHA` and `HEAD_SHA` pinned before reviewer dispatch; all diffs used `${BASE_SHA}..${HEAD_SHA}` not mutable `HEAD`
 - [ ] `DISPATCH_HEAD_SHA` checked immediately before spawning reviewers and matched pinned `HEAD_SHA`
 - [ ] Reviewer prompts required current worktree HEAD verification before reading files

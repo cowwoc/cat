@@ -168,7 +168,7 @@ public final class SessionStartHook
     if (migrationNotice.ran())
     {
       output.put("systemMessage", "CAT plugin migration updated installed assets. Restart " +
-        "Codex before using CAT custom subagents so the tool registry sees the changes.");
+        "Codex before using CAT custom agents so the tool registry sees the changes.");
     }
     return new HookResult(scope.getJsonMapper().writeValueAsString(output), result.warnings());
   }

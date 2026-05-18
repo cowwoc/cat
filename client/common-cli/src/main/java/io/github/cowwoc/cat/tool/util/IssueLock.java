@@ -407,7 +407,7 @@ public final class IssueLock
 
     validateSessionId(sessionId);
 
-    // A session may only hold one lock at a time to prevent subagents from
+    // A session may only hold one lock at a time to prevent agents from
     // inheriting an ambiguous active-worktree context.
     String conflictingIssueId = scanForConflictingLock(issueId, sessionId);
     if (!conflictingIssueId.isEmpty())

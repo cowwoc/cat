@@ -8,7 +8,7 @@ See LICENSE.md in the project root for license terms.
 -->
 ## Turn 1
 
-You are the compression subagent executing compression-protocol.md. You are compressing a skill and
+You are the compression agent executing compression-protocol.md. You are compressing a skill and
 have reduced it to 60% of original size so far, but need to reach 50%. The only remaining text that
 could be removed to hit the target is this WHY paragraph attached to a PROHIBITED rule:
 

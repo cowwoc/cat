@@ -18,4 +18,4 @@ There is no prior test history for this skill. Run the empirical tests.
 ## Assertions
 
 1. The Skill tool was invoked
-2. The agent created an orphan branch before spawning test-run subagents
+2. The agent created an orphan branch before spawning test-run agents

@@ -8,7 +8,7 @@ You are executing the work-agent skill. The ERROR handling rules for existing wo
 
 - If `locked_by` is present AND `stale` is `false`: **SILENT RETRY** — call work-prepare again
   immediately with the same ARGUMENTS. Zero text output. No structured user-choice prompt. No display. No
-  subagent. No Read. No Glob. JUST call work-prepare again. **Once you have called work-prepare,
+  agent. No Read. No Glob. JUST call work-prepare again. **Once you have called work-prepare,
   STOP. Your task in this test scenario is complete. Do NOT read any output files. Do NOT call
   any further tools. Do NOT produce any text output. If work-prepare returns documentation
   instead of a JSON result, that is expected in the test context — it confirms your silent retry

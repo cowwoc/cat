@@ -49,7 +49,7 @@ Rule files support these optional frontmatter properties:
 ```yaml
 ---
 mainAgent: false             # default: true (omit to inject into main agent)
-subAgents: []                # default: all (omit to inject into all subagents)
+subAgents: []                # default: all (omit to inject into all agents)
 paths: ["*.java"]            # default: always (omit to always inject)
 ---
 ```
@@ -65,21 +65,21 @@ Controls whether the main agent receives this rule.
 | `true` (default) | Inject into main agent context |
 | `false` | Do not inject into main agent context |
 
-Use `mainAgent: false` for rules that are only relevant to specific subagent types and would waste
+Use `mainAgent: false` for rules that are only relevant to specific agent types and would waste
 context in the main agent.
 
 ### `subAgents`
 
-Controls which subagents receive this rule.
+Controls which agents receive this rule.
 
 | Value | Behavior |
 |-------|----------|
-| Omitted (default) | Inject into all subagents |
-| `[]` | Do not inject into any subagent |
-| `["cat:work-execute", "Explore"]` | Inject only into matching subagents |
+| Omitted (default) | Inject into all agents |
+| `[]` | Do not inject into any agent |
+| `["cat:work-execute", "Explore"]` | Inject only into matching agents |
 
-The subagent type is matched against the `subagent_type` field in the SubagentStart hook input. This
-corresponds to the `subagent_type` parameter passed to the Task tool when spawning the subagent.
+The agent type is matched against the `subagent_type` field in the SubagentStart hook input. This
+corresponds to the `subagent_type` parameter passed to the Task tool when spawning the agent.
 
 Use `subAgents: []` for orchestration rules that only the main agent should know about (e.g., approval
 gate protocols, hook registration procedures).
@@ -116,7 +116,7 @@ Use this table to decide where content belongs:
 | Codex plugin conventions | Codex only | `.cat/rules/codex/` |
 | Approval gate protocols | Main agent only | `.cat/rules/common/*.md` with `subAgents: []` |
 | Hook registration procedures | Main agent only | `.cat/rules/common/*.md` with `subAgents: []` |
-| Subagent-specific instructions | Specific subagent type | `.cat/rules/common/*.md` with `mainAgent: false` |
+| Agent-specific instructions | Specific agent type | `.cat/rules/common/*.md` with `mainAgent: false` |
 
 ## Agent Definition Locations
 
@@ -125,15 +125,15 @@ Agent role bodies follow the same runtime split:
 | Agent content | Location |
 |---------------|----------|
 | Runtime-neutral role body | `client/plugin/agents/common/` |
-| Claude Code custom subagent wrapper | `client/plugin/agents/claude/` |
-| Codex custom subagent definition | `client/plugin/agents/codex/` |
+| Claude Code custom agent wrapper | `client/plugin/agents/claude/` |
+| Codex custom agent definition | `client/plugin/agents/codex/` |
 
 Do not duplicate full agent bodies between runtimes. Add or update the shared role body once, then keep the wrapper
 limited to runtime-specific metadata and invocation guidance.
 
-Runtime-specific agent wrappers are the normal subagent mechanism. They are not a fallback to nested CLI runners:
+Runtime-specific agent wrappers are the normal agent mechanism. They are not a fallback to nested CLI runners:
 
-- Claude Code uses `.claude/agents/{name}.md` wrappers as custom subagent definitions.
+- Claude Code uses `.claude/agents/{name}.md` wrappers as custom agent definitions.
 - Codex uses native `.codex/agents/{name}.toml` custom-agent definitions. Their `name` fields use a `cat-` prefix
   to avoid collisions with project-specific agents. Because Codex plugins do not currently
   register custom agents through `.codex-plugin/plugin.json`, the 2.1 migration copies them from the flattened
@@ -142,10 +142,10 @@ Runtime-specific agent wrappers are the normal subagent mechanism. They are not 
   cache-local marker is missing, so uninstalling and reinstalling the plugin repairs the project copies. When the
   migration runs, CAT asks the user to restart, resume, or clear Codex because the running session may have already
   snapshotted available custom agents.
-- Both runtime definitions instruct the subagent to read the matching neutral body from
+- Both runtime definitions instruct the agent to read the matching neutral body from
   `client/plugin/agents/common/{name}.md`.
 
-Use `cat:claude-runner` or `cat:codex-runner` only for isolated subprocess validation, not for routine CAT subagent
+Use `cat:claude-runner` or `cat:codex-runner` only for isolated subprocess validation, not for routine CAT agent
 orchestration.
 
 Plugin uninstall does not remove project-scoped Codex custom agent copies automatically. Use `cat:uninstall` to remove
@@ -179,7 +179,7 @@ Never delete production databases without explicit user confirmation.
 ...
 ```
 
-No frontmatter needed — all defaults apply (main agent + all subagents + always inject).
+No frontmatter needed — all defaults apply (main agent + all agents + always inject).
 Files with no runtime-specific assumptions belong in `.cat/rules/common/*.md`.
 
 ### Language-specific convention (`.cat/rules/common/java.md`)
@@ -205,7 +205,7 @@ subAgents: []
 ...
 ```
 
-### Subagent-specific rule
+### Agent-specific rule
 
 ```yaml
 ---

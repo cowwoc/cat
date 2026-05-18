@@ -200,6 +200,31 @@ public final class BlockMainRebaseTest
   }
 
   /**
+   * Verifies that switch in main worktree is blocked when no lock exists.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void switchInMainWorktreeIsBlockedWhenNoLock() throws IOException
+  {
+    Path projectPath = TestUtils.createTempGitRepo("main");
+    Path pluginRoot = Files.createTempDirectory("bmr-test-");
+    String command = "git switch feature-branch";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, projectPath, SESSION_ID,
+      projectPath, pluginRoot, projectPath))
+    {
+      BlockMainRebase handler = new BlockMainRebase(scope);
+      BashHandler.Result result = handler.check();
+      requireThat(result.blocked(), "blocked").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
    * Verifies that checkout is allowed when the session has an active worktree lock.
    * <p>
    * When the session holds a lock, the handler recognizes the session is in a task worktree
@@ -358,6 +383,298 @@ public final class BlockMainRebaseTest
       BashHandler.Result result = handler.check();
 
       requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that checkout scoped to the main worktree using {@code -C} is blocked.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void checkoutWithDashCToMainIsBlocked() throws IOException
+  {
+    Path projectPath = TestUtils.createTempGitRepo("main");
+    Path pluginRoot = Files.createTempDirectory("bmr-test-");
+    String command = "git -C " + projectPath + " checkout feature-branch";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, projectPath, SESSION_ID,
+      projectPath, pluginRoot, projectPath))
+    {
+      BlockMainRebase handler = new BlockMainRebase(scope);
+      BashHandler.Result result = handler.check();
+      requireThat(result.blocked(), "blocked").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that checkout scoped to main using quoted {@code -C} with spaces is blocked.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void checkoutWithQuotedDashCToMainWithSpacesIsBlocked() throws IOException
+  {
+    Path projectPath = TestUtils.createTempGitRepo("main");
+    Path pluginRoot = Files.createTempDirectory("bmr-test-");
+    Path spacedMain = Files.createDirectories(projectPath.resolve("main dir"));
+    String command = "git -C \"" + spacedMain + "\" checkout feature-branch";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, projectPath, SESSION_ID,
+      projectPath, pluginRoot, projectPath))
+    {
+      BlockMainRebase handler = new BlockMainRebase(scope);
+      BashHandler.Result result = handler.check();
+      requireThat(result.blocked(), "blocked").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that switch scoped to the main worktree using {@code -C} is blocked.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void switchWithDashCToMainIsBlocked() throws IOException
+  {
+    Path projectPath = TestUtils.createTempGitRepo("main");
+    Path pluginRoot = Files.createTempDirectory("bmr-test-");
+    String command = "git -C " + projectPath + " switch feature-branch";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, projectPath, SESSION_ID,
+      projectPath, pluginRoot, projectPath))
+    {
+      BlockMainRebase handler = new BlockMainRebase(scope);
+      BashHandler.Result result = handler.check();
+      requireThat(result.blocked(), "blocked").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that switch scoped to main via {@code --work-tree}/{@code --git-dir} is blocked.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void switchWithGitDirAndWorkTreeOnMainIsBlocked() throws IOException
+  {
+    Path projectPath = TestUtils.createTempGitRepo("main");
+    Path pluginRoot = Files.createTempDirectory("bmr-test-");
+    String command = "git --git-dir=" + projectPath.resolve(".git") +
+      " --work-tree=" + projectPath + " switch feature-branch";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, projectPath, SESSION_ID,
+      projectPath, pluginRoot, projectPath))
+    {
+      BlockMainRebase handler = new BlockMainRebase(scope);
+      BashHandler.Result result = handler.check();
+      requireThat(result.blocked(), "blocked").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that checkout scoped to a subdirectory under main is blocked even with an active lock.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void checkoutWithDashCToMainSubdirectoryIsBlockedEvenWithLock() throws IOException
+  {
+    Path projectPath = TestUtils.createTempGitRepo("main");
+    Path pluginRoot = Files.createTempDirectory("bmr-test-");
+    Path mainSubdirectory = Files.createDirectories(projectPath.resolve("nested"));
+    String command = "git -C " + mainSubdirectory + " checkout feature-branch";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, projectPath, SESSION_ID,
+      projectPath, pluginRoot, projectPath))
+    {
+      TestUtils.createWorktreeDir(scope, ISSUE_ID);
+      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      BlockMainRebase handler = new BlockMainRebase(scope);
+      BashHandler.Result result = handler.check();
+      requireThat(result.blocked(), "blocked").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that rebase scoped to main via {@code --git-dir}/{@code --work-tree} is blocked.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void rebaseWithGitDirAndWorkTreeOnMainIsBlocked() throws IOException
+  {
+    Path projectPath = TestUtils.createTempGitRepo("main");
+    Path pluginRoot = Files.createTempDirectory("bmr-test-");
+    String command = "git --git-dir=" + projectPath.resolve(".git") +
+      " --work-tree=" + projectPath + " rebase origin/main";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, projectPath, SESSION_ID,
+      projectPath, pluginRoot, projectPath))
+    {
+      BlockMainRebase handler = new BlockMainRebase(scope);
+      BashHandler.Result result = handler.check();
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("REBASE ON MAIN BLOCKED");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that quoted scoped flags with spaces in a {@code cd ... && git ...} chain are still blocked on main.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void rebaseWithQuotedGitScopeInCdChainOnMainIsBlocked() throws IOException
+  {
+    Path projectPath = TestUtils.createTempGitRepo("main");
+    Path pluginRoot = Files.createTempDirectory("bmr-test-");
+    Path spacedMain = Files.createDirectories(projectPath.resolve("main dir"));
+    String command = "cd \"" + spacedMain + "\" && git --git-dir=\"" + projectPath.resolve(".git") +
+      "\" --work-tree=\"" + spacedMain + "\" rebase origin/main";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, projectPath, SESSION_ID,
+      projectPath, pluginRoot, projectPath))
+    {
+      BlockMainRebase handler = new BlockMainRebase(scope);
+      BashHandler.Result result = handler.check();
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("REBASE ON MAIN BLOCKED");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that branch-detection failures return a warning (allow) result.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void rebaseWithUnresolvableGitDirReturnsWarning() throws IOException
+  {
+    Path projectPath = TestUtils.createTempGitRepo("main");
+    Path pluginRoot = Files.createTempDirectory("bmr-test-");
+    Path missingGitDir = projectPath.resolve("missing").resolve(".git");
+    String command = "git --git-dir=" + missingGitDir + " rebase origin/main";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, projectPath, SESSION_ID,
+      projectPath, pluginRoot, projectPath))
+    {
+      BlockMainRebase handler = new BlockMainRebase(scope);
+      BashHandler.Result result = handler.check();
+      requireThat(result.blocked(), "blocked").isFalse();
+      requireThat(result.reason(), "reason").contains("Branch detection failed");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that rebase scoped via work-tree to a subdirectory under main is blocked.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void rebaseWithWorkTreeInMainSubdirectoryIsBlockedEvenWithLock() throws IOException
+  {
+    Path projectPath = TestUtils.createTempGitRepo("main");
+    Path pluginRoot = Files.createTempDirectory("bmr-test-");
+    Path mainSubdirectory = Files.createDirectories(projectPath.resolve("nested"));
+    String command = "git --work-tree=" + mainSubdirectory + " rebase origin/main";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, projectPath, SESSION_ID,
+      projectPath, pluginRoot, projectPath))
+    {
+      TestUtils.createWorktreeDir(scope, ISSUE_ID);
+      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+      BlockMainRebase handler = new BlockMainRebase(scope);
+      BashHandler.Result result = handler.check();
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("REBASE ON MAIN BLOCKED");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that newline-separated checkout commands in main are blocked.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void newlineSeparatedCheckoutInMainIsBlocked() throws IOException
+  {
+    Path projectPath = TestUtils.createTempGitRepo("main");
+    Path pluginRoot = Files.createTempDirectory("bmr-test-");
+    String command = "echo prep\ngit checkout feature-branch";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, projectPath, SESSION_ID,
+      projectPath, pluginRoot, projectPath))
+    {
+      BlockMainRebase handler = new BlockMainRebase(scope);
+      BashHandler.Result result = handler.check();
+      requireThat(result.blocked(), "blocked").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that newline-separated rebase commands in main are blocked.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void newlineSeparatedRebaseInMainIsBlocked() throws IOException
+  {
+    Path projectPath = TestUtils.createTempGitRepo("main");
+    Path pluginRoot = Files.createTempDirectory("bmr-test-");
+    String command = "echo prep\ngit rebase origin/main";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, projectPath, SESSION_ID,
+      projectPath, pluginRoot, projectPath))
+    {
+      BlockMainRebase handler = new BlockMainRebase(scope);
+      BashHandler.Result result = handler.check();
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("REBASE ON MAIN BLOCKED");
     }
     finally
     {

@@ -149,7 +149,7 @@ public final class CodexSessionStartHookTest
   }
 
   /**
-   * Verifies that Codex SessionStart detects subagent input and applies {@code subAgents} frontmatter instead of
+   * Verifies that Codex SessionStart detects agent input and applies {@code subAgents} frontmatter instead of
    * main-agent filtering.
    *
    * @throws IOException if file operations fail
@@ -161,7 +161,7 @@ public final class CodexSessionStartHookTest
     try
     {
       Fixture fixture = createFixture(tempDir);
-      Files.writeString(fixture.pluginRoot().resolve("rules/common/shared.md"), "shared subagent rule",
+      Files.writeString(fixture.pluginRoot().resolve("rules/common/shared.md"), "shared agent rule",
         StandardCharsets.UTF_8);
       Files.writeString(fixture.pluginRoot().resolve("rules/codex/main-only.md"), """
         ---
@@ -175,11 +175,11 @@ public final class CodexSessionStartHookTest
         ---
         targeted work-execute rule
         """, StandardCharsets.UTF_8);
-      Files.writeString(fixture.projectRoot().resolve(".cat/rules/codex/subagent-only.md"), """
+      Files.writeString(fixture.projectRoot().resolve(".cat/rules/codex/agent-only.md"), """
         ---
         mainAgent: false
         ---
-        codex subagent-only rule
+        codex agent-only rule
         """, StandardCharsets.UTF_8);
       String nativeInput = """
         {
@@ -196,9 +196,9 @@ public final class CodexSessionStartHookTest
       SessionStartHook.HookResult result = SessionStartHook.run(new String[0],
         new ByteArrayInputStream(nativeInput.getBytes(StandardCharsets.UTF_8)), environment);
 
-      requireThat(result.output(), "output").contains("shared subagent rule");
+      requireThat(result.output(), "output").contains("shared agent rule");
       requireThat(result.output(), "output").contains("targeted work-execute rule");
-      requireThat(result.output(), "output").contains("codex subagent-only rule");
+      requireThat(result.output(), "output").contains("codex agent-only rule");
       requireThat(result.output(), "output").doesNotContain("main-agent-only rule");
     }
     finally
@@ -208,7 +208,7 @@ public final class CodexSessionStartHookTest
   }
 
   /**
-   * Verifies that Codex SessionStart fails fast when subagent input omits the top-level role.
+   * Verifies that Codex SessionStart fails fast when agent input omits the top-level role.
    *
    * @throws IOException if file operations fail
    */
@@ -246,9 +246,58 @@ public final class CodexSessionStartHookTest
         new ByteArrayInputStream(nativeInput.getBytes(StandardCharsets.UTF_8)), environment);
 
       requireThat(result.output(), "output").contains("SessionStart Handler Errors");
-      requireThat(result.output(), "output").contains("Codex subagent SessionStart payload is missing top-level " +
+      requireThat(result.output(), "output").contains("Codex agent SessionStart payload is missing top-level " +
         "agent_role");
       requireThat(result.output(), "output").doesNotContain("targeted nested-role rule");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that nested-session detection via source.subagent succeeds when top-level agent_role
+   * is present.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void sourceSubagentSessionStartWithTopLevelRoleLoadsTargetedRule() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("codex-session-start-test-");
+    try
+    {
+      Fixture fixture = createFixture(tempDir);
+      Files.writeString(fixture.pluginRoot().resolve("rules/codex/targeted.md"), """
+        ---
+        subAgents: ["cat:work-execute"]
+        ---
+        targeted nested-role rule
+        """, StandardCharsets.UTF_8);
+      String nativeInput = """
+        {
+          "cwd": "%s",
+          "agent_role": "cat:work-execute",
+          "source": {
+            "subagent": {
+              "thread_spawn": {
+                "agent_role": "cat:work-execute"
+              }
+            }
+          }
+        }
+        """.formatted(fixture.projectRoot().toString().replace("\\", "\\\\"));
+      Map<String, String> environment = Map.of(
+        "CAT_PLUGIN_ROOT", fixture.pluginRoot().toString(),
+        "CAT_PLUGIN_DATA", fixture.pluginData().toString(),
+        "TZ", "UTC");
+
+      SessionStartHook.HookResult result = SessionStartHook.run(new String[0],
+        new ByteArrayInputStream(nativeInput.getBytes(StandardCharsets.UTF_8)), environment);
+
+      requireThat(result.output(), "output").contains("targeted nested-role rule");
+      requireThat(result.output(), "output").doesNotContain("SessionStart Handler Errors");
     }
     finally
     {
@@ -276,20 +325,20 @@ public final class CodexSessionStartHookTest
         ---
         main path-scoped rule
         """, StandardCharsets.UTF_8);
-      Files.writeString(fixture.pluginRoot().resolve("rules/codex/subagent-eager.md"), """
+      Files.writeString(fixture.pluginRoot().resolve("rules/codex/agent-eager.md"), """
         ---
         mainAgent: false
         subAgents: ["cat:work-execute"]
         ---
-        subagent eager rule
+        agent eager rule
         """, StandardCharsets.UTF_8);
-      Files.writeString(fixture.pluginRoot().resolve("rules/codex/subagent-path-scoped.md"), """
+      Files.writeString(fixture.pluginRoot().resolve("rules/codex/agent-path-scoped.md"), """
         ---
         mainAgent: false
         subAgents: ["cat:work-execute"]
         paths: ["*.java"]
         ---
-        subagent path-scoped rule
+        agent path-scoped rule
         """, StandardCharsets.UTF_8);
       Map<String, String> environment = Map.of(
         "CAT_PLUGIN_ROOT", fixture.pluginRoot().toString(),
@@ -316,8 +365,8 @@ public final class CodexSessionStartHookTest
 
       requireThat(mainResult.output(), "mainOutput").contains("main eager rule");
       requireThat(mainResult.output(), "mainOutput").doesNotContain("main path-scoped rule");
-      requireThat(subagentResult.output(), "subagentOutput").contains("subagent eager rule");
-      requireThat(subagentResult.output(), "subagentOutput").doesNotContain("subagent path-scoped rule");
+      requireThat(subagentResult.output(), "subagentOutput").contains("agent eager rule");
+      requireThat(subagentResult.output(), "subagentOutput").doesNotContain("agent path-scoped rule");
     }
     finally
     {

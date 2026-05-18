@@ -5,7 +5,7 @@ See LICENSE.md in the project root for license terms.
 -->
 # Learn From Mistakes: Orchestrator
 
-**Architecture:** Main agent spawns a subagent that executes phases 1-3 (Investigate, Analyze, Prevent). The
+**Architecture:** Main agent spawns an agent that executes phases 1-3 (Investigate, Analyze, Prevent). The
 main agent then passes the Phase 3 output directly to the `record-learning` CLI tool for Phase 4, eliminating
 an LLM invocation for the purely mechanical recording work.
 
@@ -16,7 +16,7 @@ Investigate the root cause of a mistake and implement prevention so the mistake 
 ## When to Use
 
 - Any mistake during CAT orchestration
-- Subagent produces incorrect/incomplete results
+- Agent produces incorrect/incomplete results
 - Issue requires rework or correction
 - Build/test/logical errors
 - Repeated attempts at same operation
@@ -44,7 +44,7 @@ Capture the returned JSON as `PRE_EXTRACTED_CONTEXT`.
 
 ## Step 2: Decide Foreground vs Background
 
-Determine execution mode before spawning the subagent:
+Determine execution mode before spawning the agent:
 
 - **BACKGROUND:** Learn was triggered mid-operation (while working on an issue via `/cat:work`) AND the learn results
   (recording to mistakes JSON, updating counter, committing prevention) do not affect the current issue's remaining git
@@ -55,11 +55,11 @@ Determine execution mode before spawning the subagent:
 
 **Default:** Use background when mid-operation. Use foreground when standalone.
 
-## Step 3: Spawn Subagent
+## Step 3: Spawn Agent
 
 **Background mode:** When background mode was selected in Step 2, inform the user before spawning:
 "Running learn analysis in background — will notify when complete."
-Then spawn the subagent with `run_in_background: true` (see Task tool parameters below). Control returns immediately
+Then spawn the agent with `run_in_background: true` (see Task tool parameters below). Control returns immediately
 to the caller.
 
 **Persist spawn time (CRITICAL):** Immediately before issuing the Task tool call, record the spawn time in a file.
@@ -89,11 +89,11 @@ printf '%s:%s' "$SPAWN_EPOCH" "$SPAWN_EPOCH_HASH" > "$SPAWN_EPOCH_FILE"
 # SPAWN_EPOCH="$STORED_EPOCH"
 ```
 
-In background mode, include `SPAWN_EPOCH_FILE` in the subagent's JSON output or pass it as a parameter to Step 4
+In background mode, include `SPAWN_EPOCH_FILE` in the agent's JSON output or pass it as a parameter to Step 4
 handler. Step 4b MUST use the persisted value, not a reconstructed or assumed one. MANDATORY: Verify the checksum
 before using SPAWN_EPOCH to detect tampering.
 
-Delegate to general-purpose subagent using the Task tool with these JSON parameters:
+Delegate to general-purpose agent using the Task tool with these JSON parameters:
 
 - **description:** `"Learn: Execute phases 1-3 for mistake analysis"`
 - **subagent_type:** `"general-purpose"`
@@ -101,7 +101,7 @@ Delegate to general-purpose subagent using the Task tool with these JSON paramet
 - **prompt:** The prompt below (substitute variables with actual values)
 - **run_in_background:** `true` if background mode was selected in Step 2, omit otherwise
 
-**Subagent prompt:**
+**Agent prompt:**
 
 > Execute the learn skill phases for mistake analysis.
 >
@@ -153,9 +153,9 @@ Delegate to general-purpose subagent using the Task tool with these JSON paramet
 > }
 > ```
 
-## Step 4: Validate Subagent Output, Verify Commit, Run record-learning CLI (Phase 4)
+## Step 4: Validate Agent Output, Verify Commit, Run record-learning CLI (Phase 4)
 
-**Note:** If the subagent was spawned in background (Step 2), Steps 4-7 execute when the background task
+**Note:** If the agent was spawned in background (Step 2), Steps 4-7 execute when the background task
 notification arrives, not immediately after Step 3. MANDATORY: The orchestrator MUST implement a timeout mechanism
 to detect stalled background tasks. The timeout MUST be enforced in code (not advisory): if the background notification
 does not arrive within **300 seconds** (5 minutes, supporting complex multi-phase analyses), the orchestrator MUST
@@ -186,7 +186,7 @@ fi
 ### Step 4a: Validate required fields
 
 Before invoking `record-learning`, validate that all of the following fields are present and non-null in the
-subagent JSON. If any field is missing, empty, or null, stop and display an error listing every missing field —
+agent JSON. If any field is missing, empty, or null, stop and display an error listing every missing field —
 do NOT proceed to Step 4b or 4c.
 
 Required fields (exhaustive — no others are treated as required):
@@ -262,10 +262,10 @@ Required fields (exhaustive — no others are treated as required):
 
 **Error display format:**
 ```
-ERROR: Subagent output is missing required fields. Learning NOT recorded.
+ERROR: Agent output is missing required fields. Learning NOT recorded.
 Missing/invalid fields: [list each missing or invalid field with reason]
-Resolution: Re-run the learn skill or inspect subagent output for fabricated values.
-Raw subagent output: {raw output}
+Resolution: Re-run the learn skill or inspect agent output for fabricated values.
+Raw agent output: {raw output}
 ```
 
 ### Step 4b: Verify prevention commit hash
@@ -275,7 +275,7 @@ Any failing check stops the process with the associated error — do NOT proceed
 
 **Check 1 — Hash exists in git:**
 ```bash
-COMMIT_HASH="{prevent.prevention_commit_hash from subagent JSON}"
+COMMIT_HASH="{prevent.prevention_commit_hash from agent JSON}"
 # Validate hash is hexadecimal (7-64 chars) before passing to git — prevents shell metacharacter injection
 if ! [[ "$COMMIT_HASH" =~ ^[0-9a-fA-F]{7,64}$ ]]; then
   echo "ERROR: prevention_commit_hash '${COMMIT_HASH}' is not a valid hex hash. Learning NOT recorded."
@@ -283,12 +283,12 @@ if ! [[ "$COMMIT_HASH" =~ ^[0-9a-fA-F]{7,64}$ ]]; then
 fi
 if ! git cat-file -e "${COMMIT_HASH}^{commit}" 2>/dev/null; then
   echo "ERROR: prevention_commit_hash '${COMMIT_HASH}' does not exist in git. Learning NOT recorded."
-  echo "The subagent may have fabricated a commit hash. Verify prevention was actually committed."
+  echo "The agent may have fabricated a commit hash. Verify prevention was actually committed."
   exit 1
 fi
 ```
 
-**Check 2 — Commit timestamp is after subagent spawn AND is on current branch:**
+**Check 2 — Commit timestamp is after agent spawn AND is on current branch:**
 Use the `SPAWN_EPOCH` value recorded in Step 3 immediately before the Task tool call. Commit timestamp MUST be
 strictly greater than spawn_epoch. Additionally, the commit MUST be reachable from HEAD (not a commit from a different branch reused in cross-session attack).
 
@@ -301,8 +301,8 @@ if ! [[ "$COMMIT_TIME" =~ ^[0-9]+$ ]]; then
 fi
 # Use strictly greater than (not >=) to prevent same-second timestamp exploits
 if [[ "$COMMIT_TIME" -le "$SPAWN_EPOCH" ]]; then
-  echo "ERROR: prevention_commit_hash '${COMMIT_HASH}' does not postdate subagent spawn (commit: ${COMMIT_TIME}, spawn: ${SPAWN_EPOCH})."
-  echo "Commit timestamp must be strictly greater than spawn time. The subagent may have reused a pre-existing commit or exploited second-level granularity."
+  echo "ERROR: prevention_commit_hash '${COMMIT_HASH}' does not postdate agent spawn (commit: ${COMMIT_TIME}, spawn: ${SPAWN_EPOCH})."
+  echo "Commit timestamp must be strictly greater than spawn time. The agent may have reused a pre-existing commit or exploited second-level granularity."
   exit 1
 fi
 # Verify commit is a descendant of current HEAD (not a pre-existing commit from another branch)
@@ -318,7 +318,7 @@ fi
 `prevention_path` is guaranteed non-empty here (validated in Step 4a when `prevention_commit_hash` is non-null).
 
 ```bash
-PREVENTION_PATH="{prevent.prevention_path from subagent JSON}"
+PREVENTION_PATH="{prevent.prevention_path from agent JSON}"
 # Strict validation: path must not contain "..", symlinks, or escapes (reject before normalization)
 if [[ "$PREVENTION_PATH" == *..* ]] || [[ "$PREVENTION_PATH" =~ \$\{ ]]; then
   echo "ERROR: prevention_path contains invalid patterns (.. or variable reference): '${PREVENTION_PATH}'. Learning NOT recorded."
@@ -378,7 +378,7 @@ if ! echo "$CHANGED_FILES" | grep -qxF "$RELATIVE_PATH"; then
 fi
 
 # ADDITIONAL: Verify the change to prevention_path includes non-comment code changes
-# This prevents subagents from claiming credit for documentation-only or comment-only changes
+# This prevents agents from claiming credit for documentation-only or comment-only changes
 # Extract only the diff content lines (lines prefixed with + or -)
 CHANGE_DIFF=$(git show "${COMMIT_HASH}" -- "$RELATIVE_PATH" 2>/dev/null || echo "")
 if [[ -z "$CHANGE_DIFF" ]]; then
@@ -443,7 +443,7 @@ Use explicit machine-enforced checks. The orchestrator MUST parse JSON with `jq`
 this gate because it can misclassify empty arrays, non-arrays, or malformed JSON-like text.
 
 ```bash
-# PHASE_JSON_FILE contains the complete parsed Phase 3 JSON object from the subagent output
+# PHASE_JSON_FILE contains the complete parsed Phase 3 JSON object from the agent output
 if ! jq -e '
   .prevent.prevention_rules
   | type == "array"
@@ -533,32 +533,32 @@ silently truncate the input. Using a variable protects against both heredoc inje
 **IMPORTANT:** The `PHASE3_JSON` variable MUST be assigned using double-quoted syntax (`PHASE3_JSON="..."`) to prevent
 word splitting and glob expansion. Never use `eval`, backtick substitution, or unquoted assignment with this value.
 
-**Phase 3 subagent failure handling:** If the Phase 3 subagent returns an error, empty output, or output
-that cannot be parsed as JSON, the correct action is to RETRY the Phase 3 subagent (go back to Step 3).
+**Phase 3 agent failure handling:** If the Phase 3 agent returns an error, empty output, or output
+that cannot be parsed as JSON, the correct action is to RETRY the Phase 3 agent (go back to Step 3).
 Do NOT attempt to call `record-learning` directly with manually constructed or partial data — this bypasses
 the three-phase analysis and produces incomplete learning records.
 
 ```bash
-# Extract ONLY the .prevent object from the combined subagent JSON output.
-# The subagent returns a combined JSON with top-level keys: phases_executed, phase_summaries,
+# Extract ONLY the .prevent object from the combined agent JSON output.
+# The agent returns a combined JSON with top-level keys: phases_executed, phase_summaries,
 # investigate, analyze, prevent. The record-learning CLI expects the FLAT .prevent object
 # (containing category, description, root_cause, prevention_type at the top level),
 # NOT the full combined JSON (which nests these fields inside the "prevent" key).
 #
 # WRONG: PHASE3_JSON="$FULL_SUBAGENT_JSON"  — fields are nested, record-learning reads empty strings
-# RIGHT: PHASE3_JSON="<the value of the 'prevent' key from the subagent JSON>"
+# RIGHT: PHASE3_JSON="<the value of the 'prevent' key from the agent JSON>"
 # MUST use double-quoted assignment: PHASE3_JSON="..." — unquoted or eval'd assignment risks injection
-PHASE3_JSON="{value of the 'prevent' key extracted from the combined subagent JSON}"
+PHASE3_JSON="{value of the 'prevent' key extracted from the combined agent JSON}"
 
 # Pre-check: verify record-learning input fields are non-empty before invocation.
 # These are the fields record-learning reads from the top level of PHASE3_JSON.
-# If any are empty, the subagent output was likely passed as the full combined JSON
+# If any are empty, the agent output was likely passed as the full combined JSON
 # instead of just the .prevent key, or the prevent phase produced incomplete output.
 for FIELD in category description root_cause prevention_type; do
   FIELD_VALUE=$(printf '%s' "$PHASE3_JSON" | grep -o "\"${FIELD}\"[[:space:]]*:[[:space:]]*\"[^\"]*\"" | sed "s/.*\"${FIELD}\"[[:space:]]*:[[:space:]]*\"\([^\"]*\)\".*/\1/")
   if [[ -z "$FIELD_VALUE" ]]; then
-    echo "ERROR: PHASE3_JSON is missing or has empty '${FIELD}' field. This usually means the full combined subagent JSON was passed instead of just the .prevent key. Learning NOT recorded."
-    echo "Expected: PHASE3_JSON should contain the value of the 'prevent' key from the subagent output."
+    echo "ERROR: PHASE3_JSON is missing or has empty '${FIELD}' field. This usually means the full combined agent JSON was passed instead of just the .prevent key. Learning NOT recorded."
+    echo "Expected: PHASE3_JSON should contain the value of the 'prevent' key from the agent output."
     echo "Got PHASE3_JSON (first 500 chars): $(printf '%s' "$PHASE3_JSON" | head -c 500)"
     exit 1
   fi
@@ -609,7 +609,7 @@ Capture this as the Phase 4 result and proceed to Step 5.
 | Commit hash not valid hex format (Step 4b Check 1) | `ERROR: prevention_commit_hash '{hash}' is not a valid hex hash. Learning NOT recorded.`, stop |
 | Commit hash not found in git (Step 4b Check 1) | `ERROR: prevention_commit_hash '{hash}' does not exist in git. Learning NOT recorded.` + verification guidance, stop |
 | Commit timestamp not numeric (Step 4b Check 2) | `ERROR: Could not retrieve commit timestamp for '{hash}'. Learning NOT recorded.`, stop |
-| Commit predates or equals subagent spawn (Step 4b Check 2) | `ERROR: prevention_commit_hash '{hash}' does not strictly postdate subagent spawn (commit: {time}, spawn: {spawn}). Learning NOT recorded.` + guidance, stop |
+| Commit predates or equals agent spawn (Step 4b Check 2) | `ERROR: prevention_commit_hash '{hash}' does not strictly postdate agent spawn (commit: {time}, spawn: {spawn}). Learning NOT recorded.` + guidance, stop |
 | Commit not descendant of HEAD (Step 4b Check 2) | `ERROR: prevention_commit_hash '{hash}' is not a descendant of current HEAD. This may indicate a reused commit from another branch. Learning NOT recorded.`, stop |
 | Prevention path contains unsafe characters or invalid patterns (Step 4b Check 3) | `ERROR: prevention_path contains invalid characters, directory traversal, or empty value: '{path}'. Learning NOT recorded.`, stop |
 | Prevention path resolves outside git root (Step 4b Check 3) | `ERROR: prevention_path resolves outside git root: '{resolved_path}'. Learning NOT recorded.`, stop |
@@ -642,7 +642,7 @@ Learning {learning_id} recorded. {counter_status.count}/{counter_status.threshol
 
 | Condition | Action |
 |-----------|--------|
-| Subagent returns no JSON | `ERROR: Subagent returned no JSON output. Learning NOT recorded.` + raw output + resolution guidance, stop |
+| Agent returns no JSON | `ERROR: Agent returned no JSON output. Learning NOT recorded.` + raw output + resolution guidance, stop |
 | Phase status is ERROR | `ERROR: Phase '{phase}' reported an error: {error message}. Learning NOT recorded.`, stop |
 
 *Note: JSON validation errors (missing fields, invalid values) are handled in the Step 4 error table above.*
@@ -652,7 +652,7 @@ Learning {learning_id} recorded. {counter_status.count}/{counter_status.threshol
 **MANDATORY when `prevent.prevention_implemented` is false. Skip this step entirely if
 `prevent.prevention_implemented` is true.**
 
-When `prevention_implemented` is false, the subagent could not commit prevention because the current branch is
+When `prevention_implemented` is false, the agent could not commit prevention because the current branch is
 protected. A follow-up issue must be created so the prevention is not lost.
 
 1. **Validate `issue_creation_info` before proceeding (MANDATORY enforcement).** Verify that:
@@ -787,7 +787,7 @@ Key anti-patterns to avoid:
 
 ## Error Handling
 
-If any phase subagent fails unexpectedly:
+If any phase agent fails unexpectedly:
 
 1. Capture error message
 2. Display error to user with phase context

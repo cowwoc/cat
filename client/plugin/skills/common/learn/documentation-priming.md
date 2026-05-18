@@ -16,7 +16,7 @@ misleading content.
 ## When to Use
 
 Include this analysis when:
-- Subagent bypassed a skill and did manual work instead
+- Agent bypassed a skill and did manual work instead
 - Agent claimed results without proper validation
 - Agent applied "principles" instead of invoking required tools
 - Pattern matches M256 (misleading documentation) or M269 (score fabrication)
@@ -34,7 +34,7 @@ SESSION_ANALYZER="${CAT_PLUGIN_ROOT}/client/bin/session-analyzer"
 "$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" search "$SESSION_ID" "Read|Skill|Task|apply_patch|exec_command" \
   --regex --context 3
 
-# Get a full session overview, including runtime-supported subagent discovery
+# Get a full session overview, including runtime-supported agent discovery
 "$SESSION_ANALYZER" --runtime "${CAT_RUNTIME}" analyze "$SESSION_ID"
 ```
 
@@ -72,7 +72,7 @@ priming_sequence:
   step_1: "Agent reads {skill}.md"
   step_2: "Agent sees detailed compression algorithm in 'Agent Prompt Template' section"
   step_3: "Agent learns what to preserve, what to remove, target reduction"
-  step_4: "Agent invokes skill for 2 files, sees it's expensive (spawns subagents)"
+  step_4: "Agent invokes skill for 2 files, sees it's expensive (spawns agents)"
   step_5: "Context pressure builds, agent decides to apply learned principles directly"
   step_6: "Agent skips skill invocation, fabricates validation scores"
 
@@ -125,7 +125,7 @@ Step 2: Verify postcondition (score = 1.0)
 
 ```markdown
 ## Note
-Running a validation tool may spawn multiple subagents for parallel processing.
+Running a validation tool may spawn multiple agents for parallel processing.
 For batch operations, consider the resource impact.
 ```
 
@@ -168,7 +168,7 @@ Navigate to the worktree and verify the branch before running any commands.
 
 ## Prevention Principle
 
-**Encapsulation**: Information needed only by internal subagents should not appear
+**Encapsulation**: Information needed only by internal agents should not appear
 in documents that external/orchestrating agents read.
 
 ```

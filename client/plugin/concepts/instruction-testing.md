@@ -37,7 +37,7 @@ Presence and absence checks for skill files are allowed when they validate packa
 ## Eval Set Format
 
 An eval set is a JSON object with a `version` field and a `test_cases` array. Each test case defines the prompt to
-send to the subagent and the assertions to evaluate against the output.
+send to the agent and the assertions to evaluate against the output.
 
 ```json
 {
@@ -113,14 +113,14 @@ send to the subagent and the assertions to evaluate against the output.
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `test_case_id` | string | required | Unique identifier for this test case (used in grading output and test JSON) |
-| `prompt` | string | required | The user prompt sent to the subagent under test |
+| `prompt` | string | required | The user prompt sent to the agent under test |
 | `assertions` | array | required | Array of assertion objects |
 | `category` | string | optional | Test case category, e.g., `requirement`, `prohibition`, `sequence`, `conditional` |
 | `priming_messages` | array | optional | Prior conversation turns to inject before the prompt |
 
 ### priming_messages
 
-`priming_messages` is an optional array of prior conversation turns prepended to the subagent context before the
+`priming_messages` is an optional array of prior conversation turns prepended to the agent context before the
 `prompt` is sent. Use it to test behavior that depends on conversation history.
 
 Each entry is an object with two fields:
@@ -319,9 +319,9 @@ human review step.
 
 ### Step 2: Spawn Parallel Runs (instruction-builder Step 10)
 
-For each test case, spawn **two subagents in the same turn** — one running with the `baseline`
+For each test case, spawn **two agents in the same turn** — one running with the `baseline`
 configuration (previous instruction version, or no instruction for the first iteration) and one
-with the `candidate` configuration (the new version being tested). Pass each subagent its prompt,
+with the `candidate` configuration (the new version being tested). Pass each agent its prompt,
 which instruction version to use, and instructions to record `duration_ms` and `total_tokens` on completion.
 
 Do not run test cases sequentially: all test cases for all configs must be in flight simultaneously

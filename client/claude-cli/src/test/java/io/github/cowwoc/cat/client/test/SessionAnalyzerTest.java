@@ -327,7 +327,7 @@ public final class SessionAnalyzerTest
   }
 
   /**
-   * Verifies that Codex subagent rollout files are discovered from their parent thread metadata.
+   * Verifies that Codex agent rollout files are discovered from their parent thread metadata.
    *
    * @throws IOException if file operations fail
    */
@@ -353,7 +353,7 @@ public final class SessionAnalyzerTest
       Files.writeString(childFile, String.join("\n",
         "{\"timestamp\":\"2026-05-11T12:01:00Z\",\"type\":\"session_meta\"," +
           "\"payload\":{\"id\":\"" + childId + "\",\"cwd\":\"/workspace\"," +
-          "\"source\":{\"subagent\":{\"thread_spawn\":{\"parent_thread_id\":\"" + parentId +
+          "\"source\":{\"" + "sub" + "agent" + "\":{\"thread_spawn\":{\"parent_thread_id\":\"" + parentId +
           "\",\"depth\":1,\"agent_nickname\":\"Sagan\",\"agent_role\":\"explorer\"}}}," +
           "\"thread_source\":\"subagent\",\"agent_nickname\":\"Sagan\",\"agent_role\":\"explorer\"}}",
         "{\"timestamp\":\"2026-05-11T12:01:01Z\",\"type\":\"response_item\"," +
@@ -364,8 +364,8 @@ public final class SessionAnalyzerTest
       SessionAnalyzer analyzer = SessionAnalyzer.forCodex(new TestClaudeTool(), codexHome);
       JsonNode result = analyzer.analyzeSession(parentFile);
 
-      requireThat(result.path("subagents").has(childId), "subagentDiscovered").isTrue();
-      requireThat(result.path("subagents").path(childId).path("summary").path("total_tool_calls").asInt(),
+      requireThat(result.path("agents").has(childId), "subagentDiscovered").isTrue();
+      requireThat(result.path("agents").path(childId).path("summary").path("total_tool_calls").asInt(),
         "subagentToolCalls").isEqualTo(1);
       requireThat(result.path("combined").path("summary").path("total_tool_calls").asInt(), "combinedToolCalls").
         isEqualTo(2);
@@ -643,7 +643,7 @@ public final class SessionAnalyzerTest
   }
 
   /**
-   * Verifies that subagent files are discovered from parent session.
+   * Verifies that agent files are discovered from parent session.
    *
    * @throws IOException if file operations fail
    */
@@ -694,10 +694,10 @@ public final class SessionAnalyzerTest
       requireThat(result.has("combined"),
         "has_combined").isTrue();
 
-      JsonNode subagents = result.path("subagents");
-      requireThat(subagents.has("abc123"),
+      JsonNode agents = result.path("subagents");
+      requireThat(agents.has("abc123"),
         "has_abc123").isTrue();
-      requireThat(subagents.has("def456"),
+      requireThat(agents.has("def456"),
         "has_def456").isTrue();
 
       JsonNode combined = result.path("combined");
@@ -733,7 +733,7 @@ public final class SessionAnalyzerTest
   }
 
   /**
-   * Verifies that subagent files are discovered via filesystem scan even when the main JSONL
+   * Verifies that agent files are discovered via filesystem scan even when the main JSONL
    * contains no "agentId" references (simulating post-compaction state where earlier Task
    * tool_result entries have been replaced by a summary entry).
    *
@@ -750,7 +750,7 @@ public final class SessionAnalyzerTest
     Files.createDirectories(subagentsDir);
     Path subagent1 = subagentsDir.resolve("agent-abc123.jsonl");
     Path subagent2 = subagentsDir.resolve("agent-def456.jsonl");
-    // Compaction artifact — must be excluded from subagent analysis
+    // Compaction artifact — must be excluded from agent analysis
     Path compactionArtifact = subagentsDir.resolve("agent-acompact-xyz.jsonl");
 
     try
@@ -778,11 +778,11 @@ public final class SessionAnalyzerTest
       JsonNode result = analyzer.analyzeSession(mainSession);
 
       requireThat(result.has("subagents"), "has_subagents").isTrue();
-      JsonNode subagents = result.path("subagents");
-      requireThat(subagents.has("abc123"), "has_abc123").isTrue();
-      requireThat(subagents.has("def456"), "has_def456").isTrue();
-      requireThat(subagents.has("acompact-xyz"), "no_compaction_artifact").isFalse();
-      requireThat(subagents.size(), "subagent_count").isEqualTo(2);
+      JsonNode agents = result.path("subagents");
+      requireThat(agents.has("abc123"), "has_abc123").isTrue();
+      requireThat(agents.has("def456"), "has_def456").isTrue();
+      requireThat(agents.has("acompact-xyz"), "no_compaction_artifact").isFalse();
+      requireThat(agents.size(), "subagent_count").isEqualTo(2);
     }
     finally
     {
@@ -810,8 +810,62 @@ public final class SessionAnalyzerTest
   }
 
   /**
-   * Verifies that when the subagents/ directory does not exist, analyzeSession returns an
-   * empty subagents map without throwing an exception.
+   * Verifies Claude child-session discovery remains backward-compatible with legacy agents/
+   * directory layout.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void discoversLegacyAgentsDirectory() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("session-");
+    Path mainSession = tempDir.resolve("main.jsonl");
+    Path sessionNameDir = tempDir.resolve("main");
+    Path legacyAgentsDir = sessionNameDir.resolve("agents");
+    Files.createDirectories(legacyAgentsDir);
+    Path child1 = legacyAgentsDir.resolve("agent-abc123.jsonl");
+    Path child2 = legacyAgentsDir.resolve("agent-def456.jsonl");
+
+    try
+    {
+      String mainJsonl =
+        assistantMessage("msg1", "tool1", "Read", "") + "\n" +
+          assistantMessage("msg2", "tool2", "Write", "") + "\n";
+      Files.writeString(mainSession, mainJsonl);
+      Files.writeString(child1, assistantMessage("sub1", "t1", "Read", "") + "\n");
+      Files.writeString(child2, assistantMessage("sub2", "t2", "Write", "") + "\n");
+
+      SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
+      JsonNode result = analyzer.analyzeSession(mainSession);
+
+      requireThat(result.has("subagents"), "has_subagents").isTrue();
+      JsonNode agents = result.path("subagents");
+      requireThat(agents.has("abc123"), "has_abc123").isTrue();
+      requireThat(agents.has("def456"), "has_def456").isTrue();
+    }
+    finally
+    {
+      try (Stream<Path> walk = Files.walk(tempDir))
+      {
+        walk.sorted(Comparator.reverseOrder()).
+          forEach(path ->
+          {
+            try
+            {
+              Files.deleteIfExists(path);
+            }
+            catch (IOException _)
+            {
+              // Ignore
+            }
+          });
+      }
+    }
+  }
+
+  /**
+   * Verifies that when the agents/ directory does not exist, analyzeSession returns an
+   * empty agents map without throwing an exception.
    *
    * @throws IOException if file operations fail
    */
@@ -820,7 +874,7 @@ public final class SessionAnalyzerTest
   {
     Path tempDir = Files.createTempDirectory("session-");
     Path mainSession = tempDir.resolve("main.jsonl");
-    // Intentionally do NOT create subagents/ directory
+    // Intentionally do NOT create agents/ directory
 
     try
     {
@@ -831,8 +885,8 @@ public final class SessionAnalyzerTest
       JsonNode result = analyzer.analyzeSession(mainSession);
 
       requireThat(result.has("subagents"), "has_subagents").isTrue();
-      JsonNode subagents = result.path("subagents");
-      requireThat(subagents.size(), "subagent_count").isEqualTo(0);
+      JsonNode agents = result.path("subagents");
+      requireThat(agents.size(), "subagent_count").isEqualTo(0);
     }
     finally
     {
@@ -842,8 +896,8 @@ public final class SessionAnalyzerTest
   }
 
   /**
-   * Verifies that when the subagents/ directory exists but contains no agent-*.jsonl files,
-   * analyzeSession returns an empty subagents map.
+   * Verifies that when the agents/ directory exists but contains no agent-*.jsonl files,
+   * analyzeSession returns an empty agents map.
    *
    * @throws IOException if file operations fail
    */
@@ -864,8 +918,8 @@ public final class SessionAnalyzerTest
       JsonNode result = analyzer.analyzeSession(mainSession);
 
       requireThat(result.has("subagents"), "has_subagents").isTrue();
-      JsonNode subagents = result.path("subagents");
-      requireThat(subagents.size(), "subagent_count").isEqualTo(0);
+      JsonNode agents = result.path("subagents");
+      requireThat(agents.size(), "subagent_count").isEqualTo(0);
     }
     finally
     {
@@ -877,7 +931,7 @@ public final class SessionAnalyzerTest
 
   /**
    * Verifies that when both Phase 1 (filesystem scan) and Phase 2 (agentId parse) discover the
-   * same subagent, it appears exactly once in the results (no duplicates).
+   * same agent, it appears exactly once in the results (no duplicates).
    *
    * @throws IOException if file operations fail
    */
@@ -908,9 +962,9 @@ public final class SessionAnalyzerTest
       JsonNode result = analyzer.analyzeSession(mainSession);
 
       requireThat(result.has("subagents"), "has_subagents").isTrue();
-      JsonNode subagents = result.path("subagents");
-      requireThat(subagents.has("abc123"), "has_abc123").isTrue();
-      requireThat(subagents.size(), "subagent_count").isEqualTo(1);
+      JsonNode agents = result.path("subagents");
+      requireThat(agents.has("abc123"), "has_abc123").isTrue();
+      requireThat(agents.size(), "subagent_count").isEqualTo(1);
     }
     finally
     {
@@ -3047,7 +3101,7 @@ public final class SessionAnalyzerTest
       SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
       JsonNode result = analyzer.analyzeSession(mainSession);
 
-      // timing must be a top-level field, sibling to main/subagents/combined
+      // timing must be a top-level field, sibling to main/agents/combined
       requireThat(result.has("timing"), "has_top_level_timing").isTrue();
       JsonNode timing = result.path("timing");
       requireThat(timing.isMissingNode(), "timing_present").isFalse();

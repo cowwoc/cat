@@ -55,36 +55,36 @@ cost.
 
 A **delegation opportunity** exists when the skill procedure contains one or more steps that perform
 tool calls (Read, Grep, Bash, Glob, Write, Edit) without requiring main-agent decision-making.
-These steps load data onto the main agent's context that a subagent could obtain independently.
+These steps load data onto the main agent's context that an agent could obtain independently.
 
 **Detection rule:** When `skill_text_path` is provided, scan the procedure steps for:
 - Sequential Read/Grep/Bash/Glob calls that gather information used only in the next step
-- Steps that explicitly say "read file X, then pass to subagent" or equivalent
-- Any step that runs 3+ tool calls before spawning a Task subagent
+- Steps that explicitly say "read file X, then pass to agent" or equivalent
+- Any step that runs 3+ tool calls before spawning a Task agent
 
 Flag as delegation opportunity if any of the above are found. Reference
-`plugin/concepts/subagent-context-minimization.md` for when delegation is appropriate.
+`plugin/concepts/agent-context-minimization.md` for when delegation is appropriate.
 
 **Skip this check** if `skill_text_path` is absent from the inputs.
 
 ### Content Relay Anti-Pattern
 
 A **content relay anti-pattern** exists when the skill procedure instructs the main agent to read
-file content and then include that content verbatim in a subagent prompt, rather than passing the
-file path and letting the subagent load the content itself.
+file content and then include that content verbatim in an agent prompt, rather than passing the
+file path and letting the agent load the content itself.
 
 **Detection rule:** When `skill_text_path` is provided, scan the procedure steps for:
 - A Read/Grep/Bash call immediately followed (within 1-2 steps) by a Task tool invocation where the
   prompt template includes the variable populated by that read (e.g., `{FILE_CONTENT}`, `{DIFF_OUTPUT}`,
   `{TEST_RESULTS}`)
-- Explicit instructions like "read X and include in the subagent prompt"
+- Explicit instructions like "read X and include in the agent prompt"
 - Prompt templates that embed full file content rather than file paths
 
 Flag as content relay anti-pattern if any of the above are found. Reference
-`plugin/concepts/subagent-context-minimization.md` for the correct pattern.
+`plugin/concepts/agent-context-minimization.md` for the correct pattern.
 
 **Exception:** If the step comment or surrounding text indicates the main agent needed the content for
-its own decision-making before passing it to the subagent, do NOT flag it as an anti-pattern.
+its own decision-making before passing it to the agent, do NOT flag it as an anti-pattern.
 
 **Skip this check** if `skill_text_path` is absent from the inputs.
 
@@ -192,16 +192,16 @@ Delegation Opportunities:
   [Skipped (no skill_text_path provided)]
   [or: NONE FOUND]
   [or: FOUND in steps: <step numbers and brief descriptions>
-   Recommendation: Consider delegating these steps to a subagent. See
-   plugin/concepts/subagent-context-minimization.md for delegation criteria.]
+   Recommendation: Consider delegating these steps to an agent. See
+   plugin/concepts/agent-context-minimization.md for delegation criteria.]
 
 Content Relay Anti-Patterns:
   [Skipped (no skill_text_path provided)]
   [or: NONE FOUND]
   [or: FOUND:
-   - Step N: variable {VAR_NAME} populated by <tool> and relayed to subagent prompt.
+   - Step N: variable {VAR_NAME} populated by <tool> and relayed to agent prompt.
      Fix: pass file path or task description instead of file content.
-     See plugin/concepts/subagent-context-minimization.md for the correct pattern.]
+     See plugin/concepts/agent-context-minimization.md for the correct pattern.]
 
 Recommendations:
   - <actionable recommendation for each pattern found, or "No issues found">
@@ -215,10 +215,10 @@ Recommendations:
   why the eval is non-deterministic (e.g., model sampling, external state).
 - **Time/token tradeoff**: Summarize the tradeoff quantitatively and note that the extra cost may be
   justified by the pass rate improvement; recommend the user decide based on their latency/quality budget.
-- **Delegation opportunity**: List the steps by number and suggest wrapping them in a subagent Task call.
-  Reference `plugin/concepts/subagent-context-minimization.md` for the decision table.
+- **Delegation opportunity**: List the steps by number and suggest wrapping them in an agent Task call.
+  Reference `plugin/concepts/agent-context-minimization.md` for the decision table.
 - **Content relay anti-pattern**: Name each relayed variable and its source tool call. Recommend passing
-  the file path or search term instead. Reference `plugin/concepts/subagent-context-minimization.md`.
+  the file path or search term instead. Reference `plugin/concepts/agent-context-minimization.md`.
 
 After producing the analysis report text:
 
@@ -260,4 +260,4 @@ After producing the analysis report text:
 - [ ] Delegation opportunity check runs when `skill_text_path` is provided; skipped when absent
 - [ ] Content relay anti-pattern check runs when `skill_text_path` is provided; skipped when absent
 - [ ] Both new patterns produce actionable recommendations referencing
-  `plugin/concepts/subagent-context-minimization.md`
+  `plugin/concepts/agent-context-minimization.md`

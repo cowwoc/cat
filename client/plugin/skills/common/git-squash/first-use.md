@@ -319,7 +319,7 @@ rm -rf "$SQUASH_TMPDIR"
 
 ### Delegate Complex Squash Operations
 
-**MANDATORY: Delegate complex squash operations to a subagent.**
+**MANDATORY: Delegate complex squash operations to an agent.**
 
 Complex squash operations include:
 - Squashing by topic when commits are interleaved (different topics mixed together)

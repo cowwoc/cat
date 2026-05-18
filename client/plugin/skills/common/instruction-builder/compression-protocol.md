@@ -5,7 +5,7 @@ See LICENSE.md in the project root for license terms.
 -->
 # Compression Protocol
 
-**Reference document** — Used by the compression subagent spawned during instruction-builder's compression phase.
+**Reference document** — Used by the compression agent spawned during instruction-builder's compression phase.
 
 ---
 

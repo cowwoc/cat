@@ -10,14 +10,14 @@ See LICENSE.md in the project root for license terms.
 ## When to Load
 
 Load this workflow when:
-- Subagent reports **compaction events > 0**
+- Agent reports **compaction events > 0**
 - Token usage **exceeds targetContextUsage threshold**
 
 ## Compaction Event Warning (Critical)
 
 **If compaction events > 0:**
 
-Context compaction means the subagent's context window was exhausted and summarized
+Context compaction means the agent's context window was exhausted and summarized
 during execution. This indicates potential quality degradation.
 
 ### Display Warning
@@ -25,7 +25,7 @@ during execution. This indicates potential quality degradation.
 ```
 ⚠️ CONTEXT COMPACTION DETECTED
 
-The subagent experienced {N} compaction event(s). This indicates:
+The agent experienced {N} compaction event(s). This indicates:
 - Context window was exhausted during execution
 - Quality may have degraded as context was summarized
 - Remaining jobs should be split before spawning
@@ -63,7 +63,7 @@ Rollback changes and mark issue for manual review.
 ```
 📊 HIGH TOKEN USAGE: {N} tokens ({percentage}% of context)
 
-The subagent used significant context (threshold: 40%).
+The agent used significant context (threshold: 40%).
 Remaining jobs will be split before spawning to stay under the 40% budget.
 ```
 
@@ -78,10 +78,10 @@ This split happens automatically — no user prompt is needed.
 
 ## Token Metrics Reporting (Mandatory)
 
-**ALWAYS report token metrics after subagent completion:**
+**ALWAYS report token metrics after agent completion:**
 
 ```
-## Subagent Execution Report
+## Agent Execution Report
 
 **Issue:** {issue-name}
 **Status:** {success|partial|failed}
@@ -98,7 +98,7 @@ This split happens automatically — no user prompt is needed.
 - Lines: +{added} / -{removed}
 ```
 
-**Why this metric:** The `totalTokens` from `toolUseResult` represents actual context the subagent
+**Why this metric:** The `totalTokens` from `toolUseResult` represents actual context the agent
 processed during execution. This is different from cumulative API tokens (`input_tokens +
 output_tokens` from message.usage) which only shows response overhead.
 

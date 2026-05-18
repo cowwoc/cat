@@ -274,7 +274,7 @@ public final class ClaudeRunner implements AutoCloseable
     env.remove("LD_PRELOAD");
     env.remove("LD_LIBRARY_PATH");
     env.remove("JAVA_TOOL_OPTIONS");
-    // Override CLAUDE_PROJECT_DIR so the Claude Code process and its subagents resolve relative
+    // Override CLAUDE_PROJECT_DIR so the Claude Code process and its agents resolve relative
     // file paths against the runner worktree, not the main workspace.
     env.put("CLAUDE_PROJECT_DIR", cwd.toAbsolutePath().toString());
 

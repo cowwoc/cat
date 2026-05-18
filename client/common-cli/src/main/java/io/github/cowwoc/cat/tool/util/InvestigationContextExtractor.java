@@ -34,7 +34,7 @@ import java.util.Map;
  * Extracts investigation context from a Claude session JSONL file for the learn skill.
  * <p>
  * Extracts all tool calls relevant to mistake investigation, eliminating the need for the
- * investigation subagent to re-parse the session file.
+ * investigation agent to re-parse the session file.
  * <p>
  * The extractor collects documents read (Read/Glob tools), skill invocations (Skill tool),
  * and Bash commands with optional keyword filtering. Tool results are correlated with Bash

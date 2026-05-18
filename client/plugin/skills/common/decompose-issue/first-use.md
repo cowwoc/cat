@@ -78,7 +78,7 @@ cat "${ISSUE_DIR}/plan.md"
 # Read index.json for progress
 cat "${ISSUE_DIR}/index.json"
 
-# If subagent exists, check its progress
+# If agent exists, check its progress
 source "${CAT_PLUGIN_ROOT}/scripts/cat-env.sh"
 if [ -d "${WORKTREES_DIR}/${ISSUE}-sub-${UUID}" ]; then
   # Review commits made
@@ -202,7 +202,7 @@ Original issue index.json:
 - 1.2-parser-semantic
 
 ## Progress Preserved
-- Lexer implementation 80% complete in subagent work
+- Lexer implementation 80% complete in agent work
 - Will be merged to 1.2-parser-lexer branch
 ```
 
@@ -217,20 +217,20 @@ New issue index.json:
 - **Status:** open
 - **Progress:** 0%
 - **Created From:** 1.2-implement-parser
-- **Inherits Progress:** true (will receive merge from parent subagent)
+- **Inherits Progress:** true (will receive merge from parent agent)
 - **Dependencies:** []
 ```
 
-### 7. Handle Existing Subagent Work
+### 7. Handle Existing Agent Work
 
 ```bash
-# Collect partial results from subagent
+# Collect partial results from agent
 collect-results "${SUBAGENT_ID}"
 
 # Determine which new issue inherits the work
 # Usually the first or most complete component
 
-# Merge subagent work to appropriate new issue branch
+# Merge agent work to appropriate new issue branch
 git checkout "1.2-parser-lexer"
 git merge "${SUBAGENT_BRANCH}" -m "Inherit partial progress from decomposed parent"
 ```
@@ -272,10 +272,10 @@ parallel_execution_plan:
     reason: "Depends on 1.2-parser-lexer output from Group 1"
 
 execution_order:
-  1. Spawn subagents for group_1 issues (parallel)
+  1. Spawn agents for group_1 issues (parallel)
   2. Monitor and collect group_1 results
   3. Merge group_1 branches
-  4. Spawn subagents for group_2 issues (parallel, only if dependencies exist)
+  4. Spawn agents for group_2 issues (parallel, only if dependencies exist)
   5. Monitor and collect group_2 results
   6. Merge group_2 branches
 ```
@@ -297,7 +297,7 @@ execution_order:
 | 1.2-parser-ast | 30K | 1.2-parser-lexer |
 
 **Total sub-issues:** 3
-**Max concurrent subagents:** 2 (in agent 1)
+**Max concurrent agents:** 2 (in agent 1)
 ```
 
 **Conflict detection for parallel issues:**
@@ -390,7 +390,7 @@ decomposition_trigger:
 
 decomposition_result:
   - issue: 1.3-formatter-core
-    inherits: subagent work
+    inherits: agent work
     status: nearly_complete
   - issue: 1.3-formatter-wrapping
     status: ready
@@ -400,13 +400,13 @@ decomposition_result:
 
 ### Emergency Decomposition
 
-When subagent is stuck or confused:
+When agent is stuck or confused:
 
 ```yaml
 emergency_decomposition:
-  trigger: "Subagent making no progress for 30+ minutes"
+  trigger: "Agent making no progress for 30+ minutes"
   analysis: |
-    Issue scope unclear, subagent attempting multiple
+    Issue scope unclear, agent attempting multiple
     approaches without success.
 
   action:
@@ -449,7 +449,7 @@ emergency_decomposition:
 ```yaml
 # ❌ Starting fresh after decomposition
 decompose_issue "1.2-parser"
-# Subagent work discarded!
+# Agent work discarded!
 
 # ✅ Preserve progress
 collect_results "${SUBAGENT}"
@@ -519,5 +519,5 @@ sub-issues:
 ## Related Skills
 
 - `cat:collect-results` - Preserves progress before decomposition
-- `cat:spawn-subagent` - Launches work on decomposed issues
+- `cat:spawn-agent` - Launches work on decomposed issues
 - `cat:parallel-execute` - Can run independent sub-issues concurrently

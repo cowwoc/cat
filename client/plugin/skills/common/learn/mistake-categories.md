@@ -12,7 +12,7 @@ Reference for categorizing mistakes in `/cat:learn`.
 | Category | Description |
 |----------|-------------|
 | protocol_violation | Violated documented workflow, skill steps, or mandatory instructions |
-| prompt_engineering | Subagent prompt lacked necessary instructions or constraints |
+| prompt_engineering | Agent prompt lacked necessary instructions or constraints |
 | context_degradation | Quality degraded due to context window pressure or compaction |
 | tool_misuse | Used wrong tool, wrong flags, or misunderstood tool behavior |
 | assumption_without_verification | Claimed state without measurement or verification |

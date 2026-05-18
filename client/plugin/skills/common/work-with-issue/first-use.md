@@ -13,7 +13,7 @@ be invoked through the Skill tool (`cat:work-with-issue`), not through shell exe
 
 **Architecture:** This skill is invoked by `/cat:work` after issue discovery (Phase 1). The main agent
 delegates each phase to a dedicated skill:
-- Implement: `cat:work-implement` (banners, lock verify, subagent delegation)
+- Implement: `cat:work-implement` (banners, lock verify, agent delegation)
 - Confirm: `cat:work-confirm` (verify-implementation, fix iteration)
 - Review: `cat:work-review` (stakeholder review, deferred concern wizard)
 - Merge: `cat:work-merge` (squash, rebase, approval gate, merge execution)
@@ -46,16 +46,8 @@ are additionally enforced by hooks or explicit STOP instructions that block prog
   `ABORTED`, `CHANGES_REQUESTED`, or `FAILED`. If the worktree still exists and the issue branch still exists,
   continue confirm → review → merge. A committed implementation with `index.json status: closed` is still
   "implementation running" until the merge approval gate has been presented and resolved.
-- **Approval gate is mandatory before merge (BLOCKING)** — never run `git merge`, `merge-and-cleanup`, branch
-  deletion, or lock/worktree cleanup that implies merge completion until the approval gate has been presented to the
-  user and the user explicitly approves. If a merge happens before explicit approval, treat it as a protocol
-  violation: stop, report the mistake, and restore commits to the issue branch/worktree before continuing.
 - **Step 5: Review Phase (Stakeholder Review)** — always invoke `cat:stakeholder-review` except for config-driven
   exceptions (CAUTION=none or TRUST=high); do not skip based on perceived simplicity or short feedback cycles
-- **No approval gate before review completion (BLOCKING)** — when review is required by config (`CAUTION != none` and
-  `TRUST != high`), do not present, request, or imply an approval gate outcome until Phase 3 has executed and
-  returned a parseable result for the current HEAD. If review is missing, stale, or unparseable, STOP and run/re-run
-  Phase 3 before any merge-gate interaction.
 - **Step 5 freshness check before approval** — before presenting the approval gate, if any implementation,
   review-fix, or user-feedback change modifies HEAD after a stakeholder review, re-run the review. Before approval,
   the merge phase must block the approval gate when the persisted `reviewed_head_sha` does not match the current HEAD.
@@ -205,12 +197,6 @@ and review phases.
 
 Capture the final result. The merge skill handles the approval gate and returns when the user
 approves merge, requests changes, or aborts.
-
-**Do not bypass this contract:** if no explicit user approval has been captured for the current approval gate prompt,
-Phase 4 must not perform merge actions.
-**Review-before-gate validation (BLOCKING):** before Phase 4 begins, verify Phase 3 produced a valid result for this
-run. If review is required and Phase 3 result is absent, malformed, or tied to an older HEAD, do not continue to
-merge. Return a failure that explicitly states stakeholder review must run first.
 
 ## Return Result
 

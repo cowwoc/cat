@@ -77,13 +77,13 @@ If TRUST differs from config.json (or its effective default of "low" when absent
 **Config file is READ-ONLY during the review phase (MANDATORY):**
 
 `config.json` MUST NOT be modified at any point during the review phase (Steps 5–6 and all sub-steps). This
-constraint binds the review phase agent AND every subagent it spawns (planning subagents, implementation subagents,
-and any other agent invoked during Steps 5–6), regardless of what task the subagent believes it is performing.
+constraint binds the review phase agent AND every agent it spawns (planning agents, implementation agents,
+and any other agent invoked during Steps 5–6), regardless of what task the agent believes it is performing.
 This includes but is not limited to: `Bash` commands that write to it (e.g., `sed -i`, `echo >`, `tee`, `cat >`),
-`Edit` tool calls, `Write` tool calls, or any subagent that modifies it. The values of `trust`, `caution`,
+`Edit` tool calls, `Write` tool calls, or any agent that modifies it. The values of `trust`, `caution`,
 `minSeverity`, and `perfection` are read once at the start of the review phase and used as-is throughout. Any attempt
 to modify `config.json` during the review phase is a protocol violation — STOP immediately and report the
-violation. **There is no exception for "fixing code concerns" — config.json is off-limits to all subagents
+violation. **There is no exception for "fixing code concerns" — config.json is off-limits to all agents
 spawned during the review phase, for any reason.**
 
 **Read minSeverity from config:**
@@ -222,13 +222,13 @@ If `CURIOSITY == "low"`, output: "Review skipped (curiosity: low)" and return:
 ### Invoke Stakeholder Review
 
 **Proceed automatically without asking the user.** The review phase is a mandatory workflow step, not an optional
-operation. Do NOT ask for permission to run it, even though it spawns reviewer subagents. Asking for permission here
+operation. Do NOT ask for permission to run it, even though it spawns reviewer agents. Asking for permission here
 interrupts the workflow unnecessarily — the user already approved the workflow by invoking `/cat:work`.
 
 **If CURIOSITY == "high", invoke `cat:research` before running stakeholder review:**
 
 Invoke `cat:research` to survey the codebase for existing patterns relevant to this issue. Pass the research
-findings as additional context in the `DOMAIN_KNOWLEDGE` section when spawning stakeholder reviewer subagents. This
+findings as additional context in the `DOMAIN_KNOWLEDGE` section when spawning stakeholder reviewer agents. This
 allows reviewers to evaluate the implementation against established patterns in the broader codebase, not just the
 changed files.
 
@@ -240,7 +240,7 @@ Skill tool:
 
 Capture the research output and include it in the stakeholder reviewer prompts as additional domain knowledge context.
 
-**CRITICAL: Invoke stakeholder-review at main agent level** (do NOT delegate to subagent):
+**CRITICAL: Invoke stakeholder-review at main agent level** (do NOT delegate to agent):
 
 Encode commits in compact format: `hash:type,hash:type` (e.g., `abc123:bugfix,def456:test`).
 Build COMMITS_COMPACT from the execution result's commits array.
@@ -251,7 +251,7 @@ Skill tool:
   args: "${ISSUE_ID} ${WORKTREE_PATH} ${CAUTION} ${TARGET_BRANCH} ${COMMITS_COMPACT}"
 ```
 
-The stakeholder-review skill will spawn its own reviewer subagents and return aggregated results.
+The stakeholder-review skill will spawn its own reviewer agents and return aggregated results.
 
 ### Reviewer Completion Gate (MANDATORY)
 
@@ -275,7 +275,7 @@ work-with-issue. Release the lock:
 
 Then return FAILED status:
 ```json
-{"status": "FAILED", "message": "Reviewer completion gate failed: only ${reviewer_count} of ${total_stakeholder_count} reviewers returned results. All reviewer subagents must complete before the approval gate can be presented. Re-run /cat:work to retry."}
+{"status": "FAILED", "message": "Reviewer completion gate failed: only ${reviewer_count} of ${total_stakeholder_count} reviewers returned results. All reviewer agents must complete before the approval gate can be presented. Re-run /cat:work to retry."}
 ```
 
 ### Handle Review Result
@@ -358,6 +358,30 @@ Store `ALL_CONCERNS` for use in the auto-fix loop and the approval gate. Each co
 `severity`, `stakeholder`, `location`, `explanation`, `recommendation`, and optionally `detail_file`.
 Store `REVIEWED_BASE_SHA` and `REVIEWED_HEAD_SHA` for all downstream file-scope checks so the cost/benefit and
 auto-fix logic uses the same immutable diff that reviewers saw.
+
+**Stale-review guard (MANDATORY):** Immediately after parsing review metadata, compare
+`REVIEWED_HEAD_SHA` to the current issue-branch `HEAD`:
+
+```bash
+CURRENT_HEAD_SHA=$(cd "${WORKTREE_PATH}" && git rev-parse --verify "HEAD^{commit}") || {
+    echo "ERROR: Unable to resolve HEAD for stale-review guard." >&2
+    exit 1
+}
+if [[ "${REVIEWED_HEAD_SHA}" != "${CURRENT_HEAD_SHA}" ]]; then
+    echo "WARNING: Stakeholder review is stale (reviewed_head_sha=${REVIEWED_HEAD_SHA}, current_head=${CURRENT_HEAD_SHA}). Re-running review on latest HEAD." >&2
+    ALL_COMMITS_COMPACT=$(cd "${WORKTREE_PATH}" && git log --format='%h:%s' "${TARGET_BRANCH}..HEAD" | \
+        sed 's/:.*\(feature\|refactor\|bugfix\|test\|performance\|docs\|config\|planning\).*/:\1/' | \
+        tr '\n' ',' | sed 's/,$//')
+    # Re-run review once on current HEAD before continuing.
+    Skill tool:
+      skill: "cat:stakeholder-review"
+      args: "${ISSUE_ID} ${WORKTREE_PATH} ${CAUTION} ${TARGET_BRANCH} ${ALL_COMMITS_COMPACT}"
+    # Re-parse REVIEW_STATUS, ALL_CONCERNS, REVIEWED_BASE_SHA, REVIEWED_HEAD_SHA, CHANGED_FILE_COUNT here.
+fi
+```
+
+If `REVIEWED_HEAD_SHA` still does not match `CURRENT_HEAD_SHA` after this one automatic re-run, stop with an error:
+"ERROR: Stakeholder review metadata remains stale after retry."
 
 **Severity immutability (MANDATORY):** The `severity` field of each concern object is set by the stakeholder
 reviewer and MUST NOT be modified, re-interpreted, downgraded, or overridden at any point during the review phase.
@@ -456,15 +480,15 @@ assignments.
 
 **Auto-fix loop for concerns marked as FIX:**
 
-**Spawn fix subagents without asking the user during the auto-fix loop.** When stakeholder review returns
+**Spawn fix agents without asking the user during the auto-fix loop.** When stakeholder review returns
 REJECTED, always enter the re-work loop — CRITICAL concerns must be fixed before merge. When review returns
 CONCERNS_FOUND, concerns flow through the pipeline: `MIN_SEVERITY` filter (silently drops concerns strictly below
 threshold) → perfection cost/benefit matrix (marks each surviving concern as FIX or DEFER) → Concern Decision Gate
 (ALL trust levels: user confirms/modifies FIX/DEFER assignments via structured user-choice prompt). FIX-marked concerns enter
 the auto-fix loop. In all cases, do NOT present options to the user or ask what to do during the auto-fix loop
-itself — spawn fix subagents and continue.
+itself — spawn fix agents and continue.
 
-**CRITICAL: The auto-fix loop applies ONLY to spawning fix subagents. Step 6 (Deferred Concern
+**CRITICAL: The auto-fix loop applies ONLY to spawning fix agents. Step 6 (Deferred Concern
 Review) MUST still be executed after the loop completes.**
 
 **`AUTOFIX_ITERATION` is a single shared counter initialized exactly once to 0 before this loop begins and is
@@ -478,8 +502,8 @@ Initialize loop counter (once, before any looping): `AUTOFIX_ITERATION=0`
 
 **Priority ordering (MANDATORY):** The auto-fix loop MUST address CRITICAL concerns first, then HIGH, then
 MEDIUM, then LOW. When constructing `concerns_formatted` below, order concerns by severity (CRITICAL first).
-When spawning planning and fix subagents, the prompt MUST instruct them to address CRITICAL concerns BEFORE
-other severities. If any CRITICAL concern is in the FIX list, the subagent prompts MUST explicitly state:
+When spawning planning and fix agents, the prompt MUST instruct them to address CRITICAL concerns BEFORE
+other severities. If any CRITICAL concern is in the FIX list, the agent prompts MUST explicitly state:
 "CRITICAL concerns MUST be addressed first, before any other severity."
 
 1. Increment iteration counter: `AUTOFIX_ITERATION++`
@@ -503,7 +527,7 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
    paths using their `${WORKTREE_PATH}`). Include the path only if the file exists on disk. Omit concerns with no
    `detail_file` or a non-existent file — this is normal when a reviewer found no detailed concerns worth recording.
 
-3. Spawn a shared planning subagent to produce a per-concern fix plan:
+3. Spawn a shared planning agent to produce a per-concern fix plan:
    ```
    Task tool:
      description: "Plan per-concern fixes (iteration ${AUTOFIX_ITERATION})"
@@ -511,7 +535,7 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
      prompt: |
        Analyze the following stakeholder review concerns for issue ${ISSUE_ID} and produce a
        per-concern fix plan. Each concern MUST have a self-contained section with all information
-       a separate subagent would need to implement the fix without additional context.
+       a separate agent would need to implement the fix without additional context.
 
        ## Issue Configuration
        ISSUE_ID: ${ISSUE_ID}
@@ -550,22 +574,22 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
        [or: UNFIXABLE: [reason]]
    ```
 
-   After the planning subagent returns, read `${WORKTREE_PATH}/.cat/work/review-fix-plans.md` and store its
+   After the planning agent returns, read `${WORKTREE_PATH}/.cat/work/review-fix-plans.md` and store its
    contents as `fix_plan_from_planning_subagent` for use in step 4 (single-concern path) and step 6 scope
    isolation validation. If the file is missing or empty, treat this as a planning failure for the iteration.
 
-   **Fix plan validation (MANDATORY):** After receiving the planning subagent's output, verify that each
+   **Fix plan validation (MANDATORY):** After receiving the planning agent's output, verify that each
    FIX-marked concern has at least one actionable file change (a file path and a concrete modification).
    If the plan contains only observations, commentary, or states that a concern is "already addressed"
    without any code change, treat that concern as UNFIXABLE for this iteration: move it to
-   `DEFERRED_CONCERNS` and do NOT pass it to the implementation subagent(s). A fix plan that contains
+   `DEFERRED_CONCERNS` and do NOT pass it to the implementation agent(s). A fix plan that contains
    zero actionable changes across all concerns is treated as a complete planning failure — skip the
-   implementation subagent(s) for this iteration and decrement no concerns from the FIX list.
+   implementation agent(s) for this iteration and decrement no concerns from the FIX list.
 
    **Noop and partial-noop detection (MANDATORY):** Track two counters, both initialized to 0 before the loop:
    - `NOOP_ITERATIONS`: iterations that produce zero actionable changes (complete planning failures).
    - `PARTIAL_NOOP_ITERATIONS`: iterations where fewer than half of the FIX-marked concerns had at least one
-     concern fix subagent return SUCCESS. Specifically, if `successful_concern_count < ceil(total_fix_concerns / 2)`,
+     concern fix agent return SUCCESS. Specifically, if `successful_concern_count < ceil(total_fix_concerns / 2)`,
      the iteration is a partial noop. (A full noop is also counted as a partial noop.) Concerns retried
      sequentially that succeed count as successful. Concerns that fail both the parallel and sequential attempts
      count as non-successful.
@@ -575,27 +599,27 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
    UNFIXABLE concern has CRITICAL or HIGH severity, the return `status` MUST be `CONCERNS_FOUND`, not
    `REVIEW_PASSED`.
 
-   **CRITICAL and HIGH concerns CANNOT be marked as UNFIXABLE.** If the planning subagent declares a CRITICAL or HIGH
+   **CRITICAL and HIGH concerns CANNOT be marked as UNFIXABLE.** If the planning agent declares a CRITICAL or HIGH
    concern as UNFIXABLE, treat this as a planning failure for that concern: log a warning
-   (`"WARNING: Planning subagent declared [SEVERITY] concern '[description]' as UNFIXABLE — treating as planning failure."`)
+   (`"WARNING: Planning agent declared [SEVERITY] concern '[description]' as UNFIXABLE — treating as planning failure."`)
    and keep the concern in the FIX list for the next iteration. The concern is NOT moved to `DEFERRED_CONCERNS`
    unless the auto-fix loop exhausts all 3 iterations.
 
-   **MEDIUM UNFIXABLE cap (MANDATORY):** The planning subagent MAY declare MEDIUM concerns as UNFIXABLE, which moves
+   **MEDIUM UNFIXABLE cap (MANDATORY):** The planning agent MAY declare MEDIUM concerns as UNFIXABLE, which moves
    them to `DEFERRED_CONCERNS`. However, at most 2 MEDIUM concerns may be moved to `DEFERRED_CONCERNS` via UNFIXABLE
    declaration across the entire review phase. If a third or subsequent MEDIUM concern is declared UNFIXABLE, treat it
    as a planning failure (same as CRITICAL/HIGH): log a warning
    (`"WARNING: MEDIUM UNFIXABLE cap reached — treating MEDIUM concern '[description]' as planning failure."`)
-   and keep it in the FIX list for the next iteration. This prevents the planning subagent from silently deferring an
+   and keep it in the FIX list for the next iteration. This prevents the planning agent from silently deferring an
    unlimited number of MEDIUM concerns without user confirmation.
 
    **Repeated UNFIXABLE escalation (MANDATORY):** Track UNFIXABLE declarations per concern using the match key
    `stakeholder` + normalized `location` (same normalization as step 14: strip line numbers, remove leading `./`,
-   remove trailing `/`). If the planning subagent declares the SAME CRITICAL or HIGH concern as UNFIXABLE for the
+   remove trailing `/`). If the planning agent declares the SAME CRITICAL or HIGH concern as UNFIXABLE for the
    SECOND time, halt auto-fix attempts for that concern immediately and escalate to the user:
    ```
    runtime-supported structured user-choice prompt:
-     question: "A [SEVERITY] concern has been declared UNFIXABLE twice by the planning subagent.
+     question: "A [SEVERITY] concern has been declared UNFIXABLE twice by the planning agent.
 
      Concern: [stakeholder] at [location]: [explanation]
 
@@ -615,7 +639,7 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
    This escalation prevents wasting iteration budget on concerns the planner cannot resolve.
 
 4. **Single-concern optimization:** When there is exactly ONE FIX-marked concern in the current iteration, skip
-   the parallel worktree protocol entirely. Instead, spawn one implementation subagent running in the original
+   the parallel worktree protocol entirely. Instead, spawn one implementation agent running in the original
    issue worktree `${WORKTREE_PATH}` on the main `${BRANCH}`:
 
    ```
@@ -666,17 +690,17 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
        ```
    ```
 
-   Proceed directly to step 11 (validate fix subagent output) using commits from the fix subagent's return
+   Proceed directly to step 11 (validate fix agent output) using commits from the fix agent's return
    value. Skip steps 5–10.
 
    **When there are TWO OR MORE FIX-marked concerns**, use the full parallel worktree protocol (steps 5–10):
 
-5. **Spawn N parallel concern fix subagents (one per FIX-marked concern):**
+5. **Spawn N parallel concern fix agents (one per FIX-marked concern):**
 
     **Worktree naming convention:** For each concern N (1-indexed, ordered by severity CRITICAL first), create
     a temporary branch name: `fix-concern-${AUTOFIX_ITERATION}-${N}-${BRANCH}`.
 
-    Before spawning subagents, create one isolated worktree per concern using the main agent's Bash tool:
+    Before spawning agents, create one isolated worktree per concern using the main agent's Bash tool:
 
     ```bash
     # For each concern N (1-indexed):
@@ -687,10 +711,10 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
     ```
 
     Run worktree creation for all N concerns in a single chained Bash call (create all before spawning any
-    subagent). If worktree creation fails for concern N, do NOT spawn that concern's subagent — mark it as
+    agent). If worktree creation fails for concern N, do NOT spawn that concern's agent — mark it as
     FAILED immediately and include it in the failed-concerns list.
 
-    **Spawn all N concern fix subagents in a single message** (not sequentially — use N simultaneous Task tool
+    **Spawn all N concern fix agents in a single message** (not sequentially — use N simultaneous Task tool
     calls in one response):
 
     For each concern N, the delegation prompt is:
@@ -741,25 +765,25 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
         ```
     ```
 
-    Each subagent receives only the fix plan section for its assigned concern (not the full plan). The
+    Each agent receives only the fix plan section for its assigned concern (not the full plan). The
     `${CONCERN_WORKTREE_N}` and `${CONCERN_BRANCH_N}` values are specific to concern N.
 
-6. **Wait for all N concern fix subagents to complete.**
+6. **Wait for all N concern fix agents to complete.**
 
-    Collect results from all N subagents. For each subagent result:
-    - `SUCCESS`: subagent produced at least one commit touching concern-relevant files.
-    - `PARTIAL`: subagent produced some commits but not all concern files were touched.
-    - `FAILED` or no commits: subagent failed to produce any useful change.
+    Collect results from all N agents. For each agent result:
+    - `SUCCESS`: agent produced at least one commit touching concern-relevant files.
+    - `PARTIAL`: agent produced some commits but not all concern files were touched.
+    - `FAILED` or no commits: agent failed to produce any useful change.
 
-    **Scope isolation validation (MANDATORY):** After all subagents complete, validate that each subagent
+    **Scope isolation validation (MANDATORY):** After all agents complete, validate that each agent
     only modified files allowed by the fix plan. The allowed files for concern N are extracted from the
-    planning subagent's output by parsing lines matching `- Files: <paths>` within the `### Concern N:`
+    planning agent's output by parsing lines matching `- Files: <paths>` within the `### Concern N:`
     section:
 
     ```bash
     # For each concern N that returned SUCCESS or PARTIAL:
     CONCERN_BRANCH="fix-concern-${AUTOFIX_ITERATION}-${N}-${BRANCH}"
-    # Extract "- Files: ..." line(s) from the planning subagent's Concern N section
+    # Extract "- Files: ..." line(s) from the planning agent's Concern N section
     # (grep between "### Concern N:" and the next "### Concern" or end of plan output)
     ALLOWED_FILES=$(echo "${fix_plan_from_planning_subagent}" | \
       awk "/^### Concern ${N}:/,/^### Concern [0-9]/" | \
@@ -768,7 +792,7 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
     # For each file in ACTUAL_FILES, check if it appears in ALLOWED_FILES:
     while IFS= read -r actual_file; do
       if ! echo "${ALLOWED_FILES}" | grep -qF "${actual_file}"; then
-        echo "WARNING: Concern ${N} fix subagent modified out-of-scope file: ${actual_file}. Allowed: ${ALLOWED_FILES}"
+        echo "WARNING: Concern ${N} fix agent modified out-of-scope file: ${actual_file}. Allowed: ${ALLOWED_FILES}"
       fi
     done <<< "${ACTUAL_FILES}"
     ```
@@ -782,7 +806,7 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
 
     ```bash
     cd "${WORKTREE_PATH}"
-    # For each concern N whose subagent returned SUCCESS or PARTIAL (in severity order: CRITICAL first):
+    # For each concern N whose agent returned SUCCESS or PARTIAL (in severity order: CRITICAL first):
     CONCERN_BRANCH="fix-concern-${AUTOFIX_ITERATION}-${N}-${BRANCH}"
     if ! git merge --no-ff "${CONCERN_BRANCH}" \
       -m "merge: concern ${N} fixes (${CONCERN_BRANCH})"; then
@@ -796,18 +820,18 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
     Log a warning for every conflict resolved via `--theirs`. After all merges complete, the issue worktree
     (`WORKTREE_PATH`) has all concern fixes applied.
 
-    If a concern's subagent returned FAILED or produced no commits, do NOT attempt to merge its branch.
+    If a concern's agent returned FAILED or produced no commits, do NOT attempt to merge its branch.
     Instead, apply the fallback strategy for that concern (see step 8).
 
-8. **Fallback for failed concern fix subagents:**
+8. **Fallback for failed concern fix agents:**
 
-    For each concern whose fix subagent returned FAILED or produced no commits:
-    - Retry the concern ONCE using a sequential fix subagent (same Task tool format as step 4 single-concern
+    For each concern whose fix agent returned FAILED or produced no commits:
+    - Retry the concern ONCE using a sequential fix agent (same Task tool format as step 4 single-concern
       path above, running in the ORIGINAL issue worktree `${WORKTREE_PATH}` on the main `${BRANCH}`).
     - If the sequential retry also fails, escalate to the user via Structured user-choice prompt:
       ```
       runtime-supported structured user-choice prompt:
-        question: "Concern fix subagent failed twice for concern:
+        question: "Concern fix agent failed twice for concern:
 
         [concern_N_formatted]
 
@@ -855,7 +879,7 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
     Parse the new commit hashes and append them to `ALL_COMMITS_COMPACT` (format: `hash:type`). The commit type
     for concern fix merges is `bugfix:` (or the primary implementation type if known).
 
-    Compute `successful_concern_count` = number of concerns for which either the parallel fix subagent returned
+    Compute `successful_concern_count` = number of concerns for which either the parallel fix agent returned
     SUCCESS, or the sequential retry in step 8 succeeded. Compute `total_fix_concerns` = count of concerns in
     `concerns_formatted` this iteration. Then apply the NOOP_ITERATIONS and PARTIAL_NOOP_ITERATIONS formula:
     increment `NOOP_ITERATIONS` if `successful_concern_count == 0` (complete planning failure, zero actionable
@@ -868,8 +892,8 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
     entire loop. A single trivial change across many concerns does NOT constitute meaningful progress when CRITICAL
     concerns remain unaddressed.
 
-11. **Validate fix subagent output (MANDATORY):** After fix subagent(s) return (either the single-concern
-   implementation subagent from step 4, or after step 9 merges all concern branches into the issue branch),
+11. **Validate fix agent output (MANDATORY):** After fix agent(s) return (either the single-concern
+   implementation agent from step 4, or after step 9 merges all concern branches into the issue branch),
    verify using commits in the issue worktree (`WORKTREE_PATH`):
    - For each concern in `concerns_formatted`, check that the commits touch at least one file mentioned
      in that concern's `location` field. Run `git diff --name-only` on each commit hash and confirm overlap with
@@ -878,7 +902,7 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
      concern as unresolved for this iteration (do NOT count it in `concerns_addressed`).
    - The self-reported `concerns_addressed` count MUST match the number of concerns in `concerns_formatted` that
      had at least one file touched. If the self-reported count exceeds the validated count, use the validated
-     (lower) count and log: `"WARNING: Fix subagent(s) reported ${reported} concerns addressed but only ${validated} were validated by file changes."`
+     (lower) count and log: `"WARNING: Fix agent(s) reported ${reported} concerns addressed but only ${validated} were validated by file changes."`
    - **File-touch is necessary but NOT sufficient for CRITICAL/HIGH concerns (MANDATORY):** For CRITICAL and HIGH
      severity concerns, the file-level overlap check above is a necessary pre-condition only. A CRITICAL or HIGH
      concern is only considered resolved when the re-review in step 13 no longer flags it (same stakeholder +
@@ -905,7 +929,7 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
    dropping real concerns between review rounds.
 
    **Location shell-game protection (MANDATORY):** When a CRITICAL or HIGH concern from `PRIOR_UNRESOLVED_CONCERNS`
-   is absent from the re-review AND the fix subagent commits (as merged into the issue branch) include any of the
+   is absent from the re-review AND the fix agent commits (as merged into the issue branch) include any of the
    following — file renames (`R` entries), new file additions (`A` entries), or deletions of existing files (`D`
    entries) — the concern is NOT removed from `PRIOR_UNRESOLVED_CONCERNS`. Check via `git diff --name-status` for
    entries starting with `R`, `A`, or `D`. This covers copy-then-delete patterns (where vulnerable code is copied to
@@ -917,7 +941,7 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
 
    **Trivial-change guard for CRITICAL removal (MANDATORY):** Re-review non-determinism is an acknowledged limitation
    of LLM-based review. As mitigation: when a CRITICAL concern was in `PRIOR_UNRESOLVED_CONCERNS` and is absent from
-   re-review, check the fix subagent commits (as merged into the issue branch) for the concern's file (the file
+   re-review, check the fix agent commits (as merged into the issue branch) for the concern's file (the file
    referenced in the concern's `location` field) using `git diff --stat`. If the commits changed fewer than 5 lines
    in that file, log a warning:
    `"WARNING: CRITICAL concern '[stakeholder] at [location]' absent from re-review but only [N] lines changed in [file] — possible non-deterministic drop. Keeping in PRIOR_UNRESOLVED."`
@@ -1034,8 +1058,8 @@ Partition `ALL_CONCERNS` into two named lists based on the threshold:
 CRITICAL concern — one not present in any prior round's `ALL_CONCERNS` (matched by `stakeholder` + normalized
 `location`) — AND `AUTOFIX_ITERATION >= 3`, grant ONE additional iteration exclusively for that CRITICAL concern.
 This bonus iteration is capped at 1 total (not per concern): if multiple new CRITICAL concerns are discovered, they
-all share the single bonus iteration. The bonus iteration follows the same auto-fix loop rules (planning subagent,
-implementation subagent, re-review, persistent tracking merge). If the bonus iteration does not resolve the CRITICAL
+all share the single bonus iteration. The bonus iteration follows the same auto-fix loop rules (planning agent,
+implementation agent, re-review, persistent tracking merge). If the bonus iteration does not resolve the CRITICAL
 concern(s), they move to `DEFERRED_CONCERNS` with tracking issues created per the severity x decision matrix. The
 `AUTOFIX_ITERATION` counter increments normally for the bonus iteration (e.g., from 3 to 4). No further bonus
 iterations are granted after the first one.

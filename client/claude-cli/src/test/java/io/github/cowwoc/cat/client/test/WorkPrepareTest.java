@@ -2755,7 +2755,7 @@ public class WorkPrepareTest
   }
 
   /**
-   * Verifies that non-blank rawArguments without a agent ID prefix are parsed directly.
+   * Verifies that non-blank rawArguments without a subagent ID prefix are parsed directly.
    */
   @Test
   public void parseRawArgumentsParsesWhenCatAgentIdAbsent()
@@ -2853,7 +2853,7 @@ public class WorkPrepareTest
   }
 
   /**
-   * Verifies that when {@code --arguments} contains only a agent ID UUID (no trailing issue name),
+   * Verifies that when {@code --arguments} contains only a subagent ID UUID (no trailing issue name),
    * {@code run()} strips the UUID and returns READY for the next available issue (not NO_ISSUES).
    * <p>
    * This is the end-to-end regression test for the bug where UUIDs were matched as bare issue names.
@@ -2898,7 +2898,7 @@ public class WorkPrepareTest
   }
 
   /**
-   * Verifies that when {@code --arguments} contains a agent ID UUID followed by an issue name,
+   * Verifies that when {@code --arguments} contains a subagent ID UUID followed by an issue name,
    * {@code run()} strips the UUID and selects the named issue, returning READY with the correct
    * {@code issue_id}.
    * <p>

@@ -3141,6 +3141,129 @@ public final class EmpiricalTestRunnerTest
   }
 
   /**
+   * Verifies that nested session discovery scans both subagents/ and agents/ directories, and
+   * keeps the main session first.
+   *
+   * @throws Exception if reflection or filesystem setup fails
+   */
+  @Test
+  public void collectSessionFilesScansBothNestedDirectories() throws Exception
+  {
+    Path tempDir = Files.createTempDirectory("empirical-session-");
+    try
+    {
+      String sessionId = "session-123";
+      Path main = tempDir.resolve(sessionId + ".jsonl");
+      Files.writeString(main, "{}\n");
+      Path sessionDir = Files.createDirectories(tempDir.resolve(sessionId));
+      Path subagentsDir = Files.createDirectories(sessionDir.resolve("subagents"));
+      Path agentsDir = Files.createDirectories(sessionDir.resolve("agents"));
+      Path subA = subagentsDir.resolve("agent-a.jsonl");
+      Path legacyB = agentsDir.resolve("agent-b.jsonl");
+      Files.writeString(subA, "{}\n");
+      Files.writeString(legacyB, "{}\n");
+
+      List<Path> files = SharedSecrets.collectSessionFiles(tempDir, sessionId);
+
+      requireThat(files.getFirst(), "main_first").isEqualTo(main);
+      requireThat(files.contains(subA), "contains_subagent").isTrue();
+      requireThat(files.contains(legacyB), "contains_legacy_agent").isTrue();
+      requireThat(files.size(), "file_count").isEqualTo(3);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies deterministic nested-session ordering and dedupe behavior.
+   *
+   * @throws Exception if reflection or filesystem setup fails
+   */
+  @Test
+  public void collectSessionFilesOrdersNestedSessionsDeterministically() throws Exception
+  {
+    Path tempDir = Files.createTempDirectory("empirical-session-");
+    try
+    {
+      String sessionId = "session-456";
+      Path main = tempDir.resolve(sessionId + ".jsonl");
+      Files.writeString(main, "{}\n");
+      Path sessionDir = Files.createDirectories(tempDir.resolve(sessionId));
+      Path subagentsDir = Files.createDirectories(sessionDir.resolve("subagents"));
+      Path agentsDir = Files.createDirectories(sessionDir.resolve("agents"));
+      Path zeta = subagentsDir.resolve("agent-zeta.jsonl");
+      Path alpha = agentsDir.resolve("agent-alpha.jsonl");
+      Path beta = subagentsDir.resolve("agent-beta.jsonl");
+      Files.writeString(zeta, "{}\n");
+      Files.writeString(alpha, "{}\n");
+      Files.writeString(beta, "{}\n");
+
+      List<Path> files = SharedSecrets.collectSessionFiles(tempDir, sessionId);
+
+      requireThat(files.size(), "file_count").isEqualTo(4);
+      requireThat(files.getFirst(), "main_first").isEqualTo(main);
+      List<Path> nested = files.subList(1, files.size());
+      List<Path> sortedNested = new ArrayList<>(nested);
+      sortedNested.sort(Path::compareTo);
+      requireThat(nested, "nested_order").isEqualTo(sortedNested);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that an empty session ID returns no collected session files.
+   *
+   * @throws Exception if invocation fails
+   */
+  @Test
+  public void collectSessionFilesReturnsEmptyForEmptySessionId() throws Exception
+  {
+    Path tempDir = Files.createTempDirectory("empirical-session-");
+    try
+    {
+      List<Path> files = SharedSecrets.collectSessionFiles(tempDir, "");
+      requireThat(files.isEmpty(), "empty_result").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that nested files are collected even if the main session file is missing.
+   *
+   * @throws Exception if invocation fails
+   */
+  @Test
+  public void collectSessionFilesAllowsMissingMainFileWithNestedFiles() throws Exception
+  {
+    Path tempDir = Files.createTempDirectory("empirical-session-");
+    try
+    {
+      String sessionId = "session-789";
+      Path sessionDir = Files.createDirectories(tempDir.resolve(sessionId));
+      Path subagentsDir = Files.createDirectories(sessionDir.resolve("subagents"));
+      Path nested = subagentsDir.resolve("agent-only.jsonl");
+      Files.writeString(nested, "{}\n");
+
+      List<Path> files = SharedSecrets.collectSessionFiles(tempDir, sessionId);
+
+      requireThat(files.size(), "file_count").isEqualTo(1);
+      requireThat(files.getFirst(), "nested_only").isEqualTo(nested);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that a tool_use assertion passes when the expected tool appears in toolUses.
    */
   @Test

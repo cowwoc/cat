@@ -52,17 +52,17 @@ Final v1.0 release completing the core rewrite with workflow refinements, displa
 structure for v1.1 commercialization.
 
 **New Features:**
-- **Review Feedback Loop**: Approval gate now spawns subagent for review feedback implementation
+- **Review Feedback Loop**: Approval gate now spawns agent for review feedback implementation
 - **Task Branch Forking**: Task branches fork from current branch instead of main
 - **Inline Diff Display**: Updated diff output to inline context style (Proposal I)
 - **Progress Phase Indicators**: 4-phase progress display replaces 17-step tracker
 - **Render Box Skill**: Centralized ASCII box rendering with emoji-aware alignment
 - **Terminal Width Config**: Add terminal width setting to `/cat:config` wizard
-- **Context Limit Enforcement**: Subagents have enforced context limits
+- **Context Limit Enforcement**: Agents have enforced context limits
 
 **Workflow Improvements:**
 - Config-driven approach selection with confidence-based fork wizard
-- Expanded exploration subagent role for preparation and verification
+- Expanded exploration agent role for preparation and verification
 - Positive prescriptive language replaces negative language in skills
 - Validation-driven status display using scripts (M140-M145)
 - Base branch configuration replaces hardcoded main references
@@ -109,7 +109,7 @@ Comprehensive display standardization, test infrastructure, and workflow stabili
 **Bugfixes:**
 - Fix bold rendering in display templates
 - Fix box formatting for display standard compliance
-- Fix subagent token measurement session ID issue
+- Fix agent token measurement session ID issue
 - Fix inconsistent task path patterns
 - Fix parse_error false positives when command succeeds
 - Fix HEREDOC message extraction in commit type validation
@@ -196,7 +196,7 @@ workflow stability improvements.
 - **Escalation Requirements**: When prevention rules already exist for a mistake type, escalation is
  required for pattern-level analysis
 - **Main Agent Boundaries**: Main agent is orchestrator only - all code implementation must be
- delegated to subagents
+ delegated to agents
 
 **Bugfixes:**
 - **STATE.md Verification**: Approval gates now verify STATE.md is committed before presentation
@@ -216,7 +216,7 @@ workflow stability improvements.
 - Contributing section clarifying project scope and plugin boundaries
 - STATE.md template expanded with optional sections
 - Parser test anti-patterns
-- Spawn-subagent updated to use Task tool
+- Spawn-agent updated to use Task tool
 
 ### 2026-01-13: v1.3
 
@@ -232,23 +232,23 @@ workflow stability improvements.
 
 **Auto-Decomposition and Parallel Execution**
 
-Major enhancement enabling proactive task decomposition and parallel subagent execution.
+Major enhancement enabling proactive task decomposition and parallel agent execution.
 
 **New Features:**
 - **Auto-decomposition**: Tasks exceeding context threshold (default 40% of 200K = 80K tokens) are
   automatically decomposed before execution
-- **Parallel execution**: Independent subtasks spawn concurrent subagents in sub-task-based execution
+- **Parallel execution**: Independent subtasks spawn concurrent agents in sub-task-based execution
 - **Task size estimation**: Pre-execution analysis estimates token requirements from PLAN.md
-- **Mandatory token reporting**: Subagent execution reports always show token usage and compaction events
+- **Mandatory token reporting**: Agent execution reports always show token usage and compaction events
 
-**Subagent Improvements:**
+**Agent Improvements:**
 - Task-level locking prevents concurrent execution of same task
 - Lightweight completion markers (`.completion.json`) for efficient monitoring
 - Mandatory SESSION_ID verification before worktree creation
-- Hook inheritance documentation for subagent prompts (A008)
+- Hook inheritance documentation for agent prompts (A008)
 
 **Workflow Fixes:**
-- Subagent cleanup now happens BEFORE approval gate presentation
+- Agent cleanup now happens BEFORE approval gate presentation
 - Approval gate requires re-presentation after feedback
 - Bugfix tests must be in same commit as fix
 - Checkbox rendering fixed in cat:status output
@@ -274,7 +274,7 @@ Stabilization release with workflow improvements and better context management.
 **Workflow Improvements:**
 - Integrated changelog workflow with minor/major version CHANGELOG.md files
 - Clarified task STATE.md belongs with implementation commit
-- Required subagent for bulk operations (shrink-doc)
+- Required agent for bulk operations (shrink-doc)
 - Improved git skills with safety requirements
 
 **Bug Fixes:**
@@ -294,8 +294,8 @@ CAT v1.0 introduces multi-agent orchestration for AI-assisted software developme
 
 **Architecture:**
 - **MAJOR → MINOR → TASK** hierarchy
-- Multi-agent orchestration with parallel subagent execution
-- Main agent coordinates, subagents execute in dedicated worktrees
+- Multi-agent orchestration with parallel agent execution
+- Main agent coordinates, agents execute in dedicated worktrees
 - Token-aware task decomposition to prevent context overflow
 
 **Commands:**
@@ -306,11 +306,11 @@ CAT v1.0 introduces multi-agent orchestration for AI-assisted software developme
 - `/cat:remove-task`, `/cat:remove-minor-version`, `/cat:remove-major-version`
 
 **Skills:**
-- `spawn-subagent` - Launch subagent with task context in isolated worktree
-- `get-subagent-status` - Check status of running subagents including token usage
-- `collect-results` - Gather results from completed subagents
-- `merge-subagent` - Merge subagent branch into task branch
-- `parallel-execute` - Orchestrate multiple independent subagents concurrently
+- `spawn-agent` - Launch agent with task context in isolated worktree
+- `get-agent-status` - Check status of running agents including token usage
+- `collect-results` - Gather results from completed agents
+- `merge-agent` - Merge agent branch into task branch
+- `parallel-execute` - Orchestrate multiple independent agents concurrently
 - `decompose-task` - Split oversized tasks based on token analysis
 - `token-report` - Generate detailed token usage report
 

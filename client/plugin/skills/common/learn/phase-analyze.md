@@ -227,7 +227,7 @@ Proceed to Question 5 (Prevention vs Detection) after all steps 1-3 of the indep
 
 | Problem | Detection Fix (❌) | Prevention Fix (✅) |
 |---------|-------------------|---------------------|
-| Subagent fabricates scores | Verify independently | Remove expected values from prompts |
+| Agent fabricates scores | Verify independently | Remove expected values from prompts |
 | Wrong file edited | Check file path after | Hook blocks edits to wrong paths |
 | Threshold wrong | Validate on read | Fix the source template |
 | Skill bypassed | Check if skill was invoked | Make skill the only path (hook) |

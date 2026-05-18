@@ -85,7 +85,7 @@ test measures.
   and executes test-aware responses
 - **CRITICAL enforcement:** "CRITICAL: You must record this finding explicitly" → Agent
   anchors on enforcement language instead of instruction content
-- **Cost/efficiency language:** "This approach spawns 2 subagents (expensive)" → Agent takes
+- **Cost/efficiency language:** "This approach spawns 2 agents (expensive)" → Agent takes
   shortcuts to minimize cost instead of following procedure
 
 Test runner prompts must deliver ONLY: (1) the Turn file content (exactly as written in the test case),

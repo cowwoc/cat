@@ -8,7 +8,7 @@ See LICENSE.md in the project root for license terms.
 -->
 ## Turn 1
 
-I just completed all collect-results calls for 3 parallel implementation jobs. The subagent branches are: job3-branch (Job 3), job1-branch (Job 1), job2-branch (Job 2). What is the correct order to merge these branches into the issue branch?
+I just completed all collect-results calls for 3 parallel implementation jobs. The agent branches are: job3-branch (Job 3), job1-branch (Job 1), job2-branch (Job 2). What is the correct order to merge these branches into the issue branch?
 
 ## Assertions
 

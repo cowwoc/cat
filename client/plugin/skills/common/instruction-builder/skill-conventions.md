@@ -65,7 +65,7 @@ in the description so intent routing matches correctly.
 | `user-invocable` | `true` | Set to `false` for internal-only skills |
 | `allowed-tools` | all tools | Set to restrict available tools |
 | `model` | inherited | Set to override (e.g., `haiku` for simple skills) |
-| `context` | main agent | Set to `fork` to run in isolated sub-agent |
+| `context` | main agent | Set to `fork` to run in isolated agent |
 
 Do NOT add fields set to their default value — it adds noise and obscures intentional overrides.
 
@@ -1317,11 +1317,11 @@ Output format:
 
 ```yaml
 # ❌ WRONG - Encourages shortcuts
-Note: Running validation spawns 2 subagents for parallel extraction.
+Note: Running validation spawns 2 agents for parallel extraction.
 For batch operations, this can be costly.
 
 # ❌ WRONG - Suggests overhead
-This approach spawns subagents which adds context overhead.
+This approach spawns agents which adds context overhead.
 
 # ✅ CORRECT - No cost language
 Note: Validation ensures semantic comparison by running parallel extraction.
@@ -1356,15 +1356,15 @@ should contain only: what to invoke, postconditions to verify, and fail-fast con
 
 ### Delegation Safety Check
 
-If the skill will be delegated to subagents:
+If the skill will be delegated to agents:
 
-- [ ] Skill does NOT tell subagent what validation score to expect
-- [ ] Producer and validator are separate (subagent A produces, subagent B validates)
+- [ ] Skill does NOT tell agent what validation score to expect
+- [ ] Producer and validator are separate (agent A produces, agent B validates)
 - [ ] Output format uses placeholders (`{actual score}`), not expected values
 - [ ] Acceptance criteria specify WHAT to measure, not WHAT result to report
-- [ ] Subagent is required to include raw tool output, not summaries
+- [ ] Agent is required to include raw tool output, not summaries
 
-**Anti-pattern**: Telling a subagent "validation score must be 1.0" primes fabrication.
+**Anti-pattern**: Telling an agent "validation score must be 1.0" primes fabrication.
 Instead: "Run validation and report the actual score."
 
 ---
@@ -1373,13 +1373,13 @@ Instead: "Run validation and report the actual score."
 
 ### Principle
 
-Every token in a subagent prompt, return contract, or exchanged file costs context. Agents only process data they
+Every token in an agent prompt, return contract, or exchanged file costs context. Agents only process data they
 actually use — explanatory prose, repeated constraints, and per-invocation rationale all inflate token usage without
 changing behavior.
 
 **What this covers:**
-- Subagent prompts (instructions passed when spawning a subagent)
-- Return contracts (JSON or structured output a subagent returns)
+- Agent prompts (instructions passed when spawning an agent)
+- Return contracts (JSON or structured output an agent returns)
 - Agent-to-agent files (files written by one agent and read by the next)
 
 **What this does NOT cover:**
@@ -1388,9 +1388,9 @@ changing behavior.
 
 The rule is simple: if a human never reads it, every character should earn its place.
 
-**Why this matters:** Subagent prompts are read on every invocation. A 500-token prompt repeated 10 times costs 5,000
+**Why this matters:** Agent prompts are read on every invocation. A 500-token prompt repeated 10 times costs 5,000
 tokens. Refactoring that prompt to 150 tokens by externalizing constraints to a shared file saves 3,500 tokens with
-zero behavior change. At scale — skills with many subagent invocations or high-frequency skills — this compounds
+zero behavior change. At scale — skills with many agent invocations or high-frequency skills — this compounds
 dramatically.
 
 ### Start Lean — Add Only What Tests Demand
@@ -1409,13 +1409,13 @@ the lean version actually fails. Test first; add only what the tests demand.
 
 ### Redundancy Elimination
 
-Constraints, rationale, and parameter explanations written inline in subagent prompts get re-read on every invocation.
+Constraints, rationale, and parameter explanations written inline in agent prompts get re-read on every invocation.
 Consolidate them into shared files referenced by path.
 
 **Anti-pattern — constraints repeated per invocation:**
 
 ```markdown
-## ❌ WRONG - Constraint block embedded in every subagent prompt
+## ❌ WRONG - Constraint block embedded in every agent prompt
 
 Spawn extraction-agent with:
 """
@@ -1478,7 +1478,7 @@ invocation).
 
 ### File References Over Inline Content
 
-When a subagent needs to read or process a document, pass a file path instead of embedding the content inline.
+When an agent needs to read or process a document, pass a file path instead of embedding the content inline.
 Inline content forces the agent to parse a large block during prompt ingestion. A file path enables on-demand
 reading — the agent reads exactly what it needs when it needs it.
 
@@ -1554,7 +1554,7 @@ subtask_3: generate-output
 ### Compact Return Contracts
 
 Return JSON should contain required fields only. Do not embed prose explanations of the return format inside
-subagent prompts — put format documentation in a separate reference file, not in the invocation.
+agent prompts — put format documentation in a separate reference file, not in the invocation.
 
 **Anti-pattern — return format explained per invocation:**
 
@@ -1586,7 +1586,7 @@ Extract skill parameters. Output format: {skill-directory}/extraction-return-sch
 """
 ```
 
-The `extraction-return-schema.md` file documents the contract once. The subagent reads it on first invocation;
+The `extraction-return-schema.md` file documents the contract once. The agent reads it on first invocation;
 subsequent invocations don't re-parse the explanation.
 
 **For inline return contracts (small, stable schemas), use terse JSON:**
@@ -1674,7 +1674,7 @@ only the structured result. Don't include the analysis process, discarded altern
 
 ### Terse Procedure Language
 
-Step descriptions in subagent prompts should be short imperative statements. Agents execute steps — they don't
+Step descriptions in agent prompts should be short imperative statements. Agents execute steps — they don't
 benefit from multi-sentence explanations of what each step does or why it exists.
 
 **Anti-pattern — verbose step descriptions:**
@@ -1714,20 +1714,20 @@ Step 3: Write extracted data to {output-file}.
 | "Check whether the operation succeeded and if not, report the error" | "Check result; report error on failure." |
 | "This step is necessary because..." | (delete entirely) |
 
-Rationale sentences ("This is important because...", "This step is necessary because...") never belong in subagent
+Rationale sentences ("This is important because...", "This step is necessary because...") never belong in agent
 prompt steps. If a step needs justification, it belongs in the skill's design documentation.
 
 ### Checklist: Lean Intra-Agent Communication
 
-When delegating to subagents, verify:
+When delegating to agents, verify:
 
-- [ ] Subagent prompt does NOT repeat constraints/rationale already in external files
+- [ ] Agent prompt does NOT repeat constraints/rationale already in external files
 - [ ] Long documents (> 500 characters) are referenced via file path, not embedded inline
 - [ ] Return contract JSON is terse (required fields only, not explained in prose per invocation)
 - [ ] Agent-to-agent files contain only data needed by the receiving agent
 - [ ] Step descriptions are imperative one-liners, not multi-sentence explanations
-- [ ] Rationale belongs in design docs (read once), not in subagent prompts (read every invocation)
-- [ ] No "for reference" or "for context" sections in subagent prompts for data agents won't use
+- [ ] Rationale belongs in design docs (read once), not in agent prompts (read every invocation)
+- [ ] No "for reference" or "for context" sections in agent prompts for data agents won't use
 - [ ] Inline content under 200 characters; anything larger uses a file reference
 
 ---

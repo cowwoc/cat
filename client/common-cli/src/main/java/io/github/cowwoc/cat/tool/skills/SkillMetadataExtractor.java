@@ -20,7 +20,7 @@ import java.util.List;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Extracts metadata from skill and subagent files.
+ * Extracts metadata from skill and agent files.
  * <p>
  * Provides operations for reading model, effort, test directory, and body content
  * from YAML-frontmatter skill files.

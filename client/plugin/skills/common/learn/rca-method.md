@@ -359,7 +359,7 @@ cause_signature: "<cause_type>:<barrier_type>:<context>"
 | `skill_execution` | Failure occurred during skill step execution |
 | `git_operations` | Failure in git commands (commit, rebase, push, etc.) |
 | `file_operations` | Failure in file read/write/edit operations |
-| `subagent_delegation` | Failure in spawning or interpreting subagent results |
+| `subagent_delegation` | Failure in spawning or interpreting agent results |
 | `issue_workflow` | Failure in issue lifecycle (lock, worktree, merge) |
 | `rca_process` | Failure in the learn/RCA workflow itself |
 
@@ -370,7 +370,7 @@ cause_signature: "<cause_type>:<barrier_type>:<context>"
 | `compliance_failure:hook_absent:pre_tool_use` | Agent violated a rule; no hook existed to block the attempt |
 | `compliance_failure:doc_ignored:plugin_rules` | Rule existed in project instructions; agent did not follow it |
 | `knowledge_gap:doc_missing:skill_execution` | Skill instructions did not cover the needed scenario |
-| `knowledge_gap:skill_incomplete:subagent_delegation` | Delegation prompt omitted information the subagent needed |
+| `knowledge_gap:skill_incomplete:subagent_delegation` | Delegation prompt omitted information the agent needed |
 | `context_degradation:process_gap:issue_workflow` | Late-session context loss caused workflow step to be skipped |
 | `architectural_conflict:hook_absent:plugin_rules` | LLM training conflicts with required verbatim/mechanical output |
 | `environment_mismatch:validation_absent:git_operations` | Git operation ran in wrong worktree; no path check existed |

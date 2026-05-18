@@ -3,11 +3,11 @@ Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
-# Parallel Subagent Execution
+# Parallel Agent Execution
 
 > See `plugin/concepts/work-decomposition.md` for the full execution model, hierarchy, and parallel job execution model.
 
-CAT supports running independent work items in parallel by spawning multiple implementation subagents, each working on
+CAT supports running independent work items in parallel by spawning multiple implementation agents, each working on
 its own set of items. Parallelism is the default: when plan.md contains a `## Jobs` section with
 multiple `### Job N` subsections, all jobs spawn simultaneously. Sequential ordering applies only when an explicit
 dependency between jobs requires one job to complete before the next begins.
@@ -18,19 +18,19 @@ When the work skill starts executing an issue:
 
 1. `work-with-issue` reads plan.md directly to detect `## Jobs` sections.
 2. For each `### Job N` subsection, the LLM counts the top-level bullet items.
-3. **Single-subagent mode (1 job or no jobs):** Plans with only 1 job (or no jobs at all) use single-subagent
-   mode, spawning one implementation subagent with all items. Plans with 2 or more distinct jobs spawn parallel
-   subagents.
-4. **Parallel execution (2+ jobs):** All implementation subagents spawn simultaneously in a single API response. Sequential
+3. **Single-agent mode (1 job or no jobs):** Plans with only 1 job (or no jobs at all) use single-agent
+   mode, spawning one implementation agent with all items. Plans with 2 or more distinct jobs spawn parallel
+   agents.
+4. **Parallel execution (2+ jobs):** All implementation agents spawn simultaneously in a single API response. Sequential
    ordering applies only when an explicit dependency is declared between jobs.
-5. All subagents commit to the same issue branch (`v2.1-issue-name`).
+5. All agents commit to the same issue branch (`v2.1-issue-name`).
 6. After all jobs complete, `work-with-issue` merges their commit lists and proceeds to review and merge.
 
 ## Job Section Syntax
 
 Create a `## Jobs` section with one `### Job N` subsection per job. Each job contains top-level bullet
 items (`- `) listing the work to be done. Sub-items (indented bullets with `  - `) are ignored and do not spawn
-additional subagents.
+additional agents.
 
 ```markdown
 ## Jobs
@@ -64,7 +64,7 @@ whenever items can run simultaneously without conflict:
 **Use a single job (or no jobs) only when:**
 
 - All items must touch the same files (parallelism would cause merge conflicts)
-- The issue is small enough that a single subagent handles everything efficiently
+- The issue is small enough that a single agent handles everything efficiently
 
 ## index.json Ownership
 
@@ -80,19 +80,19 @@ Examples:
 - Plan with Job 1 and Job 2: Job 2 owns and updates index.json; Job 1 does NOT
 - Plan with Job 1, Job 2, and Job 3: Job 3 owns and updates index.json; Job 1 and Job 2 do NOT
 
-The `work-with-issue` skill communicates this ownership in each subagent's delegation prompt.
+The `work-with-issue` skill communicates this ownership in each agent's delegation prompt.
 
 ## Worktree Sharing
 
-All implementation subagents share the same worktree (`WORKTREE_PATH`). They commit and push to the same branch.
-Each subagent must `git pull --rebase` before pushing to incorporate commits from other jobs that completed first.
+All implementation agents share the same worktree (`WORKTREE_PATH`). They commit and push to the same branch.
+Each agent must `git pull --rebase` before pushing to incorporate commits from other jobs that completed first.
 
 The `work-merge` phase is transparent to parallelism — it squashes all commits from `TARGET_BRANCH..HEAD` regardless of
-how many subagents produced them.
+how many agents produced them.
 
 ## Push Coordination Protocol
 
-When pushing commits to the shared issue branch, a subagent may encounter non-fast-forward rejection (when another
+When pushing commits to the shared issue branch, an agent may encounter non-fast-forward rejection (when another
 agent's commits have already been pushed). The coordination protocol is:
 
 1. **Attempt to push** the local commits to the remote
@@ -103,5 +103,5 @@ agent's commits have already been pushed). The coordination protocol is:
    - Return BLOCKED status with error details
    - The main agent will handle the deadlock and retry or fail the issue
 
-This ensures that even when subagents complete in unpredictable order, each subagent can eventually push its commits
+This ensures that even when agents complete in unpredictable order, each agent can eventually push its commits
 without forcing a merge or overwriting other jobs' work.

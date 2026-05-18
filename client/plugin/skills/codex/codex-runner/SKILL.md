@@ -3,7 +3,7 @@ name: codex-runner
 description: >
   Launch a nested Codex CLI exec run from a prompt file.
   Use when running on Codex and you need an isolated non-interactive Codex run for testing or validation;
-  do not use for normal CAT subagent orchestration, which uses runtime-specific agent wrappers instead.
+  do not use for normal CAT agent orchestration, which uses runtime-specific agent wrappers instead.
 ---
 <!--
 Copyright (c) 2026 Gili Tzabari. All rights reserved.

@@ -69,7 +69,7 @@ public final class InjectSubAgentRules implements SubagentStartHandler
     // Rules with paths: restrictions are injected dynamically by InjectPathRules (PreToolUse hook)
     // when matching files are accessed. For subagents, only non-paths rules are injected at start.
     String rules = RulesDiscovery.getCatRulesForAudience(rulesDirs, scope.getYamlMapper(),
-      (r, activeFiles) -> RulesDiscovery.filterForSubagent(r, subagentType, activeFiles),
+      (r, activeFiles) -> RulesDiscovery.filterForAgent(r, subagentType, activeFiles),
       List.of());
     if (rules.isBlank())
       return Result.empty();

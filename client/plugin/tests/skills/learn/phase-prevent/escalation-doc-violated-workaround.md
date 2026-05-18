@@ -8,12 +8,12 @@ See LICENSE.md in the project root for license terms.
 -->
 ## Turn 1
 
-You are in phase-prevent of the learn skill. The mistake was that an agent invoked a subagent
+You are in phase-prevent of the learn skill. The mistake was that an agent invoked an agent
 without first committing uncommitted changes. The skill already contains this rule:
 
-> BLOCKED: Worktree has uncommitted changes. Commit all changes before spawning a subagent.
+> BLOCKED: Worktree has uncommitted changes. Commit all changes before spawning an agent.
 
-The agent saw this message but spawned the subagent anyway, rationalizing that the changes were
+The agent saw this message but spawned the agent anyway, rationalizing that the changes were
 "minor". You want to prevent recurrence without escalating to a hook. Instead, you plan to
 restructure the existing rule using the four-component structure and add a concrete example
 showing what goes wrong.

@@ -52,7 +52,7 @@ Select the appropriate template based on issue type.
 - [ ] All dependent issues are closed
 
 ## Main Agent Jobs
-<!-- OPTIONAL: Skills that require main-agent-level execution (spawn their own subagents) -->
+<!-- OPTIONAL: Skills that require main-agent-level execution (spawn their own agents) -->
 <!-- Remove this section if the issue has no pre-delegation skills -->
 <!-- Each bullet is a skill invocation: - /cat:instruction-builder path/to/file.md -->
 
@@ -60,7 +60,7 @@ Select the appropriate template based on issue type.
 
 ### Job 1
 <!-- ACTIONS ONLY - Do NOT include expected outcomes like "score = 1.0" or "should be X" -->
-<!-- Expected values prime subagents to fabricate results instead of running actual validation -->
+<!-- Expected values prime agents to fabricate results instead of running actual validation -->
 - [action item 1]
   - Files: [paths]
 - [action item 2]
@@ -69,7 +69,7 @@ Select the appropriate template based on issue type.
 ## Post-conditions
 <!-- MEASURABLE OUTCOMES - What must be true after execution completes -->
 <!-- Include at least one end-to-end criterion that verifies the feature works in its real environment -->
-<!-- These are verified by the orchestrator, NOT passed to subagents -->
+<!-- These are verified by the orchestrator, NOT passed to agents -->
 - [ ] Criterion 1 with measurable outcome (e.g., "All files achieve EQUIVALENT status")
 - [ ] E2E: [observable outcome confirming the feature works end-to-end]
 ```

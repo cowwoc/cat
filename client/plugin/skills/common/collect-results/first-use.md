@@ -7,16 +7,16 @@ See LICENSE.md in the project root for license terms.
 
 ## Purpose
 
-Extract work products from a completed subagent's worktree, including commit history, code changes,
-token metrics, and status information. Prepares the subagent's work for integration back into the
+Extract work products from a completed agent's worktree, including commit history, code changes,
+token metrics, and status information. Prepares the agent's work for integration back into the
 parent issue branch.
 
 ## When to Use
 
-- Subagent has signaled completion
-- Subagent has hit context limits and partial results are needed
-- Monitoring indicates subagent is stalled or needs intervention
-- Before merging subagent branch to issue branch
+- Agent has signaled completion
+- Agent has hit context limits and partial results are needed
+- Monitoring indicates agent is stalled or needs intervention
+- Before merging agent branch to issue branch
 
 ## Workflow
 
@@ -26,19 +26,19 @@ Display collection progress using visible feedback symbols:
 
 **On collection start:**
 ```
-◆ Collecting results: {subagent-id}...
+◆ Collecting results: {agent-id}...
 ```
 
 **On successful collection:**
 ```
-✓ Subagent complete: {N}K tokens · {N} commits
+✓ Agent complete: {N}K tokens · {N} commits
   → Files changed: {N}
   → Status: {success|partial|failed}
 ```
 
 **On collection with issues:**
 ```
-⚠ Subagent complete with concerns: {N}K tokens · {N} commits
+⚠ Agent complete with concerns: {N}K tokens · {N} commits
   → Compaction events: {N}
   → Discovered issues: {N}
 ```
@@ -47,7 +47,7 @@ These symbols match the phase-based progress format used in `/cat:work`.
 
 Steps: Verify completion, Extract commits, Parse metrics, Extract issues, Report to user, Update index.json
 
-### 1. Verify Subagent Completion
+### 1. Verify Agent Completion
 
 Check for completion marker file (fast path, no session parsing):
 
@@ -58,10 +58,10 @@ COMPLETION_FILE="${WORKTREE}/.completion.json"
 
 # Check for completion marker (preferred - lightweight)
 if [ -f "$COMPLETION_FILE" ]; then
-  echo "Subagent completed"
+  echo "Agent completed"
   cat "$COMPLETION_FILE"  # Contains status, tokensUsed, compactionEvents, summary
 else
-  echo "Subagent not yet complete or marker not written"
+  echo "Agent not yet complete or marker not written"
 fi
 ```
 
@@ -71,12 +71,12 @@ the session JSONL file (potentially megabytes of conversation history).
 ### 2. Extract Commit History
 
 ```bash
-# Get commits made by subagent (since branch creation)
+# Get commits made by agent (since branch creation)
 cd "${WORKTREE}"
 git log --oneline origin/HEAD..HEAD
 
 # Get detailed commit info
-git log --format="%H %s" origin/HEAD..HEAD > /tmp/subagent-commits.txt
+git log --format="%H %s" origin/HEAD..HEAD > /tmp/agent-commits.txt
 ```
 
 ### 3. Parse Token Metrics
@@ -86,7 +86,7 @@ git log --format="%H %s" origin/HEAD..HEAD > /tmp/subagent-commits.txt
 Session files contain entries BEFORE and AFTER any compaction. The jq command below parses ALL
 assistant entries regardless of when compaction occurred, providing cumulative totals.
 
-**Preferred: Read from completion marker** (already computed by subagent):
+**Preferred: Read from completion marker** (already computed by agent):
 
 ```bash
 COMPLETION_FILE="${WORKTREE}/.completion.json"
@@ -105,10 +105,10 @@ fi
 if [ ! -f "$COMPLETION_FILE" ]; then
   echo "ERROR: .completion.json not found at ${COMPLETION_FILE}"
   echo ""
-  echo "The subagent should have written this file on completion."
+  echo "The agent should have written this file on completion."
   echo "Possible causes:"
-  echo "1. Subagent is still running"
-  echo "2. Subagent crashed before writing completion marker"
+  echo "1. Agent is still running"
+  echo "2. Agent crashed before writing completion marker"
   echo "3. Worktree path is incorrect"
   echo ""
   echo "Do NOT proceed with merge until completion file exists."
@@ -116,17 +116,17 @@ if [ ! -f "$COMPLETION_FILE" ]; then
 fi
 ```
 
-**Why fail-fast?** Proceeding without `.completion.json` means no metrics are recorded. The subagent
+**Why fail-fast?** Proceeding without `.completion.json` means no metrics are recorded. The agent
 work cannot be properly evaluated, and token tracking becomes incomplete. This defeats the purpose
-of structured subagent management.
+of structured agent management.
 
 **Why totalTokens from toolUseResult?** The session file stores Task tool completion results with
-`totalTokens` which represents the full context the subagent processed. This matches the CLI
+`totalTokens` which represents the full context the agent processed. This matches the CLI
 "Done (X tool uses · XK tokens · Xm Xs)" display and is the correct metric for monitoring.
 
 ### 4. Extract Discovered Issues
 
-If curiosity was medium or high, the subagent may have noted issues in `.completion.json`:
+If curiosity was medium or high, the agent may have noted issues in `.completion.json`:
 
 ```bash
 COMPLETION_FILE="${WORKTREE}/.completion.json"
@@ -158,7 +158,7 @@ fi
 **Important:** The main agent handles these issues based on the `perfection` setting (see
 work.md handle_discovered_issues step). This skill only extracts them.
 
-### 5. Read Subagent Work Products
+### 5. Read Agent Work Products
 
 ```bash
 # List modified files
@@ -166,15 +166,15 @@ cd "${WORKTREE}"
 git diff --name-only origin/HEAD..HEAD
 
 # Get full diff for review
-git diff origin/HEAD..HEAD > /tmp/subagent-changes.diff
+git diff origin/HEAD..HEAD > /tmp/agent-changes.diff
 ```
 
-### 6. Extract Subagent Status
+### 6. Extract Agent Status
 
-If subagent maintained a index.json or status file:
+If agent maintained a index.json or status file:
 
 ```bash
-# Read subagent's final state
+# Read agent's final state
 cat "${WORKTREE}/.cat/issues/${ISSUE}/index.json"
 
 # Or check for completion report
@@ -199,12 +199,12 @@ if [ -f "$COMPLETION_FILE" ]; then
   fi
 fi
 
-# Sanity check: implementation subagents typically use 30K-150K tokens
+# Sanity check: implementation agents typically use 30K-150K tokens
 # If value seems unreasonably low (< 10K for implementation), verify source
 ```
 
 **Anti-pattern:** Presenting token metrics without actually reading them from `.completion.json`
-or session file. Claiming "subagent used X tokens" without verification is a measurement bug.
+or session file. Claiming "agent used X tokens" without verification is a measurement bug.
 
 **Before updating state, present token metrics to user.**
 
@@ -213,9 +213,9 @@ when output as plain text, but shows as literal asterisks inside triple-backtick
 
 Output format (do NOT wrap in ```):
 
-## Subagent Execution Report
+## Agent Execution Report
 
-**Subagent:** a1b2c3d4
+**Agent:** a1b2c3d4
 **Issue:** 1.2-implement-parser
 **Status:** success
 
@@ -233,15 +233,15 @@ Output format (do NOT wrap in ```):
 
 **Discovered Issues:** 2 (will be handled by main agent based on perfection setting)
 
-**Why mandatory:** Users cannot observe subagent execution. This report is the only visibility
-into what happened during subagent execution and whether quality may have degraded.
+**Why mandatory:** Users cannot observe agent execution. This report is the only visibility
+into what happened during agent execution and whether quality may have degraded.
 
 **If compaction events > 0, add warning:**
 
 ```
 ⚠️ CONTEXT COMPACTION DETECTED
 
-The subagent experienced context pressure and may have produced lower quality output.
+The agent experienced context pressure and may have produced lower quality output.
 Consider invoking /cat:decompose-issue for similar issues in the future.
 ```
 
@@ -250,7 +250,7 @@ Consider invoking /cat:decompose-issue for similar issues in the future.
 Record collection results in parent's tracking:
 
 ```yaml
-subagents:
+agents:
   - id: a1b2c3d4
     issue: 1.2-implement-parser
     status: collected  # Changed from 'running'
@@ -272,13 +272,13 @@ subagents:
 ### 9. Prepare for Merge
 
 ```bash
-# Ensure subagent branch is up to date
+# Ensure agent branch is up to date
 cd "${WORKTREE}"
 git status
 
 # Note any uncommitted changes
 if [ -n "$(git status --porcelain)" ]; then
-  echo "WARNING: Uncommitted changes in subagent worktree"
+  echo "WARNING: Uncommitted changes in agent worktree"
   git status --short
 fi
 ```
@@ -339,7 +339,7 @@ collection_report:
     efficiency: 0.05  # Low due to compaction overhead
 
   next_action: decompose_remaining
-  recommendation: "Spawn new subagent for remaining work"
+  recommendation: "Spawn new agent for remaining work"
 ```
 
 ## Anti-Patterns
@@ -361,7 +361,7 @@ fi
 ```bash
 # ❌ Proceeding with dirty worktree
 collect-results "${SUBAGENT}"
-merge-subagent "${SUBAGENT}"
+merge-agent "${SUBAGENT}"
 
 # ✅ Handle uncommitted work
 if has_uncommitted_changes "${SUBAGENT}"; then
@@ -397,7 +397,7 @@ TOKENS=$(jq -s '[.[] | select(.type == "assistant") | .message.usage |
 # Sums ALL entries regardless of compaction events
 ```
 
-**Why this matters:** Token estimates are for the ENTIRE issue. If a subagent uses 50K tokens,
+**Why this matters:** Token estimates are for the ENTIRE issue. If an agent uses 50K tokens,
 hits compaction, then uses another 30K tokens, the actual usage is 80K - not 30K. Accurate
 reporting enables proper estimate validation.
 

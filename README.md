@@ -120,7 +120,7 @@ Tell Claude to add a version or task (e.g., "add a task to implement login"), th
 
 Tell Claude to work on an issue (e.g., "work on the next task" or "work on v1.0-setup-auth").
 
-CAT spawns a subagent in an isolated worktree, executes the task, and presents
+CAT spawns an agent in an isolated worktree, executes the task, and presents
 you with results at a checkpoint:
 
 <p align="center">
@@ -171,7 +171,7 @@ Each task follows this path:
 
 1. **Planning** → plan.md defines the task objectives
 2. **Approach Selection** → At forks in the road, you choose the path
-3. **Execution** → Subagent works in isolation (no risk to your main branch)
+3. **Execution** → Agent works in isolation (no risk to your main branch)
 4. **Verification** → Build, test, lint—all must pass
 5. **Review** → Optional stakeholder council weighs in
 6. **Checkpoint** → You approve or request changes
@@ -376,7 +376,7 @@ you can call directly:
 `git-commit` · `git-squash` · `git-rebase` · `git-amend` · `git-merge-linear`
 
 ### Multi-Agent Coordination
-`spawn-subagent` · `get-subagent-status` · `collect-results` · `merge-subagent` · `parallel-execute`
+`spawn-agent` · `get-agent-status` · `collect-results` · `merge-agent` · `parallel-execute`
 
 ### Quality & Learning
 `stakeholder-review` · `learn-from-mistakes` · `retrospective` · `decompose-task`

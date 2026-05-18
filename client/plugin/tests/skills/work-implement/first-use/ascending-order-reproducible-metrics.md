@@ -8,7 +8,7 @@ See LICENSE.md in the project root for license terms.
 -->
 ## Turn 1
 
-Why does the work implementation workflow require calling collect-results and merging subagent branches in ascending job order (Job 1 first, then Job 2, etc.) rather than in the order jobs happen to complete?
+Why does the work implementation workflow require calling collect-results and merging agent branches in ascending job order (Job 1 first, then Job 2, etc.) rather than in the order jobs happen to complete?
 
 ## Assertions
 

@@ -30,9 +30,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
@@ -108,6 +110,12 @@ public final class EmpiricalTestRunner
       public void removeTestWorktree(Path baseRepo, Path worktreePath)
       {
         EmpiricalTestRunner.removeTestWorktree(baseRepo, worktreePath);
+      }
+
+      @Override
+      public List<Path> collectSessionFiles(Path sessionsPath, String sessionId) throws IOException
+      {
+        return EmpiricalTestRunner.collectSessionFiles(sessionsPath, sessionId);
       }
     });
   }
@@ -442,21 +450,23 @@ public final class EmpiricalTestRunner
   }
 
   /**
-   * Collects all session files (main + subagent) for a given session ID.
+   * Collects all session files (main + agent) for a given session ID.
    * <p>
    * Session files follow this structure:
    * <pre>
    * sessionsPath/
    *   {sessionId}.jsonl              — main agent session
    *   {sessionId}/subagents/
-   *     agent-<id>.jsonl        — subagent sessions
+   *     agent-<id>.jsonl        — Claude nested-agent sessions
+   *   {sessionId}/agents/
+   *     agent-<id>.jsonl        — Codex nested-agent sessions
    * </pre>
    *
    * @param sessionsPath the path to the sessions directory
    * @param sessionId the session ID extracted from stream-json output
-   * @return the list of session file paths (main first, then subagents), or empty list if
+   * @return the list of session file paths (main first, then nested agents), or empty list if
    *         sessionId is empty
-   * @throws IOException if the subagents directory exists but cannot be read
+   * @throws IOException if a nested-agent directory exists but cannot be read
    */
   private static List<Path> collectSessionFiles(Path sessionsPath, String sessionId) throws IOException
   {
@@ -468,15 +478,22 @@ public final class EmpiricalTestRunner
     if (Files.isRegularFile(mainFile))
       files.add(mainFile);
 
-    Path subagentsDir = sessionsPath.resolve(sessionId).resolve("subagents");
-    if (Files.isDirectory(subagentsDir))
+    Set<Path> nestedFiles = new LinkedHashSet<>();
+    Path sessionDir = sessionsPath.resolve(sessionId);
+    for (String childDirName : List.of("subagents", "agents"))
     {
-      try (DirectoryStream<Path> stream = Files.newDirectoryStream(subagentsDir, "*.jsonl"))
+      Path childDir = sessionDir.resolve(childDirName);
+      if (!Files.isDirectory(childDir))
+        continue;
+      try (DirectoryStream<Path> stream = Files.newDirectoryStream(childDir, "*.jsonl"))
       {
         for (Path path : stream)
-          files.add(path);
+          nestedFiles.add(path);
       }
     }
+    List<Path> sortedNestedFiles = new ArrayList<>(nestedFiles);
+    sortedNestedFiles.sort(Path::compareTo);
+    files.addAll(sortedNestedFiles);
     return files;
   }
 
@@ -1810,7 +1827,7 @@ public final class EmpiricalTestRunner
    * @param messageEvaluations per-message evaluation results for multi-message trials, empty for
    *                           single-message trials
    * @param sessionFiles paths to session .jsonl files created during this trial (main agent first,
-   *                     then subagents), or empty list if the session ID was not found in the output
+   *                     then agents), or empty list if the session ID was not found in the output
    */
   public record TrialResult(boolean pass, Map<String, Boolean> checks, Duration elapsed,
     String outputPreview, List<String> toolsUsed, String error,
@@ -1828,7 +1845,7 @@ public final class EmpiricalTestRunner
      * @param messageEvaluations per-message evaluation results for multi-message trials, empty for
      *                           single-message trials
      * @param sessionFiles       paths to session .jsonl files created during this trial (main agent
-     *                           first, then subagents), or empty list if the session ID was not found
+     *                           first, then agents), or empty list if the session ID was not found
      *                           in the output
      * @throws NullPointerException if {@code checks}, {@code outputPreview}, {@code toolsUsed},
      *                              {@code error}, {@code messageEvaluations}, or {@code sessionFiles}

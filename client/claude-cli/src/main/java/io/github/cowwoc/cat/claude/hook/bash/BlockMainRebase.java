@@ -10,12 +10,11 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.claude.hook.BashHandler;
 import io.github.cowwoc.cat.claude.hook.ClaudeHook;
-import io.github.cowwoc.cat.tool.util.GitCommands;
 import io.github.cowwoc.cat.tool.util.WorktreeContext;
+import io.github.cowwoc.cat.tool.util.GitCommands;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,13 +27,15 @@ import java.util.regex.Pattern;
 public final class BlockMainRebase implements BashHandler
 {
   private static final Pattern CHECKOUT_PATTERN =
-    Pattern.compile("^git\\s+(checkout|switch)\\s+", Pattern.CASE_INSENSITIVE);
+    Pattern.compile("(^|[;&|\\n\\r])\\s*git\\s+.*\\b(checkout|switch)\\b", Pattern.CASE_INSENSITIVE);
   private static final Pattern CHECKOUT_TARGET_PATTERN =
-    Pattern.compile("git\\s+(?:checkout|switch)\\s+([^\\s;&|]+)");
+    Pattern.compile("git\\s+" +
+      "(?:(?:-C\\s+\\S+|--git-dir(?:=|\\s+)\\S+|--work-tree(?:=|\\s+)\\S+)\\s+)*" +
+      "(?:checkout|switch)\\s+([^\\s;&|\\n\\r]+)");
   private static final Pattern REBASE_PATTERN =
-    Pattern.compile("^git\\s+rebase", Pattern.CASE_INSENSITIVE);
+    Pattern.compile("(^|[;&|\\n\\r])\\s*git\\s+.*\\brebase\\b", Pattern.CASE_INSENSITIVE);
   private static final Pattern CD_TARGET_PATTERN =
-    Pattern.compile("^cd\\s+['\"]?([^'\";&|]+)['\"]?");
+    Pattern.compile("^cd\\s+['\"]?([^'\";&|\\n\\r]+)['\"]?");
 
   private final ClaudeHook scope;
   private final Path projectPath;
@@ -59,52 +60,50 @@ public final class BlockMainRebase implements BashHandler
   @Override
   public Result check()
   {
-    String rawCommand = scope.getCommand();
+    String command = scope.getCommand();
+    String commandLower = GitCommands.toLowerCase(command);
     String sessionId = scope.getSessionId();
-    List<String> commands = GitCommandNormalizer.extractNormalizedGitCommands(rawCommand);
-    for (String command : commands)
+
+    // Check for git checkout/switch in main worktree
+    if (CHECKOUT_PATTERN.matcher(commandLower).find())
     {
-      // Check for git checkout/switch in main worktree
-      if (CHECKOUT_PATTERN.matcher(command).find())
-      {
-        Result checkoutResult = checkCheckoutInMainWorktree(rawCommand, command, sessionId);
-        if (checkoutResult != null)
-          return checkoutResult;
-      }
+      Result checkoutResult = checkCheckoutInMainWorktree(command, sessionId);
+      if (checkoutResult != null)
+        return checkoutResult;
+    }
 
-      // Check for git rebase command
-      if (!REBASE_PATTERN.matcher(command).find())
-        continue;
+    // Check for git rebase command
+    if (!REBASE_PATTERN.matcher(commandLower).find())
+      return Result.allow();
 
-      // Check if rebasing on main
-      String currentBranch = getCurrentBranch(rawCommand, sessionId);
-      if (currentBranch == null)
-      {
-        return Result.warn(
-          "⚠️ Branch detection failed while checking rebase safety.\n" +
-          "Cannot determine if rebasing on a protected branch.\n" +
-          "Proceeding without rebase branch check.");
-      }
-      if (currentBranch.equals("main"))
-      {
-        Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
-        return Result.block(String.format("""
-          REBASE ON MAIN BLOCKED
+    // Check if rebasing on main
+    String currentBranch = getCurrentBranch(command, sessionId);
+    if (currentBranch == null)
+    {
+      return Result.warn(
+        "⚠️ Branch detection failed while checking rebase safety.\n" +
+        "Cannot determine if rebasing on a protected branch.\n" +
+        "Proceeding without rebase branch check.");
+    }
+    if (currentBranch.equals("main"))
+    {
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
+      return Result.block(String.format("""
+        REBASE ON MAIN BLOCKED
 
-          Attempted: git rebase on main branch
-          Correct:   Main branch should never be rebased
+        Attempted: git rebase on main branch
+        Correct:   Main branch should never be rebased
 
-          WHY THIS IS BLOCKED:
-          - Rebasing main rewrites commit history
-          - Merged commits get recreated as direct commits
-          - This breaks the audit trail
+        WHY THIS IS BLOCKED:
+        - Rebasing main rewrites commit history
+        - Merged commits get recreated as direct commits
+        - This breaks the audit trail
 
-          TO REBASE AN ISSUE BRANCH ONTO MAIN:
-          Run from your issue's worktree, not main:
+        TO REBASE AN ISSUE BRANCH ONTO MAIN:
+        Run from your issue's worktree, not main:
 
-            cd %s/<issue-branch>
-            git rebase main""", worktreesDir));
-      }
+          cd %s/<issue-branch>
+          git rebase main""", worktreesDir));
     }
 
     return Result.allow();
@@ -113,17 +112,16 @@ public final class BlockMainRebase implements BashHandler
   /**
    * Checks if a checkout command is targeting the main worktree.
    *
-   * @param rawCommand the raw bash command
-   * @param checkoutCommand the normalized checkout/switch command
+   * @param command the bash command
    * @param sessionId the session ID for worktree context lookup
    * @return a block result if checkout in main worktree detected, null otherwise
    */
-  private Result checkCheckoutInMainWorktree(String rawCommand, String checkoutCommand, String sessionId)
+  private Result checkCheckoutInMainWorktree(String command, String sessionId)
   {
     // Check if command cd's to the project directory
-    if (cdProjectPattern.matcher(rawCommand).find() || commandTargetsProjectDirectory(rawCommand))
+    if (cdProjectPattern.matcher(command).find())
     {
-      String target = extractCheckoutTarget(checkoutCommand);
+      String target = extractCheckoutTarget(command);
       if (!isCheckoutFlag(target))
       {
         Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
@@ -147,10 +145,20 @@ public final class BlockMainRebase implements BashHandler
 
     Optional<WorktreeContext> context = WorktreeContext.forSession(
       scope.getCatWorkPath(), projectPath, scope.getJsonMapper(), sessionId);
+    // If git command explicitly scopes to main worktree via -C/--git-dir/--work-tree, block checkout.
+    Path scopedDir = resolveExplicitGitScope(command);
+    Path normalizedProjectPath = projectPath.toAbsolutePath().normalize();
+    if (scopedDir != null && scopedDir.toAbsolutePath().normalize().startsWith(normalizedProjectPath))
+    {
+      String target = extractCheckoutTarget(command);
+      if (!isCheckoutFlag(target))
+        return Result.block(String.format(
+          "Blocked: Cannot checkout '%s' in main worktree. Use issue worktrees instead.", target));
+    }
     if (context.isPresent())
       return null;
     // No active worktree for this session — this is the main context; block checkout
-    String target = extractCheckoutTarget(checkoutCommand);
+    String target = extractCheckoutTarget(command);
     if (!isCheckoutFlag(target))
     {
       return Result.block(String.format(
@@ -195,8 +203,21 @@ public final class BlockMainRebase implements BashHandler
   private String getCurrentBranch(String command, String sessionId)
   {
     // Check if command cd's to the project directory
-    if (cdProjectPattern.matcher(command).find() || commandTargetsProjectDirectory(command))
+    if (cdProjectPattern.matcher(command).find())
       return "main";
+
+    Path scopedDir = resolveExplicitGitScope(command);
+    if (scopedDir != null)
+    {
+      try
+      {
+        return GitCommands.getCurrentBranch(scopedDir);
+      }
+      catch (IllegalArgumentException | IOException _)
+      {
+        return null;
+      }
+    }
 
     // Check if command cd's elsewhere
     Matcher cdMatcher = CD_TARGET_PATTERN.matcher(command);
@@ -228,28 +249,11 @@ public final class BlockMainRebase implements BashHandler
     }
   }
 
-  /**
-   * Returns true if the raw command targets this project via git scope flags.
-   *
-   * @param rawCommand the raw command
-   * @return true if git scope resolves to project path
-   */
-  private boolean commandTargetsProjectDirectory(String rawCommand)
+  private Path resolveExplicitGitScope(String command)
   {
-    Path workingDirectory = Path.of(scope.getStringInput("cwd")).toAbsolutePath().normalize();
-    for (GitCommandNormalizer.NormalizedGitCommand command :
-      GitCommandNormalizer.extractGitCommands(rawCommand))
-    {
-      GitCommandScopeResolver.GitScopeTarget target =
-        GitCommandScopeResolver.resolve(command.rawSegment(), workingDirectory);
-      if (!target.overridesScope())
-        continue;
-      if (target.workingTree().equals(projectPath))
-        return true;
-      Path gitDir = target.gitDirectory();
-      if (gitDir != null && gitDir.equals(projectPath.resolve(".git")))
-        return true;
-    }
-    return false;
+    GitCommandScopeResolver.GitScopeTarget target = GitCommandScopeResolver.resolve(command, scope.getWorkDir());
+    if (!target.overridesScope())
+      return null;
+    return target.workingTree().toAbsolutePath().normalize();
   }
 }

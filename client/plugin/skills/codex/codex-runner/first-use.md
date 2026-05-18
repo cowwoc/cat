@@ -110,13 +110,13 @@ Remove temporary files unless the caller explicitly asked to keep them:
 rm -f "$PROMPT_FILE" "$OUTPUT_FILE" "$JSONL_FILE"
 ```
 
-## Relationship To Runtime Subagents
+## Relationship To Runtime Agents
 
-Runtime subagents and runners solve different problems:
+Runtime agents and runners solve different problems:
 
-- Runtime subagents use native Codex agent definitions and are the default for CAT orchestration.
+- Runtime agents use native Codex agent definitions and are the default for CAT orchestration.
 - Runners spawn fresh CLI processes for empirical or isolated validation and are not a substitute for native
-  subagent delegation.
+  agent delegation.
 
 ## Relationship To Other Runners
 

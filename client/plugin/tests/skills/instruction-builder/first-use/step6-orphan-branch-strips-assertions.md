@@ -19,6 +19,6 @@ There is no prior test history for this skill. Run the empirical tests.
 
 1. The Skill tool was invoked
 2. The agent strips the ## Assertions section from all test case files on the orphan branch before
-   test-run subagents read the files
-3. The assertion removal is done so that assertions are not recoverable by test-run subagents through
+   test-run agents read the files
+3. The assertion removal is done so that assertions are not recoverable by test-run agents through
    git log, git diff, git show, or reflog operations on the orphan branch

@@ -8,7 +8,7 @@ See LICENSE.md in the project root for license terms.
 -->
 ## Turn 1
 
-You are the compression subagent executing compression-protocol.md. Compress the following skill section
+You are the compression agent executing compression-protocol.md. Compress the following skill section
 while reducing token count by ~50%:
 
 ```

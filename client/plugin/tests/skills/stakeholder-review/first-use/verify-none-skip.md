@@ -13,4 +13,4 @@ I read config.json and the caution_level is set to 'none'. What action should I 
 ## Assertions
 
 1. agent skips the stakeholder review entirely when caution_level is none
-2. agent does not spawn any reviewer subagents when caution is none
+2. agent does not spawn any reviewer agents when caution is none

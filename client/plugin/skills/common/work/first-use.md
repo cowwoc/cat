@@ -5,9 +5,9 @@ See LICENSE.md in the project root for license terms.
 -->
 # Work: Thin Orchestrator
 
-Execute issues with worktree isolation, subagent orchestration, and quality gates.
+Execute issues with worktree isolation, agent orchestration, and quality gates.
 
-**Architecture:** Main agent orchestrates 4 phase subagents. Each phase runs in isolation with
+**Architecture:** Main agent orchestrates 4 phase agents. Each phase runs in isolation with
 its own context, keeping main agent context minimal (~5-10K tokens).
 
 ## Arguments
@@ -34,7 +34,7 @@ an error listing the ambiguous issue IDs.
 - `skip compression issues` - exclude issues with "compression" in name
 - `only migration` - only issues with "migration" in name
 
-Filters are interpreted by the prepare phase subagent using natural language understanding. Filters may
+Filters are interpreted by the prepare phase agent using natural language understanding. Filters may
 only include or exclude issues by name pattern. Filters MUST NOT override blocking, locking, or status
 constraints.
 
@@ -80,7 +80,7 @@ fi
 
 ## Phase 1: Prepare
 
-Execute the deterministic preparation script directly (no subagent needed).
+Execute the deterministic preparation script directly (no agent needed).
 
 **Call the prepare script:**
 
@@ -202,7 +202,7 @@ existing session lock (e.g., "already holds a lock", "worktree already exists"):
 **STOP. Read the `stale` field NOW before doing anything else.**
 
 - `"stale": false` → **SILENT RETRY**. Your next tool call MUST be work-prepare (Skill or Bash).
-  Not Read. Not Glob. No structured user-choice prompt. No subagent. NOTHING else first. Zero text output.
+  Not Read. Not Glob. No structured user-choice prompt. No agent. NOTHING else first. Zero text output.
   Go directly to the SILENT RETRY section below. Do NOT research, investigate, or look up other
   skill files. The instructions are already in front of you.
 - `"stale": true`, `stale` absent, or `locked_by` absent → **DISPLAY + DIALOG** (step 1 below).
@@ -271,11 +271,11 @@ is to silently retry, not present a dialog.
 [calls work-prepare again]
 ```
 
-WRONG — do NOT spawn a subagent or explore the codebase when `stale == false`:
+WRONG — do NOT spawn an agent or explore the codebase when `stale == false`:
 ```
 I'll look at the current work-prepare skill and related implementations to understand
 what needs to happen when a non-stale lock is encountered.
-[spawns subagent, reads work-prepare-agent/first-use.md]
+[spawns agent, reads work-prepare-agent/first-use.md]
 Based on the skill instructions in work-prepare-agent/first-use.md: the correct action
 is to invent a local skipped outcome for the calling orchestrator.
 ```
@@ -586,7 +586,7 @@ IS_DECOMPOSED=$(grep -q "^## Decomposed Into" "$ISSUE_STATE" && echo "true" || e
 **Required flow when IS_DECOMPOSED is true:**
 
 1. Read plan.md acceptance criteria: `cat "${issue_path}/plan.md"`
-2. Verify each acceptance criterion is satisfied (spawn an Explore subagent if needed)
+2. Verify each acceptance criterion is satisfied (spawn an Explore agent if needed)
 3. Only after all criteria are verified, use a runtime-supported structured user-choice prompt to offer closure:
    ```
    header: "${issue_id}"
@@ -640,7 +640,7 @@ Skill tool:
 
 The skill will:
 1. Render progress banners via exclamation-backtick preprocessing (now has issue_id available)
-2. Execute Phase 2 (implementation subagent)
+2. Execute Phase 2 (implementation agent)
 3. Execute Phase 3 (stakeholder review) if verify != none
 4. Execute Phase 4 (merge and cleanup)
 5. Return execution summary
@@ -704,7 +704,7 @@ to continue to the next issue. No delay needed — the work skill handles its ow
 
 ## Error Handling
 
-If any phase subagent fails unexpectedly:
+If any phase agent fails unexpectedly:
 
 1. Capture error message
 2. Classify the failure before releasing any lock:
@@ -713,7 +713,7 @@ If any phase subagent fails unexpectedly:
      written by the confirm/verify phase. Do NOT release the issue lock merely because verification
      failed.
    - **Workflow/control failure**: examples include malformed phase JSON, missing required fields,
-     failed launcher invocation, invalid paths, or a subagent infrastructure failure that prevents
+     failed launcher invocation, invalid paths, or an agent infrastructure failure that prevents
      diagnosis.
 3. For a verification or test failure, keep the lock and attempt recovery in the same issue worktree:
    - Inspect the failing test reports, command output, or verification detail files to identify the
@@ -735,7 +735,7 @@ If any phase subagent fails unexpectedly:
 
 ## Success Criteria
 
-- [ ] Phase subagent spawned for each phase
+- [ ] Phase agent spawned for each phase
 - [ ] Results collected and parsed as JSON
 - [ ] User approval gate respected (skipped only when `--override-gate` flag is passed)
 - [ ] Lock released on completion, explicit user abort/manual cleanup, or unrecoverable non-verification error

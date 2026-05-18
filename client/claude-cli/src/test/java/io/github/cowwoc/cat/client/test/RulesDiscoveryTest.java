@@ -353,7 +353,7 @@ public final class RulesDiscoveryTest
 
       RulesDiscovery discovery = new RulesDiscovery(rulesDir, YAML_MAPPER);
       List<RuleFile> allRules = discovery.discoverAll();
-      List<RuleFile> subagentRules = RulesDiscovery.filterForSubagent(allRules,
+      List<RuleFile> subagentRules = RulesDiscovery.filterForAgent(allRules,
         "SomeRandomAgent", List.of());
 
       requireThat(subagentRules.size(), "subagentRules.size()").isEqualTo(1);
@@ -388,7 +388,7 @@ public final class RulesDiscoveryTest
 
       RulesDiscovery discovery = new RulesDiscovery(rulesDir, YAML_MAPPER);
       List<RuleFile> allRules = discovery.discoverAll();
-      List<RuleFile> subagentRules = RulesDiscovery.filterForSubagent(allRules, "AnyAgent",
+      List<RuleFile> subagentRules = RulesDiscovery.filterForAgent(allRules, "AnyAgent",
         List.of());
 
       requireThat(subagentRules, "subagentRules").isEmpty();
@@ -423,9 +423,9 @@ public final class RulesDiscoveryTest
       RulesDiscovery discovery = new RulesDiscovery(rulesDir, YAML_MAPPER);
       List<RuleFile> allRules = discovery.discoverAll();
 
-      List<RuleFile> matching = RulesDiscovery.filterForSubagent(allRules, "cat:work-execute",
+      List<RuleFile> matching = RulesDiscovery.filterForAgent(allRules, "cat:work-execute",
         List.of());
-      List<RuleFile> nonMatching = RulesDiscovery.filterForSubagent(allRules, "Explore",
+      List<RuleFile> nonMatching = RulesDiscovery.filterForAgent(allRules, "Explore",
         List.of());
 
       requireThat(matching.size(), "matching.size()").isEqualTo(1);
@@ -587,7 +587,7 @@ public final class RulesDiscoveryTest
       requireThat(mainRules.size(), "mainRules.size()").isEqualTo(1);
       requireThat(mainRules.getFirst().content(), "content").contains("Main agent only rule");
 
-      List<RuleFile> subRules = RulesDiscovery.filterForSubagent(allRules, "AnyAgent", List.of());
+      List<RuleFile> subRules = RulesDiscovery.filterForAgent(allRules, "AnyAgent", List.of());
       requireThat(subRules, "subRules").isEmpty();
     }
     finally
@@ -1091,17 +1091,17 @@ public final class RulesDiscoveryTest
       List<RuleFile> allRules = discovery.discoverAll();
 
       // Should match the exact type
-      List<RuleFile> exactMatch = RulesDiscovery.filterForSubagent(allRules,
+      List<RuleFile> exactMatch = RulesDiscovery.filterForAgent(allRules,
         "cat:work-execute", List.of());
       requireThat(exactMatch.size(), "exactMatch.size()").isEqualTo(1);
 
       // Should NOT match a different subagent type
-      List<RuleFile> noMatch = RulesDiscovery.filterForSubagent(allRules,
+      List<RuleFile> noMatch = RulesDiscovery.filterForAgent(allRules,
         "cat:work-prepare", List.of());
       requireThat(noMatch, "noMatch").isEmpty();
 
       // Should NOT match a different subagent type
-      List<RuleFile> noMatchExplore = RulesDiscovery.filterForSubagent(allRules,
+      List<RuleFile> noMatchExplore = RulesDiscovery.filterForAgent(allRules,
         "Explore", List.of());
       requireThat(noMatchExplore, "noMatchExplore").isEmpty();
     }
@@ -1426,7 +1426,7 @@ public final class RulesDiscoveryTest
 
       String subagentType = "SomeSubagentType";
       String result = RulesDiscovery.getCatRulesForAudience(rulesDir, YAML_MAPPER,
-        (rules, activeFiles) -> RulesDiscovery.filterForSubagent(rules, subagentType, activeFiles),
+        (rules, activeFiles) -> RulesDiscovery.filterForAgent(rules, subagentType, activeFiles),
         List.of());
       requireThat(result, "result").contains("Subagent universal content");
       requireThat(result, "result").contains("Applies to all subagents.");

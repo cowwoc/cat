@@ -8,26 +8,26 @@ See LICENSE.md in the project root for license terms.
 ## Overview
 
 Core issue execution workflow for CAT. Uses a **direct orchestration** architecture where the main
-agent (work-with-issue skill) orchestrates phases by spawning subagents and invoking skills directly.
+agent (work-with-issue skill) orchestrates phases by spawning agents and invoking skills directly.
 
 ## Architecture
 
 ```
 Main Agent (work-with-issue skill)
     |
-    +---> work-prepare subagent
+    +---> work-prepare agent
     |     Loads: version-paths.md, discovery scripts
     |     Returns: {issue_id, worktree_path, estimate}
     |
-    +---> Implementation subagent (inline)
+    +---> Implementation agent (inline)
     |     Receives: plan.md steps, pre-invoked skill results
     |     Returns: {status, tokens, commits}
     |
     +---> Skill: stakeholder-review (invoked directly)
-    |     Spawns: reviewer subagents internally
+    |     Spawns: reviewer agents internally
     |     Returns: {approval_status, concerns[]}
     |
-    +---> work-merge subagent
+    +---> work-merge agent
           Loads: merge-and-cleanup.md, commit-types.md
           Returns: {merged, cleanup_status}
 ```
@@ -35,18 +35,18 @@ Main Agent (work-with-issue skill)
 **Benefits:**
 - Main agent can invoke skills directly (Skill tool available)
 - Skills requiring spawning (instruction-builder, stakeholder-review) work correctly
-- Each subagent has fresh context for quality work
+- Each agent has fresh context for quality work
 - User sees clean phase transitions, not internal tool calls
-- Eliminates nested subagent spawning (architecturally impossible)
+- Eliminates nested agent spawning (architecturally impossible)
 
 ## Phase Orchestration
 
 | Phase | Handler | Purpose |
 |-------|---------|---------|
-| Prepare | work-prepare subagent | Find issue, create worktree |
-| Execute | Inline implementation subagent | Implement issue per plan.md |
+| Prepare | work-prepare agent | Find issue, create worktree |
+| Execute | Inline implementation agent | Implement issue per plan.md |
 | Review | stakeholder-review skill | Run stakeholder reviews |
-| Merge | work-merge subagent | Squash, merge, cleanup |
+| Merge | work-merge agent | Squash, merge, cleanup |
 
 Model selection follows `delegate/SKILL.md` criteria based on issue complexity.
 
@@ -56,21 +56,21 @@ The main agent ONLY handles:
 
 | Area | Actions |
 |------|---------|
-| Orchestration | Spawn phase subagents, collect results |
+| Orchestration | Spawn phase agents, collect results |
 | User interaction | Approval gates, questions, feedback |
 | Error escalation | Surface failures, offer recovery |
 | Progress display | Show phase banners |
-| Decision routing | Handle status codes from subagents |
+| Decision routing | Handle status codes from agents |
 
 Main agent does NOT:
-- Load full documentation (delegated to subagents)
+- Load full documentation (delegated to agents)
 - Perform implementation work
 - Run stakeholder reviews directly
 - Handle merge operations directly
 
 ## JSON Contracts
 
-Each phase subagent returns structured JSON. Main agent parses and routes.
+Each phase agent returns structured JSON. Main agent parses and routes.
 
 **Success statuses:** READY, SUCCESS, APPROVED, MERGED
 **Failure statuses:** NO_ISSUES, LOCKED, BLOCKED, FAILED, CONFLICT, ERROR
@@ -142,38 +142,38 @@ changes, the user has no way to review your work.
 **Verification:** Before stopping, run `git status` in the worktree. If it shows modified files,
 commit them first.
 
-This requirement applies to all worktree work, including implementation subagents and
+This requirement applies to all worktree work, including implementation agents and
 manual debugging sessions.
 
 ## Issue Discovery
 
 **MANDATORY: Use `IssueDiscovery` Java class (via `work-prepare` launcher). FAIL-FAST if tool fails.**
 
-The work-prepare subagent handles discovery internally. Main agent receives the result
+The work-prepare agent handles discovery internally. Main agent receives the result
 as JSON with issue_id, worktree_path, and other metadata.
 
 ## Lock Management
 
-Locks are acquired by work-prepare subagent and released by work-merge subagent.
+Locks are acquired by work-prepare agent and released by work-merge agent.
 Main agent tracks lock status but doesn't manage locks directly.
 
 ## Error Recovery
 
 | Error | Handler |
 |-------|---------|
-| Subagent returns ERROR | Main agent displays error, offers retry/abort |
+| Agent returns ERROR | Main agent displays error, offers retry/abort |
 | Merge conflict | work-merge returns CONFLICT, main agent asks user |
 | Lock unavailable | work-prepare returns LOCKED, main agent tries next issue |
-| Token limit exceeded | Implementation subagent returns warning, main agent offers decomposition |
+| Token limit exceeded | Implementation agent returns warning, main agent offers decomposition |
 
 ## Work-Phase Output File Paths
 
 Work phases write output files to two distinct locations based on ownership and lifecycle:
 
 **Verify files** — `${WORKTREE_PATH}/.cat/work/verify/${CLAUDE_SESSION_ID}/`
-- Owner: verify subagent; Scope: session-scoped
+- Owner: verify agent; Scope: session-scoped
 - Ephemeral scratch files (`criteria-analysis.json`, `e2e-test-output.json`) written during confirm phase
-- Read by fix subagents to understand what failed; never committed to the issue branch
+- Read by fix agents to understand what failed; never committed to the issue branch
 
 **Review files** — `${WORKTREE_PATH}/.cat/work/review/`
 - Owner: stakeholder agents; Scope: worktree-scoped

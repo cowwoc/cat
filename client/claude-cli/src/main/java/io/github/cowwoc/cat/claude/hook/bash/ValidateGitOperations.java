@@ -10,9 +10,13 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.claude.hook.BashHandler;
 import io.github.cowwoc.cat.claude.hook.ClaudeHook;
+import io.github.cowwoc.cat.claude.hook.ShellParser;
 import io.github.cowwoc.cat.tool.util.WorktreeContext;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -22,8 +26,6 @@ import java.util.Optional;
  */
 public final class ValidateGitOperations implements BashHandler
 {
-  private static final String RESET_HARD_PREFIX = "git reset --hard";
-
   private final ClaudeHook scope;
 
   /**
@@ -41,66 +43,199 @@ public final class ValidateGitOperations implements BashHandler
   @Override
   public Result check()
   {
-    for (GitCommandNormalizer.NormalizedGitCommand normalizedCommand :
-      GitCommandNormalizer.extractGitCommands(scope.getCommand()))
+    for (CommandContext context : parseCommandContexts(scope.getCommand()))
     {
-      String command = normalizedCommand.normalizedCommand();
-      // Block: git reset --hard without explicit acknowledgment
-      if (isResetHardCommand(command))
-      {
-        if (isResetHardAllowed(normalizedCommand.rawSegment()))
-          continue;
-        return Result.block("""
-          **BLOCKED: git reset --hard can lose uncommitted work**
-
-          This command discards all uncommitted changes permanently.
-
-          If you're sure:
-          - In a worktree: Use /cat:git-rebase skill
-          - Main worktree: Add # ACKNOWLEDGED comment
-
-          Consider: git stash to save work before reset.""");
-      }
+      String normalized = context.normalizedCommand();
+      String lower = normalized.toLowerCase(Locale.ROOT);
+      if (isForcePushToProtectedBranch(lower))
+        return blockForcePush();
+      if (!isResetHardCommand(lower))
+        continue;
+      if (GitCommandNormalizer.containsAcknowledgedComment(context.rawSegment()))
+        continue;
+      if (isWorktreeDirectory(context.baseDirectory()) && !hasExplicitScopeOverride(context.rawSegment()))
+        continue;
+      if (isResetHardAllowed(context))
+        continue;
+      return blockResetHard();
     }
     return Result.allow();
   }
 
-  /**
-   * Returns true if command is a reset-hard invocation.
-   *
-   * @param command normalized git command
-   * @return true if reset-hard detected
-   */
-  private boolean isResetHardCommand(String command)
+  private boolean isForcePushToProtectedBranch(String normalizedLower)
   {
-    return command.startsWith(RESET_HARD_PREFIX);
+    if (!(normalizedLower.startsWith("git push ") || normalizedLower.equals("git push")))
+      return false;
+    if (!normalizedLower.contains(" --force ") &&
+      !normalizedLower.endsWith(" --force") &&
+      !normalizedLower.contains(" -f ") &&
+      !normalizedLower.endsWith(" -f"))
+    {
+      return false;
+    }
+    // `--force-with-lease` is explicitly allowed.
+    return !normalizedLower.contains("--force-with-lease") &&
+      normalizedLower.matches(".*(\\s|:)(main|master)(\\s|$).*");
   }
 
-  /**
-   * Returns true if a reset-hard command is explicitly acknowledged or is scoped to the active
-   * CAT issue worktree.
-   *
-   * @param rawSegment the raw command segment containing reset-hard
-   * @return true if reset-hard is allowed
-   */
-  private boolean isResetHardAllowed(String rawSegment)
+  private Result blockForcePush()
   {
-    if (GitCommandNormalizer.containsAcknowledgedComment(rawSegment))
-      return true;
-    Optional<WorktreeContext> context = WorktreeContext.forSession(scope.getCatWorkPath(),
-      scope.getProjectPath(), scope.getJsonMapper(), scope.getSessionId());
-    if (context.isEmpty())
-      return false;
+    return Result.block("""
+      **BLOCKED: Force push to main/master**
 
-    Path worktreePath = context.get().absoluteWorktreePath();
-    Path workingDirectory = Path.of(scope.getStringInput("cwd")).toAbsolutePath().normalize();
-    GitCommandScopeResolver.GitScopeTarget target =
-      GitCommandScopeResolver.resolve(rawSegment, workingDirectory);
-    if (target.overridesScope() && !target.workingTree().startsWith(worktreePath))
+      Force pushing to main/master rewrites shared history and can cause:
+      - Lost commits from other contributors
+      - Broken references
+      - Confused collaborators
+
+      Use --force-with-lease instead, or ask the user if they really want this.""");
+  }
+
+  private boolean isResetHardCommand(String normalizedLower)
+  {
+    return normalizedLower.startsWith("git reset --hard");
+  }
+
+  private Result blockResetHard()
+  {
+    return Result.block("""
+      **BLOCKED: git reset --hard can lose uncommitted work**
+
+      This command discards all uncommitted changes permanently.
+
+      If you're sure:
+      - In a worktree: Use /cat:git-rebase skill
+      - Main worktree: Add # ACKNOWLEDGED comment
+
+      Consider: git stash to save work before reset.""");
+  }
+
+  private boolean isResetHardAllowed(CommandContext context)
+  {
+    GitCommandScopeResolver.GitScopeTarget target = GitCommandScopeResolver.resolve(context.rawSegment(),
+      context.baseDirectory());
+    Optional<WorktreeContext> worktreeContext = WorktreeContext.forSession(scope.getCatWorkPath(),
+      scope.getProjectPath(), scope.getJsonMapper(), scope.getSessionId());
+    if (worktreeContext.isEmpty())
       return false;
-    if (target.overridesScope() && target.gitDirectory() != null &&
-      !target.gitDirectory().startsWith(worktreePath))
+    if (!target.overridesScope())
+      return true;
+    Path worktreePath = worktreeContext.get().absoluteWorktreePath().toAbsolutePath().normalize();
+    Path workingTree = target.workingTree().toAbsolutePath().normalize();
+    if (target.overridesScope() && !workingTree.startsWith(worktreePath))
       return false;
-    return target.workingTree().startsWith(worktreePath);
+    Path gitDirectory = target.gitDirectory();
+    if (target.overridesScope() && gitDirectory != null &&
+      !gitDirectory.toAbsolutePath().normalize().startsWith(worktreePath))
+    {
+      return false;
+    }
+    return workingTree.startsWith(worktreePath);
+  }
+
+  private boolean isWorktreeDirectory(Path path)
+  {
+    String normalized = path.toAbsolutePath().normalize().toString();
+    return normalized.contains("/worktrees/") || normalized.contains("\\worktrees\\");
+  }
+
+  private boolean hasExplicitScopeOverride(String rawSegment)
+  {
+    List<String> tokens = ShellParser.tokenize(rawSegment);
+    for (String token : tokens)
+    {
+      if (token.startsWith("-C") && token.length() > 2)
+        return true;
+      if ("-C".equals(token) || token.startsWith("--work-tree=") || token.startsWith("--git-dir="))
+        return true;
+      if ("--work-tree".equals(token) || "--git-dir".equals(token))
+        return true;
+    }
+    return false;
+  }
+
+  private List<CommandContext> parseCommandContexts(String command)
+  {
+    List<CommandContext> contexts = new ArrayList<>();
+    Path currentBase = scope.getWorkDir().toAbsolutePath().normalize();
+    for (String segment : splitSegments(command))
+    {
+      List<String> tokens = ShellParser.tokenize(segment);
+      if (tokens.isEmpty())
+        continue;
+      if ("cd".equals(tokens.getFirst()) && tokens.size() > 1)
+      {
+        currentBase = ShellParser.resolvePath(tokens.get(1), currentBase).toAbsolutePath().normalize();
+        continue;
+      }
+      int gitIndex = GitCommandNormalizer.findGitTokenIndex(tokens);
+      if (gitIndex < 0)
+        continue;
+      List<GitCommandNormalizer.NormalizedGitCommand> commands = GitCommandNormalizer.extractGitCommands(segment);
+      if (commands.isEmpty())
+        continue;
+      String normalized = commands.getFirst().normalizedCommand();
+      contexts.add(new CommandContext(segment, normalized, currentBase));
+    }
+    return contexts;
+  }
+
+  private List<String> splitSegments(String command)
+  {
+    List<String> segments = new ArrayList<>();
+    StringBuilder current = new StringBuilder();
+    boolean inSingleQuote = false;
+    boolean inDoubleQuote = false;
+    for (int i = 0; i < command.length(); ++i)
+    {
+      char c = command.charAt(i);
+      if (c == '\'' && !inDoubleQuote)
+      {
+        inSingleQuote = !inSingleQuote;
+        current.append(c);
+        continue;
+      }
+      if (c == '"' && !inSingleQuote)
+      {
+        inDoubleQuote = !inDoubleQuote;
+        current.append(c);
+        continue;
+      }
+      if (!inSingleQuote && !inDoubleQuote)
+      {
+        if (c == '\n' || c == '\r')
+        {
+          addSegment(segments, current);
+          continue;
+        }
+        if (c == ';' || c == '|')
+        {
+          addSegment(segments, current);
+          continue;
+        }
+        if (c == '&')
+        {
+          addSegment(segments, current);
+          if (i + 1 < command.length() && command.charAt(i + 1) == '&')
+            ++i;
+          continue;
+        }
+      }
+      current.append(c);
+    }
+    addSegment(segments, current);
+    return segments;
+  }
+
+  private void addSegment(List<String> segments, StringBuilder current)
+  {
+    String segment = current.toString().strip();
+    if (!segment.isEmpty())
+      segments.add(segment);
+    current.setLength(0);
+  }
+
+  private record CommandContext(String rawSegment, String normalizedCommand, Path baseDirectory)
+  {
   }
 }

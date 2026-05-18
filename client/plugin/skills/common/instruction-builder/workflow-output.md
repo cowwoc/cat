@@ -66,9 +66,9 @@ Now analyze the results...
 
 ---
 
-### 2. Subagent Batching (Multi-Step Operations)
+### 2. Agent Batching (Multi-Step Operations)
 
-For operations involving many tool calls, delegate to subagents. Subagent internal
+For operations involving many tool calls, delegate to agents. Agent internal
 tool calls are invisible to the parent conversation.
 
 **Why?**
@@ -77,14 +77,14 @@ tool calls are invisible to the parent conversation.
 |----------|-------------------|-----------------|
 | Direct execution | 20+ Read/Bash/Grep | Noisy, confusing |
 | Progress messaging | 20+ (contextualized) | Better, still noisy |
-| **Batched subagents** | 3-5 Task invocations | Clean, demo-ready |
+| **Batched agents** | 3-5 Task invocations | Clean, demo-ready |
 
-**Rule of thumb:** If a phase involves 3+ tool calls, delegate to a subagent.
+**Rule of thumb:** If a phase involves 3+ tool calls, delegate to an agent.
 
 **Pattern:**
 ```
 Main agent shows progress indicator
-  └── Subagent executes (tool calls invisible)
+  └── Agent executes (tool calls invisible)
       └── Returns structured result
 Main agent shows result summary
 ```
@@ -102,7 +102,7 @@ Main agent shows result summary
 
 ## Progress Indicators
 
-With pre-computation or subagent batching, only show:
+With pre-computation or agent batching, only show:
 - `◆ {Phase}...` before operation
 - `✓ {Result summary}` after completion
 
@@ -126,7 +126,7 @@ With pre-computation or subagent batching, only show:
 
 ## Anti-Patterns
 
-### Too Many Small Subagents
+### Too Many Small Agents
 
 ```
 # BAD: Overhead exceeds benefit
@@ -140,7 +140,7 @@ With pre-computation or subagent batching, only show:
 [Single Task tool that reads both]
 ```
 
-### Main Agent Doing Subagent Work
+### Main Agent Doing Agent Work
 
 ```
 # BAD: Main agent shows all tool calls
@@ -148,7 +148,7 @@ With pre-computation or subagent batching, only show:
 ● Read(plan.md)
 ● Bash(check dependencies)
 
-# GOOD: Delegate to subagent
+# GOOD: Delegate to agent
 ◆ Preparing execution context...
 [Task tool - internal calls invisible]
 ✓ Context loaded, ready to proceed
@@ -183,11 +183,11 @@ Let me calculate the box width...
 | Scenario | Approach |
 |----------|----------|
 | Formatted output (boxes, tables) | Silent preprocessing ([BANG]`command`) |
-| Multi-step data gathering | Subagent batching |
+| Multi-step data gathering | Agent batching |
 | Simple file reads (1-2 files) | Direct execution |
 | User interaction required | Direct execution |
 | Deterministic transformation | Silent preprocessing ([BANG]`command`) |
-| Exploratory search | Subagent batching |
+| Exploratory search | Agent batching |
 
 **Decision tree:**
 
@@ -198,7 +198,7 @@ Need formatted output (boxes, tables, alignment)?
   │
   └─ No → Multiple tool calls needed?
            │
-           ├─ Yes (3+) → Subagent batching
+           ├─ Yes (3+) → Agent batching
            │
            └─ No → Direct execution
 ```

@@ -14,7 +14,7 @@ See LICENSE.md in the project root for license terms.
 - [SPRT Parameters](#sprt-parameters)
 - [API Boundary](#api-boundary)
 - [Early Abort on Failure](#early-abort-on-failure)
-- [Subagent Command Allowlist](#subagent-command-allowlist)
+- [Agent Command Allowlist](#agent-command-allowlist)
 - [Test Fixture Policy](#test-fixture-policy)
 - [Plugin Cache Isolation](#plugin-cache-isolation)
 - [Procedure](#procedure)
@@ -164,22 +164,22 @@ execution queue.
 
 ---
 
-## Subagent Command Allowlist
+## Agent Command Allowlist
 
-All subagents spawned by this skill operate under a strict command allowlist. Deviations are a constraint
+All agents spawned by this skill operate under a strict command allowlist. Deviations are a constraint
 violation and must be treated as prohibition failures.
 
-**Test-run subagents** (no tool restrictions):
-- Test-run subagents execute organically with full tool access to test natural behavior
+**Test-run agents** (no tool restrictions):
+- Test-run agents execute organically with full tool access to test natural behavior
 - Filesystem isolation (orphan-branch worktree) ensures assertions are structurally absent
 
-**Grader subagents** (no tool restrictions):
+**Grader agents** (no tool restrictions):
 - Graders run through the active runtime inside the run worktree, which has assertions structurally absent
 - Full tool access is permitted; the run worktree isolation is the primary defense
 
 **Isolation model:** Both test runners and graders execute inside run worktrees branched from an orphan
 branch where assertions have been structurally removed (see Step 3). This provides filesystem-level
-isolation: assertions do not exist on the subagent's disk and cannot be recovered via git commands.
+isolation: assertions do not exist on the agent's disk and cannot be recovered via git commands.
 Both components share exactly the same plugin version from the run worktree; neither depends on `CAT_PLUGIN_ROOT`.
 
 ---

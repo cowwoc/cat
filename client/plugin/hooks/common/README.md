@@ -83,8 +83,8 @@ no-op Codex launchers for Claude-only behavior, and it does not attempt to port 
 events that CAT can handle meaningfully.
 
 CAT intentionally does not emulate Claude Code's `SubagentStart` hook for Codex. Claude Code needs that hook because
-Claude subagents do not automatically receive CAT's lightweight subagent rules and skill-listing context. Codex
-subagents use Codex sessions/configuration and receive native skill discovery for their effective configuration, so
+Claude agents do not automatically receive CAT's lightweight agent rules and skill-listing context. Codex
+agents use Codex sessions/configuration and receive native skill discovery for their effective configuration, so
 duplicating the Claude injection would waste context and risk conflicting with Codex's own skill mechanism.
 
 ## jlink Runtime

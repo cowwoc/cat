@@ -93,7 +93,7 @@
         }
       ]
     },
-    "subagent-restriction": {
+    "agent-restriction": {
       "assertions": [
         {
           "log_ratio": 4.337,

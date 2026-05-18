@@ -4,7 +4,7 @@
 # See LICENSE.md in the project root for license terms.
 name = "cat-diff-validation-agent"
 nickname_candidates = ["diff-validation-agent"]
-description = "Internal subagent — verifies that blue-team patch commits address each finding in the red-team's findings.json. Returns a validation report with PASS/FAIL/SKIPPED status per finding and exits non-zero when any non-disputed CRITICAL or HIGH finding has no matching patch hunk."
+description = "Internal agent — verifies that blue-team patch commits address each finding in the red-team's findings.json. Returns a validation report with PASS/FAIL/SKIPPED status per finding and exits non-zero when any non-disputed CRITICAL or HIGH finding has no matching patch hunk."
 model = "gpt-5.3-codex-spark"
 model_reasoning_effort = "high"
 sandbox_mode = "read-only"

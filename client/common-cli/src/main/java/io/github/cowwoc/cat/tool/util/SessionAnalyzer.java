@@ -127,10 +127,12 @@ public final class SessionAnalyzer
    * Accepts either:
    * <ul>
    *   <li>A session UUID: {@code b0078f4d-efa0-47a5-8182-03970ffd737a}</li>
-   *   <li>A subagent path: {@code b0078f4d-efa0-47a5-8182-03970ffd737a/subagents/agent-ad630cb}</li>
+ *   <li>A nested-agent path:
+ *     {@code b0078f4d-efa0-47a5-8182-03970ffd737a/subagents/agent-ad630cb} (Claude) or
+ *     {@code b0078f4d-efa0-47a5-8182-03970ffd737a/agents/agent-ad630cb} (Codex)</li>
    * </ul>
    *
-   * @param sessionId the session ID or subagent path
+   * @param sessionId the session ID or agent path
    * @return the resolved JSONL file path
    * @throws IllegalArgumentException if the resolved path does not exist
    */
@@ -759,13 +761,13 @@ public final class SessionAnalyzer
   }
 
   /**
-   * Analyzes a session JSONL file with subagent discovery and combined analysis.
+   * Analyzes a session JSONL file with agent discovery and combined analysis.
    * <p>
-   * Analyzes the main session and discovers any subagent sessions, providing
+   * Analyzes the main session and discovers any agent sessions, providing
    * per-agent and combined metrics.
    *
    * @param filePath path to the session JSONL file
-   * @return JSON object containing main, subagents, and combined analysis
+   * @return JSON object containing main, runtime-specific child-session analysis, and combined analysis
    * @throws NullPointerException if filePath is null
    * @throws IOException if file reading or parsing fails
    */
@@ -794,7 +796,7 @@ public final class SessionAnalyzer
       }
       catch (IOException e)
       {
-        warnings.add("Warning: Failed to analyze subagent " + agentId + ": " + e.getMessage());
+        warnings.add("Warning: Failed to analyze agent " + agentId + ": " + e.getMessage());
       }
     }
 
@@ -810,7 +812,8 @@ public final class SessionAnalyzer
       result.set("timing", mainTiming);
     }
     result.set("main", mainAnalysis);
-    result.set("subagents", subagentsNode);
+    String childSessionKey = sessionLog.getChildSessionKey();
+    result.set(childSessionKey, subagentsNode);
     result.set("combined", combined);
     if (!warnings.isEmpty())
       result.set("warnings", warnings);
@@ -821,7 +824,7 @@ public final class SessionAnalyzer
   /**
    * Analyzes a single agent's JSONL file.
    * <p>
-   * Returns analysis without subagent or combined keys.
+   * Returns analysis without agent or combined keys.
    *
    * @param filePath path to the agent's JSONL file
    * @return JSON object containing tool frequency, token usage, output sizes, candidates, and summary
@@ -839,7 +842,7 @@ public final class SessionAnalyzer
   /**
    * Analyzes a single agent's entries.
    * <p>
-   * Returns analysis without subagent or combined keys.
+   * Returns analysis without agent or combined keys.
    *
    * @param entries list of parsed JSONL entries
    * @return JSON object containing tool frequency, token usage, output sizes, candidates, and summary
@@ -1832,14 +1835,14 @@ public final class SessionAnalyzer
   }
 
   /**
-   * Discovers subagent JSONL files from parent session.
+   * Discovers agent JSONL files from parent session.
    * <p>
    * Parses the session JSONL for Task tool_result entries containing agentId,
-   * then resolves subagent file paths. Returns only paths that exist on disk.
+   * then resolves agent file paths. Returns only paths that exist on disk.
    *
    * @param entries list of parsed JSONL entries from parent session
-   * @param filePath path to parent session JSONL file (used to resolve subagent directory)
-   * @return list of discovered subagent file paths (only existing files)
+   * @param filePath path to parent session JSONL file (used to resolve agent directory)
+   * @return list of discovered agent file paths (only existing files)
    * @throws NullPointerException if any parameter is null
    */
   private List<Path> discoverSubagents(List<JsonNode> entries, Path filePath)
@@ -2335,13 +2338,20 @@ public final class SessionAnalyzer
     List<Path> discoverSubagents(List<JsonNode> entries, Path filePath) throws IOException;
 
     /**
-     * Returns the identifier to use for a session in the {@code subagents} analysis object.
+     * Returns the identifier to use for a session in the child-session analysis object.
      *
      * @param filePath the session file
      * @return the session key
      * @throws IOException if the session key cannot be read
      */
     String getSessionKey(Path filePath) throws IOException;
+
+    /**
+     * Returns the top-level key name used to store child-session analyses.
+     *
+     * @return key name for child-session analysis map
+     */
+    String getChildSessionKey();
   }
 
   /**
@@ -2397,29 +2407,20 @@ public final class SessionAnalyzer
       Path sessionDir = filePath.getParent();
       if (sessionDir == null)
         sessionDir = Path.of(".");
-      // Extract session name from JSONL filename to locate subagents directory.
-      // Claude Code stores subagents at {sessionDir}/{sessionName}/subagents/.
+      // Extract session name from JSONL filename to locate child session directories.
       String sessionName = filePath.getFileName().toString();
       if (sessionName.endsWith(".jsonl"))
         sessionName = sessionName.substring(0, sessionName.length() - ".jsonl".length());
-      Path subagentDir = sessionDir.resolve(sessionName).resolve("subagents");
+      Path sessionRootDir = sessionDir.resolve(sessionName);
+      Path subagentDir = sessionRootDir.resolve("subagents");
+      Path legacyAgentDir = sessionRootDir.resolve("agents");
 
-      // Phase 1: Filesystem scan — find all agent-*.jsonl files in the subagents directory,
+      // Phase 1: Filesystem scan — find all agent-*.jsonl files in child-session directories,
       // excluding compaction artifacts (agent-acompact-*.jsonl).
+      // During migration we read both Claude-native subagents/ and legacy agents/ paths.
       Set<Path> subagentPaths = new LinkedHashSet<>();
-      if (Files.isDirectory(subagentDir))
-      {
-        try (java.nio.file.DirectoryStream<Path> stream =
-          Files.newDirectoryStream(subagentDir, "agent-*.jsonl"))
-        {
-          for (Path p : stream)
-          {
-            String name = p.getFileName().toString();
-            if (!name.startsWith("agent-acompact-"))
-              subagentPaths.add(p);
-          }
-        }
-      }
+      scanAgentDirectory(subagentDir, subagentPaths);
+      scanAgentDirectory(legacyAgentDir, subagentPaths);
 
       // Phase 2: AgentId parse — finds refs in non-compacted sessions (retained for completeness).
       for (JsonNode entry : entries)
@@ -2453,11 +2454,33 @@ public final class SessionAnalyzer
       return result;
     }
 
+    private void scanAgentDirectory(Path agentDir, Set<Path> subagentPaths) throws IOException
+    {
+      if (!Files.isDirectory(agentDir))
+        return;
+      try (java.nio.file.DirectoryStream<Path> stream =
+             Files.newDirectoryStream(agentDir, "agent-*.jsonl"))
+      {
+        for (Path p : stream)
+        {
+          String name = p.getFileName().toString();
+          if (!name.startsWith("agent-acompact-"))
+            subagentPaths.add(p);
+        }
+      }
+    }
+
     @Override
     public String getSessionKey(Path filePath)
     {
       requireThat(filePath, "filePath").isNotNull();
       return filePath.getFileName().toString().replace("agent-", "").replace(".jsonl", "");
+    }
+
+    @Override
+    public String getChildSessionKey()
+    {
+      return "subagents";
     }
   }
 
@@ -2878,7 +2901,7 @@ public final class SessionAnalyzer
       }
       catch (IOException e)
       {
-        throw new IOException("Failed to search Codex subagents in: " + codexSessionsPath, e);
+        throw new IOException("Failed to search Codex agents in: " + codexSessionsPath, e);
       }
     }
 
@@ -2897,6 +2920,12 @@ public final class SessionAnalyzer
       if (matcher.find())
         return matcher.group();
       return filePath.getFileName().toString().replace(".jsonl", "");
+    }
+
+    @Override
+    public String getChildSessionKey()
+    {
+      return "agents";
     }
 
     /**
@@ -2929,17 +2958,17 @@ public final class SessionAnalyzer
     }
 
     /**
-     * Extracts the parent thread ID from a Codex subagent metadata payload.
+     * Extracts the parent thread ID from a Codex agent metadata payload.
      *
      * @param payload the {@code session_meta.payload} object
      * @return the parent thread ID, or an empty string if the session is not a child thread
      */
     private static String getCodexParentThreadId(JsonNode payload)
     {
-      JsonNode subagent = payload.path("source").path("subagent");
-      if (!subagent.isObject())
+      JsonNode agent = payload.path("source").path("subagent");
+      if (!agent.isObject())
         return "";
-      for (Map.Entry<String, JsonNode> entry : subagent.properties())
+      for (Map.Entry<String, JsonNode> entry : agent.properties())
       {
         String parentThreadId = getStringOrDefault(entry.getValue(), "parent_thread_id", "");
         if (!parentThreadId.isBlank())

@@ -4,7 +4,7 @@
 # See LICENSE.md in the project root for license terms.
 name = "cat-red-team-agent"
 nickname_candidates = ["red-team-agent"]
-description = "Internal subagent — adversarially probes a target (skill instructions, test code, or source code) to find concrete loopholes, bypass vectors, and under-specified rules. Returns structured findings.json for use by the adversarial TDD loop."
+description = "Internal agent — adversarially probes a target (skill instructions, test code, or source code) to find concrete loopholes, bypass vectors, and under-specified rules. Returns structured findings.json for use by the adversarial TDD loop."
 model = "gpt-5.5"
 model_reasoning_effort = "high"
 sandbox_mode = "workspace-write"

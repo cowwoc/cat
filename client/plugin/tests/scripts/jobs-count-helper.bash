@@ -29,12 +29,12 @@ classify_job_execution() {
     fi
 }
 
-# Builds a compliant subagent prompt that passes PLAN_MD_PATH but does NOT embed JOBS_COUNT.
+# Builds a compliant agent prompt that passes PLAN_MD_PATH but does NOT embed JOBS_COUNT.
 # Arguments: $1 = PLAN_MD_PATH, $2 = JOBS_COUNT
 # Output: prints the prompt string to stdout
 build_subagent_prompt() {
     local plan_md_path="$1"
     # $2 (JOBS_COUNT) is intentionally NOT embedded in the prompt.
-    # Subagents must read plan.md directly via PLAN_MD_PATH.
+    # Agents must read plan.md directly via PLAN_MD_PATH.
     echo "PLAN_MD_PATH: ${plan_md_path}"
 }

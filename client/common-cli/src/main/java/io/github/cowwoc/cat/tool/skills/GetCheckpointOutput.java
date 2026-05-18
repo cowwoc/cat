@@ -244,7 +244,7 @@ public final class GetCheckpointOutput implements SkillOutput
       "**Feedback iteration:** " + iteration,
       "");
     List<String> metrics = List.of(
-      "**Feedback subagent:** " + tokens + "K tokens",
+      "**Feedback agent:** " + tokens + "K tokens",
       "**Total tokens (all iterations):** " + total + "K");
     List<String> branchContent = List.of(
       "**Branch:** " + branch,
