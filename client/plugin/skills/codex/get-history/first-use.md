@@ -13,6 +13,11 @@ Codex session logs live under `$CODEX_HOME/sessions/YYYY/MM/DD/rollout-...<threa
 The current Codex thread ID is `${CODEX_THREAD_ID}`.
 
 ```bash
+<!-- cat:include ../../include/codex-home-bootstrap.md -->
+if [ -z "${CAT_PLUGIN_ROOT:-}" ]; then
+  echo "CAT_PLUGIN_ROOT is required" >&2
+  exit 1
+fi
 SESSION_ANALYZER="${CAT_PLUGIN_ROOT}/client/bin/session-analyzer"
 
 "$SESSION_ANALYZER" --runtime codex search "${CODEX_THREAD_ID}" "keyword" --context 2

@@ -71,8 +71,8 @@ Extract these values:
 Render the preparing progress banner:
 
 ```bash
-if [ -z "${CAT_PLUGIN_DATA:-}" ]; then
-  echo "CAT_PLUGIN_DATA is required" >&2
+if [ -z "${CAT_PLUGIN_ROOT:-}" ] || [ -z "${CAT_PLUGIN_DATA:-}" ]; then
+  echo "CAT_PLUGIN_ROOT and CAT_PLUGIN_DATA are required" >&2
   exit 1
 fi
 "${CAT_PLUGIN_ROOT}/client/bin/progress-banner" --phase preparing

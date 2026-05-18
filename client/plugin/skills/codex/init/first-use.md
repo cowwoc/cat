@@ -25,6 +25,7 @@ mkdir -p .cat/issues .cat/rules/common .cat/rules/codex .codex
 3. Copy project templates from the installed plugin.
 
 ```bash
+<!-- cat:include ../../include/codex-home-bootstrap.md -->
 : "${CAT_PLUGIN_ROOT:?CAT_PLUGIN_ROOT is required}"
 cp "${CAT_PLUGIN_ROOT}/templates/project.md" .cat/project.md
 cp "${CAT_PLUGIN_ROOT}/templates/roadmap.md" .cat/roadmap.md
@@ -34,6 +35,7 @@ cp "${CAT_PLUGIN_ROOT}/templates/config.json" .cat/config.json
 4. Install bundled portable and runtime-specific rules when present.
 
 ```bash
+<!-- cat:include ../../include/codex-home-bootstrap.md -->
 : "${CAT_PLUGIN_ROOT:?CAT_PLUGIN_ROOT is required}"
 if [ -d "${CAT_PLUGIN_ROOT}/rules/common" ]; then
   cp -R "${CAT_PLUGIN_ROOT}/rules/common/." .cat/rules/common/

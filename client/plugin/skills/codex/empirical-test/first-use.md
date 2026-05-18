@@ -14,8 +14,9 @@ normal project context by itself.
 ## Run
 
 ```bash
-if [ -z "${CAT_PLUGIN_DATA:-}" ]; then
-  echo "CAT_PLUGIN_DATA is required" >&2
+<!-- cat:include ../../include/codex-home-bootstrap.md -->
+if [ -z "${CAT_PLUGIN_ROOT:-}" ] || [ -z "${CAT_PLUGIN_DATA:-}" ]; then
+  echo "CAT_PLUGIN_ROOT and CAT_PLUGIN_DATA are required" >&2
   exit 1
 fi
 RUNNER="${CAT_PLUGIN_ROOT}/client/bin/empirical-test-runner"
@@ -30,8 +31,9 @@ RUNNER="${CAT_PLUGIN_ROOT}/client/bin/empirical-test-runner"
 ## Inspect
 
 ```bash
-if [ -z "${CAT_PLUGIN_DATA:-}" ]; then
-  echo "CAT_PLUGIN_DATA is required" >&2
+<!-- cat:include ../../include/codex-home-bootstrap.md -->
+if [ -z "${CAT_PLUGIN_ROOT:-}" ] || [ -z "${CAT_PLUGIN_DATA:-}" ]; then
+  echo "CAT_PLUGIN_ROOT and CAT_PLUGIN_DATA are required" >&2
   exit 1
 fi
 SESSION_ANALYZER="${CAT_PLUGIN_ROOT}/client/bin/session-analyzer"
