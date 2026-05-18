@@ -1,4 +1,6 @@
 {
-  "status" : "open",
-  "blocks" : [ ]
+  "status" : "closed",
+  "progress" : 100,
+  "blocks" : [ ],
+  "target_branch" : "v2.1"
 }

@@ -92,9 +92,11 @@ public final class MainCliToolTest
       Path project = root.resolve("project");
       Path pluginRoot = root.resolve("plugin");
       Path pluginData = root.resolve("plugin-data");
+      Path userHome = root.resolve("home");
       Files.createDirectories(project);
       Files.createDirectories(pluginRoot);
       Files.createDirectories(pluginData);
+      Files.createDirectories(userHome);
 
       Map<String, String> environment = new HashMap<>();
       environment.put("CAT_SESSION_ID", "cat-session");
@@ -104,13 +106,15 @@ public final class MainCliToolTest
       environment.put("CAT_CONFIG_DIR", root.resolve("cat-config").toString());
       environment.put("CAT_RUNTIME", "codex");
       environment.put("TZ", "America/New_York");
+      Map<String, String> properties = Map.of("user.home", userHome.toString());
 
-      try (MainCliTool scope = new MainCliTool(environment::get, root))
+      try (MainCliTool scope = new MainCliTool(environment::get, properties::get, root))
       {
         requireThat(scope.getSessionId(), "sessionId").isEqualTo("cat-session");
         requireThat(scope.getProjectPath(), "projectPath").isEqualTo(project);
         requireThat(scope.getPluginRoot(), "pluginRoot").isEqualTo(pluginRoot);
-        requireThat(scope.getPluginData(), "pluginData").isEqualTo(pluginData);
+        requireThat(scope.getPluginData(), "pluginData").
+          isEqualTo(userHome.resolve(".codex/plugins/data/cat-cat"));
         requireThat(scope.getConfigPath(), "configPath").
           isEqualTo(root.resolve("cat-config"));
         requireThat(scope.getTimezone(), "timezone").isEqualTo("America/New_York");
@@ -331,7 +335,8 @@ public final class MainCliToolTest
         requireThat(scope.getSessionId(), "sessionId").isEqualTo("cat-session");
         requireThat(scope.getProjectPath(), "projectPath").isEqualTo(project);
         requireThat(scope.getPluginRoot(), "pluginRoot").isEqualTo(pluginRoot);
-        requireThat(scope.getPluginData(), "pluginData").isEqualTo(pluginData);
+        requireThat(scope.getPluginData(), "pluginData").
+          isEqualTo(userHome.resolve(".codex/plugins/data/cat-cat"));
         requireThat(scope.getConfigPath(), "configPath").isEqualTo(userHome.resolve(".codex"));
         requireThat(scope.getPluginDescriptor(), "pluginDescriptor").
           isEqualTo(AgentRuntime.CODEX.pluginDescriptor());
@@ -613,6 +618,43 @@ public final class MainCliToolTest
       try (MainCliTool scope = new MainCliTool(environment::get, properties::get, project))
       {
         requireThat(scope.getConfigPath(), "configPath").isEqualTo(userHome.resolve(".codex"));
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(root);
+    }
+  }
+
+  /**
+   * Verifies that Codex runtime defaults its plugin data directory to {@code user.home/.codex/plugins/data/cat-cat}.
+   *
+   * @throws Exception if file operations fail
+   */
+  @Test
+  public void codexRuntimeDefaultsPluginDataDirToUserHome() throws Exception
+  {
+    Path root = Files.createTempDirectory("main-cli-tool-codex-home-plugin-data-");
+    try
+    {
+      Path project = root.resolve("project");
+      Path pluginRoot = root.resolve("plugin");
+      Path launcherDir = pluginRoot.resolve("client/bin");
+      Path userHome = root.resolve("home");
+      Files.createDirectories(project);
+      Files.createDirectories(launcherDir);
+      Files.createDirectories(userHome);
+
+      Map<String, String> environment = new HashMap<>();
+      environment.put("CODEX_THREAD_ID", "codex-session");
+      Map<String, String> properties = Map.of(
+        "cat.launcher.dir", launcherDir.toString(),
+        "user.home", userHome.toString());
+
+      try (MainCliTool scope = new MainCliTool(environment::get, properties::get, project))
+      {
+        requireThat(scope.getPluginData(), "pluginData").
+          isEqualTo(userHome.resolve(".codex/plugins/data/cat-cat"));
       }
     }
     finally

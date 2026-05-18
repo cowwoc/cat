@@ -456,8 +456,12 @@ public abstract class AbstractCliTool extends AbstractRuntimeScope implements Cl
       if (runtime == AgentRuntime.CODEX)
       {
         String codexHome = values.environmentValue("CODEX_HOME");
+        Path base;
         if (codexHome != null)
-          return Path.of(codexHome).resolve("plugins/data/cat-cat");
+          base = Path.of(codexHome);
+        else
+          base = userHome().resolve(".codex");
+        return base.resolve("plugins/data/cat-cat");
       }
       return Path.of(values.requiredEnvironmentValue("CAT_PLUGIN_DATA"));
     }
