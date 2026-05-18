@@ -85,7 +85,7 @@ public final class UpdateBranch
       err.println("Invalid target commit: " + targetHash);
       return 1;
     }
-    String resolvedTargetHash = newTipCheck.stdout().strip();
+    String resolvedTargetHash = newTipCheck.output().strip();
 
     ProcessRunner.Result currentTipResult = runGit(workingDirectory,
       "rev-parse", "--verify", branchRef);
@@ -93,7 +93,7 @@ public final class UpdateBranch
     String expectedOldTip = MISSING_REF;
     if (branchExists && !parsed.force())
     {
-      String currentTip = currentTipResult.stdout().strip();
+      String currentTip = currentTipResult.output().strip();
       ProcessRunner.Result fastForwardCheck = runGit(workingDirectory,
         "merge-base", "--is-ancestor", currentTip, resolvedTargetHash);
       if (fastForwardCheck.exitCode() != 0)
@@ -112,7 +112,7 @@ public final class UpdateBranch
       updateResult = runGit(workingDirectory, "update-ref", branchRef, resolvedTargetHash, expectedOldTip);
     if (updateResult.exitCode() != 0)
     {
-      String details = updateResult.stdout().strip();
+      String details = updateResult.output().strip();
       if (details.isEmpty())
         err.println("Failed to update branch '" + branch + "'.");
       else

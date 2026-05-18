@@ -512,7 +512,7 @@ public final class InstructionTestRunner
       ProcessRunner.Result addResult = ProcessRunner.run(worktreeRoot, "git", "add", relPath);
       if (addResult.exitCode() != 0)
         throw new IOException("git add failed for " + relPath +
-          ": exit code " + addResult.exitCode() + ", output: " + addResult.stdout());
+          ": exit code " + addResult.exitCode() + ", output: " + addResult.output());
     }
 
     // Commit with retry on lock contention (exponential backoff)
@@ -999,7 +999,7 @@ public final class InstructionTestRunner
     if (fixtureResult.exitCode() == 0)
     {
       Files.createDirectories(Path.of(outputDir));
-      Files.writeString(Path.of(outputJson), fixtureResult.stdout(), UTF_8);
+      Files.writeString(Path.of(outputJson), fixtureResult.output(), UTF_8);
       StringJoiner fixtureOutput = new StringJoiner("\n");
       fixtureOutput.add("runner_fixture=yes");
       fixtureOutput.add("output_json=" + outputJson);
@@ -1013,8 +1013,8 @@ public final class InstructionTestRunner
       throw new IOException(
         "InstructionTestRunner prepare-trial: git show failed for " +
         isolationBranch + ":" + testDirRel + "/" + tcId + "_turn1.md" +
-        " in " + worktreePath + ": " + showResult.stdout());
-    String turnContent = showResult.stdout();
+        " in " + worktreePath + ": " + showResult.output());
+    String turnContent = showResult.output();
 
     // Build the preamble: provides operational context (CWD, resolve-paths instruction)
     // without revealing assertion content
@@ -2012,7 +2012,7 @@ public final class InstructionTestRunner
     if (addResult.exitCode() != 0)
       throw new IOException(
         "InstructionTestRunner write-test-results: git add failed with exit code " +
-        addResult.exitCode() + ": " + addResult.stdout());
+        addResult.exitCode() + ": " + addResult.output());
 
     // Commit with retry (3 attempts, exponential backoff)
     String commitMessage = "test-results: update " + testDirPath.getFileName();
@@ -2051,7 +2051,7 @@ public final class InstructionTestRunner
         "git", "rev-parse", "HEAD");
       String testSha;
       if (shaResult.exitCode() == 0)
-        testSha = shaResult.stdout().trim();
+        testSha = shaResult.output().trim();
       else
         testSha = "";
       StringJoiner resultLines = new StringJoiner("\n");

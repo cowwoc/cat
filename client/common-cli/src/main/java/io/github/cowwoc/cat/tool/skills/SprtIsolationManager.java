@@ -87,11 +87,11 @@ final class SprtIsolationManager
 
     // Verify clean working tree before creating the isolation branch
     ProcessRunner.Result statusResult = ProcessRunner.run(worktreePath, "git", "status", "--porcelain");
-    if (!statusResult.stdout().isBlank())
+    if (!statusResult.output().isBlank())
       throw new IOException(
         "InstructionTestRunner create-isolation-branch: worktree has uncommitted changes in " +
         worktreePath + ". Commit or stash all changes before creating the isolation branch.\n" +
-        "Uncommitted changes:\n" + statusResult.stdout());
+        "Uncommitted changes:\n" + statusResult.output());
 
     // Enumerate .md files in testDir sorted, excluding test-results.json (which is not .md anyway)
     List<Path> mdFiles = listMdFiles(testDir);
@@ -109,7 +109,7 @@ final class SprtIsolationManager
 
     // Get current branch to restore later
     ProcessRunner.Result branchResult = ProcessRunner.run(worktreePath, "git", "branch", "--show-current");
-    String originalBranch = branchResult.stdout().strip();
+    String originalBranch = branchResult.output().strip();
     if (originalBranch.isBlank())
       throw new IOException(
         "InstructionTestRunner create-isolation-branch: git branch --show-current returned no output " +
@@ -125,7 +125,7 @@ final class SprtIsolationManager
       if (orphanResult.exitCode() != 0)
         throw new IOException(
           "InstructionTestRunner create-isolation-branch: git checkout --orphan failed with exit code " +
-          orphanResult.exitCode() + ": " + orphanResult.stdout());
+          orphanResult.exitCode() + ": " + orphanResult.output());
 
       // For each file, call extract-turns binary on a stripped temporary copy
       Path extractTurnsBin = worktreePath.resolve("client/distribution/target/jlink").
@@ -148,7 +148,7 @@ final class SprtIsolationManager
           if (extractResult.exitCode() != 0)
             throw new IOException(
               "InstructionTestRunner create-isolation-branch: extract-turns failed for " + mdFile +
-              " with exit code " + extractResult.exitCode() + ": " + extractResult.stdout());
+              " with exit code " + extractResult.exitCode() + ": " + extractResult.output());
         }
         finally
         {
@@ -173,14 +173,14 @@ final class SprtIsolationManager
       if (addResult.exitCode() != 0)
         throw new IOException(
           "InstructionTestRunner create-isolation-branch: git add -A failed with exit code " +
-          addResult.exitCode() + ": " + addResult.stdout());
+          addResult.exitCode() + ": " + addResult.output());
 
       ProcessRunner.Result commitResult = ProcessRunner.run(worktreePath, "git", "commit",
         "-m", "test-runner workspace");
       if (commitResult.exitCode() != 0)
         throw new IOException(
           "InstructionTestRunner create-isolation-branch: git commit failed with exit code " +
-          commitResult.exitCode() + ": " + commitResult.stdout());
+          commitResult.exitCode() + ": " + commitResult.output());
     }
     finally
     {
@@ -270,7 +270,7 @@ final class SprtIsolationManager
         if (worktreeResult.exitCode() != 0)
           throw new IOException(
             "InstructionTestRunner create-runner-worktrees: git worktree add failed for " +
-            tcId + " with exit code " + worktreeResult.exitCode() + ": " + worktreeResult.stdout());
+            tcId + " with exit code " + worktreeResult.exitCode() + ": " + worktreeResult.output());
 
         // Copy jlink directory from the issue worktree to the runner worktree so that
         // prepareTrial and claude-runner can use it without rebuilding.
@@ -330,7 +330,7 @@ final class SprtIsolationManager
     List<String> worktreePathsToRemove = new ArrayList<>();
     List<String> branchesToDelete = new ArrayList<>();
 
-    String[] blocks = listResult.stdout().split("\n\n");
+    String[] blocks = listResult.output().split("\n\n");
     for (String block : blocks)
     {
       String[] lines = block.trim().split("\n");
@@ -368,7 +368,7 @@ final class SprtIsolationManager
       if (removeResult.exitCode() != 0)
         throw new IOException(
           "InstructionTestRunner remove-runner-worktrees: git worktree remove failed for " +
-          wtPath + " with exit code " + removeResult.exitCode() + ": " + removeResult.stdout());
+          wtPath + " with exit code " + removeResult.exitCode() + ": " + removeResult.output());
 
       ProcessRunner.Result deleteBranchResult = ProcessRunner.run(worktreePath,
         "git", "branch", "-D", branch);
@@ -376,7 +376,7 @@ final class SprtIsolationManager
         throw new IOException(
           "InstructionTestRunner remove-runner-worktrees: git branch -D failed for " +
           branch + " with exit code " + deleteBranchResult.exitCode() + ": " +
-          deleteBranchResult.stdout());
+          deleteBranchResult.output());
 
       ++removedCount;
     }
@@ -447,7 +447,7 @@ final class SprtIsolationManager
       throw new IOException(
         "InstructionTestRunner remove-runner-worktree: git worktree remove failed for " +
         runnerWorktree + " with exit code " + removeResult.exitCode() + ": " +
-        removeResult.stdout());
+        removeResult.output());
 
     // Delete branch — ignore failure if branch is already gone
     ProcessRunner.run(worktreePath, "git", "branch", "-D", runnerBranch);

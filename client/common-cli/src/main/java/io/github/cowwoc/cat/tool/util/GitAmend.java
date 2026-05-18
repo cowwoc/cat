@@ -113,10 +113,10 @@ public final class GitAmend
     ProcessRunner.Result statusResult = ProcessRunner.run(
       "git", "-C", directory, "status", "--porcelain", "-b");
     String pushStatus = "";
-    if (statusResult.exitCode() == 0 && !statusResult.stdout().isBlank())
+    if (statusResult.exitCode() == 0 && !statusResult.output().isBlank())
     {
       // Get first line (branch tracking info)
-      String firstLine = statusResult.stdout().strip().split("\n")[0];
+      String firstLine = statusResult.output().strip().split("\n")[0];
       pushStatus = firstLine;
     }
 
@@ -152,7 +152,7 @@ public final class GitAmend
 
     ProcessRunner.Result amendResult = ProcessRunner.run(amendCmd.toArray(new String[0]));
     if (amendResult.exitCode() != 0)
-      return block(scope, "Amend failed: " + amendResult.stdout().strip());
+      return block(scope, "Amend failed: " + amendResult.output().strip());
 
     // Step 4: Record NEW_HEAD after amend
     String newHead = runGitCommandSingleLineInDirectory(directory, "rev-parse", "HEAD");
@@ -164,9 +164,9 @@ public final class GitAmend
     boolean raceDetected = false;
     ProcessRunner.Result remoteRefResult = ProcessRunner.run(
       "git", "-C", directory, "rev-parse", "@{push}");
-    if (remoteRefResult.exitCode() == 0 && !remoteRefResult.stdout().isBlank())
+    if (remoteRefResult.exitCode() == 0 && !remoteRefResult.output().isBlank())
     {
-      String remoteRef = remoteRefResult.stdout().strip();
+      String remoteRef = remoteRefResult.output().strip();
       // Check if OLD_HEAD is an ancestor of remote ref (meaning it was pushed during amend)
       ProcessRunner.Result ancestorResult = ProcessRunner.run(
         "git", "-C", directory, "merge-base", "--is-ancestor", oldHead, remoteRef);

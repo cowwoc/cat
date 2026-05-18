@@ -1,7 +1,7 @@
 # Maven build artifacts
 target/
 build/
-lib/
+plugin/lib/
 
 # IDE files
 .idea/

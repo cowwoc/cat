@@ -128,7 +128,7 @@ public final class GitRebase
     String backup = "backup-before-rebase-" + LocalDateTime.now().format(BACKUP_TIMESTAMP_FORMATTER);
     ProcessRunner.Result branchResult = runGit("branch", backup);
     if (branchResult.exitCode() != 0)
-      return buildBlockResponse("Failed to create backup branch: " + branchResult.stdout().strip(), null, null);
+      return buildBlockResponse("Failed to create backup branch: " + branchResult.output().strip(), null, null);
 
     // Verify backup was created (fail-fast)
     ProcessRunner.Result verifyResult = runGit("show-ref", "--verify", "--quiet",
@@ -148,7 +148,7 @@ public final class GitRebase
 
     // Step 5: Count commits rebased
     ProcessRunner.Result countResult = runGit("rev-list", "--count", resolvedTarget + "..HEAD");
-    int commitsRebased = Integer.parseInt(countResult.stdout().strip());
+    int commitsRebased = Integer.parseInt(countResult.output().strip());
 
     // Step 6: Delete backup
     runGit("branch", "-D", backup);
@@ -186,7 +186,7 @@ public final class GitRebase
       ProcessRunner.Result diffStatResult = runGit("diff", "--diff-filter=M", backup, "--stat");
       String diffStat;
       if (diffStatResult.exitCode() == 0)
-        diffStat = diffStatResult.stdout().strip();
+        diffStat = diffStatResult.output().strip();
       else
         diffStat = "";
       return new RebaseOutcome(buildContentChangedBlockResponse(resolvedTarget, backup, diffStat), List.of());
@@ -245,9 +245,9 @@ public final class GitRebase
     if (mergeBaseResult.exitCode() != 0)
     {
       throw new IOException("git merge-base failed for target '" + resolvedTarget +
-        "': " + mergeBaseResult.stdout().strip());
+        "': " + mergeBaseResult.output().strip());
     }
-    String mergeBase = mergeBaseResult.stdout().strip();
+    String mergeBase = mergeBaseResult.output().strip();
 
     // Try fork-point detection via reflog. This fails when the target is a commit hash
     // (no reflog) or when the reflog has been pruned — both are expected conditions.
@@ -255,7 +255,7 @@ public final class GitRebase
     if (forkPointResult.exitCode() != 0)
       return mergeBase;
 
-    return forkPointResult.stdout().strip();
+    return forkPointResult.output().strip();
   }
 
   /**
@@ -273,7 +273,7 @@ public final class GitRebase
     ProcessRunner.Result result = runGit("merge-base", targetBranch, "HEAD");
     if (result.exitCode() != 0)
       return null;
-    return result.stdout().strip();
+    return result.output().strip();
   }
 
   /**
@@ -306,7 +306,7 @@ public final class GitRebase
     // Find renamed files on the target branch since the merge base
     ProcessRunner.Result renameResult = runGit("diff", "--name-status", "--diff-filter=R",
       "--find-renames=50%", mergeBase, targetBranch);
-    if (renameResult.exitCode() != 0 || renameResult.stdout().isBlank())
+    if (renameResult.exitCode() != 0 || renameResult.output().isBlank())
       return null;
 
     // Find old path prefixes that the current branch has ALSO renamed since the merge base.
@@ -322,7 +322,7 @@ public final class GitRebase
     // Map from file path to list of old paths it references
     Map<String, List<String>> contentConflicts = new LinkedHashMap<>();
 
-    for (String line : renameResult.stdout().split("\n"))
+    for (String line : renameResult.output().split("\n"))
     {
       String trimmed = line.strip();
       if (trimmed.isEmpty())
@@ -350,7 +350,7 @@ public final class GitRebase
       if (!oldPath.startsWith(".cat/"))
       {
         ProcessRunner.Result lsResult = runGit("ls-files", "--", oldPath);
-        if (lsResult.exitCode() == 0 && !lsResult.stdout().isBlank())
+        if (lsResult.exitCode() == 0 && !lsResult.output().isBlank())
           trackedConflicts.add(oldPath);
       }
 
@@ -367,17 +367,17 @@ public final class GitRebase
       ProcessRunner.Result grepResult = runGit("grep", "-l", "--", oldPrefix);
       // git grep exits 1 when no matches (not an error); only exit code > 1 is a real error
       if (grepResult.exitCode() > 1)
-        throw new IOException("git grep failed: " + grepResult.stdout().strip());
-      if (grepResult.exitCode() == 0 && !grepResult.stdout().isBlank())
+        throw new IOException("git grep failed: " + grepResult.output().strip());
+      if (grepResult.exitCode() == 0 && !grepResult.output().isBlank())
       {
         // If the old path is still tracked, skip validation: any references to it are still valid.
         // This handles cases like documentation that references the old path location.
         ProcessRunner.Result lsOldPathResult = runGit("ls-files", "--", oldPath);
-        boolean oldPathStillTracked = lsOldPathResult.exitCode() == 0 && !lsOldPathResult.stdout().isBlank();
+        boolean oldPathStillTracked = lsOldPathResult.exitCode() == 0 && !lsOldPathResult.output().isBlank();
         if (oldPathStillTracked)
           continue;  // Old path still exists; references to it are still valid, not a conflict
 
-        for (String file : grepResult.stdout().split("\n"))
+        for (String file : grepResult.output().split("\n"))
         {
           String fileTrimmed = file.strip();
           if (fileTrimmed.isEmpty())
@@ -422,9 +422,9 @@ public final class GitRebase
     ProcessRunner.Result result = runGit("diff", "--name-status", "--diff-filter=R",
       "--find-renames=50%", mergeBase, "HEAD");
     Set<String> prefixes = new HashSet<>();
-    if (result.exitCode() != 0 || result.stdout().isBlank())
+    if (result.exitCode() != 0 || result.output().isBlank())
       return prefixes;
-    for (String line : result.stdout().split("\n"))
+    for (String line : result.output().split("\n"))
     {
       String trimmed = line.strip();
       if (trimmed.isEmpty())
@@ -455,9 +455,9 @@ public final class GitRebase
   {
     ProcessRunner.Result result = runGit("diff", "--name-only", mergeBase, "HEAD");
     Set<String> files = new HashSet<>();
-    if (result.exitCode() != 0 || result.stdout().isBlank())
+    if (result.exitCode() != 0 || result.output().isBlank())
       return files;
-    for (String line : result.stdout().split("\n"))
+    for (String line : result.output().split("\n"))
     {
       String trimmed = line.strip();
       if (!trimmed.isEmpty())
@@ -573,14 +573,14 @@ public final class GitRebase
 
     // Rebase failed — check if it's a conflict
     ProcessRunner.Result conflictResult = runGit("diff", "--name-only", "--diff-filter=U");
-    String conflictingFiles = conflictResult.stdout().strip();
+    String conflictingFiles = conflictResult.output().strip();
 
     // Abort rebase to return to clean state
     runGit("rebase", "--abort");
 
     if (!conflictingFiles.isEmpty())
       return buildConflictJson(resolvedTarget, backup, conflictingFiles);
-    return buildBlockResponse("Rebase failed: " + rebaseResult.stdout().strip(), resolvedTarget, backup);
+    return buildBlockResponse("Rebase failed: " + rebaseResult.output().strip(), resolvedTarget, backup);
   }
 
   /**
@@ -595,10 +595,10 @@ public final class GitRebase
   {
     ProcessRunner.Result result = runGit("status", "--porcelain");
     if (result.exitCode() != 0)
-      throw new IOException("Failed to run git status --porcelain: " + result.stdout().strip());
+      throw new IOException("Failed to run git status --porcelain: " + result.output().strip());
 
     Set<String> untracked = new HashSet<>();
-    for (String line : result.stdout().split("\n"))
+    for (String line : result.output().split("\n"))
     {
       if (line.startsWith("?? "))
         untracked.add(line.substring(3).strip());

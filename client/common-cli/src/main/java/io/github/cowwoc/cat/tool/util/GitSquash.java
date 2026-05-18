@@ -214,7 +214,7 @@ public final class GitSquash
     // Check for conflicting files
     ProcessRunner.Result conflictResult = ProcessRunner.run(
       "git", "-C", directory, "diff", "--name-only", "--diff-filter=U");
-    String conflictingFiles = conflictResult.stdout().strip();
+    String conflictingFiles = conflictResult.output().strip();
 
     // Create backup before aborting
     String rebaseBackup = "backup-after-rebase-conflict-" +
@@ -240,7 +240,7 @@ public final class GitSquash
       }
     }
     else
-      return block(scope, "Rebase failed: " + rebaseResult.stdout().strip());
+      return block(scope, "Rebase failed: " + rebaseResult.output().strip());
     return scope.getJsonMapper().writeValueAsString(json);
   }
 
@@ -260,7 +260,7 @@ public final class GitSquash
     // Files modified on target branch since the worktree branched
     ProcessRunner.Result baseChangedResult = ProcessRunner.run(
       "git", "-C", directory, "diff", "--name-only", mergeBase + ".." + base);
-    String baseOutput = baseChangedResult.stdout().strip();
+    String baseOutput = baseChangedResult.output().strip();
     if (baseChangedResult.exitCode() != 0 || baseOutput.isBlank())
       return result;
 
@@ -269,7 +269,7 @@ public final class GitSquash
     // Files modified on issue branch (after rebase, relative to base)
     ProcessRunner.Result issueChangedResult = ProcessRunner.run(
       "git", "-C", directory, "diff", "--name-only", base + "..HEAD");
-    String issueOutput = issueChangedResult.stdout().strip();
+    String issueOutput = issueChangedResult.output().strip();
     if (issueChangedResult.exitCode() != 0 || issueOutput.isBlank())
       return result;
 

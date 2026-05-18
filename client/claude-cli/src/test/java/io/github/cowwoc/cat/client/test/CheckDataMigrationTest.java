@@ -186,6 +186,133 @@ public final class CheckDataMigrationTest
   }
 
   /**
+   * Verifies that current-install migrations receive CAT runtime variables and can source
+   * {@code migrations/lib/utils.sh} via {@code CAT_PLUGIN_ROOT}.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void cacheInstallMigrationUsesCatPluginRoot() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("check-upgrade-install-env-test-");
+    try
+    {
+      Path projectPath = tempDir.resolve("project");
+      Path catDir = projectPath.resolve(".cat");
+      Path pluginRoot = tempDir.resolve("plugins/cache/cat/2.1");
+      Path codexConfigPath = tempDir.resolve(".codex");
+      Files.createDirectories(catDir);
+      Files.createDirectories(pluginRoot.resolve(".claude-plugin"));
+      Files.createDirectories(pluginRoot.resolve(".codex-plugin"));
+      Files.createDirectories(pluginRoot.resolve("migrations/lib"));
+      Files.createDirectories(codexConfigPath);
+
+      Files.writeString(catDir.resolve("config.json"), "{}");
+      Files.writeString(catDir.resolve("VERSION"), "2.1\n");
+      Files.writeString(pluginRoot.resolve(".claude-plugin/plugin.json"), "{\"version\":\"2.1\"}");
+      Files.writeString(pluginRoot.resolve(".codex-plugin/plugin.json"), "{\"version\":\"2.1\"}");
+      Files.writeString(pluginRoot.resolve("migrations/registry.json"), """
+        {
+          "migrations": [
+            {"version": "2.1", "script": "2.1.sh"}
+          ]
+        }
+        """);
+      Files.writeString(pluginRoot.resolve("migrations/lib/utils.sh"), """
+        #!/bin/bash
+        set -euo pipefail
+        log_migration() { printf '%s\\n' "$*"; }
+        """);
+      Path migrationScript = pluginRoot.resolve("migrations/2.1.sh");
+      Files.writeString(migrationScript, """
+        #!/bin/bash
+        set -euo pipefail
+        : "${CAT_PLUGIN_ROOT:?CAT_PLUGIN_ROOT missing}"
+        source "${CAT_PLUGIN_ROOT}/migrations/lib/utils.sh"
+        log_migration "install migration"
+        echo ok > .cat/install-env-ok
+        """);
+      requireThat(migrationScript.toFile().setExecutable(true), "setExecutable").isTrue();
+
+      SessionStartHandler.Result result;
+      try (TestCachePluginScope scope = new TestCachePluginScope(projectPath, pluginRoot,
+        codexConfigPath))
+      {
+        result = new CheckDataMigration(scope).handle();
+      }
+
+      requireThat(Files.readString(catDir.resolve("install-env-ok")).strip(), "installEnvMarker").
+        isEqualTo("ok");
+      requireThat(result.additionalContext(), "additionalContext").
+        contains("CAT plugin install migration completed for version 2.1");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that install migration failures include command output details for diagnosis.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void cacheInstallMigrationFailureIncludesOutput() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("check-upgrade-install-failure-output-test-");
+    try
+    {
+      Path projectPath = tempDir.resolve("project");
+      Path catDir = projectPath.resolve(".cat");
+      Path pluginRoot = tempDir.resolve("plugins/cache/cat/2.1");
+      Path codexConfigPath = tempDir.resolve(".codex");
+      Files.createDirectories(catDir);
+      Files.createDirectories(pluginRoot.resolve(".claude-plugin"));
+      Files.createDirectories(pluginRoot.resolve(".codex-plugin"));
+      Files.createDirectories(pluginRoot.resolve("migrations"));
+      Files.createDirectories(codexConfigPath);
+
+      Files.writeString(catDir.resolve("config.json"), "{}");
+      Files.writeString(catDir.resolve("VERSION"), "2.1\n");
+      Files.writeString(pluginRoot.resolve(".claude-plugin/plugin.json"), "{\"version\":\"2.1\"}");
+      Files.writeString(pluginRoot.resolve(".codex-plugin/plugin.json"), "{\"version\":\"2.1\"}");
+      Files.writeString(pluginRoot.resolve("migrations/registry.json"), """
+        {
+          "migrations": [
+            {"version": "2.1", "script": "2.1.sh"}
+          ]
+        }
+        """);
+      Path migrationScript = pluginRoot.resolve("migrations/2.1.sh");
+      Files.writeString(migrationScript, """
+        #!/bin/bash
+        set -euo pipefail
+        echo "stdout-diagnostic"
+        echo "stderr-diagnostic" >&2
+        exit 7
+        """);
+      requireThat(migrationScript.toFile().setExecutable(true), "setExecutable").isTrue();
+
+      SessionStartHandler.Result result;
+      try (TestCachePluginScope scope = new TestCachePluginScope(projectPath, pluginRoot,
+        codexConfigPath))
+      {
+        result = new CheckDataMigration(scope).handle();
+      }
+
+      requireThat(result.additionalContext(), "additionalContext").
+        contains("CAT INSTALL MIGRATION FAILED").
+        contains("stdout-diagnostic").
+        contains("stderr-diagnostic");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that reading a VERSION file containing a valid version string returns that version.
    *
    * @throws IOException if file operations fail

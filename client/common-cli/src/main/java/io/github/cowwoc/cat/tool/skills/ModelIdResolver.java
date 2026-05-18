@@ -155,10 +155,10 @@ public final class ModelIdResolver
       throw new IllegalStateException(
         "ModelIdResolver.detectClaudeCodeVersion: '" + claudeExecutable +
         " --version' failed with exit code " +
-        result.exitCode() + ". stdout: " + result.stdout());
+        result.exitCode() + ". stdout: " + result.output());
     }
 
-    return parseClaudeCodeVersion(result.stdout(), claudeExecutable + " --version");
+    return parseClaudeCodeVersion(result.output(), claudeExecutable + " --version");
   }
 
   /**

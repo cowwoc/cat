@@ -992,6 +992,34 @@ public final class PluginArtifactBuilderTest
   }
 
   /**
+   * Verifies runtime artifacts include migration utility scripts needed by migration entrypoints.
+   */
+  @Test
+  public void buildIncludesMigrationUtilityScripts() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try
+    {
+      Path repoRoot = tempDir.resolve("repo");
+      Path clientDir = repoRoot.resolve("client");
+      Path pluginDir = clientDir.resolve("plugin");
+      Path targetDir = clientDir.resolve("distribution/target/runtime");
+      createPluginSource(repoRoot, clientDir, pluginDir);
+
+      new PluginArtifactBuilder(pluginDir, clientDir, targetDir).build();
+
+      requireThat(Files.isRegularFile(targetDir.resolve("claude/migrations/lib/utils.sh")),
+        "claudeMigrationUtils").isTrue();
+      requireThat(Files.isRegularFile(targetDir.resolve("codex/migrations/lib/utils.sh")),
+        "codexMigrationUtils").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Creates a minimal plugin source tree for runtime artifact tests.
    *
    * @param repoRoot the temporary repository root
@@ -1005,7 +1033,7 @@ public final class PluginArtifactBuilderTest
     Files.createDirectories(clientDir);
     Files.writeString(repoRoot.resolve("LICENSE.md"), "license\n", StandardCharsets.UTF_8);
     for (String directory : new String[]{
-      ".git-filter-repo-config", "concepts", "config", "lang", "lib", "migrations", "scripts",
+      ".git-filter-repo-config", "concepts", "config", "lang", "lib", "migrations", "migrations/lib", "scripts",
       "templates", ".claude-plugin", ".codex-plugin", "rules/common", "rules/claude",
       "rules/codex", "hooks/common", "hooks/claude", "hooks/codex",
       "skills/common/common-skill", "skills/claude/claude-skill",
@@ -1072,6 +1100,14 @@ public final class PluginArtifactBuilderTest
       # Licensed under the CAT Commercial License.
       # See LICENSE.md in the project root for license terms.
       exit 0
+      """, StandardCharsets.UTF_8);
+    Files.writeString(pluginDir.resolve("migrations/lib/utils.sh"), """
+      #!/usr/bin/env bash
+      # Copyright (c) 2026 Gili Tzabari. All rights reserved.
+      #
+      # Licensed under the CAT Commercial License.
+      # See LICENSE.md in the project root for license terms.
+      log_migration() { printf '%s\\n' "$*"; }
       """, StandardCharsets.UTF_8);
     Files.writeString(pluginDir.resolve("concepts/shared-fragment.md"), MARKDOWN_LICENSE +
       "shared body\n", StandardCharsets.UTF_8);

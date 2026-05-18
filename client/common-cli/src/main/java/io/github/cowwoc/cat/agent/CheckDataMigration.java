@@ -24,6 +24,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.StringJoiner;
 
 /**
@@ -487,6 +488,8 @@ public final class CheckDataMigration implements SessionStartHandler
         "\n" +
         "Attempted current-version migration: " + pluginVersion + "\n" +
         "\n" +
+        "Migration output:\n" + result.output() + "\n" +
+        "\n" +
         "Please review the error and try again.");
     }
 
@@ -575,7 +578,8 @@ public final class CheckDataMigration implements SessionStartHandler
     if (!realPath.startsWith(realMigrationsDir))
       throw new IOException("Migration script escapes migrations directory: " + scriptPath);
 
-    return ProcessRunner.run(scope.getProjectPath(), scriptPath.toString());
+    return ProcessRunner.runWithEnvironment(scope.getProjectPath(),
+      Map.of("CAT_PLUGIN_ROOT", pluginRoot.toString()), scriptPath.toString());
   }
 
   /**

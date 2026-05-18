@@ -14,6 +14,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.StringJoiner;
 
 /**
@@ -28,20 +29,20 @@ public final class ProcessRunner
    * Result of running a process.
    *
    * @param exitCode the process exit code
-   * @param stdout the standard output
+   * @param output combined stdout and stderr output
    */
-  public record Result(int exitCode, String stdout)
+  public record Result(int exitCode, String output)
   {
     /**
      * Creates a new process result.
      *
      * @param exitCode the process exit code
-     * @param stdout the standard output
-     * @throws NullPointerException if {@code stdout} is null
+     * @param output combined stdout and stderr output
+     * @throws NullPointerException if {@code output} is null
      */
     public Result
     {
-      requireThat(stdout, "stdout").isNotNull();
+      requireThat(output, "output").isNotNull();
     }
   }
 
@@ -53,10 +54,10 @@ public final class ProcessRunner
   }
 
   /**
-   * Runs a command and returns the exit code and stdout.
+   * Runs a command and returns the exit code and combined output.
    *
    * @param command the command and arguments to run
-   * @return the result with exit code and stdout
+   * @return the result with exit code and combined output
    */
   public static Result run(String... command)
   {
@@ -64,12 +65,12 @@ public final class ProcessRunner
   }
 
   /**
-   * Runs a command in a specific working directory and returns the exit code and stdout.
+   * Runs a command in a specific working directory and returns the exit code and combined output.
    *
    * @param workingDirectory the working directory for the process, or {@code null} to inherit the JVM's
    *                         working directory
    * @param command          the command and arguments to run
-   * @return the result with exit code and stdout
+   * @return the result with exit code and combined output
    */
   public static Result run(Path workingDirectory, String... command)
   {
@@ -91,10 +92,66 @@ public final class ProcessRunner
       int exitCode = process.waitFor();
       return new Result(exitCode, output);
     }
-    catch (IOException | InterruptedException _)
+    catch (InterruptedException e)
     {
-      return new Result(1, "");
+      Thread.currentThread().interrupt();
+      return failureResult(e);
     }
+    catch (IOException e)
+    {
+      return failureResult(e);
+    }
+  }
+
+  /**
+   * Runs a command with additional environment variables.
+   *
+   * @param workingDirectory the working directory for the process, or {@code null} to inherit the JVM's
+   *                         working directory
+   * @param environment the environment variables to add or override
+   * @param command the command and arguments to run
+   * @return the result with exit code and combined output
+   */
+  public static Result runWithEnvironment(Path workingDirectory, Map<String, String> environment,
+    String... command)
+  {
+    requireThat(environment, "environment").isNotNull();
+    try
+    {
+      ProcessBuilder pb = new ProcessBuilder(command);
+      if (workingDirectory != null)
+        pb.directory(workingDirectory.toFile());
+      pb.environment().putAll(environment);
+      pb.redirectErrorStream(true);
+      Process process = pb.start();
+
+      String output;
+      try (BufferedReader reader = new BufferedReader(
+        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
+      {
+        output = readAllLines(reader);
+      }
+
+      int exitCode = process.waitFor();
+      return new Result(exitCode, output);
+    }
+    catch (InterruptedException e)
+    {
+      Thread.currentThread().interrupt();
+      return failureResult(e);
+    }
+    catch (IOException e)
+    {
+      return failureResult(e);
+    }
+  }
+
+  private static Result failureResult(Exception exception)
+  {
+    String message = exception.getClass().getSimpleName();
+    if (exception.getMessage() != null && !exception.getMessage().isBlank())
+      message += ": " + exception.getMessage();
+    return new Result(1, message);
   }
 
   /**

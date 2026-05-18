@@ -400,7 +400,7 @@ public final class GetCleanupOutput implements SkillOutput
     if (result.exitCode() != 0)
       return List.of();
 
-    return parseWorktreesPorcelain(result.stdout());
+    return parseWorktreesPorcelain(result.output());
   }
 
   /**
@@ -516,7 +516,7 @@ public final class GetCleanupOutput implements SkillOutput
       return Duration.ZERO;
     try
     {
-      Instant commitTime = Instant.ofEpochSecond(Long.parseLong(result.stdout().strip()));
+      Instant commitTime = Instant.ofEpochSecond(Long.parseLong(result.output().strip()));
       return Duration.between(commitTime, now);
     }
     catch (NumberFormatException _)
@@ -569,7 +569,7 @@ public final class GetCleanupOutput implements SkillOutput
       return List.of();
 
     List<String> branches = new ArrayList<>();
-    String[] lines = result.stdout().split("\n");
+    String[] lines = result.output().split("\n");
 
     for (String line : lines)
     {
@@ -604,7 +604,7 @@ public final class GetCleanupOutput implements SkillOutput
 
     List<StaleRemote> staleRemotes = new ArrayList<>();
     Instant now = Instant.now();
-    String[] lines = branchResult.stdout().split("\n");
+    String[] lines = branchResult.output().split("\n");
 
     for (String line : lines)
     {
@@ -620,7 +620,7 @@ public final class GetCleanupOutput implements SkillOutput
 
       try
       {
-        Instant commitTime = Instant.ofEpochSecond(Long.parseLong(dateResult.stdout().strip()));
+        Instant commitTime = Instant.ofEpochSecond(Long.parseLong(dateResult.output().strip()));
         Duration age = Duration.between(commitTime, now);
 
         if (age.compareTo(MIN_STALE_AGE) >= 0 && age.compareTo(MAX_STALE_AGE) <= 0)
@@ -632,11 +632,11 @@ public final class GetCleanupOutput implements SkillOutput
 
           String author = "";
           if (authorResult.exitCode() == 0)
-            author = authorResult.stdout().strip();
+            author = authorResult.output().strip();
 
           String relative = "";
           if (relativeResult.exitCode() == 0)
-            relative = relativeResult.stdout().strip();
+            relative = relativeResult.output().strip();
 
           if (!author.isEmpty() && !relative.isEmpty())
             staleRemotes.add(new StaleRemote(branch, author, relative, ""));

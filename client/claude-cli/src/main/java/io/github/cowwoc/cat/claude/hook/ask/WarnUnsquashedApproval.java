@@ -86,7 +86,7 @@ public final class WarnUnsquashedApproval implements AskHandler
     if (result.exitCode() != 0)
       return Result.allow();
 
-    String[] lines = result.stdout().split("\n");
+    String[] lines = result.output().split("\n");
     if (lines.length < 2)
       return Result.allow();
 

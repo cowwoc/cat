@@ -56,7 +56,7 @@ set -euo pipefail
 trap 'echo "ERROR in 2.1.sh at line $LINENO: $BASH_COMMAND" >&2; exit 1' ERR
 
 # shellcheck source=lib/utils.sh
-source "${CLAUDE_PLUGIN_ROOT}/migrations/lib/utils.sh"
+source "${CAT_PLUGIN_ROOT}/migrations/lib/utils.sh"
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Phase 1: Move .claude/cat/ directory to .cat/ at workspace root
@@ -544,7 +544,7 @@ fi
 log_migration "Phase 7: Create or update .cat/.gitignore"
 
 gitignore_file=".cat/.gitignore"
-gitignore_template="${CLAUDE_PLUGIN_ROOT}/templates/gitignore"
+gitignore_template="${CAT_PLUGIN_ROOT}/templates/gitignore"
 
 if [[ ! -f "$gitignore_template" ]]; then
     echo "ERROR: .gitignore template not found: $gitignore_template" >&2
@@ -1901,9 +1901,9 @@ if [[ -n "${CODEX_TOOL:-}" ]] || [[ -n "${CODEX_HOME:-}" ]] || [[ -n "${CODEX_TH
 fi
 
 if [[ "$is_codex_runtime" == "true" ]]; then
-    source_agents="${CLAUDE_PLUGIN_ROOT}/agents"
-    if [[ ! -d "$source_agents" && -d "${CLAUDE_PLUGIN_ROOT}/agents/codex" ]]; then
-        source_agents="${CLAUDE_PLUGIN_ROOT}/agents/codex"
+    source_agents="${CAT_PLUGIN_ROOT}/agents"
+    if [[ ! -d "$source_agents" && -d "${CAT_PLUGIN_ROOT}/agents/codex" ]]; then
+        source_agents="${CAT_PLUGIN_ROOT}/agents/codex"
     fi
     target_agents=".codex/agents"
 
