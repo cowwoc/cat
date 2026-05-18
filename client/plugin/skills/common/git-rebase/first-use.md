@@ -73,6 +73,19 @@ For deterministic execution with automatic backup and conflict detection:
 
 TARGET_BRANCH is required. The tool outputs JSON.
 
+### Integration Boundary After Rebase
+
+When rebase is part of issue-branch integration, resolve all conflicts in the issue worktree branch during this step.
+Do not resolve merge conflicts in `/workspace`.
+
+After rebase and verification succeed in the issue worktree, advance the target branch in `/workspace` using:
+
+```bash
+git merge --ff-only <issue-branch>
+```
+
+If `--ff-only` fails because the target branch moved, re-run this rebase flow against the updated target branch.
+
 #### Result Handling
 
 The tool outputs one of three JSON formats:

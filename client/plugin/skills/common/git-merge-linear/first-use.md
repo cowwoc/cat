@@ -74,6 +74,18 @@ The `git-merge-linear` binary enforces exactly 1 commit ahead of the target bran
 The Java tool implements all steps: check divergence, check suspicious deletions, verify
 merge-base, fast-forward merge. Outputs JSON on success.
 
+## Workspace Integration Rule
+
+Resolve conflicts on the issue worktree branch before running this merge skill. Do not resolve merge conflicts in
+`/workspace`.
+
+Integration sequence:
+1. In the issue worktree, rebase or merge onto the latest target branch and resolve conflicts there.
+2. Re-run verification in the issue worktree.
+3. In `/workspace`, run `git merge --ff-only <issue-branch>`.
+
+If `--ff-only` fails because the target branch moved, repeat from step 1.
+
 ## Result Handling
 
 On success, the tool prints JSON to stdout (exit code 0) with `"status": "success"`. On failure, it prints a JSON error
