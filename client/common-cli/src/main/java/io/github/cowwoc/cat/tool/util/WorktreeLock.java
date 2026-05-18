@@ -91,7 +91,7 @@ public final class WorktreeLock
           String filename = lockFile.getFileName().toString();
           return filename.substring(0, filename.length() - ".lock".length());
         }
-        catch (IOException _)
+        catch (IOException | RuntimeException _)
         {
           // Skip unreadable or malformed lock files
         }
@@ -148,7 +148,7 @@ public final class WorktreeLock
             ownedWorktrees.add(Path.of(worktreePath).toAbsolutePath().normalize());
           }
         }
-        catch (IOException _)
+        catch (IOException | RuntimeException _)
         {
           // Skip unreadable or malformed lock files
         }

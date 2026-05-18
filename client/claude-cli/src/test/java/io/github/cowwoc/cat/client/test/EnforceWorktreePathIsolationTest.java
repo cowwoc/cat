@@ -293,6 +293,127 @@ public class EnforceWorktreePathIsolationTest
   }
 
   /**
+   * Verifies that deleting a lock file before check execution does not crash and falls back to
+   * permissive behavior.
+   */
+  @Test
+  public void deletedLockFileDuringLookupIsAllowed() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("ewpi-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+    {
+      Path lockDir = scope.getCatWorkPath().resolve("locks");
+      Files.createDirectories(lockDir);
+      Path lockFile = lockDir.resolve(ISSUE_ID + ".lock");
+      Files.writeString(lockFile, """
+        {"session_id":"%s","created_at":1000000,"created_iso":"2026-01-01T00:00:00Z"}
+        """.formatted(SESSION_ID));
+      Files.delete(lockFile);
+
+      EnforceWorktreePathIsolation handler = new EnforceWorktreePathIsolation(scope);
+      ObjectNode input = scope.getJsonMapper().createObjectNode();
+      input.put("file_path", projectPath.resolve("plugin/test.py").toString());
+
+      FileWriteHandler.Result result = handler.check(input, SESSION_ID);
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that malformed lock JSON is ignored and does not crash isolation checks.
+   */
+  @Test
+  public void malformedLockJsonIsIgnored() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("ewpi-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+    {
+      Path lockDir = scope.getCatWorkPath().resolve("locks");
+      Files.createDirectories(lockDir);
+      Files.writeString(lockDir.resolve(ISSUE_ID + ".lock"), "{invalid-json");
+
+      EnforceWorktreePathIsolation handler = new EnforceWorktreePathIsolation(scope);
+      ObjectNode input = scope.getJsonMapper().createObjectNode();
+      input.put("file_path", projectPath.resolve("plugin/test.py").toString());
+
+      FileWriteHandler.Result result = handler.check(input, SESSION_ID);
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies that a lock file with missing {@code session_id} does not bind the current session.
+   */
+  @Test
+  public void missingSessionIdInLockIsIgnored() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("ewpi-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+    {
+      Path lockDir = scope.getCatWorkPath().resolve("locks");
+      Files.createDirectories(lockDir);
+      Files.writeString(lockDir.resolve(ISSUE_ID + ".lock"), """
+        {"created_at":1000000,"created_iso":"2026-01-01T00:00:00Z"}
+        """);
+
+      EnforceWorktreePathIsolation handler = new EnforceWorktreePathIsolation(scope);
+      ObjectNode input = scope.getJsonMapper().createObjectNode();
+      input.put("file_path", projectPath.resolve("plugin/test.py").toString());
+
+      FileWriteHandler.Result result = handler.check(input, SESSION_ID);
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
+   * Verifies legacy lock handling when {@code worktrees} is missing but {@code session_id} exists.
+   */
+  @Test
+  public void missingWorktreesFallsBackToLegacySessionId() throws IOException
+  {
+    Path projectPath = Files.createTempDirectory("ewpi-test-");
+    try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
+    {
+      Path lockDir = scope.getCatWorkPath().resolve("locks");
+      Files.createDirectories(lockDir);
+      Files.writeString(lockDir.resolve(ISSUE_ID + ".lock"), """
+        {"session_id":"%s","created_at":1000000,"created_iso":"2026-01-01T00:00:00Z"}
+        """.formatted(SESSION_ID));
+      Path worktreeDir = TestUtils.createWorktreeDir(scope, ISSUE_ID);
+      Path mainWorkspaceFile = projectPath.resolve("plugin/important.py");
+
+      EnforceWorktreePathIsolation handler = new EnforceWorktreePathIsolation(scope);
+      ObjectNode input = scope.getJsonMapper().createObjectNode();
+      input.put("file_path", mainWorkspaceFile.toString());
+
+      FileWriteHandler.Result result = handler.check(input, SESSION_ID);
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Worktree isolation violation");
+      requireThat(result.reason(), "reason").contains(worktreeDir.toAbsolutePath().normalize().toString());
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectPath);
+    }
+  }
+
+  /**
    * Verifies that a file targeting the project root (main workspace) is blocked when a worktree
    * context is active.
    * <p>
