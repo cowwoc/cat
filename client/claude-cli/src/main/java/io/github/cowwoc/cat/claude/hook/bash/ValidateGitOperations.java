@@ -10,8 +10,10 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.claude.hook.BashHandler;
 import io.github.cowwoc.cat.claude.hook.ClaudeHook;
+import io.github.cowwoc.cat.tool.util.WorktreeContext;
 
-import java.util.regex.Pattern;
+import java.nio.file.Path;
+import java.util.Optional;
 
 /**
  * Validate dangerous git operations.
@@ -20,10 +22,7 @@ import java.util.regex.Pattern;
  */
 public final class ValidateGitOperations implements BashHandler
 {
-  private static final Pattern FORCE_PUSH_MAIN_PATTERN =
-    Pattern.compile("git\\s+push\\s+.*--force.*\\s+(main|master)(\\s|$)", Pattern.CASE_INSENSITIVE);
-  private static final Pattern RESET_HARD_PATTERN =
-    Pattern.compile("git\\s+reset\\s+--hard");
+  private static final String RESET_HARD_PREFIX = "git reset --hard";
 
   private final ClaudeHook scope;
 
@@ -42,40 +41,66 @@ public final class ValidateGitOperations implements BashHandler
   @Override
   public Result check()
   {
-    String command = scope.getCommand();
-
-    // Block: git push --force to main/master
-    if (FORCE_PUSH_MAIN_PATTERN.matcher(command).find())
+    for (GitCommandNormalizer.NormalizedGitCommand normalizedCommand :
+      GitCommandNormalizer.extractGitCommands(scope.getCommand()))
     {
-      return Result.block("""
-        **BLOCKED: Force push to main/master**
+      String command = normalizedCommand.normalizedCommand();
+      // Block: git reset --hard without explicit acknowledgment
+      if (isResetHardCommand(command))
+      {
+        if (isResetHardAllowed(normalizedCommand.rawSegment()))
+          continue;
+        return Result.block("""
+          **BLOCKED: git reset --hard can lose uncommitted work**
 
-        Force pushing to main/master rewrites shared history and can cause:
-        - Lost commits from other contributors
-        - Broken references
-        - Confused collaborators
+          This command discards all uncommitted changes permanently.
 
-        Use --force-with-lease instead, or ask the user if they really want this.""");
+          If you're sure:
+          - In a worktree: Use /cat:git-rebase skill
+          - Main worktree: Add # ACKNOWLEDGED comment
+
+          Consider: git stash to save work before reset.""");
+      }
     }
-
-    // Block: git reset --hard without explicit acknowledgment
-    if (RESET_HARD_PATTERN.matcher(command).find())
-    {
-      // Allow if in a worktree or has acknowledgment
-      if (command.contains("# ACKNOWLEDGED") || command.contains("worktrees"))
-        return Result.allow();
-      return Result.block("""
-        **BLOCKED: git reset --hard can lose uncommitted work**
-
-        This command discards all uncommitted changes permanently.
-
-        If you're sure:
-        - In a worktree: Use /cat:git-rebase skill
-        - Main worktree: Add # ACKNOWLEDGED comment
-
-        Consider: git stash to save work before reset.""");
-    }
-
     return Result.allow();
+  }
+
+  /**
+   * Returns true if command is a reset-hard invocation.
+   *
+   * @param command normalized git command
+   * @return true if reset-hard detected
+   */
+  private boolean isResetHardCommand(String command)
+  {
+    return command.startsWith(RESET_HARD_PREFIX);
+  }
+
+  /**
+   * Returns true if a reset-hard command is explicitly acknowledged or is scoped to the active
+   * CAT issue worktree.
+   *
+   * @param rawSegment the raw command segment containing reset-hard
+   * @return true if reset-hard is allowed
+   */
+  private boolean isResetHardAllowed(String rawSegment)
+  {
+    if (GitCommandNormalizer.containsAcknowledgedComment(rawSegment))
+      return true;
+    Optional<WorktreeContext> context = WorktreeContext.forSession(scope.getCatWorkPath(),
+      scope.getProjectPath(), scope.getJsonMapper(), scope.getSessionId());
+    if (context.isEmpty())
+      return false;
+
+    Path worktreePath = context.get().absoluteWorktreePath();
+    Path workingDirectory = Path.of(scope.getStringInput("cwd")).toAbsolutePath().normalize();
+    GitCommandScopeResolver.GitScopeTarget target =
+      GitCommandScopeResolver.resolve(rawSegment, workingDirectory);
+    if (target.overridesScope() && !target.workingTree().startsWith(worktreePath))
+      return false;
+    if (target.overridesScope() && target.gitDirectory() != null &&
+      !target.gitDirectory().startsWith(worktreePath))
+      return false;
+    return target.workingTree().startsWith(worktreePath);
   }
 }

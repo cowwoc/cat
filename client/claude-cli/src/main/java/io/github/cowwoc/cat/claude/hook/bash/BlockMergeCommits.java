@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 public final class BlockMergeCommits implements BashHandler
 {
   private static final Pattern MERGE_PATTERN =
-    Pattern.compile("(^|;|&&|\\|)\\s*git\\s+merge(?!-)");
+    Pattern.compile("^git\\s+merge(?!-)");
   private static final Pattern NO_FF_PATTERN =
     Pattern.compile("git\\s+merge(?!-)\\s+.*--no-ff|git\\s+merge(?!-)\\s+--no-ff");
   private static final Pattern FF_ONLY_OR_SQUASH_PATTERN =
@@ -42,43 +42,42 @@ public final class BlockMergeCommits implements BashHandler
   @Override
   public Result check()
   {
-    String command = scope.getCommand();
-
-    // Skip if not a git merge command
-    if (!MERGE_PATTERN.matcher(command).find())
+    for (String command : GitCommandNormalizer.extractNormalizedGitCommands(scope.getCommand()))
     {
-      return Result.allow();
-    }
+      // Skip if not a git merge command
+      if (!MERGE_PATTERN.matcher(command).find())
+        continue;
 
-    // BLOCK: git merge --no-ff (explicitly creates merge commit)
-    if (NO_FF_PATTERN.matcher(command).find())
-    {
-      return Result.block("""
-        **BLOCKED: git merge --no-ff creates merge commits**
+      // BLOCK: git merge --no-ff (explicitly creates merge commit)
+      if (NO_FF_PATTERN.matcher(command).find())
+      {
+        return Result.block("""
+          **BLOCKED: git merge --no-ff creates merge commits**
 
-        Linear history is required. Use one of:
-        - `git merge --ff-only <branch>` - Fast-forward only, fails if not possible
-        - `git rebase <branch>` - Rebase for linear history
+          Linear history is required. Use one of:
+          - `git merge --ff-only <branch>` - Fast-forward only, fails if not possible
+          - `git rebase <branch>` - Rebase for linear history
 
-        Or use the `/cat:git-merge-linear` skill which handles this correctly.
+          Or use the `/cat:git-merge-linear` skill which handles this correctly.
 
-        Use `/cat:git-merge-linear` to merge with linear history.""");
-    }
+          Use `/cat:git-merge-linear` to merge with linear history.""");
+      }
 
-    // BLOCK: git merge without --ff-only or --squash
-    if (!FF_ONLY_OR_SQUASH_PATTERN.matcher(command).find())
-    {
-      return Result.block("""
-        **BLOCKED: git merge without --ff-only may create merge commits**
+      // BLOCK: git merge without --ff-only or --squash
+      if (!FF_ONLY_OR_SQUASH_PATTERN.matcher(command).find())
+      {
+        return Result.block("""
+          **BLOCKED: git merge without --ff-only may create merge commits**
 
-        Linear history is required. Use one of:
-        - `git merge --ff-only <branch>` - Fast-forward only, fails if not possible
-        - `git merge --squash <branch>` - Squash commits into one
-        - `git rebase <branch>` - Rebase for linear history
+          Linear history is required. Use one of:
+          - `git merge --ff-only <branch>` - Fast-forward only, fails if not possible
+          - `git merge --squash <branch>` - Squash commits into one
+          - `git rebase <branch>` - Rebase for linear history
 
-        Or use the `/cat:git-merge-linear` skill which handles this correctly.
+          Or use the `/cat:git-merge-linear` skill which handles this correctly.
 
-        Use `/cat:git-merge-linear` to merge with linear history.""");
+          Use `/cat:git-merge-linear` to merge with linear history.""");
+      }
     }
 
     return Result.allow();

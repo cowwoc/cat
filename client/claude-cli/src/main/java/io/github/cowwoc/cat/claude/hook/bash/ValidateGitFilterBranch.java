@@ -10,8 +10,10 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.claude.hook.BashHandler;
 import io.github.cowwoc.cat.claude.hook.ClaudeHook;
+import io.github.cowwoc.cat.claude.hook.ShellParser;
 
-import java.util.regex.Pattern;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Validate git filter-branch and history-rewriting commands.
@@ -20,9 +22,6 @@ import java.util.regex.Pattern;
  */
 public final class ValidateGitFilterBranch implements BashHandler
 {
-  private static final Pattern DANGEROUS_FLAGS_PATTERN =
-    Pattern.compile("(^|;|&&|\\|)\\s*git\\s+(filter-branch|rebase)\\s+.*\\s+--(all|branches)(\\s|$)");
-
   private final ClaudeHook scope;
 
   /**
@@ -40,29 +39,47 @@ public final class ValidateGitFilterBranch implements BashHandler
   @Override
   public Result check()
   {
-    String command = scope.getCommand();
-
-    // BLOCK: dangerous --all or --branches flags with history rewriting
-    if (DANGEROUS_FLAGS_PATTERN.matcher(command).find())
+    for (String command : GitCommandNormalizer.extractNormalizedGitCommands(scope.getCommand()))
     {
-      return Result.block("""
-        CRITICAL: DANGEROUS GIT HISTORY REWRITING DETECTED
+      List<String> tokens = ShellParser.tokenize(command);
+      if (tokens.size() < 3)
+        continue;
+      String subcommand = tokens.get(1).toLowerCase(Locale.ROOT);
+      if (!subcommand.equals("filter-branch") && !subcommand.equals("rebase"))
+        continue;
+      boolean dangerousFlag = false;
+      for (int i = 2; i < tokens.size(); ++i)
+      {
+        String token = tokens.get(i);
+        if (token.equals("--all") || token.equals("--branches"))
+        {
+          dangerousFlag = true;
+          break;
+        }
+      }
 
-        **Blocked command**: git filter-branch/rebase with --all or --branches
+      // BLOCK: dangerous --all or --branches flags with history rewriting
+      if (dangerousFlag)
+      {
+        return Result.block("""
+          CRITICAL: DANGEROUS GIT HISTORY REWRITING DETECTED
 
-        This would rewrite history on ALL branches including:
-        - Version branches (v1.0, v2.0, etc.)
-        - Release branches
-        - Other protected branches
+          **Blocked command**: git filter-branch/rebase with --all or --branches
 
-        **WHAT TO DO INSTEAD:**
-        1. Target specific branches explicitly:
-           git filter-branch --tree-filter 'command' main feature-branch
+          This would rewrite history on ALL branches including:
+          - Version branches (v1.0, v2.0, etc.)
+          - Release branches
+          - Other protected branches
 
-        2. Use git-filter-repo with explicit refs:
-           git filter-repo --refs main --refs feature-branch
+          **WHAT TO DO INSTEAD:**
+          1. Target specific branches explicitly:
+             git filter-branch --tree-filter 'command' main feature-branch
 
-        **See**: /cat:git-rewrite-history skill for proper usage""");
+          2. Use git-filter-repo with explicit refs:
+             git filter-repo --refs main --refs feature-branch
+
+          **See**: /cat:git-rewrite-history skill for proper usage""");
+      }
     }
 
     return Result.allow();

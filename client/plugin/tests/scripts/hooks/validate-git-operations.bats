@@ -152,9 +152,74 @@ run_hook_with_command() {
     [[ "$output" == "{}" ]] || [[ "$output" != *"block"* ]]
 }
 
-@test "allows: git push --force to feature branch" {
+@test "blocks: git push --force to feature branch" {
     run run_hook_with_command "git push --force origin feature-branch"
     [ "$status" -eq 0 ]
-    # Only blocks force push to main/master
+    [[ "$output" == *"block"* ]]
+}
+
+@test "blocks: git -C prefix bypass for force push" {
+    run run_hook_with_command "git -C /tmp/repo push -f origin feature-branch"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"block"* ]]
+}
+
+@test "blocks: git -C prefix bypass for destructive clean" {
+    run run_hook_with_command "git -C /tmp/repo clean -fd"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"block"* ]]
+}
+
+@test "blocks: multiline destructive git command" {
+    run run_hook_with_command $'echo ok\ngit clean -fd'
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"block"* ]]
+}
+
+@test "allows: git -C prefix with force-with-lease" {
+    run run_hook_with_command "git -C /tmp/repo push --force-with-lease origin feature-branch"
+    [ "$status" -eq 0 ]
+    [[ "$output" == "{}" ]] || [[ "$output" != *"block"* ]]
+}
+
+@test "blocks: protected branch force delete" {
+    run run_hook_with_command "git branch -D main"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"block"* ]]
+}
+
+@test "blocks: checkout full-tree discard" {
+    run run_hook_with_command "git checkout -- ."
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"block"* ]]
+}
+
+@test "blocks: restore full-tree discard" {
+    run run_hook_with_command "git restore --worktree --staged ."
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"block"* ]]
+}
+
+@test "blocks: stash clear" {
+    run run_hook_with_command "git stash clear"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"block"* ]]
+}
+
+@test "blocks: stash drop all" {
+    run run_hook_with_command "git stash drop --all"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"block"* ]]
+}
+
+@test "blocks: gc prune now" {
+    run run_hook_with_command "git gc --prune=now"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"block"* ]]
+}
+
+@test "allows: acknowledged gc prune now" {
+    run run_hook_with_command "git gc --prune=now # ACKNOWLEDGED: gc prune"
+    [ "$status" -eq 0 ]
     [[ "$output" == "{}" ]] || [[ "$output" != *"block"* ]]
 }

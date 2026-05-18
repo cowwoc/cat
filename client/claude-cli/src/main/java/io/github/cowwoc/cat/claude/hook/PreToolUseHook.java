@@ -14,6 +14,7 @@ import io.github.cowwoc.cat.claude.hook.bash.BlockLockManipulation;
 import io.github.cowwoc.cat.claude.hook.bash.BlockMainRebase;
 import io.github.cowwoc.cat.claude.hook.bash.BlockMergeCommits;
 import io.github.cowwoc.cat.claude.hook.bash.BlockReflogDestruction;
+import io.github.cowwoc.cat.claude.hook.bash.BlockDestructiveGitCommands;
 import io.github.cowwoc.cat.claude.hook.bash.BlockUnauthorizedMergeCleanup;
 import io.github.cowwoc.cat.claude.hook.bash.BlockWorktreeIsolationViolation;
 import io.github.cowwoc.cat.claude.hook.bash.BlockWrongBranchCommit;
@@ -70,6 +71,7 @@ public final class PreToolUseHook implements HookHandler
       new BlockLockManipulation(scope),
       new BlockMainRebase(scope),
       new BlockMergeCommits(scope),
+      new BlockDestructiveGitCommands(scope),
       new BlockReflogDestruction(scope),
       new BlockUnauthorizedMergeCleanup(scope),
       new BlockWorktreeIsolationViolation(scope),

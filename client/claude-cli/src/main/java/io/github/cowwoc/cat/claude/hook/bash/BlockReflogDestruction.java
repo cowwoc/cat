@@ -45,53 +45,55 @@ public final class BlockReflogDestruction implements BashHandler
   @Override
   public Result check()
   {
-    String command = scope.getCommand();
+    String rawCommand = scope.getCommand();
 
     // Check for acknowledgment bypass
-    if (ACKNOWLEDGMENT_PATTERN.matcher(command).find())
+    if (ACKNOWLEDGMENT_PATTERN.matcher(rawCommand).find())
       return Result.allow();
-
-    // Check for reflog expire with --expire=now (dangerous)
-    if (REFLOG_EXPIRE_PATTERN.matcher(command).find())
+    for (String command : GitCommandNormalizer.extractNormalizedGitCommands(rawCommand))
     {
-      return Result.block("""
-        **BLOCKED: Premature reflog destruction detected**
+      // Check for reflog expire with --expire=now (dangerous)
+      if (REFLOG_EXPIRE_PATTERN.matcher(command).find())
+      {
+        return Result.block("""
+          **BLOCKED: Premature reflog destruction detected**
 
-        This command PERMANENTLY DESTROYS the git reflog, which is your PRIMARY RECOVERY
-        MECHANISM after history-rewriting operations like:
-        - git filter-branch
-        - git rebase
-        - git reset --hard
-        - git commit --amend
+          This command PERMANENTLY DESTROYS the git reflog, which is your PRIMARY RECOVERY
+          MECHANISM after history-rewriting operations like:
+          - git filter-branch
+          - git rebase
+          - git reset --hard
+          - git commit --amend
 
-        **Why this is dangerous:**
-        The reflog keeps references to ALL previous HEAD positions for ~90 days by default.
-        If something went wrong with filter-branch or rebase, you can recover using:
-          git reflog
-          git reset --hard HEAD@{N}
+          **Why this is dangerous:**
+          The reflog keeps references to ALL previous HEAD positions for ~90 days by default.
+          If something went wrong with filter-branch or rebase, you can recover using:
+            git reflog
+            git reset --hard HEAD@{N}
 
-        Once you run 'git reflog expire --expire=now', this recovery option is GONE FOREVER.
+          Once you run 'git reflog expire --expire=now', this recovery option is GONE FOREVER.
 
-        **RECOMMENDED APPROACH:**
-        1. Wait 24-48 hours after major operations
-        2. Verify everything works correctly
-        3. THEN (and only then) clean up if needed
+          **RECOMMENDED APPROACH:**
+          1. Wait 24-48 hours after major operations
+          2. Verify everything works correctly
+          3. THEN (and only then) clean up if needed
 
-        To bypass (if user explicitly requests): Add comment # ACKNOWLEDGED: reflog""");
-    }
+          To bypass (if user explicitly requests): Add comment # ACKNOWLEDGED: reflog""");
+      }
 
-    // Check for git gc --prune=now (also dangerous)
-    if (GC_PRUNE_PATTERN.matcher(command).find())
-    {
-      return Result.block("""
-        **BLOCKED: Aggressive garbage collection detected**
+      // Check for git gc --prune=now (also dangerous)
+      if (GC_PRUNE_PATTERN.matcher(command).find())
+      {
+        return Result.block("""
+          **BLOCKED: Aggressive garbage collection detected**
 
-        This command with --prune=now permanently removes unreachable objects.
-        Combined with reflog expire, this destroys ALL recovery options.
+          This command with --prune=now permanently removes unreachable objects.
+          Combined with reflog expire, this destroys ALL recovery options.
 
-        **RECOMMENDED:** Let git gc run naturally with default 2-week prune period.
+          **RECOMMENDED:** Let git gc run naturally with default 2-week prune period.
 
-        To bypass (if user explicitly requests): Add comment # ACKNOWLEDGED: gc prune""");
+          To bypass (if user explicitly requests): Add comment # ACKNOWLEDGED: gc prune""");
+      }
     }
 
     return Result.allow();

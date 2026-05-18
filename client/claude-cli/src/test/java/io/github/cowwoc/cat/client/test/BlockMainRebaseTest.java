@@ -106,6 +106,69 @@ public final class BlockMainRebaseTest
   }
 
   /**
+   * Verifies that {@code git -C <project>} cannot bypass main-worktree rebase blocking when the
+   * session also has an active issue worktree lock.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void rebaseOnMainWithGitGlobalDirectoryIsBlockedWhenSessionHasWorktreeLock() throws IOException
+  {
+    Path mainRepo = TestUtils.createTempGitRepo("main");
+    Path pluginRoot = Files.createTempDirectory("bmr-test-");
+    String command = "git -C " + mainRepo + " rebase origin/main";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, mainRepo, SESSION_ID,
+      mainRepo, pluginRoot, mainRepo))
+    {
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+      TestUtils.createWorktree(mainRepo, worktreesDir, ISSUE_ID);
+      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+
+      BashHandler.Result result = new BlockMainRebase(scope).check();
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("REBASE ON MAIN BLOCKED");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that {@code --git-dir <project>/.git} cannot bypass rebase blocking on main.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void rebaseOnMainWithGitDirIsBlockedWhenSessionHasWorktreeLock() throws IOException
+  {
+    Path mainRepo = TestUtils.createTempGitRepo("main");
+    Path pluginRoot = Files.createTempDirectory("bmr-test-");
+    String command = "git --git-dir " + mainRepo.resolve(".git") + " rebase origin/main";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, mainRepo, SESSION_ID,
+      mainRepo, pluginRoot, mainRepo))
+    {
+      Path worktreesDir = scope.getCatWorkPath().resolve("worktrees");
+      Files.createDirectories(worktreesDir);
+      TestUtils.createWorktree(mainRepo, worktreesDir, ISSUE_ID);
+      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+
+      BashHandler.Result result = new BlockMainRebase(scope).check();
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("REBASE ON MAIN BLOCKED");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
    * Verifies that checkout in main worktree is blocked when no lock exists for the session.
    * <p>
    * When the session has no active worktree lock, the handler treats the session as operating
@@ -163,6 +226,63 @@ public final class BlockMainRebaseTest
 
       // -b is a flag, not a branch name — even in main context this would be a flag checkout
       requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that {@code git -C <project>} cannot bypass main-worktree checkout blocking when the
+   * session also has an active issue worktree lock.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void checkoutInMainWithGitGlobalDirectoryIsBlockedWhenSessionHasWorktreeLock() throws IOException
+  {
+    Path mainRepo = TestUtils.createTempGitRepo("main");
+    Path pluginRoot = Files.createTempDirectory("bmr-test-");
+    String command = "git -C " + mainRepo + " checkout feature-branch";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, mainRepo, SESSION_ID,
+      mainRepo, pluginRoot, mainRepo))
+    {
+      TestUtils.createWorktreeDir(scope, ISSUE_ID);
+      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+
+      BashHandler.Result result = new BlockMainRebase(scope).check();
+
+      requireThat(result.blocked(), "blocked").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that {@code --git-dir <project>/.git} cannot bypass main-worktree checkout blocking.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void checkoutInMainWithGitDirIsBlockedWhenSessionHasWorktreeLock() throws IOException
+  {
+    Path mainRepo = TestUtils.createTempGitRepo("main");
+    Path pluginRoot = Files.createTempDirectory("bmr-test-");
+    String command = "git --git-dir " + mainRepo.resolve(".git") + " checkout feature-branch";
+    try (TestClaudeHook scope = TestUtils.bashHook(command, mainRepo, SESSION_ID,
+      mainRepo, pluginRoot, mainRepo))
+    {
+      TestUtils.createWorktreeDir(scope, ISSUE_ID);
+      TestUtils.writeLockFile(scope, ISSUE_ID, SESSION_ID);
+
+      BashHandler.Result result = new BlockMainRebase(scope).check();
+
+      requireThat(result.blocked(), "blocked").isTrue();
     }
     finally
     {
