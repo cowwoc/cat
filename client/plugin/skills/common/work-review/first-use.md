@@ -518,6 +518,7 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
        WORKTREE_PATH: ${WORKTREE_PATH}
        BRANCH: ${BRANCH}
        TARGET_BRANCH: ${TARGET_BRANCH}
+       FIX_PLAN_OUTPUT_PATH: ${WORKTREE_PATH}/.cat/work/review-fix-plans.md
 
        ## Concerns to Analyze (CRITICAL first)
        ${concerns_formatted}
@@ -527,6 +528,9 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
 
        ## Instructions
        - CRITICAL concerns MUST be addressed first (list them first in the plan).
+       - The output path in `FIX_PLAN_OUTPUT_PATH` is authoritative; do not substitute another path.
+       - Write the complete fix plan to `${WORKTREE_PATH}/.cat/work/review-fix-plans.md`.
+       - Do not write the fix plan to any other location.
        - For each concern produce a self-contained section with:
          1. Exact file path(s) to modify
          2. What the current code does (quote the relevant lines if possible)
@@ -546,7 +550,9 @@ other severities. If any CRITICAL concern is in the FIX list, the subagent promp
        [or: UNFIXABLE: [reason]]
    ```
 
-   Capture the planning subagent's full output as `fix_plan_from_planning_subagent` for use in step 4 (single-concern path) and step 6 scope isolation validation.
+   After the planning subagent returns, read `${WORKTREE_PATH}/.cat/work/review-fix-plans.md` and store its
+   contents as `fix_plan_from_planning_subagent` for use in step 4 (single-concern path) and step 6 scope
+   isolation validation. If the file is missing or empty, treat this as a planning failure for the iteration.
 
    **Fix plan validation (MANDATORY):** After receiving the planning subagent's output, verify that each
    FIX-marked concern has at least one actionable file change (a file path and a concrete modification).

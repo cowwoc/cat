@@ -546,6 +546,7 @@ public final class PluginArtifactBuilderTest
           "REVIEWED_HEAD_SHA=$(cd \"${WORKTREE_PATH}\" && git rev-parse HEAD)");
         requireThat(workReview, runtime + "WorkReview").contains(
           "reject stale review results after later implementation changes");
+        assertWorkReviewAutoFixPlanArtifactContract(workReview, runtime + "WorkReview");
         requireThat(workReview, runtime + "WorkReview").doesNotContain("cat:include");
 
         String workMerge = Files.readString(runtimeRoot.resolve("skills/work-merge/first-use.md"),
@@ -1207,6 +1208,27 @@ public final class PluginArtifactBuilderTest
           throw new AssertionError(name + ": " + runtimeRoot.relativize(file) + " contains " + text);
       }
     }
+  }
+
+  /**
+   * Verifies the generated runtime work-review instructions enforce the auto-fix planning artifact contract.
+   *
+   * @param content the rendered work-review skill content
+   * @param name    the assertion name
+   */
+  private static void assertWorkReviewAutoFixPlanArtifactContract(String content, String name)
+  {
+    String planningSection = content.substring(content.indexOf(
+      "description: \"Plan per-concern fixes (iteration ${AUTOFIX_ITERATION})\""),
+      content.indexOf("**Fix plan validation (MANDATORY):**"));
+    requireThat(planningSection, name + "AutoFixPlanning").
+      contains("FIX_PLAN_OUTPUT_PATH: ${WORKTREE_PATH}/.cat/work/review-fix-plans.md").
+      contains("The output path in `FIX_PLAN_OUTPUT_PATH` is authoritative; do not substitute another path.").
+      contains("Write the complete fix plan to `${WORKTREE_PATH}/.cat/work/review-fix-plans.md`.").
+      contains("Do not write the fix plan to any other location.").
+      contains("read `${WORKTREE_PATH}/.cat/work/review-fix-plans.md`").
+      contains("If the file is missing or empty, treat this as a planning failure for the iteration.").
+      doesNotContain(".claude");
   }
 
   /**

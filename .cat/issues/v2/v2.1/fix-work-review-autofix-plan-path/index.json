@@ -1,5 +1,7 @@
 {
-  "status" : "open",
-  "dependencies" : [ ],
-  "target_branch" : "v2.1"
+  "status": "closed",
+  "progress": 100,
+  "resolution": "implemented",
+  "dependencies": [],
+  "target_branch": "v2.1"
 }
