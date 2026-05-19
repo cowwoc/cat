@@ -65,32 +65,31 @@ trackable progress, and code that passes review the first time.
 **Claude Code**
 
 ```bash
-# Add the plugin marketplace
+# Add the CAT marketplace
 /plugin marketplace add cowwoc/cat
 
 # Install CAT
 /plugin install cat@cowwoc-claude-code-cat
 
-# Verify you're ready
+# Verify CAT is installed
 /cat:help
 ```
 
 **Codex**
 
 ```bash
-# Install CAT
+# Install or update CAT
 Run https://raw.githubusercontent.com/cowwoc/cat/v2.1/docs/prompts/codex-install.md
-to install or update the CAT plugin.
 
-# Verify you're ready
+# Verify CAT is installed
 $cat:help
 ```
 
 To remove CAT from Codex, run `/cat:uninstall`.
 
 For local development builds from a source checkout, run `/cat-update` after publishing or staging the matching
-release artifact. Codex support is preview parity: the artifact is first-class, but some Claude Code extension points
-are not available in Codex yet; see the [Codex parity notes](docs/development/codex-parity.md).
+release artifact. Codex is a supported CAT engine with explicit behavior differences from Claude Code; see the
+[Codex parity notes](docs/development/codex-parity.md).
 
 ### Step 2: Initialize Your Project
 

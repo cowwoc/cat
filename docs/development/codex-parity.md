@@ -5,15 +5,28 @@ See LICENSE.md in the project root for license terms.
 -->
 # Codex Parity Notes
 
-This note captures Codex hook-porting and runner-parity decisions for future work. The current work is runtime-specific
-packaging plus partial Codex parity, not a claim that CAT has equivalent runtime behavior across Claude Code and Codex.
-Codex should be positioned as a first-class CAT install artifact with explicit parity gaps, not as a full substitute
-for Claude Code runtime behavior.
+This note captures Codex hook-porting and runner-parity decisions for future work. CAT supports
+the latest Codex version only. The current work is runtime-specific packaging plus partial Codex parity, not a claim that CAT has
+equivalent runtime behavior across Claude Code and Codex. Codex should be positioned as a first-class CAT install
+artifact with explicit parity gaps, not as a full substitute for Claude Code runtime behavior.
+
+## Codex Diagnostics
+
+Use Codex-native diagnostics first when CAT behavior is unexpected:
+
+```bash
+codex doctor
+codex doctor --json
+```
+
+CAT docs and support workflows assume current Codex diagnostics behavior. CAT does not provide backward-compatibility
+workarounds for older Codex diagnostic surfaces.
 
 ## Hooks Ported To Codex
 
 - `SessionStart`: Codex receives portable `.cat/rules/common/*.md` files plus `.cat/rules/codex/` main-agent
-  rules and shared critical-thinking context.
+  rules and shared critical-thinking context. CAT's matcher includes `startup|resume|clear`, including
+  SessionStart `/clear` flows.
 - `UserPromptSubmit`: Codex payloads are adapted into the existing prompt hook.
 - `PreToolUse` / `PostToolUse` for Bash: Codex `Bash` and `functions.exec_command` are adapted into
   Claude-compatible Bash payloads.
@@ -91,6 +104,9 @@ Future work for full Codex parity:
 - **SubagentStart:** intentionally not ported. Claude Code needs CAT's `SubagentStart` hook to inject lightweight
   agent rules and skill-listing context. Codex agents use native agent definitions and skill discovery, so
   duplicating the Claude injection would waste context and may conflict with Codex's own mechanism.
+- **Plugin-bundled custom agents:** not supported by Codex plugin install as of `0.131.0`. Open requests:
+  `openai/codex#18308` and `openai/codex#18988`. CAT must keep distributing Codex agent definitions through CAT's
+  current runtime packaging/skill strategy rather than assuming plugin install registers agent TOML files.
 - **Write/Edit content validation:** Codex `apply_patch` support is path-safe, and add-file hunks include content
   for validators. Update/delete/move hunks currently get path-level checks only. Full edited-content validation
   requires a dedicated patch applier/parser.

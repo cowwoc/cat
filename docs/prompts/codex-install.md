@@ -12,6 +12,8 @@ This copy of the prompt installs CAT `v2.1`.
 Install CAT directly from the Codex release artifact. This creates a local Codex marketplace from the release artifact,
 adds it to Codex, and installs the bundled CAT client runtime.
 
+This installer targets current Codex behavior only. It does not include backward-compatibility or legacy fallback paths.
+
 Codex plugins currently install CAT skills, hooks, marketplace metadata, and client runtime files. Codex does not
 currently support plugin-provided custom slash commands, and CAT does not install Codex command wrappers. For Codex,
 invoke CAT with the corresponding dollar-prefixed skill mention, such as `$cat:init`, `$cat:status`, or `$cat:work`.
@@ -114,9 +116,8 @@ codex plugin marketplace add "${LOCAL_MARKETPLACE_ROOT}"
 CODEX_PLUGIN_CACHE_ROOT="${CODEX_HOME}/plugins/cache/cat/cat"
 CODEX_PLUGIN_CACHE="${CODEX_PLUGIN_CACHE_ROOT}/${PLUGIN_VERSION}"
 CAT_PLUGIN_ROOT="${CAT_PLUGIN_ROOT:-${CODEX_PLUGIN_CACHE}}"
-rm -rf "${CODEX_PLUGIN_CACHE_ROOT}"
 
-try_codex_plugin_browser_install() {
+codex_plugin_browser_install() {
   local marketplace_json escaped_marketplace_json
   marketplace_json="${LOCAL_MARKETPLACE_ROOT}/.agents/plugins/marketplace.json"
   escaped_marketplace_json="${marketplace_json//\\/\\\\}"
@@ -125,10 +126,7 @@ try_codex_plugin_browser_install() {
     "${escaped_marketplace_json}" | codex app-server proxy >/dev/null 2>&1
 }
 
-if ! try_codex_plugin_browser_install || [[ ! -f "${CODEX_PLUGIN_CACHE}/skills/add/SKILL.md" ]]; then
-  mkdir -p "${CODEX_PLUGIN_CACHE_ROOT}"
-  cp -R "${RELEASE_ARTIFACT}" "${CODEX_PLUGIN_CACHE}"
-fi
+codex_plugin_browser_install
 
 CODEX_CONFIG="${CODEX_CONFIG:-${CODEX_HOME}/config.toml}"
 mkdir -p "$(dirname "${CODEX_CONFIG}")"
