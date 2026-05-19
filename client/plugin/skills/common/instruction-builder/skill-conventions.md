@@ -134,6 +134,17 @@ modules must never depend on engine-specific modules.
 The same neutrality rule applies to tests: common/neutral tests must not assert engine-specific literals, names,
 commands, or class references. Put engine-specific assertions in the corresponding engine-specific test modules.
 
+**Prohibited test pattern (source-text validation):**
+
+Do not create tests/check scripts whose primary assertion is that prose in source files contains or omits
+specific terms (README wording checks, skill prose deny-lists, etc.). These checks do not validate runtime behavior
+and create high-maintenance churn.
+
+Use behavior-first assertions instead:
+- Verify command/runtime behavior with fixtures and observable outcomes.
+- Verify structured contracts (JSON/TOML/schema keys) when text validation is required.
+- Verify packaging/routing semantics by executing build/load paths, not by scanning prose.
+
 ---
 
 ## Skill Structure Template
@@ -555,6 +566,28 @@ under completion pressure.
 
 **Anti-pattern:** A text rule that says "NEVER do X" without a hook is a soft guardrail. The agent may
 bypass it when X seems like the only path to completing the task.
+
+### Worktree Targeting Contract (Rule-Level, No Hook Required)
+
+When a workflow operates on an issue worktree, skill text must include a fail-closed targeting
+contract before any write/edit operation:
+
+1. **Target validation (mandatory, pre-write):**
+   - verify `git rev-parse --show-toplevel` equals `${WORKTREE_PATH}`
+   - verify `pwd` is `${WORKTREE_PATH}` (or starts within it)
+   - if either check fails: STOP and report mismatch (no writes)
+2. **Write discipline (mandatory):**
+   - every write/edit/git-mutate command must start with `cd "${WORKTREE_PATH}" && ...`
+   - forbid absolute write paths under `/workspace/...` while issue worktree is active
+   - use paths relative to `${WORKTREE_PATH}` for writes
+3. **Pre-commit location check (mandatory):**
+   - verify workspace root (`/workspace`) is clean
+   - verify intended diffs are present in `${WORKTREE_PATH}`
+   - if inverted (workspace dirty, worktree clean): STOP and move changes before commit
+4. **Execution header (mandatory):**
+   - print target path, `pwd`, current branch, and `git rev-parse --show-toplevel` before first write
+
+Use these exact requirements in skill procedures that can edit files during issue execution.
 
 ### Framing for Verbatim Output
 

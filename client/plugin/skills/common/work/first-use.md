@@ -45,6 +45,33 @@ constraints.
 **Use absolute paths for all file operations.** When reading, editing, or writing files inside the
 worktree, prefix every path with `${WORKTREE_PATH}/` (e.g., `${WORKTREE_PATH}/client/plugin/skills/common/foo/SKILL.md`).
 
+**MANDATORY pre-edit check (fail closed):** Before any write/edit tool call, run:
+
+```bash
+cd "${WORKTREE_PATH}" && \
+  CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD) && \
+  TOP=$(git rev-parse --show-toplevel) && \
+  CURRENT_PWD=$(pwd) && \
+  echo "WORKTREE_PATH=${WORKTREE_PATH} PWD=${CURRENT_PWD} BRANCH=${CURRENT_BRANCH} TOP=${TOP}"
+```
+
+Validation requirements:
+- `CURRENT_BRANCH` equals `${ISSUE_BRANCH}`
+- `TOP` equals `${WORKTREE_PATH}`
+- `CURRENT_PWD` equals `${WORKTREE_PATH}`
+
+If any check fails, **STOP** and report context mismatch. Do not write files.
+
+**Write discipline (mandatory):**
+- All write/edit/git-mutate commands must use `cd "${WORKTREE_PATH}" && ...`
+- While issue worktree is active, do not write to absolute `/workspace/...` paths
+- Use worktree-relative paths for writes after changing into `${WORKTREE_PATH}`
+
+**Pre-commit location check (mandatory):**
+- Verify `/workspace` is clean before commit
+- Verify intended diffs exist in `${WORKTREE_PATH}`
+- If inverted (workspace dirty, worktree clean), STOP and move changes first
+
 **Git commands use the single-call pattern:** `cd ${WORKTREE_PATH} && git ...` — the `cd` keeps git
 operating in the worktree within that single Bash call. Do NOT rely on a prior `cd` persisting across
 separate Bash calls.

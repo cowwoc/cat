@@ -34,6 +34,14 @@ Java/TestNG tests may validate engine code that processes, packages, routes, or 
 assert exact prose, examples, command lists, ANSI text, or other `SKILL.md`/`first-use.md` content.
 Presence and absence checks for skill files are allowed when they validate packaging or routing contracts.
 
+Do not add new tests or CI checks whose primary signal is matching source wording in docs/skill prose
+(for example, term deny-lists over `README.md` or skill markdown). Those checks are brittle and drift-prone.
+Validate behavior or machine contracts instead:
+- command behavior in fixture repos (`exit code`, side effects, emitted structured fields),
+- hook/runner behavior under realistic inputs,
+- packaging/routing contracts for generated artifacts.
+If a text check is unavoidable, scope it to machine-readable contracts (schema keys, JSON/TOML fields), not prose.
+
 ## Eval Set Format
 
 An eval set is a JSON object with a `version` field and a `test_cases` array. Each test case defines the prompt to

@@ -18,6 +18,12 @@ fallback or backward-compatibility paths, and execute the full release backlog e
 - `docs/development/codex-parity.md` - hook/session semantics, permissions/profile, remote-control behavior.
 - `docs/development/plugin-distribution.md` - marketplace/share/discoverability/version guidance.
 
+## Implementation Evidence
+- `README.md` updated with Codex latest-only install flow, `$cat:help` verification, and `/cat:uninstall` removal path.
+- `docs/prompts/codex-install.md` updated with latest-only installer contract and explicit no-fallback behavior.
+- `docs/development/codex-parity.md` updated with latest-only support statement, current diagnostics flow, and parity-gap framing.
+- `docs/development/plugin-distribution.md` updated with latest-only Codex support tier and engine-managed marketplace metadata notes.
+
 ## Pre-conditions
 - [x] All dependent issues are closed
 
@@ -75,6 +81,6 @@ fallback or backward-compatibility paths, and execute the full release backlog e
 
 ## Post-conditions
 - [x] Full release backlog workstreams (A-E) are represented in this issue plan.
-- [x] Codex install instructions do not include fallback installation logic.
-- [x] Codex-facing docs state latest-version support expectations clearly.
-- [x] Parity/distribution docs do not prescribe removed legacy feature flags/config keys.
+- [x] Codex install instructions do not include fallback installation logic (`docs/prompts/codex-install.md`).
+- [x] Codex-facing docs state latest-version support expectations clearly (`README.md`, `docs/development/codex-parity.md`, `docs/development/plugin-distribution.md`).
+- [x] Parity/distribution docs do not prescribe removed legacy feature flags/config keys (`docs/development/codex-parity.md`, `docs/development/plugin-distribution.md`).

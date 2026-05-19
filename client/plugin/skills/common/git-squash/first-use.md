@@ -329,6 +329,31 @@ Complex squash operations include:
 
 Delegation isolates conflict resolution from the main context and allows retry with different strategies.
 
+### Delegated Agent Execution Protocol (MANDATORY)
+
+Use this protocol whenever delegation is required:
+- Spawn with the engine's isolated/no-history mode and a minimal bootstrap message.
+- Treat spawn-turn output as startup-only; do not accept it as task execution.
+- Trigger execution using the engine's delegated-agent follow-up mechanism with explicit concrete deliverables.
+- If first follow-up response is non-executing, send one final execution follow-up.
+- If second follow-up response is still non-executing, terminate that delegated-agent attempt.
+- Run at most two delegated-agent attempts per squash run. If both fail startup execution, classify
+  `delegation_blocker=bootstrap_loop` and stop spawning additional agents for that run.
+
+### Delegated Output Acceptance Checks (MANDATORY)
+
+Reject delegated output unless all checks pass:
+- Output addresses the requested squash scope (target commits/topics) and current branch state.
+- Output includes concrete actionable artifacts (grouping/ordering plan, conflict strategy, verification steps),
+  not acknowledgements or generic readiness text.
+- Output does not introduce out-of-scope operations (merge/push/worktree removal/tagging) forbidden by this skill.
+- File/commit references in the report exist in the current working tree/history.
+
+If checks fail:
+- Classify `delegation_failure=invalid_analysis`.
+- Retry/replace per the delegated-agent protocol above.
+- If blocked, proceed once via main-agent fallback with blocker evidence recorded.
+
 **Simple squash (do NOT delegate):**
 - Squashing all commits into one (single topic)
 - Adjacent commits that don't require reordering

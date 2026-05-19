@@ -538,10 +538,9 @@ Review manifest:
 - changed_files_fingerprint: {CHANGED_FILES_FINGERPRINT}
 
 WORKTREE_PATH is the authoritative working directory for this review.
-The line above is intentionally written as `WORKTREE_PATH=<absolute-path>` because stakeholder role
-instructions parse that exact variable assignment before reviewing. This is the canonical form.
-Do not rewrite it as prose, `WORKTREE_PATH: <absolute-path>`, or any other alternate syntax.
-Do not include multiple `WORKTREE_PATH` lines in the same reviewer prompt.
+The line above is canonical and must remain the only worktree variable assignment in this prompt.
+If that canonical line is present, do not claim the working directory is missing.
+Do not rewrite it into alternate syntax.
 Before reading files, verify that the current worktree HEAD is exactly `{HEAD_SHA}`. If the current worktree HEAD
 differs from `{HEAD_SHA}`, return REJECTED with a reviewer execution concern instead of reviewing stale content.
 Read every changed file using absolute paths rooted at {WORKTREE_PATH}/.
@@ -593,7 +592,6 @@ Severity: CRITICAL (blocks release, data loss, security breach) > HIGH (material
 Review scope: {REVIEW_SCOPE}
 
 Compaction reminder:
-- WORKTREE_PATH={WORKTREE_PATH}
 - target_branch={TARGET_BRANCH}
 - reviewed_base_sha={BASE_SHA}
 - reviewed_head_sha={HEAD_SHA}
@@ -622,6 +620,15 @@ NEVER use the Task tool, a nested engine runner, a full-history fork, a generic/
   prose or examples).
 - Use isolated reviewer forks with no inherited conversation history for the active engine. Never inherit full parent
   history for stakeholder reviewer agents.
+
+**Pre-dispatch prompt audit (MANDATORY):**
+- Before spawning any reviewer, validate each generated reviewer prompt contains:
+  1) exactly one canonical `WORKTREE_PATH=<absolute-path>` assignment
+  2) the pinned `reviewed_head_sha` value in the Review manifest block
+  3) explicit instruction to verify current worktree HEAD matches pinned `reviewed_head_sha` before reading files
+- If any reviewer prompt fails audit, STOP immediately with REJECTED and concern:
+  "Reviewer prompt missing canonical worktree context; review aborted to prevent stale-branch analysis."
+- Do not spawn reviewers until all reviewer prompts pass audit.
 
 ### Step 4: Collect Reviews
 
