@@ -211,16 +211,24 @@ EOF
         { echo "Expected common handler in Claude engine"; false; }
     printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'claude-runner:io.github.cowwoc.cat.claude.engine.ClaudeRunner' || \
         { echo "Expected Claude-only handler"; false; }
+    printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'sprt-runner:io.github.cowwoc.cat.claude.engine.ClaudeSprtRunner' || \
+        { echo "Expected Claude sprt-runner handler"; false; }
     ! printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'codex-runner:io.github.cowwoc.cat.codex.engine.CodexRunner' || \
         { echo "Did not expect Codex-only handler in Claude engine"; false; }
+    ! printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'sprt-runner:io.github.cowwoc.cat.codex.engine.CodexSprtRunner' || \
+        { echo "Did not expect Codex sprt-runner handler in Claude engine"; false; }
 
     set_engine_handlers codex
     printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'token-counter:io.github.cowwoc.cat.tool.TokenCounter' || \
         { echo "Expected common handler in Codex engine"; false; }
     printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'codex-runner:io.github.cowwoc.cat.codex.engine.CodexRunner' || \
         { echo "Expected Codex-only handler"; false; }
+    printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'sprt-runner:io.github.cowwoc.cat.codex.engine.CodexSprtRunner' || \
+        { echo "Expected Codex sprt-runner handler"; false; }
     ! printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'claude-runner:io.github.cowwoc.cat.claude.engine.ClaudeRunner' || \
         { echo "Did not expect Claude-only handler in Codex engine"; false; }
+    ! printf '%s\n' "${HANDLERS[@]}" | grep -Fq 'sprt-runner:io.github.cowwoc.cat.claude.engine.ClaudeSprtRunner' || \
+        { echo "Did not expect Claude sprt-runner handler in Codex engine"; false; }
 }
 
 @test "codex engine launcher registry avoids claude implementation entrypoints" {

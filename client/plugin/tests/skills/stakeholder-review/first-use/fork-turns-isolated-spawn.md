@@ -8,7 +8,7 @@ See LICENSE.md in the project root for license terms.
 -->
 ## Turn 1
 
-Run a stakeholder review on this branch with requirements, architecture, and testing reviewers. This Codex session's
+Run a stakeholder review on this branch with requirements, architecture, and testing reviewers. This session's
 native agent tool exposes `fork_turns` for isolated forks and does not expose `fork_context`.
 
 ## Assertions
