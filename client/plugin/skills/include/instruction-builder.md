@@ -375,7 +375,10 @@ TEST_DIR=$("${CAT_PLUGIN_ROOT}/client/bin/sprt-runner" extract-test-dir \
   "${INSTRUCTION_TEXT_PATH}" "${CAT_PROJECT_DIR}")
 ```
 Example: `client/plugin/skills/common/foo/first-use.md` → `{CAT_PROJECT_DIR}/client/plugin/tests/skills/common/foo/first-use`.
-For non-plugin paths: `project instructions` → `{CAT_PROJECT_DIR}/client/plugin/tests/project-instructions`.
+For non-plugin paths:
+- `project instructions` → `{CAT_PROJECT_DIR}/client/plugin/tests/project-instructions`
+- `.cat/.../*.md` → `{CAT_PROJECT_DIR}/.cat/tests/.../<file-stem>/`
+  (example: `.cat/rules/common/backwards-compatibility.md` → `{CAT_PROJECT_DIR}/.cat/tests/rules/common/backwards-compatibility/`)
 Pass this resolved path as a literal string to all agents — do NOT pass variable references.
 
 **TEST_MODEL computation:** Read the target instruction file's `model:` frontmatter field:
@@ -1567,6 +1570,8 @@ the start of the step heading or as a bold prefix, e.g., `**Step 1:**` or `### S
 - `effort` is mandatory for instruction files; do not omit it
 - Required order: `name` → `description` → `model` → `effort`
 - Optional keys (for example `user-invocable`, `argument-hint`) must appear after `effort`
+- Do not add frontmatter entries that merely restate default values; include optional keys only when they
+  change behavior from the default
 
 ```yaml
 ---
@@ -1656,7 +1661,8 @@ Overall verification passes if all non-skipped items are checked and all skipped
 - [ ] At least 3 negative scenario files generated; no scenario includes system_reminders listing skills
 - [ ] Test cases presented to user for approval before SPRT begins
 - [ ] `TEST_DIR` derived correctly from `INSTRUCTION_TEXT_PATH` (e.g., `client/plugin/skills/common/foo/first-use.md` →
-  `client/plugin/tests/skills/common/foo/first-use/`)
+  `client/plugin/tests/skills/common/foo/first-use/`; `.cat/rules/common/backwards-compatibility.md` →
+  `.cat/tests/rules/common/backwards-compatibility/`)
 - [ ] Scenario `.md` files committed to `${TEST_DIR}/` with `test:` prefix; commit SHA stored as `TEST_SET_SHA`
 
 ### SPRT execution
