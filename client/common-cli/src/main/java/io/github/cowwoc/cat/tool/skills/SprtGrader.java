@@ -61,6 +61,7 @@ final class SprtGrader
    * @param modelId        the model ID to use for grading
    * @param effort         the reasoning effort to use for grading
    * @param runnerWorktree path to the runner worktree
+   * @param graderWorktree path to the worktree used as grader cwd
    * @param testDir        path to the test directory containing scenario MD files
    * @param gradeOutputPath path where grader should write grade.json
    * @param isolationResult JSON string from create-isolation-branch (contains tc_name_map)
@@ -68,7 +69,7 @@ final class SprtGrader
    * @throws IOException if grading fails
    */
   String gradeTc(String tcId, int trialNum, String outputJson, String modelId,
-    String effort, String runnerWorktree, String testDir,
+    String effort, String runnerWorktree, String graderWorktree, String testDir,
     String gradeOutputPath, String isolationResult)
     throws IOException
   {
@@ -83,7 +84,7 @@ final class SprtGrader
       Files.writeString(graderPromptFile, graderPrompt, UTF_8);
 
       Path actualGradePath = invokeGrader(tcId, graderPromptFile, modelId, effort,
-        runnerWorktree, gradeOutputPath, trialNum);
+        runnerWorktree, graderWorktree, gradeOutputPath, trialNum);
 
       String runId = tcId + "_run" + trialNum;
       ensureTestCaseId(actualGradePath, runId);
@@ -150,13 +151,14 @@ final class SprtGrader
    * @param modelId the model ID to use for grading
    * @param effort the reasoning effort to use for grading
    * @param runnerWorktree the runner worktree path
+   * @param graderWorktree the worktree path used as grader cwd
    * @param gradeOutputPath the expected output path for the grade file
    * @param trialNum the trial number
    * @return the actual path where the grade file was written
    * @throws IOException if the grader fails or the grade file is not found
    */
   Path invokeGrader(String tcId, Path graderPromptFile, String modelId,
-    String effort, String runnerWorktree, String gradeOutputPath, int trialNum)
+    String effort, String runnerWorktree, String graderWorktree, String gradeOutputPath, int trialNum)
     throws IOException
   {
     int maxAttempts = 3;
@@ -167,7 +169,7 @@ final class SprtGrader
       try (PrintStream graderOut = new PrintStream(graderStdout.toFile(), UTF_8))
       {
         int exitCode = engineRunner.runGrader(graderPromptFile, modelId, effort,
-          runnerWorktree, graderOut);
+          graderWorktree, gradeOutputPath, graderOut);
 
         if (exitCode != 0)
         {
@@ -285,9 +287,36 @@ final class SprtGrader
       return;
     ObjectNode gradeObject = (ObjectNode) rootNode;
     JsonNode testCaseIdNode = gradeObject.path("test_case_id");
-    if (testCaseIdNode.isString() && !testCaseIdNode.asString().isBlank())
-      return;
-    gradeObject.put("test_case_id", runId);
+    if (!testCaseIdNode.isString() || testCaseIdNode.asString().isBlank())
+      gradeObject.put("test_case_id", runId);
+
+    JsonNode assertionResultsNode = gradeObject.path("assertion_results");
+    if (assertionResultsNode.isArray())
+    {
+      int passCount = 0;
+      int failCount = 0;
+      for (JsonNode resultNode : assertionResultsNode)
+      {
+        if (!resultNode.isObject())
+          continue;
+        String verdict = resultNode.path("verdict").asString("");
+        if (verdict.equals("PASS"))
+          ++passCount;
+        else if (verdict.equals("FAIL"))
+          ++failCount;
+      }
+      int totalCount = assertionResultsNode.size();
+      gradeObject.put("pass_count", passCount);
+      gradeObject.put("fail_count", failCount);
+      gradeObject.put("total_count", totalCount);
+      double passRate;
+      if (totalCount > 0)
+        passRate = (double) passCount / totalCount;
+      else
+        passRate = 0.0;
+      gradeObject.put("pass_rate", passRate);
+    }
+
     Files.writeString(gradePath, mapper.writeValueAsString(gradeObject), UTF_8);
   }
 
@@ -310,12 +339,6 @@ final class SprtGrader
         "SprtRunner get-tc-name: 'tc_name_map' field not found in isolation " +
         "result JSON");
     JsonNode stemNode = tcNameMapNode.path(tcId);
-    if (stemNode.isMissingNode() && tcId.startsWith("tc"))
-    {
-      // Backward compatibility with older isolation JSON that keyed tc_name_map by numeric suffix.
-      String numericKey = tcId.substring(2);
-      stemNode = tcNameMapNode.path(numericKey);
-    }
     if (stemNode.isMissingNode())
       throw new IllegalArgumentException(
         "SprtRunner get-tc-name: tc_id '" + tcId + "' not found in tc_name_map");

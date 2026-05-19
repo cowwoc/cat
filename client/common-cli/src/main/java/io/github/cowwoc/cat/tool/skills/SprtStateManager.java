@@ -160,7 +160,8 @@ final class SprtStateManager
     if (hasPrior)
     {
       JsonNode priorRoot = mapper.readTree(Path.of(priorPath).toFile());
-      String priorModelId = priorRoot.path("model_id").asString("");
+      JsonNode priorResult = findResultForModelAndEffort(priorRoot, nextModelId, effort);
+      String priorModelId = priorResult.path("model_id").asString("");
       // Only carry forward prior results when model_id matches the next model
       boolean modelMatches = !priorModelId.isBlank() && priorModelId.equals(nextModelId);
       if (!modelMatches && !priorModelId.isBlank())
@@ -198,7 +199,9 @@ final class SprtStateManager
 
       if (modelMatches)
       {
-        JsonNode priorTestCases = priorRoot.path("test_cases");
+        JsonNode priorTestCases = priorResult.path("sprt").path("test_cases");
+        if (!priorTestCases.isArray())
+          priorTestCases = priorResult.path("test_cases");
         if (priorTestCases.isArray())
         {
           for (JsonNode tc : priorTestCases)
@@ -526,5 +529,35 @@ final class SprtStateManager
     {
       throw WrappedCheckedException.wrap(e);
     }
+  }
+
+  /**
+   * Finds the prior result entry for the requested model and effort.
+   *
+   * @param priorRoot the root node of test-results.json
+   * @param modelId the requested model id
+   * @param effort the requested effort
+   * @return the matching result entry, or a missing node if none exists
+   */
+  private JsonNode findResultForModelAndEffort(JsonNode priorRoot, String modelId, String effort)
+  {
+    JsonNode exact = priorRoot.path(resultKey(modelId, effort));
+    if (exact.isObject())
+      return exact;
+    return scope.getJsonMapper().missingNode();
+  }
+
+  /**
+   * Builds a stable key for a `[model_id, effort]` result entry.
+   *
+   * @param modelId the model id
+   * @param effort the effort level
+   * @return a stable map key
+   */
+  private static String resultKey(String modelId, String effort)
+  {
+    if (effort.isBlank())
+      return modelId + "|default";
+    return modelId + "|" + effort;
   }
 }

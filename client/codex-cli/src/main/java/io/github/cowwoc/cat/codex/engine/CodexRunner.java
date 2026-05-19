@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -47,13 +46,9 @@ public final class CodexRunner
   private static final List<String> EFFORT_LEVELS = List.of("minimal", "low", "medium",
     "high", "xhigh");
   /**
-   * Sandbox mode used for nested Codex executions in already-sandboxed CAT engines.
-   */
-  private static final String NESTED_SANDBOX_MODE = "danger-full-access";
-  /**
    * Default timeout for the Codex CLI process.
    */
-  private static final Duration DEFAULT_TIMEOUT = Duration.ofMinutes(3);
+  private static final Duration DEFAULT_TIMEOUT = Duration.ofMinutes(10);
   private final AgentPluginScope scope;
   private final Duration timeout;
   private final Map<String, String> environment;
@@ -135,10 +130,14 @@ public final class CodexRunner
     command.add(lastMessageOutputPath.toString());
     command.add("--cd");
     command.add(cwd.toString());
-    if (isExternallySandboxedEngine())
+    if (CodexSandboxPolicy.shouldInheritYoloMode(environment))
+    {
+      command.add(CodexSandboxPolicy.YOLO_FLAG);
+    }
+    else if (CodexSandboxPolicy.isExternallySandboxedEngine(environment))
     {
       command.add("--sandbox");
-      command.add(NESTED_SANDBOX_MODE);
+      command.add(CodexSandboxPolicy.NESTED_SANDBOX_MODE);
     }
     command.add("--model");
     command.add(model);
@@ -146,20 +145,6 @@ public final class CodexRunner
     command.add("model_reasoning_effort=\"" + effort + "\"");
     command.add("-");
     return command;
-  }
-
-  /**
-   * Returns {@code true} if the runner is already executing inside a Codex-managed sandbox.
-   *
-   * @return {@code true} if nested Codex executions need an explicit sandbox override
-   */
-  private boolean isExternallySandboxedEngine()
-  {
-    String codexTool = environment.get("CODEX_TOOL");
-    String codexCi = environment.get("CODEX_CI");
-    return Objects.equals(codexTool, "codex-cli") ||
-      Objects.equals(codexCi, "1") ||
-      (codexCi != null && codexCi.equalsIgnoreCase("true"));
   }
 
   /**
@@ -261,7 +246,22 @@ public final class CodexRunner
         if (jsonlOutputPath != null)
           Files.writeString(jsonlOutputPath, output, UTF_8);
 
-        ParsedOutput parsed = appendLastMessage(parseOutput(output), lastMessageOutputPath);
+        ParsedOutput parsed;
+        try
+        {
+          parsed = appendLastMessage(parseOutput(output), lastMessageOutputPath);
+        }
+        catch (RuntimeException e)
+        {
+          return new ProcessResult(empty, elapsed, e.getMessage());
+        }
+        if (parsed.turns().isEmpty() && parsed.texts().isEmpty())
+        {
+          String snippet = output.strip();
+          if (snippet.length() > 500)
+            snippet = snippet.substring(0, 500) + "...";
+          return new ProcessResult(empty, elapsed, "codex produced no parseable output. jsonl=" + snippet);
+        }
         return new ProcessResult(parsed, elapsed, "");
       }
     }

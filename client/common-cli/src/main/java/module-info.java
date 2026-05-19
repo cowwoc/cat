@@ -22,7 +22,6 @@ module io.github.cowwoc.cat.common.cli
   exports io.github.cowwoc.cat.hook.bash;
   exports io.github.cowwoc.cat.tool;
   exports io.github.cowwoc.cat.tool.licensing;
-  exports io.github.cowwoc.cat.tool.runner;
   exports io.github.cowwoc.cat.tool.skills;
   exports io.github.cowwoc.cat.tool.util;
 }

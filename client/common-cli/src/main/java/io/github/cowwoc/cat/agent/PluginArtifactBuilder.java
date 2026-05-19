@@ -41,6 +41,8 @@ public final class PluginArtifactBuilder
 {
   private static final Pattern FILE_REFERENCE = Pattern.compile(
     "(?<![A-Za-z0-9_./-])([A-Za-z0-9][A-Za-z0-9_.-]*\\.[A-Za-z0-9][A-Za-z0-9_.-]*)(?![A-Za-z0-9_./-])");
+  private static final Pattern INCLUDE_DIRECTIVE =
+    Pattern.compile("(?m)^\\s*<!--\\s*cat:include\\s+[^>]+-->\\s*$");
   private static final Pattern RENDER_OUTPUT_DIRECTIVE =
     Pattern.compile("(?m)^\\s*<!--\\s*cat:render-output\\b(.*?)\\s*-->\\s*$");
   private static final Pattern RENDER_OUTPUT_TOKEN = Pattern.compile("[A-Za-z0-9][A-Za-z0-9_.-]*");
@@ -292,9 +294,9 @@ public final class PluginArtifactBuilder
             FileSystemUtils.writeStringIfChanged(file, text);
             if (containsSourceLicenseText(text))
               throw new IllegalStateException("Engine artifact contains source license text: " + file);
-            if (text.contains("cat:include"))
+            if (INCLUDE_DIRECTIVE.matcher(text).find())
               throw new IllegalStateException("Engine artifact contains unresolved cat:include marker: " + file);
-            if (text.contains("cat:render-output"))
+            if (RENDER_OUTPUT_DIRECTIVE.matcher(text).find())
               throw new IllegalStateException("Engine artifact contains unresolved cat:render-output marker: " + file);
           }
           return FileVisitResult.CONTINUE;

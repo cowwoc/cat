@@ -106,6 +106,32 @@ public final class CodexRunnerTest
   }
 
   /**
+   * Verifies that nested runs inherit yolo mode when the parent approval policy is never.
+   */
+  @Test
+  public void buildCommandInheritsYoloMode() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestCodexTool scope = new TestCodexTool(tempDir, tempDir))
+    {
+      CodexRunner runner = new CodexRunner(scope, Duration.ofMinutes(3),
+        Map.of("CODEX_APPROVAL_POLICY", "never"));
+      Path outputPath = tempDir.resolve("last-message.txt");
+
+      List<String> command = runner.buildCommand("gpt-5.5", "high", tempDir, outputPath);
+
+      requireThat(command, "command").isEqualTo(List.of("codex", "exec", "--json",
+        "--output-last-message", outputPath.toString(), "--cd", tempDir.toString(),
+        "--dangerously-bypass-approvals-and-sandbox", "--model", "gpt-5.5", "-c",
+        "model_reasoning_effort=\"high\"", "-"));
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that omitting the model is rejected.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
@@ -188,6 +214,31 @@ public final class CodexRunnerTest
 
       requireThat(result.error(), "error").isEqualTo("timeout");
       requireThat(result.elapsed().compareTo(Duration.ofSeconds(3)), "elapsed").isLessThan(0);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that malformed JSONL output is reported as an error instead of throwing.
+   */
+  @Test
+  public void executeProcessReportsMalformedJsonlAsError() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestCodexTool scope = new TestCodexTool(tempDir, tempDir))
+    {
+      CodexRunner runner = new CodexRunner(scope, Duration.ofSeconds(5));
+      Path outputPath = tempDir.resolve("last-message.txt");
+      List<String> command = List.of("bash", "-c", "printf '{bad json}\\n'");
+
+      CodexRunner.ProcessResult result = runner.executeProcess(command, "prompt", tempDir,
+        outputPath);
+
+      requireThat(result.error(), "error").isNotBlank();
+      requireThat(result.parsed().texts(), "texts").isEmpty();
     }
     finally
     {

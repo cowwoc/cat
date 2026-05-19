@@ -1,0 +1,6 @@
+{
+  "status": "open",
+  "dependencies": [
+    "split-cli-runtime-modules"
+  ]
+}

@@ -300,8 +300,8 @@ final class SprtIsolationManager
   /**
    * Implements the {@code remove-runner-worktrees} command.
    * <p>
-   * Bulk-removes all git worktrees and branches whose branch name starts with
-   * {@code ${issue_name}-tc}. Also attempts to delete the {@code ${issue_name}-isolation} branch.
+   * Bulk-removes all git worktrees and branches whose branch name matches
+   * {@code ${issue_name}-*-rN}. Also attempts to delete the {@code ${issue_name}-isolation} branch.
    *
    * @param args {@code [worktree_path, issue_name]}
    * @return {@code key=value} line: {@code removed_count=N}
@@ -319,7 +319,7 @@ final class SprtIsolationManager
 
     Path worktreePath = Path.of(args[0]);
     String issueName = args[1];
-    String prefix = issueName + "-tc";
+    String prefix = issueName + "-";
 
     // Parse git worktree list --porcelain output
     ProcessRunner.Result listResult = ProcessRunner.run(worktreePath,
@@ -350,7 +350,9 @@ final class SprtIsolationManager
             blockBranch = ref;
         }
       }
-      if (!blockBranch.isBlank() && blockBranch.startsWith(prefix))
+      if (!blockBranch.isBlank() &&
+        blockBranch.startsWith(prefix) &&
+        blockBranch.matches(".*-r\\d+$"))
       {
         worktreePathsToRemove.add(blockPath);
         branchesToDelete.add(blockBranch);

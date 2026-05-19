@@ -184,6 +184,30 @@ agent. Do NOT read the instruction files into a variable — the design agent wi
 
 If creating a new instruction document, set `EXISTING_INSTRUCTION_PATH` to `"N/A"`.
 
+When `EXISTING_INSTRUCTION_PATH` is provided, process it as **release-rendered content**:
+- Expand include directives before analysis. Supported include syntax for this workflow is:
+  - `<!-- cat:include <relative-path> -->`
+- Do not treat generic markdown links (for example `[include](...)`) as includes unless they match the exact
+  `cat:include` directive syntax above.
+- Expand includes recursively (transitively) in rendered order until no include directives remain.
+  Example traversal: if `A` includes `B` and `B` includes `C`, the effective rendered view must include `C` via
+  transitive expansion of `B` while preserving origin metadata at each depth.
+- Build a source map from rendered spans back to their origin files and line ranges.
+- Treat the rendered composite as the analysis surface, but preserve origin metadata for every span.
+- Resolve include paths relative to the including file's directory and require the resolved path to remain under
+  `${CAT_PROJECT_DIR}`. If an include cannot be resolved, does not exist, or resolves outside `${CAT_PROJECT_DIR}`,
+  fail the update flow with an explicit diagnostic (do not silently continue and do not guess an edit target).
+- If multiple candidate origin spans match the same rendered text, select by deterministic priority:
+  1) exact rendered span offset + source line range match
+  2) unique source-map entry for that rendered segment
+  3) otherwise fail with an explicit "ambiguous origin mapping" diagnostic
+
+When proposing or applying edits discovered from rendered content, update the **originating source file** that owns
+the rendered text span. Do not patch the top-level including file when the text came from an included file.
+Example: if `first-use.md` includes `../../include/codex-home-bootstrap.md` and a needed edit is inside that included
+content, the edit must be applied to `codex-home-bootstrap.md`.
+For transitive include chains, the edit target must be the deepest true origin file for the matched rendered span.
+
 ### Step 2: Delegate Design Phase to Design Agent
 
 Use the available agent-spawning tool to delegate the design phase (backward chaining, methodology, conventions) to the

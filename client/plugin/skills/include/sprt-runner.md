@@ -29,6 +29,10 @@ See LICENSE.md in the project root for license terms.
 Run the full SPRT loop over every `.md` test case in `test_dir`, producing per-test-case
 decisions (ACCEPT/REJECT/INCONCLUSIVE) and an overall result (ACCEPT or REJECT).
 
+**Critical worktree rule:** run SPRT from the issue worktree context, not `/workspace`.
+Use the issue worktree root as `worktree_path` and choose `test_dir` inside that same worktree.
+Do not pass `/workspace` as `worktree_path`.
+
 ---
 
 ## Quick Start
@@ -59,6 +63,7 @@ If `overall_decision` is REJECT, the Investigation Procedure section provides st
 
 - `worktree_path` points to a clean git worktree on the issue branch
 - `test_dir` is a path (absolute or relative to `worktree_path`) containing one or more `*.md` test case files
+- `worktree_path` MUST NOT be `/workspace`; it must be the issue worktree root for the issue under test
 - `test_model` is the model identifier to use for all trial runs (must match the skill under test)
 - `${CAT_PLUGIN_ROOT}/client/bin/sprt-runner` binary is available
 - `${CAT_PLUGIN_ROOT}/client/bin/extract-turns` binary is available (splits multi-turn scenarios into individual turn files)
@@ -448,7 +453,9 @@ Do NOT remove the output file yet - it's needed for investigation if failures oc
 The SPRT command performs the complete SPRT workflow:
 
 1. **Prepare run** — Validates test directory, resolves paths, initializes state file
-2. **Cleanup prior runs** — Removes orphaned SPRT worktrees and branches
+2. **Cleanup prior runs** — Removes orphaned SPRT worktrees and branches, then clears any existing
+   `test-results.json` aggregate entry for the current `[model_id, effort]` tuple before starting
+   the new round
 3. **Create isolation branch** — Strips assertions, creates opaque test case files, commits to orphan branch
 4. **Initialize SPRT** — Sets up per-test-case state tracking with configured thresholds
 5. **SPRT loop** — Adaptive batching: creates run worktrees, spawns parallel trials through the active engine, grades outputs, updates SPRT state, repeats until all test cases decided or truncated at 50 runs

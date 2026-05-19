@@ -43,10 +43,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.stream.Stream;
-import io.github.cowwoc.cat.agent.AgentEngine;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -82,10 +82,6 @@ public final class SprtRunner
   private static final DateTimeFormatter ISO_UTC =
     DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC);
   private static final String GRADER_AGENT = "instruction-grader-agent";
-  private static final List<String> CLAUDE_EFFORT_LEVELS = List.of("low", "medium", "high",
-    "xhigh", "max");
-  private static final List<String> CODEX_EFFORT_LEVELS = List.of("minimal", "low", "medium",
-    "high", "xhigh");
 
   static
   {
@@ -109,59 +105,74 @@ public final class SprtRunner
       public String[] buildClaudeTrialArgs(Path promptFile, String modelId, String effort,
         String runnerWorktree, String outputJson, Path jlinkBin)
       {
-        return buildClaudeTrialArgsInternal(promptFile, modelId, effort, runnerWorktree,
-          outputJson, jlinkBin);
+        return buildTrialArgsInternal(promptFile, modelId, effort, runnerWorktree, outputJson,
+          jlinkBin, true);
       }
 
       @Override
       public String[] buildCodexTrialArgs(Path promptFile, String modelId, String effort,
         String runnerWorktree, String outputJson)
       {
-        return buildCodexTrialArgsInternal(promptFile, modelId, effort, runnerWorktree, outputJson);
+        return buildTrialArgsInternal(promptFile, modelId, effort, runnerWorktree, outputJson,
+          null, false);
       }
 
       @Override
       public String[] buildClaudeGraderArgs(Path graderPromptFile, String modelId, String effort,
         String runnerWorktree, Path jlinkBin)
       {
-        return buildClaudeGraderArgsInternal(graderPromptFile, modelId, effort, runnerWorktree,
-          jlinkBin);
+        return buildGraderArgsInternal(graderPromptFile, modelId, effort, runnerWorktree, null,
+          jlinkBin, true, true);
       }
 
       @Override
       public String[] buildCodexGraderArgs(Path graderPromptFile, String modelId, String effort,
         String runnerWorktree)
       {
-        return buildCodexGraderArgsInternal(graderPromptFile, modelId, effort, runnerWorktree);
+        return buildGraderArgsInternal(graderPromptFile, modelId, effort, runnerWorktree,
+          Path.of(runnerWorktree, ".cat", "work", "grade-output.json").toString(),
+          null, false, false);
       }
 
       @Override
       public String engineIdForDescriptor(Path descriptor)
       {
-        return engineOfDescriptor(descriptor).id();
+        return runtimeIdFromDescriptor(descriptor);
       }
 
       @Override
       public String[] buildTrialArgsForDescriptor(Path descriptor, Path promptFile,
         String modelId, String effort, String runnerWorktree, String outputJson)
       {
-        AgentEngine engine = engineOfDescriptor(descriptor);
-        return buildTrialArgs(engine, promptFile, modelId, effort, runnerWorktree, outputJson);
+        String runtimeId = runtimeIdFromDescriptor(descriptor);
+        Path jlinkBin = jlinkBin(runnerWorktree, runtimeId);
+        boolean hasClaudeFlags = runtimeId.equals("claude");
+        return buildTrialArgsInternal(promptFile, modelId, effort, runnerWorktree, outputJson,
+          jlinkBin, hasClaudeFlags);
       }
 
       @Override
       public String[] buildGraderArgsForDescriptor(Path descriptor, Path graderPromptFile,
         String modelId, String effort, String runnerWorktree)
       {
-        AgentEngine engine = engineOfDescriptor(descriptor);
-        return buildGraderArgs(engine, graderPromptFile, modelId, effort, runnerWorktree);
+        String runtimeId = runtimeIdFromDescriptor(descriptor);
+        Path jlinkBin = jlinkBin(runnerWorktree, runtimeId);
+        boolean hasClaudeFlags = runtimeId.equals("claude");
+        String outputPath = null;
+        if (!hasClaudeFlags)
+        {
+          outputPath = Path.of(runnerWorktree, ".cat", "work", "grade-output.json").toString();
+        }
+        return buildGraderArgsInternal(graderPromptFile, modelId, effort, runnerWorktree,
+          outputPath, jlinkBin, hasClaudeFlags, hasClaudeFlags);
       }
     });
   }
 
   private final Logger log = LoggerFactory.getLogger(SprtRunner.class);
+  private final Map<String, Set<String>> launcherFlagsByPath = new ConcurrentHashMap<>();
   private final CliTool scope;
-  private final AgentEngine engine;
+  private final String runtimeId;
   private final String claudeCodeVersion;
   private final SprtStateManager sprtStateManager;
   private final SprtIsolationManager sprtIsolationManager;
@@ -181,10 +192,10 @@ public final class SprtRunner
     requireThat(scope, "scope").isNotNull();
     requireThat(claudeCodeVersion, "claudeCodeVersion").isNotBlank();
     this.scope = scope;
-    this.engine = engineOf(scope);
+    this.runtimeId = runtimeIdFromDescriptor(scope.getPluginDescriptor());
     this.claudeCodeVersion = claudeCodeVersion;
     this.sprtStateManager = new SprtStateManager(scope);
-    this.sprtIsolationManager = new SprtIsolationManager(scope, engine.id());
+    this.sprtIsolationManager = new SprtIsolationManager(scope, runtimeId);
     this.sprtGrader = new SprtGrader(scope, this);
     this.skillMetadataExtractor = new SkillMetadataExtractor(scope, claudeCodeVersion);
   }
@@ -1083,7 +1094,7 @@ public final class SprtRunner
       "Example: " + runnerWorktree + "/some/file.txt\n" +
       "Never use any other root for file operations.";
 
-    String jlinkBin = runnerWorktree + "/client/distribution/target/jlink/" + engine.id() + "/bin";
+    String jlinkBin = runnerWorktree + "/client/distribution/target/jlink/" + runtimeId + "/bin";
     if (!Files.isDirectory(Path.of(jlinkBin)))
       throw new IOException(
         "SprtRunner prepare-trial: jlink directory not found in runner worktree: " +
@@ -1098,7 +1109,7 @@ public final class SprtRunner
     Path versionFile = jlinkDir.resolve("VERSION");
     if (!Files.exists(versionFile) && Files.isDirectory(jlinkDir))
     {
-      String pluginVersion = VersionUtils.getPluginVersion(scope);
+      String pluginVersion = readJlinkPluginVersion(jlinkDir);
       Files.writeString(versionFile, pluginVersion, UTF_8);
     }
 
@@ -1118,6 +1129,34 @@ public final class SprtRunner
     output.add("plugin_source=" + pluginSource);
     output.add("output_json=" + outputJson);
     return output.toString();
+  }
+
+  /**
+   * Reads the plugin version from the runner jlink artifact.
+   *
+   * @param jlinkDir the runner engine jlink directory
+   * @return the plugin version
+   * @throws IOException if reading the manifest fails
+   */
+  private String readJlinkPluginVersion(Path jlinkDir) throws IOException
+  {
+    Path manifest = jlinkDir.resolve(scope.getPluginDescriptor());
+    if (!Files.isRegularFile(manifest))
+    {
+      throw new AssertionError("Plugin version not found: " + manifest + "\n" +
+        "Build CAT distribution artifacts before running SPRT.");
+    }
+    JsonNode root = scope.getJsonMapper().readTree(Files.readString(manifest, UTF_8));
+    JsonNode version = root.get("version");
+    if (version == null || !version.isString())
+      throw new AssertionError("Invalid plugin.json: missing or non-string 'version' field in " + manifest);
+    String value = version.stringValue();
+    if (value == null || !VersionUtils.isValidVersion(value.strip()))
+    {
+      throw new AssertionError("Invalid version format in " + manifest + ": '" + value +
+        "'. Expected X.Y or X.Y.Z");
+    }
+    return value.strip();
   }
 
   /**
@@ -1188,12 +1227,6 @@ public final class SprtRunner
         "SprtRunner get-tc-name: 'tc_name_map' field not found in isolation " +
         "result JSON");
     JsonNode stemNode = tcNameMapNode.path(tcId);
-    if (stemNode.isMissingNode() && tcId.startsWith("tc"))
-    {
-      // Backward compatibility with older isolation JSON that keyed tc_name_map by numeric suffix.
-      String numericKey = tcId.substring(2);
-      stemNode = tcNameMapNode.path(numericKey);
-    }
     if (stemNode.isMissingNode())
       throw new IllegalArgumentException(
         "SprtRunner get-tc-name: tc_id '" + tcId + "' not found in tc_name_map");
@@ -1437,6 +1470,7 @@ public final class SprtRunner
               // where test files still exist with their ## Assertions sections.
               verdict = sprtGrader.gradeTc(tcId, trialNum, finalOutputJson, modelId, testEffort,
                 runnerWorktree,
+                runnerWorktree,
                 Path.of(worktreePathStr, testDirRel).toString(),
                 gradeFilePath, isolationResultJson);
             }
@@ -1596,6 +1630,7 @@ public final class SprtRunner
     out.println("Step 2: Cleaning up previous run...");
     removeIsolationBranch(new String[]{worktreePath, issueName + "-isolation"});
     removeRunnerWorktrees(new String[]{worktreePath, issueName});
+    clearModelEffortResults(Path.of(testDirAbs), testModel, testEffort);
     out.println();
 
     // Step 3: Create isolation branch
@@ -1624,7 +1659,8 @@ public final class SprtRunner
       if (Files.exists(testResultsPath))
       {
         JsonNode priorResults = mapper.readTree(testResultsPath.toFile());
-        failedTestIdsSource = priorResults.path("failed_test_ids");
+        failedTestIdsSource = findResultForModelAndEffort(priorResults, testModel, testEffort).
+          path("failed_test_ids");
       }
     }
     if (failedTestIdsSource != null && failedTestIdsSource.isArray())
@@ -1878,8 +1914,19 @@ public final class SprtRunner
     out.println("Step 6: Writing test results...");
     String writeOutput = writeTestResults(new String[]{worktreePath, sprtStatePath.toString(), testDirAbs});
     Map<String, String> writeVars = parseKeyValue(writeOutput);
+    String writeStatus = writeVars.get("status");
+    if (!"ok".equals(writeStatus))
+    {
+      String message = writeVars.getOrDefault("message",
+        "write-test-results returned status='" + writeStatus + "'");
+      throw new IOException("SprtRunner write-test-results failed: " + message);
+    }
     String overallDecision = writeVars.get("overall_decision");
+    if (overallDecision == null || overallDecision.isBlank())
+      throw new IOException("SprtRunner write-test-results did not return overall_decision");
     String testSha = writeVars.get("test_sha");
+    if (testSha == null || testSha.isBlank())
+      throw new IOException("SprtRunner write-test-results did not return test_sha");
     out.println("  Overall decision: " + overallDecision);
     out.println("  Test SHA: " + testSha);
     out.println();
@@ -2042,24 +2089,36 @@ public final class SprtRunner
     sprtNode.put("total_tokens", 0);
     sprtNode.put("total_duration_ms", 0);
 
-    ObjectNode output = mapper.createObjectNode();
+    ObjectNode currentResult = mapper.createObjectNode();
     // Persist model_id, effort, and failed_test_ids so subsequent runs can validate model consistency
     // and prioritize previously-failed test cases across sessions.
     String modelId = stateRoot.path("model_id").asString("");
     if (modelId.isBlank())
       throw new IllegalStateException(
         "SprtRunner write-test-results: sprt state is missing required field model_id");
-    output.put("model_id", modelId);
-    output.put("effort", stateRoot.path("effort").asString(""));
+    String effort = stateRoot.path("effort").asString("");
+    currentResult.put("model_id", modelId);
+    currentResult.put("effort", effort);
     JsonNode failedIdsNode = stateRoot.path("failed_test_ids");
     if (!failedIdsNode.isArray())
       throw new IllegalStateException(
         "SprtRunner write-test-results: sprt state is missing required field failed_test_ids");
-    output.set("failed_test_ids", failedIdsNode);
-    output.set("sprt", sprtNode);
+    currentResult.set("failed_test_ids", failedIdsNode);
+    currentResult.set("sprt", sprtNode);
+
+    ObjectNode output = mapper.createObjectNode();
+    Path testResultsFile = testDirPath.resolve("test-results.json");
+    if (Files.exists(testResultsFile))
+    {
+      JsonNode existing = mapper.readTree(testResultsFile.toFile());
+      if (existing.isObject())
+        output.setAll((ObjectNode) existing);
+    }
+
+    // Persist per [model, effort] aggregate snapshots.
+    output.set(resultKey(modelId, effort), currentResult);
 
     // Write test-results.json
-    Path testResultsFile = testDirPath.resolve("test-results.json");
     Files.createDirectories(testDirPath);
     Files.writeString(testResultsFile, prettyJson(output), UTF_8);
 
@@ -2138,6 +2197,58 @@ public final class SprtRunner
     {
       throw WrappedCheckedException.wrap(e);
     }
+  }
+
+  /**
+   * Builds a stable key for a [model_id, effort] result entry.
+   *
+   * @param modelId the model id
+   * @param effort the effort level
+   * @return a stable map key
+   */
+  private static String resultKey(String modelId, String effort)
+  {
+    if (effort.isBlank())
+      return modelId + "|default";
+    return modelId + "|" + effort;
+  }
+
+  /**
+   * Removes the aggregate result for the current [model, effort] tuple before a new SPRT round.
+   *
+   * @param testDirPath the test directory
+   * @param modelId the model id
+   * @param effort the effort level
+   * @throws IOException if the file cannot be read or written
+   */
+  private void clearModelEffortResults(Path testDirPath, String modelId, String effort) throws IOException
+  {
+    Path testResultsPath = testDirPath.resolve("test-results.json");
+    if (Files.notExists(testResultsPath))
+      return;
+    JsonMapper mapper = scope.getJsonMapper();
+    JsonNode rootNode = mapper.readTree(testResultsPath.toFile());
+    if (!rootNode.isObject())
+      return;
+    ObjectNode root = (ObjectNode) rootNode;
+    root.remove(resultKey(modelId, effort));
+    Files.writeString(testResultsPath, prettyJson(root), UTF_8);
+  }
+
+  /**
+   * Finds the result entry matching the requested [model, effort] tuple.
+   *
+   * @param root the test-results root
+   * @param modelId the model id
+   * @param effort the effort level
+   * @return the matching result entry, or a missing node if not found
+   */
+  private JsonNode findResultForModelAndEffort(JsonNode root, String modelId, String effort)
+  {
+    JsonNode exact = root.path(resultKey(modelId, effort));
+    if (exact.isObject())
+      return exact;
+    return scope.getJsonMapper().missingNode();
   }
 
   /**
@@ -2300,14 +2411,9 @@ public final class SprtRunner
         "SprtRunner: path traversal detected: '" + candidate + "' is outside '" + boundary + "'");
   }
 
-  AgentEngine engine()
-  {
-    return engine;
-  }
-
   void validateConfiguration(String modelId, String effort)
   {
-    validateModelAndEffort(engine, modelId, effort);
+    validateModelAndEffort(modelId, effort);
   }
 
   int runTrial(Path promptFile, String modelId, String effort, String runnerWorktree,
@@ -2315,26 +2421,22 @@ public final class SprtRunner
     throws IOException
   {
     requireThat(logStream, "logStream").isNotNull();
-    String[] args = buildTrialArgs(engine, promptFile, modelId, effort, runnerWorktree, outputJson);
-    return runEngineCommand(args, logStream);
+    String[] args = buildTrialArgs(promptFile, modelId, effort, runnerWorktree, outputJson);
+    return runEngineCommand(args, runnerWorktree, logStream);
   }
 
   int runGrader(Path graderPromptFile, String modelId, String effort, String runnerWorktree,
-    PrintStream out)
+    String gradeOutputPath, PrintStream out)
     throws IOException
   {
     requireThat(out, "out").isNotNull();
-    String[] args = buildGraderArgs(engine, graderPromptFile, modelId, effort, runnerWorktree);
-    return runEngineCommand(args, out);
+    String[] args = buildGraderArgs(graderPromptFile, modelId, effort, runnerWorktree);
+    return runEngineCommand(args, runnerWorktree, out);
   }
 
-  private int runEngineCommand(String[] args, PrintStream out) throws IOException
+  private int runEngineCommand(String[] args, String runnerWorktree, PrintStream out) throws IOException
   {
-    Path launcher = switch (engine)
-    {
-      case CLAUDE -> scope.getPluginRoot().resolve("client").resolve("bin").resolve("claude-runner");
-      case CODEX -> scope.getPluginRoot().resolve("client").resolve("bin").resolve("codex-runner");
-    };
+    Path launcher = launcherPath(runnerWorktree);
     List<String> command = new ArrayList<>(args.length + 1);
     command.add(launcher.toString());
     command.addAll(List.of(args));
@@ -2369,165 +2471,156 @@ public final class SprtRunner
     }
   }
 
-  private static String[] buildTrialArgs(AgentEngine engine, Path promptFile, String modelId,
+  private String[] buildTrialArgs(Path promptFile, String modelId,
     String effort, String runnerWorktree, String outputJson)
   {
-    return switch (engine)
-    {
-      case CLAUDE -> buildClaudeTrialArgsInternal(promptFile, modelId, effort, runnerWorktree,
-        outputJson, jlinkBin(runnerWorktree, engine));
-      case CODEX -> buildCodexTrialArgsInternal(promptFile, modelId, effort, runnerWorktree,
-        outputJson);
-    };
+    validateModelAndEffort(modelId, effort);
+    Path jlinkBin = jlinkBin(runnerWorktree, runtimeId);
+    Set<String> flags = supportedFlags(runnerWorktree);
+    return buildTrialArgsInternal(promptFile, modelId, effort, runnerWorktree, outputJson,
+      jlinkBin, flags.contains("--plugin-source") && flags.contains("--jlink-bin"));
   }
 
-  private static String[] buildGraderArgs(AgentEngine engine, Path graderPromptFile, String modelId,
+  private String[] buildGraderArgs(Path graderPromptFile, String modelId,
     String effort, String runnerWorktree)
   {
-    return switch (engine)
-    {
-      case CLAUDE -> buildClaudeGraderArgsInternal(graderPromptFile, modelId, effort, runnerWorktree,
-        jlinkBin(runnerWorktree, engine));
-      case CODEX -> buildCodexGraderArgsInternal(graderPromptFile, modelId, effort, runnerWorktree);
-    };
+    validateModelAndEffort(modelId, effort);
+    Path jlinkBin = jlinkBin(runnerWorktree, runtimeId);
+    Set<String> flags = supportedFlags(runnerWorktree);
+    return buildGraderArgsInternal(graderPromptFile, modelId, effort, runnerWorktree, null,
+      jlinkBin, flags.contains("--plugin-source") && flags.contains("--jlink-bin"),
+      flags.contains("--agent"));
   }
 
-  private static String[] buildClaudeTrialArgsInternal(Path promptFile, String modelId, String effort,
-    String runnerWorktree, String outputJson, Path jlinkBin)
+  private static String[] buildTrialArgsInternal(Path promptFile, String modelId, String effort,
+    String runnerWorktree, String outputJson, Path jlinkBin, boolean includeClaudeFlags)
   {
     requireThat(promptFile, "promptFile").isNotNull();
     requireThat(modelId, "modelId").isNotBlank();
     requireThat(effort, "effort").isNotBlank();
-    validateModelAndEffort(AgentEngine.CLAUDE, modelId, effort);
     requireThat(runnerWorktree, "runnerWorktree").isNotBlank();
     requireThat(outputJson, "outputJson").isNotBlank();
     requireThat(jlinkBin, "jlinkBin").isNotNull();
-    return new String[]{
-      "--prompt-file", promptFile.toString(),
-      "--model", modelId,
-      "--effort", effort,
-      "--plugin-source", Path.of(runnerWorktree, "client/plugin").toString(),
-      "--jlink-bin", jlinkBin.toString(),
-      "--cwd", runnerWorktree,
-      "--output", outputJson
-    };
-  }
-
-  private static String[] buildCodexTrialArgsInternal(Path promptFile, String modelId, String effort,
-    String runnerWorktree, String outputJson)
-  {
-    requireThat(promptFile, "promptFile").isNotNull();
-    requireThat(modelId, "modelId").isNotBlank();
-    requireThat(effort, "effort").isNotBlank();
-    validateModelAndEffort(AgentEngine.CODEX, modelId, effort);
-    requireThat(runnerWorktree, "runnerWorktree").isNotBlank();
-    requireThat(outputJson, "outputJson").isNotBlank();
-    return new String[]{
-      "--prompt-file", promptFile.toString(),
-      "--model", modelId,
-      "--effort", effort,
-      "--cwd", runnerWorktree,
-      "--output", outputJson
-    };
-  }
-
-  private static String[] buildClaudeGraderArgsInternal(Path graderPromptFile, String modelId,
-    String effort, String runnerWorktree, Path jlinkBin)
-  {
-    requireThat(graderPromptFile, "graderPromptFile").isNotNull();
-    requireThat(modelId, "modelId").isNotBlank();
-    requireThat(effort, "effort").isNotBlank();
-    validateModelAndEffort(AgentEngine.CLAUDE, modelId, effort);
-    requireThat(runnerWorktree, "runnerWorktree").isNotBlank();
-    requireThat(jlinkBin, "jlinkBin").isNotNull();
-    return new String[]{
-      "--prompt-file", graderPromptFile.toString(),
-      "--model", modelId,
-      "--effort", effort,
-      "--agent", GRADER_AGENT,
-      "--plugin-source", Path.of(runnerWorktree, "client/plugin").toString(),
-      "--jlink-bin", jlinkBin.toString(),
-      "--cwd", runnerWorktree
-    };
-  }
-
-  private static String[] buildCodexGraderArgsInternal(Path graderPromptFile, String modelId,
-    String effort, String runnerWorktree)
-  {
-    requireThat(graderPromptFile, "graderPromptFile").isNotNull();
-    requireThat(modelId, "modelId").isNotBlank();
-    requireThat(effort, "effort").isNotBlank();
-    validateModelAndEffort(AgentEngine.CODEX, modelId, effort);
-    requireThat(runnerWorktree, "runnerWorktree").isNotBlank();
-    return new String[]{
-      "--prompt-file", graderPromptFile.toString(),
-      "--model", modelId,
-      "--effort", effort,
-      "--cwd", runnerWorktree
-    };
-  }
-
-  private static void validateModelAndEffort(AgentEngine engine, String modelId, String effort)
-  {
-    requireThat(modelId, "modelId").isNotBlank();
-    requireThat(effort, "effort").isNotBlank();
-    switch (engine)
+    List<String> args = new ArrayList<>();
+    args.add("--prompt-file");
+    args.add(promptFile.toString());
+    args.add("--model");
+    args.add(modelId);
+    args.add("--effort");
+    args.add(effort);
+    if (includeClaudeFlags)
     {
-      case CLAUDE ->
-      {
-        if (!CLAUDE_EFFORT_LEVELS.contains(effort))
-        {
-          throw new IllegalArgumentException("Invalid effort '" + effort +
-            "'. Valid values: " + CLAUDE_EFFORT_LEVELS);
-        }
-        if (!modelId.startsWith("claude-"))
-          throw new IllegalArgumentException("Invalid Claude model ID: " + modelId);
-      }
-      case CODEX ->
-      {
-        if (!CODEX_EFFORT_LEVELS.contains(effort))
-        {
-          throw new IllegalArgumentException("Invalid effort '" + effort +
-            "'. Valid values: " + CODEX_EFFORT_LEVELS);
-        }
-        if (!(modelId.startsWith("gpt-") || modelId.startsWith("o")))
-          throw new IllegalArgumentException("Invalid Codex model ID: " + modelId);
-      }
+      args.add("--plugin-source");
+      args.add(Path.of(runnerWorktree, "client/plugin").toString());
+      args.add("--jlink-bin");
+      args.add(jlinkBin.toString());
     }
+    args.add("--cwd");
+    args.add(runnerWorktree);
+    args.add("--output");
+    args.add(outputJson);
+    return args.toArray(String[]::new);
+  }
+
+  private static String[] buildGraderArgsInternal(Path graderPromptFile, String modelId,
+    String effort, String runnerWorktree, String gradeOutputPath, Path jlinkBin,
+    boolean includeClaudeFlags, boolean includeAgentFlag)
+  {
+    requireThat(graderPromptFile, "graderPromptFile").isNotNull();
+    requireThat(modelId, "modelId").isNotBlank();
+    requireThat(effort, "effort").isNotBlank();
+    requireThat(runnerWorktree, "runnerWorktree").isNotBlank();
+    requireThat(jlinkBin, "jlinkBin").isNotNull();
+    List<String> args = new ArrayList<>();
+    args.add("--prompt-file");
+    args.add(graderPromptFile.toString());
+    args.add("--model");
+    args.add(modelId);
+    args.add("--effort");
+    args.add(effort);
+    if (includeAgentFlag)
+    {
+      args.add("--agent");
+      args.add(GRADER_AGENT);
+    }
+    if (includeClaudeFlags)
+    {
+      args.add("--plugin-source");
+      args.add(Path.of(runnerWorktree, "client/plugin").toString());
+      args.add("--jlink-bin");
+      args.add(jlinkBin.toString());
+    }
+    args.add("--cwd");
+    args.add(runnerWorktree);
+    if (gradeOutputPath != null)
+    {
+      args.add("--output");
+      args.add(gradeOutputPath);
+    }
+    return args.toArray(String[]::new);
+  }
+
+  private static void validateModelAndEffort(String modelId, String effort)
+  {
+    requireThat(modelId, "modelId").isNotBlank();
+    requireThat(effort, "effort").isNotBlank();
+    List<String> allowedEffort = List.of("minimal", "low", "medium", "high", "xhigh", "max");
+    if (!allowedEffort.contains(effort))
+      throw new IllegalArgumentException("Invalid effort '" + effort + "'. Valid values: " + allowedEffort);
   }
 
   /**
    * Resolves the jlink binary directory for an engine in a runner worktree.
    *
    * @param runnerWorktree runner worktree path
-   * @param engine the engine
+   * @param runtimeId the runtime identifier
    * @return the jlink bin directory
    */
-  public static Path jlinkBin(String runnerWorktree, AgentEngine engine)
+  public static Path jlinkBin(String runnerWorktree, String runtimeId)
   {
     requireThat(runnerWorktree, "runnerWorktree").isNotBlank();
-    requireThat(engine, "engine").isNotNull();
-    Path result = Path.of(runnerWorktree, "client/distribution/target/jlink", engine.id(), "bin");
+    requireThat(runtimeId, "runtimeId").isNotBlank();
+    Path result = Path.of(runnerWorktree, "client/distribution/target/jlink", runtimeId, "bin");
     if (!Files.isDirectory(result))
       throw new IllegalArgumentException(
-        "jlink directory not found in runner worktree for engine '" + engine.id() + "': " +
+        "jlink directory not found in runner worktree for runtime '" + runtimeId + "': " +
           result);
     return result;
   }
 
-  static AgentEngine engineOf(CliTool scope)
-  {
-    return engineOfDescriptor(scope.getPluginDescriptor());
-  }
-
-  static AgentEngine engineOfDescriptor(Path descriptor)
+  static String runtimeIdFromDescriptor(Path descriptor)
   {
     requireThat(descriptor, "descriptor").isNotNull();
-    if (descriptor.equals(AgentEngine.CLAUDE.pluginDescriptor()))
-      return AgentEngine.CLAUDE;
-    if (descriptor.equals(AgentEngine.CODEX.pluginDescriptor()))
-      return AgentEngine.CODEX;
-    throw new IllegalStateException("Unsupported CAT engine descriptor: " + descriptor);
+    Path parent = descriptor.getParent();
+    if (parent == null)
+      throw new IllegalStateException("Plugin descriptor has no parent directory: " + descriptor);
+    String name = parent.getFileName().toString();
+    if (!name.startsWith(".") || !name.endsWith("-plugin"))
+      throw new IllegalStateException("Unsupported plugin descriptor path: " + descriptor);
+    return name.substring(1, name.length() - "-plugin".length());
+  }
+
+  private Path launcherPath(String runnerWorktree)
+  {
+    return jlinkBin(runnerWorktree, runtimeId).resolve(runtimeId + "-runner");
+  }
+
+  private Set<String> supportedFlags(String runnerWorktree)
+  {
+    Path launcher = launcherPath(runnerWorktree);
+    String launcherPath = launcher.toString();
+    return launcherFlagsByPath.computeIfAbsent(launcherPath, _ ->
+    {
+      ProcessRunner.Result result = ProcessRunner.run(Path.of(runnerWorktree), launcherPath, "--help");
+      String help = result.output();
+      Set<String> flags = new HashSet<>();
+      for (String token: List.of("--plugin-source", "--jlink-bin", "--agent", "--output"))
+      {
+        if (help.contains(token))
+          flags.add(token);
+      }
+      return Set.copyOf(flags);
+    });
   }
 
 
