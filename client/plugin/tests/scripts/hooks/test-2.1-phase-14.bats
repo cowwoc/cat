@@ -10,15 +10,15 @@ load '../test_helper'
 
 setup() {
     setup_test_dir
-    export CLAUDE_PLUGIN_ROOT="$TEST_TEMP_DIR/plugin-under-test"
-    cp -R "$PROJECT_ROOT/client/plugin/." "$CLAUDE_PLUGIN_ROOT/"
-    mkdir -p "$CLAUDE_PLUGIN_ROOT/migrations/lib"
-    cat > "$CLAUDE_PLUGIN_ROOT/migrations/lib/utils.sh" <<'UTILS'
+    export CAT_PLUGIN_ROOT="$TEST_TEMP_DIR/plugin-under-test"
+    cp -R "$PROJECT_ROOT/client/plugin/." "$CAT_PLUGIN_ROOT/"
+    mkdir -p "$CAT_PLUGIN_ROOT/migrations/lib"
+    cat > "$CAT_PLUGIN_ROOT/migrations/lib/utils.sh" <<'UTILS'
 #!/usr/bin/env bash
 log_migration() { printf '%s\n' "$*"; }
 log_success() { printf '%s\n' "$*"; }
 UTILS
-    chmod +x "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh" "$CLAUDE_PLUGIN_ROOT/migrations/lib/utils.sh"
+    chmod +x "$CAT_PLUGIN_ROOT/migrations/2.1.sh" "$CAT_PLUGIN_ROOT/migrations/lib/utils.sh"
 }
 
 teardown() {
@@ -46,7 +46,7 @@ PLAN
     setup_config_fixture
 
     cd "$TEST_TEMP_DIR"
-    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    run bash "$CAT_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
     run grep '^## Parent Requirements$' ".cat/issues/v2/v2.1/open-issue/plan.md"
     [ "$status" -eq 0 ]
@@ -75,7 +75,7 @@ PLAN
     setup_config_fixture
 
     cd "$TEST_TEMP_DIR"
-    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    run bash "$CAT_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
     run grep '^## Satisfies$' ".cat/issues/v2/v2.1/closed-issue/plan.md"
     [ "$status" -eq 0 ]
@@ -104,10 +104,14 @@ PLAN
     setup_config_fixture
 
     cd "$TEST_TEMP_DIR"
-    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    run bash "$CAT_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
+    run grep '^## Parent Requirements$' ".cat/issues/v2/v2.1/open-issue/plan.md"
+    [ "$status" -eq 0 ]
+    run grep '^## Satisfies$' ".cat/issues/v2/v2.1/open-issue/plan.md"
+    [ "$status" -ne 0 ]
 
-    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    run bash "$CAT_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
     [[ "$output" == *"Phase 14 complete: 0 files changed"* || "$output" == *"No issue-level PLAN.md files found - skipping phase 14"* ]]
 }
@@ -128,7 +132,7 @@ PLAN
     setup_config_fixture
 
     cd "$TEST_TEMP_DIR"
-    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    run bash "$CAT_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
     [[ "$output" == *"WARNING: Missing STATE.md for issue"* ]]
     run grep '^## Satisfies$' ".cat/issues/v2/v2.1/no-state-issue/plan.md"

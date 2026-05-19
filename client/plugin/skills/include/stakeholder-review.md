@@ -527,8 +527,16 @@ Task tool, or any other agent-management tool. Do NOT wait for, poll, inspect, o
 Perform only your own review and return exactly one JSON review object directly to the parent.
 
 ## Working Directory
-WORKTREE_PATH={WORKTREE_PATH}
-Changed files (read from WORKTREE_PATH): {CHANGED_FILES_BULLETS}
+<review_context>
+  <worktree_path>{WORKTREE_PATH}</worktree_path>
+  <target_branch>{TARGET_BRANCH}</target_branch>
+  <reviewed_base_sha>{BASE_SHA}</reviewed_base_sha>
+  <reviewed_head_sha>{HEAD_SHA}</reviewed_head_sha>
+  <changed_file_count>{CHANGED_FILE_COUNT}</changed_file_count>
+  <client_file_count>{CLIENT_FILE_COUNT}</client_file_count>
+  <changed_files_fingerprint>{CHANGED_FILES_FINGERPRINT}</changed_files_fingerprint>
+</review_context>
+Changed files (read from worktree_path): {CHANGED_FILES_BULLETS}
 Review manifest:
 - target_branch: {TARGET_BRANCH}
 - reviewed_base_sha: {BASE_SHA}
@@ -537,10 +545,8 @@ Review manifest:
 - client_file_count: {CLIENT_FILE_COUNT}
 - changed_files_fingerprint: {CHANGED_FILES_FINGERPRINT}
 
-WORKTREE_PATH is the authoritative working directory for this review.
-The line above is canonical and must remain the only worktree variable assignment in this prompt.
-If that canonical line is present, do not claim the working directory is missing.
-Do not rewrite it into alternate syntax.
+The `<worktree_path>...</worktree_path>` element above is canonical for this review.
+If that canonical element is present, do not claim the working directory is missing.
 Before reading files, verify that the current worktree HEAD is exactly `{HEAD_SHA}`. If the current worktree HEAD
 differs from `{HEAD_SHA}`, return REJECTED with a reviewer execution concern instead of reviewing stale content.
 Read every changed file using absolute paths rooted at {WORKTREE_PATH}/.
@@ -614,16 +620,15 @@ NEVER use the Task tool, a nested engine runner, a full-history fork, a generic/
 `run_in_background: true`.
 
 **Reviewer prompt hardening (MANDATORY):**
-- Build each reviewer prompt so exactly one literal `WORKTREE_PATH=<absolute-path>` assignment is visible in the
-  prompt body.
-- Do not include additional `WORKTREE_PATH=` literals anywhere else in that reviewer prompt (including explanatory
+- Build each reviewer prompt so exactly one `<worktree_path>...</worktree_path>` element is visible in the prompt body.
+- Do not include additional `<worktree_path>` elements anywhere else in that reviewer prompt (including explanatory
   prose or examples).
 - Use isolated reviewer forks with no inherited conversation history for the active engine. Never inherit full parent
   history for stakeholder reviewer agents.
 
 **Pre-dispatch prompt audit (MANDATORY):**
 - Before spawning any reviewer, validate each generated reviewer prompt contains:
-  1) exactly one canonical `WORKTREE_PATH=<absolute-path>` assignment
+  1) exactly one canonical `<worktree_path>...</worktree_path>` element
   2) the pinned `reviewed_head_sha` value in the Review manifest block
   3) explicit instruction to verify current worktree HEAD matches pinned `reviewed_head_sha` before reading files
 - If any reviewer prompt fails audit, STOP immediately with REJECTED and concern:
@@ -668,9 +673,9 @@ retry for that reviewer using the same stakeholder-specific agent type and isola
 MUST:
 
 - Include the original review prompt in full.
-- Explicitly restate the canonical line once as `WORKTREE_PATH=<absolute-path>` under `## Working Directory`.
-- Instruct the reviewer to use that single visible assignment as authoritative task context.
-- Avoid adding any additional `WORKTREE_PATH=` occurrences outside the single canonical assignment.
+- Explicitly restate the canonical `<worktree_path>...</worktree_path>` element once under `## Working Directory`.
+- Instruct the reviewer to use that single visible element as authoritative task context.
+- Avoid adding any additional `<worktree_path>` elements outside the single canonical element.
 
 If the retry returns the same "No working directory provided..." rejection again, keep that reviewer as REJECTED and
 record that the deterministic retry path was exhausted.
