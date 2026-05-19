@@ -23,6 +23,12 @@ engine-neutral guidance.
 **Principle:** Put engine-neutral guidance in `.cat/rules/common/*.md` files. Put product-specific behavior, APIs,
 environment variables, or hook semantics in the matching engine directory.
 
+**Reference boundary rule:** Files under `plugin/rules/common/` must not reference any engine-specific rule files
+under `plugin/rules/<engine>/` (or `.cat/rules/<engine>/`). Keep common rules self-contained and engine-neutral.
+
+**Heading convention for engine-specific files:** Do not label headings with engine names. Engine scope is implied
+by directory location. Use neutral headings (for example, `## Worktree Isolation`, not `## Worktree Isolation (Claude)`).
+
 ### Portable Loading (`.cat/rules/common/*.md`)
 
 CAT loaders discover and inject files from `.cat/rules/common/*.md` for every supported engine. Engine-specific

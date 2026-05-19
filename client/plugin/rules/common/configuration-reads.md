@@ -62,5 +62,3 @@ git rebase "$TARGET_BRANCH"
 - Stale in-memory values cause merges to wrong branches and file operations in wrong directories
 - Reading config on-demand catches wrong-worktree contexts before data corruption occurs
 - `jq` is not available; use `grep`/`sed` for JSON field extraction
-
-See `plugin/concepts/worktree-isolation.md` for detailed verification checklist and worktree context requirements.
