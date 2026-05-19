@@ -24,6 +24,46 @@ PROJECT_DIR="/workspace"
 CODEX_HOME="${CODEX_HOME:-${HOME}/.codex}"
 CAT_PLUGIN_DATA="${CAT_PLUGIN_DATA:-${CODEX_HOME}/plugins/data/cat-cat}"
 
+# Resolve CAT workPath from config (default: ${CAT_PROJECT_DIR}/.cat/work),
+# then use it to discover session lock files.
+CONFIG_PATH="${PROJECT_DIR}/.cat/config.json"
+WORK_PATH_TEMPLATE='${CAT_PROJECT_DIR}/.cat/work'
+if [[ -f "${CONFIG_PATH}" ]]; then
+  CONFIG_WORK_PATH="$(sed -n 's/.*"workPath"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "${CONFIG_PATH}" | head -1)"
+  if [[ -n "${CONFIG_WORK_PATH}" ]]; then
+    WORK_PATH_TEMPLATE="${CONFIG_WORK_PATH}"
+  fi
+fi
+WORK_PATH="${WORK_PATH_TEMPLATE//'${CAT_PROJECT_DIR}'/${PROJECT_DIR}}"
+WORK_PATH="${WORK_PATH//'${CLAUDE_PROJECT_DIR}'/${PROJECT_DIR}}"
+LOCKS_DIR="${WORK_PATH}/locks"
+
+# If this session currently holds a CAT issue lock, build/install from that
+# worktree instead of the main workspace.
+SESSION_IDS=(
+  "${CAT_SESSION_ID:-}"
+  "${CODEX_THREAD_ID:-}"
+  "${CODEX_SESSION_ID:-}"
+  "${CLAUDE_SESSION_ID:-}"
+  "${SESSION_ID:-}"
+)
+if [[ -d "${LOCKS_DIR}" ]]; then
+  for SID in "${SESSION_IDS[@]}"; do
+    [[ -z "${SID}" ]] && continue
+    while IFS= read -r -d '' LOCK_FILE; do
+      LOCK_JSON="$(tr -d '\n' < "${LOCK_FILE}")"
+      if [[ "${LOCK_JSON}" =~ \"session_id\"[[:space:]]*:[[:space:]]*\"${SID}\" ]]; then
+        LOCKED_WORKTREE="$(echo "${LOCK_JSON}" | sed -n 's/.*"worktrees"[[:space:]]*:[[:space:]]*{[[:space:]]*"\([^"]*\)".*/\1/p')"
+        if [[ -n "${LOCKED_WORKTREE}" && -f "${LOCKED_WORKTREE}/client/pom.xml" ]]; then
+          PROJECT_DIR="${LOCKED_WORKTREE}"
+          break 2
+        fi
+      fi
+    done < <(find "${LOCKS_DIR}" -maxdepth 1 -type f -name '*.lock' -print0 2>/dev/null)
+  done
+fi
+echo "Using PROJECT_DIR=${PROJECT_DIR}"
+
 mvn -f "${PROJECT_DIR}/client/pom.xml" verify -Djlink.extra.args=--enable-assertions
 
 BATS_BIN="${PROJECT_DIR}/client/plugin/node_modules/.bin/bats"
@@ -36,7 +76,7 @@ cp -a "${PROJECT_DIR}/." "${BATS_PROJECT}/"
 rm -rf "${BATS_PROJECT}/.git" "${BATS_PROJECT}"/client/*/target
 npm run --prefix "${BATS_PROJECT}/client/plugin" test
 
-RELEASE_ARTIFACT="${PROJECT_DIR}/client/distribution/target/runtime/codex"
+RELEASE_ARTIFACT="${PROJECT_DIR}/client/distribution/target/engine/codex"
 test -f "${RELEASE_ARTIFACT}/client/VERSION"
 test -f "${RELEASE_ARTIFACT}/.codex-plugin/plugin.json"
 test -d "${RELEASE_ARTIFACT}/agents"

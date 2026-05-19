@@ -518,7 +518,7 @@ public final class PluginArtifactBuilderTest
         requireThat(stakeholderReview, engine + "StakeholderReview").contains(
           "return REJECTED with a reviewer execution concern instead of reviewing stale content");
         requireThat(stakeholderReview, engine + "StakeholderReview").contains(
-          "stakeholder role\ninstructions parse that exact variable assignment");
+          "The line above is canonical and must remain the only worktree variable assignment in this prompt.");
         requireThat(stakeholderReview, engine + "StakeholderReview").doesNotContain(
           "\nWORKTREE_PATH: {WORKTREE_PATH}");
         requireThat(stakeholderReview, engine + "StakeholderReview").contains(
