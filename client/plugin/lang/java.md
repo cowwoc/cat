@@ -34,6 +34,7 @@ See LICENSE.md in the project root for license terms.
 | Missing `@Test` | Test won't execute |
 | `assertEquals` with floats | Needs delta parameter |
 | `try { call(); fail(); } catch (ExpectedException e) { ... }` in TestNG tests | Prefer `@Test(expectedExceptions = ExpectedException.class, expectedExceptionsMessageRegExp = "...")` |
+| Common/engine-neutral tests reference engine-specific identifiers (for example `claude-runner`, `codex-runner`, engine class names) | Breaks neutrality boundary; move these assertions to engine-specific test modules |
 
 ## Architecture
 | Pattern | Issue |
@@ -41,6 +42,8 @@ See LICENSE.md in the project root for license terms.
 | Circular package deps | A imports B, B imports A |
 | God classes | 20+ methods or 500+ lines |
 | Static-only utility classes | Should be instance methods |
+| Common module/package/class references engine-specific names or types (including via reflection or `ServiceLoader`) | Violates layer boundaries; creates hidden coupling |
+| Common module contains `main()` for a class that has engine-specific equivalents | Entry-point ownership belongs to engine layer |
 
 ## Correctness
 | Pattern | Issue | Fix |
@@ -54,3 +57,4 @@ See LICENSE.md in the project root for license terms.
 |---------|-------|-----|
 | `i += 1` | Hides intent for simple increment/decrement | `++i` (or `i++` when expression semantics require postfix) |
 | `i -= 1` | Hides intent for simple increment/decrement | `--i` (or `i--` when expression semantics require postfix) |
+| Test package names with internal `.test.` component (for example `a.b.test.c`) | Inconsistent package topology | End test package names with `.test` (for example `a.b.c.test`) |

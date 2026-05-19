@@ -32,7 +32,7 @@ final class SprtGrader
 {
   private final Logger log = LoggerFactory.getLogger(SprtGrader.class);
   private final CliTool scope;
-  private final SprtEngineRunner engineRunner;
+  private final EngineSprtRunner engineRunner;
 
   /**
    * Creates a new SprtGrader.
@@ -41,7 +41,7 @@ final class SprtGrader
    * @param engineRunner the active engine runner
    * @throws NullPointerException if {@code scope} or {@code engineRunner} are null
    */
-  SprtGrader(CliTool scope, SprtEngineRunner engineRunner)
+  SprtGrader(CliTool scope, EngineSprtRunner engineRunner)
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(engineRunner, "engineRunner").isNotNull();

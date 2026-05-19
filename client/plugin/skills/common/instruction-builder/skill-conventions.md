@@ -118,6 +118,22 @@ Tests for shared instruction bodies should assert the behavior and user-visible 
 tool invocation. For example, assert that the agent asks through a structured user-choice prompt with
 "Resume", "Clean up", and "Abort" choices instead of asserting that it invoked `AskUserQuestion`.
 
+**Common-layer neutrality (hard rule)**:
+
+Any common layer artifact (modules, packages, directories, classes, skills, rules, concepts) must be fully
+engine-neutral:
+
+- Must NOT contain engine-specific concepts, names, terms, class references, commands, or examples
+- Must NOT reference engine-specific implementations directly or indirectly (including reflection, SPI/service
+  loading, string class-name dispatch, or provider discovery)
+- Must NOT be the CLI `main()` entrypoint when an engine-specific equivalent exists
+
+Engine-specific entrypoints belong in engine-specific modules. They may depend on common modules, but common
+modules must never depend on engine-specific modules.
+
+The same neutrality rule applies to tests: common/neutral tests must not assert engine-specific literals, names,
+commands, or class references. Put engine-specific assertions in the corresponding engine-specific test modules.
+
 ---
 
 ## Skill Structure Template

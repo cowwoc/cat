@@ -30,7 +30,7 @@ public final class SharedSecrets
 {
   private static final Lookup LOOKUP = MethodHandles.lookup();
   private static SprtRunnerAccess instructionTestRunnerAccess;
-  private static SprtEngineRunnerAccess sprtEngineRunnerAccess;
+  private static EngineSprtRunnerAccess engineSprtRunnerAccess;
   private static StatuslineCommandAccess statuslineCommandAccess;
 
   private SharedSecrets()
@@ -110,9 +110,9 @@ public final class SharedSecrets
   public static String[] buildClaudeTrialArgs(Path promptFile, String modelId, String effort,
     String runnerWorktree, String outputJson, Path jlinkBin)
   {
-    if (sprtEngineRunnerAccess == null)
-      initialize(SprtEngineRunner.class);
-    return sprtEngineRunnerAccess.buildClaudeTrialArgs(promptFile, modelId, effort,
+    if (engineSprtRunnerAccess == null)
+      initialize(EngineSprtRunner.class);
+    return engineSprtRunnerAccess.buildClaudeTrialArgs(promptFile, modelId, effort,
       runnerWorktree, outputJson, jlinkBin);
   }
 
@@ -129,9 +129,9 @@ public final class SharedSecrets
   public static String[] buildCodexTrialArgs(Path promptFile, String modelId, String effort,
     String runnerWorktree, String outputJson)
   {
-    if (sprtEngineRunnerAccess == null)
-      initialize(SprtEngineRunner.class);
-    return sprtEngineRunnerAccess.buildCodexTrialArgs(promptFile, modelId, effort,
+    if (engineSprtRunnerAccess == null)
+      initialize(EngineSprtRunner.class);
+    return engineSprtRunnerAccess.buildCodexTrialArgs(promptFile, modelId, effort,
       runnerWorktree, outputJson);
   }
 
@@ -148,9 +148,9 @@ public final class SharedSecrets
   public static String[] buildClaudeGraderArgs(Path graderPromptFile, String modelId, String effort,
     String runnerWorktree, Path jlinkBin)
   {
-    if (sprtEngineRunnerAccess == null)
-      initialize(SprtEngineRunner.class);
-    return sprtEngineRunnerAccess.buildClaudeGraderArgs(graderPromptFile, modelId, effort,
+    if (engineSprtRunnerAccess == null)
+      initialize(EngineSprtRunner.class);
+    return engineSprtRunnerAccess.buildClaudeGraderArgs(graderPromptFile, modelId, effort,
       runnerWorktree, jlinkBin);
   }
 
@@ -166,9 +166,9 @@ public final class SharedSecrets
   public static String[] buildCodexGraderArgs(Path graderPromptFile, String modelId, String effort,
     String runnerWorktree)
   {
-    if (sprtEngineRunnerAccess == null)
-      initialize(SprtEngineRunner.class);
-    return sprtEngineRunnerAccess.buildCodexGraderArgs(graderPromptFile, modelId, effort,
+    if (engineSprtRunnerAccess == null)
+      initialize(EngineSprtRunner.class);
+    return engineSprtRunnerAccess.buildCodexGraderArgs(graderPromptFile, modelId, effort,
       runnerWorktree);
   }
 
@@ -181,9 +181,9 @@ public final class SharedSecrets
   public static String sprtEngineIdForDescriptor(Path descriptor)
   {
     requireThat(descriptor, "descriptor").isNotNull();
-    if (sprtEngineRunnerAccess == null)
-      initialize(SprtEngineRunner.class);
-    return sprtEngineRunnerAccess.engineIdForDescriptor(descriptor);
+    if (engineSprtRunnerAccess == null)
+      initialize(EngineSprtRunner.class);
+    return engineSprtRunnerAccess.engineIdForDescriptor(descriptor);
   }
 
   /**
@@ -201,9 +201,9 @@ public final class SharedSecrets
     String modelId, String effort, String runnerWorktree, String outputJson)
   {
     requireThat(descriptor, "descriptor").isNotNull();
-    if (sprtEngineRunnerAccess == null)
-      initialize(SprtEngineRunner.class);
-    return sprtEngineRunnerAccess.buildTrialArgsForDescriptor(descriptor, promptFile, modelId,
+    if (engineSprtRunnerAccess == null)
+      initialize(EngineSprtRunner.class);
+    return engineSprtRunnerAccess.buildTrialArgsForDescriptor(descriptor, promptFile, modelId,
       effort, runnerWorktree, outputJson);
   }
 
@@ -221,22 +221,22 @@ public final class SharedSecrets
     String modelId, String effort, String runnerWorktree)
   {
     requireThat(descriptor, "descriptor").isNotNull();
-    if (sprtEngineRunnerAccess == null)
-      initialize(SprtEngineRunner.class);
-    return sprtEngineRunnerAccess.buildGraderArgsForDescriptor(descriptor, graderPromptFile,
+    if (engineSprtRunnerAccess == null)
+      initialize(EngineSprtRunner.class);
+    return engineSprtRunnerAccess.buildGraderArgsForDescriptor(descriptor, graderPromptFile,
       modelId, effort, runnerWorktree);
   }
 
   /**
-   * Registers the access object for {@link SprtEngineRunner}.
+   * Registers the access object for {@link EngineSprtRunner}.
    *
    * @param access the access object
    * @throws NullPointerException if {@code access} is null
    */
-  public static void setSprtEngineRunnerAccess(SprtEngineRunnerAccess access)
+  public static void setEngineSprtRunnerAccess(EngineSprtRunnerAccess access)
   {
     requireThat(access, "access").isNotNull();
-    sprtEngineRunnerAccess = access;
+    engineSprtRunnerAccess = access;
   }
 
   /**
@@ -325,9 +325,9 @@ public final class SharedSecrets
   }
 
   /**
-   * Provides access to {@link SprtEngineRunner} internal methods.
+   * Provides access to {@link EngineSprtRunner} internal methods.
    */
-  public interface SprtEngineRunnerAccess
+  public interface EngineSprtRunnerAccess
   {
     /**
      * Builds Claude trial runner arguments.

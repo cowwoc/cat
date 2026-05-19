@@ -356,14 +356,15 @@ manually create test files or skip SPRT as a shortcut. The instruction is consid
 `test-results.json` shows `overall_decision: "Accept"`. Skipping SPRT and then creating test files manually
 is a workflow violation — the SPRT run IS the test verification, not an optional add-on.
 
-**Ad-hoc batch runs are NOT SPRT decisions:** Running `empirical-test-runner --trials 5` and seeing 5/5 passes
+**Ad-hoc runs are NOT SPRT decisions:** Running `spawn-engine` and seeing a few passes
 is NOT equivalent to an SPRT ACCEPT decision. SPRT Accept requires log_ratio ≥ 2.944, which needs a minimum of
-27 consecutive passes. Use empirical-test-runner only for debugging isolated compliance failures — formal SPRT
+27 consecutive passes. Use `spawn-engine` only for debugging isolated compliance failures — formal SPRT
 decisions must go through this Step 6 pipeline.
 
 **Runner selection:** For isolated ad-hoc single-prompt validation, use the runner skill available in the current
 environment. Formal `sprt-runner` and SPRT validation must use the supported formal runner pipeline. If
 formal validation is unavailable, report that limitation instead of presenting non-native results as evidence.
+Example ad-hoc invocation: `skill: "cat:spawn-engine"` with one prompt and no SPRT decision claims.
 
 Compute `TEST_DIR` and `TEST_MODEL` now — these values are required for all subsequent steps, including the
 sanity check below.

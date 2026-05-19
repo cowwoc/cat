@@ -89,7 +89,6 @@ declare -a COMMON_HANDLERS=(
   "write-session-marker:io.github.cowwoc.cat.tool.util.WriteSessionMarker"
   "read-session-marker:io.github.cowwoc.cat.tool.util.ReadSessionMarker"
   "auto-close-index:io.github.cowwoc.cat.tool.util.AutoCloseIndexJson"
-  "sprt-runner:io.github.cowwoc.cat.tool.skills.SprtRunner"
   "verify-defer-plan-generation:io.github.cowwoc.cat.tool.util.VerifyDeferPlanGeneration"
   "write-and-commit:io.github.cowwoc.cat.tool.util.WriteAndCommit"
   "extract-turns:io.github.cowwoc.cat.tool.skills.ExtractTurnsContent"
@@ -100,6 +99,7 @@ declare -a COMMON_HANDLERS=(
 # Claude-only handlers.
 declare -a CLAUDE_HANDLERS=(
   "claude-runner:io.github.cowwoc.cat.claude.engine.ClaudeRunner"
+  "sprt-runner:io.github.cowwoc.cat.claude.engine.ClaudeSprtRunner"
   "register-hook:io.github.cowwoc.cat.claude.hook.util.HookRegistrar"
   "statusline-command:io.github.cowwoc.cat.claude.hook.util.StatuslineCommand"
   "statusline-install:io.github.cowwoc.cat.claude.hook.util.StatuslineInstall"
@@ -121,6 +121,7 @@ declare -a CLAUDE_HANDLERS=(
 # Codex-only handlers.
 declare -a CODEX_HANDLERS=(
   "codex-runner:io.github.cowwoc.cat.codex.engine.CodexRunner"
+  "sprt-runner:io.github.cowwoc.cat.codex.engine.CodexSprtRunner"
   "session-start:io.github.cowwoc.cat.codex.hook.SessionStartHook"
   "pre-bash:io.github.cowwoc.cat.codex.hook.PreBashHook"
 )

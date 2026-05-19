@@ -7,7 +7,6 @@
 package io.github.cowwoc.cat.tool.skills;
 
 import io.github.cowwoc.cat.tool.CliTool;
-import io.github.cowwoc.cat.tool.MainCliTool;
 import io.github.cowwoc.cat.agent.ProcessRunner;
 import io.github.cowwoc.cat.agent.VersionUtils;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
@@ -40,7 +39,6 @@ import java.util.HashSet;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Set;
@@ -106,7 +104,7 @@ public final class SprtRunner
   private final String claudeCodeVersion;
   private final SprtStateManager sprtStateManager;
   private final SprtIsolationManager sprtIsolationManager;
-  private final SprtEngineRunner sprtEngineRunner;
+  private final EngineSprtRunner sprtEngineRunner;
   private final SprtGrader sprtGrader;
   private final SkillMetadataExtractor skillMetadataExtractor;
 
@@ -125,7 +123,7 @@ public final class SprtRunner
     this.scope = scope;
     this.claudeCodeVersion = claudeCodeVersion;
     this.sprtStateManager = new SprtStateManager(scope);
-    this.sprtEngineRunner = SprtEngineRunner.create(scope);
+    this.sprtEngineRunner = EngineSprtRunner.create(scope);
     this.sprtIsolationManager = new SprtIsolationManager(scope, sprtEngineRunner.engine().id());
     this.sprtGrader = new SprtGrader(scope, sprtEngineRunner);
     this.skillMetadataExtractor = new SkillMetadataExtractor(scope, claudeCodeVersion);
@@ -2262,56 +2260,6 @@ public final class SprtRunner
     requireThat(message, "message").isNotNull();
     String escapedMessage = scope.getJsonMapper().writeValueAsString(message);
     return "{\"status\":\"ERROR\",\"message\":" + escapedMessage + "}";
-  }
-
-  /**
-   * CLI entry point.
-   * <p>
-   * Reads the subcommand and its arguments from {@code args}, dispatches to the appropriate
-   * handler, and prints the JSON result to {@code System.out}. Expected errors (invalid arguments,
-   * I/O failures) are reported as business-format JSON on stdout with exit code 0.
-   * Unexpected errors are logged and also reported as business-format JSON on stdout.
-   *
-   * @param args the command-line arguments
-   */
-  public static void main(String[] args)
-  {
-    try (CliTool scope = new MainCliTool())
-    {
-      try
-      {
-        run(scope, args, System.out);
-      }
-      catch (IllegalArgumentException | IOException | InterruptedException e)
-      {
-        try
-        {
-          String message = Objects.toString(e.getMessage(), e.getClass().getSimpleName());
-          System.out.println(toErrorJson(scope, message));
-        }
-        catch (IOException jsonException)
-        {
-          Logger log = LoggerFactory.getLogger(SprtRunner.class);
-          log.error("Failed to serialize error message", jsonException);
-          System.out.println("{\"status\":\"ERROR\",\"message\":\"serialization failed\"}");
-        }
-      }
-      catch (RuntimeException | AssertionError e)
-      {
-        Logger log = LoggerFactory.getLogger(SprtRunner.class);
-        log.error("Unexpected error", e);
-        try
-        {
-          String message = Objects.toString(e.getMessage(), e.getClass().getSimpleName());
-          System.out.println(toErrorJson(scope, message));
-        }
-        catch (IOException jsonException)
-        {
-          log.error("Failed to serialize error message", jsonException);
-          System.out.println("{\"status\":\"ERROR\",\"message\":\"serialization failed\"}");
-        }
-      }
-    }
   }
 
   /**

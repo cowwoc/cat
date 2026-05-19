@@ -197,7 +197,8 @@ plan execution. `.cat/work/` is gitignored — writes there never produce uninte
 ## Calibration: How to Tune Trigger Sensitivity
 
 A well-calibrated skill is neither over-triggering (invoked on out-of-scope prompts) nor under-triggering
-(missed on in-scope prompts). Use the empirical-test-runner to calibrate:
+(missed on in-scope prompts). Use `spawn-engine` to calibrate one-off behavior:
+invoke `skill: "cat:spawn-engine"` with a single calibration prompt.
 
 1. Run positive cases using the SPRT test run (p0=0.95, p1=0.85, α=β=0.05): pass rate must be ≥95%. If below
    95%, the `description:` frontmatter in SKILL.md may not contain enough trigger signal. Revise the test prompt

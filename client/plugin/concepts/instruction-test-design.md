@@ -352,14 +352,5 @@ the description.
 
 ## Running Instruction-Tests
 
-```bash
-RUNNER="${CLAUDE_PLUGIN_ROOT}/client/bin/empirical-test-runner"
-"$RUNNER" \
-  --test-dir client/plugin/tests/skills/<skill-name>/ \
-  --trials 3 \
-  --model haiku \
-  --cwd .
-```
-
-Use `--trials 3` during development for fast iteration. Increase to `--trials 10` before accepting an instruction-test
-as the canonical pass rate.
+Use `cat:sprt-runner` for formal instruction-tests and `cat:spawn-engine` for one-off empirical checks while
+iterating on prompts.
