@@ -37,26 +37,26 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public final class SprtRunnerTest
 {
   /**
-   * Verifies that SPRT diagnostics reference stable testcase IDs instead of positional numbers.
+   * Verifies runtime unknown-command diagnostics from SPRT dispatch.
    *
    * @throws IOException if an I/O error occurs
+   * @throws InterruptedException if interrupted
    */
-  @Test
-  public void sprtDiagnosticsReferenceTestcaseIds() throws IOException
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = "(?s).*SprtRunner: unknown command: unknown-command.*")
+  public void runtimeUnknownCommandDiagnostics() throws IOException, InterruptedException
   {
-    Path sourceRoot = Path.of(System.getProperty("user.dir")).getParent().
-      resolve("common-cli/src/main/java");
-    Path runnerSource = sourceRoot.resolve(
-      "io/github/cowwoc/cat/tool/skills/SprtRunner.java");
-    Path graderSource = sourceRoot.resolve(
-      "io/github/cowwoc/cat/tool/skills/SprtGrader.java");
-
-    String runnerContent = Files.readString(runnerSource, StandardCharsets.UTF_8);
-    String graderContent = Files.readString(graderSource, StandardCharsets.UTF_8);
-
-    requireThat(runnerContent, "runnerContent").doesNotContain("tc" + "Num");
-    requireThat(runnerContent, "runnerContent").doesNotContain("\"TC{}:");
-    requireThat(graderContent, "graderContent").doesNotContain("\"TC{}:");
+    Path tempDir = Files.createTempDirectory("sprt-runtime-diagnostics-");
+    try (var scope = new TestClaudeTool(tempDir, tempDir))
+    {
+      SprtRunner runner = new SprtRunner(scope, "2.1.87");
+      runner.run(new String[]{"unknown-command"},
+        new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8));
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
