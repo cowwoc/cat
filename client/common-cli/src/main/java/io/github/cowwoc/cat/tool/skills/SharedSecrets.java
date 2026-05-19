@@ -29,8 +29,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public final class SharedSecrets
 {
   private static final Lookup LOOKUP = MethodHandles.lookup();
-  private static SprtRunnerAccess instructionTestRunnerAccess;
-  private static EngineSprtRunnerAccess engineSprtRunnerAccess;
+  private static SprtRunnerAccess sprtRunnerAccess;
   private static StatuslineCommandAccess statuslineCommandAccess;
 
   private SharedSecrets()
@@ -64,7 +63,7 @@ public final class SharedSecrets
   public static void setSprtRunnerAccess(SprtRunnerAccess access)
   {
     requireThat(access, "access").isNotNull();
-    instructionTestRunnerAccess = access;
+    sprtRunnerAccess = access;
   }
 
   /**
@@ -77,9 +76,9 @@ public final class SharedSecrets
   public static String sha256Bytes(byte[] bytes)
   {
     requireThat(bytes, "bytes").isNotNull();
-    if (instructionTestRunnerAccess == null)
+    if (sprtRunnerAccess == null)
       initialize(SprtRunner.class);
-    return instructionTestRunnerAccess.sha256Bytes(bytes);
+    return sprtRunnerAccess.sha256Bytes(bytes);
   }
 
   /**
@@ -91,9 +90,9 @@ public final class SharedSecrets
   public static String[] parseRunSprtArgs(String[] args)
   {
     requireThat(args, "args").isNotNull();
-    if (instructionTestRunnerAccess == null)
+    if (sprtRunnerAccess == null)
       initialize(SprtRunner.class);
-    return instructionTestRunnerAccess.parseRunSprtArgs(args);
+    return sprtRunnerAccess.parseRunSprtArgs(args);
   }
 
   /**
@@ -110,9 +109,9 @@ public final class SharedSecrets
   public static String[] buildClaudeTrialArgs(Path promptFile, String modelId, String effort,
     String runnerWorktree, String outputJson, Path jlinkBin)
   {
-    if (engineSprtRunnerAccess == null)
-      initialize(EngineSprtRunner.class);
-    return engineSprtRunnerAccess.buildClaudeTrialArgs(promptFile, modelId, effort,
+    if (sprtRunnerAccess == null)
+      initialize(SprtRunner.class);
+    return sprtRunnerAccess.buildClaudeTrialArgs(promptFile, modelId, effort,
       runnerWorktree, outputJson, jlinkBin);
   }
 
@@ -129,9 +128,9 @@ public final class SharedSecrets
   public static String[] buildCodexTrialArgs(Path promptFile, String modelId, String effort,
     String runnerWorktree, String outputJson)
   {
-    if (engineSprtRunnerAccess == null)
-      initialize(EngineSprtRunner.class);
-    return engineSprtRunnerAccess.buildCodexTrialArgs(promptFile, modelId, effort,
+    if (sprtRunnerAccess == null)
+      initialize(SprtRunner.class);
+    return sprtRunnerAccess.buildCodexTrialArgs(promptFile, modelId, effort,
       runnerWorktree, outputJson);
   }
 
@@ -148,9 +147,9 @@ public final class SharedSecrets
   public static String[] buildClaudeGraderArgs(Path graderPromptFile, String modelId, String effort,
     String runnerWorktree, Path jlinkBin)
   {
-    if (engineSprtRunnerAccess == null)
-      initialize(EngineSprtRunner.class);
-    return engineSprtRunnerAccess.buildClaudeGraderArgs(graderPromptFile, modelId, effort,
+    if (sprtRunnerAccess == null)
+      initialize(SprtRunner.class);
+    return sprtRunnerAccess.buildClaudeGraderArgs(graderPromptFile, modelId, effort,
       runnerWorktree, jlinkBin);
   }
 
@@ -166,9 +165,9 @@ public final class SharedSecrets
   public static String[] buildCodexGraderArgs(Path graderPromptFile, String modelId, String effort,
     String runnerWorktree)
   {
-    if (engineSprtRunnerAccess == null)
-      initialize(EngineSprtRunner.class);
-    return engineSprtRunnerAccess.buildCodexGraderArgs(graderPromptFile, modelId, effort,
+    if (sprtRunnerAccess == null)
+      initialize(SprtRunner.class);
+    return sprtRunnerAccess.buildCodexGraderArgs(graderPromptFile, modelId, effort,
       runnerWorktree);
   }
 
@@ -181,9 +180,9 @@ public final class SharedSecrets
   public static String sprtEngineIdForDescriptor(Path descriptor)
   {
     requireThat(descriptor, "descriptor").isNotNull();
-    if (engineSprtRunnerAccess == null)
-      initialize(EngineSprtRunner.class);
-    return engineSprtRunnerAccess.engineIdForDescriptor(descriptor);
+    if (sprtRunnerAccess == null)
+      initialize(SprtRunner.class);
+    return sprtRunnerAccess.engineIdForDescriptor(descriptor);
   }
 
   /**
@@ -201,9 +200,9 @@ public final class SharedSecrets
     String modelId, String effort, String runnerWorktree, String outputJson)
   {
     requireThat(descriptor, "descriptor").isNotNull();
-    if (engineSprtRunnerAccess == null)
-      initialize(EngineSprtRunner.class);
-    return engineSprtRunnerAccess.buildTrialArgsForDescriptor(descriptor, promptFile, modelId,
+    if (sprtRunnerAccess == null)
+      initialize(SprtRunner.class);
+    return sprtRunnerAccess.buildTrialArgsForDescriptor(descriptor, promptFile, modelId,
       effort, runnerWorktree, outputJson);
   }
 
@@ -221,22 +220,10 @@ public final class SharedSecrets
     String modelId, String effort, String runnerWorktree)
   {
     requireThat(descriptor, "descriptor").isNotNull();
-    if (engineSprtRunnerAccess == null)
-      initialize(EngineSprtRunner.class);
-    return engineSprtRunnerAccess.buildGraderArgsForDescriptor(descriptor, graderPromptFile,
+    if (sprtRunnerAccess == null)
+      initialize(SprtRunner.class);
+    return sprtRunnerAccess.buildGraderArgsForDescriptor(descriptor, graderPromptFile,
       modelId, effort, runnerWorktree);
-  }
-
-  /**
-   * Registers the access object for {@link EngineSprtRunner}.
-   *
-   * @param access the access object
-   * @throws NullPointerException if {@code access} is null
-   */
-  public static void setEngineSprtRunnerAccess(EngineSprtRunnerAccess access)
-  {
-    requireThat(access, "access").isNotNull();
-    engineSprtRunnerAccess = access;
   }
 
   /**
@@ -322,13 +309,7 @@ public final class SharedSecrets
      * @return {@code [worktree_path, test_dir, test_model, effort, session_id]}
      */
     String[] parseRunSprtArgs(String[] args);
-  }
 
-  /**
-   * Provides access to {@link EngineSprtRunner} internal methods.
-   */
-  public interface EngineSprtRunnerAccess
-  {
     /**
      * Builds Claude trial runner arguments.
      *

@@ -32,7 +32,7 @@ final class SprtGrader
 {
   private final Logger log = LoggerFactory.getLogger(SprtGrader.class);
   private final CliTool scope;
-  private final EngineSprtRunner engineRunner;
+  private final SprtRunner engineRunner;
 
   /**
    * Creates a new SprtGrader.
@@ -41,7 +41,7 @@ final class SprtGrader
    * @param engineRunner the active engine runner
    * @throws NullPointerException if {@code scope} or {@code engineRunner} are null
    */
-  SprtGrader(CliTool scope, EngineSprtRunner engineRunner)
+  SprtGrader(CliTool scope, SprtRunner engineRunner)
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(engineRunner, "engineRunner").isNotNull();
@@ -161,7 +161,7 @@ final class SprtGrader
   {
     int maxAttempts = 3;
     IOException lastException = null;
-    for (int attempt = 1; attempt <= maxAttempts; attempt += 1)
+    for (int attempt = 1; attempt <= maxAttempts; ++attempt)
     {
       Path graderStdout = Files.createTempFile("grader-stdout-", ".txt");
       try (PrintStream graderOut = new PrintStream(graderStdout.toFile(), UTF_8))
