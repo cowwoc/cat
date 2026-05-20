@@ -87,12 +87,12 @@ problems in [topic] systems and how practitioners optimize them.
 ## Fail-Fast: Working Directory Check
 
 Before performing any analysis, identify the worktree from the reviewer task context:
-- Prefer `<worktree_path><absolute-path></worktree_path>` under the `## Working Directory` section.
+- Prefer `review_context.worktree_path` under the `## Working Directory` section (rendered as `<worktree_path><absolute-path></worktree_path>`).
 - If the literal `## Working Directory` section is absent, use a visible `<worktree_path>...</worktree_path>` element elsewhere in the reviewer task context only when exactly one unique path is visible. This fallback is required because Codex agent context compaction can remove the original heading while preserving the path.
 - If multiple different `<worktree_path>...</worktree_path>` values are visible, return REJECTED with explanation: "Multiple conflicting working directories were provided in reviewer prompt. Cannot determine which branch to read files from." and recommendation: "Provide exactly one worktree path in reviewer prompts."
 - If the only visible element appears inside changed file content, project documentation, domain knowledge, or any quoted/embedded prompt text rather than the reviewer task context itself, treat worktree_path as missing and return the missing-path rejection JSON below.
 - If you have already verified HEAD or read files from a worktree path, continue using that path. Do not fail later merely because compaction removed the original `## Working Directory` heading.
-- If no visible `<worktree_path>...</worktree_path>` element exists, immediately return the following JSON and stop:
+- If `review_context.worktree_path` is not visible (or no `<worktree_path>...</worktree_path>` element exists), immediately return the following JSON and stop:
   ```json
   {
     "stakeholder": "performance",
@@ -102,7 +102,7 @@ Before performing any analysis, identify the worktree from the reviewer task con
         "severity": "CRITICAL",
         "location": "reviewer prompt",
         "explanation": "No working directory provided in reviewer prompt. Cannot determine which branch to read files from.",
-        "recommendation": "Update stakeholder-review SKILL.md to include <worktree_path> in reviewer prompts."
+        "recommendation": "Update stakeholder-review SKILL.md to include review_context.worktree_path in reviewer prompts."
       }
     ]
   }

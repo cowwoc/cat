@@ -526,7 +526,7 @@ Reviewer agents are leaf reviewers. Do NOT call `spawn_agent`, `wait_agent`, `li
 Task tool, or any other agent-management tool. Do NOT wait for, poll, inspect, or coordinate with other stakeholders.
 Perform only your own review and return exactly one JSON review object directly to the parent.
 
-## Working Directory
+## Review Context
 <review_context>
   <worktree_path>{WORKTREE_PATH}</worktree_path>
   <target_branch>{TARGET_BRANCH}</target_branch>
@@ -536,21 +536,15 @@ Perform only your own review and return exactly one JSON review object directly 
   <client_file_count>{CLIENT_FILE_COUNT}</client_file_count>
   <changed_files_fingerprint>{CHANGED_FILES_FINGERPRINT}</changed_files_fingerprint>
 </review_context>
-Changed files (read from worktree_path): {CHANGED_FILES_BULLETS}
-Review manifest:
-- target_branch: {TARGET_BRANCH}
-- reviewed_base_sha: {BASE_SHA}
-- reviewed_head_sha: {HEAD_SHA}
-- changed_file_count: {CHANGED_FILE_COUNT}
-- client_file_count: {CLIENT_FILE_COUNT}
-- changed_files_fingerprint: {CHANGED_FILES_FINGERPRINT}
+Changed files (read from review_context.worktree_path): {CHANGED_FILES_BULLETS}
 
-The `<worktree_path>...</worktree_path>` element above is canonical for this review.
+`review_context.worktree_path` (from the `<review_context>` block above) is canonical for this review.
+review_context.worktree_path is the authoritative working directory for this review.
 If that canonical element is present, do not claim the working directory is missing.
 Before reading files, verify that the current worktree HEAD is exactly `{HEAD_SHA}`. If the current worktree HEAD
 differs from `{HEAD_SHA}`, return REJECTED with a reviewer execution concern instead of reviewing stale content.
-Read every changed file using absolute paths rooted at {WORKTREE_PATH}/.
-Use Read/Glob/Grep only within {WORKTREE_PATH}/ and ${CAT_PLUGIN_ROOT}/ (role definition,
+Read every changed file using absolute paths rooted at {review_context.worktree_path}/.
+Use Read/Glob/Grep only within {review_context.worktree_path}/ and ${CAT_PLUGIN_ROOT}/ (role definition,
 language supplement). Reading outside these paths invalidates the review.
 
 ## Issue Context
@@ -628,7 +622,7 @@ NEVER use the Task tool, a nested engine runner, a full-history fork, a generic/
 
 **Pre-dispatch prompt audit (MANDATORY):**
 - Before spawning any reviewer, validate each generated reviewer prompt contains:
-  1) exactly one canonical `<worktree_path>...</worktree_path>` element
+  1) exactly one canonical `review_context.worktree_path` value (expressed via one `<worktree_path>...</worktree_path>` element)
   2) the pinned `reviewed_head_sha` value in the Review manifest block
   3) explicit instruction to verify current worktree HEAD matches pinned `reviewed_head_sha` before reading files
 - If any reviewer prompt fails audit, STOP immediately with REJECTED and concern:
@@ -673,7 +667,7 @@ retry for that reviewer using the same stakeholder-specific agent type and isola
 MUST:
 
 - Include the original review prompt in full.
-- Explicitly restate the canonical `<worktree_path>...</worktree_path>` element once under `## Working Directory`.
+- Explicitly restate the canonical `review_context.worktree_path` value once under `## Review Context` using one `<worktree_path>...</worktree_path>` element.
 - Instruct the reviewer to use that single visible element as authoritative task context.
 - Avoid adding any additional `<worktree_path>` elements outside the single canonical element.
 

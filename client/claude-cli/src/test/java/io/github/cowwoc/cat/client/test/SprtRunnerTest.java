@@ -1891,13 +1891,14 @@ public final class SprtRunnerTest
     Path promptFile = repoRoot.resolve("plugin/skills/include/stakeholder-review.md");
     String prompt = Files.readString(promptFile, StandardCharsets.UTF_8);
 
-    requireThat(prompt, "prompt").contains("## Working Directory");
-    requireThat(prompt, "prompt").contains("WORKTREE_PATH={WORKTREE_PATH}");
-    requireThat(prompt, "prompt").contains("Changed files (read from WORKTREE_PATH): {CHANGED_FILES_BULLETS}");
-    requireThat(prompt, "prompt").contains("WORKTREE_PATH is the authoritative working directory for this review.");
-    requireThat(prompt, "prompt").contains("stakeholder role\ninstructions parse that exact variable assignment");
+    requireThat(prompt, "prompt").contains("## Review Context");
+    requireThat(prompt, "prompt").contains(
+      "Changed files (read from review_context.worktree_path): {CHANGED_FILES_BULLETS}");
+    requireThat(prompt, "prompt").contains(
+      "review_context.worktree_path is the authoritative working directory for this review.");
     requireThat(prompt, "prompt").doesNotContain("\nWORKTREE_PATH: {WORKTREE_PATH}");
-    requireThat(prompt, "prompt").contains("Read every changed file using absolute paths rooted at {WORKTREE_PATH}/.");
+    requireThat(prompt, "prompt").contains(
+      "Read every changed file using absolute paths rooted at {review_context.worktree_path}/.");
     requireThat(prompt, "prompt").contains("Reading outside these paths invalidates the review.");
   }
 

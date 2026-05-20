@@ -505,10 +505,9 @@ public final class PluginArtifactBuilderTest
             "DOMAIN_KNOWLEDGE from plan.md `## Domain Knowledge` section (if present), and convert CHANGED_FILES " +
             "to bullets.");
         requireThat(stakeholderReview, engine + "StakeholderReview").contains("Spawn each stakeholder with:");
-        requireThat(stakeholderReview, engine + "StakeholderReview").contains("## Working Directory");
-        requireThat(stakeholderReview, engine + "StakeholderReview").contains("WORKTREE_PATH={WORKTREE_PATH}");
+        requireThat(stakeholderReview, engine + "StakeholderReview").contains("## Review Context");
         requireThat(stakeholderReview, engine + "StakeholderReview").contains(
-          "Changed files (read from WORKTREE_PATH): {CHANGED_FILES_BULLETS}");
+          "Changed files (read from review_context.worktree_path): {CHANGED_FILES_BULLETS}");
         requireThat(stakeholderReview, engine + "StakeholderReview").contains(
           "DISPATCH_HEAD_SHA=$(git rev-parse --verify \"HEAD^{commit}\")");
         requireThat(stakeholderReview, engine + "StakeholderReview").contains(
@@ -517,12 +516,10 @@ public final class PluginArtifactBuilderTest
           "Before reading files, verify that the current worktree HEAD is exactly `{HEAD_SHA}`");
         requireThat(stakeholderReview, engine + "StakeholderReview").contains(
           "return REJECTED with a reviewer execution concern instead of reviewing stale content");
-        requireThat(stakeholderReview, engine + "StakeholderReview").contains(
-          "The line above is canonical and must remain the only worktree variable assignment in this prompt.");
         requireThat(stakeholderReview, engine + "StakeholderReview").doesNotContain(
           "\nWORKTREE_PATH: {WORKTREE_PATH}");
         requireThat(stakeholderReview, engine + "StakeholderReview").contains(
-          "Read every changed file using absolute paths rooted at {WORKTREE_PATH}/.");
+          "Read every changed file using absolute paths rooted at {review_context.worktree_path}/.");
         requireThat(stakeholderReview, engine + "StakeholderReview").contains(
           "Each reviewer MUST also use its stakeholder-specific agent type");
         requireThat(stakeholderReview, engine + "StakeholderReview").contains(
