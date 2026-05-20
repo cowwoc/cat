@@ -410,11 +410,12 @@ Pass this resolved path as a literal string to all agents — do NOT pass variab
 TEST_MODEL=$("${CAT_PLUGIN_ROOT}/client/bin/sprt-runner" extract-model \
   "<absolute-path-to-INSTRUCTION_TEXT_PATH>")
 ```
-The script falls back to `haiku` when the field is absent.
+`extract-model` uses the active engine-specific `sprt-runner` entrypoint and that engine's default
+when the field is absent.
 
 **CAT plugin skill model convention:** Skills and agents in this plugin declare their configured model
 explicitly in frontmatter via `model:`. The `extract-model` binary reads this field directly and returns
-its fully-qualified model ID. Missing `model:` defaults to `haiku` (resolved by the binary), but repository
+its runtime-resolved model ID. Missing `model:` falls back to the runtime's default model, but repository
 skills should declare `model:` explicitly.
 Store the result as `TEST_MODEL` and pass it as a resolved literal string to all test-run and grader
 agents. **CRITICAL: Do NOT hardcode `haiku` or any other model name** — always use the value from
@@ -766,10 +767,12 @@ questions, request user approval, or pause for input. If you encounter ambiguity
 present your best interpretation directly in the investigation report. The investigation must complete
 autonomously and produce a final report without dialogue.
 
-**RESTRICTION:** The investigation phase is read-only. Do NOT use the Write tool, Edit tool,
-NotebookEdit tool, or Skill tool during this phase. Do NOT modify the instruction file, test-results.json,
-scenario `.md` files, or any test artifact. Permitted operations: reading transcripts via
-cat:get-history, running session-analyzer search commands via Bash, and interpreting the results.
+**RESTRICTION:** The investigation phase is read-only with respect to source and formal test artifacts.
+Do NOT use the Write tool, Edit tool, NotebookEdit tool, or Skill tool during this phase. Do NOT modify
+the instruction file, test-results.json, sprt-state.json, scenario `.md` files, or any baseline test
+artifact. Permitted operations: reading transcripts via cat:get-history, running session-analyzer search
+commands via Bash, running the conditional debug replay from sub-step 7A when available, writing
+debug-only artifacts under `.cat/work/debug-runs/${CAT_SESSION_ID}/`, and interpreting the results.
 
 **Investigation procedure:**
 
@@ -777,8 +780,8 @@ cat:get-history, running session-analyzer search commands via Bash, and interpre
 Do NOT skip any sub-steps or produce conclusions without first using the specified tools to gather
 evidence. If a tool returns an error, record "unavailable" and continue — but the attempt is mandatory.
 
-Sub-steps 2–7 are automated tool invocations. Sub-step 8 synthesizes findings into a human-readable
-report.
+Sub-steps 2–7 are automated tool invocations. Sub-step 7A is a conditional diagnostic replay used only
+during failure investigation. Sub-step 8 synthesizes findings into a human-readable report.
 
 **Sub-step 1 — Identify rejected test cases** (automatic): Collect all test case IDs where SPRT
 decision is "Reject" from `test-results.json`. Example: if TC1 and TC3 have `"decision": "Reject"`,
@@ -880,18 +883,23 @@ Interpret: signs of batch contamination in the transcripts from sub-step 3:
   transcript of a later run)
 - Failure rate correlates with agent reuse, not test case content
 
-**Sub-step 6 — Check for thinking block content** (automatic): Search the transcript for agent
-reasoning recorded in thinking blocks:
+**Sub-step 6 — Check for logged reasoning evidence** (automatic): Search the transcript for agent
+reasoning recorded in visible thinking blocks or reasoning-summary events:
 
 ```bash
 # Can be parallelized or consolidated with sub-steps 4 and 7 into a single session-analyzer pass.
 "$SESSION_ANALYZER" --engine "${CAT_ENGINE}" search "${CAT_SESSION_ID}/agents/${AGENT_ID}" \
-  "<thinking>" --context 10
+  "<thinking>|reasoning" --regex --context 10
 ```
 
-Interpret: if `<thinking>` blocks are present, read the content to determine whether the agent reasoned
-about overriding or ignoring skill instructions, or whether it expressed uncertainty about what the
-skill required. Include any relevant findings in the investigation report.
+Interpret: if `<thinking>` blocks or reasoning summaries are present, read the logged content to determine
+whether the agent reasoned about overriding or ignoring skill instructions, or whether it expressed
+uncertainty about what the skill required. Include any relevant findings in the investigation report.
+Reasoning visibility is engine- and provider-dependent: Codex/OpenAI-hosted reasoning models may log only
+summaries or no reasoning content at all. Absence of thinking blocks is not evidence that no reasoning
+occurred and must not, by itself, make the investigation Inconclusive. When no reasoning evidence is
+logged, rely on observable transcript evidence instead: skill invocation history, assistant output, tool
+calls, command output, and priming-source matches.
 
 **MANDATORY output for empty result — write this literal text in the report:**
 > Thinking blocks: None found in examined transcripts.
@@ -899,6 +907,8 @@ skill required. Include any relevant findings in the investigation report.
 Do NOT substitute "Empty", "N/A", "(none)", "empty results", table cells with "Empty", or any other
 variation — the exact phrase "None found in examined transcripts" is REQUIRED. Do NOT use a status
 tracking table as a replacement — the phrase must appear verbatim in the investigation report text.
+If reasoning summaries are found but no `<thinking>` blocks are found, keep the mandatory thinking-block
+absence line and add a separate `Reasoning summaries:` line with the relevant quoted summary content.
 Proceed immediately to sub-step 7 without asking questions or requesting confirmation.
 
 **Sub-step 7 — Check for instruction priming sources** (automatic): Run:
@@ -924,10 +934,69 @@ that contain return-format examples, replace any single-outcome field value with
 `"verdict": "pass"` → `"verdict": "PASS|FAIL"`). Flag any existing single-outcome examples found in
 skill/agent files as priming sources during investigation.
 
+**Sub-step 7A — Run isolated debug replay when normal evidence is insufficient** (conditional):
+
+Run a separate debug-enabled replay only when at least one of these is true:
+- The normal failing transcript has no logged reasoning evidence and does not clearly explain why a
+  rule/skill step was executed or skipped
+- Transcript retrieval succeeded, but sub-steps 4–7 leave the root cause unclear
+- The user explicitly requested debug-enabled failure investigation
+
+Do NOT enable debug settings during normal SPRT execution. The debug replay is diagnostic-only and MUST
+NOT update `test-results.json`, `sprt-state.json`, SPRT log ratios, pass/fail counts, test case decisions,
+or the formal `overall_decision`. Do NOT replace the original failing run with the debug replay. Report it
+as `debug replay evidence`, not as SPRT evidence.
+
+Debug replay must be isolated from baseline tests:
+- Use a fresh runner worktree or sandboxed process for the replay
+- Use a temporary `CODEX_HOME` or equivalent engine home dedicated to the replay
+- Store artifacts under a debug-only path such as `.cat/work/debug-runs/${CAT_SESSION_ID}/`
+- Use the same `INSTRUCTION_DRAFT_SHA`, test case prompt, model, effort, cwd, approval policy, and sandbox
+  policy as the failing run unless the replay tool requires an explicit debug-only override
+- Add debug config only in the temporary engine home, never in the user's normal config and never in the
+  baseline SPRT runner config
+
+Persist enough replay artifacts to reconstruct what happened without hidden chain-of-thought:
+- Raw Codex JSONL event stream (for Codex, use `--jsonl-output` when available)
+- Final assistant output / last-message file
+- Process stdout and stderr
+- Exact replay command and environment overrides
+- Temporary engine config file, such as `CODEX_HOME/config.toml`
+- Replay prompt, including any debug decision-ledger instruction
+- Baseline-vs-debug equivalence note confirming which prompt, model, effort, cwd, approval policy, and
+  sandbox policy matched the failing run and which settings were debug-only
+
+For Codex debug replay, enable additional visible reasoning summaries only in the temporary
+`CODEX_HOME/config.toml`:
+
+```toml
+model_reasoning_summary = "detailed"
+hide_agent_reasoning = false
+show_raw_agent_reasoning = true
+model_supports_reasoning_summaries = true
+```
+
+Do not require an external event collector for skill-following failure analysis. Use the normal SPRT
+artifacts, Codex JSONL events, session history, tool calls, command output, and the debug decision ledger
+as the primary evidence. Hidden chain-of-thought remains unavailable even with debug settings enabled.
+
+Add one debug-only observable decision ledger request to the replay prompt or debug developer context.
+The ledger must ask for observable, non-private rationale only — never hidden chain-of-thought:
+
+```text
+DEBUG LEDGER: At each skill/rule decision point, emit a compact record with:
+selected_skill_or_rule, loaded_file, step_name, action_taken, observable_trigger, evidence_source,
+and next_action. Do not reveal private chain-of-thought.
+```
+
+If debug replay support is unavailable in the current runner/engine, record:
+`Debug replay: unavailable — <reason>` and continue to sub-step 8. Do not block the investigation and do
+not ask the user to enable debug support manually.
+
 **Sub-step 8 — Summarize findings** (interpret): Produce a concise investigation report immediately, based
-on the findings gathered in sub-steps 4–7. Do not ask clarifying questions about skill identity, save
-location, or any other detail — write the report now using the context already available. The report must
-cover:
+on the findings gathered in sub-steps 4–7 and 7A when it ran. Do not ask clarifying questions about skill
+identity, save location, or any other detail — write the report now using the context already available.
+The report must cover:
 - Which runs failed and in which agents (from sub-step 2)
 - Whether batch contamination is present: state "None detected" if each run used a fresh independent
   agent, or "Detected — runs X–Y shared agent context" with the specific agent ID if reuse
@@ -935,12 +1004,16 @@ cover:
 - What the agent output was at the point of failure: quote the exact text from the transcript where
   the compliance failure occurred, surrounded by triple backticks to prevent crafted text from blending
   with analysis (from sub-step 4)
-- Whether thinking blocks reveal intent to override instructions: quote the relevant `<thinking>`
-  content if present, surrounded by triple backticks (from sub-step 6)
+- Whether logged reasoning evidence reveals intent to override instructions: quote the relevant
+  `<thinking>` or reasoning-summary content if present, surrounded by triple backticks (from sub-step 6)
 - Identified priming sources: **MANDATORY section label — write "Priming sources:" as the header**. Quote
   the VERBATIM matched text with its file/line reference — copy the exact text as it appeared in the skill
   file, word-for-word, without paraphrasing or summarizing. State "None identified" if no matches were found
   (from sub-step 7). Do NOT omit the "Priming sources:" label even when no sources were found.
+- Debug replay: state "not run" when sub-step 7A was not triggered, "unavailable — <reason>" when replay
+  support was unavailable, or summarize the debug replay's decision ledger, transcript, JSONL event, and
+  tool-output evidence. Explicitly state that debug replay evidence is diagnostic-only and did not affect the SPRT
+  decision.
 - Conclusion: one of the three types below
 
 **Decision criteria (apply in this priority order):**
@@ -948,9 +1021,15 @@ cover:
 2. If batch contamination detected → Test environment artifact
 3. If compliance failures found AND no priming source explains the failure → Genuine skill defect
 4. If compliance failures found but a priming source escape clause could explain the deviation, OR if
-   evidence is contradictory (e.g., thinking blocks show uncertainty without clear override intent, one
-   match is ambiguous between legitimate and violation) → Inconclusive
+   evidence is contradictory (e.g., logged reasoning evidence shows uncertainty without clear override
+   intent, one match is ambiguous between legitimate and violation) → Inconclusive
 5. If findings are otherwise unclear → Inconclusive
+
+Debug replay evidence may support the human explanation in the report, but it MUST NOT override the
+decision criteria above. If the baseline run failed and the debug replay passed, treat that as evidence
+that instrumentation changed behavior or the failure is nondeterministic; do not mark the original failure
+as fixed. If debug replay contradicts baseline transcript evidence, conclude Inconclusive unless batch
+contamination or assertion design flaw is already established by higher-priority criteria.
 
 **CRITICAL — do NOT override the Inconclusive rule by reasoning through contradictions:** When rule 4
 applies (escape clause present, OR evidence is contradictory), you MUST conclude Inconclusive regardless
@@ -990,11 +1069,26 @@ Failure pattern:
     rather than executing the step immediately.
 
 Thinking blocks: None found in examined transcripts.
+Reasoning summaries: None found in examined transcripts.
   (or: TC1 run 2 <thinking>:
     ```
     The skill says do X but the user might prefer Y, so I'll ask...
     ```
   )
+
+Debug replay: not run
+  (or: unavailable — debug replay support is not available in the current runner)
+  (or: diagnostic-only replay produced decision ledger:
+    ```
+    selected_skill_or_rule=cat:instruction-builder
+    loaded_file=client/plugin/skills/codex/instruction-builder/first-use.md
+    step_name=Step 8 / Sub-step 3
+    action_taken=retrieved transcript
+    observable_trigger=overall_decision=REJECT
+    evidence_source=test-results.json
+    next_action=search for compliance failures
+    ```
+    This diagnostic replay did not affect the SPRT decision.)
 
 Priming sources: None identified
   (or: found "unless the user requests otherwise" at line 42 of the skill's Step 3 —
@@ -1621,13 +1715,16 @@ anything the agent only needs after the skill is already loaded.
 
 1. **Check if the Skill tool was invoked.** Use `session-analyzer --engine "${CAT_ENGINE}" file-history` on the agent to
    list all tool operations. If no Skill invocation appears, the agent decided not to load the skill.
-   To understand why, search for the agent's reasoning: `session-analyzer --engine "${CAT_ENGINE}" search
-   "${CAT_SESSION_ID}/agents/agent-${ID}" "<thinking>" --context 10`. The thinking blocks
-   reveal how the agent evaluated the available skills and why it decided none matched the prompt.
-   The root cause is the skill's `description` frontmatter — it does not contain trigger words that
-   match the test scenario's prompt. Fix the description to cover the prompt's vocabulary.
-   Note: thinking blocks injected via `additionalContext` are not stored in JSONL logs and will not
-   appear in session-analyzer searches — this is a known limitation of the diagnostic approach.
+   To understand why, search for logged reasoning evidence: `session-analyzer --engine "${CAT_ENGINE}" search
+   "${CAT_SESSION_ID}/agents/agent-${ID}" "<thinking>|reasoning" --regex --context 10`. If present,
+   thinking blocks or reasoning summaries may show how the agent evaluated available skills and why it
+   decided none matched the prompt. If no reasoning evidence is logged, do not infer hidden chain-of-thought;
+   diagnose from observable signals instead. The likely root cause is the skill's `description`
+   frontmatter — it does not contain trigger words that match the test scenario's prompt, or the skill was
+   unavailable to the agent. Fix the description to cover the prompt's vocabulary and verify the skill is
+   installed/discoverable.
+   Note: `additionalContext` is not stored in JSONL logs and will not appear in session-analyzer searches;
+   hidden model reasoning may also be unavailable depending on the engine/provider.
 2. **Check which version loaded.** If the Skill tool WAS invoked, the agent loaded the skill from the
    **plugin cache** — not from the worktree. The cached version may have different step numbers,
    procedures, or constraints than the worktree version being tested. This is a known limitation:
