@@ -36,6 +36,14 @@ if [[ -f "${CONFIG_PATH}" ]]; then
 fi
 WORK_PATH="${WORK_PATH_TEMPLATE//'${CAT_PROJECT_DIR}'/${PROJECT_DIR}}"
 WORK_PATH="${WORK_PATH//'${CLAUDE_PROJECT_DIR}'/${PROJECT_DIR}}"
+case "${WORK_PATH}" in
+  "~")
+    WORK_PATH="${HOME}"
+    ;;
+  "~/"*)
+    WORK_PATH="${HOME}/${WORK_PATH:2}"
+    ;;
+esac
 LOCKS_DIR="${WORK_PATH}/locks"
 
 # If this session currently holds a CAT issue lock, build/install from that
