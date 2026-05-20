@@ -186,9 +186,9 @@ If creating a new instruction document, set `EXISTING_INSTRUCTION_PATH` to `"N/A
 
 When `EXISTING_INSTRUCTION_PATH` is provided, process it as **release-rendered content**:
 - Expand include directives before analysis. Supported include syntax for this workflow is:
-  - `<!-- cat:include <relative-path> -->`
+  - `<!-- cat-include <relative-path> -->` (replace `cat-include` with `cat` + `:include` in real files)
 - Do not treat generic markdown links (for example `[include](...)`) as includes unless they match the exact
-  `cat:include` directive syntax above.
+  include-directive syntax above.
 - Expand includes recursively (transitively) in rendered order until no include directives remain.
   Example traversal: if `A` includes `B` and `B` includes `C`, the effective rendered view must include `C` via
   transitive expansion of `B` while preserving origin metadata at each depth.
