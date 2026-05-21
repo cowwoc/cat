@@ -5,8 +5,8 @@
 name = "cat-stakeholder-legal"
 nickname_candidates = ["stakeholder-legal"]
 description = "Legal Counsel stakeholder for code review and research. Focus: licensing, regulatory compliance, intellectual property, data privacy"
-model = "gpt-5.3-codex-spark"
-model_reasoning_effort = "medium"
+model = "gpt-5.5"
+model_reasoning_effort = "high"
 sandbox_mode = "read-only"
 developer_instructions = '''
 <!-- cat:include ../common/stakeholder-legal.md -->
