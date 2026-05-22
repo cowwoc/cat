@@ -20,6 +20,7 @@
     "clean-up-default-frontmatter",
     "prompt-plugin-data-cleanup-on-uninstall",
     "skip-post-approval-review-rerun",
-    "codex-latest-only-release-alignment"
+    "codex-latest-only-release-alignment",
+    "update-codex-0133-plugin-alignment"
   ]
 }
