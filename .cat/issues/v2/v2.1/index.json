@@ -21,6 +21,7 @@
     "prompt-plugin-data-cleanup-on-uninstall",
     "skip-post-approval-review-rerun",
     "codex-latest-only-release-alignment",
-    "update-codex-0133-plugin-alignment"
+    "update-codex-0133-plugin-alignment",
+    "update-ai-output-license-headers"
   ]
 }
