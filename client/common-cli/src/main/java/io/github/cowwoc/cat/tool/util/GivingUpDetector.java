@@ -646,7 +646,7 @@ public final class GivingUpDetector
   {
     String lower = messageText.toLowerCase(Locale.ENGLISH);
     String[] sentences = splitSentences(lower);
-    if (continuationPhraseFollowedByAnotherSentence(sentences))
+    if (continuationPhraseHasFollowingSentence(sentences))
       return true;
     if (continuationPhraseIsFinalSentence(sentences))
       return false;
@@ -795,7 +795,7 @@ public final class GivingUpDetector
    * @param sentences the split sentences to inspect
    * @return {@code true} if continuation phrase is not the final sentence
    */
-  private static boolean continuationPhraseFollowedByAnotherSentence(String[] sentences)
+  private static boolean continuationPhraseHasFollowingSentence(String[] sentences)
   {
     int index = indexOfContinuationPhrase(sentences);
     if (index < 0)
