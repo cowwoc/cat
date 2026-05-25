@@ -122,7 +122,7 @@ public final class CheckDataMigrationTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void cacheInstallMarkerRunsCurrentMigrationOnce() throws IOException
+  public void cacheInstallMarkerRunsCurrentMigration() throws IOException
   {
     Path tempDir = Files.createTempDirectory("check-upgrade-cache-marker-test-");
     try
@@ -253,12 +253,13 @@ public final class CheckDataMigrationTest
   }
 
   /**
-   * Verifies that install migration failures include command output details for diagnosis.
+   * Verifies that install migration failures include command output details for diagnosis and
+   * surface them on stderr.
    *
    * @throws IOException if file operations fail
    */
   @Test
-  public void cacheInstallMigrationFailureIncludesOutput() throws IOException
+  public void cacheInstallMigrationFailureIncludes() throws IOException
   {
     Path tempDir = Files.createTempDirectory("check-upgrade-install-failure-output-test-");
     try
@@ -302,6 +303,10 @@ public final class CheckDataMigrationTest
       }
 
       requireThat(result.additionalContext(), "additionalContext").
+        contains("CAT INSTALL MIGRATION FAILED").
+        contains("stdout-diagnostic").
+        contains("stderr-diagnostic");
+      requireThat(result.stderr(), "stderr").
         contains("CAT INSTALL MIGRATION FAILED").
         contains("stdout-diagnostic").
         contains("stderr-diagnostic");
@@ -371,7 +376,7 @@ public final class CheckDataMigrationTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void versionFileWithTrailingWhitespaceReturnsStripped() throws IOException
+  public void versionFileWithTrailingWhitespaceReturns() throws IOException
   {
     Path tempDir = Files.createTempDirectory("check-upgrade-test-");
     Path catDir = tempDir.resolve(".cat");
@@ -471,7 +476,7 @@ public final class CheckDataMigrationTest
    * @throws InterruptedException if the process is interrupted
    */
   @Test
-  public void phase7MigratesExecutionStepsToExecutionWaves() throws IOException, InterruptedException
+  public void phase7MigratesExecutionStepsToExecution() throws IOException, InterruptedException
   {
     String input = """
       ## Execution Steps
@@ -502,7 +507,7 @@ public final class CheckDataMigrationTest
    * @throws InterruptedException if the process is interrupted
    */
   @Test
-  public void phase7AvoidsDoubleBlankLineBeforeNextSection() throws IOException, InterruptedException
+  public void phase7AvoidsDoubleBlankLineBeforeNext() throws IOException, InterruptedException
   {
     // The Execution Steps content ends with a blank line before the next ## heading.
     // Without the fix, awk would emit an extra blank line, producing two consecutive blank lines.
@@ -562,7 +567,7 @@ public final class CheckDataMigrationTest
    * @throws InterruptedException if the process is interrupted
    */
   @Test
-  public void phase7PreservesContentBeforeAndAfterSection() throws IOException, InterruptedException
+  public void phase7PreservesContentBeforeAndAfter() throws IOException, InterruptedException
   {
     String input = """
       # Title

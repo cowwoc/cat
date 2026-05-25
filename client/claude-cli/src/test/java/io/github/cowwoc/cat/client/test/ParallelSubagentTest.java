@@ -119,7 +119,7 @@ public class ParallelSubagentTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void tokenEstimationReturnsDefaultWhenNoExecutionSection() throws IOException
+  public void tokenEstimationReturnsDefaultWhenNo() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;

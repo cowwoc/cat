@@ -26,7 +26,7 @@ public final class BlockLockManipulationTest
    * @throws IOException if an I/O error occurs creating the test scope
    */
   @Test
-  public void rmLockFileIsBlockedWithIssueLockReference() throws IOException
+  public void rmLockFileIsBlockedWithIssueLock() throws IOException
   {
     String command = "rm -f /tmp/test-project/.cat/work/locks/task-123.lock";
     try (TestClaudeHook scope = TestUtils.bashHook(command, Path.of("/workspace"), "session1"))
@@ -66,7 +66,7 @@ public final class BlockLockManipulationTest
    * @throws IOException if an I/O error occurs creating the test scope
    */
   @Test
-  public void rmLocksDirIsBlockedWithIssueLockReference() throws IOException
+  public void rmLocksDirIsBlockedWithIssueLock() throws IOException
   {
     String command = "rm -rf /tmp/test-project/.cat/work/locks/";
     try (TestClaudeHook scope = TestUtils.bashHook(command, Path.of("/workspace"), "session1"))
@@ -144,7 +144,7 @@ public final class BlockLockManipulationTest
    * @throws IOException if an I/O error occurs creating the test scope
    */
   @Test
-  public void locksDirBlockDistinguishesSkillInternalFromUserFacing() throws IOException
+  public void locksDirBlockDistinguishesSkillInternal() throws IOException
   {
     String command = "rm -r /tmp/test-project/.cat/work/locks";
     try (TestClaudeHook scope = TestUtils.bashHook(command, Path.of("/workspace"), "session1"))

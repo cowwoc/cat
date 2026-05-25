@@ -514,7 +514,7 @@ public class GitSquashTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void rebaseConflictReturnsRebaseConflictStatus() throws IOException
+  public void rebaseConflictReturnsRebaseConflict() throws IOException
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
@@ -619,7 +619,7 @@ public class GitSquashTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void rebaseConflictLeavesCleanWorkingDirectory() throws IOException
+  public void rebaseConflictLeavesCleanWorking() throws IOException
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
@@ -694,7 +694,7 @@ public class GitSquashTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void multipleConflictingFilesReturnRebaseConflictStatus() throws IOException
+  public void multipleConflictingFilesReturnRebase() throws IOException
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
@@ -846,7 +846,7 @@ public class GitSquashTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void noConcurrentModWarningWhenOnlyIssueModifies() throws IOException
+  public void noConcurrentModWarningWhenOnlyIssue() throws IOException
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
@@ -957,7 +957,7 @@ public class GitSquashTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void successfulSquashHasHeadMatchingCommitHash() throws IOException
+  public void successfulSquashHasHeadMatchingCommit() throws IOException
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");

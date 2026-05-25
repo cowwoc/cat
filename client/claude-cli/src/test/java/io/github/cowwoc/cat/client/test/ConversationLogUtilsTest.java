@@ -73,7 +73,7 @@ public final class ConversationLogUtilsTest
    * positives in DetectAssistantGivingUp (e.g., "Let me remove X" → CODE_REMOVAL false positive).
    */
   @Test
-  public void compoundMessageWithTextAndToolUseReturnsEmpty() throws IOException
+  public void compoundMessageWithTextAndToolUseReturns() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -181,7 +181,7 @@ public final class ConversationLogUtilsTest
    * Verifies that string content produces a single segment with both paths null.
    */
   @Test
-  public void extractSegmentsStringContentReturnsSingleSegment() throws IOException
+  public void extractSegmentsStringContentReturns() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -204,7 +204,7 @@ public final class ConversationLogUtilsTest
    * Verifies that a pure-text array (no tool_use blocks) produces segments with both paths null.
    */
   @Test
-  public void extractSegmentsPureTextArrayReturnsBothPathsNull() throws IOException
+  public void extractSegmentsPureTextArrayReturnsBoth() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -230,7 +230,7 @@ public final class ConversationLogUtilsTest
    * Verifies that an Edit tool_use block immediately before a text block sets aboveFilePath.
    */
   @Test
-  public void extractSegmentsEditToolBeforeTextSetsAboveFilePath() throws IOException
+  public void extractSegmentsEditToolBeforeTextSets() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -256,7 +256,7 @@ public final class ConversationLogUtilsTest
    * the command contains a code file with a directory separator.
    */
   @Test
-  public void extractSegmentsBashWithCodeFileAfterTextSetsBelowFilePath() throws IOException
+  public void extractSegmentsBashWithCodeFileAfterText() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -282,7 +282,7 @@ public final class ConversationLogUtilsTest
    * belowFilePath, because CODE_PATH_PATTERN does not require a slash.
    */
   @Test
-  public void extractSegmentsBashWithBareFilenameSetsBelowFilePath() throws IOException
+  public void extractSegmentsBashWithBareFilenameSets() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -306,7 +306,7 @@ public final class ConversationLogUtilsTest
    * Verifies that a NotebookEdit tool_use block extracts the notebook_path field.
    */
   @Test
-  public void extractSegmentsNotebookEditExtractsNotebookPath() throws IOException
+  public void extractSegmentsNotebookEditExtracts() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -330,7 +330,7 @@ public final class ConversationLogUtilsTest
    * Verifies that a Bash command touching only a non-code file produces a null belowFilePath.
    */
   @Test
-  public void extractSegmentsBashWithNonCodeFileProducesNullBelowFilePath() throws IOException
+  public void extractSegmentsBashWithNonCodeFile() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -354,7 +354,7 @@ public final class ConversationLogUtilsTest
    * Verifies that a missing content field returns an empty segment list.
    */
   @Test
-  public void extractSegmentsMissingContentReturnsEmpty() throws IOException
+  public void extractSegmentsMissingContentReturns() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))

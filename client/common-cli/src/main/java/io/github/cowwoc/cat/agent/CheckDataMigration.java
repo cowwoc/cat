@@ -484,13 +484,14 @@ public final class CheckDataMigration implements SessionStartHandler
     ProcessRunner.Result result = runMigration(migration, pluginRoot);
     if (result.exitCode() != 0)
     {
-      return Result.context("CAT INSTALL MIGRATION FAILED\n" +
+      String message = "CAT INSTALL MIGRATION FAILED\n" +
         "\n" +
         "Attempted current-version migration: " + pluginVersion + "\n" +
         "\n" +
         "Migration output:\n" + result.output() + "\n" +
         "\n" +
-        "Please review the error and try again.");
+        "Please review the error and try again.";
+      return Result.both(message, message);
     }
 
     PluginCacheInstallMarker.write(pluginVersion, scope);

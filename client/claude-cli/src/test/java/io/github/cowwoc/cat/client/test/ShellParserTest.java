@@ -58,7 +58,7 @@ public class ShellParserTest
    * POSIX: inside double quotes, {@code \"} → {@code "}.
    */
   @Test
-  public void tokenizeHandlesBackslashEscapedDoubleQuoteInsideDoubleQuotes()
+  public void tokenizeHandlesBackslashEscapedDouble()
   {
     List<String> tokens = ShellParser.tokenize("\"path with \\\"embedded\\\" quotes\"");
     requireThat(tokens, "tokens").isEqualTo(List.of("path with \"embedded\" quotes"));
@@ -71,7 +71,7 @@ public class ShellParserTest
    * POSIX: inside double quotes, {@code \\} → {@code \}.
    */
   @Test
-  public void tokenizeHandlesBackslashEscapedBackslashInsideDoubleQuotes()
+  public void tokenizeHandlesBackslashEscapedBackslash()
   {
     List<String> tokens = ShellParser.tokenize("\"path\\\\to\\\\file\"");
     requireThat(tokens, "tokens").isEqualTo(List.of("path\\to\\file"));
@@ -84,7 +84,7 @@ public class ShellParserTest
    * POSIX: inside double quotes, {@code \$} → {@code $}.
    */
   @Test
-  public void tokenizeHandlesBackslashEscapedDollarInsideDoubleQuotes()
+  public void tokenizeHandlesBackslashEscapedDollar()
   {
     List<String> tokens = ShellParser.tokenize("\"cost: \\$5\"");
     requireThat(tokens, "tokens").isEqualTo(List.of("cost: $5"));
@@ -99,7 +99,7 @@ public class ShellParserTest
    * handles {@code \"}, {@code \\}, and {@code \$}.
    */
   @Test
-  public void tokenizePassesThroughBackslashBeforeNonEscapableCharInsideDoubleQuotes()
+  public void tokenizePassesThroughBackslashBeforeNon()
   {
     List<String> tokens = ShellParser.tokenize("\"value\\nmore\"");
     requireThat(tokens, "tokens").isEqualTo(List.of("value\\nmore"));
@@ -110,7 +110,7 @@ public class ShellParserTest
    * (single quotes are literal — no escaping).
    */
   @Test
-  public void tokenizeDoesNotProcessBackslashInsideSingleQuotes()
+  public void tokenizeDoesNotProcessBackslashInside()
   {
     List<String> tokens = ShellParser.tokenize("'value\\\"more'");
     requireThat(tokens, "tokens").isEqualTo(List.of("value\\\"more"));
@@ -141,7 +141,7 @@ public class ShellParserTest
    * not as shell glob or subshell metacharacters.
    */
   @Test
-  public void tokenizeHandlesParenthesesInsideDoubleQuotes()
+  public void tokenizeHandlesParenthesesInsideDouble()
   {
     List<String> tokens = ShellParser.tokenize("\"occurrences: (3/5)\"");
     requireThat(tokens, "tokens").isEqualTo(List.of("occurrences: (3/5)"));
@@ -152,7 +152,7 @@ public class ShellParserTest
    * not as shell glob character class metacharacters.
    */
   @Test
-  public void tokenizeHandlesBracketsInsideDoubleQuotes()
+  public void tokenizeHandlesBracketsInsideDouble()
   {
     List<String> tokens = ShellParser.tokenize("\"commits: [abc123,def456]\"");
     requireThat(tokens, "tokens").isEqualTo(List.of("commits: [abc123,def456]"));
@@ -174,7 +174,7 @@ public class ShellParserTest
    * not as shell glob expansion characters.
    */
   @Test
-  public void tokenizeHandlesWildcardsInsideDoubleQuotes()
+  public void tokenizeHandlesWildcardsInsideDouble()
   {
     List<String> tokens = ShellParser.tokenize("\"pattern: *.java and file?.txt\"");
     requireThat(tokens, "tokens").isEqualTo(List.of("pattern: *.java and file?.txt"));
@@ -185,7 +185,7 @@ public class ShellParserTest
    * The metacharacter-containing token must be double-quoted; unquoted tokens are split normally.
    */
   @Test
-  public void tokenizeHandlesMixedTokensWithMetacharacters()
+  public void tokenizeHandlesMixedTokensWith()
   {
     List<String> tokens = ShellParser.tokenize("skill-name \"arg with (parens) and [brackets]\" --flag");
     requireThat(tokens, "tokens").isEqualTo(List.of("skill-name", "arg with (parens) and [brackets]", "--flag"));
@@ -195,7 +195,7 @@ public class ShellParserTest
    * Verifies that a null input throws AssertionError.
    */
   @Test(expectedExceptions = AssertionError.class)
-  public void tokenizeThrowsAssertionErrorWhenInputIsNull()
+  public void tokenizeThrowsAssertionErrorWhenInputIs()
   {
     ShellParser.tokenize(null);
   }
@@ -215,7 +215,7 @@ public class ShellParserTest
    * Verifies that a path containing one undefined variable returns a list with that variable name.
    */
   @Test
-  public void findUndefinedVarsReturnsOneUndefinedVariable()
+  public void findUndefinedVarsReturnsOneUndefined()
   {
     List<String> result = ShellParser.findUndefinedVars("${SESSION_DIR}/file", name -> null);
     requireThat(result, "result").isEqualTo(List.of("SESSION_DIR"));
@@ -225,7 +225,7 @@ public class ShellParserTest
    * Verifies that a path containing two undefined variables returns both variable names in order.
    */
   @Test
-  public void findUndefinedVarsReturnsTwoUndefinedVariables()
+  public void findUndefinedVarsReturnsTwoUndefined()
   {
     List<String> result = ShellParser.findUndefinedVars(
       "${SESSION_DIR}/squash-complete-${ISSUE_ID}", name -> null);
@@ -236,7 +236,7 @@ public class ShellParserTest
    * Verifies that a path where all variables are defined returns an empty list.
    */
   @Test
-  public void findUndefinedVarsReturnsEmptyListWhenAllDefined()
+  public void findUndefinedVarsReturnsEmptyListWhenAll()
   {
     List<String> result = ShellParser.findUndefinedVars(
       "${SESSION_DIR}/file", name -> "/tmp");
@@ -248,7 +248,7 @@ public class ShellParserTest
    * undefined names, leaving out defined ones.
    */
   @Test
-  public void findUndefinedVarsReturnsOnlyUndefinedWhenMixed()
+  public void findUndefinedVarsReturnsOnlyUndefined()
   {
     // SESSION_DIR is defined; ISSUE_ID is not
     List<String> result = ShellParser.findUndefinedVars(
@@ -266,7 +266,7 @@ public class ShellParserTest
    * Verifies that an empty input string returns an empty list.
    */
   @Test
-  public void findUndefinedVarsReturnsEmptyListForEmptyInput()
+  public void findUndefinedVarsReturnsEmptyListFor()
   {
     List<String> result = ShellParser.findUndefinedVars("", name -> null);
     requireThat(result, "result").isEmpty();
@@ -276,7 +276,7 @@ public class ShellParserTest
    * Verifies that a path containing no variable references returns an empty list.
    */
   @Test
-  public void findUndefinedVarsReturnsEmptyListForLiteralPath()
+  public void findUndefinedVarsReturnsEmptyListFor2()
   {
     List<String> result = ShellParser.findUndefinedVars("/tmp/output.log", name -> null);
     requireThat(result, "result").isEmpty();
@@ -296,7 +296,7 @@ public class ShellParserTest
    * Verifies that a path mixing braced and unbraced forms reports both undefined variables.
    */
   @Test
-  public void findUndefinedVarsHandlesMixedBracedAndUnbracedForms()
+  public void findUndefinedVarsHandlesMixedBracedAnd()
   {
     List<String> result = ShellParser.findUndefinedVars(
       "${SESSION_DIR}/squash-$ISSUE_ID", name -> null);
@@ -308,7 +308,7 @@ public class ShellParserTest
    * preserving occurrence order.
    */
   @Test
-  public void findUndefinedVarsReturnsDuplicateOccurrences()
+  public void findUndefinedVarsReturnsDuplicate()
   {
     List<String> result = ShellParser.findUndefinedVars(
       "${SESSION_DIR}/${SESSION_DIR}", name -> null);
@@ -319,7 +319,7 @@ public class ShellParserTest
    * Verifies that passing a null target throws a NullPointerException.
    */
   @Test(expectedExceptions = NullPointerException.class)
-  public void findUndefinedVarsThrowsNullPointerExceptionWhenTargetIsNull()
+  public void findUndefinedVarsThrowsNullPointer()
   {
     ShellParser.findUndefinedVars(null, name -> null);
   }
@@ -336,7 +336,7 @@ public class ShellParserTest
    * {@code OUTPUT_FILE} must resolve to {@code /tmp/worktrees/my-issue/.cat/work/output.log}.
    */
   @Test
-  public void parseScriptAssignmentsResolvesChainedLiteralVariables()
+  public void parseScriptAssignmentsResolvesChained()
   {
     String script = """
         WORKTREE_PATH="/tmp/worktrees/my-issue"
@@ -355,7 +355,7 @@ public class ShellParserTest
    * {@code OUTPUT_FILE="${UNDEFINED_VAR}/output.log"} cannot be resolved and must be omitted.
    */
   @Test
-  public void parseScriptAssignmentsSkipsUnresolvableIntermediateVariable()
+  public void parseScriptAssignmentsSkipsUnresolvable()
   {
     String script = """
         OUTPUT_FILE="${UNDEFINED_VAR}/output.log"
@@ -376,7 +376,7 @@ public class ShellParserTest
    * {@code LEAF} must resolve to {@code /tmp/root/middle/leaf}.
    */
   @Test
-  public void parseScriptAssignmentsResolvesThreeLinkChain()
+  public void parseScriptAssignmentsResolvesThreeLink()
   {
     String script = """
         BASE="/tmp/root"
@@ -395,7 +395,7 @@ public class ShellParserTest
    * earlier in the script, so it must not appear in the assignments map.
    */
   @Test
-  public void parseScriptAssignmentsSkipsSelfReferentialAssignment()
+  public void parseScriptAssignmentsSkipsSelf()
   {
     String script = """
         FOO="${FOO}/extra"
@@ -412,7 +412,7 @@ public class ShellParserTest
    * each depends on the other, which was undefined at the time of processing.
    */
   @Test
-  public void parseScriptAssignmentsHandlesCircularChain()
+  public void parseScriptAssignmentsHandlesCircular()
   {
     String script = """
         A="${B}/x"
@@ -429,7 +429,7 @@ public class ShellParserTest
    * {@code WORKTREE_PATH=/tmp/worktrees/my-issue} (no quotes) must be captured as-is.
    */
   @Test
-  public void parseScriptAssignmentsCapturesUnquotedLiteral()
+  public void parseScriptAssignmentsCapturesUnquoted()
   {
     String script = "WORKTREE_PATH=/tmp/worktrees/my-issue\n";
     Map<String, String> assignments = ShellParser.parseScriptAssignments(script);
@@ -448,7 +448,7 @@ public class ShellParserTest
    * {@code OUTPUT_FILE} must resolve to {@code /tmp/worktrees/my-issue/.cat/work/output.log}.
    */
   @Test
-  public void parseScriptAssignmentsResolvesChainedFromUnquoted()
+  public void parseScriptAssignmentsResolvesChained2()
   {
     String script = """
         WORKTREE_PATH=/tmp/worktrees/my-issue
@@ -471,7 +471,7 @@ public class ShellParserTest
    * {@code FOO} must resolve to {@code /tmp/root/path}.
    */
   @Test
-  public void parseScriptAssignmentsResolvesUnquotedBareVarReference()
+  public void parseScriptAssignmentsResolvesUnquoted()
   {
     String script = """
         BASE=/tmp/root
@@ -488,7 +488,7 @@ public class ShellParserTest
    * engine command substitution. The assignment must not appear in the result map.
    */
   @Test
-  public void parseScriptAssignmentsSkipsMidValueCommandSubstitution()
+  public void parseScriptAssignmentsSkipsMidValue()
   {
     String script = "FOO=prefix$(cmd)suffix\n";
     Map<String, String> assignments = ShellParser.parseScriptAssignments(script);
@@ -502,7 +502,7 @@ public class ShellParserTest
    * script block) must be captured the same as the unindented form.
    */
   @Test
-  public void parseScriptAssignmentsCapturesUnquotedWithLeadingWhitespace()
+  public void parseScriptAssignmentsCapturesUnquoted2()
   {
     String script = "  WORKTREE_PATH=/tmp/worktrees/my-issue\n";
     Map<String, String> assignments = ShellParser.parseScriptAssignments(script);

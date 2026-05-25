@@ -284,7 +284,7 @@ public final class TestClaudeToolTest
    * Verifies that encodeProjectPath() replaces forward slashes with hyphens.
    */
   @Test
-  public void encodeProjectPathReplacesSlashesWithHyphens()
+  public void encodeProjectPathReplacesSlashesWith()
   {
     String encoded = AbstractAgentScope.encodeProjectPath("/workspace");
     requireThat(encoded, "encoded").isEqualTo("-workspace");
@@ -304,7 +304,7 @@ public final class TestClaudeToolTest
    * Verifies that encodeProjectPath() replaces spaces with hyphens.
    */
   @Test
-  public void encodeProjectPathReplacesSpacesWithHyphens()
+  public void encodeProjectPathReplacesSpacesWith()
   {
     String encoded = AbstractAgentScope.encodeProjectPath("/home/user/my project");
     requireThat(encoded, "encoded").isEqualTo("-home-user-my-project");

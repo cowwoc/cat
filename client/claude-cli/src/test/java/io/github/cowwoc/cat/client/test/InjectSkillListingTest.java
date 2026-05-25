@@ -253,7 +253,7 @@ public final class InjectSkillListingTest
    * A JSON like {@code {"not-plugins": {}}} is malformed for the plugin format and must cause an error.
    */
   @Test(expectedExceptions = WrappedCheckedException.class)
-  public void malformedInstalledPluginsJsonMissingPluginsField() throws IOException
+  public void malformedInstalledPluginsJsonMissing() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeHook scope = new TestClaudeHook(
@@ -283,7 +283,7 @@ public final class InjectSkillListingTest
    * in the injected skill listing.
    */
   @Test
-  public void skillWithFrontmatterButMissingDescriptionIsExcluded() throws IOException
+  public void skillWithFrontmatterButMissing() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeHook scope = new TestClaudeHook(
@@ -334,7 +334,7 @@ public final class InjectSkillListingTest
    * only effective when set to {@code true}.
    */
   @Test
-  public void explicitDisableModelInvocationFalseIsIncluded() throws IOException
+  public void explicitDisableModelInvocationFalseIs() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeHook scope = new TestClaudeHook(
@@ -387,7 +387,7 @@ public final class InjectSkillListingTest
    * {@code "cat:<skill-name>"}.
    */
   @Test
-  public void pluginKeyWithoutAtSeparatorUsesFullKeyAsPrefix() throws IOException
+  public void pluginKeyWithoutAtSeparatorUsesFullKeyAs() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeHook scope = new TestClaudeHook(
@@ -437,7 +437,7 @@ public final class InjectSkillListingTest
    * When the install entries array is {@code []}, no crash should occur and the listing is empty.
    */
   @Test
-  public void emptyInstallEntriesArrayIsSkippedGracefully() throws IOException
+  public void emptyInstallEntriesArrayIsSkipped() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeHook scope = new TestClaudeHook(
@@ -475,7 +475,7 @@ public final class InjectSkillListingTest
    * as "no plugins installed" rather than an error.
    */
   @Test
-  public void missingInstalledPluginsFileReturnsEmptyListing() throws IOException
+  public void missingInstalledPluginsFileReturnsEmpty() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeHook scope = new TestClaudeHook(
@@ -506,7 +506,7 @@ public final class InjectSkillListingTest
    * {@code IOException}), so it propagates uncaught out of the discovery methods.
    */
   @Test(expectedExceptions = StreamReadException.class)
-  public void invalidJsonInInstalledPluginsThrowsException() throws IOException
+  public void invalidJsonInInstalledPluginsThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeHook scope = new TestClaudeHook(
@@ -534,7 +534,7 @@ public final class InjectSkillListingTest
    * rather than silently skipping the plugin.
    */
   @Test(expectedExceptions = WrappedCheckedException.class)
-  public void missingInstallPathInPluginEntryThrowsException() throws IOException
+  public void missingInstallPathInPluginEntryThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeHook scope = new TestClaudeHook(

@@ -169,7 +169,7 @@ public final class SkillDiscoveryTest
    * Unquoted items work for simple paths that contain no YAML special characters.
    */
   @Test
-  public void extractPathsHandlesUnquotedMultiLineItems()
+  public void extractPathsHandlesUnquotedMultiLine()
   {
     YAMLMapper yamlMapper = YAMLMapper.builder().build();
     String frontmatter = "description: Java skill\npaths:\n  - client/src\n  - plugin/src\n";

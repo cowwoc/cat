@@ -67,7 +67,7 @@ public class GetNextIssueOutputTest
    * Verifies that IssueGoalReader returns fallback message when no Goal section.
    */
   @Test
-  public void readIssueGoalReturnsNoGoalFoundWhenSectionMissing() throws IOException
+  public void readIssueGoalReturnsNoGoalFoundWhen() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-issue");
     try
@@ -98,7 +98,7 @@ public class GetNextIssueOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void readIssueGoalReturnsNoGoalFoundWhenFileMissing() throws IOException
+  public void readIssueGoalReturnsNoGoalFoundWhenFile() throws IOException
   {
     Path tempDir = Path.of(System.getProperty("java.io.tmpdir"), "test-issue-missing-" +
       System.nanoTime());
@@ -151,7 +151,7 @@ public class GetNextIssueOutputTest
    */
   @Test(expectedExceptions = NullPointerException.class,
     expectedExceptionsMessageRegExp = ".*completedIssue.*")
-  public void getNextIssueBoxThrowsOnNullCompletedIssue() throws IOException
+  public void getNextIssueBoxThrowsOnNullCompleted() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -165,7 +165,7 @@ public class GetNextIssueOutputTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*completedIssue.*")
-  public void getNextIssueBoxThrowsOnBlankCompletedIssue() throws IOException
+  public void getNextIssueBoxThrowsOnBlankCompleted() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -263,7 +263,7 @@ public class GetNextIssueOutputTest
    */
   @Test(expectedExceptions = NullPointerException.class,
     expectedExceptionsMessageRegExp = ".*excludePattern.*")
-  public void getNextIssueBoxThrowsOnNullExcludePattern() throws IOException
+  public void getNextIssueBoxThrowsOnNullExclude() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -276,7 +276,7 @@ public class GetNextIssueOutputTest
    * Verifies that getNextIssueBox accepts empty excludePattern and returns output with box structure.
    */
   @Test
-  public void getNextIssueBoxAcceptsEmptyExcludePattern() throws IOException
+  public void getNextIssueBoxAcceptsEmptyExclude() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -380,7 +380,7 @@ public class GetNextIssueOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getOutputUsesProvidedSessionIdAndProjectDir() throws IOException
+  public void getOutputUsesProvidedSessionIdAndProject() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -439,7 +439,7 @@ public class GetNextIssueOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getNextIssueBoxSkipsCompletedAndFindsOtherIssue() throws IOException
+  public void getNextIssueBoxSkipsCompletedAndFinds() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("get-next-issue-test");
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -473,7 +473,7 @@ public class GetNextIssueOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getNextIssueBoxCombinesCompletedAndExternalExcludePatterns() throws IOException
+  public void getNextIssueBoxCombinesCompletedAnd() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("get-next-issue-test");
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))

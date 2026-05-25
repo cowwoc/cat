@@ -110,7 +110,7 @@ public final class ReleaseDocumentationTest
    * @throws IOException if reading source files fails
    */
   @Test
-  public void workExecuteAllowsCleanPreImplementationBranches() throws IOException
+  public void workExecuteAllowsCleanPreImplementation() throws IOException
   {
     Path sourceRoot = findSourceRoot();
     String workExecute = Files.readString(sourceRoot.resolve("client/plugin/agents/common/work-execute.md"),
@@ -130,7 +130,7 @@ public final class ReleaseDocumentationTest
    * @throws IOException if reading source files fails
    */
   @Test
-  public void commonWorkVerificationUsesEngineNeutralTerminology() throws IOException
+  public void commonWorkVerificationUsesEngineNeutral() throws IOException
   {
     Path sourceRoot = findSourceRoot();
     String workVerify = Files.readString(sourceRoot.resolve("client/plugin/agents/common/work-verify.md"),
@@ -144,7 +144,7 @@ public final class ReleaseDocumentationTest
    * @throws IOException if reading source files fails
    */
   @Test
-  public void workSkillTurnFixturesUseDescriptiveTestcaseIds() throws IOException
+  public void workSkillTurnFixturesUseDescriptive() throws IOException
   {
     Path sourceRoot = findSourceRoot();
     Path fixtureRoot = sourceRoot.resolve("client/plugin/tests/skills/work/first-use");

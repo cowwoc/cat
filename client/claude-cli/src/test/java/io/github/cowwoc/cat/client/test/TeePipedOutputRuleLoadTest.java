@@ -77,7 +77,7 @@ public final class TeePipedOutputRuleLoadTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void teePipedOutputRuleIncludesCompletePattern() throws IOException
+  public void teePipedOutputRuleIncludesComplete() throws IOException
   {
     Path projectPath = Files.createTempDirectory("tee-pattern-project-");
     Path pluginRoot = Files.createTempDirectory("tee-pattern-plugin-");

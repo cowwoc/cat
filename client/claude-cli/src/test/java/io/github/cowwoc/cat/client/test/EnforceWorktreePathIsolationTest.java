@@ -131,7 +131,7 @@ public class EnforceWorktreePathIsolationTest
    * owned by the same session in lock metadata.
    */
   @Test
-  public void fileInsideSessionOwnedSecondaryWorktreeIsAllowed() throws IOException
+  public void fileInsideSessionOwnedSecondaryWorktree() throws IOException
   {
     Path projectPath = Files.createTempDirectory("ewpi-test-");
     try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
@@ -384,7 +384,7 @@ public class EnforceWorktreePathIsolationTest
    * Verifies legacy lock handling when {@code worktrees} is missing but {@code session_id} exists.
    */
   @Test
-  public void missingWorktreesFallsBackToLegacySessionId() throws IOException
+  public void missingWorktreesFallsBackToLegacySession() throws IOException
   {
     Path projectPath = Files.createTempDirectory("ewpi-test-");
     try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
@@ -493,7 +493,7 @@ public class EnforceWorktreePathIsolationTest
    * for the corrected path inside the worktree.
    */
   @Test
-  public void fileInsideWorkspaceShowsCorrectedPathSuggestion() throws IOException
+  public void fileInsideWorkspaceShowsCorrectedPath() throws IOException
   {
     Path projectPath = Files.createTempDirectory("ewpi-test-");
     try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
@@ -528,7 +528,7 @@ public class EnforceWorktreePathIsolationTest
    * so the write should be allowed even when a worktree is active.
    */
   @Test
-  public void pathWithDotsNormalizedOutsideWorkspaceIsAllowed() throws IOException
+  public void pathWithDotsNormalizedOutsideWorkspaceIs() throws IOException
   {
     Path projectPath = Files.createTempDirectory("ewpi-test-");
     try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
@@ -721,7 +721,7 @@ public class EnforceWorktreePathIsolationTest
    * instead.
    */
   @Test
-  public void catSubdirectoryShowsCorrectedWorktreePath() throws IOException
+  public void catSubdirectoryShowsCorrectedWorktree() throws IOException
   {
     Path projectPath = Files.createTempDirectory("ewpi-test-");
     try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))

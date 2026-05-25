@@ -43,7 +43,7 @@ public final class SquashAutoCloseIndexJsonTest
    * @throws IOException if test setup or assertion fails
    */
   @Test
-  public void squashAutoCloseThenApproveFlowAllowsGateWhenClosed() throws IOException
+  public void squashAutoCloseThenApproveFlowAllowsGate() throws IOException
   {
     // Step 1: Create a temp git repo on the CAT issue branch "2.1-squash-flow"
     Path repoDir = TestUtils.createTempGitRepo("2.1-squash-flow");

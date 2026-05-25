@@ -90,7 +90,7 @@ public final class SessionEndHandlerTest
    * Verifies that the handler completes successfully when the sessions directory does not exist.
    */
   @Test
-  public void sessionEndHandlesNonExistentWorkDirectory() throws IOException
+  public void sessionEndHandlesNonExistentWork() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
     try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
@@ -145,7 +145,7 @@ public final class SessionEndHandlerTest
    * exercises the "Claude session directory exists" preservation path.
    */
   @Test
-  public void sessionEndPreservesActiveSessionWorkFiles() throws IOException
+  public void sessionEndPreservesActiveSessionWork() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
     try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
@@ -219,7 +219,7 @@ public final class SessionEndHandlerTest
    * Claude session directory does not yet exist (e.g., race condition at session end).
    */
   @Test
-  public void sessionEndSkipsCurrentSessionEvenWithoutClaudeDirectory() throws IOException
+  public void sessionEndSkipsCurrentSessionEvenWithout() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
     try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
@@ -282,7 +282,7 @@ public final class SessionEndHandlerTest
    * the 2 active sessions are preserved.
    */
   @Test
-  public void sessionEndCleansMultipleStaleSessionsLeavingOnlyActive() throws IOException
+  public void sessionEndCleansMultipleStaleSessions() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
     try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
@@ -338,7 +338,7 @@ public final class SessionEndHandlerTest
    * session's work directory.
    */
   @Test
-  public void sessionEndUsesScopeSessionIdToSkipCurrentSession() throws IOException
+  public void sessionEndUsesScopeSessionIdToSkip() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
     try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
@@ -399,7 +399,7 @@ public final class SessionEndHandlerTest
    * located at {@code {claudeConfigPath}/projects/{encodedProjectRoot}/}.
    */
   @Test
-  public void claudeSessionPathParentIsClaudeProjectsDirectory() throws IOException
+  public void claudeSessionPathParentIsClaudeProjects() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-handler-test");
     try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))

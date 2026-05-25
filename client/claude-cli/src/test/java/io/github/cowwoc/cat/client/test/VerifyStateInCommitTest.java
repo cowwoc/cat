@@ -63,7 +63,7 @@ public final class VerifyStateInCommitTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void blocksApprovalGateWhenBranchCannotBeDetermined() throws IOException
+  public void blocksApprovalGateWhenBranchCannotBe() throws IOException
   {
     // tempDir is not a git repo, so getCurrentBranch will throw IOException -> block
     Path tempDir = Files.createTempDirectory("vsic-test-");
@@ -94,7 +94,7 @@ public final class VerifyStateInCommitTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void allowsApprovalGateWhenBranchNotCatConvention() throws IOException
+  public void allowsApprovalGateWhenBranchNotCat() throws IOException
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
@@ -221,7 +221,7 @@ public final class VerifyStateInCommitTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void blocksApprovalGateWhenIndexJsonInProgress() throws IOException
+  public void blocksApprovalGateWhenIndexJsonIn() throws IOException
   {
     Path tempDir = TestUtils.createTempGitRepo("2.1-in-progress-issue");
     try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))

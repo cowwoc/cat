@@ -70,7 +70,7 @@ public final class NormalizedGitHandlersTest
    * Verifies that reflog destruction blocking still works with a {@code -C} prefix.
    */
   @Test
-  public void blockReflogDestructionRecognizesGlobalFlags() throws IOException
+  public void blockReflogDestructionRecognizesGlobal() throws IOException
   {
     try (TestClaudeHook scope = TestUtils.bashHook("git -C /tmp/repo reflog expire --expire=now --all",
       Path.of("/workspace"), "session-1"))
@@ -85,7 +85,7 @@ public final class NormalizedGitHandlersTest
    * Verifies that reflog expire remains blocked with work-tree prefixed form.
    */
   @Test
-  public void blockReflogDestructionRecognizesWorkTreePrefix() throws IOException
+  public void blockReflogDestructionRecognizesWorkTree() throws IOException
   {
     try (TestClaudeHook scope = TestUtils.bashHook(
       "git --work-tree=/tmp/repo reflog expire --expire=now --all", Path.of("/workspace"), "session-1"))
@@ -100,7 +100,7 @@ public final class NormalizedGitHandlersTest
    * Verifies that gc prune-all remains blocked with work-tree prefixed form.
    */
   @Test
-  public void blockReflogDestructionRecognizesWorkTreeGcPruneAll() throws IOException
+  public void blockReflogDestructionRecognizesWorkTre2() throws IOException
   {
     try (TestClaudeHook scope = TestUtils.bashHook("git --work-tree=/tmp/repo gc --prune=all",
       Path.of("/workspace"), "session-1"))
@@ -130,7 +130,7 @@ public final class NormalizedGitHandlersTest
    * Verifies that acknowledged gc prune-now is allowed.
    */
   @Test
-  public void blockReflogDestructionAllowsAcknowledgedGcPruneNow() throws IOException
+  public void blockReflogDestructionAllowsAcknowledged() throws IOException
   {
     try (TestClaudeHook scope = TestUtils.bashHook("git gc --prune=now # ACKNOWLEDGED: gc prune",
       Path.of("/workspace"), "session-1"))
@@ -145,7 +145,7 @@ public final class NormalizedGitHandlersTest
    * Verifies that history-rewrite validation still works with a {@code -C} prefix.
    */
   @Test
-  public void validateGitFilterBranchRecognizesGlobalFlags() throws IOException
+  public void validateGitFilterBranchRecognizesGlobal() throws IOException
   {
     try (TestClaudeHook scope = TestUtils.bashHook("git -C /tmp/repo filter-branch --all",
       Path.of("/workspace"), "session-1"))
@@ -160,7 +160,7 @@ public final class NormalizedGitHandlersTest
    * Verifies that reset-hard blocking still works with a {@code -C} prefix.
    */
   @Test
-  public void validateGitOperationsRecognizesGlobalFlags() throws IOException
+  public void validateGitOperationsRecognizesGlobal() throws IOException
   {
     try (TestClaudeHook scope = TestUtils.bashHook("git -C /tmp/repo reset --hard HEAD~1",
       Path.of("/workspace"), "session-1"))
@@ -175,7 +175,7 @@ public final class NormalizedGitHandlersTest
    * Verifies that reset-hard acknowledgment must appear on the reset command segment.
    */
   @Test
-  public void validateGitOperationsDoesNotUseCrossSegmentAcknowledgment() throws IOException
+  public void validateGitOperationsDoesNotUseCross() throws IOException
   {
     try (TestClaudeHook scope = TestUtils.bashHook("echo '# ACKNOWLEDGED' && git reset --hard HEAD",
       Path.of("/workspace"), "session-1"))
@@ -190,7 +190,7 @@ public final class NormalizedGitHandlersTest
    * Verifies that unrelated text containing {@code worktrees} does not bypass reset-hard blocking.
    */
   @Test
-  public void validateGitOperationsDoesNotUseWorktreesSubstring() throws IOException
+  public void validateGitOperationsDoesNotUseWorktrees() throws IOException
   {
     try (TestClaudeHook scope = TestUtils.bashHook("echo worktrees && git reset --hard HEAD",
       Path.of("/workspace"), "session-1"))
@@ -205,7 +205,7 @@ public final class NormalizedGitHandlersTest
    * Verifies that reset-hard is allowed when the command runs from the active issue worktree.
    */
   @Test
-  public void validateGitOperationsAllowsResetHardInActiveWorktree() throws IOException
+  public void validateGitOperationsAllowsResetHardIn() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("ngr-test-");
@@ -236,7 +236,7 @@ public final class NormalizedGitHandlersTest
    * Verifies that an acknowledged reset-hard command is allowed in issue worktree context.
    */
   @Test
-  public void validateGitOperationsContinuesAfterAllowedResetHard() throws IOException
+  public void validateGitOperationsContinuesAfter() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("ngr-test-");
@@ -269,7 +269,7 @@ public final class NormalizedGitHandlersTest
    * Verifies that reset-hard is blocked when git scope is overridden outside the issue worktree.
    */
   @Test
-  public void validateGitOperationsBlocksResetHardOutsideWorktreeWithScopeOverride() throws IOException
+  public void validateGitOperationsBlocksResetHard() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("ngr-test-");
@@ -302,7 +302,7 @@ public final class NormalizedGitHandlersTest
    * Verifies that quoted ACK text in arguments does not bypass reset-hard blocking.
    */
   @Test
-  public void validateGitOperationsDoesNotTreatQuotedAcknowledgmentAsBypass() throws IOException
+  public void validateGitOperationsDoesNotTreatQuoted() throws IOException
   {
     try (TestClaudeHook scope = TestUtils.bashHook("git reset --hard '# ACKNOWLEDGED'",
       Path.of("/workspace"), "session-1"))
@@ -317,7 +317,7 @@ public final class NormalizedGitHandlersTest
    * Verifies that reset-hard with work-tree override outside the issue worktree is blocked.
    */
   @Test
-  public void validateGitOperationsBlocksResetHardWithWorkTreeOverrideOutsideIssueWorktree()
+  public void validateGitOperationsBlocksResetHardWith()
     throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("main");
@@ -350,7 +350,7 @@ public final class NormalizedGitHandlersTest
    * Verifies compact work-tree override is blocked outside issue worktree.
    */
   @Test
-  public void validateGitOperationsBlocksResetHardWithCompactWorkTreeOverrideOutsideIssueWorktree()
+  public void validateGitOperationsBlocksResetHardWit2()
     throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("main");
@@ -383,7 +383,7 @@ public final class NormalizedGitHandlersTest
    * Verifies that mixed overrides are blocked when git-dir escapes the issue worktree.
    */
   @Test
-  public void validateGitOperationsBlocksResetHardWithExternalGitDirOverride() throws IOException
+  public void validateGitOperationsBlocksResetHardWit3() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("ngr-test-");
@@ -415,7 +415,7 @@ public final class NormalizedGitHandlersTest
    * Verifies compact git-dir override is blocked when it escapes issue worktree.
    */
   @Test
-  public void validateGitOperationsBlocksResetHardWithCompactExternalGitDirOverride() throws IOException
+  public void validateGitOperationsBlocksResetHardWit4() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("ngr-test-");

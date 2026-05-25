@@ -41,7 +41,7 @@ public final class GlobMatcherTest
    * Verifies that {@code *.java} does not match a file without extension.
    */
   @Test
-  public void basicGlobDoesNotMatchFileWithoutExtension()
+  public void basicGlobDoesNotMatchFileWithout()
   {
     requireThat(GlobMatcher.matches("*.java", "MyClass"),
       "matches(*.java,MyClass)").isFalse();

@@ -38,7 +38,7 @@ public class ExistingWorkCheckerTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void checkReturnsNoExistingWorkWhenAtTargetBranch() throws IOException
+  public void checkReturnsNoExistingWorkWhenAtTarget() throws IOException
   {
     Path tempDir = createTempGitRepo();
     try
@@ -213,7 +213,7 @@ public class ExistingWorkCheckerTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void checkReturnsExactlyFiveCommitsWhenAtBoundary() throws IOException
+  public void checkReturnsExactlyFiveCommitsWhenAt() throws IOException
   {
     Path tempDir = createTempGitRepo();
     try
@@ -245,7 +245,7 @@ public class ExistingWorkCheckerTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void toJsonProducesCorrectFormatForNoExistingWork() throws IOException
+  public void toJsonProducesCorrectFormatForNoExisting() throws IOException
   {
     try (AgentScope scope = new TestClaudeTool())
     {
@@ -267,7 +267,7 @@ public class ExistingWorkCheckerTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void toJsonProducesCorrectFormatForExistingWork() throws IOException
+  public void toJsonProducesCorrectFormatForCheck() throws IOException
   {
     try (AgentScope scope = new TestClaudeTool())
     {
@@ -330,7 +330,7 @@ public class ExistingWorkCheckerTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void runWithMissingWorktreeWritesErrorToStderr() throws IOException
+  public void runWithMissingWorktreeWritesErrorTo() throws IOException
   {
     try (AgentScope scope = new TestClaudeTool())
     {
@@ -356,7 +356,7 @@ public class ExistingWorkCheckerTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void runWithMissingTargetBranchWritesErrorToStderr() throws IOException
+  public void runWithMissingTargetBranchWritesErrorTo() throws IOException
   {
     Path tempDir = createTempGitRepo();
     try (AgentScope scope = new TestClaudeTool())

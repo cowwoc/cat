@@ -22,7 +22,7 @@ public final class CodexSandboxPolicyTest
    * Verifies that CAT session runs are treated as nested sandboxed executions.
    */
   @Test
-  public void catSessionDoesNotForceNestedSandboxOverride()
+  public void catSessionDoesNotForceNestedSandbox()
   {
     boolean result = CodexSandboxPolicy.isExternallySandboxedEngine(Map.of("CAT_SESSION_ID",
       "session-123"));

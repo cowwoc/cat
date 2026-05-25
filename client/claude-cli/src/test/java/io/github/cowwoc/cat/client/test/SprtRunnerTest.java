@@ -175,7 +175,7 @@ public final class SprtRunnerTest
    * Verifies that extract-model defaults to "haiku" when no model field is present in frontmatter.
    */
   @Test
-  public void extractModelRejectsSkillWithoutModelField() throws IOException, InterruptedException
+  public void extractModelRejectsSkillWithoutModel() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -436,7 +436,7 @@ public final class SprtRunnerTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*outside.*")
-  public void runSprtRejectsRelativeTestDirOutsideWorktree() throws IOException, InterruptedException
+  public void runSprtRejectsRelativeTestDirOutside() throws IOException, InterruptedException
   {
     Path parent = Files.createTempDirectory("test-skill-test-runner-parent-");
     Path worktree = parent.resolve("worktree");
@@ -462,7 +462,7 @@ public final class SprtRunnerTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*outside.*")
-  public void runSprtRejectsSymlinkedTestDirOutsideWorktree() throws IOException, InterruptedException
+  public void runSprtRejectsSymlinkedTestDirOutside() throws IOException, InterruptedException
   {
     Path parent = Files.createTempDirectory("test-skill-test-runner-parent-");
     Path worktree = parent.resolve("worktree");
@@ -496,7 +496,7 @@ public final class SprtRunnerTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Invalid Claude model ID.*")
-  public void runSprtRejectsUnsupportedClaudeModelAtEntrypoint()
+  public void runSprtRejectsUnsupportedClaudeModelAt()
     throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
@@ -517,7 +517,7 @@ public final class SprtRunnerTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Invalid Codex model ID.*")
-  public void runSprtRejectsUnsupportedCodexModelAtEntrypoint()
+  public void runSprtRejectsUnsupportedCodexModelAt()
     throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
@@ -545,7 +545,7 @@ public final class SprtRunnerTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Invalid effort.*")
-  public void runSprtRejectsUnsupportedEffortAtEntrypoint()
+  public void runSprtRejectsUnsupportedEffortAt()
     throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
@@ -566,7 +566,7 @@ public final class SprtRunnerTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Invalid effort.*")
-  public void runSprtRejectsUnsupportedCodexEffortAtEntrypoint()
+  public void runSprtRejectsUnsupportedCodexEffortAt()
     throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
@@ -677,7 +677,7 @@ public final class SprtRunnerTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*test_dir.*")
-  public void parseRunSprtArgsRejectsBlankTestDirectory()
+  public void parseRunSprtArgsRejectsBlankTest()
   {
     SharedSecrets.parseRunSprtArgs(new String[]{"/tmp/worktree", " ", "claude-haiku-4-5",
       "high", "test-session-id"});
@@ -1187,7 +1187,7 @@ public final class SprtRunnerTest
    * Verifies that merge-results produces reject overall_decision.
    */
   @Test
-  public void mergeResultsAnyRejectProducesRejectOverall() throws IOException, InterruptedException
+  public void mergeResultsAnyRejectProducesReject() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -1376,7 +1376,7 @@ public final class SprtRunnerTest
    * Verifies that write-test-results computes reject overall_decision.
    */
   @Test
-  public void writeTestResultsRejectDecisionWritesRejectOverall() throws IOException, InterruptedException
+  public void writeTestResultsRejectDecisionWrites() throws IOException, InterruptedException
   {
     Path repoDir = TestUtils.createTempGitRepo("test-branch");
     try
@@ -1466,7 +1466,7 @@ public final class SprtRunnerTest
    * Verifies that remove-runner-worktrees returns zero when no runner worktrees exist.
    */
   @Test
-  public void removeRunnerWorktreesNoMatchingWorktreesReturnsZero() throws IOException, InterruptedException
+  public void removeRunnerWorktreesNoMatchingWorktrees() throws IOException, InterruptedException
   {
     Path repoDir = TestUtils.createTempGitRepo("test-branch");
     try
@@ -1553,7 +1553,7 @@ public final class SprtRunnerTest
    * when the SHA-256 of the current skill file matches the provided hash.
    */
   @Test
-  public void detectChangesSha256MatchAllCarriedForward() throws IOException, InterruptedException
+  public void detectChangesSha256MatchAllCarried() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -1704,7 +1704,7 @@ public final class SprtRunnerTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*64.*")
-  public void detectChangesInvalidShaShortStringThrowsIllegalArgument() throws IOException, InterruptedException
+  public void detectChangesInvalidShaShortStringThrows() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -1731,7 +1731,7 @@ public final class SprtRunnerTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*64.*")
-  public void detectChangesInvalidShaNotHexThrowsIllegalArgument() throws IOException, InterruptedException
+  public void detectChangesInvalidShaNotHexThrows() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -1756,7 +1756,7 @@ public final class SprtRunnerTest
    * Verifies that detect-changes with an empty test directory returns empty arrays for all ID fields.
    */
   @Test
-  public void detectChangesEmptyTestDirectoryReturnsEmptyArrays() throws IOException, InterruptedException
+  public void detectChangesEmptyTestDirectoryReturns() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -1801,7 +1801,7 @@ public final class SprtRunnerTest
    * Verifies that extract-model defaults to "haiku" when SKILL.md is missing the model frontmatter field.
    */
   @Test
-  public void extractModelRejectsMissingModelFrontmatter() throws IOException, InterruptedException
+  public void extractModelRejectsMissingModel() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-extract-model-");
     Path pluginRoot = tempDir.resolve("plugin");
@@ -1884,7 +1884,7 @@ public final class SprtRunnerTest
    * Verifies that stakeholder-review prompts include explicit working-directory context.
    */
   @Test
-  public void stakeholderReviewPromptIncludesWorkingDirectoryContext() throws IOException
+  public void stakeholderReviewPromptIncludesWorking() throws IOException
   {
     Path repoRoot = Path.of("").toAbsolutePath().normalize().getParent();
     requireThat(repoRoot, "repoRoot").isNotNull();
@@ -1906,7 +1906,7 @@ public final class SprtRunnerTest
    * Verifies that persist-artifacts writes instruction-test.json with expected JSON fields.
    */
   @Test
-  public void persistArtifactsWritesInstructionTestJson() throws IOException, InterruptedException
+  public void persistArtifactsWritesInstructionTest() throws IOException, InterruptedException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
@@ -2059,7 +2059,7 @@ public final class SprtRunnerTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*worktree root not found.*")
-  public void persistArtifactsThrowsWhenWorktreeRootMissing() throws IOException, InterruptedException
+  public void persistArtifactsThrowsWhenWorktreeRoot() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -2267,7 +2267,7 @@ public final class SprtRunnerTest
    * Verifies that remove-runner-worktree removes the worktree directory and deletes the branch.
    */
   @Test
-  public void removeRunnerWorktreeRemovesWorktreeAndBranch() throws IOException, InterruptedException
+  public void removeRunnerWorktreeRemovesWorktreeAnd() throws IOException, InterruptedException
   {
     Path mainRepo = TestUtils.createTempGitRepo("my-issue");
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
@@ -2736,7 +2736,7 @@ public final class SprtRunnerTest
    * Verifies that write-test-results returns overall_decision and test_sha after a successful commit.
    */
   @Test
-  public void writeTestResultsReturnsOverallDecisionAndSha() throws IOException, InterruptedException
+  public void writeTestResultsReturnsOverallDecision() throws IOException, InterruptedException
   {
     Path mainRepo = TestUtils.createTempGitRepo("my-issue");
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
@@ -2779,7 +2779,7 @@ public final class SprtRunnerTest
    * Verifies that the Claude trial runner receives the expected argument shape.
    */
   @Test
-  public void buildClaudeTrialArgsIncludesEngineSpecificArguments() throws IOException
+  public void buildClaudeTrialArgsIncludesEngine() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-trial-args-");
     try
@@ -2821,7 +2821,7 @@ public final class SprtRunnerTest
    * Verifies that the Codex trial runner receives the expected argument shape.
    */
   @Test
-  public void buildCodexTrialArgsIncludesEngineSpecificArguments() throws IOException
+  public void buildCodexTrialArgsIncludesEngine() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-trial-args-");
     try
@@ -2899,7 +2899,7 @@ public final class SprtRunnerTest
    * Verifies that the Codex grader receives the expected argument shape.
    */
   @Test
-  public void buildCodexGraderArgsIncludesEngineSpecificArguments() throws IOException
+  public void buildCodexGraderArgsIncludesEngine() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-grader-args-");
     try
@@ -2934,7 +2934,7 @@ public final class SprtRunnerTest
    */
   @Test(expectedExceptions = NullPointerException.class,
     expectedExceptionsMessageRegExp = ".*promptFile.*")
-  public void buildClaudeTrialArgsRejectsNullPromptFile()
+  public void buildClaudeTrialArgsRejectsNullPrompt()
   {
     SharedSecrets.buildClaudeTrialArgs(null, "claude-sonnet-4-5", "high", "/tmp/worktree",
       "/tmp/output.json", Path.of("/tmp/worktree/client/distribution/target/jlink/claude/bin"));
@@ -2968,7 +2968,7 @@ public final class SprtRunnerTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*runnerWorktree.*")
-  public void buildCodexGraderArgsRejectsBlankRunnerWorktree()
+  public void buildCodexGraderArgsRejectsBlankRunner()
   {
     SharedSecrets.buildCodexGraderArgs(Path.of("/tmp/grader-prompt.txt"), "gpt-5.3-codex",
       "high", " ");
@@ -2990,7 +2990,7 @@ public final class SprtRunnerTest
    */
   @Test(expectedExceptions = IllegalStateException.class,
     expectedExceptionsMessageRegExp = ".*Unsupported CAT engine descriptor.*")
-  public void engineTrialArgsRejectUnsupportedDescriptor()
+  public void engineTrialArgsRejectUnsupported()
   {
     SharedSecrets.buildTrialArgsForDescriptor(Path.of("/tmp/unsupported-plugin.json"),
       Path.of("/tmp/prompt.txt"), "claude-sonnet-4-5", "high", "/tmp/worktree",
@@ -3046,7 +3046,7 @@ public final class SprtRunnerTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Invalid Claude model ID.*")
-  public void engineClaudeTrialArgsRejectUnsupportedModel()
+  public void engineClaudeTrialArgsRejectUnsupported()
   {
     SharedSecrets.buildTrialArgsForDescriptor(AgentEngine.CLAUDE.pluginDescriptor(),
       Path.of("/tmp/prompt.txt"), "gpt-5.3-codex", "high", "/tmp/worktree",
@@ -3058,7 +3058,7 @@ public final class SprtRunnerTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Invalid effort.*")
-  public void engineCodexTrialArgsRejectUnsupportedEffort()
+  public void engineCodexTrialArgsRejectUnsupported()
   {
     SharedSecrets.buildTrialArgsForDescriptor(AgentEngine.CODEX.pluginDescriptor(),
       Path.of("/tmp/prompt.txt"), "gpt-5.3-codex", "extreme", "/tmp/worktree",
@@ -3070,7 +3070,7 @@ public final class SprtRunnerTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Invalid effort.*")
-  public void engineClaudeTrialArgsRejectCodexOnlyEffort()
+  public void engineClaudeTrialArgsRejectCodexOnly()
   {
     SharedSecrets.buildClaudeTrialArgs(Path.of("/tmp/prompt.txt"), "claude-sonnet-4-5",
       "minimal", "/tmp/worktree", "/tmp/output.json", Path.of("/tmp/jlink/bin"));
@@ -3081,7 +3081,7 @@ public final class SprtRunnerTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Invalid effort.*")
-  public void engineCodexTrialArgsRejectClaudeOnlyEffort()
+  public void engineCodexTrialArgsRejectClaudeOnly()
   {
     SharedSecrets.buildTrialArgsForDescriptor(AgentEngine.CODEX.pluginDescriptor(),
       Path.of("/tmp/prompt.txt"), "gpt-5.3-codex", "max", "/tmp/worktree",
@@ -3092,7 +3092,7 @@ public final class SprtRunnerTest
    * Verifies that engine-dispatched Claude trial arguments accept Claude-only efforts.
    */
   @Test
-  public void engineClaudeTrialArgsAcceptClaudeOnlyEffort()
+  public void engineClaudeTrialArgsAcceptClaudeOnly()
   {
     String[] args = SharedSecrets.buildClaudeTrialArgs(Path.of("/tmp/prompt.txt"),
       "claude-sonnet-4-5", "max", "/tmp/worktree", "/tmp/output.json",
@@ -3117,7 +3117,7 @@ public final class SprtRunnerTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*runnerWorktree.*")
-  public void engineGraderArgsRejectBlankRunnerWorktree()
+  public void engineGraderArgsRejectBlankRunner()
   {
     SharedSecrets.buildGraderArgsForDescriptor(AgentEngine.CODEX.pluginDescriptor(),
       Path.of("/tmp/grader-prompt.txt"), "gpt-5.3-codex", "high", " ");
@@ -3150,7 +3150,7 @@ public final class SprtRunnerTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Invalid effort.*")
-  public void engineClaudeGraderArgsRejectUnsupportedEffort()
+  public void engineClaudeGraderArgsRejectUnsupported()
   {
     SharedSecrets.buildGraderArgsForDescriptor(AgentEngine.CLAUDE.pluginDescriptor(),
       Path.of("/tmp/grader-prompt.txt"), "claude-sonnet-4-5", "extreme", "/tmp/worktree");
@@ -3161,7 +3161,7 @@ public final class SprtRunnerTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Invalid Codex model ID.*")
-  public void engineCodexGraderArgsRejectUnsupportedModel()
+  public void engineCodexGraderArgsRejectUnsupported()
   {
     SharedSecrets.buildGraderArgsForDescriptor(AgentEngine.CODEX.pluginDescriptor(),
       Path.of("/tmp/grader-prompt.txt"), "claude-sonnet-4-5", "high", "/tmp/worktree");
@@ -3341,7 +3341,7 @@ public final class SprtRunnerTest
    */
   @Test(expectedExceptions = NullPointerException.class,
     expectedExceptionsMessageRegExp = ".*graderPromptFile.*")
-  public void buildClaudeGraderArgsRejectsNullPromptFile()
+  public void buildClaudeGraderArgsRejectsNullPrompt()
   {
     SharedSecrets.buildClaudeGraderArgs(null, "model", "medium", "/tmp/worktree",
       Path.of("/tmp/jlink/bin"));

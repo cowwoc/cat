@@ -108,7 +108,7 @@ public final class TrustLevelTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".* LOW .*")
-  public void fromStringWhitespacePaddedThrowsIllegalArgument()
+  public void fromStringWhitespacePaddedThrowsIllegal()
   {
     TrustLevel.fromString(" low ");
   }

@@ -201,7 +201,7 @@ public class SessionAnalyzerMainTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Usage.*file-history.*")
-  public void fileHistoryMissingPathPatternThrowsException() throws IOException
+  public void fileHistoryMissingPathPatternThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-analyzer-main-test-");
     try (CliTool scope = new TestClaudeTool(tempDir, tempDir))

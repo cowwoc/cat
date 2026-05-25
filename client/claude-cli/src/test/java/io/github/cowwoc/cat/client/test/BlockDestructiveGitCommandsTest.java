@@ -69,7 +69,7 @@ public final class BlockDestructiveGitCommandsTest
    * Verifies that long-form protected branch force-delete is blocked.
    */
   @Test
-  public void protectedBranchLongFormForceDeleteIsBlocked() throws IOException
+  public void protectedBranchLongFormForceDeleteIs() throws IOException
   {
     try (TestClaudeHook scope = TestUtils.bashHook("git branch --delete --force main",
       Path.of("/workspace"), "session-1"))
@@ -204,7 +204,7 @@ public final class BlockDestructiveGitCommandsTest
    * Verifies that acknowledgment applies only to the matching command segment.
    */
   @Test
-  public void acknowledgedDifferentSegmentDoesNotBypass() throws IOException
+  public void acknowledgedDifferentSegmentDoesNot() throws IOException
   {
     try (TestClaudeHook scope = TestUtils.bashHook("echo '# ACKNOWLEDGED' && git clean -fd",
       Path.of("/workspace"), "session-1"))
@@ -234,7 +234,7 @@ public final class BlockDestructiveGitCommandsTest
    * Verifies that double-quoted acknowledgment text does not count as a shell comment.
    */
   @Test
-  public void doubleQuotedAcknowledgmentTextDoesNotBypass() throws IOException
+  public void doubleQuotedAcknowledgmentTextDoesNot() throws IOException
   {
     try (TestClaudeHook scope = TestUtils.bashHook("git clean -fd \"# ACKNOWLEDGED\"",
       Path.of("/workspace"), "session-1"))
@@ -249,7 +249,7 @@ public final class BlockDestructiveGitCommandsTest
    * Verifies that escaped hash does not count as an acknowledgment comment.
    */
   @Test
-  public void escapedHashAcknowledgmentTextDoesNotBypass() throws IOException
+  public void escapedHashAcknowledgmentTextDoesNot() throws IOException
   {
     try (TestClaudeHook scope = TestUtils.bashHook("git clean -fd \\# ACKNOWLEDGED",
       Path.of("/workspace"), "session-1"))

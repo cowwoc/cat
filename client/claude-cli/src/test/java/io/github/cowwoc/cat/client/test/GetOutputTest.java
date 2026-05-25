@@ -63,7 +63,7 @@ public class GetOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void dotNotationInstructionsReferenceFullOutputType() throws IOException
+  public void dotNotationInstructionsReferenceFull() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -171,7 +171,7 @@ public class GetOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void outputContainsErrorContentFallbackInstructions() throws IOException
+  public void outputContainsErrorContentFallback() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-errors-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -346,7 +346,7 @@ public class GetOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void instructionTestAggregatorRoutesThroughDispatcher() throws IOException
+  public void instructionTestAggregatorRoutesThrough() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-instruction-test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -379,7 +379,7 @@ public class GetOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void descriptionOptimizerRoutesThroughDispatcher() throws IOException
+  public void descriptionOptimizerRoutesThrough() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-desc-opt-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -525,7 +525,7 @@ public class GetOutputTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Unknown skill.*")
-  public void subagentIdAndDotNotationFirstArgIsNotSkipped() throws IOException
+  public void subagentIdAndDotNotationFirstArgIsNot() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-get-output-integration-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))

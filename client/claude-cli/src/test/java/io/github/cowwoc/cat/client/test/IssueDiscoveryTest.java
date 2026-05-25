@@ -192,7 +192,7 @@ public class IssueDiscoveryTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void specificIssueAlreadyClosedReturnsAlreadyComplete() throws IOException
+  public void specificIssueAlreadyClosedReturnsAlready() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -251,7 +251,7 @@ public class IssueDiscoveryTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void issueWithUnsatisfiedDependenciesIsSkipped() throws IOException
+  public void issueWithUnsatisfiedDependenciesIs() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -321,7 +321,7 @@ public class IssueDiscoveryTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void specificIssueWithUnsatisfiedDependenciesReturnsBlocked() throws IOException
+  public void specificIssueWithUnsatisfiedDependencies() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -357,7 +357,7 @@ public class IssueDiscoveryTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void decomposedParentWithOpenSubissuesIsSkipped() throws IOException
+  public void decomposedParentWithOpenSubissuesIs() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -393,7 +393,7 @@ public class IssueDiscoveryTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void decomposedParentWithAllSubissuesClosedIsEligible() throws IOException
+  public void decomposedParentWithAllSubissuesClosedIs() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -547,7 +547,7 @@ public class IssueDiscoveryTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Not a CAT project.*")
-  public void constructorThrowsOnInvalidProjectDirectory()
+  public void constructorThrowsOnInvalidProject()
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -631,7 +631,7 @@ public class IssueDiscoveryTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void notFoundWithExcludedCountIncludesPatternDetails() throws IOException
+  public void notFoundWithExcludedCountIncludesPattern() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -774,7 +774,7 @@ public class IssueDiscoveryTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void specificIssueWithExistingWorktreeReturnsExistingWorktree() throws IOException
+  public void specificIssueWithExistingWorktreeReturns() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -809,7 +809,7 @@ public class IssueDiscoveryTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void postconditionIssueIsEnforcedWhenPrerequisitesAreOpen() throws IOException
+  public void postconditionIssueIsEnforcedWhen() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -879,7 +879,7 @@ public class IssueDiscoveryTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void postconditionIssueSkippedWhenOverridePostconditionsIsTrue() throws IOException
+  public void postconditionIssueSkippedWhenOverride() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -995,7 +995,7 @@ public class IssueDiscoveryTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void versionWithUnsatisfiedDependenciesIsSkipped() throws IOException
+  public void versionWithUnsatisfiedDependenciesIs() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -1033,7 +1033,7 @@ public class IssueDiscoveryTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void blockedResultContainsAllUnsatisfiedDependencies() throws IOException
+  public void blockedResultContainsAllUnsatisfied() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -1075,7 +1075,7 @@ public class IssueDiscoveryTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void bareNameWithMultipleMatchesSelectsFirstVersionInSortOrder() throws IOException
+  public void bareNameWithMultipleMatchesSelectsFirst() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -1110,7 +1110,7 @@ public class IssueDiscoveryTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void excludePatternWithRegexSpecialCharsWorksCorrectly() throws IOException
+  public void excludePatternWithRegexSpecialCharsWorks() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -1621,7 +1621,7 @@ public class IssueDiscoveryTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void issueInComplexCircularDependencyIsBlocked() throws IOException
+  public void issueInComplexCircularDependencyIs() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -1654,7 +1654,7 @@ public class IssueDiscoveryTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void issueNotInCycleIsFoundDespiteExistingCycle() throws IOException
+  public void issueNotInCycleIsFoundDespiteExisting() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -1749,7 +1749,7 @@ public class IssueDiscoveryTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void nonGitEnvironmentFallsBackToAlphabeticalSort() throws IOException
+  public void nonGitEnvironmentFallsBackToAlphabetical() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -1837,7 +1837,7 @@ public class IssueDiscoveryTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void gitCommandFailureFallsBackToAlphabeticalSort() throws IOException
+  public void gitCommandFailureFallsBackToAlphabetical() throws IOException
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -1948,7 +1948,7 @@ public class IssueDiscoveryTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getIssueStatusReturnOpenWhenStatusFieldMissing() throws IOException
+  public void getIssueStatusReturnOpenWhenStatusField() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -1982,7 +1982,7 @@ public class IssueDiscoveryTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void findSpecificIssueWithNullIndexJsonTreatsAsOpen() throws IOException
+  public void findSpecificIssueWithNullIndexJsonTreats() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -2025,7 +2025,7 @@ public class IssueDiscoveryTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void allScopeDiscoveryReleasesLockWhenWorktreeExists() throws IOException
+  public void allScopeDiscoveryReleasesLockWhen() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -2067,7 +2067,7 @@ public class IssueDiscoveryTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void foundResultIsCorruptWhenIndexJsonExistsButNoPlanMd() throws IOException
+  public void foundResultIsCorruptWhenIndexJsonExists() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -2106,7 +2106,7 @@ public class IssueDiscoveryTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void foundResultIsNotCorruptWhenBothIndexJsonAndPlanMdExist() throws IOException
+  public void foundResultIsNotCorruptWhenBothIndexJson() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -2137,7 +2137,7 @@ public class IssueDiscoveryTest
    * is valid (directory has neither index.json nor plan.md).
    */
   @Test
-  public void foundRecordAllowsIsCorruptAndCreateIndexJsonBothTrue()
+  public void foundRecordAllowsIsCorruptAndCreateIndex()
   {
     DiscoveryResult.Found found = new DiscoveryResult.Found("2.1-some-issue", "2", "1", "", "some-issue",
       "/path/to/issue", "all", true, true, false);
@@ -2152,7 +2152,7 @@ public class IssueDiscoveryTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void foundResultIsCorruptAndCreateIndexJsonWhenNeitherFileExists() throws IOException
+  public void foundResultIsCorruptAndCreateIndexJson() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -2194,7 +2194,7 @@ public class IssueDiscoveryTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void decomposedParentWithQualifiedSubissueNamesIsProcessed() throws IOException
+  public void decomposedParentWithQualifiedSubissue() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -2236,7 +2236,7 @@ public class IssueDiscoveryTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void decomposedParentWithBareSubissueNamesSkipsBareEntries() throws IOException
+  public void decomposedParentWithBareSubissueNames() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -2278,7 +2278,7 @@ public class IssueDiscoveryTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void phase17MigrationQualifiesBareNamesAndAllSubissuesClosedBehavesCorrectly()
+  public void phase17MigrationQualifiesBareNamesAndAll()
     throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-migration-test");
@@ -2498,7 +2498,7 @@ public class IssueDiscoveryTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void decomposedParentWithLetterSuffixedVersionPrefixIsHandled() throws IOException
+  public void decomposedParentWithLetterSuffixed() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("issue-discovery-test");
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))

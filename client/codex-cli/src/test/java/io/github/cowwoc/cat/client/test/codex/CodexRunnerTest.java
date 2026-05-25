@@ -85,7 +85,7 @@ public final class CodexRunnerTest
    * Verifies that normal Codex executions keep the default sandbox policy.
    */
   @Test
-  public void buildCommandUsesDefaultSandboxOutsideCodexEngine() throws IOException
+  public void buildCommandUsesDefaultSandboxOutside() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestCodexTool scope = new TestCodexTool(tempDir, tempDir))
@@ -225,7 +225,7 @@ public final class CodexRunnerTest
    * Verifies that malformed JSONL output is reported as an error instead of throwing.
    */
   @Test
-  public void executeProcessReportsMalformedJsonlAsError() throws IOException
+  public void executeProcessReportsMalformedJsonlAs() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestCodexTool scope = new TestCodexTool(tempDir, tempDir))
@@ -250,7 +250,7 @@ public final class CodexRunnerTest
    * Verifies that Codex JSONL output is parsed into text, tool use, and write content fields.
    */
   @Test
-  public void parseOutputExtractsTextToolUsesAndWriteContent() throws IOException
+  public void parseOutputExtractsTextToolUsesAndWrite() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestCodexTool scope = new TestCodexTool(tempDir, tempDir))

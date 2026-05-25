@@ -168,7 +168,7 @@ public class GetCheckpointOutputMainTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*--tokens.*--percent.*")
-  public void issueCompleteMissingTokensThrowsException() throws IOException
+  public void issueCompleteMissingTokensThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-checkpoint-output-main-test-");
     try (CliTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -190,7 +190,7 @@ public class GetCheckpointOutputMainTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*--iteration.*")
-  public void feedbackAppliedMissingIterationThrowsException() throws IOException
+  public void feedbackAppliedMissingIterationThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("get-checkpoint-output-main-test-");
     try (CliTool scope = new TestClaudeTool(tempDir, tempDir))

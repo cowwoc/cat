@@ -727,7 +727,7 @@ public final class BlockGitUserConfigChangeTest
    * Verifies that tee with long-form flag (--append) targeting ~/.gitconfig is blocked.
    */
   @Test
-  public void teeLongFormAppendToHomeDotGitconfigIsBlocked() throws IOException
+  public void teeLongFormAppendToHomeDotGitconfigIs() throws IOException
   {
     String command = "echo '[user]' | tee --append ~/.gitconfig";
     try (TestClaudeHook scope = TestUtils.bashHook(command, Path.of("/workspace"), "session1"))
@@ -744,7 +744,7 @@ public final class BlockGitUserConfigChangeTest
    * Verifies that tee with combined flags (tee -ai) targeting ~/.gitconfig is blocked.
    */
   @Test
-  public void teeCombinedFlagsToHomeDotGitconfigIsBlocked() throws IOException
+  public void teeCombinedFlagsToHomeDotGitconfigIs() throws IOException
   {
     String command = "echo '[user]' | tee -ai ~/.gitconfig";
     try (TestClaudeHook scope = TestUtils.bashHook(command, Path.of("/workspace"), "session1"))

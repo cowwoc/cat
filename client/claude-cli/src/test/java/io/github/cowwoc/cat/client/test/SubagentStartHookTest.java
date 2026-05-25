@@ -115,7 +115,7 @@ public final class SubagentStartHookTest
    * no project commands, and no user skills.
    */
   @Test
-  public void subagentStartHookReturnsEmptyWhenNoSkills() throws IOException
+  public void subagentStartHookReturnsEmptyWhenNo() throws IOException
   {
     Path projectPath = Files.createTempDirectory("cat-test-subagent-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -143,7 +143,7 @@ public final class SubagentStartHookTest
    * description in its frontmatter, then verifies the hook injects the skill listing.
    */
   @Test
-  public void subagentStartHookInjectsSkillListingWhenSkillsPresent() throws IOException
+  public void subagentStartHookInjectsSkillListingWhen() throws IOException
   {
     // claudeConfigPath == claudeProjectPath in TestClaudeHook(projectPath, pluginRoot, projectPath)
     Path configDir = Files.createTempDirectory("cat-test-subagent-config-");
@@ -176,7 +176,7 @@ public final class SubagentStartHookTest
    * Verifies that SubagentStartHook output is valid JSON with hookSpecificOutput structure.
    */
   @Test
-  public void subagentStartHookProducesValidJsonStructure() throws IOException
+  public void subagentStartHookProducesValidJson() throws IOException
   {
     Path configDir = Files.createTempDirectory("cat-test-subagent-config-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -211,7 +211,7 @@ public final class SubagentStartHookTest
    * Verifies that SkillDiscovery.getMainAgentSkillListing returns empty string when no skills are discoverable.
    */
   @Test
-  public void getMainAgentSkillListingReturnsEmptyStringWhenNoSkills() throws IOException
+  public void getMainAgentSkillListingReturnsEmpty() throws IOException
   {
     Path projectPath = Files.createTempDirectory("cat-test-subagent-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -231,7 +231,7 @@ public final class SubagentStartHookTest
    * Verifies that SkillDiscovery.getMainAgentSkillListing includes the correct header and only core skill entries.
    */
   @Test
-  public void getMainAgentSkillListingIncludesHeaderAndEntries() throws IOException
+  public void getMainAgentSkillListingIncludesHeader() throws IOException
   {
     Path configDir = Files.createTempDirectory("cat-test-subagent-config-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -259,7 +259,7 @@ public final class SubagentStartHookTest
    * skills with disable-model-invocation: true.
    */
   @Test
-  public void getMainAgentSkillListingExcludesNonModelInvocableSkills() throws IOException
+  public void getMainAgentSkillListingExcludesNonModel() throws IOException
   {
     Path configDir = Files.createTempDirectory("cat-test-subagent-config-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -316,7 +316,7 @@ public final class SubagentStartHookTest
    * behavioral preamble text. Behavioral instructions are in plugin/rules/common/subagent-skill-instructions.md.
    */
   @Test
-  public void getSubagentSkillListingReturnsOnlySkillListNoBehavioralPreamble() throws IOException
+  public void getSubagentSkillListingReturnsOnlySkill() throws IOException
   {
     Path configDir = Files.createTempDirectory("cat-test-subagent-config-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -346,7 +346,7 @@ public final class SubagentStartHookTest
    * instructions for subagents about when and how to invoke skills.
    */
   @Test
-  public void subagentSkillInstructionsRuleContainsBehavioralGuidance() throws IOException
+  public void subagentSkillInstructionsRuleContains() throws IOException
   {
     // Maven Surefire runs tests with user.dir set to ${project.basedir} (the client/ directory).
     // The workspace root is the parent of client/.
@@ -370,7 +370,7 @@ public final class SubagentStartHookTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void getCatRulesBlankSubagentTypeMatchesAllRule() throws IOException
+  public void getCatRulesBlankSubagentTypeMatchesAll() throws IOException
   {
     Path projectPath = Files.createTempDirectory("cat-test-getrules-blank-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -408,7 +408,7 @@ public final class SubagentStartHookTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void getCatRulesPopulatedSubagentTypeMatchesSpecificRule() throws IOException
+  public void getCatRulesPopulatedSubagentTypeMatches() throws IOException
   {
     Path projectPath = Files.createTempDirectory("cat-test-getrules-specific-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -446,7 +446,7 @@ public final class SubagentStartHookTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void getCatRulesPopulatedSubagentTypeExcludesNonMatchingRule() throws IOException
+  public void getCatRulesPopulatedSubagentTypeExcludes() throws IOException
   {
     Path projectPath = Files.createTempDirectory("cat-test-getrules-nomatch-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -487,7 +487,7 @@ public final class SubagentStartHookTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void getAgentIdContextIncludedWhenAgentIdAndSessionIdPresent() throws IOException
+  public void getAgentIdContextIncludedWhenAgentIdAnd() throws IOException
   {
     Path projectPath = Files.createTempDirectory("cat-test-agent-id-present-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -537,7 +537,7 @@ public final class SubagentStartHookTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*sessionId is empty.*")
-  public void getAgentIdContextAbsentWhenSessionIdBlank() throws IOException
+  public void getAgentIdContextAbsentWhenSessionId() throws IOException
   {
     Path projectPath = Files.createTempDirectory("cat-test-session-id-blank-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -563,7 +563,7 @@ public final class SubagentStartHookTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void allHandlersReturnEmptyProducesEmptyOutput() throws IOException
+  public void allHandlersReturnEmptyProducesEmpty() throws IOException
   {
     Path projectPath = Files.createTempDirectory("cat-test-all-empty-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");

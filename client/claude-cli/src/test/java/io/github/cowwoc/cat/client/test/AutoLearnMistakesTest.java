@@ -78,7 +78,7 @@ public final class AutoLearnMistakesTest
    * displayed content such as source files or documentation.
    */
   @Test
-  public void bashExitCodeZeroDoesNotTriggerBuildFailure() throws IOException
+  public void bashExitCodeZeroDoesNotTriggerBuild() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
     try (TestClaudeHook scope = new TestClaudeHook())
@@ -103,7 +103,7 @@ public final class AutoLearnMistakesTest
    * displayed content such as source files or documentation.
    */
   @Test
-  public void bashExitCodeZeroDoesNotTriggerTestFailure() throws IOException
+  public void bashExitCodeZeroDoesNotTriggerTest() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
     try (TestClaudeHook scope = new TestClaudeHook())
@@ -253,7 +253,7 @@ public final class AutoLearnMistakesTest
    * Verifies that "FAIL: some documentation error message" does not trigger Pattern 2 (test_failure).
    */
   @Test
-  public void failPrefixDocumentationErrorIsNotTestFailure() throws IOException
+  public void failPrefixDocumentationErrorIsNotTest() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
     try (TestClaudeHook scope = new TestClaudeHook())
@@ -406,7 +406,7 @@ public final class AutoLearnMistakesTest
    * Pattern 11 only applies to assistant messages, not to tool output.
    */
   @Test
-  public void severityTableMustFixCriticalIssuesIsNotTriggered() throws IOException
+  public void severityTableMustFixCriticalIssuesIsNot() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
     try (TestClaudeHook scope = new TestClaudeHook())
@@ -430,7 +430,7 @@ public final class AutoLearnMistakesTest
    * Pattern 11 only applies to assistant messages, not to tool output.
    */
   @Test
-  public void severityTableCriticalErrorDescriptionIsNotTriggered() throws IOException
+  public void severityTableCriticalErrorDescriptionIs() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
     try (TestClaudeHook scope = new TestClaudeHook())
@@ -454,7 +454,7 @@ public final class AutoLearnMistakesTest
    * Pattern 11 only applies to assistant messages, not to tool output.
    */
   @Test
-  public void severityTableCriticalBlocksReleaseIsNotTriggered() throws IOException
+  public void severityTableCriticalBlocksReleaseIsNot() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
     try (TestClaudeHook scope = new TestClaudeHook())
@@ -479,7 +479,7 @@ public final class AutoLearnMistakesTest
    * positive from displayed content (e.g., grep output, documentation).
    */
   @Test
-  public void firstPersonCriticalErrorInToolOutputIsNotTriggered() throws IOException
+  public void firstPersonCriticalErrorInToolOutputIs() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
     try (TestClaudeHook scope = new TestClaudeHook())
@@ -524,7 +524,7 @@ public final class AutoLearnMistakesTest
    * reports it.
    */
   @Test
-  public void bashReadingFileWithEditFailurePhraseDoesNotTriggerEditFailure() throws IOException
+  public void bashReadingFileWithEditFailurePhraseDoes() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
     try (TestClaudeHook scope = new TestClaudeHook())
@@ -555,7 +555,7 @@ public final class AutoLearnMistakesTest
    * tool itself is the source of the failure message.
    */
   @Test
-  public void editToolReportingEditFailurePhraseTriggersEditFailure() throws IOException
+  public void editToolReportingEditFailurePhrase() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
     try (TestClaudeHook scope = new TestClaudeHook())
@@ -579,7 +579,7 @@ public final class AutoLearnMistakesTest
    * True positive preserved: genuine Maven build failures must continue to be detected.
    */
   @Test
-  public void realMavenBuildFailureTriggersBuildFailurePattern() throws IOException
+  public void realMavenBuildFailureTriggersBuild() throws IOException
   {
     String sessionId = "00000000-0000-0000-0000-000000000000";
     try (TestClaudeHook scope = new TestClaudeHook())

@@ -103,7 +103,7 @@ public class DisplayUtilsTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void displayWidthIgnoresEmojiVariationSelectors() throws IOException
+  public void displayWidthIgnoresEmojiVariation() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -156,7 +156,7 @@ public class DisplayUtilsTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void buildLineConsistentWidthAcrossContentTypes() throws IOException
+  public void buildLineConsistentWidthAcrossContent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -416,7 +416,7 @@ public class DisplayUtilsTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void buildProgressBarPartialProgressHasBothCharacters() throws IOException
+  public void buildProgressBarPartialProgressHasBoth() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -719,7 +719,7 @@ public class DisplayUtilsTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void buildHeaderBoxWithEmptyContentProducesValidBox() throws IOException
+  public void buildHeaderBoxWithEmptyContentProduces() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -1129,7 +1129,7 @@ public class DisplayUtilsTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void buildSimpleBoxContentLinesHaveConsistentWidth() throws IOException
+  public void buildSimpleBoxContentLinesHaveConsistent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -1364,7 +1364,7 @@ public class DisplayUtilsTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void wrapLineContinuationLinesHaveCorrectIndent() throws IOException
+  public void wrapLineContinuationLinesHaveCorrect() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -1531,7 +1531,7 @@ public class DisplayUtilsTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void wrapLineEmptyStringReturnsSingleEmptyElement() throws IOException
+  public void wrapLineEmptyStringReturnsSingleEmpty() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -1586,7 +1586,7 @@ public class DisplayUtilsTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void wrapLineWordExceedingMaxWidthWithNoBreakPointForceBreaks() throws IOException
+  public void wrapLineWordExceedingMaxWidthWithNoBreak() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -1622,7 +1622,7 @@ public class DisplayUtilsTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void wrapLineWithLargeIndentWidthReducingEffectiveMax() throws IOException
+  public void wrapLineWithLargeIndentWidthReducing() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))

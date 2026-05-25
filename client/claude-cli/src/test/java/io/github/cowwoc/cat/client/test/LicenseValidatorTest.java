@@ -211,7 +211,7 @@ public class LicenseValidatorTest
    * @throws Exception if key generation or signing fails
    */
   @Test
-  public void expiredTokenPastGracePeriodFallsBackToCore() throws Exception
+  public void expiredTokenPastGracePeriodFallsBackTo() throws Exception
   {
     Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();
@@ -249,7 +249,7 @@ public class LicenseValidatorTest
    * @throws Exception if key generation or signing fails
    */
   @Test
-  public void expiredTokenWithinGracePeriodRetainsTierWithWarning() throws Exception
+  public void expiredTokenWithinGracePeriodRetainsTier() throws Exception
   {
     Path tempDir = TestUtils.createTempDir("license-test");
     Path pluginRoot = createPluginRoot();

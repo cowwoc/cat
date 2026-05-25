@@ -56,7 +56,7 @@ public final class StatuslineInstallTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void installWithExistingSettingsMergesStatusLine() throws IOException
+  public void installWithExistingSettingsMergesStatus() throws IOException
   {
     Path tempDir = Files.createTempDirectory("statusline-install-test-");
     Path pluginData = Files.createTempDirectory("statusline-plugin-root-");
@@ -95,7 +95,7 @@ public final class StatuslineInstallTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void installStatusLineCommandUsesAbsolutePluginPath() throws IOException
+  public void installStatusLineCommandUsesAbsolute() throws IOException
   {
     Path tempDir = Files.createTempDirectory("statusline-install-test-");
     Path pluginData = Files.createTempDirectory("statusline-plugin-root-");
@@ -146,7 +146,7 @@ public final class StatuslineInstallTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void invalidJsonInExistingSettingsReturnsError() throws IOException
+  public void invalidJsonInExistingSettingsReturns() throws IOException
   {
     Path tempDir = Files.createTempDirectory("statusline-install-test-");
     Path pluginData = Files.createTempDirectory("statusline-plugin-root-");
@@ -205,7 +205,7 @@ public final class StatuslineInstallTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void installOverwritesExistingStatusLineConfig() throws IOException
+  public void installOverwritesExistingStatusLine() throws IOException
   {
     Path tempDir = Files.createTempDirectory("statusline-install-test-");
     Path pluginData = Files.createTempDirectory("statusline-plugin-root-");

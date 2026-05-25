@@ -29,7 +29,7 @@ public class GetConfigOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getCurrentSettingsIncludesCompletionWorkflow() throws IOException
+  public void getCurrentSettingsIncludesCompletion() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -56,7 +56,7 @@ public class GetConfigOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getCurrentSettingsShowsCompletionWorkflowValue() throws IOException
+  public void getCurrentSettingsShowsCompletion() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -135,7 +135,7 @@ public class GetConfigOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getCurrentSettingsReturnsNullWhenNoConfig() throws IOException
+  public void getCurrentSettingsReturnsNullWhenNo() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -157,7 +157,7 @@ public class GetConfigOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getCurrentSettingsContainsExistingSettings() throws IOException
+  public void getCurrentSettingsContainsExisting() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -189,7 +189,7 @@ public class GetConfigOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getCurrentSettingsUsesAnsiAccentsAndAlignedLines() throws IOException
+  public void getCurrentSettingsUsesAnsiAccentsAnd() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -416,7 +416,7 @@ public class GetConfigOutputTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*(?=.*conditions-for-version requires 3 arguments)(?=.*preconditions).*")
-  public void conditionsForVersionInsufficientArgsThrows() throws IOException
+  public void conditionsForVersionInsufficientArgs() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -647,7 +647,7 @@ public class GetConfigOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getCurrentSettingsFileAndDisplayWidthAreIndependent() throws IOException
+  public void getCurrentSettingsFileAndDisplayWidthAre() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -675,7 +675,7 @@ public class GetConfigOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getCurrentSettingsIncludesVerbosityDefault() throws IOException
+  public void getCurrentSettingsIncludesVerbosity() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-config-output-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))

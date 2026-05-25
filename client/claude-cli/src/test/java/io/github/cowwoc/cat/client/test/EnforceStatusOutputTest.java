@@ -154,7 +154,7 @@ public final class EnforceStatusOutputTest
    * @throws IOException if test setup fails
    */
   @Test(dataProvider = "plainSetupStatusOutputs")
-  public void stopHookActiveWithPlainStatusErrorPresent(String text) throws IOException
+  public void stopHookActiveWithPlainStatusError(String text) throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
     try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
@@ -230,7 +230,7 @@ public final class EnforceStatusOutputTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void firstAttemptWithMissingPlanningStatusErrorPresent() throws IOException
+  public void firstAttemptWithMissingPlanningStatus() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
     try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
@@ -255,7 +255,7 @@ public final class EnforceStatusOutputTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void firstAttemptWithAugmentedPlainStatusErrorBlocks() throws IOException
+  public void firstAttemptWithAugmentedPlainStatus() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
     try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
@@ -450,7 +450,7 @@ public final class EnforceStatusOutputTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void worktreeTranscriptPathFallsBackToSessionBasePath() throws IOException
+  public void worktreeTranscriptPathFallsBackToSession() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-status-output-test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))

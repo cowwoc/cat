@@ -194,7 +194,7 @@ public class IssueLockTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void releaseFailsWhenLockOwnedByAnotherSession() throws IOException
+  public void releaseFailsWhenLockOwnedByAnother() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -602,7 +602,7 @@ public class IssueLockTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void toJsonProducesCorrectFormatForCheckLocked() throws IOException
+  public void toJsonProducesCorrectFormatForCheck() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -625,7 +625,7 @@ public class IssueLockTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void toJsonProducesCorrectFormatForCheckUnlocked() throws IOException
+  public void toJsonProducesCorrectFormatForCheck2() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -732,7 +732,7 @@ public class IssueLockTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void acquireRejectsLockRefreshedByConcurrentSession() throws IOException
+  public void acquireRejectsLockRefreshedByConcurrent() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -793,7 +793,7 @@ public class IssueLockTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void acquireOverwritesStaleLockFromDifferentSession() throws IOException
+  public void acquireOverwritesStaleLockFromDifferent() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -854,7 +854,7 @@ public class IssueLockTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void acquireRejectsNonStaleLockFromDifferentSession() throws IOException
+  public void acquireRejectsNonStaleLockFromDifferent() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -983,7 +983,7 @@ public class IssueLockTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void acquireFailsWhenSessionAlreadyHoldsLockForDifferentIssue() throws IOException
+  public void acquireFailsWhenSessionAlreadyHoldsLock() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -1083,7 +1083,7 @@ public class IssueLockTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void acquireAllowsDifferentSessionsToHoldSeparateIssues() throws IOException
+  public void acquireAllowsDifferentSessionsToHold() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -1114,7 +1114,7 @@ public class IssueLockTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void acquireSucceedsDespiteCorruptedLockFileInScanPath() throws IOException
+  public void acquireSucceedsDespiteCorruptedLockFile() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -1154,7 +1154,7 @@ public class IssueLockTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void acquireCorrectlyDetectsConflictWithManyLockFiles() throws IOException
+  public void acquireCorrectlyDetectsConflictWithMany() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -1196,7 +1196,7 @@ public class IssueLockTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void transferSucceedsWhenLockHeldByExpectedSession() throws IOException
+  public void transferSucceedsWhenLockHeldByExpected() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -1241,7 +1241,7 @@ public class IssueLockTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void transferFailsWhenLockNotHeldByExpectedSession() throws IOException
+  public void transferFailsWhenLockNotHeldByExpected() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -1356,7 +1356,7 @@ public class IssueLockTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void scanForConflictingLockWarnsOnMalformedFile() throws IOException
+  public void scanForConflictingLockWarnsOnMalformed() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("issue-lock-test");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))

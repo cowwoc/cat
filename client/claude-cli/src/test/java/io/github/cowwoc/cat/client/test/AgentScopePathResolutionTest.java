@@ -295,7 +295,7 @@ public final class AgentScopePathResolutionTest
    * @throws IOException if temporary directory creation fails
    */
   @Test
-  public void getWorkDirReturnsIndependentlyInjectedPath() throws IOException
+  public void getWorkDirReturnsIndependentlyInjected() throws IOException
   {
     Path projectPath = Files.createTempDirectory("test-project-");
     Path workDir = Files.createTempDirectory("test-work-");

@@ -34,7 +34,7 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void planningValidFalseWhenNoPlanningStructure() throws IOException
+  public void planningValidFalseWhenNoPlanning() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -381,7 +381,7 @@ public class GetAddOutputPlanningDataTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void existingIssuesShapeDeterministicForPlanningData() throws IOException
+  public void existingIssuesShapeDeterministicFor() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {

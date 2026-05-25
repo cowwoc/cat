@@ -416,7 +416,7 @@ public final class BlockWorktreeIsolationViolationTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void teeAppendLongFormOutsideWorktreeIsBlocked() throws IOException
+  public void teeAppendLongFormOutsideWorktreeIs() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
     try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
@@ -444,7 +444,7 @@ public final class BlockWorktreeIsolationViolationTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void teeMultipleTargetsSecondTargetOutsideWorktreeIsBlocked() throws IOException
+  public void teeMultipleTargetsSecondTargetOutside() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
     try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
@@ -471,7 +471,7 @@ public final class BlockWorktreeIsolationViolationTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void teeMultipleTargetsBothInsideWorktreeIsAllowed() throws IOException
+  public void teeMultipleTargetsBothInsideWorktreeIs() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
     try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
@@ -558,7 +558,7 @@ public final class BlockWorktreeIsolationViolationTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void quotedPathWithSpacesOutsideWorktreeIsBlocked() throws IOException
+  public void quotedPathWithSpacesOutsideWorktreeIs() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
     try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
@@ -614,7 +614,7 @@ public final class BlockWorktreeIsolationViolationTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void allowsRedirectWhenEnvVarExpandsToWorktreePath() throws IOException
+  public void allowsRedirectWhenEnvVarExpandsTo() throws IOException
   {
     Path fakeHome = Files.createTempDirectory("fake-home-");
     try
@@ -647,7 +647,7 @@ public final class BlockWorktreeIsolationViolationTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void allowsRedirectWhenBareEnvVarExpandsToWorktreePath() throws IOException
+  public void allowsRedirectWhenBareEnvVarExpandsTo() throws IOException
   {
     Path fakeHome = Files.createTempDirectory("fake-home-");
     try
@@ -681,7 +681,7 @@ public final class BlockWorktreeIsolationViolationTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void blocksRedirectWhenEnvVarExpandsOutsideWorktree() throws IOException
+  public void blocksRedirectWhenEnvVarExpandsOutside() throws IOException
   {
     Path fakeHome = Files.createTempDirectory("fake-home-");
     try
@@ -775,7 +775,7 @@ public final class BlockWorktreeIsolationViolationTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void redirectAllowedWhenVariableDefinedLiterallyInScript() throws IOException
+  public void redirectAllowedWhenVariableDefined() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
     try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
@@ -806,7 +806,7 @@ public final class BlockWorktreeIsolationViolationTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void redirectBlockedWhenLiteralVariableResolvesOutsideWorktree() throws IOException
+  public void redirectBlockedWhenLiteralVariable() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
     try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
@@ -837,7 +837,7 @@ public final class BlockWorktreeIsolationViolationTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void redirectRemainsBlockedWhenVariableAssignedViaCommandSubstitution() throws IOException
+  public void redirectRemainsBlockedWhenVariable() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
     try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
@@ -990,7 +990,7 @@ public final class BlockWorktreeIsolationViolationTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void mktempWithProjectPathOutsideWorktreeIsBlocked() throws IOException
+  public void mktempWithProjectPathOutsideWorktreeIs() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
     try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
@@ -1023,7 +1023,7 @@ public final class BlockWorktreeIsolationViolationTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void shellRedirectViaChainedVariablesInsideWorktreeIsAllowed() throws IOException
+  public void shellRedirectViaChainedVariablesInside() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
     try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))
@@ -1055,7 +1055,7 @@ public final class BlockWorktreeIsolationViolationTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void shellRedirectViaChainedVariablesOutsideWorktreeIsBlocked() throws IOException
+  public void shellRedirectViaChainedVariablesOutside() throws IOException
   {
     Path projectPath = Files.createTempDirectory("bwiv-test-");
     try (TestClaudeHook scope = new TestClaudeHook(projectPath, projectPath, projectPath))

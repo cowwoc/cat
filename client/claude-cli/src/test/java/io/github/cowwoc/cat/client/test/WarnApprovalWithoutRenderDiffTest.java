@@ -252,7 +252,7 @@ public final class WarnApprovalWithoutRenderDiffTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void getDiffPresentButSparseBoxCharsBlocksApproval() throws IOException
+  public void getDiffPresentButSparseBoxCharsBlocks() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-warn-approval-");
     try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))

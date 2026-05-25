@@ -28,7 +28,7 @@ public final class InjectMainAgentRulesTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void handleWithMainAgentTrueRuleReturnsContext() throws IOException
+  public void handleWithMainAgentTrueRuleReturns() throws IOException
   {
     Path tempDir = Files.createTempDirectory("inject-rules-test-");
     try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
@@ -149,7 +149,7 @@ public final class InjectMainAgentRulesTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void handleLoadsSharedAndClaudeProjectRulesOnly() throws IOException
+  public void handleLoadsSharedAndClaudeProjectRules() throws IOException
   {
     Path projectPath = Files.createTempDirectory("inject-rules-engine-project-");
     Path pluginDir = Files.createTempDirectory("inject-rules-engine-plugin-");
@@ -211,7 +211,7 @@ public final class InjectMainAgentRulesTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void handleBothPluginAndProjectRulesIncludedOnFilenameCollision() throws IOException
+  public void handleBothPluginAndProjectRulesIncluded() throws IOException
   {
     Path projectPath = Files.createTempDirectory("inject-rules-override-project-");
     Path pluginDir = Files.createTempDirectory("inject-rules-override-plugin-");
@@ -289,7 +289,7 @@ public final class InjectMainAgentRulesTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void handleWithAllSubagentOnlyRulesReturnsEmpty() throws IOException
+  public void handleWithAllSubagentOnlyRulesReturns() throws IOException
   {
     Path tempDir = Files.createTempDirectory("inject-rules-subonly-test-");
     try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
@@ -325,7 +325,7 @@ public final class InjectMainAgentRulesTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void handlePluginRuleIncludedProjectRuleFilteredWhenMainAgentFalse() throws IOException
+  public void handlePluginRuleIncludedProjectRule() throws IOException
   {
     Path projectPath = Files.createTempDirectory("inject-rules-override-main-false-project-");
     Path pluginDir = Files.createTempDirectory("inject-rules-override-main-false-plugin-");
@@ -381,7 +381,7 @@ public final class InjectMainAgentRulesTest
    * @throws IOException if file operations fail
    */
   @Test(expectedExceptions = NullPointerException.class)
-  public void testHandleWithNullInputThrowsNullPointerException()
+  public void testHandleWithNullInputThrowsNullPointer()
   {
     new InjectMainAgentRules(null);
   }
@@ -393,7 +393,7 @@ public final class InjectMainAgentRulesTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void testHandleWithMixedMainAgentRulesFiltersCorrectly() throws IOException
+  public void testHandleWithMixedMainAgentRulesFilters() throws IOException
   {
     Path tempDir = Files.createTempDirectory("inject-rules-mixed-test-");
     try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))

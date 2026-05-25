@@ -110,7 +110,7 @@ public final class CautionLevelTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".* LOW .*")
-  public void fromStringWhitespacePaddedThrowsIllegalArgument()
+  public void fromStringWhitespacePaddedThrowsIllegal()
   {
     CautionLevel.fromString(" low ");
   }

@@ -22,7 +22,7 @@ public class JsonHandoffRoundTripTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void jsonWithSpecialCharactersSurvivesRoundTrip() throws IOException
+  public void jsonWithSpecialCharactersSurvivesRound() throws IOException
   {
     Path tempFile = Files.createTempFile("json-handoff-", ".json");
     try

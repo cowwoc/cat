@@ -104,7 +104,7 @@ public final class PreBashHookTest
    * @param input the native Codex hook input
    */
   @Test(dataProvider = "commandPayloadProvider")
-  public void preBashBlocksEverySupportedCommandPayloadShape(String input)
+  public void preBashBlocksEverySupportedCommand(String input)
   {
     String output = runPreBash(input);
 

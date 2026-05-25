@@ -1123,7 +1123,7 @@ public final class GetRetrospectiveOutputTest
    * Verifies that a pattern without occurrences_total or occurrences_after_fix fields shows 0 total, 0 after fix.
    */
   @Test
-  public void patternWithMissingOccurrencesDefaultsToZero() throws IOException
+  public void patternWithMissingOccurrencesDefaultsTo() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -1173,7 +1173,7 @@ public final class GetRetrospectiveOutputTest
    * as having no previous retrospective.
    */
   @Test
-  public void missingLastRetrospectiveFieldTreatedAsNull() throws IOException
+  public void missingLastRetrospectiveFieldTreatedAs() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -1728,7 +1728,7 @@ public final class GetRetrospectiveOutputTest
    * index.json file, and no temp file is created.
    */
   @Test
-  public void counterNotResetOnErrorPathMissingIndexFile() throws IOException
+  public void counterNotResetOnErrorPathMissingIndex() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))

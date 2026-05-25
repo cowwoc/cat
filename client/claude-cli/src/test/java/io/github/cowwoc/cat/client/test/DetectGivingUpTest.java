@@ -200,7 +200,7 @@ public final class DetectGivingUpTest
    * Verifies that the token-constraints workflow summary phrase is detected as constraint rationalization.
    */
   @Test
-  public void detectsTokenConstraintsWorkflowSummaryPhrase()
+  public void detectsTokenConstraintsWorkflowSummary()
   {
     DetectGivingUp handler = new DetectGivingUp();
     String prompt =

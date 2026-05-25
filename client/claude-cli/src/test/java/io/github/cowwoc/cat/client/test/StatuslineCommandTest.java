@@ -184,7 +184,7 @@ public final class StatuslineCommandTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void usageBetween50And80ContainsRgbOrangeColor() throws IOException
+  public void usageBetween50And80ContainsRgbOrange() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
     try
@@ -261,7 +261,7 @@ public final class StatuslineCommandTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = "(?s).*model.*missing.*")
-  public void missingRequiredFieldsThrowsIllegalArgumentException() throws IOException
+  public void missingRequiredFieldsThrowsIllegal() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
     try
@@ -565,7 +565,7 @@ public final class StatuslineCommandTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = "(?s).*input_tokens.*negative.*")
-  public void negativeInputTokensThrowsIllegalArgumentException() throws IOException
+  public void negativeInputTokensThrowsIllegalArgument() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
     try
@@ -595,7 +595,7 @@ public final class StatuslineCommandTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void outputContainsAllFiveEmojisWhenActiveIssuePresent() throws IOException
+  public void outputContainsAllFiveEmojisWhenActive() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
     try
@@ -702,7 +702,7 @@ public final class StatuslineCommandTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void scalingThresholdBoundaryBetween99And100Percent() throws IOException
+  public void scalingThresholdBoundaryBetween99And100() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
     try
@@ -794,7 +794,7 @@ public final class StatuslineCommandTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = "(?s).*display_name.*missing.*")
-  public void nullRequiredFieldsThrowsIllegalArgumentException() throws IOException
+  public void nullRequiredFieldsThrowsIllegalArgument() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
     try
@@ -848,7 +848,7 @@ public final class StatuslineCommandTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getActiveIssueReturnsIssueIdWhenLockMatchesSession() throws IOException
+  public void getActiveIssueReturnsIssueIdWhenLock() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
     try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir))
@@ -881,7 +881,7 @@ public final class StatuslineCommandTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getActiveIssueReturnsEmptyWhenNoMatchingLock() throws IOException
+  public void getActiveIssueReturnsEmptyWhenNoMatching() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
     try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir))
@@ -914,7 +914,7 @@ public final class StatuslineCommandTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getActiveIssueReturnsEmptyWhenLocksDirectoryAbsent() throws IOException
+  public void getActiveIssueReturnsEmptyWhenLocks() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
     try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir))
@@ -938,7 +938,7 @@ public final class StatuslineCommandTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeOmitsFirstElementWhenNoActiveIssue() throws IOException
+  public void executeOmitsFirstElementWhenNoActive() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
     try
@@ -971,7 +971,7 @@ public final class StatuslineCommandTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeIncludesIssueIdWhenActiveIssueFound() throws IOException
+  public void executeIncludesIssueIdWhenActiveIssue() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
     try
@@ -1014,7 +1014,7 @@ public final class StatuslineCommandTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getActiveIssueSanitizesAnsiInjectionInIssueId() throws IOException
+  public void getActiveIssueSanitizesAnsiInjectionIn() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
     try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir))
@@ -1058,7 +1058,7 @@ public final class StatuslineCommandTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getActiveIssueReturnsErrorWhenLockFileHasMalformedJson() throws IOException
+  public void getActiveIssueReturnsErrorWhenLockFile() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
     try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir))
@@ -1089,7 +1089,7 @@ public final class StatuslineCommandTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getActiveIssueReturnsEmptyWhenLockFileHasNoSessionIdField() throws IOException
+  public void getActiveIssueReturnsEmptyWhenLockFile() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
     try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir))
@@ -1265,7 +1265,7 @@ public final class StatuslineCommandTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void wrappedOutputPreservesAllComponentContent() throws IOException
+  public void wrappedOutputPreservesAllComponent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
     try
@@ -1308,7 +1308,7 @@ public final class StatuslineCommandTest
    * emoji as width 2.
    */
   @Test
-  public void plainWidthStripsAnsiAndCountsEmojiAsWidth2()
+  public void plainWidthStripsAnsiAndCountsEmojiAs()
   {
     // Plain ASCII: each character is width 1
     requireThat(StatuslineCommand.plainWidth("hello"), "helloWidth").isEqualTo(5);
@@ -1337,7 +1337,7 @@ public final class StatuslineCommandTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void terminalWidthZeroAlwaysProducesSingleLine() throws IOException
+  public void terminalWidthZeroAlwaysProducesSingle() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
     try
@@ -1418,7 +1418,7 @@ public final class StatuslineCommandTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getActiveIssueReturnsErrorWhenLockFileIsEmpty() throws IOException
+  public void getActiveIssueReturnsErrorWhenLockFileIs() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
     try (ClaudeStatusline scope = new TestClaudeStatusline(tempDir, tempDir))
@@ -1579,7 +1579,7 @@ public final class StatuslineCommandTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void oneMillionContextWindowSizeUsesLargerContextWindow() throws IOException
+  public void oneMillionContextWindowSizeUsesLarger() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
     try
@@ -1656,7 +1656,7 @@ public final class StatuslineCommandTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void nullCurrentUsageBeforeFirstApiCallShowsZeroPercent() throws IOException
+  public void nullCurrentUsageBeforeFirstApiCallShows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
     try
@@ -1727,7 +1727,7 @@ public final class StatuslineCommandTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = "(?s).*missing or non-positive.*")
-  public void missingContextWindowSizeThrowsIllegalArgumentException() throws IOException
+  public void missingContextWindowSizeThrowsIllegal() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
     try
@@ -1760,7 +1760,7 @@ public final class StatuslineCommandTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = "(?s).*missing or non-positive.*")
-  public void zeroContextWindowSizeThrowsIllegalArgumentException() throws IOException
+  public void zeroContextWindowSizeThrowsIllegal() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
     try
@@ -1794,7 +1794,7 @@ public final class StatuslineCommandTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = "(?s).*missing or non-positive.*")
-  public void negativeContextWindowSizeThrowsIllegalArgumentException() throws IOException
+  public void negativeContextWindowSizeThrowsIllegal() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
     try
@@ -1828,7 +1828,7 @@ public final class StatuslineCommandTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = "(?s).*missing.*")
-  public void missingInputTokensThrowsIllegalArgumentException() throws IOException
+  public void missingInputTokensThrowsIllegalArgument() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
     try
@@ -1913,7 +1913,7 @@ public final class StatuslineCommandTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void inputTokensAloneProducesZeroWhenBelowOverhead() throws IOException
+  public void inputTokensAloneProducesZeroWhenBelow() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-");
     try

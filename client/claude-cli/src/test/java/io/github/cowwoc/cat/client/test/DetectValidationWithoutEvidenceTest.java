@@ -228,7 +228,7 @@ public final class DetectValidationWithoutEvidenceTest
    * Verifies that a cat:verify-implementation skill invocation also counts as evidence.
    */
   @Test
-  public void verifyImplementationSkillCountsAsEvidence() throws IOException
+  public void verifyImplementationSkillCountsAs() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
@@ -316,7 +316,7 @@ public final class DetectValidationWithoutEvidenceTest
    * must recognize the -agent suffix variant as valid evidence.
    */
   @Test
-  public void verifyImplementationAgentSkillCountsAsEvidence() throws IOException
+  public void verifyImplementationAgentSkillCountsAs() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))

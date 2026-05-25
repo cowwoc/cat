@@ -198,7 +198,7 @@ public final class DetectAssistantGivingUpTest
    * the hook must not fire — only a single message containing all keywords should trigger.
    */
   @Test
-  public void keywordsSplitAcrossMessagesShouldNotTrigger() throws IOException
+  public void keywordsSplitAcrossMessagesShouldNot() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
@@ -272,7 +272,7 @@ public final class DetectAssistantGivingUpTest
    * from reaching GivingUpDetector and producing a false positive.
    */
   @Test
-  public void compoundMessageWithLetMeRemoveDoesNotTriggerCodeRemoval() throws IOException
+  public void compoundMessageWithLetMeRemoveDoesNot() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))

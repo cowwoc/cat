@@ -111,7 +111,7 @@ public final class GradeJsonTransformerTest
    * Verifies that transform emits a required non-empty test_case_id even when grader input omits it.
    */
   @Test
-  public void transformAlwaysEmitsNonEmptyTestCaseIdWhenInputOmitsIt() throws IOException
+  public void transformAlwaysEmitsNonEmptyTestCaseId() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try
@@ -152,7 +152,7 @@ public final class GradeJsonTransformerTest
    * Verifies that transform emits the run ID as non-empty test_case_id even if input contains a blank one.
    */
   @Test
-  public void transformCanonicalizesBlankInputTestCaseIdToRunId() throws IOException
+  public void transformCanonicalizesBlankInputTestCase() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try

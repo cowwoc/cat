@@ -86,7 +86,7 @@ public class GetTokenReportOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void sessionWithNoTaskEntriesReturnsNoSubagentMessage() throws IOException
+  public void sessionWithNoTaskEntriesReturnsNo() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -255,7 +255,7 @@ public class GetTokenReportOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getOutputReturnsNullWhenSessionFileMissing() throws IOException
+  public void getOutputReturnsNullWhenSessionFile() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {

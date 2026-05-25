@@ -193,7 +193,7 @@ public final class ConcernSeverityTest
    * With minSeverity="critical", only CRITICAL concerns pass the threshold.
    */
   @Test
-  public void isAtLeastCriticalReturnsTrueOnlyForCritical()
+  public void isAtLeastCriticalReturnsTrueOnlyFor()
   {
     requireThat(ConcernSeverity.CRITICAL.isAtLeast(ConcernSeverity.CRITICAL), "critical").isTrue();
     requireThat(ConcernSeverity.HIGH.isAtLeast(ConcernSeverity.CRITICAL), "high").isFalse();

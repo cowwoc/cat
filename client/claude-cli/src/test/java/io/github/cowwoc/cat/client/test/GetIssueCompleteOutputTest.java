@@ -33,7 +33,7 @@ public class GetIssueCompleteOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getIssueCompleteBoxContainsIssueNameAndBoxStructure() throws IOException
+  public void getIssueCompleteBoxContainsIssueNameAnd() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -65,7 +65,7 @@ public class GetIssueCompleteOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getIssueCompleteBoxContainsCompletedIssue() throws IOException
+  public void getIssueCompleteBoxContainsCompleted() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -100,7 +100,7 @@ public class GetIssueCompleteOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getIssueCompleteBoxUsesMarkdownBoldNextLabel() throws IOException
+  public void getIssueCompleteBoxUsesMarkdownBoldNext() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -149,7 +149,7 @@ public class GetIssueCompleteOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getIssueCompleteBoxContainsContinuationInstructions() throws IOException
+  public void getIssueCompleteBoxContainsContinuation() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -183,7 +183,7 @@ public class GetIssueCompleteOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getScopeCompleteBoxContainsScopeNameAndBoxStructure() throws IOException
+  public void getScopeCompleteBoxContainsScopeNameAnd() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -266,7 +266,7 @@ public class GetIssueCompleteOutputTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*issueName.*")
-  public void getIssueCompleteBoxThrowsOnBlankIssueName() throws IOException
+  public void getIssueCompleteBoxThrowsOnBlankIssue() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -298,7 +298,7 @@ public class GetIssueCompleteOutputTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*nextIssue.*")
-  public void getIssueCompleteBoxThrowsOnBlankNextIssue() throws IOException
+  public void getIssueCompleteBoxThrowsOnBlankNext() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -553,7 +553,7 @@ public class GetIssueCompleteOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void discoverAndRenderIssueNameNoDashFallsBackToScope() throws IOException
+  public void discoverAndRenderIssueNameNoDashFalls() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -590,7 +590,7 @@ public class GetIssueCompleteOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void discoverAndRenderSuccessPathRendersIssueComplete() throws IOException
+  public void discoverAndRenderSuccessPathRendersIssue() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("get-issue-complete-test");
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -655,7 +655,7 @@ public class GetIssueCompleteOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void discoverAndRenderSkipsCompletedAndFindsOtherIssue() throws IOException
+  public void discoverAndRenderSkipsCompletedAndFinds() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("get-issue-complete-test");
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -690,7 +690,7 @@ public class GetIssueCompleteOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void discoverAndRenderExcludesCompletedIssueWithPatchVersion() throws IOException
+  public void discoverAndRenderExcludesCompletedIssue2() throws IOException
   {
     Path projectPath = TestUtils.createTempCatProject("get-issue-complete-test");
     try (TestClaudeTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -780,7 +780,7 @@ public class GetIssueCompleteOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void readGoalFromPlanMultiParagraphGoalReturnsFirst() throws IOException
+  public void readGoalFromPlanMultiParagraphGoal() throws IOException
   {
     Path planFile = Files.createTempFile("PLAN", ".md");
     try

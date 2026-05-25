@@ -41,7 +41,7 @@ public final class PreReadHookTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void readToMainWorkspaceIsBlockedWhenWorktreeActive() throws IOException
+  public void readToMainWorkspaceIsBlockedWhenWorktree() throws IOException
   {
     Path projectPath = Files.createTempDirectory("prh-test-");
     Path pluginRoot = Files.createTempDirectory("prh-plugin-");

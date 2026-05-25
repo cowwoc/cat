@@ -193,7 +193,7 @@ public final class VerifyAuditTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void prepareReturnsIssueIdentifiersAndFileResults() throws IOException
+  public void prepareReturnsIssueIdentifiersAndFile() throws IOException
   {
     Path tempDir = Files.createTempDirectory("verify-audit-test-");
     try (CliTool scope = new TestClaudeTool(tempDir, tempDir))

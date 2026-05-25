@@ -363,7 +363,7 @@ public final class WarnPipedWithoutTeeTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void chainedCommandWithPipeWithoutTeeEmitsWarning() throws IOException
+  public void chainedCommandWithPipeWithoutTeeEmits() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))

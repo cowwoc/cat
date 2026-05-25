@@ -165,7 +165,7 @@ public final class StateSchemaValidatorTest
    * Verifies that a closed index.json with duplicate resolution is accepted.
    */
   @Test
-  public void closedIndexWithDuplicateResolutionIsAccepted() throws IOException
+  public void closedIndexWithDuplicateResolutionIs() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
@@ -594,7 +594,7 @@ public final class StateSchemaValidatorTest
    * Verifies that obsolete resolution with explanation is accepted.
    */
   @Test
-  public void obsoleteResolutionWithExplanationIsAccepted() throws IOException
+  public void obsoleteResolutionWithExplanationIs() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
@@ -628,7 +628,7 @@ public final class StateSchemaValidatorTest
    * Verifies that won't-fix resolution with explanation is accepted.
    */
   @Test
-  public void wontFixResolutionWithExplanationIsAccepted() throws IOException
+  public void wontFixResolutionWithExplanationIs() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
@@ -662,7 +662,7 @@ public final class StateSchemaValidatorTest
    * Verifies that not-applicable resolution with explanation is accepted.
    */
   @Test
-  public void notApplicableResolutionWithExplanationIsAccepted() throws IOException
+  public void notApplicableResolutionWithExplanationIs() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))
@@ -925,7 +925,7 @@ public final class StateSchemaValidatorTest
    * Verifies that an Edit tool operation on index.json is validated after applying the replacement.
    */
   @Test
-  public void editOperationAppliesReplacementBeforeValidation() throws IOException
+  public void editOperationAppliesReplacementBefore() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))

@@ -168,7 +168,7 @@ public class GetResearchOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void buildScorecardRowTripleCreatesThreeRatings() throws IOException
+  public void buildScorecardRowTripleCreatesThree() throws IOException
   {
     String result = GetResearchOutput.buildScorecardRowTriple(
       "Speed", 3,

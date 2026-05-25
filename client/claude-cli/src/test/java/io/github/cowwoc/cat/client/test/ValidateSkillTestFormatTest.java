@@ -351,7 +351,7 @@ public final class ValidateSkillTestFormatTest
    * Verifies that a missing blank line before the first section header (between '---' and '## Turn 1') is blocked.
    */
   @Test
-  public void missingBlankLineBeforeFirstSectionIsBlocked() throws IOException
+  public void missingBlankLineBeforeFirstSectionIs() throws IOException
   {
     try (AgentScope scope = new TestClaudeTool())
     {
@@ -383,7 +383,7 @@ public final class ValidateSkillTestFormatTest
    * Verifies that a missing blank line before a non-first section header is blocked.
    */
   @Test
-  public void missingBlankLineBeforeSectionHeaderIsBlocked() throws IOException
+  public void missingBlankLineBeforeSectionHeaderIs() throws IOException
   {
     try (AgentScope scope = new TestClaudeTool())
     {
@@ -415,7 +415,7 @@ public final class ValidateSkillTestFormatTest
    * Verifies that a missing blank line after a section header is blocked.
    */
   @Test
-  public void missingBlankLineAfterSectionHeaderIsBlocked() throws IOException
+  public void missingBlankLineAfterSectionHeaderIs() throws IOException
   {
     try (AgentScope scope = new TestClaudeTool())
     {

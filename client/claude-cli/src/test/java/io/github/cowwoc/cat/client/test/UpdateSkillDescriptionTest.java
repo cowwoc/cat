@@ -42,7 +42,7 @@ public final class UpdateSkillDescriptionTest
    * characters without throwing.
    */
   @Test
-  public void getDescriptionAcceptsDescriptionAtMaxLength()
+  public void getDescriptionAcceptsDescriptionAtMax()
   {
     String description = "A".repeat(SkillFrontmatter.MAX_DESCRIPTION_LENGTH);
     String content = "---\ndescription: " + description + "\nuser-invocable: false\n---\n# Skill\n";
@@ -56,7 +56,7 @@ public final class UpdateSkillDescriptionTest
    * Extract mode does not enforce the length limit; it is the caller's responsibility to check.
    */
   @Test
-  public void getDescriptionReturnsDescriptionExceedingMaxLength()
+  public void getDescriptionReturnsDescription()
   {
     String description = "A".repeat(SkillFrontmatter.MAX_DESCRIPTION_LENGTH + 1);
     String content = "---\ndescription: " + description + "\nuser-invocable: false\n---\n# Skill\n";
@@ -79,7 +79,7 @@ public final class UpdateSkillDescriptionTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*No 'description:' field.*")
-  public void getDescriptionThrowsOnMissingDescriptionField()
+  public void getDescriptionThrowsOnMissingDescription()
   {
     UpdateSkillDescription.getDescription("---\nmodel: sonnet\n---\n# No description");
   }
@@ -99,7 +99,7 @@ public final class UpdateSkillDescriptionTest
    * Verifies that replaceDescription preserves all other frontmatter fields after replacement.
    */
   @Test
-  public void replacementPreservesOtherFrontmatterFields()
+  public void replacementPreservesOtherFrontmatter()
   {
     String updated = UpdateSkillDescription.replaceDescription(SIMPLE_SKILL, "New description");
     requireThat(updated, "updated").contains("user-invocable: false");
@@ -110,7 +110,7 @@ public final class UpdateSkillDescriptionTest
    * {@value SkillFrontmatter#MAX_DESCRIPTION_LENGTH} characters.
    */
   @Test
-  public void replaceDescriptionAcceptsDescriptionAtMaxLength()
+  public void replaceDescriptionAcceptsDescriptionAt()
   {
     String description = "A".repeat(SkillFrontmatter.MAX_DESCRIPTION_LENGTH);
     String updated = UpdateSkillDescription.replaceDescription(SIMPLE_SKILL, description);
@@ -123,7 +123,7 @@ public final class UpdateSkillDescriptionTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*exceeds " + SkillFrontmatter.MAX_DESCRIPTION_LENGTH + "-character limit.*")
-  public void replaceDescriptionRejectsDescriptionExceedingMaxLength()
+  public void replaceDescriptionRejectsDescription()
   {
     UpdateSkillDescription.replaceDescription(SIMPLE_SKILL, "B".repeat(SkillFrontmatter.MAX_DESCRIPTION_LENGTH + 1));
   }
@@ -133,7 +133,7 @@ public final class UpdateSkillDescriptionTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*No YAML frontmatter.*")
-  public void replaceDescriptionThrowsOnMissingFrontmatter()
+  public void replaceDescriptionThrowsOnMissing()
   {
     UpdateSkillDescription.replaceDescription("# No frontmatter here", "New description");
   }
@@ -143,7 +143,7 @@ public final class UpdateSkillDescriptionTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*No 'description:' field.*")
-  public void replaceDescriptionThrowsOnMissingDescriptionField()
+  public void replaceDescriptionThrowsOnMissing2()
   {
     UpdateSkillDescription.replaceDescription("---\nmodel: sonnet\n---\n# No description", "New");
   }

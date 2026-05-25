@@ -31,7 +31,7 @@ public final class CodexHookRegistrationTest
    * @throws IOException if the hooks file cannot be read
    */
   @Test
-  public void preBashMatcherAcceptsNativeCodexCommandToolNames() throws IOException
+  public void preBashMatcherAcceptsNativeCodexCommand() throws IOException
   {
     JsonNode hooks = readHooksJson().get("hooks");
     JsonNode registrations = hooks.get("PreToolUse");
@@ -74,7 +74,7 @@ public final class CodexHookRegistrationTest
    * @throws IOException if the hooks file cannot be read
    */
   @Test
-  public void sessionStartRegistrationUsesNativeLauncher() throws IOException
+  public void sessionStartRegistrationUsesNative() throws IOException
   {
     JsonNode registration = readHooksJson().get("hooks").get("SessionStart").get(0);
     Pattern matcher = Pattern.compile(registration.get("matcher").asString());

@@ -52,8 +52,8 @@ public class ConfigSkillContentTest
     String firstUse = readPluginFile("skills/common/config/first-use.md");
     String firstUseQuestionnaire = firstUse.substring(firstUse.indexOf("**Question 1:**"),
       firstUse.indexOf("**After collecting all 5 answers"));
-    requireQuestionnaireOptionsEndWithPeriods(firstUseQuestionnaire);
-    requireQuestionnaireOptionsEndWithPeriods(readPluginFile("templates/questionnaire.md"));
+    requireQuestionnaireOptionsEndWith(firstUseQuestionnaire);
+    requireQuestionnaireOptionsEndWith(readPluginFile("templates/questionnaire.md"));
   }
 
   /**
@@ -62,7 +62,7 @@ public class ConfigSkillContentTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void finalQuestionUsesChangeExplanationWording() throws IOException
+  public void finalQuestionUsesChangeExplanation() throws IOException
   {
     String firstUse = readPluginFile("skills/common/config/first-use.md");
     String template = readPluginFile("templates/questionnaire.md");
@@ -80,7 +80,7 @@ public class ConfigSkillContentTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getOutputSkillDoesNotReturnDispatcherWrapper() throws IOException
+  public void getOutputSkillDoesNotReturnDispatcher() throws IOException
   {
     String content = readPluginFile("skills/common/get-output/first-use.md");
 
@@ -118,7 +118,7 @@ public class ConfigSkillContentTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void manualPersonalitySettingsSelectSettingThenValue() throws IOException
+  public void manualPersonalitySettingsSelectSetting() throws IOException
   {
     String content = readPluginFile("skills/common/config/first-use.md");
     String manualSettings = content.substring(content.indexOf("### Step 5a: Manual settings"),
@@ -135,7 +135,7 @@ public class ConfigSkillContentTest
       doesNotContain("Page 2 of 2");
   }
 
-  private static void requireQuestionnaireOptionsEndWithPeriods(String content)
+  private static void requireQuestionnaireOptionsEndWith(String content)
   {
     Matcher matcher = QUESTIONNAIRE_OPTION.matcher(content);
     int options = 0;

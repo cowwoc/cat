@@ -55,6 +55,11 @@ set -euo pipefail
 
 trap 'echo "ERROR in 2.1.sh at line $LINENO: $BASH_COMMAND" >&2; exit 1' ERR
 
+if [[ -z "${CAT_PLUGIN_ROOT:-}" ]]; then
+    CAT_PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:?CAT_PLUGIN_ROOT is required}"
+    export CAT_PLUGIN_ROOT
+fi
+
 # shellcheck source=lib/utils.sh
 source "${CAT_PLUGIN_ROOT}/migrations/lib/utils.sh"
 
@@ -333,7 +338,7 @@ fi
 log_migration "Phase 5: Rename PLAN.md sections to pre-conditions/post-conditions"
 
 all_plan_files=$(find .cat/issues -name "PLAN.md" -type f 2>/dev/null || true)
-all_plan_count=$(echo "$all_plan_files" | grep -c "PLAN.md" || echo 0)
+all_plan_count=$(printf '%s\n' "$all_plan_files" | grep -c "PLAN.md" || true)
 
 if [[ "$all_plan_count" -eq 0 ]]; then
     log_migration "No PLAN.md files found - skipping phase 5"
@@ -1557,20 +1562,21 @@ fi
 log_migration "Phase 20: Rename targetBranch → target_branch in index.json files"
 
 phase20_migrated=0
-phase20_skipped=0
+legacy_index_files=$(find "$issues_dir" -name "index.json" -type f -exec grep -l '"targetBranch"' {} + \
+    2>/dev/null || true)
 
-while IFS= read -r index_file; do
-    [[ -z "$index_file" ]] && continue
-    if grep -q '"targetBranch"' "$index_file" 2>/dev/null; then
+if [[ -z "$legacy_index_files" ]]; then
+    log_migration "No legacy targetBranch keys found - skipping phase 20"
+else
+    while IFS= read -r index_file; do
+        [[ -z "$index_file" ]] && continue
         sed -i 's/"targetBranch"/"target_branch"/g' "$index_file"
         ((phase20_migrated++)) || true
         log_migration "  Renamed targetBranch → target_branch in: $index_file"
-    else
-        ((phase20_skipped++)) || true
-    fi
-done < <(find "$issues_dir" -name "index.json" -type f 2>/dev/null || true)
+    done <<< "$legacy_index_files"
 
-log_migration "Phase 20 complete: $phase20_migrated files updated, $phase20_skipped already up to date"
+    log_migration "Phase 20 complete: $phase20_migrated files updated"
+fi
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Phase 21: Rename caution config values: none→low, changed→medium, all→high
@@ -1730,36 +1736,25 @@ fi
 
 log_migration "Phase 26: Rename ## Sub-Agent Waves → ## Jobs and ### Wave N → ### Job N in plan.md files"
 
-all_plan_files_26=$(find .cat/issues -name "plan.md" -type f 2>/dev/null || true)
+legacy_plan_files_26=$(find .cat/issues -name "plan.md" -type f \
+    -exec grep -El '^(## Sub-Agent Waves|### Wave )' {} + 2>/dev/null || true)
 
-if [[ -z "$all_plan_files_26" ]]; then
-    log_migration "No plan.md files found - skipping phase 26"
+if [[ -z "$legacy_plan_files_26" ]]; then
+    log_migration "No legacy plan.md job headings found - skipping phase 26"
 else
     phase26_migrated=0
-    phase26_skipped=0
 
     while IFS= read -r planFile; do
         [[ -z "$planFile" ]] && continue
-
-        # Idempotency: skip files already using the new section name
-        if grep -q "^## Jobs" "$planFile" 2>/dev/null; then
-            ((phase26_skipped++)) || true
-            continue
-        fi
-
-        # Skip files with neither old section heading nor old wave subsections
-        if ! grep -qE "^## Sub-Agent Waves|^### Wave " "$planFile" 2>/dev/null; then
-            continue
-        fi
 
         sed -i 's/^## Sub-Agent Waves$/## Jobs/' "$planFile"
         sed -i 's/^### Wave \(.*\)$/### Job \1/' "$planFile"
         ((phase26_migrated++)) || true
         log_migration "  Updated: $planFile"
 
-    done <<< "$all_plan_files_26"
+    done <<< "$legacy_plan_files_26"
 
-    log_migration "Phase 26 complete: $phase26_migrated files migrated, $phase26_skipped already up to date"
+    log_migration "Phase 26 complete: $phase26_migrated files migrated"
 fi
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -1952,5 +1947,5 @@ else
     log_migration "Phase 29: non-Codex engine detected - skipping"
 fi
 
-log_success "Migration to 2.1 completed"
+log_migration "Migration to 2.1 completed"
 exit 0

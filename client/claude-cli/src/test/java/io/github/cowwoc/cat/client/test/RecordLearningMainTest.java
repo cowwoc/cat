@@ -53,7 +53,7 @@ public class RecordLearningMainTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void happyPathProducesLearningIdAndCounterStatus() throws IOException
+  public void happyPathProducesLearningIdAndCounter() throws IOException
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
@@ -164,7 +164,7 @@ public class RecordLearningMainTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void missingClaudeProjectDirProducesBlockResponse() throws IOException
+  public void missingClaudeProjectDirProducesBlock() throws IOException
   {
     Path tempDir = Files.createTempDirectory("record-learning-main-test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -258,7 +258,7 @@ public class RecordLearningMainTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void corruptedMistakesFileExceptionNamesFilePath() throws IOException
+  public void corruptedMistakesFileExceptionNamesFile() throws IOException
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
@@ -304,7 +304,7 @@ public class RecordLearningMainTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void priorPeriodMistakesFilesAreIncludedInMaxIdScan() throws IOException
+  public void priorPeriodMistakesFilesAreIncludedInMax() throws IOException
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
@@ -361,7 +361,7 @@ public class RecordLearningMainTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void corruptedOldMistakesFileExceptionNamesFilePath() throws IOException
+  public void corruptedOldMistakesFileExceptionNames() throws IOException
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");

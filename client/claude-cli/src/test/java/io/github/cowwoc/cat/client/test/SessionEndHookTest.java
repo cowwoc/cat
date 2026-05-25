@@ -65,7 +65,7 @@ public final class SessionEndHookTest
    * malicious directory name like {@code ../../../etc} could cause unintended deletion.
    */
   @Test
-  public void nonUuidSessionDirectorySkippedDuringCleanup() throws IOException
+  public void nonUuidSessionDirectorySkippedDuring() throws IOException
   {
     String currentSessionId = UUID.randomUUID().toString();
     Path tempDir = Files.createTempDirectory("session-end-hook-test");
@@ -107,7 +107,7 @@ public final class SessionEndHookTest
    * when the Claude session directory still exists, the work directory is preserved.
    */
   @Test
-  public void activeNonCurrentSessionWorkDirectoryPreserved() throws IOException
+  public void activeNonCurrentSessionWorkDirectory() throws IOException
   {
     String currentSessionId = UUID.randomUUID().toString();
     Path tempDir = Files.createTempDirectory("session-end-hook-test");
@@ -147,7 +147,7 @@ public final class SessionEndHookTest
    * directory) should be deleted.
    */
   @Test
-  public void sessionEndHookCleansStaleSessionWorkDirectories() throws IOException
+  public void sessionEndHookCleansStaleSessionWork() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-end-hook-test");
     try
@@ -183,7 +183,7 @@ public final class SessionEndHookTest
    * deleted mid-session.
    */
   @Test
-  public void currentSessionWorkDirectoryPreservedDuringCleanup() throws IOException
+  public void currentSessionWorkDirectoryPreserved() throws IOException
   {
     String currentSessionId = UUID.randomUUID().toString();
     Path tempDir = Files.createTempDirectory("session-end-hook-test");

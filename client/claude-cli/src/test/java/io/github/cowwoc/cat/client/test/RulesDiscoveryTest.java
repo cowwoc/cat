@@ -296,7 +296,7 @@ public final class RulesDiscoveryTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void filterForMainAgentExcludesSubagentOnlyRules() throws IOException
+  public void filterForMainAgentExcludesSubagentOnly() throws IOException
   {
     Path tempDir = Files.createTempDirectory("rules-test-");
     try
@@ -336,7 +336,7 @@ public final class RulesDiscoveryTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void filterForSubagentNullMatchesAnySubagentType() throws IOException
+  public void filterForSubagentNullMatchesAnySubagent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("rules-test-");
     try
@@ -371,7 +371,7 @@ public final class RulesDiscoveryTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void filterForSubagentEmptySubAgentsExcludesAllSubagents() throws IOException
+  public void filterForSubagentEmptySubAgentsExcludes() throws IOException
   {
     Path tempDir = Files.createTempDirectory("rules-test-");
     try
@@ -405,7 +405,7 @@ public final class RulesDiscoveryTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void filterForSubagentSpecificTypeMatchesOnlyThatType() throws IOException
+  public void filterForSubagentSpecificTypeMatchesOnly() throws IOException
   {
     Path tempDir = Files.createTempDirectory("rules-test-");
     try
@@ -565,7 +565,7 @@ public final class RulesDiscoveryTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void mainAgentTrueSubAgentsEmptyIncludedByMainExcludedBySub() throws IOException
+  public void mainAgentTrueSubAgentsEmptyIncludedBy() throws IOException
   {
     Path tempDir = Files.createTempDirectory("rules-test-");
     try
@@ -702,7 +702,7 @@ public final class RulesDiscoveryTest
    * Verifies that {@code **} matches across path separators.
    */
   @Test
-  public void matchesGlobDoubleStarMatchesAcrossPathSeparators()
+  public void matchesGlobDoubleStarMatchesAcrossPath()
   {
     requireThat(GlobMatcher.matches("src/main/**", "src/main/java/MyClass.java"),
       "matchesGlob(**,deep)").isTrue();
@@ -716,7 +716,7 @@ public final class RulesDiscoveryTest
    * Verifies that {@code ?} matches a single non-separator character.
    */
   @Test
-  public void matchesGlobQuestionMarkMatchesSingleNonSeparatorChar()
+  public void matchesGlobQuestionMarkMatchesSingleNon()
   {
     requireThat(GlobMatcher.matches("Foo?.java", "FooA.java"),
       "matchesGlob(?,single)").isTrue();
@@ -930,7 +930,7 @@ public final class RulesDiscoveryTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void frontmatterNoTrailingNewlineProducesEmptyBody() throws IOException
+  public void frontmatterNoTrailingNewlineProduces() throws IOException
   {
     Path tempDir = Files.createTempDirectory("rules-test-notail-");
     try
@@ -1050,7 +1050,7 @@ public final class RulesDiscoveryTest
    * and does not match paths under a different root.
    */
   @Test
-  public void matchesGlobSingleStarDoesNotCrossPathSeparator()
+  public void matchesGlobSingleStarDoesNotCrossPath()
   {
     // Matches one path segment under src/
     requireThat(GlobMatcher.matches("src/*", "src/main"),
@@ -1072,7 +1072,7 @@ public final class RulesDiscoveryTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void filterForSubagentExactTypeMatchesOnlyMatchingType() throws IOException
+  public void filterForSubagentExactTypeMatchesOnly() throws IOException
   {
     Path tempDir = Files.createTempDirectory("rules-test-exact-");
     try
@@ -1118,7 +1118,7 @@ public final class RulesDiscoveryTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void subAgentsQuotedValueWithCommaIsOneSingleItem() throws IOException
+  public void subAgentsQuotedValueWithCommaIsOneSingle() throws IOException
   {
     Path tempDir = Files.createTempDirectory("rules-test-quote-");
     try
@@ -1251,7 +1251,7 @@ public final class RulesDiscoveryTest
    * Verifies that getCatRulesForAudience returns empty string when the rules directory does not exist.
    */
   @Test
-  public void getCatRulesForAudienceEmptyWhenDirMissing()
+  public void getCatRulesForAudienceEmptyWhenDir()
   {
     Path nonExistentDir = Path.of("/tmp/does-not-exist-getCatRules-12345/rules");
     String result = RulesDiscovery.getCatRulesForAudience(nonExistentDir, YAML_MAPPER,
@@ -1266,7 +1266,7 @@ public final class RulesDiscoveryTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void getCatRulesForAudienceEmptyWhenNoRulesMatch() throws IOException
+  public void getCatRulesForAudienceEmptyWhenNoRules() throws IOException
   {
     Path tempDir = Files.createTempDirectory("rules-test-nofilter-");
     try
@@ -1298,7 +1298,7 @@ public final class RulesDiscoveryTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void getCatRulesForAudienceReturnsContentForMainAgent() throws IOException
+  public void getCatRulesForAudienceReturnsContentFor() throws IOException
   {
     Path tempDir = Files.createTempDirectory("rules-test-main-");
     try
@@ -1370,7 +1370,7 @@ public final class RulesDiscoveryTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void getCatRulesForAudienceExpandsEngineSiblingIncludes() throws IOException
+  public void getCatRulesForAudienceExpandsEngine() throws IOException
   {
     Path tempDir = Files.createTempDirectory("rules-test-engine-include-");
     try
@@ -1408,7 +1408,7 @@ public final class RulesDiscoveryTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void getCatRulesForAudienceReturnsContentForSubagent() throws IOException
+  public void getCatRulesForAudienceReturnsContentFor2() throws IOException
   {
     Path tempDir = Files.createTempDirectory("rules-test-subagent-");
     try
@@ -1445,7 +1445,7 @@ public final class RulesDiscoveryTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void getCatRulesForAudienceListMergesMultipleDirs() throws IOException
+  public void getCatRulesForAudienceListMergesMultiple() throws IOException
   {
     Path tempDir = Files.createTempDirectory("rules-test-multi-merge-");
     try
@@ -1491,7 +1491,7 @@ public final class RulesDiscoveryTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void getCatRulesForAudienceListBothRulesIncludedOnFilenameCollision() throws IOException
+  public void getCatRulesForAudienceListBothRules() throws IOException
   {
     Path tempDir = Files.createTempDirectory("rules-test-multi-override-");
     try
@@ -1537,7 +1537,7 @@ public final class RulesDiscoveryTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void getCatRulesForAudienceListReturnEmptyWhenAllDirsMissing() throws IOException
+  public void getCatRulesForAudienceListReturnEmpty() throws IOException
   {
     Path tempDir = Files.createTempDirectory("rules-test-multi-empty-");
     try

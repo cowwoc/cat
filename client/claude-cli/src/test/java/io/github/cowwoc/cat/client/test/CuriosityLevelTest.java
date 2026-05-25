@@ -66,7 +66,7 @@ public class CuriosityLevelTest
    * Verifies that fromString("") throws IllegalArgumentException.
    */
   @Test(expectedExceptions = IllegalArgumentException.class)
-  public void fromStringBlankThrowsIllegalArgumentException()
+  public void fromStringBlankThrowsIllegalArgument()
   {
     CuriosityLevel.fromString("");
   }
@@ -75,7 +75,7 @@ public class CuriosityLevelTest
    * Verifies that fromString("invalid") throws IllegalArgumentException.
    */
   @Test(expectedExceptions = IllegalArgumentException.class)
-  public void fromStringUnknownValueThrowsIllegalArgumentException()
+  public void fromStringUnknownValueThrowsIllegal()
   {
     CuriosityLevel.fromString("invalid");
   }

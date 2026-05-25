@@ -422,7 +422,7 @@ public class GetStakeholderOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void selectionBoxContentLinesHaveConsistentWidth() throws IOException
+  public void selectionBoxContentLinesHaveConsistent() throws IOException
   {
     try (CliTool scope = new TestClaudeTool())
     {
@@ -479,7 +479,7 @@ public class GetStakeholderOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void concernBoxRendersCompactFormatWithReviewPath() throws IOException
+  public void concernBoxRendersCompactFormatWithReview() throws IOException
   {
     try (CliTool scope = new TestClaudeTool())
     {
@@ -500,7 +500,7 @@ public class GetStakeholderOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void concernBoxRendersCompactFormatCriticalSeverity() throws IOException
+  public void concernBoxRendersCompactFormatCritical() throws IOException
   {
     try (CliTool scope = new TestClaudeTool())
     {
@@ -533,7 +533,7 @@ public class GetStakeholderOutputTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Empty stakeholder name.*")
-  public void parseReviewersRejectsEmptyStakeholderName()
+  public void parseReviewersRejectsEmptyStakeholder()
   {
     GetStakeholderReviewBox.parseReviewers(":APPROVED,design:CONCERNS");
   }
@@ -570,7 +570,7 @@ public class GetStakeholderOutputTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Empty status.*")
-  public void parseReviewersRejectsEntryWithEmptyStatus()
+  public void parseReviewersRejectsEntryWithEmpty()
   {
     GetStakeholderReviewBox.parseReviewers("design:,testing:CONCERNS");
   }

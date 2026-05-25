@@ -143,7 +143,7 @@ public class ProgressBannerTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void generateBannerPreparingPhaseShowsActiveSymbol() throws IOException
+  public void generateBannerPreparingPhaseShowsActive() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (CliTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -165,7 +165,7 @@ public class ProgressBannerTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void generateBannerImplementingPhaseShowsCompleteAndActive() throws IOException
+  public void generateBannerImplementingPhaseShows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (CliTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -189,7 +189,7 @@ public class ProgressBannerTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void generateBannerReviewingPhaseShowsProgressPattern() throws IOException
+  public void generateBannerReviewingPhaseShows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (CliTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -214,7 +214,7 @@ public class ProgressBannerTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void generateBannerMergingPhaseShowsFinalPattern() throws IOException
+  public void generateBannerMergingPhaseShowsFinal() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (CliTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -400,7 +400,7 @@ public class ProgressBannerTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void generateGenericPreparingBannerProducesOutput() throws IOException
+  public void generateGenericPreparingBannerProduces() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (CliTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -423,7 +423,7 @@ public class ProgressBannerTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void generateGenericPreparingBannerIncludesExplanation() throws IOException
+  public void generateGenericPreparingBannerIncludes() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (CliTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -488,7 +488,7 @@ public class ProgressBannerTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void generateBannerLastLineStartsWithBottomLeft() throws IOException
+  public void generateBannerLastLineStartsWithBottom() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (CliTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -510,7 +510,7 @@ public class ProgressBannerTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void generateBannerMiddleLineStartsWithVertical() throws IOException
+  public void generateBannerMiddleLineStartsWith() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (CliTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -586,7 +586,7 @@ public class ProgressBannerTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void generateBannerProducesConsistentStructure() throws IOException
+  public void generateBannerProducesConsistent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (CliTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -627,7 +627,7 @@ public class ProgressBannerTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void generateBannerConfirmingPhaseShowsCorrectPattern() throws IOException
+  public void generateBannerConfirmingPhaseShows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (CliTool scope = new TestClaudeTool(tempDir, tempDir))

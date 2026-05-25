@@ -31,7 +31,7 @@ public final class PostToolUseFailureHookTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void failureTrackingFileStoredUnderCatSessionPath() throws IOException
+  public void failureTrackingFileStoredUnderCatSession() throws IOException
   {
     Path tempDir = Files.createTempDirectory("post-tool-failure-hook-test-");
     try

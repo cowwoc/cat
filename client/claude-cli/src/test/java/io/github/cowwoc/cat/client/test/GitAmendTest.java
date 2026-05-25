@@ -86,7 +86,7 @@ public class GitAmendTest
    * Verifies that amend with a custom message succeeds on an unpushed commit.
    */
   @Test
-  public void executeWithMessageSucceedsOnUnpushedCommit() throws IOException
+  public void executeWithMessageSucceedsOnUnpushed() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
     try (AgentScope scope = new TestClaudeTool(repoDir, repoDir))
@@ -230,7 +230,7 @@ public class GitAmendTest
    * window (between the amend completing and the post-amend TOCTOU check).
    */
   @Test
-  public void executeDetectsRaceWhenOldHeadPushedDuringAmend() throws IOException
+  public void executeDetectsRaceWhenOldHeadPushed() throws IOException
   {
     Path bareRepo = TestUtils.createTempGitRepo("main");
     try

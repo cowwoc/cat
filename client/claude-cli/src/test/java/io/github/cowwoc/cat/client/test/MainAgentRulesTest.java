@@ -109,7 +109,7 @@ public final class MainAgentRulesTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void claudeAppendsSameNamedRulesInDirectoryOrder() throws IOException
+  public void claudeAppendsSameNamedRulesInDirectory() throws IOException
   {
     Path tempDir = Files.createTempDirectory("main-agent-rules-test-");
     try
@@ -156,7 +156,7 @@ public final class MainAgentRulesTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void codexAppendsSameNamedRulesInDirectoryOrder() throws IOException
+  public void codexAppendsSameNamedRulesInDirectory() throws IOException
   {
     Path tempDir = Files.createTempDirectory("main-agent-rules-test-");
     try

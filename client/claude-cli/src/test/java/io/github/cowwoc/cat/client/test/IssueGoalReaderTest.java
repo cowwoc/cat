@@ -103,7 +103,7 @@ public class IssueGoalReaderTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void multiParagraphGoalReturnsOnlyFirstParagraph() throws IOException
+  public void multiParagraphGoalReturnsOnlyFirst() throws IOException
   {
     Path planFile = Files.createTempFile("IssueGoalReader-multi-para-", ".md");
     try

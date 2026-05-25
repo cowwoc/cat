@@ -214,7 +214,7 @@ public final class SkillComparisonTest
    * Verifies that the goal is extracted from Skill A's Purpose section when not provided.
    */
   @Test
-  public void extractsGoalFromPurposeSectionWhenNotProvided() throws IOException
+  public void extractsGoalFromPurposeSectionWhenNot() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-compare-");
     try (CliTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -240,7 +240,7 @@ public final class SkillComparisonTest
    * Verifies that extractGoal returns fallback message when no Purpose section exists.
    */
   @Test
-  public void extractGoalReturnsFallbackWhenNoPurposeSection() throws IOException
+  public void extractGoalReturnsFallbackWhenNoPurpose() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-compare-");
     try (CliTool scope = new TestClaudeTool(tempDir, tempDir))

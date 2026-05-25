@@ -62,7 +62,7 @@ public class ConfigTest
    * Verifies that Config uses default caution=medium when config file is missing.
    */
   @Test
-  public void configUsesDefaultCautionWhenConfigMissing() throws IOException
+  public void configUsesDefaultCautionWhenConfig() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -903,7 +903,7 @@ public class ConfigTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void configAsMapContainsBothDefaultsAndOverrides() throws IOException
+  public void configAsMapContainsBothDefaultsAnd() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
     try (TestClaudeTool scope = new TestClaudeTool())
@@ -1192,7 +1192,7 @@ public class ConfigTest
    * Verifies that getVerbosity() returns MEDIUM by default when the config file is missing.
    */
   @Test
-  public void configUsesDefaultVerbosityWhenConfigMissing() throws IOException
+  public void configUsesDefaultVerbosityWhenConfig() throws IOException
   {
     Path tempDir = TestUtils.createTempDir("config-test");
     try (TestClaudeTool scope = new TestClaudeTool())

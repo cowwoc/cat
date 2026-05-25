@@ -47,7 +47,7 @@ public final class DetectFailuresTest
    * Verifies that exit code != 0 with a failure pattern returns warn.
    */
   @Test
-  public void nonZeroExitCodeWithFailurePatternReturnsWarn()
+  public void nonZeroExitCodeWithFailurePatternReturns()
   {
     JsonMapper mapper = new JsonMapper();
     ObjectNode toolResult = mapper.createObjectNode();
@@ -69,7 +69,7 @@ public final class DetectFailuresTest
    * Verifies that exit code != 0 without any failure pattern returns allow.
    */
   @Test
-  public void nonZeroExitCodeWithoutFailurePatternReturnsAllow()
+  public void nonZeroExitCodeWithoutFailurePattern()
   {
     JsonMapper mapper = new JsonMapper();
     ObjectNode toolResult = mapper.createObjectNode();
@@ -117,7 +117,7 @@ public final class DetectFailuresTest
    * arbitrary scripts that happen to produce failure-keyword output.
    */
   @Test
-  public void nonTestRunnerCommandWithFailureOutputReturnsAllow()
+  public void nonTestRunnerCommandWithFailureOutput()
   {
     JsonMapper mapper = new JsonMapper();
     ObjectNode toolResult = mapper.createObjectNode();
@@ -142,7 +142,7 @@ public final class DetectFailuresTest
    * Pattern matching is scoped to known test runner commands; javac is not a test runner.
    */
   @Test
-  public void compilerCommandWithErrorOutputReturnsAllow()
+  public void compilerCommandWithErrorOutputReturns()
   {
     JsonMapper mapper = new JsonMapper();
     ObjectNode toolResult = mapper.createObjectNode();
@@ -167,7 +167,7 @@ public final class DetectFailuresTest
    * Pattern matching is scoped to known test runner commands; arbitrary java invocations are not test runners.
    */
   @Test
-  public void jvmCommandWithExceptionOutputReturnsAllow()
+  public void jvmCommandWithExceptionOutputReturns()
   {
     JsonMapper mapper = new JsonMapper();
     ObjectNode toolResult = mapper.createObjectNode();
@@ -244,7 +244,7 @@ public final class DetectFailuresTest
    * "test_failure" as part of diff content, but the command itself is not a test runner.
    */
   @Test
-  public void gitDiffWithFailureKeywordsInOutputReturnsAllow()
+  public void gitDiffWithFailureKeywordsInOutput()
   {
     JsonMapper mapper = new JsonMapper();
     ObjectNode toolResult = mapper.createObjectNode();
@@ -275,7 +275,7 @@ public final class DetectFailuresTest
    * A common false positive: reading a file that contains "FAILURE" or "Exception" as documentation text.
    */
   @Test
-  public void catCommandWithFailureKeywordsInOutputReturnsAllow()
+  public void catCommandWithFailureKeywordsInOutput()
   {
     JsonMapper mapper = new JsonMapper();
     ObjectNode toolResult = mapper.createObjectNode();
@@ -301,7 +301,7 @@ public final class DetectFailuresTest
    * with words like "failure" or "test" in it.
    */
   @Test
-  public void getOutputGetDiffWithFailureKeywordsReturnsAllow()
+  public void getOutputGetDiffWithFailureKeywords()
   {
     JsonMapper mapper = new JsonMapper();
     ObjectNode toolResult = mapper.createObjectNode();
@@ -376,7 +376,7 @@ public final class DetectFailuresTest
    * The mvn test runner with lowercase "build failed" in output must still trigger a warning.
    */
   @Test
-  public void patternMatchingIsCaseInsensitiveForTestRunners()
+  public void patternMatchingIsCaseInsensitiveForTest()
   {
     JsonMapper mapper = new JsonMapper();
     ObjectNode toolResult = mapper.createObjectNode();

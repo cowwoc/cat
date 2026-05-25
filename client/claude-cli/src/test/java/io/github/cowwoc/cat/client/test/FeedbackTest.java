@@ -30,7 +30,7 @@ public class FeedbackTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void openIssueReturnsUrlOnlyWhenBrowserUnavailable() throws IOException
+  public void openIssueReturnsUrlOnlyWhenBrowser() throws IOException
   {
     Path tempDir = Files.createTempDirectory("feedback-test");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);
@@ -66,7 +66,7 @@ public class FeedbackTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void openIssueReturnsOpenedWhenBrowserSucceeds() throws IOException
+  public void openIssueReturnsOpenedWhenBrowser() throws IOException
   {
     Path tempDir = Files.createTempDirectory("feedback-test");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir);

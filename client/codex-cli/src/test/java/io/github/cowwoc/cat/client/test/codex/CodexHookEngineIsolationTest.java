@@ -39,7 +39,7 @@ public final class CodexHookEngineIsolationTest
    * @throws Exception if the reflective hook invocation fails
    */
   @Test
-  public void preBashRunsWithoutClaudeImplementationClasses() throws Exception
+  public void preBashRunsWithoutClaudeImplementation() throws Exception
   {
     Path tempDir = Files.createTempDirectory("codex-hook-engine-isolation-");
     try
@@ -70,7 +70,7 @@ public final class CodexHookEngineIsolationTest
    * @throws Exception if the reflective hook invocation fails
    */
   @Test
-  public void sessionStartRunsWithoutClaudeImplementationClasses() throws Exception
+  public void sessionStartRunsWithoutClaude() throws Exception
   {
     Path tempDir = Files.createTempDirectory("codex-hook-engine-isolation-");
     try

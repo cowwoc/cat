@@ -293,7 +293,7 @@ public final class DetectRepeatedFailuresTest
    * cleanup.
    */
   @Test
-  public void symlinkTrackingFilesAreSkippedDuringCleanup() throws IOException
+  public void symlinkTrackingFilesAreSkippedDuring() throws IOException
   {
     Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
     try (AgentScope scope = new TestClaudeTool(trackingDirectory, trackingDirectory))
@@ -321,7 +321,7 @@ public final class DetectRepeatedFailuresTest
    * Verifies that old tracking files are deleted during cleanup when the TTL has expired.
    */
   @Test
-  public void expiredTrackingFilesAreDeletedDuringCleanup() throws IOException
+  public void expiredTrackingFilesAreDeletedDuring() throws IOException
   {
     Instant now = Instant.parse("2025-06-01T12:00:00Z");
     Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");

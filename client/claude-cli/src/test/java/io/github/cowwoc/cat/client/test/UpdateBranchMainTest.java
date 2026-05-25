@@ -36,7 +36,7 @@ public final class UpdateBranchMainTest
    * Verifies that run(...) rejects invalid arguments with non-zero status and plain-text usage output.
    */
   @Test
-  public void runInvalidArgsReturnNonZeroWithPlainTextUsage()
+  public void runInvalidArgsReturnNonZeroWithPlainText()
   {
     ByteArrayOutputStream outBuffer = new ByteArrayOutputStream();
     PrintStream out = new PrintStream(outBuffer, true, StandardCharsets.UTF_8);
@@ -57,7 +57,7 @@ public final class UpdateBranchMainTest
    * Verifies that run(...) rejects unknown flags with non-zero status and plain-text usage output.
    */
   @Test
-  public void runUnknownFlagReturnNonZeroWithPlainTextUsage()
+  public void runUnknownFlagReturnNonZeroWithPlainText()
   {
     ByteArrayOutputStream outBuffer = new ByteArrayOutputStream();
     PrintStream out = new PrintStream(outBuffer, true, StandardCharsets.UTF_8);
@@ -77,7 +77,7 @@ public final class UpdateBranchMainTest
    * Verifies that run(...) rejects duplicate {@code --force} flags with plain-text usage output.
    */
   @Test
-  public void runDuplicateForceReturnsNonZeroWithPlainTextUsage()
+  public void runDuplicateForceReturnsNonZeroWithPlain()
   {
     ByteArrayOutputStream outBuffer = new ByteArrayOutputStream();
     PrintStream out = new PrintStream(outBuffer, true, StandardCharsets.UTF_8);
@@ -99,7 +99,7 @@ public final class UpdateBranchMainTest
    * Verifies that run(...) rejects blank branch and target arguments with plain-text usage output.
    */
   @Test
-  public void runBlankArgumentsReturnNonZeroWithPlainTextUsage()
+  public void runBlankArgumentsReturnNonZeroWithPlain()
   {
     ByteArrayOutputStream outBuffer = new ByteArrayOutputStream();
     PrintStream out = new PrintStream(outBuffer, true, StandardCharsets.UTF_8);
@@ -123,7 +123,7 @@ public final class UpdateBranchMainTest
    * @throws IOException if process execution fails
    */
   @Test
-  public void mainInvalidArgsEmitPlainTextUsageAndNonZeroExit() throws IOException
+  public void mainInvalidArgsEmitPlainTextUsageAndNon() throws IOException
   {
     Path tempDir = Files.createTempDirectory("update-branch-main-test-");
     try

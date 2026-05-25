@@ -288,7 +288,7 @@ public final class ClaudeRunnerTest
    * Verifies that buildProcessBuilder sets CLAUDE_CONFIG_DIR when isolation is active.
    */
   @Test
-  public void buildProcessBuilderSetsConfigDirWhenIsolated() throws IOException
+  public void buildProcessBuilderSetsConfigDirWhen() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -322,7 +322,7 @@ public final class ClaudeRunnerTest
    * The env is inherited from the parent process unchanged; no isolation-specific value is injected.
    */
   @Test
-  public void buildProcessBuilderDoesNotSetConfigDirWithoutIsolation() throws IOException
+  public void buildProcessBuilderDoesNotSetConfigDir() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -349,7 +349,7 @@ public final class ClaudeRunnerTest
    * when isolation is active.
    */
   @Test
-  public void buildProcessBuilderSetsPluginRootWhenIsolated() throws IOException
+  public void buildProcessBuilderSetsPluginRootWhen() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -386,7 +386,7 @@ public final class ClaudeRunnerTest
    * The env is inherited from the parent process unchanged; no isolation-specific value is injected.
    */
   @Test
-  public void buildProcessBuilderDoesNotSetPluginRootWithoutIsolation() throws IOException
+  public void buildProcessBuilderDoesNotSetPluginRoot() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))

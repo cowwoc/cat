@@ -277,7 +277,7 @@ public final class EntitlementsTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void circularTierReferenceDoesNotStackOverflow() throws IOException
+  public void circularTierReferenceDoesNotStack() throws IOException
   {
     Path tempDir = createTempTiersConfig("""
         {
@@ -351,7 +351,7 @@ public final class EntitlementsTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void includesNonexistentTierReturnsOwnFeatures() throws IOException
+  public void includesNonexistentTierReturnsOwn() throws IOException
   {
     Path tempDir = createTempTiersConfig("""
         {

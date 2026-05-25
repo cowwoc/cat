@@ -98,7 +98,7 @@ public class SprtRunnerMainTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = "(?s).*unknown command: unknown-command.*")
-  public void codexEngineWithoutClaudeUsesBusinessErrorPath() throws IOException, InterruptedException
+  public void codexEngineWithoutClaudeUsesBusiness() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("sprt-runner-main-test-");
     String originalValue = System.getProperty(ModelIdResolver.CLAUDE_EXECUTABLE_PROPERTY);

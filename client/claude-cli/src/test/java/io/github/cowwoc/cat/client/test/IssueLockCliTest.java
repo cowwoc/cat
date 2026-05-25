@@ -36,7 +36,7 @@ public class IssueLockCliTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void acquireWithValidArgsWritesAcquiredToStdout() throws IOException
+  public void acquireWithValidArgsWritesAcquiredTo() throws IOException
   {
     Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -66,7 +66,7 @@ public class IssueLockCliTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void acquireWithMissingSessionIdWritesBlockErrorToStdout() throws IOException
+  public void acquireWithMissingSessionIdWritesBlock() throws IOException
   {
     Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -96,7 +96,7 @@ public class IssueLockCliTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void acquireWithInvalidUuidSessionIdWritesBlockErrorToStdout() throws IOException
+  public void acquireWithInvalidUuidSessionIdWrites() throws IOException
   {
     Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -126,7 +126,7 @@ public class IssueLockCliTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void releaseWithValidArgsWritesReleasedToStdout() throws IOException
+  public void releaseWithValidArgsWritesReleasedTo() throws IOException
   {
     Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -159,7 +159,7 @@ public class IssueLockCliTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void checkWithValidIssueReturnsLockedFalseJson() throws IOException
+  public void checkWithValidIssueReturnsLockedFalse() throws IOException
   {
     Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -248,7 +248,7 @@ public class IssueLockCliTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void forceReleaseWithValidIssueWritesReleasedToStdout() throws IOException
+  public void forceReleaseWithValidIssueWritesReleased() throws IOException
   {
     Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -310,7 +310,7 @@ public class IssueLockCliTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void acquireWithBlankWorktreeArgWritesBlockErrorToStdout() throws IOException
+  public void acquireWithBlankWorktreeArgWritesBlock() throws IOException
   {
     Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -342,7 +342,7 @@ public class IssueLockCliTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void acquireWithWorktreeArgPopulatesWorktreesMap() throws IOException
+  public void acquireWithWorktreeArgPopulatesWorktrees() throws IOException
   {
     Path tempDir = TestUtils.createTempCatProject("issue-lock-cli-test");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))

@@ -177,7 +177,7 @@ public class GetStatusOutputTest
    * @param text the text to check
    */
   @Test(dataProvider = "plainSetupStatusOutputs")
-  public void isPlainSetupStatusOutputAcceptsExactMessages(String text)
+  public void isPlainSetupStatusOutputAcceptsExact(String text)
   {
     requireThat(GetStatusOutput.isPlainSetupStatusOutput(text), "plainSetupStatusOutput").isTrue();
   }
@@ -188,7 +188,7 @@ public class GetStatusOutputTest
    * @param text the text to check
    */
   @Test(dataProvider = "plainSetupStatusOutputs")
-  public void isPlainSetupStatusOutputAcceptsWhitespaceWrappedMessages(String text)
+  public void isPlainSetupStatusOutputAccepts(String text)
   {
     requireThat(GetStatusOutput.isPlainSetupStatusOutput(" \n" + text + "\t"),
       "plainSetupStatusOutput").isTrue();
@@ -220,7 +220,7 @@ public class GetStatusOutputTest
    * @param text the text to check
    */
   @Test(dataProvider = "nonPlainSetupStatusOutputs")
-  public void isPlainSetupStatusOutputRejectsNearMisses(String text)
+  public void isPlainSetupStatusOutputRejectsNear(String text)
   {
     requireThat(GetStatusOutput.isPlainSetupStatusOutput(text), "plainSetupStatusOutput").isFalse();
   }
@@ -314,7 +314,7 @@ public class GetStatusOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void singleVersionWithOpenIssuesRendersCorrectly() throws IOException
+  public void singleVersionWithOpenIssuesRenders() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-single-version");
     Path issuesDir = tempDir.resolve(".cat/issues");
@@ -502,7 +502,7 @@ public class GetStatusOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void nextIssueShowsInFooterWhenNoIssueInProgress() throws IOException
+  public void nextIssueShowsInFooterWhenNoIssueIn() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-next-footer");
     Path issuesDir = tempDir.resolve(".cat/issues");
@@ -916,7 +916,7 @@ public class GetStatusOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void parseStatusFromContentExtractsValidStatus() throws IOException
+  public void parseStatusFromContentExtractsValid() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-parse-status");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -940,7 +940,7 @@ public class GetStatusOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = IOException.class, expectedExceptionsMessageRegExp = ".*Unknown status.*")
-  public void parseStatusFromContentRejectsInvalidStatus() throws IOException
+  public void parseStatusFromContentRejectsInvalid() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-invalid-status");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -962,7 +962,7 @@ public class GetStatusOutputTest
    */
   @Test(expectedExceptions = IOException.class,
     expectedExceptionsMessageRegExp = ".*Missing Status field.*")
-  public void parseStatusFromContentRejectsMissingStatus() throws IOException
+  public void parseStatusFromContentRejectsMissing() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-missing-status");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -983,7 +983,7 @@ public class GetStatusOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void parseStatusFromContentHandlesCaseInsensitiveStatus() throws IOException
+  public void parseStatusFromContentHandlesCase() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-case-status");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -1007,7 +1007,7 @@ public class GetStatusOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void parseStatusFromContentHandlesAllValidStatuses() throws IOException
+  public void parseStatusFromContentHandlesAllValid() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-all-statuses");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -1300,7 +1300,7 @@ public class GetStatusOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void innerBoxesHaveUniformWidthAcrossMajorVersions() throws IOException
+  public void innerBoxesHaveUniformWidthAcrossMajor() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-alignment");
     Path issuesDir = tempDir.resolve(".cat/issues");
@@ -1362,7 +1362,7 @@ public class GetStatusOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void issuesAreSortedByGitCreationTimeOldestFirst() throws IOException
+  public void issuesAreSortedByGitCreationTimeOldest() throws IOException
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     try
@@ -1425,7 +1425,7 @@ public class GetStatusOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void issuesWithIdenticalTimestampsAreSortedAlphabetically() throws IOException
+  public void issuesWithIdenticalTimestampsAreSorted() throws IOException
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     try
@@ -1475,7 +1475,7 @@ public class GetStatusOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void statusDisplayIncludesCorruptIssueDirectories() throws IOException
+  public void statusDisplayIncludesCorruptIssue() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-corrupt-status");
     // Create a normal issue structure

@@ -140,7 +140,7 @@ public class GetWorkOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getCheckpointIssueCompleteReturnsFormattedOutput() throws IOException
+  public void getCheckpointIssueCompleteReturns() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -162,7 +162,7 @@ public class GetWorkOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getCheckpointIssueCompleteIncludesTimeMetrics() throws IOException
+  public void getCheckpointIssueCompleteIncludesTime() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -184,7 +184,7 @@ public class GetWorkOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getCheckpointIssueCompleteIncludesTokenMetrics() throws IOException
+  public void getCheckpointIssueCompleteIncludesToken() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -206,7 +206,7 @@ public class GetWorkOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getCheckpointFeedbackAppliedReturnsFormattedOutput() throws IOException
+  public void getCheckpointFeedbackAppliedReturns() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -228,7 +228,7 @@ public class GetWorkOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getCheckpointFeedbackAppliedIncludesIteration() throws IOException
+  public void getCheckpointFeedbackAppliedIncludes() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -250,7 +250,7 @@ public class GetWorkOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getIssueCompleteWithNextReturnsFormattedOutput() throws IOException
+  public void getIssueCompleteWithNextReturnsFormatted() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -270,7 +270,7 @@ public class GetWorkOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getIssueCompleteWithNextIncludesNextIssueName() throws IOException
+  public void getIssueCompleteWithNextIncludesNext() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -310,7 +310,7 @@ public class GetWorkOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getIssueCompleteWithNextContainsMergedMessage() throws IOException
+  public void getIssueCompleteWithNextContainsMerged() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -350,7 +350,7 @@ public class GetWorkOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getIssueCompleteWithNextContainsContinuingMessage() throws IOException
+  public void getIssueCompleteWithNextContains() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -370,7 +370,7 @@ public class GetWorkOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getIssueCompleteWithNextContainsStopAbortInstructions() throws IOException
+  public void getIssueCompleteWithNextContainsStop() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -390,7 +390,7 @@ public class GetWorkOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getIssueCompleteWithNextContainsBoxStructure() throws IOException
+  public void getIssueCompleteWithNextContainsBox() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -410,7 +410,7 @@ public class GetWorkOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getIssueAlreadyCompleteReturnsFormattedOutput() throws IOException
+  public void getIssueAlreadyCompleteReturnsFormatted() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -431,7 +431,7 @@ public class GetWorkOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getIssueAlreadyCompleteIncludesCommitHash() throws IOException
+  public void getIssueAlreadyCompleteIncludesCommit() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -509,7 +509,7 @@ public class GetWorkOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getScopeCompleteContainsIssuesCompleteMessage() throws IOException
+  public void getScopeCompleteContainsIssuesComplete() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -547,7 +547,7 @@ public class GetWorkOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getIssueCompleteLowTrustReturnsFormattedOutput() throws IOException
+  public void getIssueCompleteLowTrustReturnsFormatted() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -567,7 +567,7 @@ public class GetWorkOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getIssueCompleteLowTrustContainsCatWorkCommand() throws IOException
+  public void getIssueCompleteLowTrustContainsCatWork() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -607,7 +607,7 @@ public class GetWorkOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getVersionBoundaryGateReturnsFormattedOutput() throws IOException
+  public void getVersionBoundaryGateReturnsFormatted() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -651,7 +651,7 @@ public class GetWorkOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getCheckpointIssueCompleteContainsBoxStructure() throws IOException
+  public void getCheckpointIssueCompleteContainsBox() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {

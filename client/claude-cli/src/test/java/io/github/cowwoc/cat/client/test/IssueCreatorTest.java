@@ -421,7 +421,7 @@ public class IssueCreatorTest
    * @throws InterruptedException if git process is interrupted
    */
   @Test
-  public void executeCreatesMultipleIssuesIndependently() throws IOException, InterruptedException
+  public void executeCreatesMultipleIssues() throws IOException, InterruptedException
   {
     Path tempDir = setupGitRepo();
     Path indexTempFile1 = Files.createTempFile("index-", ".json");

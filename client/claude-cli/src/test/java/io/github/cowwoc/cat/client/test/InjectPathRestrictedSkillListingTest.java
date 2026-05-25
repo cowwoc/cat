@@ -33,7 +33,7 @@ public final class InjectPathRestrictedSkillListingTest
    * so the agent can invoke the skill if relevant.
    */
   @Test
-  public void readMatchingPathInjectsSkillNameAndDescription() throws IOException
+  public void readMatchingPathInjectsSkillNameAnd() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (ClaudeHook scope = new TestClaudeHook(
@@ -139,7 +139,7 @@ public final class InjectPathRestrictedSkillListingTest
    * Both Read and Write tool accesses trigger path-restricted skill injection.
    */
   @Test
-  public void writeMatchingPathInjectsSkillNameAndDescription() throws IOException
+  public void writeMatchingPathInjectsSkillNameAnd() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (ClaudeHook scope = new TestClaudeHook(

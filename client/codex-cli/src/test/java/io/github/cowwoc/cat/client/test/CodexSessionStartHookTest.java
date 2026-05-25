@@ -34,7 +34,7 @@ public final class CodexSessionStartHookTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void sessionStartGeneratesCodexStubsForPluginAndProjectCommonRules() throws IOException
+  public void sessionStartGeneratesCodexStubsForPlugin() throws IOException
   {
     Path tempDir = Files.createTempDirectory("codex-session-start-test-");
     try
@@ -111,7 +111,7 @@ public final class CodexSessionStartHookTest
    * @throws Exception if the hook cannot be invoked
    */
   @Test
-  public void sessionStartParsesNativeCodexInputWithoutLauncherArguments() throws Exception
+  public void sessionStartParsesNativeCodexInput() throws Exception
   {
     Path tempDir = Files.createTempDirectory("codex-session-start-test-");
     try
@@ -263,7 +263,7 @@ public final class CodexSessionStartHookTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void sourceSubagentSessionStartWithTopLevelRoleLoadsTargetedRule() throws IOException
+  public void sourceSubagentSessionStartWithTopLevel() throws IOException
   {
     Path tempDir = Files.createTempDirectory("codex-session-start-test-");
     try
@@ -380,7 +380,7 @@ public final class CodexSessionStartHookTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void sessionStartFallsBackWhenNativeInputIsBlank() throws IOException
+  public void sessionStartFallsBackWhenNativeInputIs() throws IOException
   {
     Path tempDir = Files.createTempDirectory("codex-session-start-test-");
     try
@@ -418,7 +418,7 @@ public final class CodexSessionStartHookTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void sessionStartFallsBackToWorkingDirectoryWhenProjectRootIsMissing() throws IOException
+  public void sessionStartFallsBackToWorkingDirectory() throws IOException
   {
     Path tempDir = Files.createTempDirectory("codex-session-start-test-");
     try
@@ -455,7 +455,7 @@ public final class CodexSessionStartHookTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void sessionStartNativePluginDataOverridesConflictingEnvironment() throws IOException
+  public void sessionStartNativePluginDataOverrides() throws IOException
   {
     Path tempDir = Files.createTempDirectory("codex-session-start-test-");
     try
@@ -501,7 +501,7 @@ public final class CodexSessionStartHookTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Unexpected arguments.*")
-  public void sessionStartRejectsUnexpectedLauncherArguments() throws IOException
+  public void sessionStartRejectsUnexpectedLauncher() throws IOException
   {
     Path tempDir = Files.createTempDirectory("codex-session-start-test-");
     try
@@ -533,7 +533,7 @@ public final class CodexSessionStartHookTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void sessionStartDiscoversPathsWhenEnvironmentIsMissing() throws IOException
+  public void sessionStartDiscoversPathsWhen() throws IOException
   {
     Path tempDir = Files.createTempDirectory("codex-session-start-test-");
     try
@@ -584,7 +584,7 @@ public final class CodexSessionStartHookTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void sessionStartNativePayloadPathsOverrideConflictingEnvironment() throws IOException
+  public void sessionStartNativePayloadPathsOverride() throws IOException
   {
     Path tempDir = Files.createTempDirectory("codex-session-start-test-");
     try
@@ -667,7 +667,7 @@ public final class CodexSessionStartHookTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*CAT_PLUGIN_ROOT is required.*")
-  public void sessionStartFailsWhenPluginRootCannotBeResolved() throws IOException
+  public void sessionStartFailsWhenPluginRootCannotBe() throws IOException
   {
     Path tempDir = Files.createTempDirectory("codex-session-start-test-");
     try
@@ -731,7 +731,7 @@ public final class CodexSessionStartHookTest
    * @throws InterruptedException if interrupted while waiting for cache expiration
    */
   @Test
-  public void sessionStartPrunesPluginStubsFromManifestAfterSourceRemoval()
+  public void sessionStartPrunesPluginStubsFrom()
     throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("codex-session-start-test-");
@@ -775,7 +775,7 @@ public final class CodexSessionStartHookTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void sessionStartFallsBackWhenGeneratedStubManifestIsInvalid() throws IOException
+  public void sessionStartFallsBackWhenGeneratedStub() throws IOException
   {
     Path tempDir = Files.createTempDirectory("codex-session-start-test-");
     try
@@ -805,7 +805,7 @@ public final class CodexSessionStartHookTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void sessionStartPrunesManagedStubsWhenCommonRuleDirectoryIsMissing() throws IOException
+  public void sessionStartPrunesManagedStubsWhenCommon() throws IOException
   {
     Path tempDir = Files.createTempDirectory("codex-session-start-test-");
     try
@@ -837,7 +837,7 @@ public final class CodexSessionStartHookTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void sessionStartEscapesGeneratedStubPathGlobs() throws IOException
+  public void sessionStartEscapesGeneratedStubPath() throws IOException
   {
     Path tempDir = Files.createTempDirectory("codex-session-start-test-");
     try
@@ -881,7 +881,7 @@ public final class CodexSessionStartHookTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void sessionStartPreservesAuthoredCodexRuleAtGeneratedPath() throws IOException
+  public void sessionStartPreservesAuthoredCodexRuleAt() throws IOException
   {
     Path tempDir = Files.createTempDirectory("codex-session-start-test-");
     try
@@ -916,7 +916,7 @@ public final class CodexSessionStartHookTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void sessionStartRejectsSymlinkedCodexRuleDirectory() throws IOException
+  public void sessionStartRejectsSymlinkedCodexRule() throws IOException
   {
     Path tempDir = Files.createTempDirectory("codex-session-start-test-");
     try
@@ -954,7 +954,7 @@ public final class CodexSessionStartHookTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void sessionStartRejectsSymlinkedCodexRuleFile() throws IOException
+  public void sessionStartRejectsSymlinkedCodexRule2() throws IOException
   {
     Path tempDir = Files.createTempDirectory("codex-session-start-test-");
     try

@@ -126,7 +126,7 @@ public final class ValidateGitOperationsTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void blocksForcePushNamespacedSourceToMainViaRefspec() throws IOException
+  public void blocksForcePushNamespacedSourceToMainVia() throws IOException
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("vgo-test-");
@@ -150,7 +150,7 @@ public final class ValidateGitOperationsTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void blocksResetHardWhenWorktreesAppearsInUnrelatedArgument() throws IOException
+  public void blocksResetHardWhenWorktreesAppearsIn() throws IOException
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("vgo-test-");
@@ -205,7 +205,7 @@ public final class ValidateGitOperationsTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void allowsResetHardInIssueWorktreeViaQuotedDashCWithSpaces() throws IOException
+  public void allowsResetHardInIssueWorktreeViaQuoted() throws IOException
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("vgo-test-");
@@ -262,7 +262,7 @@ public final class ValidateGitOperationsTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void blocksResetHardScopedToMainViaWorkTreeFlag() throws IOException
+  public void blocksResetHardScopedToMainViaWorkTree() throws IOException
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("vgo-test-");
@@ -287,7 +287,7 @@ public final class ValidateGitOperationsTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void blocksResetHardScopedToMainViaQuotedWorkTreeAndGitDirWithSpaces() throws IOException
+  public void blocksResetHardScopedToMainViaQuotedWork() throws IOException
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("vgo-test-");
@@ -314,7 +314,7 @@ public final class ValidateGitOperationsTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void allowsResetHardInIssueWorktreeViaWorkTreeEqualsFlag() throws IOException
+  public void allowsResetHardInIssueWorktreeViaWork() throws IOException
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("vgo-test-");
@@ -430,7 +430,7 @@ public final class ValidateGitOperationsTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void allowsResetHardInIssueWorktreeViaNewlineChain() throws IOException
+  public void allowsResetHardInIssueWorktreeViaNewline() throws IOException
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("vgo-test-");
@@ -460,7 +460,7 @@ public final class ValidateGitOperationsTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void allowsResetHardViaQuotedSplitScopeFlagsInWorktree() throws IOException
+  public void allowsResetHardViaQuotedSplitScopeFlags() throws IOException
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("vgo-test-");
@@ -492,7 +492,7 @@ public final class ValidateGitOperationsTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void blocksResetHardWhenRepeatedScopeFlagsEndOnMain() throws IOException
+  public void blocksResetHardWhenRepeatedScopeFlagsEnd() throws IOException
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("vgo-test-");
@@ -547,7 +547,7 @@ public final class ValidateGitOperationsTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void allowsResetHardViaMixedSeparatorAndNewlineChainInWorktree() throws IOException
+  public void allowsResetHardViaMixedSeparatorAnd() throws IOException
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("vgo-test-");

@@ -444,7 +444,7 @@ public class GetInitOutputTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*(?=.*version-count must be a number)(?=.*not-a-number).*")
-  public void defaultGatesConfiguredNonNumericArgThrows() throws IOException
+  public void defaultGatesConfiguredNonNumericArg() throws IOException
   {
     try (CliTool scope = new TestClaudeTool())
     {

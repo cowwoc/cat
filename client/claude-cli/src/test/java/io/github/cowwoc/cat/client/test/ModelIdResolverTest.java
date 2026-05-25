@@ -129,7 +129,7 @@ public final class ModelIdResolverTest
    */
   @Test(expectedExceptions = IllegalStateException.class,
     expectedExceptionsMessageRegExp = ".*failed with exit code.*")
-  public void detectClaudeCodeVersionFailsWhenBinaryUnavailable()
+  public void detectClaudeCodeVersionFailsWhenBinary()
   {
     String originalValue = System.getProperty(ModelIdResolver.CLAUDE_EXECUTABLE_PROPERTY);
     System.setProperty(ModelIdResolver.CLAUDE_EXECUTABLE_PROPERTY,
@@ -149,7 +149,7 @@ public final class ModelIdResolverTest
    * is unavailable.
    */
   @Test
-  public void detectClaudeCodeVersionOrLatestMappingFallsBackWhenBinaryUnavailable()
+  public void detectClaudeCodeVersionOrLatestMapping()
   {
     String originalValue = System.getProperty(ModelIdResolver.CLAUDE_EXECUTABLE_PROPERTY);
     System.setProperty(ModelIdResolver.CLAUDE_EXECUTABLE_PROPERTY,
@@ -173,7 +173,7 @@ public final class ModelIdResolverTest
    */
   @Test(expectedExceptions = IllegalStateException.class,
     expectedExceptionsMessageRegExp = ".*(unexpected output|failed with exit code).*")
-  public void detectClaudeCodeVersionOrLatestMappingFailsForMalformedOutput() throws IOException
+  public void detectClaudeCodeVersionOrLatestMapping2() throws IOException
   {
     Path fakeClaude = Files.createTempFile("cat-fake-claude", ".sh");
     Files.writeString(fakeClaude, "#!/bin/sh\nprintf '%s\\n' 'not-a-version'\n");

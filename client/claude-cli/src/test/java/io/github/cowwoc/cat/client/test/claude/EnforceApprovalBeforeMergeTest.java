@@ -302,7 +302,7 @@ public final class EnforceApprovalBeforeMergeTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void approveMergeWithoutAndInUserMessageBlocks() throws IOException
+  public void approveMergeWithoutAndBlocksChat() throws IOException
   {
     Path tempDir = Files.createTempDirectory("enforce-approval-test-");
     try (TestClaudeHook scope = new TestClaudeHook(tempDir, tempDir, tempDir))

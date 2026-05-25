@@ -409,7 +409,7 @@ public final class RecordLearningTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void commitLocationIsMainRepoWhenNotInWorktree() throws IOException
+  public void commitLocationIsMainRepoWhenNotIn() throws IOException
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
@@ -446,7 +446,7 @@ public final class RecordLearningTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void commitLocationIsWorktreeWhenLockPointsToWorktree() throws IOException
+  public void commitLocationIsWorktreeWhenLockPointsTo() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");
@@ -755,7 +755,7 @@ public final class RecordLearningTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void backwardCompatibilityMissingCauseSignature() throws IOException
+  public void backwardCompatibilityMissingCause() throws IOException
   {
     Path tempDir = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("plugin-root-");

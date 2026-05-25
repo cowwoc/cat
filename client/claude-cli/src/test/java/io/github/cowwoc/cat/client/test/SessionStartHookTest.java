@@ -241,7 +241,7 @@ public class SessionStartHookTest
    * is always populated even when no source="startup" ran for this session.
    */
   @Test
-  public void injectEnvResumeWritesWhenEnvFileAlreadyInResumedDir() throws IOException
+  public void injectEnvResumeWritesWhenEnvFileAlready() throws IOException
   {
     Path tempBase = Files.createTempDirectory("cat-test-inject-env-resume-same-");
     try
@@ -485,7 +485,7 @@ public class SessionStartHookTest
    * Verifies that writeToAllSessionDirs handles non-existent sessionEnvBase gracefully.
    */
   @Test
-  public void injectEnvHandlesNonExistentSessionEnvBase() throws IOException
+  public void injectEnvHandlesNonExistentSessionEnv() throws IOException
   {
     Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
     try
@@ -585,7 +585,7 @@ public class SessionStartHookTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*contains a dangerous shell character.*")
-  public void injectEnvRejectsDangerousShellCharacterInProjectDir() throws IOException
+  public void injectEnvRejectsDangerousShellCharacter() throws IOException
   {
     Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
     try
@@ -765,7 +765,7 @@ public class SessionStartHookTest
    * file at that location is already a symlink, it should return a warning and skip the write for security.
    */
   @Test
-  public void injectEnvHandlesSymlinkInResumedSessionDir() throws IOException
+  public void injectEnvHandlesSymlinkInResumedSession() throws IOException
   {
     Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
     try
@@ -868,7 +868,7 @@ public class SessionStartHookTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*contains a dangerous shell character.*")
-  public void injectEnvRejectsDangerousShellCharacterInPluginRoot() throws IOException
+  public void injectEnvRejectsDangerousShellCharacter2() throws IOException
   {
     Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
     try
@@ -913,7 +913,7 @@ public class SessionStartHookTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Invalid session_id format.*")
-  public void injectEnvRejectsDangerousShellCharacterInSessionId() throws IOException
+  public void injectEnvRejectsDangerousShellCharacter3() throws IOException
   {
     Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
     try
@@ -1038,7 +1038,7 @@ public class SessionStartHookTest
    * Verifies that SessionStartHook returns empty output when all handlers return empty.
    */
   @Test
-  public void dispatcherReturnsEmptyWhenAllHandlersReturnEmpty() throws IOException
+  public void dispatcherReturnsEmptyWhenAllHandlers() throws IOException
   {
     try (TestClaudeHook scope = new TestClaudeHook(
       "{\"session_id\": \"test-session\"}",
@@ -1058,7 +1058,7 @@ public class SessionStartHookTest
    * Verifies that SessionStartHook combines context from multiple handlers.
    */
   @Test
-  public void dispatcherCombinesContextFromMultipleHandlers() throws IOException
+  public void dispatcherCombinesContextFromMultiple() throws IOException
   {
     try (TestClaudeHook scope = new TestClaudeHook(
       "{\"session_id\": \"test-session\"}",
@@ -1114,7 +1114,7 @@ public class SessionStartHookTest
    * Verifies that SessionStartHook handles handler exceptions gracefully.
    */
   @Test
-  public void dispatcherHandlesHandlerExceptionsGracefully() throws IOException
+  public void dispatcherHandlesHandlerExceptions() throws IOException
   {
     try (TestClaudeHook scope = new TestClaudeHook(
       "{\"session_id\": \"test-session\"}",
@@ -1141,7 +1141,7 @@ public class SessionStartHookTest
    * Verifies that failing handler error appears in additionalContext.
    */
   @Test
-  public void dispatcherIncludesErrorInAdditionalContext() throws IOException
+  public void dispatcherIncludesErrorInAdditional() throws IOException
   {
     try (TestClaudeHook scope = new TestClaudeHook(
       "{\"session_id\": \"test-session\"}",
@@ -1195,7 +1195,7 @@ public class SessionStartHookTest
    * Verifies that all handlers succeeding produces no error section.
    */
   @Test
-  public void dispatcherReturnsSuccessWhenAllHandlersSucceed() throws IOException
+  public void dispatcherReturnsSuccessWhenAllHandlers() throws IOException
   {
     try (TestClaudeHook scope = new TestClaudeHook(
       "{\"session_id\": \"test-session\"}",
@@ -1220,7 +1220,7 @@ public class SessionStartHookTest
    * Verifies that SessionStartHook produces valid JSON with hookSpecificOutput.
    */
   @Test
-  public void dispatcherProducesValidJsonWithHookSpecificOutput() throws IOException
+  public void dispatcherProducesValidJsonWithHook() throws IOException
   {
     try (TestClaudeHook scope = new TestClaudeHook(
       "{\"source\": \"startup\", \"session_id\": \"test\"}",
@@ -1407,7 +1407,7 @@ public class SessionStartHookTest
    */
   @Test(expectedExceptions = AssertionError.class,
     expectedExceptionsMessageRegExp = ".*Plugin version not found.*")
-  public void getPluginVersionThrowsForMissingVersionFile() throws IOException
+  public void getPluginVersionThrowsForMissingVersion() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-test-version-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -1445,7 +1445,7 @@ public class SessionStartHookTest
    * Verifies that getPluginVersion reads JSON with whitespace around the version field.
    */
   @Test
-  public void getPluginVersionReadsWhitespaceVariantPluginJson() throws IOException
+  public void getPluginVersionReadsWhitespaceVariant() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-test-version-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -1514,7 +1514,7 @@ public class SessionStartHookTest
    */
   @Test(expectedExceptions = AssertionError.class,
     expectedExceptionsMessageRegExp = ".*Invalid version format.*")
-  public void getPluginVersionThrowsForPrereleaseFormat() throws IOException
+  public void getPluginVersionThrowsForPrerelease() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-test-version-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -1535,7 +1535,7 @@ public class SessionStartHookTest
    */
   @Test(expectedExceptions = AssertionError.class,
     expectedExceptionsMessageRegExp = ".*missing or non-string 'version' field.*")
-  public void getPluginVersionThrowsForMissingVersionField() throws IOException
+  public void getPluginVersionThrowsForMissingVersion2() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-test-version-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -1578,7 +1578,7 @@ public class SessionStartHookTest
    * Also verifies that both the current and latest version strings appear in the output.
    */
   @Test
-  public void checkUpdateAvailableDetectsNewVersionViaPluginJson() throws IOException
+  public void checkUpdateAvailableDetectsNewVersionVia() throws IOException
   {
     Path projectPath = Files.createTempDirectory("cat-test-update-detect-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-detect-");
@@ -1617,7 +1617,7 @@ public class SessionStartHookTest
    * contain an update notice showing both version strings.
    */
   @Test
-  public void checkUpdateAvailableReadsVersionFromPluginRoot() throws IOException
+  public void checkUpdateAvailableReadsVersionFrom() throws IOException
   {
     Path projectPath = Files.createTempDirectory("cat-test-update-root-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-root-");
@@ -1652,7 +1652,7 @@ public class SessionStartHookTest
    */
   @Test(expectedExceptions = AssertionError.class,
     expectedExceptionsMessageRegExp = ".*Plugin version not found.*")
-  public void checkUpdateAvailableThrowsWhenPluginJsonMissing() throws IOException
+  public void checkUpdateAvailableThrowsWhenPluginJson() throws IOException
   {
     Path projectPath = Files.createTempDirectory("cat-test-update-missing-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-missing-");
@@ -1759,7 +1759,7 @@ public class SessionStartHookTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = "(?s).*CAT_PLUGIN_JSON_URL must be an absolute HTTPS URL.*")
-  public void checkUpdateAvailableRejectsInvalidPluginJsonUrl() throws IOException
+  public void checkUpdateAvailableRejectsInvalidPlugin() throws IOException
   {
     Path projectPath = Files.createTempDirectory("cat-test-update-invalid-url-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-invalid-url-");
@@ -1831,7 +1831,7 @@ public class SessionStartHookTest
    * empty rather than crashing.
    */
   @Test
-  public void checkUpdateAvailableHandlesMissingVersionField() throws IOException
+  public void checkUpdateAvailableHandlesMissing() throws IOException
   {
     Path projectPath = Files.createTempDirectory("cat-test-update-no-version-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-no-version-");

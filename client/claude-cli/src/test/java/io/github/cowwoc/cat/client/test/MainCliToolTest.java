@@ -166,7 +166,7 @@ public final class MainCliToolTest
    * @throws Exception if file operations fail
    */
   @Test
-  public void claudeHarnessVariablesTakePrecedenceOverCatAliases() throws Exception
+  public void claudeHarnessVariablesTakePrecedenceOver() throws Exception
   {
     Path root = Files.createTempDirectory("main-cli-tool-precedence-");
     try
@@ -265,7 +265,7 @@ public final class MainCliToolTest
    * @throws Exception if file operations fail
    */
   @Test
-  public void codexHarnessVariablesAndLauncherContextSatisfySharedScope() throws Exception
+  public void codexHarnessVariablesAndLauncherContext() throws Exception
   {
     Path root = Files.createTempDirectory("main-cli-tool-codex-harness-");
     try
@@ -307,7 +307,7 @@ public final class MainCliToolTest
    * @throws Exception if file operations fail
    */
   @Test
-  public void codexLauncherContextSatisfiesEngineSelection() throws Exception
+  public void codexLauncherContextSatisfiesEngine() throws Exception
   {
     Path root = Files.createTempDirectory("main-cli-tool-codex-launcher-");
     try
@@ -357,7 +357,7 @@ public final class MainCliToolTest
    */
   @Test(expectedExceptions = AssertionError.class,
     expectedExceptionsMessageRegExp = "(?s).*Engine harness is ambiguous.*CAT_ENGINE is required.*")
-  public void mixedEngineHarnessValuesRequireExplicitEngine()
+  public void mixedEngineHarnessValuesRequireExplicit()
   {
     Map<String, String> environment = new HashMap<>();
     environment.put("CLAUDE_SESSION_ID", "claude-session");
@@ -393,7 +393,7 @@ public final class MainCliToolTest
    * @param expectedSessionId the expected session ID
    */
   @Test(dataProvider = "explicitEngineDisambiguation")
-  public void catEngineDisambiguatesMixedEngineHarnessValues(String engineId,
+  public void catEngineDisambiguatesMixedEngineHarness(String engineId,
     AgentEngine expectedEngine, String expectedSessionId)
   {
     Map<String, String> environment = new HashMap<>();
@@ -475,7 +475,7 @@ public final class MainCliToolTest
    * @throws Exception if file operations fail
    */
   @Test
-  public void codexEngineUsesCatConfigDirWhenCodexHomeIsAbsent() throws Exception
+  public void codexEngineUsesCatConfigDirWhenCodexHome() throws Exception
   {
     Path root = Files.createTempDirectory("main-cli-tool-codex-cat-config-");
     try
@@ -514,7 +514,7 @@ public final class MainCliToolTest
    * @throws Exception if file operations fail
    */
   @Test
-  public void claudeEngineDerivesConfigDirFromClaudeConfigDir() throws Exception
+  public void claudeEngineDerivesConfigDirFromClaude() throws Exception
   {
     Path root = Files.createTempDirectory("main-cli-tool-claude-config-");
     try
@@ -632,7 +632,7 @@ public final class MainCliToolTest
    * @throws Exception if file operations fail
    */
   @Test
-  public void codexEngineDefaultsPluginDataDirToUserHome() throws Exception
+  public void codexEngineDefaultsPluginDataDirToUser() throws Exception
   {
     Path root = Files.createTempDirectory("main-cli-tool-codex-home-plugin-data-");
     try

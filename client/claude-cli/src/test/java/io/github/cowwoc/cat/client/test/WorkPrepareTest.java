@@ -79,7 +79,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeReturnsNoIssuesWhenNoExecutableIssues() throws IOException
+  public void executeReturnsNoIssuesWhenNoExecutable() throws IOException
   {
     Path projectPath = createTempCatProject();
     try (CliTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -111,7 +111,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeReturnsOversizedWhenTokensExceedLimit() throws IOException
+  public void executeReturnsOversizedWhenTokensExceed() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     try (CliTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -146,7 +146,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeReturnsCorruptWhenIndexJsonExistsButNoPlanMd() throws IOException
+  public void executeReturnsCorruptWhenIndexJsonExists() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     try (CliTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -273,7 +273,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeDoesNotThrowWhenCalledTwiceOnOversizedIssue() throws IOException
+  public void executeDoesNotThrowWhenCalledTwiceOn() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     try (CliTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -313,7 +313,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeDoesNotThrowWhenCalledTwiceOnCorruptIssue() throws IOException
+  public void executeDoesNotThrowWhenCalledTwiceOn2() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     try (CliTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -484,7 +484,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeResolvesBareBugNameToQualifiedIssueId() throws IOException
+  public void executeResolvesBareBugNameToQualified() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
@@ -520,7 +520,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeReturnsNoIssuesWhenAllIssuesExcluded() throws IOException
+  public void executeReturnsNoIssuesWhenAllIssues() throws IOException
   {
     Path projectPath = createTempCatProject();
     try (CliTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -548,7 +548,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeIncludesEstimatedTokensInReadyResult() throws IOException
+  public void executeIncludesEstimatedTokensInReady() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
@@ -627,7 +627,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeReturnsLockedWhenReasonContainsLocked() throws IOException
+  public void executeReturnsLockedWhenReasonContains() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     try (CliTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -678,7 +678,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeReturnsErrorWithLockedByWhenForeignSessionLockAndWorktreeExists()
+  public void executeReturnsErrorWithLockedByWhen()
     throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
@@ -743,7 +743,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeReturnsErrorWithStaleFieldTrueWhenLockIsOldAndWorktreeExists()
+  public void executeReturnsErrorWithStaleFieldTrue()
     throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
@@ -809,7 +809,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeReturnsErrorWithStaleFieldTrueWhenLockAgeEqualsThreshold()
+  public void executeReturnsErrorWithStaleFieldTrue2()
     throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
@@ -867,7 +867,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeReturnsReadyWhenSessionOwnsLockAndWorktreeExists() throws IOException
+  public void executeReturnsReadyWhenSessionOwnsLock() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
@@ -913,7 +913,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeReusesExistingWorktreeWhenIssueBranchAlreadyCheckedOutElsewhere()
+  public void executeReusesExistingWorktreeWhenIssue()
     throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
@@ -958,7 +958,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeDetectsSuspiciousCommitsOnTargetBranch() throws IOException
+  public void executeDetectsSuspiciousCommitsOnTarget() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
@@ -1003,7 +1003,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeIncludesExistingWorkFieldsInReadyResult() throws IOException
+  public void executeIncludesExistingWorkFieldsInReady() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
@@ -1043,7 +1043,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeReturnsReadyWhenGoalSectionMissing() throws IOException
+  public void executeReturnsReadyWhenGoalSection() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
@@ -1093,7 +1093,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeReturnsNoIssuesWithBlockedIssuesDiagnostic() throws IOException
+  public void executeReturnsNoIssuesWithBlockedIssues() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     try (CliTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -1196,7 +1196,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void runReturnsErrorStatusWhenExecuteThrowsIOException() throws IOException
+  public void runReturnsErrorStatusWhenExecuteThrowsIO() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     try (CliTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -1496,7 +1496,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeBareIssueNameResolvedToBareNameScope() throws IOException
+  public void executeBareIssueNameResolvedToBareName() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
@@ -1540,7 +1540,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeScopeDetectionForBareVsQualifiedNames() throws IOException
+  public void executeScopeDetectionForBareVsQualified() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath1 = null;
@@ -1706,7 +1706,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void diagnosticScanCompletesWithoutErrorFor400Issues() throws IOException
+  public void diagnosticScanCompletesWithoutErrorFor() throws IOException
   {
     Path projectPath = createTempCatProject();
     try (CliTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -1742,7 +1742,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void diagnosticReportsSimpleCircularDependency() throws IOException
+  public void diagnosticReportsSimpleCircular() throws IOException
   {
     Path projectPath = createTempCatProject();
     try (CliTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -1791,7 +1791,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void diagnosticReportsComplexCircularDependency() throws IOException
+  public void diagnosticReportsComplexCircular() throws IOException
   {
     Path projectPath = createTempCatProject();
     try (CliTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -1841,7 +1841,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void diagnosticDoesNotReportNonCircularDependencies() throws IOException
+  public void diagnosticDoesNotReportNonCircular() throws IOException
   {
     Path projectPath = createTempCatProject();
     try (CliTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -1882,7 +1882,7 @@ public class WorkPrepareTest
    */
   @Test(expectedExceptions = IOException.class,
     expectedExceptionsMessageRegExp = ".*safety threshold.*")
-  public void buildIssueIndexThrowsWhenScanLimitExceeded() throws IOException
+  public void buildIssueIndexThrowsWhenScanLimit() throws IOException
   {
     Path projectPath = createTempCatProject();
     try (CliTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -1981,7 +1981,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void diagnosticDetectsCycleThroughDecomposedParent() throws IOException
+  public void diagnosticDetectsCycleThroughDecomposed() throws IOException
   {
     Path projectPath = createTempCatProject();
     try (CliTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -2025,7 +2025,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void diagnosticDetectsCycleThroughNestedDecomposedParents() throws IOException
+  public void diagnosticDetectsCycleThroughNested() throws IOException
   {
     Path projectPath = createTempCatProject();
     try (CliTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -2067,7 +2067,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void diagnosticNoFalsePositiveWithDecomposedParent() throws IOException
+  public void diagnosticNoFalsePositiveWithDecomposed() throws IOException
   {
     Path projectPath = createTempCatProject();
     try (CliTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -2102,7 +2102,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void diagnosticDetectsBothDirectAndDecomposedCycles() throws IOException
+  public void diagnosticDetectsBothDirectAndDecomposed() throws IOException
   {
     Path projectPath = createTempCatProject();
     try (CliTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -2156,7 +2156,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void diagnosticResolvesAmbiguousSubIssueToAllCandidates() throws IOException
+  public void diagnosticResolvesAmbiguousSubIssueToAll() throws IOException
   {
     Path projectPath = createTempCatProject();
     try (CliTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -2210,7 +2210,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void diagnosticDetectsDirectCycleThroughAmbiguousDependency() throws IOException
+  public void diagnosticDetectsDirectCycleThrough() throws IOException
   {
     Path projectPath = createTempCatProject();
     try (CliTool scope = new TestClaudeTool(projectPath, projectPath))
@@ -2261,14 +2261,14 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void diagnosticSkipsMalformedDecomposedEntries() throws IOException
+  public void diagnosticSkipsMalformedDecomposed() throws IOException
   {
     Path projectPath = createTempCatProject();
     try (CliTool scope = new TestClaudeTool(projectPath, projectPath))
     {
       // B is a decomposed parent with one valid and several malformed entries
       createIssueWithDependencies(projectPath, "2", "1", "issue-a", "open", "2.1-issue-b");
-      createDecomposedIssueWithMalformedEntries(projectPath, "2", "1", "issue-b", "issue-c");
+      createDecomposedIssueWithMalformed(projectPath, "2", "1", "issue-b", "issue-c");
       createIssue(projectPath, "2", "1", "issue-c", "open");
 
       WorkPrepare prepare = new WorkPrepare(scope);
@@ -2331,7 +2331,7 @@ public class WorkPrepareTest
    *         version to form a fully-qualified name
    * @throws IOException if file creation fails
    */
-  private void createDecomposedIssueWithMalformedEntries(Path projectPath, String major, String minor,
+  private void createDecomposedIssueWithMalformed(Path projectPath, String major, String minor,
     String issueName, String validSubIssueName) throws IOException
   {
     Path issueDir = projectPath.resolve(".cat").resolve("issues").
@@ -2395,7 +2395,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeCreatesIndexJsonInWorktreeForPlanMdOnlyIssue() throws IOException
+  public void executeCreatesIndexJsonInWorktreeForPlan() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
@@ -2453,7 +2453,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeReturnsReadyWhenIndexJsonExistsOnDiskButIsUntrackedByGit() throws IOException
+  public void executeReturnsReadyWhenIndexJsonExistsOn() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
@@ -2506,7 +2506,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeReturnsReadyWhenIndexJsonHasMissingStatusField() throws IOException
+  public void executeReturnsReadyWhenIndexJsonHas() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
@@ -2635,7 +2635,7 @@ public class WorkPrepareTest
    * token.
    */
   @Test
-  public void parseRawArgumentsHandlesMultipleSpacesAfterKeyword()
+  public void parseRawArgumentsHandlesMultipleSpaces()
   {
     // "resume  2.1-fix-bug" — two spaces after keyword.
     // startsWith("resume ") matches (the check only requires one space to be present).
@@ -2652,7 +2652,7 @@ public class WorkPrepareTest
    * rawArguments includes the agentId prefix as the first token.
    */
   @Test
-  public void parseRawArgumentsKeywordStrippingIsCaseSensitive()
+  public void parseRawArgumentsKeywordStrippingIsCase()
   {
     // "Resume 2.1-fix-bug" — capital R, not matched
     WorkPrepare.ParsedArguments result =
@@ -2667,7 +2667,7 @@ public class WorkPrepareTest
    * rawArguments includes the agentId prefix as the first token.
    */
   @Test
-  public void parseRawArgumentsResolvesBarePrefixedIssueId()
+  public void parseRawArgumentsResolvesBarePrefixed()
   {
     WorkPrepare.ParsedArguments result =
       WorkPrepare.parseRawArguments("2.1-fix-bug", "", "");
@@ -2681,7 +2681,7 @@ public class WorkPrepareTest
    * rawArguments includes the agentId prefix as the first token.
    */
   @Test
-  public void parseRawArgumentsResolvesShortNameIssueId()
+  public void parseRawArgumentsResolvesShortNameIssue()
   {
     WorkPrepare.ParsedArguments result =
       WorkPrepare.parseRawArguments("fix-bug", "", "");
@@ -2697,7 +2697,7 @@ public class WorkPrepareTest
    * so it is resolved as the issue ID. rawArguments includes the agentId prefix as the first token.
    */
   @Test
-  public void parseRawArgumentsResumeAloneResolvesAsIssueId()
+  public void parseRawArgumentsResumeAloneResolvesAs()
   {
     // "resume" without a trailing space: no keyword stripping; matches short-name regex.
     WorkPrepare.ParsedArguments result =
@@ -2710,7 +2710,7 @@ public class WorkPrepareTest
    * Verifies that explicit issueId flag takes precedence over raw arguments.
    */
   @Test
-  public void parseRawArgumentsExplicitIssueIdTakesPrecedence()
+  public void parseRawArgumentsExplicitIssueIdTakes()
   {
     WorkPrepare.ParsedArguments result =
       WorkPrepare.parseRawArguments("resume 2.1-other-issue", "2.1-explicit-issue", "");
@@ -2722,7 +2722,7 @@ public class WorkPrepareTest
    * Verifies that explicit excludePattern flag takes precedence over raw arguments.
    */
   @Test
-  public void parseRawArgumentsExplicitExcludePatternTakesPrecedence()
+  public void parseRawArgumentsExplicitExcludePattern()
   {
     WorkPrepare.ParsedArguments result =
       WorkPrepare.parseRawArguments("resume 2.1-fix-bug", "", "*compress*");
@@ -2746,7 +2746,7 @@ public class WorkPrepareTest
    * rawArguments includes the agentId prefix as the first token.
    */
   @Test
-  public void parseRawArgumentsSkipProducesExcludePattern()
+  public void parseRawArgumentsSkipProducesExclude()
   {
     WorkPrepare.ParsedArguments result =
       WorkPrepare.parseRawArguments("skip compress", "", "");
@@ -2758,7 +2758,7 @@ public class WorkPrepareTest
    * Verifies that non-blank rawArguments without a subagent ID prefix are parsed directly.
    */
   @Test
-  public void parseRawArgumentsParsesWhenCatAgentIdAbsent()
+  public void parseRawArgumentsParsesWhenCatAgentId()
   {
     WorkPrepare.ParsedArguments result = WorkPrepare.parseRawArguments("2.1-fix-bug", "", "");
     requireThat(result.issueId(), "issueId").isEqualTo("2.1-fix-bug");
@@ -2772,7 +2772,7 @@ public class WorkPrepareTest
    * rawArguments includes the agentId prefix as the first token.
    */
   @Test
-  public void parseRawArgumentsResumeWithSkipArgumentStripsKeywordThenProducesEmpty()
+  public void parseRawArgumentsResumeWithSkipArgument()
   {
     // "resume skip compress" — after stripping "resume ", raw = "skip compress"
     // "skip compress" is not an issue-id match, but starts with "skip " so excludePattern is set
@@ -2804,7 +2804,7 @@ public class WorkPrepareTest
    * Verifies that a subagent-form UUID input is not stripped.
    */
   @Test
-  public void parseRawArgumentsDoesNotStripSubagentIdPrefix()
+  public void parseRawArgumentsDoesNotStripSubagentId()
   {
     WorkPrepare.ParsedArguments result = WorkPrepare.parseRawArguments(
       "92289cdd-76a1-4d7e-8cf3-be5618ec270a/subagents/abc123 2.1-fix-bug", "", "");
@@ -2830,7 +2830,7 @@ public class WorkPrepareTest
    * Verifies that a UUID prefix before resume is not stripped.
    */
   @Test
-  public void parseRawArgumentsDoesNotStripUuidBeforeResumeKeyword()
+  public void parseRawArgumentsDoesNotStripUuidBefore()
   {
     WorkPrepare.ParsedArguments result = WorkPrepare.parseRawArguments(
       "92289cdd-76a1-4d7e-8cf3-be5618ec270a resume 2.1-fix-bug", "", "");
@@ -2843,7 +2843,7 @@ public class WorkPrepareTest
    * Verifies that a UUID prefix before skip does not produce an exclude pattern.
    */
   @Test
-  public void parseRawArgumentsDoesNotStripUuidBeforeSkip()
+  public void parseRawArgumentsDoesNotStripUuidBefore2()
   {
     WorkPrepare.ParsedArguments result = WorkPrepare.parseRawArguments(
       "92289cdd-76a1-4d7e-8cf3-be5618ec270a skip compress", "", "");
@@ -2861,7 +2861,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void runReturnsReadyWhenArgumentsContainsOnlyUuid() throws IOException
+  public void runReturnsReadyWhenArgumentsContainsOnly() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
@@ -2908,7 +2908,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void runReturnsReadyWhenArgumentsContainsUuidAndIssueName() throws IOException
+  public void runReturnsReadyWhenArgumentsContainsUuid() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
@@ -3006,7 +3006,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void doubleStarGlobMatchesZeroIntermediateSegments() throws IOException
+  public void doubleStarGlobMatchesZeroIntermediate() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
@@ -3066,7 +3066,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void doubleStarGlobMatchesOneIntermediateSegment() throws IOException
+  public void doubleStarGlobMatchesOneIntermediate() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
@@ -3126,7 +3126,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void doubleStarGlobMatchesMultipleIntermediateSegments() throws IOException
+  public void doubleStarGlobMatchesMultiple() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
@@ -3309,7 +3309,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeCommitsIndexJsonUpdateSoWorktreeIsClean() throws IOException
+  public void executeCommitsIndexJsonUpdateSoWorktree() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
@@ -3354,7 +3354,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void decomposedParentWithAllSubIssuesClosedReturnsReady() throws IOException
+  public void decomposedParentWithAllSubIssuesClosed() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
@@ -3510,7 +3510,7 @@ public class WorkPrepareTest
    * @throws InterruptedException if the test thread is interrupted while waiting
    */
   @Test
-  public void parseRawArgumentsIsSafeUnderConcurrentAccess()
+  public void parseRawArgumentsIsSafeUnderConcurrent()
     throws ExecutionException, InterruptedException
   {
     int threadCount = 20;
@@ -3543,7 +3543,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeReturnsReadyWhenResumeAndDifferentSessionOwnsStaleLock() throws IOException
+  public void executeReturnsReadyWhenResumeAnd() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
@@ -3604,7 +3604,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeReturnsReadyWhenResumeAndNoLockExists() throws IOException
+  public void executeReturnsReadyWhenResumeAndNoLock() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
@@ -3650,7 +3650,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeReturnsErrorWhenResumeCannotAcquireLockDueToConflictingSessionLock() throws IOException
+  public void executeReturnsErrorWhenResumeCannot() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path secondWorktreePath = null;
@@ -3716,7 +3716,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeReturnsReadyWhenResumeAndCurrentSessionOwnsLock() throws IOException
+  public void executeReturnsReadyWhenResumeAndCurrent() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
@@ -3765,7 +3765,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeReturnsReadyWhenResumeAndNoWorktreeExists() throws IOException
+  public void executeReturnsReadyWhenResumeAndNo() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;
@@ -3805,7 +3805,7 @@ public class WorkPrepareTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeReturnsErrorWhenNoResumeAndOrphanedWorktree() throws IOException
+  public void executeReturnsErrorWhenNoResumeAnd() throws IOException
   {
     Path projectPath = createTempGitCatProject("v2.1");
     Path worktreePath = null;

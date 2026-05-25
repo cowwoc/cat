@@ -104,7 +104,7 @@ public final class GivingUpDetectorTest
    * Verifies that detectType() returns CONSTRAINT_RATIONALIZATION for a constraint + abandonment phrase.
    */
   @Test
-  public void detectTypeReturnsConstraintRationalization()
+  public void detectTypeReturnsConstraint()
   {
     GivingUpDetector detector = new GivingUpDetector();
     Optional<ViolationType> result = detector.detectType(
@@ -219,7 +219,7 @@ public final class GivingUpDetectorTest
    * code. The detector must not fire CODE_REMOVAL_REMINDER on this input.
    */
   @Test
-  public void technicalDiscussionAboutBrokenCodeIsNotFalsePositive()
+  public void technicalDiscussionAboutBrokenCodeIsNot()
   {
     GivingUpDetector detector = new GivingUpDetector();
     String result = detector.check("allow fixing adjacent broken code — don't skip error handling");
@@ -327,7 +327,7 @@ public final class GivingUpDetectorTest
    * as a giving-up signal. Only multi-word constraint phrases (e.g., "token budget") qualify.
    */
   @Test
-  public void complexAdjectiveAloneIsNotConstraintRationalization()
+  public void complexAdjectiveAloneIsNotConstraint()
   {
     GivingUpDetector detector = new GivingUpDetector();
     String result = detector.check("Let me run the complex Maven build");
@@ -341,7 +341,7 @@ public final class GivingUpDetectorTest
    * "I'll" must not be treated as a scope-reduction signal.
    */
   @Test
-  public void difficultAdjectiveAloneIsNotConstraintRationalization()
+  public void difficultAdjectiveAloneIsNotConstraint()
   {
     GivingUpDetector detector = new GivingUpDetector();
     String result = detector.check("I'll run the difficult migration script");
@@ -356,7 +356,7 @@ public final class GivingUpDetectorTest
    * paired with an abandonment action.
    */
   @Test
-  public void tokenBudgetWithAbandonmentIsConstraintRationalization()
+  public void tokenBudgetWithAbandonmentIsConstraint()
   {
     GivingUpDetector detector = new GivingUpDetector();
     String result = detector.check("Given the token budget, let me simplify the approach");
@@ -387,7 +387,7 @@ public final class GivingUpDetectorTest
    * contains "Token usage:".
    */
   @Test
-  public void givenListWithTokenUsageTriggersConstraintRationalization()
+  public void givenListWithTokenUsageTriggers()
   {
     GivingUpDetector detector = new GivingUpDetector();
     String text = """
@@ -404,7 +404,7 @@ public final class GivingUpDetectorTest
    * Verifies that "If you want, I can now continue..." is allowed when it appears as the final sentence.
    */
   @Test
-  public void finalSentenceIfYouWantICanNowContinueIsAllowed()
+  public void finalSentenceIfYouWantICanNowContinueIs()
   {
     GivingUpDetector detector = new GivingUpDetector();
     String result = detector.check("If you want, I can now continue with implementation.");
@@ -415,7 +415,7 @@ public final class GivingUpDetectorTest
    * Verifies that "If you want, I can now continue..." is flagged when followed by another sentence.
    */
   @Test
-  public void ifYouWantICanNowContinueFollowedByAnotherSentenceIsDetected()
+  public void ifYouWantICanNowContinueFollowedBy()
   {
     GivingUpDetector detector = new GivingUpDetector();
     String result = detector.check(
@@ -469,7 +469,7 @@ public final class GivingUpDetectorTest
    * signal because the narrated tool call targets a source file.
    */
   @Test
-  public void compoundSegmentWithCodeFileAdjacentTriggers()
+  public void compoundSegmentWithCodeFileAdjacent()
   {
     GivingUpDetector detector = new GivingUpDetector();
     // aboveFilePath is a .java file → compound + code file → apply intro+action check
@@ -488,7 +488,7 @@ public final class GivingUpDetectorTest
    * The detector must not fire CODE_REMOVAL for this pattern.
    */
   @Test
-  public void compoundSegmentWithNonCodeFileAdjacentIsSuppressed()
+  public void compoundSegmentWithNonCodeFileAdjacentIs()
   {
     GivingUpDetector detector = new GivingUpDetector();
     // belowFilePath is a .lock file → compound + non-code file → suppress
@@ -508,7 +508,7 @@ public final class GivingUpDetectorTest
    * code file is adjacent, the detection is suppressed to avoid false positives on non-code operations.
    */
   @Test
-  public void compoundSegmentWithNoAdjacentFilePathIsSuppressed()
+  public void compoundSegmentWithNoAdjacentFilePathIs()
   {
     GivingUpDetector detector = new GivingUpDetector();
     // Both paths null → treated as pure-text → requires resource-exhaustion phrase too
@@ -529,7 +529,7 @@ public final class GivingUpDetectorTest
    * phrase) in the same sentence indicates the agent is abandoning work due to resource limits.
    */
   @Test
-  public void pureTextSegmentWithIntroActionAndResourceExhaustionTriggers()
+  public void pureTextSegmentWithIntroActionAnd()
   {
     GivingUpDetector detector = new GivingUpDetector();
     TurnSegment segment = new TurnSegment(
@@ -548,7 +548,7 @@ public final class GivingUpDetectorTest
    * exhaustion. The word "context" alone is too common in technical text to be a reliable signal.
    */
   @Test
-  public void genericContextWordIsNotResourceExhaustion()
+  public void genericContextWordIsNotResource()
   {
     GivingUpDetector detector = new GivingUpDetector();
     TurnSegment segment = new TurnSegment(
@@ -621,7 +621,7 @@ public final class GivingUpDetectorTest
    * exhaustion context, so it must not trigger CODE_REMOVAL.
    */
   @Test
-  public void pureTextSegmentWithIntroActionOnlyIsSuppressed()
+  public void pureTextSegmentWithIntroActionOnlyIs()
   {
     GivingUpDetector detector = new GivingUpDetector();
     TurnSegment segment = new TurnSegment(
@@ -638,7 +638,7 @@ public final class GivingUpDetectorTest
    * Mentioning "context" or "token" without a paired intro+action phrase is not a code-removal signal.
    */
   @Test
-  public void pureTextSegmentWithResourceExhaustionOnlyIsSuppressed()
+  public void pureTextSegmentWithResourceExhaustion()
   {
     GivingUpDetector detector = new GivingUpDetector();
     TurnSegment segment = new TurnSegment(

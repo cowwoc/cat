@@ -227,7 +227,7 @@ public class GitRebaseTest
    * Verifies that tree-state comparison correctly validates rebase success.
    */
   @Test
-  public void executeSucceedsAndTreeStatePassesOnCleanRebase() throws IOException
+  public void executeSucceedsAndTreeStatePassesOnClean() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
     try (AgentScope scope = new TestClaudeTool(repoDir, repoDir))
@@ -261,7 +261,7 @@ public class GitRebaseTest
    * Verifies that deleted_orphans is empty when no new untracked files appear after rebase.
    */
   @Test
-  public void executeReturnsEmptyDeletedOrphansWhenNoOrphans() throws IOException
+  public void executeReturnsEmptyDeletedOrphansWhenNo() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
     try (AgentScope scope = new TestClaudeTool(repoDir, repoDir))
@@ -324,7 +324,7 @@ public class GitRebaseTest
    * Verifies that pre-existing untracked files are preserved and not deleted as orphans after rebase.
    */
   @Test
-  public void executePreservesPreExistingUntrackedFiles() throws IOException
+  public void executePreservesPreExistingUntracked() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
     try (AgentScope scope = new TestClaudeTool(repoDir, repoDir))
@@ -367,7 +367,7 @@ public class GitRebaseTest
    * rewrite and uses {@code git rebase --onto} to correctly replay only the feature commits.
    */
   @Test
-  public void executeRemovesOrphanedFileAfterRetroactiveRewrite() throws IOException
+  public void executeRemovesOrphanedFileAfter() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
     try (AgentScope scope = new TestClaudeTool(repoDir, repoDir))
@@ -414,7 +414,7 @@ public class GitRebaseTest
    * directory and all its contents.
    */
   @Test
-  public void executeRemovesOrphanedDirectoryAfterRetroactiveRewrite() throws IOException
+  public void executeRemovesOrphanedDirectoryAfter() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
     try (AgentScope scope = new TestClaudeTool(repoDir, repoDir))
@@ -463,7 +463,7 @@ public class GitRebaseTest
    * Verifies that multiple feature commits are all replayed when rebasing onto a rewritten upstream.
    */
   @Test
-  public void executeReplaysMultipleCommitsAfterRetroactiveRewrite() throws IOException
+  public void executeReplaysMultipleCommitsAfter() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
     try (AgentScope scope = new TestClaudeTool(repoDir, repoDir))
@@ -513,7 +513,7 @@ public class GitRebaseTest
    * Verifies that pre-existing untracked files survive a rebase onto a rewritten upstream.
    */
   @Test
-  public void executePreservesUntrackedFilesDuringRetroactiveRewrite() throws IOException
+  public void executePreservesUntrackedFilesDuring() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
     try (AgentScope scope = new TestClaudeTool(repoDir, repoDir))
@@ -651,7 +651,7 @@ public class GitRebaseTest
    * a branch name with reflog entries.
    */
   @Test
-  public void executeFallsBackToMergeBaseWithCommitHash() throws IOException
+  public void executeFallsBackToMergeBaseWithCommit() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
     try (AgentScope scope = new TestClaudeTool(repoDir, repoDir))
@@ -684,7 +684,7 @@ public class GitRebaseTest
    * the feature commits are correctly replayed and new upstream content is incorporated.
    */
   @Test
-  public void executeHandlesUpstreamRewriteWithNewContent() throws IOException
+  public void executeHandlesUpstreamRewriteWithNew() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
     try (AgentScope scope = new TestClaudeTool(repoDir, repoDir))
@@ -779,7 +779,7 @@ public class GitRebaseTest
    * a backup, reporting the old path as a tracked-path conflict.
    */
   @Test
-  public void executeFailsWhenTargetBranchRenamesTrackedPath() throws IOException
+  public void executeFailsWhenTargetBranchRenames() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
     try (AgentScope scope = new TestClaudeTool(repoDir, repoDir))
@@ -831,7 +831,7 @@ public class GitRebaseTest
    * before creating a backup, reporting {@code skill.md} and the old path {@code .claude/cat}.
    */
   @Test
-  public void executeFailsWhenCurrentBranchHasContentReferencingRenamedPath() throws IOException
+  public void executeFailsWhenCurrentBranchHasContent() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
     try (AgentScope scope = new TestClaudeTool(repoDir, repoDir))
@@ -933,7 +933,7 @@ public class GitRebaseTest
    * This prevents false positives when the feature branch's purpose is to do the same rename as the target.
    */
   @Test
-  public void executeSucceedsWhenFeatureBranchPerformsSameRenameAsTarget() throws IOException
+  public void executeSucceedsWhenFeatureBranchPerforms() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
     try (AgentScope scope = new TestClaudeTool(repoDir, repoDir))
@@ -985,7 +985,7 @@ public class GitRebaseTest
    * feature branch has no stale references, rebase should succeed with no validation error.
    */
   @Test
-  public void executeSucceedsWhenContentReferencesAlreadyUpdated() throws IOException
+  public void executeSucceedsWhenContentReferences() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
     try (AgentScope scope = new TestClaudeTool(repoDir, repoDir))
@@ -1041,7 +1041,7 @@ public class GitRebaseTest
    * and that the content-reference section does NOT mention {@code plan.md}.
    */
   @Test
-  public void executeDoesNotFlagUntouchedFilesWithStalePathReferences() throws IOException
+  public void executeDoesNotFlagUntouchedFilesWith() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
     try (TestClaudeTool scope = new TestClaudeTool(repoDir, repoDir))
@@ -1116,7 +1116,7 @@ public class GitRebaseTest
    * The tracked-path conflict for {@code old-tools/helper.sh} is still correctly reported.
    */
   @Test
-  public void executeDoesNotFlagContentReferenceWhenOldPathStillTracked() throws IOException
+  public void executeDoesNotFlagContentReferenceWhen() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
     try (TestClaudeTool scope = new TestClaudeTool(repoDir, repoDir))
@@ -1175,7 +1175,7 @@ public class GitRebaseTest
    * the content reference in the modified file IS a conflict.
    */
   @Test
-  public void executeDoesFlagContentReferenceWhenOldPathNotTracked() throws IOException
+  public void executeDoesFlagContentReferenceWhenOld() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
     try (TestClaudeTool scope = new TestClaudeTool(repoDir, repoDir))
@@ -1230,7 +1230,7 @@ public class GitRebaseTest
    * modified by the feature, it should not be flagged for content references.
    */
   @Test
-  public void executeDoesNotFlagUnmodifiedFilesWithContentReferences() throws IOException
+  public void executeDoesNotFlagUnmodifiedFilesWith() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
     try (TestClaudeTool scope = new TestClaudeTool(repoDir, repoDir))

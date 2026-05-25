@@ -126,7 +126,7 @@ public final class WarnMainWorkspaceCommitTest
    * @throws IOException if an I/O error occurs during test setup
    */
   @Test
-  public void commitInMainWorkspaceWithActiveLockEmitsWarning() throws IOException
+  public void commitInMainWorkspaceWithActiveLockEmits() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
@@ -245,7 +245,7 @@ public final class WarnMainWorkspaceCommitTest
    * @throws IOException if an I/O error occurs during test setup
    */
   @Test
-  public void commitInMainWorkspaceWithNoActiveLockIsAllowed() throws IOException
+  public void commitInMainWorkspaceWithNoActiveLockIs() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
@@ -314,7 +314,7 @@ public final class WarnMainWorkspaceCommitTest
    * @throws IOException if an I/O error occurs during test setup
    */
   @Test
-  public void gitCommitAmendInMainWorkspaceWithActiveLockEmitsWarning() throws IOException
+  public void gitCommitAmendInMainWorkspaceWithActive() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))
@@ -341,7 +341,7 @@ public final class WarnMainWorkspaceCommitTest
    * @throws IOException if an I/O error occurs during test setup
    */
   @Test
-  public void gitPushInMainWorkspaceWithActiveLockIsAllowed() throws IOException
+  public void gitPushInMainWorkspaceWithActiveLockIs() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("v2.1");
     try (TestClaudeHook scope = new TestClaudeHook(mainRepo, mainRepo, mainRepo))

@@ -113,7 +113,7 @@ public final class InjectSubAgentRulesTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void getRulesBothPluginAndProjectRulesIncludedOnFilenameCollision() throws IOException
+  public void getRulesBothPluginAndProjectRules() throws IOException
   {
     Path projectPath = Files.createTempDirectory("inject-subagent-override-project-");
     Path pluginDir = Files.createTempDirectory("inject-subagent-override-plugin-");
@@ -165,7 +165,7 @@ public final class InjectSubAgentRulesTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void getRulesBlankSubagentTypeMatchesAllSubagentRule() throws IOException
+  public void getRulesBlankSubagentTypeMatchesAll() throws IOException
   {
     Path tempDir = Files.createTempDirectory("inject-subagent-rules-blank-");
     try (TestClaudeHook scope = new TestClaudeHook(
@@ -202,7 +202,7 @@ public final class InjectSubAgentRulesTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void getRulesPopulatedSubagentTypeMatchesSpecificRule() throws IOException
+  public void getRulesPopulatedSubagentTypeMatches() throws IOException
   {
     Path tempDir = Files.createTempDirectory("inject-subagent-rules-specific-");
     try (TestClaudeHook scope = new TestClaudeHook(
@@ -268,7 +268,7 @@ public final class InjectSubAgentRulesTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void getRulesPluginRuleIncludedProjectRuleFilteredWhenSubagentsEmpty() throws IOException
+  public void getRulesPluginRuleIncludedProjectRule() throws IOException
   {
     Path projectPath = Files.createTempDirectory("inject-subagent-override-empty-project-");
     Path pluginDir = Files.createTempDirectory("inject-subagent-override-empty-plugin-");
@@ -328,7 +328,7 @@ public final class InjectSubAgentRulesTest
    * @throws IOException if file operations fail
    */
   @Test(expectedExceptions = NullPointerException.class)
-  public void testGetRulesWithNullInputThrowsNullPointerException()
+  public void testGetRulesWithNullInputThrowsNull()
   {
     new InjectSubAgentRules(null);
   }
@@ -379,7 +379,7 @@ public final class InjectSubAgentRulesTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void testGetRulesTypeDoesNotMatchDifferentSpecificType() throws IOException
+  public void testGetRulesTypeDoesNotMatchDifferent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("inject-subagent-rules-type-mismatch-");
     try (TestClaudeHook scope = new TestClaudeHook(

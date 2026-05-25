@@ -483,7 +483,7 @@ public final class SessionAnalyzerTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void identifiesCacheCandidatesForRepeatedOperations()
+  public void identifiesCacheCandidatesForRepeated()
     throws IOException
   {
     Path tempFile = Files.createTempFile("session-", ".jsonl");
@@ -542,7 +542,7 @@ public final class SessionAnalyzerTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void identifiesBatchCandidatesForConsecutiveOperations()
+  public void identifiesBatchCandidatesForConsecutive()
     throws IOException
   {
     Path tempFile = Files.createTempFile("session-", ".jsonl");
@@ -589,7 +589,7 @@ public final class SessionAnalyzerTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void identifiesParallelCandidatesForMultipleToolsInMessage()
+  public void identifiesParallelCandidatesForMultiple()
     throws IOException
   {
     Path tempFile = Files.createTempFile("session-", ".jsonl");
@@ -870,7 +870,7 @@ public final class SessionAnalyzerTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void missingSubagentsDirectoryReturnsEmptySubagents() throws IOException
+  public void missingSubagentsDirectoryReturnsEmpty() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-");
     Path mainSession = tempDir.resolve("main.jsonl");
@@ -902,7 +902,7 @@ public final class SessionAnalyzerTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void emptySubagentsDirectoryReturnsEmptySubagents() throws IOException
+  public void emptySubagentsDirectoryReturnsEmpty() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-");
     Path mainSession = tempDir.resolve("main.jsonl");
@@ -936,7 +936,7 @@ public final class SessionAnalyzerTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void deduplicatesSubagentDiscoveredByBothPhases() throws IOException
+  public void deduplicatesSubagentDiscoveredByBoth() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-");
     Path mainSession = tempDir.resolve("main.jsonl");
@@ -1212,7 +1212,7 @@ public final class SessionAnalyzerTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void searchWithNoMatchesIncludesAdditionalContextHint() throws IOException
+  public void searchWithNoMatchesIncludesAdditional() throws IOException
   {
     Path tempFile = Files.createTempFile("session-", ".jsonl");
     try
@@ -1370,7 +1370,7 @@ public final class SessionAnalyzerTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void searchRegexAlternationMatchesBothKeywords() throws IOException
+  public void searchRegexAlternationMatchesBoth() throws IOException
   {
     Path tempFile = Files.createTempFile("session-", ".jsonl");
     try
@@ -1622,7 +1622,7 @@ public final class SessionAnalyzerTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void fileHistoryReturnsEmptyWhenNoMatchingFiles() throws IOException
+  public void fileHistoryReturnsEmptyWhenNoMatching() throws IOException
   {
     Path tempFile = Files.createTempFile("session-", ".jsonl");
     try
@@ -1651,7 +1651,7 @@ public final class SessionAnalyzerTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void fileHistoryIncludesBashCommandsReferencingFile() throws IOException
+  public void fileHistoryIncludesBashCommands() throws IOException
   {
     Path tempFile = Files.createTempFile("session-", ".jsonl");
     try
@@ -1738,7 +1738,7 @@ public final class SessionAnalyzerTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void toolCallSequencesReturnsMatchingToolPairs() throws IOException
+  public void toolCallSequencesReturnsMatchingTool() throws IOException
   {
     Path tempFile = Files.createTempFile("session-", ".jsonl");
     try
@@ -1921,7 +1921,7 @@ public final class SessionAnalyzerTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void mistakeTimelineReturnsSequenceFromLastUserMessageToError()
+  public void mistakeTimelineReturnsSequenceFromLast()
     throws IOException
   {
     Path tempFile = Files.createTempFile("session-", ".jsonl");
@@ -2014,7 +2014,7 @@ public final class SessionAnalyzerTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void mistakeTimelineCapturesOnlyEventsAfterLastUserMessage() throws IOException
+  public void mistakeTimelineCapturesOnlyEventsAfter() throws IOException
   {
     Path tempFile = Files.createTempFile("session-", ".jsonl");
     try
@@ -2155,7 +2155,7 @@ public final class SessionAnalyzerTest
    */
   @Test(expectedExceptions = NullPointerException.class,
     expectedExceptionsMessageRegExp = ".*filePath.*")
-  public void toolCallSequencesThrowsNullPointerExceptionForNullFilePath() throws IOException
+  public void toolCallSequencesThrowsNullPointer() throws IOException
   {
     SessionAnalyzer analyzer = new SessionAnalyzer(new TestClaudeTool());
     analyzer.toolCallSequences(null, List.of("keyword"), 2);
@@ -2167,7 +2167,7 @@ public final class SessionAnalyzerTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void mistakeTimelineHandlesSessionWithNoUserMessages() throws IOException
+  public void mistakeTimelineHandlesSessionWithNoUser() throws IOException
   {
     Path tempFile = Files.createTempFile("session-", ".jsonl");
     try
@@ -2613,7 +2613,7 @@ public final class SessionAnalyzerTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void timingAbsentWhenExactlyTwoIdenticalTimestamps() throws IOException
+  public void timingAbsentWhenExactlyTwoIdentical() throws IOException
   {
     Path tempFile = Files.createTempFile("session-", ".jsonl");
     try
@@ -2684,7 +2684,7 @@ public final class SessionAnalyzerTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void timingToolsBeforeFirstPhaseMarkerNotIncluded() throws IOException
+  public void timingToolsBeforeFirstPhaseMarkerNot() throws IOException
   {
     Path tempFile = Files.createTempFile("session-", ".jsonl");
     try
@@ -2727,7 +2727,7 @@ public final class SessionAnalyzerTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void timingMalformedSkillInvocationNotAPhaseMarker() throws IOException
+  public void timingMalformedSkillInvocationNotAPhase() throws IOException
   {
     Path tempFile = Files.createTempFile("session-", ".jsonl");
     try
@@ -2768,7 +2768,7 @@ public final class SessionAnalyzerTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void timingZeroElapsedForConsecutiveSameTimestamp() throws IOException
+  public void timingZeroElapsedForConsecutiveSame() throws IOException
   {
     Path tempFile = Files.createTempFile("session-", ".jsonl");
     try
@@ -2817,7 +2817,7 @@ public final class SessionAnalyzerTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void timingPreservesSpecialCharactersInToolNames() throws IOException
+  public void timingPreservesSpecialCharactersInTool() throws IOException
   {
     Path tempFile = Files.createTempFile("session-", ".jsonl");
     try
@@ -2907,7 +2907,7 @@ public final class SessionAnalyzerTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void pipelineCandidatesEmptyWhenNoDependencies() throws IOException
+  public void pipelineCandidatesEmptyWhenNo() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-");
     Path mainSession = tempDir.resolve("main.jsonl");
@@ -3027,7 +3027,7 @@ public final class SessionAnalyzerTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void scriptExtractionFiltersSubsumedSubsequences() throws IOException
+  public void scriptExtractionFiltersSubsumed() throws IOException
   {
     Path tempDir = Files.createTempDirectory("session-");
     Path mainSession = tempDir.resolve("main.jsonl");

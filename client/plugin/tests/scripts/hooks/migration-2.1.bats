@@ -1015,6 +1015,27 @@ EOF
     [ "$status" -eq 0 ]
 }
 
+# ─── Phase 20: Rename targetBranch → target_branch in index.json files ───────
+
+@test "2.1.sh phase 20: skips already migrated index.json files without scanning them as work" {
+    mkdir -p "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue"
+    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue/index.json" <<'EOF'
+{
+  "id": "test-issue",
+  "target_branch": "main"
+}
+EOF
+    setup_config_fixture
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"No legacy targetBranch keys found - skipping phase 20"* ]]
+    [[ "$output" != *"Phase 20 complete: 0 files updated"* ]]
+    run grep '"target_branch": "main"' ".cat/issues/v2/v2.1/test-issue/index.json"
+    [ "$status" -eq 0 ]
+}
+
 # ─── Phase 26: Rename ## Sub-Agent Waves → ## Jobs and ### Wave N → ### Job N ─
 
 @test "2.1.sh phase 26: renames Sub-Agent Waves section to Jobs in plan.md" {
@@ -1082,6 +1103,8 @@ EOF
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
     # Content should be unchanged
+    [[ "$output" == *"No legacy plan.md job headings found - skipping phase 26"* ]]
+    [[ "$output" != *"Phase 26 complete: 0 files migrated"* ]]
     run grep "^## Jobs$" ".cat/issues/v2/v2.1/test-issue/plan.md"
     [ "$status" -eq 0 ]
     run grep "^### Job 1$" ".cat/issues/v2/v2.1/test-issue/plan.md"

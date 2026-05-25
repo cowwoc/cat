@@ -108,7 +108,7 @@ public final class PerfectionLevelTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".* LOW .*")
-  public void fromStringWhitespacePaddedThrowsIllegalArgument()
+  public void fromStringWhitespacePaddedThrowsIllegal()
   {
     PerfectionLevel.fromString(" low ");
   }

@@ -28,7 +28,7 @@ public class GetCheckpointOutputTest
    * Verifies that getCheckpointIssueComplete returns output containing the issue name and checkpoint header.
    */
   @Test
-  public void getCheckpointIssueCompleteContainsIssueNameAndHeader() throws IOException
+  public void getCheckpointIssueCompleteContainsIssue() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -56,7 +56,7 @@ public class GetCheckpointOutputTest
    * Verifies that getCheckpointIssueComplete output contains issue name.
    */
   @Test
-  public void getCheckpointIssueCompleteContainsIssueName() throws IOException
+  public void getCheckpointIssueCompleteContainsIssue2() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -98,7 +98,7 @@ public class GetCheckpointOutputTest
    * Verifies that getCheckpointIssueComplete has box structure.
    */
   @Test
-  public void getCheckpointIssueCompleteHasBoxStructure() throws IOException
+  public void getCheckpointIssueCompleteHasBox() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -114,7 +114,7 @@ public class GetCheckpointOutputTest
    * Verifies that getCheckpointFeedbackApplied returns output containing the issue name and checkpoint header.
    */
   @Test
-  public void getCheckpointFeedbackAppliedContainsIssueNameAndHeader() throws IOException
+  public void getCheckpointFeedbackAppliedContains() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -128,7 +128,7 @@ public class GetCheckpointOutputTest
    * Verifies that getCheckpointFeedbackApplied output contains header.
    */
   @Test
-  public void getCheckpointFeedbackAppliedContainsHeader() throws IOException
+  public void getCheckpointFeedbackAppliedContains2() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -142,7 +142,7 @@ public class GetCheckpointOutputTest
    * Verifies that getCheckpointFeedbackApplied output contains iteration.
    */
   @Test
-  public void getCheckpointFeedbackAppliedContainsIteration() throws IOException
+  public void getCheckpointFeedbackAppliedContains3() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -156,7 +156,7 @@ public class GetCheckpointOutputTest
    * Verifies that getCheckpointFeedbackApplied output contains token metrics.
    */
   @Test
-  public void getCheckpointFeedbackAppliedContainsTokenMetrics() throws IOException
+  public void getCheckpointFeedbackAppliedContains4() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -170,7 +170,7 @@ public class GetCheckpointOutputTest
    * Verifies that getCheckpointFeedbackApplied has box structure.
    */
   @Test
-  public void getCheckpointFeedbackAppliedHasBoxStructure() throws IOException
+  public void getCheckpointFeedbackAppliedHasBox() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -187,7 +187,7 @@ public class GetCheckpointOutputTest
    */
   @Test(expectedExceptions = NullPointerException.class,
     expectedExceptionsMessageRegExp = ".*issueName.*")
-  public void getCheckpointIssueCompleteThrowsOnNullIssueName() throws IOException
+  public void getCheckpointIssueCompleteThrowsOnNull() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -201,7 +201,7 @@ public class GetCheckpointOutputTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*issueName.*")
-  public void getCheckpointIssueCompleteThrowsOnBlankIssueName() throws IOException
+  public void getCheckpointIssueCompleteThrowsOnBlank() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -215,7 +215,7 @@ public class GetCheckpointOutputTest
    */
   @Test(expectedExceptions = NullPointerException.class,
     expectedExceptionsMessageRegExp = ".*tokens.*")
-  public void getCheckpointIssueCompleteThrowsOnNullTokens() throws IOException
+  public void getCheckpointIssueCompleteThrowsOnNull2() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -229,7 +229,7 @@ public class GetCheckpointOutputTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*tokens.*")
-  public void getCheckpointIssueCompleteThrowsOnBlankTokens() throws IOException
+  public void getCheckpointIssueCompleteThrowsOnBlank2() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -243,7 +243,7 @@ public class GetCheckpointOutputTest
    */
   @Test(expectedExceptions = NullPointerException.class,
     expectedExceptionsMessageRegExp = ".*iteration.*")
-  public void getCheckpointFeedbackAppliedThrowsOnNullIteration() throws IOException
+  public void getCheckpointFeedbackAppliedThrowsOnNull() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -257,7 +257,7 @@ public class GetCheckpointOutputTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*iteration.*")
-  public void getCheckpointFeedbackAppliedThrowsOnBlankIteration() throws IOException
+  public void getCheckpointFeedbackAppliedThrowsOn() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {

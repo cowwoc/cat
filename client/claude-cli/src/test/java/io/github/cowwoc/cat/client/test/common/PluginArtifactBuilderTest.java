@@ -167,7 +167,7 @@ public final class PluginArtifactBuilderTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void buildEngineSkillWrappersIncludeCommonCompanions() throws IOException
+  public void buildEngineSkillWrappersIncludeCommon() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try
@@ -219,7 +219,7 @@ public final class PluginArtifactBuilderTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void buildEngineSkillWrappersShadowCommonCompanions() throws IOException
+  public void buildEngineSkillWrappersShadowCommon() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try
@@ -255,7 +255,7 @@ public final class PluginArtifactBuilderTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void buildReplacesEngineCommandPrefixPlaceholders() throws IOException
+  public void buildReplacesEngineCommandPrefix() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try
@@ -292,7 +292,7 @@ public final class PluginArtifactBuilderTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void buildReplacesEngineOutputRenderDirectives() throws IOException
+  public void buildReplacesEngineOutputRender() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try
@@ -341,7 +341,7 @@ public final class PluginArtifactBuilderTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void buildRejectsInvalidRenderOutputDirectiveToken() throws IOException
+  public void buildRejectsInvalidRenderOutputDirective() throws IOException
   {
     assertRenderOutputDirectiveRejected("<!-- cat:render-output get-output bad$token -->",
       "Invalid cat:render-output token: bad$token");
@@ -365,7 +365,7 @@ public final class PluginArtifactBuilderTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void buildRejectsRenderOutputPlaceholderCommand() throws IOException
+  public void buildRejectsRenderOutputPlaceholder() throws IOException
   {
     assertRenderOutputDirectiveRejected("<!-- cat:render-output <issue-path> -->",
       "cat:render-output command must not be a placeholder: <issue-path>");
@@ -377,7 +377,7 @@ public final class PluginArtifactBuilderTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void buildRejectsEscapedRenderOutputPlaceholder() throws IOException
+  public void buildRejectsEscapedRenderOutput() throws IOException
   {
     assertRenderOutputDirectiveRejected("<!-- cat:render-output get-output &lt;issue-path&gt; -->",
       "Invalid cat:render-output token: &lt;issue-path&gt;");
@@ -421,7 +421,7 @@ public final class PluginArtifactBuilderTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void buildCurrentEngineArtifactsExpandAgentContracts() throws IOException
+  public void buildCurrentEngineArtifactsExpandAgent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try
@@ -543,7 +543,7 @@ public final class PluginArtifactBuilderTest
           "REVIEWED_HEAD_SHA=$(cd \"${WORKTREE_PATH}\" && git rev-parse HEAD)");
         requireThat(workReview, engine + "WorkReview").contains(
           "reject stale review results after later implementation changes");
-        assertWorkReviewAutoFixPlanArtifactContract(workReview, engine + "WorkReview");
+        assertWorkReviewAutoFixPlanArtifact(workReview, engine + "WorkReview");
         requireThat(workReview, engine + "WorkReview").doesNotContain("cat:include");
 
         String workMerge = Files.readString(engineRoot.resolve("skills/work-merge/first-use.md"),
@@ -607,7 +607,7 @@ public final class PluginArtifactBuilderTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void sourceOutputRenderSkillsOnlyUseRenderDirectives() throws IOException
+  public void sourceOutputRenderSkillsOnlyUseRender() throws IOException
   {
     Path sourceRoot = findSourceRoot();
     Path skillsRoot = sourceRoot.resolve("client/plugin/skills");
@@ -630,7 +630,7 @@ public final class PluginArtifactBuilderTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void workImplementCleansUpSubagentWorktreesAfterMerge() throws IOException
+  public void workImplementCleansUpSubagentWorktrees() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try
@@ -667,7 +667,7 @@ public final class PluginArtifactBuilderTest
    * @throws InterruptedException if interrupted while running the guard
    */
   @Test
-  public void stakeholderReviewDispatchGuardBlocksStaleHeadBeforeReviewerSpawn()
+  public void stakeholderReviewDispatchGuardBlocks()
     throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-");
@@ -920,7 +920,7 @@ public final class PluginArtifactBuilderTest
    * Verifies that duplicate engine companion basenames are rejected instead of guessed.
    */
   @Test
-  public void buildRejectsDuplicateEngineSkillCompanionNames() throws IOException
+  public void buildRejectsDuplicateEngineSkill() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try
@@ -956,7 +956,7 @@ public final class PluginArtifactBuilderTest
    * Verifies that Codex artifacts preserve path-scoped common rules without generating session stubs.
    */
   @Test
-  public void buildDoesNotGenerateCodexStubsForPathScopedCommonRules() throws IOException
+  public void buildDoesNotGenerateCodexStubsForPath() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try
@@ -1280,7 +1280,7 @@ public final class PluginArtifactBuilderTest
    * @param content the rendered work-review skill content
    * @param name    the assertion name
    */
-  private static void assertWorkReviewAutoFixPlanArtifactContract(String content, String name)
+  private static void assertWorkReviewAutoFixPlanArtifact(String content, String name)
   {
     String planningSection = content.substring(content.indexOf(
       "description: \"Plan per-concern fixes (iteration ${AUTOFIX_ITERATION})\""),

@@ -181,7 +181,7 @@ public class MergeAndCleanupTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeUpdatesLocalTargetBranchWhenBehindOrigin() throws IOException
+  public void executeUpdatesLocalTargetBranchWhen() throws IOException
   {
     // Create a bare "origin" repo
     Path originRepo = Files.createTempDirectory("origin-repo-");
@@ -279,7 +279,7 @@ public class MergeAndCleanupTest
    */
   @Test(expectedExceptions = IOException.class,
     expectedExceptionsMessageRegExp = ".*diverged.*")
-  public void executeThrowsWhenLocalTargetBranchDivergedFromOrigin() throws IOException
+  public void executeThrowsWhenLocalTargetBranch() throws IOException
   {
     // Create a bare "origin" repo
     Path originRepo = Files.createTempDirectory("origin-repo-");
@@ -370,7 +370,7 @@ public class MergeAndCleanupTest
    */
   @Test(expectedExceptions = IOException.class,
     expectedExceptionsMessageRegExp = ".*origin.*")
-  public void executeThrowsWhenFetchFailsDueToInvalidRemote() throws IOException
+  public void executeThrowsWhenFetchFailsDueToInvalid() throws IOException
   {
     Path localRepo = Files.createTempDirectory("local-repo-");
     Path worktreesDir = Files.createTempDirectory("worktrees-");
@@ -432,7 +432,7 @@ public class MergeAndCleanupTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeAutoRebasesWhenTargetBranchDiverged() throws IOException
+  public void executeAutoRebasesWhenTargetBranch() throws IOException
   {
     Path originRepo = Files.createTempDirectory("origin-repo-");
     Path mainRepo = Files.createTempDirectory("main-repo-");
@@ -729,7 +729,7 @@ public class MergeAndCleanupTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeRejectsPluginRootInsideDeletedWorktreeBeforeMerge() throws IOException
+  public void executeRejectsPluginRootInsideDeleted() throws IOException
   {
     Path originRepo = Files.createTempDirectory("origin-repo-");
     Path mainRepo = Files.createTempDirectory("main-repo-");
@@ -919,7 +919,7 @@ public class MergeAndCleanupTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void runCleanupOnlyRejectsPluginRootInsideDeletedWorktree() throws IOException
+  public void runCleanupOnlyRejectsPluginRootInside() throws IOException
   {
     Path originRepo = Files.createTempDirectory("origin-repo-");
     Path mainRepo = Files.createTempDirectory("main-repo-");

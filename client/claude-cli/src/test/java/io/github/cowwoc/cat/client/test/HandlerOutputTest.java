@@ -85,7 +85,7 @@ public class HandlerOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getAddOutputShowsNoneForEmptyDependencies() throws IOException
+  public void getAddOutputShowsNoneForEmpty() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -205,7 +205,7 @@ public class HandlerOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getAddOutputVersionWithoutParentOmitsParentLine() throws IOException
+  public void getAddOutputVersionWithoutParentOmits() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -229,7 +229,7 @@ public class HandlerOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getAddOutputVersionWithoutPathOmitsPathLine() throws IOException
+  public void getAddOutputVersionWithoutPathOmitsPath() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -278,7 +278,7 @@ public class HandlerOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getAddOutputIssueDisplayContainsCheckmarkEmoji() throws IOException
+  public void getAddOutputIssueDisplayContains() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -302,7 +302,7 @@ public class HandlerOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getAddOutputVersionDisplayContainsCheckmarkEmoji() throws IOException
+  public void getAddOutputVersionDisplayContains() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -326,7 +326,7 @@ public class HandlerOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getAddOutputVersionDisplayHasBoxStructure() throws IOException
+  public void getAddOutputVersionDisplayHasBox() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -350,7 +350,7 @@ public class HandlerOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getAddOutputVersionDisplayIncludesVersionName() throws IOException
+  public void getAddOutputVersionDisplayIncludes() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -374,7 +374,7 @@ public class HandlerOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getAddOutputVersionDisplayIncludesNextCommand() throws IOException
+  public void getAddOutputVersionDisplayIncludesNext() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -398,7 +398,7 @@ public class HandlerOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getConfigOutputReturnsNullWhenConfigMissing() throws IOException
+  public void getConfigOutputReturnsNullWhenConfig() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -543,7 +543,7 @@ public class HandlerOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getAddOutputIssueDisplayContainsHeaderAndNextHint() throws IOException
+  public void getAddOutputIssueDisplayContainsHeader() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {

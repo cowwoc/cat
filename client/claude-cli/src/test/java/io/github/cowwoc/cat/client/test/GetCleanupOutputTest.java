@@ -774,7 +774,7 @@ public class GetCleanupOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void planOutputDisplaysWorktreeAgeAndClassification() throws IOException
+  public void planOutputDisplaysWorktreeAgeAnd() throws IOException
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
@@ -1199,7 +1199,7 @@ public class GetCleanupOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void verifyOutputShowsNoneForEmptyRemainingLocks() throws IOException
+  public void verifyOutputShowsNoneForEmptyRemaining() throws IOException
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
@@ -1230,7 +1230,7 @@ public class GetCleanupOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void verifyOutputShowsNoneForAllEmptyRemaining() throws IOException
+  public void verifyOutputShowsNoneForAllEmpty() throws IOException
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
@@ -1285,7 +1285,7 @@ public class GetCleanupOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void parseWorktreesPorcelainParsesSingleWorktree() throws IOException
+  public void parseWorktreesPorcelainParsesSingle() throws IOException
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
@@ -1318,7 +1318,7 @@ public class GetCleanupOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void parseWorktreesPorcelainParsesMultipleWorktrees() throws IOException
+  public void parseWorktreesPorcelainParsesMultiple() throws IOException
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
@@ -1355,7 +1355,7 @@ public class GetCleanupOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void parseWorktreesPorcelainHandlesDetachedState() throws IOException
+  public void parseWorktreesPorcelainHandlesDetached() throws IOException
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
@@ -1419,7 +1419,7 @@ public class GetCleanupOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void parseWorktreesPorcelainExtractsBranchName() throws IOException
+  public void parseWorktreesPorcelainExtractsBranch() throws IOException
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
@@ -1450,7 +1450,7 @@ public class GetCleanupOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void parseWorktreesPorcelainHandlesNoTrailingBlankLine() throws IOException
+  public void parseWorktreesPorcelainHandlesNoTrailing() throws IOException
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
@@ -1652,7 +1652,7 @@ public class GetCleanupOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void formatVerifyFromJsonHandlesEmptyRemaining() throws IOException
+  public void formatVerifyFromJsonHandlesEmpty() throws IOException
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
@@ -1693,7 +1693,7 @@ public class GetCleanupOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void missingProjectDirValueIsDetectedByBoundaryCheck() throws IOException
+  public void missingProjectDirValueIsDetectedBy() throws IOException
   {
     // Verify the boundary detection logic by simulating the parsing condition:
     // args = ["--project-dir"] -> i=0, i+1=1, args.length=1, so i+1 >= args.length is true.
@@ -1713,7 +1713,7 @@ public class GetCleanupOutputTest
    */
   @Test(expectedExceptions = NullPointerException.class,
     expectedExceptionsMessageRegExp = ".*args.*")
-  public void getOutputNullArgsThrowsNullPointerException() throws IOException
+  public void getOutputNullArgsThrowsNullPointer() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -1762,7 +1762,7 @@ public class GetCleanupOutputTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Missing PATH argument.*")
-  public void getOutputMissingProjectDirValueThrowsIllegalArgumentException() throws IOException
+  public void getOutputMissingProjectDirValueThrows() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -1778,7 +1778,7 @@ public class GetCleanupOutputTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Unknown argument.*--unknown-flag.*")
-  public void getOutputUnknownFlagThrowsIllegalArgumentException() throws IOException
+  public void getOutputUnknownFlagThrowsIllegal() throws IOException
   {
     try (TestClaudeTool scope = new TestClaudeTool())
     {
@@ -1868,7 +1868,7 @@ public class GetCleanupOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void surveyOutputIncludesCorruptIssueDirectories() throws IOException
+  public void surveyOutputIncludesCorruptIssue() throws IOException
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
@@ -1903,7 +1903,7 @@ public class GetCleanupOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void gatherCorruptIssuesDetectsIndexJsonWithoutPlanMd() throws IOException
+  public void gatherCorruptIssuesDetectsIndexJson() throws IOException
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
@@ -1934,7 +1934,7 @@ public class GetCleanupOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void gatherCorruptIssuesIgnoresValidIssueDirectories() throws IOException
+  public void gatherCorruptIssuesIgnoresValidIssue() throws IOException
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
@@ -1965,7 +1965,7 @@ public class GetCleanupOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void gatherCorruptIssuesDetectsMissingPlanMdWithNoIndexJson() throws IOException
+  public void gatherCorruptIssuesDetectsMissingPlanMd() throws IOException
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
@@ -2034,7 +2034,7 @@ public class GetCleanupOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void gatherCorruptIssuesDetectsInvalidJsonInIndexJson() throws IOException
+  public void gatherCorruptIssuesDetectsInvalidJsonIn() throws IOException
   {
     Path projectPath = Files.createTempDirectory("test-project");
     Path pluginRoot = Files.createTempDirectory("test-plugin");

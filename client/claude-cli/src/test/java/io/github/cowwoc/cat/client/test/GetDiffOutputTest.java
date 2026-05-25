@@ -825,7 +825,7 @@ public class GetDiffOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void targetBranchDetectionInNonWorktreeDirectory() throws IOException
+  public void targetBranchDetectionInNonWorktree() throws IOException
   {
     try (CliTool scope = new TestClaudeTool())
     {
@@ -1035,7 +1035,7 @@ public class GetDiffOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void issuePathDrivesProjectRootAndTargetBranch() throws IOException
+  public void issuePathDrivesProjectRootAndTarget() throws IOException
   {
     Path tempDir = Files.createTempDirectory("issue-path-test");
     try
@@ -1136,7 +1136,7 @@ public class GetDiffOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void multiLineDeletionAdditionPairsSequentially() throws IOException
+  public void multiLineDeletionAdditionPairs() throws IOException
   {
     try (CliTool scope = new TestClaudeTool())
     {
@@ -1186,7 +1186,7 @@ public class GetDiffOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void diffStatsWithMismatchedBranchReturnsZeroStats() throws IOException
+  public void diffStatsWithMismatchedBranchReturnsZero() throws IOException
   {
     try (CliTool scope = new TestClaudeTool())
     {
@@ -1396,7 +1396,7 @@ public class GetDiffOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void pureAdditionDeletionLinesHaveNoBoldMarkers() throws IOException
+  public void pureAdditionDeletionLinesHaveNoBold() throws IOException
   {
     try (CliTool scope = new TestClaudeTool())
     {
@@ -1510,7 +1510,7 @@ public class GetDiffOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void whitespaceOnlyChangesUseVisualizationNotWordDiff() throws IOException
+  public void whitespaceOnlyChangesUseVisualizationNot() throws IOException
   {
     try (CliTool scope = new TestClaudeTool())
     {
@@ -1562,7 +1562,7 @@ public class GetDiffOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void modificationLinesWithBoldMarkersAlignCorrectly() throws IOException
+  public void modificationLinesWithBoldMarkersAlign() throws IOException
   {
     try (CliTool scope = new TestClaudeTool())
     {
@@ -1663,7 +1663,7 @@ public class GetDiffOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void largeDiffReturnsDescriptiveMessageInsteadOfRendering() throws IOException
+  public void largeDiffReturnsDescriptiveMessage() throws IOException
   {
     try (CliTool scope = new TestClaudeTool())
     {
@@ -1726,7 +1726,7 @@ public class GetDiffOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void detectTargetBranchFromWorktreePathViaExplicitProjectRoot() throws IOException
+  public void detectTargetBranchFromWorktreePathVia() throws IOException
   {
     try (CliTool scope = new TestClaudeTool())
     {
@@ -1795,7 +1795,7 @@ public class GetDiffOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void nonGitDirectoryReturnsMissingTargetBranchMessage() throws IOException
+  public void nonGitDirectoryReturnsMissingTarget() throws IOException
   {
     try (CliTool scope = new TestClaudeTool())
     {
@@ -1925,7 +1925,7 @@ public class GetDiffOutputTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*target_branch.*")
-  public void testMissingTargetBranchInIndexJsonThrowsException() throws IOException
+  public void testMissingTargetBranchInIndexJsonThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("no-target-branch-test");
     try

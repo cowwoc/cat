@@ -33,7 +33,7 @@ public class JsonHelperTest
    * @throws IOException if JSON parsing fails
    */
   @Test
-  public void getStringOrDefaultReturnsValueWhenPresent() throws IOException
+  public void getStringOrDefaultReturnsValueWhen() throws IOException
   {
     try (AgentScope scope = new TestClaudeTool())
     {
@@ -50,7 +50,7 @@ public class JsonHelperTest
    * @throws IOException if JSON parsing fails
    */
   @Test
-  public void getStringOrDefaultReturnsDefaultWhenMissing() throws IOException
+  public void getStringOrDefaultReturnsDefaultWhen() throws IOException
   {
     try (AgentScope scope = new TestClaudeTool())
     {
@@ -67,7 +67,7 @@ public class JsonHelperTest
    * @throws IOException if JSON parsing fails
    */
   @Test
-  public void getStringOrDefaultReturnsDefaultWhenEmpty() throws IOException
+  public void getStringOrDefaultReturnsDefaultWhen2() throws IOException
   {
     try (AgentScope scope = new TestClaudeTool())
     {
@@ -118,7 +118,7 @@ public class JsonHelperTest
    * @throws IOException if JSON parsing fails
    */
   @Test
-  public void getIntOrDefaultReturnsDefaultWhenNotNumber() throws IOException
+  public void getIntOrDefaultReturnsDefaultWhenNot() throws IOException
   {
     try (AgentScope scope = new TestClaudeTool())
     {
@@ -205,7 +205,7 @@ public class JsonHelperTest
    * @throws IOException if JSON parsing fails
    */
   @Test
-  public void getStringArrayReturnsEmptyListWhenMissing() throws IOException
+  public void getStringArrayReturnsEmptyListWhen() throws IOException
   {
     try (AgentScope scope = new TestClaudeTool())
     {

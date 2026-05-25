@@ -275,7 +275,7 @@ public class UpdateConfigTest
    * Verifies that an invalid value for completionWorkflow returns an error response.
    */
   @Test
-  public void invalidCompletionWorkflowValueReturnsError() throws Exception
+  public void invalidCompletionWorkflowValueReturns() throws Exception
   {
     Path tempDir = Files.createTempDirectory("update-config-test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -327,7 +327,7 @@ public class UpdateConfigTest
    * Verifies that setting an existing override back to its default removes the key from raw config.json.
    */
   @Test
-  public void defaultValueUpdateRemovesExistingOverride() throws Exception
+  public void defaultValueUpdateRemovesExisting() throws Exception
   {
     Path tempDir = Files.createTempDirectory("update-config-test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -360,7 +360,7 @@ public class UpdateConfigTest
    * Verifies that removing a default-valued key preserves unrelated non-default overrides.
    */
   @Test
-  public void defaultValueUpdatePreservesOtherOverrides() throws Exception
+  public void defaultValueUpdatePreservesOther() throws Exception
   {
     Path tempDir = Files.createTempDirectory("update-config-test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))

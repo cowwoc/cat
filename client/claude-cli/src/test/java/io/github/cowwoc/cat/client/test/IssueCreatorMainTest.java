@@ -33,7 +33,7 @@ public class IssueCreatorMainTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void invalidArgsProducesBlockResponseWithUsage() throws IOException
+  public void invalidArgsProducesBlockResponseWith() throws IOException
   {
     Path tempDir = Files.createTempDirectory("issue-creator-main-test-");
     try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))

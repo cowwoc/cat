@@ -189,7 +189,7 @@ public final class DescriptionOptimizerTest
    * Verifies that the handler produces a valid optimization prompt for a well-formed input.
    */
   @Test
-  public void producesOptimizationPromptWithTrainTestSplit() throws IOException
+  public void producesOptimizationPromptWithTrainTest() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-desc-opt-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))

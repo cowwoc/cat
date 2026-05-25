@@ -330,7 +330,7 @@ public final class InvestigationContextExtractorTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void capsTimelineEventsAt200AndSetsTruncatedFlag() throws IOException
+  public void capsTimelineEventsAt200AndSetsTruncated() throws IOException
   {
     Path tempFile = Files.createTempFile("extract-", ".jsonl");
     try
@@ -511,7 +511,7 @@ public final class InvestigationContextExtractorTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void skipsToolResultWithoutMatchingBashCommand() throws IOException
+  public void skipsToolResultWithoutMatchingBash() throws IOException
   {
     Path tempFile = Files.createTempFile("extract-", ".jsonl");
     try
@@ -540,7 +540,7 @@ public final class InvestigationContextExtractorTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void setsResultTruncatedFlagWhenResultExceedsLimit() throws IOException
+  public void setsResultTruncatedFlagWhenResultExceeds() throws IOException
   {
     Path tempFile = Files.createTempFile("extract-", ".jsonl");
     try
@@ -698,7 +698,7 @@ public final class InvestigationContextExtractorTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void doesNotAppendEllipsisToShortTimelineEvents() throws IOException
+  public void doesNotAppendEllipsisToShortTimeline() throws IOException
   {
     Path tempFile = Files.createTempFile("extract-", ".jsonl");
     try
@@ -756,7 +756,7 @@ public final class InvestigationContextExtractorTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void mistakeTimelineIsArrayWhenSessionFileExists() throws IOException
+  public void mistakeTimelineIsArrayWhenSessionFile() throws IOException
   {
     Path tempFile = Files.createTempFile("extract-", ".jsonl");
     try
@@ -783,7 +783,7 @@ public final class InvestigationContextExtractorTest
    * @throws IOException if file operations fail
    */
   @Test
-  public void toolCallSequencesIsObjectKeyedByKeywordWhenKeywordsProvided() throws IOException
+  public void toolCallSequencesIsObjectKeyedByKeyword() throws IOException
   {
     Path tempFile = Files.createTempFile("extract-", ".jsonl");
     try

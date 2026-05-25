@@ -113,7 +113,7 @@ public class WarnUnknownTerminalTest
    * Verifies that WarnUnknownTerminal emits a warning when fallback is active and no marker file exists.
    */
   @Test
-  public void emitsWarningWhenFallbackActiveAndNoMarker() throws IOException
+  public void emitsWarningWhenFallbackActiveAndNo() throws IOException
   {
     Path projectPath = Files.createTempDirectory("cat-test-warn-fallback-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");

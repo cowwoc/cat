@@ -38,7 +38,7 @@ public class GetAddOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void singleIssueDisplayContainsExpectedContent() throws IOException
+  public void singleIssueDisplayContainsExpected() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))
@@ -66,7 +66,7 @@ public class GetAddOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void singleIssueWithDependenciesShowsDependencies() throws IOException
+  public void singleIssueWithDependenciesShows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestClaudeTool scope = new TestClaudeTool(tempDir, tempDir))

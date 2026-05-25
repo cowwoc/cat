@@ -75,7 +75,7 @@ public final class BlockMainRebaseTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void rebaseIsAllowedWhenSessionHasWorktreeLock() throws IOException
+  public void rebaseIsAllowedWhenSessionHasWorktree() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
@@ -112,7 +112,7 @@ public final class BlockMainRebaseTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void rebaseOnMainWithGitGlobalDirectoryIsBlockedWhenSessionHasWorktreeLock() throws IOException
+  public void rebaseOnMainWithGitGlobalDirectoryIs() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
@@ -143,7 +143,7 @@ public final class BlockMainRebaseTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void rebaseOnMainWithGitDirIsBlockedWhenSessionHasWorktreeLock() throws IOException
+  public void rebaseOnMainWithGitDirIsBlockedWhen() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
@@ -177,7 +177,7 @@ public final class BlockMainRebaseTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void checkoutInMainWorktreeIsBlockedWhenNoLock() throws IOException
+  public void checkoutInMainWorktreeIsBlockedWhenNo() throws IOException
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
@@ -233,7 +233,7 @@ public final class BlockMainRebaseTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void checkoutIsAllowedWhenSessionHasWorktreeLock() throws IOException
+  public void checkoutIsAllowedWhenSessionHasWorktree() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
@@ -266,7 +266,7 @@ public final class BlockMainRebaseTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void checkoutInMainWithGitGlobalDirectoryIsBlockedWhenSessionHasWorktreeLock() throws IOException
+  public void checkoutInMainWithGitGlobalDirectoryIs() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
@@ -294,7 +294,7 @@ public final class BlockMainRebaseTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void checkoutInMainWithGitDirIsBlockedWhenSessionHasWorktreeLock() throws IOException
+  public void checkoutInMainWithGitDirIsBlockedWhen() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
@@ -422,7 +422,7 @@ public final class BlockMainRebaseTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void checkoutWithQuotedDashCToMainWithSpacesIsBlocked() throws IOException
+  public void checkoutWithQuotedDashCToMainWithSpaces() throws IOException
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
@@ -473,7 +473,7 @@ public final class BlockMainRebaseTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void switchWithGitDirAndWorkTreeOnMainIsBlocked() throws IOException
+  public void switchWithGitDirAndWorkTreeOnMainIs() throws IOException
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
@@ -499,7 +499,7 @@ public final class BlockMainRebaseTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void checkoutWithDashCToMainSubdirectoryIsBlockedEvenWithLock() throws IOException
+  public void checkoutWithDashCToMainSubdirectoryIs() throws IOException
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
@@ -527,7 +527,7 @@ public final class BlockMainRebaseTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void rebaseWithGitDirAndWorkTreeOnMainIsBlocked() throws IOException
+  public void rebaseWithGitDirAndWorkTreeOnMainIs() throws IOException
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
@@ -554,7 +554,7 @@ public final class BlockMainRebaseTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void rebaseWithQuotedGitScopeInCdChainOnMainIsBlocked() throws IOException
+  public void rebaseWithQuotedGitScopeInCdChainOnMain() throws IOException
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
@@ -582,7 +582,7 @@ public final class BlockMainRebaseTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void rebaseWithUnresolvableGitDirReturnsWarning() throws IOException
+  public void rebaseWithUnresolvableGitDirReturns() throws IOException
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("bmr-test-");
@@ -609,7 +609,7 @@ public final class BlockMainRebaseTest
    * @throws IOException if test setup fails
    */
   @Test
-  public void rebaseWithWorkTreeInMainSubdirectoryIsBlockedEvenWithLock() throws IOException
+  public void rebaseWithWorkTreeInMainSubdirectoryIs() throws IOException
   {
     Path projectPath = TestUtils.createTempGitRepo("main");
     Path pluginRoot = Files.createTempDirectory("bmr-test-");

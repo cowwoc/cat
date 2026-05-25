@@ -29,7 +29,7 @@ public final class DetectPreprocessorFailureTest
    * containing the feedback instruction.
    */
   @Test
-  public void matchingErrorReturnsContextWithFeedbackInstruction() throws IOException
+  public void matchingErrorReturnsContextWithFeedback() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
@@ -104,7 +104,7 @@ public final class DetectPreprocessorFailureTest
    * Verifies that an error containing the pattern anywhere in the string is matched.
    */
   @Test
-  public void errorWithPatternEmbeddedReturnsContextResult() throws IOException
+  public void errorWithPatternEmbeddedReturnsContext() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (AgentScope scope = new TestClaudeTool(tempDir, tempDir))
