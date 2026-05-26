@@ -129,9 +129,9 @@ step 3 becomes step 2, current step 4 becomes step 3.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Apply all 4 fixes to the 3 affected skill files following the detailed fix specification above
   - Files: `plugin/skills/cleanup/first-use.md`, `plugin/skills/work-merge-agent/first-use.md`,
     `plugin/skills/work-with-issue-agent/first-use.md`

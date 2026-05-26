@@ -38,9 +38,9 @@ them manually.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Modify Step 4 in work-merge/first-use.md:**
 

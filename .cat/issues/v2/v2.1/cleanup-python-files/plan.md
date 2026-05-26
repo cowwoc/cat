@@ -52,9 +52,9 @@ None - cleanup task
 ## Dependencies
 - migrate-python-tests (all tests must be migrated to Java first)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Verify Java tests pass** - `mvn test` must succeed before any deletion
 2. **Remove Python entry point scripts** - `plugin/hooks/get-*.py`, `enforce-*.py`, `invoke-handler.py`
 3. **Remove Python handler directories** - All handler subdirectories under `plugin/hooks/`

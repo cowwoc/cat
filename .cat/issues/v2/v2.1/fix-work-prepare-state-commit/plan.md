@@ -39,9 +39,9 @@ The `updateStateMd()` method (line 1529) writes STATE.md to disk via `Files.writ
 
 ## Main Agent Waves
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Modify `updateStateMd()` to commit STATE.md after writing
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/WorkPrepare.java`
   - Pattern: After `Files.writeString(statePath, ...)` at line ~1540, add `git add` and `git commit` similar to the `createStateFileAndCommit()` pattern

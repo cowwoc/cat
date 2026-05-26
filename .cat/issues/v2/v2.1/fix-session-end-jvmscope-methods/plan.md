@@ -67,9 +67,9 @@ method. The correct way to derive the `{claudeConfigDir}/projects/{encodedProjec
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - In `client/src/main/java/io/github/cowwoc/cat/hooks/SessionEndHook.java`, change line 79 from:
   `return runWithProjectDir(input, output, scope.getClaudeProjectDir());`
   to:

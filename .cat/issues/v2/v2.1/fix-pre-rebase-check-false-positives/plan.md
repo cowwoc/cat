@@ -29,7 +29,7 @@ resolving the old-path references automatically.
 
 ## Implementation
 
-### Wave 1: Write failing regression test
+### Job 1: Write failing regression test
 
 **Step 1.** Open `client/src/test/java/io/github/cowwoc/cat/hooks/test/GitRebaseTest.java` and read the
 existing test structure to understand the test helper patterns used (repo setup, commit helpers, how
@@ -52,7 +52,7 @@ existing test structure to understand the test helper patterns used (repo setup,
 **Step 3.** Run `mvn -f client/pom.xml test` and confirm the new test FAILS (red) while all existing
 tests still pass. This validates the test exercises the real bug.
 
-### Wave 2: Implement the fix
+### Job 2: Implement the fix
 
 **Step 4.** Open
 `client/src/main/java/io/github/cowwoc/cat/hooks/util/GitRebase.java` and locate the
@@ -89,7 +89,7 @@ untouched → add conflict).
 issue's commits modified AND still contains old-path references will appear in BOTH `grepResult` and
 `changedByIssue`, so it will still be added to `contentConflicts`.
 
-### Wave 3: Verify
+### Job 3: Verify
 
 **Step 8.** Run `mvn -f client/pom.xml test`. All tests must pass (exit code 0), including the new
 regression test added in Wave 1.

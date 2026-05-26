@@ -84,9 +84,9 @@ Tested via nested Claude instances with 7 scenarios. Results:
 4. **Exit code 1 vs 2**: Identical treatment — only zero vs non-zero matters.
 5. **Content never discarded**: All output included regardless of exit code.
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 ### Step 1: Add main() to GetStatuslineOutput
 

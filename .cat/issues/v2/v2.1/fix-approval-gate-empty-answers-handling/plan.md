@@ -35,9 +35,9 @@ None — bugfix for work-with-issue approval gate methodology (M459 prevention).
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Add empty-answers handling to Step 8 Approval Gate
+### Job 1: Add empty-answers handling to Step 8 Approval Gate
 
 - In Step 8 of `plugin/skills/work-with-issue/first-use.md`, after the existing CRITICAL block
   listing cases not to proceed on, add a new paragraph:

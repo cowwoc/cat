@@ -31,9 +31,9 @@ None
 - [ ] Migration script moves value from old location to new file
 - [ ] Backward compatibility wrappers removed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Update `plugin/migrations/lib/utils.sh`:**
    - `get_last_migrated_version()`: Read from `.cat/VERSION` file. Return "0.0.0" if file doesn't exist.
    - `set_last_migrated_version()`: Write version string to `.cat/VERSION` file (plain text, no JSON).

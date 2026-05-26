@@ -79,9 +79,9 @@ Markdown content instead of JSON. The `version_create` step has the same problem
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Fix `plugin/skills/add/first-use.md` (source file; the cache copy at
   `/home/node/.config/claude/plugins/cache/cat/cat/2.1/skills/add/first-use.md` is read-only and must NOT be
@@ -214,7 +214,7 @@ Markdown content instead of JSON. The `version_create` step has the same problem
   - Write valid JSON content: `{"status":"open","dependencies":["2.1-rename-config-options"],"blocks":[]}`
   - Files: `.cat/issues/v2/v2.1/add-personality-questionnaire/index.json`
 
-### Wave 2
+### Job 2
 
 - Add regression test:
   - Create `client/src/test/java/io/github/cowwoc/cat/hooks/test/IndexJsonParsingTest.java`:

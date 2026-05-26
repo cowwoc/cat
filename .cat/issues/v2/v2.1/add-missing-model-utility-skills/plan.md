@@ -26,9 +26,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Add `model: haiku` field to frontmatter of `plugin/skills/get-output-agent/SKILL.md`
   (after `user-invocable: false`, before `argument-hint`)
   - Files: `plugin/skills/get-output-agent/SKILL.md`

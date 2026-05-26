@@ -42,9 +42,9 @@ only covers the current attempt's backup.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Update the Result Handling table OK row and add an "On OK status" section in
   `plugin/skills/git-rebase-agent/first-use.md`:
   - Change OK row Agent Recovery Action from "Report commits rebased, verify no content changes" to:

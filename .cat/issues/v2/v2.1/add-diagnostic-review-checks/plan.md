@@ -28,9 +28,9 @@ None
 - [ ] Requirements stakeholder has output contract semantic correctness item and checklist row
 - [ ] All existing tests pass
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Step 1:** Edit `plugin/agents/stakeholder-testing.md`
    - Add a new High Priority concern: **Diagnostic Path Coverage** - "Diagnostic, error reporting,

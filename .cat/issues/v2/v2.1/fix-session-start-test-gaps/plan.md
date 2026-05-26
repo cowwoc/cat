@@ -18,9 +18,9 @@ None - test coverage improvement from stakeholder review
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Add main() integration tests**
    - Files: `tests/hooks/session-start.bats`
    - Test: main() success path with matching VERSION and working java binary (mock Java dispatcher)

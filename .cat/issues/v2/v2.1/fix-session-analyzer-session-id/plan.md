@@ -51,9 +51,9 @@ live at `{CLAUDE_CODE_SESSION_ID}/subagents/agent-{id}.jsonl`.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Investigate how Claude Code session ID differs from CLAUDE_SESSION_ID and how to resolve it
   - Check: Does the main session JSONL filename equal the Claude Code session ID?
   - Check: Is the Claude Code session ID available from any env var (e.g., CLAUDE_CODE_SESSION_ID)?

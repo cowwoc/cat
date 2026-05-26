@@ -112,9 +112,9 @@ private String buildIssueBranch(String major, String minor, String patch, String
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Write failing tests `executeReturnsReadyWhenSessionOwnsLockAndWorktreeExists` in
   `WorkPrepareTest.java` (TDD — write test first, verify it fails, then implement).

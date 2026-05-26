@@ -103,9 +103,9 @@ cause-classification.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Add `## Prevention Strength Gate` section to `plugin/skills/learn/rca-methods.md`
   - Insert the section after `## Recording Format` comment section at line 128 (between the Recording
@@ -157,7 +157,7 @@ cause-classification.
 - [ ] No regressions to existing RCA workflows (Methods A, B, C structure unchanged)
 - [ ] All lines in modified file are ≤ 120 characters
 
-### Wave 2 (Iteration 1 Fix Items)
+### Job 2 (Iteration 1 Fix Items)
 
 - Create an empirical test document `plugin/skills/learn/rca-prevention-gate-test.md` that defines the
   regression scenario for the Prevention Strength Gate:

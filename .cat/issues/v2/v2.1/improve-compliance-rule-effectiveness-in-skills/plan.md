@@ -62,9 +62,9 @@ Research findings on Claude compliance (evidence base for this issue):
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1 — Fix compression to preserve WHY reasoning for prohibition rules
+### Job 1 — Fix compression to preserve WHY reasoning for prohibition rules
 
 Edit `plugin/skills/instruction-builder-agent/compression-protocol.md`:
 
@@ -105,7 +105,7 @@ its list, matching the existing dash-bullet style:
 Files:
 - `plugin/skills/instruction-builder-agent/compression-protocol.md`
 
-### Wave 2 — Upgrade CONSEQUENCE severity for prohibition-supporting units
+### Job 2 — Upgrade CONSEQUENCE severity for prohibition-supporting units
 
 Edit `plugin/skills/instruction-builder-agent/validation-protocol.md`:
 
@@ -147,7 +147,7 @@ upgrade, add one.
 Files:
 - `plugin/skills/instruction-builder-agent/validation-protocol.md`
 
-### Wave 3 — Add instruction effectiveness guidance to skill-conventions.md
+### Job 3 — Add instruction effectiveness guidance to skill-conventions.md
 
 Edit `plugin/skills/instruction-builder-agent/skill-conventions.md`:
 
@@ -256,7 +256,7 @@ Do NOT use XML tags for general guidance or explanations — reserve them for en
 Files:
 - `plugin/skills/instruction-builder-agent/skill-conventions.md`
 
-### Wave 4 — Generate multiple PROHIBITION test cases in first-use.md
+### Job 4 — Generate multiple PROHIBITION test cases in first-use.md
 
 Edit `plugin/skills/instruction-builder-agent/first-use.md`:
 
@@ -289,7 +289,7 @@ DEPENDENCY already use in the surrounding list.
 Files:
 - `plugin/skills/instruction-builder-agent/first-use.md`
 
-### Wave 5 — Add compliance rule structure guidance to phase-prevent.md
+### Job 5 — Add compliance rule structure guidance to phase-prevent.md
 
 Edit `plugin/skills/learn/phase-prevent.md`:
 

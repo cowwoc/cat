@@ -25,9 +25,9 @@ None
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - In `plugin/skills/optimize-doc/first-use.md`, find the list of Claude-facing files (the bullet list under
   "Claude-facing files are:"). Remove the line `- client/src/main/java/**/InjectSessionInstructions.java` and add

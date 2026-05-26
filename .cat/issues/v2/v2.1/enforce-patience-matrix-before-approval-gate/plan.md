@@ -36,9 +36,9 @@ None — workflow correctness fix
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Fix priming in Step 6 Part B AskUserQuestion in work-with-issue-agent/first-use.md:
   - Reorder options: "Create issues for selected concerns" first, "Skip all" second

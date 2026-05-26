@@ -61,9 +61,9 @@ implement the removed methods.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Rename `HookInput` to `ClaudeHookInput`:
   - Git-mv: `cd client && git mv src/main/java/io/github/cowwoc/cat/hooks/HookInput.java src/main/java/io/github/cowwoc/cat/hooks/ClaudeHookInput.java`
   - Update class declaration inside file: change `class HookInput` to `class ClaudeHookInput` (and constructor name if any)
@@ -75,7 +75,7 @@ implement the removed methods.
   - Bulk-replace all references: `find client/src -name "*.java" | xargs sed -i 's/\bHookOutput\b/ClaudeHookOutput/g'`
   - Files to verify: check that no remaining `HookOutput` (non-qualified) references exist
 
-### Wave 2
+### Job 2
 - Move Claude-path methods from `JvmScope` to `ClaudeEnv`:
   - In `ClaudeEnv.java`: add three methods (`getClaudeConfigDir()`, `getClaudeSessionsPath()`,
     `getClaudeSessionPath(String sessionId)`) with implementations equivalent to those in `MainJvmScope.java`
@@ -90,7 +90,7 @@ implement the removed methods.
   - Note: each call site must construct a `ClaudeEnv` instance; check if a `ClaudeEnv` field already exists in the
     class — if so, reuse it rather than constructing a new one per call
 
-### Wave 3
+### Job 3
 - Run `mvn -f client/pom.xml test` from the worktree root to verify all tests pass
 - Fix any compilation errors or test failures found
 - Update `.cat/issues/v2/v2.1/rename-claude-hook-types/index.json` to set `status` to `closed`

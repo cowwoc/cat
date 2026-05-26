@@ -23,9 +23,9 @@ None - infrastructure improvement
 - [ ] SKILL.md documents PREPROCESSOR OUTPUT pattern
 - [ ] Approval gates display clean output without Bash visibility
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. Create render_diff_handler.py with base branch detection
 2. Register handler in __init__.py
 3. Update SKILL.md with preprocessor output documentation

@@ -47,9 +47,9 @@ instructions without corresponding bash scripts.
 - [ ] CHANGELOG.md follows template format
 - [ ] Existing patch version creation still works
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Add CHANGELOG.md creation for major versions:**
    - After major STATE.md creation, add bash to create CHANGELOG.md

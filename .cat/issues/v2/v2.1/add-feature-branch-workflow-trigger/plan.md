@@ -48,9 +48,9 @@ None
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Create `plugin/skills/github-trigger-workflow-agent/SKILL.md` with the following exact content:
 

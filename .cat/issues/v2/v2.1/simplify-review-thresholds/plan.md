@@ -31,9 +31,9 @@ automatically iterate to fix concerns. Default is LOW (fix all concerns automati
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Update Config.java:**
    - Remove `DEFAULT_PROCEED_LIMITS` constant

@@ -19,9 +19,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Create `client/plugin/tests/scripts/hooks/test-2.1-phase-14.bats` with test cases:
   - Open issue with `## Satisfies` is renamed to `## Parent Requirements`
   - Closed issue (STATE.md status: closed) is NOT modified

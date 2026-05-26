@@ -29,9 +29,9 @@ None — performance optimization
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Update merge verification steps in work-merge-agent to chain independent commands:
   `git log --oneline -1 && git status --porcelain` and

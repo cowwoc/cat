@@ -52,9 +52,9 @@ deleted in `SessionEndHook`.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - **Update `PreCompactHook.java`:** Replace `scope.getProjectCatDir().resolve("sessions")` and the
   `{sessionId}.cwd` filename with `scope.getSessionCatDir().resolve("session.cwd")`

@@ -23,9 +23,9 @@ None
 
 - [ ] Confirm current launcher registry does not include `work-with-issue`
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Add explicit guidance in work orchestration instructions that:
   - `work-with-issue` is a skill, not a launcher binary

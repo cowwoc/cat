@@ -22,7 +22,7 @@ log_migration "Starting 2.0 migration: Research & Requirements sections"
 
 # Count files to process
 plan_files=$(find .claude/cat/issues -name "PLAN.md" -type f 2>/dev/null || true)
-totalCount=$(echo "$plan_files" | grep -c "PLAN.md" || echo 0)
+totalCount=$(printf '%s\n' "$plan_files" | grep -c "PLAN.md" || true)
 
 if [[ "$totalCount" -eq 0 ]]; then
     log_migration "No PLAN.md files found - skipping"
@@ -166,7 +166,7 @@ log_migration ""
 log_migration "Starting STATE.md format standardization..."
 
 state_files=$(find .claude/cat/issues -name "STATE.md" -type f 2>/dev/null || true)
-state_count=$(echo "$state_files" | grep -c "STATE.md" 2>/dev/null || echo 0)
+state_count=$(printf '%s\n' "$state_files" | grep -c "STATE.md" 2>/dev/null || true)
 
 if [[ "$state_count" -eq 0 ]]; then
     log_migration "No STATE.md files found - skipping format migration"

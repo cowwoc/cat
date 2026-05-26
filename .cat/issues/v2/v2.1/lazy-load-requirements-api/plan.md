@@ -22,9 +22,9 @@ None - infrastructure optimization
 - `CLAUDE.md` - Update the convention table to reference `plugin/concepts/requirements-api.md` instead of
   `.claude/rules/requirements-api.md`
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Copy `.claude/rules/requirements-api.md` to `plugin/concepts/requirements-api.md`
 2. **Step 2:** Delete `.claude/rules/requirements-api.md`
 3. **Step 3:** Update the Language Conventions table in `CLAUDE.md` to change the Convention File column for `*.java`

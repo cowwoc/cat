@@ -52,9 +52,9 @@ None - infrastructure improvement
 - [ ] `render-add-complete.sh --name "a, b, c"` produces numbered list with plural header
 - [ ] Box alignment correct in both cases (verify with terminal output)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Step 1:** Update `render-add-complete.sh` Python section
    - Detect comma in `item_name` input

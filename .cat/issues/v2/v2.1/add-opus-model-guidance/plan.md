@@ -27,9 +27,9 @@ None - infrastructure/documentation improvement
 - [ ] Code quality improved - model selection table now complete (haiku/sonnet/opus)
 - [ ] Technical debt reduced - addresses gap in model selection documentation
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Update model selection table in delegate/SKILL.md**
    - Add Opus row for complex planning/analysis cases

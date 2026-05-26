@@ -27,9 +27,9 @@ from the cat:work-execute subagent spawn prompt. Recorded as learning M535.
       cat:collect-results-agent and when updating STATE.md)
 - [ ] Existing squash and rebase delegation prompts are unaffected
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Update `plugin/skills/work-merge-agent/first-use.md`: In the Step 9 "Fix remaining concerns"
   section, find the cat:work-execute delegation prompt and add `ISSUE_PATH: ${ISSUE_PATH}` to the

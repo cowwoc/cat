@@ -19,9 +19,9 @@ be implemented consistently across calculation and reporting tools.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. Research existing technical debt metrics (SQALE, CodeClimate maintainability, CISQ) and summarize strengths/weaknesses
 2. Define the CAT technical debt metric:
    - What signals contribute to the score (complexity, duplication, coupling, test coverage gaps, code smells, age of

@@ -52,9 +52,9 @@ None - workflow infrastructure improvement
 ## Pre-conditions
 - [ ] All dependencies closed (default)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 ### Step 1: Update issue-level PLAN.md templates
 1. In `plugin/templates/issue-plan.md`:

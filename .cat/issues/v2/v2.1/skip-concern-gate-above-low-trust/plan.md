@@ -28,9 +28,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Update the Concern Decision Gate in `plugin/skills/work-review-agent/SKILL.md`:
   - Change the gate header from "MANDATORY — ALL trust levels" to "trust=low only"
   - Remove the `trust=medium` and `trust=high` AskUserQuestion invocations

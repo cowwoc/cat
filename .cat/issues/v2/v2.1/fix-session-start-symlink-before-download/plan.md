@@ -73,9 +73,9 @@ The symlink bridge logic (lines 388–398) runs only after a successful `try_acq
 
 (none)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - In `session-start.sh`, restructure the `main()` function:
   1. After reading `plugin_version` and computing `jdk_path="${plugin_root}/${JDK_SUBDIR}"`, read `installPath` from

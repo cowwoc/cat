@@ -64,9 +64,9 @@ skill draft. Main agent receives the draft and continues from Step 8.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Create `plugin/skills/skill-builder-agent/design-methodology.md` containing Steps 1–6 content extracted from
   `first-use.md`. Extract from the `### Step 1:` heading through the end of the `### Step 6:` section (i.e., the

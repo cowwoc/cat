@@ -29,9 +29,9 @@ Parent: 2.1-port-display-scripts
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/skills/GetNextTaskOutput.java` - New
 - Update relevant handlers to call Java classes instead of Python scripts
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Read Python scripts** to understand exact output format and logic
 2. **Read existing Java patterns** (`ComputeBoxLines.java`, `DisplayUtils.java`, `GetWorkOutput.java`) to match style
 3. **Read `.cat/conventions/java.md`** for coding conventions

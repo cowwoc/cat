@@ -52,9 +52,9 @@ Read handlers:
 | `posttool_handlers/user_input_reminder.py` | `UserInputReminder.java` | `plugin/hooks/src/io/github/cowwoc/cat/hooks/tool/post/` |
 | `posttool_handlers/validate_state_status.py` | `ValidateStateStatus.java` | `plugin/hooks/src/io/github/cowwoc/cat/hooks/tool/post/` |
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Create AbortClarification.java** - Port logic from `abort_clarification.py`
 2. **Create DetectManualBoxes.java** - Port logic from `detect_manual_boxes.py`
 3. **Create DetectValidationFabrication.java** - Port logic from `detect_validation_fabrication.py`

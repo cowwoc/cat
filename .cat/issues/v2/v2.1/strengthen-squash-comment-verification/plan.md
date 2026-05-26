@@ -18,9 +18,9 @@ describes actual code behavior and doesn't contain contradictions or inaccuracie
   accurately describe what the code actually does
 - [ ] The file compiles and passes any validation checks
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. Read `plugin/skills/git-squash-agent/first-use.md` to understand the current CONCURRENT_MODIFICATION verification
    guidance
 2. Locate the verification bullets in the CONCURRENT_MODIFICATION section

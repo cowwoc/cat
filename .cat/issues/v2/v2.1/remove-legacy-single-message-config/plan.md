@@ -30,9 +30,9 @@ None (code cleanup)
 - [ ] All existing tests updated and passing
 - [ ] Help text documents only the multi-message format
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. Remove legacy `buildInput` overloads and `runConfig`/`runTrial` methods
 2. Update `runTests()` to only handle Map config values

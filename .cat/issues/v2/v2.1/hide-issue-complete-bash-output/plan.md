@@ -33,9 +33,9 @@ None
 - [ ] Combined script correctly releases lock, discovers next task, renders box
 - [ ] All existing tests pass (226+ tests)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Step 1:** Create `plugin/scripts/get-next-task-box.py`
    - Import box-rendering functions from `get-issue-complete-box.py` (reuse `build_issue_complete_box`,

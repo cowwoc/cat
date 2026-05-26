@@ -38,9 +38,9 @@ None — bugfix for internal tooling
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Investigate WorkCompleteHandler issue discovery logic**
    - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/work_complete/WorkCompleteHandler.java`

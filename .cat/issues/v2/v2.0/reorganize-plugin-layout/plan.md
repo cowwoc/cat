@@ -35,9 +35,9 @@ None - infrastructure/organization task
 - [ ] Code quality improved - cleaner directory structure
 - [ ] Old `.cat/` directory removed from plugin
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Move lang directory first (before moving references)
    - Files: `plugin/.cat/references/stakeholders/lang/` → `plugin/lang/`
    - Verify: `ls plugin/lang/`

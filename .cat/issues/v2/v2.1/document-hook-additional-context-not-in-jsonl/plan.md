@@ -27,9 +27,9 @@ SessionAnalyzer (both Javadoc and user-facing hint in search output when zero re
 
 Use a single commit per logical group (one for plugin docs, one for Java changes + tests).
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Update `plugin/skills/get-history-agent/first-use.md`: add a new section "## Hook additionalContext Limitation"
   before "## Error Handling", explaining that SubagentStart hook additionalContext fields are injected at the API
@@ -45,7 +45,7 @@ Use a single commit per logical group (one for plugin docs, one for Java changes
   ```
   Commit as: `docs: document additionalContext hook limitation in get-history skill`
 
-### Wave 2
+### Job 2
 
 - Modify `client/src/main/java/io/github/cowwoc/cat/hooks/util/SessionAnalyzer.java`:
 

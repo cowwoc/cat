@@ -23,9 +23,9 @@ product), surfacing the worst offenders and providing actionable guidance.
 ## Pre-conditions
 - [ ] `aggregate-technical-debt` is closed (aggregation working)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. Write failing tests for report formatting (TDD):
    - Test summary report (product-level score, grade, top-5 worst files)
    - Test detailed report (full hierarchical breakdown)
@@ -37,7 +37,7 @@ product), surfacing the worst offenders and providing actionable guidance.
    - Format output as a CAT display box with scores, grades, and hotspot list
 3. Register `technical-debt-reporter` launcher in `build-jlink.sh`
 
-### Wave 2
+### Job 2
 4. Create `plugin/skills/tech-debt-agent/SKILL.md` skill definition
 5. Create `plugin/skills/tech-debt-agent/first-use.md` with usage instructions
 6. Run all tests: `mvn -f client/pom.xml test`

@@ -36,9 +36,9 @@ path (loophole 2), and substitute a fixed default for evidence-based reasoning (
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Edit `plugin/skills/learn/rca-methods.md` § Prevention Strength Gate:
   - Step 1: Replace the uncertainty paragraph with an expanded path that (a) halts on first
     uncertainty, (b) on second uncertainty enumerates the most-consistent cause type from

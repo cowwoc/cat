@@ -21,9 +21,9 @@ None - process improvement
 - [ ] Documentation updated
 - [ ] No regressions in existing functionality
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Update prepare step:** Modify context preparation to read full files instead of just diffs
    - Files: plugin/skills/stakeholder-review/SKILL.md
    - Verify: Read file shows full content being prepared for review

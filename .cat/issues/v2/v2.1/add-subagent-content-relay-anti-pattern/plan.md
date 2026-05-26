@@ -25,9 +25,9 @@ None — internal tooling improvement
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Add "Subagent Content Relay Anti-Pattern" section to Optimization Pattern Details**
    - Files: `plugin/skills/optimize-execution/first-use.md`

@@ -44,9 +44,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 #### plugin/skills/work-with-issue-agent/first-use.md
 
@@ -179,7 +179,7 @@ Update:
 - `**Status:**` from `open` to `closed`
 - `**Progress:**` from `0%` to `100%`
 
-### Wave 2
+### Job 2
 
 #### E2E runtime verification of implement→confirm→merge handoff
 

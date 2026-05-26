@@ -43,9 +43,9 @@ None (tech debt / compliance fix)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Update `GetConfigOutput.java` to accept an optional `page` argument and return only
    the box for that page. When no page is specified (or page is unrecognized), return all boxes
    for backward compatibility during development.

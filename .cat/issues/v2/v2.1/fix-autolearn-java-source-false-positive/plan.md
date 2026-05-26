@@ -84,9 +84,9 @@ Exit-code-based gating coverage:
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1+2+3 (Unified Implementation + Testing)
+### Job 1+2+3 (Unified Implementation + Testing)
 
 - Rewrite `detectMistake()` to gate Bash failure patterns on `toolName.equals("Bash") && exitCode != 0`
 - Remove patterns that only apply to agent output (3, 8, 9 from tool-output, 10, 11 from tool-output)

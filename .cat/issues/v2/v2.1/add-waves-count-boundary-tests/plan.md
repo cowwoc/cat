@@ -59,9 +59,9 @@ From `first-use.md` lines 288-304: subagents must read plan.md directly via `PLA
 inline `WAVES_COUNT` value, goal text, or Sub-Agent Waves content. Testing this requires verifying that a constructed
 prompt string does not contain the literal WAVES_COUNT value embedded as text.
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 #### Step 1: Create helper function file `tests/waves-count-helper.bash`
 

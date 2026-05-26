@@ -133,9 +133,9 @@ interface method. `MainJvmScope` and `TestJvmScope` already provide implementati
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - **Refactor `SkillLoader.java`**: remove `@path` support and scope variable substitution to directive strings
   - Remove `PATH_PATTERN` field (`Pattern.compile("^@(.+/.+)$", Pattern.MULTILINE)`)
@@ -180,7 +180,7 @@ interface method. `MainJvmScope` and `TestJvmScope` already provide implementati
   - Update step 5 in the loading pipeline to remove `@path` reference
   - Files: `plugin/concepts/skill-loading.md`
 
-### Wave 2
+### Job 2
 
 - **Convert `@path` references in skill files**: use `` `path` `` inline code with surrounding prose
   that tells Claude what the file contains and when to read it. This matches the pattern used in

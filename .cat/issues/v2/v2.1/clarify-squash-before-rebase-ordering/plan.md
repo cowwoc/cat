@@ -28,9 +28,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - In `plugin/skills/work-with-issue-agent/first-use.md`, apply the following renames:
   - Line ~29 (MANDATORY STEPS): `**Step 7: Rebase and Squash Commits Before Review**` →
     `**Step 7: Squash Commits by Topic Before Review**`

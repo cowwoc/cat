@@ -37,9 +37,9 @@ only contained one `agentId` reference (the most recent Agent call after compact
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Update `discoverSubagents()` to perform two-phase discovery:
   1. Filesystem scan: collect all `agent-*.jsonl` files from `subagentDir`, excluding
      `agent-acompact-*.jsonl` files

@@ -92,16 +92,16 @@ Closed issue PLANs also reference it but are historical records and must not be 
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Investigate replacement mechanism
+### Job 1: Investigate replacement mechanism
 
 1. **Determine what replaced cat-branch-point for worktree detection**
    - Files: `WorkPrepare.java`, `CatMetadata.java`
    - Identify the current mechanism for detecting whether a directory is inside a CAT worktree
    - Document the replacement approach to use consistently across all files
 
-### Wave 2: Update Java source and tests
+### Job 2: Update Java source and tests
 
 1. **Remove BRANCH_POINT_FILE constant and update CatMetadata**
    - Files: `CatMetadata.java`
@@ -121,7 +121,7 @@ Closed issue PLANs also reference it but are historical records and must not be 
 5. **Run full test suite**
    - `mvn -f client/pom.xml test`
 
-### Wave 3: Update plugin skills and docs
+### Job 3: Update plugin skills and docs
 
 1. **Update skill files**
    - Files: All 9 plugin skill/concept files
@@ -131,13 +131,13 @@ Closed issue PLANs also reference it but are historical records and must not be 
    - Files: `InjectSessionInstructions.java`
    - Remove or update injected text that mentions `cat-branch-point`
 
-### Wave 4: Update Bats tests
+### Job 4: Update Bats tests
 
 1. **Update or remove worktree-isolation.bats**
    - Files: `tests/worktree-isolation.bats`
    - Update tests to validate the current worktree detection mechanism instead of `cat-branch-point`
 
-### Wave 5: Store target branch in STATE.md
+### Job 5: Store target branch in STATE.md
 
 The `cat-branch-point` file previously provided the fork-point commit hash. Skills like `cleanup/first-use.md` need
 the **target branch name** to run `git branch --merged`. Git does not natively track which branch a branch was forked

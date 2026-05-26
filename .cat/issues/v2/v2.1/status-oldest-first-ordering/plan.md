@@ -20,9 +20,9 @@ None
 ## Pre-conditions
 - [ ] `2.1-work-select-oldest-first` is closed (provides `listIssueDirsByAge()`)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - In `IssueDiscovery.java`, replace the `listIssueDirs(minorDir)` calls used for status display
   with `listIssueDirsByAge(minorDir)` (and similarly for patchDir)
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/IssueDiscovery.java`

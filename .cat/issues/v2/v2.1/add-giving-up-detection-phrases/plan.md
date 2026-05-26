@@ -29,9 +29,9 @@ None
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - In `DetectGivingUp.java`, add the following two entries to the `return` statement inside
   `detectConstraintRationalization()` (after the existing last entry

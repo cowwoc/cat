@@ -57,9 +57,9 @@ The glob-to-regex conversion in `WorkPrepare.java` (lines 1362–1367) only esca
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - In `client/src/main/java/io/github/cowwoc/cat/hooks/util/WorkPrepare.java` at lines 1362–1367 (inside the `for (String plannedFile : plannedFiles)` loop within `checkTargetBranchCommits`), replace:
   ```java

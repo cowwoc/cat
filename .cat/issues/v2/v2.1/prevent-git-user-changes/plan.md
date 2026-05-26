@@ -24,9 +24,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Investigate where and why agents currently set git user config (worktree creation, commit
   helpers, skill files).
   - Files: `plugin/skills/`, `plugin/hooks/`, `plugin/concepts/`

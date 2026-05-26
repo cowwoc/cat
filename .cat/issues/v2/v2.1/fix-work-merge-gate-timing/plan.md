@@ -72,9 +72,9 @@ with gate presentation, violating the intent that gate output must reflect all c
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Modify `plugin/skills/work-merge-agent/first-use.md`:
 

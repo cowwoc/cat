@@ -72,9 +72,9 @@ None
 - `hooks/src/test/resources/logback-test.xml` - create, set level to ERROR (silent tests)
 - `hooks/src/main/resources/logback.xml` - update pattern to `%msg%n` (bare messages, no timestamp)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Create logback-test.xml** in `src/test/resources/` with root level ERROR
 2. **Update logback.xml** pattern from `%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n` to `%msg%n`

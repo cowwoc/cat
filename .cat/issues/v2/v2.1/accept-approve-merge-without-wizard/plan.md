@@ -26,9 +26,9 @@ None (usability improvement)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Update EnforceApprovalBeforeMerge.java** to accept direct user approval messages:
    - Add a `checkDirectApprovalMessage()` method that scans recent user messages for phrases like
      "approve and merge", "approve merge", or "approved"

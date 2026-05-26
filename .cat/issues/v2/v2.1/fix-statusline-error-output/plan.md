@@ -59,9 +59,9 @@ command needs plain-text error output with exit code 0.
 
 (none)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - In `StatuslineCommand.java`, modify `main()` to replace hook JSON error output with plain-text error indicators:
   - Remove `import static io.github.cowwoc.cat.hooks.Strings.block;`

@@ -61,9 +61,9 @@ are unaffected.
 
 ---
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 ### Step 1 — Write failing tests in `SetPendingAgentResultTest`
 

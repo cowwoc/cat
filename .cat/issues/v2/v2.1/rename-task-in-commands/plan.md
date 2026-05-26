@@ -25,9 +25,9 @@ Replace "task" terminology with "issue" in all command files.
 - plugin/commands/research.md
 - plugin/commands/status.md
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. Replace "task" with "issue" in all command files
 2. Update references to old script names
 3. Update any terminology in user-facing messages

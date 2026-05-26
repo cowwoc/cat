@@ -28,9 +28,9 @@ None
 ## Pre-conditions
 None
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Structured Grading Enhancement
+### Job 1: Structured Grading Enhancement
 - Extend test config JSON schema to support rich criterion metadata:
   - `description`: what the criterion tests
   - `reason`: why it matters
@@ -43,7 +43,7 @@ None
 - Unit tests for new grading logic and evidence extraction
   - Files: `EmpiricalTestRunner.java`, `EmpiricalTestRunnerTest.java`
 
-### Wave 2: Post-Hoc Analysis
+### Job 2: Post-Hoc Analysis
 - Add post-hoc analysis output when trials fail:
   - Parse failed trial transcripts to identify which instructions were violated
   - Score instruction adherence (1-10) with documented issues
@@ -54,7 +54,7 @@ None
 - Unit tests for analysis logic
   - Files: `EmpiricalTestRunner.java`, `EmpiricalTestRunnerTest.java`
 
-### Wave 3: Blind Comparison Support
+### Job 3: Blind Comparison Support
 - Add `--baseline` mode to EmpiricalTestRunner:
   - Run same test config against two different system prompts (candidate vs. baseline)
   - Collect results for both configurations
@@ -68,7 +68,7 @@ None
 - Unit tests for comparison logic and winner determination
   - Files: `EmpiricalTestRunner.java`, `EmpiricalTestRunnerTest.java`
 
-### Wave 4: Documentation and Verification
+### Job 4: Documentation and Verification
 - Update `plugin/skills/empirical-test-agent/first-use.md`:
   - Add structured grading examples with rich criterion metadata
   - Document blind comparison workflow (baseline vs. candidate)

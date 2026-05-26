@@ -36,9 +36,9 @@ None
 - [ ] hooks.json UserPromptSubmit section has exactly 1 entry
 - [ ] No Python UserPromptSubmit scripts remain
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. Create ForcedEvalSkills handler class with instruction text
 2. Integrate into GetSkillOutput dispatcher
 3. Write tests verifying instruction content

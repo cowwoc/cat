@@ -73,9 +73,9 @@ inherited methods to document the contract more precisely. `ClaudeStatusline` fo
 These come from Claude Code's hook payload on each invocation. `ClaudeStatusline` does not need to expose
 these as scope methods; they are transient per-invocation values handled by `execute(InputStream, ...)`.
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Create new file `client/src/main/java/io/github/cowwoc/cat/hooks/ClaudeStatusline.java`:
   - Package: `io.github.cowwoc.cat.hooks`

@@ -55,9 +55,9 @@ None - infrastructure enforcement
 - [ ] Hook passes valid STATE.md modifications
 - [ ] Hook only triggers for issue STATE.md files (not version STATE.md files)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Read Java conventions from `.cat/conventions/java.md`
 2. **Step 2:** Create StateSchemaValidator.java implementing PreToolUse hook
    - Parse STATE.md content being written

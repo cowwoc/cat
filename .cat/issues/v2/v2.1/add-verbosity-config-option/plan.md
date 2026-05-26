@@ -57,9 +57,9 @@ Test patterns:
 - `GetConfigOutputTest.java` uses `new TestClaudeTool(tempDir, tempDir)` with `handler.getCurrentSettings(tempDir)`
 - Both create temp dirs, write `.cat/config.json` with content, then verify fields
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Create `client/src/main/java/io/github/cowwoc/cat/hooks/util/VerbosityLevel.java` — new enum
   following the exact pattern of `CautionLevel.java` (LOW/MEDIUM/HIGH, `fromString`, `toString`,

@@ -35,9 +35,9 @@ The `reference.md` file (used for subsequent invocations) says "scroll up and RE
 - [ ] reference.md explicitly warns against manual output reconstruction
 - [ ] All 4 verbatim skills (status, help, token-report, render-diff) load reference.md on subsequent invocation (existing behavior, verify not broken)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Update `plugin/skills/reference.md` to add explicit re-invocation guidance
    - Add instruction: "Use the Skill tool to invoke this skill again. Do NOT manually reconstruct or edit previous output."
    - Add warning against manual reconstruction

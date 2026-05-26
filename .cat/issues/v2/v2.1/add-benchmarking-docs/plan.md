@@ -83,9 +83,9 @@ after approximately 3-4 observations.
    - Use commit type `docs:` (per CLAUDE.md: docs/ files use `docs:` commit type)
    - `docs/benchmarking.md` and `.cat/issues/v2/v2.1/add-benchmarking-docs/index.json` in one commit
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 Follow Execution Steps 1–3 exactly:
 - Create `docs/benchmarking.md` with license header and all six sections (Overview, Configuration, Indifference Zone,
   What PASS and FAIL Guarantee, Sample Efficiency, Benchmark Results Schema) as specified in Execution Step 1

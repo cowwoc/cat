@@ -58,9 +58,9 @@ What is still missing compared to Anthropic's `skill-creator`:
 
 <!-- None: no pre-delegation skills needed -->
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Invoke `/cat:tdd-implementation-agent` for `BenchmarkAggregatorHandler.java`:
   - Inputs: list of run results (config name, assertion pass/fail list, duration_ms, total_tokens)
@@ -75,7 +75,7 @@ What is still missing compared to Anthropic's `skill-creator`:
   - Files: `client/src/main/java/.../DescriptionOptimizerHandler.java`,
     `client/src/test/java/.../DescriptionOptimizerHandlerTest.java`
 
-### Wave 2
+### Job 2
 
 - Create `plugin/agents/skill-grader-agent/SKILL.md`: instructions for reading assertion list and test-case output,
   evaluating each assertion with pass/fail verdict and evidence quote, returning structured grading JSON
@@ -90,7 +90,7 @@ What is still missing compared to Anthropic's `skill-creator`:
   format, assertion schema, grading output schema, benchmark JSON schema
   - Files: `plugin/concepts/skill-benchmarking.md`
 
-### Wave 3
+### Job 3
 
 - Update `plugin/skills/skill-builder-agent/first-use.md` to add Steps 9-13:
   - Step 9: Write test cases and assertions (eval set JSON, 2-3 cases; skip assertions for subjective skills)

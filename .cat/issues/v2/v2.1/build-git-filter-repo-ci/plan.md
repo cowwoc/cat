@@ -23,9 +23,9 @@ None
 ## Pre-conditions
 - [ ] No other branches have this workflow file (will be deployed via this issue)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 Execute the following steps **in order**. Steps 2 and 3 are git/CLI operations with no file commits.
 

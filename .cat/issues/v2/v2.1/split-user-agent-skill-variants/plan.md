@@ -113,9 +113,9 @@ content from `plugin/skills/<base-name>/` for both, so no content duplication is
 ## Pre-conditions
 - [ ] `rename-run-retrospective-skill` is closed (so we work with the final `retrospective` skill name)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Create model-facing (-agent) skill directories and SKILL.md files
+### Job 1: Create model-facing (-agent) skill directories and SKILL.md files
 - For each of the 20 skills listed above, create `plugin/skills/<name>-agent/SKILL.md`
   - Set `user-invocable: false` in frontmatter
   - Keep `"$0"` in preprocessor directive
@@ -132,7 +132,7 @@ content from `plugin/skills/<base-name>/` for both, so no content duplication is
     `plugin/skills/shrink-doc-agent/SKILL.md`, `plugin/skills/status-agent/SKILL.md`,
     `plugin/skills/statusline-agent/SKILL.md`, `plugin/skills/work-agent/SKILL.md`
 
-### Wave 2: Modify user-facing skill SKILL.md files
+### Job 2: Modify user-facing skill SKILL.md files
 - For each of the 20 skills, modify `plugin/skills/<name>/SKILL.md`:
   - Add `disable-model-invocation: true` to frontmatter
   - Replace `"$0"` with `"${CLAUDE_SESSION_ID}"` in the preprocessor directive
@@ -140,14 +140,14 @@ content from `plugin/skills/<base-name>/` for both, so no content duplication is
     `load-skill ... <name> "${CLAUDE_PROJECT_DIR}" "${CLAUDE_SESSION_ID}" $ARGUMENTS`
   - Files: all 20 `plugin/skills/<name>/SKILL.md` files listed in the table above
 
-### Wave 3: Update InjectSessionInstructions.java
+### Job 3: Update InjectSessionInstructions.java
 - Find all references to user-facing skill names (`cat:learn`, `cat:work`, etc.) that agents are
   instructed to invoke
 - Update them to use the `-agent` variant (`cat:learn-agent`, `cat:work-agent`, etc.)
 - File: `client/src/main/java/io/github/cowwoc/cat/hooks/session/InjectSessionInstructions.java`
 - Also update any agent prompt templates in `plugin/agents/` that reference skill names
 
-### Wave 4: Update skill invocations in skill content files
+### Job 4: Update skill invocations in skill content files
 - Search for skill invocations inside phase files and SKILL.md content that reference user-facing
   skill names and update them to use `-agent` variants
   - `plugin/skills/learn/phase-prevent.md` — references `cat:run-retrospective`
@@ -156,7 +156,7 @@ content from `plugin/skills/<base-name>/` for both, so no content duplication is
   - Run: `grep -r "cat:learn\|cat:work\|cat:add\|cat:research\|cat:status" plugin/skills/ --include="*.md"`
   - Update any references found to use `-agent` variants where appropriate
 
-### Wave 5: Run tests
+### Job 5: Run tests
 - Command: `mvn -f client/pom.xml test`
 
 ## Post-conditions

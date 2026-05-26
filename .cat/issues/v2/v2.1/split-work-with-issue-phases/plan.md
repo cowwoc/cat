@@ -71,15 +71,15 @@ None — infrastructure optimization.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Read `plugin/skills/work-with-issue-agent/first-use.md` and identify exact line boundaries for each
   phase: implement (lines 1-530), confirm (lines 531-748), review (lines 749-1191), merge (lines
   1192-1710). Confirm boundaries by checking step header lines (## Step N).
   - Files: `plugin/skills/work-with-issue-agent/first-use.md`
 
-### Wave 2
+### Job 2
 - Create `plugin/skills/work-implement-agent/` directory with `SKILL.md` and `first-use.md` containing
   the implement phase content (Steps 1-3). SKILL.md model: sonnet, user-invocable: false, argument-hint
   matching what work-with-issue-agent currently passes for this phase.
@@ -97,7 +97,7 @@ None — infrastructure optimization.
   rebase, approval gate, merge, return success). Verify it already has or needs this content.
   - Files: `plugin/skills/work-merge-agent/first-use.md`
 
-### Wave 3
+### Job 3
 - Replace `plugin/skills/work-with-issue-agent/first-use.md` with a thin orchestrator that:
   1. Preserves the MANDATORY STEPS preamble and arguments section (lines 1-80)
   2. Replaces Steps 1-11 body with Skill tool invocations for each phase skill:

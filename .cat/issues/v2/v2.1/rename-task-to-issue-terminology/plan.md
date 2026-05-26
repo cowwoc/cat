@@ -49,9 +49,9 @@ None (terminology consistency)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Scan all files in `plugin/agents/`, `plugin/concepts/`, `plugin/skills/` for "task"
    used to mean CAT issue. Replace with "issue" while preserving legitimate uses.
    - Files: All files listed above

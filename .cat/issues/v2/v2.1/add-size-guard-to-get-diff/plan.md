@@ -48,9 +48,9 @@ None (infrastructure robustness improvement)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - **Add 2KB guard to `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetDiffOutput.java`:**
 

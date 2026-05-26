@@ -29,9 +29,9 @@ None - infrastructure/setup task
 ## Dependencies
 - java-core-hooks (entry points and core infrastructure must be wired up)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Read enforce-worktree-isolation.py** - Understand the logic (checks if Write/Edit targets base branch)
 2. **Create EnforceWorktreeIsolation.java** - Port the Python logic to Java
 3. **Wire up in hooks.json** - Replace `python3 .../enforce-worktree-isolation.py` with `java.sh EnforceWorktreeIsolation`

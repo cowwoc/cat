@@ -68,9 +68,9 @@ purpose — it just isn't called in these two paths.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Add `releaseLock(issueId, input.sessionId())` before the CORRUPT return in
   `WorkPrepare.execute()`.

@@ -35,9 +35,9 @@ None
 - [ ] All dependent issues are closed
 - [ ] extract-read-goal-from-plan-utility is closed (shared utility extracted first)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Analyze both discovery pipelines: determine if common behavior can be extracted without losing scope flexibility
   - Files: GetNextIssueOutput.java, GetIssueCompleteOutput.java

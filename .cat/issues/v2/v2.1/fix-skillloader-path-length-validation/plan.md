@@ -38,9 +38,9 @@ original `$1...$N` becoming `$2...$N+1`.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Write a failing test that passes `"UUID description text"` as `skillArgs.getFirst()` and
   verifies that after construction, `$0` = UUID and `$1` = "description text"
   - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/SkillLoaderTest.java`

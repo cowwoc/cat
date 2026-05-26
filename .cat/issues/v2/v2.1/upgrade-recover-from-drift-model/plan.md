@@ -44,9 +44,9 @@ None
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Edit `plugin/skills/recover-from-drift-agent/SKILL.md`: change `model: haiku` to `model: sonnet` in
   the YAML frontmatter.

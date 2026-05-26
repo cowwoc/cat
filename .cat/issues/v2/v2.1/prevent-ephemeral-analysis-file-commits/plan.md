@@ -24,9 +24,9 @@ directory without any instruction to keep it out of git. The file is then picked
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Update `plugin/skills/rebase-impact-agent/first-use.md`:
   - Change Step 5 to accept an optional 5th argument `session_analysis_dir`; fall back to the CLAUDE
     session directory derived from `$CLAUDE_CONFIG_DIR`, `$CLAUDE_SESSION_ID`, and `$CLAUDE_PROJECT_DIR`

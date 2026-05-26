@@ -56,9 +56,9 @@ It falls back to `scope.getClaudeProjectDir()` (`/workspace`) as the project roo
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - In `plugin/skills/get-diff-agent/SKILL.md`, update the `!` preprocessor directive from:
   ```
@@ -91,7 +91,7 @@ It falls back to `scope.getClaudeProjectDir()` (`/workspace`) as the project roo
     verify it does not throw NPE (returns null or a branch name without exception)
   - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/GetDiffOutputTest.java`
 
-### Wave 2
+### Job 2
 
 - Run the full test suite and fix any failures:
   ```bash

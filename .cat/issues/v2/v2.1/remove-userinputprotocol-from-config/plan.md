@@ -19,9 +19,9 @@ configuration — it is not consumed by any code and duplicates protocol already
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Remove userInputProtocol:** Delete the `userInputProtocol` key and its value from `.cat/cat-config.json`
 2. **Verify no references:** Grep codebase for `userInputProtocol` to confirm no code depends on it
 

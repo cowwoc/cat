@@ -37,9 +37,9 @@ line is found, silently skipping those issues instead of defaulting to `open`.
 ## Pre-conditions
 - All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** In `IssueDiscovery.getIssueStatus(List<String>, Path)`, change the IOException
    thrown when no status line is found to return `"open"` instead. Log a warning containing the
    file path and the fact that status is missing/invalid (reusing the error-message pattern from

@@ -32,8 +32,8 @@ None - sub-issue of parent
 - [ ] All files score 1.0 on /compare-docs validation
 - [ ] No functionality regression
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. For each file in scope: Run /cat:optimize-doc
 2. Commit changes with message: "config: compress skills batch 3 (help through render-diff)"

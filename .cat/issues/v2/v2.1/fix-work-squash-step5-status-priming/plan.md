@@ -65,9 +65,9 @@ authoritative source for valid values.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Edit `plugin/agents/work-squash.md` Step 5 per the exact specification in "Files to Modify"
   - Replace the if-block echo with fail-fast exit 1
   - Remove the "Blocking condition" section

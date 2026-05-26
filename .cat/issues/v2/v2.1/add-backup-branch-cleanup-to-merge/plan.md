@@ -24,9 +24,9 @@ preventing orphaned backup branches from accumulating in the repository.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Update REBASE_CONFLICT table row in work-merge-agent/first-use.md to mention backup_branch deletion
   - Files: `plugin/skills/work-merge-agent/first-use.md`

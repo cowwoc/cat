@@ -19,9 +19,9 @@ None - security hardening from stakeholder review of 2.1-session-start-version-c
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Add atomic locking to try_acquire_runtime**
    - Files: `plugin/hooks/session-start.sh`
    - Before calling `download_runtime`, acquire a lock using `mkdir "${jdk_path}.lock"` (atomic on POSIX)

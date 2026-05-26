@@ -30,9 +30,9 @@ reference the old filename, so no cross-file updates are needed outside the issu
 - [ ] All references to `tee-slow-output` in the codebase are updated to `tee-piped-output`
 - [ ] The corresponding session-level rule in `plugin/rules/` frontmatter is consistent
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. Delete `plugin/rules/tee-slow-output.md` using `git rm`.
 

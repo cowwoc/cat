@@ -62,9 +62,9 @@ becomes: any `<output>` reference in instruction text that should NOT be parsed 
 - [ ] `mvn -f client/pom.xml test` passes with all new tests
 - [ ] The status skill correctly delivers full instructions when backtick-quoted reference is present
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Audit existing SKILL.md files for `<output>` usage:** Find all files that reference `<output>` tags, distinguish
    between real tags (should be parsed) and literal references (should be backtick-quoted)
    - Files: `plugin/skills/**/SKILL.md`

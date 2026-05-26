@@ -47,9 +47,9 @@ The following is the complete audit of all skills that spawn Task subagents, doc
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Refactor `plugin/skills/plan-builder-agent/first-use.md`:
 
@@ -197,7 +197,7 @@ The following is the complete audit of all skills that spawn Task subagents, doc
 
   Files: `plugin/skills/stakeholder-review-agent/first-use.md`
 
-### Wave 2
+### Job 2
 
 - Run `mvn -f client/pom.xml test` and verify all tests pass.
   Files: (read-only verification)

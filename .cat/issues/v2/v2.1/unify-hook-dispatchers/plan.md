@@ -35,9 +35,9 @@ Split into 6 sub-issues by hook type:
 - [ ] All existing tests pass
 - [ ] New Java handler tests cover migrated logic
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. Complete all 6 sub-issues
 2. Verify no remaining bash/python hook scripts
 3. Verify hooks.json consolidation

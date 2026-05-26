@@ -34,9 +34,9 @@ The workflow templates and handlers don't include `/clear` guidance in their Nex
 - [ ] /cat:status shows `/clear` before `/cat:work` in Next Steps
 - [ ] Task completion in /cat:work shows `/clear` guidance
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Update status_handler.py
    - Files: plugin/hooks/skill_handlers/status_handler.py
    - Find the NEXT STEPS table output and add `/clear` guidance

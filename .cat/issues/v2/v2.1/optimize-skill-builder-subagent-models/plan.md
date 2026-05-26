@@ -22,9 +22,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Update red-team Task tool calls in first-use.md to pass `model: "opus"`
   - Files: `plugin/skills/skill-builder-agent/first-use.md`
 - Change model frontmatter from `sonnet` to `haiku` in grader, validator, and description-tester agents

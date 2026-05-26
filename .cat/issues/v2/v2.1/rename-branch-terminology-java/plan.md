@@ -55,9 +55,9 @@ None — infrastructure terminology cleanup.
 
 - [ ] Parent issue `2.1-rename-branch-terminology` exists
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Rename variables/comments in Java source files** — Update variable names (`baseBranch` → `targetBranch`,
    `worktreeBranch` → `sourceBranch`), method parameters, Javadoc, and error messages in client source files.

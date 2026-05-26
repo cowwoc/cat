@@ -55,9 +55,9 @@ When creating or updating a skill, add a "compact output" pass after the draft i
 - [ ] E2E: invoke cat:optimize-execution on a session and confirm "Token Efficiency" issues appear in the report
 - [ ] E2E: invoke cat:instruction-builder on a skill and confirm compact-output recommendations are surfaced with exemptions listed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: E2E Acceptance Criteria Validation
+### Job 1: E2E Acceptance Criteria Validation
 
 **Item 1: Verify optimize-execution Token Efficiency reporting**
 
@@ -89,7 +89,7 @@ Steps:
 3. Verify the compact-output pass runs and outputs "Compact-output pass reduced draft by ~{N}%" or similar
 4. Check the final SKILL_DRAFT for violations of exemption rules (manual inspection of YAML, Makefile, code blocks)
 
-### Wave 2: Exemption Rule Testing
+### Job 2: Exemption Rule Testing
 
 **Item 3: Test compact-output pass exemption rules**
 
@@ -116,7 +116,7 @@ For each test artifact, invoke the compact-output pass logic and assert:
 - Line-by-line comparison shows no changes to exempted context
 - Compaction rules ARE applied outside the exempted context (if present)
 
-### Wave 3: False-Positive and Detection Gap Analysis
+### Job 3: False-Positive and Detection Gap Analysis
 
 **Item 4: Validate Token Efficiency detection accuracy**
 

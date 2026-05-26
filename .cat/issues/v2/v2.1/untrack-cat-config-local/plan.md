@@ -19,9 +19,9 @@ None (housekeeping)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Step 1:** Update `v2.1/STATE.md` — add `untrack-cat-config-local` to the Issues Pending list.
    - Files: `.cat/issues/v2/v2.1/STATE.md`

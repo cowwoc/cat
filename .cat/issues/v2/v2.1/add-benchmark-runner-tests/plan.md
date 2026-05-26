@@ -23,9 +23,9 @@ TestNG test suite covering all 10 commands with edge cases, achieving >= 80% cov
 ## Pre-conditions
 - [ ] 2.1-migrate-benchmark-runner-to-java is closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Create BenchmarkRunnerTest.java with TestNG tests for all 10 commands
 - Cover edge cases: empty inputs, missing fields, nested JSON, boundary conditions
 - `initSprt()` carry-forward branch — when a test case exists in prior data but is NOT in `rerunIds`, its prior state

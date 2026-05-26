@@ -56,14 +56,14 @@ All SKILL.md files containing `AskUserQuestion` in their `allowed-tools` list:
 
 - None
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Remove AskUserQuestion from all allowed-tools lists
+### Job 1: Remove AskUserQuestion from all allowed-tools lists
 
 - Remove `AskUserQuestion` from the `allowed-tools` frontmatter in all 17 SKILL.md files listed above
   - Files: all 17 files listed in "Files to Modify"
 
-### Wave 2: Verify no regressions
+### Job 2: Verify no regressions
 
 - Run `mvn -f client/pom.xml test` to verify no test regressions
   - Files: `client/pom.xml`

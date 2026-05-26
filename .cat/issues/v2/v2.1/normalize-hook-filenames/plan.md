@@ -30,9 +30,9 @@ None - naming consistency and bugfix
 - `plugin/skills/status/SKILL.md` - Pass `"$(pwd)"` as 4th arg to load-skill.sh
 - `plugin/concepts/agent-architecture.md` - Correct env var availability table
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Rename the file: `git mv plugin/hooks/session_start.sh plugin/hooks/session-start.sh`
 2. **Step 2:** Update `plugin/hooks/hooks.json` line 8: change `session_start.sh` to `session-start.sh`
 3. **Step 3:** Grep the entire codebase for remaining `session_start.sh` references (excluding PLAN.md

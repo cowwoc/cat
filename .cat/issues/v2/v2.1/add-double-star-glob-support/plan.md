@@ -59,9 +59,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Invoke `cat:tdd-implementation-agent` to write failing tests for `**` glob support in
   `WorkPrepareTest.java`, then implement the token-based glob-to-regex conversion in

@@ -31,9 +31,9 @@ Add a new investigation sub-step after SPRT completes and before presenting resu
    - Prior successful patterns in context being replicated
 5. Present findings to the user alongside the SPRT results
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Read `plugin/skills/instruction-builder-agent/SKILL.md` (worktree copy)
 - Read `plugin/skills/learn/phase-investigate.md` for investigation methodology
 - Design the investigation sub-step: where it fits in Step 3 of the SPRT loop, what it reads, what it outputs
@@ -43,7 +43,7 @@ Add a new investigation sub-step after SPRT completes and before presenting resu
   - Use `session-analyzer search <SESSION_ID>/subagents/agent-<ID> "Would you like|What would you"` to find failure instances
   - Report: which runs failed, what the agent output was, whether batch contamination is present (multiple runs in one subagent), and what priming sources were detected
 
-### Wave 2 (fix stakeholder review concerns)
+### Job 2 (fix stakeholder review concerns)
 - **[CRITICAL/testing] Add test coverage for Step 4.4** — Write tests covering: (a) the execution guard
   (Step 4.4 only runs when `overall_decision="Reject"`), (b) session-analyzer invocation with correct arguments,
   (c) batch contamination detection logic, (d) conclusion classification logic (genuine defect / test artifact /
@@ -85,7 +85,7 @@ Add a new investigation sub-step after SPRT completes and before presenting resu
   content in the subagent transcripts using `session-analyzer search` with a pattern matching thinking-block markers,
   and to include thinking block findings in the investigation report.
 
-### Wave 3 (fix second-round stakeholder review concerns)
+### Job 3 (fix second-round stakeholder review concerns)
 
 #### first-use.md fixes
 

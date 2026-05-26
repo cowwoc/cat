@@ -53,9 +53,9 @@ Update Step 2 to pass `run_in_background: True` when background mode is selected
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Read `plugin/skills/learn-agent/SKILL.md` to understand current structure
   - Files: `plugin/skills/learn-agent/SKILL.md`

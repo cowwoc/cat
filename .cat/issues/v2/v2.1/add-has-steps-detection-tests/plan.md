@@ -79,9 +79,9 @@ The `^` anchor means these must all return `hasSteps=false`:
 - Empty file
 - Only other `##` headers (e.g., `## Goal`, `## Post-conditions`)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Create `tests/work-implement-agent-has-steps.bats` with the following test coverage:
   1. **Valid `## Sub-Agent Waves` header** → `hasSteps=true`

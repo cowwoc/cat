@@ -37,9 +37,9 @@ updates the data structure."
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. Remove backwards-compatibility aliases from `IssueDiscovery.getIssueStatus()` — reject non-canonical
    values with IOException instead of normalizing them
 2. Remove `"done"` alias checks from `GetStatusOutput.java`

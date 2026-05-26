@@ -42,7 +42,7 @@ Minimal surgical fix:
 
 ## Execution Plan
 
-### Wave 1: Remove _comment from BenchmarkRunner.java and fix existing files
+### Job 1: Remove _comment from BenchmarkRunner.java and fix existing files
 
 **Step 1:** In `client/src/main/java/.../BenchmarkRunner.java` line 530, remove the statement that
 writes `_comment` to the benchmark.json output node.
@@ -53,7 +53,7 @@ field from each file.
 **Step 3:** Update `plugin/concepts/skill-benchmarking.md` to note that benchmark.json is auto-generated
 by `BenchmarkRunner` (adds one sentence to the schema section).
 
-### Wave 2: Enforce schema exclusivity in test
+### Job 2: Enforce schema exclusivity in test
 
 **Step 4:** In the `persistArtifactsWritesBenchmarkJson` test method, after asserting expected fields
 exist, add an assertion that the JSON object contains ONLY those five fields and no others.

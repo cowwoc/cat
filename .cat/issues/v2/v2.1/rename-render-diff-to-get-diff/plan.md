@@ -24,9 +24,9 @@ skills (e.g., `get-render-diff.sh`).
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Rename skill directory:** `mv plugin/skills/render-diff plugin/skills/get-diff`
    - Files: `plugin/skills/render-diff/`
 2. **Update SKILL.md:** Replace all `render-diff` references with `get-diff` inside the renamed skill

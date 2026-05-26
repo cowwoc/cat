@@ -77,9 +77,9 @@ never applies to CAT's preprocessor. The prohibition is based on a false premise
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Remove the prohibition on `$ARGUMENTS` in `[BANG]` commands from `skill-conventions.md`:
   - In the `## Skill Arguments and $ARGUMENTS` section, edit the arguments-flow table to remove

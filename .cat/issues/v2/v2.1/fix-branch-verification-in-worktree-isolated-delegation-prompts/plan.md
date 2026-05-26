@@ -42,9 +42,9 @@ None — internal tooling fix.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Read `plugin/skills/work-with-issue-agent/first-use.md` and locate all delegation prompt blocks
   that include `## First Action (MANDATORY)` with branch verification instructions. Remove the branch

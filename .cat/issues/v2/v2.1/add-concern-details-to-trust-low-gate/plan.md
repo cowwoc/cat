@@ -42,9 +42,9 @@ None
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Read `plugin/skills/work-review-agent/first-use.md` lines around the Concern Decision Gate
   section (search for "trust=low" near "Concern Decision Gate").

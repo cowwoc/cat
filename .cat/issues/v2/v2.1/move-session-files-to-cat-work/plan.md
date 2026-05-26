@@ -138,9 +138,9 @@ path updates here are for external→internal relocation, not .claude/cat→.cat
 - [ ] 2.1-fix-work-with-issue-path-validation is closed
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1 — Update cat-env.sh and Java path definitions
+### Job 1 — Update cat-env.sh and Java path definitions
 
 - Update `plugin/scripts/cat-env.sh`:
   - Remove `ENCODED_PROJECT_DIR`, `PROJECT_CAT_DIR` variable definitions (or retain `ENCODED_PROJECT_DIR` only if any
@@ -169,7 +169,7 @@ path updates here are for external→internal relocation, not .claude/cat→.cat
   - Append `work/` as a new line
   - Files: `.cat/.gitignore`
 
-### Wave 2 — Update VERIFY_DIR in agent and skill files
+### Job 2 — Update VERIFY_DIR in agent and skill files
 
 - Update `plugin/agents/work-verify.md`:
   - Replace both occurrences of:
@@ -194,7 +194,7 @@ path updates here are for external→internal relocation, not .claude/cat→.cat
     ```
   - Files: `plugin/skills/work-confirm-agent/first-use.md`
 
-### Wave 3 — Update remaining skill file path references
+### Job 3 — Update remaining skill file path references
 
 - Update `plugin/skills/work-prepare-agent/first-use.md`:
   - In the output contract JSON example, update `"worktree_path"` field to show:
@@ -232,7 +232,7 @@ path updates here are for external→internal relocation, not .claude/cat→.cat
     No inline hardcoded paths in this file need changing beyond shell variable usage.
   - Files: `plugin/skills/decompose-issue-agent/first-use.md`
 
-### Wave 4 — Migration script and registry
+### Job 4 — Migration script and registry
 
 - Create `plugin/migrations/2.3.sh`:
   - Standard license header (shell script format per `license-header.md`)
@@ -280,7 +280,7 @@ path updates here are for external→internal relocation, not .claude/cat→.cat
   mvn -f client/pom.xml test
   ```
 
-### Wave 5 — Smoke test: verify path variables resolve to new locations
+### Job 5 — Smoke test: verify path variables resolve to new locations
 
 - Build the jlink image in the worktree so the updated Java binaries are available:
   ```bash
@@ -308,7 +308,7 @@ path updates here are for external→internal relocation, not .claude/cat→.cat
   echo "PASS: Both path variables resolve to .cat/work/ locations"
   ```
 
-### Wave 6 — E2E artifact test: invoke binaries and confirm artifacts appear under .cat/work/
+### Job 6 — E2E artifact test: invoke binaries and confirm artifacts appear under .cat/work/
 
 Write and execute a bash smoke test script that uses the updated jlink binaries to create real runtime artifacts
 (lock file and worktree directory) in a temporary isolated project dir, then verifies those artifacts appear under

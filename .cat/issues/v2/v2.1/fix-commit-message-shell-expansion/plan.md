@@ -73,9 +73,9 @@ workarounds like passing empty arrays instead of actual commit data.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Add "Shell Safety for Commit Messages" section to `plugin/skills/git-commit-agent/first-use.md`
   - Files: `plugin/skills/git-commit-agent/first-use.md`

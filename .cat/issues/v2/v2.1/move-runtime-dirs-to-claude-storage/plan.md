@@ -86,34 +86,34 @@ Where:
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Add path resolution methods
+### Job 1: Add path resolution methods
 - Add `getProjectCatDir()` to `JvmScope.java` — returns `{configDir}/projects/{encoded}/cat/`
 - Add `getSessionCatDir()` to `JvmScope.java` — returns `{configDir}/projects/{encoded}/{sessionId}/cat/`
 - Add encoding method that applies `replace("/", "-").replace(".", "-")` to `CLAUDE_PROJECT_DIR`
 - Write tests for encoding edge cases (paths with dots, nested paths, root paths)
   - Files: `JvmScope.java`, new test class
 
-### Wave 2: Update Java source to use new paths
+### Job 2: Update Java source to use new paths
 - Replace all `projectDir.resolve(".cat/locks")` with `getProjectCatDir().resolve("locks")`
 - Replace all `projectDir.resolve(".cat/worktrees")` with `getProjectCatDir().resolve("worktrees")`
 - Replace all verify path references with `getSessionCatDir().resolve("verify")`
 - Update all test classes to use new path resolution
   - Files: All Java source and test files listed above
 
-### Wave 3: Update plugin skills and docs
+### Job 3: Update plugin skills and docs
 - Update all hardcoded `.cat/locks/`, `.cat/worktrees/`, `.cat/verify/` references in skill
   files, concept docs, and agent docs
 - Skills must use runtime-resolved paths (e.g., from JvmScope or environment variables) rather than hardcoded strings
   - Files: All plugin files listed above
 
-### Wave 4: Update gitignore and cleanup
+### Job 4: Update gitignore and cleanup
 - Remove `.cat/locks/` and `.cat/worktrees/` from `.gitignore`
 - Remove `.cat/verify/` and `.cat/e2e-config-test/` directories from the repo if they exist
   - Files: `.gitignore`
 
-### Wave 5: Fix remaining old-path usages in core lock/worktree classes (iteration 1)
+### Job 5: Fix remaining old-path usages in core lock/worktree classes (iteration 1)
 
 #### Step 5.1: Fix `IssueLock.java` — lock directory resolution
 - In `IssueLock(JvmScope, Clock)` constructor, replace the `catDir.resolve("locks")` assignment with

@@ -54,9 +54,9 @@ argument-hint: "<severity> <stakeholder> <description> <location>"
 - [ ] Both skills have argument-hint in frontmatter
 - [ ] Neither skill references ${ARGUMENTS} or $ARGUMENTS
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Update `plugin/skills/stakeholder-review-box/SKILL.md`
    - Add `argument-hint: "<issue> <reviewers> <result> <summary>"` to frontmatter
    - Replace `${ARGUMENTS}` with `"$0" "$1" "$2" "$3"` in the preprocessor command

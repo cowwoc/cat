@@ -38,9 +38,9 @@ None
 ## Files to Create
 - `hooks/src/test/java/.../test/EnforceJvmScopeEnvAccessTest.java` - Test that scans source for System.getenv outside MainJvmScope
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. Add `getClaudeSessionId()` and `getClaudeEnvFile()` to `JvmScope` interface
 2. Add `getTerminalType()` to `JvmScope` interface (wraps TerminalType detection)
 3. Implement new accessors in `MainJvmScope` with `ConcurrentLazyReference`

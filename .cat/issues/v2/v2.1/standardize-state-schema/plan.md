@@ -57,9 +57,9 @@ None - infrastructure cleanup
 - `.cat/conventions/state-schema.md` (new - documents the schema)
 - STATE.md template in skill add (references in create-issue.py)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Create `.cat/conventions/state-schema.md` documenting the standardized schema
    - Files: `.cat/conventions/state-schema.md`
 2. **Step 2:** Write a Python migration script that processes all issue STATE.md files:

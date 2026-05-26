@@ -61,9 +61,9 @@ switch statement (`GetOutput.java` lines 104-123).
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Fix the preprocessor directive in `plugin/skills/get-output-agent/first-use.md` to forward the
   caller's arguments. Replace:

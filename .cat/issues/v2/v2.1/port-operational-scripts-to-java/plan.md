@@ -31,9 +31,9 @@ Parent: port-utility-scripts
 - `hooks/src/test/java/io/github/cowwoc/cat/hooks/test/SubagentMonitorTest.java`
 - `hooks/src/test/java/io/github/cowwoc/cat/hooks/test/BatchReaderTest.java`
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. Read monitor-subagents.sh to understand worktree parsing, session file reading, token counting
 2. Create `SubagentMonitor` class with JSON output
 3. Read batch-read.sh to understand grep + read pattern

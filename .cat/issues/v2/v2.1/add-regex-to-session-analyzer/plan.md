@@ -31,9 +31,9 @@ benefiting Phase 1 (Investigate) of the learn skill.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Implement regex search
+### Job 1: Implement regex search
 
 - Update `search()` method to compile pattern as regex; keep case-sensitive by default
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/SessionAnalyzer.java`
@@ -42,7 +42,7 @@ benefiting Phase 1 (Investigate) of the learn skill.
 - Write tests for: regex alternation, invalid regex fallback, case-insensitive flag
   - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/SessionAnalyzerTest.java`
 
-### Wave 2: Update skill to use regex
+### Job 2: Update skill to use regex
 
 - Update extract-investigation-context to combine all keywords into a single regex alternation
   pattern and make one search call instead of N

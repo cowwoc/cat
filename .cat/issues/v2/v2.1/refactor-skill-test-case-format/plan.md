@@ -32,16 +32,16 @@ Migrate instruction-builder-agent's existing benchmark/ to test/ and delete the 
 - [ ] instruction-builder-agent/first-use.md updated to reference test/ path and results.json
 - [ ] E2E: add a test case file manually and verify hook validates and rejects invalid format
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Create plugin/concepts/skill-test.md with complete markdown test case schema (frontmatter fields: type, category, unit; required sections: Scenario, Tier 1 Assertion, Tier 2 Assertion)
 - Create plugin/concepts/skill-test-results.md with results.json schema (skill_hash, model, session_id, timestamp, overall_decision, test_cases array with SPRT fields)
 - Create Java hook class ValidateSkillTestFormat that validates test/*.md files on write (check required frontmatter and required sections, block writes that fail validation)
 - Register the hook in plugin/hooks/hooks.json for PostToolUse on Edit/Write matching test/*.md pattern
 
-### Wave 2
+### Job 2
 
 - Migrate instruction-builder-agent/benchmark/ test cases to instruction-builder-agent/test/ in markdown format (one .md file per test case)
 - Delete instruction-builder-agent/benchmark/ directory

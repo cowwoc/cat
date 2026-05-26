@@ -15,9 +15,9 @@ None - workflow improvement
 ## Files to Modify
 - plugin/skills/add.md - Main /cat:add skill definition
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Analyze task description to generate name suggestions
    - Files: plugin/skills/add.md
    - Verify: Names derived from key terms in description

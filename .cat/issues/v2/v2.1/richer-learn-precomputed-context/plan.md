@@ -33,9 +33,9 @@ of performing expensive JSONL searches at runtime. Target: reduce Phase 1 time b
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Enhance SessionAnalyzer
+### Job 1: Enhance SessionAnalyzer
 
 - Add method to extract tool call sequences around keyword matches (N tool calls before/after each
   match, including tool_use and tool_result pairs)
@@ -46,7 +46,7 @@ of performing expensive JSONL searches at runtime. Target: reduce Phase 1 time b
 - Write tests for enhanced extraction methods
   - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/SessionAnalyzerTest.java`
 
-### Wave 2: Update skill instructions
+### Job 2: Update skill instructions
 
 - Update extract-investigation-context to call the enhanced extraction and format results as
   structured evidence blocks

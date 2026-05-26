@@ -43,9 +43,9 @@ must show both Agent calls in the same message block.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - **Strengthen parallel spawning requirement in `plugin/skills/work-implement-agent/first-use.md`**:
   - Find the `### Parallel Subagent Execution (two or more groups)` section

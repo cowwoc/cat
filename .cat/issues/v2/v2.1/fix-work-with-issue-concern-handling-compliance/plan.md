@@ -27,9 +27,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Read `plugin/skills/work-with-issue-agent/first-use.md` to understand current structure of patience matrix
   (lines 802-1107) and approval gate sections (lines 1349-1387)
   - Files: `plugin/skills/work-with-issue-agent/first-use.md`

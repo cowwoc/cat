@@ -190,9 +190,9 @@ All `first-use.md` and concept files referencing `.cat`. Full list from grep:
 - [ ] **No active worktrees exist** under `.cat/worktrees/` before running the migration script.
   The migration script checks for active worktrees and aborts if any are found.
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Java production code updates
+### Job 1: Java production code updates
 - Update all Java production source files in `client/src/main/` to resolve `.cat` instead of
   `.cat` or `.claude" + "cat"`
   - Use global search-and-replace patterns:
@@ -203,7 +203,7 @@ All `first-use.md` and concept files referencing `.cat`. Full list from grep:
   - Files: all 20+ Java main source files listed in Files to Modify → Java Production Files
   - Verify: `grep -r '\.cat' client/src/main/ --include='*.java'` returns zero matches
 
-### Wave 2: Java test file updates
+### Job 2: Java test file updates
 - Update all Java test source files in `client/src/test/` to use `.cat` path strings
   - Replace all `".cat/` occurrences with `".cat/`
   - Replace `".cat"` with `".cat"` (standalone without trailing slash)
@@ -211,7 +211,7 @@ All `first-use.md` and concept files referencing `.cat`. Full list from grep:
   - Verify: `grep -r '\.cat' client/src/test/ --include='*.java'` returns zero matches
 - Run full test suite: `mvn -f client/pom.xml test`
 
-### Wave 3: Shell script and migration script
+### Job 3: Shell script and migration script
 - Update `plugin/migrations/lib/utils.sh`:
   - Add `resolve_cat_dir()` function: returns `.cat` if exists, else `.cat` (for backwards
     compatibility during migration execution)
@@ -235,7 +235,7 @@ All `first-use.md` and concept files referencing `.cat`. Full list from grep:
   - Add entry: `{ "version": "2.2", "script": "2.2.sh", "description": "Move .cat to .cat at workspace root" }`
   - Files: `plugin/migrations/registry.json`
 
-### Wave 4: Markdown skill and concept file updates
+### Job 4: Markdown skill and concept file updates
 - Update all Markdown files in `plugin/skills/` and `plugin/concepts/` to use `.cat/` paths
   - Replace `.cat/` with `.cat/` throughout
   - Replace `.cat` (without trailing slash where used as exact dir reference) with `.cat`
@@ -252,7 +252,7 @@ All `first-use.md` and concept files referencing `.cat`. Full list from grep:
   - `.cat/rules/convention-locations.md`: update if needed
   - Files: listed above
 
-### Wave 5: Move .cat to .cat in the actual project data
+### Job 5: Move .cat to .cat in the actual project data
 - In the workspace (not a migration script execution), move the actual data directory:
   `mv /workspace/.cat /workspace/.cat`
 - Update `.gitignore` at workspace root if needed to ensure `.cat/.gitignore` patterns apply

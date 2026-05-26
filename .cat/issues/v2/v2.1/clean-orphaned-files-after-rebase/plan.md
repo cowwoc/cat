@@ -21,9 +21,9 @@ None - correctness improvement to rebase tooling
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - In `GitRebaseSafe.java`, before running the rebase, capture the set of untracked file paths from
   `git status --porcelain` (lines starting with `??`)
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/GitRebaseSafe.java`

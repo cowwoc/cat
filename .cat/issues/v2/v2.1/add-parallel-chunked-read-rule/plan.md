@@ -48,9 +48,9 @@ conditioned on file size being known from the persisted-output message.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Edit `plugin/rules/persisted-skill-output.md` to insert item 3 into the MANDATORY section as specified above
   - File: `plugin/rules/persisted-skill-output.md`
 - Commit with message: `refactor: add parallel chunked read rule for persisted skill output`

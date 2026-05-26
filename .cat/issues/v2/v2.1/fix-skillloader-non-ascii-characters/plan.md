@@ -43,9 +43,9 @@ arguments capture group `[^`\n]+` both exclude newlines, preventing cross-line m
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Read `SkillLoader.java` and locate `executeDirective()` method to understand exact failure point
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/SkillLoader.java`
 - Fix `executeDirective()` to properly handle non-ASCII characters in content strings before passing to

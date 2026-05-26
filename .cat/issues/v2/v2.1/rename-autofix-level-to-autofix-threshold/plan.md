@@ -85,9 +85,9 @@ The following files contain references to `AUTOFIX_LEVEL`, `autofixLevel`, `auto
 - [ ] All existing tests pass
 - [ ] Build verification passes: `mvn -f client/pom.xml verify`
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. Rename the constant and method in `/workspace/client/src/main/java/io/github/cowwoc/cat/hooks/Config.java`:
    - `DEFAULT_AUTOFIX_LEVEL` → `DEFAULT_AUTOFIX_THRESHOLD`

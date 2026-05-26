@@ -49,9 +49,9 @@ The field is NOT simply redundant - it tracks migration state. Removing it requi
 - `.cat/cat-config.json` - Remove `version` field (via migration)
 - New migration script to rename/remove the field
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Decide approach** - Choose between (A) rename, (B) separate file, or (C) remove entirely
 2. **Update migrations/lib/utils.sh** - Modify version tracking functions per chosen approach
 3. **Update check-upgrade.sh** - Ensure upgrade detection still works

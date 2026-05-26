@@ -21,9 +21,9 @@ None — prevention for mistake M452 (subagent committed directly to v2.1 instea
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Implement and register the hook
+### Job 1: Implement and register the hook
 - Create `BlockWrongBranchCommit.java` that:
   1. Triggers on `PreToolUse:Bash` when command matches `git commit`
   2. Reads current branch via `git branch --show-current`

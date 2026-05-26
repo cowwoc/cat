@@ -51,9 +51,9 @@ Cross-agent state must only flow through committed git history, never through sh
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Audit `work-with-issue-agent` orchestration: identify all points where the main agent or a
   subagent could leave uncommitted state that another agent touches
   - Files: `plugin/skills/work-with-issue-agent/SKILL.md`

@@ -32,9 +32,9 @@ None - sub-issue of parent
 - [ ] All files score 1.0 on /compare-docs validation
 - [ ] No functionality regression
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. Use /cat:delegate to process all files in parallel: `/cat:delegate --skill optimize-doc file1.md file2.md ...`
 2. Commit changes with message: "config: compress skills batch 4 (research through tdd-implementation)"
 

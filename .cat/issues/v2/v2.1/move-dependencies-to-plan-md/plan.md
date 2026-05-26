@@ -99,9 +99,9 @@ absent). Issue templates include the section for discoverability, with `- None` 
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1 — Update Java parsers
+### Job 1 — Update Java parsers
 
 - Update `client/src/main/java/io/github/cowwoc/cat/hooks/util/WorkPrepare.java`:
   - Remove `DEPS_PATTERN` static field
@@ -134,7 +134,7 @@ absent). Issue templates include the section for discoverability, with `- None` 
   - Remove the `String dependencies = fields.get("Dependencies");` line and its conditional
   - Remove any now-unused local variables
 
-### Wave 2 — Update templates and documentation
+### Job 2 — Update templates and documentation
 
 - Update `plugin/templates/issue-state.md`:
   - Delete the line `- **Dependencies:** []`
@@ -152,7 +152,7 @@ absent). Issue templates include the section for discoverability, with `- None` 
   - Remove `- **Dependencies:** [...]` from all examples in the file
   - Remove `Dependencies` from the bullet list of fields that can be malformed
 
-### Wave 3 — Migration script and registry
+### Job 3 — Migration script and registry
 
 - Create `plugin/migrations/2.3.sh` with the following logic:
 
@@ -250,7 +250,7 @@ absent). Issue templates include the section for discoverability, with `- None` 
     }
     ```
 
-### Wave 4 — Tests and verification
+### Job 4 — Tests and verification
 
 - Run `mvn -f client/pom.xml test` and confirm all tests pass
 - Fix any compilation errors or test failures from Waves 1–3

@@ -95,9 +95,9 @@ The following SKILL.md files use unquoted `$ARGUMENTS` in their `!` directives:
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Investigate exact failure point: read all 12 SKILL.md files listed above and their corresponding
   `first-use.md` files to determine the expected argument contract for each skill (how many positional
@@ -108,7 +108,7 @@ The following SKILL.md files use unquoted `$ARGUMENTS` in their `!` directives:
 - Read `client/src/test/java/io/github/cowwoc/cat/hooks/test/ShellParserTest.java` to understand
   existing coverage
 
-### Wave 2
+### Job 2
 
 - For each SKILL.md in the list: based on Wave 1 analysis, apply the correct fix:
   - If args are passed as a single joined string: change `$ARGUMENTS` → `"$ARGUMENTS"`

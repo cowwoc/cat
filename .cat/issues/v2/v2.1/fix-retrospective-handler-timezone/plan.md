@@ -38,9 +38,9 @@ may be naive or use Z suffix. The comparison at line 168 mixes these.
 - [ ] _parse_datetime returns timezone-aware datetime for all valid inputs
 - [ ] _check_action_effectiveness compares dates without TypeError
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Fix _parse_datetime():** Ensure all returned datetimes are timezone-aware (UTC). If parsed datetime is naive,
    attach UTC timezone.
 2. **Add test:** Create test in tests/ covering mixed timezone comparison scenarios.

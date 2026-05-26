@@ -30,9 +30,9 @@ None
 - [ ] All dependent issues are closed
 - [ ] JDK 26 is installed and available on the PATH
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Update `client/pom.xml`:
   - Change `<maven.compiler.release>25</maven.compiler.release>` to `<maven.compiler.release>26</maven.compiler.release>`
     (in `<properties>` section, line ~17)

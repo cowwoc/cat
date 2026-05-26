@@ -51,9 +51,9 @@ Post-tool handlers at `plugin/hooks/src/io/github/cowwoc/cat/hooks/bash/post/`:
 | `bash_handlers/validate_plan_md.py` | `ValidatePlanMd.java` | `plugin/hooks/src/io/github/cowwoc/cat/hooks/bash/` |
 | `bash_handlers/validate_worktree_remove.py` | `ValidateWorktreeRemove.java` | `plugin/hooks/src/io/github/cowwoc/cat/hooks/bash/` |
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Create DetectShellOperators.java** - Port logic from `detect_shell_operators.py`
 2. **Create ValidatePlanMd.java** - Port logic from `validate_plan_md.py`
 3. **Create ValidateWorktreeRemove.java** - Port logic from `validate_worktree_remove.py`

@@ -35,9 +35,9 @@ BlockUnauthorizedMergeCleanup.java lists four recovery steps in order:
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Update the error message in `client/src/main/java/io/github/cowwoc/cat/hooks/bash/BlockUnauthorizedMergeCleanup.java`:
   - Find the `Result.block()` call that generates the recovery guidance message
   - Replace the current guidance that starts with the approval gate step

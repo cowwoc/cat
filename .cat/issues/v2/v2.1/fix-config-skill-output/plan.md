@@ -55,9 +55,9 @@ GetConfigOutput.java exists with all box-building methods but:
 - [ ] GetConfigOutput implements SkillOutput interface
 - [ ] first-use.md contains output preprocessor directive
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Implement SkillOutput interface on GetConfigOutput:**
    - Read `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetStatusOutput.java` as reference for

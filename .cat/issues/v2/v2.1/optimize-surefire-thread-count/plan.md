@@ -25,9 +25,9 @@ Current surefire configuration in `client/pom.xml` (lines 146-163):
 The two new elements (`<threadCount>8</threadCount>` and `<perCoreThreadCount>true</perCoreThreadCount>`) should be
 added inside the existing `<configuration>` block, adjacent to the existing `<parallel>methods</parallel>` element.
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. Edit `client/pom.xml`: Inside the `maven-surefire-plugin` `<configuration>` block, add `<threadCount>8</threadCount>` and `<perCoreThreadCount>true</perCoreThreadCount>` immediately after the existing `<parallel>methods</parallel>` line (line 154). The result should look like:
    ```xml

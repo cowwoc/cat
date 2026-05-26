@@ -10,9 +10,9 @@ behavior). This behavior should be documented.
 
 None - documentation
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Edit `plugin/hooks/README.md`** — Add a section documenting SkillLoader's variable resolution behavior:
    - Known built-in variables (`CLAUDE_PLUGIN_ROOT`, `CLAUDE_SESSION_ID`, `CLAUDE_PROJECT_DIR`) are resolved

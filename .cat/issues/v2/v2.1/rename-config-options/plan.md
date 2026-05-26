@@ -88,9 +88,9 @@ be a no-op for this key. The migration must now handle:
 - `plugin/skills/init/first-use.md` updated to use new names
 - Config documentation reflects new names and their meanings
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Rename Java enum classes** (file renames + content updates):
    - `client/src/main/java/io/github/cowwoc/cat/hooks/util/CautionLevel.java` — renamed from `VerifyLevel.java`:
@@ -128,7 +128,7 @@ be a no-op for this key. The migration must now handle:
 7. **Commit Java changes**:
    `refactor: rename config option types verify→caution, effort→curiosity, patience→perfection`
 
-### Wave 2
+### Job 2
 
 1. **Update config template**:
    - In `plugin/templates/config.json`: rename keys `"verify"` → `"caution"`, `"effort"` → `"curiosity"`,

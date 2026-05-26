@@ -87,9 +87,9 @@ deriving the prefix programmatically.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Implement `getPluginPrefix()` in `JvmScope`, `AbstractJvmScope`, and `TestJvmScope`:
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/JvmScope.java`,
@@ -205,7 +205,7 @@ deriving the prefix programmatically.
   private void markSkillLoaded(String qualifiedName) throws IOException
   ```
 
-### Wave 2
+### Job 2
 
 - Add regression tests to `GetSkillTest`:
   - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/GetSkillTest.java`

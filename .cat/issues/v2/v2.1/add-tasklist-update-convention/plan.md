@@ -35,9 +35,9 @@ case; this rule covers the complementary "update/clean TaskList" case.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Create `plugin/rules/tasklist-lifecycle.md` with the following content:
 
 ```markdown

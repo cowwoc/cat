@@ -90,9 +90,9 @@ string "completed", which is always true.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - In `VerifyStateInCommit.java`:
   - Add import `import io.github.cowwoc.cat.hooks.IssueStatus;`

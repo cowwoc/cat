@@ -22,9 +22,9 @@ None - UI enhancement
 - [ ] Documentation updated
 - [ ] No regressions
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Research how active sessions are tracked
    - Files: .worktrees/, lock files, cat-config.json
    - Verify: Identify mechanism for detecting active work

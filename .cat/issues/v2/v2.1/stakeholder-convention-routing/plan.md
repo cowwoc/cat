@@ -24,9 +24,9 @@ None (infrastructure improvement)
 - [ ] The prepare step discovers convention files dynamically (no hardcoded filenames)
 - [ ] Design stakeholder receives java.md conventions when reviewing Java changes
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Add frontmatter to java.md:** Add YAML frontmatter (omit `subAgents` for all subagents, or use
    specific types like `subAgents: [cat:stakeholder-design, cat:stakeholder-architecture]`)
    - Files: `.cat/rules/java.md`

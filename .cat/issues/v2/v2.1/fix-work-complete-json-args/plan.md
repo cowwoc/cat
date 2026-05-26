@@ -27,9 +27,9 @@ The curly braces in the JSON are interpreted by shell brace expansion before the
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Investigate the quoting pipeline:** Trace how arguments flow from Skill tool invocation through
    load-skill.sh and the skill preprocessor to identify where quoting is lost.
 2. **Fix the quoting:** Ensure JSON arguments are properly quoted/escaped through the entire pipeline.

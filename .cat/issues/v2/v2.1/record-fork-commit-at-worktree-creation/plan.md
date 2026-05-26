@@ -95,9 +95,9 @@ With `cat-branch-point` storing an immutable fork-point commit, the following mi
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Step 1:** Change `WorkPrepare.java` to write commit hash
    - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/WorkPrepare.java`

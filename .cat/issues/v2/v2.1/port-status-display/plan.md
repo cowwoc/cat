@@ -26,9 +26,9 @@ Parent: 2.1-port-display-scripts
 - Update status handler to call Java class instead of Python script
 - Remove `get-status-display.sh` bash wrapper
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Read `get-status-display.py`** thoroughly to understand all rendering sections
 2. **Check if `GetStatusOutput.java` already exists** and what it contains
 3. **Read `.cat/conventions/java.md`** for coding conventions

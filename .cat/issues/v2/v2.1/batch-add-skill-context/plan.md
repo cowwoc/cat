@@ -27,9 +27,9 @@ None - context optimization
 ## Files to Modify
 - `plugin/skills/add/SKILL.md` - Add continuation prompt in task_done step
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Read the task_done step in `plugin/skills/add/SKILL.md`
 2. **Step 2:** After the render-add-complete.sh output, add an AskUserQuestion:
    - header: "Continue?"

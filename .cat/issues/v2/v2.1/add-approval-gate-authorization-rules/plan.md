@@ -42,7 +42,7 @@ When complete, all of the following must be true:
 
 ## Implementation
 
-### Wave 1: Create Approval Gate Protocol Rules
+### Job 1: Create Approval Gate Protocol Rules
 
 #### Step 1: Create `plugin/rules/approval-gate-protocol.md`
 
@@ -84,7 +84,7 @@ Document project-level enforcement for approval gates:
   - Document mistake and design prevention
   - Update enforcement rules to prevent recurrence
 
-### Wave 2: Update work-merge-agent Skill
+### Job 2: Update work-merge-agent Skill
 
 #### Step 3: Update `plugin/skills/work/first-use.md` - Step 9 (Approval Gate)
 
@@ -158,7 +158,7 @@ When a user interrupts the approval gate with a clarifying question:
 Only explicit AskUserQuestion option selection (e.g., "Approve and merge" button) counts as valid approval.
 ```
 
-### Wave 3: Testing
+### Job 3: Testing
 
 #### Step 6: Verify skill changes don't break work-merge-agent execution
 

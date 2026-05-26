@@ -39,16 +39,16 @@ In `SkillLoader`, `catAgentId` is derived from `skillArgs.getFirst()` (`$0`). If
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Examine all `SKILL.md` files that invoke `skill-loader` and check how `$0` is passed
   - Files: `plugin/skills/*/SKILL.md`
 - Trace how Claude Code's `!`` preprocessor substitutes `$0` — is it the first skill arg or shell's `$0`?
 - Examine the `{` case: identify what `${VAR}` expansion could produce a literal `{`
 - Check if the worktree path case is reproducible and what skill invocation triggered it
 
-### Wave 2
+### Job 2
 - Fix the root cause(s) identified in Wave 1
   - Files: affected `SKILL.md` files and/or `SkillLoader.java`
 - Add validation in `SkillLoader` to reject catAgentId values that look like branch names or file paths

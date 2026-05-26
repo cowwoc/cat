@@ -48,9 +48,9 @@ A file is "schema-relevant" if its basename matches any of the following (case-i
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Add the schema migration coverage check step to `plugin/skills/work-implement-agent/SKILL.md`
   - Insertion anchor: insert the new `### Schema Migration Coverage Check` section AFTER the Commit-Before-

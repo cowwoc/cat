@@ -65,9 +65,9 @@ None (technology debt / API consistency improvement)
 - [ ] All dependent issues are closed
 - [ ] Current test suite runs without the refactoring (baseline)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 **Rename ClaudeEnv methods and update all production code references:**
 - Rename `ClaudeEnv.getClaudeSessionId()` → `ClaudeEnv.getSessionId()`
@@ -81,7 +81,7 @@ None (technology debt / API consistency improvement)
 - `/workspace/client/src/main/java/io/github/cowwoc/cat/hooks/ClaudeEnv.java`
 - All production code files referencing `getClaudeSessionId()`, `getClaudePluginRoot()`, `getClaudeEnvFile()`
 
-### Wave 2
+### Job 2
 
 **Fix GetSkill.java to use scope-based environment variable lookup instead of new ClaudeEnv():**
 - In `GetSkill.java` line 178, replace `catAgentId = new ClaudeEnv().getClaudeSessionId();` with `catAgentId = scope.getEnvironmentVariable("CLAUDE_SESSION_ID");`
@@ -98,7 +98,7 @@ None (technology debt / API consistency improvement)
 - `/workspace/client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetTokenReportOutput.java`
 - `/workspace/client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetNextIssueOutput.java`
 
-### Wave 3
+### Job 3
 
 **Remove TestJvmScope.getClaudeSessionId() public method and update test code:**
 - Remove the public `getClaudeSessionId()` method from `TestJvmScope.java` (lines 267-271)
@@ -112,7 +112,7 @@ None (technology debt / API consistency improvement)
 - All test files using `scope.getClaudeSessionId()` (see search results above)
 - `/workspace/client/src/test/java/io/github/cowwoc/cat/hooks/test/TestUtils.java`
 
-### Wave 4
+### Job 4
 
 **Rename all test code method references to match new ClaudeEnv API:**
 - Update `ClaudeEnvTest.java` to call renamed methods: `getSessionId()`, `getPluginRoot()`, `getEnvFile()`
@@ -124,7 +124,7 @@ None (technology debt / API consistency improvement)
 - `/workspace/client/src/test/java/io/github/cowwoc/cat/hooks/test/ClaudeEnvTest.java`
 - All test files referencing renamed methods
 
-### Wave 5
+### Job 5
 
 **Run full verification and commit:**
 - Execute `mvn -f /workspace/client/pom.xml verify` to ensure all tests pass

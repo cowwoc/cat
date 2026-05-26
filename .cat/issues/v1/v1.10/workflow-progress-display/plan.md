@@ -42,9 +42,9 @@ Style E is implemented in work.md `<progress_output>` section. Key elements:
 
 See work.md lines 42-192 for complete specification.
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Identify all workflow steps in /cat:work
    - Files: .claude/commands/cat/work.md
    - Verify: List of steps documented

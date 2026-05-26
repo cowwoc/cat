@@ -56,9 +56,9 @@ None
   **Edge case:** If instruction-builder determines no changes are needed (skill already correct), proceed to
   Sub-Agent Waves without modification. Empirical-test still runs to confirm compliance.
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1 — Write empirical test config
+### Job 1 — Write empirical test config
 
 - Write the exact JSON below to `/tmp/get-output-agent-compliance-test.json`.
   This wave runs after the Main Agent Wave (instruction-builder) completes.
@@ -130,7 +130,7 @@ None
   }
   ```
 
-### Wave 2 — Run empirical-test against updated skill
+### Job 2 — Run empirical-test against updated skill
 
 - Invoke `cat:empirical-test-agent` via Skill tool. The skill loads its internal methodology and then runs
   `empirical-test-runner` CLI against the test config. Invoking the skill causes it to execute the CLI tool

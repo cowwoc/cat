@@ -28,9 +28,9 @@ Parent: port-utility-scripts
 - `hooks/src/test/java/io/github/cowwoc/cat/hooks/test/SessionAnalyzerTest.java`
 - `hooks/src/test/java/io/github/cowwoc/cat/hooks/test/RetrospectiveMigratorTest.java`
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. Read analyze-session.py to understand analysis logic, metrics, and output format
 2. Create `SessionAnalyzer` class porting all analysis logic
 3. Read migrate-retrospectives.py to understand migration transformations

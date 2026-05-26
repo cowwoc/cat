@@ -19,9 +19,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Replace `/* file was all blanks - emit nothing */` C-style comment in Phase 6 awk block with a
   valid awk `# ...` comment (or remove the comment entirely since the empty block is self-evident)
   - Files: `plugin/migrations/2.1.sh` (line ~566)

@@ -49,9 +49,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Create `GivingUpDetector` utility class with:
   - All pattern constants from `DetectGivingUp` (CONSTRAINT_RATIONALIZATION_REMINDER, CODE_REMOVAL_REMINDER, COMPILATION_ABANDONMENT_REMINDER, PERMISSION_SEEKING_REMINDER)
   - All reminder constants from `DetectAssistantGivingUp`: move the inline reminder string (the multi-line text starting with "🚨 ASSISTANT GIVING-UP PATTERN DETECTED - TOKEN POLICY VIOLATION") into a constant named `TOKEN_RATIONALIZATION_REMINDER` in `GivingUpDetector`
@@ -76,7 +76,7 @@ None
   - Keep all conversation-log I/O: `getConversationLogPath`, `getRecentAssistantTextContent`, the 20-message window, `ConversationLogUtils` usage
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/tool/post/DetectAssistantGivingUp.java`
 
-### Wave 2
+### Job 2
 - Create unit tests in `GivingUpDetectorTest`:
   - One test per violation type: constraint_rationalization, code_removal, compilation_abandonment, permission_seeking, token_rationalization (5 tests minimum)
   - One test verifying no false positive on clean text

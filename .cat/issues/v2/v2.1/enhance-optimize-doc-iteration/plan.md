@@ -32,9 +32,9 @@ None
 - [ ] `2.1-rename-shrink-doc-to-optimize-doc` is closed (skill directories renamed)
 - [ ] `2.1-enhance-compare-docs-grading` is closed (severity and evidence fields available in compare-docs output)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Root Cause Categorization
+### Job 1: Root Cause Categorization
 - Create `plugin/skills/optimize-doc-agent/first-use.md` with complete optimize-doc methodology:
   - Core compression workflow: compress → validate via compare-docs → check binary verdict
   - When `execution_equivalent: false`, categorize root causes using compare-docs diagnostics:
@@ -46,7 +46,7 @@ None
   - Map each compare-docs HIGH/MEDIUM finding to a root cause category using the evidence quotes
   - Files: `plugin/skills/optimize-doc-agent/first-use.md`
 
-### Wave 2: Targeted Re-Compression
+### Job 2: Targeted Re-Compression
 - Add targeted retry workflow to first-use.md:
   - On validation failure, identify which document sections contain the failing semantic units (using evidence
     quotes and location data from compare-docs)
@@ -62,7 +62,7 @@ None
   - Maximum 2 targeted retries after initial failure; if still failing, report the remaining findings and stop
   - Files: `plugin/skills/optimize-doc-agent/first-use.md`
 
-### Wave 3: Documentation and Verification
+### Job 3: Documentation and Verification
 - Create `plugin/concepts/optimize-doc-iteration.md`:
   - Compression failure pattern taxonomy with examples
   - Root cause → retry strategy mapping table

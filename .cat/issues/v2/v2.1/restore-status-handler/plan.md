@@ -36,9 +36,9 @@ None (bugfix for regression)
 
 - `plugin/hooks/skill_handlers/status_handler.py` - Add `StatusHandler` class that calls `get-status-display.py` and wraps output as "SCRIPT OUTPUT STATUS DISPLAY", register it
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Add StatusHandler class** to `plugin/hooks/skill_handlers/status_handler.py`
    - Import `register_handler` from `. import register_handler`

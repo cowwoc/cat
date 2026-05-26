@@ -63,20 +63,20 @@ None
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Add timing extraction to `SessionAnalyzer.java` and write tests
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/SessionAnalyzer.java`,
     `client/src/test/java/io/github/cowwoc/cat/hooks/util/SessionAnalyzerTest.java`
 
-### Wave 2
+### Job 2
 - Update `first-use.md` to document Time Usage step and report section, using the new `timing` field
   - Files: `plugin/skills/optimize-execution/first-use.md`
 - Run `mvn -f client/pom.xml test` and confirm all tests pass
   - Files: (no new files)
 
-### Wave 3 (iteration 1 fixes)
+### Job 3 (iteration 1 fixes)
 - Fix field name mismatch: align `first-use.md` to the actual `session-analyzer` JSON output. Update all
   references in `first-use.md` so that:
   - `timing.total_elapsed_seconds` → `timing.session_elapsed_seconds` (session-level total; lines 63, 309,

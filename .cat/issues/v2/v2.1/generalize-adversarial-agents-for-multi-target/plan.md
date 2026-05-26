@@ -42,9 +42,9 @@ adjust their internal language and patch procedures accordingly.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Create red-team-agent as a dedicated subagent
+### Job 1: Create red-team-agent as a dedicated subagent
 
 Extract the red-team inline prompt from `plugin/skills/skill-builder-agent/first-use.md` Step 4 into a
 standalone agent file `plugin/agents/red-team-agent/SKILL.md`.
@@ -63,7 +63,7 @@ Changes required:
 - Update the commit message convention: `"red-team: round N findings"` stays; no changes needed.
 - Files: `plugin/agents/red-team-agent/SKILL.md` (create)
 
-### Wave 2: Create blue-team-agent as a dedicated subagent
+### Job 2: Create blue-team-agent as a dedicated subagent
 
 Extract the blue-team inline prompt from `plugin/skills/skill-builder-agent/first-use.md` Step 4 into a
 standalone agent file `plugin/agents/blue-team-agent/SKILL.md`.
@@ -83,7 +83,7 @@ Changes required:
 - Commit message convention: `"blue-team: round N patches"` stays.
 - Files: `plugin/agents/blue-team-agent/SKILL.md` (create)
 
-### Wave 3: Create diff-validation-agent as a dedicated subagent
+### Job 3: Create diff-validation-agent as a dedicated subagent
 
 Create `plugin/agents/diff-validation-agent/SKILL.md` to verify that blue-team patch commits correspond to
 red-team findings.
@@ -102,7 +102,7 @@ Responsibilities:
 - Commit message convention: `"diff-validation: round N report"`.
 - Files: `plugin/agents/diff-validation-agent/SKILL.md` (create)
 
-### Wave 4: Update skill-builder-agent to delegate to dedicated subagents
+### Job 4: Update skill-builder-agent to delegate to dedicated subagents
 
 Update `plugin/skills/skill-builder-agent/first-use.md` Step 4 to replace the inline red-team and blue-team
 Task prompts with delegations to the newly created dedicated agents.
@@ -120,7 +120,7 @@ Changes required:
   source of truth.
 - Files: `plugin/skills/skill-builder-agent/first-use.md`
 
-### Wave 5: Verification
+### Job 5: Verification
 
 Manual trace through the updated `skill-builder-agent` Step 4 using a synthetic example:
 

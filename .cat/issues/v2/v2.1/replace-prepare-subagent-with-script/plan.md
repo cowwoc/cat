@@ -36,9 +36,9 @@ None - infrastructure/performance optimization
 - `plugin/skills/work-prepare/SKILL.md` - Add header note that logic is now implemented as work-prepare.py script;
   SKILL.md retained as algorithm documentation
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Create work-prepare.py script** that:
    - Accepts args: `--session-id`, `--project-dir`, `--exclude-pattern` (optional), `--trust-level`
    - Step 1: Verifies `.cat/` structure exists

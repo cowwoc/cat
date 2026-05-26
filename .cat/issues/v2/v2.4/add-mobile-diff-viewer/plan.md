@@ -36,9 +36,9 @@ rather than scattered file-by-file diffs.
 - [ ] Execution flows show step numbers and file transitions
 - [ ] Non-executable changes grouped separately
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Parse diff and categorize changes**
    - Files: plugin/scripts/render-diff.py
    - Categorize each hunk as: executable, test, import, type, comment, formatting

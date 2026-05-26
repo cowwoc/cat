@@ -43,9 +43,9 @@ None
 - detect-assistant-giving-up.sh: Reads last 20 assistant messages from session JSONL, detects token usage rationalization patterns, rate-limited to once per 60s via /tmp file
 - remind-restart-after-skill-modification.sh: Checks if edited file matches skill/settings/hook patterns, outputs banner to stderr
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. Create DetectAssistantGivingUp handler
 2. Create RemindRestartAfterSkillModification handler
 3. Integrate into existing PostToolUse dispatchers

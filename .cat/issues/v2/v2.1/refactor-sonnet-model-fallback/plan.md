@@ -52,9 +52,9 @@ Affected skills (currently `model: sonnet`):
 - [ ] `plugin/rules/skill-models.md` exists and lists all 31 previously-Sonnet skills with preference order [sonnet, opus]
 - [ ] E2E verification: invoke a skill that previously had `model: sonnet` and confirm the agent selects the correct model based on `plugin/rules/skill-models.md`
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - **Step 1: Create `plugin/rules/skill-models.md`**
 

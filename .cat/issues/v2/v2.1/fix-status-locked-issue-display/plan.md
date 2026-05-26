@@ -42,9 +42,9 @@ never shows other sessions' agents.
 - [ ] No new issues introduced
 - [ ] E2E verification: acquire a lock on an issue from one session context, run status from another session context, confirm the locked issue shows as 🔄
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Fix `GetStatusOutput.getIssueStatus()` in
   `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetStatusOutput.java`:

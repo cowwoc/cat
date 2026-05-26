@@ -35,14 +35,14 @@ None — performance optimization.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Read `plugin/skills/work-with-issue-agent/first-use.md` and identify all ToolSearch calls currently
   in the file. List each tool being loaded and at which step. Identify any tools loaded redundantly.
   - Files: `plugin/skills/work-with-issue-agent/first-use.md`
 
-### Wave 2
+### Job 2
 - Add a single consolidated ToolSearch call using `select:Read,Edit,Grep,Glob,Bash,AskUserQuestion,Write,Task,Skill`
   at the very start of the skill execution (before Step 1 content). Remove any redundant individual
   ToolSearch calls for tools already in the consolidated list.

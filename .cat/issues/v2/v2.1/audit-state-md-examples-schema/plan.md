@@ -19,9 +19,9 @@ None - documentation and schema hygiene
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Search all .cat/issues/**/*.md files for deprecated STATE.md fields (e.g., 'Last Updated', 'Completed',
   'Version', 'Tokens Used', 'Started', 'Assignee', 'Priority', 'Worktree', 'Merged', 'Commit')
   - Files: `.cat/issues/`

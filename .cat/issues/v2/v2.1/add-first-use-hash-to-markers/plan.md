@@ -49,9 +49,9 @@ old markers for skills with `first-use.md` are automatically invalidated on firs
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Modify `GetSkill.java` — data structure and import changes:
   - Change field declaration at line 117:
@@ -207,7 +207,7 @@ old markers for skills with `first-use.md` are automatically invalidated on firs
     `first-use.md`, causing one-time re-delivery of the full skill content
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/GetSkill.java`
 
-### Wave 2
+### Job 2
 
 - Add five test methods to `GetSkillTest.java`. Each test must be fully self-contained (no class
   fields, no shared state) and use `TestJvmScope`. Create a temporary plugin directory structure

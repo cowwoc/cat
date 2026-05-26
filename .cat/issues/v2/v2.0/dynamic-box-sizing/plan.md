@@ -21,9 +21,9 @@ None - infrastructure improvement
 - [ ] /cat:status displays correctly with dynamic sizing
 - [ ] No content truncation in rendered boxes
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Review current width calculation in build-box-lines.py
    - Files: plugin/scripts/build-box-lines.py
    - Verify: Understand how max_content_width is computed

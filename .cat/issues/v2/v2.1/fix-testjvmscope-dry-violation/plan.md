@@ -29,9 +29,9 @@ None — code quality improvement
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Move `jsonMapper`, `yamlMapper`, `displayUtils`, `detectSequentialTools`, `predictBatchOpportunity`,
   `userIssues` ConcurrentLazyReference fields and their getter implementations from `MainJvmScope` and

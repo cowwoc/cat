@@ -49,9 +49,9 @@ Core infrastructure (already implemented):
 ## Files to Modify
 - `plugin/hooks/hooks.json` - Replace 5 Python commands with java.sh calls
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Wire up GetSkillOutput** - Edit hooks.json line ~50, test by invoking a skill
 2. **Wire up GetReadPretoolOutput** - Edit hooks.json line ~96, test by reading a file
 3. **Wire up GetPosttoolOutput** - Edit hooks.json lines ~142 and ~178, test by running any tool

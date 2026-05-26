@@ -19,9 +19,9 @@ to `InjectSessionInstructions.java` (end-user plugin) so it applies to all CAT u
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Add "Directory before file write" paragraph to InjectSessionInstructions.java after "Chain independent commands"
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/session/InjectSessionInstructions.java`
 - Remove the "Directory before file write" paragraph and code block from common.md Shell Efficiency section

@@ -36,9 +36,9 @@ None - infrastructure rename
 - [ ] All tests pass (`mvn -f client/pom.xml test`)
 - [ ] Zero remaining `hooks/bin` references in `client/src/`
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Replace in SkillLoader.java:** Update 3 occurrences (Javadoc lines 67, 473 and path resolution line 521)
 2. **Replace in SkillLoaderTest.java:** Update 17 occurrences (test data and directory creation)
 3. **Verify:** Grep `client/src/` for remaining `hooks/bin` references - expect zero

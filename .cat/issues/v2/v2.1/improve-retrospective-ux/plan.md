@@ -29,9 +29,9 @@ None
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1 — Data formatting fixes (independent methods, no new sections)
+### Job 1 — Data formatting fixes (independent methods, no new sections)
 
 - **Fix Problem 10: Trigger phrasing** — In `generateAnalysis()`, change trigger line from
   `"Trigger: N mistakes accumulated (threshold: X)"` to
@@ -51,7 +51,7 @@ None
   If more than 8 categories, show top 8 and summarize the rest as `"  [N more categories]"`.
   Files: `GetRetrospectiveOutput.java`
 
-### Wave 2 — Semantic improvements (pattern notation, action item grouping)
+### Job 2 — Semantic improvements (pattern notation, action item grouping)
 
 - **Fix Problem 2: Ambiguous X/Y notation** — In `generatePatternStatusLines()`, replace
   `"occurrences: X/Y"` with semantic status:
@@ -82,7 +82,7 @@ None
 - **Run `mvn -f client/pom.xml test`** to confirm Wave 2 changes pass all tests.
   Files: none
 
-### Wave 3 — New sections (executive summary, descriptions, action guidance)
+### Job 3 — New sections (executive summary, descriptions, action guidance)
 
 - **Fix Problem 1: Full descriptions** — Add new method `generateActionItemDetailsLines()` that
   renders the FULL (untruncated) description for each action item. Call it from `generateAnalysis()`

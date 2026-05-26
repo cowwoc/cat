@@ -59,9 +59,9 @@ substring-match any issue ID.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Add a Resume Pattern block to the start of Step 2 in `plugin/skills/work-prepare-agent/first-use.md`:
   - When ARGUMENTS begins with `resume` (case-insensitive), strip the prefix and extract only the first remaining

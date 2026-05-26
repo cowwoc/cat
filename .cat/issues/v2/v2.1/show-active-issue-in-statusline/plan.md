@@ -56,9 +56,9 @@ Reading it directly avoids duplication and keeps `StatuslineCommand` self-contai
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Update `StatuslineCommand.java`:
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/StatuslineCommand.java`

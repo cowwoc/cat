@@ -14,9 +14,9 @@ None - configuration improvement
 Conservative initial memory setting in `generate_launchers()` in `hooks/build-jlink.sh` and in
 `plugin/scripts/load-skill.sh`.
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Edit `hooks/build-jlink.sh`** — In `generate_launchers()`, change `-Xms16m -Xmx64m` to `-Xms16m -Xmx96m` (line
    301).

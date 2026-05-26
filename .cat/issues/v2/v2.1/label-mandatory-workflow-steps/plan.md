@@ -21,9 +21,9 @@ None - action item A024 from retrospective (PATTERN-020)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Read work-with-issue/first-use.md:** Examine current step structure and identify the steps that
    must be labeled MANDATORY
    - Files: `plugin/skills/work-with-issue/first-use.md`

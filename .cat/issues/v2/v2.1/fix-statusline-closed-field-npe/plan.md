@@ -78,9 +78,9 @@ the 4 concrete subclasses.
 - `AbstractClaudeStatusline.java` — verify no closed-related code
 - `util/StatuslineCommand.java` — the class that triggers the NPE (no changes needed, just test target)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 All files are interdependent (shared inheritance hierarchy), so all work fits in a single wave.
 

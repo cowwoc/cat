@@ -70,9 +70,9 @@ When work is suggested or requested:
   - high: Create task automatically, proceed to work
 - [ ] Existing `/cat:work` workflow unchanged
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Document the behavior in agent-architecture.md**
    - Add "Work Request Handling" section
    - Define trivial vs non-trivial work

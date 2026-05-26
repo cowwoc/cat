@@ -24,9 +24,9 @@ None - infrastructure/consistency improvement
 - plugin/hooks/skill_handlers/cleanup_handler.py - Revert to json.loads()
 - plugin/scripts/get-cleanup-display.py - Revert to json.loads()
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Update issue-lock.sh to write JSON format
    - Files: plugin/scripts/issue-lock.sh
    - Verify: New lock files are valid JSON

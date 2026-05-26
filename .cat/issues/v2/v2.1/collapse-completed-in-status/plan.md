@@ -23,9 +23,9 @@ None (performance optimization)
 - [x] Inactive minors are unaffected (they already show summary counts only)
 - [x] All existing tests pass
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Modify `generate_status_display()` in `plugin/scripts/get-status-display.py`
    - In the active minor task loop, separate tasks into completed vs non-completed
    - Sort completed tasks by directory mtime (most recent first) as proxy for completion recency

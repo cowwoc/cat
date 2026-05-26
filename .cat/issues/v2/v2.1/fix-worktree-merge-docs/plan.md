@@ -30,9 +30,9 @@ prevent accidental branch switches.
 - [ ] Documentation clearly explains the scenario
 - [ ] No regressions
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Add section to merge-and-cleanup.md
    - Title: "Merging When Base Branch Is Checked Out in Main Workspace"
    - Explain: Don't checkout, just merge directly

@@ -44,9 +44,9 @@ None — refactor
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Read all 10 `plugin/agents/stakeholder-*.md` files to extract exact text of common sections
   - Files: `plugin/agents/stakeholder-*.md`
@@ -56,7 +56,7 @@ None — refactor
   `## Working Directory` and `## Mandatory Pre-Review Steps`
   - Files: `plugin/skills/stakeholder-common/first-use.md`
 
-### Wave 2
+### Job 2
 
 - Update all 10 `plugin/agents/stakeholder-*.md` files to:
   1. Add `skills: [cat:stakeholder-common]` to YAML frontmatter

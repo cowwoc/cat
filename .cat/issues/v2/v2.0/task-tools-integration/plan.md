@@ -31,9 +31,9 @@ None (infrastructure/internal improvement)
 - [ ] Skills create/update Task tool entries for progress visibility
 - [ ] Tasks survive context compaction without backup hooks
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Remove TodoWrite hooks**
    - Files: `plugin/hooks/hooks.json`
    - Remove PreCompact and SessionStart entries for TodoWrite backup/restore

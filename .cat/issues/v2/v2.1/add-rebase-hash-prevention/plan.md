@@ -37,9 +37,9 @@ Root cause: The agent manually constructed a sed pattern with a full/long hash i
 
 - [x] 2.1-fix-add-agent-skill-loading is merged
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Add prevention note to git-rebase-agent/SKILL.md for abbreviated hash usage
 - Fix Javadoc in SkillLoader.java loadRawContent()

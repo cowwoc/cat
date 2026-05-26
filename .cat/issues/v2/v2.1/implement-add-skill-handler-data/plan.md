@@ -91,9 +91,9 @@ them as constants in `AddSkillData`.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Create `client/src/main/java/io/github/cowwoc/cat/hooks/skills/AddSkillData.java`.
 
@@ -147,7 +147,7 @@ them as constants in `AddSkillData`.
     `requireThat`, standard Java.
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/skills/AddSkillData.java`
 
-### Wave 2
+### Job 2
 
 - Register the launcher in `client/build-jlink.sh`.
 
@@ -171,7 +171,7 @@ them as constants in `AddSkillData`.
   `<output>` tag. No args are passed because `AddSkillData` reads project dir from `JvmScope`.
   - Files: `plugin/skills/add/first-use.md`
 
-### Wave 3
+### Job 3
 
 - Run `mvn -f client/pom.xml verify` and fix any compilation errors, test failures, checkstyle, or PMD
   violations introduced by the changes. Then update `STATE.md` to closed.

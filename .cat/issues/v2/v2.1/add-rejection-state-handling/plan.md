@@ -19,9 +19,9 @@ None - action item A026 from retrospective (PATTERN-022)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Read work-with-issue/first-use.md:** Examine current approval gate and review step structure
    - Files: `plugin/skills/work-with-issue/first-use.md`
 2. **Add REJECTION HANDLING section:** Insert a section covering all three rejection cases with

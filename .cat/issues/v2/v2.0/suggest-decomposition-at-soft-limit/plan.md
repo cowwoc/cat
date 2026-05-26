@@ -21,9 +21,9 @@ None - UX improvement task
 - [ ] Documentation updated
 - [ ] No regressions
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Update analyze_task_size step in work.md
    - Files: plugin/commands/work.md
    - Change: When estimate > soft_threshold && estimate < hard_limit, use AskUserQuestion to suggest decomposition

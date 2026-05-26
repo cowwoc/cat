@@ -28,9 +28,9 @@ None - infrastructure/maintenance task
 - [ ] Display renders correctly without alignment calculations
 - [ ] /cat:status command works as expected
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Invoke skill-builder** - Run /cat:skill-builder with status.md as target
    - Verify: skill-builder produces new format
 2. **Replace content** - Update status.md with skill-builder output

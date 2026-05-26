@@ -62,9 +62,9 @@ None — consistency/quality issue.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Fix consolidate-doc-agent argument-hint (remove unused `<path-to-document-or-directory>`)
 - Add `argument-hint: "<catAgentId>"` to all 39 skills listed above
 

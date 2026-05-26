@@ -29,16 +29,16 @@ None
 ## Pre-conditions
 None
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Evidence Extraction in Extractors
+### Job 1: Evidence Extraction in Extractors
 - Update EXTRACTION-AGENT.md to include verbatim quote snippets in each extracted semantic unit's JSON output
   - New field: `"quote": "<verbatim text from source document>"`
   - Quote should be the minimal span that captures the semantic unit
   - This enables the comparison agent to cite evidence from both documents when reporting findings
   - Files: `plugin/skills/compare-docs-agent/EXTRACTION-AGENT.md`
 
-### Wave 2: Severity Classification and Binary Verdict in Comparator
+### Job 2: Severity Classification and Binary Verdict in Comparator
 - Update COMPARISON-AGENT.md:
   - Add severity classification per finding:
     - **HIGH**: PROHIBITION, REQUIREMENT, or CONDITIONAL unit lost or materially changed — would alter execution
@@ -57,7 +57,7 @@ None
   - LOW-severity findings do NOT fail the gate — they are informational diagnostics only
   - Files: `plugin/skills/compare-docs-agent/COMPARISON-AGENT.md`
 
-### Wave 3: Documentation and Verification
+### Job 3: Documentation and Verification
 - Update first-use.md:
   - Document new output fields: `severity`, `evidence`, `execution_equivalent`
   - Update output format examples showing enriched comparison results

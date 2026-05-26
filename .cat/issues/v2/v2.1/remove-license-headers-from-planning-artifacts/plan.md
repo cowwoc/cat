@@ -31,9 +31,9 @@ None (housekeeping / convention compliance)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** For each file listed in "Files to Modify", remove the HTML license comment block at the top (the `<!--
    ... -->` block containing the copyright notice). Do not modify any other content.
 2. **Step 2:** Run `grep -rl "Licensed under the CAT Commercial License" .cat/ | grep -v /worktrees/` to verify

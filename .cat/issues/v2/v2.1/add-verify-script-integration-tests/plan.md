@@ -36,9 +36,9 @@ the failure count instead, with `System.exit(1)` moved to `main()`.
 Create a TestNG test class `VerifyDeferPlanGenerationTest.java` in the test module. Refactor `run()` to return
 the failure count as an `int` (moving `System.exit` to `main()`), then test each check scenario.
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Refactor `client/src/main/java/io/github/cowwoc/cat/hooks/util/VerifyDeferPlanGeneration.java`:
   - Change `run()` return type from `void` to `int` (the failure count). The new signature is: `public static int run(String[] args, JvmScope scope, PrintStream out) throws IOException`.

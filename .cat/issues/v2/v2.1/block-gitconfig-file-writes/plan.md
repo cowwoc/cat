@@ -45,9 +45,9 @@ It has no awareness of arbitrary shell writes to well-known gitconfig file paths
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Add a pattern that detects shell write redirections to canonical gitconfig paths:
   `(echo|printf|tee|cat\s+>|sed\s+-i)\b.*?(~|HOME)/.gitconfig` and
   `(echo|printf|tee|cat\s+>|sed\s+-i)\b.*?(~|HOME)/.config/git/config`

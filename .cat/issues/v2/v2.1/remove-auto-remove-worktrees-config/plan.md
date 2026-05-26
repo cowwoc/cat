@@ -28,9 +28,9 @@ Remove the `autoRemoveWorktrees` configuration option entirely. Hard-code the au
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Find all usages** of `autoRemoveWorktrees` and `getAutoRemoveWorktrees`:
    ```bash

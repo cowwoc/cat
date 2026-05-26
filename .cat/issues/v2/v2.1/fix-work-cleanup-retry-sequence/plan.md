@@ -25,9 +25,9 @@ cleanup → retry workflow was not followed.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Read the current work first-use.md ERROR handling section
   - Files: `plugin/skills/work/first-use.md`
 - Add explicit instruction in the ERROR handling table: when ERROR is "existing worktree" and

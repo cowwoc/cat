@@ -59,9 +59,9 @@ Single-wave sequential implementation: remove the sub-section from CLAUDE.md, th
 to plugin/rules/work-request-handling.md, then verify. No parallelism needed — the two files are independent
 but the changes are small enough to do sequentially in one wave.
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Remove the "Invoking add-agent with description" sub-section from
   `CLAUDE.md`. The sub-section starts with the line `**Invoking add-agent with description:**` and ends

@@ -47,9 +47,9 @@ The M376 fix (commit daa321ca) already caps `maxContentWidth` to `terminalWidth 
 - [ ] Lines 1 character over terminal width do wrap
 - [ ] Empty blocked-by list still works
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Read `.cat/conventions/java.md` for code style conventions
 2. **Step 2:** Add `wrapLine(String line, int maxWidth, int indentWidth)` method to `DisplayUtils.java` that:
    - Returns the original line unchanged if `displayWidth(line) <= maxWidth`

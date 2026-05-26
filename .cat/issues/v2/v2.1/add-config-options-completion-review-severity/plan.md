@@ -26,9 +26,9 @@ settings box, and the skill has no wizard step for `minSeverity`.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Read existing files** to understand current rendering and step structure:
    - `GetConfigOutput.java` (full render logic)

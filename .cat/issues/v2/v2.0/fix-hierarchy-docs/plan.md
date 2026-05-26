@@ -37,9 +37,9 @@ scheme documentation exists.
 - [ ] All concept files reference version-scheme.md for scheme details
 - [ ] No duplicate scheme documentation remains
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Create version-scheme.md with centralized versioning documentation
    - Extract scheme table from version-paths.md
    - Add scheme detection guidance

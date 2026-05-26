@@ -95,9 +95,9 @@ worktree check fails.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Write failing tests for Bug 1 and Bug 2, verify they fail, then fix both bugs in
   `IssueDiscovery.java`, verify tests pass

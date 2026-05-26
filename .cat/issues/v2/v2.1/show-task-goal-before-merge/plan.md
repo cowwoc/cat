@@ -20,9 +20,9 @@ None - UX improvement
 - [ ] Tests written and passing
 - [ ] No regressions to existing functionality
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Identify where merge approval gate is triggered
    - Find the AskUserQuestion call for merge approval
    - Determine how to access task's PLAN.md goal

@@ -23,9 +23,9 @@ None (infrastructure/UX improvement)
 - `plugin/hooks/skill_handlers/work_handler.py` — Add config reading in `handle()` method, inject values into output
 - `plugin/skills/work/SKILL.md` — Remove "Configuration" section (lines 71-79), reference pre-injected values
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Modify work_handler.py `handle()` method:**
    - Read `.cat/cat-config.json` from the project directory
    - Extract `trust` (default "medium"), `verify` (default "changed"), `autoRemoveWorktrees` (default true)

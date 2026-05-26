@@ -52,9 +52,9 @@ treats each tool need independently rather than anticipating which tools it will
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Identify the best injection point for the convention**
    - Investigate whether `RestoreCwdAfterCompaction` hook output or session instructions is the

@@ -26,9 +26,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Add `getIssueCreationTime(Path issueDir)` private method to `IssueDiscovery.java`
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/IssueDiscovery.java`
   - Runs: `git -C {projectDir} log --diff-filter=A --format=%at -- {relative path to STATE.md}`
@@ -41,7 +41,7 @@ None
   - Wraps `getIssueCreationTime` call in a lambda that handles IOException (return `Long.MAX_VALUE`)
   - `thenComparing(Comparator.naturalOrder())` breaks ties alphabetically for determinism
 
-### Wave 2
+### Job 2
 - Add failing test `selectsOldestIssueFirst` to `IssueDiscoveryTest.java`
   - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/IssueDiscoveryTest.java`
   - Use `TestUtils.createTempGitRepo("main")` to create an isolated git repo

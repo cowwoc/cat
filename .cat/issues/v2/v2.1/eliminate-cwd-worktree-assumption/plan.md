@@ -66,9 +66,9 @@ None — infrastructure correctness fix
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Fix Java hooks
+### Job 1: Fix Java hooks
 
 - Fix `GetDiffOutput.java` — remove `detectFromWorktreePath()`, derive target branch from lock →
   issue ID → branch name (e.g., `2.1-issue-name` → branch `v2.1`)
@@ -93,7 +93,7 @@ None — infrastructure correctness fix
   - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/`
 - Run `mvn -f client/pom.xml test` — confirm BUILD SUCCESS
 
-### Wave 2: Update skills and agents
+### Job 2: Update skills and agents
 
 - Update `plugin/skills/work/first-use.md`: remove `cd "${worktree_path}"` instruction; replace
   with convention "use `${WORKTREE_PATH}/path` for all file operations; git commands use

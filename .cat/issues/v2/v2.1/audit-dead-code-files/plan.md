@@ -22,9 +22,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Enumerate all Java hook handler classes under `client/src/main/java/`
   - For each class, check if it is instantiated anywhere (grep for `new ClassName(`)
   - Files: `client/src/main/java/**/*.java`
@@ -32,7 +32,7 @@ None
   - For each script, check if it appears in `plugin/hooks/hooks.json`
   - Files: `plugin/hooks/*.sh`, `plugin/hooks/hooks.json`
 
-### Wave 2
+### Job 2
 - Enumerate all plugin skill directories under `plugin/skills/`
   - For each skill, check if its name appears in any agent `skills:` frontmatter or skill invocations
   - Files: `plugin/skills/*/SKILL.md`, `plugin/agents/*.md`, `plugin/hooks/hooks.json`

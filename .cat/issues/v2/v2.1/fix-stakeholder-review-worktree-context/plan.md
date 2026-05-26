@@ -48,15 +48,15 @@ relative file list. Without a working directory in the prompt, reviewers default
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Update `stakeholder-review-agent/SKILL.md` prepare step: replace FILE_CONTENTS embedding with a Working Directory
   section (WORKTREE_PATH) and relative file list in each reviewer prompt
   - Files: `plugin/skills/stakeholder-review-agent/SKILL.md`
 
-### Wave 2
+### Job 2
 
 - Add fail-fast to each reviewer agent definition: if no "Working Directory" section is found in the prompt, return
   REJECTED with a CRITICAL concern rather than defaulting to `/workspace/`

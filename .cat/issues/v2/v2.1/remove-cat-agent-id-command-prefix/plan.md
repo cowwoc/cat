@@ -59,9 +59,9 @@ None (infrastructure simplification)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Add `agentId` parameter to `BashHandler.check()`:** Add a new `String agentId` parameter. This is the composite
    catAgentId (e.g., `"sessionId"` for main agent, `"sessionId/subagents/agent_id"` for subagents).

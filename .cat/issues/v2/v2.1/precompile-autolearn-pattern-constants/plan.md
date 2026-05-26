@@ -40,9 +40,9 @@ fixed-string patterns that should be precompiled once at class load time.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Identify all `Pattern.compile()` calls inside `detectMistake()` in `AutoLearnMistakes.java`
   - Files: `plugin/hooks/src/main/java/.../AutoLearnMistakes.java`

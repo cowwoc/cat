@@ -52,9 +52,9 @@ learning M522.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Rewrite `plugin/rules/implementation-delegation.md`:
   - Remove the "Delegate via Task tool when" bullet list (the threshold-based list)

@@ -59,9 +59,9 @@ None — infrastructure terminology cleanup.
 
 - [ ] Parent issue `2.1-rename-branch-terminology` exists
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Rename variables in plugin agent files** — Update `BASE_BRANCH` → `TARGET_BRANCH` in work-merge.md,
    work-squash.md, work-verify.md. Update natural language "base branch" → "target branch" and "worktree branch"

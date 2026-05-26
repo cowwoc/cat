@@ -100,9 +100,9 @@ If validation fails, flag the review as incomplete (treat as CONCERNS with a not
 - [ ] SKILL.md validates evidence and flags missing evidence as CONCERNS
 - [ ] All tests pass (exit code 0)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Add "Mandatory Pre-Review Steps" section to all 10 stakeholder agent files
    - Files: plugin/agents/stakeholder-*.md
    - Insert section before the existing review criteria / concerns section

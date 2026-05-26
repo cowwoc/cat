@@ -19,9 +19,9 @@ None
 
 ## Main Agent Waves
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Add `<context_before_questions>` section to `plugin/concepts/questioning.md`
   - Files: `plugin/concepts/questioning.md`
   - Place after the `<critical_rule>` section (or at the end if no such section exists)

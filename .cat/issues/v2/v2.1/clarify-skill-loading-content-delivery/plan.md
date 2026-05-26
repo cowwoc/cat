@@ -15,9 +15,9 @@ In session 72dcec0d, the main agent misinterpreted normal Skill tool behavior (r
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Read `plugin/concepts/skill-loading.md` and insert the following clarification in the "Invoking Skills > Via Skill Tool" section (or equivalent):
   - "When the Skill tool returns skill instructions, that IS successful execution — follow those instructions. Do NOT bypass the Skill tool by spawning a manual Agent task with a simplified delegation prompt. Doing so strips mandatory workflow steps (such as AskUserQuestion approval gates) and causes protocol violations."
   - Files: `plugin/concepts/skill-loading.md`

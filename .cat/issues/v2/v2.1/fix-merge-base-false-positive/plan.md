@@ -45,9 +45,9 @@ lookahead after `merge` to exclude `merge-*` subcommands.
 - [ ] `git merge-file file1 file2 file3` - allowed
 - [ ] `cmd1 && git merge-base x y` - allowed (with preceding command)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Fix regex in `plugin/hooks/bash_handlers/block_merge_commits.py`
    - Files: `plugin/hooks/bash_handlers/block_merge_commits.py`
    - Change all three `re.search` patterns to add `(?!-)` negative lookahead after `merge`

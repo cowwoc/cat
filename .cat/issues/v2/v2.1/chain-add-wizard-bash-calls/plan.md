@@ -38,9 +38,9 @@ None - efficiency optimization
 - `plugin/skills/add/SKILL.md` - Update Bash code blocks in steps: task_validate_name, task_discuss,
   task_create, task_update_parent, task_commit to chain related operations
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Read `plugin/skills/add/SKILL.md` and identify all Bash code blocks in the issue creation workflow
    (steps task_validate_name through task_commit)
 2. **Step 2:** Combine the two validation Bash blocks in task_validate_name into a single `&&`-chained call

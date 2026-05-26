@@ -179,9 +179,9 @@ instructions over negative prohibitions when the positive form is equally clear.
 **Validation:**
 - [ ] No test regressions (python3 /workspace/run_tests.py passes)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 ### Extraction Agent (EXTRACTION-AGENT.md)
 

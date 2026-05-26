@@ -48,9 +48,9 @@ Two locations in `get-available-issues.sh` skip decomposed parents without check
 - [ ] Targeted selection of completed decomposed parent — returns found, not decomposed
 - [ ] Targeted selection of incomplete decomposed parent — returns decomposed status
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Extract sub-issue-completion-check into a reusable function
    - Files: `plugin/scripts/get-available-issues.sh`
    - Create function `all_subissues_closed()` that takes a STATE.md path, reads the `## Decomposed Into` section,

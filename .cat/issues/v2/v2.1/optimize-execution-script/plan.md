@@ -22,9 +22,9 @@ None
 - `plugin/scripts/analyze-session.py` - New Python script for mechanical data extraction
 - `plugin/skills/optimize-execution/SKILL.md` - Simplify to run script + interpret results
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Create `plugin/scripts/analyze-session.py`:**
    - Accept session file path as argument
    - Implement all Step 1-3 analysis: tool frequency, token usage, output sizes,

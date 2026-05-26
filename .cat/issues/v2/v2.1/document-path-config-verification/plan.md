@@ -29,9 +29,9 @@ wrong-directory file operations, and silent fallback to incorrect defaults.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Document mandatory verification steps for worktree path, base branch, and config values
   - Files: `plugin/concepts/worktree-isolation.md`

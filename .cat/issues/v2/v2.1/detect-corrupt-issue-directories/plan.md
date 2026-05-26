@@ -63,9 +63,9 @@ output via `get-cleanup-output`; its JSON contract must gain a `corruptIssues` a
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - In `IssueDiscovery.java`: add PLAN.md existence check in `findIssueInDir()`. After the existing
   `boolean createStateMd = !Files.isRegularFile(statePath)` line, add:
   `boolean isCorrupt = Files.isRegularFile(statePath) && !Files.isRegularFile(planPath);`
@@ -86,7 +86,7 @@ output via `get-cleanup-output`; its JSON contract must gain a `corruptIssues` a
   - Files: `client/src/test/java/.../IssueDiscoveryTest.java`,
     `client/src/test/java/.../WorkPrepareTest.java`
 
-### Wave 2
+### Job 2
 - In `plugin/skills/work-agent/SKILL.md`: add CORRUPT case to the Phase 1 status handling table (alongside
   READY, NO_ISSUES, LOCKED, OVERSIZED, ERROR). When status is CORRUPT, display error message from JSON and
   present AskUserQuestion:

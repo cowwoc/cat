@@ -171,9 +171,9 @@ The main agent does NOT receive:
 - [ ] refactor-adversarial-tdd-protocol is closed (establishes the git-commit-as-handoff pattern; this issue applies
   the same pattern to Step 3)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Update skill-grader-agent to commit-SHA protocol
+### Job 1: Update skill-grader-agent to commit-SHA protocol
 
 - Update `plugin/agents/skill-grader-agent/SKILL.md`:
   - Change **Inputs** section: replace "Test case output: The full text output produced by the subagent" with "Run
@@ -189,7 +189,7 @@ The main agent does NOT receive:
     returned as sole output (no JSON in return value)".
   - Files: `plugin/agents/skill-grader-agent/SKILL.md`
 
-### Wave 2: Update skill-analyzer-agent to commit-SHA protocol
+### Job 2: Update skill-analyzer-agent to commit-SHA protocol
 
 - Update `plugin/agents/skill-analyzer-agent/SKILL.md`:
   - Change **Inputs** section: replace "The invoking agent passes a benchmark JSON object" with "The invoking agent
@@ -206,7 +206,7 @@ The main agent does NOT receive:
   - Update **Verification** section: add "Compact analysis report text is returned alongside the commit SHA".
   - Files: `plugin/agents/skill-analyzer-agent/SKILL.md`
 
-### Wave 3: Rewrite first-use.md Step 3 (benchmark evaluation loop)
+### Job 3: Rewrite first-use.md Step 3 (benchmark evaluation loop)
 
 - Update `plugin/skills/skill-builder-agent/first-use.md` Step 3:
 

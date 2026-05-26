@@ -124,9 +124,9 @@ is absent from the tool input JSON, so the method returns `allow()` before runni
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - In `StateSchemaValidator.java`:
   - Add `import static java.nio.charset.StandardCharsets.UTF_8;` (static import)

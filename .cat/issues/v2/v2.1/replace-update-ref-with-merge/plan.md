@@ -32,9 +32,9 @@ None (infrastructure refactor)
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Add `mergeWithRetry` private method to MergeAndCleanup**
    - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/MergeAndCleanup.java`

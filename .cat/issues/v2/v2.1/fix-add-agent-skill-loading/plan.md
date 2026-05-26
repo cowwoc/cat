@@ -47,9 +47,9 @@ retrospective-agent, shrink-doc-agent, status-agent, statusline-agent, work-agen
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Add fallback logic in `loadRawContent`: when loading `{skill}-agent` and `{skill}-agent/first-use.md`
   is missing, check for `{skill}/first-use.md`
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/SkillLoader.java`

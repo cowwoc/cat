@@ -26,9 +26,9 @@ None (infrastructure/tech debt)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Read `emoji_widths.py` and `emoji-widths.json` to understand width calculation logic
    - Files: `plugin/scripts/lib/emoji_widths.py`, `plugin/scripts/lib/emoji-widths.json`
 2. **Step 2:** Write Java emoji width utility class that loads emoji-widths.json

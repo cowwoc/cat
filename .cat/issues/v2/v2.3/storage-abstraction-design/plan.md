@@ -23,9 +23,9 @@ GitHub, Jira, Linear, etc.).
 - [ ] Backend selection added to cat-config.json schema
 - [ ] Interface documented with extension guide
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Analyze current file-based operations**
    - Files: All skills that read/write .cat
    - Verify: List of all storage operations identified

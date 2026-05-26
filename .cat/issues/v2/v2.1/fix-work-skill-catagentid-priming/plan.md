@@ -50,9 +50,9 @@ pattern. The `argument-hint` in `work-with-issue-agent/SKILL.md` correctly shows
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Read and update the work skill invocation example**
    - Files: `plugin/skills/work/first-use.md`

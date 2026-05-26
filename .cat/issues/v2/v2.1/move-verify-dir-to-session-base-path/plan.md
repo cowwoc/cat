@@ -38,9 +38,9 @@ instead of using `getSessionBasePath()` (which resolves to `~/.config/claude/pro
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - In `plugin/agents/work-verify.md`, change the `VERIFY_DIR` definition from:
   ```

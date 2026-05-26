@@ -67,9 +67,9 @@ branch info automatically. `WorkPrepare` writes the field at worktree creation t
 
 - [x] Issue `2.1-remove-cat-branch-point-references` is closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Step 1:** Update `WorkPrepare.java` to write `Target Branch:` to STATE.md
    - After creating the worktree, write `- **Target Branch:** <branch-name>` to the issue's

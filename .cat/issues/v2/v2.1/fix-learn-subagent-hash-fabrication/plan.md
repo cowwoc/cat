@@ -34,9 +34,9 @@ instead of performing actual work.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Edit `plugin/skills/learn/first-use.md`: add anti-fabrication block before the JSON output template
   - Files: `plugin/skills/learn/first-use.md`

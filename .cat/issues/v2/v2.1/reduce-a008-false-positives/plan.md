@@ -28,9 +28,9 @@ None - bugfix for existing A008 hook
 - `plugin/hooks/posttool_handlers/detect_manual_boxes.py` - Add logic to track recent script outputs
   containing box characters and suppress warnings when assistant output matches
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Read `plugin/hooks/posttool_handlers/detect_manual_boxes.py` to understand current detection logic
 2. **Step 2:** Add tracking of recent Bash tool results that contain box-drawing characters (e.g., via a session-scoped
    state file or by checking the hook_data for preceding tool results)

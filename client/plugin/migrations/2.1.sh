@@ -120,7 +120,7 @@ else
             in_section && /^- / { print }
         ' "$state_file")
 
-        entry_count=$(echo "$in_progress_entries" | grep -c "^- " || echo 0)
+        entry_count=$(printf '%s\n' "$in_progress_entries" | grep -c "^- " || true)
         log_migration "    Moving $entry_count In Progress entries to Issues Pending"
 
         if grep -q "^## Issues Pending" "$state_file" 2>/dev/null; then
@@ -225,7 +225,7 @@ log_migration "Phase 3: Rename issue status values (pending→open, completed→
 
 # Find all STATE.md files under .cat/issues/
 all_state_files=$(find .cat/issues -name "STATE.md" -type f 2>/dev/null || true)
-all_state_count=$(echo "$all_state_files" | grep -c "STATE.md" || echo 0)
+all_state_count=$(printf '%s\n' "$all_state_files" | grep -c "STATE.md" || true)
 
 if [[ "$all_state_count" -eq 0 ]]; then
     log_migration "No STATE.md files found - skipping phase 3"
@@ -332,18 +332,18 @@ else
 fi
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Phase 5: Rename PLAN.md sections to pre-conditions / post-conditions
+# Phase 5: Rename plan.md sections to pre-conditions / post-conditions
 # ──────────────────────────────────────────────────────────────────────────────
 
-log_migration "Phase 5: Rename PLAN.md sections to pre-conditions/post-conditions"
+log_migration "Phase 5: Rename plan.md sections to pre-conditions/post-conditions"
 
-all_plan_files=$(find .cat/issues -name "PLAN.md" -type f 2>/dev/null || true)
-all_plan_count=$(printf '%s\n' "$all_plan_files" | grep -c "PLAN.md" || true)
+all_plan_files=$(find .cat/issues \( -name "plan.md" -o -name "PLAN.md" \) -type f 2>/dev/null || true)
+all_plan_count=$(printf '%s\n' "$all_plan_files" | grep -c . || true)
 
 if [[ "$all_plan_count" -eq 0 ]]; then
-    log_migration "No PLAN.md files found - skipping phase 5"
+    log_migration "No plan.md files found - skipping phase 5"
 else
-    log_migration "Found $all_plan_count PLAN.md files to check"
+    log_migration "Found $all_plan_count plan.md files to check"
 
     phase5_changed=0
 
@@ -672,15 +672,15 @@ else
 fi
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Phase 8: Migrate ## Execution Steps to ## Execution Waves in PLAN.md files
+# Phase 8: Migrate ## Execution Steps to ## Execution Waves in plan.md files
 # ──────────────────────────────────────────────────────────────────────────────
 
-log_migration "Phase 8: Migrate Execution Steps → Execution Waves in PLAN.md files"
+log_migration "Phase 8: Migrate Execution Steps → Execution Waves in plan.md files"
 
-all_plan_files=$(find .cat/issues -name "PLAN.md" -type f 2>/dev/null || true)
+all_plan_files=$(find .cat/issues \( -name "plan.md" -o -name "PLAN.md" \) -type f 2>/dev/null || true)
 
 if [[ -z "$all_plan_files" ]]; then
-    log_migration "No PLAN.md files found - skipping phase 8"
+    log_migration "No plan.md files found - skipping phase 8"
 else
     phase8_migrated=0
 
@@ -1132,20 +1132,20 @@ else
 fi
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Phase 14: Rename ## Satisfies → ## Parent Requirements in issue PLAN.md files
+# Phase 14: Rename ## Satisfies → ## Parent Requirements in issue plan.md files
 # ──────────────────────────────────────────────────────────────────────────────
 
-log_migration "Phase 14: Rename ## Satisfies → ## Parent Requirements in issue PLAN.md files"
+log_migration "Phase 14: Rename ## Satisfies → ## Parent Requirements in issue plan.md files"
 
-# Issue-level PLAN.md files live at .cat/issues/v*/v*.*/issue-name/PLAN.md (depth 4 from issues/).
-issue_plan_files=$(find .cat/issues -path "*v*.*/*" -name "PLAN.md" -mindepth 4 -maxdepth 4 -type f \
+# Issue-level plan files live at .cat/issues/v*/v*.*/issue-name/plan.md (depth 4 from issues/).
+issue_plan_files=$(find .cat/issues -path "*v*.*/*" \( -name "plan.md" -o -name "PLAN.md" \) -mindepth 4 -maxdepth 4 -type f \
     2>/dev/null || true)
 
 if [[ -z "$issue_plan_files" ]]; then
-    log_migration "No issue-level PLAN.md files found - skipping phase 14"
+    log_migration "No issue-level plan.md files found - skipping phase 14"
 else
     totalCount=$(echo "$issue_plan_files" | wc -l | tr -d ' ')
-    log_migration "Found $totalCount issue-level PLAN.md files to check"
+    log_migration "Found $totalCount issue-level plan.md files to check"
 
     phase14_changed=0
 
@@ -1179,15 +1179,15 @@ else
 fi
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Phase 15: Rename ## Execution Waves → ## Sub-Agent Waves in PLAN.md files
+# Phase 15: Rename ## Execution Waves → ## Sub-Agent Waves in plan.md files
 # ──────────────────────────────────────────────────────────────────────────────
 
-log_migration "Phase 15: Rename ## Execution Waves → ## Sub-Agent Waves in PLAN.md files"
+log_migration "Phase 15: Rename ## Execution Waves → ## Sub-Agent Waves in plan.md files"
 
-all_plan_files=$(find .cat/issues -name "PLAN.md" -type f 2>/dev/null || true)
+all_plan_files=$(find .cat/issues \( -name "plan.md" -o -name "PLAN.md" \) -type f 2>/dev/null || true)
 
 if [[ -z "$all_plan_files" ]]; then
-    log_migration "No PLAN.md files found - skipping phase 15"
+    log_migration "No plan.md files found - skipping phase 15"
 else
     phase15_migrated=0
     phase15_skipped=0
@@ -1638,7 +1638,7 @@ version_changelog_files=$(find .cat/issues -name "CHANGELOG.md" -mindepth 3 -max
 if [[ -z "$version_changelog_files" ]]; then
     log_migration "  No version-level CHANGELOG.md files found"
 else
-    totalCount=$(echo "$version_changelog_files" | grep -c . || echo 0)
+    totalCount=$(printf '%s\n' "$version_changelog_files" | grep -c . || true)
     log_migration "  Found $totalCount version-level CHANGELOG.md files to rename"
 
     while IFS= read -r changelog_file; do

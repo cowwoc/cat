@@ -50,9 +50,9 @@ After this issue is implemented:
 - [ ] `violation-scanner` entry removed from `client/build-jlink.sh` HANDLERS array
 - [ ] `plugin/concepts/work.md` updated to reference the cat-rules enforcement mechanism
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. Remove `ViolationScanner.java`, `ViolationFinding.java`, `ViolationScannerTest.java` from the worktree
 2. Remove the `violation-scanner:util.ViolationScanner` entry from the HANDLERS array in `client/build-jlink.sh`

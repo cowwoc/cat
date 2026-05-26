@@ -55,9 +55,9 @@ tune wrapping for file output (e.g., markdown docs) vs. terminal rendering (e.g.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Update `Config.java`: remove `terminalWidth` default, add `fileWidth: 120` and `displayWidth: 120`
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/Config.java`
 - Update `GetDiffOutput.java`: change `config.getInt("terminalWidth", 50)` to
@@ -69,7 +69,7 @@ tune wrapping for file output (e.g., markdown docs) vs. terminal rendering (e.g.
   variable `terminalWidth` to `displayWidth`; update all downstream uses in the same method
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetStatusOutput.java`
 
-### Wave 2
+### Job 2
 - Update test fixtures: replace all `"terminalWidth"` keys with `"displayWidth"` in
   `GetDiffOutputTest.java` (lines 72, 107, 239, 288, 339, 391)
   - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/GetDiffOutputTest.java`
@@ -78,7 +78,7 @@ tune wrapping for file output (e.g., markdown docs) vs. terminal rendering (e.g.
   mobile/desktop examples and the merge snippet
   - Files: `plugin/skills/config/first-use.md`
 
-### Wave 3
+### Job 3
 - Add Phase 9 to `plugin/migrations/2.1.sh`: after Phase 8, add a phase that:
   1. Checks if `terminalWidth` exists in `cat-config.json`
   2. Reads its value, writes `fileWidth` and `displayWidth` with that value
@@ -88,7 +88,7 @@ tune wrapping for file output (e.g., markdown docs) vs. terminal rendering (e.g.
   - Files: `plugin/migrations/2.1.sh`
 - Run `mvn -f client/pom.xml test` and verify all tests pass
 
-### Wave 4
+### Job 4
 - Update `README.md` to document both `fileWidth` and `displayWidth` config options where
   `terminalWidth` was previously referenced (if any), or add them to the configuration section
   - Files: `README.md`

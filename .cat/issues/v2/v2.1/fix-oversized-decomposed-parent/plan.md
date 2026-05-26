@@ -63,9 +63,9 @@ branch before the OVERSIZED check.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Add `boolean isDecomposedComplete` field to `IssueDiscovery.DiscoveryResult.Found` record
   - Location: `client/src/main/java/io/github/cowwoc/cat/hooks/util/IssueDiscovery.java`
   - The `Found` record signature is at line ~230: `record Found(String issueId, String major, String minor, String patch, String issueName, String issuePath, String scope, boolean createStateMd, boolean isCorrupt)`
@@ -98,7 +98,7 @@ branch before the OVERSIZED check.
   - New: `new DiscoveryResult.Found("2.1-my-feature", "2", "1", "", "my-feature", "/path/to/issue", "all", false, false, false)`
   - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/IssueDiscoveryTest.java`
 
-### Wave 2
+### Job 2
 - Add regression test `testDecomposedParentAllSubIssuesClosed_returnsReady` to `WorkPrepareTest.java`
   - Location: `client/src/test/java/io/github/cowwoc/cat/hooks/test/WorkPrepareTest.java`
   - Test setup (all steps inside `try (JvmScope scope = new TestJvmScope(projectDir, projectDir))`):

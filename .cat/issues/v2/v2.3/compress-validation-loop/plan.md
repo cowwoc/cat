@@ -20,9 +20,9 @@ To be determined through automated iteration of compress -> validate -> learn cy
 - `scripts/compress-validate-loop.py` - New orchestration script (create)
 - `plugin/skills/learn/learn.md` - Potential improvements based on findings
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Create Python orchestration script** that:
    - Manages two external Claude processes via FIFO
    - Handles plugin reinstall (`claude plugin uninstall/install cat@cat`)

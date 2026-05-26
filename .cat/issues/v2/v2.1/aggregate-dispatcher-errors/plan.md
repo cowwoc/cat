@@ -55,9 +55,9 @@ The additionalContext output includes an error section:
 - [ ] Process exits with non-zero code when any handler failed
 - [ ] All existing tests pass
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Modify GetSessionStartOutput.run()** to collect errors into a list
    - Replace catch block's stderr-only logging with error collection
    - After handler loop, append error section to combinedContext

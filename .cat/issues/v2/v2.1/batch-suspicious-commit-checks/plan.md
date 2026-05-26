@@ -52,9 +52,9 @@ None — performance optimization.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Locate the suspicious commit inspection code by searching for "suspicious_commit" or "git show --stat"
   in the work/work-prepare skill files:
   ```bash
@@ -64,7 +64,7 @@ None — performance optimization.
   Identify the exact file and line numbers where individual git show --stat calls are made.
   - Files: work skill files identified by grep
 
-### Wave 2
+### Job 2
 - Replace the individual `git show --stat` calls with a single batched Bash command that loops over
   all suspicious commit hashes and outputs each commit's stat summary with a separator line. Preserve
   the output format so the main agent can still identify which files each commit changed.

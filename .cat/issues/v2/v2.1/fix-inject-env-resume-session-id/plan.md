@@ -51,9 +51,9 @@ file, so overwriting is safe.
 - [ ] Writing to the resumed session directory uses TRUNCATE_EXISTING (overwrite), not APPEND
 - [ ] `mvn -f client/pom.xml verify` exits with code 0
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Relax the early-return guard in `handle()` to allow `source="resume"` through, then call
    `writeToResumedSessionDir()` with the resumed `session_id` and return. Update `writeToResumedSessionDir()` to use
    `TRUNCATE_EXISTING` (overwrite) instead of `APPEND` when writing to the resumed session directory.

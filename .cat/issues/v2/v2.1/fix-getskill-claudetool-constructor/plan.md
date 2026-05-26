@@ -16,9 +16,9 @@ and add ClaudeTool.class as a fallback constructor parameter type in invokeSkill
 - All existing tests pass
 - E2E: Invoke /cat:add-agent and verify the preprocessor directive for get-output executes without error
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - In `client/src/main/java/io/github/cowwoc/cat/hooks/util/GetSkill.java`, update `invokeSkillOutput()` to
   try `ClaudeTool.class` constructor first, then fall back to `JvmScope.class`, then to no-arg constructor.

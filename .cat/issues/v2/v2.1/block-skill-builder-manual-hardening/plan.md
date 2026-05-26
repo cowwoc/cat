@@ -53,9 +53,9 @@ Task tool subagents.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Add a BLOCKING notice immediately after the `### Step 5: In-Place Hardening Mode (Optional)` heading in
   `plugin/skills/skill-builder-agent/first-use.md` (currently line 333). Insert the following notice block

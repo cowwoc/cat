@@ -29,9 +29,9 @@ None (convention compliance)
 - [ ] skill-loading.md reflects current `<output>` tag pattern (no `<skill>` tag references)
 - [ ] skill-loading.md examples match actual agent frontmatter
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Research prefix requirement:** Test whether `cat:` prefix is required for plugin skill resolution in frontmatter
 2. **Update work-merge.md:** Change `git-merge-linear` → `{prefix}git-merge-linear-first-use`, same for
    `validate-git-safety`

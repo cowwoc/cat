@@ -38,9 +38,9 @@ None — internal tooling cleanup.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Audit all skill files for `git -C` usage** — for each occurrence, determine whether it can be replaced
    with a `cd` pattern or must remain (e.g., `git worktree remove` and `git branch -D` that run from the

@@ -115,9 +115,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Write failing tests for the new resume behavior in `WorkPrepareTest.java` (TDD):
   - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/WorkPrepareTest.java`
 - Implement `resume` field in `PrepareInput` and update `parseRawArguments()` to capture the
@@ -127,7 +127,7 @@ None
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/WorkPrepare.java`
 - Run `mvn -f client/pom.xml test` to confirm all tests pass
 
-### Wave 2
+### Job 2
 - Update `plugin/skills/work/first-use.md` — the ERROR: Existing Worktree Handling section:
   - Change "Resume on existing worktree" option to pass `resume <issueId>` in ARGUMENTS
   - Add constraint that this option is only presented when user explicitly said resume

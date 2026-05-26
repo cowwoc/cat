@@ -33,9 +33,9 @@ None - performance optimization
   plan to an implementation subagent. Fix subagents read detail files directly.
 - [ ] Parent agent context consumed by Phases 3a+3b is reduced by at least 50% compared to current baseline
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Measure current baseline**
    - Record average parent-agent input tokens consumed by Phases 3a+3b across 3+ sessions
 

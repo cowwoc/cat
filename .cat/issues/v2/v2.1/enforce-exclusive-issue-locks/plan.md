@@ -68,9 +68,9 @@ incorrectly and will intentionally fail after this change.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Add four failing tests to `IssueLockTest` that cover conflict detection:
   - `acquireFailsWhenSessionAlreadyHoldsLockForDifferentIssue` — session holds `issue-a`, tries to
@@ -91,7 +91,7 @@ incorrectly and will intentionally fail after this change.
 - Run `mvn -f client/pom.xml test` to confirm tests FAIL (red phase of TDD)
   - Files: none (validation only)
 
-### Wave 2
+### Job 2
 
 - Implement `scanForConflictingLock(String issueId, String sessionId)` private method in `IssueLock`:
 

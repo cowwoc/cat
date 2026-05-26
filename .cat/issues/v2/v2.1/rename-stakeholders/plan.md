@@ -33,9 +33,9 @@ None - infrastructure/organization task
 - [ ] All references updated across all files
 - [ ] No broken references remain (grep verification)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Find all files referencing stakeholders path
    - Verify: `grep -r "references/stakeholders" plugin/`
 2. **Step 2:** Move directory to new location

@@ -32,9 +32,9 @@ The skill's Step 1 and Usage section use `$SESSION_FILE` (full path) instead of 
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Update Usage section:** Change `SESSION_FILE` variable to use session ID, not path
 2. **Update Step 1:** Change `session-analyzer "$SESSION_FILE"` to `session-analyzer "$SESSION_ID"`
 3. **Verify consistency:** Ensure all references in the skill use session ID format

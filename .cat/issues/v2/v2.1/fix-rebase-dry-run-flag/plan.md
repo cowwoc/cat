@@ -27,9 +27,9 @@ provided the correct alternative.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Add a "Common Issues" entry to `plugin/skills/git-merge-linear-agent/first-use.md`:
   - Title: "Issue: `git rebase --dry-run` does not exist"
   - Explain that git rebase has no dry-run flag

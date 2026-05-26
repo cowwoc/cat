@@ -23,9 +23,9 @@ ambiguous results.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Read `plugin/skills/empirical-test/first-use.md`** to identify all `--trials` occurrences
    - Files: `plugin/skills/empirical-test/first-use.md`
 2. **Update Step 3 (Baseline)** to use `--trials 1` instead of `--trials 5`

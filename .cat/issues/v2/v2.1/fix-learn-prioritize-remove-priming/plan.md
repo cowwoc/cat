@@ -58,9 +58,9 @@ check: "if priming was found, can the priming source be removed or rewritten?"
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Update `plugin/skills/learn/prevention-hierarchy.md`:
   - Add a new "Priming Root Cause" section after the Escalation Rules table

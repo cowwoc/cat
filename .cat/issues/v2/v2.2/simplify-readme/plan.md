@@ -29,9 +29,9 @@ None (user onboarding improvement)
 - [ ] All detail pages linked from README
 - [ ] No content lost, only reorganized
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Create docs/ directory structure**
    - Files: docs/*.md
    - Verify: All files exist

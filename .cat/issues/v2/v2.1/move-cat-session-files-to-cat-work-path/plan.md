@@ -91,9 +91,9 @@ post-refactor names.
 
 - [ ] `refactor-jvmscope-path-api` is closed (provides `getCatWorkPath()` and `getCatSessionPath()`)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Write failing tests for the three file groups (TDD):
   - `GetFileTest` — verify `loaded/` marker is written under `{catWorkPath}/sessions/{catAgentId}/loaded/`
@@ -105,7 +105,7 @@ post-refactor names.
   - Files: relevant test files under `client/src/test/`
 - Run `mvn -f client/pom.xml test` — tests should fail (TDD red phase)
 
-### Wave 2
+### Job 2
 
 - Update production path construction in:
   - `GetFile.java`: change `scope.getClaudeSessionsPath()` → `scope.getCatWorkPath().resolve("sessions")`

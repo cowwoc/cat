@@ -62,14 +62,14 @@ None
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Create `plugin/concepts/subagent-context-minimization.md` with license header and full content
   - Files: `plugin/concepts/subagent-context-minimization.md`
 
-### Wave 2
+### Job 2
 
 - Add reference to `plugin/concepts/subagent-context-minimization.md` in the `## Related Concepts`
   section of `plugin/skills/optimize-execution/first-use.md`

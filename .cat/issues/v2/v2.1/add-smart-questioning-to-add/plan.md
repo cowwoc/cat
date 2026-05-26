@@ -45,9 +45,9 @@ The `issue_validate_criteria` step validates post-conditions but does not analyz
 
 - [ ] `refactor-curiosity-to-effort` is closed (effort config exists)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Add `issue_smart_questioning` step to `/cat:add`**
    - Files: `plugin/skills/add/first-use.md`

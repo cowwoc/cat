@@ -32,9 +32,9 @@ STATE.md `closed` means implementation finished, not that the merge-and-cleanup 
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Add "Issue Lifecycle States" section to `work-merge-agent/SKILL.md` defining:
   - State 1: Implementation running — confirm/review/merge phases active, worktree exists, lock held

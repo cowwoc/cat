@@ -86,9 +86,9 @@ Known issues:
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Binary rename + arg forwarding
+### Job 1: Binary rename + arg forwarding
 
 - Rename binary `load-skill` → `skill-loader` in `client/build-jlink.sh`
 - Update all SKILL.md preprocessor directives: `client/bin/load-skill` → `client/bin/skill-loader`
@@ -97,14 +97,14 @@ Known issues:
 - Fix `plugin/skills/work/SKILL.md`: append `$ARGUMENTS`
 - Run `mvn -f client/pom.xml test`
 
-### Wave 2: Argument pipeline audit
+### Job 2: Argument pipeline audit
 
 - For each skill with `argument-hint` in its SKILL.md frontmatter, verify the argument chain:
   SKILL.md → skill-loader → first-use.md positional variables → INVOKE directives
 - Fix any broken or redundant argument forwarding
 - Run `mvn -f client/pom.xml test`
 
-### Wave 3: Skill directory renames
+### Job 3: Skill directory renames
 
 - Rename all 36 skill directories to add `-agent` suffix
 - Update all `cat:<old-name>` references across the entire plugin to `cat:<new-name>`

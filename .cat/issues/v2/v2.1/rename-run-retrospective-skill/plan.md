@@ -27,9 +27,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Search codebase for all occurrences of `cat:run-retrospective` and `run-retrospective` to build a
    complete list of files requiring changes
    - Files: `plugin/`, `docs/`, `.claude/`

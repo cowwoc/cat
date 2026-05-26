@@ -28,9 +28,9 @@ None (infrastructure/optimization)
 - [ ] Existing `session-analyzer <file>` (no subcommand) continues to work as before
 - [ ] get-history skill updated to reference the Java tool
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Add subcommand dispatch to main():** Parse first argument as subcommand (analyze, search, errors, file-history).
    Default to analyze for backward compatibility.

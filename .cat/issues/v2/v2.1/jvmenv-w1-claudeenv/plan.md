@@ -190,9 +190,9 @@ New file: `client/src/test/java/io/github/cowwoc/cat/hooks/test/TestClaudeHook.j
 - [ ] `GetSkill` uses `MainClaudeHook` instead of `MainJvmScope`
 - [ ] `mvn -f client/pom.xml test` passes with exit code 0
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Implement All Changes
+### Job 1: Implement All Changes
 
 This issue is small enough for a single implementation wave. All steps must be completed
 and committed before the build verification step.
@@ -549,7 +549,7 @@ Common issues to check:
 - Any production file that imports `ClaudeEnv` needs updating (should have been caught in steps above)
 - `module-info.java` exports — no changes needed since all new classes are in the same package
 
-### Wave 2: ClaudeHook Hierarchy
+### Job 2: ClaudeHook Hierarchy
 
 This wave introduces the `ClaudeHook` interface, trims `JvmScope` to generic methods only, and
 replaces `HookInput`/`HookOutput` with unified hook scope objects.
@@ -663,7 +663,7 @@ Run `mvn -f client/pom.xml verify` from the worktree root (NOT from /workspace).
 All tests must pass. If there are compilation errors due to remaining references to `HookInput`,
 `HookOutput`, or removed `JvmScope` methods, fix them before proceeding.
 
-### Wave 3: Fix Missing Criteria (Iteration 1)
+### Job 3: Fix Missing Criteria (Iteration 1)
 
 **Step 31: Fix `MainClaudeHook.readStdin()` to eliminate direct `JsonMapper.builder().build()` call**
 

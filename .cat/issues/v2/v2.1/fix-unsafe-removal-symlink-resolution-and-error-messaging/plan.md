@@ -39,9 +39,9 @@ change directories.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. Fix symlink resolution in `checkProtectedPaths()`: attempt `toRealPath()` on target path when possible, fall back
    to normalized path if target doesn't exist
 2. Update error message format in `checkProtectedPaths()` to include `CWD: <workingDirectory>`

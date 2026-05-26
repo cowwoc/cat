@@ -24,9 +24,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Move the `isWorkExecute` check block (lines ~87-103) to execute before the `WorktreeContext.forSession()` call
   - Files: client/src/main/java/io/github/cowwoc/cat/hooks/tool/post/SetPendingAgentResult.java
 - Run all tests to confirm no regressions

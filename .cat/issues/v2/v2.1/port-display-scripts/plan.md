@@ -43,9 +43,9 @@ None - infrastructure/tech debt
 - `plugin/scripts/` - Remove ported scripts
 - `plugin/skills/*/SKILL.md` - Update script invocation paths
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Port Python display scripts to Java:** For each Python script, create corresponding Java class
    in the hooks module matching the exact output format
 2. **Update skill handlers:** Modify Java handlers to call display classes directly instead of

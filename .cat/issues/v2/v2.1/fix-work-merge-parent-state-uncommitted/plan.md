@@ -45,9 +45,9 @@ catches it — no file-specific logic needed.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Step 1:** In `work-merge/first-use.md`, move Steps 6 (auto-complete decomposed parent) and 7 (update changelog)
    to before Step 5 (merge and cleanup). Renumber all steps sequentially. The moved logic must operate inside the

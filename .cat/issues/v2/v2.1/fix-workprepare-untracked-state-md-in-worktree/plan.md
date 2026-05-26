@@ -42,9 +42,9 @@ not in git). IssueDiscovery still returns `createStateMd=false` for this case.
 ## Pre-conditions
 - All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** In `WorkPrepare.java` `executeWithLock()` around line 513, locate the
    `updateStateMd()` call. When `updateStateMd()` throws `IOException` with a message containing
    "STATE.md not found in worktree", catch the exception and call `createStateMd()` as the

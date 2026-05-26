@@ -91,9 +91,9 @@ After migration: these skills have no `<output>` tag. Each step that needs a box
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Create `GetOutput.java` dispatcher that accepts `skill` and optional `page`
    arguments, validates them, and delegates to the appropriate existing `SkillOutput` handler.
    - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetOutput.java`

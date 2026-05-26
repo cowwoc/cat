@@ -43,9 +43,9 @@ actual activity. Lock file timestamps are local-only metadata that may not refle
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Update cleanup skill AskUserQuestion to include session ID and age per artifact**
    - Files: `plugin/skills/cleanup/first-use.md`

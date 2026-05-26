@@ -24,9 +24,9 @@ None - infrastructure/marketing task
 - [ ] Template is styled consistently with existing site design
 - [ ] Template is reusable across multiple feature demos
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Design page layout structure
    - Files: template component
    - Verify: Layout renders correctly

@@ -35,9 +35,9 @@ subagent to bypass prevention validation:
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Replace Step 4 in `plugin/skills/learn/first-use.md` with expanded Step 4a/4b/4c structure:
   - Step 4a: Add required-field validation including minimum 20-character summaries
   - Step 4b: Add three-check commit verification (existence, timestamp after spawn, touches prevention_path)

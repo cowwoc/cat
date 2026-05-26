@@ -20,9 +20,9 @@ is excessively large (e.g., 158K insertions across 1588 files when diffing v2.1 
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Add guard using DiffStats before raw diff retrieval** — In `getOutput(Path projectRoot)`, after the existing
    `getDiffStats()` call (line ~427) and before `getRawDiff()` (line ~430), check if `stats.filesChanged() > 500` or
    `stats.insertions() + stats.deletions() > 50000`. If exceeded, return a message telling the agent the diff is too

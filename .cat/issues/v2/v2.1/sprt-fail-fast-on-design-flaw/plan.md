@@ -34,9 +34,9 @@ Observed during `2.1-update-instruction-builder-benchmark-approach`:
 
 refactor
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Read `plugin/skills/instruction-builder-agent/first-use.md` Step 4.3 Result Inspection Checklist
 - Add after "Check 1 — Structural contamination check" and "Check 2 — Prohibition verification":

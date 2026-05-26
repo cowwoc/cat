@@ -116,25 +116,25 @@ The proposal enables:
 - [ ] All dependent issues are closed
 - [ ] PLAN.md template supports optional grouping annotations
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Remove wave-annotation parsing from WorkPrepare.java (STEP_NUMBER_PATTERN, WAVE_ANNOTATION_PATTERN, readExecutionWavesFromPlan method)
 - Remove "waves" field from READY JSON output
 - Add EXECUTION_WAVES_PATTERN to match ## Execution Waves sections in PLAN.md
 - Update token estimation to count wave items (top-level bullets in ### Wave N sections)
 
-### Wave 2
+### Job 2
 - Update work-with-issue skill first-use.md to detect parallel execution from PLAN.md directly (not READY JSON)
 - Update add skill first-use.md to document ## Execution Waves / ### Wave N syntax
 - Update work-merge skill first-use.md references (groups → waves)
 
-### Wave 3
+### Job 3
 - Rewrite parallel-execution.md with new wave-section syntax
 - Update issue-plan.md template to use ## Execution Waves format
 - Update existing test file to test new wave-section token estimation
 
-### Wave 4
+### Job 4
 - Run full test suite to ensure no regressions
   - Command: `mvn -f client/pom.xml verify`
 

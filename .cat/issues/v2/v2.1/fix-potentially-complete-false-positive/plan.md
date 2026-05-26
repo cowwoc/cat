@@ -28,9 +28,9 @@ None (infrastructure bugfix)
 Add `"config: decompose"` to the `planning_prefixes` tuple. Add a unit test for `check_base_branch_commits()` that
 verifies decomposition commits are filtered out.
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Step 1:** Add `"config: decompose"` to `planning_prefixes` in `check_base_branch_commits()`
    - File: `plugin/scripts/work-prepare.py` line 455

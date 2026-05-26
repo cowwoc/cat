@@ -61,9 +61,9 @@ own launcher scripts from the HANDLERS array using a simple template.
 - `plugin/skills/status/handler.sh` - Change from `hook.sh skills.RunGetStatusOutput` to `bin/get-status-output`
 - `plugin/scripts/get-render-diff.sh` - Change from `hook.sh` invocation to direct launcher call
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 ### Step 1: Replace `--launcher` and `--add-options` with `generate_launchers()`
 

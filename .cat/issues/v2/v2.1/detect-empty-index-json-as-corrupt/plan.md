@@ -45,9 +45,9 @@ added to show why the directory is corrupt (e.g., "plan.md is missing", "index.j
 
 **Commit type:** `bugfix:` — this fixes a bug where corrupt directories are not surfaced during cleanup.
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Update `CorruptIssue` record in `GetCleanupOutput.java` to add a `reason` field, update its Javadoc and
   compact constructor, and update `getSurveyOutput` to display the reason.

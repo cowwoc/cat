@@ -62,16 +62,16 @@ None (technical debt/tool polish)
 - Identify which already have complete guidance vs. which need enhancement
 - Research message patterns in top 5 "good model" hooks to establish patterns
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1 (Inventory and Assessment)
+### Job 1 (Inventory and Assessment)
 
 - Inventory all hooks in `client/src/main/java/io/github/cowwoc/cat/hooks/` and `plugin/hooks/`
 - For each hook, extract current block/warn message text
 - Classify: already has actionable guidance, or needs enhancement
 - Files: (all hook source files identified in "Files to Modify" section)
 
-### Wave 2 (Enhancement)
+### Job 2 (Enhancement)
 
 - Update block/warn messages in hooks identified as needing enhancement
 - Follow patterns from good models (BlockGitconfigFileWrite, EnforceCommitBeforeSubagentSpawn, etc.)
@@ -79,14 +79,14 @@ None (technical debt/tool polish)
 - For hooks with no safe alternative (e.g., preventing rm -rf), explain what the hook protects against
 - Files: Hook source files in `client/src/main/java/io/github/cowwoc/cat/hooks/`
 
-### Wave 3 (Convention + Verification)
+### Job 3 (Convention + Verification)
 
 - Create `plugin/rules/hook-output-guidance.md` with convention that all hooks must include guidance
 - Include examples of good and bad patterns
 - Document both plugin hooks and project hooks guidance expectations
 - Files: `plugin/rules/hook-output-guidance.md` (new file)
 
-### Wave 4 (Test + Commit)
+### Job 4 (Test + Commit)
 
 - Run full test suite (mvn -f client/pom.xml test) — verify no regressions
 - Verify all hook logic unchanged (behavior identical, only messages enhanced)

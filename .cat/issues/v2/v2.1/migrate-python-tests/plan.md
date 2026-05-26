@@ -51,9 +51,9 @@ Existing: `HookEntryPointTest.java` (11 tests)
 ## Dependencies
 - All handler sub-issues complete (handlers must work in Java before tests can validate them)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Read each Python test file** to understand test cases and assertions
 2. **Create equivalent Java TestNG tests** at target location
 3. **Migrate shared fixtures** from `conftest.py` to Java test utilities

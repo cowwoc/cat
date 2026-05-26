@@ -42,9 +42,9 @@ None (infrastructure bugfix)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Update `determineLockReason()` in `BlockUnsafeRemoval` to extract sessionId from composite agentId
   when full match fails, allowing subagents to match their own session's locks
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/bash/BlockUnsafeRemoval.java`

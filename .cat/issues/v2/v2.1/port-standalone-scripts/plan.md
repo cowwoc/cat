@@ -39,9 +39,9 @@ Parent: 2.1-port-workflow-scripts (sub-issue 2 of 4)
 ## Files to Modify
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/module-info.java` - if new exports needed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. Read `create-issue.py` - understand directory creation and commit logic
 2. Read `load-skill.sh` - understand env var substitution patterns
 3. Read `get-progress-banner.sh` - understand banner rendering with box drawing

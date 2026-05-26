@@ -49,9 +49,9 @@ Deferring full plan generation ensures the implementation plan reflects the curr
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - **Modify `plugin/skills/add/first-use.md`**: Replace the plan-builder invocation in the `issue_create` step
   with lightweight inline plan generation.

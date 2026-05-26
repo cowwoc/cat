@@ -28,9 +28,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Rewrite Step 4 adversarial TDD loop in `plugin/skills/skill-builder-agent/first-use.md`:
   - Replace fresh agent spawning with persistent agents: spawn red-team agent once in round 1, `resume` it in
     subsequent rounds; same for blue-team
@@ -55,7 +55,7 @@ None
 - [ ] E2E: Run in-place hardening on a sample skill file; verify: (a) git log shows alternating red-team/blue-team commits per round, (b) final findings.json has `major_loopholes_found: false` or loop reached 10-round cap, (c) no CRITICAL/HIGH loopholes remain at natural convergence.
   (Live agent execution is verified manually; validate-adversarial-protocol.sh covers structural correctness automatically.)
 
-### Wave 2 (fix iterations)
+### Job 2 (fix iterations)
 
 - Add a structural validation script (`plugin/scripts/validate-adversarial-protocol.sh`) that statically inspects
   `plugin/skills/skill-builder-agent/first-use.md` and asserts:

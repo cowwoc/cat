@@ -153,9 +153,9 @@ The test should:
 - [ ] No new issues introduced
 - [ ] All existing tests pass (`mvn -f client/pom.xml test`)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Implement fix in `GetSkill.java` and add regression test
 

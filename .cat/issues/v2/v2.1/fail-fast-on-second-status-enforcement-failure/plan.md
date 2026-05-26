@@ -62,9 +62,9 @@ fail-fast with a clear error.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Write failing tests first (TDD) in `EnforceStatusOutputTest.java`:
   - `stopHookActiveWithBoxPresent`: build a mock transcript with `stop_hook_active=true` and box characters in

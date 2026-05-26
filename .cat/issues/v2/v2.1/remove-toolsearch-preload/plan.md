@@ -41,9 +41,9 @@ Claude Code tools, not deferred tools.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Open `plugin/skills/work-with-issue-agent/first-use.md`
 - Remove the "Tool Preloading" section (the paragraph and the ToolSearch call block)

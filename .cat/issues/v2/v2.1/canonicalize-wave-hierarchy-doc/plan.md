@@ -38,9 +38,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Read all source files listed in Files to Modify to extract all content about the execution model
   (hierarchy, wave definition, wave↔subagent relationship, parallelism, ordering, decomposition)
   - Files: `plugin/concepts/parallel-execution.md`, `plugin/concepts/hierarchy.md`,

@@ -19,9 +19,9 @@ None - documentation consistency fix
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - In `plugin/concepts/state-schema.md`, add a row for `Target Branch` to the Optional fields table with
   a description indicating it records the merge target branch for the issue.
   - Files: `plugin/concepts/state-schema.md`

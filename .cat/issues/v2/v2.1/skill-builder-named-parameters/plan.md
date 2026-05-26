@@ -35,9 +35,9 @@ None
 - [ ] M358 over-engineered changes reverted (no load-skill.sh routing for these skills)
 - [ ] All existing tests pass
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Add named parameter support to SkillLoader.java:**
    - Parse `parameters:` YAML frontmatter field (list of parameter names)
    - Accept args string from Skill tool invocation

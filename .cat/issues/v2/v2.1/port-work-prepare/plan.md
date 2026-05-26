@@ -34,9 +34,9 @@ Parent: 2.1-port-workflow-scripts (sub-issue 4 of 4)
 ## Files to Modify
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/module-info.java` - if new exports needed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. Read `work-prepare.py` thoroughly - understand full orchestration flow
 2. Map Python subprocess calls to Java method calls on ported classes
 3. Implement `WorkPrepare.java` integrating IssueLock, ExistingWorkChecker, IssueDiscovery

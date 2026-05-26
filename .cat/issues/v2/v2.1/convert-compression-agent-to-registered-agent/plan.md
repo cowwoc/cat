@@ -28,9 +28,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Create `plugin/agents/compression-agent.md`:
   - Files: `plugin/agents/compression-agent.md`

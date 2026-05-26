@@ -46,9 +46,9 @@ None
 - [ ] All tests pass
 - [ ] No regressions introduced
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Step 1:** Add naming convention to `.claude/rules/common.md`
    - Add a "Naming Conventions" section specifying snake_case for MD variables and camelCase for Java variables

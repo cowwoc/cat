@@ -37,9 +37,9 @@ checks for that file report FAIL with "File not found" — preserving the exact 
 - `client/src/main/java/io/github/cowwoc/cat/hooks/util/VerifyDeferPlanGeneration.java` — consolidate duplicate
   file-existence checks and `Files.readString()` calls
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Refactor `VerifyDeferPlanGeneration.run()` to read each file once:**
    - Read `addSkill` content once into a local variable (or null if file missing)
    - Read `workImplementSkill` content once into a local variable (or null if file missing)

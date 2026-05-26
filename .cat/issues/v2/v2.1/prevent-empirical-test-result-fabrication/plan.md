@@ -37,9 +37,9 @@ None
 - [ ] Guidance includes specific failure mode examples (runtime unavailable, framework errors, config
   incompatibility)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Read `plugin/skills/work-implement-agent/first-use.md` in the worktree. The file does NOT contain
   an empirical test section. The insertion point is the `### Delegation Prompt Construction` section
   (line ~288), specifically inside the `## Critical Requirements` bullet list within the

@@ -48,9 +48,9 @@ unnecessary.
 - [ ] `hook.sh` still works if `CAT_JAVA_HOME` happens to be set (no breakage)
 - [ ] `session_start.sh` no longer exports `CAT_JAVA_HOME`
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Step 1:** Update `plugin/hooks/hook.sh`
    - Add `SCRIPT_DIR` resolution at top of script: `readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"`

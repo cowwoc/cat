@@ -37,9 +37,9 @@ and re-rebase after skill-builder completed.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - In `plugin/skills/work-merge-agent/first-use.md` Step 9 Pre-Gate Skill-Builder Review section, after
   "Invoke `/cat:skill-builder` with the path to each modified skill or command. Review the output and address

@@ -24,9 +24,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Identify and remove duplicate test methods that test the same scenarios as other methods in the class
   - Files: client/src/test/java/io/github/cowwoc/cat/hooks/test/SetPendingAgentResultTest.java
 - Run all tests to confirm no regressions

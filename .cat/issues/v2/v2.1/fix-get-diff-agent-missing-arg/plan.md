@@ -49,9 +49,9 @@ There are two separate bugs:
 
 Both must be fixed.
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. Open `plugin/skills/work-merge-agent/first-use.md`.
 
@@ -101,7 +101,7 @@ Both must be fixed.
    change is needed; if it says `cat:get-diff` (bare), update to `cat:get-diff-agent`. (This is a
    documentation consistency fix — does not affect runtime behavior.)
 
-### Wave 2
+### Job 2
 
 Integration-level tests for skill invocation argument passing.
 

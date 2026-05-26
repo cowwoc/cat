@@ -57,9 +57,9 @@ echo "git worktree remove --force /workspace/.cat/worktrees/foo" | grep -oP 'git
 - [ ] CWD detection uses shell CWD from tool input if available, not `System.getProperty("user.dir")`
 - [ ] Existing test cases still pass
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Investigate toolInput JSON:** Examine what Claude Code passes in the Bash tool input JSON — check if there's a `cwd`
    or `working_directory` field that provides the shell's actual CWD
    - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/bash/BlockUnsafeRemoval.java`,

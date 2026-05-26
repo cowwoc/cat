@@ -34,9 +34,9 @@ None (migration/cleanup)
 - [ ] E2E: `grep -r 'reset-failure-counter' plugin/` returns no results
 - [ ] All tests pass (`mvn -f client/pom.xml test`)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Create ResetFailureCounter handler:** Implement `PostToolHandler` in the `failure` package. On `check()`,
    delete the tracking file (`cat-failure-tracking-<sessionId>.count`) and return `Result.allow()`. Use same

@@ -30,9 +30,9 @@ User request: reduce unnecessary prompts when potentially_complete is a false po
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 ### Step 1: Update the Potentially Complete Handling section
 In `plugin/skills/work/first-use.md`, replace the current "Potentially Complete Handling" section (lines 103-118) with

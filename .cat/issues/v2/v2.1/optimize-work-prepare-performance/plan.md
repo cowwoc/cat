@@ -89,27 +89,27 @@ Maintain a separate closed-issues list to avoid rescanning closed issues across 
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - In `IssueDiscovery.java`: change `creationTimeCache` and `sortedDirCache` fields from `HashMap` to
   `ConcurrentHashMap`. Update imports accordingly.
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/IssueDiscovery.java`
 
-### Wave 2
+### Job 2
 - In `IssueDiscovery.java`: refactor `listIssueDirsByAge()` to (a) read STATE.md and filter out closed
   issues before calling `getIssueCreationTime()`, and (b) parallelize the remaining `getIssueCreationTime()`
   calls using `Executors.newVirtualThreadPerTaskExecutor()`. Collect `Future<Long>` results before sorting.
   Add `ExecutorService`, `Future`, `ExecutionException` imports.
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/IssueDiscovery.java`
 
-### Wave 3
+### Job 3
 - In `IssueDiscovery.java`: refactor `buildIssueIndex()` to submit `Files.readString()` calls as virtual
   thread tasks, collect results (list of `(path, content)` pairs), then populate `issueIndex` and
   `bareNameIndex` sequentially from the collected results.
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/IssueDiscovery.java`
 
-### Wave 4
+### Job 4
 - In `WorkPrepare.java` + `IssueDiscovery.java`: eliminate double-scan. Add an overload or parameter to
   allow passing a pre-built issue index into `findNextIssue()`. In `WorkPrepare.execute()` for the `ALL`
   scope, build the index once upfront and pass it to both the selection path and `gatherDiagnosticInfo()`.
@@ -118,7 +118,7 @@ Maintain a separate closed-issues list to avoid rescanning closed issues across 
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/IssueDiscovery.java`,
     `client/src/main/java/io/github/cowwoc/cat/hooks/util/WorkPrepare.java`
 
-### Wave 5
+### Job 5
 - Run `mvn -f client/pom.xml verify` and fix any compilation errors, test failures, checkstyle, or PMD
   violations introduced by the changes. Update STATE.md to closed.
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/IssueDiscovery.java`,

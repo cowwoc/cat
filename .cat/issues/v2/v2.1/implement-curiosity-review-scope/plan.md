@@ -70,9 +70,9 @@ Research (`cat:research-agent`) also runs with broader context:
 
 (none)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Update `client/src/main/java/io/github/cowwoc/cat/hooks/util/CuriosityLevel.java`: replace the class
   Javadoc and all three enum constant Javadocs to match review-scope behavior:
@@ -97,7 +97,7 @@ Research (`cat:research-agent`) also runs with broader context:
 - Run `mvn -f client/pom.xml verify -e` and ensure all tests pass
 - Update index.json with status: closed, progress: 100% in this wave's final commit
 
-### Wave 2
+### Job 2
 
 - Update `plugin/skills/stakeholder-review-agent/first-use.md`:
   - Find the `case "$CURIOSITY" in` block (around line 373)
@@ -142,7 +142,7 @@ Research (`cat:research-agent`) also runs with broader context:
     ```
   - Files: `plugin/skills/work-review-agent/first-use.md`
 
-### Wave 3
+### Job 3
 
 - Create `tests/curiosity-review-scope.bats` — a Bats test file that validates the CURIOSITY extraction and
   branching logic extracted from `work-review-agent/first-use.md` and `stakeholder-review-agent/first-use.md`:

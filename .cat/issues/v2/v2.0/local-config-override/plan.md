@@ -21,9 +21,9 @@ None - infrastructure task
 - [ ] Missing local config file does not cause errors
 - [ ] Existing behavior unchanged when no local config exists
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Identify config loading code
    - Files: plugin/hooks/lib/ or similar
    - Verify: Locate current config loading implementation

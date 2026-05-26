@@ -45,9 +45,9 @@ Parent: optimize-hook-json-parser (complete handler migration + dependency remov
 - [ ] `grep -r 'import tools.jackson.databind' hooks/src/` returns empty
 - [ ] pom.xml has jackson-core only (no jackson-databind)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Migrate each complex handler** replacing:
    - `mapper.readTree(string)` with JsonParser-based parsing into Map<String, Object>
    - `node.get("key").asString()` with `(String) map.get("key")`

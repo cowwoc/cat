@@ -118,9 +118,9 @@ Modify `SessionStartHook` and `SubagentStartHook` to:
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Audit content**: Review `.claude/rules/common.md`, `.claude/rules/hooks.md`, and `CLAUDE.md` to classify each
    section by audience
 2. **Rename directory**: Rename `.cat/conventions/` to `.cat/rules/`, update all references

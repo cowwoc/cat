@@ -99,9 +99,9 @@ For each file below, change the parameter type of the `scope` argument from `Jvm
 - **Breaking Changes:** None — all changes are internal parameter type widening
 - **Mitigation:** Compilation check verifies all call sites are updated correctly
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - For each file listed above, check if the `scope` parameter (or field/constructor) is currently typed as
   `JvmScope` or `AbstractJvmScope`. If so, change it to the appropriate type:
   - Hook handlers (classes implementing PostToolHandler, BashHandler, SessionStartHandler, SessionEndHandler,

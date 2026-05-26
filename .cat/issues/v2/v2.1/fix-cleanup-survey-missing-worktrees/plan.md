@@ -21,9 +21,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Reproduce the bug - run /cat:cleanup and observe the survey output shows "0 worktrees found"
    even when git worktree list returns worktrees
 2. **Step 2:** Locate the source code for the cleanup survey handler that generates the worktree list section

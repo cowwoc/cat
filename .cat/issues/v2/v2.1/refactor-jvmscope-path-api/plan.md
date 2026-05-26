@@ -97,9 +97,9 @@ renamed methods (see grep output above for the full list).
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Rename methods in `JvmScope.java`:
   - Remove `getEncodedProjectDir()` from the interface
@@ -142,7 +142,7 @@ renamed methods (see grep output above for the full list).
   - Add `getWorkDir()` override returning the injected `workDir`
   - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/TestJvmScope.java`
 
-### Wave 2
+### Job 2
 
 - Update all production call sites — perform the following renames across all main source files listed
   in "Files to Modify":
@@ -170,7 +170,7 @@ renamed methods (see grep output above for the full list).
     path passed to `TestJvmScope`
   - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/JvmScopePathResolutionTest.java`
 
-### Wave 3
+### Job 3
 
 - Run `mvn -f client/pom.xml test` and verify exit code 0
 - Update `STATE.md`: set Status to `closed`, Progress to `100%`

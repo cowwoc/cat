@@ -103,9 +103,9 @@ None (infrastructure bugfix)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Extend lock file format:** Add `agent_id` parameter to `IssueLock.acquire()`. Store it in the
    lock JSON alongside `session_id`. The `agent_id` is the full agentId string (e.g.,

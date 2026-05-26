@@ -17,9 +17,9 @@ No implementation changes were needed.
   delegation prompt templates
 - [x] The file compiles and passes any validation checks
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. Read the current `plugin/skills/work-implement-agent/first-use.md` to locate the STATE.md section placement
    guidance blocks
 2. Identify the two locations where this outdated guidance appears:

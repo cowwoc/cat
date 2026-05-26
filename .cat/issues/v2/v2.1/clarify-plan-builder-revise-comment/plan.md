@@ -44,9 +44,9 @@ None
 
 - `plugin/skills/plan-builder-agent/first-use.md` contains the unclear revise mode descriptions
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Read `plugin/skills/plan-builder-agent/first-use.md`
 - Update the `### Mode: revise` section (around line 29) to explicitly describe the two use cases:
   (1) generating implementation steps for a lightweight plan, and (2) revising an existing plan mid-work

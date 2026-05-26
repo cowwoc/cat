@@ -28,9 +28,9 @@ None - infrastructure/tech debt
 - `plugin/scripts/` - Remove ported scripts
 - `plugin/skills/*/SKILL.md` - Update script invocation paths
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Port write-and-commit.sh:** Simplest script - atomic write + commit in Java
 2. **Port git-merge-linear-optimized.sh:** Linear merge with backup branch creation
 3. **Port git-squash-optimized.sh:** Commit squashing with type-based grouping

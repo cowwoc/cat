@@ -28,9 +28,9 @@ None
 - [ ] Edge case: major version with no minors still renders correctly
 - [ ] All existing tests still pass
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** In `GetStatusOutput.generateStatusDisplay()`, refactor the major version loop (lines 516-626) into a two-pass approach:
    - **Pass 1:** Build the `innerContent` list and `header` string for each major version, storing them in a list of pairs. For each pair, calculate the natural box width using the same logic as `DisplayUtils.buildInnerBox()`: `max(displayWidth(header) + 1, calculateMaxWidth(innerContent))`. Track the maximum width across all majors.
    - **Pass 2:** Call `display.buildInnerBox(header, innerContent, maxInnerWidth)` for each stored pair, passing the pre-calculated maximum as `forcedWidth`.

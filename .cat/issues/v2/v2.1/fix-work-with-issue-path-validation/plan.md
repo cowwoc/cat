@@ -56,9 +56,9 @@ not. The "Did you mean" suggestion also still references `.claude` instead of `.
 
 - [ ] All dependent issues are closed (no dependencies)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Update the Path Validation section in `plugin/skills/work-with-issue-agent/first-use.md`:
   - Change the substring check from `/.claude/` to `/.cat/issues/` (line 63)

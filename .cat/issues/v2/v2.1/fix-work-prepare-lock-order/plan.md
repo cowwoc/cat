@@ -49,9 +49,9 @@ Two code paths in `IssueDiscovery.java` share the same wrong ordering:
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - In `IssueDiscovery.evaluateIssue()`: move the lock-acquisition block (lines ~754-763) to
   **above** the existing-worktree check (lines ~748-752). The new order is:
   1. Check dependencies (unchanged)

@@ -58,9 +58,9 @@ subagent is responsible for determining the appropriate E2E command from the iss
 - [ ] No regressions in existing caution=medium workflows
 - [ ] E2E: run /cat:work at caution=low and confirm only compile runs; caution=medium confirm unit tests run; caution=high confirm E2E step executes
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Update `plugin/agents/work-verify.md` to read caution from effective config and add caution-gated
   compile, unit-test, and E2E steps (see execution details below)
@@ -74,13 +74,13 @@ subagent is responsible for determining the appropriate E2E command from the iss
   for `CautionLevel.fromString()`, `toString()`, and routing predicate helpers (see execution details
   below)
 
-### Wave 2
+### Job 2
 
 - Run `mvn -f client/pom.xml verify -e` to confirm all tests pass
 - Update `index.json` in the issue directory: set `status: closed`, `progress: 100%`
 - Commit all changes
 
-### Wave 3
+### Job 3
 
 - Add unit tests to `CautionLevelTest.java` that verify the string constants "low", "medium", "high"
   correspond to the expected `CautionLevel` enum values and verify the routing conditions:

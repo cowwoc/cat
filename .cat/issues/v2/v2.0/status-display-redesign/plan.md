@@ -74,9 +74,9 @@ The approved design from conversation:
 - [ ] Works with projects that have no patch versions (backward compatible)
 - [ ] Works with projects that have patch versions
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Update status_handler.py rendering logic
    - Files: hooks/skill_handlers/status_handler.py
    - Verify: /cat:status shows new format

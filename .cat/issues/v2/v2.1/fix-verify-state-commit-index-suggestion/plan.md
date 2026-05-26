@@ -64,9 +64,9 @@ traversal and could match multiple files in corner cases.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - In `VerifyStateInCommit.java`, add a private helper method with this exact signature and logic:
   ```java
   private String deriveIndexJsonPath(String directory)

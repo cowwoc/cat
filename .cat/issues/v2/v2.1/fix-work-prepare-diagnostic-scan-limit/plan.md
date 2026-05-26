@@ -46,9 +46,9 @@ None - infrastructure bugfix
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Remove `DIAGNOSTIC_SCAN_LIMIT` constant from `WorkPrepare.java`. Replace
    `.limit(DIAGNOSTIC_SCAN_LIMIT)` in `buildIssueIndex` with logic that errors if the scan exceeds a safety threshold
    rather than silently truncating results.

@@ -19,9 +19,9 @@ Ensure bare issue names (e.g., 'fix-bug') correctly detect as Scope.BARE_NAME an
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Write failing test** - Create a test that verifies bare name 'fix-bug' produces Scope.BARE_NAME
 2. **Verify test fails** - Confirm the test currently fails, proving it catches the bug

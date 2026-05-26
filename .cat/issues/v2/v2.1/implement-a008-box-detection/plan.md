@@ -22,9 +22,9 @@ preventing PATTERN-008 mistakes.
 - [ ] No false positives on legitimate uses (e.g., in code blocks)
 - [ ] Tests pass
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. Create detect_manual_boxes.py PostToolUse handler
 2. Register in __init__.py
 3. Add tests

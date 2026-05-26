@@ -690,9 +690,9 @@ def find_duplicates(db: sqlite3.Connection, new_claims: list, threshold: float =
 - [ ] Tests written and passing
 - [ ] No regressions
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Create claim extraction module**
    - Files: `plugin/lib/claim_extraction.py`

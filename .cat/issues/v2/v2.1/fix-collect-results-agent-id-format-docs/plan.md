@@ -48,9 +48,9 @@ The `collect-results-agent/SKILL.md` `argument-hint` shows `<catAgentId>` with n
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Update the `reason` string in `EnforceCollectAfterAgent.java` to add a construction note after
   the `Arguments:` line:
   ```

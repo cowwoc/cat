@@ -28,9 +28,9 @@ Implement a two-phase hook enforcement mechanism that detects when the main agen
 
 **Per-subagent-type detection in PostToolUse:** Checking `subagent_type` in the Agent tool output to limit flag to work-execute is fragile (subagent type not reliably available in tool result). Using presence of active worktree lock is sufficient and accurate.
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 ### Step 1 — Create `SetPendingAgentResult.java`
 

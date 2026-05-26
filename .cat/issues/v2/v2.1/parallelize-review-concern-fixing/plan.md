@@ -80,9 +80,9 @@ significant behavioral change from the current sequential single-subagent approa
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Update `plugin/skills/work-review-agent/first-use.md` to implement the parallel concern-fixing protocol.
   - Files: `plugin/skills/work-review-agent/first-use.md`

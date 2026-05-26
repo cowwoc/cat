@@ -10,9 +10,9 @@ M346, M349, M355, M370, M421, M423.
 
 Current PLAN.md structure mixes execution instructions with expected values:
 ```
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. Compress files using /cat:shrink-doc
 2. Verify each file scores 1.0 on /compare-docs  ← PRIMES fabrication
 ```
@@ -37,15 +37,15 @@ Detection patterns:
 Separate actions from success criteria in PLAN.md template:
 
 ```markdown
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. Compress files using /cat:shrink-doc
 2. Run /compare-docs validation
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. Create hook script `plugin/hooks/bash_handlers/validate_plan_md.py`
    - Detect priming patterns in PLAN.md Execution Steps

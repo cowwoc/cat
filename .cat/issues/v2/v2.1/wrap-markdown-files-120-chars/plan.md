@@ -45,9 +45,9 @@ Exclude: `.cat/backups/`, `.worktrees/`, `node_modules/`, `.git/`
 - [ ] All existing tests pass
 - [ ] Code blocks, tables, and URLs are intact
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Step 1:** Create a Python script that reformats markdown files to 120 chars
    - Wrap prose lines at 120 characters using word boundaries

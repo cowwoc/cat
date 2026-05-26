@@ -28,9 +28,9 @@ string comparisons throughout the codebase.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Create TrustLevel enum:** Extract `WorkPrepare.TrustLevel` to a top-level
    `client/src/main/java/io/github/cowwoc/cat/hooks/util/TrustLevel.java` with values `LOW`, `MEDIUM`, `HIGH` and a
    `fromString()` method

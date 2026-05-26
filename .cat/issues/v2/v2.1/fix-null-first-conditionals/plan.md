@@ -24,9 +24,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Reorder the agentIdNode extraction conditional to test isNull()/null before isTextual()
   - Files: client/src/main/java/io/github/cowwoc/cat/hooks/tool/post/SetPendingAgentResult.java
 - Run all tests to confirm no regressions

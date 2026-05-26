@@ -20,9 +20,9 @@ None
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Update `plugin/rules/qualified-issue-names.md` to add skill and file naming sections:
   - Files: `plugin/rules/qualified-issue-names.md`
@@ -53,7 +53,7 @@ None
   **Never use** bare file names (e.g., `qualified-issue-names.md`) without their directory path.
   ```
 
-### Wave 2
+### Job 2
 
 - Update frontmatter in `plugin/rules/qualified-issue-names.md` to enable subagent injection:
   - File: `plugin/rules/qualified-issue-names.md`

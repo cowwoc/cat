@@ -49,9 +49,9 @@ This is equivalent to `git update-ref` or `git branch -f`. The working tree must
 - [ ] syncMainWorkingTree() runs successfully in projectDir
 - [ ] Existing MergeAndCleanup tests still pass
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Add syncMainWorkingTree method to MergeAndCleanup**
    - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/MergeAndCleanup.java`

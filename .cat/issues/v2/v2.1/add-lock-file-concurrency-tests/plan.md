@@ -24,9 +24,9 @@ None
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Add edge case tests for lock file scanning:
   - Lock file deleted between scan and usage

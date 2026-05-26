@@ -48,9 +48,9 @@ at line 563. The tag detection and content expansion happen in the wrong order.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: TDD - Write failing tests
+### Job 1: TDD - Write failing tests
 - Create TestSkillOutputWithTag.java that returns `<output type="tag">content</output>`
 - Add test: preprocessor directive generating output tag wraps content on first invocation
 - Add test: preprocessor directive generating output tag returns fresh output on subsequent invocation
@@ -58,13 +58,13 @@ at line 563. The tag detection and content expansion happen in the wrong order.
   - Files: client/src/test/java/.../TestSkillOutputWithTag.java,
     client/src/test/java/.../SkillLoaderTest.java
 
-### Wave 2: Fix processContent()
+### Job 2: Fix processContent()
 - Move substituteVars() call before parseContent() in processContent()
 - Remove redundant substituteVars() calls on parsed.instructions() and parsed.outputBody()
 - Verify tests PASS
   - Files: client/src/main/java/.../SkillLoader.java
 
-### Wave 3: Update status/first-use.md
+### Job 3: Update status/first-use.md
 - Move echo instruction BEFORE the `!` command (so it lands in instructions section)
 - Update instruction to reference `<output skill="status">` (the SkillLoader-wrapped tag name)
   - Files: plugin/skills/status/first-use.md

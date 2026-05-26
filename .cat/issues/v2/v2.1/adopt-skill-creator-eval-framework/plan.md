@@ -39,16 +39,16 @@ None
 ## Pre-conditions
 None
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Update `plugin/skills/skill-builder-agent/first-use.md`:
   - Add Step 8: after skill is written, generate 2-3 should-trigger test prompts and 2-3 should-not-trigger test
     prompts; optionally delegate to skill-validator-agent subagent to run prompts and grade output
   - Replace ALL-CAPS mandate language with reasoned explanations — explain *why* each guideline exists
   - Files: `plugin/skills/skill-builder-agent/first-use.md`
 
-### Wave 2
+### Job 2
 - Create `plugin/agents/skill-validator-agent/SKILL.md` with frontmatter (description, model, allowed-tools) and
   instructions for running should-trigger / should-not-trigger test prompts against a skill and returning pass/fail
   results per prompt
@@ -61,7 +61,7 @@ None
   evidence
   - Files: `plugin/agents/skill-comparison-agent/SKILL.md`
 
-### Wave 3
+### Job 3
 - Implement `SkillValidatorHandler.java` in Java: parse skill file and test prompt list, invoke subagent per prompt,
   collect and format pass/fail results
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/skills/SkillValidatorHandler.java`
@@ -76,7 +76,7 @@ None
     `client/src/test/java/io/github/cowwoc/cat/hooks/test/DescriptionTesterHandlerTest.java`,
     `client/src/test/java/io/github/cowwoc/cat/hooks/test/SkillComparisonHandlerTest.java`
 
-### Wave 4
+### Job 4
 - Create `plugin/concepts/skill-validation.md`: document the eval-driven validation approach, explain when and how to
   use skill-validator-agent and description-tester-agent
   - Files: `plugin/concepts/skill-validation.md`

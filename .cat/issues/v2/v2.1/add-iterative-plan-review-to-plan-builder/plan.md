@@ -61,9 +61,9 @@ closes that gap by adding a structured review loop with a fresh Sonnet reviewer 
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Create plan-review-agent.md
+### Job 1: Create plan-review-agent.md
 
 Create `plugin/agents/plan-review-agent.md` with the following content:
 
@@ -124,7 +124,7 @@ See LICENSE.md in the project root for license terms.
 -->
 ```
 
-### Wave 2: Add review loop to first-use.md
+### Job 2: Add review loop to first-use.md
 
 Read `plugin/skills/plan-builder-agent/first-use.md` and locate:
 1. The step that writes/finalizes the PLAN.md content (the last step before the commit step).
@@ -198,7 +198,7 @@ file. Then proceed to the commit step.
 - Confirm the commit step (previously last) is renumbered if needed.
 - Confirm the effort gate (`low` = skip) is clearly stated at the top of the step.
 
-### Wave 3: Create structural validation script for the review loop
+### Job 3: Create structural validation script for the review loop
 
 Create `plugin/scripts/validate-plan-builder-review-loop.sh` that statically validates the review loop implementation
 in `plugin/skills/plan-builder-agent/first-use.md` and `plugin/agents/plan-review-agent.md`. This script provides

@@ -21,9 +21,9 @@ None - process improvement
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Add deferred concern tracking to stakeholder-review skill**
    - Files: `plugin/skills/stakeholder-review/SKILL.md`
    - After the concern evaluation step (where PATIENCE threshold is applied), add instructions:

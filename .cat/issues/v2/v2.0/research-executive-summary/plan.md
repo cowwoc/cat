@@ -23,9 +23,9 @@ None (infrastructure improvement)
 - [ ] Visual output improved for readability
 - [ ] Detailed stakeholder findings preserved below summary
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Read current research skill
    - Files: plugin/skills/research/SKILL.md
    - Verify: Understand current output structure

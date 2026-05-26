@@ -47,9 +47,9 @@ None - infrastructure enforcement
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - In `plugin/skills/write-and-commit-agent/first-use.md`, add a "STATE.md Files" subsection under
   "When to Use This Skill" stating: when writing a STATE.md file, check
   `plugin/concepts/state-schema.md` for the current allowed fields before writing to avoid

@@ -109,9 +109,9 @@ Add `reviewThresholds` to `cat-config.json`:
 - [ ] `/cat:config` wizard includes review threshold configuration
 - [ ] E2E: Setting `"autofix": "all"` causes all HIGH and MEDIUM concerns to be auto-fixed before user approval
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Add config parsing:** Add `reviewThresholds` parsing to the config reader, with defaults matching current behavior
 2. **Update stakeholder-review:** Read thresholds and apply to the aggregate decision step

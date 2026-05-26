@@ -51,9 +51,9 @@ BFG does NOT support (these use pure git instead):
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Rewrite `plugin/skills/git-rewrite-history-agent/first-use.md` to document BFG:
   - **Purpose line**: "Safely rewrite git history using BFG Repo-Cleaner, a Java-based alternative

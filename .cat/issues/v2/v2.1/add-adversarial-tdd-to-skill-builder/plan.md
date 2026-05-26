@@ -46,9 +46,9 @@ None
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Add Adversarial TDD loop to `plugin/skills/skill-builder-agent/first-use.md`:
   - Insert after the last existing numbered step (find by searching for the final `### Step N:` heading)

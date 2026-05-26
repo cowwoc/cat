@@ -47,9 +47,9 @@ None — escalation A003 from retrospective (PATTERN-003: path_config_assumption
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - **Read BashHandler.java and WarnBaseBranchEdit.java:** Understand handler registration and worktree
   detection patterns

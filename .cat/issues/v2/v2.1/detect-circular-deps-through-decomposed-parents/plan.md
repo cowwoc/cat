@@ -75,9 +75,9 @@ A→B→(implicit sub-issue C)→A is never detected.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Step 1:** Write failing tests for cycle detection through decomposed parents
    - Files: `WorkPrepareTest.java`

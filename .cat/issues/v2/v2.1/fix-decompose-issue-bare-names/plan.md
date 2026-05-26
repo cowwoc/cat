@@ -26,13 +26,13 @@ In the decompose-issue-agent skill workflow (step "9. Update Original Issue for 
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Update `decompose-issue-agent/SKILL.md` to construct qualified sub-issue names using parent version context
   - Files: `plugin/skills/decompose-issue-agent/SKILL.md`
 
-### Wave 2
+### Job 2
 - Write automated TestNG tests in `IssueDiscoveryTest` (or a new test class) that verify `allSubissuesClosed()`
   correctly processes qualified sub-issue names and silently skips bare names: (1) create a STATE.md with
   fully-qualified "Decomposed Into" entries (e.g., `2.1-parser-lexer`) and assert `allSubissuesClosed()` reads them;

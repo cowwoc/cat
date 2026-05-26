@@ -98,9 +98,9 @@ can exploit.
 
 <!-- No main-agent-level skills needed for this documentation-only fix -->
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Read `plugin/skills/work/first-use.md` to confirm current line content around the
   "ERROR: Existing Worktree Handling" section (lines 116–144)

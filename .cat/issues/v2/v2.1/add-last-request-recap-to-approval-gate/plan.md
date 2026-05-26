@@ -41,9 +41,9 @@ approval question.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - In `plugin/skills/work-merge-agent/first-use.md`, locate the line:
   ```

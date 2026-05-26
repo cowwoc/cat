@@ -63,9 +63,9 @@ None
 ## Pre-conditions
 - [ ] `2.1-enhance-compare-docs-grading` is closed (binary verdict available for verification)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Validate on Simple Document
+### Job 1: Validate on Simple Document
 - Select a single real document with scattered/duplicated information (candidate: a skill first-use.md that has
   related instructions in multiple sections)
 - Manually execute the three-phase pipeline:
@@ -77,7 +77,7 @@ None
 - Record the binary verdict and any HIGH/MEDIUM findings
 - Files: validation notes (temporary), `plugin/skills/consolidate-doc-agent/first-use.md` (draft)
 
-### Wave 2: Validate on Multi-File Document
+### Job 2: Validate on Multi-File Document
 - Select 2-3 related files that share overlapping content (candidate: a concept doc + skill first-use.md that
   partially duplicate each other)
 - Execute the three-phase pipeline across files:
@@ -93,7 +93,7 @@ None
   - Implicit ordering between files lost during extraction
 - Files: validation notes (temporary), `plugin/skills/consolidate-doc-agent/first-use.md` (update)
 
-### Wave 3: Validate on Non-Procedural Content
+### Job 3: Validate on Non-Procedural Content
 - Select a document that is primarily reference material (tables, configuration options, glossary)
 - Execute the three-phase pipeline
 - Determine whether backward chaining produces meaningful results for non-procedural content
@@ -102,7 +102,7 @@ None
   strategy is needed for reference docs (e.g., topical clustering instead of backward chaining)
 - Files: validation notes (temporary), `plugin/skills/consolidate-doc-agent/first-use.md` (update)
 
-### Wave 4: Write Skill and Documentation
+### Job 4: Write Skill and Documentation
 - Based on validation findings, write the consolidate-doc-agent skill:
   - If approach validated: full methodology with the three-phase pipeline
   - If partially validated: methodology with explicit scope limitations (e.g., "procedural docs only")

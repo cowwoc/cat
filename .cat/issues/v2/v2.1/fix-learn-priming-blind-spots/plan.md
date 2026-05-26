@@ -48,9 +48,9 @@ None — bugfix for learn skill investigation methodology.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Add cognitive anchoring pattern to priming analysis
+### Job 1: Add cognitive anchoring pattern to priming analysis
 
 - Add cognitive anchoring row to the priming table in `phase-investigate.md` Step 2 (after the
   "Conflicting general guidance" row):

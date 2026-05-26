@@ -112,9 +112,9 @@ regex. This minimizes regression risk to existing true-positive detections.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Extend `filterGitNoise()` in `AutoLearnMistakes.java` to strip unified diff structural lines:
   - Lines matching `^@@\s+-\d+` (hunk headers)

@@ -44,9 +44,9 @@ with existing skill architecture.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Update `plugin/skills/optimize-doc/first-use.md`:
   - Files: `plugin/skills/optimize-doc/first-use.md`

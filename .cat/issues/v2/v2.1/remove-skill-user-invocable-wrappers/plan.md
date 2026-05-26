@@ -66,9 +66,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Migrate first-use.md files to agent variants
+### Job 1: Migrate first-use.md files to agent variants
 - Move `plugin/skills/add/first-use.md` to `plugin/skills/add-agent/first-use.md`; update
   internal references from `/cat:add` to natural language (e.g., "say 'add an issue that...'")
   - Files: `plugin/skills/add-agent/first-use.md`
@@ -86,13 +86,13 @@ None
 - Move `plugin/skills/add/tests/` to `plugin/skills/add-agent/tests/`
   - Files: `plugin/skills/add-agent/tests/`
 
-### Wave 2: Rename stakeholder-common and delete wrapper directories
+### Job 2: Rename stakeholder-common and delete wrapper directories
 - Rename `plugin/skills/stakeholder-common/` to `plugin/skills/stakeholder-common-agent/`
 - Delete `plugin/skills/add/`, `plugin/skills/empirical-test/`, `plugin/skills/load-skill/`,
   `plugin/skills/remove/`, `plugin/skills/research/`, `plugin/skills/retrospective/`,
   `plugin/skills/work/`
 
-### Wave 3: Update references
+### Job 3: Update references
 - Update all 10 `plugin/agents/stakeholder-*.md` files: `cat:stakeholder-common` →
   `cat:stakeholder-common-agent`
 - Update `plugin/rules/work-request-handling.md`, `plugin/rules/worktree-isolation.md`,
@@ -100,7 +100,7 @@ None
   `plugin/rules/user-input-handling.md`
 - Update `plugin/concepts/skill-loading.md`, `plugin/concepts/agent-architecture.md`
 
-### Wave 3b: Fix remaining slash command references in plugin/concepts/
+### Job 3b: Fix remaining slash command references in plugin/concepts/
 - In `plugin/concepts/version-completion.md` line 277, replace the user-facing instruction
   `Use /cat:add to add more issues or versions.` with natural language equivalent
   (e.g., "Ask Claude to add more issues or versions.")
@@ -109,7 +109,7 @@ None
   `Resume with /cat:work` with natural language equivalent (e.g., "Ask Claude to resume work on the issue")
   - Files: `plugin/concepts/error-handling.md`
 
-### Wave 3c: Fix remaining slash command references (iteration 2)
+### Job 3c: Fix remaining slash command references (iteration 2)
 - In `plugin/concepts/error-handling.md` line 249, replace `User resumes with /cat:work` with
   natural language equivalent (e.g., "Ask Claude to resume work on the issue")
   - Files: `plugin/concepts/error-handling.md`
@@ -118,12 +118,12 @@ None
   (e.g., `Ask Claude to resume work on the issue to create the worktree`)
   - Files: `plugin/concepts/worktree-isolation.md`
 
-### Wave 4: Update README.md
+### Job 4: Update README.md
 - Replace slash command references for removed skills with natural language trigger descriptions;
   update the command reference table
   - Files: `README.md`
 
-### Wave 5: Fix stakeholder review concerns
+### Job 5: Fix stakeholder review concerns
 - In `README.md` line 243, replace `/cat:skill-builder` with `/cat:instruction-builder-agent`
   - Files: `README.md`
 - In `plugin/skills/remove-agent/first-use.md` line 354 and `plugin/skills/add-agent/first-use.md` line 1167,

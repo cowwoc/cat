@@ -51,9 +51,9 @@ All 17 SKILL.md files from the original removal:
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Re-add `AskUserQuestion` to all 17 SKILL.md files:** Add `AskUserQuestion` back to the `allowed-tools`
    frontmatter list in each file.

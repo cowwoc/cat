@@ -54,9 +54,9 @@ refactor
 - [ ] Line wrapping continuation rows align with content column
 - [ ] Multiple hunks in same file share one file header box
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Remove fixed column constants:** Delete `COL_OLD`, `COL_NEW`, `COL_SYM`. Add a helper method
    `_calc_col_width(hunk)` that returns the digit count for the max line number in the hunk, capped at 4.
    - Files: `plugin/scripts/render-diff.py`

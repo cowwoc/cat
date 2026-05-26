@@ -15,9 +15,9 @@ None - workflow improvement
 ## Files to Modify
 - plugin/skills/add.md - Main /cat:add skill definition
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Define acceptance criteria option sets by task type
    - Files: plugin/skills/add.md
    - Verify: Feature/Bugfix/Refactor have distinct relevant options

@@ -111,9 +111,9 @@ These remain as skills but are now preloaded into agents:
 - [ ] No manual duplication of git instructions in agent prompts
 - [ ] Clean separation: agents in plugin/agents/, skills in plugin/skills/
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Step 1:** Create work-merge agent with skills preloading
    - Create `plugin/agents/work-merge.md`

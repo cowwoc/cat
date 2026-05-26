@@ -33,9 +33,9 @@ column for disputes.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Update the blue-team agent prompt in Step 4 to require verification of each finding's premise before patching:
   instruct blue-team to check whether the claimed vulnerability is based on a true premise (e.g., verify env var
   availability, file system state, actual API behavior) and, if the premise is false, record the finding in
@@ -57,14 +57,14 @@ column for disputes.
   "Patches Applied" instead of a single combined count.
   - Files: `plugin/skills/skill-builder-agent/SKILL.md`
 
-### Wave 2
+### Job 2
 - E2E verification: manually trace through the updated skill steps using a scenario where the red-team raises a
   false-premise finding (e.g., claims an env var is unavailable when it is documented as available) and confirm that:
   (a) the finding appears in `"disputed"` not `"findings"`, (b) no patch is applied for it, (c) the summary shows
   "Disputes Upheld: 1" and "Patches Applied: 0" for that round, and (d) the round counter increments correctly.
   - Files: `plugin/skills/skill-builder-agent/SKILL.md`
 
-### Wave 3
+### Job 3
 - Add an explicit statement to `plugin/skills/skill-builder-agent/first-use.md` in the round counter / loop
   continuation section stating that disputed findings count as closed for round-advancement purposes: after the
   blue-team dispute evaluation step, insert a note such as "Disputed findings count as closed — the round counter

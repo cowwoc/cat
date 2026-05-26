@@ -17,9 +17,9 @@ None - workflow enhancement
   to approval gate
 - `plugin/skills/stakeholder-review/content.md` - decide step: align with new auto-fix behavior
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 ### Step 1: Add auto-fix loop to work-with-issue Step 4 (Review Phase)
 

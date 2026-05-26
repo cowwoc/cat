@@ -28,9 +28,9 @@ None - infrastructure/retrospective action item
 - [ ] STATE.md file grouping rules are explicit and unambiguous
 - [ ] All tests pass
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Read current squash skill and work-with-issue squash instructions
    - Files: plugin/skills/git-squash/SKILL.md, plugin/skills/work-with-issue/SKILL.md
 2. **Step 2:** Update git-squash skill to verify rebase before reset --soft

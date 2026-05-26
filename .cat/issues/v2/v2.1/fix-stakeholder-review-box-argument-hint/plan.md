@@ -36,9 +36,9 @@ point of invocation (the SKILL.md). Agents reading SKILL.md alone have no way to
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Update `stakeholder-review-box/SKILL.md` argument-hint to clarify format:
   `argument-hint: "<issue> <stakeholder:status,...> <result> <summary>"`

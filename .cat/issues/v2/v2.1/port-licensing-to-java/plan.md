@@ -33,9 +33,9 @@ Parent: port-utility-scripts
 ## Files to Modify
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/module-info.java` - Export licensing package
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. Read all three scripts to understand inputs, outputs, and logic
 2. Create `LicenseResult` record for validation output
 3. Create `LicenseValidator` class porting validate-license.py logic (Ed25519 via java.security)

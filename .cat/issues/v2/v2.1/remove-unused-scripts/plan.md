@@ -36,9 +36,9 @@ None (tech debt cleanup)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Re-verify each script has no active references via grep
    - Files: all scripts listed above
 2. **Step 2:** Remove all unused scripts and `__pycache__` directories

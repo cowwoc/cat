@@ -33,15 +33,15 @@ None
 - [ ] All tests pass (`mvn -f client/pom.xml test`)
 - [ ] E2E: Start work on an issue with an explicitly unmet pre-condition and confirm the agent reports it
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1 — Research
+### Job 1 — Research
 
 1. Read `plugin/skills/work-prepare-agent/SKILL.md` to understand where to insert the check
 2. Read `plugin/skills/work-confirm-agent/SKILL.md` and `plugin/skills/verify-implementation-agent/SKILL.md` to understand how post-condition verification works
 3. Identify the pre-conditions format used in existing PLAN.md files
 
-### Wave 2 — Implementation
+### Job 2 — Implementation
 
 1. Add a pre-condition verification step to `cat:work-prepare` that:
    - Reads pre-conditions from PLAN.md
@@ -50,7 +50,7 @@ None
    - Blocks or warns as appropriate
 2. Verify: Works correctly on an issue with pre-conditions
 
-### Wave 3 — Verification
+### Job 3 — Verification
 
 1. Run all tests: `mvn -f client/pom.xml test`
 2. E2E test: work on an issue with unmet pre-conditions and confirm they are reported

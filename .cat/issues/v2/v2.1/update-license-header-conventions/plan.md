@@ -4,9 +4,9 @@
 Correct and consolidate license header conventions: move the authoritative documentation into project conventions,
 fix exemptions, add headers to `first-use.md` files, and scrub existing headers from exempt locations.
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Move license-header.md to project conventions**
    - Move `plugin/concepts/license-header.md` to `.claude/rules/license-header.md`

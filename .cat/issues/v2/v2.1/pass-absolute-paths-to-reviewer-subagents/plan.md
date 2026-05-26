@@ -35,9 +35,9 @@ ambiguity — the full path is directly usable without any prefix logic.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - In Batch 3 (file content preparation, ~line 505-571), change `### File: ${file}` to use the
   absolute path: `### File: $(pwd)/${file}` so that file headers in the reviewer prompt contain
   the full worktree-rooted path

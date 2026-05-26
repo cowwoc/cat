@@ -36,9 +36,9 @@ Add a new section after "Subagent Responsibilities" covering these empirically-v
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Read agent-architecture.md** to find the right insertion point (after Subagent Responsibilities)
    - Files: `plugin/concepts/agent-architecture.md`
 2. **Add "Subagent Skill Invocation" section** with the four findings documented above

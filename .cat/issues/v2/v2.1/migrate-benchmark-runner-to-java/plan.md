@@ -30,15 +30,15 @@ The Bash script becomes a thin wrapper that delegates to the jlink binary.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Create BenchmarkRunner.java with all 10 command handlers
 - Replace benchmark-runner.sh with thin wrapper delegating to jlink binary
 - Register in build configuration
 - Run tests to verify functional parity
 
-### Wave 2 (Round 3 stakeholder concern fixes)
+### Job 2 (Round 3 stakeholder concern fixes)
 - **[HIGH] Fix getGitOutput() correctness defect in BenchmarkRunnerTest.java:** Delete the private
   `getGitOutput()` method (lines ~952-974 of BenchmarkRunnerTest.java) which ignores the `process.waitFor()`
   return value. Replace all three call sites (`rev-parse HEAD` on lines ~601, ~654, ~717) with

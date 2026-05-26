@@ -66,9 +66,9 @@ Four priming sources identified (M408 pattern — imperative framing triggers an
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - In `plugin/skills/learn/phase-investigate.md`, `plugin/skills/learn/phase-analyze.md`, and
   `plugin/skills/learn/phase-prevent.md`: change each output section preamble from
@@ -83,7 +83,7 @@ Four priming sources identified (M408 pattern — imperative framing triggers an
 - Check the parent learn skill orchestrator for any references to `user_summary` and update to `internal_summary`
   - Files: `plugin/skills/learn/` (all files referencing `user_summary`)
 
-### Wave 2
+### Job 2
 
 - Add a Bats test file at `plugin/skills/learn/tests/test-phase-output-schema.bats` that uses `grep` to assert
   that each of the three phase files (`phase-investigate.md`, `phase-analyze.md`, `phase-prevent.md`) contains

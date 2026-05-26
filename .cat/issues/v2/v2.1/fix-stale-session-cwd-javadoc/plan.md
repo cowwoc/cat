@@ -21,9 +21,9 @@ mechanism was removed in commit 0e6778695, but the Javadoc example was missed.
 ## Post-conditions
 - [ ] SessionEndHookTest.java class Javadoc no longer references `session.cwd`
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Edit `client/src/test/java/io/github/cowwoc/cat/hooks/test/SessionEndHookTest.java`
   - Change line 33: `Session-scoped files (such as {@code session.cwd}) are managed independently by the broader` to `Session-scoped files are managed independently by the broader session cleanup pipeline`
   - Change line 34: `session cleanup pipeline and are not cleaned up by this hook.` → remove (merged into line 33 above)

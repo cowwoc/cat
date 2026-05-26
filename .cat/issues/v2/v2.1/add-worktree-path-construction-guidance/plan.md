@@ -25,9 +25,9 @@ None — internal tooling improvement from learning M506.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Add explicit path construction guidance to `plugin/agents/work-execute.md` Key Constraints section:
   "When working in a worktree, construct ALL file paths as `${WORKTREE_PATH}/relative/path`. Never use

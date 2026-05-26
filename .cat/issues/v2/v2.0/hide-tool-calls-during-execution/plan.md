@@ -79,9 +79,9 @@ Claude Code automatically displays tool calls to users. CAT cannot directly hide
 - [ ] Final output is a summary, not raw tool results
 - [ ] Workflows document "demo-friendly" execution patterns
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Audit current workflows for excessive tool calls**
    - List all Read/Bash calls in stakeholder-review
    - Identify batching opportunities

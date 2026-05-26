@@ -27,9 +27,9 @@ fabricated validation claims.
 - [ ] Tests written and passing
 - [ ] No regressions
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Create detect_validation_fabrication.py handler
    - Trigger on Task tool completions
    - Check if result contains validation score patterns (e.g., "score: 0.XX", "equivalence: X.XX")

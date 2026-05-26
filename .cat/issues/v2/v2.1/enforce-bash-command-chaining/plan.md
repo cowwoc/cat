@@ -52,9 +52,9 @@ compaction may lose it.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Analyze where the convention is lost**
    - Check if subagent prompts include the chaining convention

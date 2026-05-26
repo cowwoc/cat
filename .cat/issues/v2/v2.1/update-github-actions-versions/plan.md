@@ -53,9 +53,9 @@ Pinning strategy: version tags only (e.g., `@v4`), not SHA pinning.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Update `.github/workflows/pages.yml`: replace `uses: actions/upload-pages-artifact@v3` with
   `uses: actions/upload-pages-artifact@v4`

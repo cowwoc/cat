@@ -45,9 +45,9 @@ Platforms iterated (in order): `linux_x64`, `linux_aarch64`, `macos_x64`, `macos
 - `tests/download-git-filter-repo.bats` — append 3 new test functions after the existing
   "Missing SHA256 field" section (after line 243)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Append 3 new Bats tests to `tests/download-git-filter-repo.bats`:
 
   **Test 1: "reports all four platforms as missing when all PLATFORM_SHA256 fields are absent"**

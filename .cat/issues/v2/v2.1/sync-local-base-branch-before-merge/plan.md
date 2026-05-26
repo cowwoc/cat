@@ -33,9 +33,9 @@ issue branches.
 - MergeAndCleanup.java contains syncBaseBranchWithOrigin called before getDivergenceCount
 - work-merge Step 3 no longer contains redundant fetch
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Add `syncBaseBranchWithOrigin` method to MergeAndCleanup.java:**
    - `git fetch origin ${baseBranch}` — update remote tracking ref
    - `git push . origin/${baseBranch}:${baseBranch}` — fast-forward local to match origin

@@ -99,9 +99,9 @@ No variant achieved 100% across all depths.
 - [ ] SkillLoader resends post-output content on subsequent invocations
 - [ ] All existing tests pass
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Modify SkillLoader.processContent():** Capture content after `</output>` in ParsedContent. On subsequent
    invocations, append post-output content after the `<output>` tag.
    - Files: `SkillLoader.java`

@@ -97,9 +97,9 @@ Use `--find-renames=50%` explicitly so the behavior is documented.
 - `plugin/skills/git-rebase-agent/first-use.md` — add a section explaining the new path rename validation behavior
   so agents know what causes pre-rebase errors
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 ### Step 1: Write failing tests in GitRebaseTest.java
 

@@ -39,9 +39,9 @@ Update all plugin skill files, concepts, rules, templates, gitignore files, and 
 - `docs/severity.md` - Update config filename references
 - `docs/patience.md` - Update config filename references
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1 — Fix remaining live references
+### Job 1 — Fix remaining live references
 
 - Update `plugin/migrations/lib/utils.sh` `is_cat_initialized()` function (line 201): replace
   `[[ -f "${cat_dir}/cat-config.json" ]]` with `[[ -f "${cat_dir}/config.json" ]]` so the live utility function

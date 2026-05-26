@@ -20,9 +20,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - In Step 2f of `plugin/skills/optimize-doc/first-use.md`, fold hook monitoring into the existing
   empirical test (no separate Step 2g):
   1. Before the test, search both hook registration locations (`.claude/settings.json` and

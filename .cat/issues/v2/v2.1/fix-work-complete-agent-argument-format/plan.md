@@ -104,9 +104,9 @@ Root cause of M524 — corrupted locks blocked multiple sessions. Discovered dur
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Add fail-fast validation in `GetNextIssueOutput.getOutput()`: after the `sessionId` fallback to
   `scope.getClaudeSessionId()`, if `sessionId` is still blank, throw:
@@ -121,7 +121,7 @@ Root cause of M524 — corrupted locks blocked multiple sessions. Discovered dur
   `IllegalArgumentException` with message containing "sessionId is empty"
   - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/GetNextIssueOutputTest.java`
 
-### Wave 2
+### Job 2
 
 - Run `mvn -f client/pom.xml verify` and confirm all tests pass (including the new fail-fast test)
 

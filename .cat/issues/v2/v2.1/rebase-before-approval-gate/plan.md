@@ -47,9 +47,9 @@ rebasing immediately before the approval gate guarantees an up-to-date diff.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Read `plugin/skills/work-with-issue-agent/first-use.md` to understand exact wording of all
   step headers and cross-references before making any edits
   - Files: `plugin/skills/work-with-issue-agent/first-use.md`

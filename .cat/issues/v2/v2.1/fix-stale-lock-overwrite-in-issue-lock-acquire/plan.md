@@ -63,9 +63,9 @@ lock and protect the worktree.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Step 1 (TDD - write failing tests first):** Add test methods to `IssueLockTest.java`:
 

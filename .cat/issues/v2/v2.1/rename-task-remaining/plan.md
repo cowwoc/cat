@@ -25,9 +25,9 @@ Replace "task" terminology with "issue" in remaining files (templates, reference
 - plugin/hooks/bash_handlers/*.py
 - Any other files discovered with grep
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. Update template files
 2. Update Python handlers
 3. Run comprehensive grep to find any remaining "task" references

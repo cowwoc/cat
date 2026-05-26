@@ -43,9 +43,9 @@ None — escalation A001 from retrospective (PATTERN-001: subagent_validation_fa
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - **Read PostToolUseHook.java and existing handlers:** Understand registration pattern and handler interface
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/PostToolUseHook.java`,

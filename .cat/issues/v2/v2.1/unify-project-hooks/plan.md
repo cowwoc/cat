@@ -52,9 +52,9 @@ None
 - BlockWorktreeCd can integrate into GetBashPretoolOutput since it matches Bash tool
 - ValidateStateMdFormat needs Write matcher - can integrate into EnforceWorktreeIsolation (Write|Edit matcher) or create new Write-specific dispatcher
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. Create BlockWorktreeCd handler, integrate into GetBashPretoolOutput
 2. Create ValidateStateMdFormat handler, integrate into Write|Edit dispatcher
 3. Write tests

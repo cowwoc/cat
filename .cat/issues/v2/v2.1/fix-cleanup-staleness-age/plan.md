@@ -47,9 +47,9 @@ modification time. The lock file mtime reflects the most recent session activity
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Update `GetCleanupOutput.java` to compute staleness age as `now - max(branch_last_commit_time, lock_file_mtime)`
   - Files: `client/src/main/java/io/github/cowwoc/cat/client/GetCleanupOutput.java`
 - Add regression test in `GetCleanupOutputTest.java` covering the scenario: old branch commits but recently-created

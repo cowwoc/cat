@@ -44,9 +44,9 @@ In `plugin/rules/persisted-skill-output.md`:
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Update `plugin/rules/persisted-skill-output.md` replacing all `limit=2000` references with `limit=400` and
   updating the chunk calculation examples accordingly
   - Files: `plugin/rules/persisted-skill-output.md`

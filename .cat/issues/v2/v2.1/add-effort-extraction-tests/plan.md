@@ -50,9 +50,9 @@ The `extract_effort` function does NOT validate values — it extracts whatever 
 `should_invoke_plan_builder` function does NOT check for empty effort before building args. These behaviors should be
 tested to document the current contract.
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Create new Bats test file `tests/work-implement-agent-effort-extraction.bats` with these tests:
 

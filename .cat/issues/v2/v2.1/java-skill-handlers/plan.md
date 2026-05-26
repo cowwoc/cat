@@ -48,9 +48,9 @@ Supporting utility classes (already exist):
 | `skill_handlers/status_handler.py` | `GetStatusOutput.java` | `plugin/hooks/src/io/github/cowwoc/cat/hooks/skills/` |
 | `skill_handlers/work_with_issue_handler.py` | `GetWorkWithIssueOutput.java` | `plugin/hooks/src/io/github/cowwoc/cat/hooks/skills/` |
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Create GetDelegateOutput.java** - Port logic from `delegate_handler.py`
 2. **Create GetMonitorSubagentsOutput.java** - Port logic from `monitor_subagents_handler.py`
 3. **Create GetRunRetrospectiveOutput.java** - Port logic from `run_retrospective_handler.py`

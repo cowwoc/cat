@@ -52,9 +52,9 @@ None
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - In `GetRetrospectiveOutput.java`, add `resetRetrospectiveCounter()` method that:
   1. Reads `index.json` from the retrospectives directory
   2. Updates `last_retrospective` field to `Instant.now().toString()`
@@ -64,7 +64,7 @@ None
     content lines are built, before returning), NOT on status-message or error paths
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetRetrospectiveOutput.java`
 
-### Wave 2
+### Job 2
 - Add tests for counter reset behavior in `GetRetrospectiveOutputTest.java`
 - Run `mvn -f client/pom.xml test` and confirm all tests pass
   - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/skills/GetRetrospectiveOutputTest.java`

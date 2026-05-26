@@ -21,9 +21,9 @@ a hierarchical debt summary.
 ## Pre-conditions
 - [ ] `calculate-file-technical-debt` is closed (per-file calculation working)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. Write failing tests for aggregation (TDD):
    - Test directory-level aggregation (weighted average of file scores)
    - Test module-level aggregation (weighted average of directory scores)

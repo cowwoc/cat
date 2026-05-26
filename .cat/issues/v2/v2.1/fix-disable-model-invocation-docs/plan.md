@@ -50,9 +50,9 @@ Incomplete documentation: flags and arguments are described by their mechanism b
 
 - [ ] merge-agent-skill-variants is closed (to avoid conflicts on skill-loading.md lines 266-303)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Update `plugin/concepts/skill-loading.md` **Flags** section (currently line 282):
   - Files: `plugin/concepts/skill-loading.md`

@@ -96,9 +96,9 @@ Files:
 - [ ] `mvn -f hooks/pom.xml test` passes
 - [ ] Verbatim skills (/cat:status, /cat:help, /cat:token-report, /cat:render-diff) produce correct output
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Step 1:** Rename markers in all skill first-use.md files (Category 1)
    - Replace `SCRIPT OUTPUT` with `SKILL OUTPUT` in all marker strings and fail-fast messages

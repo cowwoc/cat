@@ -28,9 +28,9 @@ None - infrastructure/setup task
 - `hooks/pom.xml` - Add JTokkit dependency
 - `plugin/skills/compare-docs/SKILL.md` - Update token counting command from Python to Java
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Add JTokkit dependency** to `hooks/pom.xml`
 2. **Create TokenCounter.java** - Accept file paths as args, output JSON token counts
 3. **Update compare-docs SKILL.md** - Replace `python3 -c "import tiktoken..."` with `java -cp cat-hooks.jar io.github.cowwoc.cat.hooks.TokenCounter`

@@ -20,9 +20,9 @@ None - action item A023 from retrospective (PATTERN-019)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Read phase-prevent.md:** Identify Step 4 (post-edit verification) and the current list of checks
    - Files: `plugin/skills/learn/phase-prevent.md`
 2. **Add line-length check-step:** Insert an explicit check: after editing any Markdown or Java file,

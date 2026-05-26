@@ -50,9 +50,9 @@ None
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Delete `RestoreCwdAfterCompaction.java`:
   - File: `client/src/main/java/io/github/cowwoc/cat/hooks/session/RestoreCwdAfterCompaction.java`
@@ -78,7 +78,7 @@ None
   - File: `client/src/test/java/io/github/cowwoc/cat/hooks/test/PreCompactHookTest.java`
   - Use `cat:safe-rm-agent` or `git rm` to remove the file.
 
-### Wave 2
+### Job 2
 
 - Update `SessionStartHook.java`:
   - File: `client/src/main/java/io/github/cowwoc/cat/hooks/SessionStartHook.java`
@@ -106,7 +106,7 @@ None
   - Remove any test methods or assertions that verify cwd-restore or worktree-resume behavior contributed by the two
     deleted handlers.
 
-### Wave 3
+### Job 3
 
 - Run the full test suite and verify all tests pass:
   - Command: `mvn -f client/pom.xml test`

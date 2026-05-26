@@ -43,9 +43,9 @@ None
 ## Pre-conditions
 - [ ] `2.1-canonicalize-wave-hierarchy-doc` is closed (so `plugin/concepts/execution-model.md` exists)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Update `plugin/concepts/token-warning.md`: replace context-based sub-issue decomposition trigger with
   guidance to split remaining waves when context exceeds 40%
   - Files: `plugin/concepts/token-warning.md`

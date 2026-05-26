@@ -77,9 +77,9 @@ Each skill should have:
 - [ ] All skills have "When to Use" section
 - [ ] git-rebase changes committed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Commit git-rebase update**
    - Already edited in session

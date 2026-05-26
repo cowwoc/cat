@@ -30,9 +30,9 @@ feature
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Read `GetRetrospectiveOutput.java` lines 380-395 to understand the current format code.
 - Change the format string from `"(occurrences: %d/%d)"` to `"(%d total, %d after fix)"` (or equivalent

@@ -73,9 +73,9 @@ None - infrastructure/setup task
 ## Dependencies to Add
 - `com.knuddels:jtokkit:1.1.0` - Java tokenizer library (tiktoken equivalent)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 ### Step 1: Wire up 6 existing Java entry points (one at a time)
 - Edit `plugin/hooks/hooks.json` to replace Python entry point with java.sh call

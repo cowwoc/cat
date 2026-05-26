@@ -53,9 +53,9 @@ None — workflow improvement to respect caution settings and ensure build corre
 - [ ] `caution` configuration option is read from `.cat/config.json`
 - [ ] Maven build in worktree produces passing test suite
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Modify `plugin/skills/work-merge-agent/first-use.md` Step 8 post-condition:
   - After successful squash commit, read `caution` setting from `.cat/config.json` using `get-config-output effective`

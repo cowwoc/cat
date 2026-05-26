@@ -42,9 +42,9 @@ nothing else is altered.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Replace the Phase 7 implementation in `plugin/migrations/2.1.sh`
   - Files: `plugin/migrations/2.1.sh`
   - Replace the current shell pipeline (sed + grep) with a single `awk` command that:

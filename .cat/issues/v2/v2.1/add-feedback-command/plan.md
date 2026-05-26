@@ -65,9 +65,9 @@ But instead of applying fixes locally, package this as a GitHub issue.
 - [ ] Explicit permission required before posting
 - [ ] Uses `gh` CLI for GitHub integration
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Update skill structure**: Update runtime feedback skill metadata and shared first-use instructions
    - Verify: Skill files exist in the current `client/plugin/skills/` layout
 2. **Implement bug report flow**: Integrate with /cat:learn for RCA collection

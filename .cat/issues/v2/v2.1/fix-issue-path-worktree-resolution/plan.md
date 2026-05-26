@@ -49,9 +49,9 @@ for PLAN.md/STATE.md reads instead of deriving the equivalent path within the ac
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - In `WorkPrepare.java`, change `result.put("issue_path", issuePath.toString())` (line ~496) to:
   ```java

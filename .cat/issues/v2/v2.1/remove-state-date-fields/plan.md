@@ -32,9 +32,9 @@ STATE.md schema contains no date fields. `StateSchemaValidator` rejects files th
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - **Step 1:** Read `StateSchemaValidator.java`, `ValidateStateMdFormat.java`, and `StateSchemaValidatorTest.java` to
 - **Step 2:** Update `StateSchemaValidator.java`:
 - **Step 3:** Update `ValidateStateMdFormat.java` to remove `Last Updated` from the example/guidance text.

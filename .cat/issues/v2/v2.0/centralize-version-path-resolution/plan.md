@@ -23,9 +23,9 @@ None - infrastructure/refactor improvement
 - plugin/.cat/workflows/work.md - Replace 2 hardcoded paths
 - plugin/hooks/skill_handlers/status_handler.py - Replace 2 hardcoded paths
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Create version-paths.md reference
    - Files: plugin/concepts/version-paths.md (NEW)
    - Define path resolution functions that handle:

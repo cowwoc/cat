@@ -15,9 +15,9 @@ None - workflow improvement
 ## Files to Modify
 - plugin/skills/add.md - Main /cat:add skill definition
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Add clarifying questions for vague requirements
    - Files: plugin/skills/add.md
    - Verify: Wizard asks follow-up questions when description is vague

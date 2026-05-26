@@ -28,15 +28,15 @@ The decompose-issue-agent skill previously created bare names before the fix in 
 ## Pre-conditions
 - [ ] `fix-decompose-issue-bare-names` is closed (prevents new bare names from being created)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Add migration phase to `plugin/migrations/2.1.sh` to transform bare names to qualified names
   - Files: `plugin/migrations/2.1.sh`
 - Create Bats tests verifying the migration behavior
   - Files: `tests/hooks/migration-2.1.bats`
 
-### Wave 2
+### Job 2
 - Install bats via `npm install -g bats` and run `bats tests/hooks/migration-2.1.bats` to execute all
   Phase 17 tests; all 6 tests must pass with exit code 0
   - Files: `tests/hooks/migration-2.1.bats` (read-only verification; no source changes unless a test

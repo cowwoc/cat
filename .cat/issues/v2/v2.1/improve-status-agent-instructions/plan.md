@@ -25,7 +25,7 @@ None
 ## Main Agent Waves
 - /cat:instruction-builder-agent plugin/skills/status-agent/SKILL.md
 
-## Sub-Agent Waves
+## Jobs
 
 (None — instruction-builder handles all sub-phases internally)
 

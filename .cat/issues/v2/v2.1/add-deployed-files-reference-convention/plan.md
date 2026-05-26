@@ -19,9 +19,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Create `.claude/rules/plugin-file-references.md` with the full convention content including:
   - Definition of "deployed file" (files under `plugin/`) vs "source-only path" (`.claude/rules/`, `.cat/rules/`, etc.)
   - At least 2 compliant examples (plugin/ files referencing other plugin/ files)
@@ -29,7 +29,7 @@ None
   - Guidance: end-user-facing rules go in `plugin/rules/`, developer-only rules go in `.claude/rules/`
   - Files: `.claude/rules/plugin-file-references.md`
 
-### Wave 2
+### Job 2
 - Update `.claude/rules/common.md` to add a cross-reference to the new convention file in an appropriate section
   - Files: `.claude/rules/common.md`
 

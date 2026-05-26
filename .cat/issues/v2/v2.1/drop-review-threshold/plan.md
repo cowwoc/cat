@@ -67,9 +67,9 @@ automatically removes the key at SessionStart before validation runs.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Step 1:** Update `Config.java` — remove `DEFAULT_AUTOFIX_THRESHOLD` constant, remove `reviewThreshold` from
    the defaults map (`defaults.put("reviewThreshold", ...)`), remove `getAutofixThreshold()` method entirely.

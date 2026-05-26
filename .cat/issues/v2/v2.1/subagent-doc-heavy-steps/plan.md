@@ -64,9 +64,9 @@ None - infrastructure/optimization task
 - [ ] Workflow produces same results as before
 - [ ] Error handling preserved
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Define phase subagent JSON contracts
    - Verify: Input/output schemas documented
 

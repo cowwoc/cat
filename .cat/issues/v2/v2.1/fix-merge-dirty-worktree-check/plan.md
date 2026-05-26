@@ -80,9 +80,9 @@ Missing pre-merge dirty check in `MergeAndCleanup.execute()`. The worktree dirty
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Add `verifyMainWorkspaceClean` to `MergeAndCleanup`**
    - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/MergeAndCleanup.java`

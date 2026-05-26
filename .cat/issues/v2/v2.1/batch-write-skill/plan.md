@@ -20,9 +20,9 @@ None (infrastructure/optimization issue)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Create skill directory** `plugin/skills/batch-write/`
 2. **Create SKILL.md** with frontmatter (user-invocable: false, allowed-tools: Write, Edit, Bash) and preprocessor
    directive matching the batch-read pattern

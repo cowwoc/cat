@@ -33,9 +33,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Read the current instruction-builder-agent SKILL.md to identify all locations where
   benchmark-artifacts/<session-id>/ paths are constructed or used
   - Files: plugin/skills/instruction-builder-agent/SKILL.md

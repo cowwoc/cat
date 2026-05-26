@@ -21,9 +21,9 @@ None - Infrastructure/maintenance issue
 - [ ] CAT init and migration scripts are established
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Create .gitignore template**
    - New file: `plugin/concepts/.gitignore-template`

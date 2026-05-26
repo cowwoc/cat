@@ -34,9 +34,9 @@ Parent: port-utility-scripts
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/module-info.java` - If needed
 - `plugin/scripts/get-render-diff.sh` - Update to call Java instead of Python
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. Read wrap-markdown.py to understand preservation rules and wrapping logic
 2. Create `MarkdownWrapper` class implementing wrapping with all preservation rules
 3. Read validate-status-alignment.sh to understand consistency checks

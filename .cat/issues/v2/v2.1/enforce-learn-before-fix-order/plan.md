@@ -24,9 +24,9 @@ require running the learn skill BEFORE fixing the problem, not after.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Update `INSTRUCTIONS` constant in `InjectSessionInstructions.java`: modify the Mandatory Mistake
   Handling section to make learn-first explicit, add rationale for why learn must run before the fix

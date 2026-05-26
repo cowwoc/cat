@@ -36,9 +36,9 @@ to an internal display skill.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Update `stakeholder-selection-box-agent` invocation in stakeholder-review-agent to omit the
   session ID prefix (or call the underlying binary directly via Bash)

@@ -37,9 +37,9 @@ Ten distinct findings across five phase files, falling into three categories:
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Fix tier classification in `first-use.md`:**
    - Replace unconditional `protocol_violation → quick` rule with evidence-based criteria: quick tier

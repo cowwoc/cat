@@ -76,9 +76,9 @@ None (internal restructuring)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 ### Step 1: Rename Java enum and update all Java source
 - Rename `CuriosityLevel.java` to `EffortLevel.java`, update class name and all Javadoc

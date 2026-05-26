@@ -30,9 +30,9 @@ None (infrastructure improvement)
 - [ ] Multiple trials execute concurrently (not sequentially)
 - [ ] `mvn -f client/pom.xml test` passes
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Change default trials to 10:** In `main()`, change `int trials = 5` to `int trials = 10`
    - Files: `EmpiricalTestRunner.java`
 2. **Add fail-fast behavior:** In the trial loop (`runTrials` or equivalent), check each trial result and abort

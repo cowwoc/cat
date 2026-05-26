@@ -226,9 +226,9 @@ method that produces it is removed.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Core refactor — `IssueLock.java`
+### Job 1: Core refactor — `IssueLock.java`
 
 - Remove `update()` method (lines 616–655)
 - Remove `handleUpdate()` private static method (lines 1055–1065)
@@ -238,7 +238,7 @@ method that produces it is removed.
 - Change `acquire()` validation for `worktree` from `isNotNull()` to `isNotBlank()` (line 435)
 - Update `acquire()` `@param worktree` Javadoc
 
-### Wave 2: Core refactor — `IssueDiscovery.java`
+### Job 2: Core refactor — `IssueDiscovery.java`
 
 - Remove `issueLock` field declaration and constructor initialization
 - Remove `IssueLock` import if no longer referenced
@@ -248,7 +248,7 @@ method that produces it is removed.
   `issueLock.release()` call in the existing-worktree `continue` block (~line 1141)
 - Update class Javadoc to remove lock acquisition reference
 
-### Wave 3: Core refactor — `WorkPrepare.java`
+### Job 3: Core refactor — `WorkPrepare.java`
 
 File: `client/src/main/java/io/github/cowwoc/cat/hooks/util/WorkPrepare.java`
 
@@ -277,7 +277,7 @@ File: `client/src/main/java/io/github/cowwoc/cat/hooks/util/WorkPrepare.java`
 - In `execute()` (~line 246): remove the comment `// Step 3 (lock acquisition) is handled implicitly by IssueDiscovery.findNextIssue()`
 - Update `executeWithLock()` Javadoc to state that lock acquisition happens as the first step inside this method
 
-### Wave 4: Test updates
+### Job 4: Test updates
 
 - `client/src/test/java/io/github/cowwoc/cat/hooks/util/IssueLockTest.java`:
   - Delete test methods `updateSucceedsWhenLockOwned`, `updateFailsWhenLockOwnedByAnotherSession`,
@@ -296,7 +296,7 @@ File: `client/src/main/java/io/github/cowwoc/cat/hooks/util/WorkPrepare.java`
     WorkPrepareTest.java item 3" above
   - Leave `executeReleasesLockOnOversizedReturn` and `executeReleasesLockOnCorruptReturn` unmodified
 
-### Wave 5: Build verification
+### Job 5: Build verification
 
 - Run `mvn -f client/pom.xml test` and confirm exit code 0
 - Fix any compilation errors or test failures

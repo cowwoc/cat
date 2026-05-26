@@ -23,9 +23,9 @@ Implement GitHub Issues backend that stores planning metadata as GitHub Issues w
 - [ ] Works with `gh` CLI authentication
 - [ ] Rate limiting handled gracefully
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Design GitHub mapping**
    - Verify: Document how versions/tasks map to Issues/Milestones/Labels
 2. **Implement GitHubBackend**

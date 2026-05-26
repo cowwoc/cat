@@ -55,9 +55,9 @@ against the allowed set (Status, Progress, Dependencies, Blocks, Resolution, Par
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Read `StateSchemaValidator.java` to understand current validation logic
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/write/StateSchemaValidator.java`

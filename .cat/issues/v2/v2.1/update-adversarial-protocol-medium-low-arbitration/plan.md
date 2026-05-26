@@ -29,9 +29,9 @@ arbitration for MEDIUM/LOW findings.
 - [ ] The instruction-builder-agent's `first-use.md` is updated to match the new protocol if it
   contains a copy of the MEDIUM/LOW cleanup instructions
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Read `plugin/concepts/adversarial-protocol.md` and locate the "Final-round MEDIUM/LOW cleanup"
   section. Update it so that after blue-team patches MEDIUM/LOW findings, the orchestrator checks

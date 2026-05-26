@@ -35,9 +35,9 @@ None
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Create `IssueGoalReader` utility class with `readGoalFromPlan(Path planPath)` static method
   - Extract logic from `GetIssueCompleteOutput.readGoalFromPlan()` (most recent, best-tested implementation)

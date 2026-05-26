@@ -63,9 +63,9 @@ The fix is patch-diff comparison: compare issue branch content relative to its b
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Step 1 (TDD - write failing tests first):** Add two test methods to
    `client/src/test/java/io/github/cowwoc/cat/hooks/test/GitRebaseSafeTest.java`:

@@ -57,9 +57,9 @@ call `resetRetrospectiveCounter(retroDir, indexFile, mapper)`, then return the b
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Implementation
+### Job 1: Implementation
 
 **File:** `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetRetrospectiveOutput.java`
 
@@ -138,7 +138,7 @@ to:
   }
 ```
 
-### Wave 2: Tests
+### Job 2: Tests
 
 **File:** `client/src/test/java/io/github/cowwoc/cat/hooks/test/GetRetrospectiveOutputTest.java`
 
@@ -229,7 +229,7 @@ Exact method signature:
   public void counterNotResetOnErrorPath() throws IOException
 ```
 
-### Wave 3: Verify
+### Job 3: Verify
 
 Run:
 ```bash

@@ -19,8 +19,8 @@ compress-concepts-md (decomposed)
 - [ ] All files score 1.0 on /compare-docs validation
 - [ ] Tests pass
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. For each file: Invoke /cat:shrink-doc
 2. Commit with message: "config: compress git-related concepts"

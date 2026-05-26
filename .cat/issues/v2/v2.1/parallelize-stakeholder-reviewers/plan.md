@@ -45,9 +45,9 @@ None — performance optimization from session analysis (optimize-execution).
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Read the current `spawn_reviewers` step from the actual source skill file to confirm the for-loop pattern
 - Rewrite the `spawn_reviewers` step to dispatch all selected reviewers in a single message:

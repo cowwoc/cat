@@ -57,9 +57,9 @@ None
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Create `plan-builder-agent` skill:
   - Files: `plugin/skills/plan-builder-agent/SKILL.md`, `plugin/skills/plan-builder-agent/first-use.md`
@@ -75,7 +75,7 @@ None
 
 - Commit: `feature: create plan-builder-agent skill with extracted planning logic`
 
-### Wave 2
+### Job 2
 
 - Update `add` skill to invoke plan-builder:
   - Files: `plugin/skills/add/first-use.md`, `plugin/skills/add-agent/SKILL.md`

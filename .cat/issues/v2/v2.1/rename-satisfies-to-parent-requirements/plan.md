@@ -47,22 +47,22 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Update Plugin Files
+### Job 1: Update Plugin Files
 - Rename `## Satisfies` → `## Parent Requirements` heading and all prose references in plugin template,
   concept, agent, and skill files listed above
   - Files: plugin/templates/issue-plan.md, plugin/templates/plan.md, plugin/concepts/hierarchy.md,
     plugin/concepts/version-completion.md, plugin/agents/stakeholder-requirements.md,
     plugin/skills/add/first-use.md
 
-### Wave 2: Migration Script + Existing Issue PLAN.md Files
+### Job 2: Migration Script + Existing Issue PLAN.md Files
 - Add or update the current version's migration script in `plugin/migrations/` to rename
   `## Satisfies` → `## Parent Requirements` in all issue PLAN.md files (must be idempotent)
 - Run the migration to update all existing PLAN.md files
   - Files: plugin/migrations/, all PLAN.md files under .cat/issues/
 
-### Wave 3: Verification
+### Job 3: Verification
 - `grep -r "^## Satisfies" plugin/` returns zero matches
 - `grep -r "^## Satisfies" .cat/issues/` returns zero matches
 - `grep -rn "Satisfies" plugin/templates/ plugin/concepts/ plugin/agents/ plugin/skills/add/` returns

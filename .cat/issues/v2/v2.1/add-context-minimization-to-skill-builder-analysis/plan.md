@@ -90,9 +90,9 @@ are needed.
 
 - [ ] All dependent issues are closed (add-subagent-context-minimization-concept must be closed)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Update `plugin/agents/skill-analyzer-agent/SKILL.md` with the two new patterns per the specification
   below
@@ -101,13 +101,13 @@ are needed.
   specification below
   - Files: `plugin/skills/skill-builder-agent/first-use.md`
 
-### Wave 2
+### Job 2
 
 - Run `mvn -f client/pom.xml test` and confirm all tests pass
 - Update `STATE.md` to reflect implementation complete
   - Files: `.cat/issues/v2.1/add-context-minimization-to-skill-builder-analysis/STATE.md`
 
-### Wave 3
+### Job 3
 
 - Create `plugin/agents/skill-analyzer-agent/test-trace.md` — a documented test trace that provides
   structural evidence for the E2E post-condition "Invoke skill-analyzer-agent with benchmark JSON +

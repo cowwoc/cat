@@ -65,9 +65,9 @@ Empirical testing (5 rounds, 80+ trials across haiku and sonnet) identified two 
 - [ ] SkillLoader correctly parses new tag names
 - [ ] Other skills using `<output>` pattern still work
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Read Java conventions file, then update SkillLoader.java tag patterns and output wrapping
    - Change `OUTPUT_TAG_PATTERN` from `<output>` to `<verbatim-response>`
    - Change `SKILL_TAG_PATTERN` from `<skill>` to `<response-instructions>`

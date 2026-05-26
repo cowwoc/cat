@@ -61,9 +61,9 @@ statements for subsequent Bash tool invocations. `InjectEnv` receives a `ClaudeT
 | `client/src/test/java/io/github/cowwoc/cat/hooks/test/TestClaudeHookTest.java` | Remove `getEnvFile()` test assertions |
 | `client/src/test/java/io/github/cowwoc/cat/hooks/test/EnforceJvmScopeEnvAccessTest.java` | Add `InjectEnv.java` to whitelist |
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 Each step below is a discrete edit. Read each file before editing. Commit type: `refactor:`.
 

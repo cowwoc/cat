@@ -31,9 +31,9 @@ traceability and increasing token costs.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Add context-size decision rule to work-with-issue merge step: check main context size and delegate to
   work-merge subagent when threshold exceeded

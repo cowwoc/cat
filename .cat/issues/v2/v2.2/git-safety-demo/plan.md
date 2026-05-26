@@ -24,9 +24,9 @@ None - marketing/documentation task
 - [ ] Each feature has 2-3 sentence description explaining safety value
 - [ ] Videos show automatic backup and recovery features
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Write feature descriptions for git safety commands
    - Files: demo page content
    - Verify: Descriptions emphasize safety benefits

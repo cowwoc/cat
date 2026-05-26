@@ -60,9 +60,9 @@ Match the existing jlink bundle platforms:
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: CI workflow and download script
+### Job 1: CI workflow and download script
 
 - Create `.github/workflows/build-git-filter-repo.yml`:
   - Trigger: push to `main` or `v*` branches, tags `git-filter-repo-v*`, and `workflow_dispatch`
@@ -91,7 +91,7 @@ Match the existing jlink bundle platforms:
 
 - Commit: `feature: add CI workflow and download script for git-filter-repo standalone binary`
 
-### Wave 2: Update git-rewrite-history-agent skill
+### Job 2: Update git-rewrite-history-agent skill
 
 - Rewrite `plugin/skills/git-rewrite-history-agent/first-use.md`:
   - **Purpose line**: "Safely rewrite git history using git filter-repo, with automatic Python
@@ -143,7 +143,7 @@ Match the existing jlink bundle platforms:
 - Commit: `refactor: replace BFG with git filter-repo in git-rewrite-history-agent skill`
 - Update STATE.md: status=closed, progress=100%
 
-### Wave 3: Fix missing post-conditions (iteration 1)
+### Job 3: Fix missing post-conditions (iteration 1)
 
 - Update `plugin/skills/git-rewrite-history-agent/SKILL.md` frontmatter description to remove the
   "or BFG" reference: change the description value to

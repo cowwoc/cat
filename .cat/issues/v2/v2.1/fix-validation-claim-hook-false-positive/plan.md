@@ -71,9 +71,9 @@ Expected files (to be confirmed by investigation):
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Locate the hook source file by searching for "VALIDATION CLAIM WITHOUT EVIDENCE":
   ```bash
   grep -r "VALIDATION CLAIM WITHOUT EVIDENCE" /workspace/plugin/ /workspace/.claude/ -l
@@ -81,7 +81,7 @@ Expected files (to be confirmed by investigation):
   Read the hook implementation to understand the detection logic (pattern matching, conditions, context).
   - Files: hook source file(s) identified by grep
 
-### Wave 2
+### Job 2
 - Implement the fix in the hook to exempt verify-implementation-agent output from the false-positive
   trigger. Approach: add a condition that checks whether verify-implementation-agent was invoked in the
   recent tool call history, OR narrow the pattern to require absence of preceding verification evidence.
@@ -90,7 +90,7 @@ Expected files (to be confirmed by investigation):
   verify-implementation output, (b) genuine unsubstantiated claims still trigger the hook.
   - Files: corresponding test file in `client/src/test/`
 
-### Wave 3
+### Job 3
 - Run `mvn -f client/pom.xml test` to verify all tests pass.
   - Files: none (validation only)
 - Update `STATE.md` to reflect implementation complete.

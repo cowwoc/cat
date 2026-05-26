@@ -41,9 +41,9 @@ These semantics should extend to out-of-scope review concerns.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Update SUBAGENT-PROMPT-CHECKLIST.md patience table:** Change "high" description from "FUTURE version backlog" to
    "LATER version backlog" and add a section explaining patience also applies to out-of-scope review concerns.
 2. **Add out-of-scope concern classification to work-with-issue:** After the auto-fix loop in the "Handle Review

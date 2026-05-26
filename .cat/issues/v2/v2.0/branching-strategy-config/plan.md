@@ -45,9 +45,9 @@ Agent MUST ask follow-up questions when:
 - plugin/skills/git-rebase/SKILL.md - Read PROJECT.md, warn on preference conflicts
 - plugin/templates/project.md - Add Git Workflow section template
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 ### Phase 1: Wizard Implementation
 

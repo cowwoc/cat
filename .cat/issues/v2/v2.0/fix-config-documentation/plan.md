@@ -26,9 +26,9 @@ None - documentation cleanup task
 - [ ] `autoRemoveWorktrees` documented in README Options Reference
 - [ ] README options match template defaults
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Remove yoloMode from template:**
    - File: plugin/.cat/templates/config.json
    - Verify: `grep yoloMode` returns nothing

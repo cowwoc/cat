@@ -20,19 +20,19 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Research
+### Job 1: Research
 - Determine how to detect which issues reference a given skill (scan PLAN.md files for skill names in Files to Modify, execution context references, or skill invocations)
   - Files: `.cat/issues/v2/v2.1/*/PLAN.md` (sample scan)
 
-### Wave 2: Implementation
+### Job 2: Implementation
 - Add a step to add-agent/first-use.md that triggers when the issue description or files-to-modify mention a skill file
 - Scan open issues for references to that skill and suggest adding them as dependents
 - Present findings via AskUserQuestion for user confirmation
   - Files: `plugin/skills/add-agent/first-use.md`
 
-### Wave 3: E2E Verification
+### Job 3: E2E Verification
 - Write a Bats test in `plugin/skills/add/tests/` that exercises the `issue_detect_skill_deps` step end-to-end: sets up
   a temporary ISSUES_DIR with two open PLAN.md stubs referencing `plugin/skills/add/` and one closed stub, invokes the
   bash detection block extracted from `plugin/skills/add/first-use.md`, and asserts that exactly the two open issues
@@ -40,7 +40,7 @@ None
   can be closed.
   - Files: `plugin/skills/add/tests/skill_dep_detection.bats`
 
-### Wave 4: Fix Architecture and Testing Gaps (Iteration 3 Concerns)
+### Job 4: Fix Architecture and Testing Gaps (Iteration 3 Concerns)
 
 #### CRITICAL: Test/Production Sync Architecture
 - Extract the three bash helper blocks from `first-use.md` (skill name extraction, single-skill detection loop, STATE.md
@@ -99,7 +99,7 @@ None
   expansion equivalents (`${var##*/}` and `${var%/*}`) to eliminate subprocess forks in the hot detection loop.
   - Files: `plugin/skills/add-agent/skill_dep_helpers.sh`
 
-### Wave 5: Fix Critical Bugs Found in Iteration 3 Stakeholder Review
+### Job 5: Fix Critical Bugs Found in Iteration 3 Stakeholder Review
 
 #### CRITICAL: Fix Wrong source Path in first-use.md (line 486)
 - **Current:** `source "${CLAUDE_PLUGIN_ROOT}/plugin/skills/add-agent/skill_dep_helpers.sh"`

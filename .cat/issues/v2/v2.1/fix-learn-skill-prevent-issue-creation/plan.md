@@ -57,9 +57,9 @@ it without a hard failure signal.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - In `plugin/skills/learn/first-use.md`:
   1. Keep current Step 5 header + display-summaries block as **Step 5: Display Phase Summaries**

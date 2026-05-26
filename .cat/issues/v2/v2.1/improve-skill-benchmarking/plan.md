@@ -50,9 +50,9 @@ None (infrastructure/tooling improvement)
 - [ ] Benchmark data is committed to the repository with each run
 - [ ] Backward compatibility is maintained where possible
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Change Detection and Semantic Unit Mapping
+### Job 1: Change Detection and Semantic Unit Mapping
 1. **Step 1:** Implement diff logic to identify changed semantic units
    - Parse skill frontmatter and body
    - Compare old vs new versions
@@ -63,7 +63,7 @@ None (infrastructure/tooling improvement)
    - Create mapping from semantic units to affected test cases
    - Files: Updates to test case format and mapping logic
 
-### Wave 2: Targeted Re-testing
+### Job 2: Targeted Re-testing
 1. **Step 3:** Implement selective SPRT re-run
    - Preserve passing results for unchanged units
    - Run SPRT only for test cases linked to changed units
@@ -73,7 +73,7 @@ None (infrastructure/tooling improvement)
    - Option B: Run 3-5 smoke tests before escalating to full SPRT
    - Files: `plugin/skills/instruction-builder-agent/benchmark/benchmark-runner.sh`
 
-### Wave 3: Model Selection and Artifact Persistence
+### Job 3: Model Selection and Artifact Persistence
 1. **Step 5:** Update to read skill `model:` field
    - Parse frontmatter to extract model directive
    - Use that model for benchmark subagent instead of hardcoded Haiku
@@ -86,7 +86,7 @@ None (infrastructure/tooling improvement)
    - Commit artifacts to repository
    - Files: `plugin/skills/instruction-builder-agent/benchmark/benchmark-runner.sh`
 
-### Wave 4: Token Tracking and Reporting
+### Job 4: Token Tracking and Reporting
 1. **Step 7:** Implement token tracking in benchmark subagents
    - Collect token usage from each benchmark invocation
    - Store counts in benchmark artifacts

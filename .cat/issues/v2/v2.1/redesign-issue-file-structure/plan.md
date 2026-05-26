@@ -70,9 +70,9 @@ as obsolete before or during this work.
 - [ ] E2E: Run `/cat:add`, `/cat:work`, and `/cat:status` against the new format and confirm
   correct behavior
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1 — Audit
+### Job 1 — Audit
 
 1. Grep for all references to `PLAN.md`, `STATE.md`, `plan.md`, `state.md` in:
    - `plugin/` (skills, concepts, rules, templates, hooks)
@@ -81,7 +81,7 @@ as obsolete before or during this work.
 2. Compile a complete list of files to update
 3. Close `2.1-move-dependencies-to-plan-md` as obsolete
 
-### Wave 2 — Migration Script
+### Job 2 — Migration Script
 
 1. Add new phases to `plugin/migrations/2.1.sh`:
    - Rename all `PLAN.md` → `plan.md` under `.cat/issues/`
@@ -91,7 +91,7 @@ as obsolete before or during this work.
 2. Run migration against a test copy to verify
 3. Verify script is idempotent (run twice, second run is a no-op)
 
-### Wave 3 — Java Updates
+### Job 3 — Java Updates
 
 1. Rewrite `StateSchemaValidator` to parse and validate `index.json` as JSON
 2. Update `IssueDiscovery` to read `index.json`
@@ -99,7 +99,7 @@ as obsolete before or during this work.
 4. Simplify `IssueGoalReader` if needed (keep as regex reader for status display)
 5. Run all tests: `mvn -f client/pom.xml test`
 
-### Wave 4 — Skills and Templates
+### Job 4 — Skills and Templates
 
 1. Update all skill files: replace PLAN.md references with plan.md, STATE.md with index.json
 2. Update skills that instruct LLM to parse pre-conditions/post-conditions: replace extraction
@@ -107,14 +107,14 @@ as obsolete before or during this work.
 3. Delete `plugin/templates/issue-state.md`, create `plugin/templates/issue-index.json`
 4. Update all other template and concept files
 
-### Wave 5 — Apply Migration and Verify
+### Job 5 — Apply Migration and Verify
 
 1. Run `plugin/migrations/2.1.sh` against the actual `.cat/issues/` directory
 2. Verify spot-check: 5 random issues have correct index.json and plan.md
 3. E2E test: `/cat:status`, `/cat:work`, `/cat:add` all function correctly
 4. Final test run: `mvn -f client/pom.xml test`
 
-### Wave 6 — Fix Remaining Unmigrated Issues
+### Job 6 — Fix Remaining Unmigrated Issues
 
 1. Verify all issues under `.cat/issues/v2/v2.1/` have `plan.md` and `index.json` (migrated from
    `PLAN.md` and `STATE.md`)
@@ -122,7 +122,7 @@ as obsolete before or during this work.
    `find .cat/issues -name PLAN.md -o -name STATE.md` must return empty output
 3. Verify all converted directories contain `plan.md` and `index.json` with valid JSON schemas
 
-### Wave 7 — Remove Post-condition Extraction from VerifyAudit
+### Job 7 — Remove Post-condition Extraction from VerifyAudit
 
 1. Refactor `client/src/main/java/io/github/cowwoc/cat/hooks/skills/VerifyAudit.java` to remove
    programmatic post-condition extraction: delete the `extractPostconditions()` method, the `parse()`

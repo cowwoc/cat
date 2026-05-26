@@ -117,9 +117,9 @@ Add `cat-config.local.json` to prevent accidental commit.
 - [ ] Feature gate allows team features for team tier
 - [ ] Upgrade message shown when blocked
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Create validate-license.py**
    - Implement Ed25519 signature verification

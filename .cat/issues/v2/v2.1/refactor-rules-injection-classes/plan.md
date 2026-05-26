@@ -42,9 +42,9 @@ None — code quality refactor
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Rename `InjectCatRules` to `InjectRulesToMainAgent`:
   - Files: `InjectCatRules.java`, `SessionStartHook.java`, `InjectCatRulesTest.java`

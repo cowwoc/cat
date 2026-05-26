@@ -51,9 +51,9 @@ None — quality/performance improvement from session analysis.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Add `bash-efficiency.md` to `plugin/rules/` with the following convention:
   - **MANDATORY:** Chain independent consecutive Bash commands with `&&` in a single Bash tool call
@@ -63,7 +63,7 @@ None — quality/performance improvement from session analysis.
     where one command's output feeds the next as a variable that must be captured separately
   - Set `subAgents: [all]` in frontmatter to apply to all agents
 
-### Wave 2
+### Job 2
 
 - In each orchestration skill file, identify all consecutive independent Bash call groups and merge them:
   - Pattern to fix: Multiple separate Bash tool calls that check independent state (e.g., banner, lock verify,

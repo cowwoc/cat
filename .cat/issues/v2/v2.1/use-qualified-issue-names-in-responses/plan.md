@@ -20,9 +20,9 @@ suggesting next work, when summarizing created issues, etc.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Add instruction to InjectSessionInstructions.java:** Add a section to the injected session instructions requiring
    the agent to always use fully-qualified issue names (`{major}.{minor}-{bare-name}`) when referencing issues in
    responses. Bare names should never appear in agent-to-user text.

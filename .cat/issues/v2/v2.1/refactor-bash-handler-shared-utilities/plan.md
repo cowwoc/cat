@@ -27,9 +27,9 @@ implementations.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Create `BashHandlerUtils` with shared constants and methods
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/bash/BashHandlerUtils.java`
 - Update `WarnMainWorkspaceCommit`, `BlockWrongBranchCommit`, `VerifyStateInCommit` to use `BashHandlerUtils`

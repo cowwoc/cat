@@ -21,9 +21,9 @@ None (infrastructure maintenance)
 - [ ] Cleanup is best-effort (failures ignored with `|| true`)
 - [ ] Existing backup/cleanup logic unchanged
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Add orphaned backup cleanup:** Insert a loop after the argument parsing (line 17) and before the EXIT trap
    setup (line 19) that deletes any existing `backup-before-squash-*` branches:
    ```bash

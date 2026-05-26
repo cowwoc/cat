@@ -89,9 +89,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1 — Group 1: Convert SKILL.md to top-level agent configs
+### Job 1 — Group 1: Convert SKILL.md to top-level agent configs
 - For each of the 4 subagent files (red-team-agent, blue-team-agent, diff-validation-agent,
   skill-analyzer-agent):
   - Read `plugin/agents/{name}/SKILL.md`
@@ -106,7 +106,7 @@ None
   - Files: `plugin/agents/{name}/SKILL.md` → `plugin/agents/{name}.md`
 - Commit: `refactor: convert subagent SKILL.md files to top-level agent configs`
 
-### Wave 2 — Group 2: Move skills to plugin/skills/
+### Job 2 — Group 2: Move skills to plugin/skills/
 - For each of the 3 skill files (skill-validator-agent, description-tester-agent,
   skill-comparison-agent):
   - `mkdir -p plugin/skills/{name}/`
@@ -116,7 +116,7 @@ None
   - Files: `plugin/agents/{name}/SKILL.md` → `plugin/skills/{name}/SKILL.md`
 - Commit: `refactor: move skill-invoked agents from plugin/agents/ to plugin/skills/`
 
-### Wave 3 — Update README and STATE.md
+### Job 3 — Update README and STATE.md
 - Update `plugin/agents/README.md` `## Directory Structure` fenced code block:
   - Remove all 8 subdirectory entries (e.g. `├── red-team-agent/` lines and their children)
   - Add the following 4 lines in alphabetical order among the existing top-level `.md` entries:

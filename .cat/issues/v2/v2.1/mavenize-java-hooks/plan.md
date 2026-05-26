@@ -22,9 +22,9 @@ None - infrastructure/build improvement
 - `hooks/build.sh` - Update build paths
 - `plugin/hooks/hooks.json` - Update hook command references
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Move all Java sources from `plugin/hooks/src/` to `hooks/src/main/java/`
    - Files: All 58 .java files under `plugin/hooks/src/io/github/cowwoc/cat/hooks/`
 2. **Step 2:** Create `plugin/hooks/hook.sh` as the new Java hook bridge

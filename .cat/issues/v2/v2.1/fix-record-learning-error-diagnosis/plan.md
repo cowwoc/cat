@@ -32,9 +32,9 @@ from existing-file corruption.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** In `RecordLearning.java`, locate `loadOrCreateMistakesFile()`. Wrap the Jackson parse
    exception with an `IOException` whose message reads:
    `"Failed to parse mistakes file at '<path>': <original message>. The file contains malformed JSON. Inspect and fix the file, then retry."`.

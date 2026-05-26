@@ -27,9 +27,9 @@ None (infrastructure issue)
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Read existing jlink tool for reference pattern:**
    - Read `client/src/main/java/io/github/cowwoc/cat/hooks/util/SessionAnalyzer.java` to understand

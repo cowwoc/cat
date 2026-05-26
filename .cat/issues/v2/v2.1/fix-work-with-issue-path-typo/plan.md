@@ -77,9 +77,9 @@ Prevents silent path typos that corrupt worktree and lock state, discovered in m
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Add a path validation step to `plugin/skills/work-with-issue-agent/SKILL.md` **immediately
   before** the work-implement-agent Skill tool invocation in Phase 1:

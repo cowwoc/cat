@@ -27,9 +27,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Modify `GetIssueCompleteOutput.getOutput()` to accept 2 args `(issueName, targetBranch)`:
   - Extract minor version from `issueName` (e.g., `2.1` from `2.1-fix-bug`)
   - Use `IssueDiscovery.findNextIssue()` with `Scope.MINOR`, the extracted version as target,
@@ -43,7 +43,7 @@ None
 - Run `mvn -f client/pom.xml verify` to verify no regressions
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetIssueCompleteOutput.java`
 
-### Wave 2
+### Job 2
 - Update `plugin/skills/work/SKILL.md` "Next Issue" section:
   - Remove the instruction to call `work-prepare` for next-issue discovery
   - Change to: after merge, invoke `/cat:work-complete ${issue_id} ${target_branch}` (2 args only)

@@ -55,9 +55,9 @@ None (quality assurance / infrastructure)
 - [ ] Zero false positives on negative test prompts
 - [ ] Eval harness is reproducible (documented setup, deterministic test cases)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Inventory user-invocable skills:** List all CAT skills that users can trigger, extract their descriptions
    and trigger patterns
    - Files: `plugin/skills/*/SKILL.md`

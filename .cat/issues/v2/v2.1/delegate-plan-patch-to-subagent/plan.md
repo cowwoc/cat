@@ -62,9 +62,9 @@ infrastructure needed.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Edit `plugin/skills/plan-builder-agent/first-use.md`: replace the NO-verdict handler's inline patching
   instructions with a Task tool delegation block.

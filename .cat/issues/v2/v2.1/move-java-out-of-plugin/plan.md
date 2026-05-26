@@ -42,9 +42,9 @@ These files contain `hooks/` paths. Update to `hooks/`:
 - `.cat/issues/v2/v2.1/migrate-python-to-java/PLAN.md`
 - `.cat/issues/v2/v2.1/mavenize-java-hooks/PLAN.md`
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Step 1: Move Java project directory**
    - Run: `git mv plugin/hooks/java hooks`

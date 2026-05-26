@@ -32,9 +32,9 @@ None - infrastructure improvement
 - [ ] PostToolUseFailure hook suggests skill after repeated failures
 - [ ] All existing tests pass with no regressions
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Create plugin/skills/recover-from-drift/SKILL.md with the drift detection skill
    - Files: plugin/skills/recover-from-drift/SKILL.md
    - Skill process:

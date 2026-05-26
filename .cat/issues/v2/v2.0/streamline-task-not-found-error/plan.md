@@ -50,9 +50,9 @@ Or with helpful suggestion if close match exists:
 - [ ] Optional: "Did you mean X?" for close matches (Levenshtein distance)
 - [ ] Consistent with other compact output styles
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Update work.md task lookup section**
    - Find task-not-found handling
    - Replace verbose output with compact box

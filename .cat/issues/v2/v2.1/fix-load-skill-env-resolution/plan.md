@@ -34,9 +34,9 @@ because `$(pwd)` returns the current directory (which may be a worktree), not th
 - `plugin/skills/audit-plan/SKILL.md` — Remove `$(pwd)` 4th argument
 - `plugin/skills/status/SKILL.md` — Remove `$(pwd)` 4th argument
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 ### Step 1: Update load-skill.sh parameter validation
 

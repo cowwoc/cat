@@ -19,9 +19,9 @@ None — internal tooling improvement from learning M507.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Add "Skill Failure Handling" section to `plugin/concepts/skill-loading.md`:
   - DO NOT bypass a skill with manual construction when skill fails

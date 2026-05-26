@@ -52,9 +52,9 @@ None - performance optimization
 - [ ] Re-review scope respects verify configuration (all/changed/none)
 - [ ] Parent agent context consumed by Phase 3c is reduced by at least 50% compared to current baseline
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Measure current baseline**
    - Files: session transcripts
    - Record average parent-agent input tokens consumed by Phase 3c across 3+ sessions

@@ -42,9 +42,9 @@ main agent waves.
 
 - /cat:instruction-builder-agent goal="optimize tee-piped-output rule instructions" target="plugin/rules/tee-piped-output.md"
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Create `client/src/main/java/io/github/cowwoc/cat/hooks/bash/WarnPipedWithoutTee.java`:
   - Implements `BashHandler`

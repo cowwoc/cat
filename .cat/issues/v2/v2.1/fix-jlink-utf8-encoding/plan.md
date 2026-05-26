@@ -21,9 +21,9 @@ None - bugfix
 `-Dstdout.encoding=UTF-8`. The JVM defaults `stdout.encoding` from the native locale, which is POSIX/ASCII in the
 container.
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Edit `hooks/build-jlink.sh`** — In the `generate_launchers()` function, add `-Dstdout.encoding=UTF-8` to the
    launcher template heredoc (line 301, between `-Xms16m -Xmx64m` and `-XX:+UseSerialGC`):

@@ -17,9 +17,9 @@ None
 ## Pre-conditions
 - [x] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Create test verifying that invoking the add skill creates a PLAN.md containing `## Parent Requirements`
   (not `## Satisfies`)
   - Files: `plugin/tests/skills/test-add-skill-template.bats`

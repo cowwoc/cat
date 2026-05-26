@@ -36,9 +36,9 @@ Parent: 2.1-port-workflow-scripts (sub-issue 3 of 4)
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/util/VersionUtils.java` - extend if needed
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/module-info.java` - if new exports needed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. Read `get-available-issues.sh` thoroughly - understand issue scanning, dependency resolution, lock integration
 2. Read `lib/version-utils.sh` - understand version schema detection
 3. Check existing `VersionUtils.java` for reusable version parsing

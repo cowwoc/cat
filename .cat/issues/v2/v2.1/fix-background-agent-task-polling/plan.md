@@ -54,9 +54,9 @@ tasks (deliver via `<task-notification>`). The agent conflates the two mechanism
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Identify the best injection point**
    - Check if the learn skill documentation mentions how to handle background results

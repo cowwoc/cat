@@ -29,9 +29,9 @@ Audit the instruction-builder's Step 3 benchmark runner:
 4. The SPRT orchestrator that accumulates results should be in the parent agent, not inside a
    benchmarking subagent
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Read `plugin/skills/instruction-builder-agent/SKILL.md` (worktree copy) — specifically Step 3 and any
   benchmark-runner sub-steps
 - Identify the current batching design: where does the skill instruct the agent to spawn subagents for runs?

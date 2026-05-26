@@ -75,7 +75,7 @@ skips the entire confirm phase.
 
 - /cat:instruction-builder-agent plugin/skills/work/first-use.md
 
-## Sub-Agent Waves
+## Jobs
 
 ### Iteration 1 (Pre-existing Compilation Fix)
 
@@ -110,7 +110,7 @@ skips the entire confirm phase.
   cd "${WORKTREE_PATH}" && git add client/src/main/java/io/github/cowwoc/cat/hooks/util/GitMergeLinear.java && git commit -m "bugfix: wrap Process in try-with-resources in GitMergeLinear.checkFastForwardPossible()"
   ```
 
-### Wave 1
+### Job 1
 
 - Read `plugin/skills/work/first-use.md` (lines 240–292) to understand the current "Potentially
   Complete Handling" section precisely

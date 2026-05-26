@@ -24,9 +24,9 @@ None - infrastructure/cleanup task
 - [ ] All tests still pass
 - [ ] References updated - all file references point to new location
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Create `plugin/stakeholders/` directory
    - Files: plugin/stakeholders/
    - Verify: `ls plugin/stakeholders/`

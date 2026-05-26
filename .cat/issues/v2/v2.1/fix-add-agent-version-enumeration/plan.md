@@ -39,9 +39,9 @@ changed to `index.json` with the appropriate JSON content `{"status":"..."}`.
 
 Similarly, all `PLAN.md` references must be changed to `plan.md`.
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Fix `GetAddOutput.java`: update `readVersionData()` to read `index.json` instead of `STATE.md`;
   parse status from JSON; read `plan.md` instead of `PLAN.md`; remove `parseStatus()` method and

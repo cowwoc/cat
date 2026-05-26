@@ -26,9 +26,9 @@ None (infrastructure enhancement to existing optimization tooling)
 - [ ] All existing tests continue to pass
 - [ ] New tests cover subagent discovery, per-agent analysis, and combined aggregation
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Add subagent discovery function to `analyze-session.py`:**
    - Parse parent session JSONL for Task tool_result entries containing `"agentId":"..."`
    - Extract all agentId values

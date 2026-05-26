@@ -63,9 +63,9 @@ deletes the session-scoped directories.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - **Fix Phase 6 — remove orphaned comment lines:** When removing a stale pattern from `.gitignore`,
   also delete any immediately preceding comment line(s) associated with it. Use `awk` or multi-pass

@@ -51,9 +51,9 @@ Requirements can exist at ANY version level that contains tasks:
 - [ ] /cat:work validates requirements at whatever level defines them
 - [ ] /cat:status shows requirements for any version that has them
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Update major-plan.md template**
    - Add optional `## Requirements` section (same format as minor)
    - Verify: Template includes requirements table

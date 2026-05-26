@@ -115,9 +115,9 @@ The error message must include:
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Fix `WorkPrepare.java`: replace `default -> { // ignore unknown flags }` with fail-fast block. The error must list
   valid flags: `--session-id`, `--exclude-pattern`, `--issue-id`, `--trust-level`, `--arguments`. Also fix the loop
@@ -154,7 +154,7 @@ The error message must include:
   If no such wrapping exists, add the throw and ensure the caller converts it to a block response.
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetNextIssueOutput.java`
 
-### Wave 2
+### Job 2
 
 - Add regression tests:
   - In `WorkPrepareTest.java`: add `unknownFlag_causesError()` — calls `WorkPrepare.run()` with

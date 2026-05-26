@@ -57,9 +57,9 @@ None — tech debt cleanup.
 - [ ] `retire-rca-ab-test` issue is closed (dependency)
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Delete `plugin/skills/learn/RCA-AB-TEST.md`
   - Use `cat:safe-rm-agent` or `git rm` to remove the file
@@ -71,7 +71,7 @@ None — tech debt cleanup.
     Analysis`
   - Files: `plugin/skills/learn/rca-methods.md`
 
-### Wave 2
+### Job 2
 
 - Edit `plugin/skills/learn/phase-analyze.md`: remove A/B test banner and method table; update JSON
   schema entries
@@ -94,7 +94,7 @@ None — tech debt cleanup.
     `"rca_method_name": "causal-barrier"`
   - Files: `plugin/skills/learn/mistake-categories.md`
 
-### Wave 3
+### Job 3
 
 - Run `mvn -f client/pom.xml test` to confirm no regressions
 - Update `STATE.md` progress to 100%

@@ -35,9 +35,9 @@ Add a brief note to the `Mode: revise` section explaining the design rationale: 
 
 - `plugin/skills/plan-builder-agent/first-use.md` — the only file requiring changes
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - In `plugin/skills/plan-builder-agent/first-use.md`, add a clarifying note after the `Mode: revise` description (after line 41) explaining the design rationale for why `revise` mode handles initial step generation. The note should state: adding execution steps to a lightweight plan.md (which already contains goal and post-conditions) is a revision of that existing document, not creation from scratch. The `revise` name accurately reflects this — the plan already exists, and the skill revises it to include implementation details.
 - Verify the "When to Use" section (lines 45-47) clearly distinguishes the two invocation contexts. No changes needed if it already names both contexts explicitly with their trigger conditions.

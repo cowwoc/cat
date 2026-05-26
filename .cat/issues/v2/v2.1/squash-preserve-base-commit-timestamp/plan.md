@@ -44,9 +44,9 @@ time for both dates when these variables are absent.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - In `GitCommands.java`, add a new overload:
   ```java
   public static String runGitCommandSingleLineInDirectory(
@@ -77,7 +77,7 @@ time for both dates when these variables are absent.
   - Follow the existing test structure and temp-dir isolation pattern already established in `GitSquashTest.java`.
   - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/GitSquashTest.java`
 
-### Wave 2
+### Job 2
 - Run the full test suite and verify all tests pass:
   ```bash
   mvn -f client/pom.xml test

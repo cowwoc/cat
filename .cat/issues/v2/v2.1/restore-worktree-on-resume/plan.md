@@ -59,9 +59,9 @@ None (infrastructure improvement)
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. Find and update lock file creation to populate the `worktree` field with the worktree path
 2. Create `RestoreWorktreeOnResume.java` SessionStartHandler

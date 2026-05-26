@@ -58,9 +58,9 @@ Only a compact JSON summary is returned to the main agent:
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Create `rebase-impact-agent` skill:
   - Accepts: issue_path, worktree_path, old_fork_point, new_fork_point
@@ -70,7 +70,7 @@ Only a compact JSON summary is returned to the main agent:
   - Writes full analysis to `${WORKTREE_PATH}/.cat/rebase-impact-analysis.md`
   - Returns compact JSON summary
 
-### Wave 2
+### Job 2
 
 - Integrate into `/cat:work` rebase step:
   - After rebase completes, invoke `rebase-impact-agent`
@@ -78,7 +78,7 @@ Only a compact JSON summary is returned to the main agent:
     HIGH = write proposal, ask user
   - Files: `plugin/skills/work-with-issue-agent/first-use.md`
 
-### Wave 3
+### Job 3
 
 - Add a `## Manual E2E Verification` section to `plugin/skills/rebase-impact-agent/first-use.md` that
   documents a reproducible test procedure a developer can follow in a live `/cat:work` session to satisfy

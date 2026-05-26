@@ -123,9 +123,9 @@ When `caution=low`, `work-review-agent` is skipped entirely (work-with-issue-age
 `REVIEW_RESULT_FILE` will not exist. work-merge-agent must handle this case:
 - If `REVIEW_RESULT_FILE` absent and trust=high: auto-merge (no review was run, treat as APPROVED).
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Pre-implementation gate (work-implement-agent)
+### Job 1: Pre-implementation gate (work-implement-agent)
 
 - **Modify `plugin/skills/work-implement-agent/first-use.md`**
   - Files: `plugin/skills/work-implement-agent/first-use.md`
@@ -194,7 +194,7 @@ When `caution=low`, `work-review-agent` is skipped entirely (work-with-issue-age
       not answered after 3 attempts, treat as "Abort".
     ```
 
-### Wave 2: Review result persistence (work-review-agent) and auto-merge (work-merge-agent)
+### Job 2: Review result persistence (work-review-agent) and auto-merge (work-merge-agent)
 
 These two changes are independent: Wave 2 modifies different files than Wave 1.
 
@@ -288,7 +288,7 @@ These two changes are independent: Wave 2 modifies different files than Wave 1.
     - Process responses per the existing gate logic.
     ```
 
-### Wave 3: Unit tests for gate routing logic (fix for missing criterion)
+### Job 3: Unit tests for gate routing logic (fix for missing criterion)
 
 - **Create `plugin/skills/work-implement-agent/test-trust-gate-routing.bats`**
   - Files: `plugin/skills/work-implement-agent/test-trust-gate-routing.bats`
@@ -323,7 +323,7 @@ These two changes are independent: Wave 2 modifies different files than Wave 1.
   - Run the test file (`bats plugin/skills/work-implement-agent/test-trust-gate-routing.bats`) and confirm all 5
     tests pass before committing.
 
-### Wave 4: E2E verification procedure (fix for missing criterion)
+### Job 4: E2E verification procedure (fix for missing criterion)
 
 - **Create `plugin/skills/work-implement-agent/benchmark/trust-gate-e2e-check.md`**
   - Files: `plugin/skills/work-implement-agent/benchmark/trust-gate-e2e-check.md`

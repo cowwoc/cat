@@ -65,9 +65,9 @@ turn typically shows high `cache_read_input_tokens` (shared system prompt, tool 
 `cache_creation_input_tokens` only for subagent-unique content (task prompt, agent instructions, injected skill
 listings).
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Add Subagent Delegation Analysis section** to `plugin/skills/optimize-execution/first-use.md`
    - Files: `plugin/skills/optimize-execution/first-use.md`

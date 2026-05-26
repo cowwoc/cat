@@ -183,9 +183,9 @@ Only includes symbols actually used in the diff.
 - [x] Shows complete changed lines
 - [x] Includes 2-3 lines of context around changes
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Step 1:** Restructure to hunk-per-box format
    - Remove task header box

@@ -34,9 +34,9 @@ None
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/util/SubagentMonitor.java` - `TokenCounts(int tokens, int compactions)`: add compact constructor (primitives only, validate non-negative)
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/EnforceStatusOutput.java` - `CheckResult(boolean statusInvoked, boolean hasBoxOutput)`: add compact constructor (booleans only, no validation needed but add Javadoc)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **For each record with empty compact constructor**, replace the comment body with `assert that()` validation:
    - String parameters: `assert that(param, "param").isNotBlank().elseThrow()`

@@ -27,9 +27,9 @@ None - infrastructure sub-issue of add-java-build-to-ci
 - [ ] Stale detection works (only rebuilds when needed)
 - [ ] Bundle version matches plugin.json after rebuild
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Create build-bundle.sh script**
    - Files: `plugin/hooks/jlink/build-bundle.sh`
    - Check if JDK 25 is available

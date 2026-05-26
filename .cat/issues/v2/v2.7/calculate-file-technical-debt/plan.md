@@ -20,9 +20,9 @@ defined in `define-technical-debt-metric`.
 ## Pre-conditions
 - [ ] `define-technical-debt-metric` is closed (metric definition finalized)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. Read the metric definition from `plugin/concepts/technical-debt-metric.md`
 2. Write failing tests for per-file debt calculation (TDD):
    - Test scoring for a clean file (low debt)

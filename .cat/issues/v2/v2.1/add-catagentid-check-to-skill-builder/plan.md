@@ -45,9 +45,9 @@ Skills using `skill-loader` conventionally pass catAgentId as the first argument
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Add both argument-hint validation checks to skill-builder's frontmatter section:
   - Location: `plugin/skills/skill-builder-agent/first-use.md`, in the "Positional arguments" block
@@ -74,7 +74,7 @@ Skills using `skill-loader` conventionally pass catAgentId as the first argument
   - Update STATE.md: status=closed, progress=100%
   - Commit: `feature: add catAgentId and positional arg-hint checks to skill-builder`
 
-### Wave 2 (E2E static validation)
+### Job 2 (E2E static validation)
 
 Although `/cat:empirical-test` can run E2E tests on skills, this issue uses static validation
 to verify the checks are documented. Static validation provides immediate, deterministic verification

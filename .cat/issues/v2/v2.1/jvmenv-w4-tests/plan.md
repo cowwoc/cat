@@ -50,9 +50,9 @@ No call-site changes needed — all listed files already use correctly typed var
   `scope.getClaudeSessionsPath()`, or `scope.getClaudeSessionPath()` on a `JvmScope`-typed variable
 - [ ] `mvn -f client/pom.xml test` exits 0 with no compilation errors or test failures
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Run the following to find all remaining call sites:
   ```bash

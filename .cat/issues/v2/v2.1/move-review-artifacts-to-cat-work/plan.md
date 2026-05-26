@@ -32,9 +32,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Update all stakeholder agent files to write to `.cat/work/review/` instead of `.cat/review/`
   - Files: `plugin/agents/stakeholder-architecture.md`, `plugin/agents/stakeholder-security.md`, `plugin/agents/stakeholder-design.md`, `plugin/agents/stakeholder-testing.md`, `plugin/agents/stakeholder-performance.md`, `plugin/agents/stakeholder-requirements.md`, `plugin/agents/stakeholder-business.md`, `plugin/agents/stakeholder-legal.md`, `plugin/agents/stakeholder-deployment.md`, `plugin/agents/stakeholder-ux.md`
 - Update skill files that reference `.cat/review/`

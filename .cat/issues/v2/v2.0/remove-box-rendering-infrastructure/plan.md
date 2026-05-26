@@ -49,9 +49,9 @@ None - infrastructure cleanup task
 - [ ] Plugin still functions correctly
 - [ ] All tests pass (if any)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Verify no dependencies remain** - Grep for box.sh and emoji-widths references
    - Command: `grep -r "box.sh\|emoji-widths" plugin/ --include="*.sh" --include="*.md"`
    - Verify: No matches except files being deleted

@@ -127,9 +127,9 @@ Multiple Claude instances may run concurrently, each with its own session ID. Th
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Write failing tests for `SessionEndHandler` in `SessionEndHandlerTest.java` (TDD):
   1. `sessionEndDeletesStaleSessionWorkFiles` — create a stale session directory, call handler, verify
@@ -156,7 +156,7 @@ Multiple Claude instances may run concurrently, each with its own session ID. Th
 - Run `mvn -f client/pom.xml test` to verify all tests pass
   - Files: (build only)
 
-### Wave 2 (Fix: Test Coverage and Design Gaps)
+### Job 2 (Fix: Test Coverage and Design Gaps)
 
 - Add missing test `sessionEndContinuesOnConcurrentDeletion` to `SessionEndHandlerTest.java`:
   - Simulate a directory that is deleted by another thread/process between the listing step and the
@@ -192,7 +192,7 @@ Multiple Claude instances may run concurrently, each with its own session ID. Th
 - Run `mvn -f client/pom.xml test` to verify all tests pass after Wave 2 fixes
   - Files: (build only)
 
-### Wave 3 (Fix: Missing Test Coverage for Post-conditions)
+### Job 3 (Fix: Missing Test Coverage for Post-conditions)
 
 - Add test `sessionEndContinuesOnConcurrentDeletion` to `SessionEndHandlerTest.java`:
   - Create a stale session directory (no corresponding Claude session directory)
@@ -212,7 +212,7 @@ Multiple Claude instances may run concurrently, each with its own session ID. Th
 - Run `mvn -f client/pom.xml test` to verify all tests pass after Wave 3 additions
   - Files: (build only)
 
-### Wave 4 (Fix: Stakeholder Review Concerns)
+### Job 4 (Fix: Stakeholder Review Concerns)
 
 - Fix `clean()` to use `scope.getClaudeSessionId()` as the canonical source for the current session ID instead of
   reading it from `input.getSessionId()`:

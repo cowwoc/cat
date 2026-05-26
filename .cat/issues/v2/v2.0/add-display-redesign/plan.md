@@ -23,9 +23,9 @@ reliable emoji alignment.
 - [ ] Emoji alignment is correct (verified via hook preprocessor output)
 - [ ] Next steps shown in compact single-line format
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Create add_handler.py**
    - Files: plugin/hooks/skill_handlers/add_handler.py
    - Verify: Handler registered and returns preprocessor output

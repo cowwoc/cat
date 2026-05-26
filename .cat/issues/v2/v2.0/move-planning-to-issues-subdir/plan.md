@@ -24,9 +24,9 @@ None - infrastructure/maintenance task
 - [ ] No broken path references remain
 - [ ] CAT commands still work after move
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Find all external references:**
    - Grep for `.cat/v` patterns outside of `.cat/`
    - Verify: List of files to update

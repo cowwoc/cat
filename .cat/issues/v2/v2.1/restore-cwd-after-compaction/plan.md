@@ -45,9 +45,9 @@ None (infrastructure improvement)
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. Create `TrackWorkingDirectory` PostToolUse Bash handler that writes `workingDirectory` to
    `.cat/sessions/{session_id}.cwd` when non-empty and not equal to the project root

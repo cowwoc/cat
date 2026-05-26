@@ -31,9 +31,9 @@ requirements are not met.
 - [ ] version-utils.sh functions fail with clear error if cat_dir not provided
 - [ ] All tests pass
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Update register-hook.sh
    - Files: plugin/scripts/register-hook.sh
    - Change: `CLAUDE_DIR="${CLAUDE_CONFIG_DIR:?CLAUDE_CONFIG_DIR must be set}"`

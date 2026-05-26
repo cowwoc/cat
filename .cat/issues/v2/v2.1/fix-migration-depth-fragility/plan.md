@@ -19,9 +19,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Replace the `find ... -mindepth 4 -maxdepth 4` pattern in Phase 13 with logic that finds issue-level
   PLAN.md files by checking for a STATE.md sibling in the same directory
   - Files: `plugin/migrations/2.1.sh`

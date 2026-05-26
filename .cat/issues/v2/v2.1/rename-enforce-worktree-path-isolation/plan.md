@@ -27,9 +27,9 @@ None
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Rename class to EnforcePathIsolation (or similar) across all references
   - Files: all files listed above

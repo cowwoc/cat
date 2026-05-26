@@ -35,9 +35,9 @@ Parent: 2.1-port-display-scripts
 - `get-init-boxes.sh` (after port-init-boxes completes)
 - `render-add-complete.sh`
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 ### Step 1: Code Path Parity Analysis
 For each Python→Java pair listed below, perform a side-by-side review:

@@ -47,9 +47,9 @@ verify the `${WORKTREE_PATH}` prefix is used and the main workspace path is not.
 - `plugin/tests/skills/work-agent/first-use/git-commit-uses-cd-worktree.md`
 - `plugin/tests/skills/work-agent/first-use/decomposed-parent-close-uses-worktree-path.md`
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 Create the three test scenario files with the following content.
 

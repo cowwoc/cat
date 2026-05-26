@@ -27,9 +27,9 @@ correct arguments when HAS_STEPS is false, and is NOT called when HAS_STEPS is t
 | `tests/plan-builder-invocation-helper.bash` | Create | Testable shell functions extracted from first-use.md logic |
 | `tests/work-implement-agent-plan-builder-invocation.bats` | Create | Bats tests for the invocation logic |
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Create helper script and Bats tests
+### Job 1: Create helper script and Bats tests
 
 #### Action 1.1: Create `tests/plan-builder-invocation-helper.bash`
 

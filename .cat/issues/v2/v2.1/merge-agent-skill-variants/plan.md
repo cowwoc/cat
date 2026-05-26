@@ -77,9 +77,9 @@ These 33 agent-only skills correctly have only an `-agent` variant:
 ## Pre-conditions
 - [ ] 2.1-fix-work-skill-catagentid-priming is closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Delete the 4 redundant skill directories listed above
   - Files: `plugin/skills/init-agent/`, `plugin/skills/statusline-agent/`,
     `plugin/skills/get-output/`, `plugin/skills/recover-from-drift/`
@@ -88,12 +88,12 @@ These 33 agent-only skills correctly have only an `-agent` variant:
 - Grep all `plugin/skills/**/first-use.md` for references to the 4 deleted skill names and update them
   - Files: any `first-use.md` with stale references
 
-### Wave 2
+### Job 2
 - Update `plugin/concepts/skill-loading.md` to document the corrected variant sets
 - Update `InjectSessionInstructions.java` if it references the deleted skills
   - Files: `plugin/concepts/skill-loading.md`, `client/src/main/java/**/InjectSessionInstructions.java`
 
-### Wave 3 (Post-condition Fixes)
+### Job 3 (Post-condition Fixes)
 - Create `plugin/skills/get-output-agent/first-use.md` (was deleted from base variant)
   - Files: `plugin/skills/get-output-agent/first-use.md`
 - Create `plugin/skills/recover-from-drift-agent/first-use.md` (was deleted from base variant)

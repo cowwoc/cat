@@ -51,9 +51,9 @@ None - infrastructure optimization
 
 Existing auxiliary files remain unchanged - they're already separate and referenced by link.
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Read the full current `plugin/skills/learn/SKILL.md` to understand all sections
 2. **Step 2:** Create `plugin/skills/learn/phase-investigate.md` containing steps 1 through 1b (verify event sequence,
    analyze documentation path). Include all bash examples and anti-patterns for those steps. Define JSON output contract

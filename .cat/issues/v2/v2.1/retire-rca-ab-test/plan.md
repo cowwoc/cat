@@ -77,9 +77,9 @@ Method A (5-Whys) is strictly weaker: single-chain, no symptom/cause distinction
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Update `plugin/skills/learn/RCA-AB-TEST.md`:
   - Add a `## Test Conclusion` section at the top (after the header, before `## Purpose`) with:
@@ -130,7 +130,7 @@ Method A (5-Whys) is strictly weaker: single-chain, no symptom/cause distinction
     method used for each recorded mistake)
   - Files: `plugin/skills/learn/first-use.md`
 
-### Wave 2
+### Job 2
 
 - Commit all four modified files as a single `feature:` commit:
   - Message: `feature: retire RCA A/B test and standardize on Method C (Causal Barrier Analysis)`

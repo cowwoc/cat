@@ -24,9 +24,9 @@ None (workflow improvement)
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Add `cd ${worktree_path}` step between Phase 1 "Store phase 1 results" and Phase 2-4 delegation
   - Files: `plugin/skills/work/first-use.md`

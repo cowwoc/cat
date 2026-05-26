@@ -24,9 +24,9 @@ None - infrastructure/tech debt (completes port-display-scripts parent issue)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Add multi-issue support to GetAddOutput.java:** The Python script handles comma-separated issue
    names (lines 102-112). Port this logic to the Java class's `buildIssueDisplay` method.
 2. **Add CLI main method to GetAddOutput.java:** Add `public static void main(String[])` that parses

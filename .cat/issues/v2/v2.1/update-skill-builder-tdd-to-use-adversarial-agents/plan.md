@@ -56,9 +56,9 @@ issue only modifies the consuming skills (`tdd-implementation-agent/first-use.md
 - [ ] `2.1-generalize-adversarial-agents-for-multi-target` is closed (red-team-agent, blue-team-agent, and
   diff-validation-agent dedicated subagents exist with `target_type` support)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Audit and tighten skill-builder-agent integration
+### Job 1: Audit and tighten skill-builder-agent integration
 
 Read `plugin/skills/skill-builder-agent/first-use.md` Step 4 as produced by
 `2.1-generalize-adversarial-agents-for-multi-target` and verify:
@@ -74,7 +74,7 @@ If any of these are missing or inconsistent, apply the minimal fix to `first-use
 
 - Files: `plugin/skills/skill-builder-agent/first-use.md`
 
-### Wave 2: Add adversarial test hardening phase to tdd-implementation-agent
+### Job 2: Add adversarial test hardening phase to tdd-implementation-agent
 
 Insert a new "STEP 3.5: ADVERSARIAL TEST HARDENING" section into
 `plugin/skills/tdd-implementation-agent/first-use.md` between STEP 3 (REFACTOR) and STEP 4 (ITERATE OR
@@ -117,7 +117,7 @@ Update the TDD State Machine diagram to reflect the new STEP 3.5 node and its tr
 
 - Files: `plugin/skills/tdd-implementation-agent/first-use.md`
 
-### Wave 2b: Fix TDD State Machine diagram node label
+### Job 2b: Fix TDD State Machine diagram node label
 
 In `plugin/skills/tdd-implementation-agent/first-use.md`, update the TDD State Machine diagram so
 the hardening node is labeled `[STEP 3.5]` instead of `[HARDEN]`, and make the PASS and FAIL
@@ -130,7 +130,7 @@ The diagram must clearly show:
 
 - Files: `plugin/skills/tdd-implementation-agent/first-use.md`
 
-### Wave 2c: Fix inverted PASS/FAIL labels on STEP 3.5 transitions in TDD State Machine diagram
+### Job 2c: Fix inverted PASS/FAIL labels on STEP 3.5 transitions in TDD State Machine diagram
 
 In `plugin/skills/tdd-implementation-agent/first-use.md`, the TDD State Machine diagram currently has the
 PASS and FAIL labels semantically inverted on the STEP 3.5 transitions:
@@ -149,7 +149,7 @@ Fix the diagram so that:
 
 - Files: `plugin/skills/tdd-implementation-agent/first-use.md`
 
-### Wave 3: Verification
+### Job 3: Verification
 
 Manual trace through both updated skills:
 

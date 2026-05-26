@@ -26,9 +26,9 @@ None (infrastructure/tech debt)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Read `statusline-command.sh` and document output format and behavior
    - Files: `plugin/scripts/statusline-command.sh`
 2. **Step 2:** Write Java implementation for statusline-command

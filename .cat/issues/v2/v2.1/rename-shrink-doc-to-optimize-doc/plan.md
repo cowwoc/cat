@@ -54,27 +54,27 @@ None
 ## Pre-conditions
 None
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Rename Skill Directories
+### Job 1: Rename Skill Directories
 - `git mv plugin/skills/shrink-doc-agent/ plugin/skills/optimize-doc-agent/`
 - `git mv plugin/skills/shrink-doc/ plugin/skills/optimize-doc/`
 - Update internal SKILL.md references in both directories to use new skill-loader name
 - Files: skill directories
 
-### Wave 2: Update Live Plugin References
+### Job 2: Update Live Plugin References
 - Find-and-replace `shrink-doc` → `optimize-doc` in all plugin skill files, concept files, and Java source
 - Exclude closed issue directories (`.cat/issues/` files under Issues Completed)
 - Files: all files listed in Plugin References, Concept References, Java/Test References sections
 
-### Wave 3: Update Active Issues and Project Files
+### Job 3: Update Active Issues and Project Files
 - Update STATE.md pending issue names
 - Update active issue PLAN.md files that reference shrink-doc
 - Update CATALOG.md
 - Add rename entry to CHANGELOG.md
 - Files: STATE.md, active PLAN.md files, CATALOG.md, CHANGELOG.md
 
-### Wave 4: Verification
+### Job 4: Verification
 - `grep -r "shrink-doc" plugin/` should return zero matches
 - `grep -r "shrink-doc" plugin/concepts/` should return zero matches
 - `grep -r "shrink-doc" CATALOG.md` should return zero matches

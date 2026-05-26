@@ -50,9 +50,9 @@ checks already validate parameter counts.
 - `plugin/scripts/get-work-boxes.sh`
 - `plugin/scripts/validate-status-alignment.sh`
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 ### Step 1: Add parameter count validation to each script
 

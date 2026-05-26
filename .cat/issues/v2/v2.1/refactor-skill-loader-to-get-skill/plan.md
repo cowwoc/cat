@@ -112,9 +112,9 @@ Skills without preprocessor directives (pure instruction skills) get the simple 
 - Any Java files importing `SkillLoader` — update imports to `GetSkill`
 - `plugin/concepts/skill-loading.md` — update references to `skill-loader` binary and `SkillLoader` class
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Rename and simplify `SkillLoader.java` → `GetSkill.java`**
    - Create `client/src/main/java/io/github/cowwoc/cat/hooks/util/GetSkill.java`

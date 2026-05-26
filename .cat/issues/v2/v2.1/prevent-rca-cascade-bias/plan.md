@@ -28,9 +28,9 @@ None (infrastructure improvement)
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Modify `plugin/skills/learn/first-use.md` Step 1 tier classification table
    - Remove `recurrence_of is set` from Quick tier criteria
    - Quick tier should ONLY trigger for `protocol_violation` category

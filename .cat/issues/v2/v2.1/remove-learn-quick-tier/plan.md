@@ -36,9 +36,9 @@ access regardless of how obvious the mistake appears.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Remove Step 1 (tier classification) from SKILL.md
 - Update Step 2 to always use deep-tier prompt (remove quick-tier prompt)
 - Remove tier references from Step 3 and Step 4 display templates

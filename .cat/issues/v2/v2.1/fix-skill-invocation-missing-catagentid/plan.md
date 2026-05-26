@@ -55,14 +55,14 @@ To be determined during investigation — likely skill instruction files and/or 
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Investigate which skills are affected by missing catAgentId guidance
 - Identify root cause: where agents get the wrong value from
 - Update skill instructions or session hook to fix the pattern
 
-### Wave 2
+### Job 2
 - Add an integration test in `GetSkillTest` (or a new `SkillInvocationE2ETest`) that constructs a
   `GetSkill` call with a valid UUID catAgentId (matching the format injected by SubagentStartHook) and a
   skill name of `cat:stakeholder-review-agent`, and asserts the call succeeds without throwing

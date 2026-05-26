@@ -181,9 +181,9 @@ For each class in the "needs work" categories:
 - `main()` catches only `RuntimeException | AssertionError` for unexpected errors
 - `GetSkill` is covered by `2.1-fix-get-skill-uses-main-claude-hook` — skip it here
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 Extract `run()` and add `*MainTest.java` for all **skills/ package** classes (19 classes) plus the
 5 classes that already have `run()` but need `*MainTest.java`:
@@ -237,7 +237,7 @@ For each class above:
 
 Commit: `refactor: extract run() and add MainTest for skills/ package CLI classes`
 
-### Wave 2
+### Job 2
 
 Extract `run()` and add `*MainTest.java` for all **util/ package** and **hooks/ package** classes (15 classes):
 

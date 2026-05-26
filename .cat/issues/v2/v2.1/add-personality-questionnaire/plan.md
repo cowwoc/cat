@@ -445,11 +445,11 @@ Commit all changed files together:
 
 Commit message: `feature: add personality questionnaire to init and config skills`
 
-## Sub-Agent Waves
+## Jobs
 
 These fix steps address stakeholder review concerns identified after initial implementation.
 
-### Wave 1: Code Quality Fixes
+### Job 1: Code Quality Fixes
 
 **Fix Step 1: [DESIGN] Extract questionnaire to shared component**
 
@@ -511,7 +511,7 @@ This must be done after Fix Step 1 (extract to shared template), since the templ
 
 ---
 
-### Wave 2: Testing & Verification
+### Job 2: Testing & Verification
 
 **Fix Step 4: [TESTING] Restore executeThrowsWhenMainWorkspaceIsDirty test**
 
@@ -596,7 +596,7 @@ This documents the manual/acceptance testing procedure for the config questionna
 
 ---
 
-### Wave 3: Requirements Clarification
+### Job 3: Requirements Clarification
 
 **Fix Step 8: [RELATED ISSUE] Clarify relationship to fix-merge-dirty-worktree-check**
 

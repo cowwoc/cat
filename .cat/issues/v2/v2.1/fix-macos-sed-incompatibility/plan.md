@@ -34,9 +34,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** In `client/build-jlink.sh`, replace line 351:
    ```bash
    # Before:

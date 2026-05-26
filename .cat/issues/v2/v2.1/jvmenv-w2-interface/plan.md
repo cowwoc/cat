@@ -184,9 +184,9 @@ Files:
 - Rename references to `claudeConfigDir` and `getClaudeConfigDir` to `claudeConfigPath` and
   `getClaudeConfigPath` respectively.
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - **Rename in all files touched by this issue:** In the implementation commit, rename every
   occurrence of `getClaudeConfigDir` to `getClaudeConfigPath`, `claudeConfigDir` field to

@@ -73,9 +73,9 @@ filenames with nested subdirectories under `retroDir` would be incorrectly rejec
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - **In `loadMistakesSince()` (approx line 323), replace:**
 

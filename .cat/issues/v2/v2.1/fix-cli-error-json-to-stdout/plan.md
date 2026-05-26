@@ -95,9 +95,9 @@ Files:
 ### Java Tests
 - Update any tests that assert stderr output for these CLI tools to assert stdout instead
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 2 — Fix Remaining Violations
+### Job 2 — Fix Remaining Violations
 
 - In `client/src/main/java/io/github/cowwoc/cat/hooks/util/WorkPrepare.java`, replace the inline JSON string in the
   `main()` RuntimeException/AssertionError catch block (around line 1805) with `HookOutput.block()` so it uses the

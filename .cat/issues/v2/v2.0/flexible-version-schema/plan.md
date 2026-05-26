@@ -40,9 +40,9 @@ The version schema determines where tasks are stored:
 - [ ] All MD files updated to reflect new format
 - [ ] Existing commands/scripts handle all three formats
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Audit all files for version format references
    - Files: All .md and .sh files in plugin directory
    - Verify: grep -r "v[0-9]" to find all version references

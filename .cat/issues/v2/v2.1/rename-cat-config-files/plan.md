@@ -76,9 +76,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Core rename and migration
+### Job 1: Core rename and migration
 - Add migration step to `plugin/migrations/2.1.sh` to rename physical files (`cat-config.json` → `config.json`,
   `cat-config.local.json` → `config.local.json`)
   - Files: `plugin/migrations/2.1.sh`
@@ -90,7 +90,7 @@ None
     `client/src/main/java/io/github/cowwoc/cat/hooks/task/EnforceApprovalBeforeMerge.java`,
     `client/src/main/java/io/github/cowwoc/cat/hooks/bash/BlockUnauthorizedMergeCleanup.java`
 
-### Wave 2: Plugin and documentation updates
+### Job 2: Plugin and documentation updates
 - Update all plugin skill files, concepts, rules, and templates
   - Files: All plugin skill `first-use.md` files, `plugin/rules/work-request-handling.md`,
     `plugin/concepts/build-verification.md`, `plugin/concepts/worktree-isolation.md`,
@@ -99,7 +99,7 @@ None
   - Files: `.gitignore`, `.cat/.gitignore`, `.claude/rules/common.md`, `README.md`,
     `docs/severity.md`, `docs/patience.md`
 
-### Wave 3: Test updates and verification
+### Job 3: Test updates and verification
 - Update all Java test files to use new config filenames
   - Files: All test files listed above
 - Update Bats test files

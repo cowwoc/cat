@@ -75,9 +75,9 @@ calls the Skill tool. The `get-output` SKILL.md must call the launcher directly 
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Step 1:** Add `"get-output:skills.GetOutput"` to `client/build-jlink.sh` HANDLERS array.
    Remove individual output launcher entries (`get-status-output`, `get-cleanup-output`,

@@ -48,9 +48,9 @@ None - infrastructure/tech debt
 - `plugin/scripts/` - Remove ported scripts
 - `plugin/skills/*/SKILL.md` - Update script invocation paths
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Port licensing scripts:** feature-gate, entitlements, validate-license as unified Java class
 2. **Port render-diff.py:** Largest script - git diff table rendering
 3. **Port wrap-markdown.py:** Markdown formatting utility

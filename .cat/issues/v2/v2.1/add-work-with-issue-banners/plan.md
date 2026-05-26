@@ -60,9 +60,9 @@ instructions.
 - [ ] work-with-issue skill no longer references pre-rendered banner sections
 - [ ] `mvn -f hooks/pom.xml verify` passes with exit code 0
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Step 1:** Read Java conventions from `.cat/conventions/java.md`
    - Files: `.cat/conventions/java.md`

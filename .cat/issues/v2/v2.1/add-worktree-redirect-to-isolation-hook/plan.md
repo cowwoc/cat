@@ -50,9 +50,9 @@ rationale. The gap is that there is no test explicitly verifying the `.cat/` sub
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Inspect current `checkAgainstContext` error message in `EnforceWorktreePathIsolation.java`
   - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/write/EnforceWorktreePathIsolation.java`
 - If corrected path and explanation are absent, update the block message so it contains:

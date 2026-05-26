@@ -48,9 +48,9 @@ MAST research developed an LLM-as-Judge pipeline for scalable failure pattern an
 
 (None - no skills that spawn subagents)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Define cause_signature enum vocabulary
   - Files: `plugin/skills/learn/rca-methods.md`
@@ -73,7 +73,7 @@ MAST research developed an LLM-as-Judge pipeline for scalable failure pattern an
   - Add example showing cause_signature in JSON output
   - Explain how matching signatures improve recurrence detection
 
-### Wave 2
+### Job 2
 
 - End-to-end test: record two mistakes with same cause_signature
   - Files: (test implementation)

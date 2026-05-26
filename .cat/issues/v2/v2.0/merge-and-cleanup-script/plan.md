@@ -23,9 +23,9 @@ None - infrastructure/performance task
 - [ ] Script releases task lock
 - [ ] Script exits cleanly with appropriate error codes on failures
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Create merge-and-cleanup.sh script
    - Files: plugin/scripts/merge-and-cleanup.sh
    - Verify: Script exists and is executable

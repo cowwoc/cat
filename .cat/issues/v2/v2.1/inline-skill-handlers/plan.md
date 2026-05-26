@@ -69,9 +69,9 @@ implementing `SkillOutput`. The class must have a public constructor accepting `
 - `plugin/skills/status/bindings.json` — New file mapping variables to SkillOutput classes
 - `plugin/hooks/README.md` — Update skill directory structure documentation
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. Create `SkillOutput` interface with `getOutput()` method and JvmScope constructor contract
 2. Update `GetStatusOutput` to implement `SkillOutput`, inline getOutput logic using `scope.getClaudeProjectDir()`

@@ -48,9 +48,9 @@ state, cleanupStaleSessionDirs() is also unnecessary.
 - [ ] Full prompt scanned (no truncation) - pattern at end of long prompt detected
 - [ ] No /tmp directories created during tests
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Read java.md conventions before editing
 2. **Step 2:** Modify DetectGivingUp.java:
    - Remove fields: MAX_PROMPT_LENGTH, RATE_LIMIT_SECONDS, SESSION_DIR_TTL_DAYS, SESSION_DIR_PREFIX,

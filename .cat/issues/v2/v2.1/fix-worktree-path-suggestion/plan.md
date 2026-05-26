@@ -52,14 +52,14 @@ so paths with `..` components are canonicalized before comparison.
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Write failing tests for the new test cases
   - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/EnforceWorktreePathIsolationTest.java`
 - Run tests to confirm they fail: `mvn -f client/pom.xml test -Dtest=EnforceWorktreePathIsolationTest`
 
-### Wave 2
+### Job 2
 - Fix `checkAgainstContext()`: after the worktree-containment check, add a second check —
   `absoluteFilePath.startsWith(context.absoluteProjectDirectory())`. If false, return `allow()`
   (path is outside both worktree and workspace). If true, block with the corrected path suggestion.

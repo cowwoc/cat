@@ -24,9 +24,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Replace isEmpty() with isBlank() for the subagent_type string check
   - Files: client/src/main/java/io/github/cowwoc/cat/hooks/tool/post/SetPendingAgentResult.java
 - Add a test case for whitespace-only subagent_type value

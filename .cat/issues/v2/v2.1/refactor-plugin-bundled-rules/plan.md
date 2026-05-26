@@ -53,9 +53,9 @@ None — architectural refactor
 
 - [ ] refactor-rules-injection-classes is closed (InjectRulesToMainAgent and InjectRulesToSubAgent exist)
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Create plugin rules directory and split InjectSessionInstructions
+### Job 1: Create plugin rules directory and split InjectSessionInstructions
 
 - Create `plugin/rules/` directory
 - Split `InjectSessionInstructions.INSTRUCTIONS` string into individual `.md` files, each with YAML frontmatter:
@@ -77,7 +77,7 @@ None — architectural refactor
   - Files: `plugin/rules/*.md`
   - Each file gets a license header (per license-header.md rules for `.md` files)
 
-### Wave 2: Extend RulesDiscovery and injection classes
+### Job 2: Extend RulesDiscovery and injection classes
 
 - Extend `RulesDiscovery.getCatRulesForAudience()` to accept a list of source directories instead of one:
   - Files: `RulesDiscovery.java`

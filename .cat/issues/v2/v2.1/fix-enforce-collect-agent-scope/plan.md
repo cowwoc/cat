@@ -106,9 +106,9 @@ side. Approach A fixes the root cause directly.
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 - Modify `EnforceCollectAfterAgent.check()` to call `WorktreeContext.forSession()` after confirming the
   flag exists. If `WorktreeContext.forSession()` returns null, delete the flag file (to clean up stale
@@ -178,7 +178,7 @@ side. Approach A fixes the root cause directly.
   `merge-subagent-agent`, which triggers the early-return path that deletes the flag and allows). These
   tests remain unchanged.
 
-### Wave 2
+### Job 2
 
 - Run all tests and verify they pass:
   ```bash

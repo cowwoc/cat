@@ -25,9 +25,9 @@ None
 - plugin/skills/learn/phase-prevent.md - Add user_summary output requirement
 - plugin/skills/learn/phase-record.md - Add user_summary output requirement
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Read current SKILL.md and all 4 phase files** to understand current orchestration
 2. **Define tier classification logic** in SKILL.md:
    - Quick tier: protocol_violation category OR recurrence_of is set

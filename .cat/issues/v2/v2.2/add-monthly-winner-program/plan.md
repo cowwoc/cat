@@ -39,9 +39,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Add a new `## Monthly Winner Program` section at the bottom of `README.md`
   - Files: `README.md`
 - Include a brief program description paragraph covering:

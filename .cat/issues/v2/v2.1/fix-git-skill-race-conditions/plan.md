@@ -59,9 +59,9 @@ None - infrastructure bugfix
 - [ ] Warnings documented in Critical Rules sections
 - [ ] All existing tests pass with no regressions
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 1. **Step 1:** Fix git-squash Quick Workflow
    - Files: plugin/skills/git-squash/content.md
    - Add pin step before rebase: `BASE=$(git rev-parse <base-branch>)`

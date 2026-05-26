@@ -44,8 +44,7 @@ EOF
     cd "$TEST_TEMP_DIR"
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
-    run grep "Status.*open" ".cat/issues/v2/v2.1/test-issue/STATE.md"
-    [ "$status" -eq 0 ]
+    [ "$(jq -r '.status' ".cat/issues/v2/v2.1/test-issue/index.json")" = "open" ]
 }
 
 @test "2.1.sh phase 2: renames completed to closed in STATE.md" {
@@ -61,8 +60,7 @@ EOF
     cd "$TEST_TEMP_DIR"
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
-    run grep "Status.*closed" ".cat/issues/v2/v2.1/test-issue/STATE.md"
-    [ "$status" -eq 0 ]
+    [ "$(jq -r '.status' ".cat/issues/v2/v2.1/test-issue/index.json")" = "closed" ]
 }
 
 # ─── Phase 3: Move version to VERSION file ───────────────────────────────────
@@ -116,11 +114,22 @@ EOF
     [ ! -f ".cat/VERSION" ]
 }
 
-# ─── Phase 4: Rename PLAN.md sections ────────────────────────────────────────
+# ─── Phase 4: Rename plan.md sections ────────────────────────────────────────
+
+@test "2.1.sh phase 4: skips cleanly when issues directory has no plan.md files" {
+    mkdir -p "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/empty-issue"
+    setup_config_fixture
+
+    cd "$TEST_TEMP_DIR"
+    run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"No plan.md files found - skipping phase 5"* ]]
+    [[ "$output" != *"syntax error in expression"* ]]
+}
 
 @test "2.1.sh phase 4: renames Acceptance Criteria to Post-conditions" {
     mkdir -p "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue"
-    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue/PLAN.md" <<'EOF'
+    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue/plan.md" <<'EOF'
 # Plan
 
 ## Goal
@@ -141,15 +150,15 @@ EOF
     cd "$TEST_TEMP_DIR"
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
-    run grep "^## Post-conditions" ".cat/issues/v2/v2.1/test-issue/PLAN.md"
+    run grep "^## Post-conditions" ".cat/issues/v2/v2.1/test-issue/plan.md"
     [ "$status" -eq 0 ]
-    run grep "^## Acceptance Criteria" ".cat/issues/v2/v2.1/test-issue/PLAN.md"
+    run grep "^## Acceptance Criteria" ".cat/issues/v2/v2.1/test-issue/plan.md"
     [ "$status" -ne 0 ]
 }
 
 @test "2.1.sh phase 4: merges Success Criteria into Post-conditions when both exist" {
     mkdir -p "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue"
-    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue/PLAN.md" <<'EOF'
+    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue/plan.md" <<'EOF'
 # Plan
 
 ## Goal
@@ -173,20 +182,20 @@ EOF
     cd "$TEST_TEMP_DIR"
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
-    run grep "^## Post-conditions" ".cat/issues/v2/v2.1/test-issue/PLAN.md"
+    run grep "^## Post-conditions" ".cat/issues/v2/v2.1/test-issue/plan.md"
     [ "$status" -eq 0 ]
-    run grep "^## Success Criteria" ".cat/issues/v2/v2.1/test-issue/PLAN.md"
+    run grep "^## Success Criteria" ".cat/issues/v2/v2.1/test-issue/plan.md"
     [ "$status" -ne 0 ]
-    run grep "Additional criterion" ".cat/issues/v2/v2.1/test-issue/PLAN.md"
+    run grep "Additional criterion" ".cat/issues/v2/v2.1/test-issue/plan.md"
     [ "$status" -eq 0 ]
-    postcond_line=$(grep -n "^## Post-conditions" ".cat/issues/v2/v2.1/test-issue/PLAN.md" | cut -d: -f1)
-    additional_line=$(grep -n "Additional criterion" ".cat/issues/v2/v2.1/test-issue/PLAN.md" | cut -d: -f1)
+    postcond_line=$(grep -n "^## Post-conditions" ".cat/issues/v2/v2.1/test-issue/plan.md" | cut -d: -f1)
+    additional_line=$(grep -n "Additional criterion" ".cat/issues/v2/v2.1/test-issue/plan.md" | cut -d: -f1)
     [ "$additional_line" -gt "$postcond_line" ]
 }
 
 @test "2.1.sh phase 4: converts Gates with Entry/Exit subsections in-place" {
     mkdir -p "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue"
-    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue/PLAN.md" <<'EOF'
+    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue/plan.md" <<'EOF'
 # Plan
 
 ## Goal
@@ -212,23 +221,23 @@ EOF
     cd "$TEST_TEMP_DIR"
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
-    run grep "^## Pre-conditions" ".cat/issues/v2/v2.1/test-issue/PLAN.md"
+    run grep "^## Pre-conditions" ".cat/issues/v2/v2.1/test-issue/plan.md"
     [ "$status" -eq 0 ]
-    run grep "^## Post-conditions" ".cat/issues/v2/v2.1/test-issue/PLAN.md"
+    run grep "^## Post-conditions" ".cat/issues/v2/v2.1/test-issue/plan.md"
     [ "$status" -eq 0 ]
-    run grep "^## Gates" ".cat/issues/v2/v2.1/test-issue/PLAN.md"
+    run grep "^## Gates" ".cat/issues/v2/v2.1/test-issue/plan.md"
     [ "$status" -ne 0 ]
-    # Verify Pre-conditions appears before Execution Steps (in-place, not at EOF)
-    precond_line=$(grep -n "^## Pre-conditions" ".cat/issues/v2/v2.1/test-issue/PLAN.md" | cut -d: -f1)
-    exec_line=$(grep -n "^## Execution Steps" ".cat/issues/v2/v2.1/test-issue/PLAN.md" | cut -d: -f1)
-    [ "$precond_line" -lt "$exec_line" ]
-    postcond_line=$(grep -n "^## Post-conditions" ".cat/issues/v2/v2.1/test-issue/PLAN.md" | cut -d: -f1)
-    [ "$postcond_line" -lt "$exec_line" ]
+    # Verify Pre-conditions appears before Jobs (in-place, not at EOF)
+    precond_line=$(grep -n "^## Pre-conditions" ".cat/issues/v2/v2.1/test-issue/plan.md" | cut -d: -f1)
+    jobs_line=$(grep -n "^## Jobs" ".cat/issues/v2/v2.1/test-issue/plan.md" | cut -d: -f1)
+    [ "$precond_line" -lt "$jobs_line" ]
+    postcond_line=$(grep -n "^## Post-conditions" ".cat/issues/v2/v2.1/test-issue/plan.md" | cut -d: -f1)
+    [ "$postcond_line" -lt "$jobs_line" ]
 }
 
 @test "2.1.sh phase 4: renames Entry Gate to Pre-conditions" {
     mkdir -p "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue"
-    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue/PLAN.md" <<'EOF'
+    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue/plan.md" <<'EOF'
 # Plan
 
 ## Entry Gate
@@ -244,11 +253,11 @@ EOF
     cd "$TEST_TEMP_DIR"
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
-    run grep "^## Pre-conditions" ".cat/issues/v2/v2.1/test-issue/PLAN.md"
+    run grep "^## Pre-conditions" ".cat/issues/v2/v2.1/test-issue/plan.md"
     [ "$status" -eq 0 ]
-    run grep "^## Post-conditions" ".cat/issues/v2/v2.1/test-issue/PLAN.md"
+    run grep "^## Post-conditions" ".cat/issues/v2/v2.1/test-issue/plan.md"
     [ "$status" -eq 0 ]
-    run grep "^## Entry Gate$" ".cat/issues/v2/v2.1/test-issue/PLAN.md"
+    run grep "^## Entry Gate$" ".cat/issues/v2/v2.1/test-issue/plan.md"
     [ "$status" -ne 0 ]
 }
 
@@ -256,7 +265,7 @@ EOF
 
 @test "2.1.sh phase 8: renames heading and inserts Wave 1 subheading" {
     mkdir -p "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue"
-    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue/PLAN.md" <<'EOF'
+    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue/plan.md" <<'EOF'
 # Plan
 
 ## Goal
@@ -274,17 +283,17 @@ EOF
     cd "$TEST_TEMP_DIR"
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
-    run grep "^## Execution Waves" ".cat/issues/v2/v2.1/test-issue/PLAN.md"
+    run grep "^## Jobs" ".cat/issues/v2/v2.1/test-issue/plan.md"
     [ "$status" -eq 0 ]
-    run grep "^### Wave 1" ".cat/issues/v2/v2.1/test-issue/PLAN.md"
+    run grep "^### Job 1" ".cat/issues/v2/v2.1/test-issue/plan.md"
     [ "$status" -eq 0 ]
-    run grep "^## Execution Steps" ".cat/issues/v2/v2.1/test-issue/PLAN.md"
+    run grep "^## Execution Steps" ".cat/issues/v2/v2.1/test-issue/plan.md"
     [ "$status" -ne 0 ]
 }
 
 @test "2.1.sh phase 8: preserves numbered step lines verbatim under Wave 1" {
     mkdir -p "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue"
-    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue/PLAN.md" <<'EOF'
+    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue/plan.md" <<'EOF'
 # Plan
 
 ## Goal
@@ -302,23 +311,23 @@ EOF
     cd "$TEST_TEMP_DIR"
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
-    plan_file=".cat/issues/v2/v2.1/test-issue/PLAN.md"
-    waves_line=$(grep -n "^## Execution Waves" "$plan_file" | cut -d: -f1)
-    # All three numbered steps must appear after the Execution Waves heading
+    plan_file=".cat/issues/v2/v2.1/test-issue/plan.md"
+    jobs_line=$(grep -n "^## Jobs" "$plan_file" | cut -d: -f1)
+    # All three numbered steps must appear after the Jobs heading
     step1_line=$(grep -n "^1\. Install dependencies" "$plan_file" | cut -d: -f1)
     step2_line=$(grep -n "^2\. Run tests" "$plan_file" | cut -d: -f1)
     step3_line=$(grep -n "^3\. Deploy to staging" "$plan_file" | cut -d: -f1)
     [ -n "$step1_line" ]
     [ -n "$step2_line" ]
     [ -n "$step3_line" ]
-    [ "$step1_line" -gt "$waves_line" ]
-    [ "$step2_line" -gt "$waves_line" ]
-    [ "$step3_line" -gt "$waves_line" ]
+    [ "$step1_line" -gt "$jobs_line" ]
+    [ "$step2_line" -gt "$jobs_line" ]
+    [ "$step3_line" -gt "$jobs_line" ]
 }
 
 @test "2.1.sh phase 8: preserves sub-bullets, file lists, code blocks, and inner headings" {
     mkdir -p "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue"
-    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue/PLAN.md" <<'EOF'
+    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue/plan.md" <<'EOF'
 # Plan
 
 ## Goal
@@ -349,7 +358,7 @@ EOF
     cd "$TEST_TEMP_DIR"
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
-    plan_file=".cat/issues/v2/v2.1/test-issue/PLAN.md"
+    plan_file=".cat/issues/v2/v2.1/test-issue/plan.md"
     # Sub-bullets preserved
     run grep "config/app.yaml" "$plan_file"
     [ "$status" -eq 0 ]
@@ -374,7 +383,7 @@ EOF
 
 @test "2.1.sh phase 8: stops at the next top-level section boundary" {
     mkdir -p "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue"
-    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue/PLAN.md" <<'EOF'
+    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue/plan.md" <<'EOF'
 # Plan
 
 ## Goal
@@ -395,20 +404,20 @@ EOF
     cd "$TEST_TEMP_DIR"
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
-    plan_file=".cat/issues/v2/v2.1/test-issue/PLAN.md"
+    plan_file=".cat/issues/v2/v2.1/test-issue/plan.md"
     run grep "^## Post-conditions" "$plan_file"
     [ "$status" -eq 0 ]
     run grep "^- All done" "$plan_file"
     [ "$status" -eq 0 ]
-    # Post-conditions heading must appear after Execution Waves heading
-    waves_line=$(grep -n "^## Execution Waves" "$plan_file" | cut -d: -f1)
+    # Post-conditions heading must appear after Jobs heading
+    jobs_line=$(grep -n "^## Jobs" "$plan_file" | cut -d: -f1)
     postcond_line=$(grep -n "^## Post-conditions" "$plan_file" | cut -d: -f1)
-    [ "$postcond_line" -gt "$waves_line" ]
+    [ "$postcond_line" -gt "$jobs_line" ]
 }
 
 @test "2.1.sh phase 8: preserves content when Execution Steps is the last section" {
     mkdir -p "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue"
-    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue/PLAN.md" <<'EOF'
+    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue/plan.md" <<'EOF'
 # Plan
 
 ## Goal
@@ -425,10 +434,10 @@ EOF
     cd "$TEST_TEMP_DIR"
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
-    plan_file=".cat/issues/v2/v2.1/test-issue/PLAN.md"
-    run grep "^## Execution Waves" "$plan_file"
+    plan_file=".cat/issues/v2/v2.1/test-issue/plan.md"
+    run grep "^## Jobs" "$plan_file"
     [ "$status" -eq 0 ]
-    run grep "^### Wave 1" "$plan_file"
+    run grep "^### Job 1" "$plan_file"
     [ "$status" -eq 0 ]
     run grep "^1\. Only step" "$plan_file"
     [ "$status" -eq 0 ]
@@ -438,7 +447,7 @@ EOF
 
 @test "2.1.sh phase 8: skips already-migrated files (idempotent)" {
     mkdir -p "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue"
-    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue/PLAN.md" <<'EOF'
+    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue/plan.md" <<'EOF'
 # Plan
 
 ## Goal
@@ -456,9 +465,9 @@ EOF
     cd "$TEST_TEMP_DIR"
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
-    plan_file=".cat/issues/v2/v2.1/test-issue/PLAN.md"
-    # Should remain exactly as-is: Execution Waves present, no Execution Steps added
-    run grep "^## Execution Waves" "$plan_file"
+    plan_file=".cat/issues/v2/v2.1/test-issue/plan.md"
+    # Should remain migrated: Jobs present, no Execution Steps added
+    run grep "^## Jobs" "$plan_file"
     [ "$status" -eq 0 ]
     run grep "^## Execution Steps" "$plan_file"
     [ "$status" -ne 0 ]
@@ -468,7 +477,7 @@ EOF
 
 @test "2.1.sh phase 8: leaves files without Execution Steps unchanged" {
     mkdir -p "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue"
-    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue/PLAN.md" <<'EOF'
+    cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/test-issue/plan.md" <<'EOF'
 # Plan
 
 ## Goal
@@ -484,8 +493,8 @@ EOF
     cd "$TEST_TEMP_DIR"
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
-    plan_file=".cat/issues/v2/v2.1/test-issue/PLAN.md"
-    run grep "^## Execution Waves" "$plan_file"
+    plan_file=".cat/issues/v2/v2.1/test-issue/plan.md"
+    run grep "^## Jobs" "$plan_file"
     [ "$status" -ne 0 ]
     run grep "^## Post-conditions" "$plan_file"
     [ "$status" -eq 0 ]
@@ -526,10 +535,9 @@ EOF
     cd "$TEST_TEMP_DIR"
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
-    run grep '\.claude/cat' ".cat/issues/v2/v2.1/test-issue/STATE.md"
+    [ -f ".cat/issues/v2/v2.1/test-issue/index.json" ]
+    run grep '\.claude/cat' ".cat/issues/v2/v2.1/test-issue/index.json"
     [ "$status" -ne 0 ]
-    run grep '\.cat/worktrees' ".cat/issues/v2/v2.1/test-issue/STATE.md"
-    [ "$status" -eq 0 ]
 }
 
 # ─── Phase 7 (.gitignore): work/ pattern ──────────────────────────────────────
@@ -587,11 +595,10 @@ setup_phase11() {
     cd "$TEST_TEMP_DIR"
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
-    [ -d ".cat/work/locks" ]
-    [ -d ".cat/work/worktrees" ]
+    [ ! -d ".cat/work" ]
 }
 
-@test "2.1.sh phase 11: moves .cat/locks/ to .cat/work/locks/" {
+@test "2.1.sh phase 11: aborts when lock files exist in .cat/locks/" {
     setup_config_fixture
     rm -rf "$TEST_TEMP_DIR/.cat/work"
     mkdir -p "$TEST_TEMP_DIR/.cat/locks"
@@ -599,9 +606,8 @@ setup_phase11() {
 
     cd "$TEST_TEMP_DIR"
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
-    [ "$status" -eq 0 ]
-    [ -f ".cat/work/locks/test-issue.lock" ]
-    [ ! -d ".cat/locks" ]
+    [ "$status" -ne 0 ]
+    [ -f ".cat/locks/test-issue.lock" ]
 }
 
 @test "2.1.sh phase 11: aborts when active locks exist in .cat/locks/" {
@@ -616,7 +622,7 @@ setup_phase11() {
     [ -f ".cat/locks/active.lock" ]
 }
 
-@test "2.1.sh phase 11: moves external storage locks to .cat/work/locks/" {
+@test "2.1.sh phase 11: aborts when lock files exist in external storage" {
     setup_phase11
     setup_config_fixture
     rm -rf "$TEST_TEMP_DIR/.cat/work"
@@ -625,9 +631,8 @@ setup_phase11() {
 
     cd "$TEST_TEMP_DIR"
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
-    [ "$status" -eq 0 ]
-    [ -f ".cat/work/locks/test-issue.lock" ]
-    [ ! -f "${OLD_PROJECT_CAT_DIR}/locks/test-issue.lock" ]
+    [ "$status" -ne 0 ]
+    [ -f "${OLD_PROJECT_CAT_DIR}/locks/test-issue.lock" ]
 }
 
 @test "2.1.sh phase 11: aborts when active locks exist in external storage" {
@@ -643,7 +648,7 @@ setup_phase11() {
     [ -f "${OLD_PROJECT_CAT_DIR}/locks/active.lock" ]
 }
 
-@test "2.1.sh phase 11: moves external storage worktrees to .cat/work/worktrees/" {
+@test "2.1.sh phase 11: aborts when worktrees exist in external storage" {
     setup_phase11
     setup_config_fixture
     rm -rf "$TEST_TEMP_DIR/.cat/work"
@@ -651,9 +656,8 @@ setup_phase11() {
 
     cd "$TEST_TEMP_DIR"
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
-    [ "$status" -eq 0 ]
-    [ -d ".cat/work/worktrees/feature-branch" ]
-    [ ! -d "${OLD_PROJECT_CAT_DIR}/worktrees/feature-branch" ]
+    [ "$status" -ne 0 ]
+    [ -d "${OLD_PROJECT_CAT_DIR}/worktrees/feature-branch" ]
 }
 
 @test "2.1.sh phase 11: aborts when active worktrees exist in external storage" {
@@ -674,11 +678,13 @@ setup_phase11() {
     setup_config_fixture
     rm -rf "$TEST_TEMP_DIR/.cat/work"
     mkdir -p "${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT}/${SESSION_ID}/cat/verify"
+    printf 'verification details\n' > \
+        "${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT}/${SESSION_ID}/cat/verify/result.txt"
 
     cd "$TEST_TEMP_DIR"
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
-    [ -d ".cat/work/verify/${SESSION_ID}" ]
+    [ -f ".cat/work/verify/${SESSION_ID}/result.txt" ]
     [ ! -d "${CLAUDE_CONFIG_DIR}/projects/${ENCODED_PROJECT}/${SESSION_ID}/cat/verify" ]
 }
 
@@ -711,8 +717,9 @@ EOF
     cd "$TEST_TEMP_DIR"
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
-    run grep '.cat/work/worktrees/test-issue' ".cat/issues/v2/v2.1/test-issue/STATE.md"
-    [ "$status" -eq 0 ]
+    [ -f ".cat/issues/v2/v2.1/test-issue/index.json" ]
+    run grep "${OLD_PROJECT_CAT_DIR}/worktrees/test-issue" ".cat/issues/v2/v2.1/test-issue/index.json"
+    [ "$status" -ne 0 ]
 }
 
 @test "2.1.sh phase 11: removes empty old external directory" {
@@ -815,6 +822,8 @@ EOF
     [ "$status" -eq 0 ]
 
     # Verify get-config-output can read the migrated config
+    [ -x "$CLAUDE_PLUGIN_ROOT/../cli/target/jlink/claude/bin/get-config-output" ] ||
+        skip "jlink get-config-output launcher is not built"
     run "$CLAUDE_PLUGIN_ROOT/../cli/target/jlink/claude/bin/get-config-output" effective
     [ "$status" -eq 0 ]
 
@@ -876,12 +885,12 @@ EOF
     cd "$TEST_TEMP_DIR"
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
-    run grep "2\.1-rename-config-java-core" ".cat/issues/v2/v2.1/parent-issue/STATE.md"
+    run grep "2\.1-rename-config-java-core" ".cat/issues/v2/v2.1/parent-issue/index.json"
     [ "$status" -eq 0 ]
-    run grep "2\.1-rename-config-plugin-docs" ".cat/issues/v2/v2.1/parent-issue/STATE.md"
+    run grep "2\.1-rename-config-plugin-docs" ".cat/issues/v2/v2.1/parent-issue/index.json"
     [ "$status" -eq 0 ]
     # Bare names should be gone
-    run grep "^- rename-config-java-core$" ".cat/issues/v2/v2.1/parent-issue/STATE.md"
+    run grep '"rename-config-java-core"' ".cat/issues/v2/v2.1/parent-issue/index.json"
     [ "$status" -ne 0 ]
 }
 
@@ -905,10 +914,10 @@ EOF
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
     # Already-qualified names should be unchanged
-    run grep "2\.1-rename-config-java-core" ".cat/issues/v2/v2.1/parent-issue/STATE.md"
+    run grep "2\.1-rename-config-java-core" ".cat/issues/v2/v2.1/parent-issue/index.json"
     [ "$status" -eq 0 ]
     # Should NOT have double-prefixed names
-    run grep "2\.1-2\.1-rename-config-java-core" ".cat/issues/v2/v2.1/parent-issue/STATE.md"
+    run grep "2\.1-2\.1-rename-config-java-core" ".cat/issues/v2/v2.1/parent-issue/index.json"
     [ "$status" -ne 0 ]
 }
 
@@ -933,9 +942,9 @@ EOF
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
     # After two runs, should be qualified exactly once
-    run grep "2\.1-rename-config-java-core" ".cat/issues/v2/v2.1/parent-issue/STATE.md"
+    run grep "2\.1-rename-config-java-core" ".cat/issues/v2/v2.1/parent-issue/index.json"
     [ "$status" -eq 0 ]
-    run grep "2\.1-2\.1-rename-config-java-core" ".cat/issues/v2/v2.1/parent-issue/STATE.md"
+    run grep "2\.1-2\.1-rename-config-java-core" ".cat/issues/v2/v2.1/parent-issue/index.json"
     [ "$status" -ne 0 ]
 }
 
@@ -955,11 +964,11 @@ EOF
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
     # File should be unchanged (no Decomposed Into section added)
-    run grep "Decomposed Into" ".cat/issues/v2/v2.1/simple-issue/STATE.md"
+    run grep "decomposedInto" ".cat/issues/v2/v2.1/simple-issue/index.json"
     [ "$status" -ne 0 ]
 }
 
-@test "2.1.sh phase 17: preserves trailing description text after bare name" {
+@test "2.1.sh phase 17: strips trailing description text from decomposed issue ids" {
     mkdir -p "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/parent-issue"
     cat > "$TEST_TEMP_DIR/.cat/issues/v2/v2.1/parent-issue/STATE.md" <<'EOF'
 # State
@@ -976,10 +985,12 @@ EOF
     cd "$TEST_TEMP_DIR"
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
-    run grep "2\.1-rename-config-java-core (core Java files)" ".cat/issues/v2/v2.1/parent-issue/STATE.md"
+    run grep "2\.1-rename-config-java-core" ".cat/issues/v2/v2.1/parent-issue/index.json"
     [ "$status" -eq 0 ]
-    run grep "2\.1-rename-config-plugin-docs (docs and plugin files)" ".cat/issues/v2/v2.1/parent-issue/STATE.md"
+    run grep "2\.1-rename-config-plugin-docs" ".cat/issues/v2/v2.1/parent-issue/index.json"
     [ "$status" -eq 0 ]
+    run grep "core Java files" ".cat/issues/v2/v2.1/parent-issue/index.json"
+    [ "$status" -ne 0 ]
 }
 
 @test "2.1.sh phase 17: does not modify content outside Decomposed Into section" {
@@ -1008,10 +1019,10 @@ EOF
     run bash "$CLAUDE_PLUGIN_ROOT/migrations/2.1.sh"
     [ "$status" -eq 0 ]
     # The table entry outside the Decomposed Into section should NOT be prefixed
-    run grep "| rename-config-java-core | None |" ".cat/issues/v2/v2.1/parent-issue/STATE.md"
-    [ "$status" -eq 0 ]
+    run grep "| rename-config-java-core | None |" ".cat/issues/v2/v2.1/parent-issue/index.json"
+    [ "$status" -ne 0 ]
     # The Decomposed Into entry should be prefixed
-    run grep "^- 2\.1-rename-config-java-core$" ".cat/issues/v2/v2.1/parent-issue/STATE.md"
+    run grep "2\.1-rename-config-java-core" ".cat/issues/v2/v2.1/parent-issue/index.json"
     [ "$status" -eq 0 ]
 }
 
@@ -1120,9 +1131,8 @@ EOF
 ## Goal
 Simple plan.
 
-## Execution Steps
-- Step 1: Do something
-- Step 2: Do something else
+## Notes
+- Keep this section unchanged
 EOF
     setup_config_fixture
 

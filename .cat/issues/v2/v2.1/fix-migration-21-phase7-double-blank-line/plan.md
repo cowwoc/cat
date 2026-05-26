@@ -27,9 +27,9 @@ in_section && /^## / {
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - In the Phase 7 awk block, track whether the previous printed line was blank via a
   `last_blank` variable; only emit the separator blank line when `!last_blank`
   - Files: `plugin/migrations/2.1.sh` (Phase 7 awk block)

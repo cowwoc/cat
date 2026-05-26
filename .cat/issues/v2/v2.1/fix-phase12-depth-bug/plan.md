@@ -20,9 +20,9 @@ None
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 - Change Phase 12 find command from `-mindepth 5 -maxdepth 5` to `-mindepth 4 -maxdepth 4`
   - Files: `plugin/migrations/2.1.sh`
 - Update the comment (line ~883) to correctly state "depth 4 from issues/"

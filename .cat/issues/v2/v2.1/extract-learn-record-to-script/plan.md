@@ -31,9 +31,9 @@ skill total execution time by ~24% (~3.5 minutes).
 
 - [ ] All dependent issues are closed
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1: Implement CLI tool
+### Job 1: Implement CLI tool
 
 - Create `RecordLearning.java` with `main()` that accepts Phase 3 JSON via stdin
   - Responsibilities: generate next mistake ID, append to `mistakes-YYYY-MM.json`, validate counter,
@@ -43,7 +43,7 @@ skill total execution time by ~24% (~3.5 minutes).
   threshold detection, commit location determination
   - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/RecordLearningTest.java`
 
-### Wave 2: Update learn skill
+### Job 2: Update learn skill
 
 - Replace Phase 4 bash instructions with single CLI invocation:
   `"$CLIENT_BIN/record-learning" < phase3-output.json`
@@ -60,7 +60,7 @@ skill total execution time by ~24% (~3.5 minutes).
 - [ ] `phase-record.md` invokes the CLI tool instead of containing inline bash instructions
 - [ ] Learn skill SKILL.md references the new tool for Phase 4
 
-### Wave 3: Register record-learning launcher in build-jlink.sh
+### Job 3: Register record-learning launcher in build-jlink.sh
 
 - Add `"record-learning:util.RecordLearning"` to the `HANDLERS` array in `client/build-jlink.sh` so
   the `record-learning` binary launcher is generated during jlink builds. Without this entry the

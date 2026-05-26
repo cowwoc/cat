@@ -110,9 +110,9 @@ No changes needed. Each skill remains a single directory with SKILL.md. No neste
 - [ ] A/B test shows significant token reduction on repeat invocations
 - [ ] No user-visible behavior changes
 
-## Sub-Agent Waves
+## Jobs
 
-### Wave 1
+### Job 1
 
 1. **Create content.md for each skill**: Extract the body (everything after the closing `---` frontmatter
    delimiter) from each current SKILL.md and write to content.md in the same directory.
