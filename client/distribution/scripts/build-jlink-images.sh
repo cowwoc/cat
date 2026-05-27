@@ -123,6 +123,7 @@ declare -a CODEX_HANDLERS=(
   "codex-runner:io.github.cowwoc.cat.codex.engine.CodexRunner"
   "sprt-runner:io.github.cowwoc.cat.codex.engine.CodexSprtRunner"
   "session-start:io.github.cowwoc.cat.codex.hook.SessionStartHook"
+  "subagent-start:io.github.cowwoc.cat.codex.hook.SubagentStartHook"
   "pre-bash:io.github.cowwoc.cat.codex.hook.PreBashHook"
 )
 
@@ -618,6 +619,35 @@ verify_codex_session_start_launcher() {
   trap - RETURN
 }
 
+verify_codex_subagent_start_launcher() {
+  local smoke_dir
+  smoke_dir=$(mktemp -d)
+  # shellcheck disable=SC2064
+  trap "rm -rf '$smoke_dir'" RETURN
+  local smoke_project="${smoke_dir}/project"
+  local smoke_plugin="${smoke_dir}/plugin"
+  local smoke_data="${smoke_dir}/plugin-data"
+  mkdir -p "$smoke_project/.cat/rules/codex" "$smoke_plugin/.codex-plugin" \
+    "$smoke_plugin/rules/codex" "$smoke_data"
+  printf '{"version":"2.1"}\n' > "$smoke_plugin/.codex-plugin/plugin.json"
+
+  log "  Testing codex subagent-start launcher..."
+  local subagent_output
+  subagent_output=$(printf '{"cwd":"%s","plugin_root":"%s","plugin_data":"%s","hook_event_name":"SubagentStart","agent_type":"cat:work-execute"}\n' \
+    "$smoke_project" "$smoke_plugin" "$smoke_data" | \
+    env -u CAT_PROJECT_DIR -u CAT_PLUGIN_ROOT -u CAT_PLUGIN_DATA -u CAT_SESSION_ID \
+      -u CAT_ENGINE -u CAT_CONFIG_DIR -u CLAUDE_PROJECT_DIR -u CLAUDE_PLUGIN_ROOT \
+      -u CLAUDE_PLUGIN_DATA -u CLAUDE_SESSION_ID -u CLAUDE_CONFIG_DIR \
+      CODEX_HOME="${smoke_dir}/codex-home" TZ="${TZ:-UTC}" \
+    "${OUTPUT_DIR}/bin/subagent-start") || error "codex subagent-start launcher failed"
+  if [[ "$subagent_output" != *'"hookSpecificOutput"'* ]]; then
+    error "codex subagent-start launcher did not emit hookSpecificOutput"
+  fi
+  log "  codex subagent-start launcher works"
+  rm -rf "$smoke_dir"
+  trap - RETURN
+}
+
 verify_status_launcher() {
   local status_project_dir="${TARGET_DIR}/status-verify-project"
   local status_plugin_data="${TARGET_DIR}/status-verify-plugin-data"
@@ -675,6 +705,7 @@ verify_image() {
     codex)
       verify_pre_bash_launcher "$engine"
       verify_codex_session_start_launcher
+      verify_codex_subagent_start_launcher
       ;;
     *)
       error "Unknown engine: $engine"

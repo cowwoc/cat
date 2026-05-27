@@ -26,7 +26,11 @@ workarounds for older Codex diagnostic surfaces.
 
 - `SessionStart`: Codex receives portable `.cat/rules/common/*.md` files plus `.cat/rules/codex/` main-agent
   rules and shared critical-thinking context. CAT's matcher includes `startup|resume|clear`, including
-  SessionStart `/clear` flows.
+  SessionStart `/clear` flows. When Codex provides subagent identity on SessionStart payloads, CAT requires
+  top-level `agent_type` (Codex 0.134.0+) to load agent-targeted rules.
+- `SubagentStart`: Codex 0.134.0 exposes subagent-scoped lifecycle hooks with top-level `agent_id` and
+  `agent_type`. CAT registers `SubagentStart` to inject agent-targeted rules without running SessionStart-only
+  migration or main-agent context handlers.
 - `UserPromptSubmit`: Codex payloads are adapted into the existing prompt hook.
 - `PreToolUse` / `PostToolUse` for Bash: Codex `Bash` and `functions.exec_command` are adapted into
   Claude-compatible Bash payloads.
@@ -39,9 +43,6 @@ workarounds for older Codex diagnostic surfaces.
 
 ## Hooks Not Ported Yet
 
-- `SubagentStart`: Codex agents do not need CAT's Claude-style agent context injection today. Codex agents
-  receive native skill discovery for their effective config, and Codex does not currently expose reliable hook
-  metadata that distinguishes main-agent `SessionStart` from agent `SessionStart`.
 - `Read|Glob|Grep`: these hooks mainly inject path-restricted rules/skills when Claude reads matching files, plus
   read-side worktree isolation. Codex hooks currently do not cover broad read/search built-ins, and Codex already has
   native skill discovery. Write-side path guidance now covers file modifications.
@@ -70,8 +71,8 @@ Add-file hunks include content, so add-file content validators can run.
 Update/delete/move hunks currently run path-level safety checks only; full post-edit content validation would require a
 dedicated patch applier/parser instead of pretending Codex patch text is Claude `old_string`/`new_string`.
 
-Future work should revisit these decisions if Codex exposes agent identity fields, read/search hook coverage, or
-richer structured `apply_patch` metadata.
+Future work should revisit these decisions if Codex exposes read/search hook coverage or richer structured
+`apply_patch` metadata.
 
 ## Claude Runner Parity Notes
 
@@ -101,9 +102,8 @@ Future work for full Codex parity:
 - **Task/Skill hooks:** Claude Code supports `Task|Skill` hooks. CAT uses them for workflow safety gates, including
   blocking `cat:work-execute` with dirty worktrees, blocking `cat:work-merge` when the current directory will be
   deleted, and enforcing approval before merge. Codex does not expose compatible task/skill hook payloads.
-- **SubagentStart:** intentionally not ported. Claude Code needs CAT's `SubagentStart` hook to inject lightweight
-  agent rules and skill-listing context. Codex agents use native agent definitions and skill discovery, so
-  duplicating the Claude injection would waste context and may conflict with Codex's own mechanism.
+- **SubagentStop:** not ported. CAT does not currently need an action at subagent completion time under Codex. Revisit
+  if CAT adds Codex-side subagent result collection or cleanup that benefits from a lifecycle hook.
 - **Plugin-bundled custom agents:** not supported by Codex plugin install as of `0.131.0`. Open requests:
   `openai/codex#18308` and `openai/codex#18988`. CAT must keep distributing Codex agent definitions through CAT's
   current runtime packaging/skill strategy rather than assuming plugin install registers agent TOML files.

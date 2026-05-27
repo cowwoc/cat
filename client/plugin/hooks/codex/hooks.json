@@ -11,6 +11,16 @@
         ]
       }
     ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CAT_PLUGIN_ROOT}/client/bin/subagent-start"
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "^(Bash|functions\\.exec_command)$",

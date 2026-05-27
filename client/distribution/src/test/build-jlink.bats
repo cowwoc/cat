@@ -365,9 +365,10 @@ EOF
     OUTPUT_DIR="$test_output_dir"
     PRE_BASH_LOG="$OUTPUT_DIR/pre-bash.log"
     SESSION_START_LOG="$OUTPUT_DIR/session-start.log"
+    SUBAGENT_START_LOG="$OUTPUT_DIR/subagent-start.log"
     STATUS_LOG="$OUTPUT_DIR/status.log"
     UPDATE_BRANCH_LOG="$OUTPUT_DIR/update-branch.log"
-    export PRE_BASH_LOG SESSION_START_LOG STATUS_LOG UPDATE_BRANCH_LOG
+    export PRE_BASH_LOG SESSION_START_LOG SUBAGENT_START_LOG STATUS_LOG UPDATE_BRANCH_LOG
 
     cat > "$OUTPUT_DIR/bin/java" <<'EOF'
 #!/bin/sh
@@ -385,6 +386,12 @@ cat >/dev/null
 printf '%s\n' "session-start" >> "$SESSION_START_LOG"
 printf '%s\n' '{"hookSpecificOutput":"ok"}'
 EOF
+    cat > "$OUTPUT_DIR/bin/subagent-start" <<'EOF'
+#!/bin/sh
+cat >/dev/null
+printf '%s\n' "subagent-start" >> "$SUBAGENT_START_LOG"
+printf '%s\n' '{"hookSpecificOutput":"ok"}'
+EOF
 cat > "$OUTPUT_DIR/bin/get-status-output" <<'EOF'
 #!/bin/sh
 cat >/dev/null
@@ -398,7 +405,7 @@ printf '%s\n' "Usage: update-branch"
 exit 1
 EOF
     chmod +x "$OUTPUT_DIR/bin/java" "$OUTPUT_DIR/bin/pre-bash" "$OUTPUT_DIR/bin/session-start" \
-        "$OUTPUT_DIR/bin/get-status-output" "$OUTPUT_DIR/bin/update-branch"
+        "$OUTPUT_DIR/bin/subagent-start" "$OUTPUT_DIR/bin/get-status-output" "$OUTPUT_DIR/bin/update-branch"
 
     run verify_image claude
 
@@ -410,16 +417,19 @@ EOF
     [ "$(grep -c 'status' "$STATUS_LOG")" -eq 1 ]
     [ "$(grep -c 'update-branch' "$UPDATE_BRANCH_LOG")" -eq 1 ]
     [ ! -f "$SESSION_START_LOG" ]
+    [ ! -f "$SUBAGENT_START_LOG" ]
 
     run verify_image codex
 
     [ "$status" -eq 0 ]
     [[ "$output" == *"Testing codex pre-bash launcher"* ]]
     [[ "$output" == *"Testing codex session-start launcher"* ]]
+    [[ "$output" == *"Testing codex subagent-start launcher"* ]]
     [[ "$output" == *"Testing get-status-output launcher"* ]]
     [[ "$output" == *"Testing update-branch launcher"* ]]
     [ "$(grep -c 'pre-bash' "$PRE_BASH_LOG")" -eq 2 ]
     [ "$(grep -c 'session-start' "$SESSION_START_LOG")" -eq 1 ]
+    [ "$(grep -c 'subagent-start' "$SUBAGENT_START_LOG")" -eq 1 ]
     [ "$(grep -c 'status' "$STATUS_LOG")" -eq 2 ]
     [ "$(grep -c 'update-branch' "$UPDATE_BRANCH_LOG")" -eq 2 ]
 }

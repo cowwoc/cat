@@ -70,7 +70,8 @@ public final class CodexAotTraining
     {
       PreBashHook.run(args, input(), out);
     }
-    runSessionStart(args);
+    runSessionStart();
+    runSubagentStart();
   }
 
   /**
@@ -86,10 +87,9 @@ public final class CodexAotTraining
   /**
    * Exercises the Codex SessionStart entrypoint against an isolated fixture.
    *
-   * @param args command line arguments
    * @throws IOException if the temporary fixture cannot be created or deleted
    */
-  private static void runSessionStart(String[] args) throws IOException
+  private static void runSessionStart() throws IOException
   {
     Path tempDir = Files.createTempDirectory("cat-codex-aot-");
     try
@@ -110,8 +110,52 @@ public final class CodexAotTraining
         "CAT_PLUGIN_DATA", pluginData.toString(),
         "TZ", "UTC");
       String nativeInput = "{\"cwd\":\"" + projectRoot.toString().replace("\\", "\\\\") + "\"}";
-      SessionStartHook.run(args, new ByteArrayInputStream(nativeInput.getBytes(StandardCharsets.UTF_8)),
-        environment);
+      SessionStartHook hook = new SessionStartHook();
+      try (CodexHookScope scope = hook.createScope(
+        new ByteArrayInputStream(nativeInput.getBytes(StandardCharsets.UTF_8)), environment,
+        Path.of(System.getProperty("user.dir"))))
+      {
+        hook.run(scope);
+      }
+    }
+    finally
+    {
+      deleteRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Exercises the Codex SubagentStart entrypoint against an isolated fixture.
+   *
+   * @throws IOException if the temporary fixture cannot be created or deleted
+   */
+  private static void runSubagentStart() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("cat-codex-aot-");
+    try
+    {
+      Path projectRoot = tempDir.resolve("project");
+      Path pluginRoot = tempDir.resolve("plugin");
+      Path pluginData = tempDir.resolve("plugin-data");
+      Files.createDirectories(projectRoot.resolve(".cat/rules/codex"));
+      Files.createDirectories(pluginRoot.resolve(".codex-plugin"));
+      Files.createDirectories(pluginRoot.resolve("rules/codex"));
+      Files.createDirectories(pluginData);
+      Files.writeString(pluginRoot.resolve(".codex-plugin/plugin.json"), "{\"version\":\"2.1\"}\n",
+        StandardCharsets.UTF_8);
+      Map<String, String> environment = Map.of(
+        "CAT_PLUGIN_ROOT", pluginRoot.toString(),
+        "CAT_PLUGIN_DATA", pluginData.toString(),
+        "TZ", "UTC");
+      String nativeInput = "{\"cwd\":\"" + projectRoot.toString().replace("\\", "\\\\") +
+        "\",\"hook_event_name\":\"SubagentStart\",\"agent_type\":\"cat:work-execute\"}";
+      SubagentStartHook hook = new SubagentStartHook();
+      try (CodexHookScope scope = hook.createScope(
+        new ByteArrayInputStream(nativeInput.getBytes(StandardCharsets.UTF_8)), environment,
+        Path.of(System.getProperty("user.dir"))))
+      {
+        hook.run(scope);
+      }
     }
     finally
     {

@@ -158,9 +158,22 @@ public final class CodexHookEngineIsolationTest
     try (URLClassLoader loader = new RejectClaudeClassLoader(getEngineClasspath()))
     {
       Class<?> hook = Class.forName("io.github.cowwoc.cat.codex.hook.SessionStartHook", true, loader);
-      Method run = hook.getMethod("run", String[].class, InputStream.class, Map.class);
-      Object result = run.invoke(null, new String[0], input, environment);
-      return (String) result.getClass().getMethod("output").invoke(result);
+      Class<?> scopeType = Class.forName("io.github.cowwoc.cat.codex.hook.CodexHookScope", true,
+        loader);
+      Object hookInstance = hook.getConstructor().newInstance();
+      Method createScope = hook.getMethod("createScope", InputStream.class, Map.class, Path.class);
+      Method run = hook.getMethod("run", scopeType);
+      Object scope = createScope.invoke(hookInstance, input, environment,
+        Path.of(System.getProperty("user.dir")));
+      try
+      {
+        Object result = run.invoke(hookInstance, scope);
+        return (String) result.getClass().getMethod("output").invoke(result);
+      }
+      finally
+      {
+        scopeType.getMethod("close").invoke(scope);
+      }
     }
     catch (InvocationTargetException e)
     {

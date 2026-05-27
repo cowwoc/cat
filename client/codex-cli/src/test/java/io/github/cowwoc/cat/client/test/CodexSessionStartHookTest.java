@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.client.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.codex.hook.CodexHookScope;
 import io.github.cowwoc.cat.codex.hook.SessionStartHook;
 
 import java.io.ByteArrayInputStream;
@@ -134,8 +135,7 @@ public final class CodexSessionStartHookTest
         "CAT_PLUGIN_DATA", fixture.pluginData().toString(),
         "TZ", "UTC");
 
-      SessionStartHook.HookResult result = SessionStartHook.run(new String[0],
-        new ByteArrayInputStream(nativeInput.getBytes(StandardCharsets.UTF_8)), environment);
+      SessionStartHook.HookResult result = runNative(nativeInput, environment);
 
       requireThat(result.output(), "output").contains("\"hookSpecificOutput\"");
       requireThat(result.output(), "output").contains("Java Common");
@@ -185,7 +185,7 @@ public final class CodexSessionStartHookTest
         {
           "cwd": "%s",
           "thread_source": "subagent",
-          "agent_role": "cat:work-execute"
+          "agent_type": "cat:work-execute"
         }
         """.formatted(fixture.projectRoot().toString().replace("\\", "\\\\"));
       Map<String, String> environment = Map.of(
@@ -193,8 +193,7 @@ public final class CodexSessionStartHookTest
         "CAT_PLUGIN_DATA", fixture.pluginData().toString(),
         "TZ", "UTC");
 
-      SessionStartHook.HookResult result = SessionStartHook.run(new String[0],
-        new ByteArrayInputStream(nativeInput.getBytes(StandardCharsets.UTF_8)), environment);
+      SessionStartHook.HookResult result = runNative(nativeInput, environment);
 
       requireThat(result.output(), "output").contains("shared agent rule");
       requireThat(result.output(), "output").contains("targeted work-execute rule");
@@ -208,12 +207,12 @@ public final class CodexSessionStartHookTest
   }
 
   /**
-   * Verifies that Codex SessionStart fails fast when agent input omits the top-level role.
+   * Verifies that Codex SessionStart fails fast when agent input omits the top-level agent identity.
    *
    * @throws IOException if file operations fail
    */
   @Test
-  public void subagentSessionStartRequiresTopLevelRole() throws IOException
+  public void subagentSessionStartRequiresIdentity() throws IOException
   {
     Path tempDir = Files.createTempDirectory("codex-session-start-test-");
     try
@@ -230,9 +229,7 @@ public final class CodexSessionStartHookTest
           "cwd": "%s",
           "source": {
             "subagent": {
-              "thread_spawn": {
-                "agent_role": "cat:work-execute"
-              }
+              "thread_spawn": {}
             }
           }
         }
@@ -242,12 +239,11 @@ public final class CodexSessionStartHookTest
         "CAT_PLUGIN_DATA", fixture.pluginData().toString(),
         "TZ", "UTC");
 
-      SessionStartHook.HookResult result = SessionStartHook.run(new String[0],
-        new ByteArrayInputStream(nativeInput.getBytes(StandardCharsets.UTF_8)), environment);
+      SessionStartHook.HookResult result = runNative(nativeInput, environment);
 
       requireThat(result.output(), "output").contains("SessionStart Handler Errors");
       requireThat(result.output(), "output").contains("Codex agent SessionStart payload is missing top-level " +
-        "agent_role");
+        "agent_type");
       requireThat(result.output(), "output").doesNotContain("targeted nested-role rule");
     }
     finally
@@ -257,13 +253,56 @@ public final class CodexSessionStartHookTest
   }
 
   /**
-   * Verifies that nested-session detection via source.subagent succeeds when top-level agent_role
+   * Verifies that Codex SessionStart accepts the native 0.134.0 {@code agent_type} field for
+   * subagent-scoped rule injection.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void subagentSessionStartAcceptsAgentType() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("codex-session-start-test-");
+    try
+    {
+      Fixture fixture = createFixture(tempDir);
+      Files.writeString(fixture.pluginRoot().resolve("rules/codex/targeted.md"), """
+        ---
+        subAgents: ["cat:work-execute"]
+        ---
+        targeted agent-type rule
+        """, StandardCharsets.UTF_8);
+      String nativeInput = """
+        {
+          "cwd": "%s",
+          "hook_event_name": "SessionStart",
+          "agent_id": "agent-1",
+          "agent_type": "cat:work-execute"
+        }
+        """.formatted(fixture.projectRoot().toString().replace("\\", "\\\\"));
+      Map<String, String> environment = Map.of(
+        "CAT_PLUGIN_ROOT", fixture.pluginRoot().toString(),
+        "CAT_PLUGIN_DATA", fixture.pluginData().toString(),
+        "TZ", "UTC");
+
+      SessionStartHook.HookResult result = runNative(nativeInput, environment);
+
+      requireThat(result.output(), "output").contains("targeted agent-type rule");
+      requireThat(result.output(), "output").doesNotContain("SessionStart Handler Errors");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that nested-session detection via source.subagent succeeds when top-level agent_type
    * is present.
    *
    * @throws IOException if file operations fail
    */
   @Test
-  public void sourceSubagentSessionStartWithTopLevel() throws IOException
+  public void sourceSubagentSessionStartWithAgentType() throws IOException
   {
     Path tempDir = Files.createTempDirectory("codex-session-start-test-");
     try
@@ -278,11 +317,11 @@ public final class CodexSessionStartHookTest
       String nativeInput = """
         {
           "cwd": "%s",
-          "agent_role": "cat:work-execute",
+          "agent_type": "cat:work-execute",
           "source": {
             "subagent": {
               "thread_spawn": {
-                "agent_role": "cat:work-execute"
+                "agent_type": "cat:work-execute"
               }
             }
           }
@@ -293,8 +332,7 @@ public final class CodexSessionStartHookTest
         "CAT_PLUGIN_DATA", fixture.pluginData().toString(),
         "TZ", "UTC");
 
-      SessionStartHook.HookResult result = SessionStartHook.run(new String[0],
-        new ByteArrayInputStream(nativeInput.getBytes(StandardCharsets.UTF_8)), environment);
+      SessionStartHook.HookResult result = runNative(nativeInput, environment);
 
       requireThat(result.output(), "output").contains("targeted nested-role rule");
       requireThat(result.output(), "output").doesNotContain("SessionStart Handler Errors");
@@ -354,14 +392,12 @@ public final class CodexSessionStartHookTest
         {
           "cwd": "%s",
           "thread_source": "subagent",
-          "agent_role": "cat:work-execute"
+          "agent_type": "cat:work-execute"
         }
         """.formatted(fixture.projectRoot().toString().replace("\\", "\\\\"));
 
-      SessionStartHook.HookResult mainResult = SessionStartHook.run(new String[0],
-        new ByteArrayInputStream(mainInput.getBytes(StandardCharsets.UTF_8)), environment);
-      SessionStartHook.HookResult subagentResult = SessionStartHook.run(new String[0],
-        new ByteArrayInputStream(subagentInput.getBytes(StandardCharsets.UTF_8)), environment);
+      SessionStartHook.HookResult mainResult = runNative(mainInput, environment);
+      SessionStartHook.HookResult subagentResult = runNative(subagentInput, environment);
 
       requireThat(mainResult.output(), "mainOutput").contains("main eager rule");
       requireThat(mainResult.output(), "mainOutput").doesNotContain("main path-scoped rule");
@@ -398,8 +434,7 @@ public final class CodexSessionStartHookTest
         "CAT_PLUGIN_DATA", fixture.pluginData().toString(),
         "TZ", "UTC");
 
-      SessionStartHook.HookResult result = SessionStartHook.run(new String[0],
-        new ByteArrayInputStream(new byte[0]), environment, tempDir);
+      SessionStartHook.HookResult result = runNative("", environment, tempDir);
 
       requireThat(result.output(), "output").contains("\"hookSpecificOutput\"");
       requireThat(result.output(), "output").contains("Java Common");
@@ -435,8 +470,7 @@ public final class CodexSessionStartHookTest
         "CAT_PLUGIN_DATA", fixture.pluginData().toString(),
         "TZ", "UTC");
 
-      SessionStartHook.HookResult result = SessionStartHook.run(new String[0],
-        new ByteArrayInputStream(new byte[0]), environment, fixture.projectRoot());
+      SessionStartHook.HookResult result = runNative("", environment, fixture.projectRoot());
 
       requireThat(result.output(), "output").contains("\"hookSpecificOutput\"");
       requireThat(result.output(), "output").contains("Java Common");
@@ -480,8 +514,7 @@ public final class CodexSessionStartHookTest
         "CAT_PLUGIN_DATA", "invalid\u0000environment-plugin-data",
         "TZ", "UTC");
 
-      SessionStartHook.HookResult result = SessionStartHook.run(new String[0],
-        new ByteArrayInputStream(nativeInput.getBytes(StandardCharsets.UTF_8)), environment, tempDir);
+      SessionStartHook.HookResult result = runNative(nativeInput, environment, tempDir);
 
       requireThat(result.output(), "output").contains("\"hookSpecificOutput\"");
       requireThat(result.output(), "output").contains("Java Common");
@@ -506,20 +539,7 @@ public final class CodexSessionStartHookTest
     Path tempDir = Files.createTempDirectory("codex-session-start-test-");
     try
     {
-      Fixture fixture = createFixture(tempDir);
-      String nativeInput = """
-        {
-          "cwd": "%s",
-          "hook_event_name": "SessionStart"
-        }
-        """.formatted(fixture.projectRoot().toString().replace("\\", "\\\\"));
-      Map<String, String> environment = Map.of(
-        "CAT_PLUGIN_ROOT", fixture.pluginRoot().toString(),
-        "CAT_PLUGIN_DATA", fixture.pluginData().toString(),
-        "TZ", "UTC");
-
-      SessionStartHook.run(new String[]{"unexpected"},
-        new ByteArrayInputStream(nativeInput.getBytes(StandardCharsets.UTF_8)), environment);
+      new SessionStartHook().runFromSystem(new String[]{"unexpected"});
     }
     finally
     {
@@ -564,8 +584,7 @@ public final class CodexSessionStartHookTest
         }
         """.formatted(projectRoot.toString().replace("\\", "\\\\"));
 
-      SessionStartHook.HookResult result = SessionStartHook.run(new String[0],
-        new ByteArrayInputStream(nativeInput.getBytes(StandardCharsets.UTF_8)),
+      SessionStartHook.HookResult result = runNative(nativeInput,
         Map.of("CODEX_HOME", codexHome.toString(), "TZ", "UTC"), repoRoot);
 
       requireThat(result.output(), "output").contains("\"hookSpecificOutput\"");
@@ -638,8 +657,7 @@ public final class CodexSessionStartHookTest
         "CAT_PLUGIN_DATA", environmentPluginData.toString(),
         "TZ", "UTC");
 
-      SessionStartHook.HookResult result = SessionStartHook.run(new String[0],
-        new ByteArrayInputStream(nativeInput.getBytes(StandardCharsets.UTF_8)), environment, tempDir);
+      SessionStartHook.HookResult result = runNative(nativeInput, environment, tempDir);
 
       requireThat(result.output(), "output").contains("Native Project Rule");
       requireThat(result.output(), "output").contains("Native Plugin Rule");
@@ -683,9 +701,8 @@ public final class CodexSessionStartHookTest
         }
         """.formatted(projectRoot.toString().replace("\\", "\\\\"));
 
-      SessionStartHook.run(new String[0],
-        new ByteArrayInputStream(nativeInput.getBytes(StandardCharsets.UTF_8)),
-        Map.of("CAT_PLUGIN_DATA", pluginData.toString(), "TZ", "UTC"), projectRoot);
+      runNative(nativeInput, Map.of("CAT_PLUGIN_DATA", pluginData.toString(), "TZ", "UTC"),
+        projectRoot);
     }
     finally
     {
@@ -1032,6 +1049,39 @@ public final class CodexSessionStartHookTest
   }
 
   /**
+   * Runs the Codex SessionStart hook from native input using a production scope.
+   *
+   * @param nativeInput the native Codex hook payload
+   * @param environment the process environment
+   * @return the hook result
+   */
+  private static SessionStartHook.HookResult runNative(String nativeInput,
+    Map<String, String> environment)
+  {
+    return runNative(nativeInput, environment, Path.of(System.getProperty("user.dir")));
+  }
+
+  /**
+   * Runs the Codex SessionStart hook from native input using a production scope.
+   *
+   * @param nativeInput the native Codex hook payload
+   * @param environment the process environment
+   * @param workingDirectory the process working directory
+   * @return the hook result
+   */
+  private static SessionStartHook.HookResult runNative(String nativeInput,
+    Map<String, String> environment, Path workingDirectory)
+  {
+    SessionStartHook hook = new SessionStartHook();
+    try (CodexHookScope scope = hook.createScope(
+      new ByteArrayInputStream(nativeInput.getBytes(StandardCharsets.UTF_8)), environment,
+      workingDirectory))
+    {
+      return hook.run(scope);
+    }
+  }
+
+  /**
    * Runs the Codex SessionStart hook using a test-specific scope.
    *
    * @param projectRoot the project root directory
@@ -1043,7 +1093,7 @@ public final class CodexSessionStartHookTest
   {
     try (TestCodexHook scope = new TestCodexHook(projectRoot, pluginRoot, pluginData))
     {
-      return SessionStartHook.run(scope);
+      return new SessionStartHook().run(scope);
     }
   }
 

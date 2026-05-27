@@ -7,12 +7,15 @@
 package io.github.cowwoc.cat.client.test;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import io.github.cowwoc.cat.agent.TerminalType;
 import io.github.cowwoc.cat.codex.hook.AbstractCodexHook;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 
 /**
@@ -32,7 +35,21 @@ public final class TestCodexHook extends AbstractCodexHook
    */
   public TestCodexHook(Path projectPath, Path pluginRoot, Path pluginData)
   {
-    super(projectPath, pluginRoot, pluginData);
+    this(projectPath, pluginRoot, pluginData, new ByteArrayInputStream("{}".getBytes(UTF_8)));
+  }
+
+  /**
+   * Creates a new test Codex hook scope.
+   *
+   * @param projectPath the project directory path
+   * @param pluginRoot the plugin root directory path
+   * @param pluginData the plugin data directory path
+   * @param hookInput standard input for this hook invocation
+   * @throws NullPointerException if any argument is null
+   */
+  public TestCodexHook(Path projectPath, Path pluginRoot, Path pluginData, InputStream hookInput)
+  {
+    super(projectPath, pluginRoot, pluginData, projectPath, "UTC", hookInput);
     requireThat(projectPath, "projectPath").isNotNull().isAbsolute();
     requireThat(pluginRoot, "pluginRoot").isNotNull().isAbsolute();
     requireThat(pluginData, "pluginData").isNotNull().isAbsolute();

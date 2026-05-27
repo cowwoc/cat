@@ -75,17 +75,18 @@ environment, and invoke only neutral shared code. They do not invoke Claude Java
 | Session end | `SessionEnd` | Not implemented |
 | Read/glob/grep hooks | Supported by Claude hook matchers | Not currently supported by Codex hooks |
 | Task/skill hooks | Supported by Claude hook matchers | Not currently exposed as Claude-compatible Codex hook payloads |
-| Subagent start | `SubagentStart` | Not implemented |
+| Subagent start | `SubagentStart` | `SubagentStart` via `client/bin/subagent-start` |
+| Subagent stop | Not implemented | Not implemented |
 
-CAT currently registers Codex hooks for session-start context loading and the Bash pre-hook guard. It does not ship
-no-op Codex launchers for Claude-only behavior, and it does not attempt to port Claude-only `Read|Glob|Grep`,
-`Task|Skill`, prompt, post-tool, stop/status, or session-end hook behavior until Codex exposes compatible engine
-events that CAT can handle meaningfully.
+CAT currently registers Codex hooks for session-start context loading, subagent-start rule injection, and the Bash
+pre-hook guard. It does not ship no-op Codex launchers for Claude-only behavior, and it does not attempt to port
+Claude-only `Read|Glob|Grep`, `Task|Skill`, prompt, post-tool, stop/status, session-end, or subagent-stop hook behavior
+until Codex exposes compatible engine events that CAT can handle meaningfully.
 
-CAT intentionally does not emulate Claude Code's `SubagentStart` hook for Codex. Claude Code needs that hook because
-Claude agents do not automatically receive CAT's lightweight agent rules and skill-listing context. Codex
-agents use Codex sessions/configuration and receive native skill discovery for their effective configuration, so
-duplicating the Claude injection would waste context and risk conflicting with Codex's own skill mechanism.
+Codex 0.134.0 exposes subagent-scoped lifecycle hooks and includes top-level `agent_id` and `agent_type` metadata on
+hooks that run inside thread-spawned agents. CAT's Codex `SubagentStart` hook uses `agent_type` to inject matching
+CAT rules. It does not duplicate Claude's skill-listing injection because Codex agents already use native skill
+discovery for their effective configuration.
 
 ## jlink Engine
 

@@ -49,7 +49,7 @@ final class CodexSessionRules
    * The Codex session audience derived from native SessionStart input.
    *
    * @param agent true if the session belongs to an agent
-   * @param agentName the top-level Codex agent role used for rule matching
+   * @param agentName the top-level Codex agent type used for rule matching
    */
   private record CodexSessionContext(boolean agent, String agentName)
   {
@@ -62,14 +62,16 @@ final class CodexSessionRules
     private static CodexSessionContext from(JsonNode input)
     {
       boolean nestedAgentSession = "subagent".equals(text(input, "thread_source")) ||
+        "SubagentStart".equals(text(input, "hook_event_name")) ||
+        !text(input, "agent_type").isEmpty() ||
         !input.at("/source/subagent").isMissingNode();
       if (!nestedAgentSession)
         return new CodexSessionContext(false, "");
-      String agentName = text(input, "agent_role");
+      String agentName = text(input, "agent_type");
       if (agentName.isEmpty())
       {
         throw new IllegalArgumentException("Codex agent SessionStart payload is missing top-level " +
-          "agent_role");
+          "agent_type");
       }
       return new CodexSessionContext(true, agentName);
     }

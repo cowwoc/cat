@@ -12,22 +12,22 @@ import org.slf4j.LoggerFactory;
 import java.nio.file.Path;
 
 /**
- * SessionStart hook for Codex.
+ * SubagentStart hook for Codex.
  * <p>
- * Codex does not need an environment-file bootstrap, but it does need CAT migrations and the
- * same portable and engine-specific main-agent rules injected as session context.
+ * Codex 0.134.0 exposes subagent-scoped lifecycle hooks with {@code agent_type}. CAT uses this
+ * hook to inject agent-targeted rules without running SessionStart-only migration work.
  */
-public final class SessionStartHook extends AbstractCodexContextHook
+public final class SubagentStartHook extends AbstractCodexContextHook
 {
   /**
-   * Creates a SessionStart hook.
+   * Creates a SubagentStart hook.
    */
-  public SessionStartHook()
+  public SubagentStartHook()
   {
   }
 
   /**
-   * Entry point for the Codex SessionStart hook.
+   * Entry point for the Codex SubagentStart hook.
    *
    * @param args command line arguments (unused)
    */
@@ -35,38 +35,38 @@ public final class SessionStartHook extends AbstractCodexContextHook
   {
     try
     {
-      HookResult result = run(args);
+      SessionStartHook.HookResult result = run(args);
       for (String warning : result.warnings())
         System.err.println(warning);
       System.out.println(result.output());
     }
     catch (RuntimeException | AssertionError e)
     {
-      Logger log = LoggerFactory.getLogger(SessionStartHook.class);
-      log.error("Codex SessionStart hook failed", e);
+      Logger log = LoggerFactory.getLogger(SubagentStartHook.class);
+      log.error("Codex SubagentStart hook failed", e);
       System.err.println("Hook failed: " + e.getMessage());
       System.out.println("{}");
     }
   }
 
   /**
-   * Runs the Codex SessionStart hook without writing to process streams.
+   * Runs the Codex SubagentStart hook without writing to process streams.
    *
    * @param args command line arguments
    * @return the hook output and warnings
    */
-  public static HookResult run(String[] args)
+  public static SessionStartHook.HookResult run(String[] args)
   {
-    return new SessionStartHook().runFromSystem(args);
+    return new SubagentStartHook().runFromSystem(args);
   }
 
   /**
-   * Runs the Codex SessionStart hook from process streams and environment.
+   * Runs the Codex SubagentStart hook from process streams and environment.
    *
    * @param args command line arguments
    * @return the hook output and warnings
    */
-  public HookResult runFromSystem(String[] args)
+  public SessionStartHook.HookResult runFromSystem(String[] args)
   {
     CodexHookInput.requireNoArgs(args);
     try (CodexHookScope scope = createScope(System.in, System.getenv(),
@@ -77,14 +77,13 @@ public final class SessionStartHook extends AbstractCodexContextHook
   }
 
   /**
-   * Runs the Codex SessionStart handlers for an initialized scope.
+   * Runs the Codex SubagentStart hook against an initialized scope.
    *
    * @param scope the Codex hook scope
    * @return the hook output and warnings
-   * @throws NullPointerException if {@code scope} is null
    */
-  public HookResult run(CodexHookScope scope)
+  public SessionStartHook.HookResult run(CodexHookScope scope)
   {
-    return runContextHook(scope, "SessionStart", true);
+    return runContextHook(scope, "SubagentStart", false);
   }
 }

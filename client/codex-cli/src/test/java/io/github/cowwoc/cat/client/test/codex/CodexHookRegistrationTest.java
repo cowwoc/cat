@@ -61,11 +61,27 @@ public final class CodexHookRegistrationTest
     JsonNode hooks = readHooksJson().get("hooks");
 
     requireThat(hooks.has("SessionStart"), "hasSessionStart").isTrue();
+    requireThat(hooks.has("SubagentStart"), "hasSubagentStart").isTrue();
     requireThat(hooks.has("PreToolUse"), "hasPreToolUse").isTrue();
     requireThat(hooks.has("UserPromptSubmit"), "hasUserPromptSubmit").isFalse();
     requireThat(hooks.has("PostToolUse"), "hasPostToolUse").isFalse();
     requireThat(hooks.has("Stop"), "hasStop").isFalse();
-    requireThat(hooks.size(), "hookEventCount").isEqualTo(2);
+    requireThat(hooks.size(), "hookEventCount").isEqualTo(3);
+  }
+
+  /**
+   * Verifies that Codex subagent-start registration uses the native launcher.
+   *
+   * @throws IOException if the hooks file cannot be read
+   */
+  @Test
+  public void subagentStartRegistrationUsesNative() throws IOException
+  {
+    JsonNode registration = readHooksJson().get("hooks").get("SubagentStart").get(0);
+
+    requireThat(registration.has("matcher"), "subagentStartMatcher").isFalse();
+    requireThat(registration.get("hooks").get(0).get("command").asString(),
+      "subagentStartCommand").isEqualTo("${CAT_PLUGIN_ROOT}/client/bin/subagent-start");
   }
 
   /**
