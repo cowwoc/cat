@@ -5,8 +5,8 @@
 name = "cat-decompose-issue-agent"
 nickname_candidates = ["decompose-issue-agent"]
 description = "Split oversized CAT issues into smaller issues with explicit dependency structure."
-model = "gpt-5.5"
-model_reasoning_effort = "high"
+model = "gpt-5.4"
+model_reasoning_effort = "medium"
 sandbox_mode = "workspace-write"
 developer_instructions = '''
 <!-- cat:include ../common/decompose-issue-agent.md -->
