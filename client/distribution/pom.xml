@@ -21,25 +21,21 @@
 		<dependency>
 			<groupId>io.github.cowwoc.cat</groupId>
 			<artifactId>client-common-cli</artifactId>
-			<version>${project.version}</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>io.github.cowwoc.cat</groupId>
 			<artifactId>client-claude-cli</artifactId>
-			<version>${project.version}</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>io.github.cowwoc.cat</groupId>
 			<artifactId>client-codex-cli</artifactId>
-			<version>${project.version}</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>io.github.cowwoc.cat</groupId>
 			<artifactId>client-plugin</artifactId>
-			<version>${project.version}</version>
 			<type>pom</type>
 		</dependency>
 	</dependencies>

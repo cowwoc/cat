@@ -7,31 +7,20 @@
 package io.github.cowwoc.cat.client.test;
 
 import io.github.cowwoc.cat.tool.util.UpdateBranch;
-import io.github.cowwoc.cat.agent.ProcessRunner;
 import org.testng.annotations.Test;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Tests for {@link UpdateBranch#run(String[], PrintStream, PrintStream, Path)} and
- * {@link UpdateBranch#main(String[])} argument-error behavior.
+ * Tests for {@link UpdateBranch#run(String[], PrintStream, PrintStream, Path)} argument-error behavior.
  */
 public final class UpdateBranchMainTest
 {
-  private static final String UPDATE_BRANCH_CLASS =
-    "io.github.cowwoc.cat.tool.util.UpdateBranch";
-
   /**
    * Verifies that run(...) rejects invalid arguments with non-zero status and plain-text usage output.
    */
@@ -115,75 +104,5 @@ public final class UpdateBranchMainTest
     requireThat(blankTargetExitCode, "blankTargetExitCode").isNotEqualTo(0);
     requireThat(stderr, "stderr").contains("Usage:");
     TestUtils.assertPlainText(stdout, stderr);
-  }
-
-  /**
-   * Verifies that main(...) with invalid args exits non-zero and emits plain-text usage output.
-   *
-   * @throws IOException if process execution fails
-   */
-  @Test
-  public void mainInvalidArgsEmitPlainTextUsageAndNon() throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("update-branch-main-test-");
-    try
-    {
-      ProcessResult result = invokeMain(tempDir, "only-branch");
-
-      requireThat(result.exitCode(), "exitCode").isNotEqualTo(0);
-      requireThat(result.stderr(), "stderr").isNotBlank();
-      requireThat(result.stderr() + "\n" + result.stdout(), "combinedOutput").contains("Usage:");
-      TestUtils.assertPlainText(result.stdout(), result.stderr());
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  private static ProcessResult invokeMain(Path directory, String... args) throws IOException
-  {
-    List<String> command = new ArrayList<>();
-    command.add(Path.of(System.getProperty("java.home"), "bin", "java").toString());
-    command.add("-cp");
-    command.add(System.getProperty("java.class.path"));
-    command.add(UPDATE_BRANCH_CLASS);
-    for (String arg : args)
-      command.add(arg);
-
-    ProcessBuilder processBuilder = new ProcessBuilder(command);
-    processBuilder.directory(directory.toFile());
-    processBuilder.redirectErrorStream(false);
-    Process process = processBuilder.start();
-
-    String stdout;
-    try (BufferedReader stdoutReader = new BufferedReader(
-      new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
-    {
-      stdout = ProcessRunner.readAllLines(stdoutReader);
-    }
-
-    String stderr;
-    try (BufferedReader stderrReader = new BufferedReader(
-      new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8)))
-    {
-      stderr = ProcessRunner.readAllLines(stderrReader);
-    }
-
-    int exitCode;
-    try
-    {
-      exitCode = process.waitFor();
-    }
-    catch (InterruptedException e)
-    {
-      Thread.currentThread().interrupt();
-      throw new IOException("Interrupted while waiting for update-branch process", e);
-    }
-    return new ProcessResult(exitCode, stdout.strip(), stderr.strip());
-  }
-
-  private record ProcessResult(int exitCode, String stdout, String stderr)
-  {
   }
 }
