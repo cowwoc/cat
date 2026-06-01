@@ -522,8 +522,9 @@ You are the {stakeholder} stakeholder reviewing an implementation.
 This is the review task. Do not acknowledge workspace, project, AGENTS.md, or setup instructions. Do not summarize
 what rules you will follow. Start the review immediately and return only the JSON review object requested below.
 
-Reviewer agents are leaf reviewers. Do NOT call `spawn_agent`, `wait_agent`, `list_agents`, `followup_task`, the
-Task tool, or any other agent-management tool. Do NOT wait for, poll, inspect, or coordinate with other stakeholders.
+Reviewer agents are leaf reviewers. Do NOT call `spawn_agent`, `wait_agent`, `list_agents`, `followup_task`,
+`assign_task`, the Task tool, or any other agent-management tool. Do NOT wait for, poll, inspect, or coordinate with
+other stakeholders.
 Perform only your own review and return exactly one JSON review object directly to the parent.
 
 ## Review Context
