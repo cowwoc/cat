@@ -174,6 +174,27 @@ public final class CodexRunnerTest
   }
 
   /**
+   * Verifies that unsupported Codex effort values are rejected.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class,
+    expectedExceptionsMessageRegExp = ".*Invalid effort.*")
+  public void buildCommandRejectsMinimalEffort() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestCodexTool scope = new TestCodexTool(tempDir, tempDir))
+    {
+      CodexRunner runner = new CodexRunner(scope);
+      Path outputPath = tempDir.resolve("last-message.txt");
+
+      runner.buildCommand("gpt-5.5", "minimal", tempDir, outputPath);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that the process builder runs in the requested directory.
    */
   @Test

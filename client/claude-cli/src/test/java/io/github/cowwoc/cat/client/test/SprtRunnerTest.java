@@ -172,7 +172,7 @@ public final class SprtRunnerTest
   }
 
   /**
-   * Verifies that extract-model defaults to "haiku" when no model field is present in frontmatter.
+   * Verifies that extract-model uses the Claude default when no model field is present in frontmatter.
    */
   @Test
   public void extractModelRejectsSkillWithoutModel() throws IOException, InterruptedException
@@ -191,6 +191,348 @@ public final class SprtRunnerTest
       SprtRunner runner = new SprtRunner(scope, "2.1.87");
       String model = runner.extractModel(new String[]{skillFile.toString()});
       requireThat(model, "model").isEqualTo("claude-haiku-4-5");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that Codex extract-model uses the fixed test-runner default because Codex skills do
+   * not support model frontmatter.
+   */
+  @Test
+  public void extractModelUsesCodexDefault() throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new MainCliTool(name -> switch (name)
+    {
+      case "CAT_SESSION_ID" -> "test-session-id";
+      case "CAT_PROJECT_DIR", "CAT_PLUGIN_ROOT", "CAT_PLUGIN_DATA", "CAT_CONFIG_DIR" ->
+        tempDir.toString();
+      case "CAT_ENGINE" -> "codex";
+      default -> null;
+    }, tempDir))
+    {
+      Path skillFile = tempDir.resolve("skill.md");
+      Files.writeString(skillFile, """
+        ---
+        description: Test skill
+        model: gpt-5.5
+        ---
+        # Body
+        """, StandardCharsets.UTF_8);
+
+      SprtRunner runner = new SprtRunner(scope, "2.1.87");
+      String model = runner.extractModel(new String[]{skillFile.toString()});
+      requireThat(model, "model").isEqualTo("gpt-5.4-mini");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that Codex extract-effort uses the fixed test-runner default because Codex skills do
+   * not support effort frontmatter.
+   */
+  @Test
+  public void extractEffortUsesCodexDefault() throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new MainCliTool(name -> switch (name)
+    {
+      case "CAT_SESSION_ID" -> "test-session-id";
+      case "CAT_PROJECT_DIR", "CAT_PLUGIN_ROOT", "CAT_PLUGIN_DATA", "CAT_CONFIG_DIR" ->
+        tempDir.toString();
+      case "CAT_ENGINE" -> "codex";
+      default -> null;
+    }, tempDir))
+    {
+      Path skillFile = tempDir.resolve("skill.md");
+      Files.writeString(skillFile, """
+        ---
+        description: Test skill
+        effort: high
+        ---
+        # Body
+        """, StandardCharsets.UTF_8);
+
+      SprtRunner runner = new SprtRunner(scope, "2.1.87");
+      String effort = runner.extractEffort(new String[]{skillFile.toString()});
+      requireThat(effort, "effort").isEqualTo("low");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that Codex extracts the test-runner config from a uniquely targeted rule agent.
+   */
+  @Test
+  public void extractConfigUsesCodexRuleOwner() throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new MainCliTool(name -> switch (name)
+    {
+      case "CAT_SESSION_ID" -> "test-session-id";
+      case "CAT_PROJECT_DIR", "CAT_PLUGIN_ROOT", "CAT_PLUGIN_DATA", "CAT_CONFIG_DIR" ->
+        tempDir.toString();
+      case "CAT_ENGINE" -> "codex";
+      default -> null;
+    }, tempDir))
+    {
+      writeCodexAgent(tempDir, "work-execute", "gpt-5.5", "high");
+      Path ruleFile = tempDir.resolve("rules/common/configuration-reads.md");
+      Files.createDirectories(ruleFile.getParent());
+      Files.writeString(ruleFile, """
+        ---
+        subAgents: ["cat:work-execute"]
+        ---
+        # Rule
+        """, StandardCharsets.UTF_8);
+
+      SprtRunner runner = new SprtRunner(scope, "2.1.87");
+      requireThat(runner.extractModel(new String[]{ruleFile.toString()}), "model").
+        isEqualTo("gpt-5.5");
+      requireThat(runner.extractEffort(new String[]{ruleFile.toString()}), "effort").
+        isEqualTo("high");
+      requireThat(runner.extractConfigSource(new String[]{ruleFile.toString()}), "configSource").
+        isEqualTo("owner");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that Codex extracts the weakest config from multiple targeted rule agents.
+   */
+  @Test
+  public void usesWeakestCodexRuleOwner() throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new MainCliTool(name -> switch (name)
+    {
+      case "CAT_SESSION_ID" -> "test-session-id";
+      case "CAT_PROJECT_DIR", "CAT_PLUGIN_ROOT", "CAT_PLUGIN_DATA", "CAT_CONFIG_DIR" ->
+        tempDir.toString();
+      case "CAT_ENGINE" -> "codex";
+      default -> null;
+    }, tempDir))
+    {
+      writeCodexAgent(tempDir, "work-execute", "gpt-5.3-codex", "high");
+      writeCodexAgent(tempDir, "work-merge", "gpt-5.4-mini", "medium");
+      writeCodexAgent(tempDir, "instruction-builder-implement-agent", "gpt-5.4-mini", "low");
+      Path ruleFile = tempDir.resolve("rules/common/multi-agent.md");
+      Files.createDirectories(ruleFile.getParent());
+      Files.writeString(ruleFile, """
+        ---
+        subAgents: ["cat:work-execute", "cat:work-merge", "cat:instruction-builder-implement-agent"]
+        ---
+        # Rule
+        """, StandardCharsets.UTF_8);
+
+      SprtRunner runner = new SprtRunner(scope, "2.1.87");
+      requireThat(runner.extractModel(new String[]{ruleFile.toString()}), "model").
+        isEqualTo("gpt-5.4-mini");
+      requireThat(runner.extractEffort(new String[]{ruleFile.toString()}), "effort").
+        isEqualTo("low");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that rules without a subAgents restriction use the weakest config across all Codex agents.
+   */
+  @Test
+  public void usesWeakestCodexBroadRule() throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new MainCliTool(name -> switch (name)
+    {
+      case "CAT_SESSION_ID" -> "test-session-id";
+      case "CAT_PROJECT_DIR", "CAT_PLUGIN_ROOT", "CAT_PLUGIN_DATA", "CAT_CONFIG_DIR" ->
+        tempDir.toString();
+      case "CAT_ENGINE" -> "codex";
+      default -> null;
+    }, tempDir))
+    {
+      writeCodexAgent(tempDir, "work-execute", "gpt-5.3-codex", "high");
+      writeCodexAgent(tempDir, "work-merge", "gpt-5.4-mini", "medium");
+      writeCodexAgent(tempDir, "instruction-builder-implement-agent", "gpt-5.4-mini", "low");
+      Path ruleFile = tempDir.resolve("rules/common/broad-rule.md");
+      Files.createDirectories(ruleFile.getParent());
+      Files.writeString(ruleFile, "# Rule", StandardCharsets.UTF_8);
+
+      SprtRunner runner = new SprtRunner(scope, "2.1.87");
+      requireThat(runner.extractModel(new String[]{ruleFile.toString()}), "model").
+        isEqualTo("gpt-5.4-mini");
+      requireThat(runner.extractEffort(new String[]{ruleFile.toString()}), "effort").
+        isEqualTo("low");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that subAgents: [] means no Codex subagent owners and therefore uses the default.
+   */
+  @Test
+  public void usesDefaultForNoSubagentRule() throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new MainCliTool(name -> switch (name)
+    {
+      case "CAT_SESSION_ID" -> "test-session-id";
+      case "CAT_PROJECT_DIR", "CAT_PLUGIN_ROOT", "CAT_PLUGIN_DATA", "CAT_CONFIG_DIR" ->
+        tempDir.toString();
+      case "CAT_ENGINE" -> "codex";
+      default -> null;
+    }, tempDir))
+    {
+      writeCodexAgent(tempDir, "work-execute", "gpt-5.5", "high");
+      Path ruleFile = tempDir.resolve("rules/common/no-subagents.md");
+      Files.createDirectories(ruleFile.getParent());
+      Files.writeString(ruleFile, """
+        ---
+        subAgents: []
+        ---
+        # Rule
+        """, StandardCharsets.UTF_8);
+
+      SprtRunner runner = new SprtRunner(scope, "2.1.87");
+      requireThat(runner.extractModel(new String[]{ruleFile.toString()}), "model").
+        isEqualTo("gpt-5.4-mini");
+      requireThat(runner.extractEffort(new String[]{ruleFile.toString()}), "effort").
+        isEqualTo("low");
+      requireThat(runner.extractConfigSource(new String[]{ruleFile.toString()}), "configSource").
+        isEqualTo("default");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that Codex extracts the test-runner config from the matching agent wrapper for a
+   * shared agent body.
+   */
+  @Test
+  public void extractConfigUsesCodexAgentBodyOwner() throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new MainCliTool(name -> switch (name)
+    {
+      case "CAT_SESSION_ID" -> "test-session-id";
+      case "CAT_PROJECT_DIR", "CAT_PLUGIN_ROOT", "CAT_PLUGIN_DATA", "CAT_CONFIG_DIR" ->
+        tempDir.toString();
+      case "CAT_ENGINE" -> "codex";
+      default -> null;
+    }, tempDir))
+    {
+      writeCodexAgent(tempDir, "plan-review-agent", "gpt-5.4", "medium");
+      Path agentBody = tempDir.resolve("agents/common/plan-review-agent.md");
+      Files.createDirectories(agentBody.getParent());
+      Files.writeString(agentBody, "Plan review body", StandardCharsets.UTF_8);
+
+      SprtRunner runner = new SprtRunner(scope, "2.1.87");
+      requireThat(runner.extractModel(new String[]{agentBody.toString()}), "model").
+        isEqualTo("gpt-5.4");
+      requireThat(runner.extractEffort(new String[]{agentBody.toString()}), "effort").
+        isEqualTo("medium");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that Codex extracts the test-runner config from the unique agent body that invokes a
+   * skill under test.
+   */
+  @Test
+  public void extractConfigUsesUniqueCodexSkillInvoker() throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new MainCliTool(name -> switch (name)
+    {
+      case "CAT_SESSION_ID" -> "test-session-id";
+      case "CAT_PROJECT_DIR", "CAT_PLUGIN_ROOT", "CAT_PLUGIN_DATA", "CAT_CONFIG_DIR" ->
+        tempDir.toString();
+      case "CAT_ENGINE" -> "codex";
+      default -> null;
+    }, tempDir))
+    {
+      writeCodexAgent(tempDir, "work-squash", "gpt-5.4-mini", "medium");
+      Path agentBody = tempDir.resolve("agents/common/work-squash.md");
+      Files.createDirectories(agentBody.getParent());
+      Files.writeString(agentBody, """
+        When the squash is ready, invoke Skill("cat:git-amend", args="--no-edit").
+        """, StandardCharsets.UTF_8);
+      Path skillFile = tempDir.resolve("skills/common/git-amend/first-use.md");
+      Files.createDirectories(skillFile.getParent());
+      Files.writeString(skillFile, "# Git Amend", StandardCharsets.UTF_8);
+
+      SprtRunner runner = new SprtRunner(scope, "2.1.87");
+      requireThat(runner.extractModel(new String[]{skillFile.toString()}), "model").
+        isEqualTo("gpt-5.4-mini");
+      requireThat(runner.extractEffort(new String[]{skillFile.toString()}), "effort").
+        isEqualTo("medium");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that Codex extracts the weakest config when multiple agent bodies invoke a skill.
+   */
+  @Test
+  public void usesWeakestCodexSkillInvoker() throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new MainCliTool(name -> switch (name)
+    {
+      case "CAT_SESSION_ID" -> "test-session-id";
+      case "CAT_PROJECT_DIR", "CAT_PLUGIN_ROOT", "CAT_PLUGIN_DATA", "CAT_CONFIG_DIR" ->
+        tempDir.toString();
+      case "CAT_ENGINE" -> "codex";
+      default -> null;
+    }, tempDir))
+    {
+      writeCodexAgent(tempDir, "work-squash", "gpt-5.4-mini", "medium");
+      writeCodexAgent(tempDir, "work-execute", "gpt-5.3-codex", "high");
+      Path commonAgentsDir = tempDir.resolve("agents/common");
+      Files.createDirectories(commonAgentsDir);
+      Files.writeString(commonAgentsDir.resolve("work-squash.md"), """
+        When the squash is ready, invoke Skill("cat:git-amend", args="--no-edit").
+        """, StandardCharsets.UTF_8);
+      Files.writeString(commonAgentsDir.resolve("work-execute.md"), """
+        If a commit needs repair, invoke Skill("cat:git-amend", args="--message fixed").
+        """, StandardCharsets.UTF_8);
+      Path skillFile = tempDir.resolve("skills/common/git-amend/first-use.md");
+      Files.createDirectories(skillFile.getParent());
+      Files.writeString(skillFile, "# Git Amend", StandardCharsets.UTF_8);
+
+      SprtRunner runner = new SprtRunner(scope, "2.1.87");
+      requireThat(runner.extractModel(new String[]{skillFile.toString()}), "model").
+        isEqualTo("gpt-5.4-mini");
+      requireThat(runner.extractEffort(new String[]{skillFile.toString()}), "effort").
+        isEqualTo("medium");
     }
     finally
     {
@@ -1798,7 +2140,7 @@ public final class SprtRunnerTest
   }
 
   /**
-   * Verifies that extract-model defaults to "haiku" when SKILL.md is missing the model frontmatter field.
+   * Verifies that extract-model uses the Claude default when SKILL.md is missing the model frontmatter field.
    */
   @Test
   public void extractModelRejectsMissingModel() throws IOException, InterruptedException
@@ -3066,14 +3408,14 @@ public final class SprtRunnerTest
   }
 
   /**
-   * Verifies that engine-dispatched Claude trial arguments reject Codex-only efforts.
+   * Verifies that engine-dispatched Claude trial arguments reject unsupported efforts.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*Invalid effort.*")
   public void engineClaudeTrialArgsRejectCodexOnly()
   {
     SharedSecrets.buildClaudeTrialArgs(Path.of("/tmp/prompt.txt"), "claude-sonnet-4-5",
-      "minimal", "/tmp/worktree", "/tmp/output.json", Path.of("/tmp/jlink/bin"));
+      "extreme", "/tmp/worktree", "/tmp/output.json", Path.of("/tmp/jlink/bin"));
   }
 
   /**
@@ -3327,6 +3669,75 @@ public final class SprtRunnerTest
   }
 
   /**
+   * Verifies that the fixed Claude grader config is read from the grader agent descriptor.
+   */
+  @Test
+  public void graderConfigResolvesClaudeDescriptor() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-grader-config-");
+    try
+    {
+      Path pluginRoot = tempDir.resolve("plugin");
+      Path agentsDir = pluginRoot.resolve("agents/claude");
+      Files.createDirectories(agentsDir);
+      Files.writeString(agentsDir.resolve("instruction-grader-agent.md"), """
+        ---
+        name: instruction-grader-agent
+        model: haiku
+        effort: low
+        ---
+        """, StandardCharsets.UTF_8);
+
+      SharedSecrets.ModelEffort config = SharedSecrets.resolveGraderModelEffort(pluginRoot,
+        AgentEngine.CLAUDE.pluginDescriptor(), "2.1.87");
+
+      requireThat(config.modelId(), "modelId").isEqualTo("claude-haiku-4-5");
+      requireThat(config.effort(), "effort").isEqualTo("low");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that run-sprt trial config is independent from fixed Codex grader config.
+   */
+  @Test
+  public void trialConfigIndependentFromCodexGrader() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-grader-config-");
+    try
+    {
+      Path pluginRoot = tempDir.resolve("plugin");
+      Path agentsDir = pluginRoot.resolve("agents/codex");
+      Files.createDirectories(agentsDir);
+      Files.writeString(agentsDir.resolve("instruction-grader-agent.toml"), """
+        name = "cat-instruction-grader-agent"
+        model = "gpt-5.4-mini"
+        model_reasoning_effort = "medium"
+        """, StandardCharsets.UTF_8);
+      Path promptFile = tempDir.resolve("trial-prompt.txt");
+      Files.writeString(promptFile, "test prompt", StandardCharsets.UTF_8);
+
+      String[] trialArgs = SharedSecrets.buildTrialArgsForDescriptor(
+        AgentEngine.CODEX.pluginDescriptor(), promptFile, "gpt-5.5", "xhigh",
+        tempDir.toString(), tempDir.resolve("output.json").toString());
+      SharedSecrets.ModelEffort graderConfig = SharedSecrets.resolveGraderModelEffort(pluginRoot,
+        AgentEngine.CODEX.pluginDescriptor(), "2.1.87");
+
+      requireThat(trialArgs[3], "trialModel").isEqualTo("gpt-5.5");
+      requireThat(trialArgs[5], "trialEffort").isEqualTo("xhigh");
+      requireThat(graderConfig.modelId(), "graderModel").isEqualTo("gpt-5.4-mini");
+      requireThat(graderConfig.effort(), "graderEffort").isEqualTo("medium");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that SPRT engine resolution fails fast for unsupported descriptors.
    */
   @Test(expectedExceptions = IllegalStateException.class,
@@ -3345,5 +3756,17 @@ public final class SprtRunnerTest
   {
     SharedSecrets.buildClaudeGraderArgs(null, "model", "medium", "/tmp/worktree",
       Path.of("/tmp/jlink/bin"));
+  }
+
+  private static void writeCodexAgent(Path pluginRoot, String agentName, String model,
+    String effort) throws IOException
+  {
+    Path agentsDir = pluginRoot.resolve("agents/codex");
+    Files.createDirectories(agentsDir);
+    Files.writeString(agentsDir.resolve(agentName + ".toml"), """
+      name = "cat-%s"
+      model = "%s"
+      model_reasoning_effort = "%s"
+      """.formatted(agentName, model, effort), StandardCharsets.UTF_8);
   }
 }

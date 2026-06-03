@@ -6,9 +6,10 @@
  */
 package io.github.cowwoc.cat.tool.skills;
 
-import io.github.cowwoc.cat.tool.CliTool;
+import io.github.cowwoc.cat.agent.FrontmatterUtils;
 import io.github.cowwoc.cat.agent.ProcessRunner;
 import io.github.cowwoc.cat.agent.VersionUtils;
+import io.github.cowwoc.cat.tool.CliTool;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@ import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -82,6 +84,11 @@ public final class SprtRunner
   private static final DateTimeFormatter ISO_UTC =
     DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC);
   private static final String GRADER_AGENT = "instruction-grader-agent";
+  private static final YAMLMapper YAML_MAPPER = YAMLMapper.builder().build();
+  private static final List<String> CLAUDE_EFFORT_LEVELS =
+    List.of("low", "medium", "high", "xhigh", "max");
+  private static final List<String> CODEX_EFFORT_LEVELS =
+    List.of("low", "medium", "high", "xhigh");
 
   static
   {
@@ -105,6 +112,7 @@ public final class SprtRunner
       public String[] buildClaudeTrialArgs(Path promptFile, String modelId, String effort,
         String runnerWorktree, String outputJson, Path jlinkBin)
       {
+        validateClaudeModelAndEffort(modelId, effort);
         return buildTrialArgsInternal(promptFile, modelId, effort, runnerWorktree, outputJson,
           jlinkBin, true);
       }
@@ -113,6 +121,7 @@ public final class SprtRunner
       public String[] buildCodexTrialArgs(Path promptFile, String modelId, String effort,
         String runnerWorktree, String outputJson)
       {
+        validateCodexModelAndEffort(modelId, effort);
         return buildTrialArgsInternal(promptFile, modelId, effort, runnerWorktree, outputJson,
           null, false);
       }
@@ -121,6 +130,7 @@ public final class SprtRunner
       public String[] buildClaudeGraderArgs(Path graderPromptFile, String modelId, String effort,
         String runnerWorktree, Path jlinkBin)
       {
+        validateClaudeModelAndEffort(modelId, effort);
         return buildGraderArgsInternal(graderPromptFile, modelId, effort, runnerWorktree, null,
           jlinkBin, true, true);
       }
@@ -129,6 +139,7 @@ public final class SprtRunner
       public String[] buildCodexGraderArgs(Path graderPromptFile, String modelId, String effort,
         String runnerWorktree)
       {
+        validateCodexModelAndEffort(modelId, effort);
         return buildGraderArgsInternal(graderPromptFile, modelId, effort, runnerWorktree,
           Path.of(runnerWorktree, ".cat", "work", "grade-output.json").toString(),
           null, false, false);
@@ -141,12 +152,25 @@ public final class SprtRunner
       }
 
       @Override
+      public SharedSecrets.ModelEffort resolveGraderModelEffort(Path pluginRoot, Path descriptor,
+        String claudeCodeVersion)
+        throws IOException
+      {
+        GraderModelEffort resolved = SprtRunner.resolveGraderModelEffort(
+          pluginRoot, descriptor, claudeCodeVersion);
+        return new SharedSecrets.ModelEffort(resolved.modelId(), resolved.effort());
+      }
+
+      @Override
       public String[] buildTrialArgsForDescriptor(Path descriptor, Path promptFile,
         String modelId, String effort, String runnerWorktree, String outputJson)
       {
         String runtimeId = runtimeIdFromDescriptor(descriptor);
-        Path jlinkBin = jlinkBin(runnerWorktree, runtimeId);
+        validateModelAndEffort(runtimeId, modelId, effort);
         boolean hasClaudeFlags = runtimeId.equals("claude");
+        Path jlinkBin = null;
+        if (hasClaudeFlags)
+          jlinkBin = jlinkBin(runnerWorktree, runtimeId);
         return buildTrialArgsInternal(promptFile, modelId, effort, runnerWorktree, outputJson,
           jlinkBin, hasClaudeFlags);
       }
@@ -156,8 +180,11 @@ public final class SprtRunner
         String modelId, String effort, String runnerWorktree)
       {
         String runtimeId = runtimeIdFromDescriptor(descriptor);
-        Path jlinkBin = jlinkBin(runnerWorktree, runtimeId);
+        validateModelAndEffort(runtimeId, modelId, effort);
         boolean hasClaudeFlags = runtimeId.equals("claude");
+        Path jlinkBin = null;
+        if (hasClaudeFlags)
+          jlinkBin = jlinkBin(runnerWorktree, runtimeId);
         String outputPath = null;
         if (!hasClaudeFlags)
         {
@@ -225,6 +252,7 @@ public final class SprtRunner
       case "extract-model" -> out.println(extractModel(rest));
       case "extract-effort" -> out.println(extractEffort(rest));
       case "extract-test-dir" -> out.println(extractTestDir(rest));
+      case "extract-config-source" -> out.println(extractConfigSource(rest));
       case "detect-changes" -> out.println(detectChanges(rest));
       case "map-units" -> out.println(mapUnits(rest));
       case "persist-artifacts" -> persistArtifacts(rest, out);
@@ -242,7 +270,8 @@ public final class SprtRunner
       case "run-sprt" -> runSprt(rest, out);
       default -> throw new IllegalArgumentException(
         "SprtRunner: unknown command: " + command + "\n" +
-        "Valid commands: extract-units, extract-model, extract-effort, extract-test-dir, detect-changes, " +
+        "Valid commands: extract-units, extract-model, extract-effort, extract-config-source, " +
+        "extract-test-dir, detect-changes, " +
         "map-units, persist-artifacts, init-sprt, update-sprt, check-boundary, smoke-status, " +
         "merge-results, create-runner-worktrees, check-run-contamination, remove-runner-worktrees, " +
         "remove-runner-worktree, prepare-trial, get-json-field, run-sprt");
@@ -270,7 +299,7 @@ public final class SprtRunner
    * <p>
    * Reads the YAML frontmatter of the skill and returns the fully-qualified model identifier.
    * The short name from the {@code model:} field is resolved via {@link ModelIdResolver}.
-   * Falls back to {@code "haiku"} (resolved to its fully-qualified ID) when the field is absent.
+   * Falls back to the active engine's default model when the field is absent.
    *
    * @param args {@code [skill_path]}
    * @return the fully-qualified model identifier
@@ -296,6 +325,19 @@ public final class SprtRunner
   public String extractEffort(String[] args) throws IOException
   {
     return skillMetadataExtractor.extractEffort(args);
+  }
+
+  /**
+   * Implements the {@code extract-config-source} command.
+   *
+   * @param args {@code [skill_path]}
+   * @return {@code owner}, {@code default}, or {@code frontmatter}
+   * @throws IllegalArgumentException if the argument count is wrong or the file is not found
+   * @throws IOException if the file cannot be read
+   */
+  public String extractConfigSource(String[] args) throws IOException
+  {
+    return skillMetadataExtractor.extractConfigSource(args);
   }
 
   /**
@@ -1960,6 +2002,16 @@ public final class SprtRunner
   {
   }
 
+  /**
+   * Fixed grader model configuration.
+   *
+   * @param modelId the model ID to use for grading
+   * @param effort  the reasoning effort to use for grading
+   */
+  private record GraderModelEffort(String modelId, String effort)
+  {
+  }
+
   private static RunSprtArguments parseRunSprtArgs(String[] args)
   {
     requireThat(args, "args").isNotNull();
@@ -2413,7 +2465,7 @@ public final class SprtRunner
 
   void validateConfiguration(String modelId, String effort)
   {
-    validateModelAndEffort(modelId, effort);
+    validateModelAndEffort(runtimeId, modelId, effort);
   }
 
   int runTrial(Path promptFile, String modelId, String effort, String runnerWorktree,
@@ -2430,7 +2482,9 @@ public final class SprtRunner
     throws IOException
   {
     requireThat(out, "out").isNotNull();
-    String[] args = buildGraderArgs(graderPromptFile, modelId, effort, runnerWorktree);
+    GraderModelEffort graderConfig = resolveGraderModelEffort(runnerWorktree);
+    String[] args = buildGraderArgs(graderPromptFile, graderConfig.modelId(),
+      graderConfig.effort(), runnerWorktree);
     return runEngineCommand(args, runnerWorktree, out);
   }
 
@@ -2474,7 +2528,7 @@ public final class SprtRunner
   private String[] buildTrialArgs(Path promptFile, String modelId,
     String effort, String runnerWorktree, String outputJson)
   {
-    validateModelAndEffort(modelId, effort);
+    validateModelAndEffort(runtimeId, modelId, effort);
     Path jlinkBin = jlinkBin(runnerWorktree, runtimeId);
     Set<String> flags = supportedFlags(runnerWorktree);
     return buildTrialArgsInternal(promptFile, modelId, effort, runnerWorktree, outputJson,
@@ -2484,12 +2538,20 @@ public final class SprtRunner
   private String[] buildGraderArgs(Path graderPromptFile, String modelId,
     String effort, String runnerWorktree)
   {
-    validateModelAndEffort(modelId, effort);
+    validateModelAndEffort(runtimeId, modelId, effort);
     Path jlinkBin = jlinkBin(runnerWorktree, runtimeId);
     Set<String> flags = supportedFlags(runnerWorktree);
     return buildGraderArgsInternal(graderPromptFile, modelId, effort, runnerWorktree, null,
       jlinkBin, flags.contains("--plugin-source") && flags.contains("--jlink-bin"),
       flags.contains("--agent"));
+  }
+
+  private GraderModelEffort resolveGraderModelEffort(String runnerWorktree)
+    throws IOException
+  {
+    Path candidatePluginRoot = Path.of(runnerWorktree, "client/plugin");
+    return resolveGraderModelEffort(List.of(candidatePluginRoot, scope.getPluginRoot()),
+      scope.getPluginDescriptor(), claudeCodeVersion);
   }
 
   private static String[] buildTrialArgsInternal(Path promptFile, String modelId, String effort,
@@ -2500,7 +2562,8 @@ public final class SprtRunner
     requireThat(effort, "effort").isNotBlank();
     requireThat(runnerWorktree, "runnerWorktree").isNotBlank();
     requireThat(outputJson, "outputJson").isNotBlank();
-    requireThat(jlinkBin, "jlinkBin").isNotNull();
+    if (includeClaudeFlags)
+      requireThat(jlinkBin, "jlinkBin").isNotNull();
     List<String> args = new ArrayList<>();
     args.add("--prompt-file");
     args.add(promptFile.toString());
@@ -2530,7 +2593,8 @@ public final class SprtRunner
     requireThat(modelId, "modelId").isNotBlank();
     requireThat(effort, "effort").isNotBlank();
     requireThat(runnerWorktree, "runnerWorktree").isNotBlank();
-    requireThat(jlinkBin, "jlinkBin").isNotNull();
+    if (includeClaudeFlags)
+      requireThat(jlinkBin, "jlinkBin").isNotNull();
     List<String> args = new ArrayList<>();
     args.add("--prompt-file");
     args.add(graderPromptFile.toString());
@@ -2560,11 +2624,162 @@ public final class SprtRunner
     return args.toArray(String[]::new);
   }
 
-  private static void validateModelAndEffort(String modelId, String effort)
+  private static GraderModelEffort resolveGraderModelEffort(Path pluginRoot,
+    Path descriptor, String claudeCodeVersion) throws IOException
+  {
+    requireThat(pluginRoot, "pluginRoot").isNotNull();
+    return resolveGraderModelEffort(List.of(pluginRoot), descriptor, claudeCodeVersion);
+  }
+
+  private static GraderModelEffort resolveGraderModelEffort(List<Path> pluginRoots,
+    Path descriptor, String claudeCodeVersion) throws IOException
+  {
+    requireThat(pluginRoots, "pluginRoots").isNotNull();
+    requireThat(descriptor, "descriptor").isNotNull();
+    requireThat(claudeCodeVersion, "claudeCodeVersion").isNotBlank();
+    String graderRuntimeId = runtimeIdFromDescriptor(descriptor);
+    Path agentPath = findGraderAgentDescriptorPath(pluginRoots, graderRuntimeId);
+
+    String modelId;
+    String effort;
+    if (graderRuntimeId.equals("claude"))
+    {
+      String model = extractYamlFrontmatterField(agentPath, "model");
+      if (model.isBlank())
+        throw new IllegalStateException("Instruction grader agent is missing model frontmatter: " + agentPath);
+      modelId = ModelIdResolver.resolve(claudeCodeVersion, model);
+      effort = extractYamlFrontmatterField(agentPath, "effort");
+    }
+    else if (graderRuntimeId.equals("codex"))
+    {
+      modelId = extractTomlStringField(agentPath, "model");
+      effort = extractTomlStringField(agentPath, "model_reasoning_effort");
+    }
+    else
+      throw new IllegalStateException("Unsupported CAT engine descriptor: " + descriptor);
+
+    if (effort.isBlank())
+      throw new IllegalStateException("Instruction grader agent is missing effort: " + agentPath);
+    validateModelAndEffort(graderRuntimeId, modelId, effort);
+    return new GraderModelEffort(modelId, effort);
+  }
+
+  private static Path findGraderAgentDescriptorPath(List<Path> pluginRoots,
+    String graderRuntimeId)
+  {
+    List<Path> candidates = new ArrayList<>();
+    for (Path pluginRoot: pluginRoots)
+    {
+      candidates.addAll(graderAgentDescriptorPaths(pluginRoot, graderRuntimeId));
+    }
+    for (Path candidate: candidates)
+    {
+      if (Files.exists(candidate))
+        return candidate;
+    }
+    throw new IllegalStateException(
+      "Instruction grader agent descriptor not found. Searched: " + candidates);
+  }
+
+  private static List<Path> graderAgentDescriptorPaths(Path pluginRoot,
+    String graderRuntimeId)
+  {
+    return switch (graderRuntimeId)
+    {
+      case "claude" -> List.of(
+        pluginRoot.resolve("agents/claude/instruction-grader-agent.md"),
+        pluginRoot.resolve("agents/instruction-grader-agent.md"));
+      case "codex" -> List.of(
+        pluginRoot.resolve("agents/codex/instruction-grader-agent.toml"),
+        pluginRoot.resolve("agents/instruction-grader-agent.toml"));
+      default -> throw new IllegalStateException("Unsupported CAT engine: " + graderRuntimeId);
+    };
+  }
+
+  private static String extractYamlFrontmatterField(Path agentPath, String fieldName)
+    throws IOException
+  {
+    String content = Files.readString(agentPath, UTF_8);
+    String frontmatter = FrontmatterUtils.extractFrontmatter(content);
+    if (frontmatter == null || frontmatter.isBlank())
+      return "";
+    JsonNode parsed = YAML_MAPPER.readTree(frontmatter);
+    JsonNode node = parsed.get(fieldName);
+    if (node == null || node.isNull() || node.isMissingNode())
+      return "";
+    return node.asString("");
+  }
+
+  private static String extractTomlStringField(Path agentPath, String fieldName)
+    throws IOException
+  {
+    String content = Files.readString(agentPath, UTF_8);
+    for (String line: content.split("\\R"))
+    {
+      String trimmed = line.strip();
+      if (trimmed.isEmpty() || trimmed.startsWith("#"))
+        continue;
+      int equalsIndex = trimmed.indexOf('=');
+      if (equalsIndex < 0)
+        continue;
+      String key = trimmed.substring(0, equalsIndex).strip();
+      if (!key.equals(fieldName))
+        continue;
+      return parseTomlStringValue(trimmed.substring(equalsIndex + 1).strip());
+    }
+    return "";
+  }
+
+  private static String parseTomlStringValue(String rawValue)
+  {
+    if (rawValue.isEmpty())
+      return "";
+    char quote = rawValue.charAt(0);
+    if (quote == '"' || quote == '\'')
+    {
+      int closingQuote = rawValue.indexOf(quote, 1);
+      if (closingQuote < 0)
+        return "";
+      return rawValue.substring(1, closingQuote);
+    }
+    int commentIndex = rawValue.indexOf('#');
+    String withoutComment = rawValue;
+    if (commentIndex >= 0)
+      withoutComment = rawValue.substring(0, commentIndex);
+    return withoutComment.strip();
+  }
+
+  private static void validateModelAndEffort(String runtimeId, String modelId, String effort)
+  {
+    requireThat(runtimeId, "runtimeId").isNotBlank();
+    switch (runtimeId)
+    {
+      case "claude" -> validateClaudeModelAndEffort(modelId, effort);
+      case "codex" -> validateCodexModelAndEffort(modelId, effort);
+      default -> throw new IllegalStateException("Unsupported CAT engine: " + runtimeId);
+    }
+  }
+
+  private static void validateClaudeModelAndEffort(String modelId, String effort)
   {
     requireThat(modelId, "modelId").isNotBlank();
     requireThat(effort, "effort").isNotBlank();
-    List<String> allowedEffort = List.of("minimal", "low", "medium", "high", "xhigh", "max");
+    if (!modelId.startsWith("claude-") && !ModelIdResolver.knownModels().contains(modelId))
+      throw new IllegalArgumentException("Invalid Claude model ID '" + modelId + "'.");
+    validateEffort(effort, CLAUDE_EFFORT_LEVELS);
+  }
+
+  private static void validateCodexModelAndEffort(String modelId, String effort)
+  {
+    requireThat(modelId, "modelId").isNotBlank();
+    requireThat(effort, "effort").isNotBlank();
+    if (modelId.startsWith("claude-") || ModelIdResolver.knownModels().contains(modelId))
+      throw new IllegalArgumentException("Invalid Codex model ID '" + modelId + "'.");
+    validateEffort(effort, CODEX_EFFORT_LEVELS);
+  }
+
+  private static void validateEffort(String effort, List<String> allowedEffort)
+  {
     if (!allowedEffort.contains(effort))
       throw new IllegalArgumentException("Invalid effort '" + effort + "'. Valid values: " + allowedEffort);
   }
@@ -2676,7 +2891,8 @@ public final class SprtRunner
   {
     return "SprtRunner: no command specified.\n" +
       "Usage: skill-test-runner <command> [args...]\n" +
-      "Commands: extract-units, extract-model, extract-effort, extract-test-dir, detect-changes, " +
+      "Commands: extract-units, extract-model, extract-effort, extract-config-source, " +
+      "extract-test-dir, detect-changes, " +
       "map-units, persist-artifacts, init-sprt, update-sprt, check-boundary, smoke-status, " +
       "merge-results, create-isolation-branch, create-runner-worktrees, check-run-contamination, " +
       "remove-runner-worktrees, write-test-results, save-failed-run, remove-runner-worktree, " +

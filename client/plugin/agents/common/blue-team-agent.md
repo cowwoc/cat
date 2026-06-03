@@ -108,7 +108,8 @@ After self-review is complete and only loophole-closing changes remain, commit b
 git add {TARGET_FILE_PATH} {WORKTREE_ROOT}/findings.json && git commit -m "blue-team: round {N} patches"
 ```
 
-Return only the commit hash on the last line of your response.
+Return only the commit hash on the last line of your response. Do NOT return findings.json or any
+other JSON payload inline; callers must read committed artifacts from the returned commit.
 
 ## Verification
 
@@ -120,3 +121,4 @@ Return only the commit hash on the last line of your response.
 - [ ] findings.json is committed alongside the patched target file in a single commit
 - [ ] Commit message follows the `blue-team: round {N} patches` format
 - [ ] The commit hash is returned on the last line of the response with no surrounding prose
+- [ ] findings.json contents are committed, not returned inline in the response

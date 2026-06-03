@@ -36,19 +36,21 @@ Callers should check curiosity before entering the loop:
 **The adversarial loop continues as long as the `loopholes` array in findings.json contains CRITICAL or HIGH
 severity entries. Once the `loopholes` array contains only LOW/MEDIUM entries (or is empty), the loop terminates.**
 
-This removes arbitrary round limits and enables convergence-based stopping. The red-team signals convergence
-via `has_critical_high: false` in its structured JSON return — the main agent never reads findings.json directly.
+This removes arbitrary round limits and enables convergence-based stopping. The orchestrator determines
+convergence from the red-team's committed findings.json using CAT's Java CLI helpers, which return only
+booleans or counts, never the full findings payload.
 
 **Important:** Only entries in the `loopholes` array count toward convergence. Entries in the `disputed` array
 (those with `"arbitration_verdict": "upheld"`) are excluded from the CRITICAL/HIGH count, as the arbitration
 agent has confirmed they are false premises, not actual loopholes.
 
-**Final-round MEDIUM/LOW cleanup:** When the red-team returns `has_critical_high: false` and the `loopholes`
-array still contains MEDIUM or LOW entries, resume the blue-team one final time to patch those remaining
-findings before exiting the loop. Diff-validation is still skipped for this cleanup pass. However, if the
-blue-team returns `has_new_disputes: true`, run the arbitration agent (same flow as Step 3 in the main loop)
-before exiting — disputes in the MEDIUM/LOW cleanup pass still require independent verification. After the
-blue-team commits the cleanup patches (and arbitration completes if needed), the loop terminates.
+**Final-round MEDIUM/LOW cleanup:** When the red-team commit's findings.json has no CRITICAL/HIGH
+`loopholes` entries but still has MEDIUM or LOW entries, resume the blue-team one final time to patch those
+remaining findings before exiting the loop. Diff-validation is still skipped for this cleanup pass. However,
+if the blue-team commit's findings.json contains new disputes that lack `"arbitration_verdict": "upheld"`, run
+the arbitration agent (same flow as Step 3 in the main loop) before exiting — disputes in the MEDIUM/LOW
+cleanup pass still require independent verification. After the blue-team commits the cleanup patches (and
+arbitration completes if needed), the loop terminates.
 
 ## findings.json Schema
 
@@ -155,9 +157,8 @@ Task tool:
     1
 
     ## Return Format
-    Return ONLY a JSON object on the last line:
-    {"commit": "<hash>", "has_critical_high": true|false}
-    Where has_critical_high is true if the loopholes array contains any CRITICAL or HIGH severity entries.
+    Return ONLY the commit hash on the last line. Do NOT return findings.json or any JSON object inline.
+    The commit must contain findings.json.
 ```
 
 **Round 2+ — Resume red-team:**
@@ -180,21 +181,21 @@ Task tool (resume):
     ## Round Number
     {N}
 
-    ## Prior Disputed Findings (do NOT re-raise these)
-    {JSON array from the "disputed" field of findings.json, or "[]" if none}
+    ## Prior Findings Commit
+    {PREVIOUS_FINDINGS_COMMIT}
 
     First, analyze the diff above to determine whether the blue-team's patches introduced new gaps or
     failed to fully close prior loopholes. Then, re-examine the FULL current instructions (not just the diff)
     for attack vectors not yet explored in previous rounds — the diff focus must not prevent discovery of
     loopholes present in unchanged sections.
-    Do NOT re-raise findings that appear in the Prior Disputed Findings list above — those have been
-    rejected with evidence and must not be re-submitted.
+    Read prior disputed findings from `git show {PREVIOUS_FINDINGS_COMMIT}:findings.json`. Do NOT re-raise
+    findings that appear in that prior `disputed` array — those have been rejected with evidence and must not
+    be re-submitted. Do not print the prior findings JSON inline.
     Write new findings to {WORKTREE_ROOT}/findings.json and commit as before.
 
     ## Return Format
-    Return ONLY a JSON object on the last line:
-    {"commit": "<hash>", "has_critical_high": true|false}
-    Where has_critical_high is true if the loopholes array contains any CRITICAL or HIGH severity entries.
+    Return ONLY the commit hash on the last line. Do NOT return findings.json or any JSON object inline.
+    The commit must contain findings.json.
 ```
 
 **Commit hash validation:** Before using `RED_TEAM_COMMIT_HASH`, verify it is a valid commit on the current
@@ -206,18 +207,31 @@ fails, abort with "ERROR: red-team returned invalid or detached commit hash {RED
 the agent returned a stale commit hash (no new work was committed). Log "ERROR: agent returned stale commit
 hash {COMMIT_HASH} (no commits since {PREV_COMMIT})" and abort.
 
-**Termination check:** Parse the JSON object from the last line of the red-team's response. Extract the
-`commit` field as `RED_TEAM_COMMIT_HASH` and the `has_critical_high` field. If `has_critical_high` is `false`:
-check for remaining MEDIUM/LOW findings (see "Final-round MEDIUM/LOW cleanup" in § Convergence Criterion).
-If MEDIUM/LOW findings remain, resume blue-team for one final cleanup pass; if the blue-team returns
-`has_new_disputes: true`, run arbitration (Step 3) before stopping; then **STOP THE LOOP**. If no findings
-remain, **STOP THE LOOP** immediately. If `has_critical_high` is `true`: proceed to Step 2 (blue-team
+**Termination check:** Treat the last line of the red-team's response as `RED_TEAM_COMMIT_HASH`. Do not expect
+or parse an inline JSON object. Compute control flags from the committed findings file with commands whose stdout
+is only the requested scalar value:
+
+```bash
+HAS_CRITICAL_HIGH=$(git show "${RED_TEAM_COMMIT_HASH}:findings.json" |
+  "${CAT_PLUGIN_ROOT}/client/bin/adversarial-state" has-critical-high)
+HAS_MEDIUM_LOW=$(git show "${RED_TEAM_COMMIT_HASH}:findings.json" |
+  "${CAT_PLUGIN_ROOT}/client/bin/adversarial-state" has-medium-low)
+```
+
+If `HAS_CRITICAL_HIGH` is `false`: check `HAS_MEDIUM_LOW` (see "Final-round MEDIUM/LOW cleanup" in
+§ Convergence Criterion).
+If MEDIUM/LOW findings remain, resume blue-team for one final cleanup pass; after blue-team returns a commit,
+recompute `HAS_NEW_DISPUTES` from that commit's findings.json and run arbitration (Step 3) before stopping if
+needed; then **STOP THE LOOP**. If no findings remain, **STOP THE LOOP** immediately. If
+`HAS_CRITICAL_HIGH` is `true`: proceed to Step 2 (blue-team
 patching).
 
 **Error handling:**
-- If the red-team's last line is not valid JSON or is missing `commit` or `has_critical_high` fields: log
-  "ERROR: red-team returned malformed JSON: {last line}" and abort the loop.
-- If `commit` is not a valid commit on the current branch (verify with
+- If the red-team's last line is not a valid commit hash: log
+  "ERROR: red-team returned malformed commit hash: {last line}" and abort the loop.
+- If `findings.json` is missing at `RED_TEAM_COMMIT_HASH` or the Java scalar checks fail: log
+  "ERROR: red-team commit missing valid findings.json: {RED_TEAM_COMMIT_HASH}" and abort.
+- If `RED_TEAM_COMMIT_HASH` is not a valid commit on the current branch (verify with
   `git merge-base --is-ancestor {RED_TEAM_COMMIT_HASH} HEAD`): log "ERROR: red-team returned invalid or
   detached commit hash {RED_TEAM_COMMIT_HASH}" and abort.
 
@@ -279,9 +293,8 @@ Task tool:
     revised skill file. Commit all modified files.
 
     ## Return Format
-    Return ONLY a JSON object on the last line:
-    {"commit": "<hash>", "has_new_disputes": true|false}
-    Where has_new_disputes is true if you moved any findings to the disputed array in this round.
+    Return ONLY the commit hash on the last line. Do NOT return findings.json or any JSON object inline.
+    The commit must contain findings.json and any target-file patches.
 ```
 
 **Round 2+ — Resume blue-team:**
@@ -307,11 +320,12 @@ Task tool (resume):
     ## Round Number
     {N}
 
-    ## Prior Rejected Disputes (do NOT re-dispute these)
-    {JSON array of disputes that arbitration rejected in prior rounds, including finding_id, reasoning}
+    ## Prior Arbitration Report Commits (do NOT re-dispute rejected findings from these reports)
+    {ARBITRATION_REPORT_COMMITS}
 
-    Do NOT re-dispute findings listed above — arbitration has already reviewed and rejected the evidence.
-    These findings must be patched, not disputed again.
+    Read prior arbitration reports from the commits listed above (files named `arbitration-*.json`).
+    Do NOT re-dispute findings listed in those reports as rejected — arbitration has already reviewed and
+    rejected the evidence. These findings must be patched, not disputed again. Do not print report JSON inline.
 
     Apply the dispute protocol before patching: for each finding in `loopholes`, verify its premise. If the
     premise is false, move the finding to `disputed` with `"false_premise"` and `"evidence"` fields. Only
@@ -322,17 +336,24 @@ Task tool (resume):
     verified before they are accepted. If arbitration rejects a dispute, you will be asked to patch it.
 
     ## Return Format
-    Return ONLY a JSON object on the last line:
-    {"commit": "<hash>", "has_new_disputes": true|false}
-    Where has_new_disputes is true if you moved any findings to the disputed array in this round.
+    Return ONLY the commit hash on the last line. Do NOT return findings.json or any JSON object inline.
+    The commit must contain findings.json and any target-file patches.
 ```
 
-**Blue-team return parsing:** Parse the JSON object from the last line of the blue-team's response. Extract
-the `commit` field as `BLUE_TEAM_COMMIT_HASH` and the `has_new_disputes` field.
+**Blue-team return parsing:** Treat the last line of the blue-team's response as `BLUE_TEAM_COMMIT_HASH`.
+Do not expect or parse an inline JSON object. Compute whether the blue-team created new disputes from committed
+findings.json:
+
+```bash
+HAS_NEW_DISPUTES=$(git show "${BLUE_TEAM_COMMIT_HASH}:findings.json" |
+  "${CAT_PLUGIN_ROOT}/client/bin/adversarial-state" has-new-disputes)
+```
 
 **Error handling:**
-- If the blue-team's last line is not valid JSON or is missing `commit` or `has_new_disputes` fields: log
-  "ERROR: blue-team returned malformed JSON (round {N}): {last line}" and abort.
+- If the blue-team's last line is not a valid commit hash: log
+  "ERROR: blue-team returned malformed commit hash (round {N}): {last line}" and abort.
+- If `findings.json` is missing at `BLUE_TEAM_COMMIT_HASH` or the Java scalar check fails: log
+  "ERROR: blue-team commit missing valid findings.json: {BLUE_TEAM_COMMIT_HASH}" and abort.
 - Apply the same commit hash validation as for red-team (verify it is a valid commit on the current branch).
 
 **Freshness check:** Additionally verify the commit advanced by running
@@ -342,12 +363,12 @@ hash {COMMIT_HASH} (no commits since {PREV_COMMIT})" and abort.
 
 ### Step 3: Arbitration Phase (Dispute Verification)
 
-**When to run:** If the blue-team's `has_new_disputes` field is `true`, spawn a fresh arbitration agent to
-independently verify each dispute before it is accepted.
+**When to run:** If `HAS_NEW_DISPUTES` computed from the blue-team commit is `true`, spawn a fresh arbitration
+agent to independently verify each dispute before it is accepted.
 
-**Detection:** Check the `has_new_disputes` field from the blue-team's JSON return. If `has_new_disputes` is
-`false`: skip arbitration and proceed to Step 4 (diff validation). If `has_new_disputes` is `true`: spawn
-the arbitration agent below.
+**Detection:** Check `HAS_NEW_DISPUTES` from the Java scalar query above. If `HAS_NEW_DISPUTES` is `false`:
+skip arbitration and proceed to Step 4 (diff validation). If `HAS_NEW_DISPUTES` is `true`: spawn the
+arbitration agent below.
 
 **Arbitration agent prompt:**
 
@@ -368,7 +389,7 @@ Task tool:
 
     ## Instructions
     1. Read findings.json from the blue-team commit:
-       `git show {BLUE_TEAM_COMMIT_HASH}:{WORKTREE_ROOT}/findings.json`
+       `git show {BLUE_TEAM_COMMIT_HASH}:findings.json`
     2. Collect all entries in the `disputed` array that do NOT have `"arbitration_verdict": "upheld"`.
        These are the new disputes to review.
     3. For each disputed finding:
@@ -385,61 +406,73 @@ Task tool:
        - For upheld disputes: add `"arbitration_verdict": "upheld"` to the entry (it stays in `disputed`).
        - For rejected disputes: move the entry back from `disputed` to `loopholes` (removing
          `"false_premise"` and `"evidence"` fields). This finding must be patched by blue-team.
-    5. Write the updated findings.json and commit with message:
+    5. Write an arbitration report to `{WORKTREE_ROOT}/arbitration-{N}.json`:
+       {
+         "round": {N},
+         "blue_team_commit": "{BLUE_TEAM_COMMIT_HASH}",
+         "upheld": [{"name": "...", "reasoning": "..."}],
+         "rejected": [{"name": "...", "reasoning": "..."}],
+         "rejected_count": <number of rejected disputes>
+       }
+    6. Write the updated findings.json and commit both files with message:
        `arbitration: process {N} dispute(s) (round {R})`
 
     ## Return Format
-    Return ONLY a JSON object on the last line:
-    {"commit": "<hash>", "rejected_count": N, "rejected_findings": [...]}
-    Where rejected_count is the number of disputes rejected (moved back to loopholes), and
-    rejected_findings is the array of rejected finding objects (for passing context to blue-team).
-    If all disputes were upheld, return rejected_count: 0 and rejected_findings: [].
+    Return ONLY the commit hash on the last line. Do NOT return findings.json, arbitration-{N}.json,
+    or any JSON object inline.
 ```
 
 ## Arbitration Agent Scope Constraint
 
-The arbitration agent must ONLY modify `findings.json`. It must NOT modify the target file being hardened or any other
-worktree file.
+The arbitration agent must ONLY modify `findings.json` and `arbitration-{N}.json`. It must NOT modify the target
+file being hardened or any other worktree file.
 
 The arbitration prompt must include:
 
-'You may ONLY modify findings.json. Do NOT modify {TARGET_FILE_PATH} or any other file in the worktree. Do NOT use
-the Write or Edit tools on any file other than findings.json. Do NOT use Bash to run commands that modify worktree
-state (git checkout, git reset, rm, mv, sed -i, etc.). You may use Read and Bash (read-only commands like git show,
-cat, grep) solely to gather data and verify claims in disputed findings.'
+'You may ONLY modify findings.json and arbitration-{N}.json. Do NOT modify {TARGET_FILE_PATH} or any other file in
+the worktree. Do NOT use the Write or Edit tools on any file other than findings.json and arbitration-{N}.json. Do
+NOT use Bash to run commands that modify unrelated worktree state (git checkout, git reset, rm, mv, sed -i on other
+files, etc.). You may use Read and Bash (read-only commands like git show, cat, grep) solely to gather data and verify
+claims in disputed findings.'
 
 **Verdict processing:**
 
-1. Parse the JSON object from the last line of the arbitration agent's response. Extract `commit` as
-   `ARBITRATION_COMMIT_HASH`, `rejected_count`, and `rejected_findings`.
+1. Treat the last line of the arbitration agent's response as `ARBITRATION_COMMIT_HASH`. Do not expect or
+   parse an inline JSON object. Read only scalar control values from the committed arbitration report:
 
-2. If `rejected_count` is 0 (all disputes upheld): proceed directly to Step 4 (diff validation) using
+   ```bash
+   REJECTED_COUNT=$(git show "${ARBITRATION_COMMIT_HASH}:arbitration-{N}.json" |
+     "${CAT_PLUGIN_ROOT}/client/bin/adversarial-state" rejected-count)
+   ```
+
+2. If `REJECTED_COUNT` is 0 (all disputes upheld): proceed directly to Step 4 (diff validation) using
    `ARBITRATION_COMMIT_HASH` as the effective commit (findings.json is already updated by the arbitration
    agent).
 
-3. If `rejected_count` > 0: **resume the blue-team agent** to patch the rejected findings:
+3. If `REJECTED_COUNT` > 0: **resume the blue-team agent** to patch the rejected findings:
 
 ```
 Task tool (resume):
   task_id: {BLUE_TEAM_TASK_ID}
   prompt: |
-    Round {N} arbitration rejected the following disputes — the findings were moved back to loopholes:
-    {rejected_findings array from arbitration JSON return}
+    Round {N} arbitration rejected one or more disputes — the findings were moved back to loopholes.
 
-    Read the current findings.json at {ARBITRATION_COMMIT_HASH}, patch each finding now in `loopholes`,
-    and write the revised skill file. Commit all modified files.
+    Read the current findings.json at {ARBITRATION_COMMIT_HASH}:findings.json and the arbitration report at
+    {ARBITRATION_COMMIT_HASH}:arbitration-{N}.json. Patch each rejected finding listed in that report that is
+    now in `loopholes`, and write the revised skill file. Commit all modified files. Do not print either JSON
+    file inline.
 
     ## Return Format
-    Return ONLY a JSON object on the last line:
-    {"commit": "<hash>", "has_new_disputes": true|false}
-    Where has_new_disputes is true if you moved any findings to the disputed array in this round.
+    Return ONLY the commit hash on the last line. Do NOT return findings.json or any JSON object inline.
 ```
 
-4. After blue-team re-patches, parse the JSON return and update `BLUE_TEAM_COMMIT_HASH` to the new commit.
-   All upheld disputes remain in the `disputed` array with `"arbitration_verdict": "upheld"`.
+4. After blue-team re-patches, treat the last line as the new `BLUE_TEAM_COMMIT_HASH` and recompute
+   `HAS_NEW_DISPUTES` from the committed findings.json. All upheld disputes remain in the `disputed` array
+   with `"arbitration_verdict": "upheld"`.
 
-5. Accumulate rejected disputes across rounds in a list `REJECTED_DISPUTES` (from `rejected_findings` +
-   arbitration reasoning). Pass this list to the blue-team round 2+ prompt as "Prior Rejected Disputes".
+5. Accumulate arbitration report commits across rounds in `ARBITRATION_REPORT_COMMITS`. Pass those commit
+   references to the blue-team round 2+ prompt as "Prior Arbitration Report Commits" instead of embedding
+   rejected findings inline.
 
 ### Step 4: Diff Validation
 
@@ -515,15 +548,16 @@ in your report.'
 **Failure handling:** The diff-validation agent returns a commit hash on its last line and exits non-zero when
 any non-disputed CRITICAL or HIGH finding has no matching patch hunk. If the agent exits non-zero:
 
-1. Read the `diff-validation-{N}.json` report from the returned commit hash to identify which findings had no
-   matching hunk (those with `"outcome": "fail"`).
+1. Pass the returned report commit/path to the blue-team. Do not paste the `diff-validation-{N}.json` report
+   inline.
 2. Run `git revert {BLUE_TEAM_COMMIT_HASH} --no-edit` to undo the commit. If the revert encounters merge
    conflicts, abort with `git revert --abort` and fall back to `git reset --hard {PRE_ROUND_COMMIT}` to restore
    the pre-round state.
-3. Resume the blue-team agent with: "Your round {N} patch was reverted. The following findings had no
-   corresponding patch hunk: {FAIL findings from diff-validation report}. Rewrite the patch touching only
-   the lines required to close each finding. Do not modify any other content. Commit all modified files.
-   Return ONLY a JSON object on the last line: {\"commit\": \"<hash>\", \"has_new_disputes\": true|false}"
+3. Resume the blue-team agent with: "Your round {N} patch was reverted. Read
+   `diff-validation-{N}.json` from {DIFF_VALIDATION_COMMIT_HASH} and patch every finding whose outcome is
+   `FAIL`. Rewrite the patch touching only the lines required to close each failed finding. Do not modify
+   any other content. Commit all modified files. Return ONLY the commit hash on the last line; do not return
+   findings.json, diff-validation-{N}.json, or any JSON object inline."
 4. Re-run diff validation (resume `DIFF_VALIDATION_TASK_ID`) with the new blue-team commit. If validation
    still fails, log "ERROR: blue-team introduced insufficient patches in round {N} after retry — aborting loop"
    and stop. Do not retry more than once per round.

@@ -64,7 +64,8 @@ If `overall_decision` is REJECT, the Investigation Procedure section provides st
 - `worktree_path` points to a clean git worktree on the issue branch
 - `test_dir` is a path (absolute or relative to `worktree_path`) containing one or more `*.md` test case files
 - `worktree_path` MUST NOT be `/workspace`; it must be the issue worktree root for the issue under test
-- `test_model` is the model identifier to use for all trial runs (must match the skill under test)
+- `test_model` is the model identifier to use for all trial runs. When no instruction frontmatter overrides it,
+  use the active engine's default test runner model (`gpt-5.4-mini` for Codex).
 - `${CAT_PLUGIN_ROOT}/client/bin/sprt-runner` binary is available
 - `${CAT_PLUGIN_ROOT}/client/bin/extract-turns` binary is available (splits multi-turn scenarios into individual turn files)
 
@@ -143,7 +144,7 @@ Parameter types:
 - `worktree_path`: path to git worktree under test
 - `test_dir`: directory containing `*.md` test cases
 - `test_model`: model alias/id (e.g., `haiku`, `sonnet`, `opus`)
-- `effort`: required effort level (`low|medium|high|xhigh|max`)
+- `effort`: required test-runner effort level (`low|medium|high|xhigh|max`)
 - `session_id`: current CAT session ID
 
 **Error contract for `run-sprt`:**

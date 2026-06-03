@@ -132,7 +132,8 @@ After writing findings.json, commit it:
 git add {WORKTREE_ROOT}/findings.json && git commit -m "red-team: round {N} findings"
 ```
 
-Return only the commit hash on the last line of your response.
+Return only the commit hash on the last line of your response. Do NOT return findings.json or any
+other JSON payload inline; callers must read committed artifacts from the returned commit.
 
 ## Target Content
 
@@ -148,3 +149,4 @@ Return only the commit hash on the last line of your response.
 - [ ] `target_type` in findings.json matches the value passed by the invoking agent
 - [ ] Findings already in `disputed` array are not re-raised in `loopholes`
 - [ ] The commit hash is returned on the last line of the response with no surrounding prose
+- [ ] findings.json contents are committed, not returned inline in the response

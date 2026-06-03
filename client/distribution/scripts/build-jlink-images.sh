@@ -66,6 +66,7 @@ declare -a COMMON_HANDLERS=(
   "session-analyzer:io.github.cowwoc.cat.tool.util.SessionAnalyzer"
   "extract-investigation-context:io.github.cowwoc.cat.tool.util.InvestigationContextExtractor"
   "grade-json-transformer:io.github.cowwoc.cat.tool.util.GradeJsonTransformer"
+  "adversarial-state:io.github.cowwoc.cat.tool.skills.AdversarialState"
   "progress-banner:io.github.cowwoc.cat.tool.skills.ProgressBanner"
   "get-stakeholder-selection-box:io.github.cowwoc.cat.tool.skills.GetStakeholderSelectionBox"
   "get-stakeholder-review-box:io.github.cowwoc.cat.tool.skills.GetStakeholderReviewBox"

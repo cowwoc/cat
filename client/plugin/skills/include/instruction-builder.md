@@ -390,8 +390,8 @@ environment. Formal `sprt-runner` and SPRT validation must use the supported for
 formal validation is unavailable, report that limitation instead of presenting non-native results as evidence.
 Example ad-hoc invocation: `skill: "cat:spawn-engine"` with one prompt and no SPRT decision claims.
 
-Compute `TEST_DIR` and `TEST_MODEL` now — these values are required for all subsequent steps, including the
-sanity check below.
+Compute `TEST_DIR`, `TEST_MODEL`, `TEST_EFFORT`, and `TEST_CONFIG_SOURCE` now — these values are required for all
+subsequent steps, including the sanity check below.
 
 **TEST_DIR computation:**
 ```bash
@@ -405,30 +405,79 @@ For non-plugin paths:
   (example: `.cat/rules/common/backwards-compatibility.md` → `{CAT_PROJECT_DIR}/.cat/tests/rules/common/backwards-compatibility/`)
 Pass this resolved path as a literal string to all agents — do NOT pass variable references.
 
-**TEST_MODEL computation:** Read the target instruction file's `model:` frontmatter field:
+**TEST_MODEL computation:** Resolve the test-runner model through the active engine:
 ```bash
 TEST_MODEL=$("${CAT_PLUGIN_ROOT}/client/bin/sprt-runner" extract-model \
   "<absolute-path-to-INSTRUCTION_TEXT_PATH>")
 ```
-`extract-model` uses the active engine-specific `sprt-runner` entrypoint and that engine's default
-when the field is absent.
+`extract-model` uses the active engine-specific `sprt-runner` entrypoint. Codex skill files do not support
+model frontmatter. For Codex, if the instruction path has one or more matching owner agents, `extract-model` returns
+the model component from the weakest owner model/effort pair. If no owner is found, it returns the default
+test-runner model, `gpt-5.4-mini`. Claude reads the target instruction file's `model:` frontmatter field and falls
+back to the runtime-resolved Claude default when the field is absent.
 
-**CAT plugin skill model convention:** Skills and agents in this plugin declare their configured model
-explicitly in frontmatter via `model:`. The `extract-model` binary reads this field directly and returns
-its runtime-resolved model ID. Missing `model:` falls back to the runtime's default model, but repository
-skills should declare `model:` explicitly.
-Store the result as `TEST_MODEL` and pass it as a resolved literal string to all test-run and grader
-agents. **CRITICAL: Do NOT hardcode `haiku` or any other model name** — always use the value from
+**TEST_EFFORT computation:** Resolve the test-runner effort through the active engine:
+```bash
+TEST_EFFORT=$("${CAT_PLUGIN_ROOT}/client/bin/sprt-runner" extract-effort \
+  "<absolute-path-to-INSTRUCTION_TEXT_PATH>")
+```
+Codex skill files do not support effort frontmatter. For Codex, if the instruction path has one or more matching
+owner agents, `extract-effort` returns the effort component from the weakest owner model/effort pair. If no owner is
+found, it returns the fixed default test-runner effort, `low`. Claude reads the target instruction file's `effort:`
+frontmatter field and falls back to `low` when the field is absent.
+
+**TEST_CONFIG_SOURCE computation:** Resolve where the test-runner config came from:
+```bash
+TEST_CONFIG_SOURCE=$("${CAT_PLUGIN_ROOT}/client/bin/sprt-runner" extract-config-source \
+  "<absolute-path-to-INSTRUCTION_TEXT_PATH>")
+```
+For Codex, this returns `owner` when a matching invoking owner determined the runner config and `default` when no
+owner was found. For Claude, it returns `frontmatter` when the file explicitly set `model:` or `effort:` and
+`default` when both fields were absent.
+
+**Codex owner resolution:** A file has matching Codex owners only through deterministic signals:
+- The target is an agent descriptor/body with a matching `client/plugin/agents/codex/<agent>.toml`
+- The target is a rule whose frontmatter has `subAgents: ["cat:<agent>", ...]`; every listed Codex agent is an owner
+- The target is a rule with no `subAgents` frontmatter; every Codex agent is an owner because the rule reaches all subagents
+- The target is a rule with `subAgents: []`; no Codex subagent owner exists, so this falls back to the default
+- The target is a skill that one or more `client/plugin/agents/common/*.md` bodies reference as `cat:<skill>`
+
+Weakest owner selection compares complete owner model/effort pairs and never combines a model from one owner with
+an effort from another. Model rank dominates effort rank. CAT's Codex model rank from weakest to strongest is
+`gpt-5.4-mini`, `gpt-5.3-codex-spark`, `gpt-5.3-codex`, `gpt-5.4`, `gpt-5.5`; effort rank is
+`low`, `medium`, `high`, `xhigh`. If a matching owner uses a model or effort not in these rank lists, the CLI must
+fail fast so CAT can define the missing rank explicitly.
+
+If no owner is found, do not infer one from prose. The CLI reports `TEST_CONFIG_SOURCE=default`.
+
+**Formal Codex SPRT gate:** Instruction-builder must not run formal Codex SPRT with ownerless default test-runner
+configuration. After computing the values above, fail fast when:
+```bash
+if [[ "${CAT_ENGINE}" == "codex" && "${TEST_CONFIG_SOURCE}" == "default" ]]; then
+  echo "ERROR: Codex SPRT test-runner config fell back to the ownerless default (${TEST_MODEL}/${TEST_EFFORT})." >&2
+  echo "Define an owning Codex agent/rule for the instruction under test or pass an explicit override before running formal SPRT." >&2
+  exit 1
+fi
+```
+Ad-hoc experiments may still use explicit model/effort overrides, but formal instruction-builder SPRT must not
+silently downgrade to the weakest default.
+
+**CAT plugin skill model convention:** Claude skills and agents in this plugin declare their configured model
+explicitly in frontmatter via `model:`. Codex skills do not carry model/effort frontmatter; Codex agent TOML owns
+agent model/effort, and `sprt-runner` owns the fallback test-runner defaults.
+Store the results as `TEST_MODEL`, `TEST_EFFORT`, and `TEST_CONFIG_SOURCE`. Pass `TEST_MODEL` and `TEST_EFFORT` as
+resolved literal strings to all test-run agents. **CRITICAL: Do NOT hardcode `haiku` or any other model name** — always use the value from
 `extract-model`. Hardcoding a model bypasses per-skill model configuration and may test against the
 wrong model, invalidating all SPRT results. **Do NOT override TEST_MODEL for any reason, including
 debugging a failing test case.** If a trial fails, investigate the test content, prompt, and assertions
 — never switch the model. Switching models mid-SPRT produces observations from a different distribution,
 violating statistical assumptions; any such trial must be discarded and re-run with the correct model.
+Do not override `TEST_EFFORT`; switching effort mid-SPRT has the same statistical-distribution problem.
 
 **Artifact location:** `TEST_DIR` is the stable directory under `client/plugin/tests/` corresponding to the instruction
-file. Each test-run agent receives `TEST_DIR`, `CAT_SESSION_ID`, and `TEST_MODEL` as pre-resolved literal
-strings, so no agent ever expands these variables independently. Agents must not derive their own
-session ID — they must use the value passed by the main agent.
+file. Each test-run agent receives `TEST_DIR`, `CAT_SESSION_ID`, `TEST_MODEL`, and `TEST_EFFORT` as pre-resolved
+literal strings, so no agent ever expands these variables independently. Agents must not derive their own session ID
+— they must use the value passed by the main agent.
 
 **Concurrent session safety:** Each test-run agent spawns with `isolation: "worktree"`, giving it an
 isolated copy of the repository. Each agent writes results to its own worktree's `test-results.json`, then
@@ -1793,8 +1842,11 @@ Overall verification passes if all non-skipped items are checked and all skipped
 - [ ] SPRT decisions made pipelined (after each test-run completion), not batched per job; log_ratio updated
   immediately after each run grading before dispatching the next run
 - [ ] Each test run uses a fresh non-resumed `TEST_MODEL` agent (no `resume` or `conversation_id` fields)
-- [ ] `TEST_MODEL` read from skill frontmatter via `extract-model`; never hardcoded
-- [ ] Each assertion graded by a separate `TEST_MODEL` grader agent (no inline grading)
+- [ ] `TEST_MODEL` resolved via `extract-model`; never hardcoded
+- [ ] `TEST_EFFORT` resolved via `extract-effort`
+- [ ] `TEST_CONFIG_SOURCE` resolved via `extract-config-source`
+- [ ] Formal Codex SPRT stops instead of silently using the ownerless default config
+- [ ] Each assertion graded by a separate fixed instruction-grader agent (no inline grading)
 - [ ] Run outputs written to temp files only; `test-results.json` committed once after SPRT completes with Accept or Reject
 - [ ] SPRT jobs continued until Accept boundary (log_ratio ≥ 2.944) formally crossed — Inconclusive is never a final state
 - [ ] Test results show meaningful signal: SPRT log_ratios demonstrate non-trivial discrimination (not all cases
@@ -1802,7 +1854,7 @@ Overall verification passes if all non-skipped items are checked and all skipped
 - [ ] Result Inspection Checklist (4 checks) performed before updating SPRT log_ratio
 - [ ] Re-test after hardening uses identical SPRT parameters (p0, p1, α, β) and same test case set (`TEST_SET_SHA`)
 - [ ] Token usage summary displayed after SPRT; `test-results.json` includes per-case and aggregate totals
-- [ ] `TEST_DIR`, `CAT_SESSION_ID`, `TEST_MODEL` passed as resolved literal strings to all agents
+- [ ] `TEST_DIR`, `CAT_SESSION_ID`, `TEST_MODEL`, and `TEST_EFFORT` passed as resolved literal strings to all agents
 
 ### Failure investigation
 

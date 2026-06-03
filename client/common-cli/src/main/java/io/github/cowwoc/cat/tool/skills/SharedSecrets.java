@@ -6,10 +6,12 @@
  */
 package io.github.cowwoc.cat.tool.skills;
 
+import io.github.cowwoc.cat.tool.CliTool;
 import io.github.cowwoc.cat.tool.util.IssueDiscovery;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.nio.file.Path;
@@ -31,6 +33,29 @@ public final class SharedSecrets
   private static final Lookup LOOKUP = MethodHandles.lookup();
   private static SprtRunnerAccess sprtRunnerAccess;
   private static StatuslineCommandAccess statuslineCommandAccess;
+
+  /**
+   * A model and reasoning effort pair.
+   *
+   * @param modelId the model ID
+   * @param effort  the reasoning effort
+   */
+  public record ModelEffort(String modelId, String effort)
+  {
+    /**
+     * Creates a new pair.
+     *
+     * @param modelId the model ID
+     * @param effort  the reasoning effort
+     * @throws NullPointerException     if any argument is null
+     * @throws IllegalArgumentException if any argument is blank
+     */
+    public ModelEffort
+    {
+      requireThat(modelId, "modelId").isNotBlank();
+      requireThat(effort, "effort").isNotBlank();
+    }
+  }
 
   private SharedSecrets()
   {
@@ -183,6 +208,52 @@ public final class SharedSecrets
     if (sprtRunnerAccess == null)
       initialize(SprtRunner.class);
     return sprtRunnerAccess.engineIdForDescriptor(descriptor);
+  }
+
+  /**
+   * Resolves the fixed instruction-grader model and effort for tests.
+   *
+   * @param pluginRoot        the CAT plugin root
+   * @param descriptor        the plugin descriptor path
+   * @param claudeCodeVersion the Claude Code version for Claude short-name resolution
+   * @return the model and effort
+   * @throws IOException if the grader descriptor cannot be read
+   */
+  public static ModelEffort resolveGraderModelEffort(Path pluginRoot, Path descriptor,
+    String claudeCodeVersion) throws IOException
+  {
+    requireThat(pluginRoot, "pluginRoot").isNotNull();
+    requireThat(descriptor, "descriptor").isNotNull();
+    requireThat(claudeCodeVersion, "claudeCodeVersion").isNotBlank();
+    if (sprtRunnerAccess == null)
+      initialize(SprtRunner.class);
+    return sprtRunnerAccess.resolveGraderModelEffort(pluginRoot, descriptor,
+      claudeCodeVersion);
+  }
+
+  /**
+   * Runs the grader path for tests.
+   *
+   * @param scope             the active CLI scope
+   * @param claudeCodeVersion the Claude Code version for Claude short-name resolution
+   * @param graderPromptFile  the grader prompt file
+   * @param modelId           the caller-supplied model ID
+   * @param effort            the caller-supplied effort
+   * @param runnerWorktree    the runner worktree
+   * @param gradeOutputPath   the grade output path
+   * @param out               receives runner output
+   * @return the nested runner exit code
+   * @throws IOException if the grader command cannot be run
+   */
+  public static int runGrader(CliTool scope, String claudeCodeVersion,
+    Path graderPromptFile, String modelId, String effort, String runnerWorktree,
+    String gradeOutputPath, PrintStream out) throws IOException
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(claudeCodeVersion, "claudeCodeVersion").isNotBlank();
+    SprtRunner runner = new SprtRunner(scope, claudeCodeVersion);
+    return runner.runGrader(graderPromptFile, modelId, effort, runnerWorktree,
+      gradeOutputPath, out);
   }
 
   /**
@@ -369,6 +440,18 @@ public final class SharedSecrets
      * @return the engine identifier
      */
     String engineIdForDescriptor(Path descriptor);
+
+    /**
+     * Resolves the fixed instruction-grader model and effort.
+     *
+     * @param pluginRoot        the CAT plugin root
+     * @param descriptor        the plugin descriptor path
+     * @param claudeCodeVersion the Claude Code version for Claude short-name resolution
+     * @return the model and effort
+     * @throws IOException if the grader descriptor cannot be read
+     */
+    ModelEffort resolveGraderModelEffort(Path pluginRoot, Path descriptor,
+      String claudeCodeVersion) throws IOException;
 
     /**
      * Builds engine-dispatched trial arguments.

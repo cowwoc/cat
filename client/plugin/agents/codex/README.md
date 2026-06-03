@@ -18,6 +18,11 @@ roles; use `gpt-5.4-mini` for mechanical git/file operations and non-code stakeh
 only for deterministic wrappers, `medium` for checklist or semantic review, and `high` only where the agent gates
 correctness or must synthesize complex instructions.
 
+When CAT must choose the weakest test-runner configuration across multiple matching Codex agent owners, compare
+complete owner model/effort pairs. Model rank dominates effort rank. The model rank from weakest to strongest is
+`gpt-5.4-mini`, `gpt-5.3-codex-spark`, `gpt-5.3-codex`, `gpt-5.4`, `gpt-5.5`; effort rank is `low`, `medium`,
+`high`, `xhigh`. Unknown models or efforts must be ranked explicitly before they are used by CAT-owned agents.
+
 CAT agent names are prefixed with `cat-` to avoid colliding with project-specific agents. The migration copies these
 files into project `.codex/agents/` as `cat-*.toml` and replaces older CAT-generated files when the migration runs. The
 Codex `SessionStart` hook re-runs the current-version migration once per installed plugin cache when the cache-local

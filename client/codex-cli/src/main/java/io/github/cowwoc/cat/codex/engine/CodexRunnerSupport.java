@@ -153,7 +153,7 @@ public final class CodexRunnerSupport
         Options:
           --prompt-file <path>  Path to a file containing the prompt to send (required)
           --model <name>        Codex model ID or alias accepted by codex exec (required)
-          --effort <level>      Effort: minimal|low|medium|high|xhigh (required)
+          --effort <level>      Effort: low|medium|high|xhigh (required)
           --cwd <path>          Working directory (omitted: current CAT project path)
           --output <path>       Write parsed JSON results to file (omitted: stdout text only)
           --jsonl-output <path> Write raw Codex JSONL events to file (omitted: not persisted)""");
