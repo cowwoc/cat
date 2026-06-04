@@ -91,6 +91,40 @@ if (discoveryResult instanceof IssueDiscovery.DiscoveryResult.ExistingWorktree e
 
 Java allows importing nested classes at any nesting depth, and using direct imports keeps code readable while maintaining clarity about the type origin.
 
+### Time Values
+Prefer `Duration` over `long` when a value represents elapsed time, a timeout, a retry delay, or any other
+meaningful time quantity. Convert to primitive units only at API boundaries that require them, and remove unit
+suffixes from variable names once the value is typed as a `Duration`:
+
+```java
+// Good - time stays typed until the API boundary
+Duration timeout = Duration.ofSeconds(30);
+Duration waitPoll = Duration.ofMillis(50);
+process.waitFor(timeout.toMillis(), TimeUnit.MILLISECONDS);
+
+// Avoid - raw long hides units in normal control flow
+long timeoutMillis = 30_000;
+process.waitFor(timeoutMillis, TimeUnit.MILLISECONDS);
+```
+
+Use primitive `long` time values only when the API contract is inherently unit-specific or performance-critical.
+When you must drop to primitive units, keep the unit explicit in the variable name (for example, `timeoutMillis`
+or `deadlineNanos`).
+
+Prefer `Instant` over `long` when a value represents an absolute wall-clock timestamp:
+
+```java
+// Good - wall-clock time stays typed
+Instant startedAt = Instant.now();
+
+// Avoid - raw epoch millis hides semantics in normal control flow
+long startedAtMillis = System.currentTimeMillis();
+```
+
+Do not use `Instant` for monotonic elapsed-time math based on `System.nanoTime()`. Monotonic deadlines and stopwatch
+values are not wall-clock timestamps, so unit-explicit `long` values such as `startTimeNanos` or `deadlineNanos`
+remain acceptable there.
+
 ### Naming
 
 Avoid abbreviations in variable names. Use full, descriptive names:

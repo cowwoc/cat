@@ -29,6 +29,18 @@ public Config(String name, int timeout)
 }
 ```
 
+For `Comparable` domain types, prefer fluent comparison validators over manual conditionals. For example,
+treat `Duration` as a `Comparable` and compare it against `Duration.ZERO`:
+
+```java
+public Runner(Duration timeout)
+{
+  requireThat(timeout, "timeout").isNotNull();
+  requireThat(timeout, "timeout").isGreaterThan(Duration.ZERO);
+  this.timeout = timeout;
+}
+```
+
 ## Method Preconditions
 
 Validate public method parameters:
@@ -180,7 +192,7 @@ if (!failures.isEmpty())
 | `isEmpty()` / `isNotEmpty()` | Collection/string emptiness |
 | `isBlank()` / `isNotBlank()` | String whitespace checks |
 | `isPositive()` / `isNotNegative()` | Number sign checks |
-| `isGreaterThan(v)` / `isLessThan(v)` | Comparisons |
+| `isGreaterThan(v)` / `isLessThan(v)` | Comparisons, including `Comparable` values like `Duration` |
 | `isEqualTo(v)` / `isNotEqualTo(v)` | Equality |
 | `contains(v)` / `doesNotContain(v)` | Collection membership |
 | `matches(regex)` | String pattern matching |
