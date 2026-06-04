@@ -107,6 +107,7 @@ public final class MainCodexTool extends AbstractEngineScope
   private static Map<String, String> getCommandEnvironmentFromEnvironment()
   {
     return Map.of("CODEX_TOOL", System.getenv().getOrDefault("CODEX_TOOL", ""),
-      "CODEX_CI", System.getenv().getOrDefault("CODEX_CI", ""));
+      "CODEX_CI", System.getenv().getOrDefault("CODEX_CI", ""),
+      "CODEX_APPROVAL_POLICY", System.getenv().getOrDefault("CODEX_APPROVAL_POLICY", ""));
   }
 }
