@@ -31,7 +31,8 @@ all fixes have been applied.
 ### Javadoc
 
 Private methods must have Javadoc. Private visibility is not an exemption from documenting purpose, parameters,
-return values, and thrown exceptions.
+return values, and thrown exceptions. This includes small helper methods and one-call-site private methods; do not
+omit Javadoc just because a method seems locally obvious.
 
 ### Braces
 Use Allman style (opening brace on its own line):
@@ -840,6 +841,8 @@ import io.github.cowwoc.cat.engine.hook.skills.DisplayUtils;
 ### Javadoc Requirements
 - **All classes and records must have Javadoc** (public and non-public)
 - **All methods must have Javadoc** (including interface methods and private methods)
+- **Private helper methods must still have Javadoc**; inline comments are not a substitute for method-level contract
+  documentation
 - **`@Override` methods do not need Javadoc** unless the override changes the contract or adds important implementation
   details beyond what the parent documents
 - **All constructors must have Javadoc** (including record compact constructors)
