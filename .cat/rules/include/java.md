@@ -182,6 +182,40 @@ if (value == null)
 }
 ```
 
+### Method Chaining
+Prefer method chaining when calls naturally compose and intermediate variables are unnecessary:
+
+```java
+// Good - fluent construction without an unnecessary builder variable
+Process process = new ProcessBuilder("git", "status", "--porcelain").
+  directory(directory.toFile()).
+  redirectErrorStream(true).
+  start();
+
+// Avoid - intermediate variable used only for setup chaining
+ProcessBuilder processBuilder = new ProcessBuilder("git", "status", "--porcelain");
+processBuilder.directory(directory.toFile());
+processBuilder.redirectErrorStream(true);
+Process process = processBuilder.start();
+```
+
+This convention is not specific to `ProcessBuilder`; apply it broadly when chaining improves clarity
+without harming readability. Keep intermediate variables when later conditional mutation is required
+(for example, optional environment or working-directory setup).
+
+### Emptiness Checks
+Prefer `!charSequence.isEmpty()` to `charSequence.length() > 0` for `CharSequence` emptiness checks:
+
+```java
+// Good
+if (!branch.isEmpty())
+  process(branch);
+
+// Avoid
+if (branch.length() > 0)
+  process(branch);
+```
+
 ### Increment/Decrement Operators
 Prefer prefix increment/decrement (`++i`, `--i`) over compound assignment.
 When incrementing/decrementing by one, write `++i` / `--i` (or `i++` / `i--` when needed by expression semantics),
