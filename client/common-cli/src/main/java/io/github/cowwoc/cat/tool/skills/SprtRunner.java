@@ -8,47 +8,32 @@ package io.github.cowwoc.cat.tool.skills;
 
 import io.github.cowwoc.cat.agent.FrontmatterUtils;
 import io.github.cowwoc.cat.agent.ProcessRunner;
-import io.github.cowwoc.cat.agent.VersionUtils;
 import io.github.cowwoc.cat.tool.CliTool;
-import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.SerializationFeature;
-import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.node.ArrayNode;
-import tools.jackson.databind.node.ObjectNode;
 import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.Set;
-import java.util.StringJoiner;
-import java.util.stream.Stream;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -78,17 +63,14 @@ public final class SprtRunner
    * Maximum number of batches during which early-failure-detection is active.
    */
   private static final int EARLY_FAIL_WINDOW = 5;
-  /**
-   * ISO-8601 UTC timestamp formatter.
-   */
-  private static final DateTimeFormatter ISO_UTC =
-    DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC);
+  private static final Duration DEFAULT_PROCESS_TIMEOUT = Duration.ofMinutes(10);
   private static final String GRADER_AGENT = "instruction-grader-agent";
   private static final YAMLMapper YAML_MAPPER = YAMLMapper.builder().build();
   private static final List<String> CLAUDE_EFFORT_LEVELS =
     List.of("low", "medium", "high", "xhigh", "max");
   private static final List<String> CODEX_EFFORT_LEVELS =
     List.of("low", "medium", "high", "xhigh");
+  private static final Duration WAIT_POLL = Duration.ofMillis(50);
 
   static
   {
@@ -114,7 +96,16 @@ public final class SprtRunner
       {
         validateClaudeModelAndEffort(modelId, effort);
         return buildTrialArgsInternal(promptFile, modelId, effort, runnerWorktree, outputJson,
-          jlinkBin, true);
+          jlinkBin, true, null);
+      }
+
+      @Override
+      public String[] buildClaudeSessionTrialArgs(Path promptFile, String modelId, String effort,
+        String runnerWorktree, String outputJson, Path jlinkBin, Path sessionFile)
+      {
+        validateClaudeModelAndEffort(modelId, effort);
+        return buildTrialArgsInternal(promptFile, modelId, effort, runnerWorktree, outputJson,
+          jlinkBin, true, sessionFile);
       }
 
       @Override
@@ -123,7 +114,31 @@ public final class SprtRunner
       {
         validateCodexModelAndEffort(modelId, effort);
         return buildTrialArgsInternal(promptFile, modelId, effort, runnerWorktree, outputJson,
-          null, false);
+          null, false, null);
+      }
+
+      @Override
+      public String[] buildCodexSessionTrialArgs(Path promptFile, String modelId, String effort,
+        String runnerWorktree, String outputJson, Path sessionFile)
+      {
+        validateCodexModelAndEffort(modelId, effort);
+        return buildTrialArgsInternal(promptFile, modelId, effort, runnerWorktree, outputJson,
+          null, false, sessionFile);
+      }
+
+      @Override
+      public int runTrial(SprtRunner runner, List<Path> promptFiles, String modelId, String effort,
+        String runnerWorktree, String outputJson, PrintStream logStream) throws IOException
+      {
+        return runner.runTrial(promptFiles, modelId, effort, runnerWorktree, outputJson,
+          logStream);
+      }
+
+      @Override
+      public int runEngineCommand(SprtRunner runner, String[] args, String runnerWorktree,
+        PrintStream out) throws IOException
+      {
+        return runner.runEngineCommand(args, runnerWorktree, out);
       }
 
       @Override
@@ -141,8 +156,7 @@ public final class SprtRunner
       {
         validateCodexModelAndEffort(modelId, effort);
         return buildGraderArgsInternal(graderPromptFile, modelId, effort, runnerWorktree,
-          Path.of(runnerWorktree, ".cat", "work", "grade-output.json").toString(),
-          null, false, false);
+          null, null, false, false);
       }
 
       @Override
@@ -172,7 +186,7 @@ public final class SprtRunner
         if (hasClaudeFlags)
           jlinkBin = jlinkBin(runnerWorktree, runtimeId);
         return buildTrialArgsInternal(promptFile, modelId, effort, runnerWorktree, outputJson,
-          jlinkBin, hasClaudeFlags);
+          jlinkBin, hasClaudeFlags, null);
       }
 
       @Override
@@ -185,13 +199,8 @@ public final class SprtRunner
         Path jlinkBin = null;
         if (hasClaudeFlags)
           jlinkBin = jlinkBin(runnerWorktree, runtimeId);
-        String outputPath = null;
-        if (!hasClaudeFlags)
-        {
-          outputPath = Path.of(runnerWorktree, ".cat", "work", "grade-output.json").toString();
-        }
         return buildGraderArgsInternal(graderPromptFile, modelId, effort, runnerWorktree,
-          outputPath, jlinkBin, hasClaudeFlags, hasClaudeFlags);
+          null, jlinkBin, hasClaudeFlags, hasClaudeFlags);
       }
     });
   }
@@ -201,9 +210,13 @@ public final class SprtRunner
   private final CliTool scope;
   private final String runtimeId;
   private final String claudeCodeVersion;
+  private final Duration processTimeout;
   private final SprtStateManager sprtStateManager;
   private final SprtIsolationManager sprtIsolationManager;
   private final SprtGrader sprtGrader;
+  private final SprtResultsManager sprtResultsManager;
+  private final SprtRunWorkflow sprtRunWorkflow;
+  private final SprtCommandSupport sprtCommandSupport;
   private final SkillMetadataExtractor skillMetadataExtractor;
 
   /**
@@ -216,15 +229,39 @@ public final class SprtRunner
    */
   public SprtRunner(CliTool scope, String claudeCodeVersion)
   {
+    this(scope, claudeCodeVersion, DEFAULT_PROCESS_TIMEOUT);
+  }
+
+  /**
+   * Creates a new SprtRunner.
+   *
+   * @param scope             the JVM scope providing shared services
+   * @param claudeCodeVersion the Claude Code version string (e.g., {@code "2.1.87"})
+   * @param processTimeout    the launcher process timeout
+   * @throws NullPointerException     if any parameter is null
+   * @throws IllegalArgumentException if {@code claudeCodeVersion} is blank or
+   *                                  {@code processTimeout} is not positive
+   */
+  public SprtRunner(CliTool scope, String claudeCodeVersion, Duration processTimeout)
+  {
     requireThat(scope, "scope").isNotNull();
     requireThat(claudeCodeVersion, "claudeCodeVersion").isNotBlank();
+    requireThat(processTimeout, "processTimeout").isNotNull();
+    if (!processTimeout.isPositive())
+      throw new IllegalArgumentException("processTimeout must be positive");
     this.scope = scope;
     this.runtimeId = runtimeIdFromDescriptor(scope.getPluginDescriptor());
     this.claudeCodeVersion = claudeCodeVersion;
+    this.processTimeout = processTimeout;
     this.sprtStateManager = new SprtStateManager(scope);
     this.sprtIsolationManager = new SprtIsolationManager(scope, runtimeId);
     this.sprtGrader = new SprtGrader(scope, this);
+    this.sprtResultsManager = new SprtResultsManager(scope);
+    this.sprtRunWorkflow = new SprtRunWorkflow(this, scope, log, sprtGrader, sprtResultsManager,
+      EARLY_FAIL_THRESHOLD, EARLY_FAIL_WINDOW);
     this.skillMetadataExtractor = new SkillMetadataExtractor(scope, claudeCodeVersion);
+    this.sprtCommandSupport = new SprtCommandSupport(scope, runtimeId, claudeCodeVersion,
+      skillMetadataExtractor, sprtResultsManager, log);
   }
 
   /**
@@ -379,56 +416,7 @@ public final class SprtRunner
    */
   public String detectChanges(String[] args) throws IOException
   {
-    requireThat(args, "args").isNotNull();
-    if (args.length != 3)
-      throw new IllegalArgumentException(
-        "SprtRunner detect-changes: expected 3 arguments, got " + args.length + ".\n" +
-        "Usage: skill-test-runner detect-changes <old_skill_sha256> <new_skill_path> <test_dir_path>");
-
-    String oldSha = args[0];
-    Path newSkillPath = Path.of(args[1]);
-    Path testDirPath = Path.of(args[2]);
-
-    if (!oldSha.matches("[0-9a-f]{64}"))
-      throw new IllegalArgumentException(
-        "SprtRunner detect-changes: invalid SHA-256 content hash format: '" + oldSha +
-        "'. Expected 64 lowercase hex characters (got " + oldSha.length() + " characters).");
-
-    if (Files.notExists(newSkillPath))
-      throw new IllegalArgumentException(
-        "SprtRunner detect-changes: new skill file not found: " + newSkillPath);
-    if (Files.notExists(testDirPath) || !Files.isDirectory(testDirPath))
-      throw new IllegalArgumentException(
-        "SprtRunner detect-changes: test directory not found: " + testDirPath);
-
-    String currentSha = sha256File(newSkillPath);
-    boolean skillChanged = !currentSha.equals(oldSha);
-    List<String> allTestCaseIds = readAllTestCaseIds(testDirPath);
-
-    JsonMapper mapper = scope.getJsonMapper();
-    ObjectNode result = mapper.createObjectNode();
-    result.put("skill_changed", skillChanged);
-
-    ArrayNode allIdsArray = mapper.createArrayNode();
-    for (String id : allTestCaseIds)
-      allIdsArray.add(id);
-    result.set("all_test_case_ids", allIdsArray);
-
-    if (skillChanged)
-    {
-      result.set("rerun_test_case_ids", allIdsArray.deepCopy());
-      result.set("carryforward_test_case_ids", mapper.createArrayNode());
-    }
-    else
-    {
-      result.set("rerun_test_case_ids", mapper.createArrayNode());
-      result.set("carryforward_test_case_ids", allIdsArray.deepCopy());
-      result.put("semantic_units_path_hint",
-        "Run: skill-test-runner extract-units " + args[1]);
-    }
-
-    // Produce compact single-line JSON to match Bash output style
-    return compactJson(result);
+    return sprtCommandSupport.detectChanges(args);
   }
 
   /**
@@ -446,67 +434,7 @@ public final class SprtRunner
    */
   public String mapUnits(String[] args) throws IOException
   {
-    requireThat(args, "args").isNotNull();
-    if (args.length != 2)
-      throw new IllegalArgumentException(
-        "SprtRunner map-units: expected 2 arguments, got " + args.length + ".\n" +
-        "Usage: skill-test-runner map-units <test_dir_path> <changed_units_json>");
-
-    Path testDirPath = Path.of(args[0]);
-    String changedUnitsJson = args[1];
-
-    if (Files.notExists(testDirPath) || !Files.isDirectory(testDirPath))
-      throw new IllegalArgumentException(
-        "SprtRunner map-units: test directory not found: " + testDirPath);
-
-    // Parse changed_units_json: a JSON array of string IDs
-    JsonMapper mapper = scope.getJsonMapper();
-    JsonNode changedUnitsNode = mapper.readTree(changedUnitsJson);
-    Set<String> changedUnits = new HashSet<>();
-    if (changedUnitsNode.isArray())
-    {
-      for (JsonNode element : changedUnitsNode)
-      {
-        if (element.isString())
-          changedUnits.add(element.asString());
-      }
-    }
-
-    // Enumerate .md files in the test directory; filename stem is both test case ID and semantic unit ID
-    List<String> allIds = new ArrayList<>();
-    List<String> rerunIds = new ArrayList<>();
-    List<String> carryforwardIds = new ArrayList<>();
-
-    List<Path> mdFiles = listMdFiles(testDirPath);
-    for (Path mdFile : mdFiles)
-    {
-      String testCaseId = stemOf(mdFile);
-      if (testCaseId.isBlank())
-        continue;
-      allIds.add(testCaseId);
-      if (changedUnits.isEmpty() || !changedUnits.contains(testCaseId))
-        carryforwardIds.add(testCaseId);
-      else
-        rerunIds.add(testCaseId);
-    }
-
-    ObjectNode result = mapper.createObjectNode();
-    ArrayNode allArray = mapper.createArrayNode();
-    for (String id : allIds)
-      allArray.add(id);
-    result.set("all_test_case_ids", allArray);
-
-    ArrayNode rerunArray = mapper.createArrayNode();
-    for (String id : rerunIds)
-      rerunArray.add(id);
-    result.set("rerun_test_case_ids", rerunArray);
-
-    ArrayNode carryArray = mapper.createArrayNode();
-    for (String id : carryforwardIds)
-      carryArray.add(id);
-    result.set("carryforward_test_case_ids", carryArray);
-
-    return compactJson(result);
+    return sprtCommandSupport.mapUnits(args);
   }
 
   /**
@@ -522,149 +450,7 @@ public final class SprtRunner
    */
   public void persistArtifacts(String[] args, PrintStream out) throws IOException
   {
-    requireThat(args, "args").isNotNull();
-    requireThat(out, "out").isNotNull();
-    if (args.length != 5)
-      throw new IllegalArgumentException(
-        "SprtRunner persist-artifacts: expected 5 arguments, got " + args.length + ".\n" +
-        "Usage: skill-test-runner persist-artifacts <skill_path> <artifacts_dir> " +
-        "<session_id> <worktree_root> <phase>");
-
-    String skillPathArg = args[0];
-    Path artifactsDir = Path.of(args[1]);
-    String sessionId = args[2];
-    Path worktreeRoot = Path.of(args[3]);
-    String phase = args[4];
-
-    if (Files.notExists(worktreeRoot))
-      throw new IllegalArgumentException(
-        "SprtRunner persist-artifacts: worktree root not found: " + worktreeRoot);
-    if (Files.notExists(artifactsDir))
-      throw new IllegalArgumentException(
-        "SprtRunner persist-artifacts: artifacts directory not found: " + artifactsDir);
-
-    Path absSkillPath = worktreeRoot.resolve(skillPathArg).normalize();
-    validatePathWithinBoundary(worktreeRoot, absSkillPath);
-    if (Files.notExists(absSkillPath))
-      throw new IllegalArgumentException(
-        "SprtRunner persist-artifacts: skill file not found: " + absSkillPath);
-
-    // Enumerate .md test case files from the artifacts directory
-    List<Path> testCaseMdFiles = listMdFiles(artifactsDir);
-    if (testCaseMdFiles.isEmpty())
-      throw new IllegalArgumentException(
-        "SprtRunner persist-artifacts: no .md test case files found in: " + artifactsDir);
-
-    // Compute skill directory for test case copy destination
-    Path skillDir = absSkillPath.getParent();
-    // Extract skill name from path (e.g., "grep-and-read")
-    String skillName = skillDir.getFileName().toString();
-
-    // Copy each .md test case file into the skill's test directory (first-use/)
-    Path testCaseDir = skillDir.resolve("first-use");
-    Files.createDirectories(testCaseDir);
-    List<String> relTestCasePaths = new ArrayList<>();
-    Path skillParent = Path.of(skillPathArg).getParent();
-    Path skillParentOrDot;
-    if (skillParent != null)
-      skillParentOrDot = skillParent;
-    else
-      skillParentOrDot = Path.of(".");
-    for (Path srcFile : testCaseMdFiles)
-    {
-      Path destFile = testCaseDir.resolve(srcFile.getFileName());
-      validatePathWithinBoundary(skillDir, destFile);
-      Files.copy(srcFile, destFile, StandardCopyOption.REPLACE_EXISTING);
-      relTestCasePaths.add(
-        skillParentOrDot.resolve("first-use").resolve(srcFile.getFileName()).toString());
-    }
-
-    // Compute hashes and paths for instruction-test.json (stored in .cat/work/instruction-test/{skill}/)
-    String skillHash = sha256File(absSkillPath);
-    String relInstructionTestDir = skillParentOrDot.resolve("first-use").toString();
-    Path catWorkInstructionTestDir = worktreeRoot.resolve(".cat").resolve("work").resolve("instruction-test").
-      resolve(skillName);
-    Files.createDirectories(catWorkInstructionTestDir);
-
-    String timestamp = ISO_UTC.format(Instant.now());
-
-    // Resolve model_id from skill frontmatter
-    String model = skillMetadataExtractor.extractStringField(absSkillPath, "model");
-    if (model.isBlank())
-    {
-      throw new IllegalArgumentException(
-        "SprtRunner persist-artifacts: no 'model:' field in frontmatter of " +
-        absSkillPath + ". Every skill must declare a model.");
-    }
-    String modelId = ModelIdResolver.resolve(claudeCodeVersion, model);
-
-    // Write instruction-test.json to .cat/work/instruction-test/{skill}/instruction-test.json
-    Path instructionTestJsonPath = catWorkInstructionTestDir.resolve("instruction-test.json");
-    JsonMapper mapper = scope.getJsonMapper();
-    ObjectNode root = mapper.createObjectNode();
-    root.put("session_id", sessionId);
-    root.put("model_id", modelId);
-    root.put("phase", phase);
-    root.put("timestamp", timestamp);
-    ObjectNode skillNode = root.putObject("skill");
-    skillNode.put("path", skillPathArg);
-    skillNode.put("sha256", skillHash);
-    // Record the test cases directory as the location of .md test files
-    String testCasesHash = sha256Directory(artifactsDir);
-    ObjectNode testCasesNode = root.putObject("test_cases");
-    testCasesNode.put("path", relInstructionTestDir);
-    testCasesNode.put("sha256", testCasesHash);
-    String instructionTestContent = mapper.writeValueAsString(root);
-    Files.writeString(instructionTestJsonPath, instructionTestContent, UTF_8);
-
-    // Stage all copied .md test case files
-    for (String relPath : relTestCasePaths)
-    {
-      ProcessRunner.Result addResult = ProcessRunner.run(worktreeRoot, "git", "add", relPath);
-      if (addResult.exitCode() != 0)
-        throw new IOException("git add failed for " + relPath +
-          ": exit code " + addResult.exitCode() + ", output: " + addResult.output());
-    }
-
-    // Commit with retry on lock contention (exponential backoff)
-    String commitMessage =
-      "instruction-test: persist artifacts [session: " + sessionId + ", phase: " + phase + "]";
-    int maxRetries = 3;
-    boolean committed = false;
-    for (int attempt = 0; attempt < maxRetries; ++attempt)
-    {
-      ProcessRunner.Result commitResult =
-        ProcessRunner.run(worktreeRoot, "git", "commit", "-m", commitMessage);
-      if (commitResult.exitCode() == 0)
-      {
-        committed = true;
-        break;
-      }
-      if (attempt + 1 < maxRetries)
-      {
-        int baseSleepSeconds = 1 << (attempt + 1);
-        int jitter = (int) (Math.random() * (baseSleepSeconds + 1));
-        int sleepSeconds = baseSleepSeconds + jitter;
-        log.warn("SprtRunner: git commit failed (attempt {}/{}), retrying in {}s...",
-          attempt + 1, maxRetries, sleepSeconds);
-        try
-        {
-          Thread.sleep(sleepSeconds * 1000L);
-        }
-        catch (InterruptedException _)
-        {
-          Thread.currentThread().interrupt();
-          break;
-        }
-      }
-    }
-
-    if (!committed)
-      throw new IOException(
-        "SprtRunner persist-artifacts: git commit failed after " + maxRetries + " attempts");
-
-    out.println(
-      "skill-test-runner: artifacts committed for phase=" + phase + ", session=" + sessionId);
+    sprtCommandSupport.persistArtifacts(args, out);
   }
 
   /**
@@ -745,129 +531,7 @@ public final class SprtRunner
    */
   public String mergeResults(String[] args) throws IOException
   {
-    requireThat(args, "args").isNotNull();
-    if (args.length != 4)
-      throw new IllegalArgumentException(
-        "SprtRunner merge-results: expected 4 arguments, got " + args.length + ".\n" +
-        "Usage: skill-test-runner merge-results <new_sprt_state_path> " +
-        "<prior_instruction_test_json_path> <carryforward_ids_json> <model_id>");
-
-    Path statePath = Path.of(args[0]);
-    String priorInstructionTestPath = args[1];
-    String carryforwardIdsJson = args[2];
-    String modelId = args[3];
-
-    if (Files.notExists(statePath))
-      throw new IllegalArgumentException(
-        "SprtRunner merge-results: state file not found: " + statePath);
-
-    boolean hasPrior = !priorInstructionTestPath.equals("none");
-    if (hasPrior && Files.notExists(Path.of(priorInstructionTestPath)))
-      throw new IllegalArgumentException(
-        "SprtRunner merge-results: prior instruction-test file not found: " + priorInstructionTestPath);
-
-    JsonMapper mapper = scope.getJsonMapper();
-    JsonNode stateRoot = mapper.readTree(statePath.toFile());
-    JsonNode sprtStateNode = stateRoot.path("sprt_state");
-
-    // Parse the set of carryforward IDs whose stats should come from the prior instruction-test
-    Set<String> carryforwardIds = new HashSet<>();
-    JsonNode carryforwardNode = mapper.readTree(carryforwardIdsJson);
-    if (carryforwardNode.isArray())
-    {
-      for (JsonNode element : carryforwardNode)
-      {
-        if (element.isString())
-          carryforwardIds.add(element.asString());
-      }
-    }
-
-    // Build prior instruction-test lookup map for O(1) access when emitting carryforward stats
-    Map<String, JsonNode> priorByTestCaseId = new HashMap<>();
-    if (hasPrior)
-    {
-      JsonNode priorRoot = mapper.readTree(Path.of(priorInstructionTestPath).toFile());
-      JsonNode priorTestCases = priorRoot.path("test_cases");
-      if (priorTestCases.isArray())
-      {
-        for (JsonNode tc : priorTestCases)
-        {
-          String tcId = tc.path("test_case_id").asString("");
-          if (!tcId.isBlank())
-            priorByTestCaseId.put(tcId, tc);
-        }
-      }
-    }
-
-    // Collect all test case IDs from SPRT state
-    List<String> allIds = new ArrayList<>();
-    if (sprtStateNode.isObject())
-    {
-      for (Map.Entry<String, JsonNode> entry : sprtStateNode.properties())
-        allIds.add(entry.getKey());
-    }
-
-    String overallDecision = "ACCEPT";
-    ArrayNode testCasesArray = mapper.createArrayNode();
-
-    for (String testCaseId : allIds)
-    {
-      // When a test case is in the carryforward set and a prior instruction-test is available, emit prior
-      // stats rather than the current SPRT state values so the output reflects the original run.
-      boolean usePriorStats = carryforwardIds.contains(testCaseId) && priorByTestCaseId.containsKey(testCaseId);
-
-      double logRatio;
-      int passes;
-      int fails;
-      int runs;
-      String decision;
-      boolean carriedForward;
-
-      if (usePriorStats)
-      {
-        JsonNode priorTc = priorByTestCaseId.get(testCaseId);
-        logRatio = priorTc.path("log_ratio").asDouble(0.0);
-        passes = priorTc.path("passes").asInt(0);
-        fails = priorTc.path("fails").asInt(0);
-        runs = priorTc.path("runs").asInt(0);
-        decision = priorTc.path("decision").asString("INCONCLUSIVE");
-        carriedForward = true;
-      }
-      else
-      {
-        JsonNode tcNode = sprtStateNode.path(testCaseId);
-        logRatio = tcNode.path("log_ratio").asDouble(0.0);
-        passes = tcNode.path("passes").asInt(0);
-        fails = tcNode.path("fails").asInt(0);
-        runs = tcNode.path("runs").asInt(0);
-        decision = tcNode.path("decision").asString("INCONCLUSIVE");
-        carriedForward = tcNode.path("carried_forward").asBoolean(false);
-      }
-
-      if (decision.equals("REJECT"))
-        overallDecision = "REJECT";
-      else if (decision.equals("INCONCLUSIVE") && !overallDecision.equals("REJECT"))
-        overallDecision = "INCONCLUSIVE";
-
-      ObjectNode tcEntry = mapper.createObjectNode();
-      tcEntry.put("test_case_id", testCaseId);
-      tcEntry.put("log_ratio", logRatio);
-      tcEntry.put("passes", passes);
-      tcEntry.put("fails", fails);
-      tcEntry.put("runs", runs);
-      tcEntry.put("decision", decision);
-      tcEntry.put("carried_forward", carriedForward);
-      testCasesArray.add(tcEntry);
-    }
-
-    String timestamp = ISO_UTC.format(Instant.now());
-    ObjectNode result = mapper.createObjectNode();
-    result.put("model_id", modelId);
-    result.put("timestamp", timestamp);
-    result.put("overall_decision", overallDecision);
-    result.put("incremental", true);
-    result.set("test_cases", testCasesArray);
-    return compactJson(result);
+    return sprtResultsManager.mergeResults(args);
   }
 
   /**
@@ -969,26 +633,7 @@ public final class SprtRunner
    */
   public String saveFailedRun(String[] args) throws IOException
   {
-    requireThat(args, "args").isNotNull();
-    if (args.length != 2)
-      throw new IllegalArgumentException(
-        "SprtRunner save-failed-run: expected 2 arguments " +
-        "<worktree_path> <source_file>, got " + args.length + ".\n" +
-        "Usage: sprt-runner save-failed-run <worktree_path> <source_file>");
-
-    Path worktreePath = Path.of(args[0]);
-    Path sourceFile = Path.of(args[1]);
-
-    if (Files.notExists(sourceFile))
-      throw new IllegalArgumentException(
-        "SprtRunner save-failed-run: file not found: " + sourceFile);
-
-    Path failedRunsDir = worktreePath.resolve(".cat/work/failed-runs");
-    Files.createDirectories(failedRunsDir);
-    Path destFile = failedRunsDir.resolve(sourceFile.getFileName());
-    Files.copy(sourceFile, destFile, StandardCopyOption.REPLACE_EXISTING);
-
-    return "dest_path=" + destFile;
+    return sprtCommandSupport.saveFailedRun(args);
   }
 
   /**
@@ -1024,46 +669,7 @@ public final class SprtRunner
    */
   public String prepareRun(String[] args) throws IOException
   {
-    requireThat(args, "args").isNotNull();
-    if (args.length != 2)
-      throw new IllegalArgumentException(
-        "SprtRunner prepare-run: expected 2 arguments " +
-        "<worktree_path> <test_dir>, got " + args.length + ".\n" +
-        "Usage: sprt-runner prepare-run <worktree_path> <test_dir>");
-    Path worktreePath = Path.of(args[0]);
-    if (!Files.isDirectory(worktreePath))
-      throw new IllegalArgumentException(
-        "SprtRunner prepare-run: worktree_path is not a directory: " + worktreePath);
-    Path testDir = Path.of(args[1]);
-    if (!testDir.isAbsolute())
-      testDir = worktreePath.resolve(testDir);
-    validatePathWithinBoundary(worktreePath, testDir);
-    if (!Files.isDirectory(testDir))
-      throw new IllegalArgumentException(
-        "SprtRunner prepare-run: test_dir does not exist: " + testDir);
-    boolean hasMdFile;
-    try (Stream<Path> stream = Files.list(testDir))
-    {
-      hasMdFile = stream.anyMatch(p ->
-      {
-        String name = p.getFileName().toString();
-        return name.endsWith(".md") && !name.equals("test-results.json");
-      });
-    }
-    if (!hasMdFile)
-      throw new IllegalArgumentException(
-        "SprtRunner prepare-run: test_dir contains no .md test case files " +
-        "(excluding test-results.json): " + testDir);
-    Path testDirRel = worktreePath.relativize(testDir);
-    String issueName = worktreePath.getFileName().toString();
-    Path sprtStatePath = worktreePath.resolve(".cat/work/sprt-state.json");
-
-    StringJoiner output = new StringJoiner("\n");
-    output.add("test_dir_abs=" + testDir);
-    output.add("test_dir_rel=" + testDirRel);
-    output.add("issue_name=" + issueName);
-    output.add("sprt_state_path=" + sprtStatePath);
-    return output.toString();
+    return sprtCommandSupport.prepareRun(args);
   }
 
   /**
@@ -1085,120 +691,7 @@ public final class SprtRunner
    */
   public String prepareTrial(String[] args) throws IOException
   {
-    requireThat(args, "args").isNotNull();
-    if (args.length != 7)
-      throw new IllegalArgumentException(
-        "SprtRunner prepare-trial: expected 7 arguments " +
-        "<worktree_path> <isolation_branch> <test_dir_rel> <tc_id> <runner_worktree> " +
-        "<output_dir> <trial_num>, got " + args.length + ".\n" +
-        "Usage: sprt-runner prepare-trial <worktree_path> <isolation_branch> " +
-        "<test_dir_rel> <tc_id> <runner_worktree> <output_dir> <trial_num>");
-    String worktreePath = args[0];
-    String isolationBranch = args[1];
-    String testDirRel = args[2];
-    String tcId = args[3];
-    requireThat(tcId, "tcId").matches("[A-Za-z0-9][A-Za-z0-9._-]*");
-    String runnerWorktree = args[4];
-    String outputDir = args[5];
-    String trialNum = args[6];
-
-    String outputJson = outputDir + "/" + tcId + "_run" + trialNum + ".json";
-
-    // Use pre-recorded fixture if present — skip live runner entirely
-    ProcessRunner.Result fixtureResult = ProcessRunner.run(Path.of(worktreePath),
-      "git", "show", isolationBranch + ":" + testDirRel + "/" + tcId + "_runner.json");
-    if (fixtureResult.exitCode() == 0)
-    {
-      Files.createDirectories(Path.of(outputDir));
-      Files.writeString(Path.of(outputJson), fixtureResult.output(), UTF_8);
-      StringJoiner fixtureOutput = new StringJoiner("\n");
-      fixtureOutput.add("runner_fixture=yes");
-      fixtureOutput.add("output_json=" + outputJson);
-      return fixtureOutput.toString();
-    }
-
-    // Read the turn file content from the isolation branch
-    ProcessRunner.Result showResult = ProcessRunner.run(Path.of(worktreePath),
-      "git", "show", isolationBranch + ":" + testDirRel + "/" + tcId + "_turn1.md");
-    if (showResult.exitCode() != 0)
-      throw new IOException(
-        "SprtRunner prepare-trial: git show failed for " +
-        isolationBranch + ":" + testDirRel + "/" + tcId + "_turn1.md" +
-        " in " + worktreePath + ": " + showResult.output());
-    String turnContent = showResult.output();
-
-    // Build the preamble: provides operational context (CWD, resolve-paths instruction)
-    // without revealing assertion content
-    String preamble = "[CWD: " + runnerWorktree + "]\n" +
-      "Execute the task below immediately. Do not ask for clarification or confirmation.\n" +
-      "Every path argument passed to Write, Edit, or Bash MUST begin with the exact CWD value above " +
-      "(both relative and absolute paths). " +
-      "Example: " + runnerWorktree + "/some/file.txt\n" +
-      "Never use any other root for file operations.";
-
-    String jlinkBin = runnerWorktree + "/client/distribution/target/jlink/" + runtimeId + "/bin";
-    if (!Files.isDirectory(Path.of(jlinkBin)))
-      throw new IOException(
-        "SprtRunner prepare-trial: jlink directory not found in runner worktree: " +
-        jlinkBin + ". Run 'mvn -f client/pom.xml package' before starting SPRT.");
-
-    // Ensure the jlink directory has a VERSION file. session-start.sh checks for this file
-    // before running the Java dispatcher; without it, it tries to download the bundle from
-    // GitHub (which will fail in SPRT runner sessions that have no network release). The
-    // jlink directory is a build artifact not managed by the plugin install process, so the
-    // VERSION stamp must be written here.
-    Path jlinkDir = Path.of(jlinkBin).getParent();
-    Path versionFile = jlinkDir.resolve("VERSION");
-    if (!Files.exists(versionFile) && Files.isDirectory(jlinkDir))
-    {
-      String pluginVersion = readJlinkPluginVersion(jlinkDir);
-      Files.writeString(versionFile, pluginVersion, UTF_8);
-    }
-
-    // Write the combined prompt to a file so claude-runner reads it via --prompt <path>
-    // rather than receiving multiline content inline. This keeps all prepare-trial outputs scalar.
-    String promptFile = outputDir + "/" + tcId + "_run" + trialNum + "_prompt.txt";
-    Files.createDirectories(Path.of(outputDir));
-    Files.writeString(Path.of(promptFile), preamble + "\n\n" + turnContent, UTF_8);
-
-    // Always use the runner worktree's plugin directory so the test run uses the committed plugin
-    // version from the isolation branch, not the globally installed plugin cache.
-    String pluginSource = runnerWorktree + "/plugin/";
-
-    StringJoiner output = new StringJoiner("\n");
-    output.add("prompt_file=" + promptFile);
-    output.add("jlink_bin=" + jlinkBin);
-    output.add("plugin_source=" + pluginSource);
-    output.add("output_json=" + outputJson);
-    return output.toString();
-  }
-
-  /**
-   * Reads the plugin version from the runner jlink artifact.
-   *
-   * @param jlinkDir the runner engine jlink directory
-   * @return the plugin version
-   * @throws IOException if reading the manifest fails
-   */
-  private String readJlinkPluginVersion(Path jlinkDir) throws IOException
-  {
-    Path manifest = jlinkDir.resolve(scope.getPluginDescriptor());
-    if (!Files.isRegularFile(manifest))
-    {
-      throw new AssertionError("Plugin version not found: " + manifest + "\n" +
-        "Build CAT distribution artifacts before running SPRT.");
-    }
-    JsonNode root = scope.getJsonMapper().readTree(Files.readString(manifest, UTF_8));
-    JsonNode version = root.get("version");
-    if (version == null || !version.isString())
-      throw new AssertionError("Invalid plugin.json: missing or non-string 'version' field in " + manifest);
-    String value = version.stringValue();
-    if (value == null || !VersionUtils.isValidVersion(value.strip()))
-    {
-      throw new AssertionError("Invalid version format in " + manifest + ": '" + value +
-        "'. Expected X.Y or X.Y.Z");
-    }
-    return value.strip();
+    return sprtCommandSupport.prepareTrial(args);
   }
 
   /**
@@ -1216,26 +709,7 @@ public final class SprtRunner
    */
   public String getJsonField(String[] args) throws IOException
   {
-    requireThat(args, "args").isNotNull();
-    if (args.length != 2)
-      throw new IllegalArgumentException(
-        "SprtRunner get-json-field: expected 2 arguments " +
-        "<json_string> <field_name>, got " + args.length + ".\n" +
-        "Usage: sprt-runner get-json-field <json_string> <field_name>");
-    String jsonString = args[0];
-    String fieldName = args[1];
-    JsonMapper mapper = scope.getJsonMapper();
-    JsonNode root = mapper.readTree(jsonString);
-    JsonNode fieldNode = root.path(fieldName);
-    if (fieldNode.isMissingNode())
-      throw new IllegalArgumentException(
-        "SprtRunner get-json-field: field '" + fieldName +
-        "' not found in JSON: " + jsonString);
-    // Scalar values (string, number, boolean, null) are returned as unquoted plain text.
-    // Non-scalar values (arrays, objects) are returned as compact JSON for downstream CLI tools.
-    if (fieldNode.isValueNode())
-      return fieldNode.asString();
-    return fieldNode.toString();
+    return sprtCommandSupport.getJsonField(args);
   }
 
   /**
@@ -1253,26 +727,7 @@ public final class SprtRunner
    */
   public String getTcName(String[] args) throws IOException
   {
-    requireThat(args, "args").isNotNull();
-    if (args.length != 2)
-      throw new IllegalArgumentException(
-        "SprtRunner get-tc-name: expected 2 arguments " +
-        "<isolation_result_json> <tc_id>, got " + args.length + ".\n" +
-        "Usage: sprt-runner get-tc-name <isolation_result_json> <tc_id>");
-    String isolationResultJson = args[0];
-    String tcId = args[1];
-    JsonMapper mapper = scope.getJsonMapper();
-    JsonNode root = mapper.readTree(isolationResultJson);
-    JsonNode tcNameMapNode = root.path("tc_name_map");
-    if (tcNameMapNode.isMissingNode())
-      throw new IllegalArgumentException(
-        "SprtRunner get-tc-name: 'tc_name_map' field not found in isolation " +
-        "result JSON");
-    JsonNode stemNode = tcNameMapNode.path(tcId);
-    if (stemNode.isMissingNode())
-      throw new IllegalArgumentException(
-        "SprtRunner get-tc-name: tc_id '" + tcId + "' not found in tc_name_map");
-    return stemNode.asString();
+    return sprtCommandSupport.getTcName(args);
   }
 
   /**
@@ -1291,341 +746,7 @@ public final class SprtRunner
    */
   public String getWorktreeField(String[] args) throws IOException
   {
-    requireThat(args, "args").isNotNull();
-    if (args.length != 3)
-      throw new IllegalArgumentException(
-        "SprtRunner get-worktree-field: expected 3 arguments " +
-        "<create_runner_worktrees_json> <tc_id> <field_name>, got " + args.length + ".\n" +
-        "Usage: sprt-runner get-worktree-field " +
-        "<create_runner_worktrees_json> <tc_id> <field_name>");
-    String worktreesJson = args[0];
-    String tcId = args[1];
-    String fieldName = args[2];
-    JsonMapper mapper = scope.getJsonMapper();
-    JsonNode root = mapper.readTree(worktreesJson);
-    JsonNode worktreesNode = root.path("worktrees");
-    if (worktreesNode.isMissingNode() || !worktreesNode.isArray())
-      throw new IllegalArgumentException(
-        "SprtRunner get-worktree-field: 'worktrees' array not found in JSON");
-    for (JsonNode worktree : worktreesNode)
-    {
-      JsonNode tcIdNode = worktree.path("tc_id");
-      if (!tcIdNode.isMissingNode() && tcIdNode.asString().equals(tcId))
-      {
-        JsonNode fieldNode = worktree.path(fieldName);
-        if (fieldNode.isMissingNode())
-          throw new IllegalArgumentException(
-            "SprtRunner get-worktree-field: field '" + fieldName +
-            "' not found in worktree descriptor for tc_id '" + tcId + "'");
-        return fieldNode.asString();
-      }
-    }
-    throw new IllegalArgumentException(
-      "SprtRunner get-worktree-field: tc_id '" + tcId +
-      "' not found in worktrees array");
-  }
-
-  /**
-   * Implements one internal SPRT batch.
-   * <p>
-   * Orchestrates a single SPRT batch run: creates runner worktrees, prepares trials, launches
-   * claude-runner instances, grades results, updates SPRT state, checks boundaries, and cleans up.
-   *
-   * @param worktreePathStr    the worktree under test
-   * @param sprtStateJson      the SPRT state file
-   * @param issueName          the issue name
-   * @param testDirRel         the test directory relative to the worktree
-   * @param sessionId          the current CAT session ID
-   * @param modelId            the model ID for trial execution
-   * @param testEffort         the effort level for trial execution
-   * @param batchNum           the current batch number
-   * @param isolationResultJson the isolation result JSON
-   * @return compact JSON: {@code {"decided_count": N, "inconclusive_tcs": ["tc1", ...]}}
-   * @throws IllegalArgumentException if arguments are invalid
-   * @throws IOException              if an I/O error occurs
-   * @throws InterruptedException     if waiting for a runner process is interrupted
-   */
-  private String runSprtBatch(String worktreePathStr, String sprtStateJson, String issueName,
-    String testDirRel, String sessionId, String modelId, String testEffort, int batchNum,
-    String isolationResultJson) throws IOException, InterruptedException
-  {
-    requireThat(worktreePathStr, "worktreePathStr").isNotBlank();
-    requireThat(sprtStateJson, "sprtStateJson").isNotBlank();
-    requireThat(issueName, "issueName").isNotBlank();
-    requireThat(testDirRel, "testDirRel").isNotBlank();
-    requireThat(sessionId, "sessionId").isNotBlank();
-    requireThat(modelId, "modelId").isNotBlank();
-    requireThat(testEffort, "testEffort").isNotBlank();
-    requireThat(isolationResultJson, "isolationResultJson").isNotBlank();
-
-    JsonMapper mapper = scope.getJsonMapper();
-    Object sprtLock = new Object();
-
-    // Step 1: Create runner worktrees
-    String[] createArgs = {worktreePathStr, sprtStateJson, issueName, sessionId};
-    String worktreesJson = createRunnerWorktrees(createArgs);
-    JsonNode worktreesRoot = mapper.readTree(worktreesJson);
-    String outputDir = worktreesRoot.path("output_dir").asString();
-    ArrayNode worktreesArray = (ArrayNode) worktreesRoot.path("worktrees");
-
-    // Read SPRT state to prioritize failed test cases
-    JsonNode sprtState = mapper.readTree(Files.readString(Path.of(sprtStateJson), UTF_8));
-    JsonNode sprtStateData = sprtState.path("sprt_state");
-    List<JsonNode> sortedWorktrees = new ArrayList<>();
-    for (JsonNode node : worktreesArray)
-      sortedWorktrees.add(node);
-    sortedWorktrees.sort((a, b) ->
-    {
-      String tcIdA = a.path("tc_id").asString();
-      String tcIdB = b.path("tc_id").asString();
-      int failsA = sprtStateData.path(tcIdA).path("fails").asInt(0);
-      int failsB = sprtStateData.path(tcIdB).path("fails").asInt(0);
-      return Integer.compare(failsB, failsA);
-    });
-
-    int decidedCount = 0;
-    ArrayNode inconclusiveTcs = mapper.createArrayNode();
-
-    // Adaptive parallelism: start at 2, double on success, halve on failure, cap at core count
-    int maxParallelism = Runtime.getRuntime().availableProcessors();
-    int currentParallelism = Math.min(2, maxParallelism);
-    int processedCount = 0;
-    // Seed with existing failures from prior batches so cross-batch threshold works.
-    // Only active within the early-detection window to avoid aborting legitimate long runs.
-    int priorFailures = 0;
-    if (batchNum <= EARLY_FAIL_WINDOW)
-    {
-      for (JsonNode wt : sortedWorktrees)
-      {
-        String tcId = wt.path("tc_id").asString();
-        priorFailures += sprtStateData.path(tcId).path("fails").asInt(0);
-      }
-    }
-    AtomicInteger cumulativeFailures = new AtomicInteger(priorFailures);
-
-    // Step 2: Process test cases with full pipeline (run → grade → update SPRT)
-    while (processedCount < sortedWorktrees.size())
-    {
-      if (batchNum <= EARLY_FAIL_WINDOW && cumulativeFailures.get() >= EARLY_FAIL_THRESHOLD)
-        break;
-      int batchSize = Math.min(currentParallelism, sortedWorktrees.size() - processedCount);
-      List<Thread> pipelineThreads = new ArrayList<>();
-      List<Boolean> pipelineFailures = Collections.synchronizedList(new ArrayList<>());
-      List<Exception> pipelineErrors = Collections.synchronizedList(new ArrayList<>());
-      AtomicInteger batchDecidedCount = new AtomicInteger(0);
-
-      for (int i = 0; i < batchSize; ++i)
-      {
-        JsonNode worktreeNode = sortedWorktrees.get(processedCount + i);
-        String tcId = worktreeNode.path("tc_id").asString();
-        String runnerWorktree = worktreeNode.path("runner_worktree").asString();
-        int trialNum = worktreeNode.path("trial_num").asInt();
-
-        // Prepare trial
-        String[] prepareArgs = {
-          worktreePathStr,
-          issueName + "-isolation",
-          testDirRel,
-          tcId,
-          runnerWorktree,
-          outputDir,
-          String.valueOf(trialNum)
-        };
-        String prepareResult = prepareTrial(prepareArgs);
-        String promptFile = null;
-        String outputJson = null;
-        boolean hasFixture = false;
-        for (String line : prepareResult.split("\n"))
-        {
-          if (line.startsWith("prompt_file="))
-            promptFile = line.substring("prompt_file=".length());
-          else if (line.startsWith("output_json="))
-            outputJson = line.substring("output_json=".length());
-          else if (line.startsWith("runner_fixture="))
-            hasFixture = true;
-        }
-
-        if (outputJson == null || (!hasFixture && promptFile == null))
-          throw new IOException("prepare-trial did not return all required fields for " + tcId);
-
-        // Launch full pipeline (run → grade → update SPRT) in one thread
-        String finalPromptFile = promptFile;
-        String finalOutputJson = outputJson;
-        boolean finalHasFixture = hasFixture;
-        Thread pipelineThread = Thread.ofVirtual().start(() ->
-        {
-          boolean failed = false;
-          try
-          {
-            if (!finalHasFixture)
-            {
-              // Step 1: Run trial (config at worktree/.cat/config/)
-              int exitCode;
-              Path runnerLogPath = Path.of(outputDir, tcId + "_run" + trialNum + "_runner.log");
-              try (OutputStream logOut = Files.newOutputStream(runnerLogPath);
-                PrintStream logStream = new PrintStream(logOut, true, UTF_8))
-              {
-                exitCode = runTrial(Path.of(finalPromptFile), modelId, testEffort,
-                  runnerWorktree, finalOutputJson, logStream);
-              }
-
-              if (!Files.exists(Path.of(finalOutputJson)))
-              {
-                log.warn("{}: runner failed (exit={}). Log: {}", tcId, exitCode, runnerLogPath);
-                failed = true;
-                cumulativeFailures.incrementAndGet();
-                // Count runner failures as FAIL in SPRT so consistent failures trigger rejection
-                synchronized (sprtLock)
-                {
-                  String[] updateArgs = {sprtStateJson, tcId, "false"};
-                  updateSprt(updateArgs);
-                  String[] boundaryArgs = {sprtStateJson, tcId};
-                  String boundaryResult = checkBoundary(boundaryArgs);
-                  JsonNode boundaryNode = mapper.readTree(boundaryResult);
-                  String decision = boundaryNode.path("decision").asString();
-                  log.info("{}: {} (trial={}, runner-failure)", tcId, decision, trialNum);
-                  if (decision.equals("ACCEPT") || decision.equals("REJECT"))
-                    batchDecidedCount.incrementAndGet();
-                  else
-                    inconclusiveTcs.add(tcId);
-                }
-                return;
-              }
-
-              // Step 2: Check contamination
-              String contamResult = checkRunContamination(new String[]{finalOutputJson});
-              if (contamResult.contains("status=FAIL"))
-              {
-                log.warn("{}: contamination detected", tcId);
-                failed = true;
-                return;
-              }
-            }
-
-            // Step 3: Grade
-            String gradeFilePath = Path.of(outputDir, tcId + "_run" + trialNum + "_grade.json").
-              toString();
-            String verdict;
-            try
-            {
-              // Use worktreePathStr so the grader reads assertions from the issue worktree,
-              // where test files still exist with their ## Assertions sections.
-              verdict = sprtGrader.gradeTc(tcId, trialNum, finalOutputJson, modelId, testEffort,
-                runnerWorktree,
-                runnerWorktree,
-                Path.of(worktreePathStr, testDirRel).toString(),
-                gradeFilePath, isolationResultJson);
-            }
-            catch (IOException e)
-            {
-              // Check if this is a grader failure (not infrastructure failure)
-              String message = e.getMessage();
-              if (message.contains("Grader for") || message.contains("Grader did not write") ||
-                message.contains("Grader output missing") || message.contains("Grade file"))
-              {
-                log.error("{}: grader failed - {}", tcId, message);
-                throw e;
-              }
-              else
-              {
-                // Infrastructure failure - rethrow to be caught by outer catch
-                throw e;
-              }
-            }
-
-            boolean passed = verdict.equals("PASS");
-            if (!passed)
-            {
-              failed = true;
-              cumulativeFailures.incrementAndGet();
-            }
-
-            // Step 4: Update SPRT (synchronized - modifies shared file)
-            synchronized (sprtLock)
-            {
-              String[] updateArgs = {sprtStateJson, tcId, String.valueOf(passed)};
-              updateSprt(updateArgs);
-
-              // Check boundary
-              String[] boundaryArgs = {sprtStateJson, tcId};
-              String boundaryResult = checkBoundary(boundaryArgs);
-              JsonNode boundaryNode = mapper.readTree(boundaryResult);
-              String decision = boundaryNode.path("decision").asString();
-
-              log.info("{}: {} (trial={})", tcId, decision, trialNum);
-
-              if (decision.equals("ACCEPT") || decision.equals("REJECT"))
-                batchDecidedCount.incrementAndGet();
-              else
-                inconclusiveTcs.add(tcId);
-            }
-          }
-          catch (Exception e)
-          {
-            log.error("Pipeline for {} failed", tcId, e);
-            pipelineErrors.add(e);
-            failed = true;
-          }
-          finally
-          {
-            pipelineFailures.add(failed);
-          }
-        });
-        pipelineThreads.add(pipelineThread);
-      }
-
-      // Wait for all pipelines to complete
-      for (Thread pipelineThread : pipelineThreads)
-        pipelineThread.join();
-
-      // Exit after all pipelines complete if any had an infrastructure error
-      if (!pipelineErrors.isEmpty())
-      {
-        Exception firstError = pipelineErrors.getFirst();
-        IOException aggregate;
-        if (firstError instanceof IOException ioException)
-          aggregate = ioException;
-        else
-          aggregate = new IOException("Pipeline failed", firstError);
-        for (int i = 1; i < pipelineErrors.size(); ++i)
-          aggregate.addSuppressed(pipelineErrors.get(i));
-        throw aggregate;
-      }
-
-      // Update counters
-      decidedCount += batchDecidedCount.get();
-      boolean anyFailed = pipelineFailures.stream().anyMatch(f -> f);
-      processedCount += batchSize;
-
-      // Adjust parallelism
-      if (anyFailed)
-      {
-        currentParallelism = Math.max(1, currentParallelism / 2);
-        log.info("Failures detected, reducing parallelism to {}", currentParallelism);
-      }
-      else if (batchSize == currentParallelism)
-      {
-        currentParallelism = Math.min(maxParallelism, currentParallelism * 2);
-        log.info("Batch succeeded, increasing parallelism to {}", currentParallelism);
-      }
-    }
-
-    boolean earlyAbort = batchNum <= EARLY_FAIL_WINDOW &&
-      cumulativeFailures.get() >= EARLY_FAIL_THRESHOLD;
-    if (earlyAbort)
-      log.info("Early failure detection: {} failures reached threshold, batch interrupted",
-        cumulativeFailures.get());
-
-    // Step 3: Cleanup
-    String[] removeArgs = {worktreePathStr, issueName};
-    removeRunnerWorktrees(removeArgs);
-
-    ObjectNode result = mapper.createObjectNode();
-    result.put("decided_count", decidedCount);
-    result.put("early_abort", earlyAbort);
-    result.put("cumulative_failures", cumulativeFailures.get());
-    result.set("inconclusive_tcs", inconclusiveTcs);
-    return compactJson(result);
+    return sprtCommandSupport.getWorktreeField(args);
   }
 
   /**
@@ -1642,363 +763,20 @@ public final class SprtRunner
    */
   private void runSprt(String[] args, PrintStream out) throws IOException, InterruptedException
   {
-    RunSprtArguments parsedArgs = parseRunSprtArgs(args);
-    String worktreePath = parsedArgs.worktreePath();
-    String testDir = parsedArgs.testDir();
-    String testModel = parsedArgs.testModel();
-    String testEffort = parsedArgs.testEffort();
-    String sessionId = parsedArgs.sessionId();
-
-    validateConfiguration(testModel, testEffort);
-
-    JsonMapper mapper = scope.getJsonMapper();
-
-    // Step 1: prepare-run
-    out.println("Step 1: Running prepare-run...");
-    String prepareOutput = prepareRun(new String[]{worktreePath, testDir});
-    Map<String, String> prepareVars = parseKeyValue(prepareOutput);
-    String testDirAbs = prepareVars.get("test_dir_abs");
-    String testDirRelValue = prepareVars.get("test_dir_rel");
-    String issueName = prepareVars.get("issue_name");
-    String sprtStatePathValue = prepareVars.get("sprt_state_path");
-    Path testDirRel = Path.of(testDirRelValue);
-    Path sprtStatePath = Path.of(sprtStatePathValue);
-    out.println("  TEST_DIR_ABS: " + testDirAbs);
-    out.println("  ISSUE_NAME: " + issueName);
-    out.println("  SPRT_STATE_PATH: " + sprtStatePath);
-    out.println();
-
-    // Step 2: Cleanup previous run
-    out.println("Step 2: Cleaning up previous run...");
-    removeIsolationBranch(new String[]{worktreePath, issueName + "-isolation"});
-    removeRunnerWorktrees(new String[]{worktreePath, issueName});
-    clearModelEffortResults(Path.of(testDirAbs), testModel, testEffort);
-    out.println();
-
-    // Step 3: Create isolation branch
-    out.println("Step 3: Creating isolation branch...");
-    String isolationResult = createIsolationBranch(new String[]{worktreePath, testDirAbs, issueName});
-    JsonNode isolationNode = mapper.readTree(isolationResult);
-    String isolationBranch = isolationNode.path("isolation_branch").asString();
-    ArrayNode tcIdsArray = (ArrayNode) isolationNode.path("tc_ids_json");
-    out.println("  Isolation branch: " + isolationBranch);
-    out.println("  Test cases: " + tcIdsArray.size());
-    out.println();
-
-    // Read failed_test_ids from previous run BEFORE initializing SPRT state.
-    // Prefer sprt-state.json (same-session); fall back to test-results.json (cross-session).
-    Set<String> failedTestIds = new HashSet<>();
-    Path stateFilePath = sprtStatePath;
-    JsonNode failedTestIdsSource = null;
-    if (Files.exists(stateFilePath))
-    {
-      JsonNode priorStateRoot = mapper.readTree(stateFilePath.toFile());
-      failedTestIdsSource = priorStateRoot.path("failed_test_ids");
-    }
-    if (failedTestIdsSource == null || !failedTestIdsSource.isArray() || failedTestIdsSource.isEmpty())
-    {
-      Path testResultsPath = Path.of(testDirAbs).resolve("test-results.json");
-      if (Files.exists(testResultsPath))
-      {
-        JsonNode priorResults = mapper.readTree(testResultsPath.toFile());
-        failedTestIdsSource = findResultForModelAndEffort(priorResults, testModel, testEffort).
-          path("failed_test_ids");
-      }
-    }
-    if (failedTestIdsSource != null && failedTestIdsSource.isArray())
-    {
-      for (JsonNode idNode : failedTestIdsSource)
-      {
-        if (idNode.isString())
-          failedTestIds.add(idNode.asString());
-      }
-    }
-
-    // Step 4: Initialize SPRT
-    out.println("Step 4: Initializing SPRT state...");
-    initSprt(new String[]{sprtStatePath.toString(), mapper.writeValueAsString(tcIdsArray), "/dev/null", testModel,
-      sessionId, "--effort", testEffort});
-    out.println("  SPRT state initialized at: " + sprtStatePath);
-    out.println();
-
-    // Step 5: SPRT loop
-    List<String> tcIds = new ArrayList<>();
-    for (JsonNode tcIdNode : tcIdsArray)
-      tcIds.add(tcIdNode.asString());
-
-    // Sort test cases: failed tests first, then others
-    if (!failedTestIds.isEmpty())
-    {
-      tcIds.sort((a, b) ->
-      {
-        boolean aFailed = failedTestIds.contains(a);
-        boolean bFailed = failedTestIds.contains(b);
-        if (aFailed && !bFailed)
-          return -1;
-        if (!aFailed && bFailed)
-          return 1;
-        return 0;
-      });
-      out.println("=== Test Prioritization ===");
-      out.println("Prioritizing " + failedTestIds.size() + " previously-failed test(s)");
-      out.println();
-    }
-
-    out.println("=== Starting SPRT Loop ===");
-    out.println("Test cases: " + tcIds.size());
-    out.println();
-
-    int batchNum = 0;
-    int trialsPerBatch = 1;
-    List<String> undecided = new ArrayList<>(tcIds);
-    Map<String, Integer> runCounts = new HashMap<>();
-    Map<String, String> decisions = new HashMap<>();
-    for (String tcId : tcIds)
-      runCounts.put(tcId, 0);
-    long loopStartMs = System.currentTimeMillis();
-    List<Long> batchDurationsMs = new ArrayList<>();
-
-    while (!undecided.isEmpty())
-    {
-      ++batchNum;
-      out.printf("=== Batch %d (%d trial(s) per TC): %d test case(s) remaining ===%n",
-        batchNum, trialsPerBatch, undecided.size());
-
-      // Read cumulative fails before this batch group for adaptive sizing
-      String preStateJson = Files.readString(sprtStatePath);
-      int failsBefore = 0;
-      JsonNode preSprtNode = mapper.readTree(preStateJson).path("sprt_state");
-      for (String tcId : undecided)
-        failsBefore += preSprtNode.path(tcId).path("fails").asInt(0);
-
-      boolean batchEarlyAbort = false;
-      JsonNode batchResultNode = null;
-      boolean anyReject = false;
-
-      for (int trial = 0; trial < trialsPerBatch; ++trial)
-      {
-        // Run one trial for all currently undecided TCs
-        long batchStartMs = System.currentTimeMillis();
-        String batchResult = runSprtBatch(worktreePath, sprtStatePath.toString(), issueName,
-          testDirRel.toString(), sessionId, testModel, testEffort, batchNum, isolationResult);
-        batchDurationsMs.add(System.currentTimeMillis() - batchStartMs);
-        batchResultNode = mapper.readTree(batchResult);
-        batchEarlyAbort = batchResultNode.path("early_abort").asBoolean(false);
-
-        // Check decisions after this trial
-        List<String> stillUndecided = new ArrayList<>();
-        for (String tcId : undecided)
-        {
-          String boundaryResult = checkBoundary(new String[]{sprtStatePath.toString(), tcId});
-          JsonNode boundaryNode = mapper.readTree(boundaryResult);
-          String decision = boundaryNode.path("decision").asString();
-          int runs = runCounts.get(tcId) + 1;
-          runCounts.put(tcId, runs);
-
-          if (decision.equals("ACCEPT") || decision.equals("REJECT"))
-          {
-            decisions.put(tcId, decision);
-            out.println("  ✓ " + tcId + ": " + decision + " (" + runs + " runs)");
-            if (decision.equals("REJECT"))
-              anyReject = true;
-          }
-          else if (runs >= 50)
-          {
-            decisions.put(tcId, "REJECT");
-            out.println("  ✗ " + tcId + ": REJECT (truncated at 50 runs)");
-            anyReject = true;
-          }
-          else
-          {
-            stillUndecided.add(tcId);
-          }
-        }
-        undecided = stillUndecided;
-
-        if (batchEarlyAbort || anyReject || undecided.isEmpty())
-          break;
-      }
-      out.println();
-
-      // Print batch status summary
-      out.println("=== Batch " + batchNum + " Summary ===");
-      out.println();
-      String sprtStateJson = Files.readString(sprtStatePath);
-      JsonNode sprtState = mapper.readTree(sprtStateJson);
-      JsonNode sprtNode = sprtState.path("sprt_state");
-
-      out.printf("%-10s %-7s %-7s %-12s %-6s %-20s%n",
-        "TC", "Passes", "Fails", "Decision", "Runs", "Runs to Convergence");
-      out.println("-".repeat(72));
-
-      for (String tcId : tcIds)
-      {
-        JsonNode tcNode = sprtNode.path(tcId);
-        int passes = tcNode.path("passes").asInt(0);
-        int fails = tcNode.path("fails").asInt(0);
-        double logRatio = tcNode.path("log_ratio").asDouble(0.0);
-        String decision = decisions.getOrDefault(tcId, "INCONCLUSIVE");
-        int runs = runCounts.get(tcId);
-
-        // Estimate runs to convergence for INCONCLUSIVE
-        String convergence;
-        if (decision.equals("INCONCLUSIVE"))
-        {
-          // ACCEPT boundary: 2.944, REJECT boundary: -2.944
-          // PASS adds ~0.1112, FAIL adds ~-1.0986
-          // Show runsToAccept: the number of consecutive passes still needed,
-          // so the estimate reflects the accept trajectory we are targeting.
-          double toAccept = 2.944 - logRatio;
-          int runsToAccept = (int) Math.ceil(toAccept / 0.1112);
-          convergence = "~" + runsToAccept + " more";
-        }
-        else
-        {
-          convergence = "-";
-        }
-
-        out.printf("%-10s %-7d %-7d %-12s %-6d %-20s%n",
-          tcId, passes, fails, decision, runs, convergence);
-      }
-      out.println();
-
-      // ETA line (only when undecided TCs remain)
-      if (!undecided.isEmpty())
-      {
-        long avgBatchMs = batchDurationsMs.stream().mapToLong(Long::longValue).sum() /
-          batchDurationsMs.size();
-        int maxRunsToAccept = 0;
-        for (String tcId : undecided)
-        {
-          double logRatio = sprtNode.path(tcId).path("log_ratio").asDouble(0.0);
-          int runsToAccept = (int) Math.ceil((2.944 - logRatio) / 0.1112);
-          if (runsToAccept > maxRunsToAccept)
-            maxRunsToAccept = runsToAccept;
-        }
-        long elapsedMs = System.currentTimeMillis() - loopStartMs;
-        long etaMs = maxRunsToAccept * avgBatchMs;
-        out.printf("Elapsed: %s | Avg batch: %s | ETA to ACCEPT: ~%s (%d batch(es) @ %s each)%n",
-          formatDuration(elapsedMs), formatDuration(avgBatchMs),
-          formatDuration(etaMs), maxRunsToAccept, formatDuration(avgBatchMs));
-        out.println();
-      }
-
-      // Update adaptive trials-per-batch: double on all-pass, reset to 1 on any failure
-      {
-        String postStateJson = Files.readString(sprtStatePath);
-        JsonNode postSprtNode = mapper.readTree(postStateJson).path("sprt_state");
-        int failsAfter = 0;
-        for (String tcId : tcIds)
-          failsAfter += postSprtNode.path(tcId).path("fails").asInt(0);
-        if (!batchEarlyAbort && !anyReject && failsAfter == failsBefore)
-          trialsPerBatch = Math.min(trialsPerBatch * 2, 4);
-        else
-          trialsPerBatch = 1;
-      }
-
-      // Early failure detection: batch was interrupted mid-execution due to threshold
-      if (batchEarlyAbort)
-      {
-        int totalFailures = batchResultNode.path("cumulative_failures").asInt(0);
-        List<String> failedTcIds = new ArrayList<>();
-        for (String tcId : tcIds)
-        {
-          if (sprtNode.path(tcId).path("fails").asInt(0) > 0)
-            failedTcIds.add(tcId);
-        }
-
-        out.println("=== Early Failure Detection (Batch " + batchNum + ") ===");
-        out.println("Detected " + totalFailures + " total failures across " +
-          failedTcIds.size() + " test case(s). Batch interrupted mid-execution.");
-        out.println("Stopping early to provide fast feedback.");
-        out.println();
-
-        // Update failed_test_ids in state file
-        String freshStateJson = Files.readString(sprtStatePath);
-        ObjectNode mutableStateRoot = (ObjectNode) mapper.readTree(freshStateJson);
-        ArrayNode failedIdsArray = mapper.createArrayNode();
-        for (String tcId : failedTcIds)
-          failedIdsArray.add(tcId);
-        mutableStateRoot.set("failed_test_ids", failedIdsArray);
-        Files.writeString(sprtStatePath, mapper.writeValueAsString(mutableStateRoot), UTF_8);
-
-        // Mark remaining undecided as INCONCLUSIVE
-        for (String tcId : undecided)
-        {
-          decisions.put(tcId, "INCONCLUSIVE");
-          out.println("  " + tcId + ": INCONCLUSIVE (early stop after " +
-            runCounts.get(tcId) + " runs)");
-        }
-        out.println();
-        break;
-      }
-
-      // Early abort if any test case failed
-      if (anyReject)
-      {
-        out.println("=== SPRT Aborted: At least one test case REJECT detected ===");
-        out.println("Remaining test cases (" + undecided.size() + ") will be marked INCONCLUSIVE.");
-        // Mark all remaining undecided test cases as INCONCLUSIVE
-        for (String tcId : undecided)
-        {
-          decisions.put(tcId, "INCONCLUSIVE");
-          out.println("  " + tcId + ": INCONCLUSIVE (aborted after " + runCounts.get(tcId) + " runs)");
-        }
-        out.println();
-        break;
-      }
-    }
-
-    out.println("=== SPRT Loop Complete ===");
-    out.println();
-
-    // Step 6: Write test results
-    out.println("Step 6: Writing test results...");
-    String writeOutput = writeTestResults(new String[]{worktreePath, sprtStatePath.toString(), testDirAbs});
-    Map<String, String> writeVars = parseKeyValue(writeOutput);
-    String writeStatus = writeVars.get("status");
-    if (!"ok".equals(writeStatus))
-    {
-      String message = writeVars.getOrDefault("message",
-        "write-test-results returned status='" + writeStatus + "'");
-      throw new IOException("SprtRunner write-test-results failed: " + message);
-    }
-    String overallDecision = writeVars.get("overall_decision");
-    if (overallDecision == null || overallDecision.isBlank())
-      throw new IOException("SprtRunner write-test-results did not return overall_decision");
-    String testSha = writeVars.get("test_sha");
-    if (testSha == null || testSha.isBlank())
-      throw new IOException("SprtRunner write-test-results did not return test_sha");
-    out.println("  Overall decision: " + overallDecision);
-    out.println("  Test SHA: " + testSha);
-    out.println();
-
-    // Step 7: Cleanup
-    out.println("Step 7: Cleanup...");
-    removeIsolationBranch(new String[]{worktreePath, isolationBranch});
-    removeRunnerWorktrees(new String[]{worktreePath, issueName});
-    out.println();
-
-    // Step 8: Report results
-    out.println("=== SPRT Results ===");
-    out.println();
-    out.println("Overall Decision: " + overallDecision);
-    out.println("Test SHA: " + testSha);
-    out.println();
-
-    for (String tcId : tcIds)
-    {
-      String originalStem = getTcName(new String[]{isolationResult, tcId});
-      out.println(tcId + ": " + decisions.get(tcId) + " (" + runCounts.get(tcId) +
-        " runs) - " + originalStem + ".md");
-    }
-
-    out.println();
-    out.println("COMPLETE: overall_decision=" + overallDecision);
+    sprtRunWorkflow.runSprt(args, out);
   }
 
-  private record RunSprtArguments(String worktreePath, String testDir, String testModel,
-                                  String testEffort, String sessionId)
+  /**
+   * Parsed arguments for the {@code run-sprt} command.
+   *
+   * @param worktreePath the trial worktree path
+   * @param testDir the test-case directory
+   * @param testModel the model under test
+   * @param testEffort the effort level under test
+   * @param sessionId the test-run session id
+   */
+  record RunSprtArguments(String worktreePath, String testDir, String testModel,
+                          String testEffort, String sessionId)
   {
   }
 
@@ -2012,7 +790,13 @@ public final class SprtRunner
   {
   }
 
-  private static RunSprtArguments parseRunSprtArgs(String[] args)
+  /**
+   * Parses arguments for the {@code run-sprt} command.
+   *
+   * @param args the raw command-line arguments
+   * @return the parsed arguments
+   */
+  static RunSprtArguments parseRunSprtArgs(String[] args)
   {
     requireThat(args, "args").isNotNull();
     if (args.length != 5)
@@ -2025,44 +809,8 @@ public final class SprtRunner
     requireThat(args[1], "test_dir").isNotBlank();
     requireThat(args[2], "test_model").isNotBlank();
     requireThat(args[3], "effort").isNotBlank();
-    requireThat(args[4], "session_id").isNotBlank();
-    return new RunSprtArguments(args[0], args[1], args[2], args[3], args[4]);
-  }
-
-  /**
-   * Formats a duration in milliseconds as a human-readable string.
-   *
-   * @param ms the duration in milliseconds
-   * @return a formatted string like "3s", "2m 15s", or "1h 30m"
-   */
-  private static String formatDuration(long ms)
-  {
-    long seconds = ms / 1_000;
-    if (seconds < 60)
-      return seconds + "s";
-    long minutes = seconds / 60;
-    long remainingSeconds = seconds % 60;
-    if (minutes < 60)
-      return minutes + "m " + remainingSeconds + "s";
-    long hours = minutes / 60;
-    long remainingMinutes = minutes % 60;
-    return hours + "h " + remainingMinutes + "m";
-  }
-
-  private Map<String, String> parseKeyValue(String output)
-  {
-    Map<String, String> result = new HashMap<>();
-    for (String line : output.split("\n"))
-    {
-      int eqIndex = line.indexOf('=');
-      if (eqIndex > 0)
-      {
-        String key = line.substring(0, eqIndex);
-        String value = line.substring(eqIndex + 1);
-        result.put(key, value);
-      }
-    }
-    return result;
+    String sessionId = SprtCommandSupport.validateSessionIdSegment(args[4]);
+    return new RunSprtArguments(args[0], args[1], args[2], args[3], sessionId);
   }
 
   /**
@@ -2080,246 +828,7 @@ public final class SprtRunner
    */
   public String writeTestResults(String[] args) throws IOException
   {
-    requireThat(args, "args").isNotNull();
-    if (args.length != 3)
-      throw new IllegalArgumentException(
-        "SprtRunner write-test-results: expected 3 arguments " +
-        "<worktree_path> <sprt_state_path> <test_dir_path>, got " + args.length + ".\n" +
-        "Usage: sprt-runner write-test-results " +
-        "<worktree_path> <sprt_state_path> <test_dir_path>");
-
-    Path worktreePath = Path.of(args[0]);
-    Path sprtStatePath = Path.of(args[1]);
-    Path testDirPath = Path.of(args[2]);
-
-    if (Files.notExists(sprtStatePath))
-      throw new IllegalArgumentException(
-        "SprtRunner write-test-results: state file not found: " + sprtStatePath);
-
-    JsonMapper mapper = scope.getJsonMapper();
-    JsonNode stateRoot = mapper.readTree(sprtStatePath.toFile());
-    JsonNode sprtStateNode = stateRoot.path("sprt_state");
-
-    // Compute overall_decision: REJECT if any REJECT; INCONCLUSIVE if any INCONCLUSIVE and no REJECT;
-    // ACCEPT if all ACCEPT
-    String overallDecision = "ACCEPT";
-    ArrayNode testCasesArray = mapper.createArrayNode();
-
-    if (sprtStateNode.isObject())
-    {
-      for (Map.Entry<String, JsonNode> entry : sprtStateNode.properties())
-      {
-        String tcId = entry.getKey();
-        JsonNode tcNode = entry.getValue();
-        String decision = tcNode.path("decision").asString("INCONCLUSIVE");
-        double logRatio = tcNode.path("log_ratio").asDouble(0.0);
-        int passCount = tcNode.path("passes").asInt(0);
-        int failCount = tcNode.path("fails").asInt(0);
-        int totalRuns = tcNode.path("runs").asInt(0);
-
-        if (decision.equals("REJECT"))
-          overallDecision = "REJECT";
-        else if (decision.equals("INCONCLUSIVE") && !overallDecision.equals("REJECT"))
-          overallDecision = "INCONCLUSIVE";
-
-        ObjectNode tcEntry = mapper.createObjectNode();
-        tcEntry.put("test_case_id", tcId);
-        tcEntry.put("decision", decision);
-        tcEntry.put("log_ratio", logRatio);
-        tcEntry.put("pass_count", passCount);
-        tcEntry.put("fail_count", failCount);
-        tcEntry.put("total_runs", totalRuns);
-        tcEntry.put("total_tokens", 0);
-        tcEntry.put("total_duration_ms", 0);
-        testCasesArray.add(tcEntry);
-      }
-    }
-
-    ObjectNode sprtNode = mapper.createObjectNode();
-    sprtNode.set("test_cases", testCasesArray);
-    sprtNode.put("overall_decision", overallDecision);
-    sprtNode.put("total_tokens", 0);
-    sprtNode.put("total_duration_ms", 0);
-
-    ObjectNode currentResult = mapper.createObjectNode();
-    // Persist model_id, effort, and failed_test_ids so subsequent runs can validate model consistency
-    // and prioritize previously-failed test cases across sessions.
-    String modelId = stateRoot.path("model_id").asString("");
-    if (modelId.isBlank())
-      throw new IllegalStateException(
-        "SprtRunner write-test-results: sprt state is missing required field model_id");
-    String effort = stateRoot.path("effort").asString("");
-    currentResult.put("model_id", modelId);
-    currentResult.put("effort", effort);
-    JsonNode failedIdsNode = stateRoot.path("failed_test_ids");
-    if (!failedIdsNode.isArray())
-      throw new IllegalStateException(
-        "SprtRunner write-test-results: sprt state is missing required field failed_test_ids");
-    currentResult.set("failed_test_ids", failedIdsNode);
-    currentResult.set("sprt", sprtNode);
-
-    ObjectNode output = mapper.createObjectNode();
-    Path testResultsFile = testDirPath.resolve("test-results.json");
-    if (Files.exists(testResultsFile))
-    {
-      JsonNode existing = mapper.readTree(testResultsFile.toFile());
-      if (existing.isObject())
-        output.setAll((ObjectNode) existing);
-    }
-
-    // Persist per [model, effort] aggregate snapshots.
-    output.set(resultKey(modelId, effort), currentResult);
-
-    // Write test-results.json
-    Files.createDirectories(testDirPath);
-    Files.writeString(testResultsFile, prettyJson(output), UTF_8);
-
-    // Stage the file
-    ProcessRunner.Result addResult = ProcessRunner.run(worktreePath,
-      "git", "add", "--", testResultsFile.toAbsolutePath().toString());
-    if (addResult.exitCode() != 0)
-      throw new IOException(
-        "SprtRunner write-test-results: git add failed with exit code " +
-        addResult.exitCode() + ": " + addResult.output());
-
-    // Commit with retry (3 attempts, exponential backoff)
-    String commitMessage = "test-results: update " + testDirPath.getFileName();
-    Random random = new Random();
-    boolean committed = false;
-    for (int attempt = 1; attempt <= 3; ++attempt)
-    {
-      ProcessRunner.Result commitResult = ProcessRunner.run(worktreePath,
-        "git", "commit", "-m", commitMessage);
-      if (commitResult.exitCode() == 0)
-      {
-        committed = true;
-        break;
-      }
-      if (attempt < 3)
-      {
-        // Exponential backoff: attempt 1 → 2±rand(2)s, attempt 2 → 4±rand(4)s
-        long baseMs = (long) Math.pow(2, attempt) * 1000L;
-        long jitterMs = (long) (random.nextDouble() * baseMs);
-        try
-        {
-          Thread.sleep(baseMs + jitterMs);
-        }
-        catch (InterruptedException _)
-        {
-          Thread.currentThread().interrupt();
-          break;
-        }
-      }
-    }
-
-    if (committed)
-    {
-      // Read the SHA of the commit just made so callers can reference the exact test state
-      ProcessRunner.Result shaResult = ProcessRunner.run(worktreePath,
-        "git", "rev-parse", "HEAD");
-      String testSha;
-      if (shaResult.exitCode() == 0)
-        testSha = shaResult.output().trim();
-      else
-        testSha = "";
-      StringJoiner resultLines = new StringJoiner("\n");
-      resultLines.add("status=ok");
-      resultLines.add("overall_decision=" + overallDecision);
-      resultLines.add("test_sha=" + testSha);
-      return resultLines.toString();
-    }
-    return "status=error\nmessage=git commit failed after 3 attempts";
-  }
-
-  /**
-   * Converts an object to compact JSON (single line without indentation).
-   *
-   * @param value the object to serialize
-   * @return compact JSON representation
-   */
-  private String compactJson(Object value)
-  {
-    try
-    {
-      return scope.getJsonMapper().writer().
-        withoutFeatures(SerializationFeature.INDENT_OUTPUT).
-        writeValueAsString(value);
-    }
-    catch (Exception e)
-    {
-      throw WrappedCheckedException.wrap(e);
-    }
-  }
-
-  /**
-   * Builds a stable key for a [model_id, effort] result entry.
-   *
-   * @param modelId the model id
-   * @param effort the effort level
-   * @return a stable map key
-   */
-  private static String resultKey(String modelId, String effort)
-  {
-    if (effort.isBlank())
-      return modelId + "|default";
-    return modelId + "|" + effort;
-  }
-
-  /**
-   * Removes the aggregate result for the current [model, effort] tuple before a new SPRT round.
-   *
-   * @param testDirPath the test directory
-   * @param modelId the model id
-   * @param effort the effort level
-   * @throws IOException if the file cannot be read or written
-   */
-  private void clearModelEffortResults(Path testDirPath, String modelId, String effort) throws IOException
-  {
-    Path testResultsPath = testDirPath.resolve("test-results.json");
-    if (Files.notExists(testResultsPath))
-      return;
-    JsonMapper mapper = scope.getJsonMapper();
-    JsonNode rootNode = mapper.readTree(testResultsPath.toFile());
-    if (!rootNode.isObject())
-      return;
-    ObjectNode root = (ObjectNode) rootNode;
-    root.remove(resultKey(modelId, effort));
-    Files.writeString(testResultsPath, prettyJson(root), UTF_8);
-  }
-
-  /**
-   * Finds the result entry matching the requested [model, effort] tuple.
-   *
-   * @param root the test-results root
-   * @param modelId the model id
-   * @param effort the effort level
-   * @return the matching result entry, or a missing node if not found
-   */
-  private JsonNode findResultForModelAndEffort(JsonNode root, String modelId, String effort)
-  {
-    JsonNode exact = root.path(resultKey(modelId, effort));
-    if (exact.isObject())
-      return exact;
-    return scope.getJsonMapper().missingNode();
-  }
-
-  /**
-   * Serializes the given value to a pretty-printed JSON string using the shared mapper's default
-   * {@code INDENT_OUTPUT} configuration.
-   *
-   * @param value the object to serialize
-   * @return pretty-printed JSON representation
-   */
-  private String prettyJson(Object value)
-  {
-    try
-    {
-      return scope.getJsonMapper().writeValueAsString(value);
-    }
-    catch (Exception e)
-    {
-      throw WrappedCheckedException.wrap(e);
-    }
+    return sprtResultsManager.writeTestResults(args);
   }
 
 
@@ -2329,7 +838,7 @@ public final class SprtRunner
    * @param bytes the bytes to hash
    * @return lowercase hex SHA-256 digest
    */
-  private static String sha256Bytes(byte[] bytes)
+  static String sha256Bytes(byte[] bytes)
   {
     try
     {
@@ -2342,139 +851,79 @@ public final class SprtRunner
     }
   }
 
-  /**
-   * Computes the SHA-256 hex digest of the contents of a file.
-   *
-   * @param filePath path to the file
-   * @return lowercase hex SHA-256 digest
-   * @throws IOException if the file cannot be read
-   */
-  private String sha256File(Path filePath) throws IOException
-  {
-    return sha256Bytes(Files.readAllBytes(filePath));
-  }
-
-  /**
-   * Computes a combined SHA-256 hex digest over all .md files in a directory, sorted by filename for
-   * determinism.
-   *
-   * @param directory the directory containing .md files
-   * @return lowercase hex SHA-256 digest
-   * @throws IOException if reading fails
-   */
-  private String sha256Directory(Path directory) throws IOException
-  {
-    List<Path> mdFiles = listMdFiles(directory);
-    try
-    {
-      MessageDigest digest = MessageDigest.getInstance("SHA-256");
-      for (Path file : mdFiles)
-      {
-        digest.update(file.getFileName().toString().getBytes(UTF_8));
-        digest.update(Files.readAllBytes(file));
-      }
-      return HexFormat.of().formatHex(digest.digest());
-    }
-    catch (NoSuchAlgorithmException e)
-    {
-      throw new AssertionError("SHA-256 algorithm not available", e);
-    }
-  }
-
-  /**
-   * Reads all test case IDs from a directory of {@code .md} test case files.
-   * <p>
-   * Each {@code .md} file's filename stem (without the {@code .md} extension) is its test case ID.
-   * Files are returned in sorted order for determinism.
-   *
-   * @param testDirPath path to the directory containing {@code .md} test case files
-   * @return list of test case ID strings in sorted filename order
-   * @throws IOException if the directory cannot be read
-   */
-  private List<String> readAllTestCaseIds(Path testDirPath) throws IOException
-  {
-    List<String> ids = new ArrayList<>();
-    for (Path mdFile : listMdFiles(testDirPath))
-    {
-      String id = stemOf(mdFile);
-      if (!id.isBlank())
-        ids.add(id);
-    }
-    return ids;
-  }
-
-  /**
-   * Lists all {@code .md} files in the given directory, sorted by filename for determinism.
-   *
-   * @param directory the directory to scan
-   * @return list of {@code .md} file paths in sorted order
-   * @throws IOException if the directory cannot be read
-   */
-  private List<Path> listMdFiles(Path directory) throws IOException
-  {
-    List<Path> result = new ArrayList<>();
-    try (Stream<Path> entries = Files.list(directory))
-    {
-      List<Path> sorted = entries.sorted(
-        Comparator.comparing(p -> p.getFileName().toString())).
-        toList();
-      for (Path entry : sorted)
-      {
-        String name = entry.getFileName().toString();
-        if (name.endsWith(".md") && Files.isRegularFile(entry))
-          result.add(entry);
-      }
-    }
-    return result;
-  }
-
-  /**
-   * Returns the filename stem (name without the last {@code .} extension) of the given path.
-   *
-   * @param path the file path
-   * @return the stem portion of the filename
-   */
-  private String stemOf(Path path)
-  {
-    String name = path.getFileName().toString();
-    int dotIndex = name.lastIndexOf('.');
-    if (dotIndex > 0)
-      return name.substring(0, dotIndex);
-    return name;
-  }
-
-  /**
-   * Validates that a candidate path is within the given boundary directory.
-   *
-   * @param boundary  the allowed root directory
-   * @param candidate the path to check
-   * @throws IllegalArgumentException if {@code candidate} is outside {@code boundary}
-   */
-  private void validatePathWithinBoundary(Path boundary, Path candidate) throws IOException
-  {
-    Path resolvedBoundary = boundary.toRealPath();
-    Path resolvedCandidate;
-    if (Files.exists(candidate))
-      resolvedCandidate = candidate.toRealPath();
-    else
-      resolvedCandidate = candidate.toAbsolutePath().normalize();
-    if (!resolvedCandidate.startsWith(resolvedBoundary))
-      throw new IllegalArgumentException(
-        "SprtRunner: path traversal detected: '" + candidate + "' is outside '" + boundary + "'");
-  }
-
   void validateConfiguration(String modelId, String effort)
   {
     validateModelAndEffort(runtimeId, modelId, effort);
   }
 
+  /**
+   * Runs a single-turn trial.
+   * <p>
+   * Equivalent to
+   * {@code runTrial(List.of(promptFile), modelId, effort, runnerWorktree, outputJson, logStream)}.
+   *
+   * @param promptFile the prompt file for the trial turn
+   * @param modelId the model id under test
+   * @param effort the effort level under test
+   * @param runnerWorktree the runner worktree
+   * @param outputJson the final output path
+   * @param logStream the output sink for launcher logs
+   * @return the nested runner exit code
+   * @throws IOException if trial execution fails
+   */
   int runTrial(Path promptFile, String modelId, String effort, String runnerWorktree,
     String outputJson, PrintStream logStream)
     throws IOException
   {
+    return runTrial(List.of(promptFile), modelId, effort, runnerWorktree, outputJson, logStream);
+  }
+
+  int runTrial(List<Path> promptFiles, String modelId, String effort, String runnerWorktree,
+    String outputJson, PrintStream logStream) throws IOException
+  {
+    requireThat(promptFiles, "promptFiles").isNotNull().isNotEmpty();
     requireThat(logStream, "logStream").isNotNull();
-    String[] args = buildTrialArgs(promptFile, modelId, effort, runnerWorktree, outputJson);
-    return runEngineCommand(args, runnerWorktree, logStream);
+    Path outputPath = Path.of(outputJson);
+    if (promptFiles.size() == 1)
+    {
+      Files.deleteIfExists(outputPath);
+      String[] args = buildTrialArgs(promptFiles.getFirst(), modelId, effort, runnerWorktree,
+        outputJson);
+      return runEngineCommand(args, runnerWorktree, logStream);
+    }
+    Path sessionFile = Path.of(runnerWorktree).resolve(".cat/work").resolve(
+      outputPath.getFileName().toString().replace(".json", "") + "-session.json");
+    Files.deleteIfExists(outputPath);
+    Files.deleteIfExists(sessionFile);
+    int exitCode = 0;
+    try
+    {
+      for (int i = 0; i < promptFiles.size(); ++i)
+      {
+        Path promptFile = promptFiles.get(i);
+        Files.deleteIfExists(outputPath);
+        String outputForTurn = null;
+        if (i == promptFiles.size() - 1)
+          outputForTurn = outputJson;
+        String[] args = buildTrialArgs(promptFile, modelId, effort, runnerWorktree, outputForTurn,
+          sessionFile);
+        exitCode = runEngineCommand(args, runnerWorktree, logStream);
+        if (exitCode != 0)
+        {
+          Files.deleteIfExists(outputPath);
+          return exitCode;
+        }
+        if (i < promptFiles.size() - 1 && Files.notExists(sessionFile))
+        {
+          throw new IOException("Multi-turn runner did not persist session state: " + sessionFile);
+        }
+      }
+      return exitCode;
+    }
+    finally
+    {
+      Files.deleteIfExists(sessionFile);
+    }
   }
 
   int runGrader(Path graderPromptFile, String modelId, String effort, String runnerWorktree,
@@ -2488,53 +937,277 @@ public final class SprtRunner
     return runEngineCommand(args, runnerWorktree, out);
   }
 
+  /**
+   * Runs a nested engine launcher and streams its output to the supplied print stream.
+   *
+   * @param args the launcher arguments
+   * @param runnerWorktree the runner worktree
+   * @param out the destination for launcher output
+   * @return the nested process exit code
+   * @throws IOException if process startup, output draining, or timeout cleanup fails
+   */
   private int runEngineCommand(String[] args, String runnerWorktree, PrintStream out) throws IOException
   {
     Path launcher = launcherPath(runnerWorktree);
+    AtomicReference<Exception> readerFailure = new AtomicReference<>();
+    Thread stdoutReader = null;
+    try (Process process = startEngineProcess(args, launcher))
+    {
+      stdoutReader = startStdoutReader(process, out, readerFailure);
+      long deadlineNanos = System.nanoTime() + processTimeout.toNanos();
+      waitForProcessCompletion(process, stdoutReader, readerFailure, deadlineNanos, launcher);
+      return process.exitValue();
+    }
+    catch (InterruptedException e)
+    {
+      Thread.currentThread().interrupt();
+      if (stdoutReader != null)
+        stopReaderThread(stdoutReader);
+      throw new IOException("Interrupted while waiting for " + launcher.getFileName(), e);
+    }
+  }
+
+  /**
+   * Starts the nested engine process for a launcher invocation.
+   *
+   * @param args the launcher arguments
+   * @param launcher the launcher executable path
+   * @return the started process
+   * @throws IOException if process startup fails
+   */
+  private Process startEngineProcess(String[] args, Path launcher) throws IOException
+  {
     List<String> command = new ArrayList<>(args.length + 1);
     command.add(launcher.toString());
     command.addAll(List.of(args));
     ProcessBuilder builder = new ProcessBuilder(command);
     builder.redirectErrorStream(true);
-    Process process = builder.start();
-    try (BufferedReader reader = new BufferedReader(
-      new InputStreamReader(process.getInputStream(), UTF_8)))
+    return builder.start();
+  }
+
+  /**
+   * Starts the stdout reader thread that mirrors launcher output to the supplied stream.
+   *
+   * @param process the nested engine process
+   * @param out the output sink
+   * @param readerFailure captures reader-thread failures
+   * @return the started reader thread
+   */
+  private Thread startStdoutReader(Process process, PrintStream out, AtomicReference<Exception> readerFailure)
+  {
+    return Thread.ofVirtual().start(() ->
     {
-      while (true)
+      try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), UTF_8)))
       {
-        String line = reader.readLine();
-        if (line == null)
-          break;
-        out.println(line);
+        while (true)
+        {
+          String line = reader.readLine();
+          if (line == null)
+            break;
+          out.println(line);
+        }
       }
-    }
-    catch (IOException e)
+      catch (IOException | RuntimeException e)
+      {
+        readerFailure.set(e);
+      }
+    });
+  }
+
+  /**
+   * Waits for process completion and drains stdout within the shared timeout budget.
+   *
+   * @param process the nested engine process
+   * @param stdoutReader the stdout reader thread
+   * @param readerFailure captures reader-thread failures
+   * @param deadlineNanos the absolute timeout deadline from {@link System#nanoTime()}
+   * @param launcher the launcher executable path
+   * @throws IOException if the process, reader, or timeout path fails
+   * @throws InterruptedException if interrupted while waiting
+   */
+  private void waitForProcessCompletion(Process process, Thread stdoutReader,
+    AtomicReference<Exception> readerFailure, long deadlineNanos, Path launcher)
+    throws IOException, InterruptedException
+  {
+    boolean completed = waitForProcessOrReaderFailure(process, readerFailure, deadlineNanos);
+    rethrowProcessReaderFailure(process, stdoutReader, readerFailure.get());
+    if (!completed)
     {
-      process.destroyForcibly();
-      throw e;
+      abortEngineProcess(process, stdoutReader);
+      throw new IOException("Timeout while waiting for " + launcher.getFileName());
     }
-    try
+    joinStdoutReader(process, stdoutReader, deadlineNanos, launcher);
+    rethrowReaderFailure(readerFailure.get());
+  }
+
+  /**
+   * Rethrows a reader failure after aborting the process and stopping the reader thread.
+   *
+   * @param process the nested engine process
+   * @param stdoutReader the stdout reader thread
+   * @param readerFailure the captured reader failure
+   * @throws IOException if the failure should surface as checked I/O
+   */
+  private void rethrowProcessReaderFailure(Process process, Thread stdoutReader,
+    Exception readerFailure) throws IOException
+  {
+    if (readerFailure == null)
+      return;
+    abortEngineProcess(process, stdoutReader);
+    rethrowReaderFailure(readerFailure);
+  }
+
+  /**
+   * Joins the stdout reader within the remaining timeout budget.
+   *
+   * @param process the nested engine process
+   * @param stdoutReader the stdout reader thread
+   * @param deadlineNanos the absolute timeout deadline from {@link System#nanoTime()}
+   * @param launcher the launcher executable path
+   * @throws IOException if draining stdout times out
+   * @throws InterruptedException if interrupted while joining
+   */
+  private void joinStdoutReader(Process process, Thread stdoutReader, long deadlineNanos, Path launcher)
+    throws IOException, InterruptedException
+  {
+    long remainingNanos = Math.max(0L, deadlineNanos - System.nanoTime());
+    stdoutReader.join(Duration.ofNanos(remainingNanos).toMillis());
+    if (stdoutReader.isAlive())
     {
-      return process.waitFor();
-    }
-    catch (InterruptedException e)
-    {
-      Thread.currentThread().interrupt();
-      process.destroyForcibly();
-      throw new IOException("Interrupted while waiting for " + launcher.getFileName(), e);
+      abortEngineProcess(process, stdoutReader);
+      throw new IOException("Timeout while draining stdout for " + launcher.getFileName());
     }
   }
 
+  /**
+   * Forcibly stops the process and asks the stdout reader to exit.
+   *
+   * @param process the nested engine process
+   * @param stdoutReader the stdout reader thread; may be {@code null}
+   */
+  private void abortEngineProcess(Process process, Thread stdoutReader)
+  {
+    process.destroyForcibly();
+    if (stdoutReader != null)
+      stopReaderThread(stdoutReader);
+  }
+
+  /**
+   * Waits until the nested process exits, the stdout reader fails, or the deadline expires.
+   *
+   * @param process the nested process
+   * @param readerFailure captures reader-thread failures
+   * @param deadlineNanos the absolute timeout deadline from {@link System#nanoTime()}
+   * @return {@code true} if the process exited before the deadline; otherwise {@code false}
+   * @throws InterruptedException if interrupted while waiting
+   */
+  private static boolean waitForProcessOrReaderFailure(Process process,
+    AtomicReference<Exception> readerFailure, long deadlineNanos) throws InterruptedException
+  {
+    while (true)
+    {
+      if (readerFailure.get() != null)
+        return process.waitFor(0, TimeUnit.MILLISECONDS);
+      long remainingNanos = deadlineNanos - System.nanoTime();
+      if (remainingNanos <= 0)
+        return false;
+      long waitMillis = Math.min(Duration.ofNanos(remainingNanos).toMillis(), WAIT_POLL.toMillis());
+      if (waitMillis <= 0)
+        waitMillis = 1;
+      if (process.waitFor(waitMillis, TimeUnit.MILLISECONDS))
+        return true;
+    }
+  }
+
+  /**
+   * Rethrows a reader-thread failure using the closest checked-exception shape.
+   *
+   * @param readerFailure the captured reader failure
+   * @throws IOException if the failure should surface as checked I/O
+   */
+  private static void rethrowReaderFailure(Exception readerFailure) throws IOException
+  {
+    if (readerFailure == null)
+      return;
+    if (readerFailure instanceof IOException ioException)
+      throw ioException;
+    if (readerFailure instanceof RuntimeException runtimeException)
+      throw runtimeException;
+    throw new IOException(readerFailure.getMessage(), readerFailure);
+  }
+
+  /**
+   * Interrupts and briefly joins the stdout reader thread during cleanup.
+   *
+   * @param stdoutReader the reader thread to stop
+   */
+  private void stopReaderThread(Thread stdoutReader)
+  {
+    stdoutReader.interrupt();
+    try
+    {
+      stdoutReader.join(100);
+    }
+    catch (InterruptedException _)
+    {
+      Thread.currentThread().interrupt();
+    }
+  }
+
+  /**
+   * Builds one-shot trial arguments without managed-session persistence.
+   * <p>
+   * Equivalent to
+   * {@code buildTrialArgs(promptFile, modelId, effort, runnerWorktree, outputJson, null)}.
+   *
+   * @param promptFile the prompt file for the trial turn
+   * @param modelId the model id under test
+   * @param effort the effort level under test
+   * @param runnerWorktree the runner worktree
+   * @param outputJson the final output path
+   * @return the launcher argument vector
+   */
   private String[] buildTrialArgs(Path promptFile, String modelId,
     String effort, String runnerWorktree, String outputJson)
+  {
+    return buildTrialArgs(promptFile, modelId, effort, runnerWorktree, outputJson, null);
+  }
+
+  /**
+   * Builds trial arguments for one-shot or managed-session execution.
+   *
+   * @param promptFile the prompt file for the trial turn
+   * @param modelId the model id under test
+   * @param effort the effort level under test
+   * @param runnerWorktree the runner worktree
+   * @param outputJson the optional final output path
+   * @param sessionFile the optional managed-session file
+   * @return the launcher argument vector
+   */
+  private String[] buildTrialArgs(Path promptFile, String modelId, String effort,
+    String runnerWorktree, String outputJson, Path sessionFile)
   {
     validateModelAndEffort(runtimeId, modelId, effort);
     Path jlinkBin = jlinkBin(runnerWorktree, runtimeId);
     Set<String> flags = supportedFlags(runnerWorktree);
+    if (sessionFile != null && !flags.contains("--session-file"))
+    {
+      throw new IllegalArgumentException(launcherPath(runnerWorktree).getFileName() +
+        " does not support --session-file; update the runner/plugin cache before multi-turn SPRT");
+    }
     return buildTrialArgsInternal(promptFile, modelId, effort, runnerWorktree, outputJson,
-      jlinkBin, flags.contains("--plugin-source") && flags.contains("--jlink-bin"));
+      jlinkBin, flags.contains("--plugin-source") && flags.contains("--jlink-bin"), sessionFile);
   }
 
+  /**
+   * Builds grader-runner arguments for the current engine/runtime.
+   *
+   * @param graderPromptFile the grader prompt file
+   * @param modelId the grader model id
+   * @param effort the grader effort level
+   * @param runnerWorktree the runner worktree
+   * @return the launcher argument vector
+   */
   private String[] buildGraderArgs(Path graderPromptFile, String modelId,
     String effort, String runnerWorktree)
   {
@@ -2546,6 +1219,13 @@ public final class SprtRunner
       flags.contains("--agent"));
   }
 
+  /**
+   * Resolves the fixed grader model/effort pair for the current runner worktree.
+   *
+   * @param runnerWorktree the runner worktree
+   * @return the grader model configuration
+   * @throws IOException if the grader agent descriptor cannot be read
+   */
   private GraderModelEffort resolveGraderModelEffort(String runnerWorktree)
     throws IOException
   {
@@ -2554,14 +1234,27 @@ public final class SprtRunner
       scope.getPluginDescriptor(), claudeCodeVersion);
   }
 
+  /**
+   * Builds trial arguments once engine-specific capability checks are complete.
+   *
+   * @param promptFile the prompt file for the trial turn
+   * @param modelId the model id under test
+   * @param effort the effort level under test
+   * @param runnerWorktree the runner worktree
+   * @param outputJson the optional final output path
+   * @param jlinkBin the runner jlink bin directory
+   * @param includeClaudeFlags whether Claude-specific runner flags should be emitted
+   * @param sessionFile the optional managed-session file
+   * @return the launcher argument vector
+   */
   private static String[] buildTrialArgsInternal(Path promptFile, String modelId, String effort,
-    String runnerWorktree, String outputJson, Path jlinkBin, boolean includeClaudeFlags)
+    String runnerWorktree, String outputJson, Path jlinkBin, boolean includeClaudeFlags,
+    Path sessionFile)
   {
     requireThat(promptFile, "promptFile").isNotNull();
     requireThat(modelId, "modelId").isNotBlank();
     requireThat(effort, "effort").isNotBlank();
     requireThat(runnerWorktree, "runnerWorktree").isNotBlank();
-    requireThat(outputJson, "outputJson").isNotBlank();
     if (includeClaudeFlags)
       requireThat(jlinkBin, "jlinkBin").isNotNull();
     List<String> args = new ArrayList<>();
@@ -2580,11 +1273,32 @@ public final class SprtRunner
     }
     args.add("--cwd");
     args.add(runnerWorktree);
-    args.add("--output");
-    args.add(outputJson);
+    if (outputJson != null && !outputJson.isBlank())
+    {
+      args.add("--output");
+      args.add(outputJson);
+    }
+    if (sessionFile != null)
+    {
+      args.add("--session-file");
+      args.add(sessionFile.toString());
+    }
     return args.toArray(String[]::new);
   }
 
+  /**
+   * Builds grader arguments once engine-specific capability checks are complete.
+   *
+   * @param graderPromptFile the grader prompt file
+   * @param modelId the grader model id
+   * @param effort the grader effort level
+   * @param runnerWorktree the runner worktree
+   * @param gradeOutputPath the optional grader output path
+   * @param jlinkBin the runner jlink bin directory
+   * @param includeClaudeFlags whether Claude-specific runner flags should be emitted
+   * @param includeAgentFlag whether the runner supports explicit agent selection
+   * @return the launcher argument vector
+   */
   private static String[] buildGraderArgsInternal(Path graderPromptFile, String modelId,
     String effort, String runnerWorktree, String gradeOutputPath, Path jlinkBin,
     boolean includeClaudeFlags, boolean includeAgentFlag)
@@ -2624,6 +1338,18 @@ public final class SprtRunner
     return args.toArray(String[]::new);
   }
 
+  /**
+   * Resolves the grader model configuration from a single plugin root.
+   * <p>
+   * Equivalent to
+   * {@code resolveGraderModelEffort(List.of(pluginRoot), descriptor, claudeCodeVersion)}.
+   *
+   * @param pluginRoot the plugin root to inspect
+   * @param descriptor the active plugin descriptor
+   * @param claudeCodeVersion the Claude Code version for model alias resolution
+   * @return the grader model configuration
+   * @throws IOException if descriptor inspection fails
+   */
   private static GraderModelEffort resolveGraderModelEffort(Path pluginRoot,
     Path descriptor, String claudeCodeVersion) throws IOException
   {
@@ -2631,6 +1357,15 @@ public final class SprtRunner
     return resolveGraderModelEffort(List.of(pluginRoot), descriptor, claudeCodeVersion);
   }
 
+  /**
+   * Resolves the grader model configuration from one or more candidate plugin roots.
+   *
+   * @param pluginRoots the plugin roots to inspect
+   * @param descriptor the active plugin descriptor
+   * @param claudeCodeVersion the Claude Code version for model alias resolution
+   * @return the grader model configuration
+   * @throws IOException if descriptor inspection fails
+   */
   private static GraderModelEffort resolveGraderModelEffort(List<Path> pluginRoots,
     Path descriptor, String claudeCodeVersion) throws IOException
   {
@@ -2664,6 +1399,13 @@ public final class SprtRunner
     return new GraderModelEffort(modelId, effort);
   }
 
+  /**
+   * Finds the first existing grader-agent descriptor among the candidate plugin roots.
+   *
+   * @param pluginRoots the plugin roots to inspect
+   * @param graderRuntimeId the grader runtime id
+   * @return the first matching descriptor path
+   */
   private static Path findGraderAgentDescriptorPath(List<Path> pluginRoots,
     String graderRuntimeId)
   {
@@ -2681,6 +1423,13 @@ public final class SprtRunner
       "Instruction grader agent descriptor not found. Searched: " + candidates);
   }
 
+  /**
+   * Returns the candidate grader-agent descriptor paths for a runtime.
+   *
+   * @param pluginRoot the plugin root to inspect
+   * @param graderRuntimeId the grader runtime id
+   * @return the candidate descriptor paths
+   */
   private static List<Path> graderAgentDescriptorPaths(Path pluginRoot,
     String graderRuntimeId)
   {
@@ -2696,6 +1445,14 @@ public final class SprtRunner
     };
   }
 
+  /**
+   * Extracts a YAML frontmatter field from an agent markdown file.
+   *
+   * @param agentPath the agent descriptor path
+   * @param fieldName the field name to extract
+   * @return the extracted value, or an empty string
+   * @throws IOException if the agent file cannot be read
+   */
   private static String extractYamlFrontmatterField(Path agentPath, String fieldName)
     throws IOException
   {
@@ -2710,6 +1467,14 @@ public final class SprtRunner
     return node.asString("");
   }
 
+  /**
+   * Extracts a TOML string field from an agent descriptor.
+   *
+   * @param agentPath the agent descriptor path
+   * @param fieldName the field name to extract
+   * @return the extracted value, or an empty string
+   * @throws IOException if the agent file cannot be read
+   */
   private static String extractTomlStringField(Path agentPath, String fieldName)
     throws IOException
   {
@@ -2730,6 +1495,12 @@ public final class SprtRunner
     return "";
   }
 
+  /**
+   * Parses a TOML string literal or bare value from the right-hand side of an assignment.
+   *
+   * @param rawValue the raw TOML value expression
+   * @return the parsed scalar value
+   */
   private static String parseTomlStringValue(String rawValue)
   {
     if (rawValue.isEmpty())
@@ -2749,6 +1520,13 @@ public final class SprtRunner
     return withoutComment.strip();
   }
 
+  /**
+   * Dispatches runtime-specific model/effort validation.
+   *
+   * @param runtimeId the engine runtime id
+   * @param modelId the model id to validate
+   * @param effort the effort level to validate
+   */
   private static void validateModelAndEffort(String runtimeId, String modelId, String effort)
   {
     requireThat(runtimeId, "runtimeId").isNotBlank();
@@ -2760,6 +1538,12 @@ public final class SprtRunner
     }
   }
 
+  /**
+   * Validates a Claude model/effort pair.
+   *
+   * @param modelId the model id to validate
+   * @param effort the effort level to validate
+   */
   private static void validateClaudeModelAndEffort(String modelId, String effort)
   {
     requireThat(modelId, "modelId").isNotBlank();
@@ -2769,6 +1553,12 @@ public final class SprtRunner
     validateEffort(effort, CLAUDE_EFFORT_LEVELS);
   }
 
+  /**
+   * Validates a Codex model/effort pair.
+   *
+   * @param modelId the model id to validate
+   * @param effort the effort level to validate
+   */
   private static void validateCodexModelAndEffort(String modelId, String effort)
   {
     requireThat(modelId, "modelId").isNotBlank();
@@ -2778,6 +1568,12 @@ public final class SprtRunner
     validateEffort(effort, CODEX_EFFORT_LEVELS);
   }
 
+  /**
+   * Validates that an effort value belongs to the allowed set.
+   *
+   * @param effort the effort value to validate
+   * @param allowedEffort the allowed effort values
+   */
   private static void validateEffort(String effort, List<String> allowedEffort)
   {
     if (!allowedEffort.contains(effort))
@@ -2808,18 +1604,30 @@ public final class SprtRunner
     requireThat(descriptor, "descriptor").isNotNull();
     Path parent = descriptor.getParent();
     if (parent == null)
-      throw new IllegalStateException("Plugin descriptor has no parent directory: " + descriptor);
+      throw new IllegalStateException("Unsupported CAT engine descriptor: " + descriptor);
     String name = parent.getFileName().toString();
     if (!name.startsWith(".") || !name.endsWith("-plugin"))
-      throw new IllegalStateException("Unsupported plugin descriptor path: " + descriptor);
+      throw new IllegalStateException("Unsupported CAT engine descriptor: " + descriptor);
     return name.substring(1, name.length() - "-plugin".length());
   }
 
+  /**
+   * Returns the runner launcher path inside a runner worktree.
+   *
+   * @param runnerWorktree the runner worktree
+   * @return the launcher path
+   */
   private Path launcherPath(String runnerWorktree)
   {
     return jlinkBin(runnerWorktree, runtimeId).resolve(runtimeId + "-runner");
   }
 
+  /**
+   * Returns the supported CLI flags for the nested runner launcher.
+   *
+   * @param runnerWorktree the runner worktree
+   * @return the supported flag set
+   */
   private Set<String> supportedFlags(String runnerWorktree)
   {
     Path launcher = launcherPath(runnerWorktree);
@@ -2829,7 +1637,8 @@ public final class SprtRunner
       ProcessRunner.Result result = ProcessRunner.run(Path.of(runnerWorktree), launcherPath, "--help");
       String help = result.output();
       Set<String> flags = new HashSet<>();
-      for (String token: List.of("--plugin-source", "--jlink-bin", "--agent", "--output"))
+      for (String token: List.of("--plugin-source", "--jlink-bin", "--agent", "--output",
+        "--session-file"))
       {
         if (help.contains(token))
           flags.add(token);

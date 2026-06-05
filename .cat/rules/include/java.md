@@ -311,6 +311,31 @@ that call at the use site instead. For example, prefer `hookPayload.toString()` 
 whose body only null-checks `hookPayload` and returns `hookPayload.toString()`, because the method call already fails
 fast on null.
 
+### Method And Class Size
+
+Try to keep methods at 80 lines or fewer when practical. If a method grows beyond that, prefer splitting it into
+smaller helpers with clearer responsibilities when doing so improves readability rather than adding indirection.
+
+Try to keep classes at 2000 lines or fewer when practical. If a class grows beyond that, prefer splitting it into
+smaller collaborating classes when the extracted pieces have coherent responsibilities and do not just move code around
+mechanically.
+
+### Design Principles
+
+Prefer designs that follow SOLID principles, with one project-specific exception:
+
+- **Single Responsibility Principle:** Prefer methods and classes with one clear responsibility and one clear reason
+  to change.
+- **Open/Closed Principle:** Prefer designs that can be extended through composition, focused collaborators, or
+  localized changes instead of repeatedly editing large unrelated code paths.
+- **Liskov Substitution Principle:** When using inheritance or implementing a contract, make sure subtypes preserve
+  the parent contract's behavior rather than introducing surprising preconditions, side effects, or weaker guarantees.
+- **Interface Segregation Principle:** Prefer small, focused interfaces and APIs so callers depend only on the
+  operations they actually need.
+- **Dependency Inversion Principle:** Do not introduce abstractions up-front just to satisfy DIP in theory. Create
+  abstractions on demand, when there is a real need for multiple implementations, substitution, or test seams that
+  justify the extra indirection.
+
 ### StringBuilder Empty Check
 Use `!sb.isEmpty()` instead of `sb.length() > 0` to check whether a `StringBuilder` is empty:
 
@@ -850,6 +875,9 @@ import io.github.cowwoc.cat.engine.hook.skills.DisplayUtils;
   to validate parameters)
 - Document parameters with `@param`
 - Document return values with `@return`
+- **Delegating overloads must document how they differ from the full overload**. If one overload forwards to another
+  with defaults, state that explicitly in the Javadoc (for example, "Equivalent to
+  {@code method(name, 18)}")
 - Do not duplicate constraint info in `@param` that is already in `@throws` (e.g., don't write "must not be null" if
   `@throws NullPointerException` documents it)
 - **`@throws` must reference method parameter names** using `{@code paramName}` so readers can trace exception source
@@ -875,6 +903,25 @@ import io.github.cowwoc.cat.engine.hook.skills.DisplayUtils;
  * @param args file paths to count tokens for
  * @throws NullPointerException if {@code args} contains a null element
  */
+
+// Good - delegating overload explains the defaulted argument
+/**
+ * Equivalent to {@code method(name, 18)}.
+ *
+ * @param name the person's name
+ */
+public void method(String name)
+{
+  method(name, 18);
+}
+
+/**
+ * @param name the person's name
+ * @param age the person's age
+ */
+public void method(String name, int age)
+{
+}
 
 // Bad - missing {@code} annotation
 /**

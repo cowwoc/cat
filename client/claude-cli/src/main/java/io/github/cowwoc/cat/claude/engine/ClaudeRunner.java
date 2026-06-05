@@ -9,6 +9,10 @@ package io.github.cowwoc.cat.claude.engine;
 import static io.github.cowwoc.cat.tool.Strings.block;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.engine.NestedRunnerSessionState;
+import io.github.cowwoc.cat.engine.NestedRunnerEvent;
+import io.github.cowwoc.cat.engine.NestedRunnerState;
+import io.github.cowwoc.cat.engine.NestedRunnerTurnState;
 import io.github.cowwoc.cat.tool.CliTool;
 import io.github.cowwoc.cat.tool.util.FileUtils;
 import io.github.cowwoc.cat.tool.MainCliTool;
@@ -26,9 +30,10 @@ import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
-import java.util.Arrays;
+import java.nio.file.StandardCopyOption;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,14 +41,12 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.StringJoiner;
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.TimeUnit;
-
-import tools.jackson.databind.JsonNode;
+import java.util.function.Consumer;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.ObjectWriter;
-import tools.jackson.databind.node.ObjectNode;
 
 /**
  * Launches Claude Code CLI processes with optional config directory isolation.
@@ -63,21 +66,47 @@ public final class ClaudeRunner implements AutoCloseable
    * Default timeout for the Claude CLI process.
    */
   private static final Duration DEFAULT_TIMEOUT = Duration.ofMinutes(10);
+  private static final Duration WAIT_POLL = Duration.ofMillis(50);
   private final CliTool scope;
   private final ObjectWriter compactWriter;
+  private final ClaudeStreamJsonBuilder streamJsonBuilder;
+  private final ClaudeSessionOutputParser sessionOutputParser;
+  private final Duration timeout;
   private Path isolatedConfigDir;
   private Path isolatedPluginRoot;
 
   /**
    * Creates a new process launcher without config isolation.
+   * <p>
+   * Equivalent to {@code new ClaudeRunner(scope, DEFAULT_TIMEOUT)}.
    *
    * @param scope the scope providing JSON mapper and config paths
    * @throws NullPointerException if {@code scope} is null
    */
   public ClaudeRunner(CliTool scope)
   {
+    this(scope, DEFAULT_TIMEOUT);
+  }
+
+  /**
+   * Creates a new process launcher without config isolation.
+   *
+   * @param scope   the scope providing JSON mapper and config paths
+   * @param timeout the process timeout
+   * @throws NullPointerException     if {@code scope} or {@code timeout} is null
+   * @throws IllegalArgumentException if {@code timeout} is not positive
+   */
+  public ClaudeRunner(CliTool scope, Duration timeout)
+  {
+    requireThat(scope, "scope").isNotNull();
+    requireThat(timeout, "timeout").isNotNull();
+    if (!timeout.isPositive())
+      throw new IllegalArgumentException("timeout must be positive");
     this.scope = scope;
     this.compactWriter = scope.getJsonMapper().writer().without(SerializationFeature.INDENT_OUTPUT);
+    this.streamJsonBuilder = new ClaudeStreamJsonBuilder(scope.getJsonMapper(), compactWriter);
+    this.sessionOutputParser = new ClaudeSessionOutputParser(scope.getJsonMapper());
+    this.timeout = timeout;
   }
 
   /**
@@ -145,7 +174,8 @@ public final class ClaudeRunner implements AutoCloseable
   /**
    * Builds the claude CLI command with appropriate flags.
    * <p>
-   * Constructs a command that invokes the native Claude CLI binary directly.
+   * Constructs a command that invokes the native Claude CLI binary directly. Equivalent to
+   * {@code buildCommand(model, effort, appendSystemPrompt, agent, "")}.
    *
    * @param model              the model name (haiku, sonnet, or opus)
    * @param effort             the reasoning effort level
@@ -161,6 +191,24 @@ public final class ClaudeRunner implements AutoCloseable
   public List<String> buildCommand(String model, String effort, String appendSystemPrompt,
     String agent)
   {
+    return buildCommand(model, effort, appendSystemPrompt, agent, "");
+  }
+
+  /**
+   * Builds the claude CLI command with appropriate flags.
+   *
+   * @param model              the model name (haiku, sonnet, or opus)
+   * @param effort             the reasoning effort level
+   * @param appendSystemPrompt the text to append to the system prompt via
+   *                           {@code --append-system-prompt}, or empty string for none
+   * @param agent              the agent type name to pass via {@code --agent}, or empty string for
+   *                           none
+   * @param resumeSessionId    the Claude session to resume, or empty string to start a new one
+   * @return the command as a list of strings
+   */
+  public List<String> buildCommand(String model, String effort, String appendSystemPrompt,
+    String agent, String resumeSessionId)
+  {
     requireThat(model, "model").isNotBlank();
     if (!ModelIdResolver.knownModels().contains(model))
     {
@@ -175,6 +223,8 @@ public final class ClaudeRunner implements AutoCloseable
     }
     requireThat(appendSystemPrompt, "appendSystemPrompt").isNotNull();
     requireThat(agent, "agent").isNotNull();
+    requireThat(resumeSessionId, "resumeSessionId").isNotNull();
+    validateResumeSessionId(resumeSessionId);
     List<String> command = new ArrayList<>();
     command.add("claude");
     command.add("-p");
@@ -188,6 +238,11 @@ public final class ClaudeRunner implements AutoCloseable
     command.add("stream-json");
     command.add("--verbose");
     command.add("--dangerously-skip-permissions");
+    if (!resumeSessionId.isBlank())
+    {
+      command.add("--resume");
+      command.add(resumeSessionId);
+    }
     if (!appendSystemPrompt.isEmpty())
     {
       command.add("--append-system-prompt");
@@ -215,43 +270,7 @@ public final class ClaudeRunner implements AutoCloseable
   public String buildInput(List<PrimingMessage> primingMessages, List<String> prompts,
     List<String> systemReminders)
   {
-    requireThat(primingMessages, "primingMessages").isNotNull();
-    requireThat(prompts, "prompts").isNotNull();
-    requireThat(systemReminders, "systemReminders").isNotNull();
-    StringJoiner joiner = new StringJoiner("\n");
-    int toolUseCounter = 0;
-    for (PrimingMessage msg : primingMessages)
-    {
-      switch (msg)
-      {
-        case PrimingMessage.UserMessage userMsg ->
-          joiner.add(makeUserMessage(userMsg.text()));
-        case PrimingMessage.ToolUse toolUse ->
-        {
-          String toolUseId = "toolu_priming_" + toolUseCounter;
-          ++toolUseCounter;
-          joiner.add(makeToolUseMessage(toolUseId, toolUse.tool(), toolUse.input()));
-          joiner.add(makeToolResultMessage(toolUseId, toolUse.output()));
-        }
-      }
-    }
-    for (String prompt : prompts)
-    {
-      String finalPrompt = prompt;
-      if (!systemReminders.isEmpty())
-      {
-        StringBuilder sb = new StringBuilder(prompt);
-        for (String reminder : systemReminders)
-        {
-          sb.append("\n<system-reminder>\n").
-            append(reminder).
-            append("\n</system-reminder>");
-        }
-        finalPrompt = sb.toString();
-      }
-      joiner.add(makeUserMessage(finalPrompt));
-    }
-    return joiner.toString();
+    return streamJsonBuilder.buildInput(primingMessages, prompts, systemReminders);
   }
 
   /**
@@ -295,7 +314,8 @@ public final class ClaudeRunner implements AutoCloseable
    * line-by-line to avoid buffering the full response in memory.
    * <p>
    * If an isolated config directory has been created via {@link #createIsolatedConfig},
-   * the process will use it via the {@code CLAUDE_CONFIG_DIR} environment variable.
+   * the process will use it via the {@code CLAUDE_CONFIG_DIR} environment variable. Equivalent to
+   * {@code executeProcess(command, input, cwd, false, _ -> {})}.
    *
    * @param command the command to execute
    * @param input   the stream-json input to send to the process
@@ -305,44 +325,346 @@ public final class ClaudeRunner implements AutoCloseable
    */
   public ProcessResult executeProcess(List<String> command, String input, Path cwd)
   {
+    return executeProcess(command, input, cwd, false, _ -> {});
+  }
+
+  /**
+   * Executes the Claude CLI process with the given input, optionally preserving resumable state.
+   * <p>
+   * Equivalent to
+   * {@code executeProcess(command, input, cwd, preserveResumableState, _ -> {})}.
+   *
+   * @param command                the command to execute
+   * @param input                  the stream-json input to send to the process
+   * @param cwd                    the working directory
+   * @param preserveResumableState whether to preserve a resumable waiting boundary instead of
+   *                               converting it into terminal completion once the process exits
+   * @return the process result with parsed output, elapsed time, and error
+   * @throws NullPointerException if {@code command}, {@code input}, or {@code cwd} are null
+   */
+  public ProcessResult executeProcess(List<String> command, String input, Path cwd,
+    boolean preserveResumableState)
+  {
+    return executeProcess(command, input, cwd, preserveResumableState, _ -> {});
+  }
+
+  /**
+   * Executes the Claude CLI process with the given input, optionally preserving resumable state,
+   * while streaming state updates to a listener.
+   *
+   * @param command                the command to execute
+   * @param input                  the stream-json input to send to the process
+   * @param cwd                    the working directory
+   * @param preserveResumableState whether to preserve a resumable waiting boundary instead of
+   *                               converting it into terminal completion once the process exits
+   * @param eventListener          receives state snapshots as relevant engine events arrive;
+   *                               callbacks reflect only emitted engine events, while the returned
+   *                               result may further normalize one-shot completion after exit;
+   *                               listeners must return promptly and should honor interruption
+   * @return the process result with parsed output, elapsed time, and error
+   * @throws NullPointerException if {@code command}, {@code input}, {@code cwd}, or
+   *                              {@code eventListener} are null
+   */
+  public ProcessResult executeProcess(List<String> command, String input, Path cwd,
+    boolean preserveResumableState, Consumer<NestedRunnerEvent> eventListener)
+  {
     requireThat(command, "command").isNotNull();
     requireThat(input, "input").isNotNull();
     requireThat(cwd, "cwd").isNotNull();
-    long startTime = System.nanoTime();
+    requireThat(eventListener, "eventListener").isNotNull();
+    long startTimeNanos = System.nanoTime();
     ParsedOutput empty = new ParsedOutput(List.of(), List.of(), List.of(), List.of(), "");
+    NestedRunnerState emptyState = new NestedRunnerState("", "", "", "",
+      NestedRunnerTurnState.UNKNOWN, NestedRunnerSessionState.UNKNOWN, false, "", "");
     try
     {
       try (Process process = buildProcessBuilder(command, cwd).start())
       {
-        try (OutputStreamWriter writer = new OutputStreamWriter(
-          process.getOutputStream(), StandardCharsets.UTF_8))
-        {
-          writer.write(input);
-        }
+        ParsedSessionOutput[] resultHolder = new ParsedSessionOutput[1];
+        AtomicReference<Exception> readerFailure = new AtomicReference<>();
+        Thread stdoutReader = startOutputReader(process, eventListener, resultHolder,
+          readerFailure);
+        writeProcessInput(process, input);
 
-        ParsedOutput parsed;
-        try (BufferedReader reader = new BufferedReader(
-          new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
-        {
-          parsed = parseOutput(reader);
-        }
-
-        boolean completed = process.waitFor(DEFAULT_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
-        Duration elapsed = Duration.ofNanos(System.nanoTime() - startTime);
-
-        if (!completed)
-        {
-          process.destroyForcibly();
-          return new ProcessResult(empty, elapsed, "timeout");
-        }
-
-        return new ProcessResult(parsed, elapsed, "");
+        AwaitedProcess awaited = awaitProcess(process, stdoutReader, readerFailure, resultHolder,
+          startTimeNanos, empty, emptyState);
+        if (awaited.earlyResult() != null)
+          return awaited.earlyResult();
+        return toProcessResult(awaited, preserveResumableState);
       }
     }
     catch (IOException | InterruptedException e)
     {
-      Duration elapsed = Duration.ofNanos(System.nanoTime() - startTime);
-      return new ProcessResult(empty, elapsed, e.getMessage());
+      Duration elapsed = Duration.ofNanos(System.nanoTime() - startTimeNanos);
+      return new ProcessResult(empty, emptyState, elapsed, e.getMessage(), -1);
+    }
+  }
+
+  /**
+   * Starts the stdout reader thread that parses Claude stream-json events.
+   *
+   * @param process the running Claude process
+   * @param eventListener receives streamed state updates
+   * @param resultHolder stores the parsed session output
+   * @param readerFailure stores reader-thread failures
+   * @return the started reader thread
+   */
+  private Thread startOutputReader(Process process, Consumer<NestedRunnerEvent> eventListener,
+    ParsedSessionOutput[] resultHolder, AtomicReference<Exception> readerFailure)
+  {
+    return Thread.ofVirtual().start(() ->
+    {
+      try (BufferedReader reader = new BufferedReader(
+        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
+      {
+        resultHolder[0] = parseSessionOutput(reader, eventListener);
+      }
+      catch (IOException | RuntimeException e)
+      {
+        readerFailure.set(e);
+      }
+    });
+  }
+
+  /**
+   * Writes the stream-json input payload to the nested Claude process.
+   *
+   * @param process the running Claude process
+   * @param input the stream-json input payload
+   * @throws IOException if writing fails
+   */
+  private static void writeProcessInput(Process process, String input) throws IOException
+  {
+    try (OutputStreamWriter writer = new OutputStreamWriter(
+      process.getOutputStream(), StandardCharsets.UTF_8))
+    {
+      writer.write(input);
+    }
+  }
+
+  /**
+   * Waits for process completion, reader completion, or the first fatal failure.
+   *
+   * @param process the running Claude process
+   * @param stdoutReader the stdout reader thread
+   * @param readerFailure stores reader-thread failures
+   * @param resultHolder stores the parsed session output
+   * @param startTimeNanos the start time from {@link System#nanoTime()}
+   * @param empty the empty parsed-output sentinel
+   * @param emptyState the empty state sentinel
+   * @return the awaited process outcome
+   * @throws InterruptedException if interrupted while waiting
+   */
+  private AwaitedProcess awaitProcess(Process process, Thread stdoutReader,
+    AtomicReference<Exception> readerFailure, ParsedSessionOutput[] resultHolder,
+    long startTimeNanos, ParsedOutput empty, NestedRunnerState emptyState)
+    throws InterruptedException
+  {
+    long deadlineNanos = startTimeNanos + timeout.toNanos();
+    boolean completed = waitForProcessOrReaderFailure(process, readerFailure, deadlineNanos);
+    Duration elapsed = Duration.ofNanos(System.nanoTime() - startTimeNanos);
+    Exception processReaderFailure = readerFailure.get();
+    if (processReaderFailure != null)
+    {
+      process.destroyForcibly();
+      stopReaderThread(stdoutReader);
+      return AwaitedProcess.early(failureResult(empty, emptyState, elapsed, processReaderFailure));
+    }
+    if (!completed)
+    {
+      process.destroyForcibly();
+      stopReaderThread(stdoutReader);
+      return AwaitedProcess.early(timeoutResult(empty, elapsed));
+    }
+    ProcessResult readerJoinFailure = joinReaderThread(stdoutReader, deadlineNanos, process,
+      empty, emptyState, elapsed);
+    if (readerJoinFailure != null)
+      return AwaitedProcess.early(readerJoinFailure);
+    processReaderFailure = readerFailure.get();
+    if (processReaderFailure != null)
+      return AwaitedProcess.early(failureResult(empty, emptyState, elapsed, processReaderFailure));
+    return AwaitedProcess.completed(resultHolder[0], elapsed, process.exitValue());
+  }
+
+  /**
+   * Waits for the stdout reader thread to finish within the remaining timeout budget.
+   *
+   * @param stdoutReader the stdout reader thread
+   * @param deadlineNanos the absolute timeout deadline from {@link System#nanoTime()}
+   * @param process the running Claude process
+   * @param empty the empty parsed-output sentinel
+   * @param emptyState the empty state sentinel
+   * @param elapsed the elapsed runtime observed so far
+   * @return a failure result, or {@code null} if the reader finished successfully
+   */
+  private ProcessResult joinReaderThread(Thread stdoutReader, long deadlineNanos, Process process,
+    ParsedOutput empty, NestedRunnerState emptyState, Duration elapsed)
+  {
+    try
+    {
+      long remainingNanos = Math.max(0L, deadlineNanos - System.nanoTime());
+      stdoutReader.join(Duration.ofNanos(remainingNanos).toMillis());
+    }
+    catch (InterruptedException e)
+    {
+      Thread.currentThread().interrupt();
+      return new ProcessResult(empty, emptyState, elapsed, e.getMessage(), -1);
+    }
+    if (!stdoutReader.isAlive())
+      return null;
+    process.destroyForcibly();
+    stopReaderThread(stdoutReader);
+    return timeoutResult(empty, elapsed);
+  }
+
+  /**
+   * Converts a completed awaited process into the final public process result.
+   *
+   * @param awaited the completed awaited process
+   * @param preserveResumableState whether to preserve resumable state
+   * @return the final process result
+   */
+  private static ProcessResult toProcessResult(AwaitedProcess awaited,
+    boolean preserveResumableState)
+  {
+    ParsedSessionOutput parsedSession = awaited.parsedSession();
+    ParsedOutput parsed = parsedSession.parsed();
+    NestedRunnerState state = parsedSession.state();
+    if (!preserveResumableState)
+      state = finalizeCompletedState(state);
+    String error = "";
+    if (awaited.exitCode() != 0 && !reachedExpectedBoundary(state, preserveResumableState))
+      error = "claude exited with code " + awaited.exitCode();
+    return new ProcessResult(parsed, state, awaited.elapsed(), error, awaited.exitCode());
+  }
+
+  /**
+   * Creates a failure process result from a reader or callback exception.
+   *
+   * @param empty the empty parsed-output sentinel
+   * @param emptyState the empty state sentinel
+   * @param elapsed the elapsed runtime
+   * @param failure the underlying reader or callback failure
+   * @return the failure process result
+   */
+  private static ProcessResult failureResult(ParsedOutput empty, NestedRunnerState emptyState,
+    Duration elapsed, Exception failure)
+  {
+    return new ProcessResult(empty, emptyState, elapsed, failure.getMessage(), -1);
+  }
+
+  /**
+   * Creates a timeout process result.
+   *
+   * @param empty the empty parsed-output sentinel
+   * @param elapsed the elapsed runtime
+   * @return the timeout process result
+   */
+  private static ProcessResult timeoutResult(ParsedOutput empty, Duration elapsed)
+  {
+    NestedRunnerState timeoutState = new NestedRunnerState("", "", "", "",
+      NestedRunnerTurnState.TIMEOUT, NestedRunnerSessionState.TIMEOUT, false, "", "timeout");
+    return new ProcessResult(empty, timeoutState, elapsed, "timeout", -1);
+  }
+
+  /**
+   * Waits until the nested process exits, the stdout reader fails, or the deadline expires.
+   *
+   * @param process the nested process
+   * @param readerFailure captures reader-thread failures
+   * @param deadlineNanos the absolute timeout deadline from {@link System#nanoTime()}
+   * @return {@code true} if the process exited before the deadline; otherwise {@code false}
+   * @throws InterruptedException if interrupted while waiting
+   */
+  private static boolean waitForProcessOrReaderFailure(Process process,
+    AtomicReference<Exception> readerFailure, long deadlineNanos)
+    throws InterruptedException
+  {
+    while (true)
+    {
+      if (readerFailure.get() != null)
+        return process.waitFor(0, TimeUnit.MILLISECONDS);
+      long remainingNanos = deadlineNanos - System.nanoTime();
+      if (remainingNanos <= 0)
+        return false;
+      long waitMillis = Math.min(Duration.ofNanos(remainingNanos).toMillis(), WAIT_POLL.toMillis());
+      if (waitMillis <= 0)
+        waitMillis = 1;
+      if (process.waitFor(waitMillis, TimeUnit.MILLISECONDS))
+        return true;
+    }
+  }
+
+  /**
+   * Converts a resumable waiting boundary into terminal completion for one-shot execution.
+   *
+   * @param state the derived runner state
+   * @return the terminalized state for one-shot callers
+   */
+  private static NestedRunnerState finalizeCompletedState(NestedRunnerState state)
+  {
+    if (state.sessionState() != NestedRunnerSessionState.WAITING_FOR_NEXT_REQUEST ||
+      state.turnState() != NestedRunnerTurnState.COMPLETED)
+    {
+      return state;
+    }
+    return new NestedRunnerState(state.sessionId(), state.currentTurnId(),
+      state.latestEventType(), state.latestEventTimestamp(), state.turnState(),
+      NestedRunnerSessionState.COMPLETED, false, state.engineSubstate(), state.error());
+  }
+
+  /**
+   * Interrupts and briefly joins the stdout reader thread during cleanup.
+   *
+   * @param stdoutReader the reader thread to stop
+   */
+  private void stopReaderThread(Thread stdoutReader)
+  {
+    stdoutReader.interrupt();
+    try
+    {
+      stdoutReader.join(100);
+    }
+    catch (InterruptedException _)
+    {
+      Thread.currentThread().interrupt();
+    }
+  }
+
+  /**
+   * Awaited process state for {@link #executeProcess(List, String, Path, boolean, Consumer)}.
+   *
+   * @param earlyResult the early failure result, or {@code null} when execution completed normally
+   * @param parsedSession the parsed session output when execution completed normally
+   * @param elapsed the elapsed runtime
+   * @param exitCode the nested process exit code
+   */
+  private record AwaitedProcess(ProcessResult earlyResult, ParsedSessionOutput parsedSession,
+    Duration elapsed, int exitCode)
+  {
+    /**
+     * Returns an awaited process that completed early with a terminal result.
+     *
+     * @param earlyResult the early terminal result
+     * @return the awaited process wrapper
+     */
+    private static AwaitedProcess early(ProcessResult earlyResult)
+    {
+      return new AwaitedProcess(earlyResult, null, earlyResult.elapsed(), earlyResult.exitCode());
+    }
+
+    /**
+     * Returns an awaited process that completed normally.
+     *
+     * @param parsedSession the parsed session output
+     * @param elapsed the elapsed runtime
+     * @param exitCode the nested process exit code
+     * @return the awaited process wrapper
+     */
+    private static AwaitedProcess completed(ParsedSessionOutput parsedSession, Duration elapsed,
+      int exitCode)
+    {
+      return new AwaitedProcess(null, parsedSession, elapsed, exitCode);
     }
   }
 
@@ -358,7 +680,7 @@ public final class ClaudeRunner implements AutoCloseable
     requireThat(output, "output").isNotNull();
     try (BufferedReader reader = new BufferedReader(new StringReader(output)))
     {
-      return parseOutput(reader);
+      return parseSessionOutput(reader).parsed();
     }
     catch (IOException e)
     {
@@ -380,107 +702,57 @@ public final class ClaudeRunner implements AutoCloseable
    */
   public ParsedOutput parseOutput(BufferedReader reader) throws IOException
   {
-    requireThat(reader, "reader").isNotNull();
-    List<String> texts = new ArrayList<>();
-    List<String> toolUses = new ArrayList<>();
-    List<String> writeContents = new ArrayList<>();
-    List<TurnOutput> turns = new ArrayList<>();
-    List<String> currentTurnTexts = new ArrayList<>();
-    List<String> currentTurnToolUses = new ArrayList<>();
-    List<String> currentTurnWriteContents = new ArrayList<>();
-    String sessionId = "";
+    return parseSessionOutput(reader).parsed();
+  }
 
-    String line = reader.readLine();
-    while (line != null)
+  /**
+   * Parses stream-json output and derives the latest session state.
+   *
+   * @param output the raw output from Claude Code CLI
+   * @return the parsed output and derived state
+   * @throws NullPointerException if {@code output} is null
+   */
+  public ParsedSessionOutput parseSessionOutput(String output)
+  {
+    requireThat(output, "output").isNotNull();
+    try (BufferedReader reader = new BufferedReader(new StringReader(output)))
     {
-      String trimmed = line.strip();
-      if (!trimmed.isEmpty())
-      {
-        // Only assistant and result events contain data we need to extract.
-        // Skipping other events (particularly the user echo, which contains the full input
-        // and can be hundreds of KB) avoids allocating large JsonNode trees for unused content.
-        if (!trimmed.startsWith("{\"type\":\"assistant\"") &&
-          !trimmed.startsWith("{\"type\": \"assistant\"") &&
-          !trimmed.startsWith("{\"type\":\"result\"") &&
-          !trimmed.startsWith("{\"type\": \"result\""))
-        {
-          line = reader.readLine();
-          continue;
-        }
-        JsonNode event = scope.getJsonMapper().readTree(trimmed);
-        String type = event.path("type").asString("");
-
-        if (sessionId.isEmpty())
-        {
-          String id = event.path("session_id").asString("");
-          if (!id.isEmpty())
-            sessionId = id;
-        }
-
-        if (type.equals("assistant"))
-        {
-          if (!currentTurnTexts.isEmpty() || !currentTurnToolUses.isEmpty() ||
-            !currentTurnWriteContents.isEmpty())
-          {
-            turns.add(new TurnOutput(List.copyOf(currentTurnTexts),
-              List.copyOf(currentTurnToolUses), List.copyOf(currentTurnWriteContents)));
-            currentTurnTexts = new ArrayList<>();
-            currentTurnToolUses = new ArrayList<>();
-            currentTurnWriteContents = new ArrayList<>();
-          }
-          JsonNode content = event.path("message").path("content");
-          if (content.isArray())
-          {
-            for (JsonNode block : content)
-            {
-              String blockType = block.path("type").asString("");
-              if (blockType.equals("text"))
-              {
-                String text = block.path("text").asString("");
-                texts.add(text);
-                currentTurnTexts.add(text);
-              }
-              else if (blockType.equals("tool_use"))
-              {
-                String name = block.path("name").asString("");
-                toolUses.add(name);
-                currentTurnToolUses.add(name);
-                if (name.equals("Write"))
-                {
-                  // Capture the content written so callers can verify file-level behavior
-                  // without needing to access the filesystem.
-                  String writeContent = block.path("input").path("content").asString("");
-                  if (!writeContent.isEmpty())
-                  {
-                    writeContents.add(writeContent);
-                    currentTurnWriteContents.add(writeContent);
-                  }
-                }
-              }
-            }
-          }
-        }
-        else if (type.equals("result"))
-        {
-          String result = event.path("result").asString("");
-          if (!result.isEmpty())
-          {
-            texts.add(result);
-            currentTurnTexts.add(result);
-          }
-        }
-      }
-      line = reader.readLine();
+      return parseSessionOutput(reader);
     }
-
-    if (!currentTurnTexts.isEmpty() || !currentTurnToolUses.isEmpty() ||
-      !currentTurnWriteContents.isEmpty())
+    catch (IOException e)
     {
-      turns.add(new TurnOutput(List.copyOf(currentTurnTexts),
-        List.copyOf(currentTurnToolUses), List.copyOf(currentTurnWriteContents)));
+      throw WrappedCheckedException.wrap(e);
     }
+  }
 
-    return new ParsedOutput(texts, toolUses, writeContents, turns, sessionId);
+  /**
+   * Parses stream-json output and derives the latest session state.
+   *
+   * @param reader the reader supplying stream-json lines
+   * @return the parsed output and derived state
+   * @throws NullPointerException if {@code reader} is null
+   * @throws IOException          if reading from {@code reader} fails
+   */
+  public ParsedSessionOutput parseSessionOutput(BufferedReader reader) throws IOException
+  {
+    return parseSessionOutput(reader, _ -> {});
+  }
+
+  /**
+   * Parses stream-json output and derives the latest session state, streaming state updates as
+   * relevant events arrive.
+   *
+   * @param reader        the reader supplying stream-json lines
+   * @param eventListener receives state snapshots as relevant engine events arrive; listeners
+   *                      must return promptly and should honor interruption
+   * @return the parsed output and derived state
+   * @throws NullPointerException if {@code reader} or {@code eventListener} are null
+   * @throws IOException          if reading from {@code reader} fails
+   */
+  public ParsedSessionOutput parseSessionOutput(BufferedReader reader,
+    Consumer<NestedRunnerEvent> eventListener) throws IOException
+  {
+    return sessionOutputParser.parseSessionOutput(reader, eventListener);
   }
 
   @Override
@@ -491,76 +763,6 @@ public final class ClaudeRunner implements AutoCloseable
       FileUtils.deleteDirectoryRecursively(isolatedConfigDir);
       isolatedConfigDir = null;
     }
-  }
-
-  /**
-   * Creates a stream-json message with the common envelope structure.
-   *
-   * @param envelopeType the type field for the outer envelope ("user" or "assistant")
-   * @param role         the role field for the inner message ("user" or "assistant")
-   * @param contentBlock the content block to include in the message
-   * @return the compact JSON string
-   */
-  private String buildMessage(String envelopeType, String role, ObjectNode contentBlock)
-  {
-    ObjectNode message = scope.getJsonMapper().createObjectNode();
-    message.put("type", envelopeType);
-
-    ObjectNode msg = scope.getJsonMapper().createObjectNode();
-    msg.put("role", role);
-    msg.set("content", scope.getJsonMapper().createArrayNode().add(contentBlock));
-    message.set("message", msg);
-
-    return compactWriter.writeValueAsString(message);
-  }
-
-  /**
-   * Creates a stream-json user message.
-   *
-   * @param text the message text
-   * @return the JSON message string
-   */
-  private String makeUserMessage(String text)
-  {
-    ObjectNode content = scope.getJsonMapper().createObjectNode();
-    content.put("type", "text");
-    content.put("text", text);
-    return buildMessage("user", "user", content);
-  }
-
-  /**
-   * Creates a stream-json assistant message with tool_use.
-   *
-   * @param toolUseId the unique ID for the tool use
-   * @param toolName  the name of the tool
-   * @param toolInput the tool input as a map
-   * @return the JSON message string
-   */
-  private String makeToolUseMessage(String toolUseId, String toolName,
-    Map<String, Object> toolInput)
-  {
-    ObjectNode content = scope.getJsonMapper().createObjectNode();
-    content.put("type", "tool_use");
-    content.put("id", toolUseId);
-    content.put("name", toolName);
-    content.set("input", scope.getJsonMapper().valueToTree(toolInput));
-    return buildMessage("assistant", "assistant", content);
-  }
-
-  /**
-   * Creates a stream-json user message with tool_result.
-   *
-   * @param toolUseId  the ID from the tool_use message
-   * @param toolOutput the tool output content
-   * @return the JSON message string
-   */
-  private String makeToolResultMessage(String toolUseId, String toolOutput)
-  {
-    ObjectNode content = scope.getJsonMapper().createObjectNode();
-    content.put("type", "tool_result");
-    content.put("tool_use_id", toolUseId);
-    content.put("content", toolOutput);
-    return buildMessage("user", "user", content);
   }
 
   /**
@@ -596,22 +798,28 @@ public final class ClaudeRunner implements AutoCloseable
    * Result of executing the Claude CLI process.
    *
    * @param parsed  the parsed output
+   * @param state   the latest derived runner state
    * @param elapsed the elapsed time
    * @param error   the error message, or empty string if none
+   * @param exitCode the nested Claude CLI exit code, or {@code -1} if unavailable
    */
-  public record ProcessResult(ParsedOutput parsed, Duration elapsed, String error)
+  public record ProcessResult(ParsedOutput parsed, NestedRunnerState state, Duration elapsed,
+                              String error, int exitCode)
   {
     /**
      * Creates a new process result.
      *
      * @param parsed  the parsed output
+     * @param state   the latest derived runner state
      * @param elapsed the elapsed time
      * @param error   the error message, or empty string if none
-     * @throws NullPointerException if {@code parsed} or {@code error} are null
+     * @param exitCode the nested Claude CLI exit code, or {@code -1} if unavailable
+     * @throws NullPointerException if {@code parsed}, {@code state}, or {@code error} are null
      */
     public ProcessResult
     {
       requireThat(parsed, "parsed").isNotNull();
+      requireThat(state, "state").isNotNull();
       requireThat(elapsed, "elapsed").isNotNull();
       requireThat(error, "error").isNotNull();
     }
@@ -667,7 +875,7 @@ public final class ClaudeRunner implements AutoCloseable
      * @param texts         the text blocks from this turn
      * @param toolUses      the tool use names from this turn
      * @param writeContents the content strings passed to Write tool calls in this turn
-     * @throws NullPointerException if {@code texts}, {@code toolUses}, or {@code writeContents} are null
+     * @throws NullPointerException if any argument is null
      */
     public TurnOutput
     {
@@ -719,246 +927,702 @@ public final class ClaudeRunner implements AutoCloseable
    */
   public static int run(CliTool scope, String[] args, PrintStream out) throws IOException
   {
-    requireThat(scope, "scope").isNotNull();
-    requireThat(args, "args").isNotNull();
-    requireThat(out, "out").isNotNull();
+    return ClaudeRunnerCli.run(scope, args, out);
+  }
 
-    if (args.length >= 1 && args[0].equals("resolve-model"))
+  /**
+   * Loads a managed session from disk, or returns a ready-to-start empty session if none exists.
+   *
+   * @param sessionFile the persisted session file, or {@code null} for an ephemeral session
+   * @param model       the model for the requested turn
+   * @param effort      the effort for the requested turn
+   * @param cwd         the working directory for the requested turn
+   * @return the loaded or initialized session
+   * @throws IOException if the session file cannot be read
+   */
+  public ClaudeSession loadSession(Path sessionFile, String model, String effort, Path cwd) throws IOException
+  {
+    return loadSession(sessionFile, model, effort, cwd, "", "");
+  }
+
+  /**
+   * Loads a managed session from disk and validates the runner settings that define resume semantics.
+   *
+   * @param sessionFile         the persisted session file, or {@code null} for an ephemeral session
+   * @param model               the model for the requested turn
+   * @param effort              the effort for the requested turn
+   * @param cwd                 the working directory for the requested turn
+   * @param appendSystemPrompt  the appended system prompt fragment for the requested turn
+   * @param agent               the Claude agent name for the requested turn
+   * @return the loaded or initialized session
+   * @throws IOException if the session file cannot be read
+   */
+  public ClaudeSession loadSession(Path sessionFile, String model, String effort, Path cwd,
+    String appendSystemPrompt, String agent) throws IOException
+  {
+    requireThat(model, "model").isNotBlank();
+    requireThat(effort, "effort").isNotBlank();
+    requireThat(cwd, "cwd").isNotNull();
+    requireThat(appendSystemPrompt, "appendSystemPrompt").isNotNull();
+    requireThat(agent, "agent").isNotNull();
+    Path resolvedSessionFile = resolveSessionFile(sessionFile, cwd);
+    if (resolvedSessionFile == null || Files.notExists(resolvedSessionFile))
+      return new ClaudeSession("", model, effort, normalizeCwd(cwd), appendSystemPrompt, agent,
+        List.of(), new NestedRunnerState("", "", "", "", NestedRunnerTurnState.UNKNOWN,
+        NestedRunnerSessionState.WAITING_FOR_NEXT_REQUEST, true, "", ""));
+    rejectSymlinkSessionFile(resolvedSessionFile);
+    ClaudeSession session = scope.getJsonMapper().readValue(Files.readString(resolvedSessionFile),
+      ClaudeSession.class);
+    if (!session.model().equals(model) || !session.effort().equals(effort))
     {
-      String[] rest = Arrays.copyOfRange(args, 1, args.length);
-      out.println(resolveModel(rest));
+      throw new IllegalArgumentException("Session file model/effort does not match current request");
+    }
+    if (!session.cwd().equals(normalizeCwd(cwd)))
+      throw new IllegalArgumentException("Session file cwd does not match current request");
+    if (!session.appendSystemPrompt().equals(appendSystemPrompt) || !session.agent().equals(agent))
+    {
+      throw new IllegalArgumentException(
+        "Session file prompt/agent settings do not match current request");
+    }
+    validateLoadedSession(session);
+    if (!session.sessionId().isBlank() && !isReadyForNextTurn(session.latestState()))
+      throw new IllegalArgumentException("Session file is not ready for another turn");
+    return normalizeLoadedSession(session);
+  }
+
+  /**
+   * Normalizes a working directory to a stable absolute string form.
+   *
+   * @param cwd the working directory
+   * @return the normalized directory string
+   * @throws IOException if resolving an existing directory fails
+   */
+  private static String normalizeCwd(Path cwd) throws IOException
+  {
+    if (Files.exists(cwd))
+      return cwd.toRealPath().toString();
+    return cwd.toAbsolutePath().normalize().toString();
+  }
+
+  /**
+   * Returns whether a runner state is resumable for another managed-session turn.
+   *
+   * @param state the state to inspect
+   * @return {@code true} if the state can accept another turn
+   */
+  private static boolean isReadyForNextTurn(NestedRunnerState state)
+  {
+    return state.sessionState() == NestedRunnerSessionState.WAITING_FOR_NEXT_REQUEST &&
+      state.turnState() == NestedRunnerTurnState.COMPLETED &&
+      state.canSubmitTurn();
+  }
+
+  /**
+   * Returns whether a runner state represents terminal one-shot completion.
+   *
+   * @param state the state to inspect
+   * @return {@code true} if the state represents terminal completion
+   */
+  private static boolean isTerminalCompleted(NestedRunnerState state)
+  {
+    return state.sessionState() == NestedRunnerSessionState.COMPLETED &&
+      state.turnState() == NestedRunnerTurnState.COMPLETED &&
+      !state.canSubmitTurn();
+  }
+
+  /**
+   * Returns whether a runner state reached the expected boundary for the current execution mode.
+   *
+   * @param state          the state to evaluate
+   * @param managedSession {@code true} if the caller expects a resumable managed-session boundary;
+   *                       {@code false} if the caller expects terminal one-shot completion
+   * @return {@code true} if the state reached the expected boundary
+   */
+  public static boolean reachedExpectedBoundary(NestedRunnerState state, boolean managedSession)
+  {
+    if (managedSession)
+      return isReadyForNextTurn(state);
+    return isTerminalCompleted(state);
+  }
+
+  /**
+   * Resolves the CLI exit code for a Claude runner invocation.
+   *
+   * @param result         the process result
+   * @param managedSession {@code true} if the caller expects a resumable managed-session boundary;
+   *                       {@code false} if the caller expects terminal one-shot completion
+   * @return {@code 0} if the result reached the expected boundary without runner error;
+   *         otherwise the nested exit code when non-zero, or {@code 1}
+   */
+  public static int resolveCliExitCode(ProcessResult result, boolean managedSession)
+  {
+    requireThat(result, "result").isNotNull();
+    if (result.error().isEmpty() && reachedExpectedBoundary(result.state(), managedSession))
       return 0;
-    }
+    if (result.exitCode() != 0)
+      return result.exitCode();
+    return 1;
+  }
 
-    if (args.length == 0 || args[0].equals("--help") || args[0].equals("-h"))
+  /**
+   * Saves a managed session to disk.
+   *
+   * @param sessionFile the destination file
+   * @param session     the session snapshot
+   * @throws IOException if the session cannot be written
+   */
+  public void saveSession(Path sessionFile, ClaudeSession session) throws IOException
+  {
+    requireThat(sessionFile, "sessionFile").isNotNull();
+    requireThat(session, "session").isNotNull();
+    Path resolvedSessionFile = resolveSessionFile(sessionFile, Path.of(session.cwd()));
+    Path parent = resolvedSessionFile.toAbsolutePath().normalize().getParent();
+    if (parent != null)
+      Files.createDirectories(parent);
+    rejectSymlinkSessionFile(resolvedSessionFile);
+    Path tempFile = Files.createTempFile(parent, resolvedSessionFile.getFileName().toString(),
+      ".tmp");
+    try (OutputStream fileOut = Files.newOutputStream(tempFile))
     {
-      out.println("""
-        Usage: claude-runner --prompt-file <path> [OPTIONS]
-
-        Options:
-          --prompt-file <path>            Path to a file containing the prompt to send (required)
-          --model <name>                  Model: haiku|sonnet|opus (required)
-          --effort <level>                Effort: low|medium|high|xhigh|max (required)
-          --cwd <path>                    Working directory (omitted: current directory)
-          --plugin-source <path>          Plugin source directory; requires --jlink-bin to isolate
-          --jlink-bin <path>              jlink binary directory; requires --plugin-source to isolate
-          --plugin-version <ver>          Cache version when isolating (omitted: 2.1)
-          --agent <name>                  Run claude --agent <name> (omitted: main agent)
-          --append-system-prompt <text>   Extra system prompt (omitted: none)
-          --output <path>                 Write JSON results to file (omitted: stdout text only)
-
-        Subcommands:
-          resolve-model <short_name>      Resolve a short model name to a fully-qualified model ID""");
-      return 0;
+      scope.getJsonMapper().writeValue(fileOut, normalizeLoadedSession(session));
+      Files.move(tempFile, resolvedSessionFile, StandardCopyOption.REPLACE_EXISTING,
+        StandardCopyOption.ATOMIC_MOVE);
     }
-
-    String prompt = null;
-    String model = null;
-    String effort = null;
-    Path cwd = Path.of(".");
-    Path pluginSource = null;
-    Path jlinkBin = null;
-    String pluginVersion = "2.1";
-    String agent = "";
-    String appendSystemPrompt = "";
-    Path outputPath = null;
-
-    for (int i = 0; i < args.length; ++i)
+    finally
     {
-      if (i + 1 >= args.length)
-        continue;
-      switch (args[i])
-      {
-        case "--prompt-file" ->
-        {
-          prompt = args[i + 1];
-          ++i;
-        }
-        case "--model" ->
-        {
-          model = args[i + 1];
-          ++i;
-        }
-        case "--effort" ->
-        {
-          effort = args[i + 1];
-          ++i;
-        }
-        case "--cwd" ->
-        {
-          cwd = Path.of(args[i + 1]);
-          ++i;
-        }
-        case "--plugin-source" ->
-        {
-          pluginSource = Path.of(args[i + 1]);
-          ++i;
-        }
-        case "--jlink-bin" ->
-        {
-          jlinkBin = Path.of(args[i + 1]);
-          ++i;
-        }
-        case "--plugin-version" ->
-        {
-          pluginVersion = args[i + 1];
-          ++i;
-        }
-        case "--agent" ->
-        {
-          agent = args[i + 1];
-          ++i;
-        }
-        case "--append-system-prompt" ->
-        {
-          appendSystemPrompt = args[i + 1];
-          ++i;
-        }
-        case "--output" ->
-        {
-          outputPath = Path.of(args[i + 1]);
-          ++i;
-        }
-        default -> throw new IllegalArgumentException(
-          "Unknown argument: " + args[i] + ". Valid arguments: --prompt-file <path>, --model, " +
-            "--effort, --cwd, --plugin-source, --jlink-bin, --plugin-version, --agent, " +
-            "--append-system-prompt, --output");
-      }
-    }
-
-    if (prompt == null)
-      throw new IllegalArgumentException("--prompt-file argument is required");
-    if (model == null)
-      throw new IllegalArgumentException("--model argument is required");
-    if (effort == null)
-      throw new IllegalArgumentException("--effort argument is required");
-    String promptText;
-    try
-    {
-      promptText = Files.readString(Path.of(prompt));
-    }
-    catch (IOException e)
-    {
-      throw new IOException("--prompt-file file not found: " + prompt, e);
-    }
-
-    try (ClaudeRunner runner = new ClaudeRunner(scope))
-    {
-      if (pluginSource != null && jlinkBin != null)
-      {
-        runner.createIsolatedConfig(scope.getConfigPath(), pluginSource, jlinkBin,
-          pluginVersion);
-      }
-
-      // When --agent is specified, pass --agent <type> to the nested Claude Code process.
-      // The nested process has CLAUDE_CONFIG_DIR pointing to the isolated config directory
-      // (when --plugin-source is provided), so --agent resolves from the candidate plugin's
-      // .claude/agents/ directory, honoring all frontmatter settings (tools:, model:, etc.).
-      List<String> command = runner.buildCommand(model, effort, appendSystemPrompt, agent);
-      String input = runner.buildInput(List.of(), List.of(promptText), List.of());
-
-      try (Process process = runner.buildProcessBuilder(command, cwd).start())
-      {
-        // Container to hold parsed output from async reader thread
-        ParsedOutput[] resultHolder = new ParsedOutput[1];
-        IOException[] readerError = new IOException[1];
-
-        // Start reading stdout async (drains buffer to prevent deadlock during stdin write)
-        Thread stdoutReader = Thread.ofVirtual().start(() ->
-        {
-          try (BufferedReader reader = new BufferedReader(
-            new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
-          {
-            resultHolder[0] = runner.parseOutput(reader);
-          }
-          catch (IOException e)
-          {
-            readerError[0] = e;
-          }
-        });
-
-        // Write stdin sync (async reader prevents subprocess stdout buffer from blocking us)
-        try (OutputStreamWriter writer = new OutputStreamWriter(
-          process.getOutputStream(), StandardCharsets.UTF_8))
-        {
-          writer.write(input);
-        }
-        // Stdin closed here - subprocess knows input is complete
-
-        // Wait for async reader to finish collecting all output. Use a timeout because
-        // the subprocess may spawn nested processes that keep stdout open past the deadline.
-        try
-        {
-          stdoutReader.join(DEFAULT_TIMEOUT.toMillis());
-        }
-        catch (InterruptedException e)
-        {
-          Thread.currentThread().interrupt();
-          throw new IOException("Interrupted while waiting for stdout read", e);
-        }
-        if (stdoutReader.isAlive())
-        {
-          process.destroyForcibly();
-          out.println("ERROR: timeout after " + DEFAULT_TIMEOUT.toSeconds() + "s");
-          return 1;
-        }
-
-        // Check if reader encountered an error
-        if (readerError[0] != null)
-          throw readerError[0];
-
-        ParsedOutput parsed = resultHolder[0];
-
-        boolean completed = process.waitFor(DEFAULT_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
-        if (!completed)
-        {
-          process.destroyForcibly();
-          out.println("ERROR: timeout after " + DEFAULT_TIMEOUT.toSeconds() + "s");
-          return 1;
-        }
-
-        int exitCode = process.exitValue();
-
-        String fullText = String.join("\n", parsed.texts());
-        out.println(fullText);
-
-        if (outputPath != null)
-        {
-          try (OutputStream fileOut = Files.newOutputStream(outputPath))
-          {
-            scope.getJsonMapper().writeValue(fileOut, parsed);
-          }
-          out.println("Results written to: " + outputPath);
-        }
-
-        return exitCode;
-      }
-      catch (InterruptedException e)
-      {
-        out.println("ERROR: " + e.getMessage());
-        return 1;
-      }
+      Files.deleteIfExists(tempFile);
     }
   }
 
   /**
-   * Implements the {@code resolve-model} subcommand.
-   * <p>
-   * Resolves a short model name (e.g., {@code "sonnet"}, {@code "opus"}, {@code "haiku"}) to its
-   * fully-qualified model identifier (e.g., {@code "claude-sonnet-4-6"}).
+   * Removes a persisted managed session.
    *
-   * @param args {@code [short_name]}
-   * @return the fully-qualified model identifier
-   * @throws IllegalArgumentException if the argument count is wrong or the short name is unknown
-   * @throws IOException              if the claude version cannot be determined
+   * @param sessionFile the session file to remove
+   * @param cwd         the working directory boundary that owns the session file
+   * @throws IOException if deletion fails
    */
-  private static String resolveModel(String[] args) throws IOException
+  public void closeSession(Path sessionFile, Path cwd) throws IOException
   {
-    if (args.length != 1)
-      throw new IllegalArgumentException(
-        "claude-runner resolve-model: expected 1 argument <short_name>, got " + args.length +
-        ".\nUsage: claude-runner resolve-model <short_name>");
-    String shortName = args[0];
-    return ModelIdResolver.resolveModelStrict(shortName);
+    requireThat(cwd, "cwd").isNotNull();
+    Path resolvedSessionFile = resolveSessionFile(sessionFile, cwd);
+    rejectSymlinkSessionFile(resolvedSessionFile);
+    Files.deleteIfExists(resolvedSessionFile);
+  }
+
+  /**
+   * Starts a managed Claude session for direct turn-by-turn interaction.
+   * <p>
+   * Equivalent to {@code startSession(sessionFile, model, effort, cwd, "", "")}.
+   * <p>
+   * The returned handle owns the resumable session lifecycle. Successful turns may persist a
+   * resumable snapshot to {@code sessionFile}, but calling {@link ManagedSession#close()} is
+   * terminal: it finalizes the in-memory handle and deletes the persisted session file.
+   * Callers that need to resume later must do so before closing the handle.
+   *
+   * @param sessionFile the persisted session file, or {@code null} for in-memory only
+   * @param model       the model to use
+   * @param effort      the reasoning effort level
+   * @param cwd         the working directory boundary
+   * @return the managed session handle
+   * @throws IOException if the session cannot be loaded
+   */
+  public ManagedSession startSession(Path sessionFile, String model, String effort, Path cwd)
+    throws IOException
+  {
+    return startSession(sessionFile, model, effort, cwd, "", "");
+  }
+
+  /**
+   * Starts a managed Claude session for direct turn-by-turn interaction.
+   * <p>
+   * The returned handle owns the resumable session lifecycle. Successful turns may persist a
+   * resumable snapshot to {@code sessionFile}, but calling {@link ManagedSession#close()} is
+   * terminal: it finalizes the in-memory handle and deletes the persisted session file.
+   * Callers that need to resume later must do so before closing the handle.
+   *
+   * @param sessionFile        the persisted session file, or {@code null} for in-memory only
+   * @param model              the model to use
+   * @param effort             the reasoning effort level
+   * @param cwd                the working directory boundary
+   * @param appendSystemPrompt the appended system prompt fragment bound to this session
+   * @param agent              the Claude agent bound to this session
+   * @return the managed session handle
+   * @throws IOException if the session cannot be loaded
+   */
+  public ManagedSession startSession(Path sessionFile, String model, String effort, Path cwd,
+    String appendSystemPrompt, String agent) throws IOException
+  {
+    ClaudeSession session = loadSession(sessionFile, model, effort, cwd, appendSystemPrompt, agent);
+    return new ManagedSession(sessionFile, cwd, session);
+  }
+
+  /**
+   * Validates internal consistency of a persisted Claude session.
+   *
+   * @param session the loaded session
+   */
+  private static void validateLoadedSession(ClaudeSession session)
+  {
+    if (session.turns().isEmpty() && !session.sessionId().isBlank())
+      throw new IllegalArgumentException("Session file has a native session id but no turns");
+    if (!session.turns().isEmpty() && session.sessionId().isBlank())
+      throw new IllegalArgumentException("Session file has turns but no native session id");
+    String stateSessionId = session.latestState().sessionId();
+    if (!stateSessionId.isBlank() && !session.sessionId().isBlank() &&
+      !stateSessionId.equals(session.sessionId()))
+    {
+      throw new IllegalArgumentException("Session file session id does not match latest state");
+    }
+  }
+
+  /**
+   * Normalizes a loaded session so the latest state carries the persisted session id when needed.
+   *
+   * @param session the loaded session
+   * @return the normalized session
+   */
+  private static ClaudeSession normalizeLoadedSession(ClaudeSession session)
+  {
+    if (session.sessionId().isBlank() || !session.latestState().sessionId().isBlank())
+      return session;
+    NestedRunnerState state = session.latestState();
+    return new ClaudeSession(session.sessionId(), session.model(), session.effort(), session.cwd(),
+      session.appendSystemPrompt(), session.agent(), session.turns(),
+      new NestedRunnerState(session.sessionId(), state.currentTurnId(), state.latestEventType(),
+        state.latestEventTimestamp(), state.turnState(), state.sessionState(),
+        state.canSubmitTurn(), state.engineSubstate(), state.error()));
+  }
+
+  /**
+   * Rejects symlinked session files before reading or writing them.
+   *
+   * @param sessionFile the candidate session file
+   * @throws IOException if the session file is a symbolic link
+   */
+  private static void rejectSymlinkSessionFile(Path sessionFile) throws IOException
+  {
+    if (Files.isSymbolicLink(sessionFile))
+      throw new IOException("Session file must not be a symbolic link: " + sessionFile);
+  }
+
+  /**
+   * Resolves a managed-session file under the requested cwd boundary.
+   *
+   * @param sessionFile the candidate session file, or {@code null}
+   * @param cwd the cwd boundary
+   * @return the normalized session path, or {@code null} if no session file was requested
+   * @throws IOException if resolving an existing ancestor or file fails
+   */
+  private static Path resolveSessionFile(Path sessionFile, Path cwd) throws IOException
+  {
+    if (sessionFile == null)
+      return null;
+    Path boundary = Path.of(normalizeCwd(cwd));
+    Path candidate = sessionFile;
+    if (!candidate.isAbsolute())
+      candidate = boundary.resolve(candidate);
+    candidate = candidate.normalize();
+    if (!candidate.startsWith(boundary))
+      throw new IllegalArgumentException("Session file must be under cwd: " + boundary);
+    Path parent = candidate.getParent();
+    Path existingAncestor = parent;
+    while (existingAncestor != null && Files.notExists(existingAncestor))
+      existingAncestor = existingAncestor.getParent();
+    if (existingAncestor != null)
+    {
+      Path resolvedAncestor = existingAncestor.toRealPath();
+      if (!resolvedAncestor.startsWith(boundary))
+        throw new IllegalArgumentException("Session file must be under cwd: " + boundary);
+    }
+    if (Files.exists(candidate) && !Files.isRegularFile(candidate, LinkOption.NOFOLLOW_LINKS))
+      throw new IOException("Session file must be a regular file: " + candidate);
+    return candidate;
+  }
+
+  /**
+   * Validates a native resume session id before it is passed to the Claude CLI.
+   *
+   * @param sessionId the native session id
+   */
+  private static void validateResumeSessionId(String sessionId)
+  {
+    if (sessionId.startsWith("-"))
+      throw new IllegalArgumentException("Session id must not start with '-': " + sessionId);
+  }
+
+  /**
+   * Parsed output plus the derived latest state.
+   *
+   * @param parsed the parsed output
+   * @param state  the derived latest state
+   */
+  public record ParsedSessionOutput(ParsedOutput parsed, NestedRunnerState state)
+  {
+    /**
+     * Creates a parsed session output.
+     *
+     * @param parsed the parsed output
+     * @param state  the derived latest state
+     */
+    public ParsedSessionOutput
+    {
+      requireThat(parsed, "parsed").isNotNull();
+      requireThat(state, "state").isNotNull();
+    }
+  }
+
+  /**
+   * A persisted turn inside a managed Claude session.
+   *
+   * @param prompt         the submitted prompt
+   * @param assistantTexts assistant text blocks emitted for this turn
+   * @param toolUses       tools used during this turn
+   * @param writeContents  write or patch contents emitted during this turn
+   */
+  public record ClaudeSessionTurn(String prompt, List<String> assistantTexts, List<String> toolUses,
+    List<String> writeContents)
+  {
+    /**
+     * Creates a persisted turn.
+     *
+     * @param prompt         the submitted prompt
+     * @param assistantTexts assistant text blocks emitted for this turn
+     * @param toolUses       tools used during this turn
+     * @param writeContents  write or patch contents emitted during this turn
+     */
+    public ClaudeSessionTurn
+    {
+      requireThat(prompt, "prompt").isNotNull();
+      requireThat(assistantTexts, "assistantTexts").isNotNull();
+      requireThat(toolUses, "toolUses").isNotNull();
+      requireThat(writeContents, "writeContents").isNotNull();
+    }
+  }
+
+  /**
+   * A managed Claude session persisted by CAT between turns.
+   *
+   * @param sessionId   the Claude session identifier
+   * @param model       the model bound to this session
+   * @param effort      the effort bound to this session
+   * @param cwd         the working directory bound to this session
+   * @param appendSystemPrompt the system prompt fragment bound to this session
+   * @param agent       the Claude agent bound to this session
+   * @param turns       the completed turns in order
+   * @param latestState the latest derived runner state
+   */
+  public record ClaudeSession(String sessionId, String model, String effort, String cwd,
+    String appendSystemPrompt, String agent, List<ClaudeSessionTurn> turns,
+    NestedRunnerState latestState)
+  {
+    /**
+     * Creates a managed session snapshot.
+     *
+     * @param sessionId   the Claude session identifier
+     * @param model       the model bound to this session
+     * @param effort      the effort bound to this session
+     * @param cwd         the working directory bound to this session
+     * @param appendSystemPrompt the system prompt fragment bound to this session
+     * @param agent       the Claude agent bound to this session
+     * @param turns       the completed turns in order
+     * @param latestState the latest derived runner state
+     */
+    public ClaudeSession
+    {
+      requireThat(sessionId, "sessionId").isNotNull();
+      requireThat(model, "model").isNotNull();
+      requireThat(effort, "effort").isNotNull();
+      requireThat(cwd, "cwd").isNotNull();
+      requireThat(appendSystemPrompt, "appendSystemPrompt").isNotNull();
+      requireThat(agent, "agent").isNotNull();
+      requireThat(turns, "turns").isNotNull();
+      requireThat(latestState, "latestState").isNotNull();
+    }
+
+    /**
+     * Returns a copy of this session with an appended turn and updated latest state.
+     *
+     * @param prompt the submitted prompt
+     * @param parsed the parsed output for the turn
+     * @param state  the latest derived state for the turn
+     * @return the updated session
+     */
+    public ClaudeSession appendTurn(String prompt, ParsedOutput parsed, NestedRunnerState state)
+    {
+      requireThat(prompt, "prompt").isNotNull();
+      requireThat(parsed, "parsed").isNotNull();
+      requireThat(state, "state").isNotNull();
+      List<ClaudeSessionTurn> updatedTurns = new ArrayList<>(turns);
+      TurnOutput turn;
+      if (parsed.turns().isEmpty())
+      {
+        turn = new TurnOutput(List.copyOf(parsed.texts()), List.copyOf(parsed.toolUses()),
+          List.copyOf(parsed.writeContents()));
+      }
+      else
+      {
+        turn = parsed.turns().getLast();
+      }
+      updatedTurns.add(new ClaudeSessionTurn(prompt, List.copyOf(turn.texts()),
+        List.copyOf(turn.toolUses()), List.copyOf(turn.writeContents())));
+      String resolvedSessionId = parsed.sessionId();
+      if (resolvedSessionId.isBlank())
+        resolvedSessionId = sessionId;
+      return new ClaudeSession(resolvedSessionId, model, effort, cwd, appendSystemPrompt, agent,
+        List.copyOf(updatedTurns), new NestedRunnerState(resolvedSessionId, state.currentTurnId(),
+        state.latestEventType(), state.latestEventTimestamp(), state.turnState(),
+        state.sessionState(), state.canSubmitTurn(), state.engineSubstate(), state.error()));
+    }
+
+    /**
+     * Returns a copy of this session with an updated latest state.
+     *
+     * @param state the replacement latest state
+     * @return the updated session
+     */
+    public ClaudeSession withLatestState(NestedRunnerState state)
+    {
+      requireThat(state, "state").isNotNull();
+      String resolvedSessionId = sessionId;
+      if (resolvedSessionId.isBlank())
+        resolvedSessionId = state.sessionId();
+      return new ClaudeSession(resolvedSessionId, model, effort, cwd, appendSystemPrompt, agent,
+        turns, new NestedRunnerState(resolvedSessionId, state.currentTurnId(),
+        state.latestEventType(), state.latestEventTimestamp(), state.turnState(),
+        state.sessionState(), state.canSubmitTurn(), state.engineSubstate(), state.error()));
+    }
+
+    /**
+     * Aggregates all turns into one-shot parsed output.
+     *
+     * @return the aggregated parsed output
+     */
+    public ParsedOutput toParsedOutput()
+    {
+      List<String> texts = new ArrayList<>();
+      List<String> toolUses = new ArrayList<>();
+      List<String> writeContents = new ArrayList<>();
+      List<TurnOutput> parsedTurns = new ArrayList<>();
+      for (ClaudeSessionTurn turn : turns)
+      {
+        texts.addAll(turn.assistantTexts());
+        toolUses.addAll(turn.toolUses());
+        writeContents.addAll(turn.writeContents());
+        parsedTurns.add(new TurnOutput(turn.assistantTexts(), turn.toolUses(),
+          turn.writeContents()));
+      }
+      return new ParsedOutput(List.copyOf(texts), List.copyOf(toolUses), List.copyOf(writeContents),
+        List.copyOf(parsedTurns), sessionId);
+    }
+  }
+
+  /**
+   * A direct managed Claude session for turn-by-turn interaction.
+   * <p>
+   * This handle is the live owner of any resumable state. Successful turns may persist resumable
+   * session metadata while the handle remains open, but {@link #close()} is destructive: it
+   * finalizes the handle state and removes the persisted session file.
+   */
+  public final class ManagedSession implements AutoCloseable
+  {
+    private final Path sessionFile;
+    private final Path cwd;
+    private volatile ClaudeSession session;
+    private volatile NestedRunnerState latestState;
+    private boolean closed;
+    private boolean invalidated;
+
+    private ManagedSession(Path sessionFile, Path cwd, ClaudeSession session)
+    {
+      this.sessionFile = sessionFile;
+      this.cwd = cwd;
+      this.session = session;
+      this.latestState = session.latestState();
+    }
+
+    /**
+     * Returns the latest known state for the managed session.
+     *
+     * @return the latest known state
+     */
+    public NestedRunnerState latestState()
+    {
+      return latestState;
+    }
+
+    /**
+     * Returns the current persisted or in-memory session snapshot.
+     *
+     * @return the current session snapshot
+     */
+    public ClaudeSession snapshot()
+    {
+      return session;
+    }
+
+    /**
+     * Submits a turn using the standard Claude runner command for this session.
+     * <p>
+     * Equivalent to {@code submitTurn(prompt, _ -> {})}.
+     *
+     * @param prompt the prompt to submit
+     * @return the process result
+     * @throws IOException if session persistence fails
+     */
+    public ProcessResult submitTurn(String prompt) throws IOException
+    {
+      return submitTurn(prompt, _ -> {});
+    }
+
+    /**
+     * Submits a turn using the standard Claude runner command for this session while streaming
+     * state updates to the caller.
+     *
+     * @param prompt        the prompt to submit
+     * @param eventListener receives state updates during execution; listeners must return
+     *                      promptly and should honor interruption
+     * @return the process result
+     * @throws IOException if session persistence fails
+     */
+    public ProcessResult submitTurn(String prompt, Consumer<NestedRunnerEvent> eventListener)
+      throws IOException
+    {
+      requireOpen();
+      requireThat(prompt, "prompt").isNotNull();
+      String resumeSessionId = "";
+      if (!session.sessionId().isBlank() && !session.turns().isEmpty())
+        resumeSessionId = session.sessionId();
+      List<String> command = buildCommand(session.model(), session.effort(),
+        session.appendSystemPrompt(), session.agent(), resumeSessionId);
+      String input = buildInput(List.of(), List.of(prompt), List.of());
+      return submitTurn(prompt, command, input, eventListener);
+    }
+
+    /**
+     * Submits a turn using a caller-supplied command and input payload.
+     * <p>
+     * This is primarily intended for tests and advanced callers that need to drive a custom engine
+     * shim while still using CAT-managed session persistence and state updates.
+     *
+     * @param prompt        the prompt to persist for this turn
+     * @param command       the command to execute
+     * @param input         the stream-json input to send
+     * @param eventListener receives state updates during execution; listeners must return
+     *                      promptly and should honor interruption
+     * @return the process result
+     * @throws IOException if session persistence fails
+     */
+    public ProcessResult submitTurn(String prompt, List<String> command, String input,
+      Consumer<NestedRunnerEvent> eventListener) throws IOException
+    {
+      requireOpen();
+      requireThat(prompt, "prompt").isNotNull();
+      requireThat(command, "command").isNotNull();
+      requireThat(input, "input").isNotNull();
+      requireThat(eventListener, "eventListener").isNotNull();
+      ProcessResult result = executeProcess(command, input, cwd, true, event ->
+      {
+        latestState = event.state();
+        eventListener.accept(event);
+      });
+      ClaudeSession updatedLatestState = session.withLatestState(result.state());
+      if (!result.error().isEmpty() || !reachedExpectedBoundary(result.state(), true))
+      {
+        session = updatedLatestState;
+        latestState = session.latestState();
+        invalidated = true;
+        if (sessionFile != null)
+          closeSession(sessionFile, cwd);
+      }
+      else
+      {
+        ClaudeSession updatedSession = session.appendTurn(prompt, result.parsed(), result.state());
+        try
+        {
+          if (sessionFile != null)
+            saveSession(sessionFile, updatedSession);
+          session = updatedSession;
+        }
+        catch (IOException e)
+        {
+          latestState = new NestedRunnerState(result.state().sessionId(),
+            result.state().currentTurnId(), result.state().latestEventType(),
+            result.state().latestEventTimestamp(), result.state().turnState(),
+            NestedRunnerSessionState.ERROR, false, result.state().engineSubstate(),
+            e.getMessage());
+          session = session.withLatestState(latestState);
+          invalidated = true;
+          if (sessionFile != null)
+          {
+            try
+            {
+              closeSession(sessionFile, cwd);
+            }
+            catch (IOException closeError)
+            {
+              e.addSuppressed(closeError);
+            }
+          }
+          throw e;
+        }
+        latestState = session.latestState();
+      }
+      return result;
+    }
+
+    /**
+     * Closes the managed session handle.
+     * <p>
+     * This operation is terminal. If the session is still valid, the in-memory state is
+     * finalized to {@code COMPLETED}; any persisted session file is then deleted. Use this when
+     * the caller is done with the session, not to pause it for later reuse.
+     *
+     * @throws IOException if deleting the persisted session file fails
+     */
+    @Override
+    public void close() throws IOException
+    {
+      if (closed)
+        return;
+      closed = true;
+      if (!invalidated)
+      {
+        NestedRunnerState completedState = finalizeClosedState(session.latestState());
+        session = session.withLatestState(completedState);
+        latestState = completedState;
+      }
+      if (sessionFile != null)
+        closeSession(sessionFile, cwd);
+    }
+
+    /**
+     * Ensures the managed session can still accept more turns.
+     */
+    private void requireOpen()
+    {
+      if (closed)
+        throw new IllegalStateException("Session is already closed");
+      if (invalidated)
+        throw new IllegalStateException("Session is no longer resumable after the last turn");
+    }
+
+    /**
+     * Converts a healthy managed-session state into terminal completion on close.
+     *
+     * @param state the latest session state
+     * @return the finalized state
+     */
+    private NestedRunnerState finalizeClosedState(NestedRunnerState state)
+    {
+      if (state.sessionState() == NestedRunnerSessionState.ERROR ||
+        state.sessionState() == NestedRunnerSessionState.TIMEOUT ||
+        state.sessionState() == NestedRunnerSessionState.COMPLETED)
+      {
+        return state;
+      }
+      return new NestedRunnerState(state.sessionId(), state.currentTurnId(),
+        state.latestEventType(), state.latestEventTimestamp(), state.turnState(),
+        NestedRunnerSessionState.COMPLETED, false, state.engineSubstate(), state.error());
+    }
   }
 }

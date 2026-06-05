@@ -44,4 +44,6 @@ These are checked into this repository's `.cat/rules/` directory and are NOT dis
 - Put portable CAT repository conventions under `.cat/rules/common/` when both Claude and Codex agents should receive
   them while working on this repository.
 - Put repository-only engine exceptions under `.cat/rules/claude/` or `.cat/rules/codex/`.
+- When actively working on an issue in an isolated worktree, edit project or plugin convention files in that issue
+  worktree rather than in `/workspace`, so the convention change travels with the issue branch under review.
 - Do not put end-user workflow rules under `.cat/rules/`; they will not ship in flattened plugin artifacts.

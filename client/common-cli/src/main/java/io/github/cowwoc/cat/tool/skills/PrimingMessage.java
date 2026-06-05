@@ -16,7 +16,7 @@ import java.util.Map;
  * A priming message that simulates prior conversation context in empirical tests.
  * <p>
  * Priming messages are sent before the test prompt to establish conversation history.
- * They can be either simple user text messages or completed tool use sequences.
+ * They can be user text, assistant text, or completed tool use sequences.
  */
 public sealed interface PrimingMessage
 {
@@ -34,6 +34,25 @@ public sealed interface PrimingMessage
      * @throws NullPointerException if {@code text} is null
      */
     public UserMessage
+    {
+      requireThat(text, "text").isNotNull();
+    }
+  }
+
+  /**
+   * An assistant text message from a prior turn.
+   *
+   * @param text the assistant message text
+   */
+  record AssistantMessage(String text) implements PrimingMessage
+  {
+    /**
+     * Creates a new assistant message.
+     *
+     * @param text the message text
+     * @throws NullPointerException if {@code text} is null
+     */
+    public AssistantMessage
     {
       requireThat(text, "text").isNotNull();
     }
@@ -70,6 +89,7 @@ public sealed interface PrimingMessage
    * Each element can be:
    * <ul>
    *   <li>A {@code String} -- converted to {@link UserMessage}</li>
+   *   <li>A {@code Map} with {@code "type": "assistant"} -- converted to {@link AssistantMessage}</li>
    *   <li>A {@code Map} with {@code "type": "tool_use"} -- converted to {@link ToolUse}</li>
    * </ul>
    *
@@ -93,11 +113,23 @@ public sealed interface PrimingMessage
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) rawMap;
         String type = (String) map.get("type");
+        if ("assistant".equals(type))
+        {
+          String text = (String) map.get("text");
+          if (text == null)
+          {
+            throw new IllegalArgumentException(
+              "priming_messages[" + i + "]: assistant message is missing required field 'text'. " +
+                "Message: " + map);
+          }
+          result.add(new AssistantMessage(text));
+          continue;
+        }
         if (type == null || !type.equals("tool_use"))
         {
           throw new IllegalArgumentException(
             "priming_messages[" + i + "]: unsupported type '" + type + "'. " +
-              "Expected 'tool_use'. Message: " + map);
+              "Expected 'assistant' or 'tool_use'. Message: " + map);
         }
         String toolName = (String) map.get("tool");
         if (toolName == null)

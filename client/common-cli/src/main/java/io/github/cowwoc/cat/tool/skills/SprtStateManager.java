@@ -175,8 +175,8 @@ final class SprtStateManager
       // When cached results are invalidated, delete old test outputs to prevent schema conflicts
       if (!modelMatches)
       {
-        Path worktreePath = sprtStatePath.getParent().getParent();
-        Path testRunsDir = worktreePath.resolve(".cat/work/test-runs").resolve(sessionId);
+        Path worktreePath = sprtStatePath.getParent().getParent().getParent();
+        Path testRunsDir = SprtCommandSupport.resolveTestRunSessionDir(worktreePath, sessionId);
         if (Files.exists(testRunsDir))
         {
           log.debug("Deleting stale test outputs at: {}", testRunsDir);
@@ -544,6 +544,12 @@ final class SprtStateManager
     JsonNode exact = priorRoot.path(resultKey(modelId, effort));
     if (exact.isObject())
       return exact;
+    String rootModelId = priorRoot.path("model_id").asString("");
+    String rootEffort = priorRoot.path("effort").asString("");
+    if (rootModelId.equals(modelId) && rootEffort.equals(effort))
+      return priorRoot;
+    if (rootModelId.equals(modelId) && rootEffort.isBlank() && effort.isBlank())
+      return priorRoot;
     return scope.getJsonMapper().missingNode();
   }
 

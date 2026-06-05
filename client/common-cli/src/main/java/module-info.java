@@ -18,6 +18,7 @@ module io.github.cowwoc.cat.common.cli
   requires ch.qos.logback.classic;
 
   exports io.github.cowwoc.cat.agent;
+  exports io.github.cowwoc.cat.engine;
   exports io.github.cowwoc.cat.hook;
   exports io.github.cowwoc.cat.hook.bash;
   exports io.github.cowwoc.cat.tool;

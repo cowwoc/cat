@@ -15,6 +15,7 @@ import java.io.PrintStream;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.nio.file.Path;
+import java.util.List;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -134,10 +135,44 @@ public final class SharedSecrets
   public static String[] buildClaudeTrialArgs(Path promptFile, String modelId, String effort,
     String runnerWorktree, String outputJson, Path jlinkBin)
   {
+    requireThat(promptFile, "promptFile").isNotNull();
+    requireThat(modelId, "modelId").isNotBlank();
+    requireThat(effort, "effort").isNotBlank();
+    requireThat(runnerWorktree, "runnerWorktree").isNotBlank();
+    requireThat(outputJson, "outputJson").isNotBlank();
+    requireThat(jlinkBin, "jlinkBin").isNotNull();
     if (sprtRunnerAccess == null)
       initialize(SprtRunner.class);
     return sprtRunnerAccess.buildClaudeTrialArgs(promptFile, modelId, effort,
       runnerWorktree, outputJson, jlinkBin);
+  }
+
+  /**
+   * Builds Claude trial runner arguments with a persisted session file.
+   *
+   * @param promptFile     the prompt file
+   * @param modelId        the model ID
+   * @param effort         the reasoning effort
+   * @param runnerWorktree the runner worktree
+   * @param outputJson     the output JSON path
+   * @param jlinkBin       the jlink binary directory
+   * @param sessionFile    the persisted session file path
+   * @return the runner arguments
+   */
+  public static String[] buildClaudeSessionTrialArgs(Path promptFile, String modelId, String effort,
+    String runnerWorktree, String outputJson, Path jlinkBin, Path sessionFile)
+  {
+    requireThat(promptFile, "promptFile").isNotNull();
+    requireThat(modelId, "modelId").isNotBlank();
+    requireThat(effort, "effort").isNotBlank();
+    requireThat(runnerWorktree, "runnerWorktree").isNotBlank();
+    requireThat(outputJson, "outputJson").isNotBlank();
+    requireThat(jlinkBin, "jlinkBin").isNotNull();
+    requireThat(sessionFile, "sessionFile").isNotNull();
+    if (sprtRunnerAccess == null)
+      initialize(SprtRunner.class);
+    return sprtRunnerAccess.buildClaudeSessionTrialArgs(promptFile, modelId, effort,
+      runnerWorktree, outputJson, jlinkBin, sessionFile);
   }
 
   /**
@@ -153,10 +188,92 @@ public final class SharedSecrets
   public static String[] buildCodexTrialArgs(Path promptFile, String modelId, String effort,
     String runnerWorktree, String outputJson)
   {
+    requireThat(promptFile, "promptFile").isNotNull();
+    requireThat(modelId, "modelId").isNotBlank();
+    requireThat(effort, "effort").isNotBlank();
+    requireThat(runnerWorktree, "runnerWorktree").isNotBlank();
+    requireThat(outputJson, "outputJson").isNotBlank();
     if (sprtRunnerAccess == null)
       initialize(SprtRunner.class);
     return sprtRunnerAccess.buildCodexTrialArgs(promptFile, modelId, effort,
       runnerWorktree, outputJson);
+  }
+
+  /**
+   * Builds Codex trial runner arguments with a persisted session file.
+   *
+   * @param promptFile     the prompt file
+   * @param modelId        the model ID
+   * @param effort         the reasoning effort
+   * @param runnerWorktree the runner worktree
+   * @param outputJson     the output JSON path
+   * @param sessionFile    the persisted session file path
+   * @return the runner arguments
+   */
+  public static String[] buildCodexSessionTrialArgs(Path promptFile, String modelId, String effort,
+    String runnerWorktree, String outputJson, Path sessionFile)
+  {
+    requireThat(promptFile, "promptFile").isNotNull();
+    requireThat(modelId, "modelId").isNotBlank();
+    requireThat(effort, "effort").isNotBlank();
+    requireThat(runnerWorktree, "runnerWorktree").isNotBlank();
+    requireThat(outputJson, "outputJson").isNotBlank();
+    requireThat(sessionFile, "sessionFile").isNotNull();
+    if (sprtRunnerAccess == null)
+      initialize(SprtRunner.class);
+    return sprtRunnerAccess.buildCodexSessionTrialArgs(promptFile, modelId, effort,
+      runnerWorktree, outputJson, sessionFile);
+  }
+
+  /**
+   * Invokes multi-turn trial execution for tests.
+   *
+   * @param runner         the runner instance
+   * @param promptFiles    the ordered prompt files
+   * @param modelId        the model ID
+   * @param effort         the reasoning effort
+   * @param runnerWorktree the runner worktree
+   * @param outputJson     the output JSON path
+   * @param logStream      the log stream
+   * @return the process exit code
+   * @throws IOException if execution fails
+   */
+  public static int runTrial(SprtRunner runner, List<Path> promptFiles, String modelId, String effort,
+    String runnerWorktree, String outputJson, PrintStream logStream) throws IOException
+  {
+    requireThat(runner, "runner").isNotNull();
+    requireThat(promptFiles, "promptFiles").isNotNull();
+    requireThat(modelId, "modelId").isNotBlank();
+    requireThat(effort, "effort").isNotBlank();
+    requireThat(runnerWorktree, "runnerWorktree").isNotBlank();
+    requireThat(outputJson, "outputJson").isNotBlank();
+    requireThat(logStream, "logStream").isNotNull();
+    if (sprtRunnerAccess == null)
+      initialize(SprtRunner.class);
+    return sprtRunnerAccess.runTrial(runner, promptFiles, modelId, effort, runnerWorktree,
+      outputJson, logStream);
+  }
+
+  /**
+   * Invokes the nested engine launcher for tests.
+   *
+   * @param runner         the runner instance
+   * @param args           the launcher arguments
+   * @param runnerWorktree the runner worktree
+   * @param out            receives launcher output
+   * @return the nested runner exit code
+   * @throws IOException if execution fails
+   */
+  public static int runSprtEngineCommand(SprtRunner runner, String[] args, String runnerWorktree,
+    PrintStream out) throws IOException
+  {
+    requireThat(runner, "runner").isNotNull();
+    requireThat(args, "args").isNotNull();
+    requireThat(runnerWorktree, "runnerWorktree").isNotBlank();
+    requireThat(out, "out").isNotNull();
+    if (sprtRunnerAccess == null)
+      initialize(SprtRunner.class);
+    return sprtRunnerAccess.runEngineCommand(runner, args, runnerWorktree, out);
   }
 
   /**
@@ -172,6 +289,11 @@ public final class SharedSecrets
   public static String[] buildClaudeGraderArgs(Path graderPromptFile, String modelId, String effort,
     String runnerWorktree, Path jlinkBin)
   {
+    requireThat(graderPromptFile, "graderPromptFile").isNotNull();
+    requireThat(modelId, "modelId").isNotBlank();
+    requireThat(effort, "effort").isNotBlank();
+    requireThat(runnerWorktree, "runnerWorktree").isNotBlank();
+    requireThat(jlinkBin, "jlinkBin").isNotNull();
     if (sprtRunnerAccess == null)
       initialize(SprtRunner.class);
     return sprtRunnerAccess.buildClaudeGraderArgs(graderPromptFile, modelId, effort,
@@ -190,6 +312,10 @@ public final class SharedSecrets
   public static String[] buildCodexGraderArgs(Path graderPromptFile, String modelId, String effort,
     String runnerWorktree)
   {
+    requireThat(graderPromptFile, "graderPromptFile").isNotNull();
+    requireThat(modelId, "modelId").isNotBlank();
+    requireThat(effort, "effort").isNotBlank();
+    requireThat(runnerWorktree, "runnerWorktree").isNotBlank();
     if (sprtRunnerAccess == null)
       initialize(SprtRunner.class);
     return sprtRunnerAccess.buildCodexGraderArgs(graderPromptFile, modelId, effort,
@@ -271,6 +397,11 @@ public final class SharedSecrets
     String modelId, String effort, String runnerWorktree, String outputJson)
   {
     requireThat(descriptor, "descriptor").isNotNull();
+    requireThat(promptFile, "promptFile").isNotNull();
+    requireThat(modelId, "modelId").isNotBlank();
+    requireThat(effort, "effort").isNotBlank();
+    requireThat(runnerWorktree, "runnerWorktree").isNotBlank();
+    requireThat(outputJson, "outputJson").isNotBlank();
     if (sprtRunnerAccess == null)
       initialize(SprtRunner.class);
     return sprtRunnerAccess.buildTrialArgsForDescriptor(descriptor, promptFile, modelId,
@@ -291,6 +422,10 @@ public final class SharedSecrets
     String modelId, String effort, String runnerWorktree)
   {
     requireThat(descriptor, "descriptor").isNotNull();
+    requireThat(graderPromptFile, "graderPromptFile").isNotNull();
+    requireThat(modelId, "modelId").isNotBlank();
+    requireThat(effort, "effort").isNotBlank();
+    requireThat(runnerWorktree, "runnerWorktree").isNotBlank();
     if (sprtRunnerAccess == null)
       initialize(SprtRunner.class);
     return sprtRunnerAccess.buildGraderArgsForDescriptor(descriptor, graderPromptFile,
@@ -396,6 +531,21 @@ public final class SharedSecrets
       String runnerWorktree, String outputJson, Path jlinkBin);
 
     /**
+     * Builds Claude trial runner arguments with a persisted session file.
+     *
+     * @param promptFile     the prompt file
+     * @param modelId        the model ID
+     * @param effort         the reasoning effort
+     * @param runnerWorktree the runner worktree
+     * @param outputJson     the output JSON path
+     * @param jlinkBin       the jlink binary directory
+     * @param sessionFile    the persisted session file path
+     * @return the runner arguments
+     */
+    String[] buildClaudeSessionTrialArgs(Path promptFile, String modelId, String effort,
+      String runnerWorktree, String outputJson, Path jlinkBin, Path sessionFile);
+
+    /**
      * Builds Codex trial runner arguments.
      *
      * @param promptFile     the prompt file
@@ -407,6 +557,49 @@ public final class SharedSecrets
      */
     String[] buildCodexTrialArgs(Path promptFile, String modelId, String effort,
       String runnerWorktree, String outputJson);
+
+    /**
+     * Builds Codex trial runner arguments with a persisted session file.
+     *
+     * @param promptFile     the prompt file
+     * @param modelId        the model ID
+     * @param effort         the reasoning effort
+     * @param runnerWorktree the runner worktree
+     * @param outputJson     the output JSON path
+     * @param sessionFile    the persisted session file path
+     * @return the runner arguments
+     */
+    String[] buildCodexSessionTrialArgs(Path promptFile, String modelId, String effort,
+      String runnerWorktree, String outputJson, Path sessionFile);
+
+    /**
+     * Invokes multi-turn trial execution for tests.
+     *
+     * @param runner         the runner instance
+     * @param promptFiles    the ordered prompt files
+     * @param modelId        the model ID
+     * @param effort         the reasoning effort
+     * @param runnerWorktree the runner worktree
+     * @param outputJson     the output JSON path
+     * @param logStream      the log stream
+     * @return the process exit code
+     * @throws IOException if execution fails
+     */
+    int runTrial(SprtRunner runner, List<Path> promptFiles, String modelId, String effort,
+      String runnerWorktree, String outputJson, PrintStream logStream) throws IOException;
+
+    /**
+     * Invokes the nested engine launcher.
+     *
+     * @param runner         the runner instance
+     * @param args           the launcher arguments
+     * @param runnerWorktree the runner worktree
+     * @param out            receives launcher output
+     * @return the nested runner exit code
+     * @throws IOException if execution fails
+     */
+    int runEngineCommand(SprtRunner runner, String[] args, String runnerWorktree, PrintStream out)
+      throws IOException;
 
     /**
      * Builds Claude grader arguments.

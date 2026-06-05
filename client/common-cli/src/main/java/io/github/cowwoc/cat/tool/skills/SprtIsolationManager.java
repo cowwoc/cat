@@ -233,14 +233,14 @@ final class SprtIsolationManager
     Path worktreePath = Path.of(args[0]);
     Path sprtStatePath = Path.of(args[1]);
     String issueName = args[2];
-    String sessionId = args[3];
+    String sessionId = SprtCommandSupport.validateSessionIdSegment(args[3]);
 
     if (Files.notExists(sprtStatePath))
       throw new IllegalArgumentException(
         "SprtRunner create-runner-worktrees: state file not found: " + sprtStatePath);
 
     // Create the output directory for this session's test run JSON files
-    Path outputDir = worktreePath.resolve(".cat/work/test-runs").resolve(sessionId);
+    Path outputDir = SprtCommandSupport.resolveTestRunSessionDir(worktreePath, sessionId);
     Files.createDirectories(outputDir);
 
     JsonMapper mapper = scope.getJsonMapper();
