@@ -394,7 +394,7 @@ public final class GetCleanupOutput implements SkillOutput
   {
     requireThat(projectPath, "projectPath").isNotNull();
 
-    ProcessRunner.Result result = ProcessRunner.run("git", "-C", projectPath.toString(),
+    ProcessRunner.Result result = ProcessRunner.run(projectPath, "git",
       "worktree", "list", "--porcelain");
 
     if (result.exitCode() != 0)
@@ -510,7 +510,7 @@ public final class GetCleanupOutput implements SkillOutput
    */
   private static Duration getBranchAge(Path projectPath, String branch, Instant now)
   {
-    ProcessRunner.Result result = ProcessRunner.run("git", "-C", projectPath.toString(),
+    ProcessRunner.Result result = ProcessRunner.run(projectPath, "git",
       "log", "-1", "--format=%ct", branch);
     if (result.exitCode() != 0)
       return Duration.ZERO;
@@ -562,7 +562,7 @@ public final class GetCleanupOutput implements SkillOutput
   {
     requireThat(projectPath, "projectPath").isNotNull();
 
-    ProcessRunner.Result result = ProcessRunner.run("git", "-C", projectPath.toString(),
+    ProcessRunner.Result result = ProcessRunner.run(projectPath, "git",
       "branch", "-a");
 
     if (result.exitCode() != 0)
@@ -594,9 +594,9 @@ public final class GetCleanupOutput implements SkillOutput
   {
     requireThat(projectPath, "projectPath").isNotNull();
 
-    ProcessRunner.run("git", "-C", projectPath.toString(), "fetch", "--prune");
+    ProcessRunner.run(projectPath, "git", "fetch", "--prune");
 
-    ProcessRunner.Result branchResult = ProcessRunner.run("git", "-C", projectPath.toString(),
+    ProcessRunner.Result branchResult = ProcessRunner.run(projectPath, "git",
       "branch", "-r");
 
     if (branchResult.exitCode() != 0)
@@ -612,7 +612,7 @@ public final class GetCleanupOutput implements SkillOutput
       if (!STALE_REMOTE_PATTERN.matcher(branch).find())
         continue;
 
-      ProcessRunner.Result dateResult = ProcessRunner.run("git", "-C", projectPath.toString(),
+      ProcessRunner.Result dateResult = ProcessRunner.run(projectPath, "git",
         "log", "-1", "--format=%ct", branch);
 
       if (dateResult.exitCode() != 0)
@@ -625,9 +625,9 @@ public final class GetCleanupOutput implements SkillOutput
 
         if (age.compareTo(MIN_STALE_AGE) >= 0 && age.compareTo(MAX_STALE_AGE) <= 0)
         {
-          ProcessRunner.Result authorResult = ProcessRunner.run("git", "-C", projectPath.toString(),
+          ProcessRunner.Result authorResult = ProcessRunner.run(projectPath, "git",
             "log", "-1", "--format=%an", branch);
-          ProcessRunner.Result relativeResult = ProcessRunner.run("git", "-C", projectPath.toString(),
+          ProcessRunner.Result relativeResult = ProcessRunner.run(projectPath, "git",
             "log", "-1", "--format=%cr", branch);
 
           String author = "";

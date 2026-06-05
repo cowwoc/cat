@@ -125,8 +125,9 @@ public final class GitSquash
     String mergeBase = runGitCommandSingleLineInDirectory(directory, "merge-base", "HEAD", base);
 
     // Step 4: Rebase onto pinned base
-    ProcessRunner.Result rebaseResult = ProcessRunner.run(
-      "git", "-C", directory, "rebase", base);
+    Path workingDirectory = Path.of(directory);
+    ProcessRunner.Result rebaseResult = ProcessRunner.run(workingDirectory,
+      "git", "rebase", base);
     if (rebaseResult.exitCode() != 0)
       return handleRebaseFailure(rebaseResult);
 
@@ -138,8 +139,8 @@ public final class GitSquash
     runGit(Path.of(directory), "branch", backupBranch);
 
     // Verify backup was created
-    ProcessRunner.Result verifyBackup = ProcessRunner.run(
-      "git", "-C", directory, "show-ref", "--verify", "--quiet",
+    ProcessRunner.Result verifyBackup = ProcessRunner.run(workingDirectory,
+      "git", "show-ref", "--verify", "--quiet",
       "refs/heads/" + backupBranch);
     if (verifyBackup.exitCode() != 0)
       throw new IOException("Backup branch '" + backupBranch + "' was not created");
@@ -212,17 +213,18 @@ public final class GitSquash
   private String handleRebaseFailure(ProcessRunner.Result rebaseResult) throws IOException
   {
     // Check for conflicting files
-    ProcessRunner.Result conflictResult = ProcessRunner.run(
-      "git", "-C", directory, "diff", "--name-only", "--diff-filter=U");
+    Path workingDirectory = Path.of(directory);
+    ProcessRunner.Result conflictResult = ProcessRunner.run(workingDirectory,
+      "git", "diff", "--name-only", "--diff-filter=U");
     String conflictingFiles = conflictResult.output().strip();
 
     // Create backup before aborting
     String rebaseBackup = "backup-after-rebase-conflict-" +
       LocalDateTime.now().format(BACKUP_TIMESTAMP_FORMATTER);
-    ProcessRunner.run("git", "-C", directory, "branch", rebaseBackup);
+    ProcessRunner.run(workingDirectory, "git", "branch", rebaseBackup);
 
     // Abort rebase to return to clean state
-    ProcessRunner.run("git", "-C", directory, "rebase", "--abort");
+    ProcessRunner.run(workingDirectory, "git", "rebase", "--abort");
 
     ObjectNode json = scope.getJsonMapper().createObjectNode();
 
@@ -258,8 +260,9 @@ public final class GitSquash
     Set<String> result = new LinkedHashSet<>();
 
     // Files modified on target branch since the worktree branched
-    ProcessRunner.Result baseChangedResult = ProcessRunner.run(
-      "git", "-C", directory, "diff", "--name-only", mergeBase + ".." + base);
+    Path workingDirectory = Path.of(directory);
+    ProcessRunner.Result baseChangedResult = ProcessRunner.run(workingDirectory,
+      "git", "diff", "--name-only", mergeBase + ".." + base);
     String baseOutput = baseChangedResult.output().strip();
     if (baseChangedResult.exitCode() != 0 || baseOutput.isBlank())
       return result;
@@ -267,8 +270,8 @@ public final class GitSquash
     Set<String> baseChanged = parseLinesToSet(baseOutput);
 
     // Files modified on issue branch (after rebase, relative to base)
-    ProcessRunner.Result issueChangedResult = ProcessRunner.run(
-      "git", "-C", directory, "diff", "--name-only", base + "..HEAD");
+    ProcessRunner.Result issueChangedResult = ProcessRunner.run(workingDirectory,
+      "git", "diff", "--name-only", base + "..HEAD");
     String issueOutput = issueChangedResult.output().strip();
     if (issueChangedResult.exitCode() != 0 || issueOutput.isBlank())
       return result;

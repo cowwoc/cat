@@ -16,6 +16,7 @@ import tools.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -99,6 +100,7 @@ public final class GitAmend
     requireThat(afterAmend, "afterAmend").isNotNull();
 
     // Step 1: Record OLD_HEAD before amend
+    Path workingDirectory = Path.of(directory);
     String oldHead;
     try
     {
@@ -110,8 +112,8 @@ public final class GitAmend
     }
 
     // Step 2: Check push status — if commit already pushed, fail-fast
-    ProcessRunner.Result statusResult = ProcessRunner.run(
-      "git", "-C", directory, "status", "--porcelain", "-b");
+    ProcessRunner.Result statusResult = ProcessRunner.run(workingDirectory,
+      "git", "status", "--porcelain", "-b");
     String pushStatus = "";
     if (statusResult.exitCode() == 0 && !statusResult.output().isBlank())
     {
@@ -137,8 +139,6 @@ public final class GitAmend
     // Step 3: Perform amend with appropriate flags
     List<String> amendCmd = new ArrayList<>();
     amendCmd.add("git");
-    amendCmd.add("-C");
-    amendCmd.add(directory);
     amendCmd.add("commit");
     amendCmd.add("--amend");
 
@@ -150,7 +150,7 @@ public final class GitAmend
       amendCmd.add(message);
     }
 
-    ProcessRunner.Result amendResult = ProcessRunner.run(amendCmd.toArray(new String[0]));
+    ProcessRunner.Result amendResult = ProcessRunner.run(workingDirectory, amendCmd.toArray(new String[0]));
     if (amendResult.exitCode() != 0)
       return block(scope, "Amend failed: " + amendResult.output().strip());
 
@@ -162,14 +162,14 @@ public final class GitAmend
 
     // Step 5: Post-amend TOCTOU check — verify OLD_HEAD not pushed during amend
     boolean raceDetected = false;
-    ProcessRunner.Result remoteRefResult = ProcessRunner.run(
-      "git", "-C", directory, "rev-parse", "@{push}");
+    ProcessRunner.Result remoteRefResult = ProcessRunner.run(workingDirectory,
+      "git", "rev-parse", "@{push}");
     if (remoteRefResult.exitCode() == 0 && !remoteRefResult.output().isBlank())
     {
       String remoteRef = remoteRefResult.output().strip();
       // Check if OLD_HEAD is an ancestor of remote ref (meaning it was pushed during amend)
-      ProcessRunner.Result ancestorResult = ProcessRunner.run(
-        "git", "-C", directory, "merge-base", "--is-ancestor", oldHead, remoteRef);
+      ProcessRunner.Result ancestorResult = ProcessRunner.run(workingDirectory,
+        "git", "merge-base", "--is-ancestor", oldHead, remoteRef);
       if (ancestorResult.exitCode() == 0)
         raceDetected = true;
     }

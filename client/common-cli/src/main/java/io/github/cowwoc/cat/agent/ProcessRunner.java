@@ -76,10 +76,9 @@ public final class ProcessRunner
   {
     try
     {
-      ProcessBuilder pb = new ProcessBuilder(command);
+      ProcessBuilder pb = new ProcessBuilder(command).redirectErrorStream(true);
       if (workingDirectory != null)
         pb.directory(workingDirectory.toFile());
-      pb.redirectErrorStream(true);
       Process process = pb.start();
 
       String output;
@@ -118,11 +117,10 @@ public final class ProcessRunner
     requireThat(environment, "environment").isNotNull();
     try
     {
-      ProcessBuilder pb = new ProcessBuilder(command);
+      ProcessBuilder pb = new ProcessBuilder(command).redirectErrorStream(true);
       if (workingDirectory != null)
         pb.directory(workingDirectory.toFile());
       pb.environment().putAll(environment);
-      pb.redirectErrorStream(true);
       Process process = pb.start();
 
       String output;
@@ -165,11 +163,29 @@ public final class ProcessRunner
    */
   public static String runAndCaptureFirstLine(List<String> command)
   {
+    return runAndCaptureFirstLine(null, command);
+  }
+
+  /**
+   * Runs a command in a specific working directory and returns the first line of output, or
+   * {@code null} on error or non-zero exit code.
+   * <p>
+   * Use this when only the first line of output is needed, to avoid reading unnecessary data.
+   *
+   * @param workingDirectory the working directory for the process, or {@code null} to inherit the JVM's
+   *                         working directory
+   * @param command the command and arguments to run
+   * @return the first line of output, or {@code null} if the command fails, exits non-zero, or produces no
+   *   output
+   */
+  public static String runAndCaptureFirstLine(Path workingDirectory, List<String> command)
+  {
     Process process = null;
     try
     {
-      ProcessBuilder pb = new ProcessBuilder(command);
-      pb.redirectErrorStream(true);
+      ProcessBuilder pb = new ProcessBuilder(command).redirectErrorStream(true);
+      if (workingDirectory != null)
+        pb.directory(workingDirectory.toFile());
       process = pb.start();
 
       String firstLine;

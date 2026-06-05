@@ -125,9 +125,10 @@ public final class EnforceCommitBeforeSubagentSpawn implements TaskHandler
    */
   private String runGitStatus(Path directory) throws IOException
   {
-    ProcessBuilder pb = new ProcessBuilder("git", "-C", directory.toString(), "status", "--porcelain");
-    pb.redirectErrorStream(true);
-    Process process = pb.start();
+    Process process = new ProcessBuilder("git", "status", "--porcelain").
+      directory(directory.toFile()).
+      redirectErrorStream(true).
+      start();
     StringBuilder output = new StringBuilder();
     try (BufferedReader reader = new BufferedReader(
       new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
@@ -135,7 +136,7 @@ public final class EnforceCommitBeforeSubagentSpawn implements TaskHandler
       String line = reader.readLine();
       while (line != null)
       {
-        if (output.length() > 0)
+        if (!output.isEmpty())
           output.append('\n');
         output.append(line);
         line = reader.readLine();

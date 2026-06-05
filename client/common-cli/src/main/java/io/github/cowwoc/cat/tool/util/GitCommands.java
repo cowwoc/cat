@@ -81,9 +81,9 @@ public final class GitCommands
   public static List<String> getStagedFiles() throws IOException
   {
     List<String> files = new ArrayList<>();
-    ProcessBuilder pb = new ProcessBuilder("git", "diff", "--cached", "--name-only");
-    pb.redirectErrorStream(true);
-    Process process = pb.start();
+    Process process = new ProcessBuilder("git", "diff", "--cached", "--name-only").
+      redirectErrorStream(true).
+      start();
     try (BufferedReader reader = new BufferedReader(
       new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
     {
@@ -128,9 +128,10 @@ public final class GitCommands
     requireThat(directory, "directory").isNotNull();
     if (!Files.isDirectory(directory))
       throw new IllegalArgumentException("Not a directory: " + directory);
-    ProcessBuilder pb = new ProcessBuilder("git", "-C", directory.toString(), "branch", "--show-current");
-    pb.redirectErrorStream(true);
-    Process process = pb.start();
+    Process process = new ProcessBuilder("git", "branch", "--show-current").
+      directory(directory.toFile()).
+      redirectErrorStream(true).
+      start();
     String branch;
     try (BufferedReader reader = new BufferedReader(
       new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
@@ -194,9 +195,9 @@ public final class GitCommands
     String[] command = new String[args.length + 1];
     command[0] = "git";
     System.arraycopy(args, 0, command, 1, args.length);
-    ProcessBuilder pb = new ProcessBuilder(command);
-    pb.redirectErrorStream(true);
-    Process process = pb.start();
+    Process process = new ProcessBuilder(command).
+      redirectErrorStream(true).
+      start();
     String output;
     try (BufferedReader reader = new BufferedReader(
       new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
@@ -233,11 +234,38 @@ public final class GitCommands
    */
   public static String runGit(Path directory, String... args) throws IOException
   {
-    String[] dirArgs = new String[args.length + 2];
-    dirArgs[0] = "-C";
-    dirArgs[1] = directory.toString();
-    System.arraycopy(args, 0, dirArgs, 2, args.length);
-    return runGit(dirArgs);
+    requireThat(directory, "directory").isNotNull();
+    String[] command = new String[args.length + 1];
+    command[0] = "git";
+    System.arraycopy(args, 0, command, 1, args.length);
+    Process process = new ProcessBuilder(command).
+      directory(directory.toFile()).
+      redirectErrorStream(true).
+      start();
+    String output;
+    try (BufferedReader reader = new BufferedReader(
+      new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
+    {
+      output = ProcessRunner.readAllLines(reader);
+    }
+    int exitCode;
+    try
+    {
+      exitCode = process.waitFor();
+    }
+    catch (InterruptedException e)
+    {
+      process.destroyForcibly();
+      Thread.currentThread().interrupt();
+      throw new IOException("Interrupted while waiting for git command: " +
+        String.join(" ", command), e);
+    }
+    if (exitCode != 0)
+    {
+      throw new IOException("git command failed with exit code " + exitCode + ": " +
+        String.join(" ", command));
+    }
+    return output.strip();
   }
 
   /**
@@ -249,10 +277,7 @@ public final class GitCommands
    */
   public static String runGitCommandSingleLine(String... args) throws IOException
   {
-    String[] command = new String[args.length + 1];
-    command[0] = "git";
-    System.arraycopy(args, 0, command, 1, args.length);
-    return buildAndRunSingleLine(Map.of(), command);
+    return buildAndRunSingleLine(null, Map.of(), prependGit(args));
   }
 
   /**
@@ -265,11 +290,8 @@ public final class GitCommands
    */
   public static String runGitCommandSingleLineInDirectory(String directory, String... args) throws IOException
   {
-    String[] dirArgs = new String[args.length + 2];
-    dirArgs[0] = "-C";
-    dirArgs[1] = directory;
-    System.arraycopy(args, 0, dirArgs, 2, args.length);
-    return runGitCommandSingleLine(dirArgs);
+    requireThat(directory, "directory").isNotBlank();
+    return buildAndRunSingleLine(Path.of(directory), Map.of(), prependGit(args));
   }
 
   /**
@@ -289,12 +311,8 @@ public final class GitCommands
     String... args) throws IOException
   {
     requireThat(extraEnv, "extraEnv").isNotNull();
-    String[] command = new String[args.length + 3];
-    command[0] = "git";
-    command[1] = "-C";
-    command[2] = directory;
-    System.arraycopy(args, 0, command, 3, args.length);
-    return buildAndRunSingleLine(extraEnv, command);
+    requireThat(directory, "directory").isNotBlank();
+    return buildAndRunSingleLine(Path.of(directory), extraEnv, prependGit(args));
   }
 
   /**
@@ -303,15 +321,19 @@ public final class GitCommands
    * <p>
    * The extra environment variables are layered on top of the inherited process environment.
    *
+   * @param workingDirectory the working directory for the process, or {@code null} to inherit the JVM's
+   *                         working directory
    * @param extraEnv additional environment variables to set for the process, or an empty map for none
    * @param command the full command and arguments (including the executable name)
    * @return the first line of output trimmed
    * @throws IOException if the command fails, is interrupted, or returns no output
    */
-  private static String buildAndRunSingleLine(Map<String, String> extraEnv, String... command) throws IOException
+  private static String buildAndRunSingleLine(Path workingDirectory, Map<String, String> extraEnv,
+    String... command) throws IOException
   {
-    ProcessBuilder pb = new ProcessBuilder(command);
-    pb.redirectErrorStream(true);
+    ProcessBuilder pb = new ProcessBuilder(command).redirectErrorStream(true);
+    if (workingDirectory != null)
+      pb.directory(workingDirectory.toFile());
     if (!extraEnv.isEmpty())
       pb.environment().putAll(extraEnv);
     Process process = pb.start();
@@ -341,6 +363,14 @@ public final class GitCommands
     if (line == null || line.isEmpty())
       throw new IOException("git command returned no output: " + String.join(" ", command));
     return line.strip();
+  }
+
+  private static String[] prependGit(String... args)
+  {
+    String[] command = new String[args.length + 1];
+    command[0] = "git";
+    System.arraycopy(args, 0, command, 1, args.length);
+    return command;
   }
 
   /**

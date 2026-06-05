@@ -265,7 +265,7 @@ final class SprtIsolationManager
         String runnerWorktree = scope.getCatWorkPath().resolve("worktrees").resolve(runnerBranch).toString();
 
         ProcessRunner.Result worktreeResult = ProcessRunner.run(worktreePath,
-          "git", "-C", worktreePath.toString(), "worktree", "add", "-b", runnerBranch,
+          "git", "worktree", "add", "-b", runnerBranch,
           runnerWorktree, issueName + "-isolation");
         if (worktreeResult.exitCode() != 0)
           throw new IOException(

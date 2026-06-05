@@ -1844,7 +1844,7 @@ public final class IssueDiscovery
       return cached;
     Path indexPath = issueDir.resolve("index.json");
     Path relativePath = projectPath.relativize(indexPath);
-    String firstLine = ProcessRunner.runAndCaptureFirstLine(List.of("git", "-C", projectPath.toString(),
+    String firstLine = ProcessRunner.runAndCaptureFirstLine(projectPath, List.of("git",
       "log", "--diff-filter=A", "--format=%at", "--reverse", "--", relativePath.toString()));
     long timestamp;
     if (firstLine == null || firstLine.isBlank())

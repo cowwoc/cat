@@ -422,10 +422,11 @@ public final class MergeAndCleanup
     int maxRetries = 3;
     for (int attempt = 1; attempt <= maxRetries; ++attempt)
     {
-      String[] command = {"git", "-C", directory, "merge", "--ff-only", ref};
-      ProcessBuilder pb = new ProcessBuilder(command);
-      pb.redirectErrorStream(true);
-      Process process = pb.start();
+      String[] command = {"git", "merge", "--ff-only", ref};
+      Process process = new ProcessBuilder(command).
+        directory(Path.of(directory).toFile()).
+        redirectErrorStream(true).
+        start();
       StringBuilder output = new StringBuilder();
       try (BufferedReader reader = new BufferedReader(
         new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))

@@ -293,13 +293,13 @@ public final class GetDiffOutput implements SkillOutput
       requireThat(projectPath, "projectPath").isNotNull();
       requireThat(targetBranch, "targetBranch").isNotNull();
 
-      ProcessBuilder pb = new ProcessBuilder("git", "-C", projectPath.toString(),
-        "diff", targetBranch + "..HEAD");
-      pb.redirectErrorStream(false);
       Process process;
       try
       {
-        process = pb.start();
+        process = new ProcessBuilder("git", "diff", targetBranch + "..HEAD").
+          directory(projectPath.toFile()).
+          redirectErrorStream(false).
+          start();
       }
       catch (IOException e)
       {
