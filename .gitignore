@@ -13,6 +13,7 @@ config.local.json
 demo-recording/
 .clone/
 tools/
+.agents/skills/caveman/
 
 # Compiled code
 plugin/client
