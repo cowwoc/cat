@@ -530,6 +530,30 @@ generate_launchers() {
     cat > "$launcher" <<'EOF'
 #!/bin/sh
 DIR=`dirname $0`
+if [ -z "${CAT_PLUGIN_ROOT:-}" ]; then
+  if [ -n "${PLUGIN_ROOT:-}" ]; then
+    CAT_PLUGIN_ROOT="$PLUGIN_ROOT"
+  else
+    SEARCH_DIR=`cd "$DIR/../.." 2>/dev/null && pwd -P || printf '%s' "$DIR/../.."`
+    while [ -n "$SEARCH_DIR" ]; do
+      if [ -f "$SEARCH_DIR/.codex-plugin/plugin.json" ]; then
+        CAT_PLUGIN_ROOT="$SEARCH_DIR"
+        break
+      fi
+      if [ "$SEARCH_DIR" = "/" ]; then
+        break
+      fi
+      PARENT=`dirname "$SEARCH_DIR"`
+      if [ "$PARENT" = "$SEARCH_DIR" ]; then
+        break
+      fi
+      SEARCH_DIR="$PARENT"
+    done
+  fi
+  if [ -n "${CAT_PLUGIN_ROOT:-}" ]; then
+    export CAT_PLUGIN_ROOT
+  fi
+fi
 exec "JAVA_PATH" \
   ${CAT_JVM_OPTS:-} \
   ASSERTIONS_FLAG \

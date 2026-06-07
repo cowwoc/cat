@@ -153,9 +153,11 @@ public abstract class AbstractCodexContextHook
       nativeInput.get("cat_plugin_root"));
     if (value.isBlank())
       value = getEnvironment(environment, "CAT_PLUGIN_ROOT");
+    if (value.isBlank())
+      value = getEnvironment(environment, "PLUGIN_ROOT");
     if (!value.isBlank())
       return toAbsolutePath(value, "pluginRoot");
-    return findPluginRootFromWorkingDirectory(workingDirectory);
+    return findPluginRootFromLauncherOrWorkingDirectory(workingDirectory);
   }
 
   /**
@@ -187,8 +189,18 @@ public abstract class AbstractCodexContextHook
    * @return the discovered plugin root
    * @throws IllegalArgumentException if no plugin root can be found
    */
-  private static Path findPluginRootFromWorkingDirectory(Path workingDirectory)
+  private static Path findPluginRootFromLauncherOrWorkingDirectory(Path workingDirectory)
   {
+    String launcherDir = System.getProperty("cat.launcher.dir", "").strip();
+    if (!launcherDir.isEmpty())
+    {
+      Path launcherPath = Path.of(launcherDir);
+      for (Path candidate = launcherPath; candidate != null; candidate = candidate.getParent())
+      {
+        if (candidate.resolve(".codex-plugin/plugin.json").toFile().isFile())
+          return candidate;
+      }
+    }
     for (Path candidate = workingDirectory; candidate != null; candidate = candidate.getParent())
     {
       if (candidate.resolve(".codex-plugin/plugin.json").toFile().isFile())
@@ -197,8 +209,8 @@ public abstract class AbstractCodexContextHook
       if (sourcePlugin.resolve(".codex-plugin/plugin.json").toFile().isFile())
         return sourcePlugin;
     }
-    throw new IllegalArgumentException("CAT_PLUGIN_ROOT is required when the plugin root cannot be " +
-      "discovered from the working directory.");
+    throw new IllegalArgumentException("CAT_PLUGIN_ROOT or Codex PLUGIN_ROOT is required when the " +
+      "plugin root cannot be discovered from the launcher path or working directory.");
   }
 
   /**

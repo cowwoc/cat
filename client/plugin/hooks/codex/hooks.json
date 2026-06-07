@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CAT_PLUGIN_ROOT}/client/bin/session-start"
+            "command": "${PLUGIN_ROOT}/client/bin/session-start"
           }
         ]
       }
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CAT_PLUGIN_ROOT}/client/bin/subagent-start"
+            "command": "${PLUGIN_ROOT}/client/bin/subagent-start"
           }
         ]
       }
@@ -27,7 +27,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CAT_PLUGIN_ROOT}/client/bin/pre-bash"
+            "command": "${PLUGIN_ROOT}/client/bin/pre-bash"
           }
         ]
       }

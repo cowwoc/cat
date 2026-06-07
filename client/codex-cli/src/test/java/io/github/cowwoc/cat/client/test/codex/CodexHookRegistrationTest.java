@@ -47,7 +47,7 @@ public final class CodexHookRegistrationTest
     requireThat(matcher.matcher("grep").matches(), "grepDoesNotMatch").isFalse();
     requireThat(matcher.matcher("custom.tool").matches(), "customToolDoesNotMatch").isFalse();
     requireThat(registration.get("hooks").get(0).get("command").asString(), "preBashCommand").
-      isEqualTo("${CAT_PLUGIN_ROOT}/client/bin/pre-bash");
+      isEqualTo("${PLUGIN_ROOT}/client/bin/pre-bash");
   }
 
   /**
@@ -81,7 +81,7 @@ public final class CodexHookRegistrationTest
 
     requireThat(registration.has("matcher"), "subagentStartMatcher").isFalse();
     requireThat(registration.get("hooks").get(0).get("command").asString(),
-      "subagentStartCommand").isEqualTo("${CAT_PLUGIN_ROOT}/client/bin/subagent-start");
+      "subagentStartCommand").isEqualTo("${PLUGIN_ROOT}/client/bin/subagent-start");
   }
 
   /**
@@ -100,7 +100,7 @@ public final class CodexHookRegistrationTest
     requireThat(matcher.matcher("clear").matches(), "clearMatches").isTrue();
     requireThat(matcher.matcher("other").matches(), "otherDoesNotMatch").isFalse();
     requireThat(registration.get("hooks").get(0).get("command").asString(), "sessionStartCommand").
-      isEqualTo("${CAT_PLUGIN_ROOT}/client/bin/session-start");
+      isEqualTo("${PLUGIN_ROOT}/client/bin/session-start");
   }
 
   /**
