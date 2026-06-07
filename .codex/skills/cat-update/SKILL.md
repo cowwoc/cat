@@ -80,8 +80,12 @@ if [[ ! -x "${BATS_BIN}" ]]; then
 fi
 BATS_PROJECT="$(mktemp -d)"
 trap 'rm -rf "${BATS_PROJECT}"' EXIT
-cp -a "${PROJECT_DIR}/." "${BATS_PROJECT}/"
-rm -rf "${BATS_PROJECT}/.git" "${BATS_PROJECT}"/client/*/target
+mkdir -p "${BATS_PROJECT}/client"
+tar -C "${PROJECT_DIR}" \
+  --exclude='client/plugin/node_modules' \
+  --exclude='client/*/target' \
+  -cf - client/plugin client/distribution | tar -C "${BATS_PROJECT}" -xf -
+ln -s "${PROJECT_DIR}/client/plugin/node_modules" "${BATS_PROJECT}/client/plugin/node_modules"
 npm run --prefix "${BATS_PROJECT}/client/plugin" test
 
 RELEASE_ARTIFACT="${PROJECT_DIR}/client/distribution/target/engine/codex"
@@ -89,10 +93,20 @@ test -f "${RELEASE_ARTIFACT}/client/VERSION"
 test -f "${RELEASE_ARTIFACT}/.codex-plugin/plugin.json"
 test -d "${RELEASE_ARTIFACT}/agents"
 
-PLUGIN_VERSION="$(sed -n 's/^[[:space:]]*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
-  "${RELEASE_ARTIFACT}/.codex-plugin/plugin.json" | head -1)"
+PLUGIN_MANIFEST="${RELEASE_ARTIFACT}/.codex-plugin/plugin.json"
+PLUGIN_VERSION="$(python3 - "${PLUGIN_MANIFEST}" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+manifest = json.loads(Path(sys.argv[1]).read_text())
+version = manifest.get("version", "").strip()
+if version:
+    print(version)
+PY
+)"
 if [[ -z "${PLUGIN_VERSION}" ]]; then
-  echo "ERROR: Could not determine CAT plugin version." >&2
+  echo "ERROR: Could not determine CAT plugin version from ${PLUGIN_MANIFEST}." >&2
   exit 1
 fi
 
@@ -199,11 +213,23 @@ test -f "${PROJECT_CODEX_AGENTS_DIR}/cat-stakeholder-architecture.toml"
 grep -F 'name = "cat-stakeholder-architecture"' \
   "${PROJECT_CODEX_AGENTS_DIR}/cat-stakeholder-architecture.toml" >/dev/null
 grep -F '[plugins."cat@cat"]' "${CODEX_CONFIG}" >/dev/null
-awk '
-  /^\[.*\]$/ { in_cat_plugin = ($0 == "[plugins.\"cat@cat\"]"); next }
-  in_cat_plugin && /^[[:space:]]*enabled[[:space:]]*=[[:space:]]*true[[:space:]]*$/ { found_enabled = 1 }
-  END { exit(found_enabled ? 0 : 1) }
-' "${CODEX_CONFIG}"
+python3 - "${CODEX_CONFIG}" <<'PY'
+from pathlib import Path
+import sys
+
+text = Path(sys.argv[1]).read_text().splitlines()
+in_section = False
+enabled = False
+for line in text:
+    stripped = line.strip()
+    if stripped.startswith("[") and stripped.endswith("]"):
+        in_section = stripped == '[plugins."cat@cat"]'
+        continue
+    if in_section and stripped == "enabled = true":
+        enabled = True
+        break
+raise SystemExit(0 if enabled else 1)
+PY
 ```
 
 After the command succeeds, tell the user to restart Codex to complete the installation.

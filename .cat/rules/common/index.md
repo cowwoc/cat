@@ -29,6 +29,7 @@ Path-specific shared rule bodies live in `.cat/rules/include/`. Engine directori
 | Rule File | Audience | Paths | Purpose |
 |-----------|----------|-------|---------|
 | [backwards-compatibility.md](backwards-compatibility.md) | all agents | always | Require migrations instead of legacy fallbacks |
+| [caveman-guard.md](caveman-guard.md) | main agent only | always | External caveman drift guard consumed by SessionStart hook |
 | [commit-types.md](commit-types.md) | main agent only | always | Enforce commit type selection and commit grouping rules |
 | [convention-locations.md](convention-locations.md) | main agent only | always | Where to put end-user vs plugin-dev conventions |
 | [issue-workflow.md](issue-workflow.md) | main agent only | always | Require issue workflow for plugin/client changes |

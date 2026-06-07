@@ -684,7 +684,7 @@ public final class CodexSessionStartHookTest
    * @throws IOException if file operations fail
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*CAT_PLUGIN_ROOT is required.*")
+    expectedExceptionsMessageRegExp = ".*CAT_PLUGIN_ROOT or Codex PLUGIN_ROOT is required.*")
   public void sessionStartFailsWhenPluginRootCannotBe() throws IOException
   {
     Path tempDir = Files.createTempDirectory("codex-session-start-test-");

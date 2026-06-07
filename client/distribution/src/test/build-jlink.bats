@@ -394,7 +394,6 @@ printf '%s\n' '{"hookSpecificOutput":"ok"}'
 EOF
 cat > "$OUTPUT_DIR/bin/get-status-output" <<'EOF'
 #!/bin/sh
-cat >/dev/null
 printf '%s\n' "status" >> "$STATUS_LOG"
 printf '%s\n' "No CAT project found. Initialize one first."
 EOF
@@ -460,10 +459,9 @@ while [ "$#" -gt 0 ]; do
     esac
     shift || true
 done
-cat >/dev/null
-printf '%s|%s|%s|%s|%s|%s|%s|%s\n' \
-    "$mode" "$module" "${CLAUDE_PROJECT_DIR:-}" "${CLAUDE_PLUGIN_ROOT:-}" "${CLAUDE_PLUGIN_DATA:-}" \
-    "${CLAUDE_CONFIG_DIR:-}" "${CODEX_THREAD_ID:-}" "${CODEX_HOME:-}" >> "$AOT_LOG"
+    printf '%s|%s|%s|%s|%s|%s|%s|%s\n' \
+        "$mode" "$module" "${CLAUDE_PROJECT_DIR:-}" "${CLAUDE_PLUGIN_ROOT:-}" "${CLAUDE_PLUGIN_DATA:-}" \
+        "${CLAUDE_CONFIG_DIR:-}" "${CODEX_THREAD_ID:-}" "${CODEX_HOME:-}" >> "$AOT_LOG"
 case "$mode" in
     record) touch "$configuration" ;;
     create) touch "$cache" ;;
@@ -517,10 +515,9 @@ while [ "$#" -gt 0 ]; do
     esac
     shift || true
 done
-cat >/dev/null
-case "$mode" in
-    record)
-        touch "$configuration"
+    case "$mode" in
+        record)
+            touch "$configuration"
         exit 0
         ;;
     create)

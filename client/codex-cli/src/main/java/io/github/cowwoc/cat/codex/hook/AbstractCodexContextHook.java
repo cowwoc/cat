@@ -157,7 +157,7 @@ public abstract class AbstractCodexContextHook
       value = getEnvironment(environment, "PLUGIN_ROOT");
     if (!value.isBlank())
       return toAbsolutePath(value, "pluginRoot");
-    return findPluginRootFromLauncherOrWorkingDirectory(workingDirectory);
+    return findPluginRootNearLauncher(workingDirectory);
   }
 
   /**
@@ -189,7 +189,7 @@ public abstract class AbstractCodexContextHook
    * @return the discovered plugin root
    * @throws IllegalArgumentException if no plugin root can be found
    */
-  private static Path findPluginRootFromLauncherOrWorkingDirectory(Path workingDirectory)
+  private static Path findPluginRootNearLauncher(Path workingDirectory)
   {
     String launcherDir = System.getProperty("cat.launcher.dir", "").strip();
     if (!launcherDir.isEmpty())

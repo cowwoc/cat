@@ -1549,7 +1549,7 @@ public final class PluginArtifactBuilderTest
         if [ -n "${PLUGIN_ROOT:-}" ]; then
           CAT_PLUGIN_ROOT="$PLUGIN_ROOT"
         else
-          SEARCH_DIR=`cd "$DIR/../.." 2>/dev/null && pwd -P || printf '%s' "$DIR/../.."`
+          SEARCH_DIR=`cd "$DIR/../.." 2>/dev/null && pwd -P || printf '%%s' "$DIR/../.."`
           while [ -n "$SEARCH_DIR" ]; do
             if [ -f "$SEARCH_DIR/.codex-plugin/plugin.json" ] || [ -f "$SEARCH_DIR/.claude-plugin/plugin.json" ]; then
               CAT_PLUGIN_ROOT="$SEARCH_DIR"
