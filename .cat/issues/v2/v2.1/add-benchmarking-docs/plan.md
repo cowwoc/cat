@@ -49,7 +49,9 @@ Sample efficiency: For a perfectly compliant skill (true rate = 1.0), SPRT accep
 27 passes (3 smoke + ~24 SPRT runs). For a completely failing skill (true rate = 0.0), SPRT rejects
 after approximately 3-4 observations.
 
-## Execution Steps
+## Jobs
+
+### Job 1
 
 1. Create `docs/benchmarking.md` with the following sections (line-wrap at 120 chars):
    - License header (HTML comment, per `.claude/rules/license-header.md` — `docs/` is NOT exempt)

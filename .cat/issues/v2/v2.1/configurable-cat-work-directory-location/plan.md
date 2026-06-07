@@ -194,7 +194,7 @@ Run `/cat:config` and select "Home directory (~/.cat)"
 7. ✅ Update other agents using `.cat/work/`
 8. ✅ Add README.md documentation
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] Config hierarchy works: `.cat/config.local.json` > `.cat/config.json` > `~/.cat/config.json`
 - [ ] `/cat:config` updates config with `workPath` (preserves existing fields)

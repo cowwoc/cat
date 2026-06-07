@@ -55,7 +55,7 @@ content engine-neutral and preserving existing behavioral contracts.
 - Skill test directories use `spawn-claude` and `spawn-codex` naming.
 - Commit history is squashed by topic for approval gate presentation.
 
-## Acceptance Criteria
+## Post-conditions
 - No unresolved references remain in changed files to removed skill paths/names that this issue replaced.
 - `mvn -f client/pom.xml verify -e` passes from the issue worktree.
 - `git log v2.1..HEAD` on the issue branch shows only issue-related topic commits.

@@ -41,7 +41,9 @@ Files that reference the renamed files and must be updated:
 - `plugin/skills/learn/phase-analyze.md` → references `MULTIPLE-MISTAKES.md`, `HOOK-WORKAROUNDS.md`
 - `plugin/skills/learn/phase-prevent.md` → references `PRIMING-VERIFICATION.md`, `RELATED-FILES-CHECK.md`
 
-## Execution Steps
+## Jobs
+
+### Job 1
 
 ### Step 1: Read the files to understand exact retroactive content
 

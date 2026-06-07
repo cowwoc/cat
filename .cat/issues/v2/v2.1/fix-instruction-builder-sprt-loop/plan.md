@@ -23,6 +23,13 @@ skill-grader-agent if they still reference the old JSON format.
 - [ ] E2E verification: run instruction-builder on a real skill and confirm steps 4.1-4.3 execute without
   skipping
 
+- `plugin/skills/instruction-builder-agent/first-use.md` Step 4.1 describes generating individual `.md`
+- `plugin/skills/instruction-builder-agent/first-use.md` Steps 4.2-4.3 pass `${TEST_DIR}` (directory)
+- `plugin/skills/instruction-builder-agent/first-use.md` Step 4.3 test-run subagent reads
+- `SkillTestRunner.detectChanges` accepts a directory as its third argument and derives test case IDs
+- `SkillTestRunner.mapUnits` accepts a directory as its first argument and reads `semantic_unit_id`
+- `mvn -f client/pom.xml verify -e` passes with zero errors or warnings
+
 ## Research Findings
 
 Investigation of affected files confirms:
@@ -284,17 +291,3 @@ tests and linters pass.
 **Commit** with message:
 `bugfix: update skill-test-runner to accept test directory; add tests; close issue`
 
-## Success Criteria
-
-- `plugin/skills/instruction-builder-agent/first-use.md` Step 4.1 describes generating individual `.md`
-  files with YAML frontmatter containing `category` and `semantic_unit_id`, a `## Turn 1` section, and
-  a `## Assertions` numbered list — no JSON schema block remains
-- `plugin/skills/instruction-builder-agent/first-use.md` Steps 4.2-4.3 pass `${TEST_DIR}` (directory)
-  to `detect-changes` and `map-units` CLI commands — no references to `test-cases.json` remain in 4.1-4.3
-- `plugin/skills/instruction-builder-agent/first-use.md` Step 4.3 test-run subagent reads
-  `{TEST_DIR}/{test_case_id}.md` and its prohibition permits only that file from `${TEST_DIR}`
-- `SkillTestRunner.detectChanges` accepts a directory as its third argument and derives test case IDs
-  from `.md` file stems in that directory
-- `SkillTestRunner.mapUnits` accepts a directory as its first argument and reads `semantic_unit_id`
-  from `.md` file frontmatter to partition test cases
-- `mvn -f client/pom.xml verify -e` passes with zero errors or warnings

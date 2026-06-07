@@ -63,7 +63,9 @@ Since the cleanup logic is three lines of Bash (`plan_temp_file=$(mktemp --suffi
 2. **Simulate both paths** — write helper functions that mimic success and error paths
 3. **Verify file state** — assert presence/absence of temp file before and after cleanup
 
-## Execution Steps
+## Jobs
+
+### Job 1
 
 ### Step 1: Create tests/add-agent-temp-file-cleanup.bats
 

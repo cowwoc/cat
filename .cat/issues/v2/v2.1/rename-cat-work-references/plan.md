@@ -53,6 +53,11 @@ Also skip historical changelog entries and `.cat/issues/` files (closed issues a
 - [ ] Tests pass (`mvn -f client/pom.xml verify -e`)
 - [ ] No behavioral regressions
 
+- All stale files updated with the correct new skill names (plugin skills, config, docs, Java source)
+- `mvn -f client/pom.xml verify -e` exits 0
+- `changelog.md` is unchanged
+- No file under `.cat/issues/` is modified
+
 ## Research Findings
 
 Comprehensive grep across the worktree (excluding `.cat/`, `.git/`, `target/`, `changelog.md`) found
@@ -224,9 +229,3 @@ Update index.json to close the issue in the same commit as implementation.
 - Stage `${ISSUE_PATH}/index.json` (set `status: "closed"`, `progress: 100`)
 - Commit message: `refactor: rename stale /cat:X references to /cat:X-agent in client Java source and tests`
 
-## Success Criteria
-
-- All stale files updated with the correct new skill names (plugin skills, config, docs, Java source)
-- `mvn -f client/pom.xml verify -e` exits 0
-- `changelog.md` is unchanged
-- No file under `.cat/issues/` is modified

@@ -22,11 +22,18 @@ modified.
 - [ ] Running `empirical-test-runner` on the benchmark achieves ≥80% on each positive test case
   (verified manually before committing)
 
+- `plugin/skills/grep-and-read-agent/benchmark/test-cases.json` exists
+- At least 1 positive test case (`must_use_tools: ["Skill"]`)
+- At least 2 negative test cases (`must_not_use_tools: ["Skill"]`)
+- Empirical validation: positive cases ≥80% pass rate
+
 ## Files Modified
 
 - `plugin/skills/grep-and-read-agent/benchmark/test-cases.json` — new file
 
-## Execution Steps
+## Jobs
+
+### Job 1
 
 ### Step 1 — Read grep-and-read-agent skill
 
@@ -94,9 +101,3 @@ git add plugin/skills/grep-and-read-agent/benchmark/test-cases.json
 git commit -m "test: add grep-and-read-agent benchmark test cases"
 ```
 
-## Success Criteria
-
-- `plugin/skills/grep-and-read-agent/benchmark/test-cases.json` exists
-- At least 1 positive test case (`must_use_tools: ["Skill"]`)
-- At least 2 negative test cases (`must_not_use_tools: ["Skill"]`)
-- Empirical validation: positive cases ≥80% pass rate

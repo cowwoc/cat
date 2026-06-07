@@ -111,7 +111,7 @@ Issue changelog content is embedded in commit messages.
 - Run `mvn -f client/pom.xml verify -e` from the worktree.
 - Update `/home/node/.cat/worktrees/2.1-codex-friendly-help-output/.cat/issues/v2/v2.1/codex-friendly-help-output/index.json` in the same implementation commit as the help/test changes: set `status` to `closed` and `progress` to `100`.
 
-## Acceptance Criteria
+## Post-conditions
 - `client/plugin/skills/codex/help/first-use.md` contains zero Markdown pipe-table rows (no lines matching regex `^\|.*\|$`) and still contains: `$cat:init`, `$cat:status`, `$cat:config`, `$cat:cleanup`, `Work on v1 issues`, `Work on v1.0 issues`, `Work on v1.0.1 issues`, `{major}.{minor}-{issue-name}`, `{major}.{minor}.{patch}-{issue-name}`, `{issue-branch}-sub-{uuid}`.
 - `client/plugin/skills/claude/help/first-use.md` contains zero Markdown pipe-table rows (no lines matching regex `^\|.*\|$`) and still contains: `/cat:init`, `/cat:status`, `/cat:config`, `/cat:cleanup`, `Work on v1 issues`, `Work on v1.0 issues`, `Work on v1.0.1 issues`, `{major}.{minor}-{issue-name}`, `{major}.{minor}.{patch}-{issue-name}`, `{issue-branch}-sub-{uuid}`.
 - `client/plugin/skills/codex/help/first-use.md` contains the heading `# CAT Command Reference` and `## Start Here`; `client/plugin/skills/claude/help/first-use.md` contains `# CAT Command Reference` and the sentence `Use slash commands to select a CAT workflow explicitly.`.

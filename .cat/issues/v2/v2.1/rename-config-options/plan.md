@@ -88,6 +88,13 @@ be a no-op for this key. The migration must now handle:
 - `plugin/skills/init/first-use.md` updated to use new names
 - Config documentation reflects new names and their meanings
 
+- `mvn -f client/pom.xml verify -e` passes with zero errors
+- `plugin/templates/config.json` contains only `caution`, `curiosity`, `perfection` (not the old names)
+- No Java file references `VerifyLevel`, `EffortLevel`, or `PatienceLevel` class names
+- No skill file greps for `"verify"`, `"effort"`, or `"patience"` as config keys
+- Migration script in `plugin/migrations/2.1.sh` handles old→new key conversion with value inversion for
+- Migration is idempotent (running twice produces same result)
+
 ## Jobs
 
 ### Job 1
@@ -177,12 +184,3 @@ be a no-op for this key. The migration must now handle:
 
 10. **Update index.json**: set status to `closed`, progress to 100%
 
-## Success Criteria
-
-- `mvn -f client/pom.xml verify -e` passes with zero errors
-- `plugin/templates/config.json` contains only `caution`, `curiosity`, `perfection` (not the old names)
-- No Java file references `VerifyLevel`, `EffortLevel`, or `PatienceLevel` class names
-- No skill file greps for `"verify"`, `"effort"`, or `"patience"` as config keys
-- Migration script in `plugin/migrations/2.1.sh` handles old→new key conversion with value inversion for
-  perfection
-- Migration is idempotent (running twice produces same result)

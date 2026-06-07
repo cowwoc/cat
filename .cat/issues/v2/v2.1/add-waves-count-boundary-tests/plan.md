@@ -24,6 +24,12 @@ one wave, multiple waves, and edge cases like malformed wave headers.
 - No regressions in existing work-implement-agent behavior
 - E2E verification: confirm WAVES_COUNT is correctly determined and used for subagent orchestration
 
+- `tests/waves-count-helper.bash` exists with `detect_waves_count`, `classify_wave_execution`, and
+- `tests/work-implement-agent-waves-count.bats` exists with all 22 test cases listed above
+- `bats tests/work-implement-agent-waves-count.bats` exits 0 with all tests passing
+- `bats tests/` exits 0 with no regressions in existing tests
+- License headers present on both new files
+
 ## Research Findings
 
 ### Code Under Test
@@ -178,11 +184,3 @@ cd "${WORKTREE_PATH}" && bats tests/
 
 All tests must pass with exit code 0.
 
-## Success Criteria
-
-- `tests/waves-count-helper.bash` exists with `detect_waves_count`, `classify_wave_execution`, and
-  `build_subagent_prompt` functions
-- `tests/work-implement-agent-waves-count.bats` exists with all 22 test cases listed above
-- `bats tests/work-implement-agent-waves-count.bats` exits 0 with all tests passing
-- `bats tests/` exits 0 with no regressions in existing tests
-- License headers present on both new files

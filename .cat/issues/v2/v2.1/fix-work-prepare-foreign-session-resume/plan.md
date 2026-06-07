@@ -58,7 +58,9 @@ The following source locations are relevant:
 - [ ] Existing behavior for unlocked existing worktree (ERROR with existing worktree message, no `locked_by`
   field) is unchanged — the skill continues to handle this via the Orphaned Worktree Recovery Protocol
 
-## Execution Steps
+## Jobs
+
+### Job 1
 
 ### Step 1: Modify WorkPrepare.handleNonFoundResult() to return ERROR for foreign-session locks
 

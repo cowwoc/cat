@@ -22,6 +22,11 @@ Add Bats tests for the EFFORT value extraction from config in `plugin/skills/wor
 - No regressions in existing work-implement-agent behavior
 - E2E verification: confirm plan-builder is invoked with correct effort level based on config
 
+- All 15 new Bats tests in `tests/work-implement-agent-effort-extraction.bats` pass
+- No regressions: existing tests in `tests/work-implement-agent-plan-builder-invocation.bats` and
+- Test file has correct license header
+- Tests are self-contained and use isolated temp directories (no operations against real repo)
+
 ## Research Findings
 
 The code under test is the `extract_effort` function in `tests/plan-builder-invocation-helper.bash` (line 20-23), which wraps the grep/sed pattern from `plugin/skills/work-implement-agent/first-use.md:184-185`:
@@ -125,10 +130,3 @@ tested to document the current contract.
 
 - Update `index.json` to set status to `closed` and progress to 100%.
 
-## Success Criteria
-
-- All 15 new Bats tests in `tests/work-implement-agent-effort-extraction.bats` pass
-- No regressions: existing tests in `tests/work-implement-agent-plan-builder-invocation.bats` and
-  `tests/work-implement-agent-has-steps.bats` still pass
-- Test file has correct license header
-- Tests are self-contained and use isolated temp directories (no operations against real repo)

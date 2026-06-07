@@ -27,7 +27,7 @@ refactor
 7. Update tests for loading guidance changes and parser-contract removal behavior.
 8. ✅ Replace `test-json-handoff.bats` coverage with an equivalent unit test.
 
-## Acceptance Criteria
+## Post-conditions
 
 - [x] A single shared loading contract file defines first-use loading behavior.
 - [x] All `plugin/skills/**/SKILL.md` files reference the shared loading contract instead of duplicating loading boilerplate.

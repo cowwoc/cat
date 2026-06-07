@@ -170,7 +170,7 @@ None - Testing infrastructure enhancement
 - Verify exit code is 0 (all tests pass)
 - Verify acceptance criteria are met (checklist in plan.md)
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] SprtState schema includes `failedTestIds` field that persists across runs
 - [ ] If any test fails in first 3 runs, SPRT stops after current batch completes

@@ -52,7 +52,9 @@ Specifically:
 - [ ] All modified files still render correctly (no broken references)
 - [ ] Commit message: `refactor: rename skill-builder references to instruction-builder`
 
-## Execution Steps
+## Jobs
+
+### Job 1
 
 ### Step 1: Audit current occurrences
 

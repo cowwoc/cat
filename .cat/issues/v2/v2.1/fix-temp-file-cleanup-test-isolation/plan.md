@@ -70,7 +70,9 @@ in all sibling test files, so alignment with convention takes priority. The `-p 
 in `mktemp` calls is unaffected by any system `TMPDIR` shadowing because the `-p` flag takes
 explicit precedence.
 
-## Execution Steps
+## Jobs
+
+### Job 1
 
 ### Step 1: Update tests/add-agent-temp-file-cleanup.bats
 

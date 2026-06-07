@@ -39,6 +39,12 @@ manifest must therefore use the platform-qualified name. The correct approach is
 - [ ] Two consecutive runs with the same inputs produce identical manifest files
 - [ ] No regressions introduced to the build or download flow
 
+- `artifacts/SHA256SUMS.txt` is created with exactly 4 entries (one per platform)
+- Entries are sorted alphabetically: `linux-aarch64`, `linux-x64`, `macos-aarch64`, `macos-x64`
+- "Verify manifest ordering" step passes (no exit code 1)
+- `SHA256SUMS.txt` is attached to the GitHub release alongside the individual `.sha256` files
+- `git diff` of the workflow shows only the three additions described above
+
 ## Jobs
 
 ### Job 1
@@ -86,10 +92,3 @@ manifest must therefore use the platform-qualified name. The correct approach is
      existing `.sha256` entries).
 - Update index.json: set status to `closed`, progress to 100%.
 
-## Success Criteria
-
-- `artifacts/SHA256SUMS.txt` is created with exactly 4 entries (one per platform)
-- Entries are sorted alphabetically: `linux-aarch64`, `linux-x64`, `macos-aarch64`, `macos-x64`
-- "Verify manifest ordering" step passes (no exit code 1)
-- `SHA256SUMS.txt` is attached to the GitHub release alongside the individual `.sha256` files
-- `git diff` of the workflow shows only the three additions described above

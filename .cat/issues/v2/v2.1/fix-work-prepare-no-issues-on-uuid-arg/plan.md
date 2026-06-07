@@ -46,7 +46,9 @@ READY response from the full execution pipeline (required by post-conditions 2 a
 - [ ] E2E verification: invoking /cat:work with no explicit issue argument (where ARGUMENTS contains only
   the agent UUID) correctly returns the next available issue rather than NO_ISSUES
 
-## Execution Steps
+## Jobs
+
+### Job 1
 
 ### Step 1: Add E2E test for run() with UUID-only --arguments
 

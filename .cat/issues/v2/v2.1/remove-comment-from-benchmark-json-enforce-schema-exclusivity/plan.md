@@ -60,7 +60,7 @@ exist, add an assertion that the JSON object contains ONLY those five fields and
 
 **Step 5:** Run `mvn -f client/pom.xml test` and verify all tests pass.
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] `_comment` field removed from `BenchmarkRunner.java`
 - [ ] `persistArtifactsWritesBenchmarkJson` test asserts JSON object contains ONLY the documented

@@ -101,7 +101,7 @@ Mistake → instruction-builder (harden) → SPRT test added →
   SPRT REJECT → learn-agent → instruction-builder (re-harden) → SPRT re-run
 ```
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] When `prevention_path` is an instruction file (skill, CLAUDE.md, rule file, agent prompt, or other
       behavior-governing markdown), Phase 3 sets `prevention_type: "instruction_builder"` and the

@@ -110,7 +110,9 @@ For each value, use the following explanation text verbatim:
 - **Test Coverage:** Questionnaire logic is covered by manual testing procedures (documented in init and config skills for user acceptance testing). Automated unit tests validate worktree isolation and merge safety (MergeAndCleanupTest). No unit tests are required for questionnaire answer mapping since this logic is exercised during manual testing and verified via config.json state.
 - All tests pass with no regressions
 
-## Execution Steps
+## Jobs
+
+### Job 1
 
 ### Step 1: Modify `plugin/skills/init/first-use.md` — Replace `behavior_style` step
 

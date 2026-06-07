@@ -17,13 +17,20 @@ search+read scenario. No skill is needed for plain batch reads.
 - [ ] No remaining references to `cat:batch-read-agent` exist in any file under `plugin/`
 - [ ] `.cat/issues/v2/v2.1/refactor-batch-read-instructions/index.json` `status` field is set to `"closed"`
 
+- `plugin/skills/batch-read-agent/` does not exist
+- `grep -r "batch-read-agent" plugin/` returns no results
+- `tests/bats/batch-read-invocation.bats` does not exist
+- `index.json` status is `"closed"`
+
 ## Files Modified
 
 - `plugin/skills/batch-read-agent/` — deleted
 - `tests/bats/batch-read-invocation.bats` — deleted
 - `.cat/issues/v2/v2.1/refactor-batch-read-instructions/index.json` — status set to `"closed"`
 
-## Execution Steps
+## Jobs
+
+### Job 1
 
 ### Step 1 — Search for references to cat:batch-read-agent
 
@@ -105,9 +112,3 @@ git add .cat/issues/v2/v2.1/refactor-batch-read-instructions/index.json
 git commit -m "planning: close refactor-batch-read-instructions"
 ```
 
-## Success Criteria
-
-- `plugin/skills/batch-read-agent/` does not exist
-- `grep -r "batch-read-agent" plugin/` returns no results
-- `tests/bats/batch-read-invocation.bats` does not exist
-- `index.json` status is `"closed"`

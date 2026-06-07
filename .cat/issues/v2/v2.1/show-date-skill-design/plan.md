@@ -28,7 +28,7 @@ With CURIOSITY=medium, the instruction-builder-agent will:
 - Harden the instruction against adversarial probing
 - Compress the instruction for efficiency
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] SKILL.md created with proper delegation structure
 - [ ] first-use.md created with Purpose, Procedure, Verification sections

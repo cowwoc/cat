@@ -34,12 +34,20 @@ the skill correctly.
 - [ ] Running `empirical-test-runner` on grep-and-read-agent benchmark achieves ≥80% on each
   positive test case
 
+- `plugin/concepts/benchmark-design.md` exists with organic standard documented
+- `plugin/skills/grep-and-read-agent/benchmark/test-cases.json` has no system_reminders priming
+- At least 2 positive cases (Tier 1 + Tier 2 criteria)
+- At least 3 negative cases
+- Empirical validation: ≥80% on positive cases
+
 ## Files Modified
 
 - `plugin/concepts/benchmark-design.md` — new reference document
 - `plugin/skills/grep-and-read-agent/benchmark/test-cases.json` — updated to organic standard
 
-## Execution Steps
+## Jobs
+
+### Job 1
 
 ### Step 1 — Read grep-and-read-agent first-use.md
 
@@ -149,10 +157,3 @@ git add plugin/skills/grep-and-read-agent/benchmark/test-cases.json
 git commit -m "feature: strengthen positive prompts so haiku reliably triggers grep-and-read-agent"
 ```
 
-## Success Criteria
-
-- `plugin/concepts/benchmark-design.md` exists with organic standard documented
-- `plugin/skills/grep-and-read-agent/benchmark/test-cases.json` has no system_reminders priming
-- At least 2 positive cases (Tier 1 + Tier 2 criteria)
-- At least 3 negative cases
-- Empirical validation: ≥80% on positive cases

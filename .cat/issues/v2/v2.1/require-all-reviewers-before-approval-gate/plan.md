@@ -19,6 +19,13 @@ be blocked until the failure is resolved — no partial review results are accep
 - [ ] The fix is verified end-to-end: spawn reviewers, confirm gate does not appear until all return
 - [ ] All existing tests pass
 
+- `stakeholder-review-agent` Step 3 prohibits `run_in_background: true` for reviewer subagents
+- `stakeholder-review-agent` Step 4 verifies reviewer count before parsing
+- `work-review-agent` has a reviewer completion gate before returning
+- `work-merge-agent` Step 12 explicitly covers reviewer subagents in the background task check
+- `work-merge-agent` Step 12 reads and validates the review result file before showing the gate
+- All existing tests pass
+
 ## Research Findings
 
 After deep analysis of the review/merge flow in the plugin:
@@ -143,11 +150,3 @@ After deep analysis of the review/merge flow in the plugin:
 
 - Update index.json in the SAME commit: set `status` to `closed`, `progress` to `100`
 
-## Success Criteria
-
-- `stakeholder-review-agent` Step 3 prohibits `run_in_background: true` for reviewer subagents
-- `stakeholder-review-agent` Step 4 verifies reviewer count before parsing
-- `work-review-agent` has a reviewer completion gate before returning
-- `work-merge-agent` Step 12 explicitly covers reviewer subagents in the background task check
-- `work-merge-agent` Step 12 reads and validates the review result file before showing the gate
-- All existing tests pass

@@ -14,7 +14,9 @@ Add `tool_use` as a valid assertion type in `EmpiricalTestRunner.java` and add T
 - No existing Java method evaluates the typed assertion schema — this is new functionality
 - `EvaluationResult` record (line 1646) is the correct return type: `(boolean pass, Map<String, Boolean> checks)`
 
-## Execution Steps
+## Jobs
+
+### Job 1
 
 ### Step 1: Add `evaluateAssertions()` to `EmpiricalTestRunner.java`
 

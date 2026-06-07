@@ -31,7 +31,9 @@ The convention file `plugin/rules/tee-slow-output.md` already exists on the targ
 The implementation subagent should read the file, check each post-condition against the actual content, and close the
 issue if all are met.
 
-## Execution Steps
+## Jobs
+
+### Job 1
 
 Commit type: `feature:`
 

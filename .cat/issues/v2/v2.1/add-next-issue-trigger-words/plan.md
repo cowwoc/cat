@@ -9,7 +9,9 @@ and instead tries non-existent skill names like /cat:work.
 - plugin/skills/work-agent/SKILL.md trigger words include 'next issue' and 'next'
 - Agent correctly resolves 'Next issue' to cat:work-agent skill invocation
 
-## Execution Steps
+## Jobs
+
+### Job 1
 
 - Edit `plugin/skills/work-agent/SKILL.md`: in the `description:` frontmatter field, append `"next issue"` and
   `"next"` to the trigger words list.
@@ -19,7 +21,7 @@ and instead tries non-existent skill names like /cat:work.
 - Update `.cat/issues/v2/v2.1/add-next-issue-trigger-words/index.json`: set `"status"` to `"closed"` and `"progress"` to `100` in the same commit.
 - Commit with message: `feature: add next issue trigger words to work-agent skill`
 
-## Success Criteria
+## Post-conditions
 
 - `plugin/skills/work-agent/SKILL.md` description contains the words `"next issue"` and `"next"` in the trigger words
   list

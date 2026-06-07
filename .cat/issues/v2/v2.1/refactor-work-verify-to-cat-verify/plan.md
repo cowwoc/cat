@@ -31,7 +31,9 @@ All references are string literals in shell/Markdown files. The migration script
 - [ ] The directory name `.cat/work/verify` is preserved (not renamed)
 - [ ] Tests passing
 
-## Execution Steps
+## Jobs
+
+### Job 1
 
 1. **Update plugin/concepts/work.md**
    - Change: `${CLAUDE_PROJECT_DIR}/.cat/work/verify/${CLAUDE_SESSION_ID}/` to `${WORKTREE_PATH}/.cat/work/verify/${CLAUDE_SESSION_ID}/`

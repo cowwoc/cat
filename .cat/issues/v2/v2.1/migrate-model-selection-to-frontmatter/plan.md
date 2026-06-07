@@ -74,7 +74,7 @@ Modify the skill invocation logic to:
 
 Delete `plugin/rules/model-selection.md` after migration is complete and verified.
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] All skill SKILL.md files have `model` frontmatter field
 - [ ] All agent .md files in plugin/agents/ have `model` frontmatter field

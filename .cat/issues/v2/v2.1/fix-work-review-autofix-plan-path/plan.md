@@ -35,7 +35,9 @@ The planning subagent in `work-review-agent`'s auto-fix loop writes `review-fix-
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Steps
+## Jobs
+
+### Job 1
 1. In `plugin/skills/work-review-agent/first-use.md`, locate the section where the planning subagent
    is spawned for auto-fix iteration
 2. Add explicit output path instruction to the planning subagent prompt:

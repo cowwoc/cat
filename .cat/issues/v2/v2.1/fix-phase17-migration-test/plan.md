@@ -17,7 +17,7 @@ Update four areas in the test:
 4. **Content assertions** — check JSON format (`"2.1-sub-task"`) instead of Markdown format (`- 2.1-sub-task`).
 5. **Sub-task state path** — the test writes a closed state to `STATE.md`; update to write `index.json`.
 
-## Acceptance Criteria
+## Post-conditions
 
 - [ ] Test `phase17MigrationQualifiesBareNamesAndAllSubissuesClosedBehavesCorrectly` passes
 - [ ] All other tests in `IssueDiscoveryTest` continue to pass

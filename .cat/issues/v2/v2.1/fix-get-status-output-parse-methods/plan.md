@@ -32,7 +32,9 @@ Fix two bugs in `GetStatusOutput` status-parsing methods:
 - New unit tests cover: blank content → returns "open", non-blank valid JSON, unknown status throws, missing
   status field throws.
 
-## Execution Steps
+## Jobs
+
+### Job 1
 
 1. In `GetStatusOutput.parseStatusFromIndexJson` (in
    `client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetStatusOutput.java`):
