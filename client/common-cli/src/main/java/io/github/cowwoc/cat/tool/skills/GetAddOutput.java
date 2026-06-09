@@ -297,6 +297,14 @@ public final class GetAddOutput implements SkillOutput
   private record VersionData(String version, String status, String summary,
     List<String> existingIssues)
   {
+    /**
+     * Creates immutable version display data.
+     *
+     * @param version version string
+     * @param status version status
+     * @param summary version summary text
+     * @param existingIssues existing issue names under version
+     */
     private VersionData
     {
       requireThat(version, "version").isNotNull();

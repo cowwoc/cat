@@ -365,6 +365,12 @@ public final class GitCommands
     return line.strip();
   }
 
+  /**
+   * Prepends git executable name to argument array.
+   *
+   * @param args git arguments
+   * @return full process command
+   */
   private static String[] prependGit(String... args)
   {
     String[] command = new String[args.length + 1];

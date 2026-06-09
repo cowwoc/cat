@@ -568,6 +568,14 @@ public final class MergeAndCleanup
     rejectInsideWorktree("Java engine", Path.of(System.getProperty("java.home")), worktree);
   }
 
+  /**
+   * Rejects cleanup when protected path resides inside worktree being removed.
+   *
+   * @param name logical path name for diagnostics
+   * @param path protected path to inspect
+   * @param worktree candidate worktree removal path
+   * @throws IOException if protected path is inside worktree
+   */
   private void rejectInsideWorktree(String name, Path path, Path worktree) throws IOException
   {
     Path normalized = path.toAbsolutePath().normalize();
@@ -578,6 +586,14 @@ public final class MergeAndCleanup
     }
   }
 
+  /**
+   * Indicates whether local branch exists.
+   *
+   * @param projectPath project root path
+   * @param branch branch name
+   * @return {@code true} if local branch exists
+   * @throws IOException if git invocation fails unexpectedly
+   */
   private boolean branchExists(String projectPath, String branch) throws IOException
   {
     try
@@ -619,6 +635,16 @@ public final class MergeAndCleanup
     return scope.getJsonMapper().writerWithDefaultPrettyPrinter().writeValueAsString(json);
   }
 
+  /**
+   * Builds success JSON for merge-only phase completion.
+   *
+   * @param issueId merged issue ID
+   * @param targetBranch merge target branch
+   * @param commitSha merge commit SHA
+   * @param duration operation duration in seconds
+   * @return JSON string
+   * @throws IOException if JSON creation fails
+   */
   private String buildMergeJson(String issueId, String targetBranch, String commitSha, long duration)
     throws IOException
   {
@@ -634,6 +660,17 @@ public final class MergeAndCleanup
     return scope.getJsonMapper().writerWithDefaultPrettyPrinter().writeValueAsString(json);
   }
 
+  /**
+   * Builds success JSON for cleanup-only phase completion.
+   *
+   * @param issueId cleaned issue ID
+   * @param targetBranch merge target branch
+   * @param commitSha merge commit SHA
+   * @param lockReleased whether CAT worktree lock was released
+   * @param duration operation duration in seconds
+   * @return JSON string
+   * @throws IOException if JSON creation fails
+   */
   private String buildCleanupJson(String issueId, String targetBranch, String commitSha,
     boolean lockReleased, long duration)
     throws IOException

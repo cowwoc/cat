@@ -41,6 +41,11 @@ public final class ConversationLogUtils
   {
   }
 
+  /**
+   * Builds regex that matches tokens ending with known source-code extensions.
+   *
+   * @return compiled pattern for code-like path detection
+   */
   private static Pattern buildCodePathPattern()
   {
     StringBuilder sb = new StringBuilder("\\S+(?:");

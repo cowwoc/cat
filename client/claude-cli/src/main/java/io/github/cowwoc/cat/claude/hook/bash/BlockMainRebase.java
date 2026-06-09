@@ -249,6 +249,12 @@ public final class BlockMainRebase implements BashHandler
     }
   }
 
+  /**
+   * Resolves explicit git scope override from command, if present.
+   *
+   * @param command raw shell command
+   * @return normalized explicit working tree, or {@code null} if command keeps implicit scope
+   */
   private Path resolveExplicitGitScope(String command)
   {
     GitCommandScopeResolver.GitScopeTarget target = GitCommandScopeResolver.resolve(command, scope.getWorkDir());

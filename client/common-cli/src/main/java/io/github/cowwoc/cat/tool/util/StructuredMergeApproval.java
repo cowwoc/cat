@@ -37,6 +37,12 @@ public final class StructuredMergeApproval
     return containsAskUserQuestion(recentLines) && containsApprovalToolResult(mapper, recentLines);
   }
 
+  /**
+   * Checks whether transcript includes AskUserQuestion tool invocation.
+   *
+   * @param recentLines recent transcript lines
+   * @return {@code true} if AskUserQuestion appears
+   */
   private static boolean containsAskUserQuestion(List<String> recentLines)
   {
     for (String line : recentLines)
@@ -47,6 +53,13 @@ public final class StructuredMergeApproval
     return false;
   }
 
+  /**
+   * Checks whether transcript includes merge-approval tool result.
+   *
+   * @param mapper JSON mapper
+   * @param recentLines recent transcript lines
+   * @return {@code true} if approval tool result appears
+   */
   private static boolean containsApprovalToolResult(JsonMapper mapper, List<String> recentLines)
   {
     for (String line : recentLines)
@@ -57,6 +70,13 @@ public final class StructuredMergeApproval
     return false;
   }
 
+  /**
+   * Parses one transcript line for structured approval selection.
+   *
+   * @param mapper JSON mapper
+   * @param line transcript line
+   * @return {@code true} if line is approval tool result
+   */
   private static boolean isApprovalToolResult(JsonMapper mapper, String line)
   {
     try

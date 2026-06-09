@@ -62,6 +62,12 @@ public final class ValidateGitOperations implements BashHandler
     return Result.allow();
   }
 
+  /**
+   * Detects force-push attempts targeting protected mainline branches.
+   *
+   * @param normalizedLower normalized git command in lowercase
+   * @return {@code true} if command force-pushes to {@code main} or {@code master}
+   */
   private boolean isForcePushToProtectedBranch(String normalizedLower)
   {
     if (!(normalizedLower.startsWith("git push ") || normalizedLower.equals("git push")))
@@ -78,6 +84,11 @@ public final class ValidateGitOperations implements BashHandler
       normalizedLower.matches(".*(\\s|:)(main|master)(\\s|$).*");
   }
 
+  /**
+   * Builds blocking result for protected-branch force push.
+   *
+   * @return blocking hook result
+   */
   private Result blockForcePush()
   {
     return Result.block("""
@@ -91,11 +102,22 @@ public final class ValidateGitOperations implements BashHandler
       Use --force-with-lease instead, or ask the user if they really want this.""");
   }
 
+  /**
+   * Detects hard reset command.
+   *
+   * @param normalizedLower normalized git command in lowercase
+   * @return {@code true} if command starts with {@code git reset --hard}
+   */
   private boolean isResetHardCommand(String normalizedLower)
   {
     return normalizedLower.startsWith("git reset --hard");
   }
 
+  /**
+   * Builds blocking result for unsafe hard reset.
+   *
+   * @return blocking hook result
+   */
   private Result blockResetHard()
   {
     return Result.block("""
@@ -110,6 +132,12 @@ public final class ValidateGitOperations implements BashHandler
       Consider: git stash to save work before reset.""");
   }
 
+  /**
+   * Indicates whether hard reset stays within allowed worktree scope.
+   *
+   * @param context parsed command context
+   * @return {@code true} if reset applies only to current issue worktree
+   */
   private boolean isResetHardAllowed(CommandContext context)
   {
     GitCommandScopeResolver.GitScopeTarget target = GitCommandScopeResolver.resolve(context.rawSegment(),
@@ -133,12 +161,25 @@ public final class ValidateGitOperations implements BashHandler
     return workingTree.startsWith(worktreePath);
   }
 
+  /**
+   * Detects CAT worktree directory path by naming convention.
+   *
+   * @param path candidate path
+   * @return {@code true} if path looks like nested worktrees directory
+   */
   private boolean isWorktreeDirectory(Path path)
   {
     String normalized = path.toAbsolutePath().normalize().toString();
     return normalized.contains("/worktrees/") || normalized.contains("\\worktrees\\");
   }
 
+  /**
+   * Detects explicit git scope flags such as {@code -C}, {@code --work-tree}, or
+   * {@code --git-dir}.
+   *
+   * @param rawSegment raw shell segment
+   * @return {@code true} if command overrides implicit directory scope
+   */
   private boolean hasExplicitScopeOverride(String rawSegment)
   {
     List<String> tokens = ShellParser.tokenize(rawSegment);
@@ -154,6 +195,12 @@ public final class ValidateGitOperations implements BashHandler
     return false;
   }
 
+  /**
+   * Parses shell command into git-relevant execution contexts.
+   *
+   * @param command raw shell command
+   * @return parsed command contexts
+   */
   private List<CommandContext> parseCommandContexts(String command)
   {
     List<CommandContext> contexts = new ArrayList<>();
@@ -180,6 +227,12 @@ public final class ValidateGitOperations implements BashHandler
     return contexts;
   }
 
+  /**
+   * Splits shell command into sequential segments on top-level separators.
+   *
+   * @param command raw shell command
+   * @return stripped command segments
+   */
   private List<String> splitSegments(String command)
   {
     List<String> segments = new ArrayList<>();
@@ -227,6 +280,12 @@ public final class ValidateGitOperations implements BashHandler
     return segments;
   }
 
+  /**
+   * Flushes current parsed shell segment into destination list.
+   *
+   * @param segments destination segment list
+   * @param current current mutable segment buffer
+   */
   private void addSegment(List<String> segments, StringBuilder current)
   {
     String segment = current.toString().strip();

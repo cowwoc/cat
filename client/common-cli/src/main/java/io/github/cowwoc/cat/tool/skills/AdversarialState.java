@@ -52,6 +52,14 @@ public final class AdversarialState
     };
   }
 
+  /**
+   * Checks whether findings include either requested severity.
+   *
+   * @param root findings JSON root
+   * @param firstSeverity first severity to match
+   * @param secondSeverity second severity to match
+   * @return {@code true} if any loophole matches
+   */
   private static boolean hasSeverity(JsonNode root, String firstSeverity, String secondSeverity)
   {
     JsonNode loopholes = root.path("loopholes");
@@ -66,6 +74,12 @@ public final class AdversarialState
     return false;
   }
 
+  /**
+   * Checks whether disputed findings still await upheld arbitration.
+   *
+   * @param root findings JSON root
+   * @return {@code true} if any dispute is new or unresolved
+   */
   private static boolean hasNewDisputes(JsonNode root)
   {
     JsonNode disputed = root.path("disputed");
@@ -80,6 +94,12 @@ public final class AdversarialState
     return false;
   }
 
+  /**
+   * Returns rejected finding count from scalar field or fallback array size.
+   *
+   * @param root findings JSON root
+   * @return rejected finding count
+   */
   private static int rejectedCount(JsonNode root)
   {
     JsonNode rejectedCount = root.path("rejected_count");

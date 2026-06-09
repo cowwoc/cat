@@ -521,6 +521,14 @@ public final class SessionAnalyzer
    */
   private record ToolPair(String toolId, String name, JsonNode toolInput, JsonNode toolResult)
   {
+    /**
+     * Creates validated tool use/result pair.
+     *
+     * @param toolId tool use ID
+     * @param name tool name
+     * @param toolInput tool input payload
+     * @param toolResult matching tool result payload
+     */
     private ToolPair
     {
       requireThat(toolId, "toolId").isNotNull();
@@ -539,6 +547,13 @@ public final class SessionAnalyzer
    */
   private record ToolUseInfo(String toolId, String name, JsonNode input)
   {
+    /**
+     * Creates validated tool use descriptor.
+     *
+     * @param toolId tool use ID
+     * @param name tool name
+     * @param input tool input payload
+     */
     private ToolUseInfo
     {
       requireThat(toolId, "toolId").isNotNull();
@@ -2454,6 +2469,13 @@ public final class SessionAnalyzer
       return result;
     }
 
+    /**
+     * Scans session subagent directory for non-compaction child transcripts.
+     *
+     * @param agentDir candidate agent directory
+     * @param subagentPaths destination set of discovered subagent transcripts
+     * @throws IOException if directory listing fails
+     */
     private void scanAgentDirectory(Path agentDir, Set<Path> subagentPaths) throws IOException
     {
       if (!Files.isDirectory(agentDir))

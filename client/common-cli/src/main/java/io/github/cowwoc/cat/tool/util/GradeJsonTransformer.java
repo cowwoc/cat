@@ -44,6 +44,12 @@ public final class GradeJsonTransformer
     run(args);
   }
 
+  /**
+   * Executes CLI transformation from grader output to canonical schema.
+   *
+   * @param args CLI arguments
+   * @throws IOException if reading, parsing, or writing fails
+   */
   private static void run(String[] args) throws IOException
   {
     if (args.length != 3)

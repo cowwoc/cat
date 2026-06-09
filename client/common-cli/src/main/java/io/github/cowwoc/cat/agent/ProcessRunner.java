@@ -144,6 +144,12 @@ public final class ProcessRunner
     }
   }
 
+  /**
+   * Converts process startup or wait failure into synthetic result.
+   *
+   * @param exception underlying failure
+   * @return result with exit code {@code 1} and rendered exception message
+   */
   private static Result failureResult(Exception exception)
   {
     String message = exception.getClass().getSimpleName();

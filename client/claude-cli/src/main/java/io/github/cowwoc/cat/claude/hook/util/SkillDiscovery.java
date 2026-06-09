@@ -229,6 +229,12 @@ public final class SkillDiscovery
     return discoverAllEntries((ClaudePluginScope) scope);
   }
 
+  /**
+   * Discovers all entries using concrete plugin scope and process-local cache.
+   *
+   * @param scope Claude plugin scope
+   * @return immutable discovered skill entries
+   */
   private static List<SkillEntry> discoverAllEntries(ClaudePluginScope scope)
   {
     String cacheKey = scope.getClaudeConfigPath().toString() + "|" + scope.getProjectPath().toString();
@@ -327,6 +333,12 @@ public final class SkillDiscovery
     return deduplicateByName(entries);
   }
 
+  /**
+   * Removes duplicate skill entries while preserving first occurrence order.
+   *
+   * @param entries discovered entries
+   * @return deduplicated entries
+   */
   private static List<SkillEntry> deduplicateByName(List<SkillEntry> entries)
   {
     Map<String, SkillEntry> result = new LinkedHashMap<>();

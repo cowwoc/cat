@@ -18,6 +18,10 @@
     <property name="files" value="[/\\]src[/\\]test[/\\]"/>
     <property name="checks" value="MissingJavadocType"/>
   </module>
+  <module name="SuppressionSingleFilter">
+    <property name="files" value="[/\\]src[/\\]test[/\\]"/>
+    <property name="checks" value="MissingJavadocMethod"/>
+  </module>
   <module name="TreeWalker">
     <!-- WORKAROUND: https://github.com/checkstyle/checkstyle/issues/17052 -->
     <property name="skipFileOnJavaParseException" value="true"/>
@@ -48,7 +52,9 @@
     WORKAROUND: https://github.com/pmd/pmd/issues/4515
     -->
     <module name="MissingJavadocMethod">
-      <property name="tokens" value="COMPACT_CTOR_DEF"/>
+      <property name="scope" value="private"/>
+      <property name="excludeScope" value="package"/>
+      <property name="tokens" value="METHOD_DEF, COMPACT_CTOR_DEF"/>
     </module>
     <module name="MissingJavadocType"/>
     <module name="NonEmptyAtclauseDescription"/>

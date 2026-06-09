@@ -73,6 +73,18 @@ public final class SourceIncludeProcessor
     return expand(normalizedSource, content, allowedTarget, contentFilter, List.of());
   }
 
+  /**
+   * Recursively expands include directives while tracking visited files.
+   *
+   * @param sourceFile the current source file
+   * @param content the file content
+   * @param allowedTarget returns true if a resolved include target is allowed
+   * @param contentFilter transforms included file content before recursive expansion
+   * @param stack include chain used for recursion detection
+   * @return the expanded content
+   * @throws IOException if reading an included file fails
+   * @throws IllegalStateException if recursion, excessive depth, or invalid targets are detected
+   */
   private static String expand(Path sourceFile, String content, Predicate<Path> allowedTarget,
     UnaryOperator<String> contentFilter, List<Path> stack) throws IOException
   {
@@ -106,6 +118,14 @@ public final class SourceIncludeProcessor
     return output.toString();
   }
 
+  /**
+   * Resolves raw include target text against source file location.
+   *
+   * @param sourceFile file containing include directive
+   * @param rawTarget raw target captured from directive
+   * @return normalized absolute target path
+   * @throws IllegalStateException if target is blank or absolute
+   */
   private static Path resolveTarget(Path sourceFile, String rawTarget)
   {
     String target = rawTarget.strip();
@@ -117,6 +137,12 @@ public final class SourceIncludeProcessor
     return sourceFile.getParent().resolve(targetPath).toAbsolutePath().normalize();
   }
 
+  /**
+   * Removes one trailing line separator from expanded include content.
+   *
+   * @param text text to trim
+   * @return text without final line separator
+   */
   private static String stripTrailingLineSeparator(String text)
   {
     return text.replaceFirst("\\R\\z", "");

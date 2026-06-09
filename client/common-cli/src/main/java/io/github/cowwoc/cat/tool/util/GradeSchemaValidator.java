@@ -81,6 +81,14 @@ public final class GradeSchemaValidator
     return "FAIL";
   }
 
+  /**
+   * Validates required non-blank string field on assertion result object.
+   *
+   * @param result assertion result object
+   * @param fieldName required field name
+   * @param gradePath grade file path for diagnostics
+   * @throws IOException if field is missing or blank
+   */
   private static void validateRequiredTextField(ObjectNode result, String fieldName,
     Path gradePath) throws IOException
   {
@@ -92,6 +100,14 @@ public final class GradeSchemaValidator
     }
   }
 
+  /**
+   * Validates verdict field and returns normalized verdict text.
+   *
+   * @param result assertion result object
+   * @param gradePath grade file path for diagnostics
+   * @return verdict text
+   * @throws IOException if verdict is missing or not {@code PASS}/{@code FAIL}
+   */
   private static String validateVerdictField(ObjectNode result, Path gradePath) throws IOException
   {
     JsonNode verdictNode = result.path("verdict");
@@ -112,6 +128,15 @@ public final class GradeSchemaValidator
     return verdict;
   }
 
+  /**
+   * Validates summary count field against computed value.
+   *
+   * @param gradeNode root grade JSON object
+   * @param fieldName count field name
+   * @param expectedValue computed count
+   * @param gradePath grade file path for diagnostics
+   * @throws IOException if field is missing, negative, or inconsistent
+   */
   private static void validateRequiredCount(JsonNode gradeNode, String fieldName,
     int expectedValue, Path gradePath) throws IOException
   {
@@ -129,6 +154,15 @@ public final class GradeSchemaValidator
     }
   }
 
+  /**
+   * Validates pass-rate field against derived ratio.
+   *
+   * @param gradeNode root grade JSON object
+   * @param passCount computed passing assertion count
+   * @param totalCount computed total assertion count
+   * @param gradePath grade file path for diagnostics
+   * @throws IOException if pass rate is missing or inconsistent
+   */
   private static void validatePassRate(JsonNode gradeNode, int passCount, int totalCount,
     Path gradePath) throws IOException
   {

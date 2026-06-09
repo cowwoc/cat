@@ -119,6 +119,13 @@ public final class MainClaudeHook extends AbstractClaudeHook
     return Path.of(System.getProperty("user.home"), ".claude");
   }
 
+  /**
+   * Reads optional environment variable with fallback value.
+   *
+   * @param name environment variable name
+   * @param defaultValue fallback value when unset or blank
+   * @return environment value or fallback
+   */
   private static String readOptionalEnv(String name, String defaultValue)
   {
     String value = System.getenv(name);

@@ -127,6 +127,13 @@ public final class UpdateBranch
     return 0;
   }
 
+  /**
+   * Parses CLI flags and positional arguments.
+   *
+   * @param args raw CLI arguments
+   * @param err stream used for usage and validation errors
+   * @return parsed arguments, or {@code null} if validation fails
+   */
   private static ParsedArgs parseArguments(String[] args, PrintStream err)
   {
     boolean force = false;
@@ -169,6 +176,13 @@ public final class UpdateBranch
     return new ParsedArgs(force, branch, targetHash);
   }
 
+  /**
+   * Runs git command in requested working directory.
+   *
+   * @param workingDirectory working directory
+   * @param args git arguments without executable name
+   * @return process result
+   */
   private static ProcessRunner.Result runGit(Path workingDirectory, String... args)
   {
     String[] command = new String[args.length + 1];

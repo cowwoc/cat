@@ -54,6 +54,13 @@ public final class CodexPluginCache
     return pluginRoot;
   }
 
+  /**
+   * Validates path segment used inside Codex plugin cache layout.
+   *
+   * @param value raw segment value
+   * @param name logical parameter name
+   * @return stripped segment value
+   */
   private static String validateSegment(String value, String name)
   {
     requireThat(value, name).isNotBlank();

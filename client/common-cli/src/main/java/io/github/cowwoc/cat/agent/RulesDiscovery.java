@@ -91,6 +91,13 @@ public final class RulesDiscovery
 
   private record CachedRules(List<FileState> fileStates, List<RuleFile> rules, Instant validatedAt)
   {
+    /**
+     * Creates cached rule snapshot with defensive copies.
+     *
+     * @param fileStates file-state snapshot used for invalidation
+     * @param rules discovered rules
+     * @param validatedAt time cache entry was last validated
+     */
     private CachedRules
     {
       fileStates = List.copyOf(fileStates);
@@ -195,6 +202,12 @@ public final class RulesDiscovery
     }
   }
 
+  /**
+   * Lists markdown rule files in rules directory.
+   *
+   * @return sorted markdown rule files
+   * @throws IOException if directory listing fails
+   */
   private List<Path> listRuleFiles() throws IOException
   {
     List<Path> files = new ArrayList<>();
@@ -206,6 +219,12 @@ public final class RulesDiscovery
     return files;
   }
 
+  /**
+   * Captures cache-relevant file metadata for rules and shared includes.
+   *
+   * @return immutable file-state snapshot
+   * @throws IOException if metadata lookup fails
+   */
   private List<FileState> getFileStates() throws IOException
   {
     List<FileState> fileStates = new ArrayList<>();
@@ -221,7 +240,16 @@ public final class RulesDiscovery
     return List.copyOf(fileStates);
   }
 
-  private void collectFileStates(List<FileState> fileStates, Path normalizedRulesDir, Path root) throws IOException
+  /**
+   * Collects file metadata beneath root for cache invalidation.
+   *
+   * @param fileStates destination list
+   * @param normalizedRulesDir normalized rules directory used as relativization base
+   * @param root directory to walk
+   * @throws IOException if directory walk or metadata lookup fails
+   */
+  private void collectFileStates(List<FileState> fileStates, Path normalizedRulesDir, Path root)
+    throws IOException
   {
     try (Stream<Path> stream = Files.walk(root))
     {
@@ -238,6 +266,12 @@ public final class RulesDiscovery
     }
   }
 
+  /**
+   * Indicates whether include target stays within allowed rule directories.
+   *
+   * @param target resolved include target
+   * @return {@code true} if target is under rules directory or shared include directory
+   */
   private boolean isAllowedIncludeTarget(Path target)
   {
     Path normalizedRulesDir = rulesDir.toAbsolutePath().normalize();
@@ -282,6 +316,12 @@ public final class RulesDiscovery
     }
   }
 
+  /**
+   * Maps rule file path to canonical context path exposed to agents.
+   *
+   * @param file rule file path
+   * @return normalized context path
+   */
   private String toContextPath(Path file)
   {
     Path relative = rulesDir.relativize(file);
@@ -300,6 +340,12 @@ public final class RulesDiscovery
     return normalizeContextPath(file);
   }
 
+  /**
+   * Normalizes path separators for agent-facing context paths.
+   *
+   * @param path path to normalize
+   * @return path using forward slashes
+   */
   private String normalizeContextPath(Path path)
   {
     return path.toString().replace('\\', '/');
@@ -499,6 +545,12 @@ public final class RulesDiscovery
     return sb.toString();
   }
 
+  /**
+   * Renders one rule as XML-like wrapper block.
+   *
+   * @param rule rule to render
+   * @return rendered rule block
+   */
   private static String render(RuleFile rule)
   {
     return """

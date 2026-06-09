@@ -159,6 +159,12 @@ public final class IssueCreator
     return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result);
   }
 
+  /**
+   * Reads dependent issue index files from request payload.
+   *
+   * @param data parsed request payload
+   * @return dependent index file paths
+   */
   private List<Path> getDependentIndexFiles(ObjectNode data)
   {
     JsonNode node = data.get("dependent_index_files");
@@ -179,6 +185,14 @@ public final class IssueCreator
     return paths;
   }
 
+  /**
+   * Adds new issue name to dependency lists of related issue indexes.
+   *
+   * @param issueName newly created issue name
+   * @param dependentIndexFiles dependent index file paths
+   * @param workingDirectory project root used to resolve relative paths
+   * @throws IOException if any index cannot be read or updated
+   */
   private void updateDependentIssues(String issueName, List<Path> dependentIndexFiles,
     Path workingDirectory) throws IOException
   {

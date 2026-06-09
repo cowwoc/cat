@@ -228,6 +228,12 @@ public abstract class AbstractCodexContextHook
     return value.strip();
   }
 
+  /**
+   * Normalizes blank timezone values to UTC.
+   *
+   * @param value raw timezone value
+   * @return stripped timezone, or {@code UTC} if blank
+   */
   private static String normalizeTimezone(String value)
   {
     if (value == null || value.isBlank())
@@ -309,6 +315,11 @@ public abstract class AbstractCodexContextHook
       return result;
     }
 
+    /**
+     * Indicates whether delegate emitted any migration notice content.
+     *
+     * @return {@code true} if delegate produced stdout or stderr content
+     */
     private boolean ran()
     {
       return ran;

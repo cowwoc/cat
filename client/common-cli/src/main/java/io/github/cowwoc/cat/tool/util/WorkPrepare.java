@@ -1570,6 +1570,14 @@ public final class WorkPrepare
     return defaultWorktreePath;
   }
 
+  /**
+   * Finds existing worktree already attached to issue branch.
+   *
+   * @param projectPath project root
+   * @param issueBranch issue branch name
+   * @return existing worktree path, or {@code null} if none is attached
+   * @throws IOException if git worktree listing fails
+   */
   private Path findWorktreeForBranch(Path projectPath, String issueBranch) throws IOException
   {
     String output = GitCommands.runGit(projectPath, "worktree", "list", "--porcelain");

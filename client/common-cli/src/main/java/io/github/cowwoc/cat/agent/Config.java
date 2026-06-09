@@ -149,6 +149,14 @@ public final class Config
     return new Config(merged);
   }
 
+  /**
+   * Loads configuration JSON into map form.
+   *
+   * @param mapper mapper used to deserialize JSON
+   * @param path file to read
+   * @return parsed configuration entries
+   * @throws IOException if reading or parsing fails
+   */
   private static Map<String, Object> loadJsonFile(JsonMapper mapper, Path path) throws IOException
   {
     String content = Files.readString(path);
