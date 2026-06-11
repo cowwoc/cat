@@ -5,6 +5,9 @@
 Use [requirements.java](https://github.com/cowwoc/requirements.java) for all validation needs.
 Version: 13.2 (or later)
 
+When requirements.java already provides validator for check, use validator API instead of manual
+`if (...) throw ...` blocks.
+
 ## Entry Points
 
 Three validators for different contexts:
@@ -14,6 +17,39 @@ Three validators for different contexts:
 | `requireThat(value, name)` | Method preconditions (public API) | `IllegalArgumentException` |
 | `that(value, name)` | Class invariants, postconditions, private methods | `AssertionError` |
 | `checkIf(value, name)` | Multiple failures, custom error handling | Configurable |
+
+Library docs describe these three validator families directly:
+- `requireThat()` for method preconditions
+- `that()` / `assert that(...).elseThrow()` for class invariants and postconditions
+- `checkIf()` for collecting multiple validation failures
+
+## Prefer Validator API Over Manual if-throw
+
+If requirements.java exposes validator for target type/constraint, prefer it over handwritten
+conditionals.
+
+```java
+// Good
+requireThat(name, "name").isNotBlank();
+requireThat(timeout, "timeout").isGreaterThan(Duration.ZERO);
+requireThat(path, "path").isRegularFile();
+
+// Avoid
+if (name == null || name.isBlank())
+  throw new IllegalArgumentException("name must not be blank");
+if (timeout == null || timeout.compareTo(Duration.ZERO) <= 0)
+  throw new IllegalArgumentException("timeout must be greater than zero");
+if (!Files.isRegularFile(path))
+  throw new IllegalArgumentException("path must be a regular file");
+```
+
+Use manual `if`/`throw` only when at least one is true:
+- requirements.java has no validator for needed constraint
+- validation depends on multi-value/domain rule not expressible cleanly with validator chaining
+- thrown exception type must differ from validator family contract and adapter method is not justified
+
+Even then, prefer combining validator API with narrow manual logic instead of replacing validator API
+entirely.
 
 ## Constructor Validation
 
@@ -51,6 +87,17 @@ public void process(String input)
   requireThat(input, "input").isNotNull();
   // ...
 }
+```
+
+Do not rewrite ordinary preconditions as manual guards when validator exists:
+
+```java
+// Good
+requireThat(input, "input").isNotNull();
+
+// Avoid
+if (input == null)
+  throw new IllegalArgumentException("input may not be null");
 ```
 
 ## Internal Validation (Asserts)
@@ -144,8 +191,8 @@ requireThat(result, "result").isNotNull().isEqualTo(expected);
 Use `and()` for validating multiple values together:
 
 ```java
-checkIf(start, "start").isNotNegative()
-  .and(checkIf(end, "end").isGreaterThan(start));
+checkIf(start, "start").isNotNegative().
+  and(checkIf(end, "end").isGreaterThan(start));
 ```
 
 ## Test Assertions
@@ -170,14 +217,25 @@ requireThat(path, "path").isRegularFile();
 requireThat(Files.isRegularFile(path), "path").isTrue();
 ```
 
+Same rule for non-filesystem validation:
+
+```java
+// Good
+requireThat(count, "count").isNotNegative();
+
+// Avoid
+if (count < 0)
+  throw new IllegalArgumentException("count must be >= 0");
+```
+
 ## Error Collection (Web Services)
 
 For collecting multiple failures without throwing:
 
 ```java
-List<String> failures = checkIf(value, "value")
-  .isNotNull()
-  .elseGetFailures();
+List<String> failures = checkIf(value, "value").
+  isNotNull().
+  elseGetFailures();
 if (!failures.isEmpty())
 {
   return failures;
@@ -199,6 +257,9 @@ if (!failures.isEmpty())
 | `length()` | Navigate to string/collection length |
 | `size()` | Navigate to collection size |
 
+If needed constraint appears in these validator families or in type-specific validators from
+requirements.java packages, use library API first.
+
 ## Jackson (JsonNode) Validation
 
 Use the `requirements-jackson` module for validating Jackson `JsonNode` objects. Access its validators through
@@ -208,23 +269,77 @@ Use the `requirements-jackson` module for validating Jackson `JsonNode` objects.
 import io.github.cowwoc.requirements13.jackson.DefaultJacksonValidators;
 ```
 
+Before manual `JsonNode.path(...).isX()/asX()` validation, search for existing
+`DefaultJacksonValidators` usage in repo.
+
+Discovery command:
+
+```bash
+rg -n "DefaultJacksonValidators|\\.property\\(|\\.isString\\(|\\.isObject\\(|\\.isArray\\(|\\.isNumber\\(" client
+```
+
+Canonical static import:
+
+```java
+import static io.github.cowwoc.requirements13.jackson.DefaultJacksonValidators.requireThat;
+```
+
 ### Property Navigation
 
 Navigate into JSON object properties and validate their types:
 
 ```java
 // Validate a property exists and is a string
-String issueId = requireThat(root, "root")
-  .property("issue_id").isString().getValue().asString();
+String issueId = requireThat(root, "root").
+  property("issue_id").isString().getValue().asString();
 requireThat(issueId, "root.issue_id").isNotBlank();
 
 // Validate a property is an object
-requireThat(root, "root")
-  .property("config").isObject();
+requireThat(root, "root").
+  property("config").isObject();
 
 // Validate a property is an array
-requireThat(root, "root")
-  .property("items").isArray();
+requireThat(root, "root").
+  property("items").isArray();
+```
+
+### Common Jackson Patterns
+
+Prefer these patterns over manual `path(...).isX()/asX()` checks when the validator API can
+express the requirement:
+
+```java
+// Required object root
+requireThat(root, "root").isObject();
+
+// Required property string
+String issueId = requireThat(root, "root").
+  property("issue_id").isString().getValue().asString();
+
+// Required array
+requireThat(root, "root").
+  property("items").isArray();
+
+// Required number
+double score = requireThat(root, "root").
+  property("score").isNumber().getValue().asDouble();
+
+// Nested property extraction
+String modelId = requireThat(root, "root").
+  property("config").isObject().
+  property("model_id").isString().getValue().asString();
+```
+
+Avoid manual pattern when validator covers it:
+
+```java
+// Avoid
+JsonNode config = root.path("config");
+if (!config.isObject())
+  throw new IllegalArgumentException("config must be an object");
+String modelId = config.path("model_id").asString("");
+if (modelId.isBlank())
+  throw new IllegalArgumentException("config.model_id must be a non-blank string");
 ```
 
 ### Available Type Checks

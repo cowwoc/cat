@@ -394,7 +394,7 @@ public final class CodexRunnerTest
    * Verifies that malformed JSONL output is reported as an error instead of throwing.
    */
   @Test
-  public void executeProcessReportsMalformedJsonlAs() throws IOException
+  public void executeProcessMalformedJsonl() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (TestCodexTool scope = new TestCodexTool(tempDir, tempDir))
