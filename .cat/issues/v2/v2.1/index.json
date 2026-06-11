@@ -22,6 +22,7 @@
     "skip-post-approval-review-rerun",
     "codex-latest-only-release-alignment",
     "update-codex-0133-plugin-alignment",
-    "update-ai-output-license-headers"
+    "update-ai-output-license-headers",
+    "require-javadoc-for-private-methods"
   ]
 }
