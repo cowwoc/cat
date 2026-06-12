@@ -368,12 +368,31 @@ build_jlink_image() {
 }
 
 copy_legal_notices() {
-  log "Copying legal notices..."
-  cp "$WORKSPACE_DIR/LICENSE.md" "$OUTPUT_DIR/LICENSE.md"
-  cp "$REACTOR_DIR/common-cli/target/generated-resources/licenses/THIRD-PARTY-NOTICES.txt" \
-    "$OUTPUT_DIR/THIRD-PARTY-NOTICES.txt"
-  mkdir -p "$OUTPUT_DIR/licenses"
-  cp "$REACTOR_DIR"/legal/licenses/*.txt "$OUTPUT_DIR/licenses/"
+log "Copying legal notices..."
+cp "$WORKSPACE_DIR/LICENSE.md" "$OUTPUT_DIR/LICENSE.md"
+ensure_third_party_notices
+cp "$(third_party_notices_path)" \
+"$OUTPUT_DIR/THIRD-PARTY-NOTICES.txt"
+mkdir -p "$OUTPUT_DIR/licenses"
+cp "$REACTOR_DIR"/legal/licenses/*.txt "$OUTPUT_DIR/licenses/"
+}
+
+third_party_notices_path() {
+echo "$REACTOR_DIR/common-cli/target/generated-resources/licenses/THIRD-PARTY-NOTICES.txt"
+}
+
+ensure_third_party_notices() {
+local notices_path
+notices_path="$(third_party_notices_path)"
+if [[ -f "$notices_path" ]]; then
+return 0
+fi
+log "Regenerating third-party notices..."
+"$MVN" -B --no-transfer-progress -pl common-cli -am generate-resources >/dev/null
+if [[ ! -f "$notices_path" ]]; then
+echo "Failed to generate third-party notices: $notices_path" >&2
+return 1
+fi
 }
 
 plugin_version() {

@@ -552,6 +552,44 @@ EOF
     [ "$status" -ne 0 ]
 }
 
+@test "copy_legal_notices regenerates missing third-party notices" {
+    local test_root reactor_dir workspace_dir output_dir fake_mvn notices_path
+    test_root="$(mktemp -d)"
+    reactor_dir="$test_root/client"
+    workspace_dir="$test_root/workspace"
+    output_dir="$test_root/output"
+    fake_mvn="$reactor_dir/mvnw"
+    notices_path="$reactor_dir/common-cli/target/generated-resources/licenses/THIRD-PARTY-NOTICES.txt"
+
+    mkdir -p "$reactor_dir/common-cli/target/generated-resources/licenses"
+    mkdir -p "$reactor_dir/legal/licenses"
+    mkdir -p "$workspace_dir"
+    mkdir -p "$output_dir"
+    printf 'license\n' > "$workspace_dir/LICENSE.md"
+    printf 'dep\n' > "$reactor_dir/legal/licenses/example.txt"
+    cat > "$fake_mvn" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+mkdir -p "$(dirname "$notices_path")"
+printf 'generated\n' > "$notices_path"
+EOF
+    chmod +x "$fake_mvn"
+
+    source "$BUILD_JLINK"
+    REACTOR_DIR="$reactor_dir"
+    WORKSPACE_DIR="$workspace_dir"
+    OUTPUT_DIR="$output_dir"
+    MVN="$fake_mvn"
+
+    rm -f "$notices_path"
+    run copy_legal_notices
+
+    [ "$status" -eq 0 ]
+    [ -f "$output_dir/THIRD-PARTY-NOTICES.txt" ]
+    grep -q 'generated' "$output_dir/THIRD-PARTY-NOTICES.txt"
+    grep -q 'license' "$output_dir/LICENSE.md"
+}
+
 @test "engine descriptor writer creates codex plugin descriptor with version" {
     local test_output_root
     test_output_root="$(mktemp -d)"
