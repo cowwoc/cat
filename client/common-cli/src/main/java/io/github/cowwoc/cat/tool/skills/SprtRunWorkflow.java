@@ -84,7 +84,8 @@ final class SprtRunWorkflow
    */
   void runSprt(String[] args, PrintStream out) throws IOException, InterruptedException
   {
-    SprtRunner.RunSprtArguments parsedArgs = SprtRunner.parseRunSprtArgs(args);
+    SprtRunner.RunSprtArguments parsedArgs = SprtRunner.parseRunSprtArgs(args,
+      scope.getSessionId());
     String worktreePath = parsedArgs.worktreePath();
     String testDir = parsedArgs.testDir();
     String testModel = parsedArgs.testModel();

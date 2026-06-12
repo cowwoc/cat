@@ -6,21 +6,21 @@
  */
 package io.github.cowwoc.cat.codex.tool;
 
-import io.github.cowwoc.cat.agent.AbstractEngineScope;
 import io.github.cowwoc.cat.agent.AgentEngine;
+import io.github.cowwoc.cat.tool.MainCliTool;
 
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
 
 /**
  * Production implementation of a Codex CLI scope.
  * <p>
- * Reads Codex infrastructure environment values from {@code System.getenv()} at construction time.
+ * Derives engine-specific scope values from the active Codex harness and exposes
+ * Codex-only environment values used by command policy decisions.
  * <p>
  * <b>Thread Safety:</b> This class is thread-safe.
  */
-public final class MainCodexTool extends AbstractEngineScope
+public final class MainCodexTool extends MainCliTool
 {
   private final Path codexHome;
   private final Map<String, String> commandEnvironment;
@@ -30,25 +30,10 @@ public final class MainCodexTool extends AbstractEngineScope
    */
   public MainCodexTool()
   {
-    this(Path.of(System.getProperty("user.dir")).toAbsolutePath(), getCodexHomeFromEnvironment(),
-      getTimezoneFromEnvironment(), getCommandEnvironmentFromEnvironment());
-  }
-
-  /**
-   * Creates a new production Codex tool scope.
-   *
-   * @param projectPath the project path
-   * @param codexHome the Codex home directory
-   * @param timezone           the timezone
-   * @param commandEnvironment environment values used for command policy decisions
-   */
-  private MainCodexTool(Path projectPath, Path codexHome, String timezone,
-    Map<String, String> commandEnvironment)
-  {
-    super(projectPath, projectPath, projectPath, AgentEngine.CODEX.pluginDescriptor(), List.of(),
-      AgentEngine.CODEX.pluginCacheDescriptor(), projectPath, timezone);
-    this.codexHome = codexHome;
-    this.commandEnvironment = Map.copyOf(commandEnvironment);
+    super(AgentEngine.CODEX, System::getenv, System::getProperty,
+      Path.of(System.getProperty("user.dir")));
+    this.codexHome = getCodexHomeFromEnvironment();
+    this.commandEnvironment = getCommandEnvironmentFromEnvironment();
   }
 
   /**
@@ -84,19 +69,6 @@ public final class MainCodexTool extends AbstractEngineScope
     if (codexHome != null && !codexHome.isBlank())
       return Path.of(codexHome);
     return Path.of(System.getProperty("user.home"), ".codex");
-  }
-
-  /**
-   * Reads the timezone from the environment.
-   *
-   * @return the timezone
-   */
-  private static String getTimezoneFromEnvironment()
-  {
-    String timezone = System.getenv("TZ");
-    if (timezone == null || timezone.isBlank())
-      return "UTC";
-    return timezone;
   }
 
   /**

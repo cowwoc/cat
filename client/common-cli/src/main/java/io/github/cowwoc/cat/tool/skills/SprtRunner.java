@@ -85,7 +85,7 @@ public final class SprtRunner
       @Override
       public String[] parseRunSprtArgs(String[] args)
       {
-        RunSprtArguments parsed = SprtRunner.parseRunSprtArgs(args);
+        RunSprtArguments parsed = SprtRunner.parseRunSprtArgs(args, "test-session");
         return new String[]{parsed.worktreePath(), parsed.testDir(), parsed.testModel(),
           parsed.testEffort(), parsed.sessionId()};
       }
@@ -755,7 +755,7 @@ public final class SprtRunner
    * Orchestrates the complete SPRT workflow: prepare run, create isolation branch, initialize SPRT state,
    * run batches until all test cases reach decisions, write test results, and cleanup.
    *
-   * @param args {@code <worktree_path> <test_dir> <test_model> <effort> <session_id>}
+   * @param args {@code <worktree_path> <test_dir> <test_model> <effort>}
    * @param out  the output stream for progress messages (goes to stderr in bash)
    * @throws IllegalArgumentException if the argument count is wrong
    * @throws IOException              if any I/O operation fails
@@ -794,22 +794,28 @@ public final class SprtRunner
    * Parses arguments for the {@code run-sprt} command.
    *
    * @param args the raw command-line arguments
+   * @param defaultSessionId the derived session id from active engine scope
    * @return the parsed arguments
    */
-  static RunSprtArguments parseRunSprtArgs(String[] args)
+  static RunSprtArguments parseRunSprtArgs(String[] args, String defaultSessionId)
   {
     requireThat(args, "args").isNotNull();
-    if (args.length != 5)
+    requireThat(defaultSessionId, "defaultSessionId").isNotBlank();
+    if (args.length < 4)
       throw new IllegalArgumentException(
-        "SprtRunner run-sprt: expected 5 arguments " +
-        "<worktree_path> <test_dir> <test_model> <effort> <session_id>, got " + args.length + ".\n" +
+        "SprtRunner run-sprt: expected at least 4 arguments " +
+        "<worktree_path> <test_dir> <test_model> <effort>, got " + args.length + ".\n" +
         "Usage: sprt-runner run-sprt <worktree_path> <test_dir> <test_model> " +
-        "<effort> <session_id>");
+        "<effort>");
+    if (args.length > 4)
+      throw new IllegalArgumentException(
+        "SprtRunner run-sprt: session_id is derived from active engine scope and must not be " +
+        "supplied explicitly.");
     requireThat(args[0], "worktree_path").isNotBlank();
     requireThat(args[1], "test_dir").isNotBlank();
     requireThat(args[2], "test_model").isNotBlank();
     requireThat(args[3], "effort").isNotBlank();
-    String sessionId = SprtCommandSupport.validateSessionIdSegment(args[4]);
+    String sessionId = SprtCommandSupport.validateSessionIdSegment(defaultSessionId);
     return new RunSprtArguments(args[0], args[1], args[2], args[3], sessionId);
   }
 

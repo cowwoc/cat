@@ -6,8 +6,7 @@
  */
 package io.github.cowwoc.cat.codex.engine;
 
-import io.github.cowwoc.cat.tool.CliTool;
-import io.github.cowwoc.cat.tool.MainCliTool;
+import io.github.cowwoc.cat.codex.tool.MainCodexTool;
 import io.github.cowwoc.cat.tool.skills.SprtRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +30,7 @@ public final class CodexSprtRunner
    */
   public static void main(String[] args)
   {
-    try (CliTool scope = new MainCliTool())
+    try (MainCodexTool scope = new MainCodexTool())
     {
       try
       {

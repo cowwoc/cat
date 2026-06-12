@@ -711,7 +711,7 @@ public final class SprtRunnerTest
    * Verifies that run-sprt is the canonical public SPRT command.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*SprtRunner run-sprt: expected 5 arguments.*")
+    expectedExceptionsMessageRegExp = ".*SprtRunner run-sprt: expected at least 4 arguments.*")
   public void runSprtCommandIsRecognized() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
@@ -730,7 +730,7 @@ public final class SprtRunnerTest
    * Verifies that run-sprt is recognized when invoked under the Codex engine.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*SprtRunner run-sprt: expected 5 arguments.*")
+    expectedExceptionsMessageRegExp = ".*SprtRunner run-sprt: expected at least 4 arguments.*")
   public void runSprtCommandIsRecognizedForCodexEngine() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
@@ -756,15 +756,15 @@ public final class SprtRunnerTest
    * Verifies that run-sprt requires effort to be specified explicitly.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*SprtRunner run-sprt: expected 5 arguments.*")
+    expectedExceptionsMessageRegExp = ".*SprtRunner run-sprt: expected at least 4 arguments.*")
   public void runSprtRejectsMissingEffort() throws IOException, InterruptedException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       SprtRunner runner = new SprtRunner(scope, "2.1.87");
-      runner.run(new String[]{"run-sprt", tempDir.toString(), "tests", "claude-haiku-4-5",
-        "test-session-id"}, System.out);
+      runner.run(new String[]{"run-sprt", tempDir.toString(), "tests", "claude-haiku-4-5"},
+        System.out);
     }
     finally
     {
@@ -791,7 +791,7 @@ public final class SprtRunnerTest
 
       SprtRunner runner = new SprtRunner(scope, "2.1.87");
       runner.run(new String[]{"run-sprt", worktree.toString(), "../outside",
-        "claude-haiku-4-5", "high", "test-session-id"}, System.out);
+        "claude-haiku-4-5", "high"}, System.out);
     }
     finally
     {
@@ -825,7 +825,7 @@ public final class SprtRunnerTest
 
       SprtRunner runner = new SprtRunner(scope, "2.1.87");
       runner.run(new String[]{"run-sprt", worktree.toString(), "linked-tests",
-        "claude-haiku-4-5", "high", "test-session-id"}, System.out);
+        "claude-haiku-4-5", "high"}, System.out);
     }
     finally
     {
@@ -846,7 +846,7 @@ public final class SprtRunnerTest
     {
       SprtRunner runner = new SprtRunner(scope, "2.1.87");
       runner.run(new String[]{"run-sprt", tempDir.toString(), "tests", "gpt-5.3-codex",
-        "high", "test-session-id"}, System.out);
+        "high"}, System.out);
     }
     finally
     {
@@ -874,7 +874,7 @@ public final class SprtRunnerTest
     {
       SprtRunner runner = new SprtRunner(scope, "2.1.87");
       runner.run(new String[]{"run-sprt", tempDir.toString(), "tests", "claude-haiku-4-5",
-        "high", "test-session-id"}, System.out);
+        "high"}, System.out);
     }
     finally
     {
@@ -895,7 +895,7 @@ public final class SprtRunnerTest
     {
       SprtRunner runner = new SprtRunner(scope, "2.1.87");
       runner.run(new String[]{"run-sprt", tempDir.toString(), "tests", "claude-haiku-4-5",
-        "extreme", "test-session-id"}, System.out);
+        "extreme"}, System.out);
     }
     finally
     {
@@ -923,7 +923,7 @@ public final class SprtRunnerTest
     {
       SprtRunner runner = new SprtRunner(scope, "2.1.87");
       runner.run(new String[]{"run-sprt", tempDir.toString(), "tests", "gpt-5.3-codex",
-        "extreme", "test-session-id"}, System.out);
+        "extreme"}, System.out);
     }
     finally
     {
@@ -938,33 +938,31 @@ public final class SprtRunnerTest
   public void parseRunSprtArgsRequiresExplicitEffort()
   {
     String[] parsed = SharedSecrets.parseRunSprtArgs(new String[]{
-      "/tmp/worktree", "client/plugin/tests/skills/learn", "claude-haiku-4-5", "high",
-      "test-session-id"});
+      "/tmp/worktree", "client/plugin/tests/skills/learn", "claude-haiku-4-5", "high"});
 
     requireThat(parsed, "parsed").length().isEqualTo(5);
     requireThat(parsed[0], "worktreePath").isEqualTo("/tmp/worktree");
     requireThat(parsed[1], "testDir").isEqualTo("client/plugin/tests/skills/learn");
     requireThat(parsed[2], "testModel").isEqualTo("claude-haiku-4-5");
     requireThat(parsed[3], "testEffort").isEqualTo("high");
-    requireThat(parsed[4], "sessionId").isEqualTo("test-session-id");
+    requireThat(parsed[4], "sessionId").isEqualTo("test-session");
   }
 
   /**
    * Verifies that run-sprt does not accept a missing effort argument.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*SprtRunner run-sprt: expected 5 arguments.*")
+    expectedExceptionsMessageRegExp = ".*SprtRunner run-sprt: expected at least 4 arguments.*")
   public void parseRunSprtArgsRejectsMissingEffort()
   {
-    SharedSecrets.parseRunSprtArgs(new String[]{"/tmp/worktree", "tests", "claude-haiku-4-5",
-      "test-session-id"});
+    SharedSecrets.parseRunSprtArgs(new String[]{"/tmp/worktree", "tests", "claude-haiku-4-5"});
   }
 
   /**
    * Verifies that run-sprt rejects too many arguments.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*SprtRunner run-sprt: expected 5 arguments.*")
+    expectedExceptionsMessageRegExp = ".*session_id is derived from active engine scope.*")
   public void parseRunSprtArgsRejectsExtraArguments()
   {
     SharedSecrets.parseRunSprtArgs(new String[]{"/tmp/worktree", "tests", "claude-haiku-4-5",
@@ -988,8 +986,7 @@ public final class SprtRunnerTest
     expectedExceptionsMessageRegExp = ".*test_model.*")
   public void parseRunSprtArgsRejectsNullModel()
   {
-    SharedSecrets.parseRunSprtArgs(new String[]{"/tmp/worktree", "tests", null,
-      "high", "test-session-id"});
+    SharedSecrets.parseRunSprtArgs(new String[]{"/tmp/worktree", "tests", null, "high"});
   }
 
   /**
@@ -999,8 +996,7 @@ public final class SprtRunnerTest
     expectedExceptionsMessageRegExp = ".*worktree_path.*")
   public void parseRunSprtArgsRejectsBlankWorktreePath()
   {
-    SharedSecrets.parseRunSprtArgs(new String[]{" ", "tests", "claude-haiku-4-5",
-      "high", "test-session-id"});
+    SharedSecrets.parseRunSprtArgs(new String[]{" ", "tests", "claude-haiku-4-5", "high"});
   }
 
   /**
@@ -1010,8 +1006,7 @@ public final class SprtRunnerTest
     expectedExceptionsMessageRegExp = ".*test_dir.*")
   public void parseRunSprtArgsRejectsNullTestDirectory()
   {
-    SharedSecrets.parseRunSprtArgs(new String[]{"/tmp/worktree", null, "claude-haiku-4-5",
-      "high", "test-session-id"});
+    SharedSecrets.parseRunSprtArgs(new String[]{"/tmp/worktree", null, "claude-haiku-4-5", "high"});
   }
 
   /**
@@ -1021,8 +1016,7 @@ public final class SprtRunnerTest
     expectedExceptionsMessageRegExp = ".*test_dir.*")
   public void parseRunSprtArgsRejectsBlankTest()
   {
-    SharedSecrets.parseRunSprtArgs(new String[]{"/tmp/worktree", " ", "claude-haiku-4-5",
-      "high", "test-session-id"});
+    SharedSecrets.parseRunSprtArgs(new String[]{"/tmp/worktree", " ", "claude-haiku-4-5", "high"});
   }
 
   /**
@@ -1032,8 +1026,7 @@ public final class SprtRunnerTest
     expectedExceptionsMessageRegExp = ".*test_model.*")
   public void parseRunSprtArgsRejectsBlankModel()
   {
-    SharedSecrets.parseRunSprtArgs(new String[]{"/tmp/worktree", "tests", " ",
-      "high", "test-session-id"});
+    SharedSecrets.parseRunSprtArgs(new String[]{"/tmp/worktree", "tests", " ", "high"});
   }
 
   /**
@@ -1043,26 +1036,25 @@ public final class SprtRunnerTest
     expectedExceptionsMessageRegExp = ".*effort.*")
   public void parseRunSprtArgsRejectsBlankEffort()
   {
-    SharedSecrets.parseRunSprtArgs(new String[]{"/tmp/worktree", "tests", "claude-haiku-4-5",
-      " ", "test-session-id"});
+    SharedSecrets.parseRunSprtArgs(new String[]{"/tmp/worktree", "tests", "claude-haiku-4-5", " "});
   }
 
   /**
-   * Verifies that run-sprt rejects a blank session ID.
+   * Verifies that run-sprt rejects an explicitly supplied session ID.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*session_id.*")
-  public void parseRunSprtArgsRejectsBlankSessionId()
+    expectedExceptionsMessageRegExp = ".*session_id is derived from active engine scope.*")
+  public void parseRunSprtArgsRejectsExplicitSessionId()
   {
     SharedSecrets.parseRunSprtArgs(new String[]{"/tmp/worktree", "tests", "claude-haiku-4-5",
       "high", " "});
   }
 
   /**
-   * Verifies that run-sprt rejects session ids containing path traversal characters.
+   * Verifies that run-sprt rejects any explicitly supplied session ID payload.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
-    expectedExceptionsMessageRegExp = ".*letters, digits, underscores, or hyphens.*")
+    expectedExceptionsMessageRegExp = ".*session_id is derived from active engine scope.*")
   public void parseRunSprtArgsRejectsUnsafeSessionId()
   {
     SharedSecrets.parseRunSprtArgs(new String[]{"/tmp/worktree", "tests", "claude-haiku-4-5",

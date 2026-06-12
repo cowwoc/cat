@@ -137,7 +137,7 @@ The `sprt-runner` binary exposes one public SPRT entry point for skills and agen
 
 ```bash
 sprt-runner run-sprt \
-  <worktree_path> <test_dir> <test_model> <effort> <session_id>
+<worktree_path> <test_dir> <test_model> <effort>
 ```
 
 Parameter types:
@@ -145,7 +145,6 @@ Parameter types:
 - `test_dir`: directory containing `*.md` test cases
 - `test_model`: model alias/id (e.g., `haiku`, `sonnet`, `opus`)
 - `effort`: required test-runner effort level (`low|medium|high|xhigh|max`)
-- `session_id`: current CAT session ID
 
 **Error contract for `run-sprt`:**
 - On success: exits with code 0 and writes the structured results report to stdout.
@@ -297,7 +296,7 @@ Bash tool:
   command: |
     "${WORKTREE_PATH}/client/distribution/target/jlink/${SPRT_RUNTIME}/bin/sprt-runner" run-sprt \
       "${WORKTREE_PATH}" "${TEST_DIR}" "${TEST_MODEL_ID}" \
-      "${TEST_EFFORT}" "${CAT_SESSION_ID}" \
+      "${TEST_EFFORT}" \
       > "${OUTPUT_FILE}" 2>&1
 ```
 
