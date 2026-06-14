@@ -20,10 +20,13 @@ setup() {
 
     mkdir -p \
         "${DISTRIBUTION_DIR}/scripts" \
+        "${DISTRIBUTION_DIR}/scripts/lib" \
         "${DISTRIBUTION_DIR}/target/jlink/codex/bin" \
         "${PLUGIN_DIR}/scripts" \
         "${PLUGIN_DIR}/.git-filter-repo-config"
     cp "${BUILD_SCRIPT}" "${DISTRIBUTION_DIR}/scripts/build-engine-artifacts.sh"
+    cp "${SCRIPT_DIR}/distribution/scripts/lib/build-stamp.sh" \
+        "${DISTRIBUTION_DIR}/scripts/lib/build-stamp.sh"
     cp "${SHA256_PORTABLE}" "${PLUGIN_DIR}/scripts/sha256sum-portable.sh"
     cp "${GIT_FILTER_REPO_RELEASE}" "${PLUGIN_DIR}/scripts/git-filter-repo-release.sh"
 
@@ -108,6 +111,7 @@ client_dir="$2"
 target_dir="$3"
 binary="${plugin_dir}/lib/git-filter-repo-linux-x64"
 version_file="${binary}.version"
+counter_file="${target_dir}/builder-count.txt"
 [[ -x "${binary}" ]] || { echo "bundled binary missing during builder execution" >&2; exit 1; }
 [[ "$(cat "${version_file}")" == "git-filter-repo-v2.38.0" ]] || {
   echo "version file missing during builder execution" >&2
@@ -115,12 +119,25 @@ version_file="${binary}.version"
 }
 mkdir -p "${target_dir}"
 printf '%s\n%s\n%s\n' "${plugin_dir}" "${client_dir}" "${target_dir}" > "${target_dir}/builder-args.txt"
+count=0
+if [[ -f "${counter_file}" ]]; then
+  count="$(cat "${counter_file}")"
+fi
+count="$((count + 1))"
+printf '%s' "${count}" > "${counter_file}"
+mkdir -p "${target_dir}/claude/.claude-plugin" "${target_dir}/claude/client" \
+         "${target_dir}/codex/.codex-plugin" "${target_dir}/codex/client"
+printf '{}' > "${target_dir}/claude/.claude-plugin/plugin.json"
+printf '1.2.3\n' > "${target_dir}/claude/client/VERSION"
+printf '{}' > "${target_dir}/codex/.codex-plugin/plugin.json"
+printf '1.2.3\n' > "${target_dir}/codex/client/VERSION"
 BUILDER_EOF
     chmod +x "${DISTRIBUTION_DIR}/target/jlink/codex/bin/build-engine-artifacts"
 }
 
 run_build_script() {
     run env PATH="${STUB_BIN_DIR}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+        BUILD_STAMP_CLI="${DISTRIBUTION_DIR}/scripts/lib/build-stamp.sh" \
         bash "${DISTRIBUTION_DIR}/scripts/build-engine-artifacts.sh"
 }
 
@@ -184,4 +201,29 @@ run_build_script() {
     [ "${status}" -ne 0 ]
     [[ "${output}" == *"ERROR: SHA256 checksum mismatch for bundled git-filter-repo-linux-x64"* ]] || \
         [[ "${lines[*]}" == *"ERROR: SHA256 checksum mismatch for bundled git-filter-repo-linux-x64"* ]]
+}
+
+@test "skips builder when stamp and required outputs are current" {
+    run_build_script
+    [ "${status}" -eq 0 ]
+    [ "$(cat "${DISTRIBUTION_DIR}/target/engine/builder-count.txt")" -eq 1 ]
+
+    run_build_script
+
+    [ "${status}" -eq 0 ]
+    [[ "${output}" == *"Skipping engine artifact rebuild because inputs and required outputs are unchanged"* ]] || \
+        [[ "${lines[*]}" == *"Skipping engine artifact rebuild because inputs and required outputs are unchanged"* ]]
+    [ "$(cat "${DISTRIBUTION_DIR}/target/engine/builder-count.txt")" -eq 1 ]
+}
+
+@test "rebuilds when a required output is missing even if stamp exists" {
+    run_build_script
+    [ "${status}" -eq 0 ]
+    rm -f "${DISTRIBUTION_DIR}/target/engine/codex/.codex-plugin/plugin.json"
+
+    run_build_script
+
+    [ "${status}" -eq 0 ]
+    [ "$(cat "${DISTRIBUTION_DIR}/target/engine/builder-count.txt")" -eq 2 ]
+    [ -f "${DISTRIBUTION_DIR}/target/engine/codex/.codex-plugin/plugin.json" ]
 }

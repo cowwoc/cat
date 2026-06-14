@@ -132,6 +132,7 @@ The `sprt-runner` binary exposes one public SPRT entry point for skills and agen
 | Command | Scope | Use case |
 |---------|-------|----------|
 | `run-sprt` | Complete SPRT workflow | Invoked by `sprt-runner-agent` to run the test suite in the selected test directory. Orchestrates prepare, isolation, batching, grading, state updates, results, and cleanup. |
+| `run-status` | Whole-run status snapshot and event deltas | Canonical monitoring surface for in-flight SPRT runs. Reads `.cat/work/sprt-run-status.json` and `.cat/work/sprt-run-events.jsonl`, optionally waiting for new events before returning. |
 
 `run-sprt` usage:
 
@@ -150,6 +151,28 @@ Parameter types:
 - On success: exits with code 0 and writes the structured results report to stdout.
 - On error: exits with code 1. The error message is written to stderr, never to stdout. Stdout contains only the valid results report or nothing.
 - Progress messages during execution are written to stderr so they do not pollute the stdout report.
+
+`run-status` usage:
+
+```bash
+sprt-runner run-status \
+<worktree_path> [--since-seq N] [--wait-seconds N] [--json|--summary]
+```
+
+Parameter types:
+- `worktree_path`: worktree under test
+- `--since-seq N`: optional lower bound for returned event sequence numbers
+- `--wait-seconds N`: optional bounded wait for new events before returning
+- `--json|--summary`: JSON is the default; `--summary` is a compact human-readable view
+
+**Contract for `run-status`:**
+- Use this as the only normal monitoring interface for an active SPRT run.
+- `status` is telemetry only. Formal pass/fail results still come from `test-results.json`.
+- The JSON response contains:
+  - `status`: whole-run snapshot (`status`, `phase`, `batch`, `undecided_count`, `decided_count`, `cumulative_failures`, `last_event_seq`, `test_results_path`, `overall_decision`, `error`, etc.)
+  - `events`: append-only event deltas with `seq`, `timestamp`, `type`, `phase`, and `message`
+- Repeated polling with `--since-seq <last_event_seq>` returns only newly appended events.
+- `--wait-seconds` performs bounded long-polling and is preferred over tight empty polling loops.
 
 ---
 
@@ -237,21 +260,14 @@ No manual cache sync or `/reload-plugins` is needed.
 
 The SPRT workflow is executed via `sprt-runner run-sprt` with effort immediately after the model id.
 
-**Step 0 (if retrying after client updates):** Kill any previous background SPRT instance and clean up artifacts:
+**Step 0 (if retrying after client updates):** Stop any still-running background SPRT task in the harness, then clean up stale artifacts:
 
 ```bash
-# CRITICAL: Kill stale monitors FIRST. Monitors do NOT auto-stop when the background process dies.
-# Failure to kill monitors before restarting creates duplicate monitors that waste resources.
-#
-# Find monitor PIDs watching SPRT output files (matches: tail -f --pid=<N> .../sprt-output.log):
-ps aux | grep -E "tail.*--pid.*sprt-output" | grep -v grep | awk '{print $2}' | \
-  xargs -I{} kill {} 2>/dev/null || true
-
-# If you have SPRT_PID from a previous run, kill it
-kill ${SPRT_PID} 2>/dev/null || true
-
-# Remove the output file if it exists
-rm -f "${OUTPUT_FILE}"
+# Remove prior status and log artifacts
+rm -f "${WORKTREE_PATH}/.cat/work/sprt-run-status.json"
+rm -f "${WORKTREE_PATH}/.cat/work/sprt-run-events.jsonl"
+rm -f "${RESULT_FILE}"
+rm -f "${RUN_LOG_FILE}"
 
 # Clean up previous run worktree artifacts
 rm -rf "${WORKTREE_PATH}/.cat/work/test-runs"
@@ -264,7 +280,7 @@ git branch | grep -E "$(basename ${WORKTREE_PATH})-(tc|isolation)" | \
   xargs -I{} git branch -D {} 2>/dev/null || true
 ```
 
-**Step 1:** Start the SPRT runner in the background and capture its output path:
+**Step 1:** Start the SPRT runner in the background and define the status/log artifact paths:
 
 ```bash
 TEST_DIR="$0"
@@ -282,11 +298,17 @@ if [[ -z "${SPRT_RUNTIME}" ]]; then
   exit 1
 fi
 
-# Start SPRT runner in background using Bash tool run_in_background parameter
-# This ensures proper process lifecycle management (no zombie processes)
-OUTPUT_FILE="${WORKTREE_PATH}/.cat/work/sprt-output.log"
+# Start SPRT runner in background using Bash tool run_in_background parameter.
+# The harness owns the process lifecycle; monitor it through run-status, not via ps/tail.
+RESULT_FILE="${WORKTREE_PATH}/.cat/work/sprt-results.json"
+RUN_LOG_FILE="${WORKTREE_PATH}/.cat/work/sprt-runner.stderr.log"
+STATUS_FILE="${WORKTREE_PATH}/.cat/work/sprt-run-status.json"
+EVENTS_FILE="${WORKTREE_PATH}/.cat/work/sprt-run-events.jsonl"
 mkdir -p "${WORKTREE_PATH}/.cat/work"
-echo "OUTPUT_FILE=${OUTPUT_FILE}"
+echo "RESULT_FILE=${RESULT_FILE}"
+echo "RUN_LOG_FILE=${RUN_LOG_FILE}"
+echo "STATUS_FILE=${STATUS_FILE}"
+echo "EVENTS_FILE=${EVENTS_FILE}"
 ```
 
 ```
@@ -297,74 +319,70 @@ Bash tool:
     "${WORKTREE_PATH}/client/distribution/target/jlink/${SPRT_RUNTIME}/bin/sprt-runner" run-sprt \
       "${WORKTREE_PATH}" "${TEST_DIR}" "${TEST_MODEL_ID}" \
       "${TEST_EFFORT}" \
-      > "${OUTPUT_FILE}" 2>&1
+      > "${RESULT_FILE}" 2> "${RUN_LOG_FILE}"
 ```
 
-The run_in_background parameter ensures the harness manages the process lifecycle correctly, preventing zombie processes
-when the runner exits abnormally. You will be notified when the background task completes.
+The `run_in_background` parameter ensures the harness manages the process lifecycle correctly. You will be
+notified when the background task completes.
 
-**Step 1b:** After starting the background task, capture the SPRT process PID so the monitor can auto-exit:
+**Step 1b:** Initialize incremental status polling state:
 
 ```bash
-# Wait briefly for the java process to start, then capture its PID
-sleep 1
-SPRT_PID=$(ps aux | grep "sprt-runner.*run-sprt" | grep -v grep | awk '{print $2}' | head -1)
-if [[ -z "${SPRT_PID}" ]]; then
-  echo "ERROR: Could not find SPRT process PID" >&2
-  exit 1
-fi
-echo "SPRT_PID=${SPRT_PID}"
+LAST_EVENT_SEQ=0
+WAIT_SECONDS=60
 ```
 
-**Step 2:** Immediately after capturing the PID, use the Monitor tool to stream progress updates:
+**Step 2:** Monitor the run exclusively through `run-status`:
 
+Run the following command, then repeat it until the returned `status.status` becomes terminal
+(`COMPLETED`, `FAILED`, `ABORTED`, `UNKNOWN`, or `STALE`):
+
+```bash
+"${WORKTREE_PATH}/client/distribution/target/jlink/${SPRT_RUNTIME}/bin/sprt-runner" run-status \
+  "${WORKTREE_PATH}" \
+  --since-seq "${LAST_EVENT_SEQ}" \
+  --wait-seconds "${WAIT_SECONDS}" \
+  --json
 ```
-Monitor tool:
-  description: "SPRT test progress"
-  timeout_ms: 3600000
-  persistent: false
-  command: tail -f -n +1 --pid=<SPRT_PID> <OUTPUT_FILE> 2>/dev/null || true
-```
 
-Replace `<OUTPUT_FILE>` with the actual file path from Step 1 and `<SPRT_PID>` with the PID from Step 1b.
+After each response:
+- Read `status.last_event_seq` and assign it back to `LAST_EVENT_SEQ`.
+- Summarize only the newly returned `events`; do not reread the whole run from disk.
+- Use the snapshot fields (`phase`, `batch`, `undecided_count`, `decided_count`, `cumulative_failures`,
+  `overall_decision`, `error`) as the source of truth for your progress summary.
+- If you need a compact human-readable view, rerun the same command with `--summary`.
+- If one poll returns no new events and the snapshot is still `RUNNING`, increase `WAIT_SECONDS` from `60` to `120`,
+  then to `300` on later empty polls. Reset `WAIT_SECONDS=60` after any response that includes new events.
 
-The `-n +1` flag shows all output from the beginning of the file (not just the last 10 lines), so you see the complete
-SPRT run including all batch summaries and test results as they're generated.
+The runner automatically checks for failures after each of the first 5 batches and stops early if
+2+ total failures are detected across all test cases.
 
-The `--pid=<SPRT_PID>` flag causes `tail` to exit automatically when the SPRT process (PID) exits, so the monitor
-terminates cleanly without manual intervention.
-
-The runner automatically checks for failures after each of the first 5 batches and will stop early if 2+ total failures are detected across all test cases.
-
-**Monitor notification response format:** Each time a monitor notification arrives, respond with a one-line progress
+**Progress response format:** Each time `run-status` returns one or more new events, respond with a one-line progress
 summary in this format:
 
 ```
-**Batch B** | <description of event> | <N> TCs remaining | ETA ~Xh Ym
+**Batch B** | <latest event message> | <N> TCs remaining | <status>/<phase>
 ```
 
-Track the following state across notifications to keep the summary accurate:
-- `CURRENT_BATCH`: current batch number (increments when you see `=== Batch N:`)
-- `BATCH_START_TIME`: wall-clock time when the current batch started
-- `AVG_BATCH_MS`: running average of completed batch durations (update after each `=== Batch N Summary ===`)
-- `RUNS_TO_ACCEPT`: max "Runs to Convergence" value from the most recent batch summary
-- `TCS_REMAINING`: count of undecided test cases (from the most recent batch summary)
+Populate:
+- `B`: `status.batch` when present, otherwise `-`
+- `<latest event message>`: the final message in the returned `events` array, or the snapshot phase transition
+- `<N> TCs remaining`: `status.undecided_count` when present
+- `<status>/<phase>`: the returned snapshot status and phase
 
-ETA formula: `RUNS_TO_ACCEPT × AVG_BATCH_MS`. Before the first batch summary arrives, use the elapsed
-time since Step 1 as the single-batch estimate. Express durations as `Xh Ym` or `Ym Xs` as appropriate.
+When a poll returns no new events and the snapshot is still `RUNNING`, do not spam the user. Simply continue
+long-polling with the current `WAIT_SECONDS` value and only report again after new events arrive or the snapshot
+becomes terminal.
 
-After each `=== Batch N Summary ===` notification, also output the full batch summary table verbatim
-so the user can see per-TC decisions and convergence estimates.
-
-**While monitoring, watch for three failure signals:**
+**While monitoring, watch for three failure signals from `status` or newly returned `events`:**
 
 **Signal 1 — Infrastructure failure (`tc{N}: runner failed` or `tc{N}: grader failed`):**
 
 The run worktree is still alive when this message appears. Act immediately — do NOT wait for the batch
 to finish:
 
-1. Kill SPRT to prevent worktree cleanup: `kill ${SPRT_PID}`
-2. Wait for the monitor to stop
+1. Stop the background SPRT task in the harness to prevent worktree cleanup.
+2. Re-run `run-status` once without `--wait-seconds` to capture the latest snapshot.
 3. Identify the run worktree:
    ```bash
    RUN_WORKTREE="${WORKTREE_PATH}/.cat/work/worktrees/$(basename ${WORKTREE_PATH})-tc{N}-r{M}"
@@ -387,17 +405,17 @@ to finish:
 
 **Signal 2 — Assertion failures (test case shows same failure in 2+ runs):**
 
-After each batch completes (when you see `=== Batch N: ...` followed by test case results), check for
-any test cases with >= 2 runs showing consistent failures. If found, investigate immediately.
+After each `batch_summary` event, inspect the current `RESULT_FILE` if you need per-test-case detail, and
+check for any test cases with >= 2 runs showing consistent failures. If found, investigate immediately.
 
 Look for patterns like:
 - Same assertions failing each time
 - Same agent behavior (e.g., always asks questions, always uses hardcoded paths)
 
 **If clear defect pattern found:**
-1. Kill SPRT: `kill ${SPRT_PID}`
-2. Wait for monitor to stop
-3. Read partial results: `cat ${OUTPUT_FILE}`
+1. Stop the background SPRT task in the harness.
+2. Re-run `run-status` once without `--wait-seconds` to capture the latest snapshot.
+3. Read partial results: `cat "${RESULT_FILE}" 2>/dev/null || true`
 4. Proceed immediately to Investigation Procedure (see below)
 
 **Why investigate early:** Don't wait for SPRT to accumulate 3+ runs to statistically decide REJECT.
@@ -406,7 +424,7 @@ Abort and investigate immediately to save resources.
 
 **Signal 3 — Infrastructure errors (JSON parsing, schema validation, Java exceptions):**
 
-When the monitor shows errors like:
+When `run-status` or the captured stderr log shows errors like:
 - "Pipeline for tc{N} failed"
 - "Grade file missing assertion_results or assertions field"
 - Java stack traces (IOException, IllegalArgumentException, etc.)
@@ -414,9 +432,9 @@ When the monitor shows errors like:
 
 **These indicate infrastructure failures that require investigation:**
 
-1. **Do NOT wait for SPRT to complete** — kill it immediately: `kill ${SPRT_PID}`
-2. Wait for the monitor to stop
-3. Read the output: `cat ${OUTPUT_FILE}`
+1. **Do NOT wait for SPRT to complete** — stop the background SPRT task in the harness immediately.
+2. Re-run `run-status` once without `--wait-seconds` to capture the latest snapshot.
+3. Read the output: `cat "${RUN_LOG_FILE}" 2>/dev/null || true`
 4. Identify the failing test case and run number from the error message
 5. Check if grade files and run artifacts still exist:
    ```bash
@@ -428,16 +446,19 @@ When the monitor shows errors like:
 7. Investigate the root cause using available artifacts (grade files, transcripts, prompts)
 8. Report findings and ask user whether to proceed with investigation or fix and re-run
 
-**Step 3:** After the monitor stops (or after investigation if failures occurred), read the final output:
+**Step 3:** Once `run-status` reaches a terminal state (or after investigation if failures occurred), read the final output:
 
 ```bash
-cat "${OUTPUT_FILE}"
+cat "${RESULT_FILE}"
 ```
 
-**CRITICAL CHECK:** Before doing anything else, check if the output contains infrastructure errors:
+**CRITICAL CHECK:** Before doing anything else, inspect the terminal snapshot and stderr log for infrastructure errors:
 
 ```bash
-if grep -q "Pipeline for.*failed\|Grade file missing\|IOException\|ERROR" "${OUTPUT_FILE}"; then
+FINAL_STATUS_JSON=$("${WORKTREE_PATH}/client/distribution/target/jlink/${SPRT_RUNTIME}/bin/sprt-runner" run-status \
+  "${WORKTREE_PATH}" --json)
+if grep -q "Pipeline for.*failed\|Grade file missing\|IOException\|ERROR" "${RUN_LOG_FILE}" || \
+   printf '%s' "${FINAL_STATUS_JSON}" | grep -q '"status":"FAILED"\|"status":"UNKNOWN"\|"phase":"ERROR"'; then
   echo "⚠️  INFRASTRUCTURE ERROR DETECTED"
   echo "Artifacts may have been cleaned up already if SPRT completed."
   echo "Check if test-runs directory still exists:"
@@ -448,7 +469,7 @@ if grep -q "Pipeline for.*failed\|Grade file missing\|IOException\|ERROR" "${OUT
 fi
 ```
 
-Do NOT remove the output file yet - it's needed for investigation if failures occurred.
+Do NOT remove the result or stderr log files yet. They are needed for investigation if failures occurred.
 
 The SPRT command performs the complete SPRT workflow:
 
@@ -463,7 +484,8 @@ The SPRT command performs the complete SPRT workflow:
 7. **Cleanup** — Removes all run worktrees, branches, and isolation branch
 8. **Report** — Outputs structured results table with per-test-case decisions and token usage
 
-The CLI command outputs progress messages to stderr during execution and returns the final structured report to stdout.
+The CLI command writes the final structured report to stdout, stderr diagnostics to the stderr log you captured
+in Step 1, and whole-run telemetry to the status snapshot/event files consumed by `run-status`.
 
 ## Output Contract
 
@@ -587,28 +609,17 @@ For each REJECT test case, determine the root cause:
 2. Re-run SPRT to verify fixes
 ```
 
-### Step 5: Cleanup monitor and SPRT process
+### Step 5: Cleanup temporary telemetry and captured output
 
-**MANDATORY:** After investigation is complete (or immediately if overall_decision is ACCEPT), clean up the monitor and SPRT process:
+**MANDATORY:** After investigation is complete (or immediately if `overall_decision` is ACCEPT), remove any temporary logs you no longer need:
 
 ```bash
-# Kill the monitor (if still running - may have already stopped naturally)
-ps aux | grep "tail.*--pid.*${SPRT_PID}" | grep -v grep | awk '{print $2}' | xargs -r kill 2>/dev/null || true
-
-# Kill the SPRT process (if still running - may have already exited naturally)
-kill "${SPRT_PID}" 2>/dev/null || true
-
-# Wait briefly for processes to terminate
-sleep 1
-
-# Force kill if still alive
-kill -9 "${SPRT_PID}" 2>/dev/null || true
-
-# Remove output file
-rm -f "${OUTPUT_FILE}"
+rm -f "${RESULT_FILE}"
+rm -f "${RUN_LOG_FILE}"
 ```
 
-**Why this matters:** SPRT processes can sometimes hang after completing their work. Explicitly killing them ensures clean termination and prevents resource leaks.
+**Why this matters:** The harness owns the background process lifecycle. Your responsibility is to avoid stale
+status/log artifacts from confusing the next run.
 
 ---
 
@@ -622,5 +633,7 @@ rm -f "${OUTPUT_FILE}"
 - [ ] **If infrastructure errors occurred:** Run worktrees and grade files preserved until investigation complete
 - [ ] Sanitized branch deleted ONLY after investigation complete (if failures occurred) or after SPRT completes (if ACCEPT)
 - [ ] SPRT state file at `${WORKTREE_PATH}/.cat/work/sprt-state.json` reflects final state
+- [ ] `run-status` snapshot at `${WORKTREE_PATH}/.cat/work/sprt-run-status.json` reached a terminal lifecycle state
+- [ ] `run-status` event log at `${WORKTREE_PATH}/.cat/work/sprt-run-events.jsonl` recorded monotonic `seq` values
 - [ ] `JLINK_BIN` used from `prepare-trial` output — never manually constructed or overridden
 - [ ] **If overall_decision is REJECT:** Investigation procedure completed and results reported

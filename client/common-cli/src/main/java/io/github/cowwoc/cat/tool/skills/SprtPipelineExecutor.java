@@ -64,6 +64,7 @@ final class SprtPipelineExecutor
    * @param sprtLock the shared SPRT lock
    * @param cumulativeFailures the cumulative failure counter
    * @param inconclusiveTestCases the batch-local inconclusive list
+   * @param progressListener records whole-run trial progress
    * @return the batch outcome
    * @throws InterruptedException if interrupted while joining pipelines
    */
@@ -71,7 +72,7 @@ final class SprtPipelineExecutor
     String testDirRel, String modelId, String testEffort, String isolationResultJson,
     String outputDir, int processedCount, List<JsonNode> sortedWorktrees, int currentParallelism,
     JsonMapper mapper, Object sprtLock, AtomicInteger cumulativeFailures,
-    ArrayNode inconclusiveTestCases) throws InterruptedException
+    ArrayNode inconclusiveTestCases, SprtProgressListener progressListener) throws InterruptedException
   {
     int batchSize = Math.min(currentParallelism, sortedWorktrees.size() - processedCount);
     List<Thread> pipelineThreads = new ArrayList<>();
@@ -90,7 +91,7 @@ final class SprtPipelineExecutor
       Thread pipelineThread = Thread.ofVirtual().start(() ->
         runPipeline(inputs, worktreePath, testDirRel, sprtStateJson, isolationResultJson, modelId,
           testEffort, mapper, sprtLock, cumulativeFailures, batchDecidedCount,
-          inconclusiveTestCases, pipelineFailures, pipelineErrors));
+          inconclusiveTestCases, pipelineFailures, pipelineErrors, progressListener));
       pipelineThreads.add(pipelineThread);
     }
     for (Thread pipelineThread : pipelineThreads)
@@ -175,19 +176,21 @@ final class SprtPipelineExecutor
    * @param inconclusiveTestCases the batch-local inconclusive list
    * @param pipelineFailures the per-pipeline failure list
    * @param pipelineErrors the per-pipeline error list
+   * @param progressListener records whole-run trial progress
    */
   private void runPipeline(PipelineInputs inputs, String worktreePath, String testDirRel,
     String sprtStateJson, String isolationResultJson, String modelId, String testEffort,
     JsonMapper mapper, Object sprtLock, AtomicInteger cumulativeFailures,
     AtomicInteger batchDecidedCount, ArrayNode inconclusiveTestCases,
-    List<Boolean> pipelineFailures, List<Exception> pipelineErrors)
+    List<Boolean> pipelineFailures, List<Exception> pipelineErrors,
+    SprtProgressListener progressListener)
   {
     boolean failed = false;
     try
     {
       failed = executeTrialAndGrade(inputs, worktreePath, testDirRel, sprtStateJson,
         isolationResultJson, modelId, testEffort, mapper, sprtLock, cumulativeFailures,
-        batchDecidedCount, inconclusiveTestCases);
+        batchDecidedCount, inconclusiveTestCases, progressListener);
     }
     catch (Exception e)
     {
@@ -216,16 +219,19 @@ final class SprtPipelineExecutor
    * @param cumulativeFailures the cumulative failure counter
    * @param batchDecidedCount the count of decisions reached in this batch
    * @param inconclusiveTestCases the batch-local inconclusive list
+   * @param progressListener records whole-run trial progress
    * @return {@code true} if the pipeline failed, otherwise {@code false}
    * @throws IOException if runner output, grading, or state updates fail
    */
   private boolean executeTrialAndGrade(PipelineInputs inputs, String worktreePath,
     String testDirRel, String sprtStateJson, String isolationResultJson, String modelId,
     String testEffort, JsonMapper mapper, Object sprtLock, AtomicInteger cumulativeFailures,
-    AtomicInteger batchDecidedCount, ArrayNode inconclusiveTestCases) throws IOException
+    AtomicInteger batchDecidedCount, ArrayNode inconclusiveTestCases,
+    SprtProgressListener progressListener) throws IOException
   {
     if (!inputs.hasFixture() && handleRunnerFailure(inputs, sprtStateJson, modelId, testEffort,
-      mapper, sprtLock, cumulativeFailures, batchDecidedCount, inconclusiveTestCases))
+      mapper, sprtLock, cumulativeFailures, batchDecidedCount, inconclusiveTestCases,
+      progressListener))
     {
       return true;
     }
@@ -239,7 +245,7 @@ final class SprtPipelineExecutor
     if (!passed)
       cumulativeFailures.incrementAndGet();
     updateBoundaryDecision(inputs, sprtStateJson, passed, mapper, sprtLock, batchDecidedCount,
-      inconclusiveTestCases);
+      inconclusiveTestCases, cumulativeFailures, progressListener);
     return !passed;
   }
 
@@ -255,13 +261,14 @@ final class SprtPipelineExecutor
    * @param cumulativeFailures the cumulative failure counter
    * @param batchDecidedCount the count of decisions reached in this batch
    * @param inconclusiveTestCases the batch-local inconclusive list
+   * @param progressListener records whole-run trial progress
    * @return {@code true} if the trial failed before grading
    * @throws IOException if runner execution or SPRT updates fail
    */
   private boolean handleRunnerFailure(PipelineInputs inputs, String sprtStateJson,
     String modelId, String testEffort, JsonMapper mapper, Object sprtLock,
     AtomicInteger cumulativeFailures, AtomicInteger batchDecidedCount,
-    ArrayNode inconclusiveTestCases) throws IOException
+    ArrayNode inconclusiveTestCases, SprtProgressListener progressListener) throws IOException
   {
     Path runnerLogPath = Path.of(inputs.outputJson()).getParent().
       resolve(inputs.testCaseId() + "_run" + inputs.trialNum() + "_runner.log");
@@ -271,7 +278,8 @@ final class SprtPipelineExecutor
       log.warn("{}: runner failed (exit={}). Log: {}", inputs.testCaseId(), exitCode, runnerLogPath);
       cumulativeFailures.incrementAndGet();
       recordFailureDecision(sprtStateJson, inputs.testCaseId(), inputs.trialNum(), "runner-failure",
-        mapper, sprtLock, batchDecidedCount, inconclusiveTestCases);
+        mapper, sprtLock, batchDecidedCount, inconclusiveTestCases, cumulativeFailures,
+        progressListener);
       return true;
     }
     String contamination = runner.checkRunContamination(new String[]{inputs.outputJson()});
@@ -280,7 +288,8 @@ final class SprtPipelineExecutor
     log.warn("{}: contamination detected", inputs.testCaseId());
     cumulativeFailures.incrementAndGet();
     recordFailureDecision(sprtStateJson, inputs.testCaseId(), inputs.trialNum(), "contamination",
-      mapper, sprtLock, batchDecidedCount, inconclusiveTestCases);
+      mapper, sprtLock, batchDecidedCount, inconclusiveTestCases, cumulativeFailures,
+      progressListener);
     return true;
   }
 
@@ -315,11 +324,14 @@ final class SprtPipelineExecutor
    * @param sprtLock the shared SPRT state lock
    * @param batchDecidedCount the count of decisions reached in this batch
    * @param inconclusiveTestCases the batch-local inconclusive list
+   * @param cumulativeFailures the cumulative failure counter
+   * @param progressListener records whole-run trial progress
    * @throws IOException if SPRT update or boundary checks fail
    */
   private void updateBoundaryDecision(PipelineInputs inputs, String sprtStateJson, boolean passed,
     JsonMapper mapper, Object sprtLock, AtomicInteger batchDecidedCount,
-    ArrayNode inconclusiveTestCases) throws IOException
+    ArrayNode inconclusiveTestCases, AtomicInteger cumulativeFailures,
+    SprtProgressListener progressListener) throws IOException
   {
     synchronized (sprtLock)
     {
@@ -332,6 +344,10 @@ final class SprtPipelineExecutor
         batchDecidedCount.incrementAndGet();
       else
         inconclusiveTestCases.add(inputs.testCaseId());
+      DecisionCounts counts = countDecisions(mapper.readTree(Files.readString(Path.of(sprtStateJson), UTF_8)).
+        path("sprt_state"));
+      progressListener.onTrialResult(inputs.testCaseId(), inputs.trialNum(), decision,
+        counts.undecidedCount(), counts.decidedCount(), cumulativeFailures.get());
     }
   }
 
@@ -346,11 +362,14 @@ final class SprtPipelineExecutor
    * @param sprtLock the shared SPRT state lock
    * @param batchDecidedCount the count of decisions reached in this batch
    * @param inconclusiveTestCases the batch-local inconclusive list
+   * @param cumulativeFailures the cumulative failure counter
+   * @param progressListener records whole-run trial progress
    * @throws IOException if SPRT update or boundary checks fail
    */
   private void recordFailureDecision(String sprtStateJson, String testCaseId, int trialNum,
     String failureType, JsonMapper mapper, Object sprtLock, AtomicInteger batchDecidedCount,
-    ArrayNode inconclusiveTestCases) throws IOException
+    ArrayNode inconclusiveTestCases, AtomicInteger cumulativeFailures,
+    SprtProgressListener progressListener) throws IOException
   {
     synchronized (sprtLock)
     {
@@ -363,7 +382,37 @@ final class SprtPipelineExecutor
         batchDecidedCount.incrementAndGet();
       else
         inconclusiveTestCases.add(testCaseId);
+      DecisionCounts counts = countDecisions(mapper.readTree(Files.readString(Path.of(sprtStateJson), UTF_8)).
+        path("sprt_state"));
+      progressListener.onTrialResult(testCaseId, trialNum, decision + " (" + failureType + ")",
+        counts.undecidedCount(), counts.decidedCount(), cumulativeFailures.get());
     }
+  }
+
+  private DecisionCounts countDecisions(JsonNode sprtState)
+  {
+    int undecidedCount = 0;
+    int decidedCount = 0;
+    for (java.util.Map.Entry<String, JsonNode> entry : sprtState.properties())
+    {
+      JsonNode decisionNode = entry.getValue().get("decision");
+      String decision;
+      if (decisionNode == null)
+        decision = "INCONCLUSIVE";
+      else
+        decision = decisionNode.stringValue();
+      if (decision == null)
+        decision = "INCONCLUSIVE";
+      if ("ACCEPT".equals(decision) || "REJECT".equals(decision))
+        ++decidedCount;
+      else
+        ++undecidedCount;
+    }
+    return new DecisionCounts(undecidedCount, decidedCount);
+  }
+
+  private record DecisionCounts(int undecidedCount, int decidedCount)
+  {
   }
 
   /**

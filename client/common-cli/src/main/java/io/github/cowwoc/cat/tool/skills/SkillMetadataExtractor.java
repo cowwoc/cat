@@ -8,12 +8,12 @@ package io.github.cowwoc.cat.tool.skills;
 
 import io.github.cowwoc.cat.agent.AgentScope;
 import io.github.cowwoc.cat.agent.AgentPluginScope;
+import io.github.cowwoc.cat.agent.FileContentCache;
 import io.github.cowwoc.cat.agent.FrontmatterUtils;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import java.io.IOException;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -357,7 +357,7 @@ final class SkillMetadataExtractor
         sorted().
         toList())
       {
-        String content = Files.readString(agentBody, UTF_8);
+        String content = FileContentCache.readString(agentBody);
         if (containsSkillReference(content, skillName))
         {
           ModelEffort config = readCodexAgentConfigByStem(fileStem(agentBody));
@@ -447,7 +447,7 @@ final class SkillMetadataExtractor
 
   private static String extractTomlStringField(Path filePath, String fieldName) throws IOException
   {
-    for (String line: Files.readString(filePath, UTF_8).split("\\R"))
+    for (String line: FileContentCache.readString(filePath).split("\\R"))
     {
       String trimmed = line.strip();
       if (trimmed.isEmpty() || trimmed.startsWith("#"))
@@ -570,7 +570,7 @@ final class SkillMetadataExtractor
    */
   JsonNode parseFrontmatterNode(Path skillPath) throws IOException
   {
-    String content = Files.readString(skillPath, UTF_8);
+    String content = FileContentCache.readString(skillPath);
     String frontmatter = FrontmatterUtils.extractFrontmatter(content);
     if (frontmatter == null || frontmatter.isBlank())
       return yamlMapper.createObjectNode();
@@ -622,7 +622,7 @@ final class SkillMetadataExtractor
    */
   private String bodyWithLineNumbers(Path skillPath) throws IOException
   {
-    List<String> lines = Files.readAllLines(skillPath, UTF_8);
+    List<String> lines = FileContentCache.readString(skillPath).lines().toList();
     int bodyStart = 0;
     if (!lines.isEmpty() && lines.get(0).equals("---"))
     {

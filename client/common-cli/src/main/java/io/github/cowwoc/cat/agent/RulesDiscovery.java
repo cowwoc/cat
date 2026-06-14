@@ -17,8 +17,6 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -87,20 +85,18 @@ public final class RulesDiscovery
   {
   }
 
-  private record CachedRules(List<FileState> fileStates, List<RuleFile> rules, Instant validatedAt)
+  private record CachedRules(List<FileState> fileStates, List<RuleFile> rules)
   {
     /**
      * Creates cached rule snapshot with defensive copies.
      *
      * @param fileStates file-state snapshot used for invalidation
      * @param rules discovered rules
-     * @param validatedAt time cache entry was last validated
      */
     private CachedRules
     {
       fileStates = List.copyOf(fileStates);
       rules = List.copyOf(rules);
-      requireThat(validatedAt, "validatedAt").isNotNull();
     }
   }
 
@@ -114,7 +110,6 @@ public final class RulesDiscovery
    */
   private static final long MAX_RULE_FILE_SIZE = 1024 * 1024;
   private static final int MAX_CACHE_ENTRIES = 128;
-  private static final Duration CACHE_VALIDATION_TTL = Duration.ofSeconds(2);
   private static final Map<String, CachedRules> CACHE = new LinkedHashMap<>(16, 0.75f, true)
   {
     @Override
@@ -160,17 +155,6 @@ public final class RulesDiscovery
     {
       Path normalizedRulesDir = rulesDir.toAbsolutePath().normalize();
       String cacheKey = normalizedRulesDir.toString();
-      Instant now = Instant.now();
-      synchronized (CACHE)
-      {
-        CachedRules cached = CACHE.get(cacheKey);
-        if (cached != null && Duration.between(cached.validatedAt(), now).
-          compareTo(CACHE_VALIDATION_TTL) < 0)
-        {
-          return cached.rules();
-        }
-      }
-
       List<Path> files = listRuleFiles();
       List<FileState> fileStates = getFileStates();
       synchronized (CACHE)
@@ -178,7 +162,7 @@ public final class RulesDiscovery
         CachedRules cached = CACHE.get(cacheKey);
         if (cached != null && cached.fileStates().equals(fileStates))
         {
-          CACHE.put(cacheKey, new CachedRules(fileStates, cached.rules(), now));
+          CACHE.put(cacheKey, cached);
           return cached.rules();
         }
       }
@@ -188,13 +172,14 @@ public final class RulesDiscovery
       {
         if (Files.size(file) > MAX_RULE_FILE_SIZE)
           throw new IOException("Rule file exceeds 1 MB size limit: " + file.getFileName());
-        String rawContent = SourceIncludeProcessor.expand(file, Files.readString(file), this::isAllowedIncludeTarget);
+        String rawContent = SourceIncludeProcessor.expand(file, FileContentCache.readString(file),
+          this::isAllowedIncludeTarget);
         rules.add(parseRuleFile(file, rawContent));
       }
       rules = List.copyOf(rules);
       synchronized (CACHE)
       {
-        CACHE.put(cacheKey, new CachedRules(fileStates, rules, now));
+        CACHE.put(cacheKey, new CachedRules(fileStates, rules));
       }
       return rules;
     }

@@ -23,6 +23,7 @@ setup() {
     MODULE_NAME="io.github.cowwoc.cat.client"
     HANDLERS=("test-launcher:PreToolUseHook")
     ENABLE_ASSERTIONS=false
+    BUILD_STAMP_CLI="$BATS_TEST_DIRNAME/../../scripts/lib/build-stamp.sh"
 }
 
 teardown() {
@@ -245,6 +246,83 @@ EOF
         ! grep -q "io.github.cowwoc.cat.claude" "$launcher" || \
             { echo "Codex launcher references Claude implementation: $launcher"; cat "$launcher"; false; }
     done
+}
+
+@test "jlink stamp is current when required outputs and inputs match" {
+    source "$BUILD_JLINK"
+    BUILD_STAMP_CLI="$BATS_TEST_DIRNAME/../../scripts/lib/build-stamp.sh"
+    TARGET_DIR="$(mktemp -d)"
+    STAMP_DIR="${TARGET_DIR}/.stamps"
+    OUTPUT_ROOT="${TARGET_DIR}/jlink"
+    COMMON_JAR="${TARGET_DIR}/common.jar"
+    CLAUDE_JAR="${TARGET_DIR}/claude.jar"
+    CODEX_JAR="${TARGET_DIR}/codex.jar"
+    : > "$COMMON_JAR"
+    : > "$CLAUDE_JAR"
+    : > "$CODEX_JAR"
+    mkdir -p "${OUTPUT_ROOT}/claude/bin" "${OUTPUT_ROOT}/codex/bin"
+    : > "${OUTPUT_ROOT}/claude/bin/java"
+    : > "${OUTPUT_ROOT}/claude/bin/sprt-runner"
+    : > "${OUTPUT_ROOT}/codex/bin/java"
+    : > "${OUTPUT_ROOT}/codex/bin/sprt-runner"
+
+    write_jlink_stamp
+    run bash -lc 'source "'"$BUILD_JLINK"'"; BUILD_STAMP_CLI="'"$BUILD_STAMP_CLI"'"; TARGET_DIR="'"$TARGET_DIR"'"; STAMP_DIR="'"$STAMP_DIR"'"; OUTPUT_ROOT="'"$OUTPUT_ROOT"'"; COMMON_JAR="'"$COMMON_JAR"'"; CLAUDE_JAR="'"$CLAUDE_JAR"'"; CODEX_JAR="'"$CODEX_JAR"'"; if jlink_stamp_current; then echo yes; else echo no; fi'
+
+    [ "$status" -eq 0 ]
+    [ "$output" = "yes" ]
+}
+
+@test "jlink stamp is stale when a required output is missing" {
+    source "$BUILD_JLINK"
+    BUILD_STAMP_CLI="$BATS_TEST_DIRNAME/../../scripts/lib/build-stamp.sh"
+    TARGET_DIR="$(mktemp -d)"
+    STAMP_DIR="${TARGET_DIR}/.stamps"
+    OUTPUT_ROOT="${TARGET_DIR}/jlink"
+    COMMON_JAR="${TARGET_DIR}/common.jar"
+    CLAUDE_JAR="${TARGET_DIR}/claude.jar"
+    CODEX_JAR="${TARGET_DIR}/codex.jar"
+    : > "$COMMON_JAR"
+    : > "$CLAUDE_JAR"
+    : > "$CODEX_JAR"
+    mkdir -p "${OUTPUT_ROOT}/claude/bin" "${OUTPUT_ROOT}/codex/bin"
+    : > "${OUTPUT_ROOT}/claude/bin/java"
+    : > "${OUTPUT_ROOT}/claude/bin/sprt-runner"
+    : > "${OUTPUT_ROOT}/codex/bin/java"
+    : > "${OUTPUT_ROOT}/codex/bin/sprt-runner"
+    write_jlink_stamp
+    rm -f "${OUTPUT_ROOT}/codex/bin/sprt-runner"
+
+    run bash -lc 'source "'"$BUILD_JLINK"'"; BUILD_STAMP_CLI="'"$BUILD_STAMP_CLI"'"; TARGET_DIR="'"$TARGET_DIR"'"; STAMP_DIR="'"$STAMP_DIR"'"; OUTPUT_ROOT="'"$OUTPUT_ROOT"'"; COMMON_JAR="'"$COMMON_JAR"'"; CLAUDE_JAR="'"$CLAUDE_JAR"'"; CODEX_JAR="'"$CODEX_JAR"'"; if jlink_stamp_current; then echo yes; else echo no; fi'
+
+    [ "$status" -eq 0 ]
+    [ "$output" = "no" ]
+}
+
+@test "jlink stamp is stale when an input jar changes" {
+    source "$BUILD_JLINK"
+    BUILD_STAMP_CLI="$BATS_TEST_DIRNAME/../../scripts/lib/build-stamp.sh"
+    TARGET_DIR="$(mktemp -d)"
+    STAMP_DIR="${TARGET_DIR}/.stamps"
+    OUTPUT_ROOT="${TARGET_DIR}/jlink"
+    COMMON_JAR="${TARGET_DIR}/common.jar"
+    CLAUDE_JAR="${TARGET_DIR}/claude.jar"
+    CODEX_JAR="${TARGET_DIR}/codex.jar"
+    printf 'one' > "$COMMON_JAR"
+    : > "$CLAUDE_JAR"
+    : > "$CODEX_JAR"
+    mkdir -p "${OUTPUT_ROOT}/claude/bin" "${OUTPUT_ROOT}/codex/bin"
+    : > "${OUTPUT_ROOT}/claude/bin/java"
+    : > "${OUTPUT_ROOT}/claude/bin/sprt-runner"
+    : > "${OUTPUT_ROOT}/codex/bin/java"
+    : > "${OUTPUT_ROOT}/codex/bin/sprt-runner"
+    write_jlink_stamp
+    printf 'two' > "$COMMON_JAR"
+
+    run bash -lc 'source "'"$BUILD_JLINK"'"; BUILD_STAMP_CLI="'"$BUILD_STAMP_CLI"'"; TARGET_DIR="'"$TARGET_DIR"'"; STAMP_DIR="'"$STAMP_DIR"'"; OUTPUT_ROOT="'"$OUTPUT_ROOT"'"; COMMON_JAR="'"$COMMON_JAR"'"; CLAUDE_JAR="'"$CLAUDE_JAR"'"; CODEX_JAR="'"$CODEX_JAR"'"; if jlink_stamp_current; then echo yes; else echo no; fi'
+
+    [ "$status" -eq 0 ]
+    [ "$output" = "no" ]
 }
 
 @test "automatic module patching describes each peer jar once" {

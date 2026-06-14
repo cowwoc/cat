@@ -21,6 +21,9 @@ paths from an earlier Grep run — if the goal is search-and-read, invoke this s
 **Using raw Grep followed by separate Read calls for a search-and-read goal is an anti-pattern. Always
 invoke this skill instead.**
 
+When this skill is the right tool, complete the whole discovery-plus-read path here. Do not fall back to a manual
+Grep call first and then continue with ad hoc Reads in later messages.
+
 **Do NOT use this skill when ANY of the following is true:**
 
 - You already have the file paths from a source other than a Grep for this same goal (e.g., they were

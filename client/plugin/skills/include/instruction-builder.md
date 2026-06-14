@@ -671,7 +671,7 @@ branch, before doing anything else whatsoever:
 
 ```bash
 "${CAT_PLUGIN_ROOT}/client/bin/sprt-runner" detect-changes \
-  <INSTRUCTION_DRAFT_SHA> <INSTRUCTION_TEXT_PATH> "${TEST_DIR}"
+  <PRIOR_SKILL_METADATA_OR_SHA> <INSTRUCTION_TEXT_PATH> "${TEST_DIR}"
 ```
 
 Do not ask clarifying questions, do not read files first, do not proceed to validation first. Invoke
@@ -730,7 +730,7 @@ determine whether the skill instruction changed and whether new test cases were 
 1. Run change detection:
    ```bash
    "${CAT_PLUGIN_ROOT}/client/bin/sprt-runner" detect-changes \
-     <INSTRUCTION_DRAFT_SHA> <INSTRUCTION_TEXT_PATH> "${TEST_DIR}"
+     <PRIOR_SKILL_METADATA_OR_SHA> <INSTRUCTION_TEXT_PATH> "${TEST_DIR}"
    ```
    Output fields:
    - `skill_changed`: whether the skill or any of its transitive dependencies changed since the last
@@ -738,6 +738,9 @@ determine whether the skill instruction changed and whether new test cases were 
      `first-use.md` alongside `SKILL.md`). A change to any companion file sets `skill_changed: true`.
    - `all_test_case_ids`: all `.md` file stems in `${TEST_DIR}`
    - `prior_test_case_ids`: test case IDs present in the prior `test-results.json`
+   - `skill_dependency_metadata`: versioned dependency metadata for the current skill snapshot.
+     Reuse this structured value on the next incremental re-test when it is available; otherwise,
+     fall back to the legacy 64-character `skill_sha256` value.
 
 2. Determine which test cases to run based on the result:
 
@@ -764,6 +767,8 @@ args: "${TEST_DIR} ${WORKTREE_PATH} ${TEST_MODEL} ${TEST_EFFORT} ${INSTRUCTION_D
 renaming, SPRT state initialization (p0=0.95, p1=0.85, α=β=0.05), job dispatch with parallel
 trial agents, grader invocation for each run, boundary checking
 (A=log(19)≈2.944, B=log(0.0526)≈−2.944), test-results.json commit, and per-test-case reporting.
+It also owns the normal run monitoring path through `run-status`; do not layer manual PID polling,
+`progress.json` reads, `tail -f`, or output-grep loops around this delegation.
 
 It returns a structured report containing `overall_decision` (Accept, Reject, or Inconclusive),
 per-test-case decisions, and `TEST_SHA`. Extract these from the skill output:

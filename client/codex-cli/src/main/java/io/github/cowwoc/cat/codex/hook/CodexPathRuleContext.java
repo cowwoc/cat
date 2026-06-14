@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.codex.hook;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.agent.AgentPluginScope;
+import io.github.cowwoc.cat.agent.FileContentCache;
 import io.github.cowwoc.cat.agent.FileSystemUtils;
 import io.github.cowwoc.cat.agent.FrontmatterUtils;
 import io.github.cowwoc.cat.agent.RulesDiscovery;
@@ -19,7 +20,6 @@ import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -197,7 +197,7 @@ final class CodexPathRuleContext
       {
         throw new IOException("Codex path-scoped rule include is not a regular file: " + include);
       }
-      String body = FrontmatterUtils.stripFrontmatter(Files.readString(include, StandardCharsets.UTF_8));
+      String body = FrontmatterUtils.stripFrontmatter(FileContentCache.readString(include));
       ++index;
       lazyLoads.add(new LazyLoadBody(declarationPath, body,
         lazyLoadBodyPath(outputRoot, namespace, rule.contextPath(), index, include)));
@@ -318,7 +318,7 @@ final class CodexPathRuleContext
   {
     if (Files.isSymbolicLink(manifest) || !Files.isRegularFile(manifest, LinkOption.NOFOLLOW_LINKS))
       throw new IOException("Codex path-scoped rule manifest is not a regular file: " + manifest);
-    JsonNode root = scope.getJsonMapper().readTree(Files.readString(manifest, StandardCharsets.UTF_8));
+    JsonNode root = scope.getJsonMapper().readTree(FileContentCache.readString(manifest));
     JsonNode entriesNode = root.path("entries");
     if (!entriesNode.isArray())
       return List.of();

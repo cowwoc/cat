@@ -15,6 +15,7 @@ import io.github.cowwoc.cat.engine.NestedRunnerSessionState;
 import io.github.cowwoc.cat.engine.NestedRunnerState;
 import io.github.cowwoc.cat.engine.NestedRunnerTurnState;
 import io.github.cowwoc.cat.codex.tool.MainCodexTool;
+import io.github.cowwoc.cat.tool.util.ProcessWaitHelper;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 
 import java.io.BufferedReader;
@@ -34,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
@@ -54,6 +54,10 @@ public final class CodexRunner
    * Default timeout for the Codex CLI process.
    */
   private static final Duration DEFAULT_TIMEOUT = Duration.ofMinutes(10);
+  /**
+   * Internal process-supervision cadence. This is not user-facing polling; it balances timeout and
+   * reader-failure responsiveness against unnecessary wakeups.
+   */
   private static final Duration WAIT_POLL = Duration.ofMillis(50);
   private static final String ADDITIONAL_WORKDIRS_ENV = "ADDITIONAL_WORKDIRS";
   private final AgentPluginScope scope;
@@ -602,19 +606,8 @@ public final class CodexRunner
     AtomicReference<RuntimeException> readerRuntimeError, long deadlineNanos)
     throws InterruptedException
   {
-    while (true)
-    {
-      if (readerRuntimeError.get() != null)
-        return process.waitFor(0, TimeUnit.MILLISECONDS);
-      long remainingNanos = deadlineNanos - System.nanoTime();
-      if (remainingNanos <= 0)
-        return false;
-      long waitMillis = Math.min(Duration.ofNanos(remainingNanos).toMillis(), WAIT_POLL.toMillis());
-      if (waitMillis <= 0)
-        waitMillis = 1;
-      if (process.waitFor(waitMillis, TimeUnit.MILLISECONDS))
-        return true;
-    }
+    return ProcessWaitHelper.waitForProcessOrFailure(process,
+      () -> readerRuntimeError.get() != null, deadlineNanos, WAIT_POLL);
   }
 
   /**

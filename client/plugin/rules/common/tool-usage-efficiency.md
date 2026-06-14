@@ -13,7 +13,7 @@ turn** — reads from earlier turns do not satisfy this requirement.
 current conversation, reuse that context instead of repeating Read calls unless the file changed.
 For plugin, skill, or bundled reference files, reuse the existing context or previously loaded file
 reference when available. Re-read those files only when the plugin cache has been updated, the
-context was compacted, or an agent lacks the prior context.
+context was compacted, an agent lacks the prior context, or the file changed on disk.
 
 **Batch known-ahead operations**: If you know in advance that multiple independent reads/searches are needed,
 issue them together in one response rather than sequentially.
@@ -30,4 +30,5 @@ Grep → Read chain. The only exceptions are: (1) you already have the file path
 directly), (2) you only need to locate files or see matching lines without reading full content
 (use Grep alone), or (3) you need to pre-screen matching lines to decide which files to read AND
 you expect to read only a strict subset of the matches — not all of them (use Grep with
-output_mode: "content" first, then read the selected subset in parallel in a single message).
+output_mode: "content" first, then read the selected subset in parallel in a single message). When paths are already
+known and reads are still needed, batch those Read calls in one message rather than serializing them across turns.

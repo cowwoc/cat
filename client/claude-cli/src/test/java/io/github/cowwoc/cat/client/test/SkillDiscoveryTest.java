@@ -5,10 +5,15 @@
  * See LICENSE.md in the project root for license terms.
  */
 package io.github.cowwoc.cat.client.test;
+
+import io.github.cowwoc.cat.agent.FileContentCache;
 import io.github.cowwoc.cat.claude.hook.util.SkillDiscovery;
 import org.testng.annotations.Test;
 import tools.jackson.dataformat.yaml.YAMLMapper;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -175,5 +180,79 @@ public final class SkillDiscoveryTest
     String frontmatter = "description: Java skill\npaths:\n  - client/src\n  - plugin/src\n";
     List<String> result = SkillDiscovery.extractPaths(frontmatter, yamlMapper);
     requireThat(result, "result").containsExactly(List.of("client/src", "plugin/src"));
+  }
+
+  /**
+   * Verifies that cached main-agent skill listings invalidate when a skill becomes path-restricted.
+   * <p>
+   * This exercises both listing-cache invalidation and path extraction parity because the second
+   * version should disappear from the session-start listing.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void mainAgentListingInvalidatesOnPathsChange() throws IOException
+  {
+    FileContentCache.clear();
+    Path configDir = Files.createTempDirectory("skill-discovery-config-");
+    Path projectDir = Files.createTempDirectory("skill-discovery-project-");
+    Path pluginRoot = Files.createTempDirectory("skill-discovery-runtime-");
+    try
+    {
+      Path fakePluginRoot = setupFakePlugin(configDir, "fake", "cache-test-skill", """
+        ---
+        description: Cache test skill.
+        ---
+        # cache-test-skill
+        """);
+      try (TestClaudeHook scope = new TestClaudeHook(projectDir, pluginRoot, configDir))
+      {
+        String initialListing = SkillDiscovery.getMainAgentSkillListing(scope);
+        requireThat(initialListing, "initialListing").contains("fake:cache-test-skill");
+        requireThat(initialListing, "initialListing").contains("Cache test skill.");
+
+        Path skillMd = fakePluginRoot.resolve("skills/common/cache-test-skill/SKILL.md");
+        Files.writeString(skillMd, """
+          ---
+          description: Cache test skill.
+          paths: ["*.java"]
+          ---
+          # cache-test-skill
+          """);
+
+        String updatedListing = SkillDiscovery.getMainAgentSkillListing(scope);
+        requireThat(updatedListing, "updatedListing").doesNotContain("fake:cache-test-skill");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(configDir);
+      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      FileContentCache.clear();
+    }
+  }
+
+  private static Path setupFakePlugin(Path configDir, String prefix, String skillName,
+    String skillMarkdown) throws IOException
+  {
+    Path pluginsDir = configDir.resolve("plugins");
+    Files.createDirectories(pluginsDir);
+
+    Path fakePluginRoot = configDir.resolve("fake-plugin-" + prefix);
+    Path skillDir = fakePluginRoot.resolve("skills/common").resolve(skillName);
+    Files.createDirectories(skillDir);
+    Files.writeString(skillDir.resolve("SKILL.md"), skillMarkdown);
+
+    Files.writeString(pluginsDir.resolve("installed_plugins.json"), """
+      {
+        "plugins": {
+          "%s@%s": [
+            {"installPath": "%s"}
+          ]
+        }
+      }
+      """.formatted(prefix, prefix, fakePluginRoot));
+    return fakePluginRoot;
   }
 }

@@ -10,6 +10,7 @@ DISTRIBUTION_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 CLIENT_DIR="$(cd "${DISTRIBUTION_DIR}/.." && pwd)"
 PLUGIN_DIR="${CLIENT_DIR}/plugin"
 TARGET_DIR="${DISTRIBUTION_DIR}/target/engine"
+STAMP_DIR="${DISTRIBUTION_DIR}/target/.stamps"
 CONF="${PLUGIN_DIR}/.git-filter-repo-config/release.conf"
 GENERATED_BUNDLE_FILES=()
 
@@ -23,6 +24,61 @@ cleanup_generated_bundle_files() {
     rm -f "${GENERATED_BUNDLE_FILES[@]}"
     rmdir "${PLUGIN_DIR}/lib" 2>/dev/null || true
   fi
+}
+
+COMMON_JAR="${CLIENT_DIR}/common-cli/target/client-common-cli-2.1.jar"
+
+build_stamp_cli() {
+  if [[ -n "${BUILD_STAMP_CLI:-}" ]]; then
+    if [[ -x "${BUILD_STAMP_CLI}" ]]; then
+      "${BUILD_STAMP_CLI}" "$@"
+    else
+      bash "${BUILD_STAMP_CLI}" "$@"
+    fi
+  else
+    java -cp "${COMMON_JAR}" io.github.cowwoc.cat.tool.util.BuildStamp "$@"
+  fi
+}
+
+engine_artifact_stamp_file() {
+  echo "${STAMP_DIR}/engine-artifacts.sha256"
+}
+
+engine_artifact_stamp_inputs() {
+  printf '%s\n' \
+    "${DISTRIBUTION_DIR}/scripts/build-engine-artifacts.sh" \
+    "${DISTRIBUTION_DIR}/scripts/lib/build-stamp.sh" \
+    "${PLUGIN_DIR}/scripts/sha256sum-portable.sh" \
+    "${PLUGIN_DIR}/scripts/git-filter-repo-release.sh" \
+    "${CONF}" \
+    "${BUILDER}" \
+    "${PLUGIN_DIR}"
+}
+
+engine_artifact_required_outputs() {
+  printf '%s\n' \
+    "${TARGET_DIR}/claude/.claude-plugin/plugin.json" \
+    "${TARGET_DIR}/claude/client/VERSION" \
+    "${TARGET_DIR}/codex/.codex-plugin/plugin.json" \
+    "${TARGET_DIR}/codex/client/VERSION"
+}
+
+engine_artifact_outputs_ready() {
+  local output
+  while IFS= read -r output; do
+    [[ -e "${output}" ]] || return 1
+  done < <(engine_artifact_required_outputs)
+}
+
+engine_artifact_stamp_current() {
+  engine_artifact_outputs_ready || return 1
+  mapfile -t inputs < <(engine_artifact_stamp_inputs)
+  build_stamp_cli matches "$(engine_artifact_stamp_file)" "${inputs[@]}"
+}
+
+write_engine_artifact_stamp() {
+  mapfile -t inputs < <(engine_artifact_stamp_inputs)
+  build_stamp_cli write "$(engine_artifact_stamp_file)" "${inputs[@]}"
 }
 
 ensure_bundled_git_filter_repo() {
@@ -97,9 +153,6 @@ ensure_bundled_git_filter_repo() {
   trap - EXIT
 }
 
-ensure_bundled_git_filter_repo
-trap cleanup_generated_bundle_files EXIT
-
 BUILDER=""
 for engine in codex claude; do
   candidate="${DISTRIBUTION_DIR}/target/jlink/${engine}/bin/build-engine-artifacts"
@@ -115,4 +168,22 @@ if [[ -z "$BUILDER" ]]; then
   exit 1
 fi
 
+FORCE_REBUILD=false
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --force) FORCE_REBUILD=true; shift ;;
+    *) echo "ERROR: Unknown argument: $1" >&2; exit 1 ;;
+  esac
+done
+
+if [[ "${FORCE_REBUILD}" == "false" ]] && engine_artifact_stamp_current; then
+  echo "Skipping engine artifact rebuild because inputs and required outputs are unchanged" >&2
+  exit 0
+fi
+
+ensure_bundled_git_filter_repo
+trap cleanup_generated_bundle_files EXIT
+
 "$BUILDER" "$PLUGIN_DIR" "$CLIENT_DIR" "$TARGET_DIR"
+cleanup_generated_bundle_files
+write_engine_artifact_stamp

@@ -16,6 +16,7 @@ import io.github.cowwoc.cat.engine.NestedRunnerTurnState;
 import io.github.cowwoc.cat.tool.CliTool;
 import io.github.cowwoc.cat.tool.util.FileUtils;
 import io.github.cowwoc.cat.tool.MainCliTool;
+import io.github.cowwoc.cat.tool.util.ProcessWaitHelper;
 import io.github.cowwoc.cat.tool.skills.ModelIdResolver;
 import io.github.cowwoc.cat.tool.skills.PrimingMessage;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
@@ -43,7 +44,6 @@ import java.util.List;
 import java.util.Map;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.ObjectWriter;
@@ -66,6 +66,10 @@ public final class ClaudeRunner implements AutoCloseable
    * Default timeout for the Claude CLI process.
    */
   private static final Duration DEFAULT_TIMEOUT = Duration.ofMinutes(10);
+  /**
+   * Internal process-supervision cadence. This is not user-facing polling; it balances timeout and
+   * reader-failure responsiveness against unnecessary wakeups.
+   */
   private static final Duration WAIT_POLL = Duration.ofMillis(50);
   private final CliTool scope;
   private final ObjectWriter compactWriter;
@@ -580,19 +584,8 @@ public final class ClaudeRunner implements AutoCloseable
     AtomicReference<Exception> readerFailure, long deadlineNanos)
     throws InterruptedException
   {
-    while (true)
-    {
-      if (readerFailure.get() != null)
-        return process.waitFor(0, TimeUnit.MILLISECONDS);
-      long remainingNanos = deadlineNanos - System.nanoTime();
-      if (remainingNanos <= 0)
-        return false;
-      long waitMillis = Math.min(Duration.ofNanos(remainingNanos).toMillis(), WAIT_POLL.toMillis());
-      if (waitMillis <= 0)
-        waitMillis = 1;
-      if (process.waitFor(waitMillis, TimeUnit.MILLISECONDS))
-        return true;
-    }
+    return ProcessWaitHelper.waitForProcessOrFailure(process, () -> readerFailure.get() != null,
+      deadlineNanos, WAIT_POLL);
   }
 
   /**

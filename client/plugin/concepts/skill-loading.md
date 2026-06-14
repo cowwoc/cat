@@ -20,6 +20,10 @@ CAT-specific guidance for structuring plugin skills and avoiding loading-path mi
 Invoke CAT skills through the Skill tool and follow the returned instructions exactly.
 Do not replace a skill invocation with a manual substitute prompt.
 
+Within a single conversation, treat a previously loaded `first-use.md` as reusable context. Do not re-read the same
+skill body unless the plugin content changed, the conversation was compacted, or the relevant context is no longer
+available to the current agent.
+
 ## Skill Arguments
 
 ### The `argument-hint` Field

@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.claude.hook.util;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.agent.FileContentCache;
 import io.github.cowwoc.cat.agent.FrontmatterUtils;
 import io.github.cowwoc.cat.claude.hook.ClaudeHook;
 import io.github.cowwoc.cat.claude.hook.ClaudePluginScope;
@@ -27,6 +28,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
@@ -81,14 +83,33 @@ public final class SkillDiscovery
    * <b>Thread Safety:</b> This class is thread-safe.
    */
   private static final int MAX_ENTRY_CACHE_SIZE = 64;
-  private static final Map<String, List<SkillEntry>> ENTRY_CACHE = new LinkedHashMap<>(16, 0.75f, true)
+  private static final Map<String, CachedEntries> ENTRY_CACHE = new LinkedHashMap<>(16, 0.75f, true)
   {
     @Override
-    protected boolean removeEldestEntry(Map.Entry<String, List<SkillEntry>> eldest)
+    protected boolean removeEldestEntry(Map.Entry<String, CachedEntries> eldest)
     {
       return size() > MAX_ENTRY_CACHE_SIZE;
     }
   };
+
+  private record FileState(String path, long size, long modifiedMillis)
+  {
+  }
+
+  private record CachedEntries(List<FileState> fileStates, List<SkillEntry> entries)
+  {
+    /**
+     * Creates cached discovery results with defensive copies.
+     *
+     * @param fileStates the file-state snapshot used for invalidation
+     * @param entries the discovered skill entries
+     */
+    private CachedEntries
+    {
+      fileStates = List.copyOf(fileStates);
+      entries = List.copyOf(entries);
+    }
+  }
 
   private final Path claudeConfigPath;
   private final Path projectPath;
@@ -238,18 +259,146 @@ public final class SkillDiscovery
   private static List<SkillEntry> discoverAllEntries(ClaudePluginScope scope)
   {
     String cacheKey = scope.getClaudeConfigPath().toString() + "|" + scope.getProjectPath().toString();
+    List<FileState> fileStates;
+    try
+    {
+      fileStates = captureFileStates(scope);
+    }
+    catch (IOException e)
+    {
+      throw WrappedCheckedException.wrap(e);
+    }
     synchronized (ENTRY_CACHE)
     {
-      List<SkillEntry> cached = ENTRY_CACHE.get(cacheKey);
-      if (cached != null)
-        return cached;
+      CachedEntries cached = ENTRY_CACHE.get(cacheKey);
+      if (cached != null && cached.fileStates().equals(fileStates))
+        return cached.entries();
     }
     List<SkillEntry> entries = List.copyOf(new SkillDiscovery(scope).discoverAll());
     synchronized (ENTRY_CACHE)
     {
-      ENTRY_CACHE.put(cacheKey, entries);
+      ENTRY_CACHE.put(cacheKey, new CachedEntries(fileStates, entries));
     }
     return entries;
+  }
+
+  /**
+   * Captures cache-relevant metadata for all currently discoverable skill sources.
+   *
+   * @param scope the active plugin scope
+   * @return ordered file-state snapshot
+   * @throws IOException if directory walking or metadata lookup fails
+   */
+  private static List<FileState> captureFileStates(ClaudePluginScope scope) throws IOException
+  {
+    List<FileState> fileStates = new ArrayList<>();
+    Path configPath = scope.getClaudeConfigPath().toAbsolutePath().normalize();
+    Path projectPath = scope.getProjectPath().toAbsolutePath().normalize();
+
+    Path installedPluginsFile = configPath.resolve("plugins/installed_plugins.json");
+    addIfRegularFile(fileStates, configPath, installedPluginsFile);
+    for (Path pluginRoot : pluginRoots(configPath, scope.getJsonMapper()))
+    {
+      collectSkillMarkdownStates(fileStates, pluginRoot, pluginRoot.resolve("skills"));
+      collectSkillMarkdownStates(fileStates, pluginRoot, pluginRoot.resolve("skills/common"));
+      collectSkillMarkdownStates(fileStates, pluginRoot, pluginRoot.resolve("skills/claude"));
+    }
+    collectFlatMarkdownStates(fileStates, projectPath, projectPath.resolve(".claude/commands"));
+    collectSkillMarkdownStates(fileStates, configPath, configPath.resolve("skills"));
+    fileStates.sort(Comparator.comparing(FileState::path));
+    return List.copyOf(fileStates);
+  }
+
+  /**
+   * Resolves installed plugin roots from Claude's installed-plugins manifest.
+   *
+   * @param configPath the Claude config directory
+   * @param jsonMapper the JSON mapper
+   * @return distinct normalized plugin roots
+   * @throws IOException if manifest reading fails
+   */
+  private static List<Path> pluginRoots(Path configPath, JsonMapper jsonMapper) throws IOException
+  {
+    Path installedPluginsFile = configPath.resolve("plugins/installed_plugins.json");
+    if (!Files.exists(installedPluginsFile))
+      return List.of();
+    JsonNode root = jsonMapper.readTree(FileContentCache.readString(installedPluginsFile));
+    JsonNode plugins = root.get("plugins");
+    if (!(plugins instanceof ObjectNode pluginsObj))
+      return List.of();
+    List<Path> roots = new ArrayList<>();
+    for (Map.Entry<String, JsonNode> entry : pluginsObj.properties())
+    {
+      JsonNode installEntries = entry.getValue();
+      if (!installEntries.isArray() || installEntries.isEmpty())
+        continue;
+      JsonNode installPathNode = installEntries.get(0).get("installPath");
+      if (installPathNode == null)
+        continue;
+      roots.add(Path.of(installPathNode.asString()).toAbsolutePath().normalize());
+    }
+    return roots.stream().filter(Objects::nonNull).distinct().toList();
+  }
+
+  /**
+   * Collects top-level markdown files beneath a directory into the file-state snapshot.
+   *
+   * @param fileStates destination snapshot list
+   * @param base relativization base for stored paths
+   * @param directory directory to inspect
+   * @throws IOException if directory listing or metadata lookup fails
+   */
+  private static void collectFlatMarkdownStates(List<FileState> fileStates, Path base, Path directory)
+    throws IOException
+  {
+    if (!Files.isDirectory(directory))
+      return;
+    try (Stream<Path> stream = Files.list(directory))
+    {
+      for (Path file : stream.filter(path -> path.getFileName().toString().endsWith(".md")).sorted().toList())
+        addIfRegularFile(fileStates, base, file);
+    }
+  }
+
+  /**
+   * Collects {@code SKILL.md} files from one directory of skill subdirectories.
+   *
+   * @param fileStates destination snapshot list
+   * @param base relativization base for stored paths
+   * @param skillsDir directory containing skill subdirectories
+   * @throws IOException if directory traversal or metadata lookup fails
+   */
+  private static void collectSkillMarkdownStates(List<FileState> fileStates, Path base, Path skillsDir)
+    throws IOException
+  {
+    if (!Files.isDirectory(skillsDir))
+      return;
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(skillsDir, Files::isDirectory))
+    {
+      List<Path> sortedDirs = new ArrayList<>();
+      stream.forEach(sortedDirs::add);
+      sortedDirs.sort(Comparator.naturalOrder());
+      for (Path skillDir : sortedDirs)
+        addIfRegularFile(fileStates, base, skillDir.resolve("SKILL.md"));
+    }
+  }
+
+  /**
+   * Adds one regular file to the invalidation snapshot.
+   *
+   * @param fileStates destination snapshot list
+   * @param base relativization base for stored paths
+   * @param file file to snapshot
+   * @throws IOException if metadata lookup fails
+   */
+  private static void addIfRegularFile(List<FileState> fileStates, Path base, Path file) throws IOException
+  {
+    if (!Files.isRegularFile(file))
+      return;
+    Path normalizedBase = base.toAbsolutePath().normalize();
+    Path normalizedFile = file.toAbsolutePath().normalize();
+    fileStates.add(new FileState(normalizedBase.relativize(normalizedFile).toString(),
+      Files.size(normalizedFile), Files.getLastModifiedTime(normalizedFile).toMillis()));
   }
 
   /**
@@ -291,7 +440,7 @@ public final class SkillDiscovery
     if (!Files.exists(installedPluginsFile))
       return entries;
 
-    JsonNode root = jsonMapper.readTree(Files.readString(installedPluginsFile));
+    JsonNode root = jsonMapper.readTree(FileContentCache.readString(installedPluginsFile));
     JsonNode plugins = root.get("plugins");
     if (!(plugins instanceof ObjectNode pluginsObj))
     {
@@ -372,7 +521,7 @@ public final class SkillDiscovery
       {
         String filename = commandFile.getFileName().toString();
         String name = filename.substring(0, filename.length() - ".md".length());
-        String content = Files.readString(commandFile);
+        String content = FileContentCache.readString(commandFile);
         String frontmatter = extractFrontmatter(content);
         if (frontmatter == null)
           continue;
@@ -434,7 +583,7 @@ public final class SkillDiscovery
         Path skillMd = skillDir.resolve("SKILL.md");
         if (!Files.exists(skillMd))
           continue;
-        String content = Files.readString(skillMd);
+        String content = FileContentCache.readString(skillMd);
         String frontmatter = extractFrontmatter(content);
         if (frontmatter == null)
           continue;

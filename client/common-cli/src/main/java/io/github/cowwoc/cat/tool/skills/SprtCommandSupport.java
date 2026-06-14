@@ -19,14 +19,19 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.HexFormat;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.regex.Pattern;
@@ -48,12 +53,14 @@ final class SprtCommandSupport
   private static final DateTimeFormatter ISO_UTC =
     DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC);
   private static final Pattern SESSION_ID_PATTERN = Pattern.compile("^[a-zA-Z0-9_-]+$");
+  private static final int DETECT_CHANGES_SCHEMA_VERSION = 1;
 
   private final CliTool scope;
   private final String runtimeId;
   private final String claudeCodeVersion;
   private final SkillMetadataExtractor skillMetadataExtractor;
   private final SprtResultsManager sprtResultsManager;
+  private final SprtRunStatusStore sprtRunStatusStore;
   private final Logger log;
 
   /**
@@ -64,29 +71,33 @@ final class SprtCommandSupport
    * @param claudeCodeVersion the Claude Code version used for model resolution
    * @param skillMetadataExtractor extracts skill frontmatter and test metadata
    * @param sprtResultsManager renders compact JSON for CLI responses
+   * @param sprtRunStatusStore persists whole-run status snapshots and event deltas
    * @param log the runner logger
    */
   SprtCommandSupport(CliTool scope, String runtimeId, String claudeCodeVersion,
-    SkillMetadataExtractor skillMetadataExtractor, SprtResultsManager sprtResultsManager, Logger log)
+    SkillMetadataExtractor skillMetadataExtractor, SprtResultsManager sprtResultsManager,
+    SprtRunStatusStore sprtRunStatusStore, Logger log)
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(runtimeId, "runtimeId").isNotBlank();
     requireThat(claudeCodeVersion, "claudeCodeVersion").isNotBlank();
     requireThat(skillMetadataExtractor, "skillMetadataExtractor").isNotNull();
     requireThat(sprtResultsManager, "sprtResultsManager").isNotNull();
+    requireThat(sprtRunStatusStore, "sprtRunStatusStore").isNotNull();
     requireThat(log, "log").isNotNull();
     this.scope = scope;
     this.runtimeId = runtimeId;
     this.claudeCodeVersion = claudeCodeVersion;
     this.skillMetadataExtractor = skillMetadataExtractor;
     this.sprtResultsManager = sprtResultsManager;
+    this.sprtRunStatusStore = sprtRunStatusStore;
     this.log = log;
   }
 
   /**
    * Implements the {@code detect-changes} command.
    *
-   * @param args {@code [old_skill_sha256, new_skill_path, test_dir_path]}
+   * @param args {@code [old_skill_sha256_or_metadata_json, new_skill_path, test_dir_path]}
    * @return a JSON object describing which test cases should rerun
    * @throws IOException if file reading fails
    */
@@ -96,16 +107,13 @@ final class SprtCommandSupport
     if (args.length != 3)
       throw new IllegalArgumentException(
         "SprtRunner detect-changes: expected 3 arguments, got " + args.length + ".\n" +
-          "Usage: skill-test-runner detect-changes <old_skill_sha256> <new_skill_path> <test_dir_path>");
+          "Usage: skill-test-runner detect-changes <old_skill_sha256_or_metadata_json> <new_skill_path> " +
+          "<test_dir_path>");
 
-    String oldSha = args[0];
+    String priorMetadataArg = args[0];
     Path newSkillPath = Path.of(args[1]);
     Path testDirPath = Path.of(args[2]);
 
-    if (!oldSha.matches("[0-9a-f]{64}"))
-      throw new IllegalArgumentException(
-        "SprtRunner detect-changes: invalid SHA-256 content hash format: '" + oldSha +
-          "'. Expected 64 lowercase hex characters (got " + oldSha.length() + " characters).");
     if (Files.notExists(newSkillPath))
       throw new IllegalArgumentException(
         "SprtRunner detect-changes: new skill file not found: " + newSkillPath);
@@ -113,18 +121,26 @@ final class SprtCommandSupport
       throw new IllegalArgumentException(
         "SprtRunner detect-changes: test directory not found: " + testDirPath);
 
-    String currentSha = sha256File(newSkillPath);
-    boolean skillChanged = !currentSha.equals(oldSha);
+    DetectChangesPriorState priorState = parseDetectChangesPriorState(priorMetadataArg);
+    SkillDependencySnapshot currentSnapshot = snapshotSkillDependencies(newSkillPath);
+    boolean skillChanged = isSkillChanged(priorState, currentSnapshot);
     List<String> allTestCaseIds = readAllTestCaseIds(testDirPath);
+    List<String> priorTestCaseIds = readPriorTestCaseIds(testDirPath);
 
     JsonMapper mapper = scope.getJsonMapper();
     ObjectNode result = mapper.createObjectNode();
     result.put("skill_changed", skillChanged);
+    result.put("skill_sha256", currentSnapshot.compositeSha256());
 
     ArrayNode allIdsArray = mapper.createArrayNode();
     for (String id : allTestCaseIds)
       allIdsArray.add(id);
     result.set("all_test_case_ids", allIdsArray);
+    ArrayNode priorIdsArray = mapper.createArrayNode();
+    for (String id : priorTestCaseIds)
+      priorIdsArray.add(id);
+    result.set("prior_test_case_ids", priorIdsArray);
+    result.set("skill_dependency_metadata", currentSnapshot.toObjectNode(mapper));
 
     if (skillChanged)
     {
@@ -138,6 +154,214 @@ final class SprtCommandSupport
       result.put("semantic_units_path_hint", "Run: skill-test-runner extract-units " + args[1]);
     }
     return sprtResultsManager.compactJson(result);
+  }
+
+  /**
+   * Parses prior detect-changes state from either a legacy SHA-256 string or structured metadata.
+   *
+   * @param priorMetadataArg the prior-state argument
+   * @return the parsed prior-state contract
+   * @throws IOException if structured metadata cannot be parsed
+   */
+  private DetectChangesPriorState parseDetectChangesPriorState(String priorMetadataArg) throws IOException
+  {
+    requireThat(priorMetadataArg, "priorMetadataArg").isNotBlank();
+    if (priorMetadataArg.matches("[0-9a-f]{64}"))
+      return new DetectChangesPriorState("legacy", priorMetadataArg, null);
+    String trimmed = priorMetadataArg.trim();
+    if (!trimmed.startsWith("{") && !trimmed.startsWith("["))
+    {
+      throw new IllegalArgumentException(
+        "SprtRunner detect-changes: legacy skill SHA must be 64 lowercase hex characters");
+    }
+    JsonNode root = scope.getJsonMapper().readTree(trimmed);
+    int schemaVersion = root.path("schema_version").asInt();
+    if (schemaVersion != DETECT_CHANGES_SCHEMA_VERSION)
+    {
+      throw new IllegalArgumentException(
+        "SprtRunner detect-changes: unsupported metadata schema_version: " + schemaVersion);
+    }
+    String compositeSha256 = root.path("composite_sha256").asString("");
+    if (!compositeSha256.matches("[0-9a-f]{64}"))
+    {
+      throw new IllegalArgumentException(
+        "SprtRunner detect-changes: metadata composite_sha256 must be 64 lowercase hex characters");
+    }
+    String legacySkillSha256 = root.path("skill_sha256").asString("");
+    if (!legacySkillSha256.isBlank() && !legacySkillSha256.matches("[0-9a-f]{64}"))
+    {
+      throw new IllegalArgumentException(
+        "SprtRunner detect-changes: metadata skill_sha256 must be 64 lowercase hex characters");
+    }
+    return new DetectChangesPriorState("metadata", legacySkillSha256, compositeSha256);
+  }
+
+  /**
+   * Determines whether the current skill snapshot differs from prior persisted state.
+   *
+   * @param priorState the prior detect-changes state
+   * @param currentSnapshot the current skill dependency snapshot
+   * @return {@code true} if the skill changed, otherwise {@code false}
+   */
+  private boolean isSkillChanged(DetectChangesPriorState priorState, SkillDependencySnapshot currentSnapshot)
+  {
+    if (priorState.compositeSha256() != null)
+      return !currentSnapshot.compositeSha256().equals(priorState.compositeSha256());
+    return !currentSnapshot.primaryFileSha256().equals(priorState.legacySkillSha256());
+  }
+
+  /**
+   * Snapshots the current skill file and co-located markdown dependencies.
+   *
+   * @param skillPath the skill file path
+   * @return the dependency snapshot
+   * @throws IOException if file reading fails
+   */
+  private SkillDependencySnapshot snapshotSkillDependencies(Path skillPath) throws IOException
+  {
+    Path normalizedSkillPath = skillPath.toAbsolutePath().normalize();
+    Path skillDirectory = normalizedSkillPath.getParent();
+    if (skillDirectory == null)
+      throw new IllegalArgumentException("SprtRunner detect-changes: skill file has no parent directory");
+    List<Path> companionFiles = listMarkdownCompanionFiles(skillDirectory);
+    if (!companionFiles.contains(normalizedSkillPath))
+      companionFiles.add(normalizedSkillPath);
+    companionFiles.sort(Comparator.comparing(path -> path.getFileName().toString()));
+    Map<String, String> fileHashes = new LinkedHashMap<>();
+    MessageDigest digest = newSha256Digest();
+    for (Path file : companionFiles)
+    {
+      String relativePath = skillDirectory.relativize(file).toString().replace('\\', '/');
+      String fileSha256 = sha256File(file);
+      fileHashes.put(relativePath, fileSha256);
+      digest.update(relativePath.getBytes(UTF_8));
+      digest.update((byte) 0);
+      digest.update(fileSha256.getBytes(UTF_8));
+      digest.update((byte) '\n');
+    }
+    String primaryFileSha256 = sha256File(normalizedSkillPath);
+    String compositeSha256 = HexFormat.of().formatHex(digest.digest());
+    return new SkillDependencySnapshot(normalizedSkillPath.toString(), primaryFileSha256,
+      compositeSha256, Collections.unmodifiableMap(fileHashes));
+  }
+
+  /**
+   * Reads prior test-case IDs from test-results.json when present.
+   *
+   * @param testDirPath the test directory
+   * @return the ordered prior test-case identifiers
+   * @throws IOException if reading test-results fails
+   */
+  private List<String> readPriorTestCaseIds(Path testDirPath) throws IOException
+  {
+    Path testResultsPath = testDirPath.resolve("test-results.json");
+    if (!Files.exists(testResultsPath))
+      return List.of();
+    JsonNode root = scope.getJsonMapper().readTree(testResultsPath.toFile());
+    Set<String> ids = new LinkedHashSet<>();
+    collectPriorTestCaseIds(root.path("test_cases"), ids);
+    collectPriorTestCaseIds(root.path("sprt").path("test_cases"), ids);
+    if (root.isObject())
+    {
+      for (Map.Entry<String, JsonNode> entry : root.properties())
+        collectPriorTestCaseIds(entry.getValue().path("sprt").path("test_cases"), ids);
+    }
+    return List.copyOf(ids);
+  }
+
+  /**
+   * Collects test-case IDs from an instruction-test or test-results array.
+   *
+   * @param testCasesNode the array node
+   * @param ids the destination set preserving encounter order
+   */
+  private void collectPriorTestCaseIds(JsonNode testCasesNode, Set<String> ids)
+  {
+    if (!testCasesNode.isArray())
+      return;
+    for (JsonNode testCase : testCasesNode)
+    {
+      String testCaseId = testCase.path("test_case_id").asString("");
+      if (!testCaseId.isBlank())
+        ids.add(testCaseId);
+    }
+  }
+
+  /**
+   * Implements the {@code run-status} command.
+   *
+   * @param args {@code <worktree_path> [--since-seq N] [--wait-seconds N] [--json|--summary]}
+   * @return compact JSON or a human-readable summary
+   * @throws IOException if reading status artifacts fails
+   */
+  String runStatus(String[] args) throws IOException
+  {
+    requireThat(args, "args").isNotNull();
+    if (args.length == 0)
+    {
+      throw new IllegalArgumentException("SprtRunner run-status: expected at least 1 argument " +
+        "<worktree_path>.\nUsage: sprt-runner run-status <worktree_path> [--since-seq N] " +
+        "[--wait-seconds N] [--json|--summary]");
+    }
+
+    Path worktreePath = Path.of(args[0]);
+    long sinceSeq = 0;
+    Duration waitDuration = Duration.ZERO;
+    boolean summary = false;
+    for (int i = 1; i < args.length; ++i)
+    {
+      String arg = args[i];
+      switch (arg)
+      {
+        case "--json" -> summary = false;
+        case "--summary" -> summary = true;
+        case "--since-seq" ->
+        {
+          if (i + 1 >= args.length)
+            throw new IllegalArgumentException("SprtRunner run-status: missing value after --since-seq");
+          ++i;
+          sinceSeq = Long.parseLong(args[i]);
+        }
+        case "--wait-seconds" ->
+        {
+          if (i + 1 >= args.length)
+            throw new IllegalArgumentException(
+              "SprtRunner run-status: missing value after --wait-seconds");
+          ++i;
+          waitDuration = Duration.ofSeconds(Long.parseLong(args[i]));
+        }
+        default -> throw new IllegalArgumentException("SprtRunner run-status: unknown argument: " + arg);
+      }
+    }
+
+    SprtRunStatusStore.StatusReadResult result =
+      sprtRunStatusStore.readStatus(worktreePath, sinceSeq, waitDuration);
+    if (!summary)
+    {
+      ObjectNode root = scope.getJsonMapper().createObjectNode();
+      root.set("status", result.status().toObjectNode(scope.getJsonMapper()));
+      ArrayNode events = scope.getJsonMapper().createArrayNode();
+      for (JsonNode event : result.events())
+        events.add(event);
+      root.set("events", events);
+      return sprtResultsManager.compactJson(root);
+    }
+
+    StringBuilder output = new StringBuilder(96);
+    SprtRunStatus status = result.status();
+    output.append(status.status()).append(' ').append(status.phase()).append(" worktree=").append(
+      status.worktreePath());
+    if (status.batch() != null)
+      output.append(" batch=").append(status.batch());
+    if (status.undecidedCount() != null)
+      output.append(" undecided=").append(status.undecidedCount());
+    if (status.decidedCount() != null)
+      output.append(" decided=").append(status.decidedCount());
+    if (status.error() != null)
+      output.append(" error=").append(status.error());
+    for (JsonNode event : result.events())
+      output.append('\n').append("- ").append(event.path("message").stringValue());
+    return output.toString();
   }
 
   /**
@@ -766,18 +990,27 @@ final class SprtCommandSupport
   private String sha256Directory(Path directory) throws IOException
   {
     List<Path> mdFiles = listMdFiles(directory);
-    MessageDigest digest;
+    MessageDigest digest = newSha256Digest();
+    for (Path mdFile : mdFiles)
+      digest.update(Files.readAllBytes(mdFile));
+    return HexFormat.of().formatHex(digest.digest());
+  }
+
+  /**
+   * Creates a new SHA-256 digest instance.
+   *
+   * @return the digest
+   */
+  private MessageDigest newSha256Digest()
+  {
     try
     {
-      digest = MessageDigest.getInstance("SHA-256");
+      return MessageDigest.getInstance("SHA-256");
     }
     catch (NoSuchAlgorithmException e)
     {
       throw new AssertionError("SHA-256 not available in JDK", e);
     }
-    for (Path mdFile : mdFiles)
-      digest.update(Files.readAllBytes(mdFile));
-    return HexFormat.of().formatHex(digest.digest());
   }
 
   /**
@@ -823,6 +1056,18 @@ final class SprtCommandSupport
   }
 
   /**
+   * Lists companion markdown files co-located with a skill file.
+   *
+   * @param directory the skill directory
+   * @return the ordered companion markdown files
+   * @throws IOException if directory reading fails
+   */
+  private List<Path> listMarkdownCompanionFiles(Path directory) throws IOException
+  {
+    return listMdFiles(directory);
+  }
+
+  /**
    * Returns a filename stem.
    *
    * @param path the file path
@@ -835,6 +1080,52 @@ final class SprtCommandSupport
     if (dotIndex > 0)
       return name.substring(0, dotIndex);
     return name;
+  }
+
+  /**
+   * Prior detect-changes state from either legacy SHA input or structured metadata.
+   *
+   * @param format the input format identifier
+   * @param legacySkillSha256 the legacy primary-file SHA, if applicable
+   * @param compositeSha256 the structured composite SHA, if applicable
+   */
+  private record DetectChangesPriorState(String format, String legacySkillSha256, String compositeSha256)
+  {
+  }
+
+  /**
+   * Current skill dependency snapshot for detect-changes.
+   *
+   * @param skillPath the normalized skill path
+   * @param primaryFileSha256 the legacy primary-file SHA
+   * @param compositeSha256 the composite dependency SHA
+   * @param fileHashes ordered companion relative-path to SHA mapping
+   */
+  private record SkillDependencySnapshot(String skillPath, String primaryFileSha256,
+                                         String compositeSha256, Map<String, String> fileHashes)
+  {
+    /**
+     * Converts the snapshot to JSON metadata for persistence and reuse.
+     *
+     * @param mapper the JSON mapper
+     * @return the object node
+     */
+    private ObjectNode toObjectNode(JsonMapper mapper)
+    {
+      ObjectNode root = mapper.createObjectNode();
+      root.put("schema_version", DETECT_CHANGES_SCHEMA_VERSION);
+      root.put("skill_path", skillPath);
+      root.put("skill_sha256", primaryFileSha256);
+      root.put("composite_sha256", compositeSha256);
+      ArrayNode files = root.putArray("files");
+      for (Map.Entry<String, String> entry : fileHashes.entrySet())
+      {
+        ObjectNode file = files.addObject();
+        file.put("path", entry.getKey());
+        file.put("sha256", entry.getValue());
+      }
+      return root;
+    }
   }
 
   /**

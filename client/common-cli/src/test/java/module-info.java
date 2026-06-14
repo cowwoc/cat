@@ -9,6 +9,7 @@ module io.github.cowwoc.cat.common.cli.test
   requires io.github.cowwoc.cat.common.cli;
   requires io.github.cowwoc.requirements13.java;
   requires org.testng;
+  requires tools.jackson.databind;
 
   exports io.github.cowwoc.cat.common.test to org.testng;
 }

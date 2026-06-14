@@ -9,7 +9,6 @@ package io.github.cowwoc.cat.agent;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -105,7 +104,7 @@ public final class SourceIncludeProcessor
           throw new IllegalStateException("cat:include target does not exist: " + target);
         if (!allowedTarget.test(target))
           throw new IllegalStateException("cat:include target is not allowed: " + target);
-        String targetContent = Files.readString(target, StandardCharsets.UTF_8);
+        String targetContent = FileContentCache.readString(target);
         if (FrontmatterUtils.extractFrontmatter(targetContent) != null)
           throw new IllegalStateException("cat:include target must not contain YAML frontmatter: " + target);
         targetContent = contentFilter.apply(targetContent);

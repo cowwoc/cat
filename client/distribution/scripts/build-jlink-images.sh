@@ -35,6 +35,7 @@ MVN="${REACTOR_DIR}/mvnw"
 # Force Maven Wrapper to resolve .mvn from client/ even when invoked by external launchers.
 export MAVEN_PROJECTBASEDIR="$REACTOR_DIR"
 TARGET_DIR="${PROJECT_DIR}/target"
+STAMP_DIR="${TARGET_DIR}/.stamps"
 STAGING_DIR="${TARGET_DIR}/jlink-staging"
 PATCH_DIR="${TARGET_DIR}/module-patches"
 OUTPUT_ROOT="${TARGET_DIR}/jlink"
@@ -180,7 +181,10 @@ set_engine_handlers() {
 # --- Phase 1: Build client JAR ---
 
 ensure_client_jar() {
-  if [[ -f "$COMMON_JAR" && -f "$CLAUDE_JAR" && -f "$CODEX_JAR" ]]; then
+  if [[ -f "$COMMON_JAR" && -f "$CLAUDE_JAR" && -f "$CODEX_JAR" ]] &&
+    ! module_sources_newer_than_jar "$COMMON_JAR" "${REACTOR_DIR}/common-cli" &&
+    ! module_sources_newer_than_jar "$CLAUDE_JAR" "${REACTOR_DIR}/claude-cli" &&
+    ! module_sources_newer_than_jar "$CODEX_JAR" "${REACTOR_DIR}/codex-cli"; then
     log "CLI module JARs already exist"
     return
   fi
@@ -192,6 +196,69 @@ ensure_client_jar() {
   [[ -f "$CLAUDE_JAR" ]] || error "Failed to build Claude CLI JAR"
   [[ -f "$CODEX_JAR" ]] || error "Failed to build Codex CLI JAR"
   log "CLI module JARs built successfully"
+}
+
+module_sources_newer_than_jar() {
+  local jar="$1"
+  local module_dir="$2"
+  [[ -f "${jar}" ]] || return 0
+  find "${module_dir}/src" "${module_dir}/pom.xml" -type f -newer "${jar}" -print -quit | grep -q .
+}
+
+build_stamp_cli() {
+  if [[ -n "${BUILD_STAMP_CLI:-}" ]]; then
+    if [[ -x "${BUILD_STAMP_CLI}" ]]; then
+      "${BUILD_STAMP_CLI}" "$@"
+    else
+      bash "${BUILD_STAMP_CLI}" "$@"
+    fi
+  else
+    java -cp "${COMMON_JAR}" io.github.cowwoc.cat.tool.util.BuildStamp "$@"
+  fi
+}
+
+jlink_stamp_file() {
+  local assertions_mode="noassert"
+  if [[ "${ENABLE_ASSERTIONS}" == "true" ]]; then
+    assertions_mode="assert"
+  fi
+  echo "${STAMP_DIR}/jlink-images-${assertions_mode}.sha256"
+}
+
+jlink_stamp_inputs() {
+  printf '%s\n' \
+    "${SCRIPT_DIR}/build-jlink-images.sh" \
+    "${SCRIPT_DIR}/lib/build-stamp.sh" \
+    "${REACTOR_DIR}/distribution/pom.xml" \
+    "${COMMON_JAR}" \
+    "${CLAUDE_JAR}" \
+    "${CODEX_JAR}"
+}
+
+jlink_required_outputs() {
+  printf '%s\n' \
+    "${OUTPUT_ROOT}/claude/bin/java" \
+    "${OUTPUT_ROOT}/claude/bin/sprt-runner" \
+    "${OUTPUT_ROOT}/codex/bin/java" \
+    "${OUTPUT_ROOT}/codex/bin/sprt-runner"
+}
+
+jlink_outputs_ready() {
+  local output
+  while IFS= read -r output; do
+    [[ -e "${output}" ]] || return 1
+  done < <(jlink_required_outputs)
+}
+
+jlink_stamp_current() {
+  jlink_outputs_ready || return 1
+  mapfile -t inputs < <(jlink_stamp_inputs)
+  build_stamp_cli matches "$(jlink_stamp_file)" "${inputs[@]}"
+}
+
+write_jlink_stamp() {
+  mapfile -t inputs < <(jlink_stamp_inputs)
+  build_stamp_cli write "$(jlink_stamp_file)" "${inputs[@]}"
 }
 
 # --- Phase 2: Stage dependencies ---
@@ -767,14 +834,20 @@ main() {
   log "Starting jlink build process..."
 
   ENABLE_ASSERTIONS=false
+  local force_rebuild=false
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --enable-assertions) ENABLE_ASSERTIONS=true; shift ;;
+      --force) force_rebuild=true; shift ;;
       *) error "Unknown argument: $1" ;;
     esac
   done
 
   ensure_client_jar
+  if [[ "${force_rebuild}" == "false" ]] && jlink_stamp_current; then
+    log "Skipping jlink rebuild because inputs and required outputs are unchanged"
+    return
+  fi
   stage_dependencies
   patch_automatic_modules
   rm -rf "$OUTPUT_ROOT"
@@ -788,6 +861,7 @@ main() {
     verify_image "$engine"
   done
   write_engine_plugin_descriptors "$(plugin_version)"
+  write_jlink_stamp
 
   log "Build complete!"
   log "Output: $OUTPUT_ROOT"

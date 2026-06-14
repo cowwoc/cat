@@ -38,6 +38,7 @@ final class SprtRunWorkflow
   private final Logger log;
   private final SprtPipelineExecutor pipelineExecutor;
   private final SprtResultsManager resultsManager;
+  private final SprtRunStatusStore sprtRunStatusStore;
   private final int earlyFailThreshold;
   private final int earlyFailWindow;
 
@@ -54,23 +55,28 @@ final class SprtRunWorkflow
    *
    * @param resultsManager the resultsManager
    *
+   * @param sprtRunStatusStore persists whole-run status snapshots and event deltas
+   *
    * @param earlyFailThreshold the earlyFailThreshold
    *
    * @param earlyFailWindow the earlyFailWindow
    */
   SprtRunWorkflow(SprtRunner runner, CliTool scope, Logger log, SprtGrader sprtGrader,
-    SprtResultsManager resultsManager, int earlyFailThreshold, int earlyFailWindow)
+    SprtResultsManager resultsManager, SprtRunStatusStore sprtRunStatusStore,
+    int earlyFailThreshold, int earlyFailWindow)
   {
     requireThat(runner, "runner").isNotNull();
     requireThat(scope, "scope").isNotNull();
     requireThat(log, "log").isNotNull();
     requireThat(sprtGrader, "sprtGrader").isNotNull();
     requireThat(resultsManager, "resultsManager").isNotNull();
+    requireThat(sprtRunStatusStore, "sprtRunStatusStore").isNotNull();
     this.runner = runner;
     this.scope = scope;
     this.log = log;
     this.pipelineExecutor = new SprtPipelineExecutor(runner, log, sprtGrader);
     this.resultsManager = resultsManager;
+    this.sprtRunStatusStore = sprtRunStatusStore;
     this.earlyFailThreshold = earlyFailThreshold;
     this.earlyFailWindow = earlyFailWindow;
   }
@@ -91,65 +97,84 @@ final class SprtRunWorkflow
     String testModel = parsedArgs.testModel();
     String testEffort = parsedArgs.testEffort();
     String sessionId = parsedArgs.sessionId();
+    SprtProgressListener progressListener = sprtRunStatusStore.createListener(
+      Path.of(worktreePath), sessionId, testDir, testModel, testEffort);
     runner.validateConfiguration(testModel, testEffort);
 
     JsonMapper mapper = scope.getJsonMapper();
-    out.println("Step 1: Running prepare-run...");
-    String prepareOutput = runner.prepareRun(new String[]{worktreePath, testDir});
-    Map<String, String> prepareVars = parseKeyValue(prepareOutput);
-    String testDirAbs = prepareVars.get("test_dir_abs");
-    String issueName = prepareVars.get("issue_name");
-    Path testDirRel = Path.of(prepareVars.get("test_dir_rel"));
-    Path sprtStatePath = Path.of(prepareVars.get("sprt_state_path"));
-    out.println("  TEST_DIR_ABS: " + testDirAbs);
-    out.println("  ISSUE_NAME: " + issueName);
-    out.println("  SPRT_STATE_PATH: " + sprtStatePath);
-    out.println();
-
-    out.println("Step 2: Cleaning up previous run...");
-    runner.removeIsolationBranch(new String[]{worktreePath, issueName + "-isolation"});
-    runner.removeRunnerWorktrees(new String[]{worktreePath, issueName});
-    out.println();
-
-    out.println("Step 3: Creating isolation branch...");
-    String isolationResult = runner.createIsolationBranch(new String[]{worktreePath, testDirAbs, issueName});
-    JsonNode isolationNode = mapper.readTree(isolationResult);
-    String isolationBranch = isolationNode.path("isolation_branch").asString();
-    ArrayNode testCaseIdsArray = (ArrayNode) isolationNode.path("tc_ids_json");
-    out.println("  Isolation branch: " + isolationBranch);
-    out.println("  Test cases: " + testCaseIdsArray.size());
-    out.println();
-
-    Set<String> failedTestIds = loadFailedTestIds(testModel, testEffort, testDirAbs, sprtStatePath, mapper);
-
-    out.println("Step 4: Initializing SPRT state...");
-    runner.initSprt(new String[]{sprtStatePath.toString(), mapper.writeValueAsString(testCaseIdsArray),
-      "none", testModel, sessionId, "--effort", testEffort});
-    out.println("  SPRT state initialized at: " + sprtStatePath);
-    out.println();
-
-    List<String> testCaseIds = new ArrayList<>();
-    for (JsonNode testCaseIdNode : testCaseIdsArray)
-      testCaseIds.add(testCaseIdNode.asString());
-    if (!failedTestIds.isEmpty())
+    try
     {
-      testCaseIds.sort((left, right) ->
-      {
-        boolean leftFailed = failedTestIds.contains(left);
-        boolean rightFailed = failedTestIds.contains(right);
-        if (leftFailed && !rightFailed)
-          return -1;
-        if (!leftFailed && rightFailed)
-          return 1;
-        return 0;
-      });
-      out.println("=== Test Prioritization ===");
-      out.println("Prioritizing " + failedTestIds.size() + " previously-failed test(s)");
+      out.println("Step 1: Running prepare-run...");
+      String prepareOutput = runner.prepareRun(new String[]{worktreePath, testDir});
+      Map<String, String> prepareVars = parseKeyValue(prepareOutput);
+      String testDirAbs = prepareVars.get("test_dir_abs");
+      String issueName = prepareVars.get("issue_name");
+      Path testDirRel = Path.of(prepareVars.get("test_dir_rel"));
+      Path sprtStatePath = Path.of(prepareVars.get("sprt_state_path"));
+      progressListener.onRunStarted(0, sprtStatePath);
+      out.println("  TEST_DIR_ABS: " + testDirAbs);
+      out.println("  ISSUE_NAME: " + issueName);
+      out.println("  SPRT_STATE_PATH: " + sprtStatePath);
       out.println();
-    }
 
-    runSprtLoop(worktreePath, testDirAbs, testDirRel, issueName, sessionId, testModel, testEffort,
-      isolationResult, isolationBranch, sprtStatePath, testCaseIds, out, mapper);
+      out.println("Step 2: Cleaning up previous run...");
+      progressListener.onPhaseChanged(SprtRunStatus.PHASE_CLEANUP_PREVIOUS,
+        "Cleaning up previous runner worktrees");
+      runner.removeIsolationBranch(new String[]{worktreePath, issueName + "-isolation"});
+      runner.removeRunnerWorktrees(new String[]{worktreePath, issueName});
+      out.println();
+
+      out.println("Step 3: Creating isolation branch...");
+      progressListener.onPhaseChanged(SprtRunStatus.PHASE_ISOLATION, "Creating isolation branch");
+      String isolationResult = runner.createIsolationBranch(new String[]{worktreePath, testDirAbs, issueName});
+      JsonNode isolationNode = mapper.readTree(isolationResult);
+      String isolationBranch = isolationNode.path("isolation_branch").asString();
+      ArrayNode testCaseIdsArray = (ArrayNode) isolationNode.path("tc_ids_json");
+      out.println("  Isolation branch: " + isolationBranch);
+      out.println("  Test cases: " + testCaseIdsArray.size());
+      out.println();
+
+      Set<String> failedTestIds = loadFailedTestIds(testModel, testEffort, testDirAbs, sprtStatePath, mapper);
+
+      out.println("Step 4: Initializing SPRT state...");
+      progressListener.onPhaseChanged(SprtRunStatus.PHASE_INIT_STATE, "Initializing SPRT state");
+      runner.initSprt(new String[]{sprtStatePath.toString(), mapper.writeValueAsString(testCaseIdsArray),
+        "none", testModel, sessionId, "--effort", testEffort});
+      progressListener.onRunStarted(testCaseIdsArray.size(), sprtStatePath);
+      out.println("  SPRT state initialized at: " + sprtStatePath);
+      out.println();
+
+      List<String> testCaseIds = new ArrayList<>();
+      for (JsonNode testCaseIdNode : testCaseIdsArray)
+        testCaseIds.add(testCaseIdNode.asString());
+      if (!failedTestIds.isEmpty())
+      {
+        testCaseIds.sort((left, right) ->
+        {
+          boolean leftFailed = failedTestIds.contains(left);
+          boolean rightFailed = failedTestIds.contains(right);
+          if (leftFailed && !rightFailed)
+            return -1;
+          if (!leftFailed && rightFailed)
+            return 1;
+          return 0;
+        });
+        out.println("=== Test Prioritization ===");
+        out.println("Prioritizing " + failedTestIds.size() + " previously-failed test(s)");
+        out.println();
+      }
+
+      runSprtLoop(worktreePath, testDirAbs, testDirRel, issueName, sessionId, testModel, testEffort,
+        isolationResult, isolationBranch, sprtStatePath, testCaseIds, out, mapper, progressListener);
+    }
+    catch (IOException | InterruptedException | RuntimeException e)
+    {
+      String errorMessage = e.getMessage();
+      if (errorMessage == null)
+        errorMessage = e.getClass().getSimpleName();
+      progressListener.onFailed(errorMessage);
+      throw e;
+    }
   }
 
   /**
@@ -173,11 +198,14 @@ final class SprtRunWorkflow
    *
    * @param isolationResultJson the isolationResultJson
    *
+   * @param progressListener records whole-run status snapshots and event deltas
+   *
    * @return the result
    */
   String runSprtBatch(String worktreePathStr, String sprtStateJson, String issueName,
     String testDirRel, String sessionId, String modelId, String testEffort, int batchNum,
-    String isolationResultJson) throws IOException, InterruptedException
+    String isolationResultJson, SprtProgressListener progressListener)
+    throws IOException, InterruptedException
   {
     requireThat(worktreePathStr, "worktreePathStr").isNotBlank();
     requireThat(sprtStateJson, "sprtStateJson").isNotBlank();
@@ -224,7 +252,7 @@ final class SprtRunWorkflow
       SprtPipelineExecutor.BatchOutcome outcome = pipelineExecutor.runParallelPipelines(
         worktreePathStr, sprtStateJson, issueName, testDirRel, modelId, testEffort,
         isolationResultJson, outputDir, processedCount, sortedWorktrees, currentParallelism,
-        mapper, sprtLock, cumulativeFailures, inconclusiveTestCases);
+        mapper, sprtLock, cumulativeFailures, inconclusiveTestCases, progressListener);
       if (!outcome.errors().isEmpty())
         throw aggregatePipelineErrors(outcome.errors());
 
@@ -286,11 +314,13 @@ final class SprtRunWorkflow
    * @param out the out
    *
    * @param mapper the mapper
+   *
+   * @param progressListener records whole-run status snapshots and event deltas
    */
   private void runSprtLoop(String worktreePath, String testDirAbs, Path testDirRel, String issueName,
     String sessionId, String testModel, String testEffort, String isolationResult,
     String isolationBranch, Path sprtStatePath, List<String> testCaseIds, PrintStream out,
-    JsonMapper mapper) throws IOException, InterruptedException
+    JsonMapper mapper, SprtProgressListener progressListener) throws IOException, InterruptedException
   {
     out.println("=== Starting SPRT Loop ===");
     out.println("Test cases: " + testCaseIds.size());
@@ -307,6 +337,8 @@ final class SprtRunWorkflow
     while (!undecided.isEmpty())
     {
       ++batchNum;
+      progressListener.onBatchStarted(batchNum, trialsPerBatch, undecided.size(), Math.min(2,
+        Runtime.getRuntime().availableProcessors()));
       out.printf("=== Batch %d (%d trial(s) per TC): %d test case(s) remaining ===%n",
         batchNum, trialsPerBatch, undecided.size());
       String preStateJson = Files.readString(sprtStatePath);
@@ -314,12 +346,14 @@ final class SprtRunWorkflow
 
       BatchProgress progress = runBatchTrials(worktreePath, testDirRel, issueName, sessionId,
         testModel, testEffort, isolationResult, sprtStatePath, undecided, runCounts, decisions,
-        batchNum, trialsPerBatch, batchDurationsMilliseconds, out, mapper);
+        batchNum, trialsPerBatch, batchDurationsMilliseconds, out, mapper, progressListener);
       undecided = progress.undecided();
       out.println();
 
       JsonNode sprtNode = printBatchSummary(batchNum, sprtStatePath, testCaseIds, decisions, runCounts,
         out, mapper);
+      progressListener.onBatchSummary(batchNum, undecided.size(), decisions.size(),
+        progress.batchResultNode().path("cumulative_failures").asInt(0));
       if (!undecided.isEmpty())
         printEta(sprtNode, undecided, loopStartMilliseconds, batchDurationsMilliseconds, out);
       trialsPerBatch = nextTrialsPerBatch(sprtStatePath, testCaseIds, mapper, failsBefore,
@@ -327,19 +361,21 @@ final class SprtRunWorkflow
 
       if (progress.batchEarlyAbort())
       {
+        progressListener.onEarlyAbort(batchNum, progress.batchResultNode().path("cumulative_failures").asInt(0));
         handleEarlyAbort(progress.batchResultNode(), sprtNode, batchNum, sprtStatePath,
           testCaseIds, undecided, decisions, runCounts, out, mapper);
         break;
       }
       if (progress.anyReject())
       {
+        progressListener.onRejectAbort(undecided.size());
         handleRejectAbort(sprtStatePath, undecided, decisions, runCounts, out, mapper);
         break;
       }
     }
 
     finishRun(worktreePath, testDirAbs, issueName, isolationBranch, isolationResult, sprtStatePath,
-      testCaseIds, decisions, runCounts, out);
+      testCaseIds, decisions, runCounts, out, progressListener);
   }
 
   /**
@@ -436,13 +472,16 @@ final class SprtRunWorkflow
    *
    * @param mapper the mapper
    *
+   * @param progressListener records whole-run status snapshots and event deltas
+   *
    * @return the result
    */
   private BatchProgress runBatchTrials(String worktreePath, Path testDirRel, String issueName,
     String sessionId, String testModel, String testEffort, String isolationResult,
     Path sprtStatePath, List<String> undecided, Map<String, Integer> runCounts,
     Map<String, String> decisions, int batchNum, int trialsPerBatch,
-    List<Long> batchDurationsMilliseconds, PrintStream out, JsonMapper mapper)
+    List<Long> batchDurationsMilliseconds, PrintStream out, JsonMapper mapper,
+    SprtProgressListener progressListener)
     throws IOException, InterruptedException
   {
     boolean batchEarlyAbort = false;
@@ -453,7 +492,7 @@ final class SprtRunWorkflow
     {
       batchResultNode = executeSingleBatchTrial(worktreePath, testDirRel, issueName, sessionId,
         testModel, testEffort, batchNum, isolationResult, sprtStatePath,
-        batchDurationsMilliseconds, mapper);
+        batchDurationsMilliseconds, mapper, progressListener);
       batchEarlyAbort = batchResultNode.path("early_abort").asBoolean(false);
       TrialDecisionResult decisionResult = updateTrialDecisions(currentUndecided, sprtStatePath,
         runCounts, decisions, out, mapper);
@@ -479,18 +518,21 @@ final class SprtRunWorkflow
    * @param sprtStatePath the SPRT state file
    * @param batchDurationsMilliseconds the collected batch durations
    * @param mapper the JSON mapper
+   * @param progressListener records whole-run status snapshots and event deltas
    * @return the parsed batch result payload
    * @throws IOException if batch execution or parsing fails
    * @throws InterruptedException if interrupted while running the nested batch
    */
   private JsonNode executeSingleBatchTrial(String worktreePath, Path testDirRel, String issueName,
     String sessionId, String testModel, String testEffort, int batchNum, String isolationResult,
-    Path sprtStatePath, List<Long> batchDurationsMilliseconds, JsonMapper mapper)
+    Path sprtStatePath, List<Long> batchDurationsMilliseconds, JsonMapper mapper,
+    SprtProgressListener progressListener)
     throws IOException, InterruptedException
   {
     long batchStartMilliseconds = System.currentTimeMillis();
     String batchResult = runSprtBatch(worktreePath, sprtStatePath.toString(), issueName,
-      testDirRel.toString(), sessionId, testModel, testEffort, batchNum, isolationResult);
+      testDirRel.toString(), sessionId, testModel, testEffort, batchNum, isolationResult,
+      progressListener);
     batchDurationsMilliseconds.add(System.currentTimeMillis() - batchStartMilliseconds);
     return mapper.readTree(batchResult);
   }
@@ -771,19 +813,24 @@ final class SprtRunWorkflow
    * @param runCounts the runCounts
    *
    * @param out the out
+   *
+   * @param progressListener records whole-run status snapshots and event deltas
    */
   private void finishRun(String worktreePath, String testDirAbs, String issueName,
     String isolationBranch, String isolationResult, Path sprtStatePath, List<String> testCaseIds,
-    Map<String, String> decisions, Map<String, Integer> runCounts, PrintStream out)
+    Map<String, String> decisions, Map<String, Integer> runCounts, PrintStream out,
+    SprtProgressListener progressListener)
     throws IOException
   {
     out.println("=== SPRT Loop Complete ===");
     out.println();
-    TestResultsSummary summary = writeTestResults(worktreePath, testDirAbs, sprtStatePath, out);
+    TestResultsSummary summary = writeTestResults(worktreePath, testDirAbs, sprtStatePath, out,
+      progressListener);
     String overallDecision = summary.overallDecision();
     String testSha = summary.testSha();
 
-    cleanupRun(worktreePath, issueName, isolationBranch, out);
+    cleanupRun(worktreePath, issueName, isolationBranch, out, progressListener);
+    progressListener.onCompleted(overallDecision, testSha, Path.of(testDirAbs).resolve("test-results.json"));
     printFinalResults(isolationResult, testCaseIds, decisions, runCounts, out, overallDecision,
       testSha);
   }
@@ -795,13 +842,15 @@ final class SprtRunWorkflow
    * @param testDirAbs the absolute test directory
    * @param sprtStatePath the SPRT state file
    * @param out the user-facing output stream
+   * @param progressListener records whole-run status snapshots and event deltas
    * @return the final summary values emitted by write-test-results
    * @throws IOException if writing test results fails
    */
   private TestResultsSummary writeTestResults(String worktreePath, String testDirAbs,
-    Path sprtStatePath, PrintStream out) throws IOException
+    Path sprtStatePath, PrintStream out, SprtProgressListener progressListener) throws IOException
   {
     out.println("Step 6: Writing test results...");
+    progressListener.onWritingResults(Path.of(testDirAbs).resolve("test-results.json"));
     Map<String, String> writeVars = parseKeyValue(resultsManager.writeTestResults(
       new String[]{worktreePath, sprtStatePath.toString(), testDirAbs}));
     String writeStatus = writeVars.get("status");
@@ -826,12 +875,14 @@ final class SprtRunWorkflow
    * @param issueName the issue name
    * @param isolationBranch the temporary isolation branch
    * @param out the user-facing output stream
+   * @param progressListener records whole-run status snapshots and event deltas
    * @throws IOException if cleanup commands fail
    */
   private void cleanupRun(String worktreePath, String issueName, String isolationBranch,
-    PrintStream out) throws IOException
+    PrintStream out, SprtProgressListener progressListener) throws IOException
   {
     out.println("Step 7: Cleanup...");
+    progressListener.onCleanupStarted();
     runner.removeIsolationBranch(new String[]{worktreePath, isolationBranch});
     runner.removeRunnerWorktrees(new String[]{worktreePath, issueName});
     out.println();

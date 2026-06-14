@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.tool.skills;
 import io.github.cowwoc.cat.agent.FrontmatterUtils;
 import io.github.cowwoc.cat.agent.ProcessRunner;
 import io.github.cowwoc.cat.tool.CliTool;
+import io.github.cowwoc.cat.tool.util.ProcessWaitHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.databind.JsonNode;
@@ -32,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.Set;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -70,6 +70,10 @@ public final class SprtRunner
     List.of("low", "medium", "high", "xhigh", "max");
   private static final List<String> CODEX_EFFORT_LEVELS =
     List.of("low", "medium", "high", "xhigh");
+  /**
+   * Internal process-supervision cadence. This is not user-facing polling; it balances timeout and
+   * reader-failure responsiveness against unnecessary wakeups.
+   */
   private static final Duration WAIT_POLL = Duration.ofMillis(50);
 
   static
@@ -218,6 +222,7 @@ public final class SprtRunner
   private final SprtRunWorkflow sprtRunWorkflow;
   private final SprtCommandSupport sprtCommandSupport;
   private final SkillMetadataExtractor skillMetadataExtractor;
+  private final SprtRunStatusStore sprtRunStatusStore;
 
   /**
    * Creates a new SprtRunner.
@@ -257,11 +262,13 @@ public final class SprtRunner
     this.sprtIsolationManager = new SprtIsolationManager(scope, runtimeId);
     this.sprtGrader = new SprtGrader(scope, this);
     this.sprtResultsManager = new SprtResultsManager(scope);
+    this.sprtRunStatusStore = new SprtRunStatusStore(scope.getJsonMapper(), log);
     this.sprtRunWorkflow = new SprtRunWorkflow(this, scope, log, sprtGrader, sprtResultsManager,
+      sprtRunStatusStore,
       EARLY_FAIL_THRESHOLD, EARLY_FAIL_WINDOW);
     this.skillMetadataExtractor = new SkillMetadataExtractor(scope, claudeCodeVersion);
     this.sprtCommandSupport = new SprtCommandSupport(scope, runtimeId, claudeCodeVersion,
-      skillMetadataExtractor, sprtResultsManager, log);
+      skillMetadataExtractor, sprtResultsManager, sprtRunStatusStore, log);
   }
 
   /**
@@ -305,13 +312,14 @@ public final class SprtRunner
       case "prepare-trial" -> out.println(prepareTrial(rest));
       case "get-json-field" -> out.println(getJsonField(rest));
       case "run-sprt" -> runSprt(rest, out);
+      case "run-status" -> out.println(runStatus(rest));
       default -> throw new IllegalArgumentException(
         "SprtRunner: unknown command: " + command + "\n" +
         "Valid commands: extract-units, extract-model, extract-effort, extract-config-source, " +
         "extract-test-dir, detect-changes, " +
         "map-units, persist-artifacts, init-sprt, update-sprt, check-boundary, smoke-status, " +
         "merge-results, create-runner-worktrees, check-run-contamination, remove-runner-worktrees, " +
-        "remove-runner-worktree, prepare-trial, get-json-field, run-sprt");
+        "remove-runner-worktree, prepare-trial, get-json-field, run-sprt, run-status");
     }
   }
 
@@ -767,6 +775,18 @@ public final class SprtRunner
   }
 
   /**
+   * Implements the {@code run-status} command.
+   *
+   * @param args {@code <worktree_path> [--since-seq N] [--wait-seconds N] [--json|--summary]}
+   * @return the status snapshot plus any event deltas
+   * @throws IOException if reading status artifacts fails
+   */
+  public String runStatus(String[] args) throws IOException
+  {
+    return sprtCommandSupport.runStatus(args);
+  }
+
+  /**
    * Parsed arguments for the {@code run-sprt} command.
    *
    * @param worktreePath the trial worktree path
@@ -1110,19 +1130,8 @@ public final class SprtRunner
   private static boolean waitForProcessOrReaderFailure(Process process,
     AtomicReference<Exception> readerFailure, long deadlineNanos) throws InterruptedException
   {
-    while (true)
-    {
-      if (readerFailure.get() != null)
-        return process.waitFor(0, TimeUnit.MILLISECONDS);
-      long remainingNanos = deadlineNanos - System.nanoTime();
-      if (remainingNanos <= 0)
-        return false;
-      long waitMillis = Math.min(Duration.ofNanos(remainingNanos).toMillis(), WAIT_POLL.toMillis());
-      if (waitMillis <= 0)
-        waitMillis = 1;
-      if (process.waitFor(waitMillis, TimeUnit.MILLISECONDS))
-        return true;
-    }
+    return ProcessWaitHelper.waitForProcessOrFailure(process, () -> readerFailure.get() != null,
+      deadlineNanos, WAIT_POLL);
   }
 
   /**
@@ -1712,6 +1721,6 @@ public final class SprtRunner
       "merge-results, create-isolation-branch, create-runner-worktrees, check-run-contamination, " +
       "remove-runner-worktrees, write-test-results, save-failed-run, remove-runner-worktree, " +
       "remove-isolation-branch, prepare-run, prepare-trial, get-json-field, get-tc-name, " +
-      "get-worktree-field, run-sprt";
+      "get-worktree-field, run-sprt, run-status";
   }
 }

@@ -232,6 +232,42 @@ public final class RulesDiscoveryTest
   }
 
   /**
+   * Verifies that rule discovery re-expands included content after an include file changes, without
+   * waiting for a time-based cache TTL.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void catIncludeInvalidatesOnFragmentChange() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("rules-test-");
+    try
+    {
+      Path rulesDir = tempDir.resolve("rules");
+      Files.createDirectories(rulesDir.resolve("fragments"));
+      Path fragment = rulesDir.resolve("fragments/shared.md");
+      Files.writeString(fragment, "Version one.\n");
+      Files.writeString(rulesDir.resolve("rule.md"), """
+        # Rule
+        <!-- cat:include fragments/shared.md -->
+        """);
+
+      RulesDiscovery discovery = new RulesDiscovery(rulesDir, YAML_MAPPER);
+      String initial = discovery.discoverAll().getFirst().content();
+      requireThat(initial, "initial").contains("Version one.");
+
+      Files.writeString(fragment, "Version two with changed size.\n");
+      String updated = discovery.discoverAll().getFirst().content();
+      requireThat(updated, "updated").contains("Version two with changed size.");
+      requireThat(updated, "updated").doesNotContain("Version one.");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that agents: ["subagents"] excludes a file from main agent injection.
    *
    * @throws IOException if file operations fail
