@@ -5,7 +5,7 @@
 name = "cat-instruction-analyzer-agent"
 nickname_candidates = ["instruction-analyzer-agent"]
 description = "Internal agent — reads an instruction-test JSON produced by InstructionTestAggregator and surfaces actionable patterns: non-discriminating assertions, high-variance evals, and time/token tradeoffs. Returns a structured analysis report for the instruction-builder review step."
-model = "gpt-5.3-codex"
+model = "gpt-5.5"
 model_reasoning_effort = "high"
 sandbox_mode = "workspace-write"
 developer_instructions = '''

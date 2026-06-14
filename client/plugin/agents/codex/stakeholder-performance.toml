@@ -5,7 +5,7 @@
 name = "cat-stakeholder-performance"
 nickname_candidates = ["stakeholder-performance"]
 description = "Performance Engineer stakeholder for code review and research. Focus: algorithmic efficiency, memory usage, resource utilization, scalability"
-model = "gpt-5.3-codex"
+model = "gpt-5.4"
 model_reasoning_effort = "medium"
 sandbox_mode = "read-only"
 developer_instructions = '''

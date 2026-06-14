@@ -46,8 +46,6 @@ final class SkillMetadataExtractor
    */
   private static final List<String> CODEX_MODEL_STRENGTH = List.of(
     "gpt-5.4-mini",
-    "gpt-5.3-codex-spark",
-    "gpt-5.3-codex",
     "gpt-5.4",
     "gpt-5.5");
   private static final List<String> CODEX_EFFORT_STRENGTH =

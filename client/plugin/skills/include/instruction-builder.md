@@ -445,9 +445,8 @@ owner was found. For Claude, it returns `frontmatter` when the file explicitly s
 
 Weakest owner selection compares complete owner model/effort pairs and never combines a model from one owner with
 an effort from another. Model rank dominates effort rank. CAT's Codex model rank from weakest to strongest is
-`gpt-5.4-mini`, `gpt-5.3-codex-spark`, `gpt-5.3-codex`, `gpt-5.4`, `gpt-5.5`; effort rank is
-`low`, `medium`, `high`, `xhigh`. If a matching owner uses a model or effort not in these rank lists, the CLI must
-fail fast so CAT can define the missing rank explicitly.
+`gpt-5.4-mini`, `gpt-5.4`, `gpt-5.5`; effort rank is `low`, `medium`, `high`, `xhigh`. If a matching owner uses a
+model or effort not in these rank lists, the CLI must fail fast so CAT can define the missing rank explicitly.
 
 If no owner is found, do not infer one from prose. The CLI reports `TEST_CONFIG_SOURCE=default`.
 

@@ -326,7 +326,7 @@ public final class SprtRunnerTest
       default -> null;
     }, tempDir))
     {
-      writeCodexAgent(tempDir, "work-execute", "gpt-5.3-codex", "high");
+      writeCodexAgent(tempDir, "work-execute", "gpt-5.5", "high");
       writeCodexAgent(tempDir, "work-merge", "gpt-5.4-mini", "medium");
       writeCodexAgent(tempDir, "instruction-builder-implement-agent", "gpt-5.4-mini", "low");
       Path ruleFile = tempDir.resolve("rules/common/multi-agent.md");
@@ -366,7 +366,7 @@ public final class SprtRunnerTest
       default -> null;
     }, tempDir))
     {
-      writeCodexAgent(tempDir, "work-execute", "gpt-5.3-codex", "high");
+      writeCodexAgent(tempDir, "work-execute", "gpt-5.5", "high");
       writeCodexAgent(tempDir, "work-merge", "gpt-5.4-mini", "medium");
       writeCodexAgent(tempDir, "instruction-builder-implement-agent", "gpt-5.4-mini", "low");
       Path ruleFile = tempDir.resolve("rules/common/broad-rule.md");
@@ -401,7 +401,7 @@ public final class SprtRunnerTest
       default -> null;
     }, tempDir))
     {
-      writeCodexAgent(tempDir, "work-execute", "gpt-5.3-codex", "high");
+      writeCodexAgent(tempDir, "work-execute", "gpt-5.5", "high");
       writeCodexAgent(tempDir, "work-merge", "gpt-5.4-mini", "medium");
       Path ruleFile = tempDir.resolve("rules/common/all-subagents.md");
       Files.createDirectories(ruleFile.getParent());
@@ -440,7 +440,7 @@ public final class SprtRunnerTest
       default -> null;
     }, tempDir))
     {
-      writeCodexAgent(tempDir, "work-execute", "gpt-5.3-codex", "high");
+      writeCodexAgent(tempDir, "work-execute", "gpt-5.5", "high");
       Path ruleFile = tempDir.resolve("rules/common/invalid-agents.md");
       Files.createDirectories(ruleFile.getParent());
       Files.writeString(ruleFile, """
@@ -598,7 +598,7 @@ public final class SprtRunnerTest
     }, tempDir))
     {
       writeCodexAgent(tempDir, "work-squash", "gpt-5.4-mini", "medium");
-      writeCodexAgent(tempDir, "work-execute", "gpt-5.3-codex", "high");
+      writeCodexAgent(tempDir, "work-execute", "gpt-5.5", "high");
       Path commonAgentsDir = tempDir.resolve("agents/common");
       Files.createDirectories(commonAgentsDir);
       Files.writeString(commonAgentsDir.resolve("work-squash.md"), """
@@ -928,7 +928,7 @@ public final class SprtRunnerTest
     try (var scope = new TestClaudeTool(tempDir, tempDir))
     {
       SprtRunner runner = new SprtRunner(scope, "2.1.87");
-      runner.run(new String[]{"run-sprt", tempDir.toString(), "tests", "gpt-5.3-codex",
+      runner.run(new String[]{"run-sprt", tempDir.toString(), "tests", "gpt-5.4",
         "high"}, System.out);
     }
     finally
@@ -1005,7 +1005,7 @@ public final class SprtRunnerTest
     }, tempDir))
     {
       SprtRunner runner = new SprtRunner(scope, "2.1.87");
-      runner.run(new String[]{"run-sprt", tempDir.toString(), "tests", "gpt-5.3-codex",
+      runner.run(new String[]{"run-sprt", tempDir.toString(), "tests", "gpt-5.4",
         "extreme"}, System.out);
     }
     finally

@@ -5,7 +5,7 @@
 name = "cat-learn-agent"
 nickname_candidates = ["learn-agent"]
 description = "Investigate CAT mistakes and record durable learnings and preventions."
-model = "gpt-5.3-codex"
+model = "gpt-5.4"
 model_reasoning_effort = "medium"
 sandbox_mode = "workspace-write"
 developer_instructions = '''

@@ -5,7 +5,7 @@
 name = "cat-plan-review-agent"
 nickname_candidates = ["plan-review-agent"]
 description = "Plan completeness reviewer. Evaluates whether plan.md is detailed enough for Haiku-level mechanical implementation."
-model = "gpt-5.3-codex"
+model = "gpt-5.4"
 model_reasoning_effort = "medium"
 sandbox_mode = "read-only"
 developer_instructions = '''

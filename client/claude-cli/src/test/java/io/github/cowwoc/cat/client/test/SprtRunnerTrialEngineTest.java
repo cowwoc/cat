@@ -965,7 +965,7 @@ public final class SprtRunnerTrialEngineTest
       Path promptFile = tempDir.resolve("trial-prompt.txt");
       Files.writeString(promptFile, "test prompt", StandardCharsets.UTF_8);
       String runnerWorktree = tempDir.toString();
-      String modelId = "gpt-5.3-codex";
+      String modelId = "gpt-5.5";
       String effort = "xhigh";
       String outputJson = tempDir.resolve("output.json").toString();
 
@@ -1043,8 +1043,8 @@ public final class SprtRunnerTrialEngineTest
       Path graderPromptFile = tempDir.resolve("grader-prompt.txt");
       Files.writeString(graderPromptFile, "test prompt", StandardCharsets.UTF_8);
       String runnerWorktree = tempDir.toString();
-      String modelId = "gpt-5.3-codex";
-      String effort = "high";
+      String modelId = "gpt-5.4-mini";
+      String effort = "medium";
 
       String[] args = SharedSecrets.buildCodexGraderArgs(graderPromptFile, modelId, effort,
         runnerWorktree);
@@ -1106,8 +1106,8 @@ public final class SprtRunnerTrialEngineTest
     expectedExceptionsMessageRegExp = ".*runnerWorktree.*")
   public void buildCodexGraderArgsRejectsBlankRunner()
   {
-    SharedSecrets.buildCodexGraderArgs(Path.of("/tmp/grader-prompt.txt"), "gpt-5.3-codex",
-      "high", " ");
+    SharedSecrets.buildCodexGraderArgs(Path.of("/tmp/grader-prompt.txt"), "gpt-5.4-mini",
+      "medium", " ");
   }
 
   /**
@@ -1152,7 +1152,7 @@ public final class SprtRunnerTrialEngineTest
   public void engineTrialArgsRejectBlankOutput()
   {
     SharedSecrets.buildTrialArgsForDescriptor(AgentEngine.CODEX.pluginDescriptor(),
-      Path.of("/tmp/prompt.txt"), "gpt-5.3-codex", "high", "/tmp/worktree", " ");
+      Path.of("/tmp/prompt.txt"), "gpt-5.4", "high", "/tmp/worktree", " ");
   }
 
   /**
@@ -1174,7 +1174,7 @@ public final class SprtRunnerTrialEngineTest
   public void engineCodexTrialArgsRejectBlankEffort()
   {
     SharedSecrets.buildTrialArgsForDescriptor(AgentEngine.CODEX.pluginDescriptor(),
-      Path.of("/tmp/prompt.txt"), "gpt-5.3-codex", " ", "/tmp/worktree", "/tmp/output.json");
+      Path.of("/tmp/prompt.txt"), "gpt-5.4", " ", "/tmp/worktree", "/tmp/output.json");
   }
 
   /**
@@ -1185,7 +1185,7 @@ public final class SprtRunnerTrialEngineTest
   public void engineClaudeTrialArgsRejectUnsupported()
   {
     SharedSecrets.buildTrialArgsForDescriptor(AgentEngine.CLAUDE.pluginDescriptor(),
-      Path.of("/tmp/prompt.txt"), "gpt-5.3-codex", "high", "/tmp/worktree",
+      Path.of("/tmp/prompt.txt"), "gpt-5.4", "high", "/tmp/worktree",
       "/tmp/output.json");
   }
 
@@ -1197,7 +1197,7 @@ public final class SprtRunnerTrialEngineTest
   public void engineCodexTrialArgsRejectUnsupported()
   {
     SharedSecrets.buildTrialArgsForDescriptor(AgentEngine.CODEX.pluginDescriptor(),
-      Path.of("/tmp/prompt.txt"), "gpt-5.3-codex", "extreme", "/tmp/worktree",
+      Path.of("/tmp/prompt.txt"), "gpt-5.4", "extreme", "/tmp/worktree",
       "/tmp/output.json");
   }
 
@@ -1220,7 +1220,7 @@ public final class SprtRunnerTrialEngineTest
   public void engineCodexTrialArgsRejectClaudeOnly()
   {
     SharedSecrets.buildTrialArgsForDescriptor(AgentEngine.CODEX.pluginDescriptor(),
-      Path.of("/tmp/prompt.txt"), "gpt-5.3-codex", "max", "/tmp/worktree",
+      Path.of("/tmp/prompt.txt"), "gpt-5.4", "max", "/tmp/worktree",
       "/tmp/output.json");
   }
 
@@ -1256,7 +1256,7 @@ public final class SprtRunnerTrialEngineTest
   public void engineGraderArgsRejectBlankRunner()
   {
     SharedSecrets.buildGraderArgsForDescriptor(AgentEngine.CODEX.pluginDescriptor(),
-      Path.of("/tmp/grader-prompt.txt"), "gpt-5.3-codex", "high", " ");
+      Path.of("/tmp/grader-prompt.txt"), "gpt-5.4-mini", "medium", " ");
   }
 
   /**
@@ -1278,7 +1278,7 @@ public final class SprtRunnerTrialEngineTest
   public void engineCodexGraderArgsRejectBlankEffort()
   {
     SharedSecrets.buildGraderArgsForDescriptor(AgentEngine.CODEX.pluginDescriptor(),
-      Path.of("/tmp/grader-prompt.txt"), "gpt-5.3-codex", " ", "/tmp/worktree");
+      Path.of("/tmp/grader-prompt.txt"), "gpt-5.4-mini", " ", "/tmp/worktree");
   }
 
   /**
@@ -1375,7 +1375,7 @@ public final class SprtRunnerTrialEngineTest
       String outputJson = tempDir.resolve("output.json").toString();
 
       String[] args = SharedSecrets.buildTrialArgsForDescriptor(
-        AgentEngine.CODEX.pluginDescriptor(), promptFile, "gpt-5.3-codex", "xhigh",
+        AgentEngine.CODEX.pluginDescriptor(), promptFile, "gpt-5.5", "xhigh",
         runnerWorktree, outputJson);
 
       requireThat(args, "args").length().isEqualTo(10);
@@ -1436,7 +1436,7 @@ public final class SprtRunnerTrialEngineTest
       String runnerWorktree = tempDir.toString();
 
       String[] args = SharedSecrets.buildGraderArgsForDescriptor(
-        AgentEngine.CODEX.pluginDescriptor(), promptFile, "gpt-5.3-codex", "high",
+        AgentEngine.CODEX.pluginDescriptor(), promptFile, "gpt-5.4-mini", "medium",
         runnerWorktree);
 
       requireThat(args, "args").length().isEqualTo(8);

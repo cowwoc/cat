@@ -5,7 +5,7 @@
 name = "cat-work-execute"
 nickname_candidates = ["work-execute"]
 description = "Implementation specialist for CAT work Phase 2. Use for executing issue plan.md steps - writing code, fixing bugs, running tests, making commits."
-model = "gpt-5.3-codex"
+model = "gpt-5.5"
 model_reasoning_effort = "high"
 sandbox_mode = "workspace-write"
 developer_instructions = '''

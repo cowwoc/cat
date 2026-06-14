@@ -5,7 +5,7 @@
 name = "cat-stakeholder-security"
 nickname_candidates = ["stakeholder-security"]
 description = "Security Engineer stakeholder for code review and research. Focus: vulnerabilities, attack vectors, input validation, secure coding practices"
-model = "gpt-5.3-codex"
+model = "gpt-5.4"
 model_reasoning_effort = "high"
 sandbox_mode = "read-only"
 developer_instructions = '''

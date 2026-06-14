@@ -1,6 +1,6 @@
 ---
 description: Initialize a new project or add CAT to an existing project.
-model: gpt-5.3-codex
+model: gpt-5.4-mini
 effort: medium
 allowed-tools: [Read, Write, Bash, Glob, Grep, functions.request_user_input]
 disable-model-invocation: true
