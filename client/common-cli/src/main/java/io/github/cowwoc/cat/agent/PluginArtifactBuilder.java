@@ -115,6 +115,7 @@ public final class PluginArtifactBuilder
 
     Files.createDirectories(target.resolve("rules"));
     copyTree(pluginDir.resolve("rules/common"), target.resolve("rules/common"));
+    copyTree(pluginDir.resolve("rules/include"), target.resolve("rules/include"));
     copyTree(pluginDir.resolve("rules").resolve(engine.directoryName),
       target.resolve("rules").resolve(engine.directoryName));
 
@@ -152,6 +153,7 @@ public final class PluginArtifactBuilder
   private void copyCommonPluginFiles(Engine engine, Path target) throws IOException
   {
     copyTree(pluginDir.resolve(".git-filter-repo-config"), target.resolve(".git-filter-repo-config"));
+    copyTree(pluginDir.resolve("common"), target.resolve("common"));
     copyTree(pluginDir.resolve("concepts"), target.resolve("concepts"));
     copyTree(pluginDir.resolve("config"), target.resolve("config"));
     copyTree(pluginDir.resolve("lang"), target.resolve("lang"));
@@ -248,9 +250,11 @@ public final class PluginArtifactBuilder
       return false;
     List<Path> allowedRoots = List.of(
       pluginDir.resolve("agents/common"),
+      pluginDir.resolve("common"),
       pluginDir.resolve("skills/common"),
       pluginDir.resolve("skills/include"),
       pluginDir.resolve("rules/common"),
+      pluginDir.resolve("rules/include"),
       pluginDir.resolve("hooks/common"),
       pluginDir.resolve("concepts"),
       pluginDir.resolve("agents").resolve(engine.directoryName),
@@ -274,8 +278,8 @@ public final class PluginArtifactBuilder
    */
   private void stripAndVerifyAgentFacingFiles(Path target) throws IOException
   {
-    for (Path directory : List.of(target.resolve("agents"), target.resolve("commands"), target.resolve("concepts"),
-      target.resolve("rules"), target.resolve("skills")))
+    for (Path directory : List.of(target.resolve("agents"), target.resolve("commands"), target.resolve("common"),
+      target.resolve("concepts"), target.resolve("rules"), target.resolve("skills")))
     {
       if (!Files.isDirectory(directory, LinkOption.NOFOLLOW_LINKS))
         continue;

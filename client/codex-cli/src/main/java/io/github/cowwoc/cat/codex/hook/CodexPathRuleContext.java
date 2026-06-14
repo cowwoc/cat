@@ -42,7 +42,7 @@ final class CodexPathRuleContext
   private static final Path GENERATED_ROOT = Path.of("generated/codex-rule-bodies");
   private static final String MANIFEST_FILE = "manifest.json";
   private static final Pattern INCLUDE_DECLARATION =
-    Pattern.compile("(?m)^`include` = `([^`]+)`\\s*$");
+    Pattern.compile("(?m)^Lazy load `([^`]+)`\\.\\s*$");
 
   private CodexPathRuleContext()
   {
@@ -140,38 +140,96 @@ final class CodexPathRuleContext
   private static ManifestEntry generateEntry(RuleFile rule, Path outputRoot, String namespace)
     throws IOException
   {
-    Path bodyPath = bodyPath(outputRoot, namespace, rule.contextPath());
-    BodySource bodySource = bodyFor(rule);
+    BodySource bodySource = bodyFor(rule, outputRoot, namespace);
+    Path bodyPath = bodySource.bodyPath();
+    if (bodySource.lazyLoads().isEmpty())
+    {
+      writeBody(bodyPath, bodySource.body());
+    }
+    else
+    {
+      for (LazyLoadBody lazyLoad : bodySource.lazyLoads())
+        writeBody(lazyLoad.bodyPath(), lazyLoad.body());
+    }
+    return new ManifestEntry(rule.contextPath(), rule.mainAgent(), rule.subAgents(),
+      List.copyOf(rule.paths()), extractTitle(rule.content(), rule.path()), bodySource.stubTemplate(),
+      bodyPath, bodySource.lazyLoads().stream().
+        map(lazyLoad -> new LazyLoadDeclaration(lazyLoad.declarationPath(), lazyLoad.bodyPath())).
+        toList());
+  }
+
+  /**
+   * Writes a generated body file.
+   *
+   * @param bodyPath the generated body path
+   * @param body     the body content
+   * @throws IOException if the body cannot be written safely
+   */
+  private static void writeBody(Path bodyPath, String body) throws IOException
+  {
     Files.createDirectories(bodyPath.getParent());
     requireNoSymlinkInExistingPath(bodyPath.getParent());
     if (Files.exists(bodyPath, LinkOption.NOFOLLOW_LINKS) && Files.isSymbolicLink(bodyPath))
       throw new IOException("Refusing to write Codex path-scoped rule body through symbolic link: " +
         bodyPath);
-    FileSystemUtils.writeStringIfChanged(bodyPath, ensureTrailingNewline(bodySource.body()));
-    return new ManifestEntry(rule.contextPath(), rule.mainAgent(), rule.subAgents(),
-      List.copyOf(rule.paths()), extractTitle(rule.content(), rule.path()), bodySource.stubTemplate(),
-      bodyPath);
+    FileSystemUtils.writeStringIfChanged(bodyPath, ensureTrailingNewline(body));
   }
 
   /**
-   * Resolves the generated body for a path-scoped rule.
+   * Resolves generated bodies for a path-scoped rule.
    *
-   * @param rule the rule source
-   * @return the body to write into plugin data
+   * @param rule       the rule source
+   * @param outputRoot the generated body root
+   * @param namespace  the source namespace
+   * @return the bodies to write into plugin data
    * @throws IOException if an included body cannot be read
    */
-  private static BodySource bodyFor(RuleFile rule) throws IOException
+  private static BodySource bodyFor(RuleFile rule, Path outputRoot, String namespace) throws IOException
   {
     Matcher matcher = INCLUDE_DECLARATION.matcher(rule.content());
-    if (!matcher.find())
-      return new BodySource(rule.content(), null);
-    Path include = rule.path().getParent().resolve(matcher.group(1)).toAbsolutePath().normalize();
-    if (!Files.isRegularFile(include, LinkOption.NOFOLLOW_LINKS) || Files.isSymbolicLink(include))
+    List<LazyLoadBody> lazyLoads = new ArrayList<>();
+    int index = 0;
+    while (matcher.find())
     {
-      throw new IOException("Codex path-scoped rule include is not a regular file: " + include);
+      String declarationPath = matcher.group(1);
+      Path include = resolveLazyLoadInclude(rule.path(), declarationPath);
+      if (!Files.isRegularFile(include, LinkOption.NOFOLLOW_LINKS) || Files.isSymbolicLink(include))
+      {
+        throw new IOException("Codex path-scoped rule include is not a regular file: " + include);
+      }
+      String body = FrontmatterUtils.stripFrontmatter(Files.readString(include, StandardCharsets.UTF_8));
+      ++index;
+      lazyLoads.add(new LazyLoadBody(declarationPath, body,
+        lazyLoadBodyPath(outputRoot, namespace, rule.contextPath(), index, include)));
     }
-    String body = FrontmatterUtils.stripFrontmatter(Files.readString(include, StandardCharsets.UTF_8));
-    return new BodySource(body, rule.content());
+    if (lazyLoads.isEmpty())
+      return new BodySource(rule.content(), null, bodyPath(outputRoot, namespace, rule.contextPath()), List.of());
+    return new BodySource(null, rule.content(), lazyLoads.getFirst().bodyPath(), lazyLoads);
+  }
+
+  /**
+   * Resolves an authored lazy-load include path and confines it to the rule tree's include directory.
+   *
+   * @param rulePath        the rule source path
+   * @param declarationPath the authored lazy-load path
+   * @return the resolved include path
+   * @throws IOException if the include path is unsafe
+   */
+  private static Path resolveLazyLoadInclude(Path rulePath, String declarationPath) throws IOException
+  {
+    Path relativeDeclaration = Path.of(declarationPath);
+    if (relativeDeclaration.isAbsolute())
+      throw new IOException("Codex path-scoped rule include must be relative: " + declarationPath);
+    Path ruleDirectory = rulePath.getParent();
+    Path rulesRoot = ruleDirectory.getParent();
+    if (rulesRoot == null)
+      throw new IOException("Codex path-scoped rule has no rules root: " + rulePath);
+    Path includeRoot = rulesRoot.resolve("include").toAbsolutePath().normalize();
+    Path include = ruleDirectory.resolve(relativeDeclaration).toAbsolutePath().normalize();
+    if (!include.startsWith(includeRoot))
+      throw new IOException("Codex path-scoped rule include escapes rules/include: " + declarationPath);
+    requireNoSymlinkInExistingPath(include.getParent());
+    return include;
   }
 
   /**
@@ -196,6 +254,24 @@ final class CodexPathRuleContext
         ": " + output);
     }
     return output;
+  }
+
+  /**
+   * Returns the generated body path for an authored lazy-load declaration.
+   *
+   * @param outputRoot  the generated body root
+   * @param namespace   the source namespace
+   * @param contextPath the source rule context path
+   * @param index       the declaration index within the rule
+   * @param include     the source include file
+   * @return the generated body path
+   * @throws IOException if the path would escape the output root
+   */
+  private static Path lazyLoadBodyPath(Path outputRoot, String namespace, String contextPath, int index,
+    Path include) throws IOException
+  {
+    String fileName = "%02d-%s".formatted(index, include.getFileName());
+    return bodyPath(outputRoot, namespace, contextPath + ".lazy-loads/" + fileName);
   }
 
   /**
@@ -265,9 +341,21 @@ final class CodexPathRuleContext
       String stubTemplateText = null;
       if (stubTemplate.isString())
         stubTemplateText = stubTemplate.asString();
+      List<LazyLoadDeclaration> lazyLoads = new ArrayList<>();
+      JsonNode lazyLoadsNode = entry.path("lazyLoads");
+      if (lazyLoadsNode.isArray())
+      {
+        for (JsonNode lazyLoad : lazyLoadsNode)
+        {
+          String declarationPath = lazyLoad.path("declarationPath").asString();
+          String lazyLoadBodyPath = lazyLoad.path("bodyPath").asString();
+          if (!declarationPath.isBlank() && !lazyLoadBodyPath.isBlank())
+            lazyLoads.add(new LazyLoadDeclaration(declarationPath, Path.of(lazyLoadBodyPath)));
+        }
+      }
       result.add(new ManifestEntry(contextPath, entry.path("mainAgent").asBoolean(false), subAgents,
         paths, entry.path("title").asString("# " + Path.of(contextPath).getFileName()),
-        stubTemplateText, Path.of(bodyPathText)));
+        stubTemplateText, Path.of(bodyPathText), lazyLoads));
     }
     return result;
   }
@@ -318,6 +406,13 @@ final class CodexPathRuleContext
       else
         entryNode.put("stubTemplate", entry.stubTemplate());
       entryNode.put("bodyPath", entry.bodyPath().toString());
+      ArrayNode lazyLoads = entryNode.putArray("lazyLoads");
+      for (LazyLoadDeclaration lazyLoad : entry.lazyLoads())
+      {
+        ObjectNode lazyLoadNode = lazyLoads.addObject();
+        lazyLoadNode.put("declarationPath", lazyLoad.declarationPath());
+        lazyLoadNode.put("bodyPath", lazyLoad.bodyPath().toString());
+      }
     }
     FileSystemUtils.writeStringIfChanged(manifest,
       scope.getJsonMapper().writerWithDefaultPrettyPrinter().writeValueAsString(root) + "\n");
@@ -336,18 +431,37 @@ final class CodexPathRuleContext
   {
     Set<Path> currentBodies = new HashSet<>();
     for (ManifestEntry entry : currentEntries)
+    {
       currentBodies.add(entry.bodyPath().toAbsolutePath().normalize());
+      for (LazyLoadDeclaration lazyLoad : entry.lazyLoads())
+        currentBodies.add(lazyLoad.bodyPath().toAbsolutePath().normalize());
+    }
     for (ManifestEntry previous : previousEntries)
     {
-      Path previousBody = previous.bodyPath().toAbsolutePath().normalize();
-      if (!previousBody.startsWith(outputRoot) || currentBodies.contains(previousBody) ||
-        !Files.exists(previousBody, LinkOption.NOFOLLOW_LINKS))
-      {
-        continue;
-      }
-      Files.delete(previousBody);
+      deleteStaleBody(outputRoot, currentBodies, previous.bodyPath());
+      for (LazyLoadDeclaration lazyLoad : previous.lazyLoads())
+        deleteStaleBody(outputRoot, currentBodies, lazyLoad.bodyPath());
     }
     pruneEmptyDirectories(outputRoot);
+  }
+
+  /**
+   * Deletes a generated body if it is no longer referenced by the manifest.
+   *
+   * @param outputRoot    the generated body root
+   * @param currentBodies generated bodies still referenced by the current manifest
+   * @param bodyPath      the previous generated body path
+   * @throws IOException if file deletion fails
+   */
+  private static void deleteStaleBody(Path outputRoot, Set<Path> currentBodies, Path bodyPath) throws IOException
+  {
+    Path previousBody = bodyPath.toAbsolutePath().normalize();
+    if (!previousBody.startsWith(outputRoot) || currentBodies.contains(previousBody) ||
+      !Files.exists(previousBody, LinkOption.NOFOLLOW_LINKS))
+    {
+      return;
+    }
+    Files.delete(previousBody);
   }
 
   /**
@@ -411,19 +525,14 @@ final class CodexPathRuleContext
     String stub;
     if (entry.stubTemplate() == null)
     {
-      String directive;
-      if (entry.contextPath().startsWith(".cat/"))
-        directive = "Apply `.cat/rules/codex/rule-loading.md`.";
-      else
-        directive = "Apply `rules/codex/rule-loading.md`.";
       stub = entry.title() + "\n\n" +
         "`paths` = " + toJsonArray(entry.paths()) + "\n" +
-        "`include` = `" + bodyPath + "`\n\n" +
-        directive + "\n";
+        lazyLoad(bodyPath) + "\n\n" +
+        ruleLoadingDirective() + "\n";
     }
     else
     {
-      stub = renderTemplateStub(entry.stubTemplate(), entry.paths(), bodyPath);
+      stub = renderTemplateStub(entry.stubTemplate(), entry.paths(), bodyPath, entry.lazyLoads());
     }
     return "<rule path=\"" + escapeXmlAttribute(entry.contextPath()) + "\">\n" + stub + "</rule>";
   }
@@ -431,22 +540,78 @@ final class CodexPathRuleContext
   /**
    * Renders an authored Codex stub template with generated path metadata.
    *
-   * @param template the authored stub template
-   * @param paths    the path globs
-   * @param bodyPath the generated body path
+   * @param template    the authored stub template
+   * @param paths       the path globs
+   * @param bodyPath    the generated body path
+   * @param lazyLoads   authored lazy-load declarations and their generated body paths
    * @return the rendered stub
    */
-  private static String renderTemplateStub(String template, List<String> paths, String bodyPath)
+  private static String renderTemplateStub(String template, List<String> paths, String bodyPath,
+    List<LazyLoadDeclaration> lazyLoads)
   {
-    String replacement = "`paths` = " + toJsonArray(paths) + "\n" +
-      "`include` = `" + bodyPath + "`";
+    String pathMetadata = "`paths` = " + toJsonArray(paths) + "\n";
     Matcher matcher = INCLUDE_DECLARATION.matcher(template);
-    String rendered;
-    if (matcher.find())
-      rendered = matcher.replaceFirst(Matcher.quoteReplacement(replacement));
-    else
-      rendered = template + "\n\n" + replacement + "\n";
+    StringBuilder renderedBuilder = new StringBuilder(template.length());
+    int replacementIndex = 0;
+    while (matcher.find())
+    {
+      String replacementPath = bodyPath;
+      if (replacementIndex < lazyLoads.size())
+        replacementPath = lazyLoads.get(replacementIndex).bodyPath().toString().replace('\\', '/');
+      StringBuilder replacement = new StringBuilder();
+      if (replacementIndex == 0)
+        replacement.append(pathMetadata);
+      replacement.append(lazyLoad(replacementPath));
+      matcher.appendReplacement(renderedBuilder, Matcher.quoteReplacement(replacement.toString()));
+      ++replacementIndex;
+    }
+    matcher.appendTail(renderedBuilder);
+    String rendered = renderedBuilder.toString();
+    if (replacementIndex == 0)
+    {
+      rendered = template + "\n\n" + pathMetadata +
+        lazyLoad(bodyPath) + "\n";
+    }
+    if (!hasRuleLoadingDirective(rendered))
+      rendered = ensureTrailingNewline(rendered) + "\n" + ruleLoadingDirective() + "\n";
     return ensureTrailingNewline(rendered);
+  }
+
+  /**
+   * Returns true if the rendered stub already contains the standalone rule-loading directive.
+   *
+   * @param rendered the rendered stub
+   * @return true if the directive is present on its own line
+   */
+  private static boolean hasRuleLoadingDirective(String rendered)
+  {
+    for (String line : rendered.lines().toList())
+    {
+      if (line.strip().equals(ruleLoadingDirective()))
+        return true;
+    }
+    return false;
+  }
+
+  /**
+   * Returns the rule-loading directive.
+   *
+   * @return the directive
+   */
+  private static String ruleLoadingDirective()
+  {
+    return "Apply `rules/codex/path-filter.md`.";
+  }
+
+  /**
+   * Renders a lazy-load declaration.
+   *
+   * @param path the include path
+   * @return the declaration
+   */
+  private static String lazyLoad(String path)
+  {
+    return "Lazy load `" + path + "`.";
   }
 
   /**
@@ -623,9 +788,11 @@ final class CodexPathRuleContext
    * @param title       the heading to show in the lazy-loading stub
    * @param stubTemplate the authored stub template, or null for generated title-only stubs
    * @param bodyPath    the generated body file path
+   * @param lazyLoads   authored lazy-load declarations and their generated body paths
    */
   private record ManifestEntry(String contextPath, boolean mainAgent, List<String> subAgents,
-                               List<String> paths, String title, String stubTemplate, Path bodyPath)
+                               List<String> paths, String title, String stubTemplate, Path bodyPath,
+                               List<LazyLoadDeclaration> lazyLoads)
   {
     /**
      * Creates a manifest entry.
@@ -637,6 +804,7 @@ final class CodexPathRuleContext
      * @param title        the heading to show in the lazy-loading stub
      * @param stubTemplate the authored stub template, or null for generated title-only stubs
      * @param bodyPath     the generated body file path
+     * @param lazyLoads    authored lazy-load declarations and their generated body paths
      */
     private ManifestEntry
     {
@@ -644,9 +812,33 @@ final class CodexPathRuleContext
       requireThat(paths, "paths").isNotEmpty();
       requireThat(title, "title").isNotBlank();
       requireThat(bodyPath, "bodyPath").isNotNull();
+      requireThat(lazyLoads, "lazyLoads").isNotNull();
       if (subAgents != null)
         subAgents = List.copyOf(subAgents);
       paths = List.copyOf(paths);
+      bodyPath = bodyPath.toAbsolutePath().normalize();
+      lazyLoads = List.copyOf(lazyLoads);
+    }
+  }
+
+  /**
+   * Authored lazy-load declaration and generated body path.
+   *
+   * @param declarationPath the authored declaration path
+   * @param bodyPath        the generated body file path
+   */
+  private record LazyLoadDeclaration(String declarationPath, Path bodyPath)
+  {
+    /**
+     * Creates a lazy-load declaration.
+     *
+     * @param declarationPath the authored declaration path
+     * @param bodyPath        the generated body file path
+     */
+    private LazyLoadDeclaration
+    {
+      requireThat(declarationPath, "declarationPath").isNotBlank();
+      requireThat(bodyPath, "bodyPath").isNotNull();
       bodyPath = bodyPath.toAbsolutePath().normalize();
     }
   }
@@ -656,18 +848,52 @@ final class CodexPathRuleContext
    *
    * @param body         the body file content
    * @param stubTemplate the authored stub template, or null for generated title-only stubs
+   * @param bodyPath     the generated body file path
+   * @param lazyLoads    generated lazy-load body files
    */
-  private record BodySource(String body, String stubTemplate)
+  private record BodySource(String body, String stubTemplate, Path bodyPath, List<LazyLoadBody> lazyLoads)
   {
     /**
      * Creates a body source.
      *
      * @param body         the body file content
      * @param stubTemplate the authored stub template, or null for generated title-only stubs
+     * @param bodyPath     the generated body file path
+     * @param lazyLoads    generated lazy-load body files
      */
     private BodySource
     {
+      requireThat(bodyPath, "bodyPath").isNotNull();
+      requireThat(lazyLoads, "lazyLoads").isNotNull();
+      if (lazyLoads.isEmpty())
+        requireThat(body, "body").isNotNull();
+      bodyPath = bodyPath.toAbsolutePath().normalize();
+      lazyLoads = List.copyOf(lazyLoads);
+    }
+  }
+
+  /**
+   * Generated body for an authored lazy-load declaration.
+   *
+   * @param declarationPath the authored declaration path
+   * @param body            the generated body content
+   * @param bodyPath        the generated body file path
+   */
+  private record LazyLoadBody(String declarationPath, String body, Path bodyPath)
+  {
+    /**
+     * Creates a lazy-load body.
+     *
+     * @param declarationPath the authored declaration path
+     * @param body            the generated body content
+     * @param bodyPath        the generated body file path
+     */
+    private LazyLoadBody
+    {
+      requireThat(declarationPath, "declarationPath").isNotBlank();
       requireThat(body, "body").isNotNull();
+      requireThat(bodyPath, "bodyPath").isNotNull();
+      bodyPath = bodyPath.toAbsolutePath().normalize();
     }
   }
 }

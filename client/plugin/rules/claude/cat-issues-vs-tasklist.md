@@ -1,11 +1,11 @@
----
-agents: ["main"]
----
 <!--
 Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
+---
+agents: ["main"]
+---
 # Terminology: CAT Issues vs Claude TaskList
 
 **CRITICAL DISTINCTION:** Two different "task" systems exist. Never conflate them.

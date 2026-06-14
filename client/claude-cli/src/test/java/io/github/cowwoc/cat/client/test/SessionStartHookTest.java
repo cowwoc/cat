@@ -80,7 +80,7 @@ public class SessionStartHookTest
       Path resumedDir = sessionEnvBase.resolve(resumedId);
       Files.createDirectories(startupDir);
       Files.createDirectories(resumedDir);
-      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+      Path envFile = startupDir.resolve("session-start-hook-1.sh");
 
       Path projectPath = Files.createTempDirectory("cat-test-project-");
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -96,7 +96,7 @@ public class SessionStartHookTest
           requireThat(result.stderr(), "stderr").isEmpty();
         }
         // Env file must be written to resumed session dir, not to startup dir
-        Path resumedEnvFile = resumedDir.resolve("sessionstart-hook-1.sh");
+        Path resumedEnvFile = resumedDir.resolve("session-start-hook-1.sh");
         requireThat(Files.exists(resumedEnvFile), "resumedEnvFileExists").isTrue();
         String content = Files.readString(resumedEnvFile);
         requireThat(content, "content").contains("CAT_SESSION_ID=\"" + resumedId + "\"");
@@ -137,7 +137,7 @@ public class SessionStartHookTest
       Path sessionEnvBase = tempBase.resolve("session-env");
       Path startupDir = sessionEnvBase.resolve(startupId);
       Files.createDirectories(startupDir);
-      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+      Path envFile = startupDir.resolve("session-start-hook-1.sh");
 
       Path projectPath = Files.createTempDirectory("cat-test-project-");
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -184,8 +184,8 @@ public class SessionStartHookTest
       Path resumedDir = sessionEnvBase.resolve(resumedId);
       Files.createDirectories(startupDir);
       Files.createDirectories(resumedDir);
-      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
-      Path resumedEnvFile = resumedDir.resolve("sessionstart-hook-1.sh");
+      Path envFile = startupDir.resolve("session-start-hook-1.sh");
+      Path resumedEnvFile = resumedDir.resolve("session-start-hook-1.sh");
 
       // Pre-populate the resumed session env file as if a prior startup write had already done so
       Files.writeString(resumedEnvFile,
@@ -252,7 +252,7 @@ public class SessionStartHookTest
       Path resumedDir = sessionEnvBase.resolve(resumedId);
       Files.createDirectories(resumedDir);
       // CLAUDE_ENV_FILE is inside the resumed dir (not a separate startup dir)
-      Path envFile = resumedDir.resolve("sessionstart-hook-1.sh");
+      Path envFile = resumedDir.resolve("session-start-hook-1.sh");
 
       Path projectPath = Files.createTempDirectory("cat-test-project-");
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -303,7 +303,7 @@ public class SessionStartHookTest
       Path sessionEnvBase = tempBase.resolve("session-env");
       Path clearSessionDir = sessionEnvBase.resolve(clearSessionId);
       Files.createDirectories(clearSessionDir);
-      Path envFile = clearSessionDir.resolve("sessionstart-hook-1.sh");
+      Path envFile = clearSessionDir.resolve("session-start-hook-1.sh");
 
       Path projectPath = Files.createTempDirectory("cat-test-project-");
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -354,7 +354,7 @@ public class SessionStartHookTest
       Path nonUuidDir = sessionEnvBase.resolve("not-a-uuid");
       Files.createDirectories(startupDir);
       Files.createDirectories(nonUuidDir);
-      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+      Path envFile = startupDir.resolve("session-start-hook-1.sh");
 
       Path projectPath = Files.createTempDirectory("cat-test-project-");
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -368,7 +368,7 @@ public class SessionStartHookTest
           new InjectEnv(hook, envFile).handle();
         }
         // Non-UUID directory should not have an env file written
-        Path nonUuidEnvFile = nonUuidDir.resolve("sessionstart-hook-1.sh");
+        Path nonUuidEnvFile = nonUuidDir.resolve("session-start-hook-1.sh");
         requireThat(Files.exists(nonUuidEnvFile), "nonUuidEnvFileExists").isFalse();
       }
       finally
@@ -397,7 +397,7 @@ public class SessionStartHookTest
       Path sessionEnvBase = tempBase.resolve("session-env");
       Path startupDir = sessionEnvBase.resolve(startupId);
       Files.createDirectories(startupDir);
-      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+      Path envFile = startupDir.resolve("session-start-hook-1.sh");
 
       Path projectPath = Files.createTempDirectory("cat-test-project-");
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -452,7 +452,7 @@ public class SessionStartHookTest
       Path sessionEnvBase = tempBase.resolve("session-env");
       Path startupDir = sessionEnvBase.resolve(startupId);
       Files.createDirectories(startupDir);
-      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+      Path envFile = startupDir.resolve("session-start-hook-1.sh");
 
       Path projectPath = Files.createTempDirectory("cat-test-project-");
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -496,7 +496,7 @@ public class SessionStartHookTest
       // envFile is directly in tempBase (no sessionEnvBase subdirectory)
       Path startupDir = tempBase.resolve(startupId);
       Files.createDirectories(startupDir);
-      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+      Path envFile = startupDir.resolve("session-start-hook-1.sh");
 
       Path projectPath = Files.createTempDirectory("cat-test-project-");
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -545,7 +545,7 @@ public class SessionStartHookTest
       Files.createDirectories(realTarget);
       Path symlinkDir = sessionEnvBase.resolve(symlinkId);
       Files.createSymbolicLink(symlinkDir, realTarget);
-      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+      Path envFile = startupDir.resolve("session-start-hook-1.sh");
 
       Path projectPath = Files.createTempDirectory("cat-test-project-");
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -559,7 +559,7 @@ public class SessionStartHookTest
           new InjectEnv(hook, envFile).handle();
         }
         // Symlink directory should not have an env file written inside it
-        Path symlinkEnvFile = symlinkDir.resolve("sessionstart-hook-1.sh");
+        Path symlinkEnvFile = symlinkDir.resolve("session-start-hook-1.sh");
         requireThat(Files.exists(symlinkEnvFile), "symlinkEnvFileExists").isFalse();
       }
       finally
@@ -594,7 +594,7 @@ public class SessionStartHookTest
       Path sessionEnvBase = tempBase.resolve("session-env");
       Path startupDir = sessionEnvBase.resolve(startupId);
       Files.createDirectories(startupDir);
-      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+      Path envFile = startupDir.resolve("session-start-hook-1.sh");
 
       // Inject a projectPath path that contains '$' - a dangerous shell character
       // Path.of() allows this without touching the filesystem
@@ -640,7 +640,7 @@ public class SessionStartHookTest
       Path sessionEnvBase = tempBase.resolve("session-env");
       Path startupDir = sessionEnvBase.resolve(startupId);
       Files.createDirectories(startupDir);
-      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+      Path envFile = startupDir.resolve("session-start-hook-1.sh");
 
       // Inject a projectPath path that contains '"' - a dangerous shell character
       // Path.of() allows this without touching the filesystem
@@ -685,7 +685,7 @@ public class SessionStartHookTest
       Path sessionEnvBase = tempBase.resolve("session-env");
       Path startupDir = sessionEnvBase.resolve(startupId);
       Files.createDirectories(startupDir);
-      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+      Path envFile = startupDir.resolve("session-start-hook-1.sh");
 
       // Inject a projectPath path that contains '`' - a dangerous shell character
       // Path.of() allows this without touching the filesystem
@@ -730,7 +730,7 @@ public class SessionStartHookTest
       Path sessionEnvBase = tempBase.resolve("session-env");
       Path startupDir = sessionEnvBase.resolve(startupId);
       Files.createDirectories(startupDir);
-      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+      Path envFile = startupDir.resolve("session-start-hook-1.sh");
 
       // Inject a projectPath path that contains '\n' - a dangerous shell character
       // Path.of() allows this without touching the filesystem
@@ -775,14 +775,14 @@ public class SessionStartHookTest
       Path sessionEnvBase = tempBase.resolve("session-env");
       Path startupDir = sessionEnvBase.resolve(startupId);
       Files.createDirectories(startupDir);
-      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+      Path envFile = startupDir.resolve("session-start-hook-1.sh");
 
       // Create the resumed session directory and place a symlink at the env file location
       Path resumedSessionDir = sessionEnvBase.resolve(resumedId);
       Files.createDirectories(resumedSessionDir);
       Path realEnvTarget = tempBase.resolve("real-env-target.sh");
       Files.writeString(realEnvTarget, "# real target");
-      Path resumedEnvFile = resumedSessionDir.resolve("sessionstart-hook-1.sh");
+      Path resumedEnvFile = resumedSessionDir.resolve("session-start-hook-1.sh");
       Files.createSymbolicLink(resumedEnvFile, realEnvTarget);
 
       Path projectPath = Files.createTempDirectory("cat-test-project-");
@@ -831,7 +831,7 @@ public class SessionStartHookTest
       // Create a real target file and then create envFile as a symlink pointing to it
       Path realTarget = tempBase.resolve("real-target.sh");
       Files.writeString(realTarget, "# real target");
-      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+      Path envFile = startupDir.resolve("session-start-hook-1.sh");
       Files.createSymbolicLink(envFile, realTarget);
 
       Path projectPath = Files.createTempDirectory("cat-test-project-");
@@ -877,7 +877,7 @@ public class SessionStartHookTest
       Path sessionEnvBase = tempBase.resolve("session-env");
       Path startupDir = sessionEnvBase.resolve(startupId);
       Files.createDirectories(startupDir);
-      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+      Path envFile = startupDir.resolve("session-start-hook-1.sh");
 
       // Inject a pluginRoot path that contains '$' - a dangerous shell character
       // Path.of() allows this without touching the filesystem
@@ -922,7 +922,7 @@ public class SessionStartHookTest
       Path sessionEnvBase = tempBase.resolve("session-env");
       Path startupDir = sessionEnvBase.resolve(startupId);
       Files.createDirectories(startupDir);
-      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+      Path envFile = startupDir.resolve("session-start-hook-1.sh");
 
       Path projectPath = Files.createTempDirectory("cat-test-project-");
       Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");

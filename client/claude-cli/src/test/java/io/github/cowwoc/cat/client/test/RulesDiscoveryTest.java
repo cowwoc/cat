@@ -63,6 +63,48 @@ public final class RulesDiscoveryTest
   }
 
   /**
+   * Verifies that source Markdown license headers may appear before rule frontmatter.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void frontmatterMayFollowLicenseHeader() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("rules-test-");
+    try
+    {
+      Path rulesDir = tempDir.resolve("rules");
+      Files.createDirectories(rulesDir);
+      Files.writeString(rulesDir.resolve("licensed.md"), """
+        <!--
+        Copyright (c) 2026 Gili Tzabari. All rights reserved.
+        Licensed under the CAT Commercial License.
+        See LICENSE.md in the project root for license terms.
+        -->
+        ---
+        paths: ["*.java"]
+        agents: ["main"]
+        ---
+        # Licensed Rule
+        """);
+
+      List<RuleFile> rules = new RulesDiscovery(rulesDir, YAML_MAPPER).discoverAll();
+
+      requireThat(rules.size(), "rules.size()").isEqualTo(1);
+      RuleFile rule = rules.getFirst();
+      requireThat(rule.mainAgent(), "mainAgent").isTrue();
+      requireThat(rule.subAgents(), "subAgents").isEmpty();
+      requireThat(rule.paths(), "paths").containsExactly(List.of("*.java"));
+      requireThat(rule.content(), "content").contains("Licensed Rule");
+      requireThat(rule.content(), "content").doesNotContain("paths:");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that index files document rule directories without being injected as rules.
    *
    * @throws IOException if file operations fail

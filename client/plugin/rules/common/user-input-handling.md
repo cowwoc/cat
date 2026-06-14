@@ -1,11 +1,11 @@
----
-agents: ["main"]
----
 <!--
 Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
+---
+agents: ["main"]
+---
 ## User Input Handling
 **MANDATORY**: Process ALL user input IMMEDIATELY, regardless of how it arrives.
 

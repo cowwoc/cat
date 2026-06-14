@@ -1,11 +1,11 @@
----
-agents: ["main"]
----
 <!--
 Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
+---
+agents: ["main"]
+---
 ## Issue Lock Checking
 **CRITICAL**: Lock status is managed by the `issue-lock` CLI tool. NEVER probe the filesystem.
 

@@ -1,11 +1,11 @@
----
-agents: ["main"]
----
 <!--
 Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
+---
+agents: ["main"]
+---
 ## Work Request Handling
 **DEFAULT BEHAVIOR**: When user requests work, propose task creation first. Ask Claude to add an issue.
 

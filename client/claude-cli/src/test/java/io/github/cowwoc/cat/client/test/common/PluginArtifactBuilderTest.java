@@ -67,6 +67,12 @@ public final class PluginArtifactBuilderTest
         "claudePluginJson").doesNotContain("\"commands\"");
       requireThat(Files.readString(codexRoot.resolve(".codex-plugin/plugin.json"), StandardCharsets.UTF_8),
         "codexPluginJson").doesNotContain("\"commands\"");
+      requireThat(claudeRoot.resolve("rules/common/lazy-load.md"), "claudeLazyLoad").isRegularFile();
+      requireThat(codexRoot.resolve("rules/common/lazy-load.md"), "codexLazyLoad").isRegularFile();
+      requireThat(Files.readString(claudeRoot.resolve("rules/common/lazy-load.md"), StandardCharsets.UTF_8),
+        "claudeLazyLoadContent").doesNotContain("Copyright (c) 2026");
+      requireThat(Files.readString(codexRoot.resolve("rules/common/lazy-load.md"), StandardCharsets.UTF_8),
+        "codexLazyLoadContent").doesNotContain("Copyright (c) 2026");
       requireThat(countSkillDirectories(claudeRoot), "claudeSkillDirectoryCount").isEqualTo(2L);
       requireThat(countSkillDirectories(codexRoot), "codexSkillDirectoryCount").isEqualTo(3L);
       requireThat(claudeRoot.resolve("skills/common-skill/SKILL.md"), "claudeCommonSkill").isRegularFile();
@@ -967,6 +973,11 @@ public final class PluginArtifactBuilderTest
       Path targetDir = clientDir.resolve("distribution/target/engine");
       createPluginSource(repoRoot, clientDir, pluginDir);
       Files.writeString(pluginDir.resolve("rules/common/java.md"), """
+        <!--
+        Copyright (c) 2026 Gili Tzabari. All rights reserved.
+        Licensed under the CAT Commercial License.
+        See LICENSE.md in the project root for license terms.
+        -->
         ---
         paths: ["*.java"]
         ---
@@ -981,6 +992,58 @@ public final class PluginArtifactBuilderTest
         "codexStubExists").isFalse();
       requireThat(Files.readString(targetDir.resolve("codex/rules/common/java.md"), StandardCharsets.UTF_8),
         "commonRuleContent").contains("paths: [\"*.java\"]");
+      requireThat(Files.readString(targetDir.resolve("codex/rules/common/java.md"), StandardCharsets.UTF_8),
+        "commonRuleContent").doesNotContain("Copyright (c) 2026");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies engine artifacts include lazy-loaded rule body files.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void buildIncludesRuleIncludeFiles() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try
+    {
+      Path repoRoot = tempDir.resolve("repo");
+      Path clientDir = repoRoot.resolve("client");
+      Path pluginDir = clientDir.resolve("plugin");
+      Path targetDir = clientDir.resolve("distribution/target/engine");
+      createPluginSource(repoRoot, clientDir, pluginDir);
+      Files.writeString(pluginDir.resolve("rules/common/lazy.md"), """
+        # Lazy Rule
+
+        Before detailed work, read `../include/topic/lazy.md`.
+        """, StandardCharsets.UTF_8);
+      Files.createDirectories(pluginDir.resolve("rules/include/topic"));
+      Files.writeString(pluginDir.resolve("rules/include/topic/lazy.md"), """
+        <!--
+        Copyright (c) 2026 Gili Tzabari. All rights reserved.
+        Licensed under the CAT Commercial License.
+        See LICENSE.md in the project root for license terms.
+        -->
+        # Lazy Rule Details
+
+        Detailed guidance.
+        """, StandardCharsets.UTF_8);
+
+      new PluginArtifactBuilder(pluginDir, clientDir, targetDir).build();
+
+      Path claudeInclude = targetDir.resolve("claude/rules/include/topic/lazy.md");
+      Path codexInclude = targetDir.resolve("codex/rules/include/topic/lazy.md");
+      requireThat(claudeInclude, "claudeInclude").isRegularFile();
+      requireThat(codexInclude, "codexInclude").isRegularFile();
+      requireThat(Files.readString(claudeInclude, StandardCharsets.UTF_8), "claudeIncludeContent").
+        isEqualTo("# Lazy Rule Details\n\nDetailed guidance.\n");
+      requireThat(Files.readString(codexInclude, StandardCharsets.UTF_8), "codexIncludeContent").
+        isEqualTo("# Lazy Rule Details\n\nDetailed guidance.\n");
     }
     finally
     {
@@ -1030,9 +1093,9 @@ public final class PluginArtifactBuilderTest
     Files.createDirectories(clientDir);
     Files.writeString(repoRoot.resolve("LICENSE.md"), "license\n", StandardCharsets.UTF_8);
     for (String directory : new String[]{
-      ".git-filter-repo-config", "concepts", "config", "lang", "lib", "migrations", "migrations/lib", "scripts",
-      "templates", ".claude-plugin", ".codex-plugin", "rules/common", "rules/claude",
-      "rules/codex", "hooks/common", "hooks/claude", "hooks/codex",
+      ".git-filter-repo-config", "common", "concepts", "config", "lang", "lib", "migrations",
+      "migrations/lib", "scripts", "templates", ".claude-plugin", ".codex-plugin", "rules/common", "rules/claude",
+      "rules/codex", "rules/include", "hooks/common", "hooks/claude", "hooks/codex",
       "skills/common/common-skill", "skills/claude/claude-skill",
       "skills/codex/codex-skill", "skills/codex/uninstall", "agents/common", "agents/claude", "agents/codex"})
     {
@@ -1051,6 +1114,8 @@ public final class PluginArtifactBuilderTest
     Files.writeString(pluginDir.resolve("emoji-widths.json"), "{}\n", StandardCharsets.UTF_8);
     Files.writeString(pluginDir.resolve("package.json"), "{}\n", StandardCharsets.UTF_8);
     Files.writeString(pluginDir.resolve("package-lock.json"), "{}\n", StandardCharsets.UTF_8);
+    Files.writeString(pluginDir.resolve("rules/common/lazy-load.md"), MARKDOWN_LICENSE + "# Lazy Loading\n",
+      StandardCharsets.UTF_8);
     ensureBundledGitFilterRepo(pluginDir);
     Path javaLauncher = clientDir.resolve("distribution/target/jlink/claude/bin/java");
     Files.writeString(javaLauncher, """

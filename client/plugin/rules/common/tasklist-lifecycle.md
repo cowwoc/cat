@@ -1,11 +1,11 @@
----
-agents: ["main"]
----
 <!--
 Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
+---
+agents: ["main"]
+---
 ## TaskList Lifecycle After Major Operations
 
 **MANDATORY**: After any major CAT operation completes, update the TaskList to reflect the current

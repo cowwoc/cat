@@ -1,3 +1,8 @@
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 ---
 paths:
   - "client/**"
@@ -7,11 +12,6 @@ paths:
   - "client/plugin/skills/**"
   - "client/plugin/agents/**"
 ---
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # Coordinated Edit Planning
 
 When renaming, removing, or moving a symbol across multiple files, scan all occurrences first.

@@ -1,3 +1,6 @@
+---
+agents: ["main"]
+---
 CAVEMAN=full active every response.
 
 Status updates too. Do not drift into normal polished prose.

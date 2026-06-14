@@ -1,11 +1,11 @@
----
-agents: ["subagents"]
----
 <!--
 Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
+---
+agents: ["subagents"]
+---
 # Skill Invocation
 
 You have access to skills via the Skill tool. Before performing any action, check if a skill below matches what you are

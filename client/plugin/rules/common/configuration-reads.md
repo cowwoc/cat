@@ -1,12 +1,12 @@
----
-agents: ["main", "cat:work-implement"]
-paths: [".cat/config.json", "*.sh"]
----
 <!--
 Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
+---
+agents: ["main", "cat:work-implement"]
+paths: [".cat/config.json", "*.sh"]
+---
 # Configuration Reads in Worktrees
 
 **MANDATORY:** Agents must read `config.json` from disk **BEFORE** using behavioral configuration values (trust

@@ -21,6 +21,9 @@ path matching. Codex main SessionStart writes path-scoped bodies into the CAT pl
 lazy-loading stubs that point there. Codex subagents reuse the main-agent manifest and body files instead of
 regenerating them.
 
+Detailed bodies for lazy-loading stubs may live in `.cat/rules/include/`. Files in that directory are not discovered as
+standalone rules; top-level `.cat/rules/common/*.md` or `.cat/rules/<engine>/*.md` files must name when to read them.
+
 ## Always-On Rules
 
 | Rule File | Audience | Paths | Purpose |
@@ -44,25 +47,25 @@ regenerating them.
 | Rule File | Audience | Paths | Purpose |
 |-----------|----------|-------|---------|
 | [bug-workaround.md](bug-workaround.md) | all agents | `client/**` | Standard comment format for external bug workarounds |
-| [cli-output-format.md](cli-output-format.md) | all agents | `client/**`, `plugin/**` | Choose CLI output by consumer |
-| [data-structures.md](data-structures.md) | all agents | `client/**`, `plugin/**` | Standardize CAT-owned structured data |
-| [documentation-style.md](documentation-style.md) | all agents | `*.md`, `*.java` | Documentation wording and line-wrapping conventions |
-| [error-handling.md](error-handling.md) | all agents | `client/**`, `plugin/**` | Require meaningful fail-fast errors |
-| [hooks.md](hooks.md) | main agent only | `client/plugin/hooks/**`, `client/**/hook/**`, `client/**/hooks/**`, `.claude/settings.json`, `.codex/**` | Engine-neutral hook guidance |
+| [cli-output-format.md](cli-output-format.md) | all agents | `client/**`, `plugin/**` | Lazy index for CLI output-by-consumer rules |
+| [data-structures.md](data-structures.md) | all agents | `client/**`, `plugin/**` | Lazy index for CAT-owned structured data |
+| [documentation-style.md](documentation-style.md) | all agents | `*.md`, `*.java` | Lazy index for documentation wording conventions |
+| [error-handling.md](error-handling.md) | all agents | `client/**`, `plugin/**` | Lazy index for meaningful fail-fast errors |
+| [hooks.md](hooks.md) | main agent only | hook source paths, `.claude/settings.json`, `.codex/hooks.json`, `.codex/*hook*.sh`, `.codex/*session-start*.sh` | Lazy index for engine-neutral hook guidance |
 | [index-schema.md](index-schema.md) | all agents | `index.json`, `**/index.json` | Required schema for issue `index.json` files |
 | [jackson.md](jackson.md) | all agents | `*.java` | Use shared Jackson JsonMapper |
-| [java.md](java.md) | all agents | `*.java` | Java build, style, and testing conventions |
-| [language-requirements.md](language-requirements.md) | all agents | `plugin/**`, `client/**` | Use supported project languages |
-| [license-header.md](license-header.md) | all agents | `client/**`, `plugin/**`, `*.java`, `*.sh`, `*.md`, `*.toml` | Apply CAT license headers |
-| [llm-to-java.md](llm-to-java.md) | all agents | `client/**` | Extract deterministic skill logic into Java |
-| [multi-instance-safety.md](multi-instance-safety.md) | all agents | `plugin/**`, `client/**` | Isolate concurrent work |
+| [java.md](java.md) | all agents | `*.java` | Lazy index for Java build, style, and testing conventions |
+| [language-requirements.md](language-requirements.md) | all agents | `plugin/**`, `client/**` | Lazy index for supported project languages |
+| [license-header.md](license-header.md) | all agents | `client/**`, `plugin/**`, `*.java`, `*.sh`, `*.md`, `*.toml` | Lazy index for CAT license headers |
+| [llm-to-java.md](llm-to-java.md) | all agents | `client/**` | Lazy index for extracting deterministic skill logic into Java |
+| [multi-instance-safety.md](multi-instance-safety.md) | all agents | `plugin/**`, `client/**` | Lazy index for concurrent work isolation |
 | [naming-conventions.md](naming-conventions.md) | all agents | `client/**`, `plugin/**` | Standardize identifier casing |
 | [plugin-development.md](plugin-development.md) | all agents | `plugin/**`, `client/**` | Edit source worktrees, not installed caches |
-| [plugin-file-references.md](plugin-file-references.md) | all agents | `client/plugin/**` | Keep plugin references deployable |
-| [requirements-api.md](requirements-api.md) | all agents | `client/**` | Use requirements.java |
+| [plugin-file-references.md](plugin-file-references.md) | all agents | `client/plugin/**` | Lazy index for deployable plugin references |
+| [requirements-api.md](requirements-api.md) | all agents | `*.java` | Lazy index for requirements.java APIs |
 | [scope-passing.md](scope-passing.md) | all agents | `*.java` | Pass scope objects directly |
 | [shell-efficiency.md](shell-efficiency.md) | all agents | `*.sh` | Improve shell calls safely |
 | [skill-loading.md](skill-loading.md) | all agents | `client/plugin/skill-sources/**`, `client/plugin/agents/**` | Skill loading model and marker-file rules |
 | [skill-step-numbering.md](skill-step-numbering.md) | all agents | `client/plugin/skill-sources/**`, `client/plugin/agents/**` | Enforce sequential 1-based skill step numbering |
 | [skills.md](skills.md) | all agents | `client/plugin/skills/**` | Keep skill instructions in first-use.md |
-| [testing-conventions.md](testing-conventions.md) | all agents | `client/**` | Keep tests isolated and meaningful |
+| [testing-conventions.md](testing-conventions.md) | all agents | `client/**` | Lazy index for isolated and meaningful tests |

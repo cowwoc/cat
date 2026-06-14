@@ -214,7 +214,7 @@ public final class InjectEnv implements SessionStartHandler
    * The target directory must already exist before calling this method.
    *
    * @param targetDir        the directory to write the env file into
-   * @param envFileName      the filename of the env file (e.g. {@code sessionstart-hook-N.sh})
+   * @param envFileName      the filename of the env file (e.g. {@code session-start-hook-N.sh})
    * @param content          the export statements to write
    * @param warningIfSymlink the warning message to return if the env file is a symlink; pass empty string
    *                         if no warning should be returned in that case

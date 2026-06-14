@@ -264,6 +264,149 @@ public final class CodexSessionStartHookTest
   }
 
   /**
+   * Verifies authored lazy-load declarations use the standard compact rule-loading stub.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void sessionStartRendersAuthoredLazyLoadStub() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("codex-session-start-test-");
+    try
+    {
+      Fixture fixture = createFixture(tempDir);
+      Files.createDirectories(fixture.projectRoot().resolve(".cat/rules/include"));
+      Files.writeString(fixture.projectRoot().resolve(".cat/rules/common/hooks.md"), """
+        ---
+        paths: ["hooks/**"]
+        ---
+        # Hook Guidance
+
+        When working on hook behavior:
+        Lazy load `../include/hooks.md`.
+
+        When working on hook tests:
+        Lazy load `../include/hook-tests.md`.
+        """, StandardCharsets.UTF_8);
+      Files.writeString(fixture.projectRoot().resolve(".cat/rules/include/hooks.md"), """
+        # Hook Details
+
+        Detailed hook rule body.
+        """, StandardCharsets.UTF_8);
+      Files.writeString(fixture.projectRoot().resolve(".cat/rules/include/hook-tests.md"), """
+        # Hook Test Details
+
+        Detailed hook test rule body.
+        """, StandardCharsets.UTF_8);
+
+      SessionStartHook.HookResult result = run(fixture);
+
+      Path body = generatedBody(fixture.pluginData(), "project",
+        ".cat/rules/common/hooks.md.lazy-loads/01-hooks.md");
+      requireThat(Files.readString(body, StandardCharsets.UTF_8), "body").isEqualTo("""
+        # Hook Details
+
+        Detailed hook rule body.
+        """);
+      Path testBody = generatedBody(fixture.pluginData(), "project",
+        ".cat/rules/common/hooks.md.lazy-loads/02-hook-tests.md");
+      requireThat(Files.readString(testBody, StandardCharsets.UTF_8), "testBody").isEqualTo("""
+        # Hook Test Details
+
+        Detailed hook test rule body.
+        """);
+      String additionalContext = additionalContext(result.output());
+      requireThat(additionalContext, "additionalContext").contains("# Hook Guidance");
+      requireThat(additionalContext, "additionalContext").contains("`paths` = [\"hooks/**\"]");
+      requireThat(additionalContext, "additionalContext").contains(
+        "Lazy load `" + body.toString().replace('\\', '/') + "`.");
+      requireThat(additionalContext, "additionalContext").contains(
+        "Lazy load `" + testBody.toString().replace('\\', '/') + "`.");
+      requireThat(additionalContext, "additionalContext").contains(
+        "Apply `rules/codex/path-filter.md`.");
+      requireThat(additionalContext, "additionalContext").doesNotContain("Detailed hook rule body.");
+      requireThat(additionalContext, "additionalContext").doesNotContain("Detailed hook test rule body.");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies authored lazy-load declarations cannot read outside {@code rules/include}.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void sessionStartRejectsUnsafeLazyLoad() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("codex-session-start-test-");
+    try
+    {
+      Fixture fixture = createFixture(tempDir);
+      Files.writeString(fixture.projectRoot().resolve(".cat/rules/common/hooks.md"), """
+        ---
+        paths: ["hooks/**"]
+        ---
+        # Hook Guidance
+
+        When working on hook behavior:
+        Lazy load `../secret.md`.
+        """, StandardCharsets.UTF_8);
+      Files.writeString(fixture.projectRoot().resolve(".cat/rules/secret.md"), "# Secret\n",
+        StandardCharsets.UTF_8);
+
+      SessionStartHook.HookResult result = run(fixture);
+
+      requireThat(String.join("\n", result.warnings()), "warnings").contains("escapes rules/include");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies incidental references to path-filter.md do not suppress the required directive.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void sessionStartAddsPathFilterDirective() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("codex-session-start-test-");
+    try
+    {
+      Fixture fixture = createFixture(tempDir);
+      Files.createDirectories(fixture.projectRoot().resolve(".cat/rules/include"));
+      Files.writeString(fixture.projectRoot().resolve(".cat/rules/common/hooks.md"), """
+        ---
+        paths: ["hooks/**"]
+        ---
+        # Hook Guidance
+
+        This prose says Apply `rules/codex/path-filter.md`. but is not the directive.
+
+        When working on hook behavior:
+        Lazy load `../include/hooks.md`.
+        """, StandardCharsets.UTF_8);
+      Files.writeString(fixture.projectRoot().resolve(".cat/rules/include/hooks.md"), """
+        # Hook Details
+        """, StandardCharsets.UTF_8);
+
+      SessionStartHook.HookResult result = run(fixture);
+
+      requireThat(additionalContext(result.output()), "additionalContext").contains(
+        "Apply `rules/codex/path-filter.md`.");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that Codex SessionStart fails fast when agent input omits the top-level agent identity.
    *
    * @throws IOException if file operations fail
@@ -850,7 +993,8 @@ public final class CodexSessionStartHookTest
               "paths" : [ "*.java" ],
               "title" : "# Java Common",
               "stubTemplate" : null,
-              "bodyPath" : "%s"
+              "bodyPath" : "%s",
+              "lazyLoads" : [ ]
             } ]
           }
           """.formatted(body.toString().replace("\\", "\\\\")));
@@ -916,8 +1060,14 @@ public final class CodexSessionStartHookTest
       Path commonRules = fixture.projectRoot().resolve(".cat/rules/common");
       TestUtils.deleteDirectoryRecursively(commonRules);
       Path staleBody = generatedBody(fixture.pluginData(), "project", ".cat/rules/common/stale.md");
+      Path staleLazyLoadBody = generatedBody(fixture.pluginData(), "project",
+        ".cat/rules/common/stale.md.lazy-loads/02-extra.md");
       Files.createDirectories(staleBody.getParent());
+      Files.createDirectories(staleLazyLoadBody.getParent());
       Files.writeString(staleBody, "# Stale\n", StandardCharsets.UTF_8);
+      Files.writeString(staleLazyLoadBody, "# Extra Stale\n", StandardCharsets.UTF_8);
+      String escapedStaleBody = staleBody.toString().replace("\\", "\\\\");
+      String escapedStaleLazyLoadBody = staleLazyLoadBody.toString().replace("\\", "\\\\");
       writeManifest(fixture.pluginData(), """
         {
           "version": 1,
@@ -929,15 +1079,26 @@ public final class CodexSessionStartHookTest
               "paths": ["*.stale"],
               "title": "# Stale",
               "stubTemplate": null,
-              "bodyPath": "%s"
+              "bodyPath": "%s",
+              "lazyLoads": [
+                {
+                  "declarationPath": "../include/stale.md",
+                  "bodyPath": "%s"
+                },
+                {
+                  "declarationPath": "../include/extra.md",
+                  "bodyPath": "%s"
+                }
+              ]
             }
           ]
         }
-        """.formatted(staleBody.toString().replace("\\", "\\\\")));
+        """.formatted(escapedStaleBody, escapedStaleBody, escapedStaleLazyLoadBody));
 
       run(fixture);
 
       requireThat(Files.exists(staleBody), "staleBody.exists").isFalse();
+      requireThat(Files.exists(staleLazyLoadBody), "staleLazyLoadBody.exists").isFalse();
       requireThat(Files.exists(generatedManifest(fixture.pluginData())), "manifest.exists").isFalse();
     }
     finally
