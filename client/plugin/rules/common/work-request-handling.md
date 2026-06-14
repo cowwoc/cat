@@ -1,5 +1,5 @@
 ---
-subAgents: []
+agents: ["main"]
 ---
 <!--
 Copyright (c) 2026 Gili Tzabari. All rights reserved.

@@ -21,10 +21,10 @@ import java.util.List;
  * subagent context.
  * <p>
  * Discovers rule files from portable {@code .cat/rules/common/} directories and Claude-specific
- * {@code .claude/rules/} directories, then filters using the {@code subAgents} frontmatter property.
- * Omitting {@code subAgents} (or providing no frontmatter) reaches all subagents;
- * {@code subAgents: []} excludes all subagents; specific types like
- * {@code subAgents: ["cat:work-execute"]} target only matching subagents.
+ * {@code .claude/rules/} directories, then filters using the {@code agents} frontmatter property.
+ * Omitting {@code agents} reaches all subagents; {@code agents: ["main"]} excludes all subagents;
+ * {@code agents: ["subagents"]} reaches all subagents without the main agent; specific types like
+ * {@code agents: ["cat:work-execute"]} target only matching subagents.
  */
 public final class InjectSubAgentRules implements SubagentStartHandler
 {

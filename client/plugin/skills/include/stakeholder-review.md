@@ -402,26 +402,30 @@ esac
 # (including all file-based overrides). The loop below iterates over SELECTED, so any
 # stakeholder added by file-based overrides in Step 1 must already be present.
 # Do NOT add stakeholders to SELECTED after this point — late additions will miss
-# convention files scoped with 'subAgents: [all]'.
+# convention files scoped with 'agents: ["subagents"]' or 'agents: ["cat:stakeholder-<name>"]'.
 CONVENTION_MAP=""
 if [[ -d ".cat/rules/common" ]]; then
     for convention_file in .cat/rules/common/*.md; do
         if [[ -f "$convention_file" ]]; then
             frontmatter=$(sed -n '1{/^---$/!q};1,/^---$/p' "$convention_file" | sed '1d;$d')
-            subagents_line=$(echo "$frontmatter" | grep '^subAgents:' || echo "")
-            if [[ -n "$subagents_line" ]]; then
-                subagents_raw=$(echo "$subagents_line" | sed 's/^subAgents:\s*\[//;s/\]\s*$//' | tr ',' '\n' | sed 's/^[ \t]*//;s/[ \t]*$//')
-                if echo "$subagents_raw" | grep -qx 'all'; then
+            agents_line=$(echo "$frontmatter" | grep '^agents:' || echo "")
+            if [[ -n "$agents_line" ]]; then
+                agents_raw=$(echo "$agents_line" | sed 's/^agents:\s*\[//;s/\]\s*$//' | tr ',' '\n' | sed 's/^[ \t]*//;s/[ \t]*$//;s/^"//;s/"$//;s/^'\''//;s/'\''$//')
+                specific_agents=$(echo "$agents_raw" | grep -vxE 'main|subagents' || true)
+                if echo "$agents_raw" | grep -qx 'subagents'; then
+                    if [[ -n "$specific_agents" ]]; then
+                        echo "WARNING: Convention file ${convention_file} combines 'subagents' with specific agents; this is invalid rule frontmatter." >&2
+                    fi
                     for stakeholder in $SELECTED; do
                         CONVENTION_MAP="${CONVENTION_MAP}${stakeholder}:${convention_file} "
                     done
                 else
-                    for agent_type in $subagents_raw; do
+                    for agent_type in $specific_agents; do
                         stakeholder="${agent_type#cat:stakeholder-}"
                         if [[ "$stakeholder" != "$agent_type" ]]; then
                             CONVENTION_MAP="${CONVENTION_MAP}${stakeholder}:${convention_file} "
                         else
-                            echo "WARNING: Convention file ${convention_file} has unrecognized subAgent entry '${agent_type}'. Expected 'cat:stakeholder-<name>' or 'all'." >&2
+                            echo "WARNING: Convention file ${convention_file} has unrecognized agents entry '${agent_type}'. Expected 'cat:stakeholder-<name>', 'main', or 'subagents'." >&2
                         fi
                     done
                 fi

@@ -364,8 +364,7 @@ public final class SubagentStartHookTest
   // ---- getCatRules behavior: blank vs populated subagent_type ----
 
   /**
-   * Verifies that getCatRules (via run()) includes a rule with no subAgents restriction when
-   * subagent_type is blank. Rules with null subAgents should reach all subagents regardless of type.
+   * Verifies that getCatRules (via run()) includes an all-subagent rule when subagent_type is blank.
    *
    * @throws IOException if file operations fail
    */
@@ -380,10 +379,10 @@ public final class SubagentStartHookTest
     {
       Path rulesDir = scope.getProjectPath().resolve(".cat/rules/common");
       Files.createDirectories(rulesDir);
-      // No subAgents frontmatter → null → matches all subagents
+      // agents: ["subagents"] matches all subagents.
       Files.writeString(rulesDir.resolve("universal.md"), """
         ---
-        mainAgent: false
+        agents: ["subagents"]
         ---
         # Universal subagent content
         Applies to any subagent.
@@ -403,7 +402,7 @@ public final class SubagentStartHookTest
 
   /**
    * Verifies that getCatRules (via run()) includes a specific-type rule when
-   * subagent_type matches the rule's subAgents value.
+   * subagent_type matches the rule's agents value.
    *
    * @throws IOException if file operations fail
    */
@@ -420,8 +419,7 @@ public final class SubagentStartHookTest
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("typed-rule.md"), """
         ---
-        mainAgent: false
-        subAgents: ["cat:work-execute"]
+        agents: ["cat:work-execute"]
         ---
         # Work execute specific content
         Only for cat:work-execute.
@@ -441,7 +439,7 @@ public final class SubagentStartHookTest
 
   /**
    * Verifies that getCatRules (via run()) excludes a specific-type rule when
-   * subagent_type does not match the rule's subAgents value.
+   * subagent_type does not match the rule's agents value.
    *
    * @throws IOException if file operations fail
    */
@@ -458,8 +456,7 @@ public final class SubagentStartHookTest
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("typed-rule.md"), """
         ---
-        mainAgent: false
-        subAgents: ["cat:work-execute"]
+        agents: ["cat:work-execute"]
         ---
         # Work execute only content
         Should not appear for Explore.

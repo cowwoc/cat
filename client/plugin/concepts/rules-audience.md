@@ -54,41 +54,39 @@ Rule files support these optional frontmatter properties:
 
 ```yaml
 ---
-mainAgent: false             # default: true (omit to inject into main agent)
-subAgents: []                # default: all (omit to inject into all agents)
+agents: ["main", "subagents"] # default if omitted
 paths: ["*.java"]            # default: always (omit to always inject)
 ---
 ```
 
 All properties are optional. Omit any property to use its default.
 
-### `mainAgent`
+### `agents`
 
-Controls whether the main agent receives this rule.
-
-| Value | Behavior |
-|-------|----------|
-| `true` (default) | Inject into main agent context |
-| `false` | Do not inject into main agent context |
-
-Use `mainAgent: false` for rules that are only relevant to specific agent types and would waste
-context in the main agent.
-
-### `subAgents`
-
-Controls which agents receive this rule.
+Controls which agent-facing contexts receive this rule.
 
 | Value | Behavior |
 |-------|----------|
-| Omitted (default) | Inject into all agents |
-| `[]` | Do not inject into any agent |
-| `["cat:work-execute", "Explore"]` | Inject only into matching agents |
+| Omitted (default) | Inject into the main agent and all subagents |
+| `["main"]` | Inject only into the main agent |
+| `["subagents"]` | Inject into all subagents, not the main agent |
+| `["cat:work-execute"]` | Inject only into the matching subagent type |
+| `["main", "cat:work-execute"]` | Inject into the main agent and the matching subagent type |
 
-The agent type is matched against the `subagent_type` field in the SubagentStart hook input. This
-corresponds to the `subagent_type` parameter passed to the Task tool when spawning the agent.
+The `main` and `subagents` values are reserved special values. Every other value is matched against
+the `subagent_type` field in the SubagentStart hook input. This corresponds to the `subagent_type`
+parameter passed to the Task tool when spawning the agent.
 
-Use `subAgents: []` for orchestration rules that only the main agent should know about (e.g., approval
-gate protocols, hook registration procedures).
+Validation:
+
+- `agents: []` is invalid because prompt files are agent-facing by definition.
+- Every `agents` value must be a non-blank string.
+- `subagents` cannot appear with specific subagent names. Use either `["subagents"]` for all subagents or
+  list the specific subagent names.
+
+Use `agents: ["main"]` for orchestration rules that only the main agent should know about (for example,
+approval gate protocols and hook registration procedures). Use `agents: ["cat:work-execute"]` for rules
+that are only relevant to one agent type and would waste main-agent context.
 
 ### `paths`
 
@@ -120,9 +118,9 @@ Use this table to decide where content belongs:
 | Language-specific conventions | All engines, path-restricted | `.cat/rules/common/*.md` with `paths:` |
 | Claude hook conventions | Claude only | `.claude/rules/` or `.cat/rules/claude/` |
 | Codex plugin conventions | Codex only | `.cat/rules/codex/` |
-| Approval gate protocols | Main agent only | `.cat/rules/common/*.md` with `subAgents: []` |
-| Hook registration procedures | Main agent only | `.cat/rules/common/*.md` with `subAgents: []` |
-| Agent-specific instructions | Specific agent type | `.cat/rules/common/*.md` with `mainAgent: false` |
+| Approval gate protocols | Main agent only | `.cat/rules/common/*.md` with `agents: ["main"]` |
+| Hook registration procedures | Main agent only | `.cat/rules/common/*.md` with `agents: ["main"]` |
+| Agent-specific instructions | Specific agent type | `.cat/rules/common/*.md` with `agents: ["cat:<agent>"]` |
 
 ## Agent Definition Locations
 
@@ -205,7 +203,7 @@ language convention.
 
 ```yaml
 ---
-subAgents: []
+agents: ["main"]
 ---
 # Orchestration Rules
 ...
@@ -215,8 +213,7 @@ subAgents: []
 
 ```yaml
 ---
-mainAgent: false
-subAgents: ["cat:work-execute"]
+agents: ["cat:work-execute"]
 ---
 # Implementation Agent Instructions
 ...

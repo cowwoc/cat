@@ -26,5 +26,4 @@ __pycache__/
 target/
 
 # Serena plugin
-/.serena/cache/
-/.serena/project.local.yml
+/.serena

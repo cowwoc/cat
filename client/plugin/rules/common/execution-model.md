@@ -1,5 +1,5 @@
 ---
-subAgents: []
+agents: ["main"]
 ---
 <!--
 Copyright (c) 2026 Gili Tzabari. All rights reserved.
@@ -74,4 +74,3 @@ Add or update tests that prove each rule above:
 4. **Negative-path guards**
    - Invalid ID namespace (`agentId` as `task_id`) must fail fast with clear error handling.
    - Tests should verify the system prevents or surfaces this misuse explicitly.
-

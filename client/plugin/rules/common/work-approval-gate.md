@@ -1,5 +1,5 @@
 ---
-subAgents: []
+agents: ["main"]
 ---
 # Approval Gate Workflow
 

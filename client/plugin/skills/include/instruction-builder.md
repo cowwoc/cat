@@ -437,9 +437,10 @@ owner was found. For Claude, it returns `frontmatter` when the file explicitly s
 
 **Codex owner resolution:** A file has matching Codex owners only through deterministic signals:
 - The target is an agent descriptor/body with a matching `client/plugin/agents/codex/<agent>.toml`
-- The target is a rule whose frontmatter has `subAgents: ["cat:<agent>", ...]`; every listed Codex agent is an owner
-- The target is a rule with no `subAgents` frontmatter; every Codex agent is an owner because the rule reaches all subagents
-- The target is a rule with `subAgents: []`; no Codex subagent owner exists, so this falls back to the default
+- The target is a rule whose frontmatter has `agents: ["cat:<agent>", ...]`; every listed Codex agent is an owner
+- The target is a rule with no `agents` frontmatter; every Codex agent is an owner because omitted `agents` reaches all subagents
+- The target is a rule with `agents: ["subagents"]`; every Codex agent is an owner
+- The target is a rule with `agents: ["main"]`; no Codex subagent owner exists, so this falls back to the default
 - The target is a skill that one or more `client/plugin/agents/common/*.md` bodies reference as `cat:<skill>`
 
 Weakest owner selection compares complete owner model/effort pairs and never combines a model from one owner with

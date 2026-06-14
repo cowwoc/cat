@@ -1,20 +1,18 @@
----
-mainAgent: false
-subAgents: []
----
 # CAT Rules Index
 
-Rules in this directory are injected by CAT hooks based on audience frontmatter properties. Each file
-can declare who receives it using `mainAgent` and `subAgents` frontmatter:
+`index.md` documents this directory and is never injected as a rule file.
+
+Rules in this directory are injected by CAT hooks based on audience frontmatter properties. Each file can declare who
+receives it using `agents` frontmatter:
 
 ```yaml
 ---
-subAgents: []      # Do not inject into subagents
+agents: ["main"]      # main agent only
 ---
 ```
 
-These properties have defaults and can be omitted: `mainAgent` defaults to `true`, and `subAgents` defaults to all.
-See `plugin/concepts/rules-audience.md` for full documentation of the two-tier rules system.
+The `agents` property defaults to `["main", "subagents"]` when omitted. See
+`plugin/concepts/rules-audience.md` for full documentation of the rule audience system.
 
 Always-on shared rules live in `.cat/rules/common/`.
 

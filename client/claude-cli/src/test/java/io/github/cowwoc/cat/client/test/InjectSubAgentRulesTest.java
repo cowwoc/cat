@@ -38,10 +38,10 @@ public final class InjectSubAgentRulesTest
     {
       Path pluginRulesDir = scope.getPluginRoot().resolve("rules").resolve("common");
       Files.createDirectories(pluginRulesDir);
-      // No subAgents frontmatter → null → matches all subagents
+      // agents: ["subagents"] matches all subagents.
       Files.writeString(pluginRulesDir.resolve("plugin-subagent-rule.md"), """
         ---
-        mainAgent: false
+        agents: ["subagents"]
         ---
         # Plugin subagent rule
         Plugin rule content for subagents.
@@ -82,7 +82,7 @@ public final class InjectSubAgentRulesTest
       Files.createDirectories(pluginRulesDir);
       Files.writeString(pluginRulesDir.resolve("plugin-subagent-rule.md"), """
         ---
-        mainAgent: false
+        agents: ["subagents"]
         ---
         # Plugin subagent rule
         Plugin rule content for subagents.
@@ -125,7 +125,7 @@ public final class InjectSubAgentRulesTest
       Files.createDirectories(pluginRulesDir);
       Files.writeString(pluginRulesDir.resolve("shared-subagent-rule.md"), """
         ---
-        mainAgent: false
+        agents: ["subagents"]
         ---
         # Plugin version
         This is from the plugin.
@@ -135,7 +135,7 @@ public final class InjectSubAgentRulesTest
       Files.createDirectories(projectRulesDir);
       Files.writeString(projectRulesDir.resolve("shared-subagent-rule.md"), """
         ---
-        mainAgent: false
+        agents: ["subagents"]
         ---
         # Project version
         This is from the project.
@@ -159,8 +159,7 @@ public final class InjectSubAgentRulesTest
   }
 
   /**
-   * Verifies that handle() returns rules with no subAgents restriction when subagent_type is blank.
-   * Rules with null subAgents should reach all subagents regardless of type.
+   * Verifies that handle() returns all-subagent rules when subagent_type is blank.
    *
    * @throws IOException if file operations fail
    */
@@ -174,10 +173,10 @@ public final class InjectSubAgentRulesTest
     {
       Path rulesDir = scope.getProjectPath().resolve(".cat/rules/common");
       Files.createDirectories(rulesDir);
-      // No subAgents frontmatter → null → matches all subagents
+      // agents: ["subagents"] matches all subagents.
       Files.writeString(rulesDir.resolve("universal.md"), """
         ---
-        mainAgent: false
+        agents: ["subagents"]
         ---
         # Universal subagent content
         Applies to any subagent.
@@ -213,8 +212,7 @@ public final class InjectSubAgentRulesTest
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("typed-rule.md"), """
         ---
-        mainAgent: false
-        subAgents: ["cat:work-execute"]
+        agents: ["cat:work-execute"]
         ---
         # Work execute specific content
         Only for cat:work-execute.
@@ -261,8 +259,8 @@ public final class InjectSubAgentRulesTest
   }
 
   /**
-   * Verifies that when filenames collide, the plugin rule (null subAgents = all subagents) is
-   * included and the project rule (subAgents:[]) is filtered out by the subagent audience filter.
+   * Verifies that when filenames collide, the plugin all-subagent rule is included and the project
+   * main-only rule is filtered out by the subagent audience filter.
    * Both rules exist in the concatenated list but only the one matching the subagent type passes.
    *
    * @throws IOException if file operations fail
@@ -278,10 +276,10 @@ public final class InjectSubAgentRulesTest
     {
       Path pluginRulesDir = scope.getPluginRoot().resolve("rules").resolve("common");
       Files.createDirectories(pluginRulesDir);
-      // Plugin rule: null subAgents → matches all subagent types — passes filter
+      // Plugin rule targets all subagent types and passes the filter.
       Files.writeString(pluginRulesDir.resolve("toggled-subagent-rule.md"), """
         ---
-        mainAgent: false
+        agents: ["subagents"]
         ---
         # Plugin universal subagent rule
         This plugin content should reach all subagents.
@@ -289,11 +287,10 @@ public final class InjectSubAgentRulesTest
 
       Path projectRulesDir = scope.getProjectPath().resolve(".cat/rules/common");
       Files.createDirectories(projectRulesDir);
-      // Project rule with same filename: subAgents:[] → matches no subagent type — filtered out
+      // Project rule with same filename targets only the main agent and is filtered out.
       Files.writeString(projectRulesDir.resolve("toggled-subagent-rule.md"), """
         ---
-        mainAgent: false
-        subAgents: []
+        agents: ["main"]
         ---
         # Project rule: restricted to no subagents
         This content should not reach any subagent.
@@ -303,12 +300,12 @@ public final class InjectSubAgentRulesTest
 
       SubagentStartHandler.Result result = handler.handle();
 
-      // Plugin rule (null subAgents) passes the filter and is included
+      // Plugin all-subagent rule passes the filter and is included.
       requireThat(result.additionalContext(), "additionalContext").contains(
         "Plugin universal subagent rule");
       requireThat(result.additionalContext(), "additionalContext").contains(
         "This plugin content should reach all subagents.");
-      // Project rule (subAgents:[]) is filtered out
+      // Project main-only rule is filtered out.
       requireThat(result.additionalContext(), "additionalContext").doesNotContain(
         "Project rule: restricted to no subagents");
       requireThat(result.additionalContext(), "additionalContext").doesNotContain(
@@ -334,13 +331,12 @@ public final class InjectSubAgentRulesTest
   }
 
   /**
-   * Verifies that handle() returns an empty result when subAgents is an empty list, regardless
-   * of the subagent_type requested.
+   * Verifies that handle() returns an empty result when the rule targets only the main agent.
    *
    * @throws IOException if file operations fail
    */
   @Test
-  public void testGetRulesEmptySubagentsExcludesAll() throws IOException
+  public void testGetRulesMainOnlyExcludesAllSubagents() throws IOException
   {
     Path tempDir = Files.createTempDirectory("inject-subagent-rules-empty-subagents-");
     try (TestClaudeHook scope = new TestClaudeHook(
@@ -349,11 +345,10 @@ public final class InjectSubAgentRulesTest
     {
       Path rulesDir = scope.getProjectPath().resolve(".cat/rules/common");
       Files.createDirectories(rulesDir);
-      // subAgents: [] means no subagent type matches — exclude all
+      // agents: ["main"] means no subagent type matches.
       Files.writeString(rulesDir.resolve("excluded-rule.md"), """
         ---
-        mainAgent: false
-        subAgents: []
+        agents: ["main"]
         ---
         # Excluded content
         This rule should not reach any subagent.
@@ -374,7 +369,7 @@ public final class InjectSubAgentRulesTest
 
   /**
    * Verifies that handle() returns an empty result when the subagent_type does not match the
-   * specific type listed in the rule's subAgents frontmatter.
+   * specific type listed in the rule's agents frontmatter.
    *
    * @throws IOException if file operations fail
    */
@@ -391,8 +386,7 @@ public final class InjectSubAgentRulesTest
       // Rule targets cat:work-execute only
       Files.writeString(rulesDir.resolve("typed-rule.md"), """
         ---
-        mainAgent: false
-        subAgents: ["cat:work-execute"]
+        agents: ["cat:work-execute"]
         ---
         # Work execute only content
         Only for cat:work-execute subagents.

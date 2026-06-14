@@ -291,7 +291,7 @@ public final class SprtRunnerTest
       Files.createDirectories(ruleFile.getParent());
       Files.writeString(ruleFile, """
         ---
-        subAgents: ["cat:work-execute"]
+        agents: ["cat:work-execute"]
         ---
         # Rule
         """, StandardCharsets.UTF_8);
@@ -333,7 +333,7 @@ public final class SprtRunnerTest
       Files.createDirectories(ruleFile.getParent());
       Files.writeString(ruleFile, """
         ---
-        subAgents: ["cat:work-execute", "cat:work-merge", "cat:instruction-builder-implement-agent"]
+        agents: ["cat:work-execute", "cat:work-merge", "cat:instruction-builder-implement-agent"]
         ---
         # Rule
         """, StandardCharsets.UTF_8);
@@ -351,7 +351,7 @@ public final class SprtRunnerTest
   }
 
   /**
-   * Verifies that rules without a subAgents restriction use the weakest config across all Codex agents.
+   * Verifies that rules without an agents restriction use the weakest config across all Codex agents.
    */
   @Test
   public void usesWeakestCodexBroadRule() throws IOException, InterruptedException
@@ -386,7 +386,90 @@ public final class SprtRunnerTest
   }
 
   /**
-   * Verifies that subAgents: [] means no Codex subagent owners and therefore uses the default.
+   * Verifies that agents: ["subagents"] uses the weakest config across all Codex agents.
+   */
+  @Test
+  public void usesWeakestCodexAllSubagentsRule() throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new MainCliTool(name -> switch (name)
+    {
+      case "CAT_SESSION_ID" -> "test-session-id";
+      case "CAT_PROJECT_DIR", "CAT_PLUGIN_ROOT", "CAT_PLUGIN_DATA", "CAT_CONFIG_DIR" ->
+        tempDir.toString();
+      case "CAT_ENGINE" -> "codex";
+      default -> null;
+    }, tempDir))
+    {
+      writeCodexAgent(tempDir, "work-execute", "gpt-5.3-codex", "high");
+      writeCodexAgent(tempDir, "work-merge", "gpt-5.4-mini", "medium");
+      Path ruleFile = tempDir.resolve("rules/common/all-subagents.md");
+      Files.createDirectories(ruleFile.getParent());
+      Files.writeString(ruleFile, """
+        ---
+        agents: ["subagents"]
+        ---
+        # Rule
+        """, StandardCharsets.UTF_8);
+
+      SprtRunner runner = new SprtRunner(scope, "2.1.87");
+      requireThat(runner.extractModel(new String[]{ruleFile.toString()}), "model").
+        isEqualTo("gpt-5.4-mini");
+      requireThat(runner.extractEffort(new String[]{ruleFile.toString()}), "effort").
+        isEqualTo("medium");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that agents: ["subagents"] cannot be combined with specific subagent owners.
+  */
+  @Test
+  public void rejectsMixedSubagentAgents() throws IOException, InterruptedException
+  {
+    Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
+    try (var scope = new MainCliTool(name -> switch (name)
+    {
+      case "CAT_SESSION_ID" -> "test-session-id";
+      case "CAT_PROJECT_DIR", "CAT_PLUGIN_ROOT", "CAT_PLUGIN_DATA", "CAT_CONFIG_DIR" ->
+        tempDir.toString();
+      case "CAT_ENGINE" -> "codex";
+      default -> null;
+    }, tempDir))
+    {
+      writeCodexAgent(tempDir, "work-execute", "gpt-5.3-codex", "high");
+      Path ruleFile = tempDir.resolve("rules/common/invalid-agents.md");
+      Files.createDirectories(ruleFile.getParent());
+      Files.writeString(ruleFile, """
+        ---
+        agents: ["cat:missing-agent", "subagents"]
+        ---
+        # Rule
+        """, StandardCharsets.UTF_8);
+
+      SprtRunner runner = new SprtRunner(scope, "2.1.87");
+      try
+      {
+        runner.extractModel(new String[]{ruleFile.toString()});
+      }
+      catch (IllegalArgumentException e)
+      {
+        requireThat(e.getMessage(), "message").contains("must not combine");
+        return;
+      }
+      throw new AssertionError("Expected agents validation failure");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that agents: ["main"] means no Codex subagent owners and therefore uses the default.
    */
   @Test
   public void usesDefaultForNoSubagentRule() throws IOException, InterruptedException
@@ -406,7 +489,7 @@ public final class SprtRunnerTest
       Files.createDirectories(ruleFile.getParent());
       Files.writeString(ruleFile, """
         ---
-        subAgents: []
+        agents: ["main"]
         ---
         # Rule
         """, StandardCharsets.UTF_8);

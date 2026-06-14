@@ -1,5 +1,5 @@
 ---
-subAgents: []
+agents: ["main"]
 ---
 # Issue Workflow vs Direct Implementation
 

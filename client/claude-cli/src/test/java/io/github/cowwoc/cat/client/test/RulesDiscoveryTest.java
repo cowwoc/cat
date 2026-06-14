@@ -63,6 +63,34 @@ public final class RulesDiscoveryTest
   }
 
   /**
+   * Verifies that index files document rule directories without being injected as rules.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void indexFilesAreNotDiscoveredAsRules() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("rules-test-");
+    try
+    {
+      Path rulesDir = tempDir.resolve("rules");
+      Files.createDirectories(rulesDir);
+      Files.writeString(rulesDir.resolve("index.md"), "# Rule index\n");
+      Files.writeString(rulesDir.resolve("INDEX.md"), "# Legacy rule index\n");
+      Files.writeString(rulesDir.resolve("plain.md"), "# Plain rule\n");
+
+      List<RuleFile> rules = new RulesDiscovery(rulesDir, YAML_MAPPER).discoverAll();
+
+      requireThat(rules.size(), "rules.size()").isEqualTo(1);
+      requireThat(rules.getFirst().path().getFileName().toString(), "ruleFile").isEqualTo("plain.md");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that bundled rule files do not declare frontmatter values that match loader defaults.
    *
    * @throws IOException if file operations fail
@@ -80,7 +108,9 @@ public final class RulesDiscoveryTest
         String frontmatter = FrontmatterUtils.extractFrontmatter(Files.readString(ruleFile));
         if (frontmatter == null)
           continue;
-        if (frontmatter.lines().anyMatch(line -> line.equals("mainAgent: true") || line.equals("paths: []")))
+        if (frontmatter.lines().anyMatch(line -> line.equals("mainAgent: true") ||
+          line.equals("subAgents: []") || line.equals("agents: [\"main\", \"subagents\"]") ||
+          line.equals("paths: []")))
           violations.add(rulesDir.relativize(ruleFile));
       }
     }
@@ -160,12 +190,12 @@ public final class RulesDiscoveryTest
   }
 
   /**
-   * Verifies that mainAgent: false excludes a file from main agent injection.
+   * Verifies that agents: ["subagents"] excludes a file from main agent injection.
    *
    * @throws IOException if file operations fail
    */
   @Test
-  public void mainAgentFalseExcludesFromMainAgent() throws IOException
+  public void agentsSubagentsExcludesFromMainAgent() throws IOException
   {
     Path tempDir = Files.createTempDirectory("rules-test-");
     try
@@ -174,7 +204,7 @@ public final class RulesDiscoveryTest
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("subagent-only.md"), """
         ---
-        mainAgent: false
+        agents: ["subagents"]
         ---
         # Subagent only
         """);
@@ -190,12 +220,12 @@ public final class RulesDiscoveryTest
   }
 
   /**
-   * Verifies that subAgents: [] means no subagents receive this rule.
+   * Verifies that agents: ["main"] means no subagents receive this rule.
    *
    * @throws IOException if file operations fail
    */
   @Test
-  public void subAgentsEmptyExcludesFromAllSubagents() throws IOException
+  public void agentsMainExcludesFromAllSubagents() throws IOException
   {
     Path tempDir = Files.createTempDirectory("rules-test-");
     try
@@ -204,8 +234,7 @@ public final class RulesDiscoveryTest
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("main-only.md"), """
         ---
-        mainAgent: true
-        subAgents: []
+        agents: ["main"]
         ---
         # Main agent only
         """);
@@ -221,12 +250,12 @@ public final class RulesDiscoveryTest
   }
 
   /**
-   * Verifies that subAgents with specific types only includes those types.
+   * Verifies that agents with specific types only includes those types.
    *
    * @throws IOException if file operations fail
    */
   @Test
-  public void subAgentsSpecificTypeParsedCorrectly() throws IOException
+  public void agentsSpecificTypeParsedCorrectly() throws IOException
   {
     Path tempDir = Files.createTempDirectory("rules-test-");
     try
@@ -235,8 +264,7 @@ public final class RulesDiscoveryTest
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("targeted.md"), """
         ---
-        mainAgent: true
-        subAgents: ["cat:work-execute", "Explore"]
+        agents: ["main", "cat:work-execute", "Explore"]
         ---
         # Targeted rule
         """);
@@ -269,7 +297,6 @@ public final class RulesDiscoveryTest
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("java-only.md"), """
         ---
-        mainAgent: true
         paths: ["*.java", "src/main/**"]
         ---
         # Java conventions
@@ -305,14 +332,13 @@ public final class RulesDiscoveryTest
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("main-rule.md"), """
         ---
-        mainAgent: true
-        subAgents: []
+        agents: ["main"]
         ---
         # Main rule
         """);
       Files.writeString(rulesDir.resolve("subagent-rule.md"), """
         ---
-        mainAgent: false
+        agents: ["subagents"]
         ---
         # Subagent rule
         """);
@@ -343,10 +369,10 @@ public final class RulesDiscoveryTest
     {
       Path rulesDir = tempDir.resolve("rules");
       Files.createDirectories(rulesDir);
-      // No subAgents frontmatter → null → matches all subagents
+      // No agents frontmatter → null → matches all subagents
       Files.writeString(rulesDir.resolve("universal.md"), """
         ---
-        mainAgent: true
+        agents: ["main", "subagents"]
         ---
         # Universal rule
         """);
@@ -380,8 +406,7 @@ public final class RulesDiscoveryTest
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("main-only.md"), """
         ---
-        mainAgent: true
-        subAgents: []
+        agents: ["main"]
         ---
         # Main only
         """);
@@ -414,8 +439,7 @@ public final class RulesDiscoveryTest
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("targeted.md"), """
         ---
-        mainAgent: false
-        subAgents: ["cat:work-execute"]
+        agents: ["cat:work-execute"]
         ---
         # Only for work-execute
         """);
@@ -454,7 +478,7 @@ public final class RulesDiscoveryTest
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("always.md"), """
         ---
-        mainAgent: true
+        agents: ["main", "subagents"]
         ---
         # Always rule
         """);
@@ -492,7 +516,6 @@ public final class RulesDiscoveryTest
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("java.md"), """
         ---
-        mainAgent: true
         paths: ["*.java"]
         ---
         # Java conventions
@@ -536,7 +559,6 @@ public final class RulesDiscoveryTest
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("java.md"), """
         ---
-        mainAgent: true
         paths: ["*.java"]
         ---
         # Java conventions
@@ -556,16 +578,16 @@ public final class RulesDiscoveryTest
     }
   }
 
-  // ---- Audience combination: mainAgent:true + subAgents:[] ----
+  // ---- Audience combination: agents ["main"] ----
 
   /**
-   * Verifies that a rule with mainAgent:true + subAgents:[] is included by filterForMainAgent
+   * Verifies that a rule with agents ["main"] is included by filterForMainAgent
    * and excluded by filterForSubagent.
    *
    * @throws IOException if file operations fail
    */
   @Test
-  public void mainAgentTrueSubAgentsEmptyIncludedBy() throws IOException
+  public void agentsMainIncludedByMainOnly() throws IOException
   {
     Path tempDir = Files.createTempDirectory("rules-test-");
     try
@@ -574,8 +596,7 @@ public final class RulesDiscoveryTest
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("main-only.md"), """
         ---
-        mainAgent: true
-        subAgents: []
+        agents: ["main"]
         ---
         # Main agent only rule
         """);
@@ -614,7 +635,7 @@ public final class RulesDiscoveryTest
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("unclosed.md"), """
         ---
-        mainAgent: false
+        agents: ["subagents"]
         # No closing ---
         # Content after
         """);
@@ -647,9 +668,8 @@ public final class RulesDiscoveryTest
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("unknown-key.md"), """
         ---
-        mainAgent: false
+        agents: ["main"]
         unknownKey: somevalue
-        subAgents: []
         ---
         # Content
         """);
@@ -657,7 +677,7 @@ public final class RulesDiscoveryTest
       List<RuleFile> rules = new RulesDiscovery(rulesDir, YAML_MAPPER).discoverAll();
       requireThat(rules.size(), "rules.size()").isEqualTo(1);
       RuleFile rule = rules.getFirst();
-      requireThat(rule.mainAgent(), "mainAgent").isFalse();
+      requireThat(rule.mainAgent(), "mainAgent").isTrue();
       requireThat(rule.subAgents(), "subAgents").isEmpty();
     }
     finally
@@ -667,12 +687,12 @@ public final class RulesDiscoveryTest
   }
 
   /**
-   * Verifies that {@code mainAgent: yes} is treated as true (not "false").
+   * Verifies that legacy audience keys are rejected.
    *
    * @throws IOException if file operations fail
    */
   @Test
-  public void mainAgentYesTreatedAsTrue() throws IOException
+  public void legacyAudienceKeysRejected() throws IOException
   {
     Path tempDir = Files.createTempDirectory("rules-test-");
     try
@@ -681,19 +701,42 @@ public final class RulesDiscoveryTest
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("yes-value.md"), """
         ---
-        mainAgent: yes
+        mainAgent: false
         ---
-        # Yes rule
+        # Legacy rule
         """);
 
-      List<RuleFile> rules = new RulesDiscovery(rulesDir, YAML_MAPPER).discoverAll();
-      requireThat(rules.size(), "rules.size()").isEqualTo(1);
-      requireThat(rules.getFirst().mainAgent(), "mainAgent").isTrue();
+      try
+      {
+        new RulesDiscovery(rulesDir, YAML_MAPPER).discoverAll();
+      }
+      catch (IllegalArgumentException e)
+      {
+        requireThat(e.getMessage(), "message").contains("Legacy rule audience frontmatter");
+        return;
+      }
+      throw new AssertionError("Expected legacy audience rejection");
     }
     finally
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+  }
+
+  /**
+   * Verifies that invalid {@code agents} frontmatter fails fast.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void invalidAgentsRejected() throws IOException
+  {
+    assertInvalidAgents("agents: []", "agents must not be empty");
+    assertInvalidAgents("agents: main", "agents must be a non-empty YAML list");
+    assertInvalidAgents("agents: [true]", "agents values must be non-blank strings");
+    assertInvalidAgents("agents: [\" \"]", "agents values must be non-blank strings");
+    assertInvalidAgents("agents: [\"subagents\", \"cat:work-execute\"]",
+      "agents must not combine \"subagents\" with specific subagent names");
   }
 
   // ---- matchesGlob patterns ----
@@ -757,7 +800,6 @@ public final class RulesDiscoveryTest
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("java.md"), """
         ---
-        mainAgent: true
         paths: ["*.java"]
         ---
         # Java conventions
@@ -797,7 +839,6 @@ public final class RulesDiscoveryTest
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("src-main.md"), """
         ---
-        mainAgent: true
         paths: ["src/main/**"]
         ---
         # Source conventions
@@ -851,16 +892,10 @@ public final class RulesDiscoveryTest
       Path rulesDir = tempDir.resolve("rules");
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("a-rule.md"), """
-        ---
-        mainAgent: true
-        ---
         # Rule A
         Content A.
         """);
       Files.writeString(rulesDir.resolve("b-rule.md"), """
-        ---
-        mainAgent: true
-        ---
         # Rule B
         Content B.
         """);
@@ -938,7 +973,7 @@ public final class RulesDiscoveryTest
       Path rulesDir = tempDir.resolve("rules");
       Files.createDirectories(rulesDir);
       // No newline after the closing ---
-      Files.writeString(rulesDir.resolve("notail.md"), "---\nmainAgent: false\n---");
+      Files.writeString(rulesDir.resolve("notail.md"), "---\nagents: [\"subagents\"]\n---");
 
       List<RuleFile> rules = new RulesDiscovery(rulesDir, YAML_MAPPER).discoverAll();
       requireThat(rules.size(), "rules.size()").isEqualTo(1);
@@ -1003,7 +1038,7 @@ public final class RulesDiscoveryTest
       Path rulesDir = tempDir.resolve("rules");
       Files.createDirectories(rulesDir);
       // No closing ---
-      String rawContent = "---\nmainAgent: false\nNo closing delimiter here.";
+      String rawContent = "---\nagents: [\"subagents\"]\nNo closing delimiter here.";
       Files.writeString(rulesDir.resolve("unclosed.md"), rawContent);
 
       List<RuleFile> rules = new RulesDiscovery(rulesDir, YAML_MAPPER).discoverAll();
@@ -1013,7 +1048,7 @@ public final class RulesDiscoveryTest
       requireThat(rule.mainAgent(), "mainAgent").isTrue();
       requireThat(rule.subAgents(), "subAgents").isNull();
       // Full content is used as body (stripped)
-      requireThat(rule.content(), "content").contains("mainAgent: false");
+      requireThat(rule.content(), "content").contains("agents: [\"subagents\"]");
       requireThat(rule.content(), "content").contains("No closing delimiter here.");
     }
     finally
@@ -1066,7 +1101,7 @@ public final class RulesDiscoveryTest
   // ---- Concern 11: subagent exact-match vs non-match ----
 
   /**
-   * Verifies that filterForSubagent with {@code subAgents: ["cat:work-execute"]} matches only
+   * Verifies that filterForSubagent with {@code agents: ["cat:work-execute"]} matches only
    * that exact type and not other subagent types.
    *
    * @throws IOException if file operations fail
@@ -1081,8 +1116,7 @@ public final class RulesDiscoveryTest
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("work-only.md"), """
         ---
-        mainAgent: false
-        subAgents: ["cat:work-execute"]
+        agents: ["cat:work-execute"]
         ---
         # Work execute rule
         """);
@@ -1128,7 +1162,7 @@ public final class RulesDiscoveryTest
       // Value with a comma inside a quoted string should produce one item
       Files.writeString(rulesDir.resolve("quoted.md"), """
         ---
-        subAgents: ["cat:work,execute"]
+        agents: ["cat:work,execute"]
         ---
         # Quoted comma rule
         """);
@@ -1164,7 +1198,7 @@ public final class RulesDiscoveryTest
       // ["unclosed — mismatched open-quote: invalid YAML
       Files.writeString(rulesDir.resolve("misquote.md"), """
         ---
-        subAgents: ["unclosed]
+        agents: ["unclosed]
         ---
         # Misquote rule
         """);
@@ -1193,7 +1227,7 @@ public final class RulesDiscoveryTest
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("adjacent.md"), """
         ---
-        subAgents: ["a", "b"]
+        agents: ["a", "b"]
         ---
         # Adjacent items
         """);
@@ -1227,7 +1261,7 @@ public final class RulesDiscoveryTest
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("whitespace.md"), """
         ---
-        subAgents: ["item1" , "item2"]
+        agents: ["item1" , "item2"]
         ---
         # Whitespace around comma
         """);
@@ -1273,10 +1307,10 @@ public final class RulesDiscoveryTest
     {
       Path rulesDir = tempDir.resolve("rules");
       Files.createDirectories(rulesDir);
-      // Rule is mainAgent:false — filterForMainAgent will exclude it
+      // Rule targets only subagents, so filterForMainAgent will exclude it
       Files.writeString(rulesDir.resolve("subagent-only.md"), """
         ---
-        mainAgent: false
+        agents: ["subagents"]
         ---
         # Only for subagents
         """);
@@ -1292,7 +1326,7 @@ public final class RulesDiscoveryTest
   }
 
   /**
-   * Verifies that getCatRulesForAudience returns content for a rule with mainAgent:true when
+   * Verifies that getCatRulesForAudience returns content for a main-agent rule when
    * using filterForMainAgent.
    *
    * @throws IOException if file operations fail
@@ -1307,8 +1341,7 @@ public final class RulesDiscoveryTest
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("main-rule.md"), """
         ---
-        mainAgent: true
-        subAgents: []
+        agents: ["main"]
         ---
         # Main agent content
         Some important instruction.
@@ -1344,8 +1377,6 @@ public final class RulesDiscoveryTest
         Shared rule fragment.
         """);
       Files.writeString(rulesDir.resolve("main-rule.md"), """
-        ---
-        mainAgent: true
         ---
         # Main rule
         <!-- cat:include fragments/shared.md -->
@@ -1402,7 +1433,7 @@ public final class RulesDiscoveryTest
   }
 
   /**
-   * Verifies that getCatRulesForAudience returns content for a rule with no subAgents restriction
+   * Verifies that getCatRulesForAudience returns content for a rule targeting all subagents
    * when using filterForSubagent with any subagent type.
    *
    * @throws IOException if file operations fail
@@ -1415,10 +1446,10 @@ public final class RulesDiscoveryTest
     {
       Path rulesDir = tempDir.resolve("rules");
       Files.createDirectories(rulesDir);
-      // No subAgents frontmatter → null → matches all subagents
+      // agents: ["subagents"] → null → matches all subagents
       Files.writeString(rulesDir.resolve("universal-rule.md"), """
         ---
-        mainAgent: false
+        agents: ["subagents"]
         ---
         # Subagent universal content
         Applies to all subagents.
@@ -1453,9 +1484,6 @@ public final class RulesDiscoveryTest
       Path pluginRulesDir = tempDir.resolve("plugin/rules/common");
       Files.createDirectories(pluginRulesDir);
       Files.writeString(pluginRulesDir.resolve("plugin-rule.md"), """
-        ---
-        mainAgent: true
-        ---
         # Plugin rule
         From plugin.
         """);
@@ -1463,9 +1491,6 @@ public final class RulesDiscoveryTest
       Path projectRulesDir = tempDir.resolve("rules");
       Files.createDirectories(projectRulesDir);
       Files.writeString(projectRulesDir.resolve("project-rule.md"), """
-        ---
-        mainAgent: true
-        ---
         # Project rule
         From project.
         """);
@@ -1499,9 +1524,6 @@ public final class RulesDiscoveryTest
       Path dir1 = tempDir.resolve("dir1");
       Files.createDirectories(dir1);
       Files.writeString(dir1.resolve("shared.md"), """
-        ---
-        mainAgent: true
-        ---
         # Dir1 version
         Content from dir1.
         """);
@@ -1509,9 +1531,6 @@ public final class RulesDiscoveryTest
       Path dir2 = tempDir.resolve("dir2");
       Files.createDirectories(dir2);
       Files.writeString(dir2.resolve("shared.md"), """
-        ---
-        mainAgent: true
-        ---
         # Dir2 version
         Content from dir2.
         """);
@@ -1549,6 +1568,32 @@ public final class RulesDiscoveryTest
         List.of(missingDir1, missingDir2), YAML_MAPPER,
         RulesDiscovery::filterForMainAgent, List.of());
       requireThat(result, "result").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  private static void assertInvalidAgents(String frontmatter, String expectedMessage) throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("rules-test-invalid-agents-");
+    try
+    {
+      Path rulesDir = tempDir.resolve("rules");
+      Files.createDirectories(rulesDir);
+      Files.writeString(rulesDir.resolve("invalid.md"), "---\n" + frontmatter + "\n---\n# Rule\n");
+
+      try
+      {
+        new RulesDiscovery(rulesDir, YAML_MAPPER).discoverAll();
+      }
+      catch (IllegalArgumentException e)
+      {
+        requireThat(e.getMessage(), "message").contains(expectedMessage);
+        return;
+      }
+      throw new AssertionError("Expected invalid agents rejection for " + frontmatter);
     }
     finally
     {

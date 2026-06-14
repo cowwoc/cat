@@ -149,7 +149,7 @@ public final class CodexSessionStartHookTest
   }
 
   /**
-   * Verifies that Codex SessionStart detects agent input and applies {@code subAgents} frontmatter instead of
+   * Verifies that Codex SessionStart detects agent input and applies {@code agents} frontmatter instead of
    * main-agent filtering.
    *
    * @throws IOException if file operations fail
@@ -165,19 +165,19 @@ public final class CodexSessionStartHookTest
         StandardCharsets.UTF_8);
       Files.writeString(fixture.pluginRoot().resolve("rules/codex/main-only.md"), """
         ---
-        subAgents: []
+        agents: ["main"]
         ---
         main-agent-only rule
         """, StandardCharsets.UTF_8);
       Files.writeString(fixture.pluginRoot().resolve("rules/codex/targeted.md"), """
         ---
-        subAgents: ["cat:work-execute"]
+        agents: ["main", "cat:work-execute"]
         ---
         targeted work-execute rule
         """, StandardCharsets.UTF_8);
       Files.writeString(fixture.projectRoot().resolve(".cat/rules/codex/agent-only.md"), """
         ---
-        mainAgent: false
+        agents: ["subagents"]
         ---
         codex agent-only rule
         """, StandardCharsets.UTF_8);
@@ -221,8 +221,7 @@ public final class CodexSessionStartHookTest
       Path agentRule = fixture.pluginRoot().resolve("rules/codex/agent-path.md");
       Files.writeString(agentRule, """
         ---
-        mainAgent: false
-        subAgents: ["cat:work-execute"]
+        agents: ["cat:work-execute"]
         paths: ["*.java"]
         ---
         # Agent Path Rule
@@ -278,7 +277,7 @@ public final class CodexSessionStartHookTest
       Fixture fixture = createFixture(tempDir);
       Files.writeString(fixture.pluginRoot().resolve("rules/codex/targeted.md"), """
         ---
-        subAgents: ["cat:work-execute"]
+        agents: ["main", "cat:work-execute"]
         ---
         targeted nested-role rule
         """, StandardCharsets.UTF_8);
@@ -325,7 +324,7 @@ public final class CodexSessionStartHookTest
       Fixture fixture = createFixture(tempDir);
       Files.writeString(fixture.pluginRoot().resolve("rules/codex/targeted.md"), """
         ---
-        subAgents: ["cat:work-execute"]
+        agents: ["main", "cat:work-execute"]
         ---
         targeted agent-type rule
         """, StandardCharsets.UTF_8);
@@ -368,7 +367,7 @@ public final class CodexSessionStartHookTest
       Fixture fixture = createFixture(tempDir);
       Files.writeString(fixture.pluginRoot().resolve("rules/codex/targeted.md"), """
         ---
-        subAgents: ["cat:work-execute"]
+        agents: ["main", "cat:work-execute"]
         ---
         targeted nested-role rule
         """, StandardCharsets.UTF_8);
@@ -423,15 +422,13 @@ public final class CodexSessionStartHookTest
         """, StandardCharsets.UTF_8);
       Files.writeString(fixture.pluginRoot().resolve("rules/codex/agent-eager.md"), """
         ---
-        mainAgent: false
-        subAgents: ["cat:work-execute"]
+        agents: ["cat:work-execute"]
         ---
         agent eager rule
         """, StandardCharsets.UTF_8);
       Files.writeString(fixture.pluginRoot().resolve("rules/codex/agent-path-scoped.md"), """
         ---
-        mainAgent: false
-        subAgents: ["cat:work-execute"]
+        agents: ["cat:work-execute"]
         paths: ["*.java"]
         ---
         agent path-scoped rule

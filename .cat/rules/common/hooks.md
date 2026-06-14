@@ -1,5 +1,5 @@
 ---
-subAgents: []
+agents: ["main"]
 paths:
   - "client/plugin/hooks/**"
   - "client/**/hook/**"

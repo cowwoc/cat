@@ -4,7 +4,7 @@ paths:
   - ".claude/settings.json"
   - "client/claude-cli/**/hook/**"
   - "client/claude-cli/**/hooks/**"
-subAgents: []
+agents: ["main"]
 ---
 # Claude Hook Guidance
 

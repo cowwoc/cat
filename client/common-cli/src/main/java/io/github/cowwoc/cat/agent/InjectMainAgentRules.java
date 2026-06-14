@@ -13,9 +13,9 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * Injects audience-filtered rules from plugin-bundled and project-local rule directories into main
  * agent context.
  * <p>
- * Discovers rule files from portable and engine-specific rule directories, filters to those with
- * {@code mainAgent: true}, applies any {@code paths} restrictions, and injects matching content as
- * additional context.
+ * Discovers rule files from portable and engine-specific rule directories, filters to rules whose
+ * {@code agents} frontmatter includes {@code "main"} or omits {@code agents}, applies any
+ * {@code paths} restrictions, and injects matching content as additional context.
  */
 public final class InjectMainAgentRules implements SessionStartHandler
 {

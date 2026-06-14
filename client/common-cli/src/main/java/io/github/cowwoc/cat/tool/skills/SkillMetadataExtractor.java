@@ -267,21 +267,58 @@ final class SkillMetadataExtractor
 
   private List<ModelEffort> findCodexRuleAgentConfigs(Path rulePath) throws IOException
   {
-    JsonNode subAgents = parseFrontmatterNode(rulePath).get("subAgents");
-    if (subAgents == null || subAgents.isMissingNode() || subAgents.isNull())
+    JsonNode frontmatter = parseFrontmatterNode(rulePath);
+    if (frontmatter.has("mainAgent") || frontmatter.has("subAgents"))
+    {
+      throw new IllegalArgumentException("Legacy rule audience frontmatter is not supported in " +
+        rulePath + ": use agents instead of mainAgent/subAgents");
+    }
+    JsonNode agents = frontmatter.get("agents");
+    if (agents == null || agents.isMissingNode() || agents.isNull())
       return readAllCodexAgentConfigs();
-    if (!subAgents.isArray())
-      return List.of();
+    if (!agents.isArray())
+      throw new IllegalArgumentException("agents must be a non-empty YAML list in " + rulePath);
+    if (agents.isEmpty())
+      throw new IllegalArgumentException("agents must not be empty in " + rulePath);
 
     List<ModelEffort> matches = new ArrayList<>();
-    for (JsonNode subAgent: subAgents)
+    boolean allSubagents = false;
+    boolean hasSpecificSubagents = false;
+    for (JsonNode agent: agents)
     {
-      String agentName = normalizeAgentName(subAgent.asString(""));
+      if (!agent.isString())
+        throw new IllegalArgumentException("agents values must be non-blank strings in " + rulePath);
+      String value = agent.asString("").strip();
+      if (value.isBlank())
+        throw new IllegalArgumentException("agents values must be non-blank strings in " + rulePath);
+      if (value.equals("main"))
+        continue;
+      if (value.equals("subagents"))
+      {
+        allSubagents = true;
+        continue;
+      }
+      if (allSubagents)
+      {
+        throw new IllegalArgumentException("agents must not combine \"subagents\" with specific " +
+          "subagent names in " + rulePath);
+      }
+      hasSpecificSubagents = true;
+      String agentName = normalizeAgentName(value);
       if (agentName.isBlank())
         continue;
       ModelEffort config = readCodexAgentConfigByStem(agentName);
       if (config != null)
         matches.add(config);
+    }
+    if (allSubagents)
+    {
+      if (hasSpecificSubagents)
+      {
+        throw new IllegalArgumentException("agents must not combine \"subagents\" with specific " +
+          "subagent names in " + rulePath);
+      }
+      return readAllCodexAgentConfigs();
     }
     return matches;
   }

@@ -42,13 +42,13 @@ public final class SubagentStartHookTest
       Fixture fixture = createFixture(tempDir);
       Files.writeString(fixture.pluginRoot().resolve("rules/codex/main.md"), """
         ---
-        subAgents: []
+        agents: ["main"]
         ---
         main-only rule
         """, StandardCharsets.UTF_8);
       Files.writeString(fixture.pluginRoot().resolve("rules/codex/targeted.md"), """
         ---
-        subAgents: ["cat:work-execute"]
+        agents: ["main", "cat:work-execute"]
         ---
         targeted subagent-start rule
         """, StandardCharsets.UTF_8);

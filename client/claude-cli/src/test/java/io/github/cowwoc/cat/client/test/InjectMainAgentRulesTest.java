@@ -23,7 +23,7 @@ public final class InjectMainAgentRulesTest
 {
   /**
    * Verifies that handle() returns a non-empty context when the rules directory contains a rule
-   * with mainAgent:true.
+   * with agents containing "main".
    *
    * @throws IOException if file operations fail
    */
@@ -38,8 +38,7 @@ public final class InjectMainAgentRulesTest
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("main-rule.md"), """
         ---
-        mainAgent: true
-        subAgents: []
+        agents: ["main"]
         ---
         # Main agent rule content
         Important instruction for the main agent.
@@ -77,8 +76,7 @@ public final class InjectMainAgentRulesTest
       Files.createDirectories(pluginRulesDir);
       Files.writeString(pluginRulesDir.resolve("plugin-rule.md"), """
         ---
-        mainAgent: true
-        subAgents: []
+        agents: ["main"]
         ---
         # Plugin bundled rule
         Plugin rule content for main agent.
@@ -117,8 +115,7 @@ public final class InjectMainAgentRulesTest
       Files.createDirectories(pluginRulesDir);
       Files.writeString(pluginRulesDir.resolve("plugin-rule.md"), """
         ---
-        mainAgent: true
-        subAgents: []
+        agents: ["main"]
         ---
         # Plugin bundled rule
         Plugin rule content for main agent.
@@ -159,7 +156,7 @@ public final class InjectMainAgentRulesTest
       Files.createDirectories(sharedRulesDir);
       Files.writeString(sharedRulesDir.resolve("shared-rule.md"), """
         ---
-        mainAgent: true
+        agents: ["main", "subagents"]
         ---
         # Shared project rule
         Portable instruction for all engines.
@@ -169,7 +166,7 @@ public final class InjectMainAgentRulesTest
       Files.createDirectories(claudeRulesDir);
       Files.writeString(claudeRulesDir.resolve("claude-rule.md"), """
         ---
-        mainAgent: true
+        agents: ["main", "subagents"]
         ---
         # Claude project rule
         Claude-only instruction.
@@ -179,7 +176,7 @@ public final class InjectMainAgentRulesTest
       Files.createDirectories(codexRulesDir);
       Files.writeString(codexRulesDir.resolve("codex-rule.md"), """
         ---
-        mainAgent: true
+        agents: ["main", "subagents"]
         ---
         # Codex project rule
         Codex-only instruction.
@@ -221,7 +218,7 @@ public final class InjectMainAgentRulesTest
       Files.createDirectories(pluginRulesDir);
       Files.writeString(pluginRulesDir.resolve("shared-rule.md"), """
         ---
-        mainAgent: true
+        agents: ["main", "subagents"]
         ---
         # Plugin version of shared rule
         This is from the plugin.
@@ -231,7 +228,7 @@ public final class InjectMainAgentRulesTest
       Files.createDirectories(projectRulesDir);
       Files.writeString(projectRulesDir.resolve("shared-rule.md"), """
         ---
-        mainAgent: true
+        agents: ["main", "subagents"]
         ---
         # Project version of shared rule
         This is from the project.
@@ -284,7 +281,7 @@ public final class InjectMainAgentRulesTest
 
   /**
    * Verifies that handle() returns an empty result when the rules directory exists but all rules
-   * have mainAgent:false (no rules pass the main-agent filter).
+   * target only subagents (no rules pass the main-agent filter).
    *
    * @throws IOException if file operations fail
    */
@@ -296,10 +293,10 @@ public final class InjectMainAgentRulesTest
     {
       Path rulesDir = scope.getProjectPath().resolve(".cat/rules/common");
       Files.createDirectories(rulesDir);
-      // No subAgents frontmatter → null → targets all subagents; mainAgent: false excludes main agent
+      // agents: ["subagents"] targets all subagents and excludes the main agent.
       Files.writeString(rulesDir.resolve("subagent-only.md"), """
         ---
-        mainAgent: false
+        agents: ["subagents"]
         ---
         # Only for subagents
         """);
@@ -318,9 +315,8 @@ public final class InjectMainAgentRulesTest
   }
 
   /**
-   * Verifies that when filenames collide, the plugin rule (mainAgent:true) is included and the
-   * project rule (mainAgent:false) is filtered out by the main-agent audience filter. Both rules
-   * exist in the concatenated list but only the mainAgent:true one passes the filter.
+   * Verifies that when filenames collide, the plugin main-agent rule is included and the project
+   * subagent-only rule is filtered out by the main-agent audience filter.
    *
    * @throws IOException if file operations fail
    */
@@ -333,10 +329,10 @@ public final class InjectMainAgentRulesTest
     {
       Path pluginRulesDir = scope.getPluginRoot().resolve("rules").resolve("common");
       Files.createDirectories(pluginRulesDir);
-      // Plugin rule: mainAgent=true — passes the main-agent filter
+      // Plugin rule targets the main agent.
       Files.writeString(pluginRulesDir.resolve("toggled-rule.md"), """
         ---
-        mainAgent: true
+        agents: ["main"]
         ---
         # Plugin main-agent rule
         This plugin content should reach the main agent.
@@ -344,10 +340,10 @@ public final class InjectMainAgentRulesTest
 
       Path projectRulesDir = scope.getProjectPath().resolve(".cat/rules/common");
       Files.createDirectories(projectRulesDir);
-      // Project rule with same filename: mainAgent=false — filtered out by main-agent filter
+      // Project rule with same filename targets only subagents.
       Files.writeString(projectRulesDir.resolve("toggled-rule.md"), """
         ---
-        mainAgent: false
+        agents: ["subagents"]
         ---
         # Project rule: disabled for main agent
         This content should not appear in main agent context.
@@ -357,11 +353,11 @@ public final class InjectMainAgentRulesTest
 
       SessionStartHandler.Result result = handler.handle();
 
-      // Plugin rule (mainAgent:true) passes the filter and is included
+      // Plugin main-agent rule passes the filter and is included.
       requireThat(result.additionalContext(), "additionalContext").contains("Plugin main-agent rule");
       requireThat(result.additionalContext(), "additionalContext").contains(
         "This plugin content should reach the main agent.");
-      // Project rule (mainAgent:false) is filtered out
+      // Project subagent-only rule is filtered out.
       requireThat(result.additionalContext(), "additionalContext").doesNotContain(
         "Project rule: disabled for main agent");
       requireThat(result.additionalContext(), "additionalContext").doesNotContain(
@@ -387,8 +383,8 @@ public final class InjectMainAgentRulesTest
   }
 
   /**
-   * Verifies that handle() returns only mainAgent:true rules when both mainAgent:true and
-   * mainAgent:false rules are present.
+   * Verifies that handle() returns only main-agent rules when both main-only and subagent-only
+   * rules are present.
    *
    * @throws IOException if file operations fail
    */
@@ -402,14 +398,14 @@ public final class InjectMainAgentRulesTest
       Files.createDirectories(rulesDir);
       Files.writeString(rulesDir.resolve("main-only.md"), """
         ---
-        mainAgent: true
+        agents: ["main"]
         ---
         # Main agent exclusive content
         Only the main agent should see this.
         """);
       Files.writeString(rulesDir.resolve("subagent-only.md"), """
         ---
-        mainAgent: false
+        agents: ["subagents"]
         ---
         # Subagent exclusive content
         Only subagents should see this.

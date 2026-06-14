@@ -34,9 +34,10 @@ import java.util.StringJoiner;
  * listing. Behavioral instructions about when and how to invoke skills are provided separately via
  * {@code plugin/rules/common/subagent-skill-instructions.md}.
  * <p>
- * CAT rules are filtered using the {@code subAgents} frontmatter property: omitting {@code subAgents}
- * (or not providing frontmatter) reaches all subagents, {@code subAgents: []} excludes all subagents,
- * and specific types like {@code subAgents: ["cat:work-execute"]} target only matching subagents.
+ * CAT rules are filtered using the {@code agents} frontmatter property: omitting {@code agents}
+ * reaches all subagents, {@code agents: ["main"]} excludes all subagents, {@code agents: ["subagents"]}
+ * reaches all subagents without the main agent, and specific types like
+ * {@code agents: ["cat:work-execute"]} target only matching subagents.
  */
 public final class SubagentStartHook implements HookHandler
 {

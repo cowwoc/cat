@@ -27,8 +27,7 @@ public final class TeePipedOutputRuleLoadTest
   /**
    * Verifies that the tee-piped-output rule is loaded and injected into the main agent context.
    *
-   * <p>The rule must be present in plugin/rules/common/tee-piped-output.md with mainAgent: true
-   * frontmatter.
+   * <p>The rule must be present in plugin/rules/common/tee-piped-output.md and target the main agent.
    *
    * @throws IOException if file operations fail
    */
@@ -44,7 +43,7 @@ public final class TeePipedOutputRuleLoadTest
 
       Files.writeString(rulesDir.resolve("tee-piped-output.md"), """
         ---
-        mainAgent: true
+        agents: ["main"]
         ---
         ## Tee Piped Process Output
 
@@ -88,7 +87,7 @@ public final class TeePipedOutputRuleLoadTest
 
       Files.writeString(rulesDir.resolve("tee-piped-output.md"), """
         ---
-        mainAgent: true
+        agents: ["main"]
         ---
         ## Tee Piped Process Output
 

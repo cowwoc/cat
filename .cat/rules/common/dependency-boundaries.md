@@ -1,6 +1,5 @@
 ---
-mainAgent: true
-subAgents: []
+agents: ["main"]
 ---
 # Dependency Boundary Conventions
 

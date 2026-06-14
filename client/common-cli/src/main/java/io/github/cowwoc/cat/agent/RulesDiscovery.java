@@ -33,9 +33,7 @@ import java.util.stream.Stream;
  * Rule files are Markdown files with optional YAML frontmatter controlling which agent audience
  * receives the content:
  * <ul>
- *   <li>{@code mainAgent: true|false} — whether to inject into the main agent (default: true)</li>
- *   <li>{@code subAgents: [type1, type2]} or {@code subAgents: []} —
- *       which agent types receive this rule (default when omitted: all agents)</li>
+ *   <li>{@code agents: ["main", "subagents"]} — recipients. Omit to reach all agents</li>
  *   <li>{@code paths: ["*.java", "src/**"]} — only inject when an active file matches one of
  *       these globs (default: always inject)</li>
  * </ul>
@@ -47,9 +45,9 @@ public final class RulesDiscovery
    *
    * @param path       the path to the rule file
    * @param contextPath the rule path to show in injected context
-   * @param mainAgent  whether to inject into the main agent
-   * @param subAgents  the agent types that receive this rule; {@code null} means all agents
-   *                   (default when omitted from frontmatter), empty means none
+   * @param mainAgent  whether to inject into the main agent, derived from {@code agents}
+   * @param subAgents  the subagent types that receive this rule; {@code null} means all subagents,
+   *                   empty means none
    * @param paths      glob patterns restricting injection to matching active files; empty means always inject
    * @param content    the file body with leading YAML frontmatter stripped
    */
@@ -64,12 +62,12 @@ public final class RulesDiscovery
     /**
      * Creates a new RuleFile record.
      *
-     * @param path      the file path
+     * @param path        the file path
      * @param contextPath the rule path to show in injected context
-     * @param mainAgent inject into main agent
-     * @param subAgents agent types ({@code null} means all agents)
-     * @param paths     glob patterns
-     * @param content   file content (body without frontmatter)
+     * @param mainAgent   inject into main agent
+     * @param subAgents   subagent types ({@code null} means all subagents)
+     * @param paths       glob patterns
+     * @param content     file content (body without frontmatter)
      * @throws NullPointerException if {@code path}, {@code contextPath}, {@code paths}, or
      *   {@code content} are null
      */
@@ -104,6 +102,10 @@ public final class RulesDiscovery
       rules = List.copyOf(rules);
       requireThat(validatedAt, "validatedAt").isNotNull();
     }
+  }
+
+  private record Audience(boolean mainAgent, List<String> subAgents)
+  {
   }
 
   /**
@@ -213,7 +215,12 @@ public final class RulesDiscovery
     List<Path> files = new ArrayList<>();
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(rulesDir, "*.md"))
     {
-      stream.forEach(files::add);
+      stream.forEach(file ->
+      {
+        if (file.getFileName().toString().equalsIgnoreCase("index.md"))
+          return;
+        files.add(file);
+      });
     }
     files.sort(Comparator.naturalOrder());
     return files;
@@ -302,12 +309,15 @@ public final class RulesDiscovery
     try
     {
       JsonNode root = yamlMapper.readTree(frontmatter);
-      boolean mainAgent = true;
-      if (root.has("mainAgent"))
-        mainAgent = root.get("mainAgent").asBoolean(true);
-      List<String> subAgents = parseListNode(root.get("subAgents"), null);
+      if (root.has("mainAgent") || root.has("subAgents"))
+      {
+        throw new IllegalArgumentException("Legacy rule audience frontmatter is not supported in " +
+          path.getFileName() + ": use agents instead of mainAgent/subAgents");
+      }
+      Audience audience = parseAgents(root.get("agents"), path);
       List<String> paths = parseListNode(root.get("paths"), List.of());
-      return new RuleFile(path, toContextPath(path), mainAgent, subAgents, paths, body);
+      return new RuleFile(path, toContextPath(path), audience.mainAgent(), audience.subAgents(),
+        paths, body);
     }
     catch (Exception e)
     {
@@ -371,6 +381,52 @@ public final class RulesDiscovery
     for (JsonNode item : node)
       result.add(item.asString());
     return result;
+  }
+
+  /**
+   * Parses {@code agents} rule frontmatter.
+   *
+   * @param node the {@code agents} YAML node
+   * @param path the source rule path for diagnostics
+   * @return the derived audience
+   */
+  private static Audience parseAgents(JsonNode node, Path path)
+  {
+    if (node == null || node.isNull() || node.isMissingNode())
+      return new Audience(true, null);
+    if (!node.isArray())
+      throw new IllegalArgumentException("agents must be a non-empty YAML list in " + path.getFileName());
+    if (node.isEmpty())
+      throw new IllegalArgumentException("agents must not be empty in " + path.getFileName());
+
+    boolean mainAgent = false;
+    boolean allSubagents = false;
+    List<String> specificSubagents = new ArrayList<>();
+    for (JsonNode item : node)
+    {
+      if (!item.isString())
+        throw new IllegalArgumentException("agents values must be non-blank strings in " + path.getFileName());
+      String value = item.asString().strip();
+      if (value.isBlank())
+        throw new IllegalArgumentException("agents values must be non-blank strings in " + path.getFileName());
+      switch (value)
+      {
+        case "main" -> mainAgent = true;
+        case "subagents" -> allSubagents = true;
+        default -> specificSubagents.add(value);
+      }
+    }
+    if (allSubagents && !specificSubagents.isEmpty())
+    {
+      throw new IllegalArgumentException("agents must not combine \"subagents\" with specific subagent " +
+        "names in " + path.getFileName());
+    }
+    List<String> subAgents;
+    if (allSubagents)
+      subAgents = null;
+    else
+      subAgents = List.copyOf(specificSubagents);
+    return new Audience(mainAgent, subAgents);
   }
 
   /**
