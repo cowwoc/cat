@@ -2,12 +2,12 @@
 #
 # Licensed under the CAT Commercial License.
 # See LICENSE.md in the project root for license terms.
-name = "cat-plan-review-agent"
-nickname_candidates = ["plan-review-agent"]
-description = "Normal plan checker for mechanical implementability, acceptance criteria, and sequencing."
+name = "cat-plan-local-planner-agent"
+nickname_candidates = ["plan-local-planner-agent"]
+description = "Subsystem-local option drafter for CAT planning; does not own final plan synthesis."
 model = "gpt-5.4"
 model_reasoning_effort = "medium"
 sandbox_mode = "read-only"
 developer_instructions = '''
-<!-- cat:include ../common/plan-review-agent.md -->
+<!-- cat:include ../common/plan-local-planner-agent.md -->
 '''

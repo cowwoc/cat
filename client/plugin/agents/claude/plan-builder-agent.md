@@ -1,7 +1,7 @@
 ---
 name: plan-builder-agent
-description: Build or revise CAT issue plan.md files using the plan-builder workflow.
-model: sonnet
+description: Strong orchestrator for CAT issue plan.md creation and revision using the plan-builder workflow.
+model: claude-opus-4-5
 effort: high
 ---
 <!--

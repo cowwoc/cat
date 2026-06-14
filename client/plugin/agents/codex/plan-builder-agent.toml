@@ -4,7 +4,7 @@
 # See LICENSE.md in the project root for license terms.
 name = "cat-plan-builder-agent"
 nickname_candidates = ["plan-builder-agent"]
-description = "Build or revise CAT issue plan.md files using the plan-builder workflow."
+description = "Strong orchestrator for CAT issue plan.md creation and revision using the plan-builder workflow."
 model = "gpt-5.4"
 model_reasoning_effort = "high"
 sandbox_mode = "workspace-write"

@@ -25,7 +25,10 @@ plugin/agents/common/
 ├── instruction-design-agent.md
 ├── instruction-extraction-agent.md
 ├── instruction-grader-agent.md
+├── plan-evidence-agent.md
+├── plan-local-planner-agent.md
 ├── plan-review-agent.md
+├── plan-strong-review-agent.md
 ├── red-team-agent.md
 ├── stakeholder-*.md
 ├── work-execute.md

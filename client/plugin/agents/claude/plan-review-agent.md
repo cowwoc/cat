@@ -1,6 +1,6 @@
 ---
 name: plan-review-agent
-description: "Plan completeness reviewer. Evaluates whether plan.md is detailed enough for Haiku-level mechanical implementation."
+description: "Normal plan checker for mechanical implementability, acceptance criteria, and sequencing."
 model: sonnet
 effort: medium
 ---

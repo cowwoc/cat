@@ -2,12 +2,12 @@
 #
 # Licensed under the CAT Commercial License.
 # See LICENSE.md in the project root for license terms.
-name = "cat-plan-review-agent"
-nickname_candidates = ["plan-review-agent"]
-description = "Normal plan checker for mechanical implementability, acceptance criteria, and sequencing."
-model = "gpt-5.4"
+name = "cat-plan-evidence-agent"
+nickname_candidates = ["plan-evidence-agent"]
+description = "Bounded evidence explorer and local contradiction checker for CAT planning."
+model = "gpt-5.4-mini"
 model_reasoning_effort = "medium"
 sandbox_mode = "read-only"
 developer_instructions = '''
-<!-- cat:include ../common/plan-review-agent.md -->
+<!-- cat:include ../common/plan-evidence-agent.md -->
 '''

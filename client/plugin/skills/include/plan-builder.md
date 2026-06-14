@@ -4,7 +4,9 @@ Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
 
-Delegate plan building to the dedicated plan-builder agent.
+Delegate plan building to the dedicated plan-builder agent. The dedicated agent is the strong top-level orchestrator:
+it owns scope classification, decomposition, contradiction handling, sequencing, acceptance-criteria quality, and final
+plan synthesis. Helper agents may gather evidence or review drafts, but they must not own the final plan.
 
 Use the engine's native agent-spawning tool:
 

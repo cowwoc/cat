@@ -1,0 +1,13 @@
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+name = "cat-plan-strong-review-agent"
+nickname_candidates = ["plan-strong-review-agent"]
+description = "Strong reviewer for broad, architecture-sensitive, contradiction-prone CAT plans."
+model = "gpt-5.5"
+model_reasoning_effort = "xhigh"
+sandbox_mode = "read-only"
+developer_instructions = '''
+<!-- cat:include ../common/plan-strong-review-agent.md -->
+'''
