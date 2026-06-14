@@ -3,6 +3,9 @@ target/
 build/
 plugin/lib/
 
+# Internal Maven configuration
+/.mvn/extensions.xml
+
 # IDE files
 .idea/
 *.iml

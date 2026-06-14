@@ -9,6 +9,9 @@ plugin/node_modules/
 # User-specific configuration, kept local and not committed
 config.local.json
 
+# Temporary workaround until Codex supports bundling agents inside plugins
+/.codex/agents/
+
 # Local directories not tracked in git
 demo-recording/
 .clone/
@@ -21,3 +24,7 @@ plugin/runtime/
 __pycache__/
 *.pyc
 target/
+
+# Serena plugin
+/.serena/cache/
+/.serena/project.local.yml

@@ -1,5 +1,9 @@
 ---
-paths: ["client/plugin/hooks/claude/**", ".claude/settings.json", "client/**"]
+paths:
+  - "client/plugin/hooks/claude/**"
+  - ".claude/settings.json"
+  - "client/claude-cli/**/hook/**"
+  - "client/claude-cli/**/hooks/**"
 subAgents: []
 ---
 # Claude Hook Guidance

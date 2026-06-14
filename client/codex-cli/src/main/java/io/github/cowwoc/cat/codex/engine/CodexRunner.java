@@ -29,8 +29,10 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -53,6 +55,7 @@ public final class CodexRunner
    */
   private static final Duration DEFAULT_TIMEOUT = Duration.ofMinutes(10);
   private static final Duration WAIT_POLL = Duration.ofMillis(50);
+  private static final String ADDITIONAL_WORKDIRS_ENV = "ADDITIONAL_WORKDIRS";
   private final AgentPluginScope scope;
   private final CodexSessionOutputParser sessionOutputParser;
   private final Duration timeout;
@@ -198,6 +201,7 @@ public final class CodexRunner
     requireThat(cwd, "cwd").isNotNull();
     command.add("--cd");
     command.add(cwd.toString());
+    appendSharedWorkdirs(command);
     if (CodexSandboxPolicy.shouldInheritYoloMode(environment))
     {
       command.add(CodexSandboxPolicy.YOLO_FLAG);
@@ -206,6 +210,31 @@ public final class CodexRunner
     {
       command.add("--sandbox");
       command.add(CodexSandboxPolicy.NESTED_SANDBOX_MODE);
+    }
+  }
+
+  /**
+   * Appends additional work directories that nested Codex runs may access alongside their primary cwd.
+   *
+   * @param command the command under construction
+   */
+  private void appendSharedWorkdirs(List<String> command)
+  {
+    requireThat(command, "command").isNotNull();
+    String raw = environment.getOrDefault(ADDITIONAL_WORKDIRS_ENV, "").trim();
+    if (raw.isEmpty())
+      return;
+    Set<String> uniquePaths = new LinkedHashSet<>();
+    for (String token : raw.split(":"))
+    {
+      String path = token.trim();
+      if (!path.isEmpty())
+        uniquePaths.add(path);
+    }
+    for (String path : uniquePaths)
+    {
+      command.add("--add-dir");
+      command.add(path);
     }
   }
 

@@ -38,11 +38,34 @@ final class CodexSessionRules
     requireThat(nativeInput, "nativeInput").isNotNull();
     CodexSessionContext sessionContext = CodexSessionContext.from(nativeInput);
     if (!sessionContext.agent())
-      return MainAgentRules.load(scope, scope.getYamlMapper());
-    return RulesDiscovery.getCatRulesForAudience(scope.getRuleDirectories(), scope.getYamlMapper(),
+    {
+      return join(MainAgentRules.load(scope, scope.getYamlMapper()),
+        CodexPathRuleContext.generateForMain(scope));
+    }
+    return join(RulesDiscovery.getCatRulesForAudience(scope.getRuleDirectories(), scope.getYamlMapper(),
       (rules, activeFiles) -> RulesDiscovery.filterForAgent(rules,
         sessionContext.agentName(), activeFiles),
-      List.of());
+      List.of()), CodexPathRuleContext.loadForAgent(scope, sessionContext.agentName()));
+  }
+
+  /**
+   * Joins non-blank context blocks.
+   *
+   * @param blocks the context blocks
+   * @return the joined context
+   */
+  private static String join(String... blocks)
+  {
+    StringBuilder result = new StringBuilder();
+    for (String block : blocks)
+    {
+      if (block == null || block.isBlank())
+        continue;
+      if (result.length() > 0)
+        result.append("\n\n");
+      result.append(block.stripTrailing());
+    }
+    return result.toString();
   }
 
   /**

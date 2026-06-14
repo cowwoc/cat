@@ -1,3 +1,6 @@
+---
+paths: ["client/**", "plugin/**", "*.java", "*.sh", "*.md", "*.toml"]
+---
 # License Headers
 
 All source files in the CAT project must include a license header referencing the CAT Commercial License.

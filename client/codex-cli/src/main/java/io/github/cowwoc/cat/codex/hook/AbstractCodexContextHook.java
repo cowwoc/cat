@@ -89,11 +89,6 @@ public abstract class AbstractCodexContextHook
     {
       handlers = List.of(
         migrationNotice,
-        () ->
-        {
-          CodexRuleStubGenerator.generate(scope);
-          return SessionStartHandler.Result.empty();
-        },
         ruleLoader,
         new InjectCriticalThinking());
     }

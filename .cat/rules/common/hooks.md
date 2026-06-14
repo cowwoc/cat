@@ -1,5 +1,11 @@
 ---
 subAgents: []
+paths:
+  - "client/plugin/hooks/**"
+  - "client/**/hook/**"
+  - "client/**/hooks/**"
+  - ".claude/settings.json"
+  - ".codex/**"
 ---
 # Hook Guidance
 

@@ -116,6 +116,67 @@ public final class CodexRunnerTest
   }
 
   /**
+   * Verifies that nested Codex commands inherit additional workdirs alongside the primary cwd.
+   */
+  @Test
+  public void buildCommandAppendsSharedWorkdirs() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestCodexTool scope = new TestCodexTool(tempDir, tempDir))
+    {
+      CodexRunner runner = new CodexRunner(scope, Duration.ofMinutes(3),
+        Map.of("ADDITIONAL_WORKDIRS", "/home/node/.cat/worktrees"));
+      Path outputPath = tempDir.resolve("last-message.txt");
+
+      List<String> command = runner.buildCommand("gpt-5.5", "high", tempDir, outputPath);
+
+      requireThat(command.indexOf("--cd"), "cdIndex").isEqualTo(5);
+      requireThat(command.get(6), "cwd").isEqualTo(tempDir.toString());
+      requireThat(command.indexOf("--add-dir"), "firstAddDirIndex").isEqualTo(7);
+      requireThat(command.get(8), "firstSharedDir").isEqualTo("/home/node/.cat/worktrees");
+      requireThat(command, "command").containsExactly(List.of("codex", "exec", "--json",
+        "--output-last-message", outputPath.toString(), "--cd", tempDir.toString(), "--add-dir",
+        "/home/node/.cat/worktrees", "--model", "gpt-5.5", "-c",
+        "model_reasoning_effort=\"high\"", "-"));
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that resumed nested Codex commands inherit additional workdirs alongside the primary cwd.
+   */
+  @Test
+  public void buildResumeCommandAppendsSharedWorkdirs() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestCodexTool scope = new TestCodexTool(tempDir, tempDir))
+    {
+      CodexRunner runner = new CodexRunner(scope, Duration.ofMinutes(3),
+        Map.of("ADDITIONAL_WORKDIRS", "/home/node/.cat/worktrees"));
+      Path outputPath = tempDir.resolve("last-message.txt");
+
+      List<String> command = runner.buildResumeCommand("session-123", "gpt-5.5", "high", tempDir,
+        outputPath);
+
+      requireThat(command.indexOf("--cd"), "cdIndex").isEqualTo(6);
+      requireThat(command.get(7), "cwd").isEqualTo(tempDir.toString());
+      requireThat(command.indexOf("--add-dir"), "firstAddDirIndex").isEqualTo(8);
+      requireThat(command.get(9), "firstSharedDir").isEqualTo("/home/node/.cat/worktrees");
+      requireThat(command, "command").containsExactly(List.of("codex", "exec", "resume", "--json",
+        "--output-last-message", outputPath.toString(), "--cd", tempDir.toString(), "--add-dir",
+        "/home/node/.cat/worktrees", "--model", "gpt-5.5", "-c",
+        "model_reasoning_effort=\"high\"", "--", "session-123", "-"));
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that resumed Codex sessions validate effort values the same way fresh sessions do.
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
