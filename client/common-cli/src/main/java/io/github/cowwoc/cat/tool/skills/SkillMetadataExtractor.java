@@ -7,7 +7,6 @@
 package io.github.cowwoc.cat.tool.skills;
 
 import io.github.cowwoc.cat.agent.AgentScope;
-import io.github.cowwoc.cat.agent.AgentPluginScope;
 import io.github.cowwoc.cat.agent.FileContentCache;
 import io.github.cowwoc.cat.agent.FrontmatterUtils;
 import tools.jackson.databind.JsonNode;
@@ -16,10 +15,7 @@ import tools.jackson.dataformat.yaml.YAMLMapper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -31,53 +27,22 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  */
 final class SkillMetadataExtractor
 {
-  private static final String CONFIG_SOURCE_DEFAULT = "default";
-  private static final String CONFIG_SOURCE_OWNER = "owner";
-  private static final String CONFIG_SOURCE_FRONTMATTER = "frontmatter";
-  private static final String DEFAULT_CLAUDE_TEST_MODEL = "haiku";
-  private static final String DEFAULT_CODEX_TEST_MODEL = "gpt-5.4-mini";
-  private static final String DEFAULT_TEST_EFFORT = "low";
-  /**
-   * CAT's Codex test-runner model ranking, weakest to strongest.
-   * <p>
-   * Owner resolution compares whole owner configs: model rank dominates effort rank, and effort
-   * is the tie-breaker for owners using the same model. Keep this table explicit so new CAT
-   * agent model IDs cannot silently change "weakest" selection semantics.
-   */
-  private static final List<String> CODEX_MODEL_STRENGTH = List.of(
-    "gpt-5.4-mini",
-    "gpt-5.4",
-    "gpt-5.5");
-  private static final List<String> CODEX_EFFORT_STRENGTH =
-    List.of("low", "medium", "high", "xhigh");
-  private final String claudeCodeVersion;
   private final YAMLMapper yamlMapper;
-  private final String runtimeId;
-  private final Path pluginRoot;
+  private final SprtMetadataResolver metadataResolver;
 
   /**
    * Creates a new SkillMetadataExtractor.
    *
-   * @param scope             the Claude plugin scope providing JSON mapper and other services
-   * @param claudeCodeVersion the Claude Code version string for model ID resolution
+   * @param scope the plugin scope providing JSON mapper and other services
+   * @param metadataResolver engine-specific metadata resolver
    * @throws NullPointerException if any argument is null
    */
-  SkillMetadataExtractor(AgentScope scope, String claudeCodeVersion)
+  SkillMetadataExtractor(AgentScope scope, SprtMetadataResolver metadataResolver)
   {
     requireThat(scope, "scope").isNotNull();
-    requireThat(claudeCodeVersion, "claudeCodeVersion").isNotNull();
-    this.claudeCodeVersion = claudeCodeVersion;
+    requireThat(metadataResolver, "metadataResolver").isNotNull();
     this.yamlMapper = scope.getYamlMapper();
-    if (scope instanceof AgentPluginScope pluginScope)
-    {
-      this.runtimeId = SprtRunner.runtimeIdFromDescriptor(pluginScope.getPluginDescriptor());
-      this.pluginRoot = pluginScope.getPluginRoot();
-    }
-    else
-    {
-      this.runtimeId = "claude";
-      this.pluginRoot = null;
-    }
+    this.metadataResolver = metadataResolver;
   }
 
   /**
@@ -107,12 +72,7 @@ final class SkillMetadataExtractor
   /**
    * Implements the {@code extract-model} command.
    * <p>
-   * Resolves the test-runner model for the active engine.
-   * <p>
-   * Codex skill files do not support model frontmatter, so Codex uses the weakest model/effort
-   * combination among matching invoking agents when the instruction path exposes any, otherwise it uses its fixed
-   * default. Claude reads the YAML {@code model:} field and resolves short names via {@link ModelIdResolver},
-   * falling back to the Claude default when the field is absent.
+   * Delegates engine-specific model resolution to the resolver supplied by the active engine.
    *
    * @param args {@code [skill_path]}
    * @return the fully-qualified model identifier
@@ -121,34 +81,13 @@ final class SkillMetadataExtractor
    */
   String extractModel(String[] args) throws IOException
   {
-    requireThat(args, "args").isNotNull();
-    if (args.length != 1)
-      throw new IllegalArgumentException(
-        "SprtRunner extract-model: expected 1 argument <skill_path>, got " + args.length + ".\n" +
-        "Usage: skill-test-runner extract-model <skill_path>");
-    Path skillPath = Path.of(args[0]);
-    if (Files.notExists(skillPath))
-      throw new IllegalArgumentException(
-        "SprtRunner extract-model: file not found: " + skillPath);
-
-    if (runtimeId.equals("codex"))
-      return resolveCodexTestRunnerConfig(skillPath).modelId();
-
-    String model = extractStringField(skillPath, "model");
-    if (model.isBlank())
-      return defaultTestModel();
-    return ModelIdResolver.resolve(claudeCodeVersion, model);
+    return resolveMetadata(args, "extract-model").modelId();
   }
 
   /**
    * Implements the {@code extract-effort} command.
    * <p>
-   * Resolves the test-runner effort for the active engine.
-   * <p>
-   * Codex skill files do not support effort frontmatter, so Codex uses the weakest model/effort
-   * combination among matching invoking agents when the instruction path exposes any, otherwise it uses the fixed
-   * default. Claude reads the YAML {@code effort:} field, falling back to the default test effort
-   * when the field is absent.
+   * Delegates engine-specific effort resolution to the resolver supplied by the active engine.
    *
    * @param args {@code [skill_path]}
    * @return the effort level (e.g., {@code "high"}), or the default test effort if not specified
@@ -157,24 +96,7 @@ final class SkillMetadataExtractor
    */
   String extractEffort(String[] args) throws IOException
   {
-    requireThat(args, "args").isNotNull();
-    if (args.length != 1)
-      throw new IllegalArgumentException(
-        "SprtRunner extract-effort: expected 1 argument <skill_path>, got " +
-        args.length + ".\n" +
-        "Usage: skill-test-runner extract-effort <skill_path>");
-    Path skillPath = Path.of(args[0]);
-    if (Files.notExists(skillPath))
-      throw new IllegalArgumentException(
-        "SprtRunner extract-effort: file not found: " + skillPath);
-
-    if (runtimeId.equals("codex"))
-      return resolveCodexTestRunnerConfig(skillPath).effort();
-
-    String effort = extractStringField(skillPath, "effort");
-    if (effort.isBlank())
-      return DEFAULT_TEST_EFFORT;
-    return effort;
+    return resolveMetadata(args, "extract-effort").effort();
   }
 
   /**
@@ -187,338 +109,22 @@ final class SkillMetadataExtractor
    */
   String extractConfigSource(String[] args) throws IOException
   {
+    return resolveMetadata(args, "extract-config-source").source();
+  }
+
+  private SprtMetadataResolver.ResolvedConfig resolveMetadata(String[] args, String commandName)
+    throws IOException
+  {
     requireThat(args, "args").isNotNull();
     if (args.length != 1)
       throw new IllegalArgumentException(
-        "SprtRunner extract-config-source: expected 1 argument <skill_path>, got " +
-        args.length + ".\n" +
-        "Usage: skill-test-runner extract-config-source <skill_path>");
+        "SprtRunner " + commandName + ": expected 1 argument <skill_path>, got " +
+        args.length + ".\nUsage: skill-test-runner " + commandName + " <skill_path>");
     Path skillPath = Path.of(args[0]);
     if (Files.notExists(skillPath))
       throw new IllegalArgumentException(
-        "SprtRunner extract-config-source: file not found: " + skillPath);
-
-    if (runtimeId.equals("codex"))
-      return resolveCodexTestRunnerConfig(skillPath).source();
-
-    String model = extractStringField(skillPath, "model");
-    String effort = extractStringField(skillPath, "effort");
-    if (!model.isBlank() || !effort.isBlank())
-      return CONFIG_SOURCE_FRONTMATTER;
-    return CONFIG_SOURCE_DEFAULT;
-  }
-
-  private String defaultTestModel()
-  {
-    if (runtimeId.equals("codex"))
-      return DEFAULT_CODEX_TEST_MODEL;
-    return ModelIdResolver.resolve(claudeCodeVersion, DEFAULT_CLAUDE_TEST_MODEL);
-  }
-
-  private ResolvedTestRunnerConfig resolveCodexTestRunnerConfig(Path instructionPath) throws IOException
-  {
-    List<ModelEffort> owners = findCodexInvokerAgentConfigs(instructionPath);
-    if (owners.isEmpty())
-    {
-      return new ResolvedTestRunnerConfig(DEFAULT_CODEX_TEST_MODEL, DEFAULT_TEST_EFFORT,
-        CONFIG_SOURCE_DEFAULT);
-    }
-    ModelEffort weakest = weakestModelEffort(owners);
-    return new ResolvedTestRunnerConfig(weakest.modelId(), weakest.effort(), CONFIG_SOURCE_OWNER);
-  }
-
-  private List<ModelEffort> findCodexInvokerAgentConfigs(Path instructionPath) throws IOException
-  {
-    Path relativePath = pluginRelativePath(instructionPath);
-    if (relativePath == null)
-      return List.of();
-
-    if (relativePath.startsWith(Path.of("agents/codex")) && isFileType(relativePath, ".toml"))
-      return List.of(readCodexAgentConfig(pluginRoot.resolve(relativePath)));
-    if (relativePath.startsWith(Path.of("agents/common")) && isFileType(relativePath, ".md"))
-      return optionalConfigList(readCodexAgentConfigByStem(fileStem(relativePath)));
-    if (relativePath.startsWith(Path.of("agents/claude")) && isFileType(relativePath, ".md"))
-      return optionalConfigList(readCodexAgentConfigByStem(fileStem(relativePath)));
-    if (relativePath.startsWith(Path.of("rules")))
-      return findCodexRuleAgentConfigs(instructionPath);
-    if (relativePath.startsWith(Path.of("skills")))
-      return findCodexSkillInvokerConfigs(relativePath);
-    return List.of();
-  }
-
-  private Path pluginRelativePath(Path instructionPath)
-  {
-    if (pluginRoot == null)
-      return null;
-    Path absolutePath = instructionPath.toAbsolutePath().normalize();
-    Path absolutePluginRoot = pluginRoot.toAbsolutePath().normalize();
-    if (absolutePath.startsWith(absolutePluginRoot))
-      return absolutePluginRoot.relativize(absolutePath);
-
-    String normalized = absolutePath.toString().replace('\\', '/');
-    String marker = "/client/plugin/";
-    int markerIndex = normalized.indexOf(marker);
-    if (markerIndex < 0)
-      return null;
-    return Path.of(normalized.substring(markerIndex + marker.length()));
-  }
-
-  private List<ModelEffort> findCodexRuleAgentConfigs(Path rulePath) throws IOException
-  {
-    JsonNode frontmatter = parseFrontmatterNode(rulePath);
-    if (frontmatter.has("mainAgent") || frontmatter.has("subAgents"))
-    {
-      throw new IllegalArgumentException("Legacy rule audience frontmatter is not supported in " +
-        rulePath + ": use agents instead of mainAgent/subAgents");
-    }
-    JsonNode agents = frontmatter.get("agents");
-    if (agents == null || agents.isMissingNode() || agents.isNull())
-      return readAllCodexAgentConfigs();
-    if (!agents.isArray())
-      throw new IllegalArgumentException("agents must be a non-empty YAML list in " + rulePath);
-    if (agents.isEmpty())
-      throw new IllegalArgumentException("agents must not be empty in " + rulePath);
-
-    List<ModelEffort> matches = new ArrayList<>();
-    boolean allSubagents = false;
-    boolean hasSpecificSubagents = false;
-    for (JsonNode agent: agents)
-    {
-      if (!agent.isString())
-        throw new IllegalArgumentException("agents values must be non-blank strings in " + rulePath);
-      String value = agent.asString("").strip();
-      if (value.isBlank())
-        throw new IllegalArgumentException("agents values must be non-blank strings in " + rulePath);
-      if (value.equals("main"))
-        continue;
-      if (value.equals("subagents"))
-      {
-        allSubagents = true;
-        continue;
-      }
-      if (allSubagents)
-      {
-        throw new IllegalArgumentException("agents must not combine \"subagents\" with specific " +
-          "subagent names in " + rulePath);
-      }
-      hasSpecificSubagents = true;
-      String agentName = normalizeAgentName(value);
-      if (agentName.isBlank())
-        continue;
-      ModelEffort config = readCodexAgentConfigByStem(agentName);
-      if (config != null)
-        matches.add(config);
-    }
-    if (allSubagents)
-    {
-      if (hasSpecificSubagents)
-      {
-        throw new IllegalArgumentException("agents must not combine \"subagents\" with specific " +
-          "subagent names in " + rulePath);
-      }
-      return readAllCodexAgentConfigs();
-    }
-    return matches;
-  }
-
-  private List<ModelEffort> readAllCodexAgentConfigs() throws IOException
-  {
-    Path codexAgentsDir = pluginRoot.resolve("agents/codex");
-    if (!Files.isDirectory(codexAgentsDir))
-      return List.of();
-    List<ModelEffort> result = new ArrayList<>();
-    try (Stream<Path> stream = Files.list(codexAgentsDir))
-    {
-      for (Path agentPath: stream.
-        filter(path -> isFileType(path, ".toml")).
-        sorted().
-        toList())
-      {
-        result.add(readCodexAgentConfig(agentPath));
-      }
-    }
-    return result;
-  }
-
-  private List<ModelEffort> findCodexSkillInvokerConfigs(Path relativePath) throws IOException
-  {
-    if (relativePath.getNameCount() < 3)
-      return List.of();
-    String skillName = relativePath.getName(2).toString();
-    Path commonAgentsDir = pluginRoot.resolve("agents/common");
-    if (!Files.isDirectory(commonAgentsDir))
-      return List.of();
-
-    List<ModelEffort> matches = new ArrayList<>();
-    try (Stream<Path> stream = Files.list(commonAgentsDir))
-    {
-      for (Path agentBody: stream.
-        filter(path -> isFileType(path, ".md")).
-        sorted().
-        toList())
-      {
-        String content = FileContentCache.readString(agentBody);
-        if (containsSkillReference(content, skillName))
-        {
-          ModelEffort config = readCodexAgentConfigByStem(fileStem(agentBody));
-          if (config != null)
-            matches.add(config);
-        }
-      }
-    }
-    return matches;
-  }
-
-  private ModelEffort weakestModelEffort(List<ModelEffort> configs)
-  {
-    if (configs.isEmpty())
-      throw new IllegalArgumentException("configs must not be empty");
-    ModelEffort result = configs.getFirst();
-    for (ModelEffort candidate: configs.subList(1, configs.size()))
-    {
-      if (isWeakerThan(candidate, result))
-        result = candidate;
-    }
-    return result;
-  }
-
-  private static boolean isWeakerThan(ModelEffort candidate, ModelEffort current)
-  {
-    int candidateModelRank = modelStrengthRank(candidate.modelId());
-    int currentModelRank = modelStrengthRank(current.modelId());
-    if (candidateModelRank != currentModelRank)
-      return candidateModelRank < currentModelRank;
-    int candidateEffortRank = effortStrengthRank(candidate.effort());
-    int currentEffortRank = effortStrengthRank(current.effort());
-    if (candidateEffortRank != currentEffortRank)
-      return candidateEffortRank < currentEffortRank;
-    int modelComparison = candidate.modelId().compareTo(current.modelId());
-    if (modelComparison != 0)
-      return modelComparison < 0;
-    return candidate.effort().compareTo(current.effort()) < 0;
-  }
-
-  private static int modelStrengthRank(String modelId)
-  {
-    int result = CODEX_MODEL_STRENGTH.indexOf(modelId);
-    if (result >= 0)
-      return result;
-    throw new IllegalStateException(
-      "No Codex model strength rank configured for '" + modelId + "'. Known values: " +
-      CODEX_MODEL_STRENGTH);
-  }
-
-  private static int effortStrengthRank(String effort)
-  {
-    int result = CODEX_EFFORT_STRENGTH.indexOf(effort);
-    if (result >= 0)
-      return result;
-    throw new IllegalStateException(
-      "No Codex effort strength rank configured for '" + effort + "'. Known values: " +
-      CODEX_EFFORT_STRENGTH);
-  }
-
-  private static List<ModelEffort> optionalConfigList(ModelEffort config)
-  {
-    if (config == null)
-      return List.of();
-    return List.of(config);
-  }
-
-  private ModelEffort readCodexAgentConfigByStem(String agentName) throws IOException
-  {
-    Path agentPath = pluginRoot.resolve("agents/codex").resolve(agentName + ".toml");
-    if (!Files.exists(agentPath))
-      return null;
-    return readCodexAgentConfig(agentPath);
-  }
-
-  private ModelEffort readCodexAgentConfig(Path agentPath) throws IOException
-  {
-    String model = extractTomlStringField(agentPath, "model");
-    String effort = extractTomlStringField(agentPath, "model_reasoning_effort");
-    if (model.isBlank() || effort.isBlank())
-    {
-      throw new IllegalStateException(
-        "Codex agent descriptor is missing model or model_reasoning_effort: " + agentPath);
-    }
-    return new ModelEffort(model, effort);
-  }
-
-  private static String extractTomlStringField(Path filePath, String fieldName) throws IOException
-  {
-    for (String line: FileContentCache.readString(filePath).split("\\R"))
-    {
-      String trimmed = line.strip();
-      if (trimmed.isEmpty() || trimmed.startsWith("#"))
-        continue;
-      int equalsIndex = trimmed.indexOf('=');
-      if (equalsIndex < 0)
-        continue;
-      String key = trimmed.substring(0, equalsIndex).strip();
-      if (!key.equals(fieldName))
-        continue;
-      return parseTomlStringValue(trimmed.substring(equalsIndex + 1).strip());
-    }
-    return "";
-  }
-
-  private static String parseTomlStringValue(String rawValue)
-  {
-    if (rawValue.isEmpty())
-      return "";
-    char quote = rawValue.charAt(0);
-    if (quote == '"' || quote == '\'')
-    {
-      int closingQuote = rawValue.indexOf(quote, 1);
-      if (closingQuote < 0)
-        return "";
-      return rawValue.substring(1, closingQuote);
-    }
-    int commentIndex = rawValue.indexOf('#');
-    String withoutComment = rawValue;
-    if (commentIndex >= 0)
-      withoutComment = rawValue.substring(0, commentIndex);
-    return withoutComment.strip();
-  }
-
-  private static String normalizeAgentName(String rawName)
-  {
-    String result = rawName.strip();
-    if (result.startsWith("cat:"))
-      result = result.substring("cat:".length());
-    else if (result.startsWith("cat-"))
-      result = result.substring("cat-".length());
-    return result;
-  }
-
-  private static boolean containsSkillReference(String content, String skillName)
-  {
-    Pattern pattern = Pattern.compile("(?<![A-Za-z0-9_-])/?cat:" +
-      Pattern.quote(skillName) + "(?![A-Za-z0-9_-])");
-    return pattern.matcher(content).find();
-  }
-
-  private static boolean isFileType(Path path, String extension)
-  {
-    return path.getFileName().toString().endsWith(extension);
-  }
-
-  private static String fileStem(Path path)
-  {
-    String fileName = path.getFileName().toString();
-    int dotIndex = fileName.lastIndexOf('.');
-    if (dotIndex < 0)
-      return fileName;
-    return fileName.substring(0, dotIndex);
-  }
-
-  private record ModelEffort(String modelId, String effort)
-  {
-  }
-
-  private record ResolvedTestRunnerConfig(String modelId, String effort, String source)
-  {
+        "SprtRunner " + commandName + ": file not found: " + skillPath);
+    return metadataResolver.resolve(skillPath, parseFrontmatterNode(skillPath));
   }
 
   /**

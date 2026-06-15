@@ -77,7 +77,7 @@ If TRUST differs from config.json (or its effective default of "low" when absent
 **Config file is READ-ONLY during the review phase (MANDATORY):**
 
 `config.json` MUST NOT be modified at any point during the review phase (Steps 5–6 and all sub-steps). This
-constraint binds the review phase agent AND every agent it spawns (planning agents, implementation agents,
+constraint binds the review phase agent AND every agent it spawns (plan-builder agents, implementation agents,
 and any other agent invoked during Steps 5–6), regardless of what task the agent believes it is performing.
 This includes but is not limited to: `Bash` commands that write to it (e.g., `sed -i`, `echo >`, `tee`, `cat >`),
 `Edit` tool calls, `Write` tool calls, or any agent that modifies it. The values of `trust`, `caution`,
@@ -191,7 +191,7 @@ Then output: "Review skipped (caution: ${CAUTION})"
 
 Note: `TRUST == "high"` does NOT skip review. Review is mandatory regardless of trust level.
 
-**Skip review if curiosity=low:**
+**Curiosity low uses low-tier review:**
 
 Read CURIOSITY from the effective config:
 
@@ -207,17 +207,9 @@ if [[ -z "$CURIOSITY" ]]; then
 fi
 ```
 
-If `CURIOSITY == "low"`, output: "Review skipped (curiosity: low)" and return:
-
-```json
-{
-  "status": "REVIEW_PASSED",
-  "all_concerns": [],
-  "fixed_concerns": [],
-  "deferred_concerns": [],
-  "allCommitsCompact": "${ALL_COMMITS_COMPACT}"
-}
-```
+If `CURIOSITY == "low"`, continue to stakeholder review. The stakeholder-review skill will select low-tier reviewer
+agents for simple diffs and escalate deterministically to higher tiers when changed-file risk requires it. Do not skip
+review solely because curiosity is low.
 
 ### Invoke Stakeholder Review
 
@@ -527,18 +519,30 @@ other severities. If any CRITICAL concern is in the FIX list, the agent prompts 
    paths using their `${WORKTREE_PATH}`). Include the path only if the file exists on disk. Omit concerns with no
    `detail_file` or a non-existent file — this is normal when a reviewer found no detailed concerns worth recording.
 
-3. Spawn a shared planning agent to produce a per-concern fix plan:
-   ```
-   Task tool:
-     description: "Plan per-concern fixes (iteration ${AUTOFIX_ITERATION})"
-     subagent_type: "cat:work-execute"
-     prompt: |
+3. Spawn a shared plan-builder agent to produce a per-concern fix plan:
+
+   Auto-tier `plan-builder` for planning per-concern fixes on AUTOFIX_ITERATION `${AUTOFIX_ITERATION}`, using
+   concern severities, concern text, detail files, security/auth/API/schema/build/workflow signals, concurrency,
+   performance, migration, compatibility, public behavior, subsystem count, and iteration count.
+
+   Route `plan-builder` via `client/plugin/skills/include/agent-tier/plan-builder.md`, using concern severities,
+   concern text, detail files, security/auth/API/schema/build/workflow signals, concurrency, performance, migration,
+   compatibility, public behavior, subsystem count, and AUTOFIX_ITERATION `${AUTOFIX_ITERATION}`.
+   Set `AGENT_TIER` and `AGENT_ALIAS` from that file.
+
+   Set `REVIEW_FIX_PLAN_BUILDER_AGENT` to `AGENT_ALIAS`.
+
+   Spawn `REVIEW_FIX_PLAN_BUILDER_AGENT` with description
+   `Plan per-concern fixes (iteration ${AUTOFIX_ITERATION})` and this prompt:
+
+   ```text
        Analyze the following stakeholder review concerns for issue ${ISSUE_ID} and produce a
        per-concern fix plan. Each concern MUST have a self-contained section with all information
        a separate agent would need to implement the fix without additional context.
 
        ## Issue Configuration
        ISSUE_ID: ${ISSUE_ID}
+       ISSUE_PATH: ${ISSUE_PATH}
        WORKTREE_PATH: ${WORKTREE_PATH}
        BRANCH: ${BRANCH}
        TARGET_BRANCH: ${TARGET_BRANCH}
@@ -549,6 +553,13 @@ other severities. If any CRITICAL concern is in the FIX list, the agent prompts 
 
        ## Concern Detail Files
        ${detail_file_paths}
+
+       ## Prior Mechanical Blocker From Implementation
+       If a prior iteration returned `BLOCKED_PLAN_NOT_MECHANICAL`, use the exact blocker payload below when revising
+       the fix plan. If no prior iteration blocked mechanically, this section will be empty or `[]`.
+       Ambiguities JSON: ${REVIEW_BLOCKER_AMBIGUITIES_JSON}
+       Evidence JSON: ${REVIEW_BLOCKER_EVIDENCE_JSON}
+       Blocker message: ${REVIEW_BLOCKER_MESSAGE}
 
        ## Instructions
        - CRITICAL concerns MUST be addressed first (list them first in the plan).
@@ -573,12 +584,11 @@ other severities. If any CRITICAL concern is in the FIX list, the agent prompts 
        - Rationale: [why this fixes the concern]
        [or: UNFIXABLE: [reason]]
    ```
-
-   After the planning agent returns, read `${WORKTREE_PATH}/.cat/work/review-fix-plans.md` and store its
+   After the plan-builder agent returns, read `${WORKTREE_PATH}/.cat/work/review-fix-plans.md` and store its
    contents as `fix_plan_from_planning_subagent` for use in step 4 (single-concern path) and step 6 scope
    isolation validation. If the file is missing or empty, treat this as a planning failure for the iteration.
 
-   **Fix plan validation (MANDATORY):** After receiving the planning agent's output, verify that each
+   **Fix plan validation (MANDATORY):** After receiving the plan-builder agent's output, verify that each
    FIX-marked concern has at least one actionable file change (a file path and a concrete modification).
    If the plan contains only observations, commentary, or states that a concern is "already addressed"
    without any code change, treat that concern as UNFIXABLE for this iteration: move it to
@@ -599,27 +609,27 @@ other severities. If any CRITICAL concern is in the FIX list, the agent prompts 
    UNFIXABLE concern has CRITICAL or HIGH severity, the return `status` MUST be `CONCERNS_FOUND`, not
    `REVIEW_PASSED`.
 
-   **CRITICAL and HIGH concerns CANNOT be marked as UNFIXABLE.** If the planning agent declares a CRITICAL or HIGH
+   **CRITICAL and HIGH concerns CANNOT be marked as UNFIXABLE.** If the plan-builder agent declares a CRITICAL or HIGH
    concern as UNFIXABLE, treat this as a planning failure for that concern: log a warning
    (`"WARNING: Planning agent declared [SEVERITY] concern '[description]' as UNFIXABLE — treating as planning failure."`)
    and keep the concern in the FIX list for the next iteration. The concern is NOT moved to `DEFERRED_CONCERNS`
    unless the auto-fix loop exhausts all 3 iterations.
 
-   **MEDIUM UNFIXABLE cap (MANDATORY):** The planning agent MAY declare MEDIUM concerns as UNFIXABLE, which moves
+   **MEDIUM UNFIXABLE cap (MANDATORY):** The plan-builder agent MAY declare MEDIUM concerns as UNFIXABLE, which moves
    them to `DEFERRED_CONCERNS`. However, at most 2 MEDIUM concerns may be moved to `DEFERRED_CONCERNS` via UNFIXABLE
    declaration across the entire review phase. If a third or subsequent MEDIUM concern is declared UNFIXABLE, treat it
    as a planning failure (same as CRITICAL/HIGH): log a warning
    (`"WARNING: MEDIUM UNFIXABLE cap reached — treating MEDIUM concern '[description]' as planning failure."`)
-   and keep it in the FIX list for the next iteration. This prevents the planning agent from silently deferring an
+   and keep it in the FIX list for the next iteration. This prevents the plan-builder agent from silently deferring an
    unlimited number of MEDIUM concerns without user confirmation.
 
    **Repeated UNFIXABLE escalation (MANDATORY):** Track UNFIXABLE declarations per concern using the match key
    `stakeholder` + normalized `location` (same normalization as step 14: strip line numbers, remove leading `./`,
-   remove trailing `/`). If the planning agent declares the SAME CRITICAL or HIGH concern as UNFIXABLE for the
+   remove trailing `/`). If the plan-builder agent declares the SAME CRITICAL or HIGH concern as UNFIXABLE for the
    SECOND time, halt auto-fix attempts for that concern immediately and escalate to the user:
    ```
    engine-supported structured user-choice prompt:
-     question: "A [SEVERITY] concern has been declared UNFIXABLE twice by the planning agent.
+     question: "A [SEVERITY] concern has been declared UNFIXABLE twice by the plan-builder agent.
 
      Concern: [stakeholder] at [location]: [explanation]
 
@@ -636,7 +646,7 @@ other severities. If any CRITICAL concern is in the FIX list, the agent prompts 
      when status is `CONCERNS_FOUND` regardless of whether the concern was moved to DEFERRED_CONCERNS.**
    - "Abort review phase": STOP immediately and return with `status: "CONCERNS_FOUND"`, all FIX-marked concerns
      moved to `deferred_concerns`.
-   This escalation prevents wasting iteration budget on concerns the planner cannot resolve.
+   This prevents wasting iteration budget on concerns the plan-builder output did not resolve.
 
 4. **Single-concern optimization:** When there is exactly ONE FIX-marked concern in the current iteration, skip
    the parallel worktree protocol entirely. Instead, spawn one implementation agent running in the original
@@ -651,6 +661,8 @@ other severities. If any CRITICAL concern is in the FIX list, the agent prompts 
 
        ## Issue Configuration
        ISSUE_ID: ${ISSUE_ID}
+       ISSUE_PATH: ${ISSUE_PATH}
+       PLAN_MD_PATH: ${ISSUE_PATH}/plan.md
        WORKTREE_PATH: ${WORKTREE_PATH}
        BRANCH: ${BRANCH}
        TARGET_BRANCH: ${TARGET_BRANCH}
@@ -667,6 +679,8 @@ other severities. If any CRITICAL concern is in the FIX list, the agent prompts 
 
        ## Instructions
        - Work in the worktree at ${WORKTREE_PATH}
+       - Read `${ISSUE_PATH}/plan.md` before editing files. Treat the issue plan as authoritative and the fix plan
+         below as supplemental detail for this concern.
        - Fix the concern according to the fix plan and recommendation
        - Read the concern detail file for full context (if path provided and file exists)
        - Commit your fix using the same commit type as the primary implementation
@@ -682,7 +696,7 @@ other severities. If any CRITICAL concern is in the FIX list, the agent prompts 
        ## Return Format
        ```json
        {
-         "status": "SUCCESS|PARTIAL|FAILED",
+         "status": "SUCCESS|PARTIAL|FAILED|BLOCKED_PLAN_NOT_MECHANICAL",
          "commits": [{"hash": "...", "message": "...", "type": "..."}],
          "files_changed": N,
          "concern_addressed": true|false
@@ -690,8 +704,17 @@ other severities. If any CRITICAL concern is in the FIX list, the agent prompts 
        ```
    ```
 
-   Proceed directly to step 11 (validate fix agent output) using commits from the fix agent's return
-   value. Skip steps 5–10.
+   If the fix agent returns `BLOCKED_PLAN_NOT_MECHANICAL`, treat the fix plan as under-specified, keep the concern in
+   the FIX list, mark the next `plan-builder` auto-tier routing as high-risk due to an under-specified prior fix
+   plan, and immediately continue the auto-fix loop. Do not run validation, persistent concern tracking, or
+   stakeholder re-review for this iteration.
+   Preserve the blocker payload exactly:
+   - `REVIEW_BLOCKER_AMBIGUITIES_JSON` = returned `ambiguities`
+   - `REVIEW_BLOCKER_EVIDENCE_JSON` = returned `evidence`
+   - `REVIEW_BLOCKER_MESSAGE` = returned `message`
+
+   Otherwise proceed directly to step 11 (validate fix agent output) using commits from the fix agent's return value.
+   Skip steps 5–10.
 
    **When there are TWO OR MORE FIX-marked concerns**, use the full parallel worktree protocol (steps 5–10):
 
@@ -728,6 +751,8 @@ other severities. If any CRITICAL concern is in the FIX list, the agent prompts 
 
         ## Issue Configuration
         ISSUE_ID: ${ISSUE_ID}
+        ISSUE_PATH: ${ISSUE_PATH}
+        PLAN_MD_PATH: ${ISSUE_PATH}/plan.md
         WORKTREE_PATH: ${CONCERN_WORKTREE_N}
         BRANCH: ${CONCERN_BRANCH_N}
         TARGET_BRANCH: ${TARGET_BRANCH}
@@ -743,6 +768,8 @@ other severities. If any CRITICAL concern is in the FIX list, the agent prompts 
 
         ## Instructions
         - Work exclusively in the worktree at ${CONCERN_WORKTREE_N}.
+        - Read `${ISSUE_PATH}/plan.md` before editing files. Treat the issue plan as authoritative and the fix plan
+          section below as supplemental detail for this concern.
         - Fix ONLY the files listed in the fix plan for this concern.
         - Do NOT modify any file not referenced in the fix plan section above.
         - Read concern detail file for full context (if path provided and file exists).
@@ -757,7 +784,7 @@ other severities. If any CRITICAL concern is in the FIX list, the agent prompts 
         ## Return Format
         ```json
         {
-          "status": "SUCCESS|PARTIAL|FAILED",
+          "status": "SUCCESS|PARTIAL|FAILED|BLOCKED_PLAN_NOT_MECHANICAL",
           "commits": [{"hash": "...", "message": "...", "type": "..."}],
           "files_changed": N,
           "concern_addressed": true|false
@@ -773,17 +800,26 @@ other severities. If any CRITICAL concern is in the FIX list, the agent prompts 
     Collect results from all N agents. For each agent result:
     - `SUCCESS`: agent produced at least one commit touching concern-relevant files.
     - `PARTIAL`: agent produced some commits but not all concern files were touched.
+    - `BLOCKED_PLAN_NOT_MECHANICAL`: the fix plan was not detailed enough. Treat this as a planning failure for that
+      concern, keep it in the FIX list, and mark the next `plan-builder` auto-tier routing as high-risk due to an
+      under-specified prior fix plan.
     - `FAILED` or no commits: agent failed to produce any useful change.
+
+    If ANY parallel concern fix agent returns `BLOCKED_PLAN_NOT_MECHANICAL`, do not merge any concern branches and do
+    not run validation, persistent concern tracking, or stakeholder re-review for this iteration. First run the
+    cleanup in step 9 for every temporary concern worktree/branch created in this iteration, then immediately continue
+    the auto-fix loop with the next `plan-builder` auto-tier routing marked high-risk due to an under-specified prior
+    fix plan.
 
     **Scope isolation validation (MANDATORY):** After all agents complete, validate that each agent
     only modified files allowed by the fix plan. The allowed files for concern N are extracted from the
-    planning agent's output by parsing lines matching `- Files: <paths>` within the `### Concern N:`
+    plan-builder agent's output by parsing lines matching `- Files: <paths>` within the `### Concern N:`
     section:
 
     ```bash
     # For each concern N that returned SUCCESS or PARTIAL:
     CONCERN_BRANCH="fix-concern-${AUTOFIX_ITERATION}-${N}-${BRANCH}"
-    # Extract "- Files: ..." line(s) from the planning agent's Concern N section
+    # Extract "- Files: ..." line(s) from the plan-builder agent's Concern N section
     # (grep between "### Concern N:" and the next "### Concern" or end of plan output)
     ALLOWED_FILES=$(echo "${fix_plan_from_planning_subagent}" | \
       awk "/^### Concern ${N}:/,/^### Concern [0-9]/" | \
@@ -1058,7 +1094,7 @@ Partition `ALL_CONCERNS` into two named lists based on the threshold:
 CRITICAL concern — one not present in any prior round's `ALL_CONCERNS` (matched by `stakeholder` + normalized
 `location`) — AND `AUTOFIX_ITERATION >= 3`, grant ONE additional iteration exclusively for that CRITICAL concern.
 This bonus iteration is capped at 1 total (not per concern): if multiple new CRITICAL concerns are discovered, they
-all share the single bonus iteration. The bonus iteration follows the same auto-fix loop rules (planning agent,
+all share the single bonus iteration. The bonus iteration follows the same auto-fix loop rules (plan-builder agent,
 implementation agent, re-review, persistent tracking merge). If the bonus iteration does not resolve the CRITICAL
 concern(s), they move to `DEFERRED_CONCERNS` with tracking issues created per the severity x decision matrix. The
 `AUTOFIX_ITERATION` counter increments normally for the bonus iteration (e.g., from 3 to 4). No further bonus

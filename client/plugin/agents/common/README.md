@@ -39,9 +39,9 @@ plugin/agents/common/
 
 ## Wrapper Contract
 
-Every shared body should have matching engine wrappers with the same filename:
+Every shared body should have one or more matching engine wrappers that include it with `cat:include`:
 
-- Claude wrapper: `plugin/agents/claude/{name}.md`
-- Codex wrapper: `plugin/agents/codex/{name}.toml`
+- Claude wrapper: `plugin/agents/claude/{name}.md` or a tiered wrapper such as `{name}-medium.md`
+- Codex wrapper: `plugin/agents/codex/{name}.toml` or a tiered wrapper such as `{name}-medium.toml`
 
-The wrapper owns engine-specific metadata. The shared body owns the agent role.
+The wrapper owns engine-specific metadata and tier identity. The shared body owns the agent role.

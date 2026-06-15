@@ -1,0 +1,13 @@
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+name = "cat-plan-builder-medium"
+nickname_candidates = ["plan-builder-medium"]
+description = "Medium-tier CAT plan builder for normal issue plan.md creation and revision."
+model = "gpt-5.4"
+model_reasoning_effort = "high"
+sandbox_mode = "workspace-write"
+developer_instructions = '''
+<!-- cat:include ../common/plan-builder-agent.md -->
+'''

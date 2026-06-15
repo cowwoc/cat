@@ -217,9 +217,9 @@ IMPACT_SEVERITY=$(echo "${IMPACT_JSON}" | grep -o '"severity"[[:space:]]*:[[:spa
 | `MEDIUM` | Auto-revise plan.md then continue to Step 10 |
 | `HIGH` | Write proposal file, ask user via the engine's structured input tool |
 
-**MEDIUM:** Read EFFORT from config, then invoke:
+**MEDIUM:** Invoke medium-tier plan-builder repair:
 ```
-Skill("cat:plan-builder", args="${EFFORT} revise ${ISSUE_PATH} rebase introduced upstream changes — see ${ANALYSIS_PATH}")
+Skill("cat:plan-builder", args="medium revise ${ISSUE_PATH} rebase introduced upstream changes — see ${ANALYSIS_PATH}")
 ```
 If implementation was already committed, spawn a code-revision agent to apply the revised plan.md.
 
@@ -481,13 +481,27 @@ Write invalidation marker FIRST (before spawning fix agent):
 remaining, offer only: ["Approve and merge (with known concerns)", "Request changes", "Abort"].
 
 1. Extract MEDIUM+ concerns
-2. Spawn `cat:work-execute` agent to fix each concern. Pass `ISSUE_PATH` explicitly:
+2. Invoke plan-builder-mediated repair before implementation:
+   - Auto-tier `plan-builder` for adding mechanical fix steps for remaining MEDIUM+ approval-gate concerns using
+     concern severity, concern text, security/auth/API/schema/build/workflow signals, concurrency, performance,
+     migration, compatibility, public behavior, subsystem count, and prior under-specified repair evidence.
+
+   Route `plan-builder` via `client/plugin/skills/include/agent-tier/plan-builder.md`, using concern severity,
+   concern text, security/auth/API/schema/build/workflow signals, concurrency, performance, migration,
+   compatibility, public behavior, subsystem count, and prior under-specified repair evidence.
+   Set `AGENT_TIER` and `AGENT_ALIAS` from that file.
+
+   - Invoke:
+     `Skill("cat:plan-builder", "${AGENT_TIER} revise ${ISSUE_PATH} Add mechanical fix steps for the remaining MEDIUM+ approval-gate concerns. Include exact files, code changes, tests, and verification. Concerns: ${MEDIUM_PLUS_CONCERNS}. If a prior implementation attempt returned BLOCKED_PLAN_NOT_MECHANICAL, include this exact ambiguity JSON: ${MEDIUM_PLUS_BLOCKED_AMBIGUITIES_JSON}. Include this exact blocker evidence JSON: ${MEDIUM_PLUS_BLOCKED_EVIDENCE_JSON}. Include blocker message: ${MEDIUM_PLUS_BLOCKED_MESSAGE}.")`
+   - Commit any revised `plan.md` in `${WORKTREE_PATH}` before spawning `cat:work-execute`.
+3. Spawn `cat:work-execute` agent to execute the plan-builder-authored fix steps. Pass `ISSUE_PATH` explicitly:
    ```
    Task tool:
      description: "Fix remaining concerns for ${ISSUE_ID}"
      subagent_type: "cat:work-execute"
      prompt: |
-       Fix each MEDIUM+ concern. Commit with same type as primary implementation.
+       Execute the plan-builder-authored fix steps for each MEDIUM+ concern. Commit with same type as primary
+       implementation.
        SCOPE RESTRICTION: Only modify files related to listed concerns. One concern per commit.
        ISSUE_ID: ${ISSUE_ID}
        ISSUE_PATH: ${ISSUE_PATH}
@@ -496,11 +510,19 @@ remaining, offer only: ["Approve and merge (with known concerns)", "Request chan
        ## Concerns to fix
        ${MEDIUM_PLUS_CONCERNS}
    ```
-3. Re-squash ALL commits (MANDATORY, M560): invoke `cat:git-squash` before re-running stakeholder review.
-4. Re-run stakeholder review on the newly squashed HEAD. The persisted review result `reviewed_head_sha` must match
+   If the implementation agent returns `BLOCKED_PLAN_NOT_MECHANICAL`, repeat step 2 once with
+   the next `plan-builder` auto-tier routing marked high-risk due to an under-specified prior repair plan. If it
+   still returns `BLOCKED_PLAN_NOT_MECHANICAL`, return `CHANGES_REQUESTED` with the ambiguity JSON so the user can
+   decide how to proceed.
+   Preserve the blocker payload exactly before repeating step 2:
+   - `MEDIUM_PLUS_BLOCKED_AMBIGUITIES_JSON` = returned `ambiguities`
+   - `MEDIUM_PLUS_BLOCKED_EVIDENCE_JSON` = returned `evidence`
+   - `MEDIUM_PLUS_BLOCKED_MESSAGE` = returned `message`
+4. Re-squash ALL commits (MANDATORY, M560): invoke `cat:git-squash` before re-running stakeholder review.
+5. Re-run stakeholder review on the newly squashed HEAD. The persisted review result `reviewed_head_sha` must match
    the current HEAD before the approval gate can be presented:
    `Skill("cat:stakeholder-review", "${ISSUE_ID} ${WORKTREE_PATH} ${CAUTION} ${TARGET_BRANCH} ${ALL_COMMITS_COMPACT}")`
-5. Increment `FIX_ITERATION`. Return to Step 11.
+6. Increment `FIX_ITERATION`. Return to Step 11.
 
 **If changes requested:** Return to user with feedback for iteration. Return status:
 ```json

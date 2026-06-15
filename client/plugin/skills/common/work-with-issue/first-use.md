@@ -121,7 +121,38 @@ Capture the result. Assign variables from the returned JSON:
 EXECUTION_COMMITS_JSON = commits array from implement result
 FILES_CHANGED = filesChanged integer from implement result
 TOKENS_USED = tokens_used integer from implement result (only implement tracks this)
+PLAN_BLOCKER_AMBIGUITIES_JSON = ambiguities array from implement result, preserving field names exactly
+PLAN_BLOCKER_EVIDENCE_JSON = evidence array from implement result, preserving field names exactly
+PLAN_BLOCKER_MESSAGE = message string from implement result
 ```
+
+If the implement phase returns `BLOCKED_PLAN_NOT_MECHANICAL`, do not treat it as terminal implementation failure.
+This means the cheap implementer correctly refused to make planning decisions. Run plan-builder-mediated repair:
+
+1. Set `PLAN_REPAIR_ITERATION=0` and cap repairs at 2.
+2. While the implement result status is `BLOCKED_PLAN_NOT_MECHANICAL` and `PLAN_REPAIR_ITERATION < 2`:
+   - Increment `PLAN_REPAIR_ITERATION`.
+   - Auto-tier `plan-builder` for repairing plan.md after `BLOCKED_PLAN_NOT_MECHANICAL`, using the ambiguity JSON,
+     implementation evidence, PLAN_REPAIR_ITERATION, security/auth/API/schema/build/workflow signals, concurrency,
+     performance, migration, compatibility, public behavior, and subsystem count.
+
+   Route `plan-builder` via `client/plugin/skills/include/agent-tier/plan-builder.md`, using the ambiguity JSON,
+   implementation evidence, PLAN_REPAIR_ITERATION, security/auth/API/schema/build/workflow signals, concurrency,
+   performance, migration, compatibility, public behavior, and subsystem count.
+   Set `AGENT_TIER` and `AGENT_ALIAS` from that file.
+
+   - Invoke `cat:plan-builder` in revise mode with `AGENT_TIER` as the planning depth:
+     ```
+     Skill tool:
+       skill: "cat:plan-builder"
+       args: "${AGENT_TIER} revise ${ISSUE_PATH} Repair plan.md because the implementation agent returned BLOCKED_PLAN_NOT_MECHANICAL. Include this exact ambiguity JSON: ${PLAN_BLOCKER_AMBIGUITIES_JSON}. Include this exact blocker evidence JSON: ${PLAN_BLOCKER_EVIDENCE_JSON}. Include the blocker message: ${PLAN_BLOCKER_MESSAGE}. Make the plan mechanically executable by a low-tier implementer without design judgment."
+     ```
+   - Commit any revised `plan.md` in `${WORKTREE_PATH}` with:
+     `planning: repair mechanical implementation plan for ${ISSUE_ID} (iteration ${PLAN_REPAIR_ITERATION})`
+   - Re-invoke `cat:work-implement` with the original arguments.
+   - Refresh `EXECUTION_COMMITS_JSON`, `FILES_CHANGED`, and `TOKENS_USED` from the new implement result.
+3. If the status is still `BLOCKED_PLAN_NOT_MECHANICAL` after 2 repairs, return `BLOCKED` with the latest ambiguity
+   JSON and keep the lock held for the active work session.
 
 If the implement phase returns FAILED or BLOCKED, return that status immediately.
 If the implement phase returns ALREADY_IMPLEMENTED, continue to confirm/review/merge with that execution

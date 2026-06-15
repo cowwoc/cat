@@ -38,7 +38,7 @@ public final class SprtRunnerArtifactsTest
    * Verifies that write-test-results computes reject overall_decision.
    */
   @Test
-  public void writeTestResultsRejectDecisionWrites() throws IOException, InterruptedException
+  public void writeTestResultsRejectDecisionWrites() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("test-branch");
     try
@@ -98,7 +98,7 @@ public final class SprtRunnerArtifactsTest
    * Verifies that create-isolation-branch rejects a dirty worktree.
    */
   @Test(expectedExceptions = IOException.class, expectedExceptionsMessageRegExp = ".*uncommitted changes.*")
-  public void createIsolationBranchDirtyWorktreeThrows() throws IOException, InterruptedException
+  public void createIsolationBranchDirtyWorktreeThrows() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("test-branch");
     try
@@ -128,7 +128,7 @@ public final class SprtRunnerArtifactsTest
    * Verifies that remove-runner-worktrees returns zero when no runner worktrees exist.
    */
   @Test
-  public void removeRunnerWorktreesNoMatchingWorktrees() throws IOException, InterruptedException
+  public void removeRunnerWorktreesNoMatchingWorktrees() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("test-branch");
     try
@@ -215,7 +215,7 @@ public final class SprtRunnerArtifactsTest
    * when the SHA-256 of the current skill file matches the provided hash.
    */
   @Test
-  public void detectChangesSha256MatchAllCarried() throws IOException, InterruptedException
+  public void detectChangesSha256MatchAllCarried() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -291,7 +291,7 @@ public final class SprtRunnerArtifactsTest
    * when the SHA-256 of the current skill file does not match the provided hash.
    */
   @Test
-  public void detectChangesSha256MismatchAllRerun() throws IOException, InterruptedException
+  public void detectChangesSha256MismatchAllRerun() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -366,7 +366,7 @@ public final class SprtRunnerArtifactsTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*64.*")
-  public void detectChangesInvalidShaShortStringThrows() throws IOException, InterruptedException
+  public void detectChangesInvalidShaShortStringThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -393,7 +393,7 @@ public final class SprtRunnerArtifactsTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*64.*")
-  public void detectChangesInvalidShaNotHexThrows() throws IOException, InterruptedException
+  public void detectChangesInvalidShaNotHexThrows() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -418,7 +418,7 @@ public final class SprtRunnerArtifactsTest
    * Verifies that detect-changes with an empty test directory returns empty arrays for all ID fields.
    */
   @Test
-  public void detectChangesEmptyTestDirectoryReturns() throws IOException, InterruptedException
+  public void detectChangesEmptyTestDirectoryReturns() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -452,41 +452,6 @@ public final class SprtRunnerArtifactsTest
       requireThat(root.path("all_test_case_ids").size(), "allCount").isEqualTo(0);
       requireThat(root.path("rerun_test_case_ids").size(), "rerunCount").isEqualTo(0);
       requireThat(root.path("carryforward_test_case_ids").size(), "carryforwardCount").isEqualTo(0);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
-  }
-
-  /**
-   * Verifies that extract-model uses the Claude default when SKILL.md is missing the model frontmatter field.
-   */
-  @Test
-  public void extractModelRejectsMissingModel() throws IOException, InterruptedException
-  {
-    Path tempDir = Files.createTempDirectory("test-extract-model-");
-    Path pluginRoot = tempDir.resolve("plugin");
-    try
-    {
-      // Create skill dir with SKILL.md that has no model: field
-      Path skillDir = pluginRoot.resolve("skills").resolve("my-skill");
-      Files.createDirectories(skillDir);
-      Path skillFile = skillDir.resolve("SKILL.md");
-      Files.writeString(skillFile, """
-        ---
-        description: My skill
-        ---
-        """, StandardCharsets.UTF_8);
-
-      Path projectDir = tempDir.resolve("project");
-      Files.createDirectories(projectDir);
-      try (var scope = new TestClaudeTool(projectDir, pluginRoot))
-      {
-        SprtRunner runner = new SprtRunner(scope, "2.1.87");
-        String model = runner.extractModel(new String[]{skillFile.toString()});
-        requireThat(model, "model").isEqualTo("claude-haiku-4-5");
-      }
     }
     finally
     {
@@ -568,7 +533,7 @@ public final class SprtRunnerArtifactsTest
    * Verifies that persist-artifacts writes instruction-test.json with expected JSON fields.
    */
   @Test
-  public void persistArtifactsWritesInstructionTest() throws IOException, InterruptedException
+  public void persistArtifactsWritesInstructionTest() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
@@ -593,7 +558,7 @@ public final class SprtRunnerArtifactsTest
    * Verifies that persist-artifacts copies .md test case files into the instruction-test directory.
    */
   @Test
-  public void persistArtifactsCopiesMdFiles() throws IOException, InterruptedException
+  public void persistArtifactsCopiesMdFiles() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("main");
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
@@ -656,9 +621,8 @@ public final class SprtRunnerArtifactsTest
    *
    * @param repoDir the temporary repository root
    * @throws IOException if file creation or git commands fail
-   * @throws InterruptedException if interrupted while committing
    */
-  private void createPersistArtifactsSkill(Path repoDir) throws IOException, InterruptedException
+  private void createPersistArtifactsSkill(Path repoDir) throws IOException
   {
     Path skillDir = repoDir.resolve("client/plugin/skills/common/test-skill");
     Files.createDirectories(skillDir);
@@ -710,10 +674,9 @@ public final class SprtRunnerArtifactsTest
    * @param sessionId the session id to persist
    * @param phase the persisted execution phase
    * @throws IOException if the runner fails
-   * @throws InterruptedException if interrupted while running the command
    */
   private void runPersistArtifacts(TestClaudeTool scope, Path repoDir, Path artifactsDir,
-    String sessionId, String phase) throws IOException, InterruptedException
+    String sessionId, String phase) throws IOException
   {
     SprtRunner runner = new SprtRunner(scope, "2.1.87");
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -771,7 +734,7 @@ public final class SprtRunnerArtifactsTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*worktree root not found.*")
-  public void persistArtifactsThrowsWhenWorktreeRoot() throws IOException, InterruptedException
+  public void persistArtifactsThrowsWhenWorktreeRoot() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -791,7 +754,7 @@ public final class SprtRunnerArtifactsTest
    * Verifies that merge-results uses prior instruction-test stats for carryforward IDs instead of current SPRT state.
    */
   @Test
-  public void mergeResultsCarryforwardUsePriorStats() throws IOException, InterruptedException
+  public void mergeResultsCarryforwardUsePriorStats() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -839,7 +802,7 @@ public final class SprtRunnerArtifactsTest
           break;
         }
     }
-      requireThat(tc2, "tc2").isNotNull();
+      assert tc2 != null;
       // Prior instruction-test has TC2 log_ratio=3.5; SPRT state has 0.5 — must use prior value
       requireThat(tc2.path("log_ratio").asDouble(), "tc2.log_ratio").isEqualTo(3.5);
       requireThat(tc2.path("decision").asString(), "tc2.decision").isEqualTo("ACCEPT");
@@ -898,7 +861,7 @@ public final class SprtRunnerArtifactsTest
           break;
         }
       }
-      requireThat(tc2, "tc2").isNotNull();
+      assert tc2 != null;
       requireThat(tc2.path("log_ratio").asDouble(), "tc2.log_ratio").isEqualTo(3.5);
       requireThat(tc2.path("carried_forward").asBoolean(), "tc2.carried_forward").isTrue();
       requireThat(root.path("overall_decision").asString(), "overall_decision").isEqualTo("ACCEPT");
@@ -914,7 +877,7 @@ public final class SprtRunnerArtifactsTest
    * containing an ordered array of testcase IDs derived from sorted test case filenames.
    */
   @Test
-  public void createIsolationBranchIncludesTcIdsJson() throws IOException, InterruptedException
+  public void createIsolationBranchIncludesTcIdsJson() throws IOException
   {
     Path repoDir = TestUtils.createTempGitRepo("my-issue");
     Path pluginRoot = Files.createTempDirectory("test-plugin-root-");
@@ -977,7 +940,7 @@ public final class SprtRunnerArtifactsTest
    * and returns the destination path in JSON.
    */
   @Test
-  public void saveFailedRunCopiesFileToFailedRunsDir() throws IOException, InterruptedException
+  public void saveFailedRunCopiesFileToFailedRunsDir() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -1018,7 +981,7 @@ public final class SprtRunnerArtifactsTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*file not found.*")
-  public void saveFailedRunThrowsWhenSourceMissing() throws IOException, InterruptedException
+  public void saveFailedRunThrowsWhenSourceMissing() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -1036,7 +999,7 @@ public final class SprtRunnerArtifactsTest
    * Verifies that remove-runner-worktree removes the worktree directory and deletes the branch.
    */
   @Test
-  public void removeRunnerWorktreeRemovesWorktreeAnd() throws IOException, InterruptedException
+  public void removeRunnerWorktreeRemovesWorktreeAnd() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("my-issue");
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
@@ -1070,7 +1033,7 @@ public final class SprtRunnerArtifactsTest
    * issue_name, test_dir_rel, and sprt_state_path from worktree_path.
    */
   @Test
-  public void prepareRunResolvesAbsoluteTestDir() throws IOException, InterruptedException
+  public void prepareRunResolvesAbsoluteTestDir() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -1108,7 +1071,7 @@ public final class SprtRunnerArtifactsTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*outside.*")
-  public void prepareRunRejectsTestDirOutsideWorktree() throws IOException, InterruptedException
+  public void prepareRunRejectsTestDirOutsideWorktree() throws IOException
   {
     Path worktree = Files.createTempDirectory("test-worktree-");
     Path outside = Files.createTempDirectory("test-outside-");
@@ -1130,7 +1093,7 @@ public final class SprtRunnerArtifactsTest
    * Verifies that get-json-field extracts a top-level string field from a JSON object.
    */
   @Test
-  public void getJsonFieldExtractsStringValue() throws IOException, InterruptedException
+  public void getJsonFieldExtractsStringValue() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))
@@ -1151,7 +1114,7 @@ public final class SprtRunnerArtifactsTest
    * when there are no INCONCLUSIVE test cases.
    */
   @Test
-  public void createRunnerWorktreesCreatesOutputDir() throws IOException, InterruptedException
+  public void createRunnerWorktreesCreatesOutputDir() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("my-issue");
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
@@ -1194,7 +1157,7 @@ public final class SprtRunnerArtifactsTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*escapes the test-runs directory.*")
-  public void createRunnerWorktreesRejectsSymlinkDir() throws IOException, InterruptedException
+  public void createRunnerWorktreesRejectsSymlinkDir() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("my-issue");
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
@@ -1236,7 +1199,7 @@ public final class SprtRunnerArtifactsTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = ".*escapes the test-runs directory.*")
-  public void rejectsSymlinkedTestRunsRoot() throws IOException, InterruptedException
+  public void rejectsSymlinkedTestRunsRoot() throws IOException
   {
     Path mainRepo = TestUtils.createTempGitRepo("my-issue");
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
@@ -1279,7 +1242,7 @@ public final class SprtRunnerArtifactsTest
    */
   @Test(expectedExceptions = IllegalArgumentException.class,
     expectedExceptionsMessageRegExp = "(?s).*no .md.*")
-  public void prepareRunFailsOnEmptyTestDir() throws IOException, InterruptedException
+  public void prepareRunFailsOnEmptyTestDir() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-skill-test-runner-");
     try (var scope = new TestClaudeTool(tempDir, tempDir))

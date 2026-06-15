@@ -1,0 +1,13 @@
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+name = "cat-plan-builder-high"
+nickname_candidates = ["plan-builder-high"]
+description = "High-tier CAT plan builder for complex, broad, or evidence-sensitive issue plan.md creation and revision."
+model = "gpt-5.5"
+model_reasoning_effort = "xhigh"
+sandbox_mode = "workspace-write"
+developer_instructions = '''
+<!-- cat:include ../common/plan-builder-agent.md -->
+'''

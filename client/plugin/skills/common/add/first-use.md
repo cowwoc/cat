@@ -142,9 +142,15 @@ fi
 CURIOSITY=$(echo "$CONFIG" | grep -o '"curiosity"[[:space:]]*:[[:space:]]*"[^"]*"' \
   | sed 's/.*"curiosity"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 if [[ -z "$CURIOSITY" ]]; then
-    echo "ERROR: 'curiosity' key not found in effective config." >&2
-    exit 1
+    CURIOSITY="medium"
 fi
+case "$CURIOSITY" in
+    low|medium|high) ;;
+    *)
+        echo "ERROR: Invalid curiosity value '${CURIOSITY}'. Expected one of: low, medium, high." >&2
+        exit 1
+        ;;
+esac
 ```
 
 Store CURIOSITY for use in downstream steps.
@@ -306,9 +312,16 @@ Gather the following for validation:
 - POSTCONDITIONS (from issue_ask_type_and_criteria)
 - All ancestor version requirements (from issue_discuss_and_requirements and ancestor plan.md files)
 
-**Spawn requirements stakeholder agent:**
+**Run requirements stakeholder validation:**
 
-Use Task tool to spawn a cat:stakeholder-requirements agent with the following prompt:
+Auto-tier `stakeholder-requirements` for issue post-condition validation using ISSUE_DESCRIPTION,
+ISSUE_TYPE, POSTCONDITIONS, and selected ancestor version requirements.
+
+Route `stakeholder-requirements` via `client/plugin/skills/include/agent-tier/stakeholder.md`,
+using ISSUE_DESCRIPTION, ISSUE_TYPE, POSTCONDITIONS, and selected ancestor version requirements.
+Set `AGENT_TIER` and `AGENT_ALIAS` from that file.
+
+Use the following prompt:
 
 ```
 You are validating post-conditions for a CAT issue before plan.md creation.

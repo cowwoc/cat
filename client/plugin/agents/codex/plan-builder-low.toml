@@ -1,0 +1,13 @@
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+name = "cat-plan-builder-low"
+nickname_candidates = ["plan-builder-low"]
+description = "Low-tier CAT plan builder for simple, local issue plan.md creation and revision."
+model = "gpt-5.4-mini"
+model_reasoning_effort = "medium"
+sandbox_mode = "workspace-write"
+developer_instructions = '''
+<!-- cat:include ../common/plan-builder-agent.md -->
+'''

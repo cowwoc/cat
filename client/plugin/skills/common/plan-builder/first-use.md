@@ -74,59 +74,35 @@ The agent should only decide "how to write the code", not "what approach to take
 
 ## Orchestrator Delegation Model
 
-The plan-builder agent is the strong top-level orchestrator. For Codex, its default is `gpt-5.4` with `high`
-reasoning effort. It owns complexity classification, decomposition, milestone structure, contradiction handling,
-sequencing, acceptance-criteria quality, and final plan synthesis.
+The plan-builder agent is tiered. Callers use `agent-tier/plan-builder.md` before spawning.
+The selected plan-builder owns complexity classification, decomposition, milestone structure, contradiction handling,
+sequencing, acceptance-criteria quality, and final plan synthesis within that tier.
 
-Do not use a weak-orchestrator/escalate-upward design. Delegate bounded supporting work downward and keep final
-integration in the plan-builder agent.
+Delegate bounded supporting work downward and keep final integration in the selected plan-builder agent.
 
 ### Helper Agent Roles
 
-Use engine-native agent types. Codex names use `cat-*`; Claude names use `cat:*`.
+Use CAT agent aliases. Concrete engine wrapper names are owned by the installed engine integration.
 
-| Role | Codex agent | Claude agent | Use for | Must not do |
-|------|-------------|--------------|---------|-------------|
-| Evidence explorer/checker | `cat-plan-evidence-agent` | `cat:plan-evidence-agent` | Bounded repo discovery, relevant files/tests/docs, existing patterns, symbol ownership, local contradiction checks | Choose the integrated approach or write plan.md |
-| Local option planner | `cat-plan-local-planner-agent` | `cat:plan-local-planner-agent` | Draft local options for one subsystem when design choices are non-obvious | Own final plan synthesis or cross-subsystem trade-offs |
-| Normal plan checker | `cat-plan-review-agent` | `cat:plan-review-agent` | Mechanical review of acceptance criteria, sequencing, and implementability for normal plans | Edit plan.md directly |
-| Strong plan reviewer | `cat-plan-strong-review-agent` | `cat:plan-strong-review-agent` | Broad, architecture-sensitive, contradiction-prone, or multi-subsystem plan review | Edit plan.md directly |
+| Role | CAT agent family | Use for | Must not do |
+|------|------------------|---------|-------------|
+| Evidence explorer/checker | `cat:plan-evidence-agent` | Bounded repo discovery, relevant files/tests/docs, existing patterns, symbol ownership, local contradiction checks | Choose the integrated approach or write plan.md |
+| Local option planner | `cat:plan-local-planner-agent` | Draft local options for one subsystem when design choices are non-obvious | Own final plan synthesis or cross-subsystem trade-offs |
+| Plan checker/reviewer | `plan-review` via `agent-tier/plan-review.md` | Mechanical, implementability, acceptance-criteria, sequencing, broad, architecture-sensitive, contradiction-prone, or multi-subsystem plan review as selected by context | Edit plan.md directly |
 
 Delegate independent evidence and narrow checks in parallel. Keep planning local when the task is bounded and final
 synthesis is straightforward.
 
-### Mandatory Strong Review Triggers
-
-Classify the plan as broad and run strong review when any of these are true:
-
-- More than 2-3 subsystems are involved
-- The plan spans milestones, migrations, rollout, CI/build/plugin lifecycle, or workflow semantics
-- Docs, tests, config, or implementation patterns conflict
-- Acceptance criteria are judgment-heavy rather than mechanical
-- Work is evidence-gated
-- Sequencing dependencies are non-trivial
-- Performance, concurrency, persistence, compatibility, or public API behavior is involved
-
 ### Default Orchestration Workflows
 
-Normal issues:
-
-1. Strong orchestrator classifies scope.
-2. Cheap evidence agents gather relevant files, tests, docs, and existing patterns in parallel when those searches are
-   independent.
-3. Orchestrator writes the draft plan.
-4. One medium plan checker verifies acceptance criteria, sequencing, and mechanical implementability.
-5. Orchestrator resolves findings and finalizes.
-
-Broad optimization or architecture-sensitive issues:
-
-1. Strong orchestrator maps subsystems and unknowns.
-2. Cheap evidence agents gather subsystem evidence in parallel.
-3. Medium local planners draft subsystem-local options only where design choices are non-obvious.
-4. Evidence agents run bounded contradiction checks over code/docs/tests/config.
-5. Orchestrator builds the single integrated draft plan.
-6. Strong reviewer audits contradictions, sequencing, architecture sensitivity, and mechanical quality.
-7. Orchestrator resolves findings and emits the final plan.
+1. Plan-builder classifies scope and unknowns within the selected planning lane.
+2. Evidence agents gather relevant files, tests, docs, config, and existing patterns in parallel when those searches
+   are independent.
+3. Local option planners draft subsystem-local options only where design choices are non-obvious.
+4. Evidence agents run bounded contradiction checks over code/docs/tests/config when needed.
+5. Plan-builder writes the single integrated draft plan.
+6. Plan review routing selects the appropriate review agent through `agent-tier/plan-review.md`.
+7. Plan-builder resolves findings and emits the final plan.
 
 ## plan.md Templates
 
@@ -274,10 +250,12 @@ steps.
 
 The draft is already written to `PLAN_OUTPUT_PATH`.
 
-Skip review only when curiosity is `low` and no Mandatory Strong Review Trigger applies.
+Run review routing unless a caller-owned path explicitly skipped review before this section. Do not make local
+plan-review agent selection decisions here.
 
-For normal plans with curiosity `medium` or `high`, use the normal plan checker. For broad plans or any Mandatory
-Strong Review Trigger, use the strong plan reviewer.
+Auto-tier `plan-review` for reviewing PLAN_OUTPUT_PATH for completeness, implementability, sequencing,
+acceptance-criteria quality, and high-risk plan-review triggers using ISSUE_GOAL, curiosity, selected plan-builder
+context, and broad-plan status.
 
 Review agents are review-only. They must not edit `plan.md`. The plan-builder orchestrator applies targeted fixes,
 re-runs review, and owns the final plan.
@@ -285,29 +263,19 @@ re-runs review, and owns the final plan.
 **Prerequisite:** The draft plan.md must already be written to `PLAN_OUTPUT_PATH` before invoking the
 review agent.
 
-Spawn the selected review agent with the engine-native agent-spawning tool:
+Route `plan-review` via `client/plugin/skills/include/agent-tier/plan-review.md`, using ISSUE_GOAL, curiosity,
+selected plan-builder context, and broad-plan status.
+Set `AGENT_TIER` and `AGENT_ALIAS` from that file.
 
-- Codex normal review: `cat-plan-review-agent`
-- Codex strong review: `cat-plan-strong-review-agent`
-- Claude normal review: `cat:plan-review-agent`
-- Claude strong review: `cat:plan-strong-review-agent`
+Set `REVIEW_AGENT` to `AGENT_ALIAS`.
 
-```
-Agent-spawning tool:
-  description: "Plan completeness review"
-  agent_type/subagent_type: "{engine-native review agent name from the list above}"
-  # Codex uses agent_type; Claude uses subagent_type.
-  prompt: |
+Spawn `REVIEW_AGENT` with description `Plan completeness review` and this prompt:
+
+```text
     Use the configured plan review model for this agent type.
 
     You are a review-only plan checker. Read the draft plan.md from disk and review it.
     Do NOT edit files.
-
-    If the selected agent is the normal plan reviewer:
-    Read and follow: ${CAT_PLUGIN_ROOT}/agents/common/plan-review-agent.md
-
-    If the selected agent is the strong plan reviewer:
-    Read and follow: ${CAT_PLUGIN_ROOT}/agents/common/plan-strong-review-agent.md
 
     ## Review Task
 

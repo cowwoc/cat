@@ -34,7 +34,7 @@ public final class CodexSprtRunner
     {
       try
       {
-        SprtRunner.run(scope, args, System.out);
+        SprtRunner.run(scope, args, System.out, new CodexSprtMetadataResolver(scope));
       }
       catch (IllegalArgumentException | IOException | InterruptedException e)
       {

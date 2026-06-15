@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.claude.engine;
 
 import io.github.cowwoc.cat.claude.tool.MainClaudeTool;
 import io.github.cowwoc.cat.tool.CliTool;
+import io.github.cowwoc.cat.tool.skills.ModelIdResolver;
 import io.github.cowwoc.cat.tool.skills.SprtRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +36,9 @@ public final class ClaudeSprtRunner
     {
       try
       {
-        SprtRunner.run(scope, args, System.out);
+        String claudeCodeVersion = ModelIdResolver.detectClaudeCodeVersionOrLatestMapping();
+        SprtRunner.run(scope, args, System.out,
+          new ClaudeSprtMetadataResolver(claudeCodeVersion));
       }
       catch (IllegalArgumentException | IOException | InterruptedException e)
       {

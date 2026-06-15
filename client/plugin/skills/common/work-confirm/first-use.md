@@ -232,24 +232,32 @@ the first result is PARTIAL or INCOMPLETE. Do NOT re-initialize inside any branc
    - Partial criteria: items in `criteria[]` with `status: "Partial"`
    - Failed E2E: `e2e.status == "FAILED"`
 
-3. Spawn a **planning agent** to revise plan.md with fix steps.
+3. Spawn a **plan-builder agent** to revise plan.md with fix steps.
 
-   **If the planning agent returns `"status": "FAILED"`**, STOP the fix loop immediately. Do NOT
+   Auto-tier `plan-builder` for planning concrete fix steps for missing or partial post-conditions and failed E2E
+   checks on VERIFY_ITERATION `${VERIFY_ITERATION}`, using missing criteria, detail files, failed E2E evidence, risk
+   keywords, subsystem count, and iteration count.
+
+   Route `plan-builder` via `client/plugin/skills/include/agent-tier/plan-builder.md`, using missing criteria,
+   detail files, failed E2E evidence, risk keywords, subsystem count, and VERIFY_ITERATION `${VERIFY_ITERATION}`.
+   Set `AGENT_TIER` and `AGENT_ALIAS` from that file.
+
+   Set `FIX_PLAN_BUILDER_AGENT` to `AGENT_ALIAS`.
+
+   **If the plan-builder agent returns `"status": "FAILED"`**, STOP the fix loop immediately. Do NOT
    spawn the implementation agent. Note the planning failure in the return JSON and proceed to the
    next phase with remaining gaps documented. The current VERIFY_ITERATION still counts — do NOT
    retry the same iteration.
 
-   **If the planning agent returns `"status": "SUCCESS"` but `fix_steps` is empty, missing, or
+   **If the plan-builder agent returns `"status": "SUCCESS"` but `fix_steps` is empty, missing, or
    contains only whitespace/blank entries**, treat as FAILED — STOP the fix loop and proceed to the
-   next phase. A SUCCESS with no actionable fix steps means the planning agent produced nothing
+   next phase. A SUCCESS with no actionable fix steps means the plan-builder agent produced nothing
    actionable.
 
-   Spawn the planning agent:
-   ```
-   Task tool:
-     description: "Plan fixes for missing post-conditions (iteration ${VERIFY_ITERATION})"
-     subagent_type: "cat:plan-builder-agent"
-     prompt: |
+   Spawn `FIX_PLAN_BUILDER_AGENT` with description
+   `Plan fixes for missing post-conditions (iteration ${VERIFY_ITERATION})` and this prompt:
+
+   ```text
        Revise plan.md to add fix steps for the following missing post-conditions.
 
        ## Issue Configuration
@@ -262,6 +270,13 @@ the first result is PARTIAL or INCOMPLETE. Do NOT re-initialize inside any branc
 
        ## Detail Files (pass to implementation agent — do NOT return their contents in your response)
        ${detail_file_paths_from_compact_json}
+
+       ## Prior Mechanical Blocker From Implementation
+       If a prior iteration returned `BLOCKED_PLAN_NOT_MECHANICAL`, use the exact blocker payload below when revising
+       plan.md. If no prior iteration blocked mechanically, this section will be empty or `[]`.
+       Ambiguities JSON: ${IMPLEMENT_BLOCKER_AMBIGUITIES_JSON}
+       Evidence JSON: ${IMPLEMENT_BLOCKER_EVIDENCE_JSON}
+       Blocker message: ${IMPLEMENT_BLOCKER_MESSAGE}
 
        ## Instructions
        - Read ${ISSUE_PATH}/plan.md to understand the current plan
@@ -283,7 +298,6 @@ the first result is PARTIAL or INCOMPLETE. Do NOT re-initialize inside any branc
          branch, not on the main workspace branch
        - After committing, verify the commit is present: `cd "${WORKTREE_PATH}" && git log --oneline -1`
          must show the planning commit. If git commit failed (exit code non-zero), return status: FAILED
-
        ## Return Format
        ```json
        {
@@ -326,13 +340,22 @@ the first result is PARTIAL or INCOMPLETE. Do NOT re-initialize inside any branc
        ## Return Format
        ```json
        {
-         "status": "SUCCESS|PARTIAL|FAILED",
+         "status": "SUCCESS|PARTIAL|FAILED|BLOCKED_PLAN_NOT_MECHANICAL",
          "commits": [{"hash": "...", "message": "...", "type": "..."}],
          "files_changed": N,
          "criteria_addressed": N
        }
        ```
    ```
+
+   **If the implementation agent returns `"status": "BLOCKED_PLAN_NOT_MECHANICAL"`**, treat it as plan-builder repair
+   failure, not implementation failure. Feed its ambiguity JSON into the next fix-loop iteration and mark the next
+   `plan-builder` auto-tier routing as high-risk due to an under-specified prior plan. The current VERIFY_ITERATION
+   still counts. Do NOT proceed to steps 5-6 for this iteration.
+   Preserve the blocker payload exactly:
+   - `IMPLEMENT_BLOCKER_AMBIGUITIES_JSON` = returned `ambiguities`
+   - `IMPLEMENT_BLOCKER_EVIDENCE_JSON` = returned `evidence`
+   - `IMPLEMENT_BLOCKER_MESSAGE` = returned `message`
 
    **If the implementation agent returns `"status": "FAILED"`**, STOP the fix loop immediately.
    Before exiting: if the implementation agent's result includes any `commits` (partial work before
@@ -355,7 +378,7 @@ spawn step 6 until step 5 completes. Do NOT make parallel Task tool calls betwee
 6. Re-spawn the verify agent by constructing a NEW prompt from the template (do NOT reuse or re-send
    the original rendered prompt string). Substitute the CURRENT value of `CURRENT_COMMITS_JSON` (which
    now includes fix commits) and the updated `filesChanged` total into the prompt before spawning.
-   The re-rendered prompt must reflect the post-fix state. Note: the planning agent appended fix steps
+   The re-rendered prompt must reflect the post-fix state. Note: the plan-builder agent appended fix steps
    only to the `## Jobs` section of plan.md — never to the post-conditions. The verify agent
    evaluates the same post-conditions as the initial invocation.
 

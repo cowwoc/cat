@@ -1897,7 +1897,7 @@ fi
 
 if [[ "$is_codex_engine" == "true" ]]; then
     source_agents="${CAT_PLUGIN_ROOT}/agents"
-    if [[ ! -d "$source_agents" && -d "${CAT_PLUGIN_ROOT}/agents/codex" ]]; then
+    if [[ -d "${CAT_PLUGIN_ROOT}/agents/codex" ]]; then
         source_agents="${CAT_PLUGIN_ROOT}/agents/codex"
     fi
     target_agents=".codex/agents"

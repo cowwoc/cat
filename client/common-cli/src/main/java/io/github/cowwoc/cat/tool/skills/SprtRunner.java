@@ -234,7 +234,22 @@ public final class SprtRunner
    */
   public SprtRunner(CliTool scope, String claudeCodeVersion)
   {
-    this(scope, claudeCodeVersion, DEFAULT_PROCESS_TIMEOUT);
+    this(scope, claudeCodeVersion, DEFAULT_PROCESS_TIMEOUT, SprtMetadataResolver.unconfigured());
+  }
+
+  /**
+   * Creates a new SprtRunner.
+   *
+   * @param scope             the JVM scope providing shared services
+   * @param claudeCodeVersion the Claude Code version string (e.g., {@code "2.1.87"})
+   * @param metadataResolver  engine-specific metadata resolver
+   * @throws NullPointerException     if any parameter is null
+   * @throws IllegalArgumentException if {@code claudeCodeVersion} is blank
+   */
+  public SprtRunner(CliTool scope, String claudeCodeVersion,
+    SprtMetadataResolver metadataResolver)
+  {
+    this(scope, claudeCodeVersion, DEFAULT_PROCESS_TIMEOUT, metadataResolver);
   }
 
   /**
@@ -249,9 +264,27 @@ public final class SprtRunner
    */
   public SprtRunner(CliTool scope, String claudeCodeVersion, Duration processTimeout)
   {
+    this(scope, claudeCodeVersion, processTimeout, SprtMetadataResolver.unconfigured());
+  }
+
+  /**
+   * Creates a new SprtRunner.
+   *
+   * @param scope             the JVM scope providing shared services
+   * @param claudeCodeVersion the Claude Code version string (e.g., {@code "2.1.87"})
+   * @param processTimeout    the launcher process timeout
+   * @param metadataResolver  engine-specific metadata resolver
+   * @throws NullPointerException     if any parameter is null
+   * @throws IllegalArgumentException if {@code claudeCodeVersion} is blank or
+   *                                  {@code processTimeout} is not positive
+   */
+  public SprtRunner(CliTool scope, String claudeCodeVersion, Duration processTimeout,
+    SprtMetadataResolver metadataResolver)
+  {
     requireThat(scope, "scope").isNotNull();
     requireThat(claudeCodeVersion, "claudeCodeVersion").isNotBlank();
     requireThat(processTimeout, "processTimeout").isNotNull();
+    requireThat(metadataResolver, "metadataResolver").isNotNull();
     if (!processTimeout.isPositive())
       throw new IllegalArgumentException("processTimeout must be positive");
     this.scope = scope;
@@ -266,7 +299,7 @@ public final class SprtRunner
     this.sprtRunWorkflow = new SprtRunWorkflow(this, scope, log, sprtGrader, sprtResultsManager,
       sprtRunStatusStore,
       EARLY_FAIL_THRESHOLD, EARLY_FAIL_WINDOW);
-    this.skillMetadataExtractor = new SkillMetadataExtractor(scope, claudeCodeVersion);
+    this.skillMetadataExtractor = new SkillMetadataExtractor(scope, metadataResolver);
     this.sprtCommandSupport = new SprtCommandSupport(scope, runtimeId, claudeCodeVersion,
       skillMetadataExtractor, sprtResultsManager, sprtRunStatusStore, log);
   }
@@ -1697,13 +1730,34 @@ public final class SprtRunner
   public static void run(CliTool scope, String[] args, PrintStream out)
     throws IOException, InterruptedException
   {
+    run(scope, args, out, SprtMetadataResolver.unconfigured());
+  }
+
+  /**
+   * Executes the skill test runner logic with a caller-provided output stream.
+   *
+   * @param scope            the plugin scope
+   * @param args             command line arguments
+   * @param out              the output stream to write to
+   * @param metadataResolver engine-specific metadata resolver
+   * @throws NullPointerException     if {@code scope}, {@code args}, {@code out}, or
+   *                                  {@code metadataResolver} are null
+   * @throws IllegalArgumentException if arguments are invalid
+   * @throws IOException              if an I/O error occurs
+   * @throws InterruptedException     if waiting for a runner process is interrupted
+   */
+  public static void run(CliTool scope, String[] args, PrintStream out,
+    SprtMetadataResolver metadataResolver)
+    throws IOException, InterruptedException
+  {
     requireThat(scope, "scope").isNotNull();
     requireThat(args, "args").isNotNull();
     requireThat(out, "out").isNotNull();
+    requireThat(metadataResolver, "metadataResolver").isNotNull();
     if (args.length == 0)
       throw new IllegalArgumentException(noCommandSpecifiedMessage());
     String claudeCodeVersion = ModelIdResolver.detectClaudeCodeVersionOrLatestMapping();
-    new SprtRunner(scope, claudeCodeVersion).run(args, out);
+    new SprtRunner(scope, claudeCodeVersion, metadataResolver).run(args, out);
   }
 
   /**

@@ -533,6 +533,11 @@ public final class PluginArtifactBuilderTest
         requireThat(stakeholderReview, engine + "StakeholderReview").contains(
           "Reviewer agents are leaf reviewers");
         requireThat(stakeholderReview, engine + "StakeholderReview").contains(
+          "RISK_SENSITIVE_STAKEHOLDERS=$(printf '%s\\n' \"$SELECTED\" | tr ' ' '\\n' | " +
+            "grep -xE '(security|legal|deployment|performance)' || true)");
+        requireThat(stakeholderReview, engine + "StakeholderReview").contains(
+          "REVIEW_TIER_REASON=\"risk_sensitive_stakeholder_selected\"");
+        requireThat(stakeholderReview, engine + "StakeholderReview").contains(
           "Do NOT call `spawn_agent`, `wait_agent`, `list_agents`,");
         requireThat(stakeholderReview, engine + "StakeholderReview").contains(
           "agent_type=<stakeholder-agent-type>");
@@ -1347,14 +1352,21 @@ public final class PluginArtifactBuilderTest
    */
   private static void assertWorkReviewAutoFixPlanArtifact(String content, String name)
   {
-    String planningSection = content.substring(content.indexOf(
-      "description: \"Plan per-concern fixes (iteration ${AUTOFIX_ITERATION})\""),
-      content.indexOf("**Fix plan validation (MANDATORY):**"));
+    int planningStart = content.indexOf(
+      "Auto-tier `plan-builder` for planning per-concern fixes");
+    int validationStart = content.indexOf("**Fix plan validation (MANDATORY):**");
+    requireThat(planningStart, name + "PlanningStart").isGreaterThanOrEqualTo(0);
+    requireThat(validationStart, name + "ValidationStart").isGreaterThan(planningStart);
+    String planningSection = content.substring(planningStart, validationStart);
     requireThat(planningSection, name + "AutoFixPlanning").
+      contains("Set `REVIEW_FIX_PLAN_BUILDER_AGENT` to `AGENT_ALIAS`.").
+      contains("Spawn `REVIEW_FIX_PLAN_BUILDER_AGENT` with description").
+      contains("ISSUE_PATH: ${ISSUE_PATH}").
       contains("FIX_PLAN_OUTPUT_PATH: ${WORKTREE_PATH}/.cat/work/review-fix-plans.md").
       contains("The output path in `FIX_PLAN_OUTPUT_PATH` is authoritative; do not substitute another path.").
       contains("Write the complete fix plan to `${WORKTREE_PATH}/.cat/work/review-fix-plans.md`.").
       contains("Do not write the fix plan to any other location.").
+      contains("Ambiguities JSON: ${REVIEW_BLOCKER_AMBIGUITIES_JSON}").
       contains("read `${WORKTREE_PATH}/.cat/work/review-fix-plans.md`").
       contains("If the file is missing or empty, treat this as a planning failure for the iteration.").
       doesNotContain(".claude");

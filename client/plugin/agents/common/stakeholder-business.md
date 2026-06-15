@@ -247,7 +247,7 @@ Use these domain-specific examples to calibrate your severity ratings against th
 Before returning your review, write comprehensive analysis to:
 `${WORKTREE_PATH}/.cat/work/review/business-concerns.json`
 
-The detail file is consumed by a planning agent that creates concrete fix steps. Include:
+The detail file is consumed by a plan-builder agent that creates concrete fix steps. Include:
 - Exact file paths and line numbers for each problem
 - Specific code changes needed (change X to Y)
 - No persuasive prose or context-setting — just actionable instructions

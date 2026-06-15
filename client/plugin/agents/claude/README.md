@@ -10,4 +10,6 @@ This directory contains Claude Code custom subagent definitions. Each file owns 
 `plugin/agents/common/`.
 
 Keep engine-neutral behavior in `plugin/agents/common/`. Put only Claude Code metadata and Claude-specific loading
-instructions here.
+instructions here. Tiered CAT agents use `low`, `medium`, and `high` wrappers rather than untiered compatibility
+aliases. The `work-execute` implementer is intentionally cheap (`haiku`, medium effort) and must return
+`BLOCKED_PLAN_NOT_MECHANICAL` instead of making planning decisions.

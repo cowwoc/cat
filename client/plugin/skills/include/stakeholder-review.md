@@ -398,6 +398,32 @@ case "$CURIOSITY" in
             REVIEW_SCOPE="Review changed lines and their surrounding context (functions, classes containing the change). Flag issues that arise from the interaction between new and existing code." ;;
 esac
 
+# Deterministic reviewer tier selection. Do not rely on weak reviewers to decide whether they should have been
+# stronger; route to the weakest reasonable tier before dispatch.
+REVIEW_TIER="medium"
+REVIEW_TIER_REASON="normal_change"
+HIGH_RISK_CHANGED_FILES=$(printf '%s\n' "$CHANGED_FILES" | grep -iE '(auth|security|credential|token|secret|password|permission|schema|migration|api|endpoint|public|workflow|hook|plugin|build|pom\.xml|Dockerfile|\.github/|concurrent|thread|performance|cache)' || true)
+SOURCE_FILE_COUNT=$(printf '%s\n' "$CHANGED_FILES" | grep -cE '\.(java|py|ts|js|go|rs|c|cpp|cs)$' || true)
+RISK_SENSITIVE_STAKEHOLDERS=$(printf '%s\n' "$SELECTED" | tr ' ' '\n' | grep -xE '(security|legal|deployment|performance)' || true)
+if [[ "$CURIOSITY" == "high" ]]; then
+    REVIEW_TIER="high"
+    REVIEW_TIER_REASON="curiosity_high"
+elif [[ -n "$RISK_SENSITIVE_STAKEHOLDERS" ]]; then
+    REVIEW_TIER="high"
+    REVIEW_TIER_REASON="risk_sensitive_stakeholder_selected"
+elif [[ -n "$HIGH_RISK_CHANGED_FILES" ]]; then
+    REVIEW_TIER="high"
+    REVIEW_TIER_REASON="high_risk_files"
+elif [[ "$CHANGED_FILE_COUNT" -gt 5 || "$CLIENT_FILE_COUNT" -gt 3 || "$SOURCE_FILE_COUNT" -gt 3 ]]; then
+    REVIEW_TIER="high"
+    REVIEW_TIER_REASON="large_or_cross_cutting_diff"
+elif [[ "$CURIOSITY" == "low" && "$CHANGED_FILE_COUNT" -le 2 ]]; then
+    REVIEW_TIER="low"
+    REVIEW_TIER_REASON="small_low_curiosity_diff"
+fi
+
+printf '%s\n' "review_tier=${REVIEW_TIER} (${REVIEW_TIER_REASON})" > "${REVIEW_DIR}/review-tier.txt"
+
 # IMPORTANT: Convention map MUST be built AFTER Step 1 has finalized SELECTED
 # (including all file-based overrides). The loop below iterates over SELECTED, so any
 # stakeholder added by file-based overrides in Step 1 must already be present.
@@ -421,8 +447,11 @@ if [[ -d ".cat/rules/common" ]]; then
                     done
                 else
                     for agent_type in $specific_agents; do
-                        stakeholder="${agent_type#cat:stakeholder-}"
-                        if [[ "$stakeholder" != "$agent_type" ]]; then
+                        if [[ "$agent_type" == cat:stakeholder-* ]]; then
+                            stakeholder="${agent_type#cat:stakeholder-}"
+                            stakeholder="${stakeholder%-low}"
+                            stakeholder="${stakeholder%-medium}"
+                            stakeholder="${stakeholder%-high}"
                             CONVENTION_MAP="${CONVENTION_MAP}${stakeholder}:${convention_file} "
                         else
                             echo "WARNING: Convention file ${convention_file} has unrecognized agents entry '${agent_type}'. Expected 'cat:stakeholder-<name>', 'main', or 'subagents'." >&2
@@ -487,9 +516,10 @@ Each reviewer MUST run as an isolated fork with no inherited conversation histor
 
 Each reviewer MUST also use its stakeholder-specific agent type:
 - Codex: set `agent_type` to the engine-specific CAT stakeholder agent type for that stakeholder
-  (for example, the agent type corresponding to `cat-stakeholder-requirements` for the requirements
+  and selected tier (for example, `cat-stakeholder-requirements-${REVIEW_TIER}` for the requirements
   reviewer) when the engine exposes CAT stakeholder agent types.
-- Claude: set `subagent_type` to the stakeholder agent type for that stakeholder.
+- Claude: set `subagent_type` to the stakeholder agent type for that stakeholder and selected tier
+  (for example, `cat:stakeholder-requirements-${REVIEW_TIER}`).
 
 Do NOT use a generic/default agent type for stakeholder review when a stakeholder-specific agent type is
 available. If the engine does not expose the requested stakeholder agent types, stop and report the
@@ -542,6 +572,7 @@ Perform only your own review and return exactly one JSON review object directly 
   <changed_files_fingerprint>{CHANGED_FILES_FINGERPRINT}</changed_files_fingerprint>
 </review_context>
 Changed files (read from review_context.worktree_path): {CHANGED_FILES_BULLETS}
+Review tier selected by parent workflow: {REVIEW_TIER} ({REVIEW_TIER_REASON})
 
 `review_context.worktree_path` (from the `<review_context>` block above) is canonical for this review.
 review_context.worktree_path is the authoritative working directory for this review.
@@ -606,7 +637,12 @@ Compaction reminder:
 Return ONLY valid JSON matching your stakeholder definition.
 ```
 
-For each stakeholder, extract `model:` field from agent frontmatter (omit if absent).
+For each stakeholder, set the agent type from the selected tier:
+
+- Codex: `cat-stakeholder-{stakeholder}-{REVIEW_TIER}`
+- Claude: `cat:stakeholder-{stakeholder}-{REVIEW_TIER}`
+
+For each selected tiered stakeholder agent, extract `model:` field from agent frontmatter (omit if absent).
 Issue ALL reviewer calls in one message with isolated forks and stakeholder-specific agent types. Examples:
 
 - Codex v1 tool surface: `spawn_agent(message=prompt, fork_context=false,

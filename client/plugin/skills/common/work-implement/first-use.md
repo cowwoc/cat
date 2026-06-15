@@ -33,7 +33,7 @@ Return JSON when complete:
 
 ```json
 {
-  "status": "SUCCESS|PARTIAL|ALREADY_IMPLEMENTED|FAILED|BLOCKED",
+  "status": "SUCCESS|PARTIAL|ALREADY_IMPLEMENTED|FAILED|BLOCKED|BLOCKED_PLAN_NOT_MECHANICAL",
   "jobs_count": 1,
   "commits": [
     {"hash": "abc123", "message": "feature: description", "type": "feature"}
@@ -245,6 +245,16 @@ if [[ $? -ne 0 ]]; then
 fi
 CURIOSITY=$(echo "$CONFIG" | grep -o '"curiosity"[[:space:]]*:[[:space:]]*"[^"]*"' \
   | sed 's/.*"curiosity"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+if [[ -z "$CURIOSITY" ]]; then
+    CURIOSITY="medium"
+fi
+case "$CURIOSITY" in
+    low|medium|high) ;;
+    *)
+        echo "ERROR: Invalid curiosity value '${CURIOSITY}'. Expected one of: low, medium, high." >&2
+        exit 1
+        ;;
+esac
 ```
 
 2. Invoke plan-builder to add implementation steps:
@@ -346,6 +356,16 @@ if [[ $? -ne 0 ]]; then
 fi
 CURIOSITY=$(echo "$CONFIG" | grep -o '"curiosity"[[:space:]]*:[[:space:]]*"[^"]*"' \
   | sed 's/.*"curiosity"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+if [[ -z "$CURIOSITY" ]]; then
+    CURIOSITY="medium"
+fi
+case "$CURIOSITY" in
+    low|medium|high) ;;
+    *)
+        echo "ERROR: Invalid curiosity value '${CURIOSITY}'. Expected one of: low, medium, high." >&2
+        exit 1
+        ;;
+esac
 ```
 
 Then invoke:
@@ -517,6 +537,8 @@ Task tool:
 
     ## Critical Requirements
     - You are working in an isolated worktree. Your changes will be merged back to the issue branch.
+    - Before editing, verify plan.md is mechanical enough to execute. If it requires design judgment,
+      return `BLOCKED_PLAN_NOT_MECHANICAL` with ambiguities and evidence instead of making the decision yourself.
     - Follow execution steps from plan.md EXACTLY
     - If steps say to invoke a skill that was pre-invoked above, use the provided results
     - Update index.json in the SAME commit as implementation (status: closed, progress: 100%)
@@ -534,7 +556,7 @@ Task tool:
     Return JSON when complete:
     ```json
     {
-      "status": "SUCCESS|PARTIAL|FAILED|BLOCKED",
+      "status": "SUCCESS|PARTIAL|FAILED|BLOCKED|BLOCKED_PLAN_NOT_MECHANICAL",
       "tokens_used": <actual>,
       "percent_of_context": <actual>,
       "compaction_events": 0,
@@ -558,6 +580,22 @@ Task tool:
       "status": "BLOCKED",
       "message": "Description of blocker",
       "blocker": "What needs to be resolved"
+    }
+    ```
+
+    If plan.md is not mechanical enough for implementation, return:
+    ```json
+    {
+      "status": "BLOCKED_PLAN_NOT_MECHANICAL",
+      "message": "plan.md is not mechanical enough for the implementation agent",
+      "ambiguities": [
+        {
+          "location": "plan.md section or job",
+          "problem": "specific missing decision",
+          "needed_decision": "what the plan-builder must specify"
+        }
+      ],
+      "evidence": ["path or quoted plan heading supporting the ambiguity"]
     }
     ```
 
@@ -799,6 +837,9 @@ Task tool:
 
     ## Critical Requirements
     - You are working in an isolated worktree. Your changes will be merged back to the issue branch.
+    - Before editing, verify your assigned plan section is mechanical enough to execute. If it requires design
+      judgment, return `BLOCKED_PLAN_NOT_MECHANICAL` with ambiguities and evidence instead of making the decision
+      yourself.
     - Execute ONLY the items assigned to your job (ASSIGNED_JOB above, read from plan.md)
     - Do NOT execute items from other jobs
     - **index.json ownership:** You are [DETERMINED AUTOMATICALLY: if job is the last one, "the index.json owner"
@@ -819,7 +860,7 @@ Task tool:
     Return JSON when complete:
     ```json
     {
-      "status": "SUCCESS|PARTIAL|FAILED|BLOCKED",
+      "status": "SUCCESS|PARTIAL|FAILED|BLOCKED|BLOCKED_PLAN_NOT_MECHANICAL",
       "job": 1,
       "tokens_used": <actual>,
       "percent_of_context": <actual>,
@@ -848,6 +889,23 @@ Task tool:
       "job": 1,
       "message": "Description of blocker",
       "blocker": "What needs to be resolved"
+    }
+    ```
+
+    If plan.md is not mechanical enough for your assigned job, return:
+    ```json
+    {
+      "status": "BLOCKED_PLAN_NOT_MECHANICAL",
+      "job": 1,
+      "message": "plan.md is not mechanical enough for the implementation agent",
+      "ambiguities": [
+        {
+          "location": "plan.md section or job",
+          "problem": "specific missing decision",
+          "needed_decision": "what the plan-builder must specify"
+        }
+      ],
+      "evidence": ["path or quoted plan heading supporting the ambiguity"]
     }
     ```
 
@@ -1026,6 +1084,10 @@ Parse the agent result(s):
 - **ALREADY_IMPLEMENTED** (all groups, or mix of SUCCESS/PARTIAL/ALREADY_IMPLEMENTED with no FAILED/BLOCKED):
   treat as success-path execution with explicit status `ALREADY_IMPLEMENTED`, aggregate metrics, and continue.
   Use this when implementation is already present and no new work is required.
+- **BLOCKED_PLAN_NOT_MECHANICAL** (single agent or any parallel job): Do not merge agent branches or collect
+  implementation commits. Return `BLOCKED_PLAN_NOT_MECHANICAL` to `cat:work-with-issue` with the ambiguity JSON from
+  the agent result. For parallel jobs, clean up any temporary agent worktrees/branches that were created for the
+  blocked iteration before returning, and include the job number that reported the blocker.
 - **FAILED** (any group): Return FAILED status with error details from that group
 - **BLOCKED** (any group): Return FAILED with blocker info from that group
 

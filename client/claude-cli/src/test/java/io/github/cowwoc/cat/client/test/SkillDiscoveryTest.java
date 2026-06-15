@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.client.test;
 
-import io.github.cowwoc.cat.agent.FileContentCache;
 import io.github.cowwoc.cat.claude.hook.util.SkillDiscovery;
 import org.testng.annotations.Test;
 import tools.jackson.dataformat.yaml.YAMLMapper;
@@ -193,7 +192,6 @@ public final class SkillDiscoveryTest
   @Test
   public void mainAgentListingInvalidatesOnPathsChange() throws IOException
   {
-    FileContentCache.clear();
     Path configDir = Files.createTempDirectory("skill-discovery-config-");
     Path projectDir = Files.createTempDirectory("skill-discovery-project-");
     Path pluginRoot = Files.createTempDirectory("skill-discovery-runtime-");
@@ -229,7 +227,6 @@ public final class SkillDiscoveryTest
       TestUtils.deleteDirectoryRecursively(configDir);
       TestUtils.deleteDirectoryRecursively(projectDir);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
-      FileContentCache.clear();
     }
   }
 
