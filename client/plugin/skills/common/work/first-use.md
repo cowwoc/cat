@@ -68,9 +68,11 @@ If any check fails, **STOP** and report context mismatch. Do not write files.
 - Use worktree-relative paths for writes after changing into `${WORKTREE_PATH}`
 
 **Pre-commit location check (mandatory):**
-- Verify `/workspace` is clean before commit
+- Do not require `/workspace` to be clean before commit; unrelated work there is allowed
 - Verify intended diffs exist in `${WORKTREE_PATH}`
-- If inverted (workspace dirty, worktree clean), STOP and move changes first
+- Verify no issue-owned source edits were written to `/workspace` instead of `${WORKTREE_PATH}`
+- If inverted (issue-owned paths dirty in `/workspace`, or `${WORKTREE_PATH}` is missing expected issue edits),
+  STOP and move changes first
 
 **Git commands use the single-call pattern:** `cd ${WORKTREE_PATH} && git ...` — the `cd` keeps git
 operating in the worktree within that single Bash call. Do NOT rely on a prior `cd` persisting across

@@ -581,9 +581,10 @@ contract before any write/edit operation:
    - forbid absolute write paths under `/workspace/...` while issue worktree is active
    - use paths relative to `${WORKTREE_PATH}` for writes
 3. **Pre-commit location check (mandatory):**
-   - verify workspace root (`/workspace`) is clean
+   - allow unrelated dirt in workspace root (`/workspace`)
    - verify intended diffs are present in `${WORKTREE_PATH}`
-   - if inverted (workspace dirty, worktree clean): STOP and move changes before commit
+   - verify no issue-owned source edits were written to `/workspace` instead of `${WORKTREE_PATH}`
+   - if inverted (issue-owned paths dirty in `/workspace`, or `${WORKTREE_PATH}` is missing expected issue edits): STOP and move changes before commit
 4. **Execution header (mandatory):**
    - print target path, `pwd`, current branch, and `git rev-parse --show-toplevel` before first write
 

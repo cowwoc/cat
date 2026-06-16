@@ -209,9 +209,10 @@ test -x "${CAT_PLUGIN_DATA}/client/bin/pre-bash"
 test -f "${CAT_PLUGIN_DATA}/client/VERSION"
 test -f "${CODEX_PLUGIN_CACHE}/.codex-plugin/plugin.json"
 test -f "${CODEX_PLUGIN_CACHE}/skills/add/SKILL.md"
-test -f "${PROJECT_CODEX_AGENTS_DIR}/cat-stakeholder-architecture.toml"
-grep -F 'name = "cat-stakeholder-architecture"' \
-  "${PROJECT_CODEX_AGENTS_DIR}/cat-stakeholder-architecture.toml" >/dev/null
+ARCH_AGENT_FILE="$(find "${PROJECT_CODEX_AGENTS_DIR}" -maxdepth 1 -type f \
+  -name 'cat-stakeholder-architecture-*.toml' | head -1)"
+test -n "${ARCH_AGENT_FILE}"
+grep -F 'name = "cat-stakeholder-architecture-' "${ARCH_AGENT_FILE}" >/dev/null
 grep -F '[plugins."cat@cat"]' "${CODEX_CONFIG}" >/dev/null
 python3 - "${CODEX_CONFIG}" <<'PY'
 from pathlib import Path
@@ -241,5 +242,5 @@ After the command succeeds, tell the user to restart Codex to complete the insta
 - `${CODEX_HOME}/plugins/cat-marketplace/plugins/cat/.codex-plugin/plugin.json` exists.
 - `${CODEX_HOME}/plugins/cache/cat/cat/{version}/skills/add/SKILL.md` exists.
 - `${CAT_PLUGIN_DATA}/client/bin/java -version` runs successfully.
-- `${PROJECT_DIR}/.codex/agents/cat-stakeholder-architecture.toml` exists and declares `cat-stakeholder-architecture`.
+- `${PROJECT_DIR}/.codex/agents/cat-stakeholder-architecture-*.toml` exists and declares a `cat-stakeholder-architecture-*` agent.
 - `${CODEX_HOME}/config.toml` enables `[plugins."cat@cat"]`.
