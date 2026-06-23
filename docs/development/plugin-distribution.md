@@ -41,7 +41,7 @@ Release builds materialize one release artifact per engine and version:
 
 Codex artifacts are first-class install artifacts, but Codex behavior is not full Claude parity. Release notes and
 customer-facing summaries must keep current gaps visible, including unsupported read/search hooks, task/skill hook
-differences, statusline differences, and remaining formal-runner differences.
+differences, statusline differences, and remaining runtime-neutrality/documentation gaps in shared runner internals.
 
 The release artifact must not contain files for the other engine. This avoids wasting context on irrelevant
 instructions and avoids exposing engine-specific implementation details to the wrong product.
@@ -77,8 +77,8 @@ Do not commit generated release artifacts under normal source-tree paths in `cow
 ## Engine Support
 
 CAT publishes release artifacts for both Claude Code and Codex. Claude Code is the full-parity engine. CAT supports
-the latest Codex version only. Codex is a first-class install artifact with documented partial parity until Codex
-exposes equivalent hook, statusline, and formal-runner extension points.
+the latest Codex version only. Codex is a first-class install artifact with documented parity gaps until Codex
+exposes equivalent hook and statusline extension points and CAT closes the remaining runtime-neutrality gaps.
 
 | Engine | Install source | Local update path | Support tier |
 |---------|----------------|-------------------|--------------|

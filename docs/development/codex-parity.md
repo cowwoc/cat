@@ -83,9 +83,10 @@ separate from Claude Code stream-json output because the formats are not compati
 The empirical runner now supports explicit runtime selection. `EmpiricalTestRunner` can invoke either
 `ClaudeRunner` or `CodexRunner` with `--runtime claude|codex`.
 
-The formal instruction-test/SPRT pipeline is not runtime-neutral yet. `InstructionTestRunner` and `SprtGrader`
-still use `ClaudeRunner` and Claude stream-json parsing. Skills that invoke those binaries must not describe those
-results as Codex-runtime validation.
+CAT now ships Codex formal-runner entrypoints alongside the ad-hoc runner. The packaged Codex runtime includes
+`sprt-runner`, and prompt-builder self-run flows can continue formal SPRT validation on Codex-backed runtimes.
+Remaining parity work is about making the shared Java instruction-test/SPRT internals fully runtime-neutral rather
+than claiming Codex lacks formal-runner support.
 
 Future work for full Codex parity:
 - Introduce a runtime runner interface so `instruction-test-runner` and `sprt-runner` select `ClaudeRunner` or
@@ -110,9 +111,10 @@ Future work for full Codex parity:
 - **Write/Edit content validation:** Codex `apply_patch` support is path-safe, and add-file hunks include content
   for validators. Update/delete/move hunks currently get path-level checks only. Full edited-content validation
   requires a dedicated patch applier/parser.
-- **Formal validation runners:** `cat:codex-runner` covers isolated ad-hoc Codex runs, and
-  `empirical-test-runner --runtime codex` supports empirical Codex trials. The Java `instruction-test-runner` and
-  `sprt-runner` pipeline still depends on Claude stream-json parsing and Claude runner semantics.
+- **Formal validation runners:** `cat:codex-runner` covers isolated ad-hoc Codex runs, `empirical-test-runner
+  --runtime codex` supports empirical Codex trials, and the packaged Codex runtime also ships `sprt-runner` for
+  formal Codex-backed SPRT continuation. Remaining work here is broader runtime-neutrality in shared runner internals
+  and documentation, not absence of Codex formal-runner support.
 - **Statusline:** CAT statusline installation is Claude Code specific. Codex does not currently provide an
   equivalent custom statusline script mechanism for CAT to target.
 - **Environment injection:** Claude Code provides `CLAUDE_ENV_FILE`, which lets CAT inject variables into future Bash
@@ -150,7 +152,8 @@ Skills moved out of `common` because the implementation is runtime-specific:
   `client/plugin/concepts/session-history.md`.
 - `cat:register-hook`: Claude keeps `.claude/settings.json` project hook registration; Codex documents that CAT
   Codex hooks are plugin-config based.
-- `cat:sprt-runner`: Claude keeps the formal SPRT workflow; Codex reports that formal SPRT is not Codex-backed yet.
+- `cat:sprt-runner`: both runtimes now ship formal SPRT runner surfaces, but documentation and shared abstractions
+  still need cleanup where they imply Claude-only ownership.
 
 Other runtime-specific surfaces found while adding `cat:codex-runner`:
 - `session-analyzer` requires an explicit runtime (`--runtime claude` or `--runtime codex`) and supports Codex
