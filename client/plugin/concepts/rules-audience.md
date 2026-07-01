@@ -152,8 +152,8 @@ Engine-specific agent wrappers are the normal agent mechanism. They are not a fa
 Use `cat:spawn-engine` only for isolated subprocess validation, not for routine CAT agent
 orchestration.
 
-Plugin uninstall does not remove project-scoped Codex custom agent copies automatically. Use `cat:uninstall` to remove
-`.codex/agents/cat-*.toml` before invoking Codex's built-in plugin uninstaller.
+Plugin uninstall does not remove project-scoped Codex custom agent copies automatically. Use `$cat:uninstall` to
+remove `.codex/agents/cat-*.toml` before removing CAT with `codex plugin remove cat@cat` or the plugin browser.
 
 ## Skill Definition Locations
 

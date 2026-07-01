@@ -10,7 +10,7 @@ You are installing CAT for Codex. CAT may not be installed yet, so do not rely o
 This copy of the prompt installs CAT `v2.1`.
 
 Install CAT directly from the Codex release artifact. This creates a local Codex marketplace from the release artifact,
-adds it to Codex, and installs the bundled CAT client runtime.
+adds it to Codex, and installs the bundled CAT client runtime through Codex's supported plugin CLI.
 
 This installer targets current Codex behavior only. It does not include backward-compatibility or legacy fallback paths.
 
@@ -117,16 +117,8 @@ CODEX_PLUGIN_CACHE_ROOT="${CODEX_HOME}/plugins/cache/cat/cat"
 CODEX_PLUGIN_CACHE="${CODEX_PLUGIN_CACHE_ROOT}/${PLUGIN_VERSION}"
 CAT_PLUGIN_ROOT="${CAT_PLUGIN_ROOT:-${CODEX_PLUGIN_CACHE}}"
 
-codex_plugin_browser_install() {
-  local marketplace_json escaped_marketplace_json
-  marketplace_json="${LOCAL_MARKETPLACE_ROOT}/.agents/plugins/marketplace.json"
-  escaped_marketplace_json="${marketplace_json//\\/\\\\}"
-  escaped_marketplace_json="${escaped_marketplace_json//\"/\\\"}"
-  printf '{"id":1,"method":"plugin/install","params":{"marketplacePath":"%s","pluginName":"cat","remoteMarketplaceName":null}}\n' \
-    "${escaped_marketplace_json}" | codex app-server proxy >/dev/null 2>&1
-}
-
-codex_plugin_browser_install
+codex plugin remove cat@cat 2>/dev/null || true
+codex plugin add cat@cat >/dev/null
 
 CODEX_CONFIG="${CODEX_CONFIG:-${CODEX_HOME}/config.toml}"
 mkdir -p "$(dirname "${CODEX_CONFIG}")"
@@ -175,8 +167,13 @@ awk '
   END { exit(found_enabled ? 0 : 1) }
 ' "${CODEX_CONFIG}"
 
-echo "Restart Codex to complete the installation."
+if [[ -d .codex/agents ]] && find .codex/agents -maxdepth 1 \( -type f -o -type l \) -name 'cat-*.toml' -print -quit |
+  grep -q .; then
+  echo "CAT installed. Restart Codex if \$cat:help or CAT agents do not appear immediately."
+else
+  echo "CAT installed. Restart Codex if \$cat:help does not appear immediately."
+fi
 ```
 
-After the command succeeds, say only: `Restart Codex to complete the installation.` After restart, use `$cat:init` only
-when the user wants to create a new CAT project or wrap an existing project.
+After the command succeeds, say only: `CAT installed. Restart Codex if $cat:help or CAT agents do not appear
+immediately.` Use `$cat:init` only when the user wants to create a new CAT project or wrap an existing project.

@@ -1,5 +1,5 @@
 ---
-description: Uninstall CAT from Codex by removing CAT-owned project agent files before delegating to Codex's built-in plugin uninstaller.
+description: Uninstall CAT from Codex by removing CAT-owned project agent files before removing the plugin from Codex.
 allowed-tools: [Bash]
 ---
 <!--

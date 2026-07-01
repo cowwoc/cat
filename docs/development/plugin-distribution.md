@@ -92,8 +92,8 @@ Codex marketplace sharing/discoverability/version metadata are engine-managed su
 releases; CAT docs should avoid hardcoding implementation-specific share bucket names.
 
 Users install the release asset through the engine's normal plugin path. Claude Code uninstall uses Claude Code's
-built-in plugin mechanism. Codex users must run `/cat:uninstall` before removing CAT so CAT-owned project agent
-copies are removed.
+built-in plugin mechanism. Codex users must run `$cat:uninstall` before removing CAT with `codex plugin remove
+cat@cat` or the plugin browser so CAT-owned project agent copies are removed.
 
 Claude Code can install from Git-backed plugin sources and npm package sources. Codex can install from Git-backed and
 local marketplace sources; Codex does not currently document npm package plugin sources.

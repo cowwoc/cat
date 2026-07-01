@@ -33,5 +33,5 @@ marker is missing. Codex 0.134.0 also exposes `agent_type` to subagent-scoped ho
 does not register custom agent TOML files. When copies change, CAT asks the user to restart, resume, or clear Codex
 because Codex may snapshot custom-agent definitions before SessionStart hooks finish.
 
-Plugin uninstall does not remove project agent copies automatically. Use `cat:uninstall` to remove generated
-`cat-*.toml` files before invoking Codex's built-in plugin uninstaller.
+Plugin uninstall does not remove project agent copies automatically. Use `$cat:uninstall` to remove generated
+`cat-*.toml` files before removing CAT with `codex plugin remove cat@cat` or the plugin browser.

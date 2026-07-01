@@ -5,8 +5,7 @@ See LICENSE.md in the project root for license terms.
 -->
 # Uninstall CAT
 
-Remove CAT-owned Codex agent files from the current project before delegating to Codex's built-in
-plugin uninstaller.
+Remove CAT-owned Codex agent files from the current project before removing the plugin from Codex.
 
 Run this before uninstalling CAT from Codex because project-scoped `cat-*.toml` agent copies live outside the installed
 plugin root.
@@ -28,13 +27,13 @@ if [[ "$removed" -eq 0 ]]; then
 fi
 
 if codex plugin uninstall --help >/dev/null 2>&1; then
-  codex plugin uninstall cat
+  codex plugin uninstall cat@cat
 elif codex plugin remove --help >/dev/null 2>&1; then
-  codex plugin remove cat
+  codex plugin remove cat@cat
 else
   cat <<'EOF'
 Codex CLI does not expose a plugin uninstall command in this version.
-Use Codex's built-in plugin browser/uninstaller to uninstall CAT.
+Remove CAT from Codex with the built-in plugin browser.
 EOF
 fi
 ```

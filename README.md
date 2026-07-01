@@ -85,7 +85,8 @@ Run https://raw.githubusercontent.com/cowwoc/cat/v2.1/docs/prompts/codex-install
 $cat:help
 ```
 
-To remove CAT from Codex, run `/cat:uninstall`.
+To remove CAT from Codex, run `$cat:uninstall` to clean up CAT-owned project files, then remove the plugin from
+Codex with `codex plugin remove cat@cat` or the plugin browser.
 
 For local development builds from a source checkout, run `/cat-update` after publishing or staging the matching
 release artifact. Codex is a supported CAT engine with explicit behavior differences from Claude Code; see the
