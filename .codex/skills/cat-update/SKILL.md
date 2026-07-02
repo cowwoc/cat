@@ -23,9 +23,12 @@ bash ./client/plugin/scripts/codex-dev-update.sh
 
 The installer resolves the build source in this order:
 
-1. The current git worktree, when run inside a CAT issue worktree.
-2. The issue worktree locked by the current session, when run from `/workspace`.
+1. The issue worktree locked by the current session.
+2. The current git worktree, when no active issue lock is present.
 3. The main workspace checkout.
+
+`cat@cat` is the Codex plugin coordinate in `config.toml`. The runtime data directory is intentionally stored under
+`${CODEX_HOME}/plugins/data/cat-cat`.
 
 After the command succeeds, tell the user to restart Codex to complete the installation.
 
@@ -33,6 +36,8 @@ After the command succeeds, tell the user to restart Codex to complete the insta
 
 - The Maven build exits with code 0.
 - The Bats test suite exits with code 0.
+- The script reports the expected `Using PROJECT_DIR=...` for the active issue worktree or fallback checkout.
+- The script reports `Using CAT_PLUGIN_DATA=.../plugins/data/cat-cat`.
 - `${CODEX_HOME}/plugins/cat-marketplace/plugins/cat/.codex-plugin/plugin.json` exists.
 - `${CODEX_HOME}/plugins/cache/cat/cat/{version}/skills/add/SKILL.md` exists.
 - `${CAT_PLUGIN_DATA}/client/bin/java -version` runs successfully.

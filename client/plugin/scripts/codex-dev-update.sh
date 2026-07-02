@@ -85,15 +85,16 @@ resolve_locked_worktree() {
 }
 
 resolve_project_dir() {
-  local current_git_root locked_worktree
+  local current_git_root locked_worktree lock_project_dir
   current_git_root="$(resolve_current_git_root)"
-  if [[ -n "${current_git_root}" && "${current_git_root}" != "${PROJECT_ROOT}" ]]; then
-    printf '%s\n' "${current_git_root}"
-    return 0
-  fi
-  locked_worktree="$(resolve_locked_worktree "${PROJECT_ROOT}")"
+  lock_project_dir="${current_git_root:-${PROJECT_ROOT}}"
+  locked_worktree="$(resolve_locked_worktree "${lock_project_dir}")"
   if [[ -n "${locked_worktree}" ]]; then
     printf '%s\n' "${locked_worktree}"
+    return 0
+  fi
+  if [[ -n "${current_git_root}" && "${current_git_root}" != "${PROJECT_ROOT}" ]]; then
+    printf '%s\n' "${current_git_root}"
     return 0
   fi
   if [[ -n "${current_git_root}" ]]; then
@@ -258,6 +259,7 @@ main() {
   local project_dir
   project_dir="$(resolve_project_dir)"
   echo "Using PROJECT_DIR=${project_dir}"
+  echo "Using CAT_PLUGIN_DATA=${CAT_PLUGIN_DATA}"
 
   mvn -f "${project_dir}/client/pom.xml" verify -Djlink.extra.args=--enable-assertions
 

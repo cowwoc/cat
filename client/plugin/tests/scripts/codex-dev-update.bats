@@ -35,6 +35,29 @@ teardown() {
   [ "${output}" = "${worktree_dir}" ]
 }
 
+@test "resolve_project_dir prefers the locked CAT issue worktree over /workspace" {
+  local repo_dir="${TEST_ROOT}/repo"
+  local worktree_dir="${TEST_ROOT}/issue-worktree"
+  local session_id="session-123"
+
+  git -C "${TEST_ROOT}" init --quiet --initial-branch=main repo
+  git -C "${repo_dir}" config user.email "test@test.com"
+  git -C "${repo_dir}" config user.name "Test User"
+  mkdir -p "${repo_dir}/client" "${repo_dir}/.cat/work/locks"
+  touch "${repo_dir}/client/pom.xml"
+  git -C "${repo_dir}" add client/pom.xml
+  git -C "${repo_dir}" commit --quiet -m "Initial commit"
+  git -C "${repo_dir}" worktree add -b issue-branch "${worktree_dir}" HEAD --quiet
+  printf '{"session_id":"%s","worktrees":{"%s":{}}}\n' "${session_id}" "${worktree_dir}" \
+    > "${repo_dir}/.cat/work/locks/issue-branch.lock"
+
+  run env CAT_SESSION_ID="${session_id}" bash -lc 'cd "$1" && source "$2" && resolve_project_dir' _ \
+    "${repo_dir}" "${UPDATE_SCRIPT}"
+
+  [ "${status}" -eq 0 ]
+  [ "${output}" = "${worktree_dir}" ]
+}
+
 @test "jlink stamp requires codex-runner output" {
   run bash -lc 'source "$1" >/dev/null 2>&1 && jlink_required_outputs' _ "${JLINK_SCRIPT}"
 
