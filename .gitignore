@@ -17,6 +17,7 @@ demo-recording/
 .clone/
 tools/
 .agents/skills/caveman/
+.agents/scripts/caveman-session-start.sh
 
 # Compiled code
 plugin/client
