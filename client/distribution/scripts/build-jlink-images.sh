@@ -236,11 +236,14 @@ jlink_stamp_inputs() {
 }
 
 jlink_required_outputs() {
-  printf '%s\n' \
-    "${OUTPUT_ROOT}/claude/bin/java" \
-    "${OUTPUT_ROOT}/claude/bin/sprt-runner" \
-    "${OUTPUT_ROOT}/codex/bin/java" \
-    "${OUTPUT_ROOT}/codex/bin/sprt-runner"
+  local engine handler
+  for engine in claude codex; do
+    printf '%s\n' "${OUTPUT_ROOT}/${engine}/bin/java"
+    set_engine_handlers "${engine}"
+    for handler in "${HANDLERS[@]}"; do
+      printf '%s\n' "${OUTPUT_ROOT}/${engine}/bin/${handler%%:*}"
+    done
+  done
 }
 
 jlink_outputs_ready() {

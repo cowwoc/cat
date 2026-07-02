@@ -88,8 +88,10 @@ $cat:help
 To remove CAT from Codex, run `$cat:uninstall` to clean up CAT-owned project files, then remove the plugin from
 Codex with `codex plugin remove cat@cat` or the plugin browser.
 
-For local development builds from a source checkout, run `/cat-update` after publishing or staging the matching
-release artifact. Codex is a supported CAT engine with explicit behavior differences from Claude Code; see the
+For local development builds from a source checkout, run `/cat-update`. When invoked from an issue worktree, or from
+the main workspace while your session holds that issue lock, CAT rebuilds from that branch's source and refreshes the
+global Codex plugin cache from the resulting local artifact. Codex is a supported CAT engine with explicit behavior
+differences from Claude Code; see the
 [Codex parity notes](docs/development/codex-parity.md).
 
 ### Step 2: Initialize Your Project

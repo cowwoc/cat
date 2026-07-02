@@ -114,6 +114,11 @@ Primary flow: build to `client/distribution/target/runtime/{claude,codex}/`, cop
 generated local marketplace or active engine-local plugin root, and reinstall through the runtime's normal plugin
 layer. This is the parity test for release behavior.
 
+When refreshing the local Codex plugin cache from a source checkout, the update/install entrypoint must prefer the
+active issue worktree source when invoked from that worktree, or when the current session lock points at that worktree.
+Do not rebuild the global Codex plugin cache from `/workspace` if the developer is working on a different CAT issue
+branch.
+
 Fallback/debug flow: install directly from an isolated local release commit when validating the exact public-release
 shape. Do not use raw source-tree paths or symlinked development installs as the normal local update path.
 
