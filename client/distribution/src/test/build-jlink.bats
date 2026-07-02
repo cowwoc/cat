@@ -260,11 +260,10 @@ EOF
     : > "$COMMON_JAR"
     : > "$CLAUDE_JAR"
     : > "$CODEX_JAR"
-    mkdir -p "${OUTPUT_ROOT}/claude/bin" "${OUTPUT_ROOT}/codex/bin"
-    : > "${OUTPUT_ROOT}/claude/bin/java"
-    : > "${OUTPUT_ROOT}/claude/bin/sprt-runner"
-    : > "${OUTPUT_ROOT}/codex/bin/java"
-    : > "${OUTPUT_ROOT}/codex/bin/sprt-runner"
+    while IFS= read -r required_output; do
+        mkdir -p "$(dirname "${required_output}")"
+        : > "${required_output}"
+    done < <(jlink_required_outputs)
 
     write_jlink_stamp
     run bash -lc 'source "'"$BUILD_JLINK"'"; BUILD_STAMP_CLI="'"$BUILD_STAMP_CLI"'"; TARGET_DIR="'"$TARGET_DIR"'"; STAMP_DIR="'"$STAMP_DIR"'"; OUTPUT_ROOT="'"$OUTPUT_ROOT"'"; COMMON_JAR="'"$COMMON_JAR"'"; CLAUDE_JAR="'"$CLAUDE_JAR"'"; CODEX_JAR="'"$CODEX_JAR"'"; if jlink_stamp_current; then echo yes; else echo no; fi'

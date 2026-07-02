@@ -267,7 +267,7 @@ main() {
   fi
   local bats_project
   bats_project="$(mktemp -d)"
-  trap 'rm -rf "${bats_project}"' EXIT
+  trap "rm -rf '${bats_project}'" EXIT
   mkdir -p "${bats_project}/client"
   tar -C "${project_dir}" \
     --exclude='client/plugin/node_modules' \
