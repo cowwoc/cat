@@ -1,0 +1,11 @@
+#!/bin/sh
+JLINK_VM_OPTIONS='-Xlog:all=off:stdout -Xlog:all=warning:stderr'
+case "$0" in
+  */*) launcherDirectory=${0%/*} ;;
+  *) launcherDirectory=. ;;
+esac
+DIR=$(CDPATH='' cd -- "$launcherDirectory" && pwd)
+if command -v bwrap >/dev/null 2>&1; then
+  exec bwrap --bind / / --proc /proc --dev /dev -- "$DIR/java" $JLINK_VM_OPTIONS -m io.github.cowwoc.cat.claude.cli/io.github.cowwoc.cat.claude.runner.ClaudeRunnerCli "$@"
+fi
+exec "$DIR/java" $JLINK_VM_OPTIONS -m io.github.cowwoc.cat.claude.cli/io.github.cowwoc.cat.claude.runner.ClaudeRunnerCli "$@"

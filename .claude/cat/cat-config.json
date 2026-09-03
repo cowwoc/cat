@@ -1,9 +1,0 @@
-{
-  "version": "2.0",
-  "terminalWidth": 50,
-  "trust": "medium",
-  "verify": "all",
-  "curiosity": "high",
-  "patience": "medium",
-  "autoRemoveWorktrees": true
-}

@@ -1,5 +1,0 @@
-# Default to LF line endings for all text files
-* text=auto eol=lf
-
-# Ensure Unix shell scripts use LF
-*.sh text eol=lf

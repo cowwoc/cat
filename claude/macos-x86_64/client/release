@@ -1,0 +1,2 @@
+JAVA_VERSION="26.0.2.1"
+MODULES="java.base com.fasterxml.jackson.annotation org.slf4j io.github.cowwoc.pouch10.core io.github.cowwoc.requirements13.annotation io.github.javadiffutils io.github.cowwoc.requirements13.java java.net.http org.commonmark tools.jackson.core java.xml tools.jackson.databind org.snakeyaml.engine tools.jackson.dataformat.yaml io.github.cowwoc.cat.common.cli io.github.cowwoc.cat.claude.cli org.slf4j.nop"
